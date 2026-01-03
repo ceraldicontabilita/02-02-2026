@@ -45,6 +45,8 @@ async def create_product(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
         "created_at": datetime.utcnow().isoformat()
     }
     await db[Collections.WAREHOUSE_PRODUCTS].insert_one(product)
+    # Remove _id from response
+    product.pop("_id", None)
     return product
 
 
