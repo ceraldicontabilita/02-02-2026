@@ -151,6 +151,7 @@ async def root():
 
 
 @app.get("/health")
+@app.get("/api/health")
 async def health_check():
     """Detailed health check endpoint."""
     db_status = "connected" if Database.db is not None else "disconnected"
