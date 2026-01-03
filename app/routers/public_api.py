@@ -45,7 +45,6 @@ async def create_product(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
         "created_at": datetime.utcnow().isoformat()
     }
     await db[Collections.WAREHOUSE_PRODUCTS].insert_one(product)
-    # Remove _id from response
     product.pop("_id", None)
     return product
 
@@ -83,6 +82,7 @@ async def create_temperature(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]
         "created_at": datetime.utcnow().isoformat()
     }
     await db[Collections.HACCP_TEMPERATURES].insert_one(temp)
+    temp.pop("_id", None)
     return temp
 
 
@@ -110,6 +110,7 @@ async def create_invoice(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
         "created_at": datetime.utcnow().isoformat()
     }
     await db[Collections.INVOICES].insert_one(invoice)
+    invoice.pop("_id", None)
     return invoice
 
 
@@ -136,6 +137,7 @@ async def create_supplier(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
         "created_at": datetime.utcnow().isoformat()
     }
     await db[Collections.SUPPLIERS].insert_one(supplier)
+    supplier.pop("_id", None)
     return supplier
 
 
@@ -162,6 +164,7 @@ async def create_employee(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
         "created_at": datetime.utcnow().isoformat()
     }
     await db[Collections.EMPLOYEES].insert_one(employee)
+    employee.pop("_id", None)
     return employee
 
 
@@ -188,6 +191,7 @@ async def create_cash_movement(data: Dict[str, Any] = Body(...)) -> Dict[str, An
         "created_at": datetime.utcnow().isoformat()
     }
     await db[Collections.CASH_MOVEMENTS].insert_one(movement)
+    movement.pop("_id", None)
     return movement
 
 
@@ -215,6 +219,7 @@ async def create_bank_statement(data: Dict[str, Any] = Body(...)) -> Dict[str, A
         "created_at": datetime.utcnow().isoformat()
     }
     await db[Collections.BANK_STATEMENTS].insert_one(statement)
+    statement.pop("_id", None)
     return statement
 
 
@@ -242,6 +247,7 @@ async def create_order(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
         "created_at": datetime.utcnow().isoformat()
     }
     await db["orders"].insert_one(order)
+    order.pop("_id", None)
     return order
 
 
@@ -270,6 +276,7 @@ async def create_assegno(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
         "created_at": datetime.utcnow().isoformat()
     }
     await db["assegni"].insert_one(assegno)
+    assegno.pop("_id", None)
     return assegno
 
 
@@ -305,6 +312,7 @@ async def create_event(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
         "created_at": datetime.utcnow().isoformat()
     }
     await db["pianificazione_events"].insert_one(event)
+    event.pop("_id", None)
     return event
 
 
