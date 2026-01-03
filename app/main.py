@@ -73,8 +73,12 @@ from app.routers import (
     accounting_extended, haccp_extended,
     portal_extended, admin_extended, pianificazione_extended,
     cash_register_extended, magazzino_products, orders_extended, assegni_extended,
-    invoices_export, finanziaria
+    invoices_export, finanziaria,
+    public_api
 )
+
+# Include public API first (no auth required)
+app.include_router(public_api.router, prefix="/api", tags=["Public API"])
 
 app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(invoices_emesse.router, prefix="/api/invoices/emesse", tags=["Invoices Emesse"])
