@@ -143,3 +143,142 @@ async def mark_f24_pagato(f24_id: str) -> Dict[str, str]:
         raise HTTPException(status_code=404, detail="F24 non trovato")
     
     return {"message": "F24 segnato come pagato", "id": f24_id}
+
+
+@router.put("/models/{f24_id}")
+async def update_f24_model(f24_id: str, data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
+    """Aggiorna un modello F24."""
+    db = Database.get_db()
+    
+    update_data = {"updated_at": datetime.utcnow().isoformat()}
+    
+    # Campi modificabili
+    allowed_fields = [
+        "data_scadenza", "scadenza_display", "contribuente", 
+        "banca", "pagato", "note", "saldo_finale"
+    ]
+    
+    for field in allowed_fields:
+        if field in data:
+            update_data[field] = data[field]
+    
+    result = await db["f24_models"].update_one(
+        {"id": f24_id},
+        {"$set": update_data}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="F24 non trovato")
+    
+    return {"message": "F24 aggiornato", "id": f24_id}
+
+
+@router.delete("/models/{f24_id}")
+async def delete_f24_model(f24_id: str) -> Dict[str, str]:
+    """Elimina un modello F24."""
+    db = Database.get_db()
+    
+    result = await db["f24_models"].delete_one({"id": f24_id})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="F24 non trovato")
+    
+    return {"message": "F24 eliminato", "id": f24_id}
+
+
+@router.post("/upload-overwrite")
+async def upload_f24_pdf_overwrite(
+    file: UploadFile = File(..., description="File PDF F24"),
+    overwrite: bool = Query(False, description="Sovrascrivi se esiste")
+) -> Dict[str, Any]:
+    """
+    Carica PDF F24 con opzione sovrascrivi.
+    Se overwrite=True, sostituisce F24 esistenti con stessa scadenza/importo.
+    """
+    from app.parsers.f24_parser import parse_f24_pdf
+    
+    if not file.filename.lower().endswith('.pdf'):
+        raise HTTPException(status_code=400, detail="Solo file PDF supportati")
+    
+    pdf_bytes = await file.read()
+    parsed = parse_f24_pdf(pdf_bytes)
+    
+    if "error" in parsed and parsed["error"]:
+        return {
+            "success": False,
+            "error": parsed["error"],
+            "filename": file.filename
+        }
+    
+    db = Database.get_db()
+    
+    # Convert scadenza to ISO format
+    data_scadenza = None
+    if parsed.get("scadenza"):
+        try:
+            dt_obj = datetime.strptime(parsed["scadenza"], "%d/%m/%Y")
+            data_scadenza = dt_obj.strftime("%Y-%m-%d")
+        except:
+            pass
+    
+    # Check for existing
+    existing = await db["f24_models"].find_one({
+        "data_scadenza": data_scadenza,
+        "codice_fiscale": parsed.get("codice_fiscale"),
+        "saldo_finale": parsed.get("saldo_finale")
+    })
+    
+    if existing and not overwrite:
+        return {
+            "success": False,
+            "error": "F24 già presente. Usa overwrite=True per sovrascrivere.",
+            "existing_id": existing.get("id"),
+            "filename": file.filename
+        }
+    
+    f24_id = existing.get("id") if existing else str(uuid.uuid4())
+    
+    f24_record = {
+        "id": f24_id,
+        "data_scadenza": data_scadenza,
+        "scadenza_display": parsed.get("scadenza"),
+        "codice_fiscale": parsed.get("codice_fiscale"),
+        "contribuente": parsed.get("contribuente"),
+        "banca": parsed.get("banca"),
+        "tributi_erario": parsed.get("tributi_erario", []),
+        "tributi_inps": parsed.get("tributi_inps", []),
+        "tributi_regioni": parsed.get("tributi_regioni", []),
+        "tributi_imu": parsed.get("tributi_imu", []),
+        "totale_debito": parsed.get("totale_debito", 0),
+        "totale_credito": parsed.get("totale_credito", 0),
+        "saldo_finale": parsed.get("saldo_finale", 0),
+        "pagato": existing.get("pagato", False) if existing else False,
+        "filename": file.filename,
+        "source": "pdf_upload",
+        "updated_at": datetime.utcnow().isoformat()
+    }
+    
+    if existing:
+        # Update existing
+        await db["f24_models"].update_one(
+            {"id": f24_id},
+            {"$set": f24_record}
+        )
+        action = "aggiornato"
+    else:
+        # Create new
+        f24_record["created_at"] = datetime.utcnow().isoformat()
+        await db["f24_models"].insert_one(f24_record)
+        action = "creato"
+    
+    logger.info(f"F24 {action}: {f24_id} - Scadenza {data_scadenza} - €{parsed.get('saldo_finale', 0):.2f}")
+    
+    return {
+        "success": True,
+        "action": action,
+        "id": f24_id,
+        "scadenza": data_scadenza,
+        "saldo_finale": parsed.get("saldo_finale"),
+        "filename": file.filename
+    }
+
