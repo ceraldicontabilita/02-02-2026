@@ -409,8 +409,8 @@ async def delete_product(product_id: str) -> Dict[str, Any]:
 
 # ============== HACCP TEMPERATURES ==============
 @router.get("/haccp/temperatures")
-async def list_temperatures(skip: int = 0, limit: int = 100) -> List[Dict[str, Any]]:
-    """List HACCP temperatures - public endpoint."""
+async def list_temperatures(skip: int = 0, limit: int = 10000) -> List[Dict[str, Any]]:
+    """List HACCP temperatures - public endpoint. Nessun limite pratico."""
     db = Database.get_db()
     temps = await db[Collections.HACCP_TEMPERATURES].find({}, {"_id": 0}).sort("recorded_at", -1).skip(skip).limit(limit).to_list(limit)
     return temps
@@ -710,8 +710,8 @@ async def create_bank_statement(data: Dict[str, Any] = Body(...)) -> Dict[str, A
 
 # ============== ORDERS ==============
 @router.get("/orders")
-async def list_orders(skip: int = 0, limit: int = 100) -> List[Dict[str, Any]]:
-    """List orders - public endpoint."""
+async def list_orders(skip: int = 0, limit: int = 10000) -> List[Dict[str, Any]]:
+    """List orders - public endpoint. Nessun limite pratico."""
     db = Database.get_db()
     orders = await db["orders"].find({}, {"_id": 0}).sort("order_date", -1).skip(skip).limit(limit).to_list(limit)
     return orders
@@ -738,8 +738,8 @@ async def create_order(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
 
 # ============== ASSEGNI ==============
 @router.get("/assegni")
-async def list_assegni(skip: int = 0, limit: int = 100) -> List[Dict[str, Any]]:
-    """List assegni - public endpoint."""
+async def list_assegni(skip: int = 0, limit: int = 10000) -> List[Dict[str, Any]]:
+    """List assegni - public endpoint. Nessun limite pratico."""
     db = Database.get_db()
     assegni = await db["assegni"].find({}, {"_id": 0}).sort("due_date", -1).skip(skip).limit(limit).to_list(limit)
     return assegni
@@ -767,8 +767,8 @@ async def create_assegno(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
 
 # ============== F24 ==============
 @router.get("/f24")
-async def list_f24(skip: int = 0, limit: int = 100) -> List[Dict[str, Any]]:
-    """List F24 models - public endpoint."""
+async def list_f24(skip: int = 0, limit: int = 10000) -> List[Dict[str, Any]]:
+    """List F24 models - public endpoint. Nessun limite pratico."""
     db = Database.get_db()
     f24_list = await db[Collections.F24_MODELS].find({}, {"_id": 0}).skip(skip).limit(limit).to_list(limit)
     return f24_list
