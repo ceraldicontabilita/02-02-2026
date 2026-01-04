@@ -1992,12 +1992,44 @@ async def upload_corrispettivi_xml_bulk(files: List[UploadFile] = File(...)) -> 
                     results["failed"] += 1
                 continue
             
+            # === REGISTRAZIONE AUTOMATICA PAGAMENTO ELETTRONICO IN PRIMA NOTA BANCA ===
+            pagato_elettronico = float(parsed.get("pagato_elettronico", 0) or 0)
+            
+            if pagato_elettronico > 0:
+                bank_movement = {
+                    "id": str(uuid.uuid4()),
+                    "date": parsed.get("data", datetime.utcnow().isoformat()[:10]),
+                    "type": "entrata",
+                    "amount": pagato_elettronico,
+                    "description": f"Incasso POS RT {parsed.get('matricola_rt', '')} del {parsed.get('data', '')}",
+                    "category": "POS",
+                    "reference": f"COR-{corrispettivo['id'][:8]}",
+                    "source": "corrispettivi_auto",
+                    "corrispettivo_id": corrispettivo['id'],
+                    "reconciled": True,
+                    "reconciled_with": corrispettivo['id'],
+                    "reconciled_type": "corrispettivo",
+                    "created_at": datetime.utcnow().isoformat()
+                }
+                
+                try:
+                    await db["bank_statements"].insert_one(bank_movement)
+                    
+                    # Aggiorna corrispettivo con riferimento
+                    await db["corrispettivi"].update_one(
+                        {"id": corrispettivo['id']},
+                        {"$set": {"bank_movement_id": bank_movement["id"]}}
+                    )
+                except Exception as e:
+                    logger.warning(f"Errore creazione movimento bancario per corrispettivo {filename}: {e}")
+            
             results["success"].append({
                 "filename": filename,
                 "data": parsed.get("data"),
                 "totale": float(parsed.get("totale", 0) or 0),
                 "contanti": float(parsed.get("pagato_contanti", 0) or 0),
-                "elettronico": float(parsed.get("pagato_elettronico", 0) or 0)
+                "elettronico": float(parsed.get("pagato_elettronico", 0) or 0),
+                "bank_movement_created": pagato_elettronico > 0
             })
             results["imported"] += 1
             
