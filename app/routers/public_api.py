@@ -131,43 +131,76 @@ async def upload_fatture_xml_bulk(files: List[UploadFile] = File(...)) -> Dict[s
         "skipped_duplicates": 0
     }
     
-    db = Database.get_db()
+    try:
+        db = Database.get_db()
+    except Exception as e:
+        logger.error(f"Database connection error: {e}")
+        raise HTTPException(status_code=500, detail="Errore connessione database")
     
-    for file in files:
+    for idx, file in enumerate(files):
+        filename = file.filename or f"file_{idx}"
         try:
-            if not file.filename.endswith('.xml'):
+            # Verifica estensione
+            if not filename.lower().endswith('.xml'):
                 results["errors"].append({
-                    "filename": file.filename,
+                    "filename": filename,
                     "error": "Il file deve essere in formato XML"
                 })
                 results["failed"] += 1
                 continue
             
-            content = await file.read()
+            # Leggi contenuto
+            try:
+                content = await file.read()
+            except Exception as e:
+                logger.error(f"Errore lettura file {filename}: {e}")
+                results["errors"].append({
+                    "filename": filename,
+                    "error": f"Errore lettura file: {str(e)}"
+                })
+                results["failed"] += 1
+                continue
+            
+            if not content:
+                results["errors"].append({
+                    "filename": filename,
+                    "error": "File vuoto"
+                })
+                results["failed"] += 1
+                continue
             
             # Prova diverse codifiche
             xml_content = None
-            for encoding in ['utf-8', 'utf-8-sig', 'latin-1', 'iso-8859-1']:
+            for encoding in ['utf-8', 'utf-8-sig', 'latin-1', 'iso-8859-1', 'cp1252']:
                 try:
                     xml_content = content.decode(encoding)
                     break
-                except UnicodeDecodeError:
+                except (UnicodeDecodeError, LookupError):
                     continue
             
             if xml_content is None:
                 results["errors"].append({
-                    "filename": file.filename,
+                    "filename": filename,
                     "error": "Impossibile decodificare il file"
                 })
                 results["failed"] += 1
                 continue
             
             # Parse la fattura
-            parsed = parse_fattura_xml(xml_content)
+            try:
+                parsed = parse_fattura_xml(xml_content)
+            except Exception as e:
+                logger.error(f"Errore parsing XML {filename}: {e}")
+                results["errors"].append({
+                    "filename": filename,
+                    "error": f"Errore parsing XML: {str(e)}"
+                })
+                results["failed"] += 1
+                continue
             
             if parsed.get("error"):
                 results["errors"].append({
-                    "filename": file.filename,
+                    "filename": filename,
                     "error": parsed["error"]
                 })
                 results["failed"] += 1
@@ -175,16 +208,29 @@ async def upload_fatture_xml_bulk(files: List[UploadFile] = File(...)) -> Dict[s
             
             # Genera chiave univoca
             invoice_key = generate_invoice_key(
-                parsed.get("invoice_number", ""),
-                parsed.get("supplier_vat", ""),
-                parsed.get("invoice_date", "")
+                parsed.get("invoice_number", "") or "",
+                parsed.get("supplier_vat", "") or "",
+                parsed.get("invoice_date", "") or ""
             )
             
             # Controllo duplicato atomico
-            existing = await db[Collections.INVOICES].find_one({"invoice_key": invoice_key})
+            try:
+                existing = await db[Collections.INVOICES].find_one(
+                    {"invoice_key": invoice_key},
+                    {"_id": 1}  # Solo _id per efficienza
+                )
+            except Exception as e:
+                logger.error(f"Errore query duplicato {filename}: {e}")
+                results["errors"].append({
+                    "filename": filename,
+                    "error": f"Errore verifica duplicato: {str(e)}"
+                })
+                results["failed"] += 1
+                continue
+                
             if existing:
                 results["duplicates"].append({
-                    "filename": file.filename,
+                    "filename": filename,
                     "invoice_number": parsed.get("invoice_number"),
                     "supplier": parsed.get("supplier_name"),
                     "date": parsed.get("invoice_date")
@@ -192,7 +238,7 @@ async def upload_fatture_xml_bulk(files: List[UploadFile] = File(...)) -> Dict[s
                 results["skipped_duplicates"] += 1
                 continue
             
-            # Salva nel database
+            # Prepara documento per salvataggio
             invoice = {
                 "id": str(uuid.uuid4()),
                 "invoice_key": invoice_key,
@@ -202,9 +248,9 @@ async def upload_fatture_xml_bulk(files: List[UploadFile] = File(...)) -> Dict[s
                 "tipo_documento_desc": parsed.get("tipo_documento_desc", ""),
                 "supplier_name": parsed.get("supplier_name", ""),
                 "supplier_vat": parsed.get("supplier_vat", ""),
-                "total_amount": parsed.get("total_amount", 0),
-                "imponibile": parsed.get("imponibile", 0),
-                "iva": parsed.get("iva", 0),
+                "total_amount": float(parsed.get("total_amount", 0) or 0),
+                "imponibile": float(parsed.get("imponibile", 0) or 0),
+                "iva": float(parsed.get("iva", 0) or 0),
                 "divisa": parsed.get("divisa", "EUR"),
                 "fornitore": parsed.get("fornitore", {}),
                 "cliente": parsed.get("cliente", {}),
@@ -214,28 +260,49 @@ async def upload_fatture_xml_bulk(files: List[UploadFile] = File(...)) -> Dict[s
                 "causali": parsed.get("causali", []),
                 "status": "imported",
                 "source": "xml_bulk_upload",
-                "filename": file.filename,
+                "filename": filename,
                 "created_at": datetime.utcnow().isoformat()
             }
             
-            await db[Collections.INVOICES].insert_one(invoice)
+            # Salva nel database
+            try:
+                await db[Collections.INVOICES].insert_one(invoice)
+            except Exception as e:
+                logger.error(f"Errore inserimento DB {filename}: {e}")
+                # Verifica se è errore duplicato
+                if "duplicate" in str(e).lower() or "E11000" in str(e):
+                    results["duplicates"].append({
+                        "filename": filename,
+                        "invoice_number": parsed.get("invoice_number"),
+                        "supplier": parsed.get("supplier_name"),
+                        "date": parsed.get("invoice_date")
+                    })
+                    results["skipped_duplicates"] += 1
+                else:
+                    results["errors"].append({
+                        "filename": filename,
+                        "error": f"Errore salvataggio: {str(e)}"
+                    })
+                    results["failed"] += 1
+                continue
             
             results["success"].append({
-                "filename": file.filename,
+                "filename": filename,
                 "invoice_number": parsed.get("invoice_number"),
                 "supplier": parsed.get("supplier_name"),
-                "total": parsed.get("total_amount")
+                "total": float(parsed.get("total_amount", 0) or 0)
             })
             results["imported"] += 1
             
         except Exception as e:
-            logger.error(f"Errore upload fattura {file.filename}: {e}")
+            logger.error(f"Errore inaspettato upload fattura {filename}: {e}\n{traceback.format_exc()}")
             results["errors"].append({
-                "filename": file.filename,
-                "error": str(e)
+                "filename": filename,
+                "error": f"Errore inaspettato: {str(e)}"
             })
             results["failed"] += 1
     
+    logger.info(f"Upload massivo completato: {results['imported']} importate, {results['skipped_duplicates']} duplicati, {results['failed']} errori")
     return results
 
 
