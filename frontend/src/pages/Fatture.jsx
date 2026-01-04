@@ -220,12 +220,12 @@ export default function Fatture() {
             </button>
           </div>
           
-          {/* Upload massivo */}
+          {/* Upload massivo - XML multipli o ZIP */}
           <div>
             <input
               ref={bulkFileInputRef}
               type="file"
-              accept=".xml"
+              accept=".xml,.zip"
               multiple
               onChange={handleBulkUploadXML}
               style={{ display: "none" }}
@@ -234,9 +234,9 @@ export default function Fatture() {
             <button 
               onClick={() => bulkFileInputRef.current?.click()}
               disabled={uploading}
-              style={{ background: "#4caf50", color: "white" }}
+              style={{ background: "#ff9800", color: "white", fontWeight: "bold" }}
             >
-              📁 Upload XML Massivo
+              📦 Upload ZIP/XML Massivo
             </button>
           </div>
           
