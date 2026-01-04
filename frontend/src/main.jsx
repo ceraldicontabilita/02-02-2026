@@ -58,6 +58,7 @@ const router = createBrowserRouter([
       { path: "haccp/sanificazioni", element: <HACCPSanificazioni /> },
       { path: "haccp/equipaggiamenti", element: <HACCPEquipaggiamenti /> },
       { path: "haccp/scadenzario", element: <HACCPScadenzario /> },
+      { path: "haccp/analytics", element: <HACCPAnalytics /> },
       { path: "haccp/disinfestazioni", element: <HACCP /> },
       { path: "haccp/ricezione-merci", element: <HACCP /> },
       { path: "haccp/oli-frittura", element: <HACCP /> },
