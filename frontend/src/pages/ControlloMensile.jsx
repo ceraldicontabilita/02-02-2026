@@ -141,7 +141,8 @@ export default function ControlloMensile() {
       yearPosManual += posManual;
       yearCorrispAuto += corrispAuto;
       yearCorrispManual += corrispManual;
-      yearVersamenti += versamenti;
+      yearVersamentiManual += versamentiManual;
+      yearVersamentiEC += versamentiEC;
     }
 
     setMonthlyData(monthly);
@@ -150,7 +151,8 @@ export default function ControlloMensile() {
       posManual: yearPosManual,
       corrispettiviAuto: yearCorrispAuto,
       corrispettiviManual: yearCorrispManual,
-      versamenti: yearVersamenti
+      versamentiManual: yearVersamentiManual,
+      versamentiEC: yearVersamentiEC
     });
   };
 
