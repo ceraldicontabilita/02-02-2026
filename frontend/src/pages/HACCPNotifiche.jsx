@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
+import HACCPNotificationSettings from '../components/HACCPNotificationSettings';
 
 /**
  * Pagina Notifiche HACCP - Anomalie temperature con sistema severità
@@ -11,6 +12,7 @@ export default function HACCPNotifiche() {
   const [nonLette, setNonLette] = useState(0);
   const [filterNonLette, setFilterNonLette] = useState(false);
   const [filterSeverita, setFilterSeverita] = useState('');
+  const [showPushSettings, setShowPushSettings] = useState(false);
 
   useEffect(() => {
     loadNotifiche();
