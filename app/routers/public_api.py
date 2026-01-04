@@ -272,6 +272,16 @@ async def create_invoice(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     return invoice
 
 
+@router.delete("/invoices/{invoice_id}")
+async def delete_invoice(invoice_id: str) -> Dict[str, Any]:
+    """Delete an invoice."""
+    db = Database.get_db()
+    result = await db[Collections.INVOICES].delete_one({"id": invoice_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Fattura non trovata")
+    return {"success": True, "deleted_id": invoice_id}
+
+
 # ============== SUPPLIERS ==============
 @router.get("/suppliers")
 async def list_suppliers(skip: int = 0, limit: int = 100) -> List[Dict[str, Any]]:
