@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { uploadDocument } from "../api";
 import api from "../api";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, Trash2, Edit, Upload } from "lucide-react";
 
 export default function F24() {
   const [file, setFile] = useState(null);
@@ -12,6 +12,8 @@ export default function F24() {
   const [alerts, setAlerts] = useState([]);
   const [dashboard, setDashboard] = useState(null);
   const [expandedRows, setExpandedRows] = useState({});
+  const [overwriteMode, setOverwriteMode] = useState(false);
+  const [editingF24, setEditingF24] = useState(null);
 
   useEffect(() => {
     loadF24();
