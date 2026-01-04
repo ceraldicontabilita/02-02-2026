@@ -9,6 +9,7 @@ export default function RicercaProdotti() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [exactSearch, setExactSearch] = useState(false);  // Filtro esatto
   const [cart, setCart] = useState({});
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [suppliers, setSuppliers] = useState([]);
@@ -18,7 +19,7 @@ export default function RicercaProdotti() {
   useEffect(() => {
     loadProducts();
     loadCategories();
-  }, []);
+  }, [exactSearch]);  // Ricarica quando cambia il tipo di ricerca
 
   async function loadProducts() {
     try {
@@ -27,6 +28,7 @@ export default function RicercaProdotti() {
       if (selectedCategory) params.append("category", selectedCategory);
       if (searchQuery) params.append("search", searchQuery);
       params.append("days", "90");
+      if (exactSearch) params.append("exact", "true");
       
       const r = await api.get(`/api/products/catalog?${params}`);
       setProducts(Array.isArray(r.data) ? r.data : []);
