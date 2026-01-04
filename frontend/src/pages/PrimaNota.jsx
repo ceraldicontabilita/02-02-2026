@@ -250,7 +250,185 @@ export default function PrimaNota() {
 
   return (
     <div style={{ padding: 20 }}>
-      <h1 style={{ marginBottom: 20 }}>📒 Prima Nota</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+        <h1 data-testid="prima-nota-title">📒 Prima Nota</h1>
+        <button
+          data-testid="toggle-automation-btn"
+          onClick={() => setShowAutomation(!showAutomation)}
+          style={{
+            padding: '10px 20px',
+            background: showAutomation ? '#ff9800' : '#673ab7',
+            color: 'white',
+            border: 'none',
+            borderRadius: 8,
+            cursor: 'pointer',
+            fontWeight: 'bold'
+          }}
+        >
+          🤖 {showAutomation ? 'Nascondi Automazione' : 'Automazione'}
+        </button>
+      </div>
+
+      {/* Automation Panel */}
+      {showAutomation && (
+        <div data-testid="automation-panel" style={{ 
+          background: 'linear-gradient(135deg, #673ab7 0%, #9c27b0 100%)', 
+          borderRadius: 12, 
+          padding: 20, 
+          marginBottom: 20,
+          color: 'white'
+        }}>
+          <h2 style={{ marginBottom: 15 }}>🤖 Automazione Prima Nota</h2>
+          
+          {/* Stats */}
+          {autoStats && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10, marginBottom: 20 }}>
+              <div style={{ background: 'rgba(255,255,255,0.15)', padding: 12, borderRadius: 8 }}>
+                <div style={{ fontSize: 12, opacity: 0.8 }}>📑 Fatture da processare</div>
+                <div style={{ fontSize: 24, fontWeight: 'bold' }}>{autoStats.fatture?.non_processate || 0}</div>
+              </div>
+              <div style={{ background: 'rgba(255,255,255,0.15)', padding: 12, borderRadius: 8 }}>
+                <div style={{ fontSize: 12, opacity: 0.8 }}>💵 Movimenti Cassa</div>
+                <div style={{ fontSize: 24, fontWeight: 'bold' }}>{autoStats.prima_nota?.movimenti_cassa || 0}</div>
+              </div>
+              <div style={{ background: 'rgba(255,255,255,0.15)', padding: 12, borderRadius: 8 }}>
+                <div style={{ fontSize: 12, opacity: 0.8 }}>🏦 Movimenti Banca</div>
+                <div style={{ fontSize: 24, fontWeight: 'bold' }}>{autoStats.prima_nota?.movimenti_banca || 0}</div>
+              </div>
+              <div style={{ background: 'rgba(255,255,255,0.15)', padding: 12, borderRadius: 8 }}>
+                <div style={{ fontSize: 12, opacity: 0.8 }}>✅ Assegni Totali</div>
+                <div style={{ fontSize: 24, fontWeight: 'bold' }}>{autoStats.assegni?.totali || 0}</div>
+                <div style={{ fontSize: 11, opacity: 0.7 }}>({autoStats.assegni?.non_associati || 0} non associati)</div>
+              </div>
+            </div>
+          )}
+          
+          {/* Actions */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 15 }}>
+            <div style={{ background: 'rgba(255,255,255,0.1)', padding: 15, borderRadius: 8 }}>
+              <h4 style={{ marginBottom: 10 }}>📥 Import Fatture Cassa (Excel)</h4>
+              <p style={{ fontSize: 12, opacity: 0.8, marginBottom: 10 }}>
+                Importa fatture da Excel e registrale come pagate in contanti
+              </p>
+              <input
+                ref={cassaFileRef}
+                type="file"
+                accept=".xls,.xlsx"
+                onChange={handleImportCassaExcel}
+                style={{ display: 'none' }}
+              />
+              <button
+                data-testid="import-cassa-btn"
+                onClick={() => cassaFileRef.current?.click()}
+                disabled={automationLoading}
+                style={{
+                  padding: '10px 20px',
+                  background: '#4caf50',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 6,
+                  cursor: automationLoading ? 'not-allowed' : 'pointer',
+                  width: '100%'
+                }}
+              >
+                {automationLoading ? '⏳ Elaborazione...' : '📤 Seleziona Excel'}
+              </button>
+            </div>
+            
+            <div style={{ background: 'rgba(255,255,255,0.1)', padding: 15, borderRadius: 8 }}>
+              <h4 style={{ marginBottom: 10 }}>📊 Import Assegni (Estratto Conto)</h4>
+              <p style={{ fontSize: 12, opacity: 0.8, marginBottom: 10 }}>
+                Parsa estratto conto CSV/Excel per trovare prelievi assegno
+              </p>
+              <input
+                ref={estrattoFileRef}
+                type="file"
+                accept=".csv,.xls,.xlsx"
+                onChange={handleImportEstrattoContoAssegni}
+                style={{ display: 'none' }}
+              />
+              <button
+                data-testid="import-assegni-btn"
+                onClick={() => estrattoFileRef.current?.click()}
+                disabled={automationLoading}
+                style={{
+                  padding: '10px 20px',
+                  background: '#2196f3',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 6,
+                  cursor: automationLoading ? 'not-allowed' : 'pointer',
+                  width: '100%'
+                }}
+              >
+                {automationLoading ? '⏳ Elaborazione...' : '📤 Seleziona Estratto Conto'}
+              </button>
+            </div>
+            
+            <div style={{ background: 'rgba(255,255,255,0.1)', padding: 15, borderRadius: 8 }}>
+              <h4 style={{ marginBottom: 10 }}>⚙️ Elabora Fatture Automaticamente</h4>
+              <p style={{ fontSize: 12, opacity: 0.8, marginBottom: 10 }}>
+                Sposta fatture in Cassa/Banca in base al metodo pagamento fornitore
+              </p>
+              <button
+                data-testid="process-invoices-btn"
+                onClick={handleProcessInvoicesBySupplier}
+                disabled={automationLoading}
+                style={{
+                  padding: '10px 20px',
+                  background: '#ff9800',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 6,
+                  cursor: automationLoading ? 'not-allowed' : 'pointer',
+                  width: '100%'
+                }}
+              >
+                {automationLoading ? '⏳ Elaborazione...' : '▶️ Elabora Fatture'}
+              </button>
+            </div>
+            
+            <div style={{ background: 'rgba(255,255,255,0.1)', padding: 15, borderRadius: 8 }}>
+              <h4 style={{ marginBottom: 10 }}>🔗 Associa Assegni a Fatture</h4>
+              <p style={{ fontSize: 12, opacity: 0.8, marginBottom: 10 }}>
+                Collega assegni alle fatture banca per importo
+              </p>
+              <button
+                data-testid="match-assegni-btn"
+                onClick={handleMatchAssegniToInvoices}
+                disabled={automationLoading}
+                style={{
+                  padding: '10px 20px',
+                  background: '#e91e63',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 6,
+                  cursor: automationLoading ? 'not-allowed' : 'pointer',
+                  width: '100%'
+                }}
+              >
+                {automationLoading ? '⏳ Elaborazione...' : '🔗 Associa Assegni'}
+              </button>
+            </div>
+          </div>
+          
+          {/* Result Message */}
+          {automationResult && (
+            <div style={{ 
+              marginTop: 15, 
+              padding: 15, 
+              borderRadius: 8,
+              background: automationResult.type === 'success' ? 'rgba(76, 175, 80, 0.3)' : 'rgba(244, 67, 54, 0.3)'
+            }}>
+              <strong>{automationResult.title}</strong>
+              <div>{automationResult.message}</div>
+              {automationResult.details && (
+                <div style={{ fontSize: 12, marginTop: 5, opacity: 0.9 }}>{automationResult.details}</div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Summary Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 15, marginBottom: 20 }}>
