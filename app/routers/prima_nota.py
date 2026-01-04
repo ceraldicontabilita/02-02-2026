@@ -229,6 +229,8 @@ async def create_prima_nota_banca(
         "iban": data.get("iban"),
         "conto_bancario": data.get("conto_bancario"),
         "note": data.get("note"),
+        "source": data.get("source"),  # manual_pos, excel_import, etc.
+        "pos_details": data.get("pos_details"),  # {pos1, pos2, pos3} for manual POS entry
         "created_at": datetime.utcnow().isoformat()
     }
     
