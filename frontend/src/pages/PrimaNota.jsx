@@ -56,15 +56,30 @@ export default function PrimaNota() {
     loadAutoStats();
   }, [filterDataDa, filterDataA, filterTipo]);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(100);
+  const [selectedMonth, setSelectedMonth] = useState('');
+  const [previousMonthBalance, setPreviousMonthBalance] = useState(0);
+
   // Data loading
   const loadData = async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
-      params.append('limit', '500'); // Mostra fino a 500 movimenti
+      params.append('limit', '2000'); // Mostra fino a 2000 movimenti
       if (filterDataDa) params.append('data_da', filterDataDa);
       if (filterDataA) params.append('data_a', filterDataA);
       if (filterTipo) params.append('tipo', filterTipo);
+      if (selectedMonth) {
+        // Filtra per mese selezionato
+        const [year, month] = selectedMonth.split('-');
+        const startDate = `${year}-${month}-01`;
+        const endDay = new Date(parseInt(year), parseInt(month), 0).getDate();
+        const endDate = `${year}-${month}-${String(endDay).padStart(2, '0')}`;
+        params.set('data_da', startDate);
+        params.set('data_a', endDate);
+      }
 
       const [cassaRes, bancaRes, statsRes] = await Promise.all([
         api.get(`/api/prima-nota/cassa?${params}`),
@@ -75,10 +90,40 @@ export default function PrimaNota() {
       setCassaData(cassaRes.data);
       setBancaData(bancaRes.data);
       setStats(statsRes.data);
+      
+      // Calcola riporto mese precedente se selezionato un mese
+      if (selectedMonth) {
+        await loadPreviousMonthBalance();
+      } else {
+        setPreviousMonthBalance(0);
+      }
     } catch (error) {
       console.error('Error loading prima nota:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Carica saldo mese precedente per riporto
+  const loadPreviousMonthBalance = async () => {
+    if (!selectedMonth) return;
+    try {
+      const [year, month] = selectedMonth.split('-');
+      const prevMonth = parseInt(month) === 1 ? 12 : parseInt(month) - 1;
+      const prevYear = parseInt(month) === 1 ? parseInt(year) - 1 : parseInt(year);
+      const prevEndDay = new Date(prevYear, prevMonth, 0).getDate();
+      const prevEndDate = `${prevYear}-${String(prevMonth).padStart(2, '0')}-${String(prevEndDay).padStart(2, '0')}`;
+      
+      const res = await api.get(`/api/prima-nota/stats?data_a=${prevEndDate}`);
+      const prevStats = res.data;
+      if (activeTab === 'cassa') {
+        setPreviousMonthBalance(prevStats.cassa?.saldo || 0);
+      } else {
+        setPreviousMonthBalance(prevStats.banca?.saldo || 0);
+      }
+    } catch (error) {
+      console.error('Error loading previous month balance:', error);
+      setPreviousMonthBalance(0);
     }
   };
 
