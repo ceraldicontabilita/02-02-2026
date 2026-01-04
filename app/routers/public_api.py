@@ -104,10 +104,18 @@ async def upload_fattura_xml(file: UploadFile = File(...)) -> Dict[str, Any]:
         await db[Collections.INVOICES].insert_one(invoice)
         invoice.pop("_id", None)
         
+        # AUTO-POPOLAMENTO MAGAZZINO
+        warehouse_result = await auto_populate_warehouse_from_invoice(db, parsed, invoice["id"])
+        
         return {
             "success": True,
             "message": f"Fattura {parsed.get('invoice_number')} importata con successo",
-            "invoice": invoice
+            "invoice": invoice,
+            "warehouse": {
+                "products_created": warehouse_result.get("products_created", 0),
+                "products_updated": warehouse_result.get("products_updated", 0),
+                "price_records": warehouse_result.get("price_records", 0)
+            }
         }
         
     except UnicodeDecodeError:
