@@ -125,10 +125,12 @@ export default function ControlloMensile() {
   /**
    * PROCESSA DATI ANNUALI
    * Aggrega i dati per mese calcolando tutti i totali
+   * Include: POS Auto (XML), POS Manuale (Cassa), POS Banca (accrediti INC.POS)
    */
-  const processYearData = (cassa, corrispettivi) => {
+  const processYearData = (cassa, banca, corrispettivi) => {
     const monthly = [];
-    let yearPosAuto = 0, yearPosManual = 0, yearCorrispAuto = 0, yearCorrispManual = 0;
+    let yearPosAuto = 0, yearPosManual = 0, yearPosBanca = 0;
+    let yearCorrispAuto = 0, yearCorrispManual = 0;
     let yearVersamenti = 0, yearSaldoCassa = 0;
 
     for (let month = 1; month <= 12; month++) {
@@ -137,6 +139,7 @@ export default function ControlloMensile() {
       
       // Filtra dati per questo mese
       const monthCassa = cassa.filter(m => m.data?.startsWith(monthPrefix));
+      const monthBanca = banca.filter(m => m.data?.startsWith(monthPrefix));
       const monthCorrisp = corrispettivi.filter(c => c.data?.startsWith(monthPrefix));
 
       // ============ POS AUTO (da Corrispettivi XML) ============
@@ -144,11 +147,26 @@ export default function ControlloMensile() {
       const posAuto = monthCorrisp.reduce((sum, c) => sum + (parseFloat(c.pagato_elettronico) || 0), 0);
 
       // ============ POS MANUALE (da Prima Nota Cassa) ============
-      // Il POS manuale è registrato con categoria "POS" in Prima Nota
-      // Può essere sia entrata che uscita, prendiamo il valore assoluto
+      // Il POS manuale è registrato con categoria "POS" in Prima Nota Cassa
       const posManual = monthCassa
         .filter(m => m.categoria?.toUpperCase() === 'POS' || m.source === 'excel_pos')
         .reduce((sum, m) => sum + Math.abs(parseFloat(m.importo) || 0), 0);
+
+      // ============ POS BANCA (da Prima Nota Banca) ============
+      // Accrediti POS in banca: INC.POS, INCAS. TRAMITE P.O.S, ecc.
+      // Questi sono gli accrediti effettivi che la banca riceve dai pagamenti POS
+      const posBanca = monthBanca
+        .filter(m => {
+          const desc = (m.descrizione || '').toUpperCase();
+          return (desc.includes('INC.POS') || 
+                  desc.includes('INCAS.') || 
+                  desc.includes('INCASSO POS') ||
+                  desc.includes('P.O.S') ||
+                  desc.includes('CARTE CREDIT') ||
+                  m.categoria?.toUpperCase() === 'POS') &&
+                 m.tipo === 'entrata';
+        })
+        .reduce((sum, m) => sum + (parseFloat(m.importo) || 0), 0);
 
       // ============ CORRISPETTIVI AUTO (da XML) ============
       // Totale incassi giornalieri dai corrispettivi XML
@@ -184,17 +202,20 @@ export default function ControlloMensile() {
 
       // ============ DIFFERENZE ============
       const posDiff = posAuto - posManual;
+      const posBancaDiff = posBanca - posAuto; // Confronto Banca vs XML
       const corrispDiff = corrispAuto - corrispManual;
       
-      const hasData = posAuto > 0 || posManual > 0 || corrispAuto > 0 || corrispManual > 0 || versamenti > 0;
-      const hasDiscrepancy = Math.abs(posDiff) > 1 || Math.abs(corrispDiff) > 1;
+      const hasData = posAuto > 0 || posManual > 0 || posBanca > 0 || corrispAuto > 0 || corrispManual > 0 || versamenti > 0;
+      const hasDiscrepancy = Math.abs(posDiff) > 1 || Math.abs(corrispDiff) > 1 || Math.abs(posBancaDiff) > 1;
 
       monthly.push({
         month,
         monthName: monthNames[month - 1],
         posAuto,
         posManual,
+        posBanca,
         posDiff,
+        posBancaDiff,
         corrispAuto,
         corrispManual,
         corrispDiff,
