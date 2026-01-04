@@ -201,6 +201,15 @@ export default function PrimaNota() {
     boxSizing: 'border-box'
   };
 
+  const inputStyleCompact = {
+    padding: '6px 8px',
+    borderRadius: 6,
+    border: '1px solid #e5e7eb',
+    fontSize: 12,
+    width: '100%',
+    boxSizing: 'border-box'
+  };
+
   const buttonStyle = (color, disabled) => ({
     padding: '12px 20px',
     background: disabled ? '#ccc' : color,
@@ -210,6 +219,18 @@ export default function PrimaNota() {
     cursor: disabled ? 'not-allowed' : 'pointer',
     fontWeight: 'bold',
     fontSize: 14,
+    width: '100%'
+  });
+
+  const buttonStyleCompact = (color, disabled) => ({
+    padding: '6px 12px',
+    background: disabled ? '#ccc' : color,
+    color: 'white',
+    border: 'none',
+    borderRadius: 6,
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    fontWeight: 'bold',
+    fontSize: 12,
     width: '100%'
   });
 
