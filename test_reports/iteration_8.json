@@ -1,0 +1,75 @@
+{
+  "summary": "Testing completed for 3 new ERP features: Bank Statement Import with reconciliation, HACCP 4-level severity system, and Global Search. All 13 backend tests passed (100%). Frontend UI verified - all components working correctly.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "Console",
+        "issues": ["React Router Future Flag Warning (v7_startTransition) - minor, non-blocking"]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/tests/test_new_session_features.py",
+    "/app/test_reports/pytest/pytest_session_features.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/tests/test_new_session_features.py"
+  ],
+  "success_rate": {
+    "backend": "100% (13/13 tests passed)",
+    "frontend": "100% (all features working)"
+  },
+  "test_credentials": "None required - public APIs",
+  "seed_data_creation": "None - used existing data",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "New session features fully tested. Key endpoints: GET /api/bank-statement/stats, POST /api/portal/upload (kind='estratto-conto'), GET /api/haccp-completo/notifiche/stats, GET /api/ricerca-globale?q=test&limit=5. Frontend data-testids: global-search-input, global-search-results, search-result-{idx}, filter-critica/alta/media/bassa, check-anomalie-btn, refresh-btn",
+  "features_tested": {
+    "Bank Statement Reconciliation": {
+      "status": "✅ PASS",
+      "endpoints_tested": [
+        "GET /api/bank-statement/stats - Returns reconciliation statistics",
+        "POST /api/portal/upload - Handles file upload with kind='estratto-conto'"
+      ],
+      "frontend": "Riconciliazione page shows stats cards (Movimenti Banca, Riconciliati, Da Riconciliare, % Riconciliazione) and upload area"
+    },
+    "HACCP 4-Level Severity System": {
+      "status": "✅ PASS",
+      "endpoints_tested": [
+        "GET /api/haccp-completo/notifiche/stats - Returns per_severita stats for critica/alta/media/bassa",
+        "GET /api/haccp-completo/notifiche - Returns notification list with severity field",
+        "POST /api/haccp-completo/notifiche/check-anomalie - Checks for temperature anomalies"
+      ],
+      "frontend": "HACCPNotifiche page shows 4 clickable severity cards (CRITICA red, ALTA orange, MEDIA yellow, BASSA green), severity legend, filter buttons, and notification list with severity badges"
+    },
+    "Global Search": {
+      "status": "✅ PASS",
+      "endpoints_tested": [
+        "GET /api/ricerca-globale?q=test&limit=5 - Searches across fatture, fornitori, prodotti, dipendenti"
+      ],
+      "frontend": "GlobalSearch component in sidebar with Ctrl+K shortcut, dropdown results with type icons (📄 fattura, 🏢 fornitore, 📦 prodotto, 👤 dipendente), click navigation to relevant pages"
+    }
+  },
+  "api_endpoints_verified": {
+    "GET /api/bank-statement/stats": "✅ Returns {estratti_conto_importati, movimenti_banca_totali, movimenti_riconciliati, movimenti_non_riconciliati, percentuale_riconciliazione}",
+    "POST /api/portal/upload": "✅ Accepts file upload, returns {success, filename, size, message}",
+    "GET /api/haccp-completo/notifiche/stats": "✅ Returns {per_severita: {critica, alta, media, bassa}, per_categoria, totale_non_lette, livelli_severita}",
+    "GET /api/haccp-completo/notifiche": "✅ Returns {notifiche: [...], totale, non_lette}",
+    "POST /api/haccp-completo/notifiche/check-anomalie": "✅ Returns {data, anomalie_rilevate, notifiche_create, dettaglio}",
+    "GET /api/ricerca-globale?q=test&limit=5": "✅ Returns {query, total, results: [{tipo, id, titolo, sottotitolo}]}"
+  },
+  "frontend_components_verified": {
+    "GlobalSearch.jsx": "✅ Search input with Ctrl+K shortcut, debounced search, results dropdown, navigation on click",
+    "Riconciliazione.jsx": "✅ Stats cards, file upload area, reconciliation results display",
+    "HACCPNotifiche.jsx": "✅ 4 severity cards (clickable filters), notification list, severity badges, action buttons",
+    "App.jsx": "✅ GlobalSearch integrated in sidebar, HACCP notification badge"
+  }
+}
