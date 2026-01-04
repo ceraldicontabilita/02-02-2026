@@ -70,6 +70,7 @@ const router = createBrowserRouter([
       { path: "ordini", element: <Ordini /> },
       { path: "pianificazione", element: <Pianificazione /> },
       { path: "export", element: <ExportPage /> },
+      { path: "import-export", element: <ImportExport /> },
       { path: "admin", element: <AdminPage /> },
       { path: "iva", element: <IVA /> },
       { path: "metodi-pagamento", element: <MetodiPagamento /> },
