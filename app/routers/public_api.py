@@ -1210,6 +1210,17 @@ async def _get_f24_alerts_internal() -> List[Dict[str, Any]]:
 @router.get("/f24/dashboard")
 async def get_f24_dashboard() -> Dict[str, Any]:
     """Dashboard riepilogativa F24."""
+    return await _get_f24_dashboard_internal()
+
+
+@router.get("/f24-public/dashboard")
+async def get_f24_dashboard_public() -> Dict[str, Any]:
+    """Dashboard riepilogativa F24 - endpoint pubblico alternativo."""
+    return await _get_f24_dashboard_internal()
+
+
+async def _get_f24_dashboard_internal() -> Dict[str, Any]:
+    """Implementazione interna per dashboard F24."""
     db = Database.get_db()
     
     from datetime import timezone
