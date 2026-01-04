@@ -293,3 +293,81 @@ async def export_haccp(
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={"Content-Disposition": f"attachment; filename=haccp_{date.today()}.xlsx"}
     )
+
+
+@router.get(
+    "/riconciliazione",
+    summary="Export Riconciliazione Bancaria"
+)
+async def export_riconciliazione(
+    format: str = Query("xlsx"),
+    solo_non_riconciliati: bool = Query(False, description="Esporta solo movimenti non riconciliati")
+):
+    """Export stato riconciliazione Prima Nota Banca con estratto conto."""
+    db = Database.get_db()
+    
+    query = {}
+    if solo_non_riconciliati:
+        query["riconciliato"] = {"$ne": True}
+    
+    movements = await db["prima_nota_banca"].find(query, {"_id": 0}).sort("data", -1).to_list(10000)
+    
+    # Enrich with reconciliation status
+    for m in movements:
+        m["stato_riconciliazione"] = "Riconciliato" if m.get("riconciliato") else "Non riconciliato"
+        m["data_riconciliazione"] = m.get("data_riconciliazione", "")
+        m["riferimento_estratto_conto"] = m.get("estratto_conto_ref", "")
+    
+    # Get summary stats
+    total = len(movements)
+    reconciled = sum(1 for m in movements if m.get("riconciliato"))
+    
+    if format == "json":
+        return {
+            "movements": movements, 
+            "count": total,
+            "reconciled": reconciled,
+            "not_reconciled": total - reconciled
+        }
+    
+    import pandas as pd
+    
+    # Main movements sheet
+    df_movements = pd.DataFrame(movements)
+    if df_movements.empty:
+        df_movements = pd.DataFrame(columns=[
+            "data", "tipo", "importo", "descrizione", "categoria",
+            "stato_riconciliazione", "data_riconciliazione", "riferimento_estratto_conto"
+        ])
+    
+    # Summary sheet
+    summary_data = {
+        "Metrica": [
+            "Totale Movimenti Banca",
+            "Movimenti Riconciliati",
+            "Movimenti Non Riconciliati",
+            "Percentuale Riconciliazione",
+            "Data Export"
+        ],
+        "Valore": [
+            total,
+            reconciled,
+            total - reconciled,
+            f"{round((reconciled/total*100) if total > 0 else 0, 1)}%",
+            datetime.now().strftime("%Y-%m-%d %H:%M")
+        ]
+    }
+    df_summary = pd.DataFrame(summary_data)
+    
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df_summary.to_excel(writer, sheet_name="Riepilogo", index=False)
+        df_movements.to_excel(writer, sheet_name="Movimenti", index=False)
+    output.seek(0)
+    
+    return StreamingResponse(
+        output,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename=riconciliazione_{date.today()}.xlsx"}
+    )
+
