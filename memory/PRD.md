@@ -1,165 +1,208 @@
-# Azienda in Cloud ERP - Product Requirements Document
+# ERP Azienda Semplice - PRD
 
-## Original Problem Statement
-Ricreare un'applicazione ERP aziendale completa da un file zip fornito dall'utente, adattandola all'ambiente containerizzato.
+## Descrizione Progetto
+Applicazione ERP completa per la gestione aziendale con moduli per fatture, fornitori, prima nota, assegni, dipendenti, HACCP e altro.
 
-## Core Requirements
-- Dashboard con KPI in tempo reale
-- Modulo Magazzino per gestione prodotti
-- Modulo HACCP per temperature
-- Modulo Prima Nota Cassa per movimenti contanti
-- **Modulo Fatture**: Upload XML singolo/massivo con controllo duplicati atomico
-- **Modulo Corrispettivi**: Upload XML singolo/massivo con estrazione pagamento elettronico
-- **Modulo Paghe/Salari**: Upload PDF buste paga LUL Zucchetti
-- **🆕 Catalogo Prodotti**: Auto-popolamento da fatture con best price e storico prezzi
-- **🆕 Comparatore Prezzi**: Confronto prezzi tra fornitori con normalizzazione prodotti
-- **🆕 Sistema F24**: Alert scadenze, dashboard, codici tributo, riconciliazione
-- **🆕 API IVA**: Calcolo IVA giornaliero, mensile, annuale
+## Stack Tecnologico
+- **Frontend**: React + Vite + Shadcn UI
+- **Backend**: FastAPI + Motor (MongoDB async)
+- **Database**: MongoDB
 
-## What's Been Implemented
+## Moduli Implementati
 
-### 2025-01-04 - Sessione 2 - Pulizia e Formato Date
-- ✅ **API IVA** (`/api/iva/`):
-  - `/api/iva/today` - IVA giornaliera oggi
-  - `/api/iva/daily/{date}` - IVA dettagliata per data
-  - `/api/iva/monthly/{year}/{month}` - Progressiva mensile
-  - `/api/iva/annual/{year}` - Riepilogo annuale con 12 mesi
-  
-- ✅ **FORMATO DATE ITALIANO**:
-  - Tutte le date in formato gg/mm/aaaa
-  - Funzioni helper in `/app/frontend/src/lib/utils.js`:
-    - `formatDateIT()` - Converte ISO → gg/mm/aaaa
-    - `formatDateTimeIT()` - Data e ora italiana
-    - `formatEuro()` - Importi €
-    
-- ✅ **ORDINAMENTO PER DATA DESC**:
-  - Fatture ordinate per data fattura (più recente prima)
-  - Corrispettivi ordinati per data
-  - Indice MongoDB su `invoice_date`
+### 1. Fatture & XML
+- Upload massivo fatture XML (FatturaPA)
+- Parsing automatico dati fattura
+- Gestione duplicati con chiave univoca
+- Export dati
 
-- ✅ **PULIZIA CODICE**:
-  - Utility centrali in `utils.js`
-  - Import consistenti in tutte le pagine
+### 2. Fornitori
+- Anagrafica completa fornitori
+- Import Excel fornitori
+- Metodi di pagamento configurabili per fornitore
+- Statistiche e scadenze
 
-### 2025-01-04 - Sessione 1 - Nuovi Moduli
-- ✅ **COMPARATORE PREZZI** (`/api/comparatore/`):
-  - Confronto prezzi tra fornitori
-  - Normalizzazione prodotti automatica
-  - Carrello acquisti raggruppato per fornitore
-  - Esclusione fornitori dal confronto
-  - Prodotti mappati/non mappati
-  
-- ✅ **SISTEMA F24 ESTESO** (`/api/f24-public/`):
-  - Dashboard F24 con statistiche
-  - Alert scadenze (critical, high, medium)
-  - Codici tributo F24 completi (20+ codici)
-  - Riconciliazione con movimenti bancari
-  - Mark as paid manuale
+### 3. Prima Nota (NUOVO)
+- Prima Nota Cassa e Banca separate
+- Registrazione automatica pagamenti da fatture
+- **Automazione Avanzata**:
+  - Import fatture Excel → Prima Nota Cassa (pagamenti contanti)
+  - Import estratto conto CSV → Estrazione assegni automatica
+  - Elaborazione fatture per fornitore → Cassa/Banca automatico
+  - Associazione assegni a fatture per importo
+- Visualizzazione assegni collegati nella tabella banca
 
-- ✅ **COSTANTI HACCP** (`/api/haccp/config`):
-  - Operatori autorizzati: VALERIO, VINCENZO, POCCI
-  - Limiti temperature frigoriferi: 2-5°C
-  - Limiti temperature congelatori: -25°C a -15°C
-  - Info azienda per documenti
+### 4. Gestione Assegni
+- Generazione assegni progressivi
+- Stati: vuoto, compilato, emesso, incassato, annullato
+- Collegamento assegni a fatture
+- Import da estratto conto bancario
 
-### Precedentemente - Auto-Popolamento Magazzino
-- ✅ **AUTO-POPOLAMENTO**: Quando si carica una fattura XML, i prodotti vengono automaticamente:
-  - Estratti dalle linee dettaglio
-  - Normalizzati (rimozione articoli, preposizioni)
-  - Categorizzati automaticamente (18 categorie: bevande, caffè, latticini, ecc.)
-  - Salvati in `warehouse_inventory` con giacenza e prezzi
-  - Storico prezzi salvato in `price_history`
-  
-- ✅ **NUOVA PAGINA**: "Ricerca Prodotti" (`/ricerca-prodotti`)
-  - 1911 prodotti nel catalogo (auto-popolati da 1128 fatture)
-  - Ricerca predittiva con matching intelligente
-  - Best price per fornitore (ultimi 90 giorni)
-  - Confronto prezzi tra fornitori
-  - Sistema carrello per ordini raggruppati
+### 5. Paghe / Salari
+- Upload PDF buste paga (LUL Zucchetti)
+- Parser multi-pagina
+- Estrazione netto, lordo, ore, contributi
 
-### Statistiche Correnti
-- **1128 fatture** registrate
-- **151 fornitori** distinti
-- **15 dipendenti** in organico
-- **366 Corrispettivi** con pagamento elettronico
+### 6. HACCP
+- Dashboard HACCP
+- Temperature frigo/congelatori
+- Sanificazioni
+- Equipaggiamenti
+- Scadenzario alimenti
 
-## Architecture
+### 7. Dipendenti
+- Anagrafica dipendenti
+- Portale dipendenti
+- Gestione contratti
 
-### Backend
-- **Framework**: FastAPI
-- **Database**: MongoDB (motor async driver)
-- **Auto-popolamento**: `/app/app/utils/warehouse_helpers.py`
+### 8. Corrispettivi
+- Upload XML corrispettivi giornalieri
+- Calcolo IVA progressivo
 
-### Nuovi File Creati
-- `/app/backend/constants/haccp_constants.py` - Costanti HACCP
-- `/app/backend/constants/codici_tributo_f24.py` - Dizionario codici tributo
-- `/app/backend/services/f24_alert_system.py` - Sistema alert F24
-- `/app/backend/services/email_service.py` - Servizio email (richiede SMTP)
-- `/app/backend/routers/comparatore_routes.py` - Router comparatore standalone
-- `/app/app/routers/comparatore.py` - Router comparatore integrato
-- `/app/frontend/src/pages/IVA.jsx` - Dashboard IVA
+### 9. F24 / Tributi
+- Gestione scadenze F24
+- Alert scadenze
 
-### Database Collections
-- `warehouse_inventory`: Catalogo prodotti con prezzi
-- `price_history`: Storico prezzi per fornitore
-- `invoices`: Fatture con flag `warehouse_registered`
-- `corrispettivi`: Dati giornalieri RT + `bank_movement_id` (auto-registrazione)
-- `bank_statements`: Movimenti bancari + auto-registrazione POS
-- `employees`: Anagrafica dipendenti
-- `payslips`: Buste paga mensili
-- `f24`: Modelli F24
-- `comparatore_cart`: Carrello comparatore
-- `comparatore_supplier_exclusions`: Fornitori esclusi
-- `product_catalog`: Catalogo prodotti normalizzati
-- `supplier_payment_methods`: Metodi pagamento fornitori
+### 10. Magazzino
+- Catalogo prodotti auto-popolato da fatture
+- Comparatore prezzi tra fornitori
 
-## P0 - Completati
-- [x] Auto-popolamento magazzino da fatture
-- [x] Ricerca prodotti con best price
-- [x] Storico prezzi per fornitore
-- [x] Sistema carrello
-- [x] Corrispettivi con pagamento elettronico
-- [x] Limite 100 rimosso da tutte le API
-- [x] Costanti HACCP
-- [x] Codici tributo F24
-- [x] Dashboard F24 con alert
-- [x] Comparatore prezzi base
-- [x] **Dashboard IVA** - Vista annuale, mensile, giornaliera
-- [x] **Dizionario Metodi Pagamento Fornitori** - 12 metodi + import automatico
-- [x] **Corrispettivi → Prima Nota Banca** - Registrazione automatica POS
-- [x] **Fix Parser Buste Paga** - Migliorato regex netto del mese
-- [x] **Parser Libro Unico v2** - Nuovo parser per buste paga Zucchetti
-- [x] **Pagina Fornitori** (`/fornitori`) - 2025-01-04:
-  - Import Excel ReportFornitori.xls (235 fornitori importati)
-  - Gestione metodi pagamento (contanti/bonifico/assegno/misto/etc.)
-  - Termini pagamento (vista/30gg/60gg/90gg/120gg)
-  - Alert scadenze fatture (critiche 7gg, totale 30gg)
-  - Statistiche fatture per fornitore
-- [x] **Gestione Assegni** (`/gestione-assegni`) - 2025-01-04:
-  - Generazione assegni progressivi
-  - Stati: vuoto, compilato, emesso, incassato, annullato, scaduto
-  - Collegamento a fatture
-  - KPI e filtri per stato
-- [x] **Prima Nota Unificata** (`/prima-nota`) - 2025-01-04:
-  - Tab Cassa / Banca
-  - Registrazione automatica da fatture
-  - Saldi, entrate, uscite
-  - Filtri per data e tipo
-- [x] **Registrazione Automatica Fatture** - 2025-01-04:
-  - Upload XML → Cerca metodo pagamento fornitore
-  - Contanti → Prima Nota Cassa
-  - Bonifico/Assegno/etc. → Prima Nota Banca
-  - Misto → Richiede divisione manuale
-  - Calcolo automatico data scadenza
+## API Endpoints Principali
 
-## P1 - Prossimi
-- [ ] Fix bug prezzi €0.00 nei suggerimenti ricerca prodotti
-- [ ] Refactoring backend monolith → moduli
+### Prima Nota Automation (NUOVO)
+```
+POST /api/prima-nota-auto/import-cassa-from-excel
+POST /api/prima-nota-auto/import-assegni-from-estratto-conto
+POST /api/prima-nota-auto/move-invoices-by-supplier-payment
+POST /api/prima-nota-auto/match-assegni-to-invoices
+GET  /api/prima-nota-auto/stats
+```
 
-## P2 - Backlog
-- [ ] Generazione contratti dipendenti PDF
-- [ ] Configurazione HACCP UI
-- [ ] Dashboard con grafici vendite
-- [ ] Analytics fornitori
-- [ ] Servizio Email (richiede credenziali SMTP)
-- [ ] Riconciliazione automatica F24
+### Prima Nota Base
+```
+GET  /api/prima-nota/cassa
+POST /api/prima-nota/cassa
+GET  /api/prima-nota/banca
+POST /api/prima-nota/banca
+GET  /api/prima-nota/stats
+```
+
+### Fatture
+```
+POST /api/fatture/upload-xml
+POST /api/fatture/upload-xml-bulk
+GET  /api/invoices
+```
+
+### Fornitori
+```
+GET  /api/suppliers
+POST /api/suppliers/upload-excel
+PUT  /api/suppliers/{id}
+```
+
+### Assegni
+```
+GET  /api/assegni
+POST /api/assegni/genera
+PUT  /api/assegni/{id}
+```
+
+## Collections MongoDB
+
+### invoices
+```json
+{
+  "id": "uuid",
+  "invoice_key": "numero_piva_data",
+  "numero_fattura": "string",
+  "data_fattura": "YYYY-MM-DD",
+  "cedente_piva": "string",
+  "cedente_denominazione": "string",
+  "importo_totale": "float",
+  "metodo_pagamento": "string",
+  "pagato": "boolean",
+  "prima_nota_cassa_id": "string",
+  "prima_nota_banca_id": "string"
+}
+```
+
+### suppliers
+```json
+{
+  "id": "uuid",
+  "partita_iva": "string",
+  "denominazione": "string",
+  "metodo_pagamento": "contanti|bonifico|assegno|...",
+  "termini_pagamento": "30GG|60GG|...",
+  "giorni_pagamento": "int"
+}
+```
+
+### prima_nota_cassa / prima_nota_banca
+```json
+{
+  "id": "uuid",
+  "data": "YYYY-MM-DD",
+  "tipo": "entrata|uscita",
+  "importo": "float",
+  "descrizione": "string",
+  "categoria": "string",
+  "riferimento": "numero fattura",
+  "fornitore_piva": "string",
+  "fattura_id": "string",
+  "assegno_collegato": "string (solo banca)"
+}
+```
+
+### assegni
+```json
+{
+  "id": "uuid",
+  "numero": "string",
+  "stato": "vuoto|compilato|emesso|incassato|annullato",
+  "importo": "float",
+  "beneficiario": "string",
+  "data_emissione": "string",
+  "fattura_collegata": "string",
+  "fornitore_piva": "string"
+}
+```
+
+## Completato nella Sessione Corrente (4 Gennaio 2026)
+
+### Automazione Prima Nota
+1. ✅ Creato nuovo router `/app/app/routers/prima_nota_automation.py`
+2. ✅ Import fatture Excel → Prima Nota Cassa (634 fatture importate)
+3. ✅ Import estratto conto CSV → Assegni (134 assegni estratti)
+4. ✅ Elaborazione fatture per fornitore (495 fatture → 26 cassa, 469 banca)
+5. ✅ Associazione assegni a fatture per importo (106 associazioni)
+6. ✅ UI pannello automazione nel frontend PrimaNota.jsx
+7. ✅ Colonna assegni nella tabella Prima Nota Banca
+
+## Backlog
+
+### P1 - Alta Priorità
+- [ ] Refactoring completo public_api.py (spostare logica nei router modulari)
+- [ ] UI configurazione HACCP
+- [ ] Completamento moduli Gestione Dipendenti
+
+### P2 - Media Priorità
+- [ ] Frontend alert F24
+- [ ] Bug prezzo ricerca prodotti
+- [ ] Export Prima Nota Excel
+
+### P3 - Bassa Priorità
+- [ ] Email service (richiede SMTP)
+- [ ] Generazione contratti dipendenti
+
+## File Principali Modificati
+- `/app/app/routers/prima_nota_automation.py` (NUOVO)
+- `/app/app/main.py` (registrato nuovo router)
+- `/app/frontend/src/pages/PrimaNota.jsx` (pannello automazione)
+
+## Note Tecniche
+- Hot reload attivo per frontend e backend
+- Usare `api.js` per tutte le chiamate API frontend
+- MongoDB: sempre escludere `_id` nelle risposte
+- Supervisor per gestione servizi
