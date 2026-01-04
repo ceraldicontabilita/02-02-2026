@@ -1,7 +1,7 @@
 """
 F24 Public Router - Endpoints F24 senza autenticazione
 """
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Body, Query
 from typing import Dict, Any
 from datetime import datetime
 import uuid
