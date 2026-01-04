@@ -81,7 +81,10 @@ from app.routers import (
     dipendenti,
     haccp_completo,
     fatture_upload,
-    corrispettivi_router
+    corrispettivi_router,
+    iva_calcolo,
+    ordini_fornitori,
+    products_catalog
 )
 
 # Include public API first (no auth required)
