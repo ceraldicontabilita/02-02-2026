@@ -95,6 +95,7 @@ from app.routers import (
 # Include public API first (no auth required)
 app.include_router(public_api.router, prefix="/api", tags=["Public API"])
 app.include_router(email_notifications.router, prefix="/api/email", tags=["Email Notifications"])
+app.include_router(employee_contracts.router, prefix="/api/contracts", tags=["Employee Contracts"])
 
 app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(invoices_emesse.router, prefix="/api/invoices/emesse", tags=["Invoices Emesse"])
