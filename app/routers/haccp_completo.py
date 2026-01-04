@@ -1574,6 +1574,55 @@ async def get_notifiche_haccp(
     }
 
 
+@router.get("/notifiche/stats")
+async def get_notifiche_stats() -> Dict[str, Any]:
+    """Statistiche notifiche HACCP per severità e categoria."""
+    db = Database.get_db()
+    
+    # Count by severity
+    pipeline_severity = [
+        {"$group": {
+            "_id": "$severita",
+            "count": {"$sum": 1},
+            "non_lette": {"$sum": {"$cond": [{"$eq": ["$letta", False]}, 1, 0]}}
+        }}
+    ]
+    severity_stats = await db["haccp_notifiche"].aggregate(pipeline_severity).to_list(10)
+    
+    # Count by category
+    pipeline_category = [
+        {"$group": {
+            "_id": "$categoria",
+            "count": {"$sum": 1},
+            "non_lette": {"$sum": {"$cond": [{"$eq": ["$letta", False]}, 1, 0]}}
+        }}
+    ]
+    category_stats = await db["haccp_notifiche"].aggregate(pipeline_category).to_list(10)
+    
+    # Recent critical alerts (last 7 days)
+    week_ago = (datetime.utcnow() - timedelta(days=7)).strftime("%Y-%m-%d")
+    critical_recent = await db["haccp_notifiche"].count_documents({
+        "severita": "critica",
+        "data": {"$gte": week_ago}
+    })
+    
+    # Total non-read
+    non_lette = await db["haccp_notifiche"].count_documents({"letta": False})
+    
+    return {
+        "per_severita": {s["_id"]: {"totale": s["count"], "non_lette": s["non_lette"]} for s in severity_stats if s["_id"]},
+        "per_categoria": {c["_id"]: {"totale": c["count"], "non_lette": c["non_lette"]} for c in category_stats if c["_id"]},
+        "critiche_ultimi_7_giorni": critical_recent,
+        "totale_non_lette": non_lette,
+        "livelli_severita": {
+            "critica": "Temperatura fuori range critico - azione immediata",
+            "alta": "Temperatura significativamente fuori range",
+            "media": "Temperatura leggermente fuori range",
+            "bassa": "Temperatura borderline"
+        }
+    }
+
+
 @router.put("/notifiche/{notifica_id}/letta")
 async def mark_notifica_letta(notifica_id: str) -> Dict[str, str]:
     """Segna notifica come letta."""
