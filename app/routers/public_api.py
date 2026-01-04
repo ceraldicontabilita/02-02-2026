@@ -44,6 +44,7 @@ async def upload_fattura_xml(file: UploadFile = File(...)) -> Dict[str, Any]:
     """
     Upload e parse di una singola fattura elettronica XML.
     Controllo duplicati basato su: numero fattura + P.IVA fornitore + data
+    Registra automaticamente in Prima Nota in base al metodo pagamento del fornitore.
     """
     if not file.filename.endswith('.xml'):
         raise HTTPException(status_code=400, detail="Il file deve essere in formato XML")
@@ -75,12 +76,30 @@ async def upload_fattura_xml(file: UploadFile = File(...)) -> Dict[str, Any]:
                 detail=f"Fattura già presente: {parsed.get('invoice_number')} del {parsed.get('invoice_date')} - {parsed.get('supplier_name')}"
             )
         
+        # Cerca metodo pagamento del fornitore
+        supplier_vat = parsed.get("supplier_vat", "")
+        supplier = await db[Collections.SUPPLIERS].find_one({"partita_iva": supplier_vat})
+        metodo_pagamento = supplier.get("metodo_pagamento", "bonifico") if supplier else "bonifico"
+        giorni_pagamento = supplier.get("giorni_pagamento", 30) if supplier else 30
+        
+        # Calcola data scadenza
+        from datetime import timedelta
+        data_fattura_str = parsed.get("invoice_date", "")
+        data_scadenza = None
+        if data_fattura_str:
+            try:
+                data_fattura = datetime.strptime(data_fattura_str, "%Y-%m-%d")
+                data_scadenza = (data_fattura + timedelta(days=giorni_pagamento)).strftime("%Y-%m-%d")
+            except:
+                pass
+        
         # Salva nel database
         invoice = {
             "id": str(uuid.uuid4()),
             "invoice_key": invoice_key,
             "invoice_number": parsed.get("invoice_number", ""),
             "invoice_date": parsed.get("invoice_date", ""),
+            "data_scadenza": data_scadenza,
             "tipo_documento": parsed.get("tipo_documento", ""),
             "tipo_documento_desc": parsed.get("tipo_documento_desc", ""),
             "supplier_name": parsed.get("supplier_name", ""),
@@ -95,10 +114,18 @@ async def upload_fattura_xml(file: UploadFile = File(...)) -> Dict[str, Any]:
             "riepilogo_iva": parsed.get("riepilogo_iva", []),
             "pagamento": parsed.get("pagamento", {}),
             "causali": parsed.get("causali", []),
+            "metodo_pagamento": metodo_pagamento,
+            "pagato": False,
             "status": "imported",
             "source": "xml_upload",
             "filename": file.filename,
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": datetime.utcnow().isoformat(),
+            # Campi per compatibilità con altre API
+            "cedente_piva": supplier_vat,
+            "cedente_denominazione": parsed.get("supplier_name", ""),
+            "numero_fattura": parsed.get("invoice_number", ""),
+            "data_fattura": parsed.get("invoice_date", ""),
+            "importo_totale": parsed.get("total_amount", 0)
         }
         
         await db[Collections.INVOICES].insert_one(invoice)
@@ -106,6 +133,25 @@ async def upload_fattura_xml(file: UploadFile = File(...)) -> Dict[str, Any]:
         
         # AUTO-POPOLAMENTO MAGAZZINO
         warehouse_result = await auto_populate_warehouse_from_invoice(db, parsed, invoice["id"])
+        
+        # REGISTRAZIONE AUTOMATICA PRIMA NOTA
+        prima_nota_result = {"cassa": None, "banca": None}
+        if metodo_pagamento != "misto":  # Per misto, l'utente decide la divisione
+            from app.routers.prima_nota import registra_pagamento_fattura
+            prima_nota_result = await registra_pagamento_fattura(
+                fattura=invoice,
+                metodo_pagamento=metodo_pagamento
+            )
+            # Aggiorna fattura come pagata
+            await db[Collections.INVOICES].update_one(
+                {"id": invoice["id"]},
+                {"$set": {
+                    "pagato": True,
+                    "data_pagamento": datetime.utcnow().isoformat()[:10],
+                    "prima_nota_cassa_id": prima_nota_result.get("cassa"),
+                    "prima_nota_banca_id": prima_nota_result.get("banca")
+                }}
+            )
         
         return {
             "success": True,
@@ -115,6 +161,12 @@ async def upload_fattura_xml(file: UploadFile = File(...)) -> Dict[str, Any]:
                 "products_created": warehouse_result.get("products_created", 0),
                 "products_updated": warehouse_result.get("products_updated", 0),
                 "price_records": warehouse_result.get("price_records", 0)
+            },
+            "prima_nota": {
+                "cassa": prima_nota_result.get("cassa"),
+                "banca": prima_nota_result.get("banca"),
+                "metodo_pagamento": metodo_pagamento,
+                "data_scadenza": data_scadenza
             }
         }
         
