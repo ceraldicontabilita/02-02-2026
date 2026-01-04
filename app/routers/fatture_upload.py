@@ -146,26 +146,53 @@ async def upload_fattura_xml(file: UploadFile = File(...)) -> Dict[str, Any]:
 
 @router.post("/upload-xml-bulk")
 async def upload_fatture_xml_bulk(files: List[UploadFile] = File(...)) -> Dict[str, Any]:
-    """Upload massivo di fatture elettroniche XML."""
+    """
+    Upload massivo di fatture elettroniche XML.
+    Supporta:
+    - File XML multipli
+    - File ZIP contenenti XML (anche annidati)
+    """
     if not files:
         raise HTTPException(status_code=400, detail="Nessun file caricato")
     
     results = {
         "success": [], "errors": [], "duplicates": [],
-        "total": len(files), "imported": 0, "failed": 0, "skipped_duplicates": 0
+        "total": 0, "imported": 0, "failed": 0, "skipped_duplicates": 0
     }
     
     db = Database.get_db()
     
-    for idx, file in enumerate(files):
-        filename = file.filename or f"file_{idx}"
-        try:
-            if not filename.lower().endswith('.xml'):
-                results["errors"].append({"filename": filename, "error": "Non XML"})
+    # Raccoglie tutti i file XML (inclusi quelli estratti da ZIP)
+    xml_files = []
+    
+    for file in files:
+        filename = file.filename or "unknown"
+        content = await file.read()
+        
+        if filename.lower().endswith('.zip'):
+            # Estrai XML da ZIP
+            try:
+                extracted = extract_xml_from_zip(content, filename)
+                xml_files.extend(extracted)
+                logger.info(f"Estratti {len(extracted)} XML da {filename}")
+            except Exception as e:
+                results["errors"].append({"filename": filename, "error": f"Errore ZIP: {str(e)}"})
                 results["failed"] += 1
-                continue
-            
-            content = await file.read()
+        elif filename.lower().endswith('.xml'):
+            xml_files.append({"filename": filename, "content": content})
+        else:
+            results["errors"].append({"filename": filename, "error": "Formato non supportato (solo XML o ZIP)"})
+            results["failed"] += 1
+    
+    results["total"] = len(xml_files)
+    
+    # Processa tutti gli XML
+    for xml_file in xml_files:
+        filename = xml_file["filename"]
+        content = xml_file["content"]
+        
+        try:
+            # Decodifica XML
             xml_content = None
             for enc in ['utf-8', 'utf-8-sig', 'latin-1', 'iso-8859-1']:
                 try:
