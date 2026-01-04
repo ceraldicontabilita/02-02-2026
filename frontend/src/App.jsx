@@ -5,6 +5,7 @@ const NAV = [
   { to: "/", label: "Dashboard" },
   { to: "/fatture", label: "Fatture & XML" },
   { to: "/corrispettivi", label: "Corrispettivi" },
+  { to: "/iva", label: "📊 Calcolo IVA" },
   { to: "/prima-nota-cassa", label: "Prima Nota Cassa" },
   { to: "/prima-nota-banca", label: "Prima Nota Banca" },
   { to: "/riconciliazione", label: "Riconciliazione" },
