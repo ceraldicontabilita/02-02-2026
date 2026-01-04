@@ -87,7 +87,10 @@ async def genera_assegni(
             "causale": None,
             "data_emissione": None,
             "data_scadenza": None,
+            "data_fattura": None,
+            "numero_fattura": None,
             "fattura_collegata": None,
+            "fatture_collegate": [],  # Lista di fatture (max 4)
             "fornitore_piva": None,
             "note": None,
             "created_at": now,
