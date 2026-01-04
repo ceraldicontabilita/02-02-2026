@@ -11,6 +11,13 @@ const HACCP_MODULI = [
     description: 'Statistiche mensili e conformità HACCP'
   },
   {
+    id: 'notifiche',
+    title: 'Notifiche',
+    icon: '🔔',
+    color: '#f44336',
+    description: 'Alert automatici temperature anomale'
+  },
+  {
     id: 'temperature-frigoriferi',
     title: 'Temperature Frigoriferi',
     icon: '🌡️',
