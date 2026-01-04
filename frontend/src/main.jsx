@@ -51,7 +51,7 @@ const router = createBrowserRouter([
       { path: "ricerca-prodotti", element: <RicercaProdotti /> },
       { path: "haccp", element: <HACCPDashboard /> },
       { path: "haccp/temperature-frigoriferi", element: <HACCPTemperatureFrigo /> },
-      { path: "haccp/temperature-congelatori", element: <HACCPTemperatureFrigo /> },
+      { path: "haccp/temperature-congelatori", element: <HACCPTemperaturaCongelatori /> },
       { path: "haccp/sanificazioni", element: <HACCPSanificazioni /> },
       { path: "haccp/equipaggiamenti", element: <HACCPEquipaggiamenti /> },
       { path: "haccp/scadenzario", element: <HACCPScadenzario /> },
