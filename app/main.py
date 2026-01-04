@@ -166,6 +166,8 @@ app.include_router(corrispettivi_router.router, prefix="/api/corrispettivi", tag
 app.include_router(iva_calcolo.router, prefix="/api/iva", tags=["IVA Calcolo"])
 app.include_router(ordini_fornitori.router, prefix="/api/ordini-fornitori", tags=["Ordini Fornitori"])
 app.include_router(products_catalog.router, prefix="/api/products", tags=["Products Catalog"])
+app.include_router(employees_payroll.router, prefix="/api/employees", tags=["Employees Payroll"])
+app.include_router(f24_tributi.router, prefix="/api/f24", tags=["F24 Tributi"])
 
 @app.get("/")
 async def root():
