@@ -10,7 +10,8 @@
 - ✅ Sezione Anomalie con lista dettagliata
 - ✅ Vista Annuale con tabella mese per mese
 - ✅ **Grafici Recharts**: Bar chart, Line chart (trend conformità), Pie chart (distribuzione)
-- ✅ Endpoint: `GET /api/haccp-completo/analytics/mensile`, `/analytics/annuale`
+- ✅ **Export PDF**: Bottone "Esporta PDF" genera report mensile con reportlab
+- ✅ Endpoint export: `GET /api/haccp-completo/export/pdf/mensile?mese=YYYY-MM`
 - File: `/app/frontend/src/pages/HACCPAnalytics.jsx`
 
 ### Bug Fix: Ricerca Prodotti (04/01/2026) - FIXED
