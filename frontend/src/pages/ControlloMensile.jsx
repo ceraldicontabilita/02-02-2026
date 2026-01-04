@@ -19,7 +19,8 @@ export default function ControlloMensile() {
     posManual: 0,
     corrispettiviAuto: 0,
     corrispettiviManual: 0,
-    versamenti: 0
+    versamentiManual: 0,
+    versamentiEC: 0  // Estratto Conto
   });
   
   // Daily detail data (when viewing a specific month)
