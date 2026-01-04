@@ -34,6 +34,7 @@ export default function PrimaNota() {
 
   useEffect(() => {
     loadData();
+    loadAutoStats();
   }, [filterDataDa, filterDataA, filterTipo]);
 
   const loadData = async () => {
@@ -57,6 +58,15 @@ export default function PrimaNota() {
       console.error('Error loading prima nota:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadAutoStats = async () => {
+    try {
+      const res = await api.get('/api/prima-nota-auto/stats');
+      setAutoStats(res.data);
+    } catch (error) {
+      console.error('Error loading auto stats:', error);
     }
   };
 
