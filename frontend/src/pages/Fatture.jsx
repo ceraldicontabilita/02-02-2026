@@ -698,13 +698,11 @@ export default function Fatture() {
             ⏳ Elaborazione in corso...
           </div>
         )}
-        
-        {err && <div className="small" style={{ marginTop: 10, color: "#c00" }}>{err}</div>}
       </div>
 
       {/* Risultato Upload */}
       {uploadResult && (
-        <div className="card" style={{ background: uploadResult.type === "success" ? "#e8f5e9" : "#fff3e0" }}>
+        <div className="card" style={{ background: uploadResult.type === "success" ? "#e8f5e9" : "#fff3e0" }} data-testid="fatture-upload-result">
           {uploadResult.type === "success" ? (
             <>
               <div className="h1" style={{ color: "#2e7d32" }}>✓ {uploadResult.message}</div>
