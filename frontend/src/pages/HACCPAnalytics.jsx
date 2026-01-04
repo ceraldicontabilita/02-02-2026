@@ -149,6 +149,29 @@ export default function HACCPAnalytics() {
             📄 Esporta PDF
           </button>
         )}
+        
+        {activeTab === 'annuale' && (
+          <button
+            onClick={() => {
+              const url = `${process.env.REACT_APP_BACKEND_URL}/api/haccp-completo/export/pdf/annuale?anno=${selectedYear}`;
+              window.open(url, '_blank');
+            }}
+            style={{
+              padding: '10px 16px',
+              background: '#9c27b0',
+              color: 'white',
+              border: 'none',
+              borderRadius: 6,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6
+            }}
+            data-testid="export-pdf-annual-btn"
+          >
+            📄 Esporta PDF Annuale
+          </button>
+        )}
       </div>
 
       {loading ? (
