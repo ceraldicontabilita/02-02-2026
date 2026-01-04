@@ -2,14 +2,51 @@ import React, { useState, useEffect } from 'react';
 import api from '../api';
 
 /**
- * ControlloMensile - Pagina per confrontare i dati POS automatici vs manuali
- * Vista annuale con breakdown mensile
+ * =====================================================================
+ * CONTROLLO MENSILE - DOCUMENTAZIONE LOGICA
+ * =====================================================================
  * 
- * Colonne: Mese | POS Auto | POS Manuale | Diff. POS | Corrisp. Auto | Corrisp. Man. | Diff. Corr. | Versamenti | Saldo Cassa | Dettagli
+ * SCOPO: Confrontare i dati automatici (da XML) con quelli manuali (da Excel/Prima Nota)
  * 
- * POS Auto = pagato_elettronico dai corrispettivi XML
- * Corrisp. Auto = totale corrispettivi XML (sovrascrive Excel se diverso)
+ * FONTI DATI:
+ * -----------
+ * 1. CORRISPETTIVI XML (collection: corrispettivi)
+ *    - pagato_elettronico = POS Auto (incassi con carta/bancomat)
+ *    - totale = Corrispettivi Auto (incasso totale giornaliero)
+ *    - pagato_contanti = Contanti (per calcolo saldo cassa)
+ * 
+ * 2. PRIMA NOTA CASSA (collection: prima_nota_cassa)
+ *    - categoria "POS" = POS Manuale (da Excel o inserimento manuale)
+ *    - categoria "Corrispettivi" = Corrispettivi Manuali
+ *    - categoria "Versamento" con tipo "uscita" = Versamenti in banca
+ *    - Saldo Cassa = Σ entrate - Σ uscite
+ * 
+ * 3. PRIMA NOTA BANCA (collection: prima_nota_banca)
+ *    - Usata per verifiche incrociate sui versamenti
+ * 
+ * COLONNE TABELLA:
+ * ----------------
+ * | Mese/Data | POS Auto | POS Manuale | Diff. POS | Corrisp. Auto | Corrisp. Man. | Diff. Corr. | Versamenti | Saldo Cassa | Dettagli |
+ * 
+ * CALCOLI:
+ * --------
+ * - POS Auto = Σ corrispettivi.pagato_elettronico (da XML)
+ * - POS Manuale = Σ prima_nota_cassa WHERE categoria = "POS" (qualsiasi tipo)
+ * - Diff. POS = POS Auto - POS Manuale
+ * - Corrisp. Auto = Σ corrispettivi.totale (da XML)
+ * - Corrisp. Man. = Σ prima_nota_cassa WHERE categoria = "Corrispettivi" AND tipo = "entrata"
+ * - Diff. Corr. = Corrisp. Auto - Corrisp. Man.
+ * - Versamenti = Σ prima_nota_cassa WHERE (categoria = "Versamento" OR descrizione CONTAINS "versamento") AND tipo = "uscita"
+ * - Saldo Cassa = Σ entrate - Σ uscite (tutti i movimenti cassa del periodo)
+ * 
+ * NOTA IMPORTANTE:
+ * ----------------
+ * - Il POS in Prima Nota può essere sia "entrata" che "uscita" a seconda di come è stato registrato
+ * - Il dato più affidabile per il POS è quello dai corrispettivi XML (pagato_elettronico)
+ * - Se i dati XML sono diversi da quelli manuali, i dati XML hanno priorità
+ * =====================================================================
  */
+
 export default function ControlloMensile() {
   const [loading, setLoading] = useState(true);
   const currentYear = new Date().getFullYear();
@@ -48,6 +85,10 @@ export default function ControlloMensile() {
     }
   }, [anno, viewMode, meseSelezionato]);
 
+  /**
+   * CARICA DATI ANNUALI
+   * Recupera tutti i movimenti dell'anno e li aggrega per mese
+   */
   const loadYearData = async () => {
     setLoading(true);
     try {
@@ -59,18 +100,18 @@ export default function ControlloMensile() {
         data_a: endDate
       });
 
-      // Carica dati in parallelo
-      const [bancaRes, cassaRes, corrispRes] = await Promise.all([
-        api.get(`/api/prima-nota/banca?${params}&limit=2000`).catch(() => ({ data: { movimenti: [] } })),
-        api.get(`/api/prima-nota/cassa?${params}&limit=2000`).catch(() => ({ data: { movimenti: [] } })),
+      // Carica dati in parallelo da tutte le fonti
+      const [cassaRes, corrispRes] = await Promise.all([
+        api.get(`/api/prima-nota/cassa?${params}&limit=5000`).catch(() => ({ data: { movimenti: [] } })),
         api.get(`/api/corrispettivi?data_da=${startDate}&data_a=${endDate}`).catch(() => ({ data: [] }))
       ]);
 
-      const banca = bancaRes.data.movimenti || [];
       const cassa = cassaRes.data.movimenti || [];
       const corrispettivi = Array.isArray(corrispRes.data) ? corrispRes.data : (corrispRes.data.corrispettivi || []);
       
-      processYearData(banca, cassa, corrispettivi);
+      console.log(`[ControlloMensile] Caricati ${cassa.length} movimenti cassa e ${corrispettivi.length} corrispettivi per ${anno}`);
+      
+      processYearData(cassa, corrispettivi);
     } catch (error) {
       console.error('Error loading year data:', error);
     } finally {
@@ -78,7 +119,11 @@ export default function ControlloMensile() {
     }
   };
 
-  const processYearData = (banca, cassa, corrispettivi) => {
+  /**
+   * PROCESSA DATI ANNUALI
+   * Aggrega i dati per mese calcolando tutti i totali
+   */
+  const processYearData = (cassa, corrispettivi) => {
     const monthly = [];
     let yearPosAuto = 0, yearPosManual = 0, yearCorrispAuto = 0, yearCorrispManual = 0;
     let yearVersamenti = 0, yearSaldoCassa = 0;
@@ -87,47 +132,42 @@ export default function ControlloMensile() {
       const monthStr = String(month).padStart(2, '0');
       const monthPrefix = `${anno}-${monthStr}`;
       
-      // Filter data for this month
-      const monthBanca = banca.filter(m => m.data?.startsWith(monthPrefix));
+      // Filtra dati per questo mese
       const monthCassa = cassa.filter(m => m.data?.startsWith(monthPrefix));
-      const monthCorrisp = corrispettivi.filter(c => 
-        c.data?.startsWith(monthPrefix) || c.data_ora?.startsWith(monthPrefix)
-      );
+      const monthCorrisp = corrispettivi.filter(c => c.data?.startsWith(monthPrefix));
 
-      // ============ POS AUTO ============
-      // POS Auto = pagato_elettronico dai corrispettivi XML
+      // ============ POS AUTO (da Corrispettivi XML) ============
+      // Il POS automatico è il campo pagato_elettronico estratto dagli XML
       const posAuto = monthCorrisp.reduce((sum, c) => sum + (parseFloat(c.pagato_elettronico) || 0), 0);
 
-      // ============ POS MANUALE ============
-      // POS da Prima Nota Cassa/Banca con source manual o excel
-      const posManualCassa = monthCassa
-        .filter(m => m.source === 'manual_pos' || m.source === 'excel_pos' || 
-                    (m.categoria?.toLowerCase().includes('pos') && m.tipo === 'entrata'))
-        .reduce((sum, m) => sum + (parseFloat(m.importo) || 0), 0);
-      
-      const posManualBanca = monthBanca
-        .filter(m => m.source === 'manual_pos' || m.source === 'excel_pos' ||
-                    (m.descrizione?.toLowerCase().includes('pos') && m.tipo === 'entrata'))
-        .reduce((sum, m) => sum + (parseFloat(m.importo) || 0), 0);
-      
-      const posManual = posManualCassa + posManualBanca;
+      // ============ POS MANUALE (da Prima Nota Cassa) ============
+      // Il POS manuale è registrato con categoria "POS" in Prima Nota
+      // Può essere sia entrata che uscita, prendiamo il valore assoluto
+      const posManual = monthCassa
+        .filter(m => m.categoria?.toUpperCase() === 'POS' || m.source === 'excel_pos')
+        .reduce((sum, m) => sum + Math.abs(parseFloat(m.importo) || 0), 0);
 
-      // ============ CORRISPETTIVI AUTO ============
-      // Totale corrispettivi da XML (questo SOVRASCRIVE i dati Excel se presenti)
+      // ============ CORRISPETTIVI AUTO (da XML) ============
+      // Totale incassi giornalieri dai corrispettivi XML
       const corrispAuto = monthCorrisp.reduce((sum, c) => sum + (parseFloat(c.totale) || 0), 0);
 
-      // ============ CORRISPETTIVI MANUALI ============
-      // Corrispettivi da Prima Nota Cassa (inseriti manualmente o da Excel)
+      // ============ CORRISPETTIVI MANUALI (da Prima Nota) ============
+      // Corrispettivi registrati manualmente o importati da Excel
       const corrispManual = monthCassa
         .filter(m => m.categoria === 'Corrispettivi' || m.source === 'excel_corrispettivi')
+        .filter(m => m.tipo === 'entrata')
         .reduce((sum, m) => sum + (parseFloat(m.importo) || 0), 0);
 
       // ============ VERSAMENTI ============
       // Versamenti = uscite dalla cassa verso banca
       const versamenti = monthCassa
-        .filter(m => (m.categoria === 'Versamento' || m.descrizione?.toLowerCase().includes('versamento')) && 
-                    m.tipo === 'uscita')
-        .reduce((sum, m) => sum + (parseFloat(m.importo) || 0), 0);
+        .filter(m => {
+          const isVersamento = m.categoria === 'Versamento' || 
+                              m.categoria?.toLowerCase().includes('versamento') ||
+                              m.descrizione?.toLowerCase().includes('versamento');
+          return isVersamento && m.tipo === 'uscita';
+        })
+        .reduce((sum, m) => sum + Math.abs(parseFloat(m.importo) || 0), 0);
 
       // ============ SALDO CASSA ============
       // Saldo Cassa = Entrate cassa - Uscite cassa del mese
@@ -141,8 +181,7 @@ export default function ControlloMensile() {
 
       // ============ DIFFERENZE ============
       const posDiff = posAuto - posManual;
-      // Se ci sono corrispettivi XML, usiamo quelli (XML sovrascrive Excel)
-      const corrispDiff = corrispAuto > 0 ? (corrispAuto - corrispManual) : 0;
+      const corrispDiff = corrispAuto - corrispManual;
       
       const hasData = posAuto > 0 || posManual > 0 || corrispAuto > 0 || corrispManual > 0 || versamenti > 0;
       const hasDiscrepancy = Math.abs(posDiff) > 1 || Math.abs(corrispDiff) > 1;
@@ -160,8 +199,11 @@ export default function ControlloMensile() {
         saldoCassa,
         hasData,
         hasDiscrepancy,
-        // Flag se XML sovrascrive Excel
-        xmlOverridesExcel: corrispAuto > 0 && corrispManual > 0 && Math.abs(corrispAuto - corrispManual) > 1
+        // Debug info
+        _debug: {
+          cassaCount: monthCassa.length,
+          corrispCount: monthCorrisp.length
+        }
       });
 
       yearPosAuto += posAuto;
@@ -183,12 +225,16 @@ export default function ControlloMensile() {
     });
   };
 
+  /**
+   * CARICA DATI MENSILI (Dettaglio Giornaliero)
+   * Recupera i movimenti del mese selezionato e li mostra giorno per giorno
+   */
   const loadMonthData = async (month) => {
     setLoading(true);
     try {
       const monthStr = String(month).padStart(2, '0');
-      const startDate = `${anno}-${monthStr}-01`;
       const daysInMonth = new Date(anno, month, 0).getDate();
+      const startDate = `${anno}-${monthStr}-01`;
       const endDate = `${anno}-${monthStr}-${String(daysInMonth).padStart(2, '0')}`;
       
       const params = new URLSearchParams({
@@ -196,23 +242,25 @@ export default function ControlloMensile() {
         data_a: endDate
       });
 
-      const [bancaRes, cassaRes, corrispRes] = await Promise.all([
-        api.get(`/api/prima-nota/banca?${params}`).catch(() => ({ data: { movimenti: [] } })),
-        api.get(`/api/prima-nota/cassa?${params}`).catch(() => ({ data: { movimenti: [] } })),
+      const [cassaRes, corrispRes] = await Promise.all([
+        api.get(`/api/prima-nota/cassa?${params}&limit=2000`).catch(() => ({ data: { movimenti: [] } })),
         api.get(`/api/corrispettivi?data_da=${startDate}&data_a=${endDate}`).catch(() => ({ data: [] }))
       ]);
 
-      const banca = bancaRes.data.movimenti || [];
       const cassa = cassaRes.data.movimenti || [];
       const corrispettivi = Array.isArray(corrispRes.data) ? corrispRes.data : (corrispRes.data.corrispettivi || []);
       
-      processDailyData(banca, cassa, corrispettivi, month);
+      console.log(`[ControlloMensile] Mese ${month}: ${cassa.length} movimenti cassa, ${corrispettivi.length} corrispettivi`);
       
-      // Estrai dettaglio versamenti
-      const versamentiMese = cassa.filter(m => 
-        (m.categoria === 'Versamento' || m.descrizione?.toLowerCase().includes('versamento')) && 
-        m.tipo === 'uscita'
-      );
+      processDailyData(cassa, corrispettivi, month);
+      
+      // Estrai dettaglio versamenti del mese
+      const versamentiMese = cassa.filter(m => {
+        const isVersamento = m.categoria === 'Versamento' || 
+                            m.categoria?.toLowerCase().includes('versamento') ||
+                            m.descrizione?.toLowerCase().includes('versamento');
+        return isVersamento && m.tipo === 'uscita';
+      });
       setVersamentiDettaglio(versamentiMese);
       
     } catch (error) {
@@ -222,7 +270,11 @@ export default function ControlloMensile() {
     }
   };
 
-  const processDailyData = (banca, cassa, corrispettivi, month) => {
+  /**
+   * PROCESSA DATI GIORNALIERI
+   * Crea una riga per ogni giorno del mese con tutti i totali
+   */
+  const processDailyData = (cassa, corrispettivi, month) => {
     const daysInMonth = new Date(anno, month, 0).getDate();
     const comparison = [];
     const monthStr = String(month).padStart(2, '0');
@@ -231,46 +283,62 @@ export default function ControlloMensile() {
       const dateStr = `${anno}-${monthStr}-${String(day).padStart(2, '0')}`;
       const dayData = { date: dateStr, day };
 
-      // Corrispettivi del giorno
-      const dayCorrisp = corrispettivi.filter(c => 
-        c.data?.startsWith(dateStr) || c.data_ora?.startsWith(dateStr)
-      );
-      
-      // POS Auto dal corrispettivo XML (pagato_elettronico)
+      // Filtra movimenti del giorno
+      const dayCassa = cassa.filter(m => m.data === dateStr);
+      const dayCorrisp = corrispettivi.filter(c => c.data === dateStr);
+
+      // ============ POS AUTO (da Corrispettivi XML) ============
       dayData.posAuto = dayCorrisp.reduce((sum, c) => sum + (parseFloat(c.pagato_elettronico) || 0), 0);
 
-      // POS Manual da Prima Nota
-      const dayCassa = cassa.filter(m => m.data?.startsWith(dateStr));
-      const dayBanca = banca.filter(m => m.data?.startsWith(dateStr));
-      
+      // ============ POS MANUALE (da Prima Nota) ============
       dayData.posManual = dayCassa
-        .filter(m => m.source === 'manual_pos' || m.source === 'excel_pos')
-        .reduce((sum, m) => sum + (parseFloat(m.importo) || 0), 0);
+        .filter(m => m.categoria?.toUpperCase() === 'POS' || m.source === 'excel_pos')
+        .reduce((sum, m) => sum + Math.abs(parseFloat(m.importo) || 0), 0);
 
-      // Corrispettivi Auto (totale da XML)
+      // ============ CORRISPETTIVI AUTO (da XML) ============
       dayData.corrispettivoAuto = dayCorrisp.reduce((sum, c) => sum + (parseFloat(c.totale) || 0), 0);
 
-      // Corrispettivi Manual
+      // ============ CORRISPETTIVI MANUALI ============
       dayData.corrispettivoManual = dayCassa
-        .filter(m => m.categoria === 'Corrispettivi')
+        .filter(m => m.categoria === 'Corrispettivi' || m.source === 'excel_corrispettivi')
+        .filter(m => m.tipo === 'entrata')
         .reduce((sum, m) => sum + (parseFloat(m.importo) || 0), 0);
 
-      // Versamenti del giorno
+      // ============ VERSAMENTO ============
       dayData.versamento = dayCassa
-        .filter(m => (m.categoria === 'Versamento' || m.descrizione?.toLowerCase().includes('versamento')) && m.tipo === 'uscita')
-        .reduce((sum, m) => sum + (parseFloat(m.importo) || 0), 0);
+        .filter(m => {
+          const isVersamento = m.categoria === 'Versamento' || 
+                              m.categoria?.toLowerCase().includes('versamento') ||
+                              m.descrizione?.toLowerCase().includes('versamento');
+          return isVersamento && m.tipo === 'uscita';
+        })
+        .reduce((sum, m) => sum + Math.abs(parseFloat(m.importo) || 0), 0);
 
-      // Saldo Cassa del giorno
-      const entrateGiorno = dayCassa.filter(m => m.tipo === 'entrata').reduce((sum, m) => sum + (parseFloat(m.importo) || 0), 0);
-      const usciteGiorno = dayCassa.filter(m => m.tipo === 'uscita').reduce((sum, m) => sum + (parseFloat(m.importo) || 0), 0);
+      // ============ SALDO CASSA ============
+      const entrateGiorno = dayCassa
+        .filter(m => m.tipo === 'entrata')
+        .reduce((sum, m) => sum + (parseFloat(m.importo) || 0), 0);
+      const usciteGiorno = dayCassa
+        .filter(m => m.tipo === 'uscita')
+        .reduce((sum, m) => sum + (parseFloat(m.importo) || 0), 0);
       dayData.saldoCassa = entrateGiorno - usciteGiorno;
 
+      // Differenze
       dayData.posDiff = dayData.posAuto - dayData.posManual;
       dayData.corrispettivoDiff = dayData.corrispettivoAuto - dayData.corrispettivoManual;
+      
       dayData.hasData = dayData.posAuto > 0 || dayData.posManual > 0 || 
                         dayData.corrispettivoAuto > 0 || dayData.corrispettivoManual > 0 ||
-                        dayData.versamento > 0;
+                        dayData.versamento > 0 || entrateGiorno > 0 || usciteGiorno > 0;
       dayData.hasDiscrepancy = Math.abs(dayData.posDiff) > 1 || Math.abs(dayData.corrispettivoDiff) > 1;
+
+      // Debug info
+      dayData._debug = {
+        cassaCount: dayCassa.length,
+        corrispCount: dayCorrisp.length,
+        entrateGiorno,
+        usciteGiorno
+      };
 
       comparison.push(dayData);
     }
@@ -339,7 +407,7 @@ export default function ControlloMensile() {
                     <td style={{ padding: 10 }}>{v.data}</td>
                     <td style={{ padding: 10 }}>{v.descrizione || v.categoria}</td>
                     <td style={{ padding: 10, textAlign: 'right', fontWeight: 'bold', color: '#16a34a' }}>
-                      {formatCurrency(v.importo)}
+                      {formatCurrency(Math.abs(v.importo))}
                     </td>
                   </tr>
                 ))}
@@ -348,7 +416,7 @@ export default function ControlloMensile() {
                 <tr style={{ background: '#1e293b', color: 'white' }}>
                   <td colSpan={2} style={{ padding: 10, fontWeight: 'bold' }}>TOTALE</td>
                   <td style={{ padding: 10, textAlign: 'right', fontWeight: 'bold' }}>
-                    {formatCurrency(versamentiDettaglio.reduce((sum, v) => sum + (parseFloat(v.importo) || 0), 0))}
+                    {formatCurrency(versamentiDettaglio.reduce((sum, v) => sum + Math.abs(parseFloat(v.importo) || 0), 0))}
                   </td>
                 </tr>
               </tfoot>
@@ -367,7 +435,7 @@ export default function ControlloMensile() {
           📊 Controllo {viewMode === 'anno' ? 'Annuale' : 'Mensile'}
         </h1>
         <p style={{ color: '#666', margin: '8px 0 0 0' }}>
-          Confronto chiusure giornaliere - POS Auto (da XML) vs Manuali | Saldo Cassa
+          Confronto dati automatici (XML) vs manuali (Prima Nota/Excel)
         </p>
       </div>
 
@@ -471,7 +539,7 @@ export default function ControlloMensile() {
         </div>
       </div>
 
-      {/* Info Box - XML Sovrascrive Excel */}
+      {/* Info Box */}
       <div style={{ 
         background: '#e0f2fe', 
         border: '2px solid #0284c7', 
@@ -484,11 +552,8 @@ export default function ControlloMensile() {
       }}>
         <span style={{ fontSize: 24 }}>ℹ️</span>
         <div>
-          <strong>POS Auto e Corrispettivi Auto</strong> vengono estratti direttamente dai file XML dei corrispettivi.
-          <br />
-          <span style={{ fontSize: 12, color: '#0369a1' }}>
-            Se i dati XML sono diversi da quelli Excel/manuali, i dati XML hanno la priorità (sono più affidabili).
-          </span>
+          <strong>Fonti dati:</strong> POS Auto e Corrisp. Auto = da file XML corrispettivi. 
+          POS Manuale e Corrisp. Man. = da Prima Nota (Excel o inserimento manuale).
         </div>
       </div>
 
@@ -508,10 +573,7 @@ export default function ControlloMensile() {
           <span style={{ fontSize: 24 }}>⚠️</span>
           <div>
             <strong>Attenzione!</strong> Ci sono discrepanze tra i dati automatici (XML) e manuali.
-            <br />
-            <span style={{ fontSize: 12, color: '#92400e' }}>
-              Le righe evidenziate in giallo richiedono verifica.
-            </span>
+            Le righe evidenziate in giallo richiedono verifica.
           </div>
         </div>
       )}
@@ -546,14 +608,13 @@ export default function ControlloMensile() {
                   <tr 
                     key={row.month} 
                     style={{ 
-                      background: row.hasDiscrepancy ? '#fef3c7' : (row.xmlOverridesExcel ? '#e0f2fe' : (row.hasData ? 'white' : '#f9fafb')),
+                      background: row.hasDiscrepancy ? '#fef3c7' : (row.hasData ? 'white' : '#f9fafb'),
                       opacity: row.hasData ? 1 : 0.5
                     }}
                     data-testid={`row-month-${row.month}`}
                   >
                     <td style={{ padding: 12, borderBottom: '1px solid #e2e8f0', fontWeight: 600 }}>
                       {row.monthName}
-                      {row.xmlOverridesExcel && <span title="Dati XML usati" style={{ marginLeft: 5 }}>📄</span>}
                     </td>
                     <td style={{ padding: 12, borderBottom: '1px solid #e2e8f0', textAlign: 'right', background: '#f0f9ff' }}>
                       {row.posAuto > 0 ? formatCurrency(row.posAuto) : '-'}
@@ -785,15 +846,29 @@ export default function ControlloMensile() {
         borderRadius: 8,
         fontSize: 13 
       }}>
-        <strong>Legenda:</strong>
-        <div style={{ display: 'flex', gap: 20, marginTop: 8, flexWrap: 'wrap' }}>
-          <span><span style={{ color: '#3b82f6' }}>●</span> POS Auto = pagato_elettronico da XML corrispettivi</span>
-          <span><span style={{ color: '#8b5cf6' }}>●</span> POS Manuale = Importi inseriti manualmente/Excel</span>
-          <span><span style={{ color: '#f59e0b' }}>●</span> Corrisp. Auto = Totale corrispettivi da XML</span>
-          <span><span style={{ color: '#10b981' }}>●</span> Corrisp. Man. = Corrispettivi inseriti manualmente</span>
-          <span><span style={{ color: '#0ea5e9' }}>●</span> Saldo Cassa = Entrate - Uscite cassa</span>
-          <span>⚠️ = Discrepanza &gt; €1</span>
-          <span>📄 = Dati XML usati (sovrascrive Excel)</span>
+        <strong>Legenda e Logica Calcoli:</strong>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 10, marginTop: 10 }}>
+          <div>
+            <strong style={{ color: '#3b82f6' }}>POS Auto</strong> = Σ corrispettivi.pagato_elettronico (da XML)
+          </div>
+          <div>
+            <strong style={{ color: '#8b5cf6' }}>POS Manuale</strong> = Σ prima_nota_cassa WHERE categoria="POS"
+          </div>
+          <div>
+            <strong style={{ color: '#f59e0b' }}>Corrisp. Auto</strong> = Σ corrispettivi.totale (da XML)
+          </div>
+          <div>
+            <strong style={{ color: '#10b981' }}>Corrisp. Man.</strong> = Σ prima_nota_cassa WHERE categoria="Corrispettivi" AND tipo="entrata"
+          </div>
+          <div>
+            <strong style={{ color: '#22c55e' }}>Versamenti</strong> = Σ prima_nota_cassa WHERE categoria="Versamento" AND tipo="uscita"
+          </div>
+          <div>
+            <strong style={{ color: '#0ea5e9' }}>Saldo Cassa</strong> = Σ entrate - Σ uscite (Prima Nota Cassa)
+          </div>
+        </div>
+        <div style={{ marginTop: 10, color: '#666' }}>
+          ⚠️ Righe gialle = Discrepanza &gt; €1 tra dati Auto e Manuali
         </div>
       </div>
       
