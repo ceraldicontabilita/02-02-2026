@@ -44,6 +44,24 @@ export default function HACCPAnalytics() {
     }
   };
 
+  const sendReportEmail = async () => {
+    const email = window.prompt('Inserisci l\'email a cui inviare il report:');
+    if (!email) return;
+    
+    setSendingEmail(true);
+    try {
+      const res = await api.post('/api/haccp-completo/email/send-report', {
+        email_to: email,
+        mese: activeTab === 'mensile' ? selectedMonth : null
+      });
+      alert(`✅ ${res.data.message}`);
+    } catch (error) {
+      alert('❌ Errore: ' + (error.response?.data?.detail || error.message));
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
   const formatTemp = (temp) => {
     if (temp === null || temp === undefined) return '-';
     return `${temp}°C`;
