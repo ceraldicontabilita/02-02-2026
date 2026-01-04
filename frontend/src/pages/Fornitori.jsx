@@ -1,43 +1,49 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import api from '../api';
 
-// Metodi pagamento con etichette
-const PAYMENT_METHODS = {
-  contanti: { label: "Contanti", color: "#4caf50" },
-  bonifico: { label: "Bonifico", color: "#2196f3" },
-  assegno: { label: "Assegno", color: "#ff9800" },
-  riba: { label: "Ri.Ba.", color: "#9c27b0" },
-  carta: { label: "Carta", color: "#e91e63" },
-  sepa: { label: "SEPA", color: "#00bcd4" },
-  mav: { label: "MAV", color: "#795548" },
-  rav: { label: "RAV", color: "#607d8b" },
-  rid: { label: "RID", color: "#3f51b5" },
-  f24: { label: "F24", color: "#f44336" },
-  misto: { label: "Misto", color: "#ff5722" }
-};
-
-const PAYMENT_TERMS = [
-  { code: "VISTA", days: 0, label: "A vista" },
-  { code: "30GG", days: 30, label: "30 giorni" },
-  { code: "30GGDFM", days: 30, label: "30 gg fine mese" },
-  { code: "60GG", days: 60, label: "60 giorni" },
-  { code: "60GGDFM", days: 60, label: "60 gg fine mese" },
-  { code: "90GG", days: 90, label: "90 giorni" },
-  { code: "120GG", days: 120, label: "120 giorni" }
+// Metodi pagamento
+const METODI_PAGAMENTO = [
+  { value: "contanti", label: "💵 Contanti", color: "#4caf50", termineAuto: "VISTA" },
+  { value: "assegno", label: "📝 Assegno", color: "#ff9800", termineAuto: "VISTA" },
+  { value: "bonifico", label: "🔄 Bonifico", color: "#2196f3", termineAuto: null },
+  { value: "riba", label: "📋 Ri.Ba.", color: "#9c27b0", termineAuto: null },
+  { value: "sepa", label: "🏦 SEPA", color: "#00bcd4", termineAuto: null },
+  { value: "rid", label: "📥 RID", color: "#3f51b5", termineAuto: null },
+  { value: "mav", label: "📄 MAV", color: "#795548", termineAuto: null },
+  { value: "f24", label: "🏛️ F24", color: "#f44336", termineAuto: "VISTA" },
 ];
+
+// Termini pagamento
+const TERMINI_PAGAMENTO = [
+  { value: "VISTA", label: "A Vista", days: 0 },
+  { value: "30GG", label: "30 gg Data Fattura", days: 30 },
+  { value: "30GGDFM", label: "30 gg Fine Mese", days: 30 },
+  { value: "60GG", label: "60 gg Data Fattura", days: 60 },
+  { value: "60GGDFM", label: "60 gg Fine Mese", days: 60 },
+  { value: "90GG", label: "90 gg", days: 90 },
+  { value: "120GG", label: "120 gg", days: 120 },
+];
+
+// Get automatic payment term based on method
+const getTermineAutomatico = (metodo) => {
+  const m = METODI_PAGAMENTO.find(mp => mp.value === metodo);
+  return m?.termineAuto || null;
+};
 
 export default function Fornitori() {
   const [suppliers, setSuppliers] = useState([]);
-  const [stats, setStats] = useState({});
-  const [deadlines, setDeadlines] = useState({ fatture: [], totale_importo: 0, critiche_7gg: 0 });
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filterMethod, setFilterMethod] = useState('');
-  const [selectedSupplier, setSelectedSupplier] = useState(null);
-  const [editingSupplier, setEditingSupplier] = useState(null);
-  const [showDeadlines, setShowDeadlines] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [uploadResult, setUploadResult] = useState(null);
+  const [editingId, setEditingId] = useState(null);
+  const [editData, setEditData] = useState({});
+  const [saving, setSaving] = useState(false);
+  const [showNewForm, setShowNewForm] = useState(false);
+  const [newSupplier, setNewSupplier] = useState({ denominazione: '', partita_iva: '', metodo_pagamento: 'bonifico', termini_pagamento: '30GG' });
+  const [bulkMode, setBulkMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [bulkMetodo, setBulkMetodo] = useState('');
+  const [bulkTermine, setBulkTermine] = useState('');
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -50,270 +56,445 @@ export default function Fornitori() {
       const params = new URLSearchParams();
       if (search) params.append('search', search);
       if (filterMethod) params.append('metodo_pagamento', filterMethod);
-
-      const [suppliersRes, statsRes, deadlinesRes] = await Promise.all([
-        api.get(`/api/suppliers?${params}`),
-        api.get(`/api/suppliers/stats`),
-        api.get(`/api/suppliers/scadenze?days_ahead=30`)
-      ]);
-
-      setSuppliers(suppliersRes.data);
-      setStats(statsRes.data);
-      setDeadlines(deadlinesRes.data);
+      const res = await api.get(`/api/suppliers?${params}`);
+      setSuppliers(res.data);
     } catch (error) {
-      console.error('Error loading suppliers:', error);
+      console.error('Error:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleFileUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  // Start inline editing
+  const startEdit = (supplier) => {
+    setEditingId(supplier.id);
+    setEditData({
+      metodo_pagamento: supplier.metodo_pagamento || 'bonifico',
+      termini_pagamento: supplier.termini_pagamento || '30GG',
+      email: supplier.email || '',
+      telefono: supplier.telefono || ''
+    });
+  };
 
-    setUploading(true);
-    setUploadResult(null);
+  // Handle method change with auto-term
+  const handleMetodoChange = (metodo) => {
+    const termineAuto = getTermineAutomatico(metodo);
+    setEditData(prev => ({
+      ...prev,
+      metodo_pagamento: metodo,
+      termini_pagamento: termineAuto || prev.termini_pagamento
+    }));
+  };
 
-    const formData = new FormData();
-    formData.append('file', file);
-
+  // Save inline edit
+  const saveEdit = async (supplierId) => {
+    setSaving(true);
     try {
-      const response = await api.post(`/api/suppliers/upload-excel`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-      setUploadResult(response.data);
+      await api.put(`/api/suppliers/${supplierId}`, editData);
+      setEditingId(null);
       loadData();
     } catch (error) {
-      setUploadResult({ success: false, message: error.response?.data?.detail || 'Errore upload' });
+      alert('Errore: ' + (error.response?.data?.detail || error.message));
     } finally {
-      setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      setSaving(false);
     }
   };
 
-  const updateSupplier = async (supplierId, data) => {
+  // Cancel edit
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditData({});
+  };
+
+  // Create new supplier
+  const handleCreate = async () => {
+    if (!newSupplier.denominazione) {
+      alert('Denominazione obbligatoria');
+      return;
+    }
     try {
-      await api.put(`/api/suppliers/${supplierId}`, data);
-      setEditingSupplier(null);
+      // Auto-set termine based on metodo
+      const termineAuto = getTermineAutomatico(newSupplier.metodo_pagamento);
+      const data = {
+        ...newSupplier,
+        termini_pagamento: termineAuto || newSupplier.termini_pagamento
+      };
+      await api.post('/api/suppliers', data);
+      setShowNewForm(false);
+      setNewSupplier({ denominazione: '', partita_iva: '', metodo_pagamento: 'bonifico', termini_pagamento: '30GG' });
       loadData();
     } catch (error) {
-      alert('Errore aggiornamento: ' + (error.response?.data?.detail || error.message));
+      alert('Errore: ' + (error.response?.data?.detail || error.message));
     }
   };
 
-  const formatCurrency = (value) => {
-    return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(value || 0);
+  // Bulk update
+  const handleBulkUpdate = async () => {
+    if (selectedIds.length === 0) {
+      alert('Seleziona almeno un fornitore');
+      return;
+    }
+    if (!bulkMetodo && !bulkTermine) {
+      alert('Seleziona metodo o termine da applicare');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      for (const id of selectedIds) {
+        const updateData = {};
+        if (bulkMetodo) {
+          updateData.metodo_pagamento = bulkMetodo;
+          const termineAuto = getTermineAutomatico(bulkMetodo);
+          if (termineAuto) updateData.termini_pagamento = termineAuto;
+        }
+        if (bulkTermine && !getTermineAutomatico(bulkMetodo)) {
+          updateData.termini_pagamento = bulkTermine;
+        }
+        await api.put(`/api/suppliers/${id}`, updateData);
+      }
+      setSelectedIds([]);
+      setBulkMode(false);
+      setBulkMetodo('');
+      setBulkTermine('');
+      loadData();
+      alert(`Aggiornati ${selectedIds.length} fornitori`);
+    } catch (error) {
+      alert('Errore: ' + (error.response?.data?.detail || error.message));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Toggle selection
+  const toggleSelect = (id) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  };
+
+  // Select all
+  const selectAll = () => {
+    if (selectedIds.length === suppliers.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(suppliers.map(s => s.id));
+    }
+  };
+
+  // Delete supplier
+  const handleDelete = async (id) => {
+    if (!window.confirm('Eliminare questo fornitore?')) return;
+    try {
+      await api.delete(`/api/suppliers/${id}`);
+      loadData();
+    } catch (error) {
+      alert('Errore: ' + (error.response?.data?.detail || error.message));
+    }
+  };
+
+  // Quick set 30gg for selected
+  const quickSet30gg = async () => {
+    if (selectedIds.length === 0) {
+      alert('Seleziona almeno un fornitore');
+      return;
+    }
+    setSaving(true);
+    try {
+      for (const id of selectedIds) {
+        await api.put(`/api/suppliers/${id}`, {
+          metodo_pagamento: 'bonifico',
+          termini_pagamento: '30GG'
+        });
+      }
+      setSelectedIds([]);
+      loadData();
+      alert(`${selectedIds.length} fornitori impostati a Bonifico 30gg`);
+    } catch (error) {
+      alert('Errore: ' + (error.response?.data?.detail || error.message));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Get method badge
+  const getMetodoBadge = (metodo) => {
+    const m = METODI_PAGAMENTO.find(mp => mp.value === metodo);
+    if (!m) return <span style={{ color: '#999' }}>-</span>;
+    return (
+      <span style={{
+        background: m.color,
+        color: 'white',
+        padding: '3px 8px',
+        borderRadius: 4,
+        fontSize: 11,
+        fontWeight: 'bold'
+      }}>
+        {m.label}
+      </span>
+    );
+  };
+
+  // Get termine label
+  const getTermineLabel = (termine) => {
+    const t = TERMINI_PAGAMENTO.find(tp => tp.value === termine);
+    return t?.label || termine || '-';
+  };
+
+  // Stats
+  const stats = {
+    totale: suppliers.length,
+    contanti: suppliers.filter(s => s.metodo_pagamento === 'contanti').length,
+    bonifico: suppliers.filter(s => s.metodo_pagamento === 'bonifico').length,
+    assegno: suppliers.filter(s => s.metodo_pagamento === 'assegno').length,
+    trentaGg: suppliers.filter(s => s.termini_pagamento === '30GG' || s.termini_pagamento === '30GGDFM').length,
   };
 
   return (
-    <div style={{ padding: 20 }}>
-      <h1 style={{ marginBottom: 20 }}>📦 Gestione Fornitori</h1>
-
-      {/* KPI Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 15, marginBottom: 20 }}>
-        <div style={{ background: '#e3f2fd', padding: 15, borderRadius: 8 }}>
-          <div style={{ fontSize: 12, color: '#666' }}>Totale Fornitori</div>
-          <div style={{ fontSize: 28, fontWeight: 'bold' }}>{stats.totale || 0}</div>
+    <div style={{ padding: 'clamp(12px, 3vw, 20px)' }}>
+      <h1 style={{ marginBottom: 10, fontSize: 'clamp(20px, 5vw, 28px)' }}>📦 Gestione Fornitori</h1>
+      
+      {/* Stats Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 10, marginBottom: 20 }}>
+        <div style={{ background: '#e3f2fd', padding: 12, borderRadius: 8, textAlign: 'center' }}>
+          <div style={{ fontSize: 24, fontWeight: 'bold', color: '#2196f3' }}>{stats.totale}</div>
+          <div style={{ fontSize: 11, color: '#666' }}>Totale</div>
         </div>
-        <div style={{ background: '#e8f5e9', padding: 15, borderRadius: 8 }}>
-          <div style={{ fontSize: 12, color: '#666' }}>Attivi</div>
-          <div style={{ fontSize: 28, fontWeight: 'bold', color: '#4caf50' }}>{stats.attivi || 0}</div>
+        <div style={{ background: '#e8f5e9', padding: 12, borderRadius: 8, textAlign: 'center' }}>
+          <div style={{ fontSize: 24, fontWeight: 'bold', color: '#4caf50' }}>{stats.contanti}</div>
+          <div style={{ fontSize: 11, color: '#666' }}>Contanti</div>
         </div>
-        <div style={{ 
-          background: deadlines.critiche_7gg > 0 ? '#ffebee' : '#fff3e0', 
-          padding: 15, 
-          borderRadius: 8,
-          cursor: 'pointer',
-          border: deadlines.critiche_7gg > 0 ? '2px solid #f44336' : 'none'
-        }} onClick={() => setShowDeadlines(true)}>
-          <div style={{ fontSize: 12, color: '#666' }}>⚠️ Scadenze 7gg</div>
-          <div style={{ fontSize: 28, fontWeight: 'bold', color: deadlines.critiche_7gg > 0 ? '#f44336' : '#ff9800' }}>
-            {deadlines.critiche_7gg || 0}
-          </div>
+        <div style={{ background: '#fff3e0', padding: 12, borderRadius: 8, textAlign: 'center' }}>
+          <div style={{ fontSize: 24, fontWeight: 'bold', color: '#ff9800' }}>{stats.assegno}</div>
+          <div style={{ fontSize: 11, color: '#666' }}>Assegno</div>
         </div>
-        <div style={{ background: '#f3e5f5', padding: 15, borderRadius: 8, cursor: 'pointer' }} onClick={() => setShowDeadlines(true)}>
-          <div style={{ fontSize: 12, color: '#666' }}>Da Pagare (30gg)</div>
-          <div style={{ fontSize: 20, fontWeight: 'bold', color: '#9c27b0' }}>
-            {formatCurrency(deadlines.totale_importo)}
-          </div>
+        <div style={{ background: '#e3f2fd', padding: 12, borderRadius: 8, textAlign: 'center' }}>
+          <div style={{ fontSize: 24, fontWeight: 'bold', color: '#2196f3' }}>{stats.bonifico}</div>
+          <div style={{ fontSize: 11, color: '#666' }}>Bonifico</div>
+        </div>
+        <div style={{ background: '#f3e5f5', padding: 12, borderRadius: 8, textAlign: 'center' }}>
+          <div style={{ fontSize: 24, fontWeight: 'bold', color: '#9c27b0' }}>{stats.trentaGg}</div>
+          <div style={{ fontSize: 11, color: '#666' }}>30 Giorni</div>
         </div>
       </div>
 
-      {/* Actions Bar */}
-      <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap', alignItems: 'center' }}>
+      {/* Action Bar */}
+      <div style={{ display: 'flex', gap: 10, marginBottom: 15, flexWrap: 'wrap', alignItems: 'center' }}>
         <input
           type="text"
           placeholder="🔍 Cerca fornitore..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          style={{ padding: '8px 12px', borderRadius: 4, border: '1px solid #ddd', minWidth: 250 }}
+          style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid #ddd', minWidth: 200, flex: '1 1 200px' }}
         />
-        <select 
-          value={filterMethod} 
+        <select
+          value={filterMethod}
           onChange={(e) => setFilterMethod(e.target.value)}
-          style={{ padding: '8px 12px', borderRadius: 4, border: '1px solid #ddd' }}
+          style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid #ddd' }}
         >
           <option value="">Tutti i metodi</option>
-          {Object.entries(PAYMENT_METHODS).map(([code, { label }]) => (
-            <option key={code} value={code}>{label}</option>
+          {METODI_PAGAMENTO.map(m => (
+            <option key={m.value} value={m.value}>{m.label}</option>
           ))}
         </select>
         
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 10 }}>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".xls,.xlsx"
-            onChange={handleFileUpload}
-            style={{ display: 'none' }}
-          />
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
-            style={{
-              padding: '8px 16px',
-              background: '#4caf50',
-              color: 'white',
-              border: 'none',
-              borderRadius: 4,
-              cursor: uploading ? 'wait' : 'pointer'
-            }}
-          >
-            {uploading ? '⏳ Caricamento...' : '📤 Import Excel'}
-          </button>
-          <button
-            onClick={() => setShowDeadlines(true)}
-            style={{
-              padding: '8px 16px',
-              background: '#ff9800',
-              color: 'white',
-              border: 'none',
-              borderRadius: 4,
-              cursor: 'pointer'
-            }}
-          >
-            📅 Scadenze
-          </button>
-        </div>
+        <button
+          onClick={() => setShowNewForm(true)}
+          style={{ padding: '8px 16px', background: '#4caf50', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer' }}
+        >
+          ➕ Nuovo
+        </button>
+        <button
+          onClick={() => setBulkMode(!bulkMode)}
+          style={{ 
+            padding: '8px 16px', 
+            background: bulkMode ? '#ff9800' : '#9e9e9e', 
+            color: 'white', 
+            border: 'none', 
+            borderRadius: 6, 
+            cursor: 'pointer' 
+          }}
+        >
+          {bulkMode ? '✓ Modifica Multipla' : '☐ Modifica Multipla'}
+        </button>
       </div>
 
-      {/* Upload Result */}
-      {uploadResult && (
-        <div style={{
-          padding: 15,
-          marginBottom: 20,
-          borderRadius: 8,
-          background: uploadResult.success ? '#e8f5e9' : '#ffebee',
-          border: `1px solid ${uploadResult.success ? '#4caf50' : '#f44336'}`
+      {/* Bulk Actions */}
+      {bulkMode && (
+        <div style={{ 
+          background: '#fff3e0', 
+          padding: 15, 
+          borderRadius: 8, 
+          marginBottom: 15,
+          display: 'flex',
+          gap: 10,
+          flexWrap: 'wrap',
+          alignItems: 'center'
         }}>
-          <strong>{uploadResult.success ? '✅' : '❌'} {uploadResult.message}</strong>
-          {uploadResult.imported > 0 && <span style={{ marginLeft: 10 }}>Nuovi: {uploadResult.imported}</span>}
-          {uploadResult.updated > 0 && <span style={{ marginLeft: 10 }}>Aggiornati: {uploadResult.updated}</span>}
-          {uploadResult.skipped > 0 && <span style={{ marginLeft: 10 }}>Saltati: {uploadResult.skipped}</span>}
+          <span style={{ fontWeight: 'bold' }}>📋 Selezionati: {selectedIds.length}</span>
+          <button onClick={selectAll} style={{ padding: '6px 12px', background: '#2196f3', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}>
+            {selectedIds.length === suppliers.length ? 'Deseleziona Tutti' : 'Seleziona Tutti'}
+          </button>
+          <select
+            value={bulkMetodo}
+            onChange={(e) => {
+              setBulkMetodo(e.target.value);
+              const termineAuto = getTermineAutomatico(e.target.value);
+              if (termineAuto) setBulkTermine(termineAuto);
+            }}
+            style={{ padding: '6px 10px', borderRadius: 4, border: '1px solid #ddd' }}
+          >
+            <option value="">Metodo...</option>
+            {METODI_PAGAMENTO.map(m => (
+              <option key={m.value} value={m.value}>{m.label}</option>
+            ))}
+          </select>
+          <select
+            value={bulkTermine}
+            onChange={(e) => setBulkTermine(e.target.value)}
+            style={{ padding: '6px 10px', borderRadius: 4, border: '1px solid #ddd' }}
+            disabled={getTermineAutomatico(bulkMetodo)}
+          >
+            <option value="">Termine...</option>
+            {TERMINI_PAGAMENTO.map(t => (
+              <option key={t.value} value={t.value}>{t.label}</option>
+            ))}
+          </select>
+          <button 
+            onClick={handleBulkUpdate} 
+            disabled={saving}
+            style={{ padding: '6px 12px', background: '#4caf50', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}
+          >
+            {saving ? '⏳' : '✓'} Applica
+          </button>
+          <button 
+            onClick={quickSet30gg} 
+            disabled={saving}
+            style={{ padding: '6px 12px', background: '#9c27b0', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}
+          >
+            🔄 Imposta 30gg
+          </button>
         </div>
       )}
+
+      {/* Info Box */}
+      <div style={{ background: '#e8f5e9', padding: 12, borderRadius: 8, marginBottom: 15, fontSize: 13 }}>
+        <strong>💡 Regole automatiche:</strong> Contanti/Assegno/F24 → Termine "A Vista" | Bonifico → Seleziona termine (30/60/90 gg)
+      </div>
 
       {/* Suppliers Table */}
       {loading ? (
         <div style={{ textAlign: 'center', padding: 40 }}>Caricamento...</div>
       ) : (
-        <div style={{ background: 'white', borderRadius: 8, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 800, background: 'white', borderRadius: 8, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
             <thead>
               <tr style={{ background: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
-                <th style={{ padding: 12, textAlign: 'left' }}>Denominazione</th>
-                <th style={{ padding: 12, textAlign: 'left' }}>P.IVA</th>
-                <th style={{ padding: 12, textAlign: 'center' }}>Metodo Pag.</th>
-                <th style={{ padding: 12, textAlign: 'center' }}>Termini</th>
-                <th style={{ padding: 12, textAlign: 'right' }}>Fatture</th>
-                <th style={{ padding: 12, textAlign: 'right' }}>Totale</th>
-                <th style={{ padding: 12, textAlign: 'right' }}>Da Pagare</th>
-                <th style={{ padding: 12, textAlign: 'center' }}>Azioni</th>
+                {bulkMode && <th style={{ padding: 10, width: 40 }}>☐</th>}
+                <th style={{ padding: 10, textAlign: 'left' }}>Fornitore</th>
+                <th style={{ padding: 10, textAlign: 'left' }}>P.IVA</th>
+                <th style={{ padding: 10, textAlign: 'center' }}>Metodo Pag.</th>
+                <th style={{ padding: 10, textAlign: 'center' }}>Termine</th>
+                <th style={{ padding: 10, textAlign: 'center' }}>Azioni</th>
               </tr>
             </thead>
             <tbody>
-              {suppliers.map((supplier, idx) => (
-                <tr key={supplier.id || supplier.partita_iva} style={{ 
-                  borderBottom: '1px solid #eee',
-                  background: idx % 2 === 0 ? 'white' : '#fafafa'
-                }}>
-                  <td style={{ padding: 12 }}>
-                    <strong>{supplier.denominazione}</strong>
-                    {supplier.comune && <div style={{ fontSize: 11, color: '#666' }}>{supplier.comune} ({supplier.provincia})</div>}
+              {suppliers.map((sup, idx) => (
+                <tr key={sup.id} style={{ borderBottom: '1px solid #eee', background: idx % 2 === 0 ? 'white' : '#fafafa' }}>
+                  {bulkMode && (
+                    <td style={{ padding: 10, textAlign: 'center' }}>
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(sup.id)}
+                        onChange={() => toggleSelect(sup.id)}
+                        style={{ width: 18, height: 18, cursor: 'pointer' }}
+                      />
+                    </td>
+                  )}
+                  <td style={{ padding: 10 }}>
+                    <strong>{sup.denominazione || sup.ragione_sociale || 'N/A'}</strong>
+                    {sup.indirizzo && <div style={{ fontSize: 11, color: '#666' }}>📍 {sup.indirizzo}</div>}
                   </td>
-                  <td style={{ padding: 12, fontFamily: 'monospace', fontSize: 12 }}>{supplier.partita_iva}</td>
-                  <td style={{ padding: 12, textAlign: 'center' }}>
-                    {editingSupplier === supplier.partita_iva ? (
+                  <td style={{ padding: 10, fontFamily: 'monospace', fontSize: 12 }}>
+                    {sup.partita_iva || '-'}
+                  </td>
+                  <td style={{ padding: 10, textAlign: 'center' }}>
+                    {editingId === sup.id ? (
                       <select
-                        defaultValue={supplier.metodo_pagamento || 'bonifico'}
-                        onChange={(e) => updateSupplier(supplier.partita_iva, { metodo_pagamento: e.target.value })}
-                        style={{ padding: 4, borderRadius: 4 }}
+                        value={editData.metodo_pagamento}
+                        onChange={(e) => handleMetodoChange(e.target.value)}
+                        style={{ padding: '4px 8px', borderRadius: 4, border: '1px solid #ddd', fontSize: 12 }}
                       >
-                        {Object.entries(PAYMENT_METHODS).map(([code, { label }]) => (
-                          <option key={code} value={code}>{label}</option>
+                        {METODI_PAGAMENTO.map(m => (
+                          <option key={m.value} value={m.value}>{m.label}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      getMetodoBadge(sup.metodo_pagamento)
+                    )}
+                  </td>
+                  <td style={{ padding: 10, textAlign: 'center' }}>
+                    {editingId === sup.id ? (
+                      <select
+                        value={editData.termini_pagamento}
+                        onChange={(e) => setEditData({ ...editData, termini_pagamento: e.target.value })}
+                        disabled={getTermineAutomatico(editData.metodo_pagamento)}
+                        style={{ 
+                          padding: '4px 8px', 
+                          borderRadius: 4, 
+                          border: '1px solid #ddd', 
+                          fontSize: 12,
+                          background: getTermineAutomatico(editData.metodo_pagamento) ? '#f5f5f5' : 'white'
+                        }}
+                      >
+                        {TERMINI_PAGAMENTO.map(t => (
+                          <option key={t.value} value={t.value}>{t.label}</option>
                         ))}
                       </select>
                     ) : (
                       <span style={{
-                        padding: '4px 8px',
-                        borderRadius: 12,
+                        padding: '3px 8px',
+                        borderRadius: 4,
                         fontSize: 11,
-                        fontWeight: 'bold',
-                        background: PAYMENT_METHODS[supplier.metodo_pagamento]?.color || '#9e9e9e',
-                        color: 'white'
+                        background: sup.termini_pagamento === 'VISTA' ? '#e8f5e9' : '#e3f2fd',
+                        color: sup.termini_pagamento === 'VISTA' ? '#4caf50' : '#2196f3'
                       }}>
-                        {PAYMENT_METHODS[supplier.metodo_pagamento]?.label || supplier.metodo_pagamento || 'N/D'}
+                        {getTermineLabel(sup.termini_pagamento)}
                       </span>
                     )}
                   </td>
-                  <td style={{ padding: 12, textAlign: 'center', fontSize: 12 }}>
-                    {editingSupplier === supplier.partita_iva ? (
-                      <select
-                        defaultValue={supplier.termini_pagamento || '30GG'}
-                        onChange={(e) => updateSupplier(supplier.partita_iva, { termini_pagamento: e.target.value })}
-                        style={{ padding: 4, borderRadius: 4 }}
-                      >
-                        {PAYMENT_TERMS.map(term => (
-                          <option key={term.code} value={term.code}>{term.label}</option>
-                        ))}
-                      </select>
-                    ) : (
-                      PAYMENT_TERMS.find(t => t.code === supplier.termini_pagamento)?.label || '30 giorni'
-                    )}
-                  </td>
-                  <td style={{ padding: 12, textAlign: 'right' }}>{supplier.fatture_count || 0}</td>
-                  <td style={{ padding: 12, textAlign: 'right' }}>{formatCurrency(supplier.fatture_totale)}</td>
-                  <td style={{ 
-                    padding: 12, 
-                    textAlign: 'right',
-                    color: supplier.fatture_non_pagate > 0 ? '#f44336' : '#4caf50',
-                    fontWeight: supplier.fatture_non_pagate > 0 ? 'bold' : 'normal'
-                  }}>
-                    {formatCurrency(supplier.fatture_non_pagate)}
-                  </td>
-                  <td style={{ padding: 12, textAlign: 'center' }}>
-                    {editingSupplier === supplier.partita_iva ? (
-                      <button
-                        onClick={() => setEditingSupplier(null)}
-                        style={{ padding: '4px 8px', background: '#4caf50', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}
-                      >
-                        ✓
-                      </button>
+                  <td style={{ padding: 10, textAlign: 'center' }}>
+                    {editingId === sup.id ? (
+                      <>
+                        <button
+                          onClick={() => saveEdit(sup.id)}
+                          disabled={saving}
+                          style={{ padding: '4px 10px', background: '#4caf50', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', marginRight: 5 }}
+                        >
+                          {saving ? '⏳' : '✓'}
+                        </button>
+                        <button
+                          onClick={cancelEdit}
+                          style={{ padding: '4px 10px', background: '#9e9e9e', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}
+                        >
+                          ✕
+                        </button>
+                      </>
                     ) : (
                       <>
                         <button
-                          onClick={() => setEditingSupplier(supplier.partita_iva)}
-                          style={{ padding: '4px 8px', marginRight: 5, cursor: 'pointer' }}
+                          onClick={() => startEdit(sup)}
+                          style={{ padding: '4px 10px', background: '#2196f3', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', marginRight: 5 }}
                           title="Modifica"
                         >
                           ✏️
                         </button>
                         <button
-                          onClick={() => setSelectedSupplier(supplier)}
-                          style={{ padding: '4px 8px', cursor: 'pointer' }}
-                          title="Dettagli"
+                          onClick={() => handleDelete(sup.id)}
+                          style={{ padding: '4px 10px', background: '#f44336', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}
+                          title="Elimina"
                         >
-                          👁️
+                          🗑️
                         </button>
                       </>
                     )}
@@ -323,217 +504,100 @@ export default function Fornitori() {
             </tbody>
           </table>
           {suppliers.length === 0 && (
-            <div style={{ padding: 40, textAlign: 'center', color: '#666' }}>
-              Nessun fornitore trovato. Importa un file Excel per iniziare.
+            <div style={{ padding: 40, textAlign: 'center', color: '#666', background: 'white' }}>
+              Nessun fornitore trovato
             </div>
           )}
         </div>
       )}
 
-      {/* Supplier Detail Modal */}
-      {selectedSupplier && (
+      {/* New Supplier Modal */}
+      {showNewForm && (
         <div style={{
-          position: 'fixed',
-          top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }} onClick={() => setSelectedSupplier(null)}>
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20
+        }} onClick={() => setShowNewForm(false)}>
           <div style={{
-            background: 'white',
-            borderRadius: 8,
-            padding: 24,
-            maxWidth: 600,
-            width: '90%',
-            maxHeight: '80vh',
-            overflow: 'auto'
+            background: 'white', borderRadius: 12, padding: 24, maxWidth: 500, width: '100%'
           }} onClick={e => e.stopPropagation()}>
-            <h2>{selectedSupplier.denominazione}</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 15, marginTop: 20 }}>
-              <div>
-                <strong>P.IVA:</strong> {selectedSupplier.partita_iva}
-              </div>
-              <div>
-                <strong>C.F.:</strong> {selectedSupplier.codice_fiscale || '-'}
-              </div>
-              <div>
-                <strong>Email:</strong> {selectedSupplier.email || '-'}
-              </div>
-              <div>
-                <strong>PEC:</strong> {selectedSupplier.pec || '-'}
-              </div>
-              <div>
-                <strong>Telefono:</strong> {selectedSupplier.telefono || '-'}
-              </div>
-              <div>
-                <strong>Indirizzo:</strong> {selectedSupplier.indirizzo || '-'}
-              </div>
-              <div>
-                <strong>Città:</strong> {selectedSupplier.comune} ({selectedSupplier.provincia})
-              </div>
-              <div>
-                <strong>CAP:</strong> {selectedSupplier.cap || '-'}
-              </div>
-            </div>
+            <h2 style={{ marginTop: 0 }}>➕ Nuovo Fornitore</h2>
             
-            <hr style={{ margin: '20px 0' }} />
-            
-            <h3>💳 Dati Pagamento</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 15, marginTop: 10 }}>
+            <div style={{ display: 'grid', gap: 15 }}>
               <div>
-                <label style={{ display: 'block', fontSize: 12, color: '#666' }}>Metodo Pagamento</label>
-                <select
-                  value={selectedSupplier.metodo_pagamento || 'bonifico'}
-                  onChange={(e) => {
-                    updateSupplier(selectedSupplier.partita_iva, { metodo_pagamento: e.target.value });
-                    setSelectedSupplier({ ...selectedSupplier, metodo_pagamento: e.target.value });
-                  }}
-                  style={{ padding: 8, width: '100%', borderRadius: 4, border: '1px solid #ddd' }}
-                >
-                  {Object.entries(PAYMENT_METHODS).map(([code, { label }]) => (
-                    <option key={code} value={code}>{label}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: 12, color: '#666' }}>Termini Pagamento</label>
-                <select
-                  value={selectedSupplier.termini_pagamento || '30GG'}
-                  onChange={(e) => {
-                    updateSupplier(selectedSupplier.partita_iva, { termini_pagamento: e.target.value });
-                    setSelectedSupplier({ ...selectedSupplier, termini_pagamento: e.target.value });
-                  }}
-                  style={{ padding: 8, width: '100%', borderRadius: 4, border: '1px solid #ddd' }}
-                >
-                  {PAYMENT_TERMS.map(term => (
-                    <option key={term.code} value={term.code}>{term.label}</option>
-                  ))}
-                </select>
-              </div>
-              <div style={{ gridColumn: '1 / -1' }}>
-                <label style={{ display: 'block', fontSize: 12, color: '#666' }}>IBAN</label>
+                <label style={{ display: 'block', marginBottom: 5, fontWeight: 'bold', fontSize: 12 }}>Denominazione *</label>
                 <input
                   type="text"
-                  value={selectedSupplier.iban || ''}
-                  onChange={(e) => {
-                    setSelectedSupplier({ ...selectedSupplier, iban: e.target.value });
-                  }}
-                  onBlur={(e) => updateSupplier(selectedSupplier.partita_iva, { iban: e.target.value })}
-                  placeholder="IT00 X000 0000 0000 0000 0000 000"
-                  style={{ padding: 8, width: '100%', borderRadius: 4, border: '1px solid #ddd', fontFamily: 'monospace' }}
+                  value={newSupplier.denominazione}
+                  onChange={(e) => setNewSupplier({ ...newSupplier, denominazione: e.target.value })}
+                  style={{ padding: 10, width: '100%', borderRadius: 6, border: '1px solid #ddd' }}
                 />
               </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: 5, fontWeight: 'bold', fontSize: 12 }}>Partita IVA</label>
+                <input
+                  type="text"
+                  value={newSupplier.partita_iva}
+                  onChange={(e) => setNewSupplier({ ...newSupplier, partita_iva: e.target.value })}
+                  style={{ padding: 10, width: '100%', borderRadius: 6, border: '1px solid #ddd', fontFamily: 'monospace' }}
+                />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 15 }}>
+                <div>
+                  <label style={{ display: 'block', marginBottom: 5, fontWeight: 'bold', fontSize: 12 }}>Metodo Pagamento</label>
+                  <select
+                    value={newSupplier.metodo_pagamento}
+                    onChange={(e) => {
+                      const metodo = e.target.value;
+                      const termineAuto = getTermineAutomatico(metodo);
+                      setNewSupplier({ 
+                        ...newSupplier, 
+                        metodo_pagamento: metodo,
+                        termini_pagamento: termineAuto || newSupplier.termini_pagamento
+                      });
+                    }}
+                    style={{ padding: 10, width: '100%', borderRadius: 6, border: '1px solid #ddd' }}
+                  >
+                    {METODI_PAGAMENTO.map(m => (
+                      <option key={m.value} value={m.value}>{m.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label style={{ display: 'block', marginBottom: 5, fontWeight: 'bold', fontSize: 12 }}>Termine Pagamento</label>
+                  <select
+                    value={newSupplier.termini_pagamento}
+                    onChange={(e) => setNewSupplier({ ...newSupplier, termini_pagamento: e.target.value })}
+                    disabled={getTermineAutomatico(newSupplier.metodo_pagamento)}
+                    style={{ 
+                      padding: 10, width: '100%', borderRadius: 6, border: '1px solid #ddd',
+                      background: getTermineAutomatico(newSupplier.metodo_pagamento) ? '#f5f5f5' : 'white'
+                    }}
+                  >
+                    {TERMINI_PAGAMENTO.map(t => (
+                      <option key={t.value} value={t.value}>{t.label}</option>
+                    ))}
+                  </select>
+                  {getTermineAutomatico(newSupplier.metodo_pagamento) && (
+                    <div style={{ fontSize: 11, color: '#ff9800', marginTop: 5 }}>
+                      ⚡ Termine impostato automaticamente
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
             
-            <div style={{ marginTop: 20, textAlign: 'right' }}>
+            <div style={{ display: 'flex', gap: 10, marginTop: 20, justifyContent: 'flex-end' }}>
               <button
-                onClick={() => setSelectedSupplier(null)}
-                style={{ padding: '10px 20px', background: '#9e9e9e', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}
+                onClick={() => setShowNewForm(false)}
+                style={{ padding: '10px 20px', background: '#9e9e9e', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer' }}
               >
-                Chiudi
+                Annulla
               </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Deadlines Modal */}
-      {showDeadlines && (
-        <div style={{
-          position: 'fixed',
-          top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }} onClick={() => setShowDeadlines(false)}>
-          <div style={{
-            background: 'white',
-            borderRadius: 8,
-            padding: 24,
-            maxWidth: 800,
-            width: '90%',
-            maxHeight: '80vh',
-            overflow: 'auto'
-          }} onClick={e => e.stopPropagation()}>
-            <h2>📅 Fatture in Scadenza (prossimi 30 giorni)</h2>
-            
-            <div style={{ display: 'flex', gap: 20, marginTop: 20, marginBottom: 20 }}>
-              <div style={{ background: '#ffebee', padding: 15, borderRadius: 8, flex: 1 }}>
-                <div style={{ fontSize: 12, color: '#666' }}>Critiche (7 giorni)</div>
-                <div style={{ fontSize: 24, fontWeight: 'bold', color: '#f44336' }}>{deadlines.critiche_7gg}</div>
-              </div>
-              <div style={{ background: '#fff3e0', padding: 15, borderRadius: 8, flex: 1 }}>
-                <div style={{ fontSize: 12, color: '#666' }}>Totale Fatture</div>
-                <div style={{ fontSize: 24, fontWeight: 'bold', color: '#ff9800' }}>{deadlines.totale_fatture}</div>
-              </div>
-              <div style={{ background: '#f3e5f5', padding: 15, borderRadius: 8, flex: 1 }}>
-                <div style={{ fontSize: 12, color: '#666' }}>Importo Totale</div>
-                <div style={{ fontSize: 20, fontWeight: 'bold', color: '#9c27b0' }}>{formatCurrency(deadlines.totale_importo)}</div>
-              </div>
-            </div>
-            
-            {deadlines.fatture?.length > 0 ? (
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ background: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
-                    <th style={{ padding: 10, textAlign: 'left' }}>Fornitore</th>
-                    <th style={{ padding: 10, textAlign: 'left' }}>N. Fattura</th>
-                    <th style={{ padding: 10, textAlign: 'center' }}>Scadenza</th>
-                    <th style={{ padding: 10, textAlign: 'right' }}>Importo</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {deadlines.fatture.map((inv, idx) => {
-                    const scadenza = new Date(inv.data_scadenza);
-                    const oggi = new Date();
-                    const giorniRimanenti = Math.ceil((scadenza - oggi) / (1000 * 60 * 60 * 24));
-                    const isCritica = giorniRimanenti <= 7;
-                    
-                    return (
-                      <tr key={idx} style={{ 
-                        borderBottom: '1px solid #eee',
-                        background: isCritica ? '#fff8e1' : 'white'
-                      }}>
-                        <td style={{ padding: 10 }}>{inv.cedente_denominazione}</td>
-                        <td style={{ padding: 10 }}>{inv.numero_fattura}</td>
-                        <td style={{ padding: 10, textAlign: 'center' }}>
-                          <span style={{
-                            padding: '2px 8px',
-                            borderRadius: 4,
-                            fontSize: 12,
-                            background: isCritica ? '#f44336' : '#ff9800',
-                            color: 'white'
-                          }}>
-                            {new Date(inv.data_scadenza).toLocaleDateString('it-IT')}
-                          </span>
-                          <div style={{ fontSize: 10, color: '#666', marginTop: 2 }}>
-                            {giorniRimanenti <= 0 ? 'SCADUTA' : `${giorniRimanenti} giorni`}
-                          </div>
-                        </td>
-                        <td style={{ padding: 10, textAlign: 'right', fontWeight: 'bold' }}>
-                          {formatCurrency(inv.importo_totale)}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            ) : (
-              <div style={{ textAlign: 'center', padding: 40, color: '#666' }}>
-                Nessuna fattura in scadenza nei prossimi 30 giorni 🎉
-              </div>
-            )}
-            
-            <div style={{ marginTop: 20, textAlign: 'right' }}>
               <button
-                onClick={() => setShowDeadlines(false)}
-                style={{ padding: '10px 20px', background: '#9e9e9e', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}
+                onClick={handleCreate}
+                style={{ padding: '10px 20px', background: '#4caf50', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer' }}
               >
-                Chiudi
+                ➕ Crea Fornitore
               </button>
             </div>
           </div>
