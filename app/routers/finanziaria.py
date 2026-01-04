@@ -109,14 +109,12 @@ async def get_cost_categories() -> Dict[str, List[Dict[str, str]]]:
     summary="Create financial cost"
 )
 async def create_costo(
-    data: Dict[str, Any],
-    current_user: Dict[str, Any] = Depends(get_current_user)
+    data: Dict[str, Any]
 ) -> Dict[str, str]:
     """Create a financial cost entry."""
     db = Database.get_db()
     data["id"] = str(uuid4())
     data["created_at"] = datetime.utcnow()
-    data["user_id"] = current_user["user_id"]
     
     await db["costi_finanziari"].insert_one(data)
     
