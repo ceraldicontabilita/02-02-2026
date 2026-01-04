@@ -175,7 +175,7 @@ export default function Commercialista() {
     // Header
     doc.setFontSize(20);
     doc.setTextColor(255, 152, 0);
-    doc.text('Fatture Pagate in Contanti', 14, 20);
+    doc.text('Fatture Pagate per Cassa', 14, 20);
     
     doc.setFontSize(14);
     doc.setTextColor(100);
@@ -307,7 +307,7 @@ export default function Commercialista() {
         break;
       case 'fatture_cassa':
         doc = generateFattureCassaPDF();
-        filename = `Fatture_Contanti_${meseNome}_${selectedYear}.pdf`;
+        filename = `Fatture_Cassa_${meseNome}_${selectedYear}.pdf`;
         break;
       case 'carnet':
         doc = generateCarnetPDF(carnet);
@@ -666,7 +666,7 @@ export default function Commercialista() {
               color: 'white',
               padding: 20
             }}>
-              <h3 style={{ margin: 0 }}>💵 Fatture Pagate in Contanti</h3>
+              <h3 style={{ margin: 0 }}>💵 Fatture Pagate per Cassa</h3>
               <p style={{ margin: '5px 0 0 0', opacity: 0.9, fontSize: 14 }}>
                 {MESI[selectedMonth + 1]} {selectedYear}
               </p>

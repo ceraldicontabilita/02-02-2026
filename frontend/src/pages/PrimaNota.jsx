@@ -6,7 +6,7 @@ import api from '../api';
  * 
  * CASSA:
  * - DARE (Entrate): Corrispettivi (al lordo IVA), Finanziamento soci
- * - AVERE (Uscite): POS, Versamenti, Fatture pagate contanti
+ * - AVERE (Uscite): POS, Versamenti, Fatture pagate cassa
  * 
  * BANCA:
  * - AVERE (Uscite): Fatture riconciliate (pagate bonifico/assegno)
