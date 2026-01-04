@@ -303,3 +303,41 @@ async def upload_fatture_xml_bulk(files: List[UploadFile] = File(...)) -> Dict[s
             results["failed"] += 1
     
     return results
+
+
+@router.delete("/all")
+async def delete_all_invoices() -> Dict[str, Any]:
+    """Elimina tutte le fatture."""
+    db = Database.get_db()
+    result = await db[Collections.INVOICES].delete_many({})
+    return {"deleted_count": result.deleted_count}
+
+
+@router.post("/cleanup-duplicates")
+async def cleanup_duplicate_invoices() -> Dict[str, Any]:
+    """Pulisce le fatture duplicate."""
+    db = Database.get_db()
+    
+    pipeline = [
+        {"$group": {
+            "_id": {"invoice_number": "$invoice_number", "supplier_vat": "$supplier_vat", "invoice_date": "$invoice_date"},
+            "count": {"$sum": 1},
+            "ids": {"$push": "$id"},
+            "first_id": {"$first": "$id"}
+        }},
+        {"$match": {"count": {"$gt": 1}}}
+    ]
+    
+    duplicates = await db[Collections.INVOICES].aggregate(pipeline).to_list(1000)
+    
+    deleted_count = 0
+    for dup in duplicates:
+        ids_to_delete = [id for id in dup["ids"] if id != dup["first_id"]]
+        result = await db[Collections.INVOICES].delete_many({"id": {"$in": ids_to_delete}})
+        deleted_count += result.deleted_count
+    
+    return {
+        "duplicate_groups_found": len(duplicates),
+        "invoices_deleted": deleted_count
+    }
+
