@@ -354,7 +354,151 @@ export default function Fatture() {
           <button onClick={loadInvoices}>
             🔄 Aggiorna
           </button>
+          
+          <button 
+            onClick={() => setShowFilters(!showFilters)}
+            style={{ 
+              background: activeFiltersCount > 0 ? "#1565c0" : "#f5f5f5",
+              color: activeFiltersCount > 0 ? "white" : "#333",
+              fontWeight: activeFiltersCount > 0 ? "bold" : "normal"
+            }}
+          >
+            🔍 Filtri {activeFiltersCount > 0 && `(${activeFiltersCount})`}
+          </button>
         </div>
+        
+        {/* Sezione Filtri */}
+        {showFilters && (
+          <div style={{ marginTop: 15, padding: 15, background: "#f8f9fa", borderRadius: 8, border: "1px solid #ddd" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <strong>🔍 Filtri Ricerca</strong>
+              {activeFiltersCount > 0 && (
+                <button onClick={resetFilters} style={{ fontSize: 12, padding: "4px 10px" }}>
+                  ✕ Azzera filtri
+                </button>
+              )}
+            </div>
+            
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12 }}>
+              {/* Fornitore */}
+              <div>
+                <label style={{ fontSize: 12, color: "#666", display: "block", marginBottom: 4 }}>Fornitore</label>
+                <input
+                  type="text"
+                  placeholder="Cerca fornitore..."
+                  value={filters.fornitore}
+                  onChange={(e) => setFilters({...filters, fornitore: e.target.value})}
+                  style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid #ddd" }}
+                  data-testid="filter-fornitore"
+                />
+              </div>
+              
+              {/* Numero Fattura */}
+              <div>
+                <label style={{ fontSize: 12, color: "#666", display: "block", marginBottom: 4 }}>Numero Fattura</label>
+                <input
+                  type="text"
+                  placeholder="Es. 123, FT001..."
+                  value={filters.numeroFattura}
+                  onChange={(e) => setFilters({...filters, numeroFattura: e.target.value})}
+                  style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid #ddd" }}
+                  data-testid="filter-numero"
+                />
+              </div>
+              
+              {/* Data Da */}
+              <div>
+                <label style={{ fontSize: 12, color: "#666", display: "block", marginBottom: 4 }}>Data Da</label>
+                <input
+                  type="date"
+                  value={filters.dataDa}
+                  onChange={(e) => setFilters({...filters, dataDa: e.target.value})}
+                  style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid #ddd" }}
+                  data-testid="filter-data-da"
+                />
+              </div>
+              
+              {/* Data A */}
+              <div>
+                <label style={{ fontSize: 12, color: "#666", display: "block", marginBottom: 4 }}>Data A</label>
+                <input
+                  type="date"
+                  value={filters.dataA}
+                  onChange={(e) => setFilters({...filters, dataA: e.target.value})}
+                  style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid #ddd" }}
+                  data-testid="filter-data-a"
+                />
+              </div>
+              
+              {/* Importo Min */}
+              <div>
+                <label style={{ fontSize: 12, color: "#666", display: "block", marginBottom: 4 }}>Importo Min €</label>
+                <input
+                  type="number"
+                  placeholder="0.00"
+                  step="0.01"
+                  value={filters.importoMin}
+                  onChange={(e) => setFilters({...filters, importoMin: e.target.value})}
+                  style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid #ddd" }}
+                  data-testid="filter-importo-min"
+                />
+              </div>
+              
+              {/* Importo Max */}
+              <div>
+                <label style={{ fontSize: 12, color: "#666", display: "block", marginBottom: 4 }}>Importo Max €</label>
+                <input
+                  type="number"
+                  placeholder="9999.99"
+                  step="0.01"
+                  value={filters.importoMax}
+                  onChange={(e) => setFilters({...filters, importoMax: e.target.value})}
+                  style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid #ddd" }}
+                  data-testid="filter-importo-max"
+                />
+              </div>
+              
+              {/* Metodo Pagamento */}
+              <div>
+                <label style={{ fontSize: 12, color: "#666", display: "block", marginBottom: 4 }}>Metodo Pagamento</label>
+                <select
+                  value={filters.metodoPagamento}
+                  onChange={(e) => setFilters({...filters, metodoPagamento: e.target.value})}
+                  style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid #ddd" }}
+                  data-testid="filter-metodo"
+                >
+                  <option value="">Tutti</option>
+                  {METODI_PAGAMENTO.map(m => (
+                    <option key={m.value} value={m.value}>{m.label}</option>
+                  ))}
+                </select>
+              </div>
+              
+              {/* Stato */}
+              <div>
+                <label style={{ fontSize: 12, color: "#666", display: "block", marginBottom: 4 }}>Stato</label>
+                <select
+                  value={filters.stato}
+                  onChange={(e) => setFilters({...filters, stato: e.target.value})}
+                  style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid #ddd" }}
+                  data-testid="filter-stato"
+                >
+                  <option value="">Tutti</option>
+                  <option value="pagata">✓ Pagata</option>
+                  <option value="da_pagare">⏳ Da Pagare</option>
+                  <option value="importata">📥 Importata</option>
+                </select>
+              </div>
+            </div>
+            
+            {/* Riepilogo filtri attivi */}
+            {activeFiltersCount > 0 && (
+              <div style={{ marginTop: 12, fontSize: 13, color: "#1565c0" }}>
+                📊 Trovate <strong>{filteredInvoices.length}</strong> fatture su {invoices.length} totali
+              </div>
+            )}
+          </div>
+        )}
         
         {uploading && (
           <div className="small" style={{ marginTop: 10, color: "#1565c0" }}>
