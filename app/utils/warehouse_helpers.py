@@ -342,6 +342,7 @@ async def get_product_catalog(db, category: Optional[str] = None, search: Option
 async def search_products_predictive(db, query: str, limit: int = 10) -> List[Dict[str, Any]]:
     """
     Ricerca predittiva prodotti con matching intelligente.
+    Include best_price per ogni prodotto.
     """
     if not query or len(query) < 2:
         return []
@@ -355,6 +356,9 @@ async def search_products_predictive(db, query: str, limit: int = 10) -> List[Di
             {"nome_normalizzato": {"$regex": query_normalized, "$options": "i"}}
         ]
     }, {"_id": 0}).limit(50).to_list(50)
+    
+    # Date threshold per best price (ultimi 30 giorni)
+    date_threshold = (datetime.utcnow() - timedelta(days=30)).isoformat()
     
     results = []
     for product in products:
@@ -376,6 +380,29 @@ async def search_products_predictive(db, query: str, limit: int = 10) -> List[Di
         
         if score >= 0.3:
             product["match_score"] = round(score * 100)
+            
+            # Aggiungi best_price
+            product_id = product.get("id")
+            if product_id:
+                price_record = await db["price_history"].find_one(
+                    {"product_id": product_id, "created_at": {"$gte": date_threshold}},
+                    {"_id": 0, "price": 1, "supplier_name": 1},
+                    sort=[("price", 1)]
+                )
+                if price_record:
+                    product["best_price"] = price_record.get("price")
+                    product["best_supplier"] = price_record.get("supplier_name")
+                else:
+                    # Fallback ai prezzi salvati nel prodotto
+                    product["best_price"] = product.get("prezzi", {}).get("min")
+                    product["best_supplier"] = product.get("ultimo_fornitore")
+            else:
+                product["best_price"] = product.get("prezzi", {}).get("min")
+                product["best_supplier"] = product.get("ultimo_fornitore")
+            
+            # Aggiungi descrizione come alias di nome per il frontend
+            product["descrizione"] = product.get("nome", "")
+            
             results.append(product)
     
     results.sort(key=lambda x: x.get("match_score", 0), reverse=True)
