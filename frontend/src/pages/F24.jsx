@@ -568,23 +568,61 @@ export default function F24() {
                         </span>
                       </td>
                       <td style={{ padding: 12, textAlign: "center" }}>
-                        {(f.status !== 'paid' && !f.pagato) && (
+                        <div style={{ display: 'flex', gap: 6, justifyContent: 'center', flexWrap: 'wrap' }}>
+                          {(f.status !== 'paid' && !f.pagato) && (
+                            <button
+                              onClick={() => handleMarkAsPaid(f.id)}
+                              style={{
+                                padding: '6px 10px',
+                                background: '#4caf50',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: 4,
+                                cursor: 'pointer',
+                                fontSize: 11
+                              }}
+                              data-testid={`pay-f24-${f.id}`}
+                            >
+                              ✓ Paga
+                            </button>
+                          )}
                           <button
-                            onClick={() => handleMarkAsPaid(f.id)}
+                            onClick={() => setEditingF24(f)}
                             style={{
-                              padding: '6px 12px',
-                              background: '#4caf50',
+                              padding: '6px 10px',
+                              background: '#2196f3',
                               color: 'white',
                               border: 'none',
                               borderRadius: 4,
                               cursor: 'pointer',
-                              fontSize: 12
+                              fontSize: 11,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 4
                             }}
-                            data-testid={`pay-f24-${f.id}`}
+                            data-testid={`edit-f24-${f.id}`}
                           >
-                            Paga
+                            <Edit size={12} /> Modifica
                           </button>
-                        )}
+                          <button
+                            onClick={() => handleDeleteF24(f.id)}
+                            style={{
+                              padding: '6px 10px',
+                              background: '#f44336',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: 4,
+                              cursor: 'pointer',
+                              fontSize: 11,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 4
+                            }}
+                            data-testid={`delete-f24-${f.id}`}
+                          >
+                            <Trash2 size={12} /> Elimina
+                          </button>
+                        </div>
                       </td>
                     </tr>
                     {/* Expanded row for tributi details */}
@@ -602,6 +640,103 @@ export default function F24() {
           </div>
         )}
       </div>
+      
+      {/* Edit F24 Modal */}
+      {editingF24 && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}
+          onClick={() => setEditingF24(null)}
+        >
+          <div 
+            style={{
+              background: 'white',
+              borderRadius: 8,
+              padding: 24,
+              maxWidth: 500,
+              width: '90%'
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <h2 style={{ marginTop: 0 }}>✏️ Modifica F24</h2>
+            
+            <div style={{ display: 'grid', gap: 15 }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: 5, fontWeight: 'bold' }}>Contribuente</label>
+                <input
+                  type="text"
+                  value={editingF24.contribuente || ''}
+                  onChange={(e) => setEditingF24({...editingF24, contribuente: e.target.value})}
+                  style={{ padding: 10, width: '100%', borderRadius: 4, border: '1px solid #ddd' }}
+                />
+              </div>
+              
+              <div>
+                <label style={{ display: 'block', marginBottom: 5, fontWeight: 'bold' }}>Scadenza</label>
+                <input
+                  type="date"
+                  value={editingF24.data_scadenza || ''}
+                  onChange={(e) => setEditingF24({...editingF24, data_scadenza: e.target.value})}
+                  style={{ padding: 10, width: '100%', borderRadius: 4, border: '1px solid #ddd' }}
+                />
+              </div>
+              
+              <div>
+                <label style={{ display: 'block', marginBottom: 5, fontWeight: 'bold' }}>Banca</label>
+                <input
+                  type="text"
+                  value={editingF24.banca || ''}
+                  onChange={(e) => setEditingF24({...editingF24, banca: e.target.value})}
+                  style={{ padding: 10, width: '100%', borderRadius: 4, border: '1px solid #ddd' }}
+                />
+              </div>
+              
+              <div>
+                <label style={{ display: 'block', marginBottom: 5, fontWeight: 'bold' }}>Note</label>
+                <textarea
+                  value={editingF24.note || ''}
+                  onChange={(e) => setEditingF24({...editingF24, note: e.target.value})}
+                  rows={3}
+                  style={{ padding: 10, width: '100%', borderRadius: 4, border: '1px solid #ddd' }}
+                />
+              </div>
+              
+              <div>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <input
+                    type="checkbox"
+                    checked={editingF24.pagato || false}
+                    onChange={(e) => setEditingF24({...editingF24, pagato: e.target.checked})}
+                  />
+                  <span>Segnato come pagato</span>
+                </label>
+              </div>
+            </div>
+            
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 20 }}>
+              <button
+                onClick={() => setEditingF24(null)}
+                style={{ padding: '10px 20px', background: '#9e9e9e', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}
+              >
+                Annulla
+              </button>
+              <button
+                onClick={() => handleUpdateF24(editingF24.id, editingF24)}
+                style={{ padding: '10px 20px', background: '#ff9800', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}
+              >
+                Salva Modifiche
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
