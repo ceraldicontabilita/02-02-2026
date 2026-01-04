@@ -49,11 +49,13 @@
 - ✅ **Export PDF Annuale**: `GET /api/haccp-completo/export/pdf/annuale?anno=YYYY`
 - File: `/app/frontend/src/pages/HACCPAnalytics.jsx`
 
-### Sistema Notifiche HACCP (04/01/2026) - NEW
+### Sistema Notifiche HACCP (04/01/2026) - UPDATED
 - ✅ Nuova pagina `/haccp/notifiche` per alert temperature anomale
 - ✅ Check automatico anomalie: `POST /api/haccp-completo/notifiche/check-anomalie`
 - ✅ Lista notifiche con filtro "solo non lette"
-- ✅ Cards severità: alta (rosso), media (arancione), bassa (verde)
+- ✅ **4 livelli severità**: critica (🔴), alta (🟠), media (🟡), bassa (🟢)
+- ✅ Cards cliccabili per filtrare per severità
+- ✅ Statistiche per severità: `GET /api/haccp-completo/notifiche/stats`
 - ✅ Bottoni: "Segna come letta", "Segna tutte lette"
 - ✅ **Scheduler integrato**: check anomalie + invio email alle 01:00 AM
 - ✅ **Badge notifiche** nella sidebar (HACCP) e alert in Dashboard
