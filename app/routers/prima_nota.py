@@ -464,3 +464,57 @@ async def get_prima_nota_stats(
             "uscite": cassa.get("uscite", 0) + banca.get("uscite", 0)
         }
     }
+
+
+# ============== EXPORT EXCEL ==============
+
+from fastapi.responses import StreamingResponse
+import io
+
+@router.get("/export/excel")
+async def export_prima_nota_excel(
+    tipo: Literal["cassa", "banca", "entrambi"] = Query("entrambi"),
+    data_da: Optional[str] = Query(None),
+    data_a: Optional[str] = Query(None)
+) -> StreamingResponse:
+    """Export Prima Nota in Excel."""
+    try:
+        import pandas as pd
+    except ImportError:
+        raise HTTPException(status_code=500, detail="pandas non installato")
+    
+    db = Database.get_db()
+    query = {}
+    if data_da:
+        query["data"] = {"$gte": data_da}
+    if data_a:
+        query.setdefault("data", {})["$lte"] = data_a
+    
+    output = io.BytesIO()
+    
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        if tipo in ["cassa", "entrambi"]:
+            cassa = await db[COLLECTION_PRIMA_NOTA_CASSA].find(query, {"_id": 0}).sort("data", -1).to_list(10000)
+            if cassa:
+                df_cassa = pd.DataFrame(cassa)
+                cols = ["data", "tipo", "importo", "descrizione", "categoria", "riferimento"]
+                df_cassa = df_cassa[[c for c in cols if c in df_cassa.columns]]
+                df_cassa.to_excel(writer, sheet_name="Prima Nota Cassa", index=False)
+        
+        if tipo in ["banca", "entrambi"]:
+            banca = await db[COLLECTION_PRIMA_NOTA_BANCA].find(query, {"_id": 0}).sort("data", -1).to_list(10000)
+            if banca:
+                df_banca = pd.DataFrame(banca)
+                cols = ["data", "tipo", "importo", "descrizione", "categoria", "riferimento", "assegno_collegato"]
+                df_banca = df_banca[[c for c in cols if c in df_banca.columns]]
+                df_banca.to_excel(writer, sheet_name="Prima Nota Banca", index=False)
+    
+    output.seek(0)
+    filename = f"prima_nota_{datetime.now().strftime('%Y%m%d')}.xlsx"
+    
+    return StreamingResponse(
+        output,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
