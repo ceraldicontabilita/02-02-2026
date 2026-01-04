@@ -274,6 +274,10 @@ def parse_libro_unico_pdf(pdf_bytes: bytes) -> Dict[str, Any]:
     """
     Parse PDF Libro Unico and extract salary/presence data.
     
+    Handles Zucchetti LUL format with paired pages:
+    - Page 1: Attendance/Presenze (ore ordinarie, giustificativi)
+    - Page 2: Salary/Cedolino (netto, trattenute, contributi)
+    
     Returns dict with:
         - competenza_month_year
         - competenza_detected
@@ -297,142 +301,183 @@ def parse_libro_unico_pdf(pdf_bytes: bytes) -> Dict[str, Any]:
         with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
             logger.info(f"Processing PDF with {len(pdf.pages)} pages")
 
-            pdf_type = 'dipendente'
-
-            if len(pdf.pages) > 0:
-                first_page_text = pdf.pages[0].extract_text() or ""
-                first_page_text = normalize_pdf_text(first_page_text)
-                competenza_month, competenza_detected = extract_competenza_month(first_page_text)
-
-            # Process each page
-            for page_num, page in enumerate(pdf.pages):
+            # First pass: extract all text from all pages
+            all_pages_text = []
+            for page in pdf.pages:
                 page_text = page.extract_text() or ""
                 page_text = normalize_pdf_text(page_text)
+                all_pages_text.append(page_text)
 
-                logger.info(f"Processing page {page_num+1}")
+            if all_pages_text:
+                competenza_month, competenza_detected = extract_competenza_month(all_pages_text[0])
 
-                pdf_type = detect_pdf_type(page_text)
-                logger.info(f"PDF Type detected: {pdf_type}")
-
-                if pdf_type == 'amministratore':
-                    emp_data = parse_amministratore_page(page_text)
-
-                    if emp_data and emp_data["nome"] not in employees_found:
-                        employees_found[emp_data["nome"]] = emp_data
-                else:
-                    # Regular employee format
-                    lines = page_text.split('\n')
-
-                    employee_name: Optional[str] = None
-                    netto_mese: Optional[float] = None
-                    acconto = 0.0
-                    ore_ordinarie = 0.0
-                    mansione: Optional[str] = None
-                    contratto_scadenza: Optional[str] = None
-
-                    # Extract employee name
+            # Zucchetti LUL format: pairs of pages (presenze + cedolino)
+            # Process in pairs or individually based on content
+            
+            # Collect all data across pages for each employee
+            current_employee: Dict[str, Any] = {}
+            
+            for page_num, page_text in enumerate(all_pages_text):
+                lines = page_text.split('\n')
+                
+                # Check what type of page this is
+                is_presenze_page = 'GIORNO' in page_text and 'ORE' in page_text and 'GIUSTIFICATIVI' in page_text
+                is_cedolino_page = 'NETTO' in page_text or 'TRATTENUTE' in page_text or 'COMPETENZE' in page_text
+                
+                logger.info(f"Processing page {page_num+1}: presenze={is_presenze_page}, cedolino={is_cedolino_page}")
+                
+                # Extract employee name - multiple patterns
+                employee_name = None
+                codice_fiscale = None
+                
+                # Pattern 1: matricola + name + CF (page 2 format)
+                for line in lines:
+                    match = re.match(r'(\d{7})\s+([A-Z]+\s+[A-Z]+)\s+([A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z])', line)
+                    if match:
+                        employee_name = match.group(2).strip()
+                        codice_fiscale = match.group(3)
+                        logger.info(f"Found employee (pattern 1): {employee_name}, CF: {codice_fiscale}")
+                        break
+                
+                # Pattern 2: just name on its own line (page 1 format)
+                if not employee_name:
+                    for i, line in enumerate(lines):
+                        line_clean = line.strip()
+                        # Look for a line that's just SURNAME NAME (2 uppercase words)
+                        if re.match(r'^[A-Z]+\s+[A-Z]+$', line_clean):
+                            # Verify it's likely a name by checking context
+                            prev_lines = ' '.join(lines[max(0, i-3):i]).upper()
+                            if 'COGNOME' in prev_lines or 'NOME' in prev_lines or 'INDIRIZZO' in prev_lines:
+                                employee_name = line_clean
+                                logger.info(f"Found employee (pattern 2): {employee_name}")
+                                break
+                
+                # Pattern 3: matricola + name (no CF)
+                if not employee_name:
                     for line in lines:
-                        match = re.match(r'(\d{7})\s+([A-Z]+\s+[A-Z]+)(?:\s+([A-Z]{16}))?', line)
+                        match = re.match(r'(\d{7})\s+([A-Z]+\s+[A-Z]+)', line)
                         if match:
                             employee_name = match.group(2).strip()
-                            logger.info(f"Employee: {employee_name}")
+                            logger.info(f"Found employee (pattern 3): {employee_name}")
                             break
-
-                    if not employee_name:
-                        logger.warning(f"No employee name found on page {page_num+1}")
-                        continue
-
-                    # Extract mansione
+                
+                # Extract codice fiscale if not found yet
+                if not codice_fiscale:
                     for line in lines:
-                        if any(keyword in line for keyword in ['CAMERIERE', 'CUOCO', 'BARISTA', 'AIUTO', 'LAVAPIATTI', 'CASSIERA']):
-                            for keyword in ['CAMERIERE', 'CUOCO', 'BARISTA', 'AIUTO CUOCO', 'AIUTO BARISTA', 'LAVAPIATTI', 'CASSIERA']:
-                                if keyword in line:
-                                    mansione = keyword
-                                    logger.info(f"  Mansione: {mansione}")
-                                    break
-                            if mansione:
-                                break
-
-                    # Extract contratto scadenza
+                        cf_match = re.search(r'\b([A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z])\b', line)
+                        if cf_match:
+                            codice_fiscale = cf_match.group(1)
+                            logger.info(f"Found CF: {codice_fiscale}")
+                            break
+                
+                if not employee_name:
+                    logger.warning(f"No employee name found on page {page_num+1}")
+                    continue
+                
+                # Initialize or get existing employee data
+                if employee_name not in employees_found:
+                    employees_found[employee_name] = {
+                        "nome": employee_name,
+                        "codice_fiscale": codice_fiscale,
+                        "netto": None,
+                        "acconto": 0.0,
+                        "differenza": 0.0,
+                        "note": "",
+                        "ore_ordinarie": 0.0,
+                        "mansione": None,
+                        "contratto_scadenza": None
+                    }
+                elif codice_fiscale and not employees_found[employee_name].get("codice_fiscale"):
+                    employees_found[employee_name]["codice_fiscale"] = codice_fiscale
+                
+                emp_data = employees_found[employee_name]
+                
+                # Extract ore ordinarie from presenze page
+                if is_presenze_page or emp_data["ore_ordinarie"] == 0.0:
                     for line in lines:
-                        if 'T.Deter.' in line or 'Contratto' in line or 'Scadenza' in line:
-                            date_match = re.search(r'(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})', line)
-                            if date_match:
-                                contratto_scadenza = normalize_date(date_match.group(1))
-                                logger.info(f"  Scadenza contratto: {contratto_scadenza}")
-                                break
-
-                    # Extract hours
-                    for line in lines:
-                        if 'Ore ordinarie' in line or ('Ore' in line and 'ordinarie' in line):
-                            hours_match = re.search(r'(\d+[.,]\d+)', line)
+                        # Pattern: "Ore ordinarie 80,00hm" or similar
+                        if 'Ore ordinarie' in line or 'ore ordinarie' in line.lower():
+                            hours_match = re.search(r'(\d+[,.]?\d*)\s*hm', line, re.IGNORECASE)
                             if hours_match:
                                 hours_str = hours_match.group(1).replace(',', '.')
-                                ore_ordinarie = safe_float(hours_str, 0.0)
-                                logger.info(f"  Ore: {ore_ordinarie}")
+                                ore = safe_float(hours_str, 0.0)
+                                if ore > 0:
+                                    emp_data["ore_ordinarie"] = ore
+                                    logger.info(f"  Ore ordinarie: {ore}")
+                                    break
+                            # Fallback: any number on the line
+                            hours_match = re.search(r'(\d+[,.]?\d+)', line)
+                            if hours_match:
+                                hours_str = hours_match.group(1).replace(',', '.')
+                                ore = safe_float(hours_str, 0.0)
+                                if 1 <= ore <= 250:
+                                    emp_data["ore_ordinarie"] = ore
+                                    logger.info(f"  Ore ordinarie (fallback): {ore}")
+                                    break
+                
+                # Extract mansione
+                if not emp_data["mansione"]:
+                    for line in lines:
+                        for keyword in ['CAMERIERE', 'CUOCO', 'BARISTA', 'AIUTO CUOCO', 'AIUTO BARISTA', 'LAVAPIATTI', 'CASSIERA', 'PIZZAIOLO']:
+                            if keyword in line.upper():
+                                emp_data["mansione"] = keyword
+                                logger.info(f"  Mansione: {keyword}")
+                                break
+                        if emp_data["mansione"]:
                             break
-
-                        if re.search(r'\d+\s+(\d+,\d{2})\s*$', line):
-                            parts = line.split()
-                            if len(parts) >= 2:
-                                try:
-                                    hours_str = parts[-1].replace(',', '.')
-                                    candidate_hours = safe_float(hours_str, 0.0)
-                                    if 1 <= candidate_hours <= 250:
-                                        ore_ordinarie = candidate_hours
-                                        logger.info(f"  Ore (da pattern): {ore_ordinarie}")
-                                        break
-                                except (ValueError, IndexError):
-                                    pass
-
-                    # Extract salary data
-                    for i, line in enumerate(lines):
+                
+                # Extract contratto scadenza
+                if not emp_data["contratto_scadenza"]:
+                    for line in lines:
+                        if 'T.Deter.' in line or 'Tir./Stag.' in line:
+                            date_match = re.search(r'(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})', line)
+                            if date_match:
+                                emp_data["contratto_scadenza"] = normalize_date(date_match.group(1))
+                                logger.info(f"  Scadenza contratto: {emp_data['contratto_scadenza']}")
+                                break
+                
+                # Extract salary data from cedolino page
+                if is_cedolino_page or emp_data["netto"] is None:
+                    # Extract acconto
+                    for line in lines:
                         if ('Recupero' in line and 'acconto' in line) or '000306' in line:
                             amounts = re.findall(r'(\d{1,3}(?:[.,]\d{3})*[.,]\d{2})', line)
                             if amounts:
-                                max_val = 0.0
                                 for amt in amounts:
                                     amt_clean = amt.replace('.', '').replace(',', '.')
                                     val = safe_float(amt_clean, 0.0)
-                                    if val > max_val:
-                                        max_val = val
-                                if max_val > 0:
-                                    acconto = max_val
-                                    logger.info(f"  Acconto: €{acconto}")
-
-                        if 'NETTO' in line and 'MESE' in line:
+                                    if val > emp_data["acconto"]:
+                                        emp_data["acconto"] = val
+                                        logger.info(f"  Acconto: €{val}")
+                    
+                    # Extract NETTO DEL MESE
+                    for i, line in enumerate(lines):
+                        if 'NETTO' in line.upper() and ('MESE' in line.upper() or 'DEL' in line.upper()):
+                            # Search in current and following lines
                             for j in range(i, min(i+5, len(lines))):
                                 search_line = lines[j]
                                 amounts = re.findall(r'(\d{1,3}(?:[.,]\d{3})*[.,]\d{2})', search_line)
                                 if amounts:
-                                    max_val = 0.0
                                     for amt in amounts:
                                         amt_clean = amt.replace('.', '').replace(',', '.')
                                         val = safe_float(amt_clean, 0.0)
-                                        if 0 <= val <= 10000 and val >= max_val:
-                                            max_val = val
-                                    if max_val >= 0:
-                                        netto_mese = max_val
-                            if netto_mese is not None:
-                                logger.info(f"  Netto: €{netto_mese}")
-                                break
-
-                    # Save employee data
-                    if employee_name and netto_mese is not None:
-                        netto_totale = acconto + netto_mese
-                        differenza = netto_mese
-
-                        if employee_name not in employees_found:
-                            employees_found[employee_name] = {
-                                "nome": employee_name,
-                                "netto": netto_totale,
-                                "acconto": acconto,
-                                "differenza": differenza,
-                                "note": f"Acconto: €{acconto:.2f}" if acconto > 0 else "Nessun acconto",
-                                "ore_ordinarie": ore_ordinarie,
-                                "mansione": mansione,
-                                "contratto_scadenza": contratto_scadenza
-                            }
+                                        # Accept values between 0 and 10000
+                                        if 0 <= val <= 10000:
+                                            if emp_data["netto"] is None or val > 0:
+                                                emp_data["netto"] = val
+                                                logger.info(f"  Netto: €{val}")
+                                                break
+                                if emp_data["netto"] is not None:
+                                    break
+                            break
+            
+            # Finalize employee data
+            for emp_name, emp_data in employees_found.items():
+                if emp_data["netto"] is not None:
+                    netto_totale = emp_data["acconto"] + emp_data["netto"]
+                    emp_data["netto"] = netto_totale
+                    emp_data["differenza"] = emp_data["netto"] - emp_data["acconto"]
+                    emp_data["note"] = f"Acconto: €{emp_data['acconto']:.2f}" if emp_data["acconto"] > 0 else "Nessun acconto"
 
         # Convert to lists
         employees_list: List[Dict[str, Any]] = []
