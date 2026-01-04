@@ -306,6 +306,60 @@ async def upload_fatture_xml_bulk(files: List[UploadFile] = File(...)) -> Dict[s
     return results
 
 
+@router.delete("/fatture/all")
+async def delete_all_invoices() -> Dict[str, Any]:
+    """Elimina tutte le fatture (usa con cautela!)."""
+    db = Database.get_db()
+    result = await db[Collections.INVOICES].delete_many({})
+    return {"success": True, "deleted_count": result.deleted_count}
+
+
+@router.post("/fatture/cleanup-duplicates")
+async def cleanup_duplicate_invoices() -> Dict[str, Any]:
+    """
+    Pulisce le fatture duplicate nel database.
+    Mantiene solo la prima fattura per ogni combinazione numero+piva+data.
+    """
+    db = Database.get_db()
+    
+    # Trova tutti i gruppi di fatture con stessa chiave
+    pipeline = [
+        {
+            "$group": {
+                "_id": {
+                    "invoice_number": "$invoice_number",
+                    "supplier_vat": "$supplier_vat", 
+                    "invoice_date": "$invoice_date"
+                },
+                "count": {"$sum": 1},
+                "ids": {"$push": "$id"},
+                "first_id": {"$first": "$id"}
+            }
+        },
+        {
+            "$match": {
+                "count": {"$gt": 1}
+            }
+        }
+    ]
+    
+    duplicates = await db[Collections.INVOICES].aggregate(pipeline).to_list(None)
+    
+    deleted_count = 0
+    for dup in duplicates:
+        # Elimina tutti tranne il primo
+        ids_to_delete = [id for id in dup["ids"] if id != dup["first_id"]]
+        if ids_to_delete:
+            result = await db[Collections.INVOICES].delete_many({"id": {"$in": ids_to_delete}})
+            deleted_count += result.deleted_count
+    
+    return {
+        "success": True,
+        "duplicate_groups_found": len(duplicates),
+        "deleted_count": deleted_count
+    }
+
+
 # ============== WAREHOUSE PRODUCTS ==============
 @router.get("/warehouse/products")
 async def list_products(
