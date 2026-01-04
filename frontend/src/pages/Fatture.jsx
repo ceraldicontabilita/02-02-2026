@@ -15,7 +15,7 @@ export default function Fatture() {
   const bulkFileInputRef = useRef(null);
   
   const METODI_PAGAMENTO = [
-    { value: "cassa", label: "💵 Cassa", color: "#4caf50" },
+    { value: "contanti", label: "💵 Contanti", color: "#4caf50" },
     { value: "banca", label: "🏦 Banca", color: "#2196f3" },
     { value: "bonifico", label: "🔄 Bonifico", color: "#9c27b0" },
     { value: "assegno", label: "📝 Assegno", color: "#ff9800" },
