@@ -123,8 +123,25 @@ UI aggiunta in `HACCPDashboard.jsx` con sezione "Stampa Report PDF per Ispezioni
 - Gestione duplicati: aggiorna solo dati mancanti
 - Endpoint: `POST /api/prima-nota-auto/import-assegni-from-estratto-conto`
 
+## Gestione Dipendenti Completa (04/01/2026)
+- ✅ Import dati da Excel: 23 dipendenti importati
+- ✅ Modifica dati anagrafici tramite modal
+- ✅ Campi: Nome, Cognome, CF, Data/Luogo Nascita, Indirizzo, Telefono, Email, IBAN, Mansione, Livello, Stipendio, Matricola
+- ✅ Tab "Genera Contratti" con 8 tipi documenti disponibili
+- ✅ Generazione automatica Word con dati dipendente
+
+### Contratti Disponibili
+1. Contratto a Tempo Determinato
+2. Contratto a Tempo Indeterminato
+3. Contratto Part-Time Determinato
+4. Contratto Part-Time Indeterminato
+5. Informativa D.Lgs. 152/1997
+6. Informativa Privacy
+7. Regolamento Interno Aziendale
+8. Richiesta Ferie
+
 ## Prossimi Miglioramenti
-- [ ] Generazione contratti dipendenti
+- [ ] Migliorare compilazione automatica campi contratto (pattern ……)
 
 ---
 
