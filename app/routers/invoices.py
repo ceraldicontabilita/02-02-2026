@@ -141,13 +141,12 @@ async def get_anni_disponibili() -> Dict[str, Any]:
     description="Get list of invoices with optional filters"
 )
 async def list_invoices(
-    pagination: Dict[str, Any] = Depends(pagination_params),
     supplier_vat: Optional[str] = Query(None, description="Filter by supplier VAT"),
     month_year: Optional[str] = Query(None, description="Filter by month (MM-YYYY)"),
     status: Optional[str] = Query(None, description="Filter by status"),
     anno: Optional[int] = Query(None, description="Filter by year (YYYY)"),
-    limit: Optional[int] = Query(None, description="Override limit"),
-    invoice_service: InvoiceService = Depends(get_invoice_service)
+    limit: int = Query(3000, description="Limit results"),
+    skip: int = Query(0, description="Skip results")
 ) -> List[Dict[str, Any]]:
     """
     List invoices with optional filters.
@@ -161,34 +160,20 @@ async def list_invoices(
     - **anno**: Filter by year (e.g., 2025)
     """
     db = Database.get_db()
+    query = {}
     
-    # Se anno è specificato, filtra direttamente dal database
+    # Se anno è specificato, filtra per anno
     if anno:
         anno_start = f"{anno}-01-01"
         anno_end = f"{anno}-12-31"
-        
-        query = {
-            "invoice_date": {"$gte": anno_start, "$lte": anno_end}
-        }
-        
-        if supplier_vat:
-            query["supplier_vat"] = supplier_vat
-        if status:
-            query["status"] = status
-        
-        actual_limit = limit or pagination.get("limit", 3000)
-        invoices = await db[Collections.INVOICES].find(query, {"_id": 0}).sort("invoice_date", -1).limit(actual_limit).to_list(actual_limit)
-        return invoices
+        query["invoice_date"] = {"$gte": anno_start, "$lte": anno_end}
     
-    # Senza filtro anno, restituisci tutte le fatture
-    actual_limit = limit or pagination.get("limit", 3000)
-    query = {}
     if supplier_vat:
         query["supplier_vat"] = supplier_vat
     if status:
         query["status"] = status
     
-    invoices = await db[Collections.INVOICES].find(query, {"_id": 0}).sort("invoice_date", -1).limit(actual_limit).to_list(actual_limit)
+    invoices = await db[Collections.INVOICES].find(query, {"_id": 0}).sort("invoice_date", -1).skip(skip).limit(limit).to_list(limit)
     return invoices
 
 
