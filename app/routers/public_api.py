@@ -1291,6 +1291,17 @@ async def _get_f24_dashboard_internal() -> Dict[str, Any]:
 @router.get("/f24/codici/all")
 async def get_f24_codici() -> Dict[str, Any]:
     """Restituisce tutti i codici tributo F24."""
+    return _get_f24_codici_internal()
+
+
+@router.get("/f24-public/codici")
+async def get_f24_codici_public() -> Dict[str, Any]:
+    """Restituisce tutti i codici tributo F24 - endpoint pubblico alternativo."""
+    return _get_f24_codici_internal()
+
+
+def _get_f24_codici_internal() -> Dict[str, Any]:
+    """Implementazione interna per codici tributo."""
     return {
         "codici": CODICI_TRIBUTO_F24,
         "sezioni": {
