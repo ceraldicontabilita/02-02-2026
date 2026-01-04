@@ -55,12 +55,47 @@ def clean_mongo_doc(doc: Dict[str, Any]) -> Dict[str, Any]:
     return doc
 
 
+# ============== ANNI DISPONIBILI ==============
+
+@router.get("/anni-disponibili")
+async def get_anni_disponibili() -> Dict[str, Any]:
+    """Restituisce gli anni per cui esistono movimenti in prima nota."""
+    db = Database.get_db()
+    
+    anni = set()
+    current_year = datetime.now().year
+    anni.add(current_year)  # Sempre includere anno corrente
+    
+    # Estrai anni da prima_nota_cassa
+    pipeline = [
+        {"$project": {"anno": {"$substr": ["$data", 0, 4]}}},
+        {"$group": {"_id": "$anno"}}
+    ]
+    
+    cassa_anni = await db[COLLECTION_PRIMA_NOTA_CASSA].aggregate(pipeline).to_list(100)
+    for doc in cassa_anni:
+        try:
+            anni.add(int(doc["_id"]))
+        except:
+            pass
+    
+    banca_anni = await db[COLLECTION_PRIMA_NOTA_BANCA].aggregate(pipeline).to_list(100)
+    for doc in banca_anni:
+        try:
+            anni.add(int(doc["_id"]))
+        except:
+            pass
+    
+    return {"anni": sorted(list(anni), reverse=True)}
+
+
 # ============== PRIMA NOTA CASSA ==============
 
 @router.get("/cassa")
 async def list_prima_nota_cassa(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=2500),
+    anno: Optional[int] = Query(None, description="Anno (es. 2024, 2025)"),
     data_da: Optional[str] = Query(None, description="Data inizio (YYYY-MM-DD)"),
     data_a: Optional[str] = Query(None, description="Data fine (YYYY-MM-DD)"),
     tipo: Optional[str] = Query(None, description="entrata o uscita"),
@@ -70,8 +105,16 @@ async def list_prima_nota_cassa(
     db = Database.get_db()
     
     query = {}
+    
+    # Filtro per anno
+    if anno:
+        anno_start = f"{anno}-01-01"
+        anno_end = f"{anno}-12-31"
+        query["data"] = {"$gte": anno_start, "$lte": anno_end}
+    
+    # Se ci sono filtri data specifici, sovrascrivono
     if data_da:
-        query["data"] = {"$gte": data_da}
+        query.setdefault("data", {})["$gte"] = data_da
     if data_a:
         query.setdefault("data", {})["$lte"] = data_a
     if tipo:
@@ -81,8 +124,10 @@ async def list_prima_nota_cassa(
     
     movimenti = await db[COLLECTION_PRIMA_NOTA_CASSA].find(query, {"_id": 0}).sort("data", -1).skip(skip).limit(limit).to_list(limit)
     
-    # Calcola saldo
+    # Calcola saldo per l'anno/periodo selezionato
+    match_stage = {"$match": query} if query else {"$match": {}}
     pipeline = [
+        match_stage,
         {"$group": {
             "_id": None,
             "entrate": {"$sum": {"$cond": [{"$eq": ["$tipo", "entrata"]}, "$importo", 0]}},
@@ -100,7 +145,8 @@ async def list_prima_nota_cassa(
         "saldo": saldo,
         "totale_entrate": totals[0].get("entrate", 0) if totals else 0,
         "totale_uscite": totals[0].get("uscite", 0) if totals else 0,
-        "count": len(movimenti)
+        "count": len(movimenti),
+        "anno": anno
     }
 
 
