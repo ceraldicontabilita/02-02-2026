@@ -338,6 +338,9 @@ export default function PrimaNota() {
         />
       )}
 
+      {/* Quick Entry Panel - Chiusure Giornaliere */}
+      <QuickEntryPanel onDataSaved={loadData} />
+
       {/* Summary Cards */}
       <PrimaNotaSummaryCards stats={stats} formatCurrency={formatCurrency} />
 
