@@ -577,18 +577,6 @@ async def get_bank_statement_movements(
         "saldo": totale_entrate - totale_uscite
     }
 
-                "data_riconciliazione": datetime.utcnow().isoformat(),
-                "estratto_conto_ref": movement.get("descrizione", "")[:100]
-            }}
-        )
-        return {
-            "movimento_id": match["id"],
-            "descrizione": match.get("descrizione", ""),
-            "importo": match.get("importo", 0)
-        }
-    
-    return None
-
 
 # ============== API ENDPOINTS ==============
 
