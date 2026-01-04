@@ -74,7 +74,8 @@ from app.routers import (
     portal_extended, admin_extended, pianificazione_extended,
     cash_register_extended, magazzino_products, orders_extended, assegni_extended,
     invoices_export, finanziaria,
-    public_api
+    public_api,
+    comparatore
 )
 
 # Include public API first (no auth required)
