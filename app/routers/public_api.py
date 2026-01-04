@@ -1680,6 +1680,64 @@ async def list_corrispettivi(skip: int = 0, limit: int = 10000) -> List[Dict[str
     return corrispettivi
 
 
+@router.post("/corrispettivi/ricalcola-iva")
+async def ricalcola_iva_corrispettivi() -> Dict[str, Any]:
+    """
+    Ricalcola IVA su tutti i corrispettivi esistenti.
+    Applica scorporo al 10% dove l'IVA è 0 ma il totale > 0.
+    """
+    db = Database.get_db()
+    
+    # Trova corrispettivi con IVA = 0 ma totale > 0
+    corrispettivi = await db["corrispettivi"].find(
+        {
+            "$or": [
+                {"totale_iva": 0},
+                {"totale_iva": {"$exists": False}},
+                {"totale_iva": None}
+            ],
+            "totale": {"$gt": 0}
+        },
+        {"_id": 0}
+    ).to_list(10000)
+    
+    updated = 0
+    errors = 0
+    
+    for corr in corrispettivi:
+        try:
+            totale = float(corr.get("totale", 0) or 0)
+            if totale <= 0:
+                continue
+            
+            # Scorporo IVA al 10%
+            iva_calcolata = totale - (totale / 1.10)
+            imponibile_calcolato = totale / 1.10
+            
+            # Aggiorna nel database
+            await db["corrispettivi"].update_one(
+                {"id": corr.get("id")},
+                {"$set": {
+                    "totale_iva": round(iva_calcolata, 2),
+                    "totale_imponibile": round(imponibile_calcolato, 2),
+                    "iva_calcolata_scorporo": True,
+                    "aliquota_iva_applicata": 10.0
+                }}
+            )
+            updated += 1
+            
+        except Exception as e:
+            logger.error(f"Errore ricalcolo IVA corrispettivo {corr.get('id')}: {e}")
+            errors += 1
+    
+    return {
+        "success": True,
+        "updated": updated,
+        "errors": errors,
+        "message": f"IVA ricalcolata su {updated} corrispettivi (scorporo 10%)"
+    }
+
+
 @router.post("/corrispettivi/upload-xml")
 async def upload_corrispettivo_xml(file: UploadFile = File(...)) -> Dict[str, Any]:
     """
