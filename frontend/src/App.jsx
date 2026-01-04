@@ -175,6 +175,50 @@ export default function App() {
 
       {/* Main Content */}
       <main className="content">
+        {/* Alert Commercialista */}
+        {alertCommercialista && (
+          <div style={{
+            background: 'linear-gradient(135deg, #ff9800 0%, #f57c00 100%)',
+            color: 'white',
+            padding: '12px 20px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 15,
+            marginBottom: 0
+          }}>
+            <span style={{ fontSize: 24 }}>⚠️</span>
+            <div style={{ flex: 1 }}>
+              <strong>{alertCommercialista.message}</strong>
+            </div>
+            <NavLink 
+              to="/commercialista" 
+              style={{
+                padding: '8px 16px',
+                background: 'white',
+                color: '#f57c00',
+                borderRadius: 6,
+                fontWeight: 'bold',
+                textDecoration: 'none',
+                fontSize: 13
+              }}
+            >
+              Vai a Commercialista
+            </NavLink>
+            <button
+              onClick={() => setAlertCommercialista(null)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: 'white',
+                fontSize: 18,
+                cursor: 'pointer',
+                padding: 5
+              }}
+            >
+              ✕
+            </button>
+          </div>
+        )}
         <Outlet />
       </main>
 
