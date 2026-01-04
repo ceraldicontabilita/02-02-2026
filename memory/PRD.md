@@ -148,6 +148,23 @@ UI aggiunta in `HACCPDashboard.jsx` con sezione "Stampa Report PDF per Ispezioni
 7. Regolamento Interno Aziendale
 8. Richiesta Ferie
 
+## Parser PDF Buste Paga (04/01/2026)
+- ✅ Parser multi-formato per buste paga PDF:
+  - Formato Zucchetti LUL (Libro Unico del Lavoro)
+  - Formato Smart Forms (buste paga singole)
+- ✅ Estrazione dati atomici:
+  - Nome completo, Codice Fiscale
+  - Periodo (mese/anno)
+  - Retribuzione Netta ("Netto in Busta")
+  - Ore ordinarie, Qualifica
+- ✅ Inserimento automatico in Prima Nota Cassa:
+  - Categoria: "Salari"
+  - Tipo: "uscita"
+  - Data: ultimo giorno del mese
+  - Source: "payslip_import"
+- ✅ Evita duplicati tramite chiave `payslip_key`
+- File: `/app/app/parsers/payslip_parser.py`, `/app/app/routers/employees_payroll.py`
+
 ## Prossimi Miglioramenti
 - [ ] Migliorare compilazione automatica campi contratto (pattern ……)
 
