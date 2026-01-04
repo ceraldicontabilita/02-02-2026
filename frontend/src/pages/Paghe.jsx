@@ -279,7 +279,7 @@ export default function Paghe() {
       {selectedEmployee && (
         <div className="card" style={{ background: "#f5f5f5" }}>
           <div className="h1">
-            {selectedEmployee.name}
+            {selectedEmployee.nome_completo || selectedEmployee.codice_fiscale || selectedEmployee.name}
             <button onClick={() => setSelectedEmployee(null)} style={{ float: "right" }}>✕</button>
           </div>
           
