@@ -7,9 +7,10 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime
 import uuid
 import logging
+import traceback
 
 from app.database import Database, Collections
-from app.parsers.fattura_elettronica_parser import parse_fattura_xml, parse_multiple_fatture
+from app.parsers.fattura_elettronica_parser import parse_fattura_xml
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -17,7 +18,15 @@ router = APIRouter()
 
 def generate_invoice_key(invoice_number: str, supplier_vat: str, invoice_date: str) -> str:
     """Genera chiave univoca per fattura: numero_piva_data"""
-    return f"{invoice_number}_{supplier_vat}_{invoice_date}".replace(" ", "").upper()
+    key = f"{invoice_number}_{supplier_vat}_{invoice_date}"
+    return key.replace(" ", "").replace("/", "-").upper()
+
+
+def clean_mongo_doc(doc: Dict[str, Any]) -> Dict[str, Any]:
+    """Rimuove _id da documento MongoDB per serializzazione JSON."""
+    if doc and "_id" in doc:
+        doc.pop("_id", None)
+    return doc
 
 
 # ============== FATTURE XML UPLOAD ==============
