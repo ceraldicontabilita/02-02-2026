@@ -614,25 +614,26 @@ export default function ControlloMensile() {
       {/* Year View - Monthly Table */}
       {viewMode === 'anno' && (
         <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }} data-testid="yearly-table">
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }} data-testid="yearly-table">
             <thead>
               <tr style={{ background: '#f8fafc' }}>
-                <th style={{ padding: 12, textAlign: 'left', borderBottom: '2px solid #e2e8f0' }}>Mese</th>
-                <th style={{ padding: 12, textAlign: 'right', borderBottom: '2px solid #e2e8f0', background: '#dbeafe' }}>POS Auto</th>
-                <th style={{ padding: 12, textAlign: 'right', borderBottom: '2px solid #e2e8f0', background: '#ede9fe' }}>POS Manuale</th>
-                <th style={{ padding: 12, textAlign: 'right', borderBottom: '2px solid #e2e8f0' }}>Diff. POS</th>
-                <th style={{ padding: 12, textAlign: 'right', borderBottom: '2px solid #e2e8f0', background: '#fef3c7' }}>Corrisp. Auto</th>
-                <th style={{ padding: 12, textAlign: 'right', borderBottom: '2px solid #e2e8f0', background: '#d1fae5' }}>Corrisp. Man.</th>
-                <th style={{ padding: 12, textAlign: 'right', borderBottom: '2px solid #e2e8f0' }}>Diff. Corr.</th>
-                <th style={{ padding: 12, textAlign: 'right', borderBottom: '2px solid #e2e8f0', background: '#ecfdf5' }}>Versamenti</th>
-                <th style={{ padding: 12, textAlign: 'right', borderBottom: '2px solid #e2e8f0', background: '#e0f2fe' }}>Saldo Cassa</th>
-                <th style={{ padding: 12, textAlign: 'center', borderBottom: '2px solid #e2e8f0' }}>Dettagli</th>
+                <th style={{ padding: 10, textAlign: 'left', borderBottom: '2px solid #e2e8f0' }}>Mese</th>
+                <th style={{ padding: 10, textAlign: 'right', borderBottom: '2px solid #e2e8f0', background: '#dbeafe' }}>POS Auto</th>
+                <th style={{ padding: 10, textAlign: 'right', borderBottom: '2px solid #e2e8f0', background: '#ede9fe' }}>POS Cassa</th>
+                <th style={{ padding: 10, textAlign: 'right', borderBottom: '2px solid #e2e8f0', background: '#fce7f3' }}>🏦 POS Banca</th>
+                <th style={{ padding: 10, textAlign: 'right', borderBottom: '2px solid #e2e8f0' }}>Diff.</th>
+                <th style={{ padding: 10, textAlign: 'right', borderBottom: '2px solid #e2e8f0', background: '#fef3c7' }}>Corr. Auto</th>
+                <th style={{ padding: 10, textAlign: 'right', borderBottom: '2px solid #e2e8f0', background: '#d1fae5' }}>Corr. Man.</th>
+                <th style={{ padding: 10, textAlign: 'right', borderBottom: '2px solid #e2e8f0' }}>Diff.</th>
+                <th style={{ padding: 10, textAlign: 'right', borderBottom: '2px solid #e2e8f0', background: '#ecfdf5' }}>Versam.</th>
+                <th style={{ padding: 10, textAlign: 'right', borderBottom: '2px solid #e2e8f0', background: '#e0f2fe' }}>Saldo</th>
+                <th style={{ padding: 10, textAlign: 'center', borderBottom: '2px solid #e2e8f0' }}></th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="10" style={{ textAlign: 'center', padding: 40 }}>
+                  <td colSpan="11" style={{ textAlign: 'center', padding: 40 }}>
                     ⏳ Caricamento dati...
                   </td>
                 </tr>
@@ -646,38 +647,44 @@ export default function ControlloMensile() {
                     }}
                     data-testid={`row-month-${row.month}`}
                   >
-                    <td style={{ padding: 12, borderBottom: '1px solid #e2e8f0', fontWeight: 600 }}>
+                    <td style={{ padding: 10, borderBottom: '1px solid #e2e8f0', fontWeight: 600 }}>
                       {row.monthName}
                     </td>
-                    <td style={{ padding: 12, borderBottom: '1px solid #e2e8f0', textAlign: 'right', background: '#f0f9ff' }}>
+                    <td style={{ padding: 10, borderBottom: '1px solid #e2e8f0', textAlign: 'right', background: '#f0f9ff' }}>
                       {row.posAuto > 0 ? formatCurrency(row.posAuto) : '-'}
                     </td>
-                    <td style={{ padding: 12, borderBottom: '1px solid #e2e8f0', textAlign: 'right', background: '#faf5ff' }}>
+                    <td style={{ padding: 10, borderBottom: '1px solid #e2e8f0', textAlign: 'right', background: '#faf5ff' }}>
                       {row.posManual > 0 ? formatCurrency(row.posManual) : '-'}
                     </td>
+                    <td style={{ padding: 10, borderBottom: '1px solid #e2e8f0', textAlign: 'right', background: '#fdf2f8' }}>
+                      {row.posBanca > 0 ? formatCurrency(row.posBanca) : '-'}
+                    </td>
                     <td style={{ 
-                      padding: 12, 
+                      padding: 10, 
                       borderBottom: '1px solid #e2e8f0', 
                       textAlign: 'right',
-                      fontWeight: Math.abs(row.posDiff) > 1 ? 'bold' : 'normal',
-                      color: Math.abs(row.posDiff) > 1 ? (row.posDiff > 0 ? '#16a34a' : '#dc2626') : '#666'
+                      fontWeight: Math.abs(row.posBancaDiff) > 1 ? 'bold' : 'normal',
+                      color: Math.abs(row.posBancaDiff) > 1 ? (row.posBancaDiff > 0 ? '#16a34a' : '#dc2626') : '#666',
+                      fontSize: 12
                     }}>
-                      {Math.abs(row.posDiff) > 0.01 ? (
-                        <span>{row.posDiff > 0 ? '+' : ''}{formatCurrency(row.posDiff)}</span>
+                      {Math.abs(row.posBancaDiff) > 0.01 ? (
+                        <span title="POS Banca - POS Auto (XML)">{row.posBancaDiff > 0 ? '+' : ''}{formatCurrency(row.posBancaDiff)}</span>
                       ) : '-'}
                     </td>
-                    <td style={{ padding: 12, borderBottom: '1px solid #e2e8f0', textAlign: 'right', background: '#fffbeb' }}>
+                    <td style={{ padding: 10, borderBottom: '1px solid #e2e8f0', textAlign: 'right', background: '#fffbeb' }}>
                       {row.corrispAuto > 0 ? formatCurrency(row.corrispAuto) : '-'}
                     </td>
-                    <td style={{ padding: 12, borderBottom: '1px solid #e2e8f0', textAlign: 'right', background: '#ecfdf5' }}>
+                    <td style={{ padding: 10, borderBottom: '1px solid #e2e8f0', textAlign: 'right', background: '#ecfdf5' }}>
                       {row.corrispManual > 0 ? formatCurrency(row.corrispManual) : '-'}
                     </td>
                     <td style={{ 
-                      padding: 12, 
+                      padding: 10, 
                       borderBottom: '1px solid #e2e8f0', 
                       textAlign: 'right',
                       fontWeight: Math.abs(row.corrispDiff) > 1 ? 'bold' : 'normal',
-                      color: Math.abs(row.corrispDiff) > 1 ? (row.corrispDiff > 0 ? '#16a34a' : '#dc2626') : '#666'
+                      color: Math.abs(row.corrispDiff) > 1 ? (row.corrispDiff > 0 ? '#16a34a' : '#dc2626') : '#666',
+                      fontSize: 12
+                    }}>
                     }}>
                       {Math.abs(row.corrispDiff) > 0.01 ? (
                         <span>{row.corrispDiff > 0 ? '+' : ''}{formatCurrency(row.corrispDiff)}</span>
