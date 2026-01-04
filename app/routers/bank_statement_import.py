@@ -1,9 +1,10 @@
 """
 Bank Statement Import Router - Import estratto conto bancario.
 Parsa PDF/Excel/CSV estratto conto e riconcilia con Prima Nota Banca.
+Supporta formati: Intesa Sanpaolo, UniCredit, BNL, Banca Sella, generico.
 """
 from fastapi import APIRouter, HTTPException, UploadFile, File, Query
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Tuple
 from datetime import datetime
 import uuid
 import logging
@@ -20,90 +21,93 @@ COLLECTION_PRIMA_NOTA_BANCA = "prima_nota_banca"
 COLLECTION_BANK_STATEMENTS = "bank_statements_imported"
 
 
+# ============== UTILITY FUNCTIONS ==============
+
 def parse_italian_amount(amount_str: str) -> float:
     """Converte importo italiano (es. -704,7 o 1.530,9) in float."""
     if not amount_str:
         return 0.0
     amount_str = str(amount_str).strip()
-    # Rimuovi simbolo valuta
-    amount_str = amount_str.replace("€", "").replace("EUR", "").strip()
+    # Rimuovi simbolo valuta e spazi
+    amount_str = re.sub(r'[€EUR\s]', '', amount_str)
+    # Gestisci segno negativo in diverse posizioni
+    is_negative = '-' in amount_str or amount_str.endswith('-')
+    amount_str = amount_str.replace('-', '')
     # Rimuovi punti come separatore migliaia
     amount_str = amount_str.replace(".", "")
     # Sostituisci virgola con punto per decimali
     amount_str = amount_str.replace(",", ".")
     try:
-        return float(amount_str)
+        value = float(amount_str)
+        return -value if is_negative else value
     except:
         return 0.0
 
 
 def parse_italian_date(date_str: str) -> str:
-    """Converte data italiana (gg/mm/aaaa) in formato ISO (YYYY-MM-DD)."""
+    """Converte data italiana (gg/mm/aaaa o gg-mm-aaaa) in formato ISO (YYYY-MM-DD)."""
     if not date_str:
         return ""
     try:
         date_str = str(date_str).strip()
+        
+        # Formato gg/mm/aaaa o gg/mm/aa
         if "/" in date_str:
             parts = date_str.split("/")
             if len(parts) == 3:
-                day, month, year = parts
+                day, month, year = parts[0][:2], parts[1][:2], parts[2][:4]
                 if len(year) == 2:
-                    year = "20" + year
+                    year = "20" + year if int(year) < 50 else "19" + year
                 return f"{year}-{month.zfill(2)}-{day.zfill(2)}"
-        elif "-" in date_str and len(date_str) >= 10:
-            return date_str[:10]
+        
+        # Formato gg-mm-aaaa
+        elif "-" in date_str:
+            parts = date_str.split("-")
+            if len(parts) == 3:
+                # Check if already ISO format
+                if len(parts[0]) == 4:
+                    return date_str[:10]
+                day, month, year = parts[0][:2], parts[1][:2], parts[2][:4]
+                if len(year) == 2:
+                    year = "20" + year if int(year) < 50 else "19" + year
+                return f"{year}-{month.zfill(2)}-{day.zfill(2)}"
+        
+        # Formato ggmmaaaa (senza separatori)
+        elif len(date_str) == 8 and date_str.isdigit():
+            return f"{date_str[4:8]}-{date_str[2:4]}-{date_str[0:2]}"
+        
         return date_str
     except:
         return date_str
 
 
-def extract_movements_from_pdf(content: bytes) -> List[Dict[str, Any]]:
-    """Estrae movimenti da PDF estratto conto."""
-    import pdfplumber
+def detect_bank_format(text: str, tables: List) -> str:
+    """Rileva il formato bancario dal contenuto."""
+    text_upper = text.upper() if text else ""
     
-    movements = []
-    
-    with pdfplumber.open(io.BytesIO(content)) as pdf:
-        for page in pdf.pages:
-            # Extract tables
-            tables = page.extract_tables()
-            for table in tables:
-                if not table:
-                    continue
-                
-                # Skip header rows
-                for row in table:
-                    if not row or len(row) < 3:
-                        continue
-                    
-                    row_text = ' '.join([str(c) if c else '' for c in row]).upper()
-                    
-                    # Skip header rows
-                    if any(h in row_text for h in ['DATA', 'VALUTA', 'DESCRIZIONE', 'SALDO', 'CAUSALE']):
-                        continue
-                    
-                    movement = parse_table_row(row)
-                    if movement:
-                        movements.append(movement)
-            
-            # Also extract text for line-by-line parsing
-            text = page.extract_text()
-            if text:
-                text_movements = parse_text_movements(text)
-                movements.extend(text_movements)
-    
-    return movements
+    if "INTESA SANPAOLO" in text_upper or "GRUPPO INTESA" in text_upper:
+        return "intesa"
+    elif "UNICREDIT" in text_upper:
+        return "unicredit"
+    elif "BNL" in text_upper or "PARIBAS" in text_upper:
+        return "bnl"
+    elif "BANCA SELLA" in text_upper:
+        return "sella"
+    elif "CREDITO EMILIANO" in text_upper or "CREDEM" in text_upper:
+        return "credem"
+    elif "MONTE DEI PASCHI" in text_upper or "MPS" in text_upper:
+        return "mps"
+    else:
+        return "generic"
 
 
-def parse_table_row(row: List[Any]) -> Optional[Dict[str, Any]]:
-    """Parsa una riga di tabella estratto conto."""
-    if not row or len(row) < 3:
+# ============== BANK-SPECIFIC PARSERS ==============
+
+def parse_intesa_row(row: List[Any]) -> Optional[Dict[str, Any]]:
+    """Parser per formato Intesa Sanpaolo."""
+    # Formato tipico: Data Contabile | Data Valuta | Descrizione | Dare | Avere | Saldo
+    if len(row) < 4:
         return None
-    
-    # Common PDF table formats:
-    # Format 1: [Data Contabile, Data Valuta, Descrizione, Dare/Avere, Saldo]
-    # Format 2: [Data, Descrizione, Entrate, Uscite, Saldo]
-    # Format 3: [Data, Causale, Descrizione, Importo]
     
     data = None
     descrizione = ""
@@ -115,57 +119,192 @@ def parse_table_row(row: List[Any]) -> Optional[Dict[str, Any]]:
             continue
         cell_str = str(cell).strip()
         
-        # Try to find date
+        # Prima e seconda colonna sono date
+        if idx < 2 and not data:
+            date_match = re.search(r'(\d{2}[/-]\d{2}[/-]\d{2,4})', cell_str)
+            if date_match:
+                data = parse_italian_date(date_match.group(1))
+        
+        # Colonna descrizione (solitamente la 3a)
+        elif idx == 2 or (len(cell_str) > 10 and not cell_str.replace('.', '').replace(',', '').replace('-', '').replace(' ', '').isdigit()):
+            descrizione = cell_str[:200]
+        
+        # Colonne Dare/Avere (importi)
+        elif idx >= 3:
+            parsed = parse_italian_amount(cell_str)
+            if abs(parsed) > 0:
+                if idx == 3:  # Dare = uscita
+                    tipo = "uscita"
+                    importo = abs(parsed)
+                elif idx == 4:  # Avere = entrata
+                    tipo = "entrata"
+                    importo = abs(parsed)
+    
+    if data and importo > 0:
+        return {"data": data, "descrizione": descrizione, "importo": importo, "tipo": tipo}
+    return None
+
+
+def parse_unicredit_row(row: List[Any]) -> Optional[Dict[str, Any]]:
+    """Parser per formato UniCredit."""
+    # Formato tipico: Data | Valuta | Descrizione Operazione | Importo
+    if len(row) < 3:
+        return None
+    
+    data = None
+    descrizione = ""
+    importo = 0.0
+    tipo = "uscita"
+    
+    for idx, cell in enumerate(row):
+        if not cell:
+            continue
+        cell_str = str(cell).strip()
+        
+        if idx == 0:
+            date_match = re.search(r'(\d{2}[/-]\d{2}[/-]\d{2,4})', cell_str)
+            if date_match:
+                data = parse_italian_date(date_match.group(1))
+        elif idx == 2:
+            descrizione = cell_str[:200]
+        elif idx >= 3:
+            parsed = parse_italian_amount(cell_str)
+            if abs(parsed) > 0:
+                importo = abs(parsed)
+                tipo = "uscita" if parsed < 0 or '-' in cell_str else "entrata"
+    
+    if data and importo > 0:
+        return {"data": data, "descrizione": descrizione, "importo": importo, "tipo": tipo}
+    return None
+
+
+def parse_generic_row(row: List[Any]) -> Optional[Dict[str, Any]]:
+    """Parser generico per qualsiasi formato."""
+    if not row or len(row) < 3:
+        return None
+    
+    data = None
+    descrizione = ""
+    importo = 0.0
+    tipo = "uscita"
+    
+    for idx, cell in enumerate(row):
+        if not cell:
+            continue
+        cell_str = str(cell).strip()
+        
+        # Cerca data
         if not data:
-            date_match = re.search(r'(\d{2}/\d{2}/\d{2,4})', cell_str)
+            date_match = re.search(r'(\d{2}[/-]\d{2}[/-]\d{2,4})', cell_str)
             if date_match:
                 data = parse_italian_date(date_match.group(1))
                 continue
         
-        # Try to find amount (negative or positive)
-        amount_match = re.search(r'^-?\s*\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{2})?$', cell_str.replace(' ', ''))
+        # Cerca importo (pattern numerico)
+        amount_match = re.match(r'^-?\s*\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{1,2})?$', cell_str.replace(' ', ''))
         if amount_match:
-            parsed_amount = parse_italian_amount(cell_str)
-            if abs(parsed_amount) > 0:
-                if parsed_amount < 0 or '-' in cell_str:
+            parsed = parse_italian_amount(cell_str)
+            if abs(parsed) > 0.01:  # Ignora importi troppo piccoli
+                if parsed < 0 or '-' in cell_str:
                     tipo = "uscita"
-                    importo = abs(parsed_amount)
                 else:
                     tipo = "entrata"
-                    importo = parsed_amount
+                importo = abs(parsed)
                 continue
         
-        # Assume it's description
-        if len(cell_str) > 5 and not cell_str.replace('.', '').replace(',', '').isdigit():
+        # Descrizione (testo lungo non numerico)
+        if len(cell_str) > 5 and not cell_str.replace('.', '').replace(',', '').replace('-', '').replace(' ', '').isdigit():
             descrizione = (descrizione + " " + cell_str).strip()[:200]
     
     if data and importo > 0:
-        return {
-            "data": data,
-            "descrizione": descrizione or "Movimento estratto conto",
-            "importo": importo,
-            "tipo": tipo
-        }
-    
+        return {"data": data, "descrizione": descrizione or "Movimento estratto conto", "importo": importo, "tipo": tipo}
     return None
 
 
-def parse_text_movements(text: str) -> List[Dict[str, Any]]:
-    """Parsa movimenti da testo estratto conto."""
+# ============== PDF EXTRACTION ==============
+
+def extract_movements_from_pdf(content: bytes) -> List[Dict[str, Any]]:
+    """Estrae movimenti da PDF estratto conto con rilevamento automatico formato."""
+    import pdfplumber
+    
+    movements = []
+    bank_format = "generic"
+    all_text = ""
+    
+    with pdfplumber.open(io.BytesIO(content)) as pdf:
+        # Prima passata: rileva il formato
+        for page in pdf.pages[:2]:
+            text = page.extract_text()
+            if text:
+                all_text += text
+        
+        bank_format = detect_bank_format(all_text, [])
+        logger.info(f"Detected bank format: {bank_format}")
+        
+        # Seconda passata: estrai movimenti
+        for page in pdf.pages:
+            tables = page.extract_tables()
+            
+            for table in tables:
+                if not table:
+                    continue
+                
+                header_found = False
+                for row in table:
+                    if not row or len(row) < 3:
+                        continue
+                    
+                    row_text = ' '.join([str(c) if c else '' for c in row]).upper()
+                    
+                    # Skip header rows
+                    if any(h in row_text for h in ['DATA CONTABILE', 'DATA VALUTA', 'DESCRIZIONE', 'OPERAZIONE', 'SALDO']):
+                        header_found = True
+                        continue
+                    
+                    # Skip empty or summary rows
+                    if 'SALDO INIZIALE' in row_text or 'SALDO FINALE' in row_text or 'TOTALE' in row_text:
+                        continue
+                    
+                    # Parse row based on detected format
+                    movement = None
+                    if bank_format == "intesa":
+                        movement = parse_intesa_row(row)
+                    elif bank_format == "unicredit":
+                        movement = parse_unicredit_row(row)
+                    else:
+                        movement = parse_generic_row(row)
+                    
+                    if movement:
+                        movement["bank_format"] = bank_format
+                        movements.append(movement)
+            
+            # Fallback: parse text line by line
+            if not movements:
+                text = page.extract_text()
+                if text:
+                    text_movements = parse_text_movements(text, bank_format)
+                    movements.extend(text_movements)
+    
+    return movements
+
+
+def parse_text_movements(text: str, bank_format: str = "generic") -> List[Dict[str, Any]]:
+    """Parsa movimenti da testo estratto conto (fallback)."""
     movements = []
     lines = text.split('\n')
     
     for line in lines:
         line = line.strip()
-        if not line or len(line) < 10:
+        if not line or len(line) < 15:
             continue
         
-        # Skip headers
-        if any(h in line.upper() for h in ['DATA CONTABILE', 'DATA VALUTA', 'SALDO INIZIALE', 'SALDO FINALE']):
+        # Skip headers and footers
+        line_upper = line.upper()
+        if any(h in line_upper for h in ['DATA CONTABILE', 'SALDO INIZIALE', 'SALDO FINALE', 'TOTALE MOVIMENTI', 'PAGINA']):
             continue
         
-        # Try to find date and amount in same line
-        date_match = re.search(r'(\d{2}/\d{2}/\d{2,4})', line)
+        # Pattern: cerca data e importo nella stessa riga
+        date_match = re.search(r'(\d{2}[/-]\d{2}[/-]\d{2,4})', line)
         amount_match = re.search(r'(-?\s*\d{1,3}(?:\.\d{3})*,\d{2})\s*$', line)
         
         if date_match and amount_match:
@@ -173,11 +312,14 @@ def parse_text_movements(text: str) -> List[Dict[str, Any]]:
             importo_str = amount_match.group(1)
             importo = parse_italian_amount(importo_str)
             
-            if abs(importo) > 0:
-                # Extract description (between date and amount)
+            if abs(importo) > 0.01:
+                # Estrai descrizione (tra data e importo)
                 start = date_match.end()
                 end = amount_match.start()
                 descrizione = line[start:end].strip()[:200]
+                
+                # Rimuovi eventuali date extra dalla descrizione
+                descrizione = re.sub(r'\d{2}[/-]\d{2}[/-]\d{2,4}', '', descrizione).strip()
                 
                 tipo = "uscita" if importo < 0 or '-' in importo_str else "entrata"
                 
@@ -185,11 +327,14 @@ def parse_text_movements(text: str) -> List[Dict[str, Any]]:
                     "data": data,
                     "descrizione": descrizione or "Movimento estratto conto",
                     "importo": abs(importo),
-                    "tipo": tipo
+                    "tipo": tipo,
+                    "bank_format": bank_format
                 })
     
     return movements
 
+
+# ============== EXCEL/CSV EXTRACTION ==============
 
 def extract_movements_from_excel(content: bytes, filename: str) -> List[Dict[str, Any]]:
     """Estrae movimenti da Excel/CSV estratto conto."""
@@ -198,80 +343,34 @@ def extract_movements_from_excel(content: bytes, filename: str) -> List[Dict[str
     movements = []
     
     try:
+        # Load file
         if filename.lower().endswith('.csv'):
-            for encoding in ['utf-8', 'latin-1', 'cp1252']:
-                try:
-                    df = pd.read_csv(io.BytesIO(content), sep=';', encoding=encoding)
+            for encoding in ['utf-8', 'latin-1', 'cp1252', 'iso-8859-1']:
+                for sep in [';', ',', '\t']:
+                    try:
+                        df = pd.read_csv(io.BytesIO(content), sep=sep, encoding=encoding)
+                        if len(df.columns) >= 3:
+                            break
+                    except:
+                        continue
+                if len(df.columns) >= 3:
                     break
-                except:
-                    continue
         elif filename.lower().endswith('.xls'):
             df = pd.read_excel(io.BytesIO(content), engine='xlrd')
         else:
             df = pd.read_excel(io.BytesIO(content), engine='openpyxl')
         
         # Normalize column names
-        df.columns = df.columns.str.lower().str.strip()
+        df.columns = df.columns.str.lower().str.strip().str.replace(' ', '_')
         
-        # Find relevant columns
-        date_cols = [c for c in df.columns if any(d in c for d in ['data', 'date', 'valuta'])]
-        desc_cols = [c for c in df.columns if any(d in c for d in ['descrizione', 'causale', 'description', 'operazione'])]
-        amount_cols = [c for c in df.columns if any(a in c for a in ['importo', 'amount', 'dare', 'avere', 'entrate', 'uscite'])]
+        # Map columns
+        col_mapping = identify_columns(df.columns.tolist())
         
         for idx, row in df.iterrows():
             try:
-                # Get date
-                data = None
-                for col in date_cols:
-                    val = row.get(col)
-                    if pd.notna(val):
-                        if isinstance(val, datetime):
-                            data = val.strftime("%Y-%m-%d")
-                        else:
-                            data = parse_italian_date(str(val))
-                        if data:
-                            break
-                
-                if not data:
-                    continue
-                
-                # Get description
-                descrizione = ""
-                for col in desc_cols:
-                    val = row.get(col)
-                    if pd.notna(val):
-                        descrizione = str(val)[:200]
-                        break
-                
-                # Get amount and type
-                importo = 0.0
-                tipo = "uscita"
-                
-                # Try specific columns first
-                for col in amount_cols:
-                    val = row.get(col)
-                    if pd.notna(val):
-                        parsed = parse_italian_amount(str(val))
-                        if abs(parsed) > 0:
-                            if 'uscite' in col or 'dare' in col:
-                                tipo = "uscita"
-                            elif 'entrate' in col or 'avere' in col:
-                                tipo = "entrata"
-                            elif parsed < 0:
-                                tipo = "uscita"
-                            else:
-                                tipo = "entrata"
-                            importo = abs(parsed)
-                            break
-                
-                if data and importo > 0:
-                    movements.append({
-                        "data": data,
-                        "descrizione": descrizione or f"Movimento del {data}",
-                        "importo": importo,
-                        "tipo": tipo
-                    })
-                    
+                movement = extract_row_data(row, col_mapping)
+                if movement:
+                    movements.append(movement)
             except Exception as e:
                 logger.warning(f"Error parsing row {idx}: {e}")
                 continue
@@ -281,6 +380,108 @@ def extract_movements_from_excel(content: bytes, filename: str) -> List[Dict[str
     
     return movements
 
+
+def identify_columns(columns: List[str]) -> Dict[str, str]:
+    """Identifica le colonne rilevanti nel file Excel/CSV."""
+    mapping = {
+        "date": None,
+        "description": None,
+        "amount": None,
+        "debit": None,
+        "credit": None,
+        "type": None
+    }
+    
+    date_keywords = ['data', 'date', 'valuta', 'contabile']
+    desc_keywords = ['descrizione', 'causale', 'description', 'operazione', 'movimento']
+    amount_keywords = ['importo', 'amount', 'valore']
+    debit_keywords = ['dare', 'uscite', 'debit', 'addebito']
+    credit_keywords = ['avere', 'entrate', 'credit', 'accredito']
+    
+    for col in columns:
+        col_lower = col.lower()
+        
+        if any(k in col_lower for k in date_keywords) and not mapping["date"]:
+            mapping["date"] = col
+        elif any(k in col_lower for k in desc_keywords) and not mapping["description"]:
+            mapping["description"] = col
+        elif any(k in col_lower for k in debit_keywords):
+            mapping["debit"] = col
+        elif any(k in col_lower for k in credit_keywords):
+            mapping["credit"] = col
+        elif any(k in col_lower for k in amount_keywords) and not mapping["amount"]:
+            mapping["amount"] = col
+    
+    return mapping
+
+
+def extract_row_data(row, col_mapping: Dict[str, str]) -> Optional[Dict[str, Any]]:
+    """Estrae dati da una riga usando il mapping colonne."""
+    import pandas as pd
+    
+    # Get date
+    data = None
+    if col_mapping["date"]:
+        val = row.get(col_mapping["date"])
+        if pd.notna(val):
+            if isinstance(val, datetime):
+                data = val.strftime("%Y-%m-%d")
+            else:
+                data = parse_italian_date(str(val))
+    
+    if not data:
+        return None
+    
+    # Get description
+    descrizione = ""
+    if col_mapping["description"]:
+        val = row.get(col_mapping["description"])
+        if pd.notna(val):
+            descrizione = str(val)[:200]
+    
+    # Get amount and type
+    importo = 0.0
+    tipo = "uscita"
+    
+    # Try debit/credit columns first
+    if col_mapping["debit"] or col_mapping["credit"]:
+        if col_mapping["debit"]:
+            val = row.get(col_mapping["debit"])
+            if pd.notna(val):
+                parsed = parse_italian_amount(str(val))
+                if abs(parsed) > 0:
+                    importo = abs(parsed)
+                    tipo = "uscita"
+        
+        if col_mapping["credit"] and importo == 0:
+            val = row.get(col_mapping["credit"])
+            if pd.notna(val):
+                parsed = parse_italian_amount(str(val))
+                if abs(parsed) > 0:
+                    importo = abs(parsed)
+                    tipo = "entrata"
+    
+    # Fallback to single amount column
+    if importo == 0 and col_mapping["amount"]:
+        val = row.get(col_mapping["amount"])
+        if pd.notna(val):
+            parsed = parse_italian_amount(str(val))
+            if abs(parsed) > 0:
+                importo = abs(parsed)
+                tipo = "uscita" if parsed < 0 else "entrata"
+    
+    if data and importo > 0:
+        return {
+            "data": data,
+            "descrizione": descrizione or f"Movimento del {data}",
+            "importo": importo,
+            "tipo": tipo
+        }
+    
+    return None
+
+
+# ============== RECONCILIATION ==============
 
 async def reconcile_movement(db, movement: Dict[str, Any], tolerance: float = 0.01) -> Optional[Dict[str, Any]]:
     """Riconcilia un movimento con Prima Nota Banca."""
@@ -317,6 +518,8 @@ async def reconcile_movement(db, movement: Dict[str, Any], tolerance: float = 0.
     return None
 
 
+# ============== API ENDPOINTS ==============
+
 @router.post("/import")
 async def import_bank_statement(
     file: UploadFile = File(...),
@@ -325,7 +528,10 @@ async def import_bank_statement(
     """
     Importa estratto conto bancario e riconcilia con Prima Nota Banca.
     
-    Supporta formati: PDF, Excel (.xlsx, .xls), CSV
+    Supporta formati:
+    - PDF (Intesa Sanpaolo, UniCredit, BNL, generico)
+    - Excel (.xlsx, .xls)
+    - CSV
     
     Returns:
         - Movimenti estratti
@@ -490,4 +696,23 @@ async def manual_reconcile(
         "message": "Riconciliazione completata",
         "prima_nota_id": prima_nota_movimento_id,
         "estratto_conto_id": estratto_conto_movimento_id
+    }
+
+
+@router.get("/formati-supportati")
+async def get_supported_formats() -> Dict[str, Any]:
+    """Lista formati bancari supportati."""
+    return {
+        "pdf": {
+            "banche": ["Intesa Sanpaolo", "UniCredit", "BNL", "Banca Sella", "MPS", "Credem", "Generico"],
+            "note": "Rilevamento automatico del formato"
+        },
+        "excel": {
+            "formati": [".xlsx", ".xls"],
+            "colonne_riconosciute": ["data", "data_contabile", "valuta", "descrizione", "causale", "dare", "avere", "importo"]
+        },
+        "csv": {
+            "separatori": [";", ",", "TAB"],
+            "encoding": ["UTF-8", "Latin-1", "CP1252"]
+        }
     }
