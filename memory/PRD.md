@@ -9,8 +9,14 @@
 - ✅ Dettaglio temperature: media, min, max, conformi/non conformi
 - ✅ Sezione Anomalie con lista dettagliata
 - ✅ Vista Annuale con tabella mese per mese
+- ✅ **Grafici Recharts**: Bar chart, Line chart (trend conformità), Pie chart (distribuzione)
 - ✅ Endpoint: `GET /api/haccp-completo/analytics/mensile`, `/analytics/annuale`
 - File: `/app/frontend/src/pages/HACCPAnalytics.jsx`
+
+### Bug Fix: Ricerca Prodotti (04/01/2026) - FIXED
+- ✅ Aggiunto `best_price` e `best_supplier` alla funzione `search_products_predictive`
+- ✅ Le suggestions ora mostrano correttamente il prezzo migliore
+- File: `/app/app/utils/warehouse_helpers.py`
 
 ### Refactoring GestioneDipendenti.jsx (04/01/2026) - NEW
 - ✅ Riduzione da **625 righe** a **231 righe** nel file principale
