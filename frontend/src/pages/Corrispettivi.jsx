@@ -303,9 +303,12 @@ export default function Corrispettivi() {
               </div>
             </div>
             <div>
-              <strong>IVA Totale</strong>
+              <strong>IVA 10%</strong>
               <div style={{ fontSize: 24, fontWeight: "bold", color: "#e65100" }}>
                 € {totaleIVA.toFixed(2)}
+              </div>
+              <div className="small" style={{ color: "#666" }}>
+                Imponibile: € {totaleImponibile.toFixed(2)}
               </div>
             </div>
           </div>
