@@ -75,6 +75,14 @@ FATTURA XML → Parse → FATTURE DB
 
 ## Changelog
 
+### 2026-01-04 (Sessione 4 - Correzioni e Alert)
+- **Sostituzione "Contanti" → "Cassa"**: Aggiornato in tutte le pagine (Fatture, Fornitori, Corrispettivi, Commercialista, PrimaNota)
+- **Alert Automatico Commercialista**: Banner globale che appare 2 giorni dopo fine mese precedente
+  - Visibile in tutte le pagine dell'app
+  - Link diretto alla pagina Commercialista
+  - Chiudibile dall'utente
+- **Verifica Prima Nota**: La pagina Prima Nota funziona correttamente (non c'era regressione)
+
 ### 2026-01-04 (Sessione 3 - Area Commercialista)
 - **NUOVA PAGINA Commercialista**: Area dedicata per invio documenti PDF via email al commercialista
   - Email configurata: rosaria.marotta@email.it
