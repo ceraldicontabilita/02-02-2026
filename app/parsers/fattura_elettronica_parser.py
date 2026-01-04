@@ -26,8 +26,23 @@ def parse_fattura_xml(xml_content: str) -> Dict[str, Any]:
         if xml_content.startswith('\ufeff'):
             xml_content = xml_content[1:]
         
+        # Rimuovi eventuali caratteri nulli o non validi
+        xml_content = xml_content.replace('\x00', '').strip()
+        
+        # Rimuovi namespace declarations per semplificare il parsing
+        # Mantiene la struttura ma rimuove xmlns=...
+        xml_content = re.sub(r'\s+xmlns(:[a-zA-Z0-9]+)?="[^"]*"', '', xml_content)
+        xml_content = re.sub(r'\s+xsi:[a-zA-Z]+="[^"]*"', '', xml_content)
+        
         # Parse XML
-        root = ET.fromstring(xml_content.encode('utf-8'))
+        try:
+            root = ET.fromstring(xml_content.encode('utf-8'))
+        except ET.ParseError as pe:
+            # Prova con encoding diverso
+            try:
+                root = ET.fromstring(xml_content.encode('latin-1'))
+            except:
+                raise pe
         
         # Funzione helper per trovare elementi indipendentemente dal namespace
         def find_element(parent, tag_name):
