@@ -37,6 +37,7 @@ import Fornitori from "./pages/Fornitori.jsx";
 import GestioneDipendenti from "./pages/GestioneDipendenti.jsx";
 import ControlloMensile from "./pages/ControlloMensile.jsx";
 import ImportExport from "./pages/ImportExport.jsx";
+import HACCPNotifiche from "./pages/HACCPNotifiche.jsx";
 
 const router = createBrowserRouter([
   {
