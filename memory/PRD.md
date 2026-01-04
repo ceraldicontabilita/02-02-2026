@@ -128,6 +128,12 @@ Ricreare un'applicazione ERP aziendale completa da un file zip fornito dall'uten
 - [x] **Dizionario Metodi Pagamento Fornitori** - 12 metodi + import automatico
 - [x] **Corrispettivi → Prima Nota Banca** - Registrazione automatica POS
 - [x] **Fix Parser Buste Paga** - Migliorato regex netto del mese
+- [x] **Parser Libro Unico v2** - Nuovo parser per buste paga Zucchetti:
+  - Estrazione corretta: Nome, CF, Netto, Ore ordinarie, Qualifica, Periodo
+  - Gestione pagine accoppiate (presenze + cedolino)
+  - Rilevamento automatico del mese di competenza
+  - Supporto amministratori/tirocinanti
+  - API `/api/employees` arricchita con dati ultimo payslip
 
 ## P1 - Prossimi
 - [ ] Ordini fornitori generati da carrello
