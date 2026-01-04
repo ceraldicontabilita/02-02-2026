@@ -102,7 +102,8 @@ from app.routers import (
     haccp_report_pdf,
     simple_exports,
     email_notifications,
-    employee_contracts
+    employee_contracts,
+    bank_statement_import
 )
 
 # Include public API first (no auth required)
@@ -190,6 +191,7 @@ app.include_router(f24_tributi.router, prefix="/api/f24", tags=["F24 Tributi"])
 app.include_router(accounting_f24.router, prefix="/api/f24", tags=["F24 Accounting"])
 app.include_router(f24_public.router, prefix="/api/f24-public", tags=["F24 Public"])
 app.include_router(haccp_report_pdf.router, prefix="/api/haccp-report", tags=["HACCP Report PDF"])
+app.include_router(bank_statement_import.router, prefix="/api/bank-statement", tags=["Bank Statement Import"])
 
 @app.get("/")
 async def root():
