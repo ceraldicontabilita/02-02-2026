@@ -143,7 +143,7 @@ export default function HACCP() {
                 const status = getTempStatus(t.temperature);
                 return (
                   <tr key={t.id || i} style={{ borderBottom: "1px solid #eee" }}>
-                    <td style={{ padding: 8 }}>{new Date(t.recorded_at || t.created_at).toLocaleString("it-IT")}</td>
+                    <td style={{ padding: 8 }}>{formatDateTimeIT(t.recorded_at || t.created_at)}</td>
                     <td style={{ padding: 8 }}>{t.equipment_name}</td>
                     <td style={{ padding: 8, fontWeight: "bold" }}>{t.temperature}°C</td>
                     <td style={{ padding: 8 }}>{t.location || "-"}</td>
