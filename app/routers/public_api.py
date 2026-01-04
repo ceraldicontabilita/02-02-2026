@@ -244,6 +244,175 @@ async def create_supplier(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     return supplier
 
 
+# ============== WAREHOUSE ==============
+
+@router.get("/warehouse/products")
+async def list_warehouse_products(skip: int = 0, limit: int = 5000) -> List[Dict[str, Any]]:
+    """Lista prodotti magazzino."""
+    db = Database.get_db()
+    return await db[Collections.WAREHOUSE_PRODUCTS].find({}, {"_id": 0}).skip(skip).limit(limit).to_list(limit)
+
+
+@router.post("/warehouse/products")
+async def create_warehouse_product(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
+    """Crea prodotto magazzino."""
+    db = Database.get_db()
+    product = {
+        "id": str(uuid.uuid4()),
+        "name": data.get("name", ""),
+        "code": data.get("code", ""),
+        "description": data.get("description", ""),
+        "quantity": float(data.get("quantity", 0)),
+        "unit": data.get("unit", "pz"),
+        "unit_price": float(data.get("unit_price", 0)),
+        "category": data.get("category", ""),
+        "supplier_vat": data.get("supplier_vat", ""),
+        "created_at": datetime.utcnow().isoformat(),
+        "updated_at": datetime.utcnow().isoformat()
+    }
+    await db[Collections.WAREHOUSE_PRODUCTS].insert_one(product)
+    product.pop("_id", None)
+    return product
+
+
+@router.put("/warehouse/products/{product_id}")
+async def update_warehouse_product(product_id: str, data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
+    """Aggiorna prodotto magazzino."""
+    db = Database.get_db()
+    
+    update_data = {k: v for k, v in data.items() if v is not None}
+    update_data["updated_at"] = datetime.utcnow().isoformat()
+    
+    result = await db[Collections.WAREHOUSE_PRODUCTS].update_one(
+        {"id": product_id},
+        {"$set": update_data}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Prodotto non trovato")
+    
+    product = await db[Collections.WAREHOUSE_PRODUCTS].find_one({"id": product_id}, {"_id": 0})
+    return product
+
+
+@router.delete("/warehouse/products/{product_id}")
+async def delete_warehouse_product(product_id: str) -> Dict[str, Any]:
+    """Elimina prodotto magazzino."""
+    db = Database.get_db()
+    result = await db[Collections.WAREHOUSE_PRODUCTS].delete_one({"id": product_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Prodotto non trovato")
+    return {"success": True, "deleted_id": product_id}
+
+
+@router.get("/warehouse/movements")
+async def list_warehouse_movements(
+    skip: int = 0, 
+    limit: int = 1000,
+    product_id: Optional[str] = Query(None)
+) -> List[Dict[str, Any]]:
+    """Lista movimenti magazzino."""
+    db = Database.get_db()
+    query = {}
+    if product_id:
+        query["product_id"] = product_id
+    return await db[Collections.WAREHOUSE_MOVEMENTS].find(query, {"_id": 0}).sort("date", -1).skip(skip).limit(limit).to_list(limit)
+
+
+@router.post("/warehouse/movements")
+async def create_warehouse_movement(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
+    """Crea movimento magazzino (carico/scarico)."""
+    db = Database.get_db()
+    
+    movement = {
+        "id": str(uuid.uuid4()),
+        "product_id": data.get("product_id"),
+        "type": data.get("type", "in"),  # "in" = carico, "out" = scarico
+        "quantity": float(data.get("quantity", 0)),
+        "date": data.get("date", datetime.utcnow().isoformat()[:10]),
+        "reference": data.get("reference", ""),
+        "notes": data.get("notes", ""),
+        "created_at": datetime.utcnow().isoformat()
+    }
+    
+    # Aggiorna quantità prodotto
+    product = await db[Collections.WAREHOUSE_PRODUCTS].find_one({"id": movement["product_id"]})
+    if product:
+        delta = movement["quantity"] if movement["type"] == "in" else -movement["quantity"]
+        new_qty = product.get("quantity", 0) + delta
+        await db[Collections.WAREHOUSE_PRODUCTS].update_one(
+            {"id": movement["product_id"]},
+            {"$set": {"quantity": new_qty, "updated_at": datetime.utcnow().isoformat()}}
+        )
+    
+    await db[Collections.WAREHOUSE_MOVEMENTS].insert_one(movement)
+    movement.pop("_id", None)
+    return movement
+
+
+# ============== SUPPLIERS INVENTORY ==============
+
+@router.get("/suppliers/{supplier_id}/inventory")
+async def get_supplier_inventory(supplier_id: str) -> Dict[str, Any]:
+    """
+    Ottieni inventario prodotti di un fornitore.
+    Estrae prodotti dalle fatture del fornitore.
+    """
+    db = Database.get_db()
+    
+    # Trova fornitore
+    supplier = await db[Collections.SUPPLIERS].find_one(
+        {"$or": [{"id": supplier_id}, {"partita_iva": supplier_id}]},
+        {"_id": 0}
+    )
+    
+    if not supplier:
+        raise HTTPException(status_code=404, detail="Fornitore non trovato")
+    
+    piva = supplier.get("partita_iva", "")
+    
+    # Trova fatture del fornitore
+    invoices = await db[Collections.INVOICES].find(
+        {"$or": [
+            {"supplier_vat": piva},
+            {"cedente_piva": piva}
+        ]},
+        {"_id": 0, "linee": 1, "invoice_number": 1, "invoice_date": 1, "total_amount": 1}
+    ).to_list(1000)
+    
+    # Estrai prodotti unici
+    products = {}
+    for inv in invoices:
+        linee = inv.get("linee", [])
+        for linea in linee:
+            desc = linea.get("descrizione", "")
+            if not desc:
+                continue
+            
+            key = desc[:100].lower().strip()
+            if key not in products:
+                products[key] = {
+                    "descrizione": desc,
+                    "prezzo_ultimo": 0,
+                    "quantita_totale": 0,
+                    "fatture_count": 0,
+                    "ultima_fattura": ""
+                }
+            
+            products[key]["prezzo_ultimo"] = float(linea.get("prezzo_totale", 0) or 0)
+            products[key]["quantita_totale"] += float(linea.get("quantita", 1) or 1)
+            products[key]["fatture_count"] += 1
+            products[key]["ultima_fattura"] = inv.get("invoice_date", "")
+    
+    return {
+        "fornitore": supplier.get("denominazione", supplier.get("name", "")),
+        "partita_iva": piva,
+        "fatture_totali": len(invoices),
+        "prodotti_unici": len(products),
+        "prodotti": list(products.values())
+    }
+
+
 # ============== CASH ==============
 
 @router.get("/cash")
