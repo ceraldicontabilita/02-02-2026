@@ -165,6 +165,7 @@ app.include_router(haccp_completo.router, prefix="/api/haccp-completo", tags=["H
 
 # app.include_router(fattura24.router, prefix="/api/fattura24", tags=["Fattura24"])
 app.include_router(exports.router, prefix="/api/export", tags=["Exports Alias"])
+app.include_router(simple_exports.router, prefix="/api/exports", tags=["Simple Exports"])
 
 # New refactored routers
 app.include_router(fatture_upload.router, prefix="/api/fatture", tags=["Fatture Upload"])
