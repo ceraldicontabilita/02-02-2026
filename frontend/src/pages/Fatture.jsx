@@ -381,10 +381,10 @@ export default function Fatture() {
 
       {/* Dettaglio Fattura */}
       {selectedInvoice && (
-        <div className="card" style={{ background: "#f5f5f5" }}>
-          <div className="h1">
-            Dettaglio Fattura {selectedInvoice.invoice_number}
-            <button onClick={() => setSelectedInvoice(null)} style={{ float: "right" }}>✕</button>
+        <div className="card" style={{ background: "#f5f5f5", border: "2px solid #1565c0" }}>
+          <div className="h1" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span>📄 Dettaglio Fattura {selectedInvoice.invoice_number}</span>
+            <button onClick={() => setSelectedInvoice(null)} style={{ background: "#eee", border: "none", fontSize: 18, cursor: "pointer", padding: "5px 10px", borderRadius: 4 }}>✕</button>
           </div>
           
           <div className="grid">
@@ -425,6 +425,81 @@ export default function Fatture() {
                 </tr>
               </tbody>
             </table>
+          </div>
+          
+          {/* Sezione Metodo Pagamento e Paga */}
+          <div style={{ marginTop: 20, padding: 15, background: "white", borderRadius: 8, border: "1px solid #ddd" }}>
+            <strong style={{ display: "block", marginBottom: 10 }}>💳 Gestione Pagamento</strong>
+            
+            <div style={{ display: "flex", gap: 15, alignItems: "center", flexWrap: "wrap" }}>
+              <div style={{ flex: 1, minWidth: 200 }}>
+                <label style={{ fontSize: 12, color: "#666", display: "block", marginBottom: 4 }}>Metodo di Pagamento:</label>
+                <select
+                  value={selectedInvoice.metodo_pagamento || ""}
+                  onChange={(e) => handleUpdateMetodoPagamento(selectedInvoice.id, e.target.value)}
+                  disabled={updatingPayment === selectedInvoice.id}
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px",
+                    borderRadius: 8,
+                    border: "2px solid #ddd",
+                    fontSize: 14,
+                    background: selectedInvoice.metodo_pagamento ? 
+                      METODI_PAGAMENTO.find(m => m.value === selectedInvoice.metodo_pagamento)?.color + '15' : 
+                      'white',
+                    cursor: "pointer"
+                  }}
+                  data-testid="detail-metodo-pagamento"
+                >
+                  <option value="">-- Seleziona metodo --</option>
+                  {METODI_PAGAMENTO.map(m => (
+                    <option key={m.value} value={m.value}>{m.label}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <div style={{ display: "flex", gap: 10, alignItems: "flex-end" }}>
+                {/* Stato Pagamento */}
+                <div style={{ 
+                  padding: "10px 20px", 
+                  borderRadius: 8, 
+                  background: selectedInvoice.pagato || selectedInvoice.status === "paid" ? "#c8e6c9" : "#fff3e0",
+                  color: selectedInvoice.pagato || selectedInvoice.status === "paid" ? "#2e7d32" : "#e65100",
+                  fontWeight: "bold",
+                  fontSize: 14
+                }}>
+                  {selectedInvoice.pagato || selectedInvoice.status === "paid" ? "✓ PAGATA" : "⏳ DA PAGARE"}
+                </div>
+                
+                {/* Bottone Paga */}
+                {!(selectedInvoice.pagato || selectedInvoice.status === "paid") && (
+                  <button
+                    onClick={() => handlePayInvoice(selectedInvoice.id)}
+                    disabled={payingInvoice === selectedInvoice.id || !selectedInvoice.metodo_pagamento}
+                    style={{
+                      padding: "10px 25px",
+                      background: selectedInvoice.metodo_pagamento ? "#4caf50" : "#ccc",
+                      color: "white",
+                      border: "none",
+                      borderRadius: 8,
+                      fontWeight: "bold",
+                      fontSize: 14,
+                      cursor: selectedInvoice.metodo_pagamento ? "pointer" : "not-allowed",
+                      opacity: payingInvoice === selectedInvoice.id ? 0.7 : 1
+                    }}
+                    data-testid="pay-invoice-btn"
+                  >
+                    {payingInvoice === selectedInvoice.id ? "⏳ Pagamento..." : "💰 PAGA"}
+                  </button>
+                )}
+              </div>
+            </div>
+            
+            {!selectedInvoice.metodo_pagamento && !(selectedInvoice.pagato || selectedInvoice.status === "paid") && (
+              <div style={{ marginTop: 10, fontSize: 12, color: "#e65100" }}>
+                ⚠️ Seleziona un metodo di pagamento prima di pagare
+              </div>
+            )}
           </div>
           
           {selectedInvoice.linee && selectedInvoice.linee.length > 0 && (
