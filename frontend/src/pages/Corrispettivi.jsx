@@ -392,7 +392,7 @@ export default function Corrispettivi() {
               {corrispettivi.map((c, i) => (
                 <tr key={c.id || i} style={{ borderBottom: "1px solid #eee" }}>
                   <td style={{ padding: 8 }}>
-                    <strong>{c.data || "-"}</strong>
+                    <strong>{formatDateIT(c.data) || "-"}</strong>
                   </td>
                   <td style={{ padding: 8 }}>
                     {c.matricola_rt || "-"}
