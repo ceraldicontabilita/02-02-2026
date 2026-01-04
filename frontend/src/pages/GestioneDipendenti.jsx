@@ -236,7 +236,7 @@ export default function GestioneDipendenti() {
                 return (
                   <tr key={dip.id || idx} style={{ borderBottom: '1px solid #eee' }}>
                     <td style={{ padding: 12 }}>
-                      <strong>{dip.nome_completo}</strong>
+                      <strong>{dip.nome_completo || dip.codice_fiscale || 'N/A'}</strong>
                       {dip.email && <div style={{ fontSize: 11, color: '#666' }}>{dip.email}</div>}
                     </td>
                     <td style={{ padding: 12, fontFamily: 'monospace', fontSize: 12 }}>
