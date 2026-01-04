@@ -10,9 +10,18 @@
 - ✅ Sezione Anomalie con lista dettagliata
 - ✅ Vista Annuale con tabella mese per mese
 - ✅ **Grafici Recharts**: Bar chart, Line chart (trend conformità), Pie chart (distribuzione)
-- ✅ **Export PDF**: Bottone "Esporta PDF" genera report mensile con reportlab
-- ✅ Endpoint export: `GET /api/haccp-completo/export/pdf/mensile?mese=YYYY-MM`
+- ✅ **Export PDF Mensile**: `GET /api/haccp-completo/export/pdf/mensile?mese=YYYY-MM`
+- ✅ **Export PDF Annuale**: `GET /api/haccp-completo/export/pdf/annuale?anno=YYYY`
 - File: `/app/frontend/src/pages/HACCPAnalytics.jsx`
+
+### Sistema Notifiche HACCP (04/01/2026) - NEW
+- ✅ Nuova pagina `/haccp/notifiche` per alert temperature anomale
+- ✅ Check automatico anomalie: `POST /api/haccp-completo/notifiche/check-anomalie`
+- ✅ Lista notifiche con filtro "solo non lette"
+- ✅ Cards severità: alta (rosso), media (arancione), bassa (verde)
+- ✅ Bottoni: "Segna come letta", "Segna tutte lette"
+- ✅ Collection: `haccp_notifiche`
+- File: `/app/frontend/src/pages/HACCPNotifiche.jsx`
 
 ### Bug Fix: Ricerca Prodotti (04/01/2026) - FIXED
 - ✅ Aggiunto `best_price` e `best_supplier` alla funzione `search_products_predictive`
