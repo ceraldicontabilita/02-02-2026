@@ -86,8 +86,16 @@
 
 UI aggiunta in `HACCPDashboard.jsx` con sezione "Stampa Report PDF per Ispezioni ASL"
 
+## Refactoring Frontend PrimaNota (Completato 04/01/2026)
+| File | Righe | Responsabilità |
+|------|-------|----------------|
+| PrimaNota.jsx | 457 (-44%) | Logica principale |
+| components/prima-nota/PrimaNotaAutomationPanel.jsx | 182 | Pannello automazione |
+| components/prima-nota/PrimaNotaMovementsTable.jsx | 133 | Tabella movimenti |
+| components/prima-nota/PrimaNotaNewMovementModal.jsx | 146 | Modal nuovo movimento |
+| components/prima-nota/PrimaNotaSummaryCards.jsx | 59 | Card riepilogo |
+
 ## Prossimi Miglioramenti
-- [ ] Refactoring frontend (PrimaNota.jsx 816 righe)
 - [ ] UI Alert F24
 - [ ] Email service
 - [ ] Generazione contratti dipendenti
