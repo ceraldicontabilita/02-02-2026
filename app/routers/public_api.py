@@ -2033,3 +2033,221 @@ async def get_admin_stats() -> Dict[str, Any]:
         "employees": await db[Collections.EMPLOYEES].count_documents({}),
         "haccp": await db[Collections.HACCP_TEMPERATURES].count_documents({})
     }
+
+
+# ============== METODI PAGAMENTO FORNITORI ==============
+# Dizionario metodi pagamento configurabili per fornitore
+
+METODI_PAGAMENTO_DEFAULT = [
+    {"codice": "BB", "descrizione": "Bonifico Bancario", "giorni_default": 30},
+    {"codice": "RIBA", "descrizione": "Ricevuta Bancaria", "giorni_default": 60},
+    {"codice": "RID", "descrizione": "RID - Addebito diretto", "giorni_default": 30},
+    {"codice": "CONT", "descrizione": "Contanti", "giorni_default": 0},
+    {"codice": "ASSEGNO", "descrizione": "Assegno", "giorni_default": 0},
+    {"codice": "CARTA", "descrizione": "Carta di Credito", "giorni_default": 0},
+    {"codice": "FINM", "descrizione": "Fine Mese", "giorni_default": 30},
+    {"codice": "30GG", "descrizione": "30 giorni data fattura", "giorni_default": 30},
+    {"codice": "60GG", "descrizione": "60 giorni data fattura", "giorni_default": 60},
+    {"codice": "90GG", "descrizione": "90 giorni data fattura", "giorni_default": 90},
+    {"codice": "30FM", "descrizione": "30 giorni fine mese", "giorni_default": 30},
+    {"codice": "60FM", "descrizione": "60 giorni fine mese", "giorni_default": 60},
+]
+
+
+@router.get("/metodi-pagamento")
+async def list_metodi_pagamento() -> List[Dict[str, Any]]:
+    """Lista metodi pagamento disponibili."""
+    return METODI_PAGAMENTO_DEFAULT
+
+
+@router.get("/fornitori/metodi-pagamento")
+async def list_fornitori_metodi_pagamento(
+    skip: int = 0, 
+    limit: int = 10000
+) -> List[Dict[str, Any]]:
+    """Lista associazioni fornitore-metodo pagamento."""
+    db = Database.get_db()
+    
+    mappings = await db["supplier_payment_methods"].find(
+        {}, 
+        {"_id": 0}
+    ).sort("supplier_name", 1).skip(skip).limit(limit).to_list(limit)
+    
+    return mappings
+
+
+@router.get("/fornitori/{supplier_vat}/metodo-pagamento")
+async def get_fornitore_metodo_pagamento(supplier_vat: str) -> Dict[str, Any]:
+    """Ottiene metodo pagamento per un fornitore specifico (per P.IVA)."""
+    db = Database.get_db()
+    
+    mapping = await db["supplier_payment_methods"].find_one(
+        {"supplier_vat": supplier_vat},
+        {"_id": 0}
+    )
+    
+    if not mapping:
+        # Se non configurato, restituisce default
+        # Cerca nome fornitore dalle fatture
+        invoice = await db["invoices"].find_one(
+            {"supplier_vat": supplier_vat},
+            {"_id": 0, "supplier_name": 1}
+        )
+        
+        return {
+            "supplier_vat": supplier_vat,
+            "supplier_name": invoice.get("supplier_name", "") if invoice else "",
+            "metodo_pagamento": "BB",  # Default: Bonifico
+            "descrizione_metodo": "Bonifico Bancario",
+            "giorni_pagamento": 30,
+            "note": "",
+            "is_default": True
+        }
+    
+    return mapping
+
+
+@router.post("/fornitori/metodo-pagamento")
+async def set_fornitore_metodo_pagamento(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
+    """
+    Imposta/aggiorna metodo pagamento per un fornitore.
+    
+    Body:
+    {
+        "supplier_vat": "12345678901",
+        "supplier_name": "Nome Fornitore",
+        "metodo_pagamento": "BB",
+        "giorni_pagamento": 30,
+        "iban": "IT...",
+        "note": "Note aggiuntive"
+    }
+    """
+    db = Database.get_db()
+    
+    supplier_vat = data.get("supplier_vat")
+    if not supplier_vat:
+        raise HTTPException(status_code=400, detail="supplier_vat richiesto")
+    
+    # Trova descrizione metodo
+    metodo_codice = data.get("metodo_pagamento", "BB")
+    descrizione_metodo = "Bonifico Bancario"
+    giorni_default = 30
+    
+    for m in METODI_PAGAMENTO_DEFAULT:
+        if m["codice"] == metodo_codice:
+            descrizione_metodo = m["descrizione"]
+            giorni_default = m["giorni_default"]
+            break
+    
+    mapping = {
+        "supplier_vat": supplier_vat,
+        "supplier_name": data.get("supplier_name", ""),
+        "metodo_pagamento": metodo_codice,
+        "descrizione_metodo": descrizione_metodo,
+        "giorni_pagamento": data.get("giorni_pagamento", giorni_default),
+        "iban": data.get("iban", ""),
+        "note": data.get("note", ""),
+        "is_default": False,
+        "updated_at": datetime.utcnow().isoformat()
+    }
+    
+    await db["supplier_payment_methods"].update_one(
+        {"supplier_vat": supplier_vat},
+        {"$set": mapping},
+        upsert=True
+    )
+    
+    return {"success": True, "mapping": mapping}
+
+
+@router.delete("/fornitori/{supplier_vat}/metodo-pagamento")
+async def delete_fornitore_metodo_pagamento(supplier_vat: str) -> Dict[str, Any]:
+    """Rimuove configurazione metodo pagamento (torna a default)."""
+    db = Database.get_db()
+    
+    result = await db["supplier_payment_methods"].delete_one({"supplier_vat": supplier_vat})
+    
+    return {
+        "success": True,
+        "deleted": result.deleted_count > 0,
+        "message": "Configurazione rimossa, verrà usato il metodo default (BB 30gg)"
+    }
+
+
+@router.post("/fornitori/import-metodi-da-fatture")
+async def import_metodi_da_fatture() -> Dict[str, Any]:
+    """
+    Importa automaticamente metodi pagamento dalle fatture.
+    Legge i dati di pagamento dalle fatture XML e li associa ai fornitori.
+    """
+    db = Database.get_db()
+    
+    # Trova fatture con dati pagamento
+    fatture = await db["invoices"].find(
+        {"pagamento": {"$exists": True}},
+        {"_id": 0, "supplier_vat": 1, "supplier_name": 1, "pagamento": 1}
+    ).to_list(10000)
+    
+    imported = 0
+    skipped = 0
+    
+    for fattura in fatture:
+        supplier_vat = fattura.get("supplier_vat")
+        if not supplier_vat:
+            skipped += 1
+            continue
+        
+        # Verifica se già configurato
+        existing = await db["supplier_payment_methods"].find_one({"supplier_vat": supplier_vat})
+        if existing:
+            skipped += 1
+            continue
+        
+        pagamento = fattura.get("pagamento", {})
+        
+        # Determina metodo pagamento dal testo
+        condizioni = pagamento.get("condizioni_pagamento", "").upper()
+        metodo = "BB"  # Default
+        giorni = 30
+        
+        if "RIBA" in condizioni or "RICEVUTA BANCARIA" in condizioni:
+            metodo = "RIBA"
+            giorni = 60
+        elif "RID" in condizioni or "ADDEBITO" in condizioni:
+            metodo = "RID"
+        elif "CONTANT" in condizioni:
+            metodo = "CONT"
+            giorni = 0
+        elif "60" in condizioni:
+            metodo = "60GG"
+            giorni = 60
+        elif "90" in condizioni:
+            metodo = "90GG"
+            giorni = 90
+        elif "FINE MESE" in condizioni:
+            metodo = "FINM"
+        
+        # Cerca IBAN
+        iban = pagamento.get("iban", "")
+        
+        mapping = {
+            "supplier_vat": supplier_vat,
+            "supplier_name": fattura.get("supplier_name", ""),
+            "metodo_pagamento": metodo,
+            "descrizione_metodo": next((m["descrizione"] for m in METODI_PAGAMENTO_DEFAULT if m["codice"] == metodo), ""),
+            "giorni_pagamento": giorni,
+            "iban": iban,
+            "note": f"Importato automaticamente da fattura",
+            "is_default": False,
+            "updated_at": datetime.utcnow().isoformat()
+        }
+        
+        await db["supplier_payment_methods"].insert_one(mapping)
+        imported += 1
+    
+    return {
+        "success": True,
+        "imported": imported,
+        "skipped": skipped,
+        "message": f"Importati {imported} metodi pagamento da fatture"
+    }
