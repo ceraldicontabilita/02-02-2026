@@ -278,8 +278,11 @@ async def update_metodo_pagamento(invoice_id: str, data: Dict[str, Any]) -> Dict
     db = Database.get_db()
     
     metodo = data.get("metodo_pagamento")
-    if not metodo or metodo not in ["cassa", "banca", "misto", "assegno", "bonifico"]:
+    if not metodo or metodo not in ["cassa", "contanti", "banca", "misto", "assegno", "bonifico"]:
         raise HTTPException(status_code=400, detail="Metodo pagamento non valido")
+    
+    # Normalizza "contanti" a "cassa" per prima nota
+    metodo_prima_nota = "cassa" if metodo == "contanti" else metodo
     
     invoice = await db[Collections.INVOICES].find_one({"id": invoice_id})
     if not invoice:
@@ -288,14 +291,14 @@ async def update_metodo_pagamento(invoice_id: str, data: Dict[str, Any]) -> Dict
     # Update invoice with new payment method
     update_data = {"metodo_pagamento": metodo}
     
-    # If moving to prima nota
+    # If moving to prima nota - contanti e cassa vanno in prima nota cassa e sono PAGATI
     prima_nota_result = {"cassa": None, "banca": None}
-    if metodo in ["cassa", "banca", "assegno", "bonifico"]:
+    if metodo in ["cassa", "contanti", "banca", "assegno", "bonifico"]:
         try:
             from app.routers.prima_nota import registra_pagamento_fattura
             
             # Map metodo to prima nota type
-            tipo_prima_nota = metodo
+            tipo_prima_nota = metodo_prima_nota
             if metodo in ["assegno", "bonifico"]:
                 tipo_prima_nota = "banca"
             
@@ -304,6 +307,7 @@ async def update_metodo_pagamento(invoice_id: str, data: Dict[str, Any]) -> Dict
                 metodo_pagamento=tipo_prima_nota
             )
             
+            # Se metodo è contanti o cassa, la fattura è automaticamente PAGATA
             update_data["pagato"] = True
             update_data["data_pagamento"] = datetime.utcnow().isoformat()[:10]
             update_data["prima_nota_cassa_id"] = prima_nota_result.get("cassa")
