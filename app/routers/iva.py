@@ -48,8 +48,7 @@ async def get_daily_iva(
 )
 async def get_monthly_iva(
     year: int = Path(...),
-    month: int = Path(...),
-    current_user: Dict[str, Any] = Depends(get_current_user)
+    month: int = Path(...)
 ) -> Dict[str, Any]:
     """Get monthly VAT/IVA summary."""
     db = Database.get_db()
