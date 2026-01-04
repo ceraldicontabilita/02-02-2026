@@ -14,10 +14,34 @@ Ricreare un'applicazione ERP aziendale completa da un file zip fornito dall'uten
 - **🆕 Catalogo Prodotti**: Auto-popolamento da fatture con best price e storico prezzi
 - **🆕 Comparatore Prezzi**: Confronto prezzi tra fornitori con normalizzazione prodotti
 - **🆕 Sistema F24**: Alert scadenze, dashboard, codici tributo, riconciliazione
+- **🆕 API IVA**: Calcolo IVA giornaliero, mensile, annuale
 
 ## What's Been Implemented
 
-### 2025-01-04 - Nuovi Moduli Implementati
+### 2025-01-04 - Sessione 2 - Pulizia e Formato Date
+- ✅ **API IVA** (`/api/iva/`):
+  - `/api/iva/today` - IVA giornaliera oggi
+  - `/api/iva/daily/{date}` - IVA dettagliata per data
+  - `/api/iva/monthly/{year}/{month}` - Progressiva mensile
+  - `/api/iva/annual/{year}` - Riepilogo annuale con 12 mesi
+  
+- ✅ **FORMATO DATE ITALIANO**:
+  - Tutte le date in formato gg/mm/aaaa
+  - Funzioni helper in `/app/frontend/src/lib/utils.js`:
+    - `formatDateIT()` - Converte ISO → gg/mm/aaaa
+    - `formatDateTimeIT()` - Data e ora italiana
+    - `formatEuro()` - Importi €
+    
+- ✅ **ORDINAMENTO PER DATA DESC**:
+  - Fatture ordinate per data fattura (più recente prima)
+  - Corrispettivi ordinati per data
+  - Indice MongoDB su `invoice_date`
+
+- ✅ **PULIZIA CODICE**:
+  - Utility centrali in `utils.js`
+  - Import consistenti in tutte le pagine
+
+### 2025-01-04 - Sessione 1 - Nuovi Moduli
 - ✅ **COMPARATORE PREZZI** (`/api/comparatore/`):
   - Confronto prezzi tra fornitori
   - Normalizzazione prodotti automatica
@@ -38,7 +62,7 @@ Ricreare un'applicazione ERP aziendale completa da un file zip fornito dall'uten
   - Limiti temperature congelatori: -25°C a -15°C
   - Info azienda per documenti
 
-### 2025-01-04 (precedente) - Auto-Popolamento Magazzino
+### Precedentemente - Auto-Popolamento Magazzino
 - ✅ **AUTO-POPOLAMENTO**: Quando si carica una fattura XML, i prodotti vengono automaticamente:
   - Estratti dalle linee dettaglio
   - Normalizzati (rimozione articoli, preposizioni)
