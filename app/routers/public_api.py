@@ -366,10 +366,10 @@ async def cleanup_duplicate_invoices() -> Dict[str, Any]:
 @router.get("/warehouse/products")
 async def list_products(
     skip: int = 0,
-    limit: int = 100,
+    limit: int = 10000,
     category: Optional[str] = None
 ) -> List[Dict[str, Any]]:
-    """List warehouse products - public endpoint."""
+    """List warehouse products - public endpoint. Nessun limite pratico."""
     db = Database.get_db()
     query = {}
     if category:
@@ -776,8 +776,8 @@ async def list_f24(skip: int = 0, limit: int = 10000) -> List[Dict[str, Any]]:
 
 # ============== PIANIFICAZIONE ==============
 @router.get("/pianificazione/events")
-async def list_events(skip: int = 0, limit: int = 100) -> List[Dict[str, Any]]:
-    """List pianificazione events - public endpoint."""
+async def list_events(skip: int = 0, limit: int = 10000) -> List[Dict[str, Any]]:
+    """List pianificazione events - public endpoint. Nessun limite pratico."""
     db = Database.get_db()
     events = await db["pianificazione_events"].find({}, {"_id": 0}).sort("scheduled_date", 1).skip(skip).limit(limit).to_list(limit)
     return events
