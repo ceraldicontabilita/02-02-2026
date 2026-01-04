@@ -8,6 +8,7 @@ const NAV_ITEMS = [
   { to: "/fornitori", label: "Fornitori", icon: "📦", short: "Fornitori" },
   { to: "/iva", label: "Calcolo IVA", icon: "📊", short: "IVA" },
   { to: "/prima-nota", label: "Prima Nota", icon: "📒", short: "P.Nota" },
+  { to: "/controllo-mensile", label: "Controllo Mensile", icon: "📈", short: "Contr." },
   { to: "/riconciliazione", label: "Riconciliazione", icon: "🔄", short: "Riconc." },
   { to: "/magazzino", label: "Magazzino", icon: "🏭", short: "Magaz." },
   { to: "/ricerca-prodotti", label: "Ricerca Prodotti", icon: "🔍", short: "Ricerca" },
