@@ -200,7 +200,7 @@ export default function RicercaProdotti() {
           Catalogo prodotti popolato automaticamente dalle fatture XML. Trova il miglior prezzo per fornitore.
         </div>
         
-        <div className="row" style={{ gap: 10, flexWrap: "wrap", position: "relative" }}>
+        <div className="row" style={{ gap: 10, flexWrap: "wrap", position: "relative", alignItems: "center" }}>
           <div style={{ position: "relative", flex: 1, minWidth: 200 }}>
             <input
               type="text"
@@ -258,6 +258,30 @@ export default function RicercaProdotti() {
                 ))}
               </div>
             )}
+          </div>
+          
+          {/* Toggle Ricerca Esatta */}
+          <label style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 8, 
+            cursor: 'pointer',
+            padding: '8px 12px',
+            background: exactSearch ? '#e3f2fd' : '#f5f5f5',
+            borderRadius: 8,
+            border: `1px solid ${exactSearch ? '#1565c0' : '#ddd'}`,
+            fontSize: 13,
+            fontWeight: exactSearch ? 'bold' : 'normal',
+            color: exactSearch ? '#1565c0' : '#666'
+          }}>
+            <input 
+              type="checkbox" 
+              checked={exactSearch} 
+              onChange={(e) => setExactSearch(e.target.checked)}
+              style={{ width: 16, height: 16, cursor: 'pointer' }}
+            />
+            🎯 Ricerca Esatta
+          </label>
           </div>
           
           <select
