@@ -10,8 +10,17 @@ export default function Fatture() {
   const [uploadResult, setUploadResult] = useState(null);
   const [err, setErr] = useState("");
   const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [updatingPayment, setUpdatingPayment] = useState(null);
   const fileInputRef = useRef(null);
   const bulkFileInputRef = useRef(null);
+  
+  const METODI_PAGAMENTO = [
+    { value: "cassa", label: "💵 Cassa", color: "#4caf50" },
+    { value: "banca", label: "🏦 Banca", color: "#2196f3" },
+    { value: "bonifico", label: "🔄 Bonifico", color: "#9c27b0" },
+    { value: "assegno", label: "📝 Assegno", color: "#ff9800" },
+    { value: "misto", label: "🔀 Misto", color: "#607d8b" },
+  ];
   
   const [newInvoice, setNewInvoice] = useState({
     numero: "",
