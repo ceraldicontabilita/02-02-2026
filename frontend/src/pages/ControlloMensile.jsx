@@ -536,33 +536,37 @@ export default function ControlloMensile() {
       {/* Summary Cards */}
       <div style={{ 
         display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', 
-        gap: 15, 
+        gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', 
+        gap: 12, 
         marginBottom: 25 
       }}>
-        <div style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)', borderRadius: 12, padding: 16, color: 'white' }}>
-          <div style={{ fontSize: 12, opacity: 0.9 }}>POS Auto (XML)</div>
-          <div style={{ fontSize: 20, fontWeight: 'bold' }}>{formatCurrency(yearTotals.posAuto)}</div>
+        <div style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)', borderRadius: 12, padding: 14, color: 'white' }}>
+          <div style={{ fontSize: 11, opacity: 0.9 }}>POS Auto (XML)</div>
+          <div style={{ fontSize: 18, fontWeight: 'bold' }}>{formatCurrency(yearTotals.posAuto)}</div>
         </div>
-        <div style={{ background: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)', borderRadius: 12, padding: 16, color: 'white' }}>
-          <div style={{ fontSize: 12, opacity: 0.9 }}>POS Manuali</div>
-          <div style={{ fontSize: 20, fontWeight: 'bold' }}>{formatCurrency(yearTotals.posManual)}</div>
+        <div style={{ background: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)', borderRadius: 12, padding: 14, color: 'white' }}>
+          <div style={{ fontSize: 11, opacity: 0.9 }}>POS Manuali (Cassa)</div>
+          <div style={{ fontSize: 18, fontWeight: 'bold' }}>{formatCurrency(yearTotals.posManual)}</div>
         </div>
-        <div style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', borderRadius: 12, padding: 16, color: 'white' }}>
-          <div style={{ fontSize: 12, opacity: 0.9 }}>Corrisp. Auto (XML)</div>
-          <div style={{ fontSize: 20, fontWeight: 'bold' }}>{formatCurrency(yearTotals.corrispettiviAuto)}</div>
+        <div style={{ background: 'linear-gradient(135deg, #ec4899 0%, #be185d 100%)', borderRadius: 12, padding: 14, color: 'white' }}>
+          <div style={{ fontSize: 11, opacity: 0.9 }}>🏦 POS Banca (Accrediti)</div>
+          <div style={{ fontSize: 18, fontWeight: 'bold' }}>{formatCurrency(yearTotals.posBanca || 0)}</div>
         </div>
-        <div style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', borderRadius: 12, padding: 16, color: 'white' }}>
-          <div style={{ fontSize: 12, opacity: 0.9 }}>Corrisp. Manuali</div>
-          <div style={{ fontSize: 20, fontWeight: 'bold' }}>{formatCurrency(yearTotals.corrispettiviManual)}</div>
+        <div style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', borderRadius: 12, padding: 14, color: 'white' }}>
+          <div style={{ fontSize: 11, opacity: 0.9 }}>Corrisp. Auto (XML)</div>
+          <div style={{ fontSize: 18, fontWeight: 'bold' }}>{formatCurrency(yearTotals.corrispettiviAuto)}</div>
         </div>
-        <div style={{ background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)', borderRadius: 12, padding: 16, color: 'white' }}>
-          <div style={{ fontSize: 12, opacity: 0.9 }}>Versamenti</div>
-          <div style={{ fontSize: 20, fontWeight: 'bold' }}>{formatCurrency(yearTotals.versamenti)}</div>
+        <div style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', borderRadius: 12, padding: 14, color: 'white' }}>
+          <div style={{ fontSize: 11, opacity: 0.9 }}>Corrisp. Manuali</div>
+          <div style={{ fontSize: 18, fontWeight: 'bold' }}>{formatCurrency(yearTotals.corrispettiviManual)}</div>
         </div>
-        <div style={{ background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)', borderRadius: 12, padding: 16, color: 'white' }}>
-          <div style={{ fontSize: 12, opacity: 0.9 }}>Saldo Cassa</div>
-          <div style={{ fontSize: 20, fontWeight: 'bold' }}>{formatCurrency(yearTotals.saldoCassa)}</div>
+        <div style={{ background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)', borderRadius: 12, padding: 14, color: 'white' }}>
+          <div style={{ fontSize: 11, opacity: 0.9 }}>Versamenti</div>
+          <div style={{ fontSize: 18, fontWeight: 'bold' }}>{formatCurrency(yearTotals.versamenti)}</div>
+        </div>
+        <div style={{ background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)', borderRadius: 12, padding: 14, color: 'white' }}>
+          <div style={{ fontSize: 11, opacity: 0.9 }}>Saldo Cassa</div>
+          <div style={{ fontSize: 18, fontWeight: 'bold' }}>{formatCurrency(yearTotals.saldoCassa)}</div>
         </div>
       </div>
 
@@ -579,8 +583,10 @@ export default function ControlloMensile() {
       }}>
         <span style={{ fontSize: 24 }}>ℹ️</span>
         <div>
-          <strong>Fonti dati:</strong> POS Auto e Corrisp. Auto = da file XML corrispettivi. 
-          POS Manuale e Corrisp. Man. = da Prima Nota (Excel o inserimento manuale).
+          <strong>Fonti dati:</strong><br/>
+          • <strong>POS Auto</strong> = pagato_elettronico da XML corrispettivi<br/>
+          • <strong>POS Manuali</strong> = Prima Nota Cassa con categoria "POS"<br/>
+          • <strong>🏦 POS Banca</strong> = Accrediti INC.POS/INCAS. TRAMITE P.O.S dalla banca
         </div>
       </div>
 
