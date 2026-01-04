@@ -341,3 +341,88 @@ async def cleanup_duplicate_invoices() -> Dict[str, Any]:
         "invoices_deleted": deleted_count
     }
 
+
+@router.put("/{invoice_id}/metodo-pagamento")
+async def update_metodo_pagamento(invoice_id: str, data: Dict[str, Any]) -> Dict[str, Any]:
+    """Aggiorna il metodo di pagamento di una fattura."""
+    db = Database.get_db()
+    
+    metodo = data.get("metodo_pagamento")
+    if not metodo:
+        raise HTTPException(status_code=400, detail="Metodo pagamento richiesto")
+    
+    result = await db[Collections.INVOICES].update_one(
+        {"id": invoice_id},
+        {"$set": {"metodo_pagamento": metodo, "updated_at": datetime.utcnow().isoformat()}}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Fattura non trovata")
+    
+    return {"success": True, "message": "Metodo pagamento aggiornato"}
+
+
+@router.put("/{invoice_id}/paga")
+async def paga_fattura(invoice_id: str) -> Dict[str, Any]:
+    """
+    Segna una fattura come pagata.
+    Registra automaticamente il movimento in Prima Nota in base al metodo di pagamento.
+    """
+    db = Database.get_db()
+    
+    # Trova la fattura
+    invoice = await db[Collections.INVOICES].find_one({"id": invoice_id})
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Fattura non trovata")
+    
+    if invoice.get("pagato") or invoice.get("status") == "paid":
+        raise HTTPException(status_code=400, detail="Fattura già pagata")
+    
+    metodo = invoice.get("metodo_pagamento")
+    if not metodo:
+        raise HTTPException(status_code=400, detail="Seleziona prima un metodo di pagamento")
+    
+    # Registra in Prima Nota
+    prima_nota_result = {"cassa": None, "banca": None}
+    try:
+        from app.routers.prima_nota import registra_pagamento_fattura
+        prima_nota_result = await registra_pagamento_fattura(
+            fattura=invoice,
+            metodo_pagamento=metodo
+        )
+    except Exception as e:
+        logger.warning(f"Prima nota registration failed: {e}")
+    
+    # Aggiorna la fattura come pagata
+    await db[Collections.INVOICES].update_one(
+        {"id": invoice_id},
+        {"$set": {
+            "pagato": True,
+            "status": "paid",
+            "data_pagamento": datetime.utcnow().isoformat()[:10],
+            "prima_nota_cassa_id": prima_nota_result.get("cassa"),
+            "prima_nota_banca_id": prima_nota_result.get("banca"),
+            "updated_at": datetime.utcnow().isoformat()
+        }}
+    )
+    
+    return {
+        "success": True,
+        "message": "Fattura pagata con successo",
+        "prima_nota": prima_nota_result
+    }
+
+
+@router.delete("/{invoice_id}")
+async def delete_invoice(invoice_id: str) -> Dict[str, Any]:
+    """Elimina una singola fattura."""
+    db = Database.get_db()
+    
+    result = await db[Collections.INVOICES].delete_one({"id": invoice_id})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Fattura non trovata")
+    
+    return {"success": True, "message": "Fattura eliminata"}
+
+
