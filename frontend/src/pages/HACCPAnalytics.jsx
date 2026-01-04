@@ -191,6 +191,26 @@ export default function HACCPAnalytics() {
             📄 Esporta PDF Annuale
           </button>
         )}
+        
+        {/* Send Email Button */}
+        <button
+          onClick={sendReportEmail}
+          disabled={sendingEmail}
+          style={{
+            padding: '10px 16px',
+            background: sendingEmail ? '#ccc' : '#4caf50',
+            color: 'white',
+            border: 'none',
+            borderRadius: 6,
+            cursor: sendingEmail ? 'wait' : 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6
+          }}
+          data-testid="send-email-btn"
+        >
+          {sendingEmail ? '⏳ Invio...' : '📧 Invia via Email'}
+        </button>
       </div>
 
       {loading ? (
