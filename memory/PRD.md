@@ -95,16 +95,21 @@ UI aggiunta in `HACCPDashboard.jsx` con sezione "Stampa Report PDF per Ispezioni
 | components/prima-nota/PrimaNotaNewMovementModal.jsx | 146 | Modal nuovo movimento |
 | components/prima-nota/PrimaNotaSummaryCards.jsx | 59 | Card riepilogo |
 
-## Design Responsivo Mobile-First (Completato 04/01/2026)
-- Design system completo in `/app/frontend/src/styles.css`
-- Layout Mobile: Bottom navigation con 5 icone + menu espandibile a griglia
-- Layout Tablet/Desktop: Sidebar laterale con icone e testo
-- Supporto Safe Area iOS (notch, home indicator)
-- Pagine principali ottimizzate: PrimaNota, F24, HACCP
-- Touch target minimo 44px (Apple guidelines)
+## Fatture - Metodo Pagamento (Completato 04/01/2026)
+- Colonna "Metodo Pag." con dropdown: Cassa, Banca, Bonifico, Assegno, Misto
+- Selezione automatica sposta fattura in Prima Nota (Cassa o Banca)
+- Indicatore visivo "✓ In Cassa" / "✓ In Banca" sotto al dropdown
+- Stato "Pagata" aggiornato automaticamente
+- Endpoint: `PUT /api/fatture/{id}/metodo-pagamento`
+- Tabella responsive con scroll orizzontale su mobile
+
+## Email Service (In Attesa)
+- Infrastruttura completa: `/api/email/test`, `/api/email/f24-alerts`
+- Configurazione SMTP Gmail pronta
+- **PROBLEMA**: App Password non funziona. Serve nuova App Password da https://myaccount.google.com/apppasswords
 
 ## Prossimi Miglioramenti
-- [ ] Email service (configurare App Password Gmail)
+- [ ] Generare nuova App Password Gmail
 - [ ] Generazione contratti dipendenti
 
 ---
