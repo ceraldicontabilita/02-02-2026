@@ -178,6 +178,7 @@ app.include_router(products_catalog.router, prefix="/api/products", tags=["Produ
 app.include_router(employees_payroll.router, prefix="/api/employees", tags=["Employees Payroll"])
 app.include_router(f24_tributi.router, prefix="/api/f24", tags=["F24 Tributi"])
 app.include_router(accounting_f24.router, prefix="/api/f24", tags=["F24 Accounting"])
+app.include_router(f24_public.router, prefix="/api/f24-public", tags=["F24 Public"])
 app.include_router(haccp_report_pdf.router, prefix="/api/haccp-report", tags=["HACCP Report PDF"])
 
 @app.get("/")
