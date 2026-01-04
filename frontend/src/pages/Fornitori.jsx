@@ -3,14 +3,14 @@ import api from '../api';
 
 // Metodi pagamento per pulsanti rapidi
 const METODI_RAPIDI = [
-  { value: "contanti", label: "CASSA", color: "#4caf50" },
+  { value: "cassa", label: "CASSA", color: "#4caf50" },
   { value: "banca", label: "BANCA", color: "#2196f3" },
   { value: "misto", label: "MISTO", color: "#607d8b" },
 ];
 
 // Tutti i metodi pagamento
 const METODI_PAGAMENTO = [
-  { value: "contanti", label: "💵 Contanti", color: "#4caf50" },
+  { value: "cassa", label: "💵 Cassa", color: "#4caf50" },
   { value: "banca", label: "🏦 Banca", color: "#2196f3" },
   { value: "assegno", label: "📝 Assegno", color: "#ff9800" },
   { value: "bonifico", label: "🔄 Bonifico", color: "#9c27b0" },
