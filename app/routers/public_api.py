@@ -168,10 +168,22 @@ async def create_temperature(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]
 # ============== INVOICES ==============
 
 @router.get("/invoices")
-async def list_invoices(skip: int = 0, limit: int = 10000) -> List[Dict[str, Any]]:
-    """Lista fatture."""
+async def list_invoices(
+    skip: int = 0, 
+    limit: int = 10000,
+    anno: Optional[int] = Query(None, description="Filter by year (YYYY)")
+) -> List[Dict[str, Any]]:
+    """Lista fatture con filtro opzionale per anno."""
     db = Database.get_db()
-    return await db[Collections.INVOICES].find({}, {"_id": 0}).sort([("invoice_date", -1)]).skip(skip).limit(limit).to_list(limit)
+    query = {}
+    
+    # Filtro per anno
+    if anno is not None:
+        anno_start = f"{anno}-01-01"
+        anno_end = f"{anno}-12-31"
+        query["invoice_date"] = {"$gte": anno_start, "$lte": anno_end}
+    
+    return await db[Collections.INVOICES].find(query, {"_id": 0}).sort([("invoice_date", -1)]).skip(skip).limit(limit).to_list(limit)
 
 
 @router.post("/invoices")
