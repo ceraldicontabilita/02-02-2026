@@ -533,6 +533,44 @@ async def reconcile_movement(db, movement: Dict[str, Any], tolerance: float = 0.
             {"id": match["id"]},
             {"$set": {
                 "riconciliato": True,
+
+
+# Collection per estratto conto
+COLLECTION_ESTRATTO_CONTO = "estratto_conto"
+
+@router.get("/movements")
+async def get_bank_statement_movements(
+    data_da: Optional[str] = Query(None),
+    data_a: Optional[str] = Query(None),
+    limit: int = Query(1000, ge=1, le=5000)
+) -> Dict[str, Any]:
+    """
+    Recupera i movimenti importati dall'estratto conto.
+    """
+    db = Database.get_db()
+    
+    query = {}
+    if data_da:
+        query["data"] = {"$gte": data_da}
+    if data_a:
+        if "data" in query:
+            query["data"]["$lte"] = data_a
+        else:
+            query["data"] = {"$lte": data_a}
+    
+    movements = await db[COLLECTION_ESTRATTO_CONTO].find(query, {"_id": 0}).sort("data", -1).limit(limit).to_list(limit)
+    
+    totale_entrate = sum(m.get("importo", 0) for m in movements if m.get("tipo") == "entrata")
+    totale_uscite = sum(m.get("importo", 0) for m in movements if m.get("tipo") == "uscita")
+    
+    return {
+        "movements": movements,
+        "count": len(movements),
+        "totale_entrate": totale_entrate,
+        "totale_uscite": totale_uscite,
+        "saldo": totale_entrate - totale_uscite
+    }
+
                 "data_riconciliazione": datetime.utcnow().isoformat(),
                 "estratto_conto_ref": movement.get("descrizione", "")[:100]
             }}
