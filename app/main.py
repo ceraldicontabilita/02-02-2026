@@ -76,7 +76,9 @@ from app.routers import (
     invoices_export, finanziaria,
     public_api,
     comparatore,
-    prima_nota
+    prima_nota,
+    dipendenti,
+    haccp_completo
 )
 
 # Include public API first (no auth required)
