@@ -1262,3 +1262,316 @@ async def export_haccp_pdf_mensile(
     )
 
 
+
+@router.get("/export/pdf/annuale")
+async def export_haccp_pdf_annuale(
+    anno: int = Query(None, description="Anno")
+) -> StreamingResponse:
+    """
+    Genera PDF report HACCP annuale.
+    Include: riepilogo per mese, grafici, totali.
+    """
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4, landscape
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import cm
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
+    
+    db = Database.get_db()
+    
+    if not anno:
+        anno = datetime.utcnow().year
+    
+    import calendar
+    
+    # Build PDF in landscape
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=landscape(A4), rightMargin=1.5*cm, leftMargin=1.5*cm, topMargin=1.5*cm, bottomMargin=1.5*cm)
+    
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle('Title', parent=styles['Heading1'], fontSize=20, spaceAfter=20)
+    heading_style = ParagraphStyle('Heading', parent=styles['Heading2'], fontSize=14, spaceAfter=10, spaceBefore=15)
+    
+    elements = []
+    
+    # Title
+    elements.append(Paragraph(f"📋 Report HACCP Annuale - {anno}", title_style))
+    elements.append(Paragraph(f"Generato il {datetime.utcnow().strftime('%d/%m/%Y %H:%M')}", styles['Normal']))
+    elements.append(Spacer(1, 20))
+    
+    # Gather data for each month
+    mesi_data = []
+    totale_frigo = totale_congel = totale_sanif = 0
+    totale_conformi = 0
+    
+    for mese_num in range(1, 13):
+        mese_str = f"{anno}-{str(mese_num).zfill(2)}"
+        days_in_month = calendar.monthrange(anno, mese_num)[1]
+        start_date = f"{mese_str}-01"
+        end_date = f"{mese_str}-{days_in_month}"
+        
+        frigo_count = await db[COLLECTION_TEMP_FRIGO].count_documents({
+            "data": {"$gte": start_date, "$lte": end_date}
+        })
+        congel_count = await db[COLLECTION_TEMP_CONGEL].count_documents({
+            "data": {"$gte": start_date, "$lte": end_date}
+        })
+        sanif_count = await db["haccp_sanificazioni"].count_documents({
+            "data": {"$gte": start_date, "$lte": end_date}
+        })
+        
+        frigo_conformi = await db[COLLECTION_TEMP_FRIGO].count_documents({
+            "data": {"$gte": start_date, "$lte": end_date},
+            "conforme": True
+        })
+        congel_conformi = await db[COLLECTION_TEMP_CONGEL].count_documents({
+            "data": {"$gte": start_date, "$lte": end_date},
+            "conforme": True
+        })
+        
+        totale = frigo_count + congel_count + sanif_count
+        conformi = frigo_conformi + congel_conformi + sanif_count
+        
+        totale_frigo += frigo_count
+        totale_congel += congel_count
+        totale_sanif += sanif_count
+        totale_conformi += conformi
+        
+        mesi_data.append({
+            "mese": calendar.month_abbr[mese_num],
+            "frigo": frigo_count,
+            "congel": congel_count,
+            "sanif": sanif_count,
+            "totale": totale,
+            "conformita": round((conformi / totale * 100), 1) if totale > 0 else 0
+        })
+    
+    # Summary table
+    elements.append(Paragraph("📊 Riepilogo Annuale per Mese", heading_style))
+    
+    table_data = [
+        ["Mese", "Frigoriferi", "Congelatori", "Sanificazioni", "Totale", "Conformità %"]
+    ]
+    
+    for m in mesi_data:
+        table_data.append([
+            m["mese"],
+            str(m["frigo"]),
+            str(m["congel"]),
+            str(m["sanif"]),
+            str(m["totale"]),
+            f"{m['conformita']}%"
+        ])
+    
+    # Totals row
+    totale_annuo = totale_frigo + totale_congel + totale_sanif
+    conf_annua = round((totale_conformi / totale_annuo * 100), 1) if totale_annuo > 0 else 0
+    table_data.append([
+        "TOTALE",
+        str(totale_frigo),
+        str(totale_congel),
+        str(totale_sanif),
+        str(totale_annuo),
+        f"{conf_annua}%"
+    ])
+    
+    t = Table(table_data, colWidths=[3*cm, 3*cm, 3*cm, 3*cm, 2.5*cm, 3*cm])
+    t.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#9c27b0')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#f3e5f5')),
+        ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+        ('GRID', (0, 0), (-1, -1), 1, colors.grey),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -2), [colors.white, colors.HexColor('#fafafa')]),
+    ]))
+    elements.append(t)
+    
+    # Summary stats
+    elements.append(Spacer(1, 30))
+    elements.append(Paragraph("📈 Statistiche Annuali", heading_style))
+    
+    stats_data = [
+        ["Metrica", "Valore"],
+        ["Totale Rilevazioni", str(totale_annuo)],
+        ["Rilevazioni Conformi", str(totale_conformi)],
+        ["Rilevazioni Non Conformi", str(totale_annuo - totale_conformi)],
+        ["Conformità Media Annuale", f"{conf_annua}%"],
+        ["Media Rilevazioni/Mese", str(round(totale_annuo / 12, 1))],
+    ]
+    
+    t2 = Table(stats_data, colWidths=[6*cm, 4*cm])
+    t2.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4caf50')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 11),
+        ('GRID', (0, 0), (-1, -1), 1, colors.grey),
+    ]))
+    elements.append(t2)
+    
+    # Footer
+    elements.append(Spacer(1, 40))
+    elements.append(Paragraph("_" * 80, styles['Normal']))
+    elements.append(Paragraph("Report HACCP Annuale - Documento generato automaticamente", styles['Normal']))
+    
+    # Build PDF
+    doc.build(elements)
+    buffer.seek(0)
+    
+    filename = f"report_haccp_annuale_{anno}.pdf"
+    
+    return StreamingResponse(
+        buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+
+# ============== NOTIFICHE HACCP ==============
+
+@router.post("/notifiche/check-anomalie")
+async def check_and_notify_anomalie() -> Dict[str, Any]:
+    """
+    Verifica anomalie temperature e genera notifiche.
+    Può essere chiamato dallo scheduler o manualmente.
+    """
+    db = Database.get_db()
+    
+    oggi = datetime.utcnow().strftime("%Y-%m-%d")
+    
+    # Check frigoriferi anomali oggi
+    anomalie_frigo = await db[COLLECTION_TEMP_FRIGO].find({
+        "data": oggi,
+        "conforme": False
+    }, {"_id": 0}).to_list(100)
+    
+    # Check congelatori anomali oggi
+    anomalie_congel = await db[COLLECTION_TEMP_CONGEL].find({
+        "data": oggi,
+        "conforme": False
+    }, {"_id": 0}).to_list(100)
+    
+    notifiche_create = []
+    
+    for a in anomalie_frigo:
+        notifica = {
+            "id": str(uuid.uuid4()),
+            "tipo": "anomalia_temperatura",
+            "categoria": "frigorifero",
+            "equipaggiamento": a.get("equipaggiamento"),
+            "temperatura": a.get("temperatura"),
+            "data": oggi,
+            "ora": a.get("ora"),
+            "messaggio": f"⚠️ Temperatura anomala {a.get('temperatura')}°C su {a.get('equipaggiamento')} (range: 0-4°C)",
+            "severita": "alta" if a.get("temperatura", 0) > 8 or a.get("temperatura", 0) < -2 else "media",
+            "letta": False,
+            "created_at": datetime.utcnow().isoformat()
+        }
+        
+        # Evita duplicati
+        existing = await db["haccp_notifiche"].find_one({
+            "data": oggi,
+            "equipaggiamento": a.get("equipaggiamento"),
+            "categoria": "frigorifero"
+        })
+        
+        if not existing:
+            await db["haccp_notifiche"].insert_one(notifica)
+            notifiche_create.append(notifica)
+    
+    for a in anomalie_congel:
+        notifica = {
+            "id": str(uuid.uuid4()),
+            "tipo": "anomalia_temperatura",
+            "categoria": "congelatore",
+            "equipaggiamento": a.get("equipaggiamento"),
+            "temperatura": a.get("temperatura"),
+            "data": oggi,
+            "ora": a.get("ora"),
+            "messaggio": f"⚠️ Temperatura anomala {a.get('temperatura')}°C su {a.get('equipaggiamento')} (range: -18/-22°C)",
+            "severita": "alta" if a.get("temperatura", 0) > -15 else "media",
+            "letta": False,
+            "created_at": datetime.utcnow().isoformat()
+        }
+        
+        existing = await db["haccp_notifiche"].find_one({
+            "data": oggi,
+            "equipaggiamento": a.get("equipaggiamento"),
+            "categoria": "congelatore"
+        })
+        
+        if not existing:
+            await db["haccp_notifiche"].insert_one(notifica)
+            notifiche_create.append(notifica)
+    
+    return {
+        "data": oggi,
+        "anomalie_rilevate": len(anomalie_frigo) + len(anomalie_congel),
+        "notifiche_create": len(notifiche_create),
+        "dettaglio": {
+            "frigoriferi": len(anomalie_frigo),
+            "congelatori": len(anomalie_congel)
+        }
+    }
+
+
+@router.get("/notifiche")
+async def get_notifiche_haccp(
+    solo_non_lette: bool = Query(False),
+    limit: int = Query(50, ge=1, le=200)
+) -> Dict[str, Any]:
+    """Lista notifiche HACCP."""
+    db = Database.get_db()
+    
+    query = {}
+    if solo_non_lette:
+        query["letta"] = False
+    
+    notifiche = await db["haccp_notifiche"].find(
+        query,
+        {"_id": 0}
+    ).sort("created_at", -1).limit(limit).to_list(limit)
+    
+    non_lette = await db["haccp_notifiche"].count_documents({"letta": False})
+    
+    return {
+        "notifiche": notifiche,
+        "totale": len(notifiche),
+        "non_lette": non_lette
+    }
+
+
+@router.put("/notifiche/{notifica_id}/letta")
+async def mark_notifica_letta(notifica_id: str) -> Dict[str, str]:
+    """Segna notifica come letta."""
+    db = Database.get_db()
+    
+    result = await db["haccp_notifiche"].update_one(
+        {"id": notifica_id},
+        {"$set": {"letta": True, "letta_at": datetime.utcnow().isoformat()}}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Notifica non trovata")
+    
+    return {"message": "Notifica segnata come letta"}
+
+
+@router.put("/notifiche/segna-tutte-lette")
+async def mark_all_notifiche_lette() -> Dict[str, Any]:
+    """Segna tutte le notifiche come lette."""
+    db = Database.get_db()
+    
+    result = await db["haccp_notifiche"].update_many(
+        {"letta": False},
+        {"$set": {"letta": True, "letta_at": datetime.utcnow().isoformat()}}
+    )
+    
+    return {"message": "Tutte le notifiche segnate come lette", "aggiornate": result.modified_count}
+
+
