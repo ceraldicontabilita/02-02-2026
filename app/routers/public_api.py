@@ -828,6 +828,329 @@ async def get_financial_summary() -> Dict[str, Any]:
     }
 
 
+# ============== CORRISPETTIVI ==============
+@router.get("/corrispettivi")
+async def list_corrispettivi(skip: int = 0, limit: int = 100) -> List[Dict[str, Any]]:
+    """List corrispettivi - public endpoint."""
+    db = Database.get_db()
+    corrispettivi = await db["corrispettivi"].find({}, {"_id": 0}).sort("data", -1).skip(skip).limit(limit).to_list(limit)
+    return corrispettivi
+
+
+@router.post("/corrispettivi/upload-xml")
+async def upload_corrispettivo_xml(file: UploadFile = File(...)) -> Dict[str, Any]:
+    """
+    Upload e parse di un singolo corrispettivo XML.
+    Controllo duplicati basato su: P.IVA + data + matricola + numero
+    """
+    if not file.filename.lower().endswith('.xml'):
+        raise HTTPException(status_code=400, detail="Il file deve essere in formato XML")
+    
+    try:
+        content = await file.read()
+        
+        # Prova diverse codifiche
+        xml_content = None
+        for encoding in ['utf-8', 'utf-8-sig', 'latin-1', 'iso-8859-1', 'cp1252']:
+            try:
+                xml_content = content.decode(encoding)
+                break
+            except (UnicodeDecodeError, LookupError):
+                continue
+        
+        if xml_content is None:
+            raise HTTPException(status_code=400, detail="Impossibile decodificare il file")
+        
+        # Parse il corrispettivo
+        parsed = parse_corrispettivo_xml(xml_content)
+        
+        if parsed.get("error"):
+            raise HTTPException(status_code=400, detail=parsed["error"])
+        
+        db = Database.get_db()
+        
+        # Controlla duplicato
+        corrispettivo_key = parsed.get("corrispettivo_key", "")
+        if corrispettivo_key:
+            existing = await db["corrispettivi"].find_one({"corrispettivo_key": corrispettivo_key})
+            if existing:
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"Corrispettivo già presente per data {parsed.get('data')} - {parsed.get('matricola_rt')}"
+                )
+        
+        # Salva nel database
+        corrispettivo = {
+            "id": str(uuid.uuid4()),
+            "corrispettivo_key": corrispettivo_key,
+            "data": parsed.get("data", ""),
+            "matricola_rt": parsed.get("matricola_rt", ""),
+            "numero_documento": parsed.get("numero_documento", ""),
+            "partita_iva": parsed.get("partita_iva", ""),
+            "esercente": parsed.get("esercente", {}),
+            "totale": float(parsed.get("totale", 0) or 0),
+            "totale_corrispettivi": float(parsed.get("totale_corrispettivi", 0) or 0),
+            "totale_iva": float(parsed.get("totale_iva", 0) or 0),
+            "riepilogo_iva": parsed.get("riepilogo_iva", []),
+            "status": "imported",
+            "source": "xml_upload",
+            "filename": file.filename,
+            "created_at": datetime.utcnow().isoformat()
+        }
+        
+        await db["corrispettivi"].insert_one(corrispettivo)
+        corrispettivo.pop("_id", None)
+        
+        return {
+            "success": True,
+            "message": f"Corrispettivo del {parsed.get('data')} importato con successo",
+            "corrispettivo": corrispettivo
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Errore upload corrispettivo: {e}")
+        raise HTTPException(status_code=500, detail=f"Errore durante l'elaborazione: {str(e)}")
+
+
+@router.post("/corrispettivi/upload-xml-bulk")
+async def upload_corrispettivi_xml_bulk(files: List[UploadFile] = File(...)) -> Dict[str, Any]:
+    """
+    Upload massivo di corrispettivi XML.
+    - Nessun limite sul numero di file
+    - Controllo duplicati atomico per ogni corrispettivo
+    - Chiave univoca: P.IVA + data + matricola_rt + numero_documento
+    """
+    if not files:
+        raise HTTPException(status_code=400, detail="Nessun file caricato")
+    
+    results = {
+        "success": [],
+        "errors": [],
+        "duplicates": [],
+        "total": len(files),
+        "imported": 0,
+        "failed": 0,
+        "skipped_duplicates": 0
+    }
+    
+    try:
+        db = Database.get_db()
+        
+        # Crea indice unico se non esiste
+        try:
+            await db["corrispettivi"].create_index(
+                "corrispettivo_key",
+                unique=True,
+                sparse=True,
+                name="idx_corrispettivo_key_unique"
+            )
+        except Exception:
+            pass
+            
+    except Exception as e:
+        logger.error(f"Database connection error: {e}")
+        raise HTTPException(status_code=500, detail="Errore connessione database")
+    
+    for idx, file in enumerate(files):
+        filename = file.filename or f"file_{idx}"
+        try:
+            # Verifica estensione
+            if not filename.lower().endswith('.xml'):
+                results["errors"].append({
+                    "filename": filename,
+                    "error": "Il file deve essere in formato XML"
+                })
+                results["failed"] += 1
+                continue
+            
+            # Leggi contenuto
+            try:
+                content = await file.read()
+            except Exception as e:
+                logger.error(f"Errore lettura file {filename}: {e}")
+                results["errors"].append({
+                    "filename": filename,
+                    "error": f"Errore lettura file: {str(e)}"
+                })
+                results["failed"] += 1
+                continue
+            
+            if not content:
+                results["errors"].append({
+                    "filename": filename,
+                    "error": "File vuoto"
+                })
+                results["failed"] += 1
+                continue
+            
+            # Prova diverse codifiche
+            xml_content = None
+            for encoding in ['utf-8', 'utf-8-sig', 'latin-1', 'iso-8859-1', 'cp1252']:
+                try:
+                    xml_content = content.decode(encoding)
+                    break
+                except (UnicodeDecodeError, LookupError):
+                    continue
+            
+            if xml_content is None:
+                results["errors"].append({
+                    "filename": filename,
+                    "error": "Impossibile decodificare il file"
+                })
+                results["failed"] += 1
+                continue
+            
+            # Parse il corrispettivo
+            try:
+                parsed = parse_corrispettivo_xml(xml_content)
+            except Exception as e:
+                logger.error(f"Errore parsing XML {filename}: {e}")
+                results["errors"].append({
+                    "filename": filename,
+                    "error": f"Errore parsing XML: {str(e)}"
+                })
+                results["failed"] += 1
+                continue
+            
+            if parsed.get("error"):
+                results["errors"].append({
+                    "filename": filename,
+                    "error": parsed["error"]
+                })
+                results["failed"] += 1
+                continue
+            
+            # Genera chiave univoca
+            corrispettivo_key = parsed.get("corrispettivo_key", "")
+            
+            # Controllo duplicato atomico
+            if corrispettivo_key:
+                try:
+                    existing = await db["corrispettivi"].find_one(
+                        {"corrispettivo_key": corrispettivo_key},
+                        {"_id": 1}
+                    )
+                except Exception as e:
+                    logger.error(f"Errore query duplicato {filename}: {e}")
+                    results["errors"].append({
+                        "filename": filename,
+                        "error": f"Errore verifica duplicato: {str(e)}"
+                    })
+                    results["failed"] += 1
+                    continue
+                    
+                if existing:
+                    results["duplicates"].append({
+                        "filename": filename,
+                        "data": parsed.get("data"),
+                        "matricola": parsed.get("matricola_rt"),
+                        "totale": parsed.get("totale", 0)
+                    })
+                    results["skipped_duplicates"] += 1
+                    continue
+            
+            # Prepara documento per salvataggio
+            corrispettivo = {
+                "id": str(uuid.uuid4()),
+                "corrispettivo_key": corrispettivo_key,
+                "data": parsed.get("data", ""),
+                "matricola_rt": parsed.get("matricola_rt", ""),
+                "numero_documento": parsed.get("numero_documento", ""),
+                "partita_iva": parsed.get("partita_iva", ""),
+                "esercente": parsed.get("esercente", {}),
+                "totale": float(parsed.get("totale", 0) or 0),
+                "totale_corrispettivi": float(parsed.get("totale_corrispettivi", 0) or 0),
+                "totale_iva": float(parsed.get("totale_iva", 0) or 0),
+                "riepilogo_iva": parsed.get("riepilogo_iva", []),
+                "status": "imported",
+                "source": "xml_bulk_upload",
+                "filename": filename,
+                "created_at": datetime.utcnow().isoformat()
+            }
+            
+            # Salva nel database
+            try:
+                await db["corrispettivi"].insert_one(corrispettivo)
+            except Exception as e:
+                logger.error(f"Errore inserimento DB {filename}: {e}")
+                # Verifica se è errore duplicato
+                if "duplicate" in str(e).lower() or "E11000" in str(e):
+                    results["duplicates"].append({
+                        "filename": filename,
+                        "data": parsed.get("data"),
+                        "matricola": parsed.get("matricola_rt"),
+                        "totale": parsed.get("totale", 0)
+                    })
+                    results["skipped_duplicates"] += 1
+                else:
+                    results["errors"].append({
+                        "filename": filename,
+                        "error": f"Errore salvataggio: {str(e)}"
+                    })
+                    results["failed"] += 1
+                continue
+            
+            results["success"].append({
+                "filename": filename,
+                "data": parsed.get("data"),
+                "totale": float(parsed.get("totale", 0) or 0)
+            })
+            results["imported"] += 1
+            
+        except Exception as e:
+            logger.error(f"Errore inaspettato upload corrispettivo {filename}: {e}\n{traceback.format_exc()}")
+            results["errors"].append({
+                "filename": filename,
+                "error": f"Errore inaspettato: {str(e)}"
+            })
+            results["failed"] += 1
+    
+    logger.info(f"Upload massivo corrispettivi completato: {results['imported']} importati, {results['skipped_duplicates']} duplicati, {results['failed']} errori")
+    return results
+
+
+@router.delete("/corrispettivi/{corrispettivo_id}")
+async def delete_corrispettivo(corrispettivo_id: str) -> Dict[str, Any]:
+    """Elimina un corrispettivo."""
+    db = Database.get_db()
+    result = await db["corrispettivi"].delete_one({"id": corrispettivo_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Corrispettivo non trovato")
+    return {"success": True, "deleted_id": corrispettivo_id}
+
+
+@router.delete("/corrispettivi/all")
+async def delete_all_corrispettivi() -> Dict[str, Any]:
+    """Elimina tutti i corrispettivi (usa con cautela!)."""
+    db = Database.get_db()
+    result = await db["corrispettivi"].delete_many({})
+    return {"success": True, "deleted_count": result.deleted_count}
+
+
+# Endpoint generico per upload legacy (portal/upload)
+@router.post("/portal/upload")
+async def legacy_portal_upload(file: UploadFile = File(...), kind: str = "") -> Dict[str, Any]:
+    """
+    Endpoint legacy per compatibilità con vecchio frontend.
+    Smista la richiesta all'handler corretto in base al tipo.
+    """
+    if kind == "corrispettivi-xml":
+        # Reindirizza a corrispettivi
+        return await upload_corrispettivo_xml(file)
+    elif kind == "fattura-xml" or kind == "invoice-xml":
+        # Reindirizza a fatture
+        return await upload_fattura_xml(file)
+    else:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Tipo upload non supportato: {kind}. Usa 'corrispettivi-xml' o 'fattura-xml'"
+        )
+
+
+
+
 # ============== ADMIN ==============
 @router.get("/admin/stats")
 async def get_admin_stats() -> Dict[str, Any]:
