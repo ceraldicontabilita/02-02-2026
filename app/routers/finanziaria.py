@@ -1,7 +1,7 @@
 """Finanziaria router - Financial costs management."""
-from fastapi import APIRouter, status
-from typing import Dict, Any, List
-from datetime import datetime
+from fastapi import APIRouter, status, Query
+from typing import Dict, Any, List, Optional
+from datetime import datetime, date
 from uuid import uuid4
 import logging
 
@@ -12,12 +12,23 @@ router = APIRouter()
 
 
 @router.get("/summary", summary="Get financial summary")
-async def get_financial_summary() -> Dict[str, Any]:
-    """Get financial summary from Prima Nota."""
+async def get_financial_summary(
+    anno: Optional[int] = Query(None, description="Anno di riferimento")
+) -> Dict[str, Any]:
+    """Get financial summary from Prima Nota, Corrispettivi e Fatture."""
     db = Database.get_db()
+    
+    # Se anno non specificato, usa anno corrente
+    if not anno:
+        anno = date.today().year
+    
+    # Filtro data per anno
+    data_prefix = f"{anno}"
+    date_filter = {"$regex": f"^{data_prefix}"}
     
     # Get Prima Nota Cassa totals
     cassa_pipeline = [
+        {"$match": {"data": date_filter}},
         {"$group": {
             "_id": "$tipo",
             "total": {"$sum": "$importo"}
@@ -29,6 +40,7 @@ async def get_financial_summary() -> Dict[str, Any]:
     
     # Get Prima Nota Banca totals
     banca_pipeline = [
+        {"$match": {"data": date_filter}},
         {"$group": {
             "_id": "$tipo",
             "total": {"$sum": "$importo"}
@@ -40,6 +52,7 @@ async def get_financial_summary() -> Dict[str, Any]:
     
     # Get Salari totals
     salari_pipeline = [
+        {"$match": {"data": date_filter}},
         {"$group": {
             "_id": None,
             "total": {"$sum": "$importo"}
@@ -48,10 +61,59 @@ async def get_financial_summary() -> Dict[str, Any]:
     salari_result = await db["prima_nota_salari"].aggregate(salari_pipeline).to_list(1)
     salari_totale = salari_result[0]["total"] if salari_result else 0
     
+    # ============ IVA DAI CORRISPETTIVI (DEBITO) ============
+    corr_pipeline = [
+        {"$match": {"data": date_filter}},
+        {"$group": {
+            "_id": None,
+            "totale_iva": {"$sum": "$totale_iva"},
+            "totale_incassi": {"$sum": "$totale"},
+            "count": {"$sum": 1}
+        }}
+    ]
+    corr_result = await db["corrispettivi"].aggregate(corr_pipeline).to_list(1)
+    iva_debito = float(corr_result[0].get("totale_iva", 0) or 0) if corr_result else 0
+    totale_corrispettivi = float(corr_result[0].get("totale_incassi", 0) or 0) if corr_result else 0
+    corr_count = corr_result[0].get("count", 0) if corr_result else 0
+    
+    # ============ IVA DALLE FATTURE (CREDITO) ============
+    fatt_pipeline = [
+        {"$match": {"invoice_date": date_filter}},
+        {"$group": {
+            "_id": None,
+            "total_iva": {"$sum": "$iva"},
+            "total_amount": {"$sum": "$total_amount"},
+            "count": {"$sum": 1}
+        }}
+    ]
+    fatt_result = await db["invoices"].aggregate(fatt_pipeline).to_list(1)
+    
+    if fatt_result:
+        iva_credito = float(fatt_result[0].get("total_iva", 0) or 0)
+        tot_fatture = float(fatt_result[0].get("total_amount", 0) or 0)
+        fatt_count = fatt_result[0].get("count", 0)
+        # Se IVA non presente, calcola con aliquota media 22%
+        if iva_credito == 0 and tot_fatture > 0:
+            iva_credito = tot_fatture - (tot_fatture / 1.22)
+    else:
+        iva_credito, tot_fatture, fatt_count = 0, 0, 0
+    
+    # ============ FATTURE DA PAGARE (non pagate) ============
+    fatture_da_pagare = await db["invoices"].aggregate([
+        {"$match": {
+            "invoice_date": date_filter,
+            "status": {"$nin": ["Pagata", "pagata", "Pagato", "pagato"]}
+        }},
+        {"$group": {"_id": None, "total": {"$sum": "$total_amount"}}}
+    ]).to_list(1)
+    payables = float(fatture_da_pagare[0]["total"]) if fatture_da_pagare else 0
+    
     total_income = cassa_entrate + banca_entrate
     total_expenses = cassa_uscite + banca_uscite + salari_totale
+    saldo_iva = iva_debito - iva_credito
     
     return {
+        "anno": anno,
         "total_income": total_income,
         "total_expenses": total_expenses,
         "balance": total_income - total_expenses,
@@ -67,7 +129,27 @@ async def get_financial_summary() -> Dict[str, Any]:
         },
         "salari": {
             "totale": salari_totale
-        }
+        },
+        # IVA Section
+        "vat_debit": round(iva_debito, 2),
+        "vat_credit": round(iva_credito, 2),
+        "vat_balance": round(saldo_iva, 2),
+        "vat_status": "Da versare" if saldo_iva > 0 else "A credito",
+        # Corrispettivi (incassi giornalieri)
+        "corrispettivi": {
+            "totale": round(totale_corrispettivi, 2),
+            "count": corr_count,
+            "iva": round(iva_debito, 2)
+        },
+        # Fatture (acquisti)
+        "fatture": {
+            "totale": round(tot_fatture, 2),
+            "count": fatt_count,
+            "iva": round(iva_credito, 2)
+        },
+        # Payables/Receivables
+        "payables": round(payables, 2),
+        "receivables": 0  # Non gestiamo fatture attive per ora
     }
 
 
