@@ -151,6 +151,32 @@ UI aggiunta in `HACCPDashboard.jsx` con sezione "Stampa Report PDF per Ispezioni
 ## Prossimi Miglioramenti
 - [ ] Migliorare compilazione automatica campi contratto (pattern ……)
 
+## Chiusure Giornaliere - QuickEntryPanel (04/01/2026)
+- ✅ Pannello "Chiusure Giornaliere Serali" integrato in Prima Nota
+- ✅ 5 moduli inserimento rapido:
+  1. **Corrispettivo** - Entrata in cassa (arancione)
+  2. **POS Giornaliero** - 3 campi POS con totale auto-calcolato (blu)
+  3. **Versamento in Banca** - Uscita cassa + Entrata banca (verde)
+  4. **Movimento Cassa** - Entrata/Uscita generica (arancione scuro)
+  5. **Finanziamento Soci** - Entrata in cassa (viola)
+- ✅ Backend salva campi `source` e `pos_details` nei movimenti
+- File: `/app/frontend/src/components/prima-nota/QuickEntryPanel.jsx`
+
+## Controllo Mensile (04/01/2026)
+- ✅ Nuova pagina `/controllo-mensile` per confronto POS
+- ✅ Selettore mese con formato YYYY-MM
+- ✅ 5 cards riepilogative: POS Auto, POS Manuali, Corrisp Auto, Corrisp Manuali, Versamenti
+- ✅ Tabella 31 righe con confronto giornaliero
+- ✅ Evidenziazione discrepanze (> €1) in giallo
+- ✅ Alert automatico quando ci sono differenze
+- ✅ Colonna dettagli POS (P1:xxx P2:xxx P3:xxx)
+- File: `/app/frontend/src/pages/ControlloMensile.jsx`
+
+## UI Fix - Bottoni Contratti (04/01/2026)
+- ✅ Bottoni generazione contratti centrati
+- ✅ Griglia 2 colonne con minWidth 280px
+- ✅ Bordi colorati per tipo: blu (determinato), verde (indeterminato), grigio (altri)
+
 ---
 
 ## 🔴 REGOLE ARCHITETTURALI (OBBLIGATORIE)
