@@ -124,10 +124,25 @@ export default function Fatture() {
 
   const activeFiltersCount = Object.values(filters).filter(v => v !== "").length;
 
+  // Carica anni disponibili
+  async function loadAvailableYears() {
+    try {
+      const r = await api.get("/api/invoices/anni-disponibili");
+      const years = r.data.anni || [currentYear];
+      if (!years.includes(currentYear)) {
+        years.push(currentYear);
+      }
+      setAvailableYears(years.sort((a, b) => b - a));
+    } catch (e) {
+      console.error("Error loading years:", e);
+      setAvailableYears([currentYear, currentYear - 1]);
+    }
+  }
+
   async function loadInvoices() {
     try {
       setLoading(true);
-      const r = await api.get("/api/invoices");
+      const r = await api.get(`/api/invoices?anno=${selectedYear}&limit=3000`);
       setInvoices(Array.isArray(r.data) ? r.data : r.data?.items || []);
     } catch (e) {
       console.error("Error loading invoices:", e);
