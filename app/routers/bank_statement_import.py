@@ -127,7 +127,7 @@ def parse_intesa_row(row: List[Any]) -> Optional[Dict[str, Any]]:
         
         # Colonna descrizione (solitamente la 3a)
         elif idx == 2 or (len(cell_str) > 10 and not cell_str.replace('.', '').replace(',', '').replace('-', '').replace(' ', '').isdigit()):
-            descrizione = cell_str[:200]
+            descrizione = cell_str[:400]
         
         # Colonne Dare/Avere (importi)
         elif idx >= 3:
@@ -166,7 +166,7 @@ def parse_unicredit_row(row: List[Any]) -> Optional[Dict[str, Any]]:
             if date_match:
                 data = parse_italian_date(date_match.group(1))
         elif idx == 2:
-            descrizione = cell_str[:200]
+            descrizione = cell_str[:400]
         elif idx >= 3:
             parsed = parse_italian_amount(cell_str)
             if abs(parsed) > 0:
@@ -214,7 +214,7 @@ def parse_generic_row(row: List[Any]) -> Optional[Dict[str, Any]]:
         
         # Descrizione (testo lungo non numerico)
         if len(cell_str) > 5 and not cell_str.replace('.', '').replace(',', '').replace('-', '').replace(' ', '').isdigit():
-            descrizione = (descrizione + " " + cell_str).strip()[:200]
+            descrizione = (descrizione + " " + cell_str).strip()[:400]
     
     if data and importo > 0:
         return {"data": data, "descrizione": descrizione or "Movimento estratto conto", "importo": importo, "tipo": tipo}
@@ -316,7 +316,7 @@ def parse_text_movements(text: str, bank_format: str = "generic") -> List[Dict[s
                 # Estrai descrizione (tra data e importo)
                 start = date_match.end()
                 end = amount_match.start()
-                descrizione = line[start:end].strip()[:200]
+                descrizione = line[start:end].strip()[:400]
                 
                 # Rimuovi eventuali date extra dalla descrizione
                 descrizione = re.sub(r'\d{2}[/-]\d{2}[/-]\d{2,4}', '', descrizione).strip()
@@ -450,7 +450,7 @@ def extract_row_data(row, col_mapping: Dict[str, str]) -> Optional[Dict[str, Any
     if col_mapping["description"]:
         val = row.get(col_mapping["description"])
         if pd.notna(val):
-            descrizione = str(val)[:200]
+            descrizione = str(val)[:400]
     
     # Get amount and type
     importo = 0.0
