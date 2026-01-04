@@ -2,16 +2,174 @@
 Public API endpoints - No authentication required.
 Used for demo/development purposes.
 """
-from fastapi import APIRouter, HTTPException, Query, Body
+from fastapi import APIRouter, HTTPException, Query, Body, UploadFile, File
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 import uuid
 import logging
 
 from app.database import Database, Collections
+from app.parsers.fattura_elettronica_parser import parse_fattura_xml, parse_multiple_fatture
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+
+# ============== FATTURE XML UPLOAD ==============
+@router.post("/fatture/upload-xml")
+async def upload_fattura_xml(file: UploadFile = File(...)) -> Dict[str, Any]:
+    """
+    Upload e parse di una singola fattura elettronica XML.
+    """
+    if not file.filename.endswith('.xml'):
+        raise HTTPException(status_code=400, detail="Il file deve essere in formato XML")
+    
+    try:
+        content = await file.read()
+        xml_content = content.decode('utf-8')
+        
+        # Parse la fattura
+        parsed = parse_fattura_xml(xml_content)
+        
+        if parsed.get("error"):
+            raise HTTPException(status_code=400, detail=parsed["error"])
+        
+        # Salva nel database
+        db = Database.get_db()
+        invoice = {
+            "id": str(uuid.uuid4()),
+            "invoice_number": parsed.get("invoice_number", ""),
+            "invoice_date": parsed.get("invoice_date", ""),
+            "tipo_documento": parsed.get("tipo_documento", ""),
+            "tipo_documento_desc": parsed.get("tipo_documento_desc", ""),
+            "supplier_name": parsed.get("supplier_name", ""),
+            "supplier_vat": parsed.get("supplier_vat", ""),
+            "total_amount": parsed.get("total_amount", 0),
+            "imponibile": parsed.get("imponibile", 0),
+            "iva": parsed.get("iva", 0),
+            "divisa": parsed.get("divisa", "EUR"),
+            "fornitore": parsed.get("fornitore", {}),
+            "cliente": parsed.get("cliente", {}),
+            "linee": parsed.get("linee", []),
+            "riepilogo_iva": parsed.get("riepilogo_iva", []),
+            "pagamento": parsed.get("pagamento", {}),
+            "causali": parsed.get("causali", []),
+            "status": "imported",
+            "source": "xml_upload",
+            "filename": file.filename,
+            "created_at": datetime.utcnow().isoformat()
+        }
+        
+        await db[Collections.INVOICES].insert_one(invoice)
+        invoice.pop("_id", None)
+        
+        return {
+            "success": True,
+            "message": f"Fattura {parsed.get('invoice_number')} importata con successo",
+            "invoice": invoice
+        }
+        
+    except UnicodeDecodeError:
+        raise HTTPException(status_code=400, detail="Errore decodifica file. Assicurati che il file sia in formato UTF-8")
+    except Exception as e:
+        logger.error(f"Errore upload fattura: {e}")
+        raise HTTPException(status_code=500, detail=f"Errore durante l'elaborazione: {str(e)}")
+
+
+@router.post("/fatture/upload-xml-bulk")
+async def upload_fatture_xml_bulk(files: List[UploadFile] = File(...)) -> Dict[str, Any]:
+    """
+    Upload massivo di fatture elettroniche XML.
+    Accetta più file XML contemporaneamente.
+    """
+    if not files:
+        raise HTTPException(status_code=400, detail="Nessun file caricato")
+    
+    results = {
+        "success": [],
+        "errors": [],
+        "total": len(files),
+        "imported": 0,
+        "failed": 0
+    }
+    
+    db = Database.get_db()
+    
+    for file in files:
+        try:
+            if not file.filename.endswith('.xml'):
+                results["errors"].append({
+                    "filename": file.filename,
+                    "error": "Il file deve essere in formato XML"
+                })
+                results["failed"] += 1
+                continue
+            
+            content = await file.read()
+            xml_content = content.decode('utf-8')
+            
+            # Parse la fattura
+            parsed = parse_fattura_xml(xml_content)
+            
+            if parsed.get("error"):
+                results["errors"].append({
+                    "filename": file.filename,
+                    "error": parsed["error"]
+                })
+                results["failed"] += 1
+                continue
+            
+            # Salva nel database
+            invoice = {
+                "id": str(uuid.uuid4()),
+                "invoice_number": parsed.get("invoice_number", ""),
+                "invoice_date": parsed.get("invoice_date", ""),
+                "tipo_documento": parsed.get("tipo_documento", ""),
+                "tipo_documento_desc": parsed.get("tipo_documento_desc", ""),
+                "supplier_name": parsed.get("supplier_name", ""),
+                "supplier_vat": parsed.get("supplier_vat", ""),
+                "total_amount": parsed.get("total_amount", 0),
+                "imponibile": parsed.get("imponibile", 0),
+                "iva": parsed.get("iva", 0),
+                "divisa": parsed.get("divisa", "EUR"),
+                "fornitore": parsed.get("fornitore", {}),
+                "cliente": parsed.get("cliente", {}),
+                "linee": parsed.get("linee", []),
+                "riepilogo_iva": parsed.get("riepilogo_iva", []),
+                "pagamento": parsed.get("pagamento", {}),
+                "causali": parsed.get("causali", []),
+                "status": "imported",
+                "source": "xml_bulk_upload",
+                "filename": file.filename,
+                "created_at": datetime.utcnow().isoformat()
+            }
+            
+            await db[Collections.INVOICES].insert_one(invoice)
+            invoice.pop("_id", None)
+            
+            results["success"].append({
+                "filename": file.filename,
+                "invoice_number": parsed.get("invoice_number"),
+                "supplier": parsed.get("supplier_name"),
+                "total": parsed.get("total_amount")
+            })
+            results["imported"] += 1
+            
+        except UnicodeDecodeError:
+            results["errors"].append({
+                "filename": file.filename,
+                "error": "Errore decodifica file UTF-8"
+            })
+            results["failed"] += 1
+        except Exception as e:
+            logger.error(f"Errore upload fattura {file.filename}: {e}")
+            results["errors"].append({
+                "filename": file.filename,
+                "error": str(e)
+            })
+            results["failed"] += 1
+    
+    return results
 
 
 # ============== WAREHOUSE PRODUCTS ==============
