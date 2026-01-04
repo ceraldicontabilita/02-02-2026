@@ -76,6 +76,10 @@ export default function HACCPDashboard() {
     conformita_percentuale: 100
   });
   const [loading, setLoading] = useState(true);
+  const [meseReport, setMeseReport] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  });
 
   useEffect(() => {
     loadStats();
@@ -94,6 +98,38 @@ export default function HACCPDashboard() {
 
   const handleModuleClick = (moduleId) => {
     navigate(`/haccp/${moduleId}`);
+  };
+
+  const handleDownloadPDF = async (tipo) => {
+    try {
+      let url = '';
+      let filename = '';
+      
+      if (tipo === 'completo') {
+        url = `/api/haccp-report/completo-pdf?mese=${meseReport}`;
+        filename = `haccp_report_completo_${meseReport}.pdf`;
+      } else if (tipo === 'frigoriferi') {
+        url = `/api/haccp-report/temperature-pdf?mese=${meseReport}&tipo=frigoriferi`;
+        filename = `haccp_temperature_frigoriferi_${meseReport}.pdf`;
+      } else if (tipo === 'congelatori') {
+        url = `/api/haccp-report/temperature-pdf?mese=${meseReport}&tipo=congelatori`;
+        filename = `haccp_temperature_congelatori_${meseReport}.pdf`;
+      } else if (tipo === 'sanificazioni') {
+        url = `/api/haccp-report/sanificazioni-pdf?mese=${meseReport}`;
+        filename = `haccp_sanificazioni_${meseReport}.pdf`;
+      }
+      
+      const res = await api.get(url, { responseType: 'blob' });
+      const blobUrl = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      alert('Errore download PDF: ' + (error.response?.data?.detail || error.message));
+    }
   };
 
   return (
