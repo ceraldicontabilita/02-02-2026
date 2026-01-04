@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { uploadDocument } from "../api";
 import api from "../api";
+import { ChevronDown, ChevronRight } from "lucide-react";
 
 export default function F24() {
   const [file, setFile] = useState(null);
@@ -10,6 +11,7 @@ export default function F24() {
   const [loading, setLoading] = useState(true);
   const [alerts, setAlerts] = useState([]);
   const [dashboard, setDashboard] = useState(null);
+  const [expandedRows, setExpandedRows] = useState({});
 
   useEffect(() => {
     loadF24();
