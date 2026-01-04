@@ -3,6 +3,7 @@ import api from "../api";
 import { formatDateIT } from "../lib/utils";
 
 export default function Fatture() {
+  const currentYear = new Date().getFullYear();
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -14,6 +15,10 @@ export default function Fatture() {
   const [payingInvoice, setPayingInvoice] = useState(null);
   const fileInputRef = useRef(null);
   const bulkFileInputRef = useRef(null);
+  
+  // Anno selezionato (default: anno corrente)
+  const [selectedYear, setSelectedYear] = useState(currentYear);
+  const [availableYears, setAvailableYears] = useState([currentYear]);
   
   // Filtri
   const [filters, setFilters] = useState({
@@ -45,8 +50,12 @@ export default function Fatture() {
   });
 
   useEffect(() => {
-    loadInvoices();
+    loadAvailableYears();
   }, []);
+
+  useEffect(() => {
+    loadInvoices();
+  }, [selectedYear]);
 
   // Filtro locale delle fatture
   const filteredInvoices = useMemo(() => {
