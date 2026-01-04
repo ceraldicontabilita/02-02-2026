@@ -593,7 +593,7 @@ async def import_metodi_from_invoices() -> Dict[str, Any]:
 
 # ============== RICERCA GLOBALE ==============
 
-@router.get("/search/global")
+@router.get("/ricerca-globale")
 async def global_search_public(
     q: str = Query(..., min_length=2),
     limit: int = Query(10, ge=1, le=50)
