@@ -50,18 +50,20 @@ export default function ControlloMensile() {
         data_a: endDate
       });
 
-      const [bancaRes, cassaRes, corrispRes] = await Promise.all([
-        api.get(`/api/prima-nota/banca?${params}&limit=1000`),
-        api.get(`/api/prima-nota/cassa?${params}&limit=1000`),
-        api.get(`/api/corrispettivi?data_da=${startDate}&data_a=${endDate}`)
+      const [bancaRes, cassaRes, corrispRes, ecRes] = await Promise.all([
+        api.get(`/api/prima-nota/banca?${params}&limit=2000`),
+        api.get(`/api/prima-nota/cassa?${params}&limit=2000`),
+        api.get(`/api/corrispettivi?data_da=${startDate}&data_a=${endDate}`),
+        api.get(`/api/bank-statement/movements?data_da=${startDate}&data_a=${endDate}`).catch(() => ({ data: { movements: [] } }))
       ]);
 
       const banca = bancaRes.data.movimenti || [];
       const cassa = cassaRes.data.movimenti || [];
       const corrispettivi = corrispRes.data.corrispettivi || corrispRes.data || [];
+      const estrattoConto = ecRes.data.movements || [];
       
       // Process data by month
-      processYearData(banca, cassa, corrispettivi);
+      processYearData(banca, cassa, corrispettivi, estrattoConto);
     } catch (error) {
       console.error('Error loading year data:', error);
     } finally {
