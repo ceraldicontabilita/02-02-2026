@@ -767,6 +767,13 @@ async def list_employees(skip: int = 0, limit: int = 10000) -> List[Dict[str, An
                 emp["ultimo_periodo"] = latest_payslip.get("periodo", "")
                 if not emp.get("role") or emp.get("role") == "-":
                     emp["role"] = latest_payslip.get("qualifica", emp.get("role", ""))
+        
+        # Ensure name field is correct (not period)
+        if not emp.get("nome_completo"):
+            emp["nome_completo"] = emp.get("name") if emp.get("name") and emp.get("name") != emp.get("ultimo_periodo") else None
+        # Set name to nome_completo if it exists
+        if emp.get("nome_completo"):
+            emp["name"] = emp["nome_completo"]
     
     return employees
 
