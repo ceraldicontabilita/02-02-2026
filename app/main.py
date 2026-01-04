@@ -79,7 +79,9 @@ from app.routers import (
     prima_nota,
     prima_nota_automation,
     dipendenti,
-    haccp_completo
+    haccp_completo,
+    fatture_upload,
+    corrispettivi_router
 )
 
 # Include public API first (no auth required)
