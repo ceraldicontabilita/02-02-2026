@@ -21,6 +21,7 @@ import Ordini from "./pages/Ordini.jsx";
 import Pianificazione from "./pages/Pianificazione.jsx";
 import ExportPage from "./pages/Export.jsx";
 import AdminPage from "./pages/Admin.jsx";
+import IVA from "./pages/IVA.jsx";
 
 const router = createBrowserRouter([
   {
@@ -44,6 +45,7 @@ const router = createBrowserRouter([
       { path: "pianificazione", element: <Pianificazione /> },
       { path: "export", element: <ExportPage /> },
       { path: "admin", element: <AdminPage /> },
+      { path: "iva", element: <IVA /> },
     ],
   },
 ]);
