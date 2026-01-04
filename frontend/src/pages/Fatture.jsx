@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import api from "../api";
 import { formatDateIT } from "../lib/utils";
 
@@ -14,6 +14,19 @@ export default function Fatture() {
   const [payingInvoice, setPayingInvoice] = useState(null);
   const fileInputRef = useRef(null);
   const bulkFileInputRef = useRef(null);
+  
+  // Filtri
+  const [filters, setFilters] = useState({
+    fornitore: "",
+    numeroFattura: "",
+    dataDa: "",
+    dataA: "",
+    importoMin: "",
+    importoMax: "",
+    metodoPagamento: "",
+    stato: ""
+  });
+  const [showFilters, setShowFilters] = useState(false);
   
   const METODI_PAGAMENTO = [
     { value: "contanti", label: "💵 Contanti", color: "#4caf50" },
@@ -34,6 +47,73 @@ export default function Fatture() {
   useEffect(() => {
     loadInvoices();
   }, []);
+
+  // Filtro locale delle fatture
+  const filteredInvoices = useMemo(() => {
+    return invoices.filter(inv => {
+      // Filtro fornitore
+      if (filters.fornitore) {
+        const fornitore = (inv.supplier_name || inv.fornitore?.denominazione || "").toLowerCase();
+        if (!fornitore.includes(filters.fornitore.toLowerCase())) return false;
+      }
+      
+      // Filtro numero fattura
+      if (filters.numeroFattura) {
+        const numero = (inv.invoice_number || "").toLowerCase();
+        if (!numero.includes(filters.numeroFattura.toLowerCase())) return false;
+      }
+      
+      // Filtro data da
+      if (filters.dataDa && inv.invoice_date) {
+        if (inv.invoice_date < filters.dataDa) return false;
+      }
+      
+      // Filtro data a
+      if (filters.dataA && inv.invoice_date) {
+        if (inv.invoice_date > filters.dataA) return false;
+      }
+      
+      // Filtro importo min
+      if (filters.importoMin) {
+        if ((inv.total_amount || 0) < parseFloat(filters.importoMin)) return false;
+      }
+      
+      // Filtro importo max
+      if (filters.importoMax) {
+        if ((inv.total_amount || 0) > parseFloat(filters.importoMax)) return false;
+      }
+      
+      // Filtro metodo pagamento
+      if (filters.metodoPagamento) {
+        if (inv.metodo_pagamento !== filters.metodoPagamento) return false;
+      }
+      
+      // Filtro stato
+      if (filters.stato) {
+        const isPagata = inv.pagato || inv.status === "paid";
+        if (filters.stato === "pagata" && !isPagata) return false;
+        if (filters.stato === "da_pagare" && isPagata) return false;
+        if (filters.stato === "importata" && inv.status !== "imported") return false;
+      }
+      
+      return true;
+    });
+  }, [invoices, filters]);
+
+  const resetFilters = () => {
+    setFilters({
+      fornitore: "",
+      numeroFattura: "",
+      dataDa: "",
+      dataA: "",
+      importoMin: "",
+      importoMax: "",
+      metodoPagamento: "",
+      stato: ""
+    });
+  };
+
+  const activeFiltersCount = Object.values(filters).filter(v => v !== "").length;
 
   async function loadInvoices() {
     try {
