@@ -384,20 +384,13 @@ export default function GestioneAssegni() {
                   <React.Fragment key={carnetId}>
                     {/* Carnet Header */}
                     <tr style={{ background: '#f0f9ff' }}>
-                      <td colSpan={7} style={{ padding: '10px 12px' }}>
+                      <td colSpan={8} style={{ padding: '10px 12px' }}>
                         <strong>📁 Carnet {Object.keys(carnets).indexOf(carnetId) + 1}</strong>
                         <span style={{ color: '#666', marginLeft: 10 }}>
                           (Assegni {carnetAssegni.length})
                         </span>
                       </td>
-                      <td style={{ padding: '10px 12px', textAlign: 'center' }}>
-                        <button
-                          onClick={() => window.print()}
-                          style={{
-                            padding: '6px 12px',
-                            background: '#2196f3',
-                            color: 'white',
-                            border: 'none',
+                    </tr>
                             borderRadius: 6,
                             cursor: 'pointer',
                             fontSize: 12
