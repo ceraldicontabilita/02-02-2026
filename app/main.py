@@ -161,6 +161,9 @@ app.include_router(exports.router, prefix="/api/export", tags=["Exports Alias"])
 # New refactored routers
 app.include_router(fatture_upload.router, prefix="/api/fatture", tags=["Fatture Upload"])
 app.include_router(corrispettivi_router.router, prefix="/api/corrispettivi", tags=["Corrispettivi"])
+app.include_router(iva_calcolo.router, prefix="/api/iva", tags=["IVA Calcolo"])
+app.include_router(ordini_fornitori.router, prefix="/api/ordini-fornitori", tags=["Ordini Fornitori"])
+app.include_router(products_catalog.router, prefix="/api/products", tags=["Products Catalog"])
 
 @app.get("/")
 async def root():
