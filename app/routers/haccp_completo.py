@@ -185,18 +185,44 @@ async def list_temperature_frigoriferi(
 
 @router.post("/temperature/frigoriferi")
 async def create_temperatura_frigo(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
-    """Registra temperatura frigorifero."""
+    """Registra o aggiorna temperatura frigorifero."""
     db = Database.get_db()
     
     # Verifica conformità
     temp = data.get("temperatura", 0)
     conforme = 0 <= temp <= 4
     
+    data_str = data.get("data", datetime.utcnow().strftime("%Y-%m-%d"))
+    equip = data.get("equipaggiamento", "Frigo Cucina")
+    
+    # Verifica se esiste già
+    existing = await db[COLLECTION_TEMP_FRIGO].find_one({
+        "data": data_str,
+        "equipaggiamento": equip
+    })
+    
+    if existing:
+        # Aggiorna record esistente
+        await db[COLLECTION_TEMP_FRIGO].update_one(
+            {"_id": existing["_id"]},
+            {"$set": {
+                "temperatura": temp,
+                "ora": data.get("ora", datetime.utcnow().strftime("%H:%M")),
+                "conforme": conforme,
+                "operatore": data.get("operatore", ""),
+                "note": data.get("note", ""),
+                "azione_correttiva": data.get("azione_correttiva", "") if not conforme else "",
+                "updated_at": datetime.utcnow().isoformat()
+            }}
+        )
+        return {"id": existing.get("id"), "message": "Record aggiornato"}
+    
+    # Crea nuovo record
     record = {
         "id": str(uuid.uuid4()),
-        "data": data.get("data", datetime.utcnow().strftime("%Y-%m-%d")),
+        "data": data_str,
         "ora": data.get("ora", datetime.utcnow().strftime("%H:%M")),
-        "equipaggiamento": data.get("equipaggiamento", "Frigo Cucina"),
+        "equipaggiamento": equip,
         "temperatura": temp,
         "conforme": conforme,
         "operatore": data.get("operatore", ""),
@@ -209,6 +235,51 @@ async def create_temperatura_frigo(data: Dict[str, Any] = Body(...)) -> Dict[str
     record.pop("_id", None)
     
     return record
+
+
+@router.put("/temperature/frigoriferi/{record_id}")
+async def update_temperatura_frigo(record_id: str, data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
+    """Modifica un record temperatura frigorifero esistente."""
+    db = Database.get_db()
+    
+    temp = data.get("temperatura")
+    conforme = 0 <= temp <= 4 if temp is not None else None
+    
+    update_data = {"updated_at": datetime.utcnow().isoformat()}
+    if temp is not None:
+        update_data["temperatura"] = temp
+        update_data["conforme"] = conforme
+    if "ora" in data:
+        update_data["ora"] = data["ora"]
+    if "operatore" in data:
+        update_data["operatore"] = data["operatore"]
+    if "note" in data:
+        update_data["note"] = data["note"]
+    if "azione_correttiva" in data:
+        update_data["azione_correttiva"] = data["azione_correttiva"]
+    
+    result = await db[COLLECTION_TEMP_FRIGO].update_one(
+        {"id": record_id},
+        {"$set": update_data}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Record non trovato")
+    
+    return {"message": "Record aggiornato", "id": record_id}
+
+
+@router.delete("/temperature/frigoriferi/{record_id}")
+async def delete_temperatura_frigo_single(record_id: str) -> Dict[str, str]:
+    """Elimina singolo record temperatura frigorifero."""
+    db = Database.get_db()
+    
+    result = await db[COLLECTION_TEMP_FRIGO].delete_one({"id": record_id})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Record non trovato")
+    
+    return {"message": "Record eliminato"}
 
 
 @router.post("/temperature/frigoriferi/genera-mese")
