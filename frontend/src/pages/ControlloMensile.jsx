@@ -50,8 +50,8 @@ export default function ControlloMensile() {
       });
 
       const [bancaRes, cassaRes, corrispRes] = await Promise.all([
-        api.get(`/api/prima-nota/banca?${params}&limit=5000`),
-        api.get(`/api/prima-nota/cassa?${params}&limit=5000`),
+        api.get(`/api/prima-nota/banca?${params}&limit=1000`),
+        api.get(`/api/prima-nota/cassa?${params}&limit=1000`),
         api.get(`/api/corrispettivi?data_da=${startDate}&data_a=${endDate}`)
       ]);
 
