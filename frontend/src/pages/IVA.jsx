@@ -1,0 +1,448 @@
+import React, { useState, useEffect } from "react";
+import api from "../api";
+import { formatDateIT, formatEuro } from "../lib/utils";
+
+export default function IVA() {
+  const [loading, setLoading] = useState(true);
+  const [todayData, setTodayData] = useState(null);
+  const [annualData, setAnnualData] = useState(null);
+  const [monthlyData, setMonthlyData] = useState(null);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+  const [viewMode, setViewMode] = useState("annual"); // annual, monthly, daily
+  const [err, setErr] = useState("");
+
+  const mesiItaliani = [
+    "", "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
+    "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"
+  ];
+
+  useEffect(() => {
+    loadData();
+  }, [selectedYear, selectedMonth]);
+
+  async function loadData() {
+    setLoading(true);
+    setErr("");
+    try {
+      // Carica IVA oggi
+      const todayRes = await api.get("/api/iva/today");
+      setTodayData(todayRes.data);
+
+      // Carica IVA annuale
+      const annualRes = await api.get(`/api/iva/annual/${selectedYear}`);
+      setAnnualData(annualRes.data);
+
+      // Carica IVA mensile
+      const monthlyRes = await api.get(`/api/iva/monthly/${selectedYear}/${selectedMonth}`);
+      setMonthlyData(monthlyRes.data);
+    } catch (e) {
+      console.error("Error loading IVA data:", e);
+      setErr("Errore caricamento dati IVA");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function getSaldoColor(saldo) {
+    if (saldo > 0) return "#c62828"; // Rosso - da versare
+    if (saldo < 0) return "#2e7d32"; // Verde - a credito
+    return "#666";
+  }
+
+  function getSaldoBadge(stato) {
+    if (stato === "Da versare") return { bg: "#ffcdd2", color: "#c62828" };
+    if (stato === "A credito") return { bg: "#c8e6c9", color: "#2e7d32" };
+    return { bg: "#f5f5f5", color: "#666" };
+  }
+
+  return (
+    <>
+      <div className="h1">Calcolo IVA</div>
+      <div className="small" style={{ marginBottom: 20 }}>
+        Riepilogo IVA: debito da corrispettivi, credito da fatture passive
+      </div>
+
+      {err && (
+        <div className="card" style={{ background: "#ffcdd2", color: "#c62828" }}>
+          {err}
+        </div>
+      )}
+
+      {/* Controlli */}
+      <div className="card">
+        <div className="row" style={{ alignItems: "center", gap: 15 }}>
+          <div>
+            <label style={{ marginRight: 8 }}>Anno:</label>
+            <select 
+              value={selectedYear} 
+              onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+              style={{ padding: "6px 12px" }}
+            >
+              {[2023, 2024, 2025, 2026].map(y => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label style={{ marginRight: 8 }}>Mese:</label>
+            <select 
+              value={selectedMonth} 
+              onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+              style={{ padding: "6px 12px" }}
+            >
+              {mesiItaliani.slice(1).map((m, i) => (
+                <option key={i+1} value={i+1}>{m}</option>
+              ))}
+            </select>
+          </div>
+          <div style={{ marginLeft: "auto" }}>
+            <button 
+              className={viewMode === "annual" ? "primary" : ""} 
+              onClick={() => setViewMode("annual")}
+              style={{ marginRight: 5 }}
+            >
+              Annuale
+            </button>
+            <button 
+              className={viewMode === "monthly" ? "primary" : ""} 
+              onClick={() => setViewMode("monthly")}
+              style={{ marginRight: 5 }}
+            >
+              Mensile
+            </button>
+            <button 
+              className={viewMode === "today" ? "primary" : ""} 
+              onClick={() => setViewMode("today")}
+            >
+              Oggi
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="card">
+          <div className="small">Caricamento dati IVA...</div>
+        </div>
+      ) : (
+        <>
+          {/* Card Riepilogo Oggi */}
+          {todayData && (
+            <div className="grid">
+              <div className="card" style={{ background: "#e3f2fd" }}>
+                <div className="small">IVA Oggi ({todayData.data})</div>
+                <div className="kpi" style={{ color: getSaldoColor(todayData.saldo) }}>
+                  € {todayData.saldo?.toFixed(2)}
+                </div>
+                <div className="small">{todayData.stato}</div>
+              </div>
+              <div className="card" style={{ background: "#fff3e0" }}>
+                <div className="small">IVA a Debito (Corrispettivi)</div>
+                <div className="kpi" style={{ color: "#e65100" }}>
+                  € {todayData.iva_debito?.toFixed(2)}
+                </div>
+                <div className="small">{todayData.corrispettivi?.count || 0} corrispettivi</div>
+              </div>
+              <div className="card" style={{ background: "#e8f5e9" }}>
+                <div className="small">IVA a Credito (Fatture)</div>
+                <div className="kpi" style={{ color: "#2e7d32" }}>
+                  € {todayData.iva_credito?.toFixed(2)}
+                </div>
+                <div className="small">{todayData.fatture?.count || 0} fatture</div>
+              </div>
+            </div>
+          )}
+
+          {/* Vista Annuale */}
+          {viewMode === "annual" && annualData && (
+            <div className="card">
+              <div className="h1">Riepilogo IVA Annuale {selectedYear}</div>
+              
+              {/* Totali */}
+              <div className="grid" style={{ marginBottom: 20 }}>
+                <div style={{ background: "#fff3e0", padding: 15, borderRadius: 8, textAlign: "center" }}>
+                  <div className="small">Totale IVA Debito</div>
+                  <div style={{ fontSize: 28, fontWeight: "bold", color: "#e65100" }}>
+                    € {annualData.totali?.iva_debito?.toLocaleString('it-IT', {minimumFractionDigits: 2})}
+                  </div>
+                </div>
+                <div style={{ background: "#e8f5e9", padding: 15, borderRadius: 8, textAlign: "center" }}>
+                  <div className="small">Totale IVA Credito</div>
+                  <div style={{ fontSize: 28, fontWeight: "bold", color: "#2e7d32" }}>
+                    € {annualData.totali?.iva_credito?.toLocaleString('it-IT', {minimumFractionDigits: 2})}
+                  </div>
+                </div>
+                <div style={{ 
+                  background: annualData.totali?.saldo > 0 ? "#ffcdd2" : "#c8e6c9", 
+                  padding: 15, 
+                  borderRadius: 8, 
+                  textAlign: "center" 
+                }}>
+                  <div className="small">Saldo Annuale</div>
+                  <div style={{ 
+                    fontSize: 28, 
+                    fontWeight: "bold", 
+                    color: getSaldoColor(annualData.totali?.saldo) 
+                  }}>
+                    € {annualData.totali?.saldo?.toLocaleString('it-IT', {minimumFractionDigits: 2})}
+                  </div>
+                  <div className="small">{annualData.totali?.stato}</div>
+                </div>
+              </div>
+
+              {/* Tabella mensile */}
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead>
+                  <tr style={{ borderBottom: "2px solid #ddd", textAlign: "left" }}>
+                    <th style={{ padding: 10 }}>Mese</th>
+                    <th style={{ padding: 10, textAlign: "right" }}>IVA Debito</th>
+                    <th style={{ padding: 10, textAlign: "right" }}>IVA Credito</th>
+                    <th style={{ padding: 10, textAlign: "right" }}>Saldo</th>
+                    <th style={{ padding: 10, textAlign: "center" }}>Stato</th>
+                    <th style={{ padding: 10, textAlign: "center" }}>Fatture</th>
+                    <th style={{ padding: 10, textAlign: "center" }}>Corrisp.</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {annualData.monthly_data?.map((m, i) => {
+                    const badge = getSaldoBadge(m.stato);
+                    return (
+                      <tr key={i} style={{ borderBottom: "1px solid #eee" }}>
+                        <td style={{ padding: 10, fontWeight: "bold" }}>{m.mese_nome}</td>
+                        <td style={{ padding: 10, textAlign: "right", color: "#e65100" }}>
+                          € {m.iva_debito?.toFixed(2)}
+                        </td>
+                        <td style={{ padding: 10, textAlign: "right", color: "#2e7d32" }}>
+                          € {m.iva_credito?.toFixed(2)}
+                        </td>
+                        <td style={{ 
+                          padding: 10, 
+                          textAlign: "right", 
+                          fontWeight: "bold",
+                          color: getSaldoColor(m.saldo)
+                        }}>
+                          € {m.saldo?.toFixed(2)}
+                        </td>
+                        <td style={{ padding: 10, textAlign: "center" }}>
+                          <span style={{ 
+                            background: badge.bg, 
+                            color: badge.color,
+                            padding: "3px 10px",
+                            borderRadius: 12,
+                            fontSize: 12
+                          }}>
+                            {m.stato}
+                          </span>
+                        </td>
+                        <td style={{ padding: 10, textAlign: "center" }}>{m.fatture_count}</td>
+                        <td style={{ padding: 10, textAlign: "center" }}>{m.corrispettivi_count}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+                <tfoot>
+                  <tr style={{ background: "#f5f5f5", fontWeight: "bold" }}>
+                    <td style={{ padding: 10 }}>TOTALE</td>
+                    <td style={{ padding: 10, textAlign: "right", color: "#e65100" }}>
+                      € {annualData.totali?.iva_debito?.toFixed(2)}
+                    </td>
+                    <td style={{ padding: 10, textAlign: "right", color: "#2e7d32" }}>
+                      € {annualData.totali?.iva_credito?.toFixed(2)}
+                    </td>
+                    <td style={{ 
+                      padding: 10, 
+                      textAlign: "right",
+                      color: getSaldoColor(annualData.totali?.saldo)
+                    }}>
+                      € {annualData.totali?.saldo?.toFixed(2)}
+                    </td>
+                    <td style={{ padding: 10, textAlign: "center" }}>
+                      <span style={{ 
+                        background: getSaldoBadge(annualData.totali?.stato).bg, 
+                        color: getSaldoBadge(annualData.totali?.stato).color,
+                        padding: "3px 10px",
+                        borderRadius: 12,
+                        fontSize: 12,
+                        fontWeight: "bold"
+                      }}>
+                        {annualData.totali?.stato}
+                      </span>
+                    </td>
+                    <td colSpan={2}></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          )}
+
+          {/* Vista Mensile Progressiva */}
+          {viewMode === "monthly" && monthlyData && (
+            <div className="card">
+              <div className="h1">
+                IVA Progressiva - {monthlyData.mese_nome} {monthlyData.anno}
+              </div>
+              
+              {/* Totale del mese */}
+              <div className="grid" style={{ marginBottom: 20 }}>
+                <div style={{ background: "#fff3e0", padding: 15, borderRadius: 8, textAlign: "center" }}>
+                  <div className="small">IVA Debito Mese</div>
+                  <div style={{ fontSize: 24, fontWeight: "bold", color: "#e65100" }}>
+                    € {monthlyData.totale_mensile?.iva_debito?.toFixed(2)}
+                  </div>
+                </div>
+                <div style={{ background: "#e8f5e9", padding: 15, borderRadius: 8, textAlign: "center" }}>
+                  <div className="small">IVA Credito Mese</div>
+                  <div style={{ fontSize: 24, fontWeight: "bold", color: "#2e7d32" }}>
+                    € {monthlyData.totale_mensile?.iva_credito?.toFixed(2)}
+                  </div>
+                </div>
+                <div style={{ 
+                  background: monthlyData.totale_mensile?.saldo > 0 ? "#ffcdd2" : "#c8e6c9", 
+                  padding: 15, 
+                  borderRadius: 8, 
+                  textAlign: "center" 
+                }}>
+                  <div className="small">Saldo Mese</div>
+                  <div style={{ 
+                    fontSize: 24, 
+                    fontWeight: "bold", 
+                    color: getSaldoColor(monthlyData.totale_mensile?.saldo) 
+                  }}>
+                    € {monthlyData.totale_mensile?.saldo?.toFixed(2)}
+                  </div>
+                </div>
+              </div>
+
+              {/* Tabella giornaliera */}
+              <div style={{ maxHeight: 400, overflowY: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead style={{ position: "sticky", top: 0, background: "white" }}>
+                    <tr style={{ borderBottom: "2px solid #ddd", textAlign: "left" }}>
+                      <th style={{ padding: 8 }}>Giorno</th>
+                      <th style={{ padding: 8, textAlign: "right" }}>Debito</th>
+                      <th style={{ padding: 8, textAlign: "right" }}>Credito</th>
+                      <th style={{ padding: 8, textAlign: "right" }}>Saldo</th>
+                      <th style={{ padding: 8, textAlign: "right", background: "#f5f5f5" }}>Progr. Debito</th>
+                      <th style={{ padding: 8, textAlign: "right", background: "#f5f5f5" }}>Progr. Credito</th>
+                      <th style={{ padding: 8, textAlign: "right", background: "#f5f5f5" }}>Progr. Saldo</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {monthlyData.daily_data?.map((d, i) => (
+                      <tr 
+                        key={i} 
+                        style={{ 
+                          borderBottom: "1px solid #eee",
+                          background: d.has_data ? "white" : "#fafafa",
+                          opacity: d.has_data ? 1 : 0.6
+                        }}
+                      >
+                        <td style={{ padding: 8 }}>{d.data}</td>
+                        <td style={{ padding: 8, textAlign: "right", color: "#e65100" }}>
+                          {d.iva_debito > 0 ? `€ ${d.iva_debito.toFixed(2)}` : "-"}
+                        </td>
+                        <td style={{ padding: 8, textAlign: "right", color: "#2e7d32" }}>
+                          {d.iva_credito > 0 ? `€ ${d.iva_credito.toFixed(2)}` : "-"}
+                        </td>
+                        <td style={{ 
+                          padding: 8, 
+                          textAlign: "right",
+                          color: getSaldoColor(d.saldo),
+                          fontWeight: d.has_data ? "bold" : "normal"
+                        }}>
+                          {d.has_data ? `€ ${d.saldo.toFixed(2)}` : "-"}
+                        </td>
+                        <td style={{ padding: 8, textAlign: "right", background: "#fff3e0" }}>
+                          € {d.iva_debito_progressiva.toFixed(2)}
+                        </td>
+                        <td style={{ padding: 8, textAlign: "right", background: "#e8f5e9" }}>
+                          € {d.iva_credito_progressiva.toFixed(2)}
+                        </td>
+                        <td style={{ 
+                          padding: 8, 
+                          textAlign: "right",
+                          background: d.saldo_progressivo > 0 ? "#ffebee" : "#e8f5e9",
+                          fontWeight: "bold",
+                          color: getSaldoColor(d.saldo_progressivo)
+                        }}>
+                          € {d.saldo_progressivo.toFixed(2)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Vista Oggi Dettaglio */}
+          {viewMode === "today" && todayData && (
+            <div className="card">
+              <div className="h1">IVA Dettaglio - {todayData.data}</div>
+              
+              <div className="grid">
+                <div>
+                  <h3 style={{ color: "#e65100" }}>Corrispettivi (IVA Debito)</h3>
+                  <div style={{ background: "#fff3e0", padding: 15, borderRadius: 8 }}>
+                    <div style={{ fontSize: 24, fontWeight: "bold" }}>
+                      € {todayData.iva_debito?.toFixed(2)}
+                    </div>
+                    <div className="small">
+                      {todayData.corrispettivi?.count || 0} corrispettivi<br/>
+                      Totale incassato: € {todayData.corrispettivi?.totale?.toFixed(2)}
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <h3 style={{ color: "#2e7d32" }}>Fatture Passive (IVA Credito)</h3>
+                  <div style={{ background: "#e8f5e9", padding: 15, borderRadius: 8 }}>
+                    <div style={{ fontSize: 24, fontWeight: "bold" }}>
+                      € {todayData.iva_credito?.toFixed(2)}
+                    </div>
+                    <div className="small">{todayData.fatture?.count || 0} fatture</div>
+                  </div>
+                  
+                  {todayData.fatture?.items?.length > 0 && (
+                    <div style={{ marginTop: 10 }}>
+                      {todayData.fatture.items.map((f, i) => (
+                        <div key={i} style={{ 
+                          padding: 8, 
+                          borderBottom: "1px solid #eee",
+                          fontSize: 13
+                        }}>
+                          <strong>{f.supplier_name}</strong>
+                          <div className="small">
+                            N° {f.invoice_number} - Totale € {f.total_amount?.toFixed(2)} - IVA € {f.iva?.toFixed(2)}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <div style={{ 
+                marginTop: 20, 
+                padding: 20, 
+                background: todayData.saldo > 0 ? "#ffcdd2" : todayData.saldo < 0 ? "#c8e6c9" : "#f5f5f5",
+                borderRadius: 8,
+                textAlign: "center"
+              }}>
+                <div className="small">Saldo IVA Giornaliero</div>
+                <div style={{ 
+                  fontSize: 32, 
+                  fontWeight: "bold",
+                  color: getSaldoColor(todayData.saldo)
+                }}>
+                  € {todayData.saldo?.toFixed(2)}
+                </div>
+                <div style={{ fontSize: 16, marginTop: 5 }}>{todayData.stato}</div>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </>
+  );
+}
