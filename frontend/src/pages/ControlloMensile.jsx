@@ -71,9 +71,9 @@ export default function ControlloMensile() {
     }
   };
 
-  const processYearData = (banca, cassa, corrispettivi) => {
+  const processYearData = (banca, cassa, corrispettivi, estrattoConto = []) => {
     const monthly = [];
-    let yearPosAuto = 0, yearPosManual = 0, yearCorrispAuto = 0, yearCorrispManual = 0, yearVersamenti = 0;
+    let yearPosAuto = 0, yearPosManual = 0, yearCorrispAuto = 0, yearCorrispManual = 0, yearVersamentiManual = 0, yearVersamentiEC = 0;
 
     for (let month = 1; month <= 12; month++) {
       const monthStr = String(month).padStart(2, '0');
@@ -85,34 +85,41 @@ export default function ControlloMensile() {
       const monthCorrisp = corrispettivi.filter(c => 
         c.data?.startsWith(monthPrefix) || c.data_ora?.startsWith(monthPrefix)
       );
+      const monthEC = estrattoConto.filter(m => m.data?.startsWith(monthPrefix));
 
-      // POS Auto (from XML/bank imports)
-      const posAuto = monthBanca
-        .filter(m => (m.categoria?.toLowerCase().includes('pos') || m.descrizione?.toLowerCase().includes('incasso pos')) && m.source !== 'manual_pos')
+      // POS da Estratto Conto (contiene "POS" nella descrizione o categoria)
+      const posAuto = monthEC
+        .filter(m => (m.descrizione?.toLowerCase().includes('pos') || m.categoria?.toLowerCase().includes('pos')) && m.tipo === 'entrata')
         .reduce((sum, m) => sum + (m.importo || 0), 0);
 
-      // POS Manual
-      const posManual = monthBanca
-        .filter(m => m.source === 'manual_pos')
+      // POS Manual (da Prima Nota Cassa con source manual_pos)
+      const posManual = monthCassa
+        .filter(m => m.source === 'manual_pos' || m.source === 'excel_pos')
         .reduce((sum, m) => sum + (m.importo || 0), 0);
 
       // Corrispettivi Auto (from XML)
-      const corrispAuto = monthCorrisp.reduce((sum, c) => sum + (c.ammontare_vendite || c.importo || 0), 0);
+      const corrispAuto = monthCorrisp.reduce((sum, c) => sum + (c.ammontare_vendite || c.totale || c.importo || 0), 0);
 
-      // Corrispettivi Manual
+      // Corrispettivi Manual (da Prima Nota Cassa)
       const corrispManual = monthCassa
-        .filter(m => m.categoria === 'Corrispettivi' && m.source === 'manual_entry')
+        .filter(m => m.categoria === 'Corrispettivi')
         .reduce((sum, m) => sum + (m.importo || 0), 0);
 
-      // Versamenti
-      const versamenti = monthCassa
+      // Versamenti Manuali (da Prima Nota Cassa)
+      const versamentiManual = monthCassa
         .filter(m => m.categoria === 'Versamento' && m.tipo === 'uscita')
+        .reduce((sum, m) => sum + (m.importo || 0), 0);
+
+      // Versamenti da Estratto Conto (contiene "versamento" nella descrizione)
+      const versamentiEC = monthEC
+        .filter(m => m.descrizione?.toLowerCase().includes('versamento') && m.tipo === 'entrata')
         .reduce((sum, m) => sum + (m.importo || 0), 0);
 
       const posDiff = posAuto - posManual;
       const corrispDiff = corrispAuto - corrispManual;
-      const hasData = posAuto > 0 || posManual > 0 || corrispAuto > 0 || corrispManual > 0;
-      const hasDiscrepancy = Math.abs(posDiff) > 1 || Math.abs(corrispDiff) > 1;
+      const versamentiDiff = versamentiEC - versamentiManual;
+      const hasData = posAuto > 0 || posManual > 0 || corrispAuto > 0 || corrispManual > 0 || versamentiManual > 0;
+      const hasDiscrepancy = Math.abs(posDiff) > 1 || Math.abs(corrispDiff) > 1 || Math.abs(versamentiDiff) > 1;
 
       monthly.push({
         month,
@@ -123,7 +130,9 @@ export default function ControlloMensile() {
         corrispAuto,
         corrispManual,
         corrispDiff,
-        versamenti,
+        versamentiManual,
+        versamentiEC,
+        versamentiDiff,
         hasData,
         hasDiscrepancy
       });
