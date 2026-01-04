@@ -86,7 +86,8 @@ from app.routers import (
     ordini_fornitori,
     products_catalog,
     employees_payroll,
-    f24_tributi
+    f24_tributi,
+    haccp_report_pdf
 )
 
 # Include public API first (no auth required)
