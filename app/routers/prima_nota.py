@@ -139,6 +139,94 @@ async def create_prima_nota_cassa(
     return {"message": "Movimento cassa creato", "id": movimento["id"]}
 
 
+@router.delete("/cassa/delete-all")
+async def delete_all_prima_nota_cassa() -> Dict[str, Any]:
+    """Elimina TUTTI i movimenti dalla prima nota cassa."""
+    db = Database.get_db()
+    result = await db[COLLECTION_PRIMA_NOTA_CASSA].delete_many({})
+    return {"message": f"Eliminati {result.deleted_count} movimenti dalla cassa"}
+
+@router.delete("/banca/delete-all")
+async def delete_all_prima_nota_banca() -> Dict[str, Any]:
+    """Elimina TUTTI i movimenti dalla prima nota banca."""
+    db = Database.get_db()
+    result = await db[COLLECTION_PRIMA_NOTA_BANCA].delete_many({})
+    return {"message": f"Eliminati {result.deleted_count} movimenti dalla banca"}
+
+@router.post("/import-batch")
+async def import_prima_nota_batch(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
+    """
+    Importa batch di movimenti nella prima nota.
+    
+    Body:
+    {
+        "cassa": [
+            {"data": "2025-01-01", "tipo": "entrata", "importo": 1000, "descrizione": "...", "categoria": "Corrispettivi"},
+            ...
+        ],
+        "banca": [
+            {"data": "2025-01-01", "tipo": "entrata", "importo": 5000, "descrizione": "...", "categoria": "Versamento"},
+            ...
+        ]
+    }
+    """
+    db = Database.get_db()
+    
+    created_cassa = 0
+    created_banca = 0
+    errors = []
+    
+    # Import cassa movements
+    for mov in data.get("cassa", []):
+        try:
+            movimento = {
+                "id": str(uuid.uuid4()),
+                "data": mov["data"],
+                "tipo": mov["tipo"],  # "entrata" for DARE, "uscita" for AVERE
+                "importo": float(mov["importo"]),
+                "descrizione": mov.get("descrizione", ""),
+                "categoria": mov.get("categoria", "Altro"),
+                "riferimento": mov.get("riferimento"),
+                "fornitore_piva": mov.get("fornitore_piva"),
+                "fattura_id": mov.get("fattura_id"),
+                "source": mov.get("source", "excel_import"),
+                "created_at": datetime.utcnow().isoformat()
+            }
+            await db[COLLECTION_PRIMA_NOTA_CASSA].insert_one(movimento)
+            created_cassa += 1
+        except Exception as e:
+            errors.append(f"Cassa: {str(e)}")
+    
+    # Import banca movements
+    for mov in data.get("banca", []):
+        try:
+            movimento = {
+                "id": str(uuid.uuid4()),
+                "data": mov["data"],
+                "tipo": mov["tipo"],
+                "importo": float(mov["importo"]),
+                "descrizione": mov.get("descrizione", ""),
+                "categoria": mov.get("categoria", "Altro"),
+                "riferimento": mov.get("riferimento"),
+                "fornitore_piva": mov.get("fornitore_piva"),
+                "fattura_id": mov.get("fattura_id"),
+                "source": mov.get("source", "excel_import"),
+                "created_at": datetime.utcnow().isoformat()
+            }
+            await db[COLLECTION_PRIMA_NOTA_BANCA].insert_one(movimento)
+            created_banca += 1
+        except Exception as e:
+            errors.append(f"Banca: {str(e)}")
+    
+    return {
+        "message": f"Import completato",
+        "cassa_created": created_cassa,
+        "banca_created": created_banca,
+        "errors": errors[:10] if errors else []
+    }
+
+
+
 @router.put("/cassa/{movimento_id}")
 async def update_prima_nota_cassa(
     movimento_id: str,
