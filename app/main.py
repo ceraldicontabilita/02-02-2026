@@ -87,11 +87,13 @@ from app.routers import (
     products_catalog,
     employees_payroll,
     f24_tributi,
-    haccp_report_pdf
+    haccp_report_pdf,
+    email_notifications
 )
 
 # Include public API first (no auth required)
 app.include_router(public_api.router, prefix="/api", tags=["Public API"])
+app.include_router(email_notifications.router, prefix="/api/email", tags=["Email Notifications"])
 
 app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(invoices_emesse.router, prefix="/api/invoices/emesse", tags=["Invoices Emesse"])
