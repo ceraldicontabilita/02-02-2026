@@ -729,6 +729,36 @@ async def delete_all_employees() -> Dict[str, Any]:
     return {"success": True, "deleted_count": result.deleted_count}
 
 
+# ============== PAYSLIPS (BUSTE PAGA) ==============
+@router.get("/payslips")
+async def list_payslips(skip: int = 0, limit: int = 10000) -> List[Dict[str, Any]]:
+    """Lista buste paga - nessun limite pratico."""
+    db = Database.get_db()
+    payslips = await db["payslips"].find({}, {"_id": 0}).sort([("anno", -1), ("mese", -1)]).skip(skip).limit(limit).to_list(limit)
+    return payslips
+
+
+@router.get("/payslips/by-employee/{codice_fiscale}")
+async def get_payslips_by_employee(codice_fiscale: str) -> List[Dict[str, Any]]:
+    """Lista buste paga per dipendente specifico."""
+    db = Database.get_db()
+    payslips = await db["payslips"].find(
+        {"codice_fiscale": codice_fiscale}, 
+        {"_id": 0}
+    ).sort([("anno", -1), ("mese", -1)]).to_list(1000)
+    return payslips
+
+
+@router.delete("/payslips/all")
+async def delete_all_payslips() -> Dict[str, Any]:
+    """Elimina tutte le buste paga (usa con cautela!)."""
+    db = Database.get_db()
+    result = await db["payslips"].delete_many({})
+    return {"success": True, "deleted_count": result.deleted_count}
+
+
+
+
 # ============== CASH ==============
 @router.get("/cash")
 async def list_cash_movements(skip: int = 0, limit: int = 10000) -> List[Dict[str, Any]]:
