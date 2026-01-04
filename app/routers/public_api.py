@@ -879,19 +879,31 @@ async def upload_corrispettivo_xml(file: UploadFile = File(...)) -> Dict[str, An
                     detail=f"Corrispettivo già presente per data {parsed.get('data')} - {parsed.get('matricola_rt')}"
                 )
         
-        # Salva nel database
+        # Salva nel database con tutti i dati incluso pagamento elettronico
         corrispettivo = {
             "id": str(uuid.uuid4()),
             "corrispettivo_key": corrispettivo_key,
             "data": parsed.get("data", ""),
+            "data_ora_rilevazione": parsed.get("data_ora_rilevazione", ""),
+            "data_ora_trasmissione": parsed.get("data_ora_trasmissione", ""),
             "matricola_rt": parsed.get("matricola_rt", ""),
+            "tipo_dispositivo": parsed.get("tipo_dispositivo", "RT"),
             "numero_documento": parsed.get("numero_documento", ""),
+            "formato": parsed.get("formato", "COR10"),
             "partita_iva": parsed.get("partita_iva", ""),
+            "codice_fiscale": parsed.get("codice_fiscale", ""),
             "esercente": parsed.get("esercente", {}),
+            # TOTALI
             "totale": float(parsed.get("totale", 0) or 0),
             "totale_corrispettivi": float(parsed.get("totale_corrispettivi", 0) or 0),
+            "pagato_contanti": float(parsed.get("pagato_contanti", 0) or 0),
+            "pagato_elettronico": float(parsed.get("pagato_elettronico", 0) or 0),
+            "numero_documenti": int(parsed.get("numero_documenti", 0) or 0),
+            # IVA
+            "totale_imponibile": float(parsed.get("totale_imponibile", 0) or 0),
             "totale_iva": float(parsed.get("totale_iva", 0) or 0),
             "riepilogo_iva": parsed.get("riepilogo_iva", []),
+            # METADATA
             "status": "imported",
             "source": "xml_upload",
             "filename": file.filename,
@@ -903,7 +915,7 @@ async def upload_corrispettivo_xml(file: UploadFile = File(...)) -> Dict[str, An
         
         return {
             "success": True,
-            "message": f"Corrispettivo del {parsed.get('data')} importato con successo",
+            "message": f"Corrispettivo del {parsed.get('data')} importato - Contanti: €{corrispettivo['pagato_contanti']:.2f}, Elettronico: €{corrispettivo['pagato_elettronico']:.2f}",
             "corrispettivo": corrispettivo
         }
         
