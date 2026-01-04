@@ -78,3 +78,39 @@
 - [ ] Estrarre nomi dipendenti dal parser payslip
 - [ ] Email service
 - [ ] Report PDF HACCP
+
+---
+
+## 🔴 REGOLE ARCHITETTURALI (OBBLIGATORIE)
+
+### Principi Fondamentali
+1. **1 file = 1 responsabilità** (max 200-300 righe)
+2. **Mai aggiungere codice a file esistenti** se supera 300 righe → creare nuovo modulo
+3. **Ogni nuova funzionalità = nuovo file**
+
+### Backend (FastAPI)
+```
+/app/app/routers/[dominio]_[funzione].py
+Esempio: haccp_temperature.py, haccp_sanificazioni.py
+```
+- Registrare SEMPRE in main.py con prefix e tags
+- Import solo ciò che serve
+- Docstring per ogni endpoint
+
+### Frontend (React)
+```
+/app/frontend/src/pages/[Dominio][Funzione].jsx
+Esempio: HACCPTemperature.jsx, HACCPSanificazioni.jsx
+```
+- Registrare SEMPRE in main.jsx con route
+- Aggiungere link in App.jsx se necessario
+- data-testid per ogni elemento interattivo
+
+### Checklist Nuova Funzionalità
+- [ ] Creare nuovo file router backend
+- [ ] Registrare in main.py
+- [ ] Creare nuova pagina frontend
+- [ ] Registrare route in main.jsx
+- [ ] Aggiungere navigazione in App.jsx
+- [ ] Testare API con curl
+- [ ] Screenshot frontend
