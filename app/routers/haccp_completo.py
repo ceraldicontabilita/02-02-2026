@@ -1077,3 +1077,188 @@ async def get_haccp_analytics_annuale(
     }
 
 
+
+# ============== EXPORT PDF HACCP ==============
+
+from fastapi.responses import StreamingResponse
+import io
+
+@router.get("/export/pdf/mensile")
+async def export_haccp_pdf_mensile(
+    mese: str = Query(None, description="Mese in formato YYYY-MM")
+) -> StreamingResponse:
+    """
+    Genera PDF report HACCP mensile.
+    Include: riepilogo, temperature, sanificazioni, anomalie.
+    """
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import cm
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    
+    db = Database.get_db()
+    
+    if not mese:
+        now = datetime.utcnow()
+        mese = now.strftime("%Y-%m")
+    
+    # Get stats (reuse analytics logic)
+    year, month = mese.split("-")
+    import calendar
+    days_in_month = calendar.monthrange(int(year), int(month))[1]
+    start_date = f"{mese}-01"
+    end_date = f"{mese}-{days_in_month}"
+    
+    # Query data
+    frigo_records = await db[COLLECTION_TEMP_FRIGO].find({
+        "data": {"$gte": start_date, "$lte": end_date}
+    }, {"_id": 0}).to_list(1000)
+    
+    congel_records = await db[COLLECTION_TEMP_CONGEL].find({
+        "data": {"$gte": start_date, "$lte": end_date}
+    }, {"_id": 0}).to_list(1000)
+    
+    sanif_records = await db["haccp_sanificazioni"].find({
+        "data": {"$gte": start_date, "$lte": end_date}
+    }, {"_id": 0}).to_list(1000)
+    
+    # Calculate stats
+    frigo_temps = [r["temperatura"] for r in frigo_records if r.get("temperatura") is not None]
+    frigo_conformi = sum(1 for r in frigo_records if r.get("conforme"))
+    congel_temps = [r["temperatura"] for r in congel_records if r.get("temperatura") is not None]
+    congel_conformi = sum(1 for r in congel_records if r.get("conforme"))
+    
+    # Build PDF
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=2*cm, leftMargin=2*cm, topMargin=2*cm, bottomMargin=2*cm)
+    
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle('Title', parent=styles['Heading1'], fontSize=18, spaceAfter=20)
+    heading_style = ParagraphStyle('Heading', parent=styles['Heading2'], fontSize=14, spaceAfter=10, spaceBefore=15)
+    
+    elements = []
+    
+    # Title
+    mese_nome = calendar.month_name[int(month)]
+    elements.append(Paragraph(f"📋 Report HACCP - {mese_nome} {year}", title_style))
+    elements.append(Paragraph(f"Generato il {datetime.utcnow().strftime('%d/%m/%Y %H:%M')}", styles['Normal']))
+    elements.append(Spacer(1, 20))
+    
+    # Summary table
+    elements.append(Paragraph("📊 Riepilogo Mensile", heading_style))
+    
+    totale_riv = len(frigo_records) + len(congel_records) + len(sanif_records)
+    totale_conf = frigo_conformi + congel_conformi + len(sanif_records)
+    conf_percent = round((totale_conf / totale_riv * 100), 1) if totale_riv > 0 else 0
+    
+    summary_data = [
+        ["Categoria", "Rilevazioni", "Conformi", "Non Conformi", "Conformità %"],
+        ["Frigoriferi", str(len(frigo_records)), str(frigo_conformi), str(len(frigo_records) - frigo_conformi), 
+         f"{round((frigo_conformi/len(frigo_records)*100), 1) if frigo_records else 0}%"],
+        ["Congelatori", str(len(congel_records)), str(congel_conformi), str(len(congel_records) - congel_conformi),
+         f"{round((congel_conformi/len(congel_records)*100), 1) if congel_records else 0}%"],
+        ["Sanificazioni", str(len(sanif_records)), str(len(sanif_records)), "0", "100%"],
+        ["TOTALE", str(totale_riv), str(totale_conf), str(totale_riv - totale_conf), f"{conf_percent}%"]
+    ]
+    
+    t = Table(summary_data, colWidths=[3*cm, 2.5*cm, 2*cm, 2.5*cm, 2.5*cm])
+    t.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2196f3')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#e3f2fd')),
+        ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+        ('GRID', (0, 0), (-1, -1), 1, colors.grey),
+    ]))
+    elements.append(t)
+    elements.append(Spacer(1, 20))
+    
+    # Temperature stats
+    elements.append(Paragraph("🌡️ Temperature", heading_style))
+    
+    temp_data = [
+        ["", "Media", "Min", "Max", "Range Conforme"],
+        ["Frigoriferi", 
+         f"{round(sum(frigo_temps)/len(frigo_temps), 1)}°C" if frigo_temps else "-",
+         f"{min(frigo_temps)}°C" if frigo_temps else "-",
+         f"{max(frigo_temps)}°C" if frigo_temps else "-",
+         "0-4°C"],
+        ["Congelatori",
+         f"{round(sum(congel_temps)/len(congel_temps), 1)}°C" if congel_temps else "-",
+         f"{min(congel_temps)}°C" if congel_temps else "-",
+         f"{max(congel_temps)}°C" if congel_temps else "-",
+         "-18/-22°C"]
+    ]
+    
+    t2 = Table(temp_data, colWidths=[3*cm, 2.5*cm, 2.5*cm, 2.5*cm, 3*cm])
+    t2.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4caf50')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('GRID', (0, 0), (-1, -1), 1, colors.grey),
+    ]))
+    elements.append(t2)
+    elements.append(Spacer(1, 20))
+    
+    # Anomalie
+    anomalie_frigo = [r for r in frigo_records if not r.get("conforme")]
+    anomalie_congel = [r for r in congel_records if not r.get("conforme")]
+    
+    if anomalie_frigo or anomalie_congel:
+        elements.append(Paragraph("⚠️ Anomalie Rilevate", heading_style))
+        
+        anomalie_data = [["Data", "Tipo", "Equipaggiamento", "Temperatura", "Azione Correttiva"]]
+        
+        for a in anomalie_frigo[:10]:
+            anomalie_data.append([
+                a.get("data", "-"),
+                "Frigo",
+                a.get("equipaggiamento", "-"),
+                f"{a.get('temperatura', 0)}°C",
+                a.get("azione_correttiva", "-")[:30]
+            ])
+        
+        for a in anomalie_congel[:10]:
+            anomalie_data.append([
+                a.get("data", "-"),
+                "Congel",
+                a.get("equipaggiamento", "-"),
+                f"{a.get('temperatura', 0)}°C",
+                a.get("azione_correttiva", "-")[:30]
+            ])
+        
+        t3 = Table(anomalie_data, colWidths=[2.5*cm, 2*cm, 3.5*cm, 2.5*cm, 4*cm])
+        t3.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f44336')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 9),
+            ('GRID', (0, 0), (-1, -1), 1, colors.grey),
+        ]))
+        elements.append(t3)
+    
+    # Footer
+    elements.append(Spacer(1, 40))
+    elements.append(Paragraph("_" * 60, styles['Normal']))
+    elements.append(Paragraph("Documento generato automaticamente dal sistema HACCP", styles['Normal']))
+    
+    # Build PDF
+    doc.build(elements)
+    buffer.seek(0)
+    
+    filename = f"report_haccp_{mese}.pdf"
+    
+    return StreamingResponse(
+        buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+
