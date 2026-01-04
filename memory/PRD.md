@@ -75,7 +75,18 @@ FATTURA XML → Parse → FATTURE DB
 
 ## Changelog
 
-### 2026-01-04
+### 2026-01-04 (Sessione 2)
+- **Corrispettivi**: Aggiunto upload ZIP massivo con barra di progresso
+- **Corrispettivi**: Gestione duplicati atomica (salta e continua)
+- **Fatture**: Aggiunto upload ZIP massivo con barra di progresso separato
+- **Fatture**: Barra di progresso per tutti gli upload
+- **Controllo Mensile**: Sostituito "Stato" con "Saldo Cassa"
+- **Controllo Mensile**: POS Auto estratto da pagato_elettronico dei corrispettivi XML
+- **Controllo Mensile**: Aggiunto modale "Dettaglio Versamenti" con operazioni mensili
+- **Controllo Mensile**: Info box per indicare che XML sovrascrive dati Excel
+- **Componente**: Creato UploadProgressBar riutilizzabile
+
+### 2026-01-04 (Sessione 1)
 - **Refactoring P0**: Eliminati file backup (public_api_BACKUP, public_api_ORIGINAL_FULL)
 - **Refactoring P0**: Rimossa cartella /app/app/routes/ duplicata
 - **Refactoring P1**: Rimossi file API obsoleti (employees_api, iva_daily_api, comparatore_routes)
