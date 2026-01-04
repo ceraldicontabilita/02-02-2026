@@ -33,6 +33,41 @@ export function QuickEntryPanel({ onDataSaved }) {
   // Finanziamento soci state
   const [finanziamento, setFinanziamento] = useState({ data: today, importo: '', socio: '' });
   const [savingFin, setSavingFin] = useState(false);
+  
+  // Sync corrispettivi state
+  const [syncStatus, setSyncStatus] = useState(null);
+  const [syncing, setSyncing] = useState(false);
+  
+  // Load sync status on mount
+  React.useEffect(() => {
+    loadSyncStatus();
+  }, []);
+  
+  const loadSyncStatus = async () => {
+    try {
+      const res = await api.get('/api/prima-nota/corrispettivi-status');
+      setSyncStatus(res.data);
+    } catch (e) {
+      console.error('Error loading sync status:', e);
+    }
+  };
+  
+  const handleSyncCorrispettivi = async () => {
+    if (!confirm('Vuoi sincronizzare tutti i corrispettivi XML con la Prima Nota Cassa?\n\nQuesta operazione aggiungerà come ENTRATE tutti i corrispettivi non ancora sincronizzati.')) {
+      return;
+    }
+    setSyncing(true);
+    try {
+      const res = await api.post('/api/prima-nota/sync-corrispettivi');
+      alert(`✅ ${res.data.message}\n\nCreati: ${res.data.created}\nGià esistenti: ${res.data.skipped}`);
+      loadSyncStatus();
+      onDataSaved?.();
+    } catch (error) {
+      alert('Errore: ' + (error.response?.data?.detail || error.message));
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   // Save corrispettivo
   const handleSaveCorrispettivo = async () => {
