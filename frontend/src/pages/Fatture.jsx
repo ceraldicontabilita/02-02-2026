@@ -155,10 +155,32 @@ export default function Fatture() {
         metodo_pagamento: metodo
       });
       loadInvoices();
+      // Aggiorna anche selectedInvoice se aperto
+      if (selectedInvoice && selectedInvoice.id === invoiceId) {
+        setSelectedInvoice(prev => ({ ...prev, metodo_pagamento: metodo }));
+      }
     } catch (e) {
       setErr("Errore aggiornamento: " + (e.response?.data?.detail || e.message));
     } finally {
       setUpdatingPayment(null);
+    }
+  }
+
+  async function handlePayInvoice(invoiceId) {
+    if (!window.confirm("Confermi di voler segnare questa fattura come PAGATA?")) return;
+    
+    setPayingInvoice(invoiceId);
+    try {
+      await api.put(`/api/fatture/${invoiceId}/paga`);
+      loadInvoices();
+      // Aggiorna selectedInvoice
+      if (selectedInvoice && selectedInvoice.id === invoiceId) {
+        setSelectedInvoice(prev => ({ ...prev, pagato: true, status: "paid" }));
+      }
+    } catch (e) {
+      setErr("Errore pagamento: " + (e.response?.data?.detail || e.message));
+    } finally {
+      setPayingInvoice(null);
     }
   }
 
