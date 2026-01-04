@@ -88,6 +88,7 @@ from app.routers import (
     employees_payroll,
     f24_tributi,
     haccp_report_pdf,
+    simple_exports,
     email_notifications,
     employee_contracts
 )
