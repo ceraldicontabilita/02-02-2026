@@ -9,73 +9,74 @@ Ricreare un'applicazione ERP aziendale completa da un file zip fornito dall'uten
 - Modulo HACCP per temperature
 - Modulo Prima Nota Cassa per movimenti contanti
 - **Modulo Fatture**: Upload XML singolo/massivo con controllo duplicati atomico
-- **Modulo Corrispettivi**: Upload XML singolo/massivo con controllo duplicati atomico
-- **Modulo Paghe/Salari**: Upload PDF buste paga, gestione dipendenti
+- **Modulo Corrispettivi**: Upload XML singolo/massivo con estrazione pagamento elettronico
+- **Modulo Paghe/Salari**: Upload PDF buste paga LUL Zucchetti
 
 ## What's Been Implemented
 
-### 2025-01-04 - Fix Parsing XML e Paghe
-- ✅ **FIX CRITICO**: Risolto errore "unbound prefix" nel parsing XML
-  - Aggiunta funzione `clean_xml_namespaces()` che rimuove TUTTI i namespace e prefissi
-  - Supporta formati: `<p:Tag>`, `xmlns:p="..."`, `xsi:type="..."`
-- ✅ Parser corrispettivi migliorato per gestire vari formati Agenzia Entrate
-- ✅ Parser fatture migliorato con stessa logica
-- ✅ Pagina Paghe/Salari funzionante con upload PDF e form manuale
-- ✅ Test con XML con prefissi namespace passato con successo
+### 2025-01-04 - Fix Completo Parser e Limiti
+- ✅ **RIMOSSO LIMITE 100**: Tutti gli endpoint ora restituiscono fino a 10000 record
+- ✅ **Corrispettivi**: Parsing completo formato COR10 Agenzia Entrate
+  - Estrazione `PagatoContanti` e `PagatoElettronico`
+  - Gestione namespace `n1:`, `p:`, `ns3:`
+  - Riepilogo IVA per aliquota
+- ✅ **Fatture XML**: Parser robusto con gestione namespace multipli
+- ✅ **PDF Buste Paga**: Parser LUL Zucchetti
+  - Estrazione nome, codice fiscale, qualifica
+  - Ore lavorate, periodo (mese/anno)
+  - Salvataggio in collection `payslips` separata
 
-### Completato in precedenza
-- ✅ Corrispettivi upload singolo/massivo con duplicati
-- ✅ Fatture upload XML funzionante
-- ✅ Applicazione ricreata da zip
-- ✅ Backend FastAPI + Frontend React/Vite
-- ✅ MongoDB integrato con indici unici
+### Statistiche Correnti
+- **366 Corrispettivi** caricati
+- **Totale**: €929,182.53
+- **Contanti**: €363,029.55 (39%)
+- **Elettronico**: €566,152.98 (61%)
 
 ## Architecture
 
 ### Backend
 - **Framework**: FastAPI
 - **Database**: MongoDB (motor async driver)
-- **Entry Point**: `/app/backend/server.py`
-- **Router principale**: `/app/app/routers/public_api.py`
+- **Parsers**:
+  - `/app/app/parsers/corrispettivi_parser.py` - COR10 Agenzia Entrate
+  - `/app/app/parsers/fattura_elettronica_parser.py` - FatturaPA
+  - `/app/app/parsers/payslip_parser.py` - LUL Zucchetti
 
-### Parsers (con gestione namespace avanzata)
-- `/app/app/parsers/fattura_elettronica_parser.py` - Parser FatturaPA XML
-- `/app/app/parsers/corrispettivi_parser.py` - Parser Corrispettivi XML
-- `/app/app/parsers/payslip_parser.py` - Parser buste paga PDF
+### Database Collections
+- `corrispettivi`: Dati giornalieri RT con pagamenti
+- `invoices`: Fatture elettroniche
+- `employees`: Anagrafica dipendenti
+- `payslips`: Buste paga mensili
 
-## Key API Endpoints
+## Key API Endpoints (limit=10000 su tutti)
 
 ### Corrispettivi
-- `GET /api/corrispettivi` - Lista
-- `POST /api/corrispettivi/upload-xml` - Upload singolo
-- `POST /api/corrispettivi/upload-xml-bulk` - Upload massivo
+- `GET /api/corrispettivi`
+- `POST /api/corrispettivi/upload-xml`
+- `POST /api/corrispettivi/upload-xml-bulk`
 
 ### Fatture
-- `GET /api/invoices` - Lista
-- `POST /api/fatture/upload-xml` - Upload singolo
-- `POST /api/fatture/upload-xml-bulk` - Upload massivo
+- `GET /api/invoices`
+- `POST /api/fatture/upload-xml`
+- `POST /api/fatture/upload-xml-bulk`
 
 ### Paghe
-- `GET /api/employees` - Lista dipendenti
-- `POST /api/paghe/upload-pdf` - Upload PDF buste paga
-- `POST /api/employees` - Creazione manuale
+- `GET /api/employees`
+- `GET /api/payslips`
+- `POST /api/paghe/upload-pdf`
 
-## P0 - Priorità Alta
-- [x] Fix errore "unbound prefix" nei corrispettivi
-- [x] Corrispettivi upload massivo con duplicati
-- [x] Fatture upload XML funzionante
-- [x] Pagina Paghe funzionante
+## P0 - Completati
+- [x] Limite 100 rimosso da tutte le API
+- [x] Corrispettivi con pagamento elettronico
+- [x] Fatture XML funzionanti
+- [x] PDF Buste paga con parsing nomi/qualifiche
 
-## P1 - Priorità Media
-- [ ] Integrazione automatica Fatture -> Magazzino -> Prima Nota
-- [ ] Controllo mensile incrociato (Manuale vs XML vs Banca)
-- [ ] Dashboard con grafici entrate/uscite
+## P1 - Prossimi
+- [ ] Migliorare estrazione netto stipendio da PDF
+- [ ] Integrazione Corrispettivi -> Prima Nota (contanti -> cassa, elettronico -> banca)
+- [ ] Controllo mensile incrociato
 
-## P2 - Priorità Bassa
+## P2 - Backlog
 - [ ] Export dati
 - [ ] Report aggregati
-- [ ] Analytics fornitori
-
-## Test Files
-- `/app/tests/test_corrispettivi_fatture.py`
-- `/app/test_reports/iteration_1.json`
+- [ ] Dashboard grafici
