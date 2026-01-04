@@ -486,15 +486,20 @@ export default function PrimaNota() {
         onEditMovement={handleEditMovement}
       />
 
-      {/* New Movement Modal */}
+      {/* New/Edit Movement Modal */}
       <PrimaNotaNewMovementModal
         show={showNewMovement}
         activeTab={activeTab}
         newMovement={newMovement}
         setNewMovement={setNewMovement}
         categorie={categorie}
-        onClose={() => setShowNewMovement(false)}
-        onCreate={handleCreateMovement}
+        onClose={() => {
+          setShowNewMovement(false);
+          setEditingMovement(null);
+          setNewMovement(DEFAULT_MOVEMENT);
+        }}
+        onCreate={editingMovement ? handleUpdateMovement : handleCreateMovement}
+        isEditing={!!editingMovement}
       />
     </div>
   );
