@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import api from "./api";
+import GlobalSearch from "./components/GlobalSearch";
 
 const NAV_ITEMS = [
   { to: "/", label: "Dashboard", icon: "📊", short: "Home" },
@@ -62,6 +63,9 @@ export default function App() {
         <div className="brand">
           <span style={{ fontSize: 20 }}>🏢</span>
           <span>Azienda Semplice</span>
+        </div>
+        <div style={{ padding: '0 8px', marginBottom: 15 }}>
+          <GlobalSearch />
         </div>
         <nav className="nav">
           {NAV_ITEMS.map((item) => (
