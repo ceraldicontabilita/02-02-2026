@@ -81,7 +81,8 @@ export default function Fatture() {
       }
       
       const r = await api.post("/api/fatture/upload-xml-bulk", formData, {
-        headers: { "Content-Type": "multipart/form-data" }
+        headers: { "Content-Type": "multipart/form-data" },
+        timeout: 300000 // 5 minuti timeout per upload grandi
       });
       
       setUploadResult({
@@ -90,7 +91,16 @@ export default function Fatture() {
       });
       loadInvoices();
     } catch (e) {
-      setErr(e.response?.data?.detail || "Errore durante l'upload massivo");
+      console.error("Upload error:", e);
+      let errorMsg = "Errore durante l'upload massivo";
+      if (e.response?.data?.detail) {
+        errorMsg = e.response.data.detail;
+      } else if (e.code === "ECONNABORTED") {
+        errorMsg = "Timeout - troppe fatture. Prova a caricare meno file alla volta.";
+      } else if (e.message) {
+        errorMsg = e.message;
+      }
+      setErr(errorMsg);
     } finally {
       setUploading(false);
       if (bulkFileInputRef.current) bulkFileInputRef.current.value = "";
