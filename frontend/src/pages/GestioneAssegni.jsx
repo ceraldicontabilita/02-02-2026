@@ -208,6 +208,26 @@ export default function GestioneAssegni() {
     }
   };
 
+  // Auto-associa assegni alle fatture
+  const [autoAssociating, setAutoAssociating] = useState(false);
+  const [autoAssocResult, setAutoAssocResult] = useState(null);
+  
+  const handleAutoAssocia = async () => {
+    if (!window.confirm('Vuoi avviare l\'auto-associazione degli assegni alle fatture?\n\nIl sistema cercherà di abbinare:\n1. Assegni con importo uguale a fatture\n2. Assegni multipli con stesso importo a fatture di importo maggiore (es. 3 assegni da €1663 = fattura €4989)')) return;
+    
+    setAutoAssociating(true);
+    setAutoAssocResult(null);
+    try {
+      const res = await api.post('/api/assegni/auto-associa');
+      setAutoAssocResult(res.data);
+      loadData();
+    } catch (error) {
+      alert('Errore: ' + (error.response?.data?.detail || error.message));
+    } finally {
+      setAutoAssociating(false);
+    }
+  };
+
   const formatCurrency = (value) => {
     if (!value) return '-';
     return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(value);
