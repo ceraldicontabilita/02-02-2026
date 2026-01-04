@@ -11,6 +11,7 @@ export default function Fatture() {
   const [err, setErr] = useState("");
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [updatingPayment, setUpdatingPayment] = useState(null);
+  const [payingInvoice, setPayingInvoice] = useState(null);
   const fileInputRef = useRef(null);
   const bulkFileInputRef = useRef(null);
   
