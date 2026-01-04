@@ -557,39 +557,38 @@ async def import_assegni_from_estratto_conto(file: UploadFile = File(...)) -> Di
                     "created_at": now,
                     "updated_at": now
                 }
-                    "created_at": now,
-                    "updated_at": now
-                }
                 
                 # Cerca fattura in prima nota banca con importo simile
                 # (tolleranza 1%)
-                fattura_banca = await db[COLLECTION_PRIMA_NOTA_BANCA].find_one({
-                    "importo": {"$gte": importo * 0.99, "$lte": importo * 1.01},
-                    "tipo": "uscita",
-                    "assegno_collegato": {"$exists": False}
-                })
-                
-                if fattura_banca:
-                    assegno["fattura_collegata"] = fattura_banca.get("fattura_id")
-                    assegno["beneficiario"] = fattura_banca.get("descrizione", "")[:100]
-                    assegno["fornitore_piva"] = fattura_banca.get("fornitore_piva")
+                if importo > 0:
+                    fattura_banca = await db[COLLECTION_PRIMA_NOTA_BANCA].find_one({
+                        "importo": {"$gte": importo * 0.99, "$lte": importo * 1.01},
+                        "tipo": "uscita",
+                        "assegno_collegato": {"$exists": False}
+                    })
                     
-                    # Aggiorna prima nota banca con riferimento assegno
-                    await db[COLLECTION_PRIMA_NOTA_BANCA].update_one(
-                        {"id": fattura_banca["id"]},
-                        {"$set": {
-                            "assegno_collegato": numero_assegno,
-                            "metodo_pagamento": "assegno",
-                            "updated_at": now
-                        }}
-                    )
-                    results["fatture_matched"] += 1
+                    if fattura_banca:
+                        assegno["fattura_collegata"] = fattura_banca.get("fattura_id")
+                        assegno["beneficiario"] = fattura_banca.get("descrizione", "")[:100]
+                        assegno["fornitore_piva"] = fattura_banca.get("fornitore_piva")
+                        
+                        # Aggiorna prima nota banca con riferimento assegno
+                        await db[COLLECTION_PRIMA_NOTA_BANCA].update_one(
+                            {"id": fattura_banca["id"]},
+                            {"$set": {
+                                "assegno_collegato": numero_assegno,
+                                "metodo_pagamento": "assegno",
+                                "updated_at": now
+                            }}
+                        )
+                        results["fatture_matched"] += 1
                 
                 await db[COLLECTION_ASSEGNI].insert_one(assegno)
                 results["assegni_created"] += 1
                 
                 results["assegni"].append({
                     "numero": numero_assegno,
+                    "action": "created",
                     "importo": importo,
                     "data": data,
                     "fattura_collegata": assegno.get("fattura_collegata")
@@ -597,13 +596,13 @@ async def import_assegni_from_estratto_conto(file: UploadFile = File(...)) -> Di
                 
             except Exception as e:
                 results["errors"].append({
-                    "row": idx + 2,
+                    "row": idx + 1,
                     "error": str(e)
                 })
         
         return {
             "success": True,
-            "message": f"Trovati {results['assegni_found']} assegni, creati {results['assegni_created']}",
+            "message": f"Trovati {results['assegni_found']} assegni, creati {results['assegni_created']}, aggiornati {results['assegni_updated']}",
             **results
         }
         
