@@ -326,9 +326,50 @@ export default function Fatture() {
   return (
     <>
       <div className="card">
-        <div className="h1">Fatture Elettroniche</div>
-        <div className="small" style={{ marginBottom: 15 }}>
-          Carica fatture in formato XML FatturaPA oppure inseriscile manualmente.
+        {/* HEADER CON SELETTORE ANNO */}
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          marginBottom: 15,
+          padding: '15px 20px',
+          background: 'linear-gradient(135deg, #1565c0 0%, #1976d2 100%)',
+          borderRadius: 12,
+          color: 'white',
+          marginTop: -10,
+          marginLeft: -20,
+          marginRight: -20
+        }}>
+          <div>
+            <h1 style={{ margin: 0, fontSize: 22, fontWeight: 'bold' }}>📋 Fatture Elettroniche</h1>
+            <p style={{ margin: '4px 0 0 0', fontSize: 13, opacity: 0.9 }}>
+              Carica fatture XML FatturaPA o inseriscile manualmente
+            </p>
+          </div>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: 15 }}>
+            <label style={{ fontSize: 14, fontWeight: '500' }}>Anno:</label>
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+              style={{
+                padding: '10px 20px',
+                fontSize: 16,
+                fontWeight: 'bold',
+                borderRadius: 8,
+                border: 'none',
+                background: 'white',
+                color: '#1565c0',
+                cursor: 'pointer',
+                minWidth: 120
+              }}
+              data-testid="select-anno-fatture"
+            >
+              {availableYears.map(year => (
+                <option key={year} value={year}>{year}</option>
+              ))}
+            </select>
+          </div>
         </div>
         
         <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
