@@ -141,8 +141,12 @@ export default function Fatture() {
   async function handleDeleteInvoice(id) {
     if (!window.confirm("Eliminare questa fattura?")) return;
     try {
-      await api.delete(`/api/invoices/${id}`);
+      await api.delete(`/api/fatture/${id}`);
       loadInvoices();
+      // Chiudi dettaglio se era aperto
+      if (selectedInvoice && selectedInvoice.id === id) {
+        setSelectedInvoice(null);
+      }
     } catch (e) {
       setErr("Errore eliminazione: " + (e.response?.data?.detail || e.message));
     }
