@@ -103,6 +103,40 @@ async def create_invoice(
 
 
 @router.get(
+    "/anni-disponibili",
+    summary="Get available years",
+    description="Get list of years for which invoices exist"
+)
+async def get_anni_disponibili(
+    current_user: Dict[str, Any] = Depends(get_current_user)
+) -> Dict[str, Any]:
+    """Restituisce gli anni per cui esistono fatture."""
+    db = Database.get_db()
+    
+    anni = set()
+    current_year = datetime.now().year
+    anni.add(current_year)
+    
+    # Estrai anni da invoice_date
+    pipeline = [
+        {"$match": {"invoice_date": {"$exists": True, "$ne": None}}},
+        {"$project": {"anno": {"$substr": ["$invoice_date", 0, 4]}}},
+        {"$group": {"_id": "$anno"}}
+    ]
+    
+    results = await db[Collections.INVOICES].aggregate(pipeline).to_list(100)
+    for doc in results:
+        try:
+            anno = int(doc["_id"])
+            if 2000 <= anno <= 2100:
+                anni.add(anno)
+        except:
+            pass
+    
+    return {"anni": sorted(list(anni), reverse=True)}
+
+
+@router.get(
     "",
     response_model=List[Dict[str, Any]],
     summary="List invoices",
@@ -114,6 +148,8 @@ async def list_invoices(
     supplier_vat: Optional[str] = Query(None, description="Filter by supplier VAT"),
     month_year: Optional[str] = Query(None, description="Filter by month (MM-YYYY)"),
     status: Optional[str] = Query(None, description="Filter by status"),
+    anno: Optional[int] = Query(None, description="Filter by year (YYYY)"),
+    limit: Optional[int] = Query(None, description="Override limit"),
     invoice_service: InvoiceService = Depends(get_invoice_service)
 ) -> List[Dict[str, Any]]:
     """
@@ -125,13 +161,33 @@ async def list_invoices(
     - **supplier_vat**: Filter by supplier VAT number
     - **month_year**: Filter by month (format: MM-YYYY, e.g., "01-2024")
     - **status**: Filter by status (active, archived)
+    - **anno**: Filter by year (e.g., 2025)
     """
     user_id = current_user["user_id"]
+    
+    # Se anno è specificato, filtra direttamente dal database
+    if anno:
+        db = Database.get_db()
+        anno_start = f"{anno}-01-01"
+        anno_end = f"{anno}-12-31"
+        
+        query = {
+            "invoice_date": {"$gte": anno_start, "$lte": anno_end}
+        }
+        
+        if supplier_vat:
+            query["supplier_vat"] = supplier_vat
+        if status:
+            query["status"] = status
+        
+        actual_limit = limit or pagination.get("limit", 1000)
+        invoices = await db[Collections.INVOICES].find(query, {"_id": 0}).sort("invoice_date", -1).limit(actual_limit).to_list(actual_limit)
+        return invoices
     
     return await invoice_service.list_invoices(
         user_id=user_id,
         skip=pagination["skip"],
-        limit=pagination["limit"],
+        limit=limit or pagination["limit"],
         supplier_vat=supplier_vat,
         month_year=month_year,
         status=status
