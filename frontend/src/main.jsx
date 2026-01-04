@@ -34,6 +34,7 @@ import MetodiPagamento from "./pages/MetodiPagamento.jsx";
 import OrdiniFornitori from "./pages/OrdiniFornitori.jsx";
 import Fornitori from "./pages/Fornitori.jsx";
 import GestioneDipendenti from "./pages/GestioneDipendenti.jsx";
+import ControlloMensile from "./pages/ControlloMensile.jsx";
 
 const router = createBrowserRouter([
   {
@@ -73,6 +74,7 @@ const router = createBrowserRouter([
       { path: "metodi-pagamento", element: <MetodiPagamento /> },
       { path: "ordini-fornitori", element: <OrdiniFornitori /> },
       { path: "fornitori", element: <Fornitori /> },
+      { path: "controllo-mensile", element: <ControlloMensile /> },
     ],
   },
 ]);
