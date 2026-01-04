@@ -128,17 +128,33 @@ Ricreare un'applicazione ERP aziendale completa da un file zip fornito dall'uten
 - [x] **Dizionario Metodi Pagamento Fornitori** - 12 metodi + import automatico
 - [x] **Corrispettivi → Prima Nota Banca** - Registrazione automatica POS
 - [x] **Fix Parser Buste Paga** - Migliorato regex netto del mese
-- [x] **Parser Libro Unico v2** - Nuovo parser per buste paga Zucchetti:
-  - Estrazione corretta: Nome, CF, Netto, Ore ordinarie, Qualifica, Periodo
-  - Gestione pagine accoppiate (presenze + cedolino)
-  - Rilevamento automatico del mese di competenza
-  - Supporto amministratori/tirocinanti
-  - API `/api/employees` arricchita con dati ultimo payslip
+- [x] **Parser Libro Unico v2** - Nuovo parser per buste paga Zucchetti
+- [x] **Pagina Fornitori** (`/fornitori`) - 2025-01-04:
+  - Import Excel ReportFornitori.xls (235 fornitori importati)
+  - Gestione metodi pagamento (contanti/bonifico/assegno/misto/etc.)
+  - Termini pagamento (vista/30gg/60gg/90gg/120gg)
+  - Alert scadenze fatture (critiche 7gg, totale 30gg)
+  - Statistiche fatture per fornitore
+- [x] **Gestione Assegni** (`/gestione-assegni`) - 2025-01-04:
+  - Generazione assegni progressivi
+  - Stati: vuoto, compilato, emesso, incassato, annullato, scaduto
+  - Collegamento a fatture
+  - KPI e filtri per stato
+- [x] **Prima Nota Unificata** (`/prima-nota`) - 2025-01-04:
+  - Tab Cassa / Banca
+  - Registrazione automatica da fatture
+  - Saldi, entrate, uscite
+  - Filtri per data e tipo
+- [x] **Registrazione Automatica Fatture** - 2025-01-04:
+  - Upload XML → Cerca metodo pagamento fornitore
+  - Contanti → Prima Nota Cassa
+  - Bonifico/Assegno/etc. → Prima Nota Banca
+  - Misto → Richiede divisione manuale
+  - Calcolo automatico data scadenza
 
 ## P1 - Prossimi
-- [ ] Ordini fornitori generati da carrello
-- [ ] Pagina frontend Metodi Pagamento Fornitori
-- [ ] Fix bug prezzi €0.00 nei suggerimenti ricerca
+- [ ] Fix bug prezzi €0.00 nei suggerimenti ricerca prodotti
+- [ ] Refactoring backend monolith → moduli
 
 ## P2 - Backlog
 - [ ] Generazione contratti dipendenti PDF
