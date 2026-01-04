@@ -1,7 +1,7 @@
 import React from 'react';
 
 /**
- * PrimaNotaNewMovementModal - Modal per nuovo movimento
+ * PrimaNotaNewMovementModal - Modal per nuovo/modifica movimento
  */
 export function PrimaNotaNewMovementModal({ 
   show, 
@@ -10,7 +10,8 @@ export function PrimaNotaNewMovementModal({
   setNewMovement, 
   categorie,
   onClose, 
-  onCreate 
+  onCreate,
+  isEditing = false
 }) {
   if (!show) return null;
 
@@ -35,7 +36,7 @@ export function PrimaNotaNewMovementModal({
         maxWidth: 500,
         width: '90%'
       }} onClick={e => e.stopPropagation()}>
-        <h2>➕ Nuovo Movimento {activeTab === 'cassa' ? 'Cassa' : 'Banca'}</h2>
+        <h2>{isEditing ? '✏️ Modifica' : '➕ Nuovo'} Movimento {activeTab === 'cassa' ? 'Cassa' : 'Banca'}</h2>
         
         <div style={{ display: 'grid', gap: 15, marginTop: 20 }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 15 }}>
@@ -135,9 +136,9 @@ export function PrimaNotaNewMovementModal({
           <button
             data-testid="create-movement-btn"
             onClick={onCreate}
-            style={{ padding: '10px 20px', background: activeTab === 'cassa' ? '#4caf50' : '#2196f3', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}
+            style={{ padding: '10px 20px', background: isEditing ? '#ff9800' : (activeTab === 'cassa' ? '#4caf50' : '#2196f3'), color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}
           >
-            Crea Movimento
+            {isEditing ? 'Salva Modifiche' : 'Crea Movimento'}
           </button>
         </div>
       </div>
