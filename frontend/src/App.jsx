@@ -11,6 +11,7 @@ const NAV = [
   { to: "/riconciliazione", label: "Riconciliazione" },
   { to: "/magazzino", label: "Magazzino" },
   { to: "/ricerca-prodotti", label: "📦 Ricerca Prodotti" },
+  { to: "/ordini-fornitori", label: "📝 Ordini Fornitori" },
   { to: "/metodi-pagamento", label: "💳 Metodi Pagamento" },
   { to: "/haccp", label: "HACCP" },
   { to: "/f24", label: "F24 / Tributi" },
