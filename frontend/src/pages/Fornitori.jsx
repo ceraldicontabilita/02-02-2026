@@ -52,9 +52,9 @@ export default function Fornitori() {
       if (filterMethod) params.append('metodo_pagamento', filterMethod);
 
       const [suppliersRes, statsRes, deadlinesRes] = await Promise.all([
-        axios.get(`${API}/api/suppliers?${params}`),
-        axios.get(`${API}/api/suppliers/stats`),
-        axios.get(`${API}/api/suppliers/scadenze?days_ahead=30`)
+        api.get(`/api/suppliers?${params}`),
+        api.get(`/api/suppliers/stats`),
+        api.get(`/api/suppliers/scadenze?days_ahead=30`)
       ]);
 
       setSuppliers(suppliersRes.data);
@@ -78,7 +78,7 @@ export default function Fornitori() {
     formData.append('file', file);
 
     try {
-      const response = await axios.post(`${API}/api/suppliers/upload-excel`, formData, {
+      const response = await api.post(`/api/suppliers/upload-excel`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       setUploadResult(response.data);
@@ -93,7 +93,7 @@ export default function Fornitori() {
 
   const updateSupplier = async (supplierId, data) => {
     try {
-      await axios.put(`${API}/api/suppliers/${supplierId}`, data);
+      await api.put(`/api/suppliers/${supplierId}`, data);
       setEditingSupplier(null);
       loadData();
     } catch (error) {

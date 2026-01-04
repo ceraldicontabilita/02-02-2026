@@ -38,8 +38,8 @@ export default function GestioneAssegni() {
       if (search) params.append('search', search);
 
       const [assegniRes, statsRes] = await Promise.all([
-        axios.get(`${API}/api/assegni?${params}`),
-        axios.get(`${API}/api/assegni/stats`)
+        api.get(`/api/assegni?${params}`),
+        api.get(`/api/assegni/stats`)
       ]);
 
       setAssegni(assegniRes.data);
@@ -59,7 +59,7 @@ export default function GestioneAssegni() {
 
     setGenerating(true);
     try {
-      await axios.post(`${API}/api/assegni/genera`, generateForm);
+      await api.post(`/api/assegni/genera`, generateForm);
       setShowGenerate(false);
       setGenerateForm({ numero_primo: '', quantita: 10 });
       loadData();
@@ -74,7 +74,7 @@ export default function GestioneAssegni() {
     if (!window.confirm('Sei sicuro di voler eliminare tutti gli assegni vuoti?')) return;
     
     try {
-      const res = await axios.delete(`${API}/api/assegni/clear-generated?stato=vuoto`);
+      const res = await api.delete(`/api/assegni/clear-generated?stato=vuoto`);
       alert(res.data.message);
       loadData();
     } catch (error) {
@@ -86,7 +86,7 @@ export default function GestioneAssegni() {
     if (!selectedAssegno) return;
     
     try {
-      await axios.put(`${API}/api/assegni/${selectedAssegno.id}`, editForm);
+      await api.put(`/api/assegni/${selectedAssegno.id}`, editForm);
       setSelectedAssegno(null);
       loadData();
     } catch (error) {
@@ -96,7 +96,7 @@ export default function GestioneAssegni() {
 
   const handleEmetti = async (assegno) => {
     try {
-      await axios.post(`${API}/api/assegni/${assegno.id}/emetti`);
+      await api.post(`/api/assegni/${assegno.id}/emetti`);
       loadData();
     } catch (error) {
       alert('Errore: ' + (error.response?.data?.detail || error.message));
@@ -105,7 +105,7 @@ export default function GestioneAssegni() {
 
   const handleIncassa = async (assegno) => {
     try {
-      await axios.post(`${API}/api/assegni/${assegno.id}/incassa`);
+      await api.post(`/api/assegni/${assegno.id}/incassa`);
       loadData();
     } catch (error) {
       alert('Errore: ' + (error.response?.data?.detail || error.message));
@@ -116,7 +116,7 @@ export default function GestioneAssegni() {
     if (!window.confirm('Sei sicuro di voler annullare questo assegno?')) return;
     
     try {
-      await axios.post(`${API}/api/assegni/${assegno.id}/annulla`);
+      await api.post(`/api/assegni/${assegno.id}/annulla`);
       loadData();
     } catch (error) {
       alert('Errore: ' + (error.response?.data?.detail || error.message));

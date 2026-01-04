@@ -38,9 +38,9 @@ export default function PrimaNota() {
       if (filterTipo) params.append('tipo', filterTipo);
 
       const [cassaRes, bancaRes, statsRes] = await Promise.all([
-        axios.get(`${API}/api/prima-nota/cassa?${params}`),
-        axios.get(`${API}/api/prima-nota/banca?${params}`),
-        axios.get(`${API}/api/prima-nota/stats?${params}`)
+        api.get(`/api/prima-nota/cassa?${params}`),
+        api.get(`/api/prima-nota/banca?${params}`),
+        api.get(`/api/prima-nota/stats?${params}`)
       ]);
 
       setCassaData(cassaRes.data);
@@ -61,7 +61,7 @@ export default function PrimaNota() {
 
     try {
       const endpoint = activeTab === 'cassa' ? 'cassa' : 'banca';
-      await axios.post(`${API}/api/prima-nota/${endpoint}`, {
+      await api.post(`/api/prima-nota/${endpoint}`, {
         ...newMovement,
         importo: parseFloat(newMovement.importo)
       });
@@ -86,7 +86,7 @@ export default function PrimaNota() {
 
     try {
       const endpoint = activeTab === 'cassa' ? 'cassa' : 'banca';
-      await axios.delete(`${API}/api/prima-nota/${endpoint}/${id}`);
+      await api.delete(`/api/prima-nota/${endpoint}/${id}`);
       loadData();
     } catch (error) {
       alert('Errore: ' + (error.response?.data?.detail || error.message));
