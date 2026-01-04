@@ -694,9 +694,28 @@ async def create_supplier(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
 # ============== EMPLOYEES ==============
 @router.get("/employees")
 async def list_employees(skip: int = 0, limit: int = 10000) -> List[Dict[str, Any]]:
-    """List employees - public endpoint. Nessun limite pratico."""
+    """List employees with their latest payslip data. Nessun limite pratico."""
     db = Database.get_db()
     employees = await db[Collections.EMPLOYEES].find({}, {"_id": 0}).skip(skip).limit(limit).to_list(limit)
+    
+    # Enrich with latest payslip data for each employee
+    for emp in employees:
+        cf = emp.get("codice_fiscale")
+        if cf:
+            # Get the latest payslip for this employee
+            latest_payslip = await db["payslips"].find_one(
+                {"codice_fiscale": cf},
+                {"_id": 0},
+                sort=[("created_at", -1)]
+            )
+            if latest_payslip:
+                emp["netto"] = latest_payslip.get("retribuzione_netta", 0)
+                emp["lordo"] = latest_payslip.get("retribuzione_lorda", 0)
+                emp["ore_ordinarie"] = latest_payslip.get("ore_ordinarie", 0)
+                emp["ultimo_periodo"] = latest_payslip.get("periodo", "")
+                if not emp.get("role") or emp.get("role") == "-":
+                    emp["role"] = latest_payslip.get("qualifica", emp.get("role", ""))
+    
     return employees
 
 
