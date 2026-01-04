@@ -191,7 +191,7 @@ import uuid
 from datetime import datetime as dt
 
 @router.post(
-    "/f24/upload-pdf",
+    "/upload-pdf",
     summary="Carica PDF F24",
     description="Carica modello F24 in formato PDF per estrazione automatica dati"
 )
