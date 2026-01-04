@@ -6,11 +6,13 @@ export default function Corrispettivi() {
   const [corrispettivi, setCorrispettivi] = useState([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0, phase: "" });
   const [uploadResult, setUploadResult] = useState(null);
   const [err, setErr] = useState("");
   const [selectedItem, setSelectedItem] = useState(null);
   const fileInputRef = useRef(null);
   const bulkFileInputRef = useRef(null);
+  const zipFileInputRef = useRef(null);
 
   useEffect(() => {
     loadCorrispettivi();
@@ -35,15 +37,21 @@ export default function Corrispettivi() {
     setErr("");
     setUploadResult(null);
     setUploading(true);
+    setUploadProgress({ current: 0, total: 1, phase: "Caricamento file..." });
     
     try {
       const formData = new FormData();
       formData.append("file", file);
       
       const r = await api.post("/api/corrispettivi/upload-xml", formData, {
-        headers: { "Content-Type": "multipart/form-data" }
+        headers: { "Content-Type": "multipart/form-data" },
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setUploadProgress({ current: percentCompleted, total: 100, phase: `Upload: ${percentCompleted}%` });
+        }
       });
       
+      setUploadProgress({ current: 1, total: 1, phase: "Completato!" });
       setUploadResult({
         type: "success",
         message: r.data.message,
@@ -53,12 +61,13 @@ export default function Corrispettivi() {
     } catch (e) {
       const detail = e.response?.data?.detail || e.message;
       if (e.response?.status === 409) {
-        setErr("Corrispettivo già presente nel sistema.");
+        setErr("Corrispettivo già presente nel sistema (duplicato saltato).");
       } else {
         setErr("Upload fallito. " + detail);
       }
     } finally {
       setUploading(false);
+      setUploadProgress({ current: 0, total: 0, phase: "" });
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   }
@@ -70,6 +79,7 @@ export default function Corrispettivi() {
     setErr("");
     setUploadResult(null);
     setUploading(true);
+    setUploadProgress({ current: 0, total: files.length, phase: `Preparazione ${files.length} file...` });
     
     try {
       const formData = new FormData();
@@ -77,11 +87,22 @@ export default function Corrispettivi() {
         formData.append("files", files[i]);
       }
       
+      setUploadProgress({ current: 0, total: files.length, phase: "Caricamento in corso..." });
+      
       const r = await api.post("/api/corrispettivi/upload-xml-bulk", formData, {
         headers: { "Content-Type": "multipart/form-data" },
-        timeout: 300000
+        timeout: 300000,
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setUploadProgress({ 
+            current: percentCompleted, 
+            total: 100, 
+            phase: `Upload: ${percentCompleted}%` 
+          });
+        }
       });
       
+      setUploadProgress({ current: files.length, total: files.length, phase: "Elaborazione completata!" });
       setUploadResult({
         type: "bulk",
         data: r.data
@@ -93,14 +114,70 @@ export default function Corrispettivi() {
       if (e.response?.data?.detail) {
         errorMsg = e.response.data.detail;
       } else if (e.code === "ECONNABORTED") {
-        errorMsg = "Timeout - troppe file. Prova a caricare meno file alla volta.";
+        errorMsg = "Timeout - troppi file. Prova a caricare meno file alla volta.";
       } else if (e.message) {
         errorMsg = e.message;
       }
       setErr(errorMsg);
     } finally {
       setUploading(false);
+      setUploadProgress({ current: 0, total: 0, phase: "" });
       if (bulkFileInputRef.current) bulkFileInputRef.current.value = "";
+    }
+  }
+
+  async function handleZipUpload(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setErr("");
+    setUploadResult(null);
+    setUploading(true);
+    setUploadProgress({ current: 0, total: 100, phase: "Caricamento archivio ZIP..." });
+    
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      
+      const r = await api.post("/api/corrispettivi/upload-zip", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+        timeout: 600000, // 10 minuti per ZIP grandi
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setUploadProgress({ 
+            current: percentCompleted, 
+            total: 100, 
+            phase: `Upload ZIP: ${percentCompleted}%` 
+          });
+        }
+      });
+      
+      setUploadProgress({ 
+        current: r.data.total, 
+        total: r.data.total, 
+        phase: `Elaborati ${r.data.total} file XML` 
+      });
+      
+      setUploadResult({
+        type: "zip",
+        data: r.data
+      });
+      loadCorrispettivi();
+    } catch (e) {
+      console.error("ZIP Upload error:", e);
+      let errorMsg = "Errore durante l'upload del file ZIP";
+      if (e.response?.data?.detail) {
+        errorMsg = e.response.data.detail;
+      } else if (e.code === "ECONNABORTED") {
+        errorMsg = "Timeout - file ZIP troppo grande. Prova a dividere in più archivi.";
+      } else if (e.message) {
+        errorMsg = e.message;
+      }
+      setErr(errorMsg);
+    } finally {
+      setUploading(false);
+      setUploadProgress({ current: 0, total: 0, phase: "" });
+      if (zipFileInputRef.current) zipFileInputRef.current.value = "";
     }
   }
 
@@ -114,17 +191,162 @@ export default function Corrispettivi() {
     }
   }
 
-  // Calcola totali - Se IVA nel DB è 0, calcola con scorporo al 10%
+  // Calcola totali
   const totaleGiornaliero = corrispettivi.reduce((sum, c) => sum + (c.totale || 0), 0);
   const totaleContanti = corrispettivi.reduce((sum, c) => sum + (c.pagato_contanti || 0), 0);
   const totaleElettronico = corrispettivi.reduce((sum, c) => sum + (c.pagato_elettronico || 0), 0);
   const totaleIVA = corrispettivi.reduce((sum, c) => {
     if (c.totale_iva && c.totale_iva > 0) return sum + c.totale_iva;
-    // Se IVA non presente, calcola scorporo al 10%
     const totale = c.totale || 0;
     return sum + (totale - (totale / 1.10));
   }, 0);
   const totaleImponibile = totaleGiornaliero / 1.10;
+
+  // Componente Barra di Progresso
+  const ProgressBar = ({ progress }) => {
+    if (!progress.phase) return null;
+    const percentage = progress.total > 0 ? Math.round((progress.current / progress.total) * 100) : 0;
+    
+    return (
+      <div style={{ marginTop: 15, marginBottom: 10 }} data-testid="upload-progress">
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
+          <span style={{ fontSize: 13, fontWeight: 500 }}>{progress.phase}</span>
+          <span style={{ fontSize: 13, color: "#666" }}>{percentage}%</span>
+        </div>
+        <div style={{ 
+          width: "100%", 
+          height: 8, 
+          background: "#e0e0e0", 
+          borderRadius: 4,
+          overflow: "hidden"
+        }}>
+          <div style={{ 
+            width: `${percentage}%`, 
+            height: "100%", 
+            background: "linear-gradient(90deg, #1565c0, #42a5f5)",
+            borderRadius: 4,
+            transition: "width 0.3s ease"
+          }} />
+        </div>
+      </div>
+    );
+  };
+
+  // Render risultato upload (comune per bulk e zip)
+  const renderUploadResult = () => {
+    if (!uploadResult) return null;
+    
+    if (uploadResult.type === "success") {
+      return (
+        <div className="card" style={{ background: "#e8f5e9" }} data-testid="corrispettivi-upload-result">
+          <div className="h1" style={{ color: "#2e7d32" }}>✓ {uploadResult.message}</div>
+          <div className="grid" style={{ marginTop: 10 }}>
+            <div><strong>Data:</strong> {uploadResult.corrispettivo?.data}</div>
+            <div><strong>Totale:</strong> € {uploadResult.corrispettivo?.totale?.toFixed(2)}</div>
+            <div><strong>💵 Contanti:</strong> € {uploadResult.corrispettivo?.pagato_contanti?.toFixed(2)}</div>
+            <div><strong>💳 Elettronico:</strong> € {uploadResult.corrispettivo?.pagato_elettronico?.toFixed(2)}</div>
+          </div>
+          <button onClick={() => setUploadResult(null)} style={{ marginTop: 10 }}>Chiudi</button>
+        </div>
+      );
+    }
+    
+    // Bulk o ZIP result
+    const data = uploadResult.data;
+    const isZip = uploadResult.type === "zip";
+    
+    return (
+      <div className="card" style={{ background: "#fff3e0" }} data-testid="corrispettivi-upload-result">
+        <div className="h1">
+          {isZip ? "📦 Risultato Upload ZIP" : "📁 Risultato Upload Massivo"}
+        </div>
+        
+        <div className="grid" style={{ marginTop: 10 }}>
+          <div style={{ background: "#c8e6c9", padding: 10, borderRadius: 8 }}>
+            <strong style={{ color: "#2e7d32", fontSize: 18 }}>✓ Importati: {data.imported}</strong>
+          </div>
+          <div style={{ 
+            background: data.skipped_duplicates > 0 ? "#fff3e0" : "#f5f5f5", 
+            padding: 10, 
+            borderRadius: 8 
+          }}>
+            <strong style={{ color: data.skipped_duplicates > 0 ? "#e65100" : "#666", fontSize: 18 }}>
+              ⚠ Duplicati: {data.skipped_duplicates || data.skipped || 0}
+            </strong>
+            <div style={{ fontSize: 12, color: "#666" }}>(saltati automaticamente)</div>
+          </div>
+          <div style={{ 
+            background: data.failed > 0 ? "#ffcdd2" : "#f5f5f5", 
+            padding: 10, 
+            borderRadius: 8 
+          }}>
+            <strong style={{ color: data.failed > 0 ? "#c62828" : "#666", fontSize: 18 }}>
+              ✗ Errori: {data.failed}
+            </strong>
+          </div>
+          <div style={{ background: "#e3f2fd", padding: 10, borderRadius: 8 }}>
+            <strong style={{ color: "#1565c0", fontSize: 18 }}>
+              📄 Totale file: {data.total}
+            </strong>
+          </div>
+        </div>
+        
+        {data.success && data.success.length > 0 && (
+          <div style={{ marginTop: 15 }}>
+            <strong>✓ Corrispettivi importati:</strong>
+            <ul style={{ paddingLeft: 20, marginTop: 5, maxHeight: 200, overflowY: "auto" }}>
+              {data.success.slice(0, 15).map((s, i) => (
+                <li key={i} style={{ marginBottom: 3 }}>
+                  <strong>{s.data}</strong> - € {s.totale?.toFixed(2)} 
+                  {s.contanti > 0 && <span style={{ color: "#2e7d32" }}> (💵 {s.contanti?.toFixed(2)})</span>}
+                  {s.elettronico > 0 && <span style={{ color: "#9c27b0" }}> (💳 {s.elettronico?.toFixed(2)})</span>}
+                </li>
+              ))}
+              {data.success.length > 15 && (
+                <li style={{ fontStyle: "italic", color: "#666" }}>
+                  ... e altri {data.success.length - 15} corrispettivi
+                </li>
+              )}
+            </ul>
+          </div>
+        )}
+        
+        {data.duplicates && data.duplicates.length > 0 && (
+          <div style={{ marginTop: 15 }}>
+            <strong style={{ color: "#e65100" }}>⚠ Corrispettivi già presenti (saltati):</strong>
+            <ul style={{ paddingLeft: 20, marginTop: 5, maxHeight: 150, overflowY: "auto" }}>
+              {data.duplicates.slice(0, 10).map((d, i) => (
+                <li key={i} style={{ color: "#e65100" }}>
+                  {d.data} - {d.matricola || d.filename} - € {(d.totale || 0).toFixed(2)}
+                </li>
+              ))}
+              {data.duplicates.length > 10 && (
+                <li style={{ fontStyle: "italic" }}>... e altri {data.duplicates.length - 10}</li>
+              )}
+            </ul>
+          </div>
+        )}
+        
+        {data.errors && data.errors.length > 0 && (
+          <div style={{ marginTop: 15 }}>
+            <strong style={{ color: "#c62828" }}>✗ Errori:</strong>
+            <ul style={{ paddingLeft: 20, marginTop: 5, maxHeight: 150, overflowY: "auto" }}>
+              {data.errors.slice(0, 10).map((e, i) => (
+                <li key={i} style={{ color: "#c62828" }}>
+                  {e.filename}: {e.error}
+                </li>
+              ))}
+              {data.errors.length > 10 && (
+                <li style={{ fontStyle: "italic" }}>... e altri {data.errors.length - 10} errori</li>
+              )}
+            </ul>
+          </div>
+        )}
+        
+        <button onClick={() => setUploadResult(null)} style={{ marginTop: 15 }}>Chiudi</button>
+      </div>
+    );
+  };
 
   return (
     <>
@@ -135,6 +357,7 @@ export default function Corrispettivi() {
         </div>
         
         <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
+          {/* Upload Singolo XML */}
           <div>
             <input
               ref={fileInputRef}
@@ -155,6 +378,7 @@ export default function Corrispettivi() {
             </button>
           </div>
           
+          {/* Upload Massivo XML */}
           <div>
             <input
               ref={bulkFileInputRef}
@@ -172,112 +396,48 @@ export default function Corrispettivi() {
               style={{ background: "#4caf50", color: "white" }}
               data-testid="corrispettivi-bulk-upload-btn"
             >
-              📁 Upload XML Massivo
+              📁 Upload XML Multipli
             </button>
           </div>
           
-          <button onClick={loadCorrispettivi} data-testid="corrispettivi-refresh-btn">
+          {/* Upload ZIP */}
+          <div>
+            <input
+              ref={zipFileInputRef}
+              type="file"
+              accept=".zip"
+              onChange={handleZipUpload}
+              style={{ display: "none" }}
+              id="zip-upload"
+              data-testid="corrispettivi-zip-upload"
+            />
+            <button 
+              onClick={() => zipFileInputRef.current?.click()}
+              disabled={uploading}
+              style={{ background: "#ff9800", color: "white" }}
+              data-testid="corrispettivi-zip-upload-btn"
+            >
+              📦 Upload ZIP Massivo
+            </button>
+          </div>
+          
+          <button onClick={loadCorrispettivi} disabled={uploading} data-testid="corrispettivi-refresh-btn">
             🔄 Aggiorna
           </button>
         </div>
         
-        {uploading && (
-          <div className="small" style={{ marginTop: 10, color: "#1565c0" }}>
-            ⏳ Elaborazione in corso...
+        {/* Barra di Progresso */}
+        {uploading && <ProgressBar progress={uploadProgress} />}
+        
+        {err && (
+          <div className="small" style={{ marginTop: 10, color: "#c00", padding: 10, background: "#ffebee", borderRadius: 4 }} data-testid="corrispettivi-error">
+            ❌ {err}
           </div>
         )}
-        
-        {err && <div className="small" style={{ marginTop: 10, color: "#c00" }} data-testid="corrispettivi-error">{err}</div>}
       </div>
 
       {/* Risultato Upload */}
-      {uploadResult && (
-        <div className="card" style={{ background: uploadResult.type === "success" ? "#e8f5e9" : "#fff3e0" }} data-testid="corrispettivi-upload-result">
-          {uploadResult.type === "success" ? (
-            <>
-              <div className="h1" style={{ color: "#2e7d32" }}>✓ {uploadResult.message}</div>
-              <div className="grid" style={{ marginTop: 10 }}>
-                <div>
-                  <strong>Data:</strong> {uploadResult.corrispettivo?.data}
-                </div>
-                <div>
-                  <strong>Totale:</strong> € {uploadResult.corrispettivo?.totale?.toFixed(2)}
-                </div>
-                <div>
-                  <strong>💵 Contanti:</strong> € {uploadResult.corrispettivo?.pagato_contanti?.toFixed(2)}
-                </div>
-                <div>
-                  <strong>💳 Elettronico:</strong> € {uploadResult.corrispettivo?.pagato_elettronico?.toFixed(2)}
-                </div>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="h1">Risultato Upload Massivo</div>
-              <div className="grid" style={{ marginTop: 10 }}>
-                <div style={{ background: "#c8e6c9", padding: 10, borderRadius: 8 }}>
-                  <strong style={{ color: "#2e7d32" }}>✓ Importati: {uploadResult.data.imported}</strong>
-                </div>
-                <div style={{ background: uploadResult.data.skipped_duplicates > 0 ? "#fff3e0" : "#f5f5f5", padding: 10, borderRadius: 8 }}>
-                  <strong style={{ color: uploadResult.data.skipped_duplicates > 0 ? "#e65100" : "#666" }}>
-                    ⚠ Duplicati: {uploadResult.data.skipped_duplicates || 0}
-                  </strong>
-                </div>
-                <div style={{ background: uploadResult.data.failed > 0 ? "#ffcdd2" : "#f5f5f5", padding: 10, borderRadius: 8 }}>
-                  <strong style={{ color: uploadResult.data.failed > 0 ? "#c62828" : "#666" }}>
-                    ✗ Errori: {uploadResult.data.failed}
-                  </strong>
-                </div>
-              </div>
-              
-              {uploadResult.data.success && uploadResult.data.success.length > 0 && (
-                <div style={{ marginTop: 10 }}>
-                  <strong>Corrispettivi importati:</strong>
-                  <ul style={{ paddingLeft: 20, marginTop: 5 }}>
-                    {uploadResult.data.success.slice(0, 10).map((s, i) => (
-                      <li key={i}>
-                        {s.data} - Totale: € {s.totale?.toFixed(2)} 
-                        {s.contanti > 0 && <span> (💵 {s.contanti?.toFixed(2)})</span>}
-                        {s.elettronico > 0 && <span> (💳 {s.elettronico?.toFixed(2)})</span>}
-                      </li>
-                    ))}
-                    {uploadResult.data.success.length > 10 && (
-                      <li>... e altri {uploadResult.data.success.length - 10}</li>
-                    )}
-                  </ul>
-                </div>
-              )}
-              
-              {uploadResult.data.duplicates && uploadResult.data.duplicates.length > 0 && (
-                <div style={{ marginTop: 10 }}>
-                  <strong style={{ color: "#e65100" }}>Corrispettivi già presenti (saltati):</strong>
-                  <ul style={{ paddingLeft: 20, marginTop: 5 }}>
-                    {uploadResult.data.duplicates.slice(0, 5).map((d, i) => (
-                      <li key={i} style={{ color: "#e65100" }}>
-                        {d.data} - {d.matricola} - € {d.totale?.toFixed(2)}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              
-              {uploadResult.data.errors && uploadResult.data.errors.length > 0 && (
-                <div style={{ marginTop: 10 }}>
-                  <strong style={{ color: "#c62828" }}>Errori:</strong>
-                  <ul style={{ paddingLeft: 20, marginTop: 5 }}>
-                    {uploadResult.data.errors.slice(0, 10).map((e, i) => (
-                      <li key={i} style={{ color: "#c62828" }}>
-                        {e.filename}: {e.error}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </>
-          )}
-          <button onClick={() => setUploadResult(null)} style={{ marginTop: 10 }}>Chiudi</button>
-        </div>
-      )}
+      {renderUploadResult()}
 
       {/* Riepilogo Totali */}
       {corrispettivi.length > 0 && (
@@ -297,7 +457,7 @@ export default function Corrispettivi() {
               </div>
             </div>
             <div>
-              <strong>💳 Pagato Elettronico</strong>
+              <strong>💳 Pagato Elettronico (POS)</strong>
               <div style={{ fontSize: 24, fontWeight: "bold", color: "#9c27b0" }}>
                 € {totaleElettronico.toFixed(2)}
               </div>
@@ -382,7 +542,7 @@ export default function Corrispettivi() {
         ) : corrispettivi.length === 0 ? (
           <div className="small">
             Nessun corrispettivo registrato.<br/>
-            Carica un file XML per iniziare.
+            Carica un file XML o ZIP per iniziare.
           </div>
         ) : (
           <table style={{ width: "100%", borderCollapse: "collapse" }} data-testid="corrispettivi-table">
@@ -443,14 +603,15 @@ export default function Corrispettivi() {
       </div>
 
       <div className="card">
-        <div className="h1">Informazioni</div>
+        <div className="h1">ℹ️ Informazioni Upload</div>
         <ul style={{ paddingLeft: 20 }}>
+          <li><strong>XML Singolo:</strong> Carica un file XML alla volta</li>
+          <li><strong>XML Multipli:</strong> Seleziona più file XML contemporaneamente</li>
+          <li><strong>📦 ZIP Massivo:</strong> Carica un archivio ZIP contenente tutti i file XML dei corrispettivi</li>
+          <li style={{ color: "#e65100" }}><strong>Gestione duplicati:</strong> I corrispettivi già presenti vengono automaticamente SALTATI (non duplicati)</li>
+          <li><strong>Barra di progresso:</strong> Monitora lo stato dell'upload in tempo reale</li>
           <li>Formato supportato: XML Agenzia delle Entrate (COR10)</li>
-          <li>I corrispettivi vengono automaticamente registrati nel sistema</li>
-          <li><strong>Pagamento Contanti e Elettronico</strong> estratti automaticamente</li>
-          <li>I dati IVA vengono estratti e aggregati per la liquidazione</li>
-          <li><strong>Upload massivo:</strong> puoi caricare più file XML contemporaneamente</li>
-          <li><strong>Controllo duplicati:</strong> i corrispettivi già importati vengono automaticamente saltati</li>
+          <li><strong>POS Automatico:</strong> Il pagamento elettronico viene estratto automaticamente dagli XML</li>
         </ul>
       </div>
     </>
