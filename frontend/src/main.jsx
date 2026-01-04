@@ -23,6 +23,7 @@ import ExportPage from "./pages/Export.jsx";
 import AdminPage from "./pages/Admin.jsx";
 import IVA from "./pages/IVA.jsx";
 import MetodiPagamento from "./pages/MetodiPagamento.jsx";
+import OrdiniFornitori from "./pages/OrdiniFornitori.jsx";
 
 const router = createBrowserRouter([
   {
@@ -48,6 +49,7 @@ const router = createBrowserRouter([
       { path: "admin", element: <AdminPage /> },
       { path: "iva", element: <IVA /> },
       { path: "metodi-pagamento", element: <MetodiPagamento /> },
+      { path: "ordini-fornitori", element: <OrdiniFornitori /> },
     ],
   },
 ]);
