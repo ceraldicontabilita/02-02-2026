@@ -463,7 +463,7 @@ export default function Fatture() {
                       </div>
                     )}
                   </td>
-                  <td style={{ padding: 8 }}>{inv.invoice_date || "-"}</td>
+                  <td style={{ padding: 8 }}>{formatDateIT(inv.invoice_date) || "-"}</td>
                   <td style={{ padding: 8, fontWeight: "bold" }}>
                     € {(inv.total_amount || 0).toFixed(2)}
                   </td>
