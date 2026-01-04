@@ -476,7 +476,7 @@ def parse_libro_unico_pdf(pdf_bytes: bytes) -> Dict[str, Any]:
                                         emp_data["acconto"] = val
                                         logger.info(f"  Acconto: €{val}")
                     
-                    # Extract NETTO DEL MESE
+                    # Extract NETTO DEL MESE - Pattern 1: "NETTO DEL MESE" or "NETTO MESE"
                     for i, line in enumerate(lines):
                         if 'NETTO' in line.upper() and ('MESE' in line.upper() or 'DEL' in line.upper()):
                             # Search in current and following lines
@@ -496,6 +496,37 @@ def parse_libro_unico_pdf(pdf_bytes: bytes) -> Dict[str, Any]:
                                 if emp_data["netto"] is not None:
                                     break
                             break
+                    
+                    # Pattern 2: Smart Forms - "TOTALE NETTO" column header with value ending in "+"
+                    if emp_data["netto"] is None:
+                        for i, line in enumerate(lines):
+                            if 'TOTALE NETTO' in line.upper():
+                                # Look for a value with "+" at the end in the following lines
+                                for j in range(i, min(i+10, len(lines))):
+                                    # Match amounts ending with "+" like "832,00+"
+                                    netto_match = re.search(r'(\d{1,3}(?:[.,]\d{3})*[.,]\d{2})\+', lines[j])
+                                    if netto_match:
+                                        amt_clean = netto_match.group(1).replace('.', '').replace(',', '.')
+                                        val = safe_float(amt_clean, 0.0)
+                                        if 100 <= val <= 10000:  # Reasonable salary range
+                                            emp_data["netto"] = val
+                                            logger.info(f"  Netto (Smart Forms): €{val}")
+                                            break
+                                if emp_data["netto"] is not None:
+                                    break
+                    
+                    # Pattern 3: Last line with amount ending in "+" (Smart Forms netto is usually at the end)
+                    if emp_data["netto"] is None and 'COMPETENZE' in page_text.upper():
+                        # Search from bottom for netto value
+                        for line in reversed(lines):
+                            # Match amounts ending with "+" 
+                            netto_match = re.search(r'(\d{3,4})[,.](\d{2})\+\s*$', line)
+                            if netto_match:
+                                val = float(f"{netto_match.group(1)}.{netto_match.group(2)}")
+                                if 100 <= val <= 10000:
+                                    emp_data["netto"] = val
+                                    logger.info(f"  Netto (bottom search): €{val}")
+                                    break
             
             # Finalize employee data
             for emp_name, emp_data in employees_found.items():
