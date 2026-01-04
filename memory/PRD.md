@@ -1,6 +1,41 @@
 # ERP Azienda Semplice - PRD
 
-## Aggiornamento 04/01/2026 - Nuove Funzionalità
+## Aggiornamento 04/01/2026 - Session 2 - Nuove Funzionalità
+
+### Import Estratto Conto Bancario (04/01/2026 - Session 2) - NEW
+- ✅ Nuovo endpoint: `POST /api/bank-statement/import` per import PDF/Excel/CSV estratto conto
+- ✅ Riconciliazione automatica con Prima Nota Banca (matching per data, tipo, importo ±1%)
+- ✅ Endpoint statistiche: `GET /api/bank-statement/stats` (movimenti totali, riconciliati, %)
+- ✅ Supporto upload via `POST /api/portal/upload` con `kind="estratto-conto"`
+- ✅ Pagina `/riconciliazione` completamente rinnovata con:
+  - 4 cards statistiche (Movimenti Banca, Riconciliati, Da Riconciliare, % Riconciliazione)
+  - Upload file con feedback dettagliato
+  - Tabelle risultati riconciliazione/non trovati
+  - Tab istruzioni
+- File: `/app/app/routers/bank_statement_import.py`, `/app/frontend/src/pages/Riconciliazione.jsx`
+
+### Sistema Severità HACCP a 4 Livelli (04/01/2026 - Session 2) - NEW
+- ✅ Sistema severità migliorato: **CRITICA** (🔴), **ALTA** (🟠), **MEDIA** (🟡), **BASSA** (🟢)
+- ✅ Logica severità frigoriferi: >10°C o <-5°C = critica, >8°C o <-2°C = alta, >5°C o <0°C = media
+- ✅ Logica severità congelatori: >-10°C = critica, >-15°C = alta, >-17°C o <-25°C = media
+- ✅ Endpoint statistiche: `GET /api/haccp-completo/notifiche/stats` (per severità, categoria)
+- ✅ Cards cliccabili per filtrare per severità
+- ✅ Legenda severità integrata nella pagina
+- File: `/app/app/routers/haccp_completo.py` (linee 1461-1540), `/app/frontend/src/pages/HACCPNotifiche.jsx`
+
+### Barra di Ricerca Globale (04/01/2026 - Session 2) - NEW
+- ✅ Componente `GlobalSearch` integrato nella sidebar
+- ✅ Endpoint: `GET /api/ricerca-globale?q=query&limit=10`
+- ✅ Ricerca in: Fatture, Fornitori, Prodotti, Dipendenti
+- ✅ Shortcut tastiera: **Ctrl+K** / **Cmd+K**
+- ✅ Debounce 300ms per performance
+- ✅ Dropdown risultati con icone tipo (📄📦🏢👤)
+- ✅ Click su risultato naviga alla pagina appropriata
+- File: `/app/frontend/src/components/GlobalSearch.jsx`, `/app/app/routers/public_api.py`
+
+---
+
+## Aggiornamento 04/01/2026 - Session 1 - Nuove Funzionalità
 
 ### Analytics HACCP (04/01/2026) - NEW
 - ✅ Nuova pagina `/haccp/analytics` con statistiche mensili e annuali
