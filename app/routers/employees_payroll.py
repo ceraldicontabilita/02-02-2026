@@ -201,7 +201,7 @@ async def upload_payslip_pdf(file: UploadFile = File(...)) -> Dict[str, Any]:
                     "source": "pdf_upload", "filename": file.filename, "created_at": datetime.utcnow().isoformat()
                 })
                 
-                # Inserisci automaticamente in Prima Nota Cassa - Salari
+                # Inserisci automaticamente in Prima Nota Salari
                 if netto > 0 and anno and mese:
                     # Calcola data fine mese (ultimo giorno del mese)
                     try:
@@ -212,8 +212,7 @@ async def upload_payslip_pdf(file: UploadFile = File(...)) -> Dict[str, Any]:
                         data_pagamento = f"{anno}-{mese.zfill(2)}-28"
                     
                     # Verifica se esiste già un movimento salari per questo dipendente/periodo
-                    existing_salario = await db["prima_nota_cassa"].find_one({
-                        "categoria": "Salari",
+                    existing_salario = await db["prima_nota_salari"].find_one({
                         "riferimento": payslip_key,
                         "source": "payslip_import"
                     })
@@ -225,16 +224,18 @@ async def upload_payslip_pdf(file: UploadFile = File(...)) -> Dict[str, Any]:
                             "tipo": "uscita",
                             "importo": netto,
                             "descrizione": f"Stipendio {nome} - {periodo}",
-                            "categoria": "Salari",
+                            "categoria": "Stipendi",
                             "riferimento": payslip_key,
                             "payslip_id": payslip_id,
                             "employee_id": emp_id,
                             "codice_fiscale": cf,
+                            "nome_dipendente": nome,
+                            "periodo": periodo,
                             "source": "payslip_import",
                             "note": f"Importato da busta paga PDF",
                             "created_at": datetime.utcnow().isoformat()
                         }
-                        await db["prima_nota_cassa"].insert_one(movimento_salario)
+                        await db["prima_nota_salari"].insert_one(movimento_salario)
                         logger.info(f"Prima Nota Salari: €{netto} per {nome} ({periodo})")
                 
                 results["success"].append({"nome": nome, "periodo": periodo, "netto": netto, "is_new": is_new, "prima_nota": netto > 0})
