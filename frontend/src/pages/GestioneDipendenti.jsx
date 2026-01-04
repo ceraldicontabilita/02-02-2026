@@ -481,7 +481,7 @@ export default function GestioneDipendenti() {
             maxHeight: '80vh',
             overflow: 'auto'
           }} onClick={e => e.stopPropagation()}>
-            <h2 style={{ marginTop: 0 }}>👤 {selectedDipendente.nome_completo}</h2>
+            <h2 style={{ marginTop: 0 }}>👤 {selectedDipendente.nome_completo || selectedDipendente.codice_fiscale}</h2>
             
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 15, marginTop: 20 }}>
               <div>
