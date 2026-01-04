@@ -9,6 +9,7 @@ import Fatture from "./pages/Fatture.jsx";
 import Corrispettivi from "./pages/Corrispettivi.jsx";
 import PrimaNotaCassa from "./pages/PrimaNotaCassa.jsx";
 import PrimaNotaBanca from "./pages/PrimaNotaBanca.jsx";
+import PrimaNota from "./pages/PrimaNota.jsx";
 import Riconciliazione from "./pages/Riconciliazione.jsx";
 import Magazzino from "./pages/Magazzino.jsx";
 import RicercaProdotti from "./pages/RicercaProdotti.jsx";
@@ -17,6 +18,7 @@ import F24 from "./pages/F24.jsx";
 import Paghe from "./pages/Paghe.jsx";
 import Finanziaria from "./pages/Finanziaria.jsx";
 import Assegni from "./pages/Assegni.jsx";
+import GestioneAssegni from "./pages/GestioneAssegni.jsx";
 import Ordini from "./pages/Ordini.jsx";
 import Pianificazione from "./pages/Pianificazione.jsx";
 import ExportPage from "./pages/Export.jsx";
@@ -24,6 +26,7 @@ import AdminPage from "./pages/Admin.jsx";
 import IVA from "./pages/IVA.jsx";
 import MetodiPagamento from "./pages/MetodiPagamento.jsx";
 import OrdiniFornitori from "./pages/OrdiniFornitori.jsx";
+import Fornitori from "./pages/Fornitori.jsx";
 
 const router = createBrowserRouter([
   {
@@ -35,6 +38,7 @@ const router = createBrowserRouter([
       { path: "corrispettivi", element: <Corrispettivi /> },
       { path: "prima-nota-cassa", element: <PrimaNotaCassa /> },
       { path: "prima-nota-banca", element: <PrimaNotaBanca /> },
+      { path: "prima-nota", element: <PrimaNota /> },
       { path: "riconciliazione", element: <Riconciliazione /> },
       { path: "magazzino", element: <Magazzino /> },
       { path: "ricerca-prodotti", element: <RicercaProdotti /> },
@@ -43,6 +47,7 @@ const router = createBrowserRouter([
       { path: "paghe", element: <Paghe /> },
       { path: "finanziaria", element: <Finanziaria /> },
       { path: "assegni", element: <Assegni /> },
+      { path: "gestione-assegni", element: <GestioneAssegni /> },
       { path: "ordini", element: <Ordini /> },
       { path: "pianificazione", element: <Pianificazione /> },
       { path: "export", element: <ExportPage /> },
@@ -50,6 +55,7 @@ const router = createBrowserRouter([
       { path: "iva", element: <IVA /> },
       { path: "metodi-pagamento", element: <MetodiPagamento /> },
       { path: "ordini-fornitori", element: <OrdiniFornitori /> },
+      { path: "fornitori", element: <Fornitori /> },
     ],
   },
 ]);
