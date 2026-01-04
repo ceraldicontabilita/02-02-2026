@@ -88,6 +88,7 @@ export default function ControlloMensile() {
   /**
    * CARICA DATI ANNUALI
    * Recupera tutti i movimenti dell'anno e li aggrega per mese
+   * Include: Prima Nota Cassa, Prima Nota Banca, Corrispettivi
    */
   const loadYearData = async () => {
     setLoading(true);
@@ -100,18 +101,20 @@ export default function ControlloMensile() {
         data_a: endDate
       });
 
-      // Carica dati in parallelo da tutte le fonti
-      const [cassaRes, corrispRes] = await Promise.all([
+      // Carica dati in parallelo da TUTTE le fonti (Cassa, Banca, Corrispettivi)
+      const [cassaRes, bancaRes, corrispRes] = await Promise.all([
         api.get(`/api/prima-nota/cassa?${params}&limit=5000`).catch(() => ({ data: { movimenti: [] } })),
+        api.get(`/api/prima-nota/banca?${params}&limit=5000`).catch(() => ({ data: { movimenti: [] } })),
         api.get(`/api/corrispettivi?data_da=${startDate}&data_a=${endDate}`).catch(() => ({ data: [] }))
       ]);
 
       const cassa = cassaRes.data.movimenti || [];
+      const banca = bancaRes.data.movimenti || [];
       const corrispettivi = Array.isArray(corrispRes.data) ? corrispRes.data : (corrispRes.data.corrispettivi || []);
       
-      console.log(`[ControlloMensile] Caricati ${cassa.length} movimenti cassa e ${corrispettivi.length} corrispettivi per ${anno}`);
+      console.log(`[ControlloMensile] Caricati: ${cassa.length} cassa, ${banca.length} banca, ${corrispettivi.length} corrispettivi per ${anno}`);
       
-      processYearData(cassa, corrispettivi);
+      processYearData(cassa, banca, corrispettivi);
     } catch (error) {
       console.error('Error loading year data:', error);
     } finally {
