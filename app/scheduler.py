@@ -164,6 +164,190 @@ async def auto_populate_haccp_daily():
         logger.error(traceback.format_exc())
 
 
+async def check_anomalie_and_notify():
+    """
+    Task per controllare anomalie e inviare notifiche email.
+    Eseguito dopo l'auto-popolazione.
+    """
+    from app.database import Database
+    
+    logger.info("🔔 [SCHEDULER] Controllo anomalie e notifiche...")
+    
+    try:
+        db = Database.get_db()
+        oggi = datetime.utcnow().strftime("%Y-%m-%d")
+        
+        # Check anomalie frigoriferi
+        anomalie_frigo = await db["haccp_temperature_frigoriferi"].find({
+            "data": oggi,
+            "conforme": False
+        }, {"_id": 0}).to_list(100)
+        
+        # Check anomalie congelatori
+        anomalie_congel = await db["haccp_temperature_congelatori"].find({
+            "data": oggi,
+            "conforme": False
+        }, {"_id": 0}).to_list(100)
+        
+        notifiche_create = 0
+        anomalie_critiche = []
+        
+        for a in anomalie_frigo:
+            temp = a.get("temperatura", 0)
+            is_critica = temp > 8 or temp < -2
+            
+            notifica = {
+                "id": str(uuid.uuid4()),
+                "tipo": "anomalia_temperatura",
+                "categoria": "frigorifero",
+                "equipaggiamento": a.get("equipaggiamento"),
+                "temperatura": temp,
+                "data": oggi,
+                "ora": a.get("ora"),
+                "messaggio": f"⚠️ Temperatura anomala {temp}°C su {a.get('equipaggiamento')} (range: 0-4°C)",
+                "severita": "alta" if is_critica else "media",
+                "letta": False,
+                "created_at": datetime.utcnow().isoformat()
+            }
+            
+            existing = await db["haccp_notifiche"].find_one({
+                "data": oggi,
+                "equipaggiamento": a.get("equipaggiamento"),
+                "categoria": "frigorifero"
+            })
+            
+            if not existing:
+                await db["haccp_notifiche"].insert_one(notifica)
+                notifiche_create += 1
+                if is_critica:
+                    anomalie_critiche.append(notifica)
+        
+        for a in anomalie_congel:
+            temp = a.get("temperatura", 0)
+            is_critica = temp > -15
+            
+            notifica = {
+                "id": str(uuid.uuid4()),
+                "tipo": "anomalia_temperatura",
+                "categoria": "congelatore",
+                "equipaggiamento": a.get("equipaggiamento"),
+                "temperatura": temp,
+                "data": oggi,
+                "ora": a.get("ora"),
+                "messaggio": f"⚠️ Temperatura anomala {temp}°C su {a.get('equipaggiamento')} (range: -18/-22°C)",
+                "severita": "alta" if is_critica else "media",
+                "letta": False,
+                "created_at": datetime.utcnow().isoformat()
+            }
+            
+            existing = await db["haccp_notifiche"].find_one({
+                "data": oggi,
+                "equipaggiamento": a.get("equipaggiamento"),
+                "categoria": "congelatore"
+            })
+            
+            if not existing:
+                await db["haccp_notifiche"].insert_one(notifica)
+                notifiche_create += 1
+                if is_critica:
+                    anomalie_critiche.append(notifica)
+        
+        logger.info(f"🔔 [SCHEDULER] Notifiche create: {notifiche_create}, Critiche: {len(anomalie_critiche)}")
+        
+        # Invia email se ci sono anomalie critiche
+        if anomalie_critiche:
+            await send_anomalie_email(anomalie_critiche, oggi)
+        
+    except Exception as e:
+        logger.error(f"❌ [SCHEDULER] Errore check anomalie: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+
+
+async def send_anomalie_email(anomalie: list, data: str):
+    """Invia email per anomalie critiche HACCP."""
+    import os
+    import smtplib
+    from email.mime.text import MIMEText
+    from email.mime.multipart import MIMEMultipart
+    
+    smtp_host = os.environ.get("SMTP_HOST", "smtp.gmail.com")
+    smtp_port = int(os.environ.get("SMTP_PORT", "587"))
+    smtp_user = os.environ.get("SMTP_USER")
+    smtp_pass = os.environ.get("SMTP_PASSWORD")
+    email_to = os.environ.get("HACCP_ALERT_EMAIL", smtp_user)
+    
+    if not smtp_user or not smtp_pass:
+        logger.warning("⚠️ [SCHEDULER] Credenziali SMTP non configurate, email non inviata")
+        return
+    
+    try:
+        # Costruisci email
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = f"🚨 ALERT HACCP - {len(anomalie)} Anomalie Critiche - {data}"
+        msg["From"] = smtp_user
+        msg["To"] = email_to
+        
+        # Corpo email HTML
+        html = f"""
+        <html>
+        <head>
+            <style>
+                body {{ font-family: Arial, sans-serif; }}
+                .header {{ background: #f44336; color: white; padding: 20px; text-align: center; }}
+                .content {{ padding: 20px; }}
+                .anomalia {{ background: #ffebee; border-left: 4px solid #f44336; padding: 15px; margin: 10px 0; }}
+                .temp {{ font-size: 24px; font-weight: bold; color: #f44336; }}
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>🚨 ALERT HACCP</h1>
+                <p>Rilevate {len(anomalie)} anomalie critiche - {data}</p>
+            </div>
+            <div class="content">
+                <p>Sono state rilevate le seguenti anomalie di temperatura che richiedono intervento immediato:</p>
+        """
+        
+        for a in anomalie:
+            html += f"""
+                <div class="anomalia">
+                    <strong>{a.get('categoria', '').upper()}: {a.get('equipaggiamento')}</strong><br>
+                    <span class="temp">{a.get('temperatura')}°C</span><br>
+                    <small>{a.get('messaggio')}</small>
+                </div>
+            """
+        
+        html += """
+                <p style="margin-top: 20px; color: #666;">
+                    Questo è un messaggio automatico dal sistema HACCP.<br>
+                    Accedi alla piattaforma per maggiori dettagli.
+                </p>
+            </div>
+        </body>
+        </html>
+        """
+        
+        msg.attach(MIMEText(html, "html"))
+        
+        # Invia email
+        with smtplib.SMTP(smtp_host, smtp_port) as server:
+            server.starttls()
+            server.login(smtp_user, smtp_pass)
+            server.sendmail(smtp_user, email_to, msg.as_string())
+        
+        logger.info(f"📧 [SCHEDULER] Email alert HACCP inviata a {email_to}")
+        
+    except Exception as e:
+        logger.error(f"❌ [SCHEDULER] Errore invio email: {e}")
+
+
+async def daily_haccp_routine():
+    """Routine giornaliera completa HACCP."""
+    await auto_populate_haccp_daily()
+    await check_anomalie_and_notify()
+
+
 def start_scheduler():
     """Avvia lo scheduler con i task programmati."""
     logger.info("🚀 [SCHEDULER] Configurazione scheduler HACCP...")
@@ -172,10 +356,10 @@ def start_scheduler():
     # Se il server è in UTC, 01:00 UTC = 02:00 CET (Italia)
     # Quindi mettiamo 00:00 UTC per avere 01:00 CET
     scheduler.add_job(
-        auto_populate_haccp_daily,
+        daily_haccp_routine,
         CronTrigger(hour=0, minute=0),  # 00:00 UTC = 01:00 CET
-        id="haccp_auto_populate",
-        name="Auto-popolazione HACCP giornaliera",
+        id="haccp_daily_routine",
+        name="Routine HACCP giornaliera (auto-pop + notifiche)",
         replace_existing=True
     )
     
