@@ -124,7 +124,7 @@ export default function Riconciliazione() {
       {/* Actions Bar */}
       <div style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
         <a
-          href={`${API_URL}/api/exports/riconciliazione?format=xlsx`}
+          href="/api/exports/riconciliazione?format=xlsx"
           target="_blank"
           rel="noopener noreferrer"
           data-testid="export-excel-btn"
@@ -145,7 +145,7 @@ export default function Riconciliazione() {
           📊 Export Excel
         </a>
         <a
-          href={`${API_URL}/api/exports/riconciliazione?format=xlsx&solo_non_riconciliati=true`}
+          href="/api/exports/riconciliazione?format=xlsx&solo_non_riconciliati=true"
           target="_blank"
           rel="noopener noreferrer"
           data-testid="export-non-reconciled-btn"
