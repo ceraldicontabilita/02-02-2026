@@ -52,8 +52,14 @@ export default function F24() {
     setOut(null);
     if (!file) return setErr("Seleziona un file PDF.");
     try {
-      const res = await uploadDocument(file, "f24-pdf");
-      setOut(res);
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await api.post("/api/f24/f24/upload-pdf", formData);
+      setOut(res.data);
+      setFile(null);
+      // Reset file input
+      const fileInput = document.querySelector('input[type="file"]');
+      if (fileInput) fileInput.value = "";
       loadF24();
       loadAlerts();
       loadDashboard();
