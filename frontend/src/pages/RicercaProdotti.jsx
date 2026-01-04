@@ -282,7 +282,6 @@ export default function RicercaProdotti() {
             />
             🎯 Ricerca Esatta
           </label>
-          </div>
           
           <select
             value={selectedCategory}
