@@ -150,11 +150,16 @@ async def upload_payslip_pdf(file: UploadFile = File(...)) -> Dict[str, Any]:
                 periodo = payslip.get("periodo", "")
                 
                 # Check/create employee
-                existing = await db[Collections.EMPLOYEES].find_one({"codice_fiscale": cf}, {"_id": 0, "id": 1})
+                existing = await db[Collections.EMPLOYEES].find_one({"codice_fiscale": cf}, {"_id": 0, "id": 1, "nome_completo": 1})
                 
                 if existing:
                     emp_id = existing.get("id")
                     update = {}
+                    # Aggiorna nome_completo se mancante o era un periodo
+                    existing_name = existing.get("nome_completo", "")
+                    if nome and (not existing_name or any(m in str(existing_name).lower() for m in ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"])):
+                        update["nome_completo"] = nome
+                        update["name"] = nome
                     if payslip.get("qualifica"):
                         update["qualifica"] = payslip["qualifica"]
                     if payslip.get("matricola"):
