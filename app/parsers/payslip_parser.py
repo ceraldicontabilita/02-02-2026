@@ -197,17 +197,43 @@ def parse_employee_section(section: str) -> Optional[Dict[str, Any]]:
     
     # === RETRIBUZIONE NETTA ===
     # Pattern: NETTO DEL MESE, Netto a pagare, etc.
+    # Il netto è tipicamente in formato italiano: 1.234,56 (migliaia con punto, decimali con virgola)
     netto_patterns = [
-        r'(?:NETTO\s*DEL\s*MESE|Netto\s*a\s*pagare|NETTO)[:\s]*[€]?\s*(\d{1,3}(?:[.,]\d{3})*[,.]?\d{0,2})',
-        r'(?:NETTO)[:\s]*(\d+[.,]\d{2})',
-        r'(\d{1,3}(?:\.\d{3})*,\d{2})\s*€?\s*(?:NETTO|netto)',
+        # Pattern 1: "NETTO DEL MESE" seguito da importo
+        r'NETTO\s*DEL\s*MESE[:\s]*[€]?\s*(\d{1,3}(?:\.\d{3})*,\d{2})',
+        # Pattern 2: "NETTO" con importo €
+        r'NETTO[:\s]*[€]?\s*(\d{1,3}(?:\.\d{3})*,\d{2})',
+        # Pattern 3: Importo seguito da "NETTO"
+        r'(\d{1,3}(?:\.\d{3})*,\d{2})\s*€?\s*(?:NETTO)',
+        # Pattern 4: Cerca riga con NETTO e importo sulla stessa riga o successiva
+        r'(?:NETTO\s*(?:DEL\s*MESE)?)\s*[\r\n\s]*[€]?\s*(\d{1,3}(?:[.,]\d{3})*[,]\d{2})',
+        # Pattern 5: Per importi senza migliaia
+        r'NETTO[:\s]*[€]?\s*(\d+,\d{2})',
     ]
+    
     for pattern in netto_patterns:
-        netto_match = re.search(pattern, section, re.IGNORECASE)
+        netto_match = re.search(pattern, section, re.IGNORECASE | re.MULTILINE)
         if netto_match:
-            result["retribuzione_netta"] = parse_number(netto_match.group(1))
-            if result["retribuzione_netta"] > 0:
+            val = parse_number(netto_match.group(1))
+            # Valida che il netto sia ragionevole (tra 100 e 10000 euro)
+            if 100 <= val <= 10000:
+                result["retribuzione_netta"] = val
                 break
+    
+    # Fallback: cerca tutti i valori monetari vicini a "NETTO"
+    if result["retribuzione_netta"] == 0:
+        # Trova posizione di "NETTO"
+        netto_pos = section.upper().find("NETTO")
+        if netto_pos > 0:
+            # Cerca numeri nei 200 caratteri dopo "NETTO"
+            context = section[netto_pos:netto_pos+200]
+            # Cerca importi nel formato italiano
+            money_matches = re.findall(r'(\d{1,3}(?:\.\d{3})*,\d{2})', context)
+            for money in money_matches:
+                val = parse_number(money)
+                if 100 <= val <= 10000:  # Range ragionevole per netto mensile
+                    result["retribuzione_netta"] = val
+                    break
     
     # === RETRIBUZIONE LORDA ===
     lordo_match = re.search(r'(?:LORDO|Imponibile)[:\s]*[€]?\s*(\d{1,3}(?:[.,]\d{3})*[,.]?\d{0,2})', section, re.IGNORECASE)
