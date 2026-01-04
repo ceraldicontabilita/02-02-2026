@@ -2195,6 +2195,170 @@ async def legacy_portal_upload(file: UploadFile = File(...), kind: str = "") -> 
         )
 
 
+# ============== ORDINI FORNITORI ==============
+
+@router.get("/ordini-fornitori")
+async def list_ordini_fornitori(skip: int = 0, limit: int = 10000) -> List[Dict[str, Any]]:
+    """Lista ordini fornitori ordinati per data DESC."""
+    db = Database.get_db()
+    orders = await db["supplier_orders"].find({}, {"_id": 0}).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
+    return orders
+
+
+@router.post("/ordini-fornitori")
+async def create_ordine_fornitore(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
+    """
+    Crea nuovo ordine fornitore.
+    
+    Body:
+    {
+        "supplier_name": "Nome Fornitore",
+        "items": [
+            {
+                "product_name": "Prodotto",
+                "description": "Descrizione",
+                "quantity": 10,
+                "unit_price": 5.50,
+                "unit": "KG"
+            }
+        ],
+        "subtotal": 55.00,
+        "notes": "Note ordine"
+    }
+    """
+    db = Database.get_db()
+    
+    # Genera numero ordine progressivo
+    last_order = await db["supplier_orders"].find_one(
+        {}, 
+        {"_id": 0, "order_number": 1},
+        sort=[("order_number", -1)]
+    )
+    
+    if last_order and last_order.get("order_number"):
+        try:
+            last_num = int(last_order["order_number"])
+            new_num = last_num + 1
+        except ValueError:
+            new_num = 1
+    else:
+        new_num = 1
+    
+    # Calcola totale dai prodotti
+    items = data.get("items", [])
+    calculated_total = sum(
+        float(item.get("unit_price", 0) or 0) * float(item.get("quantity", 1) or 1)
+        for item in items
+    )
+    
+    order = {
+        "id": str(uuid.uuid4()),
+        "order_number": str(new_num).zfill(5),
+        "supplier_name": data.get("supplier_name", ""),
+        "supplier_vat": data.get("supplier_vat", ""),
+        "items": items,
+        "subtotal": data.get("subtotal", calculated_total),
+        "total": calculated_total,
+        "vat": 0,  # IVA da calcolare
+        "notes": data.get("notes", ""),
+        "status": "bozza",
+        "created_at": datetime.utcnow().isoformat(),
+        "updated_at": datetime.utcnow().isoformat()
+    }
+    
+    await db["supplier_orders"].insert_one(order)
+    order.pop("_id", None)
+    
+    return order
+
+
+@router.get("/ordini-fornitori/{order_id}")
+async def get_ordine_fornitore(order_id: str) -> Dict[str, Any]:
+    """Ottiene singolo ordine fornitore."""
+    db = Database.get_db()
+    
+    order = await db["supplier_orders"].find_one({"id": order_id}, {"_id": 0})
+    if not order:
+        raise HTTPException(status_code=404, detail="Ordine non trovato")
+    
+    return order
+
+
+@router.put("/ordini-fornitori/{order_id}")
+async def update_ordine_fornitore(order_id: str, data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
+    """Aggiorna ordine fornitore."""
+    db = Database.get_db()
+    
+    update_data = {k: v for k, v in data.items() if k not in ["id", "_id", "order_number"]}
+    update_data["updated_at"] = datetime.utcnow().isoformat()
+    
+    result = await db["supplier_orders"].update_one(
+        {"id": order_id},
+        {"$set": update_data}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Ordine non trovato")
+    
+    return await get_ordine_fornitore(order_id)
+
+
+@router.delete("/ordini-fornitori/{order_id}")
+async def delete_ordine_fornitore(order_id: str) -> Dict[str, Any]:
+    """Elimina ordine fornitore."""
+    db = Database.get_db()
+    
+    result = await db["supplier_orders"].delete_one({"id": order_id})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Ordine non trovato")
+    
+    return {"success": True, "deleted_id": order_id}
+
+
+@router.get("/ordini-fornitori/stats/summary")
+async def get_ordini_stats() -> Dict[str, Any]:
+    """Statistiche ordini fornitori."""
+    db = Database.get_db()
+    
+    pipeline = [
+        {
+            "$group": {
+                "_id": "$status",
+                "count": {"$sum": 1},
+                "total": {"$sum": "$total"}
+            }
+        }
+    ]
+    
+    result = await db["supplier_orders"].aggregate(pipeline).to_list(10)
+    
+    stats = {
+        "bozza": {"count": 0, "total": 0},
+        "inviato": {"count": 0, "total": 0},
+        "confermato": {"count": 0, "total": 0},
+        "consegnato": {"count": 0, "total": 0},
+        "annullato": {"count": 0, "total": 0}
+    }
+    
+    for r in result:
+        status = r.get("_id", "bozza")
+        if status in stats:
+            stats[status] = {
+                "count": r.get("count", 0),
+                "total": round(r.get("total", 0), 2)
+            }
+    
+    total_orders = sum(s["count"] for s in stats.values())
+    total_amount = sum(s["total"] for s in stats.values())
+    
+    return {
+        "by_status": stats,
+        "total_orders": total_orders,
+        "total_amount": round(total_amount, 2)
+    }
+
+
 
 
 # ============== ADMIN ==============
