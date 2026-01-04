@@ -4,6 +4,11 @@ import api from '../api';
 /**
  * ControlloMensile - Pagina per confrontare i dati POS automatici vs manuali
  * Vista annuale con breakdown mensile
+ * 
+ * Colonne: Mese | POS Auto | POS Manuale | Diff. POS | Corrisp. Auto | Corrisp. Man. | Diff. Corr. | Versamenti | Saldo Cassa | Dettagli
+ * 
+ * POS Auto = pagato_elettronico dai corrispettivi XML
+ * Corrisp. Auto = totale corrispettivi XML (sovrascrive Excel se diverso)
  */
 export default function ControlloMensile() {
   const [loading, setLoading] = useState(true);
@@ -19,12 +24,16 @@ export default function ControlloMensile() {
     posManual: 0,
     corrispettiviAuto: 0,
     corrispettiviManual: 0,
-    versamentiManual: 0,
-    versamentiEC: 0  // Estratto Conto
+    versamenti: 0,
+    saldoCassa: 0
   });
   
   // Daily detail data (when viewing a specific month)
   const [dailyComparison, setDailyComparison] = useState([]);
+  
+  // Dettaglio versamenti per il mese
+  const [versamentiDettaglio, setVersamentiDettaglio] = useState([]);
+  const [showVersamentiModal, setShowVersamentiModal] = useState(false);
 
   const monthNames = [
     'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
@@ -50,20 +59,18 @@ export default function ControlloMensile() {
         data_a: endDate
       });
 
-      const [bancaRes, cassaRes, corrispRes, ecRes] = await Promise.all([
-        api.get(`/api/prima-nota/banca?${params}&limit=2000`),
-        api.get(`/api/prima-nota/cassa?${params}&limit=2000`),
-        api.get(`/api/corrispettivi?data_da=${startDate}&data_a=${endDate}`),
-        api.get(`/api/bank-statement/movements?data_da=${startDate}&data_a=${endDate}`).catch(() => ({ data: { movements: [] } }))
+      // Carica dati in parallelo
+      const [bancaRes, cassaRes, corrispRes] = await Promise.all([
+        api.get(`/api/prima-nota/banca?${params}&limit=2000`).catch(() => ({ data: { movimenti: [] } })),
+        api.get(`/api/prima-nota/cassa?${params}&limit=2000`).catch(() => ({ data: { movimenti: [] } })),
+        api.get(`/api/corrispettivi?data_da=${startDate}&data_a=${endDate}`).catch(() => ({ data: [] }))
       ]);
 
       const banca = bancaRes.data.movimenti || [];
       const cassa = cassaRes.data.movimenti || [];
-      const corrispettivi = corrispRes.data.corrispettivi || corrispRes.data || [];
-      const estrattoConto = ecRes.data.movements || [];
+      const corrispettivi = Array.isArray(corrispRes.data) ? corrispRes.data : (corrispRes.data.corrispettivi || []);
       
-      // Process data by month
-      processYearData(banca, cassa, corrispettivi, estrattoConto);
+      processYearData(banca, cassa, corrispettivi);
     } catch (error) {
       console.error('Error loading year data:', error);
     } finally {
@@ -71,9 +78,10 @@ export default function ControlloMensile() {
     }
   };
 
-  const processYearData = (banca, cassa, corrispettivi, estrattoConto = []) => {
+  const processYearData = (banca, cassa, corrispettivi) => {
     const monthly = [];
-    let yearPosAuto = 0, yearPosManual = 0, yearCorrispAuto = 0, yearCorrispManual = 0, yearVersamentiManual = 0, yearVersamentiEC = 0;
+    let yearPosAuto = 0, yearPosManual = 0, yearCorrispAuto = 0, yearCorrispManual = 0;
+    let yearVersamenti = 0, yearSaldoCassa = 0;
 
     for (let month = 1; month <= 12; month++) {
       const monthStr = String(month).padStart(2, '0');
@@ -85,41 +93,59 @@ export default function ControlloMensile() {
       const monthCorrisp = corrispettivi.filter(c => 
         c.data?.startsWith(monthPrefix) || c.data_ora?.startsWith(monthPrefix)
       );
-      const monthEC = estrattoConto.filter(m => m.data?.startsWith(monthPrefix));
 
-      // POS da Estratto Conto (contiene "POS" nella descrizione o categoria)
-      const posAuto = monthEC
-        .filter(m => (m.descrizione?.toLowerCase().includes('pos') || m.categoria?.toLowerCase().includes('pos')) && m.tipo === 'entrata')
-        .reduce((sum, m) => sum + (m.importo || 0), 0);
+      // ============ POS AUTO ============
+      // POS Auto = pagato_elettronico dai corrispettivi XML
+      const posAuto = monthCorrisp.reduce((sum, c) => sum + (parseFloat(c.pagato_elettronico) || 0), 0);
 
-      // POS Manual (da Prima Nota Cassa con source manual_pos)
-      const posManual = monthCassa
-        .filter(m => m.source === 'manual_pos' || m.source === 'excel_pos')
-        .reduce((sum, m) => sum + (m.importo || 0), 0);
+      // ============ POS MANUALE ============
+      // POS da Prima Nota Cassa/Banca con source manual o excel
+      const posManualCassa = monthCassa
+        .filter(m => m.source === 'manual_pos' || m.source === 'excel_pos' || 
+                    (m.categoria?.toLowerCase().includes('pos') && m.tipo === 'entrata'))
+        .reduce((sum, m) => sum + (parseFloat(m.importo) || 0), 0);
+      
+      const posManualBanca = monthBanca
+        .filter(m => m.source === 'manual_pos' || m.source === 'excel_pos' ||
+                    (m.descrizione?.toLowerCase().includes('pos') && m.tipo === 'entrata'))
+        .reduce((sum, m) => sum + (parseFloat(m.importo) || 0), 0);
+      
+      const posManual = posManualCassa + posManualBanca;
 
-      // Corrispettivi Auto (from XML)
-      const corrispAuto = monthCorrisp.reduce((sum, c) => sum + (c.ammontare_vendite || c.totale || c.importo || 0), 0);
+      // ============ CORRISPETTIVI AUTO ============
+      // Totale corrispettivi da XML (questo SOVRASCRIVE i dati Excel se presenti)
+      const corrispAuto = monthCorrisp.reduce((sum, c) => sum + (parseFloat(c.totale) || 0), 0);
 
-      // Corrispettivi Manual (da Prima Nota Cassa)
+      // ============ CORRISPETTIVI MANUALI ============
+      // Corrispettivi da Prima Nota Cassa (inseriti manualmente o da Excel)
       const corrispManual = monthCassa
-        .filter(m => m.categoria === 'Corrispettivi')
-        .reduce((sum, m) => sum + (m.importo || 0), 0);
+        .filter(m => m.categoria === 'Corrispettivi' || m.source === 'excel_corrispettivi')
+        .reduce((sum, m) => sum + (parseFloat(m.importo) || 0), 0);
 
-      // Versamenti Manuali (da Prima Nota Cassa)
-      const versamentiManual = monthCassa
-        .filter(m => m.categoria === 'Versamento' && m.tipo === 'uscita')
-        .reduce((sum, m) => sum + (m.importo || 0), 0);
+      // ============ VERSAMENTI ============
+      // Versamenti = uscite dalla cassa verso banca
+      const versamenti = monthCassa
+        .filter(m => (m.categoria === 'Versamento' || m.descrizione?.toLowerCase().includes('versamento')) && 
+                    m.tipo === 'uscita')
+        .reduce((sum, m) => sum + (parseFloat(m.importo) || 0), 0);
 
-      // Versamenti da Estratto Conto (contiene "versamento" nella descrizione)
-      const versamentiEC = monthEC
-        .filter(m => m.descrizione?.toLowerCase().includes('versamento') && m.tipo === 'entrata')
-        .reduce((sum, m) => sum + (m.importo || 0), 0);
+      // ============ SALDO CASSA ============
+      // Saldo Cassa = Entrate cassa - Uscite cassa del mese
+      const entrateCassa = monthCassa
+        .filter(m => m.tipo === 'entrata')
+        .reduce((sum, m) => sum + (parseFloat(m.importo) || 0), 0);
+      const usciteCassa = monthCassa
+        .filter(m => m.tipo === 'uscita')
+        .reduce((sum, m) => sum + (parseFloat(m.importo) || 0), 0);
+      const saldoCassa = entrateCassa - usciteCassa;
 
+      // ============ DIFFERENZE ============
       const posDiff = posAuto - posManual;
-      const corrispDiff = corrispAuto - corrispManual;
-      const versamentiDiff = versamentiEC - versamentiManual;
-      const hasData = posAuto > 0 || posManual > 0 || corrispAuto > 0 || corrispManual > 0 || versamentiManual > 0;
-      const hasDiscrepancy = Math.abs(posDiff) > 1 || Math.abs(corrispDiff) > 1 || Math.abs(versamentiDiff) > 1;
+      // Se ci sono corrispettivi XML, usiamo quelli (XML sovrascrive Excel)
+      const corrispDiff = corrispAuto > 0 ? (corrispAuto - corrispManual) : 0;
+      
+      const hasData = posAuto > 0 || posManual > 0 || corrispAuto > 0 || corrispManual > 0 || versamenti > 0;
+      const hasDiscrepancy = Math.abs(posDiff) > 1 || Math.abs(corrispDiff) > 1;
 
       monthly.push({
         month,
@@ -130,19 +156,20 @@ export default function ControlloMensile() {
         corrispAuto,
         corrispManual,
         corrispDiff,
-        versamentiManual,
-        versamentiEC,
-        versamentiDiff,
+        versamenti,
+        saldoCassa,
         hasData,
-        hasDiscrepancy
+        hasDiscrepancy,
+        // Flag se XML sovrascrive Excel
+        xmlOverridesExcel: corrispAuto > 0 && corrispManual > 0 && Math.abs(corrispAuto - corrispManual) > 1
       });
 
       yearPosAuto += posAuto;
       yearPosManual += posManual;
       yearCorrispAuto += corrispAuto;
       yearCorrispManual += corrispManual;
-      yearVersamentiManual += versamentiManual;
-      yearVersamentiEC += versamentiEC;
+      yearVersamenti += versamenti;
+      yearSaldoCassa += saldoCassa;
     }
 
     setMonthlyData(monthly);
@@ -151,8 +178,8 @@ export default function ControlloMensile() {
       posManual: yearPosManual,
       corrispettiviAuto: yearCorrispAuto,
       corrispettiviManual: yearCorrispManual,
-      versamentiManual: yearVersamentiManual,
-      versamentiEC: yearVersamentiEC
+      versamenti: yearVersamenti,
+      saldoCassa: yearSaldoCassa
     });
   };
 
@@ -170,16 +197,24 @@ export default function ControlloMensile() {
       });
 
       const [bancaRes, cassaRes, corrispRes] = await Promise.all([
-        api.get(`/api/prima-nota/banca?${params}`),
-        api.get(`/api/prima-nota/cassa?${params}`),
-        api.get(`/api/corrispettivi?data_da=${startDate}&data_a=${endDate}`)
+        api.get(`/api/prima-nota/banca?${params}`).catch(() => ({ data: { movimenti: [] } })),
+        api.get(`/api/prima-nota/cassa?${params}`).catch(() => ({ data: { movimenti: [] } })),
+        api.get(`/api/corrispettivi?data_da=${startDate}&data_a=${endDate}`).catch(() => ({ data: [] }))
       ]);
 
       const banca = bancaRes.data.movimenti || [];
       const cassa = cassaRes.data.movimenti || [];
-      const corrispettivi = corrispRes.data.corrispettivi || corrispRes.data || [];
+      const corrispettivi = Array.isArray(corrispRes.data) ? corrispRes.data : (corrispRes.data.corrispettivi || []);
       
       processDailyData(banca, cassa, corrispettivi, month);
+      
+      // Estrai dettaglio versamenti
+      const versamentiMese = cassa.filter(m => 
+        (m.categoria === 'Versamento' || m.descrizione?.toLowerCase().includes('versamento')) && 
+        m.tipo === 'uscita'
+      );
+      setVersamentiDettaglio(versamentiMese);
+      
     } catch (error) {
       console.error('Error loading month data:', error);
     } finally {
@@ -196,45 +231,45 @@ export default function ControlloMensile() {
       const dateStr = `${anno}-${monthStr}-${String(day).padStart(2, '0')}`;
       const dayData = { date: dateStr, day };
 
-      // POS Auto
-      const posAutoMovements = banca.filter(m => 
-        m.data?.startsWith(dateStr) && 
-        (m.categoria?.toLowerCase().includes('pos') || m.descrizione?.toLowerCase().includes('incasso pos')) &&
-        m.source !== 'manual_pos'
-      );
-      dayData.posAuto = posAutoMovements.reduce((sum, m) => sum + (m.importo || 0), 0);
-
-      // POS Manual
-      const posManualMovements = banca.filter(m => 
-        m.data?.startsWith(dateStr) && m.source === 'manual_pos'
-      );
-      dayData.posManual = posManualMovements.reduce((sum, m) => sum + (m.importo || 0), 0);
-      dayData.posDetails = posManualMovements.length > 0 ? posManualMovements[0].pos_details : null;
-
-      // Corrispettivi Auto
-      const corrispAuto = corrispettivi.filter(c => 
+      // Corrispettivi del giorno
+      const dayCorrisp = corrispettivi.filter(c => 
         c.data?.startsWith(dateStr) || c.data_ora?.startsWith(dateStr)
       );
-      dayData.corrispettivoAuto = corrispAuto.reduce((sum, c) => 
-        sum + (c.ammontare_vendite || c.importo || 0), 0
-      );
+      
+      // POS Auto dal corrispettivo XML (pagato_elettronico)
+      dayData.posAuto = dayCorrisp.reduce((sum, c) => sum + (parseFloat(c.pagato_elettronico) || 0), 0);
+
+      // POS Manual da Prima Nota
+      const dayCassa = cassa.filter(m => m.data?.startsWith(dateStr));
+      const dayBanca = banca.filter(m => m.data?.startsWith(dateStr));
+      
+      dayData.posManual = dayCassa
+        .filter(m => m.source === 'manual_pos' || m.source === 'excel_pos')
+        .reduce((sum, m) => sum + (parseFloat(m.importo) || 0), 0);
+
+      // Corrispettivi Auto (totale da XML)
+      dayData.corrispettivoAuto = dayCorrisp.reduce((sum, c) => sum + (parseFloat(c.totale) || 0), 0);
 
       // Corrispettivi Manual
-      const corrispManualMovements = cassa.filter(m => 
-        m.data?.startsWith(dateStr) && m.categoria === 'Corrispettivi' && m.source === 'manual_entry'
-      );
-      dayData.corrispettivoManual = corrispManualMovements.reduce((sum, m) => sum + (m.importo || 0), 0);
+      dayData.corrispettivoManual = dayCassa
+        .filter(m => m.categoria === 'Corrispettivi')
+        .reduce((sum, m) => sum + (parseFloat(m.importo) || 0), 0);
 
-      // Versamenti
-      const versamentiMovements = cassa.filter(m => 
-        m.data?.startsWith(dateStr) && m.categoria === 'Versamento' && m.tipo === 'uscita'
-      );
-      dayData.versamento = versamentiMovements.reduce((sum, m) => sum + (m.importo || 0), 0);
+      // Versamenti del giorno
+      dayData.versamento = dayCassa
+        .filter(m => (m.categoria === 'Versamento' || m.descrizione?.toLowerCase().includes('versamento')) && m.tipo === 'uscita')
+        .reduce((sum, m) => sum + (parseFloat(m.importo) || 0), 0);
+
+      // Saldo Cassa del giorno
+      const entrateGiorno = dayCassa.filter(m => m.tipo === 'entrata').reduce((sum, m) => sum + (parseFloat(m.importo) || 0), 0);
+      const usciteGiorno = dayCassa.filter(m => m.tipo === 'uscita').reduce((sum, m) => sum + (parseFloat(m.importo) || 0), 0);
+      dayData.saldoCassa = entrateGiorno - usciteGiorno;
 
       dayData.posDiff = dayData.posAuto - dayData.posManual;
       dayData.corrispettivoDiff = dayData.corrispettivoAuto - dayData.corrispettivoManual;
       dayData.hasData = dayData.posAuto > 0 || dayData.posManual > 0 || 
-                        dayData.corrispettivoAuto > 0 || dayData.corrispettivoManual > 0;
+                        dayData.corrispettivoAuto > 0 || dayData.corrispettivoManual > 0 ||
+                        dayData.versamento > 0;
       dayData.hasDiscrepancy = Math.abs(dayData.posDiff) > 1 || Math.abs(dayData.corrispettivoDiff) > 1;
 
       comparison.push(dayData);
@@ -268,6 +303,62 @@ export default function ControlloMensile() {
     yearOptions.push(y);
   }
 
+  // Modal Versamenti
+  const VersamentiModal = () => {
+    if (!showVersamentiModal) return null;
+    
+    return (
+      <div style={{
+        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+        background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        zIndex: 1000
+      }} onClick={() => setShowVersamentiModal(false)}>
+        <div style={{
+          background: 'white', borderRadius: 12, padding: 20, maxWidth: 600, width: '90%',
+          maxHeight: '80vh', overflowY: 'auto'
+        }} onClick={e => e.stopPropagation()}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 }}>
+            <h2 style={{ margin: 0 }}>💰 Dettaglio Versamenti - {monthNames[meseSelezionato - 1]} {anno}</h2>
+            <button onClick={() => setShowVersamentiModal(false)} style={{ fontSize: 20, background: 'none', border: 'none', cursor: 'pointer' }}>✕</button>
+          </div>
+          
+          {versamentiDettaglio.length === 0 ? (
+            <p style={{ color: '#666' }}>Nessun versamento registrato per questo mese.</p>
+          ) : (
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ background: '#f8fafc' }}>
+                  <th style={{ padding: 10, textAlign: 'left', borderBottom: '2px solid #e2e8f0' }}>Data</th>
+                  <th style={{ padding: 10, textAlign: 'left', borderBottom: '2px solid #e2e8f0' }}>Descrizione</th>
+                  <th style={{ padding: 10, textAlign: 'right', borderBottom: '2px solid #e2e8f0' }}>Importo</th>
+                </tr>
+              </thead>
+              <tbody>
+                {versamentiDettaglio.map((v, i) => (
+                  <tr key={i} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                    <td style={{ padding: 10 }}>{v.data}</td>
+                    <td style={{ padding: 10 }}>{v.descrizione || v.categoria}</td>
+                    <td style={{ padding: 10, textAlign: 'right', fontWeight: 'bold', color: '#16a34a' }}>
+                      {formatCurrency(v.importo)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr style={{ background: '#1e293b', color: 'white' }}>
+                  <td colSpan={2} style={{ padding: 10, fontWeight: 'bold' }}>TOTALE</td>
+                  <td style={{ padding: 10, textAlign: 'right', fontWeight: 'bold' }}>
+                    {formatCurrency(versamentiDettaglio.reduce((sum, v) => sum + (parseFloat(v.importo) || 0), 0))}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div style={{ padding: 'clamp(12px, 3vw, 20px)' }}>
       {/* Header */}
@@ -276,7 +367,7 @@ export default function ControlloMensile() {
           📊 Controllo {viewMode === 'anno' ? 'Annuale' : 'Mensile'}
         </h1>
         <p style={{ color: '#666', margin: '8px 0 0 0' }}>
-          Confronto chiusure giornaliere - POS automatici vs manuali
+          Confronto chiusure giornaliere - POS Auto (da XML) vs Manuali | Saldo Cassa
         </p>
       </div>
 
@@ -304,24 +395,42 @@ export default function ControlloMensile() {
         </div>
 
         {viewMode === 'mese' && (
-          <button
-            onClick={handleBackToYear}
-            style={{
-              padding: '10px 20px',
-              background: '#6b7280',
-              color: 'white',
-              border: 'none',
-              borderRadius: 8,
-              cursor: 'pointer',
-              fontWeight: 'bold',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8
-            }}
-            data-testid="back-to-year-btn"
-          >
-            ← Torna a Vista Annuale
-          </button>
+          <>
+            <button
+              onClick={handleBackToYear}
+              style={{
+                padding: '10px 20px',
+                background: '#6b7280',
+                color: 'white',
+                border: 'none',
+                borderRadius: 8,
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8
+              }}
+              data-testid="back-to-year-btn"
+            >
+              ← Torna a Vista Annuale
+            </button>
+            
+            <button
+              onClick={() => setShowVersamentiModal(true)}
+              style={{
+                padding: '10px 20px',
+                background: '#16a34a',
+                color: 'white',
+                border: 'none',
+                borderRadius: 8,
+                cursor: 'pointer',
+                fontWeight: 'bold'
+              }}
+              data-testid="show-versamenti-btn"
+            >
+              💰 Dettaglio Versamenti
+            </button>
+          </>
         )}
 
         <span style={{ fontSize: 18, fontWeight: 'bold', marginLeft: 'auto' }}>
@@ -332,29 +441,54 @@ export default function ControlloMensile() {
       {/* Summary Cards */}
       <div style={{ 
         display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', 
+        gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', 
         gap: 15, 
         marginBottom: 25 
       }}>
         <div style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)', borderRadius: 12, padding: 16, color: 'white' }}>
-          <div style={{ fontSize: 12, opacity: 0.9 }}>POS Automatici (XML)</div>
-          <div style={{ fontSize: 22, fontWeight: 'bold' }}>{formatCurrency(yearTotals.posAuto)}</div>
+          <div style={{ fontSize: 12, opacity: 0.9 }}>POS Auto (XML)</div>
+          <div style={{ fontSize: 20, fontWeight: 'bold' }}>{formatCurrency(yearTotals.posAuto)}</div>
         </div>
         <div style={{ background: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)', borderRadius: 12, padding: 16, color: 'white' }}>
           <div style={{ fontSize: 12, opacity: 0.9 }}>POS Manuali</div>
-          <div style={{ fontSize: 22, fontWeight: 'bold' }}>{formatCurrency(yearTotals.posManual)}</div>
+          <div style={{ fontSize: 20, fontWeight: 'bold' }}>{formatCurrency(yearTotals.posManual)}</div>
         </div>
         <div style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', borderRadius: 12, padding: 16, color: 'white' }}>
-          <div style={{ fontSize: 12, opacity: 0.9 }}>Corrispettivi Auto</div>
-          <div style={{ fontSize: 22, fontWeight: 'bold' }}>{formatCurrency(yearTotals.corrispettiviAuto)}</div>
+          <div style={{ fontSize: 12, opacity: 0.9 }}>Corrisp. Auto (XML)</div>
+          <div style={{ fontSize: 20, fontWeight: 'bold' }}>{formatCurrency(yearTotals.corrispettiviAuto)}</div>
         </div>
         <div style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', borderRadius: 12, padding: 16, color: 'white' }}>
-          <div style={{ fontSize: 12, opacity: 0.9 }}>Corrispettivi Manuali</div>
-          <div style={{ fontSize: 22, fontWeight: 'bold' }}>{formatCurrency(yearTotals.corrispettiviManual)}</div>
+          <div style={{ fontSize: 12, opacity: 0.9 }}>Corrisp. Manuali</div>
+          <div style={{ fontSize: 20, fontWeight: 'bold' }}>{formatCurrency(yearTotals.corrispettiviManual)}</div>
         </div>
         <div style={{ background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)', borderRadius: 12, padding: 16, color: 'white' }}>
           <div style={{ fontSize: 12, opacity: 0.9 }}>Versamenti</div>
-          <div style={{ fontSize: 22, fontWeight: 'bold' }}>{formatCurrency(yearTotals.versamenti)}</div>
+          <div style={{ fontSize: 20, fontWeight: 'bold' }}>{formatCurrency(yearTotals.versamenti)}</div>
+        </div>
+        <div style={{ background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)', borderRadius: 12, padding: 16, color: 'white' }}>
+          <div style={{ fontSize: 12, opacity: 0.9 }}>Saldo Cassa</div>
+          <div style={{ fontSize: 20, fontWeight: 'bold' }}>{formatCurrency(yearTotals.saldoCassa)}</div>
+        </div>
+      </div>
+
+      {/* Info Box - XML Sovrascrive Excel */}
+      <div style={{ 
+        background: '#e0f2fe', 
+        border: '2px solid #0284c7', 
+        borderRadius: 8, 
+        padding: 15, 
+        marginBottom: 20,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10
+      }}>
+        <span style={{ fontSize: 24 }}>ℹ️</span>
+        <div>
+          <strong>POS Auto e Corrispettivi Auto</strong> vengono estratti direttamente dai file XML dei corrispettivi.
+          <br />
+          <span style={{ fontSize: 12, color: '#0369a1' }}>
+            Se i dati XML sono diversi da quelli Excel/manuali, i dati XML hanno la priorità (sono più affidabili).
+          </span>
         </div>
       </div>
 
@@ -373,7 +507,7 @@ export default function ControlloMensile() {
         }}>
           <span style={{ fontSize: 24 }}>⚠️</span>
           <div>
-            <strong>Attenzione!</strong> Ci sono discrepanze tra i dati automatici e manuali.
+            <strong>Attenzione!</strong> Ci sono discrepanze tra i dati automatici (XML) e manuali.
             <br />
             <span style={{ fontSize: 12, color: '#92400e' }}>
               Le righe evidenziate in giallo richiedono verifica.
@@ -396,7 +530,7 @@ export default function ControlloMensile() {
                 <th style={{ padding: 12, textAlign: 'right', borderBottom: '2px solid #e2e8f0', background: '#d1fae5' }}>Corrisp. Man.</th>
                 <th style={{ padding: 12, textAlign: 'right', borderBottom: '2px solid #e2e8f0' }}>Diff. Corr.</th>
                 <th style={{ padding: 12, textAlign: 'right', borderBottom: '2px solid #e2e8f0', background: '#ecfdf5' }}>Versamenti</th>
-                <th style={{ padding: 12, textAlign: 'center', borderBottom: '2px solid #e2e8f0' }}>Stato</th>
+                <th style={{ padding: 12, textAlign: 'right', borderBottom: '2px solid #e2e8f0', background: '#e0f2fe' }}>Saldo Cassa</th>
                 <th style={{ padding: 12, textAlign: 'center', borderBottom: '2px solid #e2e8f0' }}>Dettagli</th>
               </tr>
             </thead>
@@ -412,13 +546,14 @@ export default function ControlloMensile() {
                   <tr 
                     key={row.month} 
                     style={{ 
-                      background: row.hasDiscrepancy ? '#fef3c7' : (row.hasData ? 'white' : '#f9fafb'),
+                      background: row.hasDiscrepancy ? '#fef3c7' : (row.xmlOverridesExcel ? '#e0f2fe' : (row.hasData ? 'white' : '#f9fafb')),
                       opacity: row.hasData ? 1 : 0.5
                     }}
                     data-testid={`row-month-${row.month}`}
                   >
                     <td style={{ padding: 12, borderBottom: '1px solid #e2e8f0', fontWeight: 600 }}>
                       {row.monthName}
+                      {row.xmlOverridesExcel && <span title="Dati XML usati" style={{ marginLeft: 5 }}>📄</span>}
                     </td>
                     <td style={{ padding: 12, borderBottom: '1px solid #e2e8f0', textAlign: 'right', background: '#f0f9ff' }}>
                       {row.posAuto > 0 ? formatCurrency(row.posAuto) : '-'}
@@ -457,14 +592,15 @@ export default function ControlloMensile() {
                     <td style={{ padding: 12, borderBottom: '1px solid #e2e8f0', textAlign: 'right', background: '#f0fdf4' }}>
                       {row.versamenti > 0 ? formatCurrency(row.versamenti) : '-'}
                     </td>
-                    <td style={{ padding: 12, borderBottom: '1px solid #e2e8f0', textAlign: 'center' }}>
-                      {row.hasDiscrepancy ? (
-                        <span title="Discrepanza rilevata" style={{ color: '#f59e0b' }}>⚠️</span>
-                      ) : row.hasData ? (
-                        <span title="OK" style={{ color: '#22c55e' }}>✓</span>
-                      ) : (
-                        <span style={{ color: '#9ca3af' }}>-</span>
-                      )}
+                    <td style={{ 
+                      padding: 12, 
+                      borderBottom: '1px solid #e2e8f0', 
+                      textAlign: 'right', 
+                      background: '#e0f2fe',
+                      fontWeight: 'bold',
+                      color: row.saldoCassa >= 0 ? '#16a34a' : '#dc2626'
+                    }}>
+                      {formatCurrency(row.saldoCassa)}
                     </td>
                     <td style={{ padding: 12, borderBottom: '1px solid #e2e8f0', textAlign: 'center' }}>
                       {row.hasData && (
@@ -512,9 +648,7 @@ export default function ControlloMensile() {
                   {formatCurrency(yearTotals.corrispettiviAuto - yearTotals.corrispettiviManual)}
                 </td>
                 <td style={{ padding: 12, textAlign: 'right' }}>{formatCurrency(yearTotals.versamenti)}</td>
-                <td style={{ padding: 12, textAlign: 'center' }}>
-                  {monthlyData.filter(d => d.hasDiscrepancy).length > 0 ? '⚠️' : '✓'}
-                </td>
+                <td style={{ padding: 12, textAlign: 'right' }}>{formatCurrency(yearTotals.saldoCassa)}</td>
                 <td style={{ padding: 12 }}></td>
               </tr>
             </tfoot>
@@ -536,7 +670,7 @@ export default function ControlloMensile() {
                 <th style={{ padding: 12, textAlign: 'right', borderBottom: '2px solid #e2e8f0', background: '#d1fae5' }}>Corrisp. Man.</th>
                 <th style={{ padding: 12, textAlign: 'right', borderBottom: '2px solid #e2e8f0' }}>Diff. Corr.</th>
                 <th style={{ padding: 12, textAlign: 'right', borderBottom: '2px solid #e2e8f0', background: '#ecfdf5' }}>Versamento</th>
-                <th style={{ padding: 12, textAlign: 'center', borderBottom: '2px solid #e2e8f0' }}>Stato</th>
+                <th style={{ padding: 12, textAlign: 'right', borderBottom: '2px solid #e2e8f0', background: '#e0f2fe' }}>Saldo Cassa</th>
               </tr>
             </thead>
             <tbody>
@@ -563,16 +697,7 @@ export default function ControlloMensile() {
                       {row.posAuto > 0 ? formatCurrency(row.posAuto) : '-'}
                     </td>
                     <td style={{ padding: 10, borderBottom: '1px solid #e2e8f0', textAlign: 'right', background: '#faf5ff' }}>
-                      {row.posManual > 0 ? (
-                        <div>
-                          {formatCurrency(row.posManual)}
-                          {row.posDetails && (
-                            <div style={{ fontSize: 10, color: '#666' }}>
-                              P1:{row.posDetails.pos1} P2:{row.posDetails.pos2} P3:{row.posDetails.pos3}
-                            </div>
-                          )}
-                        </div>
-                      ) : '-'}
+                      {row.posManual > 0 ? formatCurrency(row.posManual) : '-'}
                     </td>
                     <td style={{ 
                       padding: 10, 
@@ -605,14 +730,15 @@ export default function ControlloMensile() {
                     <td style={{ padding: 10, borderBottom: '1px solid #e2e8f0', textAlign: 'right', background: '#f0fdf4' }}>
                       {row.versamento > 0 ? formatCurrency(row.versamento) : '-'}
                     </td>
-                    <td style={{ padding: 10, borderBottom: '1px solid #e2e8f0', textAlign: 'center' }}>
-                      {row.hasDiscrepancy ? (
-                        <span title="Discrepanza rilevata" style={{ color: '#f59e0b' }}>⚠️</span>
-                      ) : row.hasData ? (
-                        <span title="OK" style={{ color: '#22c55e' }}>✓</span>
-                      ) : (
-                        <span style={{ color: '#9ca3af' }}>-</span>
-                      )}
+                    <td style={{ 
+                      padding: 10, 
+                      borderBottom: '1px solid #e2e8f0', 
+                      textAlign: 'right', 
+                      background: '#e0f2fe',
+                      fontWeight: 'bold',
+                      color: row.saldoCassa >= 0 ? '#16a34a' : '#dc2626'
+                    }}>
+                      {formatCurrency(row.saldoCassa)}
                     </td>
                   </tr>
                 ))
@@ -642,8 +768,8 @@ export default function ControlloMensile() {
                 <td style={{ padding: 12, textAlign: 'right' }}>
                   {formatCurrency(dailyComparison.reduce((s, d) => s + d.versamento, 0))}
                 </td>
-                <td style={{ padding: 12, textAlign: 'center' }}>
-                  {dailyComparison.filter(d => d.hasDiscrepancy).length > 0 ? '⚠️' : '✓'}
+                <td style={{ padding: 12, textAlign: 'right' }}>
+                  {formatCurrency(dailyComparison.reduce((s, d) => s + d.saldoCassa, 0))}
                 </td>
               </tr>
             </tfoot>
@@ -661,14 +787,18 @@ export default function ControlloMensile() {
       }}>
         <strong>Legenda:</strong>
         <div style={{ display: 'flex', gap: 20, marginTop: 8, flexWrap: 'wrap' }}>
-          <span><span style={{ color: '#3b82f6' }}>●</span> POS Auto = Importi da XML registratore di cassa</span>
-          <span><span style={{ color: '#8b5cf6' }}>●</span> POS Manuale = Importi inseriti manualmente</span>
-          <span><span style={{ color: '#f59e0b' }}>●</span> Corrisp. Auto = Corrispettivi da XML</span>
+          <span><span style={{ color: '#3b82f6' }}>●</span> POS Auto = pagato_elettronico da XML corrispettivi</span>
+          <span><span style={{ color: '#8b5cf6' }}>●</span> POS Manuale = Importi inseriti manualmente/Excel</span>
+          <span><span style={{ color: '#f59e0b' }}>●</span> Corrisp. Auto = Totale corrispettivi da XML</span>
           <span><span style={{ color: '#10b981' }}>●</span> Corrisp. Man. = Corrispettivi inseriti manualmente</span>
+          <span><span style={{ color: '#0ea5e9' }}>●</span> Saldo Cassa = Entrate - Uscite cassa</span>
           <span>⚠️ = Discrepanza &gt; €1</span>
-          <span>✓ = Dati corrispondenti</span>
+          <span>📄 = Dati XML usati (sovrascrive Excel)</span>
         </div>
       </div>
+      
+      {/* Modal Versamenti */}
+      <VersamentiModal />
     </div>
   );
 }
