@@ -509,15 +509,18 @@ async def registra_pagamento_fattura(
     db = Database.get_db()
     
     now = datetime.utcnow().isoformat()
-    data_fattura = fattura.get("data_fattura", now[:10])
-    importo_totale = fattura.get("importo_totale", 0)
+    data_fattura = fattura.get("invoice_date") or fattura.get("data_fattura") or now[:10]
+    importo_totale = fattura.get("total_amount") or fattura.get("importo_totale") or 0
+    numero_fattura = fattura.get("invoice_number") or fattura.get("numero_fattura") or "N/A"
+    fornitore = fattura.get("supplier_name") or fattura.get("cedente_denominazione") or "Fornitore"
+    fornitore_piva = fattura.get("supplier_vat") or fattura.get("cedente_piva") or ""
     
     risultato = {
         "cassa": None,
         "banca": None
     }
     
-    descrizione_base = f"Pagamento fattura {fattura.get('numero_fattura')} - {fattura.get('cedente_denominazione')}"
+    descrizione_base = f"Pagamento fattura {numero_fattura} - {fornitore[:40]}"
     
     if metodo_pagamento == "cassa" or metodo_pagamento == "contanti":
         # Tutto in cassa
@@ -528,9 +531,10 @@ async def registra_pagamento_fattura(
             "importo": importo_totale,
             "descrizione": descrizione_base,
             "categoria": "Pagamento fornitore",
-            "riferimento": fattura.get("numero_fattura"),
-            "fornitore_piva": fattura.get("cedente_piva"),
+            "riferimento": numero_fattura,
+            "fornitore_piva": fornitore_piva,
             "fattura_id": fattura.get("id") or fattura.get("invoice_key"),
+            "source": "fattura_pagata",
             "created_at": now
         }
         await db[COLLECTION_PRIMA_NOTA_CASSA].insert_one(movimento_cassa)
