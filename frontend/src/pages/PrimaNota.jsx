@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import api from '../api';
 
 export default function PrimaNota() {
@@ -6,7 +6,14 @@ export default function PrimaNota() {
   const [cassaData, setCassaData] = useState({ movimenti: [], saldo: 0, totale_entrate: 0, totale_uscite: 0 });
   const [bancaData, setBancaData] = useState({ movimenti: [], saldo: 0, totale_entrate: 0, totale_uscite: 0 });
   const [stats, setStats] = useState({ cassa: {}, banca: {}, totale: {} });
+  const [autoStats, setAutoStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showAutomation, setShowAutomation] = useState(false);
+  const [automationLoading, setAutomationLoading] = useState(false);
+  const [automationResult, setAutomationResult] = useState(null);
+  
+  const cassaFileRef = useRef(null);
+  const estrattoFileRef = useRef(null);
   
   // Filters
   const [filterDataDa, setFilterDataDa] = useState('');
