@@ -147,6 +147,37 @@ export default function Fatture() {
     }
   }
 
+  async function handleUpdateMetodoPagamento(invoiceId, metodo) {
+    setUpdatingPayment(invoiceId);
+    try {
+      await api.put(`/api/fatture/${invoiceId}/metodo-pagamento`, {
+        metodo_pagamento: metodo
+      });
+      loadInvoices();
+    } catch (e) {
+      setErr("Errore aggiornamento: " + (e.response?.data?.detail || e.message));
+    } finally {
+      setUpdatingPayment(null);
+    }
+  }
+
+  function getMetodoPagamentoBadge(metodo) {
+    const m = METODI_PAGAMENTO.find(mp => mp.value === metodo);
+    if (!m) return null;
+    return (
+      <span style={{ 
+        background: m.color, 
+        color: 'white', 
+        padding: '3px 8px', 
+        borderRadius: 6, 
+        fontSize: 11,
+        fontWeight: 'bold'
+      }}>
+        {m.label}
+      </span>
+    );
+  }
+
   function getTipoDocBadge(tipo) {
     const colors = {
       "TD01": { bg: "#e3f2fd", color: "#1565c0", label: "Fattura" },
