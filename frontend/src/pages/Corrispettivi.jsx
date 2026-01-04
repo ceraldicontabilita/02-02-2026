@@ -461,9 +461,9 @@ export default function Corrispettivi() {
               </div>
             </div>
             <div>
-              <strong>💵 Pagato Contanti</strong>
+              <strong>💵 Pagato Cassa</strong>
               <div style={{ fontSize: 24, fontWeight: "bold", color: "#2e7d32" }}>
-                € {totaleContanti.toFixed(2)}
+                € {totaleCassa.toFixed(2)}
               </div>
             </div>
             <div>
