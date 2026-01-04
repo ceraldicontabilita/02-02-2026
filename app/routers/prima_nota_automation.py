@@ -1035,14 +1035,14 @@ async def import_pos(
                     results["skipped"] += 1
                     continue
                 
-                # Create movement in banca
+                # Create movement in cassa as uscita (POS payments go to bank, so it's an "exit" from cassa perspective)
                 movimento = {
                     "id": str(uuid.uuid4()),
                     "data": data,
-                    "tipo": "entrata",
+                    "tipo": "uscita",
                     "importo": totale,
                     "descrizione": f"Incasso POS giornaliero del {data}",
-                    "categoria": "Incasso POS",
+                    "categoria": "POS",
                     "source": "manual_pos",
                     "pos_details": {
                         "pos1": pos1,
@@ -1053,7 +1053,7 @@ async def import_pos(
                     "created_at": now
                 }
                 
-                await db[COLLECTION_PRIMA_NOTA_BANCA].insert_one(movimento)
+                await db[COLLECTION_PRIMA_NOTA_CASSA].insert_one(movimento)
                 
                 results["imported"] += 1
                 results["pos_entries"].append({
