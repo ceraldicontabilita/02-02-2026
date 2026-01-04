@@ -239,6 +239,25 @@ export default function PrimaNota() {
     }
   };
 
+  const handleExportExcel = async () => {
+    try {
+      const params = new URLSearchParams({ tipo: 'entrambi' });
+      if (filterDataDa) params.append('data_da', filterDataDa);
+      if (filterDataA) params.append('data_a', filterDataA);
+      
+      const res = await api.get(`/api/prima-nota/export/excel?${params}`, { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `prima_nota_${new Date().toISOString().slice(0,10)}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      alert('Errore export: ' + (error.response?.data?.detail || error.message));
+    }
+  };
+
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(value || 0);
   };
