@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
-
-const API = process.env.REACT_APP_BACKEND_URL;
+import api from '../api';
 
 // Metodi pagamento con etichette
 const PAYMENT_METHODS = {

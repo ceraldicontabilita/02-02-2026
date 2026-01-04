@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-
-const API = process.env.REACT_APP_BACKEND_URL;
+import api from '../api';
 
 const STATI_ASSEGNO = {
   vuoto: { label: "Vuoto", color: "#9e9e9e" },
