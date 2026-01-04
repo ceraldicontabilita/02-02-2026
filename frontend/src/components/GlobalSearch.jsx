@@ -52,7 +52,7 @@ export default function GlobalSearch() {
     const timer = setTimeout(async () => {
       setLoading(true);
       try {
-        const res = await api.get(`/api/search/global?q=${encodeURIComponent(query)}&limit=10`);
+        const res = await api.get(`/api/ricerca-globale?q=${encodeURIComponent(query)}&limit=10`);
         setResults(res.data.results || []);
       } catch (error) {
         console.error('Search error:', error);
