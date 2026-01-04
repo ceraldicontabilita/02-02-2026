@@ -99,6 +99,30 @@ export default function HACCPNotifiche() {
         Alert automatici per temperature anomale con sistema di severità
       </p>
 
+      {/* Push Notification Settings Toggle */}
+      <div style={{ marginBottom: 20 }}>
+        <button
+          onClick={() => setShowPushSettings(!showPushSettings)}
+          data-testid="toggle-push-settings"
+          style={{
+            padding: '8px 16px',
+            background: showPushSettings ? '#6b7280' : '#8b5cf6',
+            color: 'white',
+            border: 'none',
+            borderRadius: 6,
+            cursor: 'pointer',
+            fontSize: 13
+          }}
+        >
+          {showPushSettings ? '🔽 Nascondi Impostazioni Push' : '🔔 Configura Notifiche Push'}
+        </button>
+      </div>
+
+      {/* Push Notification Settings Panel */}
+      {showPushSettings && (
+        <HACCPNotificationSettings onClose={() => setShowPushSettings(false)} />
+      )}
+
       {/* Severity Stats Cards */}
       {stats && (
         <div style={{ 
