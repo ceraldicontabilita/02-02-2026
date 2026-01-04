@@ -150,30 +150,28 @@ async def list_invoices(
 ) -> List[Dict[str, Any]]:
     """
     List invoices with optional filters.
-    
-    **Query Parameters:**
-    - **skip**: Number of invoices to skip (pagination)
-    - **limit**: Maximum number of invoices to return
-    - **supplier_vat**: Filter by supplier VAT number
-    - **month_year**: Filter by month (format: MM-YYYY, e.g., "01-2024")
-    - **status**: Filter by status (active, archived)
-    - **anno**: Filter by year (e.g., 2025)
     """
     db = Database.get_db()
     query = {}
     
+    logger.info(f"list_invoices called with anno={anno}, limit={limit}")
+    
     # Se anno è specificato, filtra per anno
-    if anno:
+    if anno is not None:
         anno_start = f"{anno}-01-01"
         anno_end = f"{anno}-12-31"
         query["invoice_date"] = {"$gte": anno_start, "$lte": anno_end}
+        logger.info(f"Filtering by year: {anno_start} to {anno_end}")
     
     if supplier_vat:
         query["supplier_vat"] = supplier_vat
     if status:
         query["status"] = status
     
+    logger.info(f"Final query: {query}")
+    
     invoices = await db[Collections.INVOICES].find(query, {"_id": 0}).sort("invoice_date", -1).skip(skip).limit(limit).to_list(limit)
+    logger.info(f"Found {len(invoices)} invoices")
     return invoices
 
 
