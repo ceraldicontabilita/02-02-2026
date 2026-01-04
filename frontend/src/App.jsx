@@ -21,7 +21,7 @@ const NAV_ITEMS = [
   { to: "/paghe", label: "Paghe / Salari", icon: "💰", short: "Paghe" },
   { to: "/finanziaria", label: "Finanziaria", icon: "📈", short: "Finanz." },
   { to: "/pianificazione", label: "Pianificazione", icon: "📅", short: "Pianif." },
-  { to: "/export", label: "Export", icon: "⬇️", short: "Export" },
+  { to: "/import-export", label: "Import/Export", icon: "📤", short: "Import" },
   { to: "/admin", label: "Admin", icon: "⚙️", short: "Admin" },
 ];
 
