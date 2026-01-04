@@ -588,7 +588,19 @@ export default function Fatture() {
             </thead>
             <tbody>
               {invoices.map((inv, i) => (
-                <tr key={inv.id || i} style={{ borderBottom: "1px solid #eee" }}>
+                <tr 
+                  key={inv.id || i} 
+                  style={{ 
+                    borderBottom: "1px solid #eee",
+                    cursor: "pointer",
+                    transition: "background 0.2s",
+                    background: selectedInvoice?.id === inv.id ? "#e3f2fd" : "transparent"
+                  }}
+                  onClick={() => setSelectedInvoice(inv)}
+                  onMouseEnter={(e) => e.currentTarget.style.background = selectedInvoice?.id === inv.id ? "#e3f2fd" : "#f5f5f5"}
+                  onMouseLeave={(e) => e.currentTarget.style.background = selectedInvoice?.id === inv.id ? "#e3f2fd" : "transparent"}
+                  data-testid={`invoice-row-${inv.id}`}
+                >
                   <td style={{ padding: 8 }}>
                     <strong>{inv.invoice_number || "-"}</strong>
                   </td>
@@ -607,7 +619,7 @@ export default function Fatture() {
                   <td style={{ padding: 8, fontWeight: "bold", whiteSpace: 'nowrap' }}>
                     € {(inv.total_amount || 0).toFixed(2)}
                   </td>
-                  <td style={{ padding: 8 }}>
+                  <td style={{ padding: 8 }} onClick={(e) => e.stopPropagation()}>
                     {updatingPayment === inv.id ? (
                       <span style={{ color: '#666', fontSize: 12 }}>⏳ Aggiorno...</span>
                     ) : (
@@ -642,33 +654,35 @@ export default function Fatture() {
                   </td>
                   <td style={{ padding: 8 }}>
                     <span style={{
-                      background: inv.status === "paid" || inv.metodo_pagamento === "contanti" ? "#c8e6c9" : 
+                      background: inv.pagato || inv.status === "paid" ? "#c8e6c9" : 
                                  inv.status === "imported" ? "#e3f2fd" : "#fff3e0",
-                      color: inv.status === "paid" || inv.metodo_pagamento === "contanti" ? "#2e7d32" : 
+                      color: inv.pagato || inv.status === "paid" ? "#2e7d32" : 
                              inv.status === "imported" ? "#1565c0" : "#e65100",
                       padding: "2px 8px",
                       borderRadius: 4,
                       fontSize: 12,
-                      fontWeight: inv.status === "paid" || inv.metodo_pagamento === "contanti" ? "bold" : "normal"
+                      fontWeight: inv.pagato || inv.status === "paid" ? "bold" : "normal"
                     }}>
-                      {inv.status === "paid" || inv.metodo_pagamento === "contanti" ? "✓ Pagata" : 
+                      {inv.pagato || inv.status === "paid" ? "✓ Pagata" : 
                        inv.status === "imported" ? "Importata" : inv.status || "Pending"}
                     </span>
                   </td>
-                  <td style={{ padding: 8 }}>
+                  <td style={{ padding: 8 }} onClick={(e) => e.stopPropagation()}>
                     <button 
                       onClick={() => setSelectedInvoice(inv)}
-                      style={{ marginRight: 5 }}
-                      title="Dettagli"
+                      style={{ marginRight: 5, padding: "4px 8px", borderRadius: 4, border: "1px solid #ddd", background: "#fff", cursor: "pointer" }}
+                      title="Visualizza Dettagli"
+                      data-testid={`view-invoice-${inv.id}`}
                     >
-                      👁️
+                      👁️ Vedi
                     </button>
                     <button 
                       onClick={() => handleDeleteInvoice(inv.id)}
-                      style={{ color: "#c00" }}
-                      title="Elimina"
+                      style={{ padding: "4px 8px", borderRadius: 4, border: "1px solid #ffcdd2", background: "#ffebee", color: "#c62828", cursor: "pointer" }}
+                      title="Elimina Fattura"
+                      data-testid={`delete-invoice-${inv.id}`}
                     >
-                      🗑️
+                      🗑️ Elimina
                     </button>
                   </td>
                 </tr>
