@@ -155,6 +155,10 @@ app.include_router(haccp_completo.router, prefix="/api/haccp-completo", tags=["H
 # app.include_router(fattura24.router, prefix="/api/fattura24", tags=["Fattura24"])
 app.include_router(exports.router, prefix="/api/export", tags=["Exports Alias"])
 
+# New refactored routers
+app.include_router(fatture_upload.router, prefix="/api/fatture", tags=["Fatture Upload"])
+app.include_router(corrispettivi_router.router, prefix="/api/corrispettivi", tags=["Corrispettivi"])
+
 @app.get("/")
 async def root():
     """Health check endpoint."""
