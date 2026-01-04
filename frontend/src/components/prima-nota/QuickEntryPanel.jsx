@@ -60,7 +60,7 @@ export function QuickEntryPanel({ onDataSaved }) {
     }
   };
 
-  // Save POS
+  // Save POS - goes to Cassa as "uscita" (cash goes out via POS to bank)
   const handleSavePos = async () => {
     const totale = (parseFloat(pos.pos1) || 0) + (parseFloat(pos.pos2) || 0) + (parseFloat(pos.pos3) || 0);
     if (totale === 0) {
@@ -69,12 +69,12 @@ export function QuickEntryPanel({ onDataSaved }) {
     }
     setSavingPos(true);
     try {
-      await api.post('/api/prima-nota/banca', {
+      await api.post('/api/prima-nota/cassa', {
         data: pos.data,
-        tipo: 'entrata',
+        tipo: 'uscita',
         importo: totale,
         descrizione: `POS giornaliero ${pos.data} (POS1: €${pos.pos1 || 0}, POS2: €${pos.pos2 || 0}, POS3: €${pos.pos3 || 0})`,
-        categoria: 'Incasso POS',
+        categoria: 'POS',
         source: 'manual_pos',
         pos_details: {
           pos1: parseFloat(pos.pos1) || 0,
