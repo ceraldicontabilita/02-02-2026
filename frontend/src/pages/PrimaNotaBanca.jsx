@@ -128,7 +128,7 @@ export default function PrimaNotaBanca() {
             <tbody>
               {statements.map((s, i) => (
                 <tr key={s.id || i} style={{ borderBottom: "1px solid #eee" }}>
-                  <td style={{ padding: 8 }}>{new Date(s.date || s.created_at).toLocaleDateString("it-IT")}</td>
+                  <td style={{ padding: 8 }}>{formatDateIT(s.date || s.created_at)}</td>
                   <td style={{ padding: 8 }}>
                     <span style={{ 
                       background: s.type === "accredito" ? "#c8e6c9" : "#ffcdd2",
