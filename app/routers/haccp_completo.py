@@ -918,3 +918,162 @@ async def get_scheduler_status() -> Dict[str, Any]:
         "info": "Lo scheduler esegue alle 01:00 CET ogni giorno"
     }
 
+
+# ============== ANALYTICS HACCP ==============
+
+@router.get("/analytics/mensile")
+async def get_haccp_analytics_mensile(
+    mese: str = Query(None, description="Mese in formato YYYY-MM"),
+    anno: int = Query(None, description="Anno")
+) -> Dict[str, Any]:
+    """
+    Statistiche mensili HACCP: medie temperature, conformità %, anomalie.
+    """
+    db = Database.get_db()
+    
+    # Default: mese corrente
+    if not mese:
+        now = datetime.utcnow()
+        mese = now.strftime("%Y-%m")
+    
+    year, month = mese.split("-")
+    start_date = f"{mese}-01"
+    
+    # Calculate end date
+    import calendar
+    days_in_month = calendar.monthrange(int(year), int(month))[1]
+    end_date = f"{mese}-{days_in_month}"
+    
+    # Query frigoriferi
+    frigo_records = await db[COLLECTION_TEMP_FRIGO].find({
+        "data": {"$gte": start_date, "$lte": end_date}
+    }, {"_id": 0}).to_list(1000)
+    
+    # Query congelatori
+    congel_records = await db[COLLECTION_TEMP_CONGEL].find({
+        "data": {"$gte": start_date, "$lte": end_date}
+    }, {"_id": 0}).to_list(1000)
+    
+    # Query sanificazioni
+    sanif_records = await db["haccp_sanificazioni"].find({
+        "data": {"$gte": start_date, "$lte": end_date}
+    }, {"_id": 0}).to_list(1000)
+    
+    # Calculate frigoriferi stats
+    frigo_temps = [r["temperatura"] for r in frigo_records if r.get("temperatura") is not None]
+    frigo_conformi = sum(1 for r in frigo_records if r.get("conforme"))
+    
+    # Calculate congelatori stats  
+    congel_temps = [r["temperatura"] for r in congel_records if r.get("temperatura") is not None]
+    congel_conformi = sum(1 for r in congel_records if r.get("conforme"))
+    
+    # Calculate sanificazioni stats
+    sanif_eseguiti = len(sanif_records)
+    sanif_conformi = sum(1 for r in sanif_records if r.get("esito") == "Conforme" or r.get("conforme"))
+    
+    # Find anomalie (non conformi)
+    anomalie_frigo = [r for r in frigo_records if not r.get("conforme")]
+    anomalie_congel = [r for r in congel_records if not r.get("conforme")]
+    
+    return {
+        "mese": mese,
+        "periodo": f"{start_date} - {end_date}",
+        "frigoriferi": {
+            "totale_rilevazioni": len(frigo_records),
+            "media_temperatura": round(sum(frigo_temps) / len(frigo_temps), 1) if frigo_temps else None,
+            "min_temperatura": min(frigo_temps) if frigo_temps else None,
+            "max_temperatura": max(frigo_temps) if frigo_temps else None,
+            "conformi": frigo_conformi,
+            "non_conformi": len(frigo_records) - frigo_conformi,
+            "conformita_percent": round((frigo_conformi / len(frigo_records) * 100), 1) if frigo_records else 0,
+            "anomalie": anomalie_frigo[:5]  # Top 5 anomalie
+        },
+        "congelatori": {
+            "totale_rilevazioni": len(congel_records),
+            "media_temperatura": round(sum(congel_temps) / len(congel_temps), 1) if congel_temps else None,
+            "min_temperatura": min(congel_temps) if congel_temps else None,
+            "max_temperatura": max(congel_temps) if congel_temps else None,
+            "conformi": congel_conformi,
+            "non_conformi": len(congel_records) - congel_conformi,
+            "conformita_percent": round((congel_conformi / len(congel_records) * 100), 1) if congel_records else 0,
+            "anomalie": anomalie_congel[:5]
+        },
+        "sanificazioni": {
+            "totale_eseguite": sanif_eseguiti,
+            "conformi": sanif_conformi,
+            "non_conformi": sanif_eseguiti - sanif_conformi,
+            "conformita_percent": round((sanif_conformi / sanif_eseguiti * 100), 1) if sanif_eseguiti else 0
+        },
+        "riepilogo": {
+            "totale_rilevazioni": len(frigo_records) + len(congel_records) + sanif_eseguiti,
+            "totale_anomalie": len(anomalie_frigo) + len(anomalie_congel) + (sanif_eseguiti - sanif_conformi),
+            "conformita_globale_percent": round(
+                ((frigo_conformi + congel_conformi + sanif_conformi) / 
+                 (len(frigo_records) + len(congel_records) + sanif_eseguiti) * 100), 1
+            ) if (len(frigo_records) + len(congel_records) + sanif_eseguiti) > 0 else 0
+        }
+    }
+
+
+@router.get("/analytics/annuale")
+async def get_haccp_analytics_annuale(
+    anno: int = Query(None, description="Anno")
+) -> Dict[str, Any]:
+    """
+    Statistiche annuali HACCP aggregate per mese.
+    """
+    db = Database.get_db()
+    
+    if not anno:
+        anno = datetime.utcnow().year
+    
+    mesi_stats = []
+    
+    for mese_num in range(1, 13):
+        mese_str = f"{anno}-{str(mese_num).zfill(2)}"
+        import calendar
+        days_in_month = calendar.monthrange(anno, mese_num)[1]
+        start_date = f"{mese_str}-01"
+        end_date = f"{mese_str}-{days_in_month}"
+        
+        # Count records
+        frigo_count = await db[COLLECTION_TEMP_FRIGO].count_documents({
+            "data": {"$gte": start_date, "$lte": end_date}
+        })
+        congel_count = await db[COLLECTION_TEMP_CONGEL].count_documents({
+            "data": {"$gte": start_date, "$lte": end_date}
+        })
+        sanif_count = await db["haccp_sanificazioni"].count_documents({
+            "data": {"$gte": start_date, "$lte": end_date}
+        })
+        
+        # Count conformi
+        frigo_conformi = await db[COLLECTION_TEMP_FRIGO].count_documents({
+            "data": {"$gte": start_date, "$lte": end_date},
+            "conforme": True
+        })
+        congel_conformi = await db[COLLECTION_TEMP_CONGEL].count_documents({
+            "data": {"$gte": start_date, "$lte": end_date},
+            "conforme": True
+        })
+        
+        totale = frigo_count + congel_count + sanif_count
+        totale_conformi = frigo_conformi + congel_conformi + sanif_count  # Assume all sanif are conformi for now
+        
+        mesi_stats.append({
+            "mese": mese_str,
+            "mese_nome": calendar.month_name[mese_num],
+            "frigoriferi": frigo_count,
+            "congelatori": congel_count,
+            "sanificazioni": sanif_count,
+            "totale": totale,
+            "conformita_percent": round((totale_conformi / totale * 100), 1) if totale > 0 else 0
+        })
+    
+    return {
+        "anno": anno,
+        "mesi": mesi_stats,
+        "totale_annuo": sum(m["totale"] for m in mesi_stats)
+    }
+
+
