@@ -283,3 +283,59 @@ movimento = {
 4. **Le discrepanze > €1 vengono evidenziate in giallo** nella pagina Controllo Mensile
 
 5. **I duplicati vengono saltati automaticamente** durante l'import (non bloccano l'upload)
+
+---
+
+#### POS Banca (da Prima Nota Banca)
+```javascript
+// Accrediti POS in banca: INC.POS, INCAS. TRAMITE P.O.S, ecc.
+// Questi sono gli accrediti effettivi che la banca riceve dai pagamenti POS
+const posBanca = prima_nota_banca
+  .filter(m => {
+    const desc = (m.descrizione || '').toUpperCase();
+    return (desc.includes('INC.POS') || 
+            desc.includes('INCAS.') || 
+            desc.includes('INCASSO POS') ||
+            desc.includes('P.O.S') ||
+            desc.includes('CARTE CREDIT') ||
+            m.categoria?.toUpperCase() === 'POS') &&
+           m.tipo === 'entrata';
+  })
+  .reduce((sum, m) => sum + (parseFloat(m.importo) || 0), 0);
+```
+
+#### Differenza POS Banca vs XML
+```javascript
+// Confronto tra POS accreditato in banca e POS da XML corrispettivi
+// Se negativo: la banca ha accreditato meno del previsto (da verificare)
+const posBancaDiff = posBanca - posAuto;
+```
+
+---
+
+## 7. RICONCILIAZIONE BANCARIA
+
+### File: `/app/app/routers/bank_statement_import.py`
+
+### Regole Tipo Movimento
+```python
+# USCITE CERTE (sempre addebiti):
+if any(k in desc_upper for k in ['VOSTRA DISPOSIZIONE', 'VS.DISP', 'VS DISP', 
+                                  'BONIFICO A FAVORE', 'F24', 'RID ', 'MAV ', 'RAV ',
+                                  'PRELIEVO', 'ADDEBITO', 'PAGAMENTO']):
+    tipo = "uscita"
+
+# ENTRATE CERTE (sempre accrediti):
+elif any(k in desc_upper for k in ['INC.POS', 'INCAS.', 'INC. POS', 'INCASSO POS',
+                                    'TRAMITE P.O.S', 'ACCREDITO', 'STIPENDIO',
+                                    'A VS FAVORE', 'A VOSTRO FAVORE', 'GIRO DA']):
+    tipo = "entrata"
+```
+
+### Lunghezza Descrizione
+La descrizione dei movimenti bancari è stata aumentata a 400 caratteri per mostrare:
+- Numeri assegno completi
+- Riferimenti bonifico
+- Causali complete
+
+---
