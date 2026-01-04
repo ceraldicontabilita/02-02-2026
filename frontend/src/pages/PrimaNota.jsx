@@ -278,40 +278,46 @@ export default function PrimaNota() {
   const categorie = activeTab === 'cassa' ? CATEGORIE_CASSA : CATEGORIE_BANCA;
 
   return (
-    <div style={{ padding: 20 }}>
+    <div style={{ padding: 'clamp(12px, 3vw, 20px)' }}>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <h1 data-testid="prima-nota-title">📒 Prima Nota</h1>
-        <div style={{ display: 'flex', gap: 10 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
+        <h1 data-testid="prima-nota-title" style={{ margin: 0, fontSize: 'clamp(20px, 5vw, 28px)' }}>📒 Prima Nota</h1>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <button
             data-testid="export-excel-btn"
             onClick={handleExportExcel}
             style={{
-              padding: '10px 20px',
+              padding: '10px 16px',
               background: '#4caf50',
               color: 'white',
               border: 'none',
               borderRadius: 8,
               cursor: 'pointer',
-              fontWeight: 'bold'
+              fontWeight: 'bold',
+              fontSize: 'clamp(12px, 3vw, 14px)',
+              flex: '1 1 auto',
+              minWidth: 'fit-content'
             }}
           >
-            📥 Export Excel
+            📥 Export
           </button>
           <button
             data-testid="toggle-automation-btn"
             onClick={() => setShowAutomation(!showAutomation)}
             style={{
-              padding: '10px 20px',
+              padding: '10px 16px',
               background: showAutomation ? '#ff9800' : '#673ab7',
               color: 'white',
               border: 'none',
               borderRadius: 8,
               cursor: 'pointer',
-              fontWeight: 'bold'
+              fontWeight: 'bold',
+              fontSize: 'clamp(12px, 3vw, 14px)',
+              flex: '1 1 auto',
+              minWidth: 'fit-content'
             }}
           >
-            🤖 {showAutomation ? 'Nascondi Automazione' : 'Automazione'}
+            🤖 {showAutomation ? 'Nascondi' : 'Automazione'}
           </button>
         </div>
       </div>
