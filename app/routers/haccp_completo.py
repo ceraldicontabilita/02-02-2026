@@ -342,6 +342,54 @@ async def list_temperature_congelatori(
     }
 
 
+@router.post("/temperature/congelatori")
+async def create_temperatura_congel(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
+    """Registra temperatura congelatore."""
+    db = Database.get_db()
+    
+    # Verifica conformità
+    temp = data.get("temperatura", 0)
+    conforme = -22 <= temp <= -18
+    
+    record = {
+        "id": str(uuid.uuid4()),
+        "data": data.get("data", datetime.utcnow().strftime("%Y-%m-%d")),
+        "ora": data.get("ora", datetime.utcnow().strftime("%H:%M")),
+        "equipaggiamento": data.get("equipaggiamento", "Congelatore Cucina"),
+        "temperatura": temp,
+        "conforme": conforme,
+        "operatore": data.get("operatore", ""),
+        "note": data.get("note", ""),
+        "azione_correttiva": data.get("azione_correttiva", "") if not conforme else "",
+        "created_at": datetime.utcnow().isoformat()
+    }
+    
+    # Update se esiste già
+    existing = await db[COLLECTION_TEMP_CONGEL].find_one({
+        "data": record["data"],
+        "equipaggiamento": record["equipaggiamento"]
+    })
+    
+    if existing:
+        await db[COLLECTION_TEMP_CONGEL].update_one(
+            {"_id": existing["_id"]},
+            {"$set": {
+                "temperatura": temp,
+                "ora": record["ora"],
+                "conforme": conforme,
+                "operatore": record["operatore"],
+                "note": record["note"],
+                "updated_at": datetime.utcnow().isoformat()
+            }}
+        )
+        record["id"] = existing.get("id")
+    else:
+        await db[COLLECTION_TEMP_CONGEL].insert_one(record)
+    
+    record.pop("_id", None)
+    return record
+
+
 @router.post("/temperature/congelatori/genera-mese")
 async def genera_mese_congel(mese: str = Body(..., embed=True)) -> Dict[str, Any]:
     """Genera record vuoti per tutto il mese."""
