@@ -37,6 +37,15 @@
 - ✅ Click su risultato naviga alla pagina appropriata
 - File: `/app/frontend/src/components/GlobalSearch.jsx`, `/app/app/routers/public_api.py`
 
+### Notifiche Push HACCP (04/01/2026 - Session 2) - NEW
+- ✅ Componente `HACCPNotificationSettings` per gestione notifiche browser
+- ✅ Hook `useHACCPNotifications` per Web Notifications API
+- ✅ Notifiche push per anomalie critiche (🔴) e alte (🟠)
+- ✅ Click sulla notifica apre pagina `/haccp/notifiche`
+- ✅ Pannello impostazioni integrato nella pagina Notifiche HACCP
+- ✅ Pulsanti: Attiva Notifiche, Test Notifica, Controlla Alert
+- File: `/app/frontend/src/components/HACCPNotificationSettings.jsx`
+
 ---
 
 ## Aggiornamento 04/01/2026 - Session 1 - Nuove Funzionalità
