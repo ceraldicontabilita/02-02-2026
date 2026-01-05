@@ -498,3 +498,72 @@ async def reset_riconciliazione_fornitori(
         "fatture_resettate": result.modified_count,
         "estratti_conto_eliminati": ec_deleted.deleted_count
     }
+
+
+from pydantic import BaseModel
+
+class RiconciliazioneManuale(BaseModel):
+    movimento_id: str
+    fattura_id: str
+    importo_movimento: float
+    data_movimento: str
+
+
+@router.post("/riconcilia-manuale")
+async def riconcilia_manuale(data: RiconciliazioneManuale) -> Dict[str, Any]:
+    """
+    Riconcilia manualmente un movimento dell'estratto conto con una fattura.
+    Marca la fattura come pagata.
+    """
+    db = Database.get_db()
+    
+    # Trova la fattura
+    fattura = await db["invoices"].find_one({"id": data.fattura_id})
+    if not fattura:
+        # Prova con _id come ObjectId
+        from bson import ObjectId
+        try:
+            fattura = await db["invoices"].find_one({"_id": ObjectId(data.fattura_id)})
+        except:
+            pass
+    
+    if not fattura:
+        raise HTTPException(status_code=404, detail="Fattura non trovata")
+    
+    if fattura.get("pagato"):
+        raise HTTPException(status_code=400, detail="Fattura già pagata")
+    
+    # Aggiorna la fattura come pagata
+    update_query = {"id": data.fattura_id} if fattura.get("id") else {"_id": fattura["_id"]}
+    
+    await db["invoices"].update_one(
+        update_query,
+        {"$set": {
+            "pagato": True,
+            "data_pagamento": data.data_movimento,
+            "metodo_pagamento": "bonifico",
+            "riconciliato_da_estratto": True,
+            "riconciliato_manualmente": True,
+            "movimento_id_banca": data.movimento_id,
+            "importo_pagamento_banca": abs(data.importo_movimento),
+            "updated_at": datetime.utcnow().isoformat()
+        }}
+    )
+    
+    # Aggiorna anche il movimento nell'estratto conto (se esiste)
+    await db["estratto_conto_movimenti"].update_one(
+        {"id": data.movimento_id},
+        {"$set": {
+            "riconciliato": True,
+            "fattura_abbinata": data.fattura_id,
+            "riconciliato_manualmente": True,
+            "data_riconciliazione": datetime.utcnow().isoformat()
+        }}
+    )
+    
+    return {
+        "success": True,
+        "message": f"Fattura {fattura.get('invoice_number', data.fattura_id)} marcata come pagata",
+        "fattura_id": data.fattura_id,
+        "movimento_id": data.movimento_id
+    }
