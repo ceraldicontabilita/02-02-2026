@@ -34,8 +34,14 @@ def format_date_italian(date_str: str) -> str:
 
 @router.get("/daily/{date}")
 async def get_iva_daily(date_param: str) -> Dict[str, Any]:
-    """IVA giornaliera: debito (corrispettivi) vs credito (fatture)."""
+    """IVA giornaliera: debito (corrispettivi) vs credito (fatture).
+    
+    Le Note Credito (TD04, TD08) vengono SOTTRATTE dal totale IVA.
+    """
     db = Database.get_db()
+    
+    # Tipi documento Note Credito
+    NOTE_CREDITO_TYPES = ["TD04", "TD08"]
     
     try:
         # IVA DEBITO - Corrispettivi
@@ -43,36 +49,72 @@ async def get_iva_daily(date_param: str) -> Dict[str, Any]:
         iva_debito = sum(float(c.get('totale_iva', 0) or 0) for c in corrispettivi)
         totale_corr = sum(float(c.get('totale', 0) or 0) for c in corrispettivi)
         
-        # IVA CREDITO - Fatture
+        # IVA CREDITO - Fatture (con gestione Note Credito)
         fatture = await db["invoices"].find({"invoice_date": date_param}, {"_id": 0}).to_list(1000)
         iva_credito = 0
+        iva_note_credito = 0
+        imponibile_fatture = 0
+        imponibile_note_credito = 0
         fatture_details = []
+        note_credito_details = []
         
         for f in fatture:
-            f_iva = float(f.get('iva', 0) or 0)
-            if f_iva == 0:
-                total = float(f.get('total_amount', 0) or 0)
-                if total > 0:
-                    f_iva = total - (total / 1.22)
-            iva_credito += f_iva
-            fatture_details.append({
+            tipo_doc = f.get('tipo_documento', '')
+            is_nota_credito = tipo_doc in NOTE_CREDITO_TYPES
+            
+            # Calcola IVA
+            f_iva = float(f.get('iva', 0) or f.get('totale_iva', 0) or 0)
+            total = float(f.get('total_amount', 0) or f.get('importo_totale', 0) or 0)
+            imponibile = float(f.get('imponibile', 0) or f.get('importo_imponibile', 0) or 0)
+            
+            if f_iva == 0 and total > 0:
+                # Stima IVA al 22% se non presente
+                f_iva = total - (total / 1.22)
+            
+            if imponibile == 0 and total > 0:
+                imponibile = total / 1.22
+            
+            detail = {
                 "invoice_number": f.get('invoice_number'),
-                "supplier_name": f.get('supplier_name'),
-                "total_amount": float(f.get('total_amount', 0) or 0),
-                "iva": round(f_iva, 2)
-            })
+                "supplier_name": f.get('supplier_name', f.get('cedente_denominazione', '')),
+                "total_amount": round(total, 2),
+                "imponibile": round(imponibile, 2),
+                "iva": round(f_iva, 2),
+                "tipo_documento": tipo_doc,
+                "is_nota_credito": is_nota_credito
+            }
+            
+            if is_nota_credito:
+                # Note Credito: da SOTTRARRE
+                iva_note_credito += f_iva
+                imponibile_note_credito += imponibile
+                note_credito_details.append(detail)
+            else:
+                # Fatture normali: da SOMMARE
+                iva_credito += f_iva
+                imponibile_fatture += imponibile
+                fatture_details.append(detail)
         
-        saldo = iva_debito - iva_credito
+        # IVA Credito Netta = Fatture - Note Credito
+        iva_credito_netta = iva_credito - iva_note_credito
+        imponibile_netto = imponibile_fatture - imponibile_note_credito
+        saldo = iva_debito - iva_credito_netta
         
         return {
             "data": format_date_italian(date_param),
             "data_iso": date_param,
             "iva_debito": round(iva_debito, 2),
-            "iva_credito": round(iva_credito, 2),
+            "iva_credito_lordo": round(iva_credito, 2),
+            "iva_note_credito": round(iva_note_credito, 2),
+            "iva_credito": round(iva_credito_netta, 2),  # IVA netta (fatture - note credito)
+            "imponibile_fatture": round(imponibile_fatture, 2),
+            "imponibile_note_credito": round(imponibile_note_credito, 2),
+            "imponibile_netto": round(imponibile_netto, 2),
             "saldo": round(saldo, 2),
             "stato": "Da versare" if saldo > 0 else "A credito" if saldo < 0 else "Pareggio",
             "corrispettivi": {"count": len(corrispettivi), "totale": round(totale_corr, 2)},
-            "fatture": {"count": len(fatture), "items": fatture_details}
+            "fatture": {"count": len(fatture_details), "items": fatture_details},
+            "note_credito": {"count": len(note_credito_details), "items": note_credito_details}
         }
     except Exception as e:
         logger.error(f"Errore IVA giornaliera: {e}")
