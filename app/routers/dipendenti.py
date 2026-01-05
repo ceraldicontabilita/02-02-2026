@@ -241,13 +241,9 @@ async def create_busta_paga(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     return busta
 
 
-# ============== SALARI (must be before /{dipendente_id} to avoid route conflict) ==============
-
-MESI_MAP = {
-    "gennaio": 1, "febbraio": 2, "marzo": 3, "aprile": 4,
-    "maggio": 5, "giugno": 6, "luglio": 7, "agosto": 8,
-    "settembre": 9, "ottobre": 10, "novembre": 11, "dicembre": 12
-}
+# ============== NOTA: Sezione SALARI rimossa ==============
+# La gestione salari/prima nota è stata spostata in /app/app/routers/prima_nota_salari.py
+# Endpoints disponibili: /api/prima-nota-salari/*
 
 @router.post("/import-salari")
 async def import_salari_excel(file: UploadFile = File(...)) -> Dict[str, Any]:
