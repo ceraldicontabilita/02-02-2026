@@ -4,7 +4,7 @@ API per registrazioni contabili automatiche da fatture.
 """
 from fastapi import APIRouter, HTTPException, Query, Body
 from typing import Dict, Any, List, Optional, Literal
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 import uuid
 import logging
 
