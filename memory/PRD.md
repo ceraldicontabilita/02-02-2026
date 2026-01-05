@@ -206,7 +206,7 @@ SALDO IVA:
   - Hook condivisi: `useFatture`, `usePrimaNota`, `useCorrispettivi`, `useAssegni`, `useFornitori`
 - **Testing Completo**: 100% success rate su tutti i controlli di sicurezza
 
-### 2026-01-05 (Sessione 8 - POS Banca PDV + IVA Trimestrale)
+### 2026-01-05 (Sessione 8 - POS Banca PDV + IVA Trimestrale + Miglioramenti UI)
 - **Fix POS Banca (P0) - COMPLETATO**: Corretta la logica di calcolo POS Banca
   - Nuova logica: cerca "PDV 3757283" o "PDV: 3757283" nella descrizione estratto conto
   - Importi positivi (tipo=entrata) = Accrediti POS (€570.315,75 per 2025)
@@ -220,7 +220,24 @@ SALDO IVA:
   - 4 card per trimestre (Q1-Q4) con IVA Debito, Credito, Saldo
   - Tabella dettaglio trimestrale con totali
   - Sincronizzazione con anno globale (AnnoContext)
-- **Verifica IVA Aliquote**: Confermato che il calcolo IVA già include correttamente tutte le aliquote (4%, 5%, 10%, 22%) perché il campo `iva` nelle fatture è già la somma di tutte le imposte da `riepilogo_iva`
+- **Verifica IVA Aliquote**: Confermato che il calcolo IVA già include correttamente tutte le aliquote (4%, 5%, 10%, 22%)
+- **Card Pagato Non Riscosso - COMPLETATO**: Nuova card in Controllo Mensile
+  - Mostra importo totale e numero occorrenze
+  - Calcolato come (Ammontare + ImportoParziale) - (PagatoContanti + PagatoElettronico)
+  - Backend: aggiunto endpoint `/api/corrispettivi/ricalcola-annulli-non-riscosso`
+- **Card Ammontare Annulli - COMPLETATO**: Nuova card in Controllo Mensile
+  - Mostra importo totale e numero occorrenze
+  - Estratto da TotaleAmmontareAnnulli nei corrispettivi XML
+- **Prima Nota - Bottoni Mesi - COMPLETATO**: Sostituito calendario con bottoni
+  - 12 bottoni per ogni mese (Gen-Dic) + "Tutti"
+  - Filtro immediato senza necessità di cliccare "Filtra"
+- **Commercialista - Ricerca Assegni - COMPLETATO**: Migliorata card Carnet Assegni
+  - Barra di ricerca per carnet, beneficiario, importo
+  - Selezione multipla con checkbox
+  - PDF e Email raggruppano tutti i carnet selezionati
+  - Riepilogo selezione con conteggio e totale
+- **Fix PDF/Email Commercialista - VERIFICATO**: Gli endpoint funzionano correttamente
+  - Testato invio email con successo (log visibile in Storico Invii)
 
 ### 2026-01-05 (Sessione 7 - Ristrutturazione Architettura - FASE 1)
 - **NUOVO Services Layer** con Business Rules centralizzate:
