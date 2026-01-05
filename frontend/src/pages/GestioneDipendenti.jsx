@@ -462,7 +462,7 @@ export default function GestioneDipendenti() {
         <div>
           <h1 style={{ margin: 0, fontSize: 'clamp(20px, 5vw, 28px)' }}>👥 Gestione Dipendenti</h1>
           <p style={{ color: '#666', margin: '4px 0 0 0', fontSize: 'clamp(12px, 3vw, 14px)' }}>
-            Anagrafica, paghe e salari, buste paga
+            Anagrafica, prima nota salari, libro unico
           </p>
         </div>
         
