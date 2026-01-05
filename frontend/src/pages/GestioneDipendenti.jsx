@@ -14,7 +14,7 @@ import { formatEuro } from '../lib/utils';
  * Tab: Anagrafica | Paghe e Salari | Prima Nota Salari
  */
 export default function GestioneDipendenti() {
-  const { anno: selectedYear } = useAnnoGlobale();
+  const { anno: selectedYear, setAnno: setSelectedYear } = useAnnoGlobale();
   
   // Tab state
   const [activeTab, setActiveTab] = useState('anagrafica');
