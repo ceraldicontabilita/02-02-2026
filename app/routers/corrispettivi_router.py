@@ -155,8 +155,11 @@ async def get_corrispettivi_totals() -> Dict[str, Any]:
 
 
 @router.post("/upload-xml")
-async def upload_corrispettivo_xml(file: UploadFile = File(...)) -> Dict[str, Any]:
-    """Upload singolo corrispettivo XML."""
+async def upload_corrispettivo_xml(
+    file: UploadFile = File(...),
+    force_update: bool = Query(False, description="Se True, sovrascrive corrispettivo esistente")
+) -> Dict[str, Any]:
+    """Upload singolo corrispettivo XML. Supporta aggiornamento dati esistenti con force_update=True."""
     if not file.filename.lower().endswith('.xml'):
         raise HTTPException(status_code=400, detail="Il file deve essere XML")
     
@@ -180,12 +183,13 @@ async def upload_corrispettivo_xml(file: UploadFile = File(...)) -> Dict[str, An
         db = Database.get_db()
         
         corrispettivo_key = parsed.get("corrispettivo_key", "")
+        existing = None
         if corrispettivo_key:
-            if await db["corrispettivi"].find_one({"corrispettivo_key": corrispettivo_key}):
-                raise HTTPException(status_code=409, detail=f"Corrispettivo già presente per {parsed.get('data')}")
+            existing = await db["corrispettivi"].find_one({"corrispettivo_key": corrispettivo_key})
+            if existing and not force_update:
+                raise HTTPException(status_code=409, detail=f"Corrispettivo già presente per {parsed.get('data')}. Usa force_update=true per aggiornare.")
         
-        corrispettivo = {
-            "id": str(uuid.uuid4()),
+        corrispettivo_data = {
             "corrispettivo_key": corrispettivo_key,
             "data": parsed.get("data", ""),
             "matricola_rt": parsed.get("matricola_rt", ""),
@@ -196,32 +200,52 @@ async def upload_corrispettivo_xml(file: UploadFile = File(...)) -> Dict[str, An
             "pagato_elettronico": float(parsed.get("pagato_elettronico", 0) or 0),
             "totale_imponibile": float(parsed.get("totale_imponibile", 0) or 0),
             "totale_iva": float(parsed.get("totale_iva", 0) or 0),
+            "pagato_non_riscosso": float(parsed.get("pagato_non_riscosso", 0) or 0),
+            "totale_ammontare_annulli": float(parsed.get("totale_ammontare_annulli", 0) or 0),
+            "numero_documenti": int(parsed.get("numero_documenti", 0) or 0),
             "riepilogo_iva": parsed.get("riepilogo_iva", []),
             "status": "imported",
             "filename": file.filename,
-            "created_at": datetime.utcnow().isoformat()
+            "updated_at": datetime.utcnow().isoformat()
         }
         
-        await db["corrispettivi"].insert_one(corrispettivo)
-        corrispettivo.pop("_id", None)
-        
-        # Propaga corrispettivo a Prima Nota Cassa usando DataPropagationService
-        from app.services.data_propagation import get_propagation_service
-        
-        propagation_service = get_propagation_service()
-        propagation_result = await propagation_service.propagate_corrispettivo_to_prima_nota(corrispettivo)
-        
-        # Aggiorna corrispettivo con ID movimento Prima Nota
-        if propagation_result.get("movement_created"):
+        if existing:
+            # UPSERT - Aggiorna esistente
             await db["corrispettivi"].update_one(
-                {"id": corrispettivo["id"]},
-                {"$set": {"prima_nota_id": propagation_result.get("movement_id")}}
+                {"corrispettivo_key": corrispettivo_key},
+                {"$set": corrispettivo_data}
             )
+            corrispettivo_id = existing.get("id")
+            action = "updated"
+        else:
+            # INSERT - Nuovo record
+            corrispettivo_data["id"] = str(uuid.uuid4())
+            corrispettivo_data["created_at"] = datetime.utcnow().isoformat()
+            await db["corrispettivi"].insert_one(corrispettivo_data)
+            corrispettivo_id = corrispettivo_data["id"]
+            action = "created"
+        
+        corrispettivo_data.pop("_id", None)
+        corrispettivo_data["id"] = corrispettivo_id
+        
+        # Propaga corrispettivo a Prima Nota Cassa usando DataPropagationService (solo per nuovi)
+        propagation_result = {}
+        if action == "created":
+            from app.services.data_propagation import get_propagation_service
+            propagation_service = get_propagation_service()
+            propagation_result = await propagation_service.propagate_corrispettivo_to_prima_nota(corrispettivo_data)
+            
+            if propagation_result.get("movement_created"):
+                await db["corrispettivi"].update_one(
+                    {"id": corrispettivo_id},
+                    {"$set": {"prima_nota_id": propagation_result.get("movement_id")}}
+                )
         
         return {
             "success": True,
-            "message": f"Corrispettivo del {parsed.get('data')} importato",
-            "corrispettivo": corrispettivo,
+            "action": action,
+            "message": f"Corrispettivo del {parsed.get('data')} {'aggiornato' if action == 'updated' else 'importato'}",
+            "corrispettivo": corrispettivo_data,
             "prima_nota_id": propagation_result.get("movement_id")
         }
         
