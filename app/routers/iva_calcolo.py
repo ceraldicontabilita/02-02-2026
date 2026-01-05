@@ -209,7 +209,12 @@ async def get_iva_monthly(year: int, month: int) -> Dict[str, Any]:
             "daily_data": daily_data,
             "totale_mensile": {
                 "iva_debito": round(iva_debito_prog, 2),
-                "iva_credito": round(iva_credito_prog, 2),
+                "iva_credito_lordo": round(iva_credito_prog + iva_note_credito_prog, 2),
+                "iva_note_credito": round(iva_note_credito_prog, 2),
+                "iva_credito": round(iva_credito_prog, 2),  # Netto
+                "imponibile_fatture": round(imponibile_prog, 2),
+                "imponibile_note_credito": round(imponibile_nc_prog, 2),
+                "imponibile_netto": round(imponibile_prog - imponibile_nc_prog, 2),
                 "saldo": round(iva_debito_prog - iva_credito_prog, 2)
             }
         }
