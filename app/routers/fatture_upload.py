@@ -366,7 +366,10 @@ async def update_metodo_pagamento(invoice_id: str, data: Dict[str, Any]) -> Dict
 async def paga_fattura(invoice_id: str) -> Dict[str, Any]:
     """
     Segna una fattura come pagata.
-    Registra automaticamente il movimento in Prima Nota in base al metodo di pagamento.
+    Utilizza DataPropagationService per:
+    - Creare movimento in Prima Nota (Cassa o Banca)
+    - Aggiornare stato fattura
+    - Aggiornare saldo fornitore
     """
     db = Database.get_db()
     
@@ -382,34 +385,31 @@ async def paga_fattura(invoice_id: str) -> Dict[str, Any]:
     if not metodo:
         raise HTTPException(status_code=400, detail="Seleziona prima un metodo di pagamento")
     
-    # Registra in Prima Nota
-    prima_nota_result = {"cassa": None, "banca": None}
-    try:
-        from app.routers.prima_nota import registra_pagamento_fattura
-        prima_nota_result = await registra_pagamento_fattura(
-            fattura=invoice,
-            metodo_pagamento=metodo
-        )
-    except Exception as e:
-        logger.warning(f"Prima nota registration failed: {e}")
+    # Usa DataPropagationService per propagare il pagamento
+    from app.services.data_propagation import get_propagation_service
     
-    # Aggiorna la fattura come pagata
-    await db[Collections.INVOICES].update_one(
-        {"id": invoice_id},
-        {"$set": {
-            "pagato": True,
-            "status": "paid",
-            "data_pagamento": datetime.utcnow().isoformat()[:10],
-            "prima_nota_cassa_id": prima_nota_result.get("cassa"),
-            "prima_nota_banca_id": prima_nota_result.get("banca"),
-            "updated_at": datetime.utcnow().isoformat()
-        }}
+    propagation_service = get_propagation_service()
+    importo = invoice.get("total_amount") or invoice.get("importo_totale") or 0
+    
+    result = await propagation_service.propagate_invoice_payment(
+        invoice_id=invoice_id,
+        payment_amount=float(importo),
+        payment_method=metodo,
+        payment_date=datetime.utcnow().isoformat()[:10]
     )
+    
+    if result.get("errors"):
+        logger.warning(f"Propagation errors: {result['errors']}")
     
     return {
         "success": True,
         "message": "Fattura pagata con successo",
-        "prima_nota": prima_nota_result
+        "prima_nota": {
+            "movement_id": result.get("movement_id"),
+            "collection": result.get("movement_collection")
+        },
+        "payment_status": result.get("payment_status"),
+        "supplier_updated": result.get("supplier_updated")
     }
 
 
