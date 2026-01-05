@@ -106,6 +106,11 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* Widget Scadenze */}
+      {scadenzeData && scadenzeData.scadenze && scadenzeData.scadenze.length > 0 && (
+        <ScadenzeWidget scadenze={scadenzeData} />
+      )}
+
       {/* KPI Cards */}
       <div className="grid">
         <div className="card">
