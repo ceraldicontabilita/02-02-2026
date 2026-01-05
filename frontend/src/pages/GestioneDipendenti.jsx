@@ -110,8 +110,8 @@ export default function GestioneDipendenti() {
   const loadPrimaNotaSalari = async () => {
     try {
       setLoadingSalari(true);
-      // Usa il nuovo endpoint che supporta filtri anno/mese/dipendente
-      let url = `/api/dipendenti/salari?anno=${selectedYear}`;
+      // Usa il NUOVO endpoint prima-nota-salari
+      let url = `/api/prima-nota-salari/salari?anno=${selectedYear}`;
       if (selectedMonth) url += `&mese=${selectedMonth}`;
       if (filtroDipendente) url += `&dipendente=${encodeURIComponent(filtroDipendente)}`;
       
@@ -127,10 +127,117 @@ export default function GestioneDipendenti() {
 
   const loadDipendentiLista = async () => {
     try {
-      const res = await api.get('/api/dipendenti/dipendenti-lista').catch(() => ({ data: [] }));
+      const res = await api.get('/api/prima-nota-salari/dipendenti-lista').catch(() => ({ data: [] }));
       setDipendentiLista(res.data || []);
     } catch (error) {
       console.error('Error loading dipendenti lista:', error);
+    }
+  };
+
+  // Import PAGHE (buste paga)
+  const handleImportPaghe = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    try {
+      setImportingSalari(true);
+      setImportResult(null);
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const res = await api.post('/api/prima-nota-salari/import-paghe', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      
+      setImportResult(res.data);
+      loadPrimaNotaSalari();
+      loadDipendentiLista();
+      
+    } catch (error) {
+      setImportResult({ 
+        error: true, 
+        message: error.response?.data?.detail || error.message 
+      });
+    } finally {
+      setImportingSalari(false);
+      e.target.value = '';
+    }
+  };
+
+  // Import BONIFICI
+  const handleImportBonifici = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    try {
+      setImportingEstratto(true);
+      setEstrattoResult(null);
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const res = await api.post('/api/prima-nota-salari/import-bonifici', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      
+      setEstrattoResult(res.data);
+      loadPrimaNotaSalari();
+      
+    } catch (error) {
+      setEstrattoResult({ 
+        error: true, 
+        message: error.response?.data?.detail || error.message 
+      });
+    } finally {
+      setImportingEstratto(false);
+      e.target.value = '';
+    }
+  };
+
+  // Reset Prima Nota Salari
+  const handleResetSalari = async () => {
+    if (!window.confirm('⚠️ Eliminare TUTTI i dati della Prima Nota Salari?')) return;
+    
+    try {
+      await api.delete('/api/prima-nota-salari/salari/reset');
+      loadPrimaNotaSalari();
+      loadDipendentiLista();
+      alert('✅ Dati eliminati');
+    } catch (error) {
+      alert('Errore: ' + (error.response?.data?.detail || error.message));
+    }
+  };
+
+  // Export Excel
+  const handleExportSalariExcel = async () => {
+    try {
+      let url = `/api/prima-nota-salari/export-excel?anno=${selectedYear}`;
+      if (selectedMonth) url += `&mese=${selectedMonth}`;
+      
+      const response = await api.get(url, { responseType: 'blob' });
+      
+      const blob = new Blob([response.data]);
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.setAttribute('download', `prima_nota_salari_${selectedYear}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      alert('Errore export: ' + (error.response?.data?.detail || error.message));
+    }
+  };
+
+  // Delete singolo record
+  const handleDeleteSalario = async (recordId) => {
+    if (!window.confirm('Eliminare questo record?')) return;
+    try {
+      await api.delete(`/api/prima-nota-salari/salari/${recordId}`);
+      loadPrimaNotaSalari();
+    } catch (error) {
+      alert('Errore: ' + (error.response?.data?.detail || error.message));
     }
   };
 
