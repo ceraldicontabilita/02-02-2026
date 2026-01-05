@@ -46,6 +46,10 @@ export default function GestioneDipendenti() {
   const [loadingSalari, setLoadingSalari] = useState(false);
   const [importingSalari, setImportingSalari] = useState(false);
   const [importResult, setImportResult] = useState(null);
+  const [filtroDipendente, setFiltroDipendente] = useState('');
+  const [dipendentiLista, setDipendentiLista] = useState([]);
+  const [importingEstratto, setImportingEstratto] = useState(false);
+  const [estrattoResult, setEstrattoResult] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -57,8 +61,9 @@ export default function GestioneDipendenti() {
       loadBustePaga();
     } else if (activeTab === 'salari') {
       loadPrimaNotaSalari();
+      loadDipendentiLista();
     }
-  }, [activeTab, selectedYear, selectedMonth]);
+  }, [activeTab, selectedYear, selectedMonth, filtroDipendente]);
 
   const loadData = async () => {
     try {
