@@ -106,14 +106,27 @@ export default function GestioneDipendenti() {
   const loadPrimaNotaSalari = async () => {
     try {
       setLoadingSalari(true);
-      // Usa il nuovo endpoint che supporta filtri anno/mese
-      const res = await api.get(`/api/dipendenti/salari?anno=${selectedYear}&mese=${selectedMonth}`).catch(() => ({ data: [] }));
+      // Usa il nuovo endpoint che supporta filtri anno/mese/dipendente
+      let url = `/api/dipendenti/salari?anno=${selectedYear}`;
+      if (selectedMonth) url += `&mese=${selectedMonth}`;
+      if (filtroDipendente) url += `&dipendente=${encodeURIComponent(filtroDipendente)}`;
+      
+      const res = await api.get(url).catch(() => ({ data: [] }));
       setSalariMovimenti(res.data || []);
     } catch (error) {
       console.error('Error loading prima nota salari:', error);
       setSalariMovimenti([]);
     } finally {
       setLoadingSalari(false);
+    }
+  };
+
+  const loadDipendentiLista = async () => {
+    try {
+      const res = await api.get('/api/dipendenti/dipendenti-lista').catch(() => ({ data: [] }));
+      setDipendentiLista(res.data || []);
+    } catch (error) {
+      console.error('Error loading dipendenti lista:', error);
     }
   };
 
