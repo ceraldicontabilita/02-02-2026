@@ -225,6 +225,7 @@ export default function ControlloMensile() {
         corrispDiff,
         versamenti,
         saldoCassa,
+        documentiCommerciali,
         hasData,
         hasDiscrepancy,
         // Debug info
@@ -242,6 +243,7 @@ export default function ControlloMensile() {
       yearCorrispManual += corrispManual;
       yearVersamenti += versamenti;
       yearSaldoCassa += saldoCassa;
+      yearDocumentiCommerciali += documentiCommerciali;
     }
 
     setMonthlyData(monthly);
@@ -252,7 +254,8 @@ export default function ControlloMensile() {
       corrispettiviAuto: yearCorrispAuto,
       corrispettiviManual: yearCorrispManual,
       versamenti: yearVersamenti,
-      saldoCassa: yearSaldoCassa
+      saldoCassa: yearSaldoCassa,
+      documentiCommerciali: yearDocumentiCommerciali
     });
   };
 
