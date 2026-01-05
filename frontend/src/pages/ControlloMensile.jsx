@@ -755,6 +755,22 @@ export default function ControlloMensile() {
             <div style={{ fontSize: 9, opacity: 0.7, marginTop: 4 }}>N/D negli XML</div>
           )}
         </div>
+        {/* Card Pagato Non Riscosso */}
+        <div style={{ background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)', borderRadius: 12, padding: 14, color: 'white' }}>
+          <div style={{ fontSize: 11, opacity: 0.9 }}>💰 Pagato Non Riscosso</div>
+          <div style={{ fontSize: 18, fontWeight: 'bold' }}>{formatCurrency(yearTotals.pagatoNonRiscosso || 0)}</div>
+          <div style={{ fontSize: 10, opacity: 0.8, marginTop: 2 }}>
+            {yearTotals.pagatoNonRiscossoCount || 0} occorrenze
+          </div>
+        </div>
+        {/* Card Ammontare Annulli */}
+        <div style={{ background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)', borderRadius: 12, padding: 14, color: 'white' }}>
+          <div style={{ fontSize: 11, opacity: 0.9 }}>🗑️ Ammontare Annulli</div>
+          <div style={{ fontSize: 18, fontWeight: 'bold' }}>{formatCurrency(yearTotals.ammontareAnnulli || 0)}</div>
+          <div style={{ fontSize: 10, opacity: 0.8, marginTop: 2 }}>
+            {yearTotals.ammontareAnnulliCount || 0} occorrenze
+          </div>
+        </div>
       </div>
 
       {/* Info Box */}
@@ -773,7 +789,9 @@ export default function ControlloMensile() {
           <strong>Fonti dati:</strong><br/>
           • <strong>POS Agenzia</strong> = pagato_elettronico da XML corrispettivi<br/>
           • <strong>POS Chiusura</strong> = Prima Nota Cassa con categoria "POS"<br/>
-          • <strong>🏦 POS Banca</strong> = Accrediti PDV 3757283 dall'estratto conto bancario
+          • <strong>🏦 POS Banca</strong> = Accrediti PDV 3757283 dall'estratto conto bancario<br/>
+          • <strong>💰 Pagato Non Riscosso</strong> = (Ammontare + ImportoParziale) - (Contanti + Elettronico)<br/>
+          • <strong>🗑️ Ammontare Annulli</strong> = TotaleAmmontareAnnulli da XML corrispettivi
         </div>
       </div>
 
