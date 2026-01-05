@@ -3,13 +3,58 @@
 ## Project Overview
 Sistema ERP completo per gestione aziendale con focus su contabilità, fatturazione elettronica, magazzino e gestione fornitori.
 
-**Versione**: 2.7.0  
+**Versione**: 2.8.0  
 **Ultimo aggiornamento**: 6 Gennaio 2026  
 **Stack**: FastAPI (Python) + React + MongoDB
 
 ---
 
 ## Ultime Implementazioni (6 Gen 2026)
+
+### 1. Nuova Sezione Dipendenti - COMPLETATA
+Rifatto il modulo Gestione Dipendenti con 5 tab completi:
+
+**Tab disponibili:**
+1. **👤 Anagrafica** - CRUD dipendenti (esistente, mantenuto)
+2. **💰 Paghe** - Buste paga mensili (esistente, mantenuto)
+3. **📒 Prima Nota** - Prima nota salari con riconciliazione (esistente, mantenuto)
+4. **📚 Libro Unico** - NUOVO
+5. **🏥 Libretti Sanitari** - NUOVO
+
+### 2. Tab Libro Unico - NUOVO
+Import e gestione buste paga dal Libro Unico del Lavoro.
+
+**Funzionalità:**
+- Upload file PDF/Excel con parsing automatico buste paga
+- Estrazione automatica: nome dipendente, netto a pagare
+- Riepilogo con KPI: Buste Paga, Totale Netto, Acconti Pagati, Da Pagare
+- Export Excel formattato
+- Selezione periodo mese/anno
+
+**Endpoint:**
+- `GET /api/dipendenti/libro-unico/salaries` - Lista buste paga
+- `POST /api/dipendenti/libro-unico/upload` - Upload PDF/Excel
+- `GET /api/dipendenti/libro-unico/export-excel` - Export Excel
+- `PUT/DELETE /api/dipendenti/libro-unico/salaries/{id}` - CRUD
+
+### 3. Tab Libretti Sanitari - NUOVO
+Gestione scadenze certificati sanitari HACCP del personale.
+
+**Funzionalità:**
+- Form creazione nuovo libretto con: Nome, Numero, Date rilascio/scadenza
+- KPI colorati: Totale, Validi (verde), In Scadenza 30gg (arancione), Scaduti (rosso)
+- Tabella con stato visivo (badge colorati)
+- Eliminazione libretti
+
+**Endpoint:**
+- `GET /api/dipendenti/libretti-sanitari/all` - Lista libretti
+- `POST /api/dipendenti/libretti-sanitari` - Crea libretto
+- `PUT /api/dipendenti/libretti-sanitari/{id}` - Aggiorna
+- `DELETE /api/dipendenti/libretti-sanitari/{id}` - Elimina
+
+---
+
+## Implementazioni Precedenti (6 Gen 2026)
 
 ### 1. Riorganizzazione Menu Navigazione - COMPLETATA
 Il menu di navigazione principale è stato riorganizzato con sottomenu espandibili per migliorare l'usabilità.
