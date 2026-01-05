@@ -928,11 +928,11 @@ export default function GestioneDipendenti() {
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 800 }}>
                 <thead>
                   <tr style={{ background: '#f9fafb' }}>
-                    <th style={{ padding: 12, textAlign: 'left', borderBottom: '1px solid #e2e8f0' }}>Dipendente</th>
+                    <th style={{ padding: 12, textAlign: 'center', borderBottom: '1px solid #e2e8f0' }}>Dipendente</th>
                     <th style={{ padding: 12, textAlign: 'center', borderBottom: '1px solid #e2e8f0' }}>Periodo</th>
-                    <th style={{ padding: 12, textAlign: 'right', borderBottom: '1px solid #e2e8f0' }}>Importo Busta</th>
-                    <th style={{ padding: 12, textAlign: 'right', borderBottom: '1px solid #e2e8f0' }}>Bonifico</th>
-                    <th style={{ padding: 12, textAlign: 'right', borderBottom: '1px solid #e2e8f0' }}>Saldo</th>
+                    <th style={{ padding: 12, textAlign: 'center', borderBottom: '1px solid #e2e8f0' }}>Importo Busta</th>
+                    <th style={{ padding: 12, textAlign: 'center', borderBottom: '1px solid #e2e8f0' }}>Bonifico</th>
+                    <th style={{ padding: 12, textAlign: 'center', borderBottom: '1px solid #e2e8f0' }}>Saldo</th>
                     <th style={{ padding: 12, textAlign: 'center', borderBottom: '1px solid #e2e8f0' }}>Stato</th>
                     <th style={{ padding: 12, textAlign: 'center', borderBottom: '1px solid #e2e8f0', width: 60 }}>Azioni</th>
                   </tr>
@@ -945,21 +945,21 @@ export default function GestioneDipendenti() {
                     
                     return (
                       <tr key={mov.id || idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                        <td style={{ padding: 12, fontWeight: 500 }}>
+                        <td style={{ padding: 12, fontWeight: 500, textAlign: 'center' }}>
                           {mov.dipendente || mov.nome_dipendente || '-'}
                         </td>
                         <td style={{ padding: 12, textAlign: 'center', color: '#6b7280' }}>
                           {mov.mese_nome || (mov.mese ? mesiNomi[mov.mese - 1] : '-')} {mov.anno}
                         </td>
-                        <td style={{ padding: 12, textAlign: 'right' }}>
+                        <td style={{ padding: 12, textAlign: 'center' }}>
                           {formatEuro(busta)}
                         </td>
-                        <td style={{ padding: 12, textAlign: 'right', fontWeight: 'bold', color: '#ef4444' }}>
+                        <td style={{ padding: 12, textAlign: 'center', fontWeight: 'bold', color: '#ef4444' }}>
                           {formatEuro(bonifico)}
                         </td>
                         <td style={{ 
                           padding: 12, 
-                          textAlign: 'right', 
+                          textAlign: 'center', 
                           fontWeight: 'bold',
                           color: saldo > 0 ? '#f57c00' : saldo < 0 ? '#2e7d32' : '#9e9e9e'
                         }}>
