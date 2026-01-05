@@ -824,15 +824,15 @@ export default function Fatture() {
               <tbody>
                 <tr>
                   <td>Imponibile:</td>
-                  <td style={{ textAlign: "right" }}>€ {(selectedInvoice.imponibile || 0).toFixed(2)}</td>
+                  <td style={{ textAlign: "right" }}>{formatEuro(selectedInvoice.imponibile)}</td>
                 </tr>
                 <tr>
                   <td>IVA:</td>
-                  <td style={{ textAlign: "right" }}>€ {(selectedInvoice.iva || 0).toFixed(2)}</td>
+                  <td style={{ textAlign: "right" }}>{formatEuro(selectedInvoice.iva)}</td>
                 </tr>
                 <tr style={{ fontWeight: "bold", borderTop: "2px solid #ddd" }}>
                   <td>Totale:</td>
-                  <td style={{ textAlign: "right" }}>€ {(selectedInvoice.total_amount || 0).toFixed(2)}</td>
+                  <td style={{ textAlign: "right" }}>{formatEuro(selectedInvoice.total_amount)}</td>
                 </tr>
               </tbody>
             </table>
@@ -928,7 +928,7 @@ export default function Fatture() {
                   {selectedInvoice.linee.map((l, i) => (
                     <tr key={i}>
                       <td>{l.descrizione}</td>
-                      <td style={{ textAlign: "right" }}>€ {parseFloat(l.prezzo_totale || 0).toFixed(2)}</td>
+                      <td style={{ textAlign: "right" }}>{formatEuro(parseFloat(l.prezzo_totale || 0))}</td>
                       <td style={{ textAlign: "right" }}>{l.aliquota_iva}%</td>
                     </tr>
                   ))}
