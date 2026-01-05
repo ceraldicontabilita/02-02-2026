@@ -626,10 +626,13 @@ async def import_estratto_conto(file: UploadFile = File(...)) -> Dict[str, Any]:
         {"_id": 0}
     ).to_list(10000)
     
-    # Crea indice per matching veloce
+    # Crea indice per matching veloce: (nome_normalizzato, importo) -> lista salari
     salari_index = {}
     for s in salari:
-        key = (normalizza_nome(s.get("dipendente", "")), s.get("importo_erogato") or s.get("importo"))
+        importo_s = s.get("importo_erogato") or s.get("importo") or 0
+        if importo_s <= 0:
+            continue  # Salta salari senza importo
+        key = (normalizza_nome(s.get("dipendente", "")), round(importo_s, 2))
         if key not in salari_index:
             salari_index[key] = []
         salari_index[key].append(s)
@@ -645,39 +648,95 @@ async def import_estratto_conto(file: UploadFile = File(...)) -> Dict[str, Any]:
             nome_banca = " ".join(nome_banca)
         
         if not nome_banca:
-            non_trovati.append(mov)
+            non_trovati.append({
+                "data": mov["data"].isoformat() if hasattr(mov["data"], 'isoformat') else str(mov["data"]),
+                "importo": mov["importo"],
+                "descrizione": mov.get("descrizione", "")[:100],
+                "nome": "N/D - nome non estratto"
+            })
             continue
         
         nome_norm = normalizza_nome(nome_banca)
-        importo = mov["importo"]
+        importo = round(mov["importo"], 2)
+        data_mov = mov["data"]
         
-        # Cerca match esatto (nome + importo)
+        # Cerca match: nome + importo (con tolleranza) + periodo compatibile
         found = False
+        best_match = None
+        best_match_score = -1
+        
         for (key_nome, key_importo), salari_list in salari_index.items():
-            if abs(key_importo - importo) < 0.01:  # Tolleranza di 1 centesimo
-                # Verifica match nome (parziale)
+            # Tolleranza importo: 1% o 5 euro
+            importo_diff = abs(key_importo - importo)
+            if importo_diff > max(importo * 0.01, 5):
+                continue
+            
+            # Verifica match nome (parziale)
+            nome_match = False
+            if key_nome and nome_norm:
+                # Match se uno contiene l'altro o hanno parole in comune
                 if key_nome in nome_norm or nome_norm in key_nome:
-                    for salario in salari_list:
-                        if salario.get("riconciliato"):
-                            continue
-                        
-                        # Aggiorna salario come riconciliato
-                        await db["prima_nota_salari"].update_one(
-                            {"id": salario["id"]},
-                            {"$set": {
-                                "riconciliato": True,
-                                "data_riconciliazione": datetime.utcnow().isoformat(),
-                                "riferimento_banca": mov["descrizione"][:200],
-                                "data_banca": mov["data"].isoformat()
-                            }}
-                        )
-                        salario["riconciliato"] = True
-                        riconciliati += 1
-                        found = True
-                        break
+                    nome_match = True
+                else:
+                    # Match per cognome (prima parola)
+                    cognome_key = key_nome.split()[0] if key_nome.split() else ""
+                    cognome_banca = nome_norm.split()[0] if nome_norm.split() else ""
+                    if cognome_key and cognome_banca and (cognome_key == cognome_banca or cognome_key in cognome_banca or cognome_banca in cognome_key):
+                        nome_match = True
+            
+            if not nome_match:
+                continue
+            
+            # Cerca il salario con periodo più vicino alla data del movimento
+            for salario in salari_list:
+                if salario.get("riconciliato"):
+                    continue
                 
-                if found:
-                    break
+                # Calcola score basato sulla vicinanza temporale
+                sal_anno = salario.get("anno", 0)
+                sal_mese = salario.get("mese", 0)
+                mov_anno = data_mov.year
+                mov_mese = data_mov.month
+                
+                # Il bonifico di solito è nel mese successivo allo stipendio
+                # o nello stesso mese (fine mese)
+                mesi_diff = abs((mov_anno * 12 + mov_mese) - (sal_anno * 12 + sal_mese))
+                
+                # Score: 0 = stesso mese, 1 = mese successivo (ideale), 2+ = peggiore
+                # Bonus per mese successivo (tipico per stipendi)
+                if mesi_diff == 0:
+                    score = 100  # Stesso mese
+                elif mesi_diff == 1 and (mov_anno * 12 + mov_mese) > (sal_anno * 12 + sal_mese):
+                    score = 110  # Mese successivo (caso tipico)
+                elif mesi_diff <= 2:
+                    score = 50
+                elif mesi_diff <= 12:
+                    score = 10
+                else:
+                    score = 0  # Troppo lontano
+                
+                # Bonus per match importo esatto
+                if importo_diff < 0.01:
+                    score += 20
+                
+                if score > best_match_score:
+                    best_match_score = score
+                    best_match = salario
+        
+        # Applica il match migliore (se trovato con score ragionevole)
+        if best_match and best_match_score >= 10:
+            await db["prima_nota_salari"].update_one(
+                {"id": best_match["id"]},
+                {"$set": {
+                    "riconciliato": True,
+                    "data_riconciliazione": datetime.utcnow().isoformat(),
+                    "riferimento_banca": mov.get("descrizione", "")[:200],
+                    "data_banca": data_mov.isoformat()
+                }}
+            )
+            best_match["riconciliato"] = True
+            riconciliati += 1
+            found = True
         
         if not found:
             # Controlla se è già stato riconciliato in precedenza
