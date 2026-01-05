@@ -87,14 +87,13 @@ export default function Finanziaria() {
               </div>
             </div>
             <div className="card" style={{ background: "#ffebee" }}>
-              <div className="small">💸 Uscite Totali (Cassa + Banca + Salari)</div>
+              <div className="small">💸 Uscite Totali (Cassa + Banca)</div>
               <div className="kpi" style={{ color: "#c62828" }}>
                 {formatCurrency(summary?.total_expenses)}
               </div>
               <div className="small" style={{ marginTop: 5, lineHeight: 1.5 }}>
                 <div>🏪 Cassa: <strong>{formatCurrency(summary?.cassa?.uscite)}</strong></div>
-                <div>🏦 Banca: {formatCurrency(summary?.banca?.uscite)}</div>
-                <div>👥 Salari: {formatCurrency(summary?.salari?.totale)}</div>
+                <div>🏦 Banca: {formatCurrency(summary?.banca?.uscite)} <span style={{fontSize: 10, color: '#666'}}>(incl. salari e F24)</span></div>
               </div>
             </div>
             <div className="card" style={{ background: summary?.balance >= 0 ? "#e3f2fd" : "#fff3e0" }}>
