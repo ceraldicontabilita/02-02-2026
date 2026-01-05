@@ -12,6 +12,15 @@ export default function Riconciliazione() {
   const [activeTab, setActiveTab] = useState("import");
   const [tipoRiconciliazione, setTipoRiconciliazione] = useState("banca"); // "banca" | "fornitori"
   const [addingToPrimaNota, setAddingToPrimaNota] = useState(null);
+  
+  // Stato per riconciliazione manuale
+  const [movimentiNonRiconciliati, setMovimentiNonRiconciliati] = useState([]);
+  const [fattureNonPagate, setFattureNonPagate] = useState([]);
+  const [selectedMovimento, setSelectedMovimento] = useState(null);
+  const [matchingFatture, setMatchingFatture] = useState([]);
+  const [loadingManuale, setLoadingManuale] = useState(false);
+  const [searchFornitore, setSearchFornitore] = useState("");
+  const [riconciliazioneInCorso, setRiconciliazioneInCorso] = useState(false);
 
   useEffect(() => {
     loadStats();
