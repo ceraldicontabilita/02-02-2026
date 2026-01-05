@@ -427,21 +427,24 @@ export default function Riconciliazione() {
               <h3 style={{ margin: "0 0 10px 0", fontSize: 16, color: "#d97706" }}>
                 ⚠️ Movimenti Non Trovati in Prima Nota ({results.not_found_details.length})
               </h3>
-              <div style={{ maxHeight: 300, overflow: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+              <div style={{ maxHeight: 400, overflow: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, tableLayout: "fixed" }}>
                   <thead>
                     <tr style={{ background: "#fef3c7" }}>
-                      <th style={{ padding: 8, textAlign: "left", borderBottom: "1px solid #ddd" }}>Data</th>
-                      <th style={{ padding: 8, textAlign: "left", borderBottom: "1px solid #ddd" }}>Descrizione</th>
-                      <th style={{ padding: 8, textAlign: "right", borderBottom: "1px solid #ddd" }}>Importo</th>
-                      <th style={{ padding: 8, textAlign: "center", borderBottom: "1px solid #ddd" }}>Tipo</th>
+                      <th style={{ padding: 8, textAlign: "left", borderBottom: "1px solid #ddd", width: "100px" }}>Data</th>
+                      <th style={{ padding: 8, textAlign: "left", borderBottom: "1px solid #ddd", width: "55%" }}>Descrizione</th>
+                      <th style={{ padding: 8, textAlign: "right", borderBottom: "1px solid #ddd", width: "100px" }}>Importo</th>
+                      <th style={{ padding: 8, textAlign: "center", borderBottom: "1px solid #ddd", width: "80px" }}>Tipo</th>
+                      <th style={{ padding: 8, textAlign: "center", borderBottom: "1px solid #ddd", width: "100px" }}>Azione</th>
                     </tr>
                   </thead>
                   <tbody>
                     {results.not_found_details.map((item, idx) => (
                       <tr key={idx} style={{ background: idx % 2 ? "#fafafa" : "white" }}>
                         <td style={{ padding: 8, borderBottom: "1px solid #eee" }}>{item.data}</td>
-                        <td style={{ padding: 8, borderBottom: "1px solid #eee" }}>{item.descrizione}</td>
+                        <td style={{ padding: 8, borderBottom: "1px solid #eee", wordWrap: "break-word", whiteSpace: "normal" }}>
+                          {item.descrizione}
+                        </td>
                         <td style={{ padding: 8, textAlign: "right", borderBottom: "1px solid #eee" }}>
                           €{item.importo?.toFixed(2)}
                         </td>
