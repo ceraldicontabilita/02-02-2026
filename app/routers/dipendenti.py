@@ -687,18 +687,8 @@ async def import_estratto_conto(file: UploadFile = File(...)) -> Dict[str, Any]:
             if importo_diff > max(importo * 0.01, 5):
                 continue
             
-            # Verifica match nome (parziale)
-            nome_match = False
-            if key_nome and nome_norm:
-                # Match se uno contiene l'altro o hanno parole in comune
-                if key_nome in nome_norm or nome_norm in key_nome:
-                    nome_match = True
-                else:
-                    # Match per cognome (prima parola)
-                    cognome_key = key_nome.split()[0] if key_nome.split() else ""
-                    cognome_banca = nome_norm.split()[0] if nome_norm.split() else ""
-                    if cognome_key and cognome_banca and (cognome_key == cognome_banca or cognome_key in cognome_banca or cognome_banca in cognome_key):
-                        nome_match = True
+            # Verifica match nome usando fuzzy matching
+            nome_match = match_nomi_fuzzy(key_nome, nome_norm)
             
             if not nome_match:
                 continue
