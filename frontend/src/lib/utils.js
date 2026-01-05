@@ -40,11 +40,17 @@ export function parseDateIT(dateStr) {
 }
 
 /**
- * Formatta un importo in euro
+ * Formatta un importo in euro con formato italiano
+ * Usa il punto come separatore delle migliaia e la virgola per i decimali
+ * Es: 5830.62 -> € 5.830,62
  */
 export function formatEuro(amount) {
   if (amount === null || amount === undefined) return "€ 0,00";
-  return `€ ${parseFloat(amount).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return `€ ${new Intl.NumberFormat('it-IT', { 
+    minimumFractionDigits: 2, 
+    maximumFractionDigits: 2,
+    useGrouping: true
+  }).format(parseFloat(amount))}`;
 }
 
 /**
