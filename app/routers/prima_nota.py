@@ -422,18 +422,7 @@ async def update_prima_nota_cassa(
     return {"message": "Movimento aggiornato", "id": movimento_id}
 
 
-@router.delete("/cassa/{movimento_id}")
-async def delete_prima_nota_cassa(movimento_id: str) -> Dict[str, str]:
-    """Elimina movimento prima nota cassa."""
-    db = Database.get_db()
-    
-    result = await db[COLLECTION_PRIMA_NOTA_CASSA].delete_one({"id": movimento_id})
-    
-    if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Movimento non trovato")
-    
-    return {"message": "Movimento eliminato"}
-
+# NOTA: Endpoint delete_prima_nota_cassa rimosso - usare DELETE /cassa/{movimento_id} con validazione (riga 188)
 
 # ============== PRIMA NOTA BANCA ==============
 
@@ -570,18 +559,7 @@ async def update_prima_nota_banca(
     return {"message": "Movimento aggiornato", "id": movimento_id}
 
 
-@router.delete("/banca/{movimento_id}")
-async def delete_prima_nota_banca(movimento_id: str) -> Dict[str, str]:
-    """Elimina movimento prima nota banca."""
-    db = Database.get_db()
-    
-    result = await db[COLLECTION_PRIMA_NOTA_BANCA].delete_one({"id": movimento_id})
-    
-    if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Movimento non trovato")
-    
-    return {"message": "Movimento eliminato"}
-
+# NOTA: Endpoint delete_prima_nota_banca rimosso - usare DELETE /banca/{movimento_id} con validazione (riga 239)
 
 # ============== REGISTRAZIONE AUTOMATICA DA FATTURA ==============
 
