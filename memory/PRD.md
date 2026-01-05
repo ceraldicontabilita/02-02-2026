@@ -116,6 +116,21 @@ SALDO IVA:
 
 ## Changelog
 
+### 2026-01-05 (Sessione 13 - Fix Pagina Finanziaria + Piano dei Conti)
+- **FIX CRITICO - Pagina Finanziaria bianca (P0)**:
+  - ❌ **Problema**: La pagina `/finanziaria` era bianca dopo il refactoring per usare AnnoContext
+  - ✅ **Causa**: Errore di sintassi JSX in `IVA.jsx` (doppia `}}` alla riga 124) che bloccava la compilazione
+  - ✅ **Soluzione**: Corretta sintassi `onClick={() => setViewMode("today")}}`  → `onClick={() => setViewMode("today")}`
+  - 📊 **Verifica**: Uscite Totali 2025 = **€967.794,71** ✅ (valore atteso dall'utente)
+  
+- **NUOVO Riferimento Contabile**:
+  - Creato `/app/memory/PIANO_CONTI_REFERENCE.md` con:
+    - Piano dei Conti del Capitale (Attivo/Passivo) da ilbilancio.com
+    - Piano dei Conti del Reddito (Costi/Ricavi) da ilbilancio.com
+    - Registrazioni contabili comuni (acquisti, vendite, stipendi, POS)
+    - Spiegazione dettagliata delle PARTITE DI GIRO
+    - Mapping fatture XML → Piano dei Conti
+
 ### 2026-01-05 (Sessione 12 - Fix Commercialista + Card Doc. Commerciali)
 - **FIX Pagina Commercialista**:
   - ❌ **Problema**: Prima Nota Cassa non popolata per Gennaio 2025 (0 movimenti)
