@@ -102,16 +102,18 @@ class BusinessRules:
         Verifica se una fattura può essere eliminata.
         
         NON può essere eliminata se:
-        - È stata pagata (payment_status = 'paid')
+        - È stata pagata (payment_status = 'paid' o pagato = True)
         - È stata registrata in prima nota (status = 'registered')
         - Ha movimenti di magazzino associati confermati
         """
         errors = []
         warnings = []
         
-        # Check payment status
+        # Check payment status (supporta entrambi i campi legacy)
         payment_status = invoice.get("payment_status", "unpaid")
-        if payment_status == PaymentStatus.PAID.value:
+        is_paid = invoice.get("pagato", False)
+        
+        if payment_status == PaymentStatus.PAID.value or is_paid == True:
             errors.append("Impossibile eliminare: fattura già pagata")
         elif payment_status == PaymentStatus.PARTIAL.value:
             errors.append("Impossibile eliminare: fattura con pagamento parziale")
