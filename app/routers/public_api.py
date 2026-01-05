@@ -259,14 +259,21 @@ async def list_suppliers(skip: int = 0, limit: int = 10000) -> List[Dict[str, An
 
 @router.post("/suppliers")
 async def create_supplier(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
-    """Crea fornitore."""
+    """
+    Crea fornitore.
+    Associa automaticamente le fatture esistenti con la stessa P.IVA.
+    """
     db = Database.get_db()
+    
+    piva = data.get("partita_iva", data.get("vat_number", ""))
+    denominazione = data.get("denominazione", data.get("name", ""))
+    
     supplier = {
         "id": str(uuid.uuid4()),
-        "name": data.get("name", ""),
-        "vat_number": data.get("vat_number", ""),
-        "partita_iva": data.get("partita_iva", data.get("vat_number", "")),
-        "denominazione": data.get("denominazione", data.get("name", "")),
+        "name": denominazione,
+        "vat_number": piva,
+        "partita_iva": piva,
+        "denominazione": denominazione,
         "email": data.get("email", ""),
         "phone": data.get("phone", ""),
         "address": data.get("address", ""),
@@ -275,6 +282,22 @@ async def create_supplier(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     }
     await db[Collections.SUPPLIERS].insert_one(supplier)
     supplier.pop("_id", None)
+    
+    # === ASSOCIAZIONE AUTOMATICA FATTURE ===
+    # Cerca fatture con la stessa P.IVA e aggiorna il riferimento al fornitore
+    fatture_associate = 0
+    if piva:
+        result = await db[Collections.INVOICES].update_many(
+            {"cedente_piva": piva, "supplier_id": {"$exists": False}},
+            {"$set": {
+                "supplier_id": supplier["id"],
+                "supplier_name": denominazione,
+                "updated_at": datetime.utcnow().isoformat()
+            }}
+        )
+        fatture_associate = result.modified_count
+    
+    supplier["fatture_associate"] = fatture_associate
     return supplier
 
 
