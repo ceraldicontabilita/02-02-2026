@@ -146,6 +146,10 @@ export default function ControlloMensile() {
       // Il POS automatico è il campo pagato_elettronico estratto dagli XML
       const posAuto = monthCorrisp.reduce((sum, c) => sum + (parseFloat(c.pagato_elettronico) || 0), 0);
 
+      // ============ DOCUMENTI COMMERCIALI (da Corrispettivi XML) ============
+      // Numero totale di scontrini/ricevute emessi nel mese
+      const documentiCommerciali = monthCorrisp.reduce((sum, c) => sum + (parseInt(c.numero_documenti) || 0), 0);
+
       // ============ POS MANUALE (da Prima Nota Cassa) ============
       // Il POS manuale è registrato con categoria "POS" in Prima Nota Cassa
       const posManual = monthCassa
