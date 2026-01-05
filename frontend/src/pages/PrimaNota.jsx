@@ -43,8 +43,8 @@ function PrimaNotaDesktop() {
   const [bancaData, setBancaData] = useState({ movimenti: [], saldo: 0, totale_entrate: 0, totale_uscite: 0 });
   const [loading, setLoading] = useState(true);
   
-  // Filters - ora basati su anno
-  const [filterPeriodo, setFilterPeriodo] = useState({ da: '', a: '' });
+  // Filters - ora basati su mese (null = tutti i mesi)
+  const [selectedMonth, setSelectedMonth] = useState(null);
   
   // Quick entry forms - CASSA
   const [corrispettivo, setCorrispettivo] = useState({ data: today, importo: '' });
@@ -58,19 +58,18 @@ function PrimaNotaDesktop() {
   const [savingVers, setSavingVers] = useState(false);
   const [savingMov, setSavingMov] = useState(false);
 
+  // Nomi mesi
+  const mesiNomi = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
+
   // Carica anni disponibili all'avvio
   useEffect(() => {
     loadAvailableYears();
   }, []);
 
-  // Carica dati quando cambia l'anno selezionato
+  // Carica dati quando cambia l'anno o il mese selezionato
   useEffect(() => {
     loadAllData();
-  }, [selectedYear]);
-
-  useEffect(() => {
-    loadAllData();
-  }, [filterPeriodo]);
+  }, [selectedYear, selectedMonth]);
 
   // Funzione per caricare gli anni disponibili
   const loadAvailableYears = async () => {
@@ -95,9 +94,13 @@ function PrimaNotaDesktop() {
       params.append('limit', '2000');
       params.append('anno', selectedYear.toString());
       
-      // Se ci sono filtri periodo aggiuntivi
-      if (filterPeriodo.da) params.append('data_da', filterPeriodo.da);
-      if (filterPeriodo.a) params.append('data_a', filterPeriodo.a);
+      // Se è selezionato un mese specifico, aggiungi filtro date
+      if (selectedMonth !== null) {
+        const monthStr = String(selectedMonth + 1).padStart(2, '0');
+        const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
+        params.append('data_da', `${selectedYear}-${monthStr}-01`);
+        params.append('data_a', `${selectedYear}-${monthStr}-${daysInMonth}`);
+      }
 
       const [cassaRes, bancaRes] = await Promise.all([
         api.get(`/api/prima-nota/cassa?${params}`),
