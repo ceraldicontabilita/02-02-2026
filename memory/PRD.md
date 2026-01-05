@@ -454,3 +454,26 @@ SALDO IVA:
 
 ### Raccomandazione:
 Considerare n8n per automazioni secondarie, ma mantenere logica core nel backend FastAPI.
+
+---
+
+## Risorse Contabili di Riferimento
+
+### Sito di Riferimento
+- **ilbilancio.com** - Corsi di Contabilità e Bilancio (Prof. Giovanni Di Giacomo)
+- Corsi gratuiti su partita doppia, registrazioni contabili, bilancio
+
+### PDF Scaricati e Analizzati
+- **Piano dei Conti del Capitale** (Attivo/Passivo): https://ilbilancio.com/wp-content/uploads/2025/02/Piano-Conti-Capitale.pdf
+- **Piano dei Conti del Reddito** (Costi/Ricavi): https://ilbilancio.com/wp-content/uploads/2025/02/Piano-Conti-Reddito.pdf
+
+### Documentazione Interna
+- `/app/memory/PIANO_CONTI_REFERENCE.md` - Piano dei Conti completo con esempi di registrazioni
+- `/app/memory/ARCHITETTURA.md` - Architettura tecnica del sistema
+- `/app/memory/LOGICHE_CALCOLO.md` - Logiche di calcolo IVA e controlli mensili
+- `/app/dispense ragioneria.pdf` - Dispense ragioneria fornite dall'utente
+
+### Concetti Chiave Implementati
+- **Partite di Giro**: I trasferimenti interni (stipendi, versamenti cassa→banca) non vengono contati due volte nelle uscite
+- **Competenza vs Cassa**: Separazione tra movimenti finanziari (Prima Nota) e economici (Conto Economico)
+- **Liquidazione IVA**: IVA Debito (corrispettivi) - IVA Credito (fatture) = da versare/a credito
