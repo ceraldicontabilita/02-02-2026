@@ -1073,8 +1073,8 @@ export default function Fatture() {
                     >
                       👁️ Vedi
                     </button>
-                    {/* Mostra pulsante elimina solo per fatture manuali, non per XML importate */}
-                    {!inv.xml_content && inv.status !== "imported" && inv.source !== "xml" && (
+                    {/* Mostra pulsante elimina solo per fatture create manualmente */}
+                    {inv.source === "manual" && !inv.xml_content && (
                     <button 
                       onClick={() => handleDeleteInvoice(inv.id)}
                       style={{ padding: "4px 8px", borderRadius: 4, border: "1px solid #ffcdd2", background: "#ffebee", color: "#c62828", cursor: "pointer" }}
