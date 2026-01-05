@@ -3,6 +3,7 @@ import api from "../api";
 import { formatDateIT } from "../lib/utils";
 import { UploadProgressBar } from "../components/UploadProgressBar";
 import { useAnnoGlobale } from "../contexts/AnnoContext";
+import InvoiceXMLViewer from "../components/InvoiceXMLViewer";
 
 export default function Fatture() {
   const { anno: selectedYear } = useAnnoGlobale();
@@ -13,6 +14,7 @@ export default function Fatture() {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0, phase: "" });
   const [uploadResult, setUploadResult] = useState(null);
+  const [viewingInvoiceId, setViewingInvoiceId] = useState(null);
   const [err, setErr] = useState("");
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [updatingPayment, setUpdatingPayment] = useState(null);
