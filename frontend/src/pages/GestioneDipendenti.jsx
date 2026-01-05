@@ -6,12 +6,15 @@ import {
   DipendenteNewModal, 
   DEFAULT_DIPENDENTE 
 } from '../components/dipendenti';
+import { useAnnoGlobale } from '../contexts/AnnoContext';
 
 /**
  * Pagina Gestione Dipendenti - Ristrutturata
  * Tab: Anagrafica | Paghe e Salari | Prima Nota Salari
  */
 export default function GestioneDipendenti() {
+  const { anno: selectedYear } = useAnnoGlobale();
+  
   // Tab state
   const [activeTab, setActiveTab] = useState('anagrafica');
   
@@ -33,7 +36,6 @@ export default function GestioneDipendenti() {
   const [generatingContract, setGeneratingContract] = useState(false);
 
   // Paghe state
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [bustePaga, setBustePaga] = useState([]);
   const [loadingBuste, setLoadingBuste] = useState(false);
