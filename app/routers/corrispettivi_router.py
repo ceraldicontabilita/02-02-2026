@@ -255,21 +255,85 @@ async def upload_corrispettivi_xml_bulk(files: List[UploadFile] = File(...)) -> 
 
 
 @router.delete("/all")
-async def delete_all_corrispettivi() -> Dict[str, Any]:
-    """Elimina tutti i corrispettivi."""
+async def delete_all_corrispettivi(
+    force: bool = Query(False, description="Forza eliminazione")
+) -> Dict[str, Any]:
+    """
+    Elimina tutti i corrispettivi NON inviati all'AdE.
+    I corrispettivi inviati vengono preservati.
+    """
+    from app.services.business_rules import EntityStatus
+    
     db = Database.get_db()
-    result = await db["corrispettivi"].delete_many({})
-    return {"deleted": result.deleted_count}
+    
+    # Solo soft-delete di quelli non inviati
+    result = await db["corrispettivi"].update_many(
+        {"status": {"$ne": "sent_ade"}},
+        {"$set": {
+            "entity_status": EntityStatus.DELETED.value,
+            "deleted_at": datetime.now().isoformat()
+        }}
+    )
+    
+    return {
+        "deleted": result.modified_count,
+        "message": f"Archiviati {result.modified_count} corrispettivi (quelli inviati all'AdE sono stati preservati)"
+    }
 
 
 @router.delete("/{corrispettivo_id}")
-async def delete_corrispettivo(corrispettivo_id: str) -> Dict[str, Any]:
-    """Elimina un corrispettivo."""
+async def delete_corrispettivo(
+    corrispettivo_id: str,
+    force: bool = Query(False, description="Forza eliminazione")
+) -> Dict[str, Any]:
+    """
+    Elimina un corrispettivo con validazione business rules.
+    
+    **Regole:**
+    - Non può eliminare corrispettivi inviati all'AdE
+    - Non può eliminare corrispettivi già registrati in Prima Nota
+    """
+    from app.services.business_rules import BusinessRules, EntityStatus
+    
     db = Database.get_db()
-    result = await db["corrispettivi"].delete_one({"id": corrispettivo_id})
-    if result.deleted_count == 0:
+    
+    # Recupera corrispettivo
+    corr = await db["corrispettivi"].find_one({"id": corrispettivo_id})
+    if not corr:
         raise HTTPException(status_code=404, detail="Corrispettivo non trovato")
-    return {"deleted": True}
+    
+    # Valida eliminazione
+    validation = BusinessRules.can_delete_corrispettivo(corr)
+    
+    if not validation.is_valid:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "message": "Eliminazione non consentita",
+                "errors": validation.errors
+            }
+        )
+    
+    # Soft-delete
+    await db["corrispettivi"].update_one(
+        {"id": corrispettivo_id},
+        {"$set": {
+            "entity_status": EntityStatus.DELETED.value,
+            "deleted_at": datetime.now().isoformat()
+        }}
+    )
+    
+    # Annulla movimento Prima Nota collegato se esiste
+    if corr.get("prima_nota_id"):
+        await db["cash_movements"].update_one(
+            {"id": corr["prima_nota_id"]},
+            {"$set": {"status": "cancelled"}}
+        )
+    
+    return {
+        "deleted": True,
+        "message": "Corrispettivo eliminato (archiviato)"
+    }
 
 
 @router.post("/upload-zip")
