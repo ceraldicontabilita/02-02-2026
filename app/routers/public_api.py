@@ -605,65 +605,8 @@ async def create_event(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
 
 
 # ============== FINANZIARIA ==============
-
-@router.get("/finanziaria/summary")
-async def get_finanziaria() -> Dict[str, Any]:
-    """Riepilogo finanziario da Prima Nota."""
-    db = Database.get_db()
-    
-    # Get Prima Nota Cassa totals
-    cassa_pipeline = [
-        {"$group": {
-            "_id": "$tipo",
-            "total": {"$sum": "$importo"}
-        }}
-    ]
-    cassa_result = await db["prima_nota_cassa"].aggregate(cassa_pipeline).to_list(100)
-    cassa_entrate = sum(r["total"] for r in cassa_result if r["_id"] == "entrata")
-    cassa_uscite = sum(r["total"] for r in cassa_result if r["_id"] == "uscita")
-    
-    # Get Prima Nota Banca totals
-    banca_pipeline = [
-        {"$group": {
-            "_id": "$tipo",
-            "total": {"$sum": "$importo"}
-        }}
-    ]
-    banca_result = await db["prima_nota_banca"].aggregate(banca_pipeline).to_list(100)
-    banca_entrate = sum(r["total"] for r in banca_result if r["_id"] == "entrata")
-    banca_uscite = sum(r["total"] for r in banca_result if r["_id"] == "uscita")
-    
-    # Get Salari totals
-    salari_pipeline = [
-        {"$group": {
-            "_id": None,
-            "total": {"$sum": "$importo"}
-        }}
-    ]
-    salari_result = await db["prima_nota_salari"].aggregate(salari_pipeline).to_list(1)
-    salari_totale = salari_result[0]["total"] if salari_result else 0
-    
-    total_income = cassa_entrate + banca_entrate
-    total_expenses = cassa_uscite + banca_uscite + salari_totale
-    
-    return {
-        "total_income": round(total_income, 2),
-        "total_expenses": round(total_expenses, 2),
-        "balance": round(total_income - total_expenses, 2),
-        "cassa": {
-            "entrate": round(cassa_entrate, 2),
-            "uscite": round(cassa_uscite, 2),
-            "saldo": round(cassa_entrate - cassa_uscite, 2)
-        },
-        "banca": {
-            "entrate": round(banca_entrate, 2),
-            "uscite": round(banca_uscite, 2),
-            "saldo": round(banca_entrate - banca_uscite, 2)
-        },
-        "salari": {
-            "totale": round(salari_totale, 2)
-        }
-    }
+# NOTA: L'endpoint /finanziaria/summary è stato spostato in finanziaria.py
+# con supporto per filtro anno e logica contabile corretta
 
 
 # ============== PORTAL UPLOAD ==============
