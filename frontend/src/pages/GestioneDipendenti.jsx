@@ -511,7 +511,8 @@ export default function GestioneDipendenti() {
         marginBottom: 20, 
         background: '#f1f5f9',
         padding: 4,
-        borderRadius: 12
+        borderRadius: 12,
+        overflowX: 'auto'
       }}>
         <TabButton 
           active={activeTab === 'anagrafica'} 
@@ -524,15 +525,29 @@ export default function GestioneDipendenti() {
           active={activeTab === 'paghe'} 
           onClick={() => setActiveTab('paghe')}
           icon="💰"
-          label="Paghe e Salari"
+          label="Paghe"
           color="#9c27b0"
         />
         <TabButton 
           active={activeTab === 'salari'} 
           onClick={() => setActiveTab('salari')}
           icon="📒"
-          label="Prima Nota Salari"
+          label="Prima Nota"
           color="#ff9800"
+        />
+        <TabButton 
+          active={activeTab === 'libro-unico'} 
+          onClick={() => setActiveTab('libro-unico')}
+          icon="📚"
+          label="Libro Unico"
+          color="#10b981"
+        />
+        <TabButton 
+          active={activeTab === 'libretti'} 
+          onClick={() => setActiveTab('libretti')}
+          icon="🏥"
+          label="Libretti Sanitari"
+          color="#ef4444"
         />
       </div>
 
