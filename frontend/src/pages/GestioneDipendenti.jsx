@@ -720,37 +720,64 @@ export default function GestioneDipendenti() {
             ) : salariMovimenti.length === 0 ? (
               <div style={{ padding: 40, textAlign: 'center', color: '#6b7280' }}>
                 Nessun movimento salari per questo periodo.
+                <div style={{ marginTop: 12, fontSize: 13 }}>
+                  Usa il pulsante <strong>"📥 Importa Excel"</strong> per caricare i dati dal file stipendi.
+                </div>
               </div>
             ) : (
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ background: '#f9fafb' }}>
-                    <th style={{ padding: 12, textAlign: 'left', borderBottom: '1px solid #e2e8f0' }}>Data</th>
                     <th style={{ padding: 12, textAlign: 'left', borderBottom: '1px solid #e2e8f0' }}>Dipendente</th>
-                    <th style={{ padding: 12, textAlign: 'left', borderBottom: '1px solid #e2e8f0' }}>Descrizione</th>
-                    <th style={{ padding: 12, textAlign: 'right', borderBottom: '1px solid #e2e8f0' }}>Importo</th>
+                    <th style={{ padding: 12, textAlign: 'left', borderBottom: '1px solid #e2e8f0' }}>Periodo</th>
+                    <th style={{ padding: 12, textAlign: 'right', borderBottom: '1px solid #e2e8f0' }}>Stipendio Netto</th>
+                    <th style={{ padding: 12, textAlign: 'right', borderBottom: '1px solid #e2e8f0' }}>Bonifico</th>
+                    <th style={{ padding: 12, textAlign: 'center', borderBottom: '1px solid #e2e8f0', width: 60 }}>Azioni</th>
                   </tr>
                 </thead>
                 <tbody>
                   {salariMovimenti.map((mov, idx) => (
                     <tr key={mov.id || idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                      <td style={{ padding: 12, fontFamily: 'monospace' }}>
-                        {new Date(mov.data).toLocaleDateString('it-IT')}
+                      <td style={{ padding: 12, fontWeight: 500 }}>
+                        {mov.dipendente || mov.nome_dipendente || '-'}
                       </td>
-                      <td style={{ padding: 12 }}>{mov.nome_dipendente || '-'}</td>
-                      <td style={{ padding: 12, color: '#6b7280' }}>{mov.descrizione}</td>
+                      <td style={{ padding: 12, color: '#6b7280' }}>
+                        {mov.mese_nome || mesiNomi[mov.mese - 1]} {mov.anno}
+                      </td>
+                      <td style={{ padding: 12, textAlign: 'right' }}>
+                        {formatEuro(mov.stipendio_netto || mov.importo)}
+                      </td>
                       <td style={{ padding: 12, textAlign: 'right', fontWeight: 'bold', color: '#ef4444' }}>
-                        {formatEuro(mov.importo)}
+                        {formatEuro(mov.importo_erogato || mov.importo)}
+                      </td>
+                      <td style={{ padding: 12, textAlign: 'center' }}>
+                        <button
+                          onClick={() => handleDeleteSalario(mov.id)}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            fontSize: 16,
+                            opacity: 0.6
+                          }}
+                          title="Elimina"
+                        >
+                          🗑️
+                        </button>
                       </td>
                     </tr>
                   ))}
                 </tbody>
                 <tfoot>
                   <tr style={{ background: '#f9fafb', fontWeight: 'bold' }}>
-                    <td colSpan={3} style={{ padding: 12 }}>TOTALE</td>
-                    <td style={{ padding: 12, textAlign: 'right', color: '#ef4444' }}>
-                      {formatEuro(salariMovimenti.reduce((sum, m) => sum + (m.importo || 0), 0))}
+                    <td colSpan={2} style={{ padding: 12 }}>TOTALE ({salariMovimenti.length} movimenti)</td>
+                    <td style={{ padding: 12, textAlign: 'right' }}>
+                      {formatEuro(salariMovimenti.reduce((sum, m) => sum + (m.stipendio_netto || m.importo || 0), 0))}
                     </td>
+                    <td style={{ padding: 12, textAlign: 'right', color: '#ef4444' }}>
+                      {formatEuro(salariMovimenti.reduce((sum, m) => sum + (m.importo_erogato || m.importo || 0), 0))}
+                    </td>
+                    <td></td>
                   </tr>
                 </tfoot>
               </table>
