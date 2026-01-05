@@ -438,13 +438,16 @@ def estrai_nome_da_descrizione(descrizione: str) -> Optional[str]:
 @router.post("/import-estratto-conto")
 async def import_estratto_conto(file: UploadFile = File(...)) -> Dict[str, Any]:
     """
-    Importa estratto conto bancario (CSV o Excel) e riconcilia con i salari.
+    Importa estratto conto bancario (CSV, Excel o PDF) e riconcilia con i salari.
     
     Formato CSV atteso (separatore ;):
     - Data contabile o Data valuta
     - Importo (negativo = pagamento)
     - Descrizione (contiene nome dipendente)
     - Categoria (es: "Risorse Umane - Salari e stipendi")
+    
+    Formato PDF (BANCO BPM):
+    - Estrae movimenti con pattern "FAVORE NomeCognome"
     """
     db = Database.get_db()
     
@@ -453,7 +456,81 @@ async def import_estratto_conto(file: UploadFile = File(...)) -> Dict[str, Any]:
     
     movimenti_banca = []
     
-    if filename.endswith('.csv'):
+    if filename.endswith('.pdf'):
+        # Parse PDF usando PyMuPDF
+        try:
+            import fitz  # PyMuPDF
+            
+            doc = fitz.open(stream=contents, filetype="pdf")
+            full_text = ""
+            for page in doc:
+                full_text += page.get_text()
+            doc.close()
+            
+            # Pattern per estrarre bonifici stipendi
+            import re
+            
+            # Pattern 1: "DD/MM/YY ... FAVORE NomeCognome ... -IMPORTO" o "IMPORTO"
+            # Pattern per movimenti BANCO BPM
+            lines = full_text.split('\n')
+            current_date = None
+            
+            for i, line in enumerate(lines):
+                # Cerca data formato DD/MM/YY
+                date_match = re.search(r'(\d{2}/\d{2}/\d{2,4})', line)
+                if date_match:
+                    date_str = date_match.group(1)
+                    try:
+                        parts = date_str.split('/')
+                        year = int(parts[2])
+                        if year < 100:
+                            year += 2000
+                        current_date = date(year, int(parts[1]), int(parts[0]))
+                    except:
+                        pass
+                
+                # Cerca pattern FAVORE per bonifici stipendi
+                if 'FAVORE' in line.upper() and current_date:
+                    # Estrai nome dopo FAVORE
+                    favore_idx = line.upper().find('FAVORE')
+                    nome_part = line[favore_idx + 7:].strip()
+                    
+                    # Estrai nome (fino a - ADD.TOT o fine)
+                    if ' - ' in nome_part:
+                        nome = nome_part.split(' - ')[0].strip()
+                    else:
+                        nome = ' '.join(nome_part.split()[:3])
+                    
+                    # Cerca importo nelle righe vicine o nella stessa riga
+                    importo = None
+                    
+                    # Cerca importo nella stessa riga o nelle 3 righe successive
+                    search_text = line + ' ' + ' '.join(lines[i:i+4])
+                    
+                    # Pattern per importi: -1.234,56 o 1.234,56 o -1234,56
+                    importo_matches = re.findall(r'[-]?\d{1,3}(?:\.\d{3})*,\d{2}', search_text)
+                    
+                    for imp_str in importo_matches:
+                        try:
+                            imp_val = float(imp_str.replace('.', '').replace(',', '.'))
+                            if imp_val < 0:  # Solo uscite (pagamenti)
+                                importo = abs(imp_val)
+                                break
+                        except:
+                            continue
+                    
+                    if importo and nome and importo > 50:  # Ignora importi troppo piccoli (commissioni)
+                        movimenti_banca.append({
+                            "data": current_date,
+                            "importo": importo,
+                            "descrizione": line[:200],
+                            "nome_estratto": nome
+                        })
+            
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Errore parsing PDF: {str(e)}")
+    
+    elif filename.endswith('.csv'):
         # Parse CSV
         import csv
         text = contents.decode('utf-8-sig')  # Handle BOM
