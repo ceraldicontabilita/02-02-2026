@@ -60,6 +60,7 @@ export default function ControlloMensile() {
     posAuto: 0,
     posManual: 0,
     posBanca: 0,
+    posBancaCommissioni: 0,
     corrispettiviAuto: 0,
     corrispettiviManual: 0,
     versamenti: 0,
