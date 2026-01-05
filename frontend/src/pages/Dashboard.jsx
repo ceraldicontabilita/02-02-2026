@@ -14,6 +14,7 @@ export default function Dashboard() {
   const [notificheHaccp, setNotificheHaccp] = useState(0);
   const [trendData, setTrendData] = useState(null);
   const [posCalendario, setPosCalendario] = useState(null);
+  const [scadenzeData, setScadenzeData] = useState(null);
 
   useEffect(() => {
     (async () => {
@@ -26,16 +27,18 @@ export default function Dashboard() {
         setH(healthData);
         setSum(summaryData);
         
-        // Load trend mensile e calendario POS
-        const [trendRes, posRes, notifRes] = await Promise.all([
+        // Load trend mensile, calendario POS e scadenze
+        const [trendRes, posRes, notifRes, scadenzeRes] = await Promise.all([
           api.get(`/api/dashboard/trend-mensile?anno=${anno}`).catch(() => ({ data: null })),
           api.get(`/api/pos-accredito/calendario-mensile/${anno}/${new Date().getMonth() + 1}`).catch(() => ({ data: null })),
-          api.get('/api/haccp-completo/notifiche?solo_non_lette=true&limit=1').catch(() => ({ data: { non_lette: 0 } }))
+          api.get('/api/haccp-completo/notifiche?solo_non_lette=true&limit=1').catch(() => ({ data: { non_lette: 0 } })),
+          api.get('/api/scadenze/prossime?giorni=30&limit=8').catch(() => ({ data: null }))
         ]);
         
         setTrendData(trendRes.data);
         setPosCalendario(posRes.data);
         setNotificheHaccp(notifRes.data.non_lette || 0);
+        setScadenzeData(scadenzeRes.data);
       } catch (e) {
         console.error("Dashboard error:", e);
         setErr("Backend non raggiungibile. Verifica che il server sia attivo.");
