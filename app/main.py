@@ -105,7 +105,8 @@ from app.routers import (
     employee_contracts,
     bank_statement_import,
     piano_conti,
-    commercialista
+    commercialista,
+    bilancio
 )
 
 # Include public API first (no auth required)
