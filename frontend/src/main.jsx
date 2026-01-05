@@ -40,6 +40,7 @@ import ImportExport from "./pages/ImportExport.jsx";
 import HACCPNotifiche from "./pages/HACCPNotifiche.jsx";
 import PianoDeiConti from "./pages/PianoDeiConti.jsx";
 import Commercialista from "./pages/Commercialista.jsx";
+import Bilancio from "./pages/Bilancio.jsx";
 
 const router = createBrowserRouter([
   {
