@@ -692,8 +692,13 @@ export default function ControlloMensile() {
           <div style={{ fontSize: 18, fontWeight: 'bold' }}>{formatCurrency(yearTotals.posManual)}</div>
         </div>
         <div style={{ background: 'linear-gradient(135deg, #ec4899 0%, #be185d 100%)', borderRadius: 12, padding: 14, color: 'white' }}>
-          <div style={{ fontSize: 11, opacity: 0.9 }}>🏦 POS Banca (Accrediti)</div>
+          <div style={{ fontSize: 11, opacity: 0.9 }}>🏦 POS Banca (PDV)</div>
           <div style={{ fontSize: 18, fontWeight: 'bold' }}>{formatCurrency(yearTotals.posBanca || 0)}</div>
+          {yearTotals.posBancaCommissioni > 0 && (
+            <div style={{ fontSize: 9, opacity: 0.8, marginTop: 2 }}>
+              Comm.: -{formatCurrency(yearTotals.posBancaCommissioni)}
+            </div>
+          )}
         </div>
         <div style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', borderRadius: 12, padding: 14, color: 'white' }}>
           <div style={{ fontSize: 11, opacity: 0.9 }}>Corrisp. Auto (XML)</div>
