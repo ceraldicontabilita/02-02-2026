@@ -589,6 +589,27 @@ export default function App() {
           color: white;
         }
         
+        /* Mobile Submenu styles */
+        .mobile-menu-submenu-header {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          padding: 16px 8px;
+          border-radius: 12px;
+          background: #1e293b;
+          color: white;
+          font-size: 12px;
+          text-align: center;
+          font-weight: 600;
+          grid-column: span 3;
+        }
+        
+        .mobile-submenu-child {
+          background: #e2e8f0;
+        }
+        
         /* Content Padding for Mobile Nav */
         .content {
           padding-bottom: 90px;
