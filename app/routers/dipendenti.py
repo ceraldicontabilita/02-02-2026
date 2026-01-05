@@ -947,11 +947,40 @@ def match_nomi_fuzzy(nome1: str, nome2: str) -> bool:
     if n1 == n2:
         return True
     
-    # Controlla alias
-    n1_canonical = DIPENDENTI_ALIAS.get(n1, n1)
-    n2_canonical = DIPENDENTI_ALIAS.get(n2, n2)
+    # Controlla alias - cerca tutte le varianti
+    def get_canonical(nome):
+        """Trova il nome canonico attraverso gli alias."""
+        # Match esatto negli alias
+        if nome in DIPENDENTI_ALIAS:
+            return DIPENDENTI_ALIAS[nome]
+        # Match parziale (contiene)
+        for alias, canonical in DIPENDENTI_ALIAS.items():
+            if alias in nome or nome in alias:
+                return canonical
+        return nome
+    
+    n1_canonical = get_canonical(n1)
+    n2_canonical = get_canonical(n2)
+    
     if n1_canonical == n2_canonical:
         return True
+    
+    # Se uno dei due è un alias conosciuto, verifica il canonico
+    # contro le parole dell'altro
+    if n1_canonical != n1:  # n1 aveva un alias
+        if n1_canonical in n2 or n2 in n1_canonical:
+            return True
+        # Verifica se il canonico è una parola del n2
+        for word in n2.split():
+            if len(word) >= 4 and (word == n1_canonical or word in n1_canonical or n1_canonical in word):
+                return True
+    
+    if n2_canonical != n2:  # n2 aveva un alias
+        if n2_canonical in n1 or n1 in n2_canonical:
+            return True
+        for word in n1.split():
+            if len(word) >= 4 and (word == n2_canonical or word in n2_canonical or n2_canonical in word):
+                return True
     
     # Uno contenuto nell'altro (per nomi lunghi)
     if len(n1) > 5 and len(n2) > 5:
