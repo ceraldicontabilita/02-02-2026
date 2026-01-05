@@ -902,6 +902,55 @@ def normalizza_nome(nome: str) -> str:
     return ' '.join(nome_norm.lower().split())
 
 
+def match_nomi_fuzzy(nome1: str, nome2: str) -> bool:
+    """
+    Match fuzzy tra due nomi. Gestisce:
+    - Case diverse
+    - Ordine cognome/nome invertito
+    - Nomi parziali (solo cognome)
+    - Nomi composti lunghi vs abbreviati
+    """
+    if not nome1 or not nome2:
+        return False
+    
+    n1 = normalizza_nome(nome1)
+    n2 = normalizza_nome(nome2)
+    
+    # Match esatto
+    if n1 == n2:
+        return True
+    
+    # Uno contenuto nell'altro
+    if n1 in n2 or n2 in n1:
+        return True
+    
+    # Split in parole
+    words1 = set(n1.split())
+    words2 = set(n2.split())
+    
+    # Se hanno almeno 2 parole in comune (nome e cognome)
+    common = words1 & words2
+    if len(common) >= 2:
+        return True
+    
+    # Se hanno il cognome in comune (prima parola di uno = ultima parola dell'altro o viceversa)
+    if words1 and words2:
+        list1 = n1.split()
+        list2 = n2.split()
+        
+        # Cognome match (prima o ultima parola)
+        cognomi1 = {list1[0], list1[-1]} if len(list1) > 1 else {list1[0]}
+        cognomi2 = {list2[0], list2[-1]} if len(list2) > 1 else {list2[0]}
+        
+        # Se cognomi matchano e hanno almeno 4 caratteri
+        for c1 in cognomi1:
+            for c2 in cognomi2:
+                if len(c1) >= 4 and len(c2) >= 4 and (c1 == c2 or c1 in c2 or c2 in c1):
+                    return True
+    
+    return False
+
+
 def estrai_nome_da_descrizione(descrizione: str) -> Optional[str]:
     """Estrae il nome del dipendente dalla descrizione del bonifico."""
     if not descrizione:
