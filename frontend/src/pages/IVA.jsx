@@ -361,13 +361,13 @@ export default function IVA() {
                       <div style={{ background: "#fff3e0", padding: 15, borderRadius: 8, textAlign: "center" }}>
                         <div className="small">Totale IVA Debito</div>
                         <div style={{ fontSize: 28, fontWeight: "bold", color: "#e65100" }}>
-                          € {annualData.totali?.iva_debito?.toLocaleString('it-IT', {minimumFractionDigits: 2})}
+                          {formatEuro(annualData.totali?.iva_debito)}
                         </div>
                       </div>
                       <div style={{ background: "#e8f5e9", padding: 15, borderRadius: 8, textAlign: "center" }}>
                         <div className="small">Totale IVA Credito</div>
                         <div style={{ fontSize: 28, fontWeight: "bold", color: "#2e7d32" }}>
-                          € {annualData.totali?.iva_credito?.toLocaleString('it-IT', {minimumFractionDigits: 2})}
+                          {formatEuro(annualData.totali?.iva_credito)}
                         </div>
                       </div>
                       <div style={{ 
@@ -382,7 +382,7 @@ export default function IVA() {
                           fontWeight: "bold", 
                           color: getSaldoColor(annualData.totali?.saldo) 
                         }}>
-                          € {annualData.totali?.saldo?.toLocaleString('it-IT', {minimumFractionDigits: 2})}
+                          {formatEuro(annualData.totali?.saldo)}
                         </div>
                       </div>
                     </div>
