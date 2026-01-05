@@ -23,7 +23,7 @@ export default function Commercialista() {
   const [log, setLog] = useState([]);
   
   // Anno dal context globale
-  const { anno: selectedYear } = useAnnoGlobale();
+  const { anno: selectedYear, setAnno } = useAnnoGlobale();
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth()); // 0-indexed for prev month
   
