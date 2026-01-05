@@ -2,8 +2,10 @@ import React, { useState, useEffect, useRef } from "react";
 import api from "../api";
 import { formatDateIT } from "../lib/utils";
 import { UploadProgressBar } from "../components/UploadProgressBar";
+import { useAnnoGlobale } from "../contexts/AnnoContext";
 
 export default function Corrispettivi() {
+  const { anno: selectedYear } = useAnnoGlobale();
   const currentYear = new Date().getFullYear();
   const [corrispettivi, setCorrispettivi] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -12,7 +14,6 @@ export default function Corrispettivi() {
   const [uploadResult, setUploadResult] = useState(null);
   const [err, setErr] = useState("");
   const [selectedItem, setSelectedItem] = useState(null);
-  const [selectedYear, setSelectedYear] = useState(currentYear);
   const fileInputRef = useRef(null);
   const bulkFileInputRef = useRef(null);
   const zipFileInputRef = useRef(null);
