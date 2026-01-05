@@ -15,17 +15,16 @@ Questo documento descrive l'architettura modulare dell'ERP con focus su:
 /app
 ├── app/                          # Backend FastAPI
 │   ├── services/                 # Business Logic Layer
-│   │   ├── business_rules.py     # ⭐ Regole centralizzate
+│   │   ├── business_rules.py     # ⭐ Regole centralizzate (FASE 1)
+│   │   ├── data_propagation.py   # ⭐ Propagazione dati (FASE 3)
 │   │   ├── invoice_service_v2.py # Fatture con sicurezza
-│   │   ├── corrispettivi_service.py # Corrispettivi
-│   │   ├── cash_service.py       # Prima Nota Cassa
 │   │   └── ...
-│   ├── routers/                  # API Endpoints
-│   │   ├── invoices.py
-│   │   ├── corrispettivi_router.py
-│   │   ├── prima_nota.py
+│   ├── routers/                  # API Endpoints (con controlli sicurezza)
+│   │   ├── invoices.py           # ✅ Controlli integrati
+│   │   ├── corrispettivi_router.py # ✅ Controlli integrati
+│   │   ├── prima_nota.py         # ✅ Controlli integrati (endpoint duplicati rimossi)
+│   │   ├── assegni.py            # ✅ Controlli integrati
 │   │   └── ...
-│   ├── repositories/             # Data Access Layer
 │   ├── models/                   # Pydantic Models
 │   └── utils/                    # Utilities
 │
@@ -33,7 +32,7 @@ Questo documento descrive l'architettura modulare dell'ERP con focus su:
     └── src/
         ├── pages/                # Pagine principali
         ├── components/           # Componenti riutilizzabili
-        └── hooks/                # Custom hooks (futuro)
+        └── hooks/useData.js      # ⭐ Custom hooks condivisi (FASE 4)
 ```
 
 ---
