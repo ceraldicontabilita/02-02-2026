@@ -475,3 +475,88 @@ async def delete_invoice(
     }
 
 
+
+
+@router.post("/recalculate-iva")
+async def recalculate_iva_all_invoices() -> Dict[str, Any]:
+    """
+    Ricalcola IVA e imponibile per tutte le fatture.
+    Aggiunge data_ricezione se mancante.
+    Usa i dati dal riepilogo_iva se disponibili.
+    """
+    db = Database.get_db()
+    
+    # Tipi documento Note Credito
+    NOTE_CREDITO_TYPES = ["TD04", "TD08"]
+    
+    updated_count = 0
+    errors = []
+    
+    # Trova tutte le fatture
+    cursor = db[Collections.INVOICES].find({}, {"_id": 0})
+    fatture = await cursor.to_list(10000)
+    
+    for f in fatture:
+        try:
+            updates = {}
+            
+            # Aggiungi data_ricezione se mancante (default = invoice_date)
+            if not f.get('data_ricezione'):
+                updates['data_ricezione'] = f.get('invoice_date', '')
+            
+            # Ricalcola IVA/imponibile dal riepilogo_iva se presente
+            riepilogo = f.get('riepilogo_iva', [])
+            if riepilogo:
+                imponibile_calc = 0
+                iva_calc = 0
+                for r in riepilogo:
+                    try:
+                        imponibile_calc += float(r.get('imponibile', 0) or 0)
+                        iva_calc += float(r.get('imposta', 0) or 0)
+                    except (ValueError, TypeError):
+                        pass
+                
+                # Aggiorna solo se i valori calcolati sono diversi da 0
+                if imponibile_calc > 0:
+                    current_imponibile = float(f.get('imponibile', 0) or 0)
+                    if abs(current_imponibile - imponibile_calc) > 0.01:
+                        updates['imponibile'] = round(imponibile_calc, 2)
+                
+                if iva_calc > 0:
+                    current_iva = float(f.get('iva', 0) or 0)
+                    if abs(current_iva - iva_calc) > 0.01:
+                        updates['iva'] = round(iva_calc, 2)
+            else:
+                # Se non c'è riepilogo_iva, calcola IVA dal totale (22%)
+                total = float(f.get('total_amount', 0) or 0)
+                if total > 0:
+                    current_iva = float(f.get('iva', 0) or 0)
+                    current_imponibile = float(f.get('imponibile', 0) or 0)
+                    
+                    if current_iva == 0:
+                        iva_stimata = round(total - (total / 1.22), 2)
+                        updates['iva'] = iva_stimata
+                        updates['iva_stimata'] = True  # Flag per indicare che è stimata
+                    
+                    if current_imponibile == 0:
+                        imponibile_stimato = round(total / 1.22, 2)
+                        updates['imponibile'] = imponibile_stimato
+            
+            # Applica aggiornamenti
+            if updates:
+                updates['updated_at'] = datetime.utcnow().isoformat()
+                await db[Collections.INVOICES].update_one(
+                    {"id": f['id']},
+                    {"$set": updates}
+                )
+                updated_count += 1
+                
+        except Exception as e:
+            errors.append(f"Errore fattura {f.get('invoice_number', 'N/A')}: {str(e)}")
+    
+    return {
+        "success": True,
+        "fatture_analizzate": len(fatture),
+        "fatture_aggiornate": updated_count,
+        "errors": errors[:20] if errors else []
+    }
