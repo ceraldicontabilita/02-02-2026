@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import api from "../api";
-import { formatDateIT } from "../lib/utils";
+import { formatDateIT, formatEuro } from "../lib/utils";
 
 export default function PrimaNotaCassa() {
   const [movements, setMovements] = useState([]);
@@ -71,7 +71,7 @@ export default function PrimaNotaCassa() {
         <div className="card" style={{ background: balance >= 0 ? "#e8f5e9" : "#ffebee" }}>
           <div className="small">Saldo Cassa</div>
           <div className="kpi" style={{ color: balance >= 0 ? "#2e7d32" : "#c62828" }}>
-            € {balance.toFixed(2)}
+            {formatEuro(balance)}
           </div>
         </div>
         <div className="card">
@@ -152,7 +152,7 @@ export default function PrimaNotaCassa() {
                     </span>
                   </td>
                   <td style={{ padding: 8, color: m.type === "entrata" ? "#2e7d32" : "#c62828", fontWeight: "bold" }}>
-                    {m.type === "entrata" ? "+" : "-"} € {m.amount.toFixed(2)}
+                    {m.type === "entrata" ? "+" : "-"} {formatEuro(m.amount)}
                   </td>
                   <td style={{ padding: 8 }}>{m.description}</td>
                   <td style={{ padding: 8 }}>{m.category || "-"}</td>
