@@ -19,9 +19,13 @@ export default function PrimaNotaMobile() {
   const loadData = async () => {
     setLoading(true);
     try {
+      // Build date range for the selected month
+      const startDate = `${anno}-${String(selectedMonth).padStart(2, '0')}-01`;
+      const endDate = `${anno}-${String(selectedMonth).padStart(2, '0')}-31`;
+      
       const [cassaRes, bancaRes] = await Promise.all([
-        api.get(`/api/prima-nota/cassa/${anno}/${selectedMonth}`),
-        api.get(`/api/prima-nota/banca/${anno}/${selectedMonth}`)
+        api.get(`/api/prima-nota/cassa?anno=${anno}&data_da=${startDate}&data_a=${endDate}`),
+        api.get(`/api/prima-nota/banca?anno=${anno}&data_da=${startDate}&data_a=${endDate}`)
       ]);
       
       const cassa = cassaRes.data?.movimenti || [];
@@ -30,8 +34,16 @@ export default function PrimaNotaMobile() {
       setMovimenti({
         cassa: cassa,
         banca: banca,
-        totaliCassa: cassaRes.data?.totali || {},
-        totaliBanca: bancaRes.data?.totali || {}
+        totaliCassa: {
+          totale_entrate: cassaRes.data?.totale_entrate || 0,
+          totale_uscite: cassaRes.data?.totale_uscite || 0,
+          saldo: cassaRes.data?.saldo || 0
+        },
+        totaliBanca: {
+          totale_entrate: bancaRes.data?.totale_entrate || 0,
+          totale_uscite: bancaRes.data?.totale_uscite || 0,
+          saldo: bancaRes.data?.saldo || 0
+        }
       });
     } catch (e) {
       console.error('Errore caricamento dati:', e);
