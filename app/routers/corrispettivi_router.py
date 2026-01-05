@@ -70,6 +70,55 @@ async def ricalcola_iva_corrispettivi() -> Dict[str, Any]:
     return {"updated": updated, "message": f"IVA ricalcolata su {updated} corrispettivi"}
 
 
+@router.post("/ricalcola-annulli-non-riscosso")
+async def ricalcola_annulli_non_riscosso() -> Dict[str, Any]:
+    """Ricalcola pagato_non_riscosso su tutti i corrispettivi esistenti.
+    
+    Pagato Non Riscosso = totale lordo riepiloghi - (PagatoContanti + PagatoElettronico)
+    """
+    db = Database.get_db()
+    
+    corrispettivi = await db["corrispettivi"].find({}, {"_id": 0}).to_list(10000)
+    
+    updated = 0
+    for corr in corrispettivi:
+        riepilogo_iva = corr.get("riepilogo_iva", [])
+        pagato_contanti = float(corr.get("pagato_contanti", 0) or 0)
+        pagato_elettronico = float(corr.get("pagato_elettronico", 0) or 0)
+        totale_corrispettivi = pagato_contanti + pagato_elettronico
+        
+        # Calcola totale lordo dai riepiloghi
+        totale_ammontare = sum(float(r.get('ammontare', 0) or 0) for r in riepilogo_iva)
+        totale_importo_parziale = sum(float(r.get('importo_parziale', 0) or 0) for r in riepilogo_iva)
+        
+        # Usa importo_parziale se presente (è già il lordo), altrimenti ammontare + imposta
+        if totale_importo_parziale > 0:
+            totale_lordo = totale_importo_parziale
+        else:
+            totale_imposta = sum(float(r.get('imposta', 0) or 0) for r in riepilogo_iva)
+            totale_lordo = totale_ammontare + totale_imposta
+        
+        # Pagato non riscosso = lordo - (contanti + elettronico)
+        pagato_non_riscosso = max(0, round(totale_lordo - totale_corrispettivi, 2))
+        
+        # Inizializza totale_ammontare_annulli a 0 se non presente
+        # (verrà aggiornato quando reimportano gli XML)
+        update_data = {
+            "pagato_non_riscosso": pagato_non_riscosso
+        }
+        
+        if "totale_ammontare_annulli" not in corr:
+            update_data["totale_ammontare_annulli"] = 0
+        
+        await db["corrispettivi"].update_one(
+            {"id": corr.get("id")},
+            {"$set": update_data}
+        )
+        updated += 1
+    
+    return {"updated": updated, "message": f"Ricalcolati annulli/non riscosso su {updated} corrispettivi"}
+
+
 @router.get("/totals")
 async def get_corrispettivi_totals() -> Dict[str, Any]:
     """Totali corrispettivi."""
