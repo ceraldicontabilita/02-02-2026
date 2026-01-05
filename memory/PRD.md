@@ -116,6 +116,17 @@ SALDO IVA:
 
 ## Changelog
 
+### 2026-01-05 (Sessione 12 - Fix Commercialista + Card Doc. Commerciali)
+- **FIX Pagina Commercialista**:
+  - ❌ **Problema**: Prima Nota Cassa non popolata per Gennaio 2025 (0 movimenti)
+  - ✅ **Soluzione**: Corretta query in `commercialista.py` per usare regex su date (`^YYYY-MM`) invece di confronto datetime
+  - ✅ **Verificato**: Gennaio 2025 ora mostra 104 movimenti, Entrate €69.037, Uscite €64.812, Saldo €4.225
+
+- **NUOVA Card "Documenti Commerciali" in Controllo Mensile**:
+  - Mostra il conteggio totale degli scontrini/ricevute emessi (da XML corrispettivi)
+  - Campo `numero_documenti` già presente nei corrispettivi
+  - Totale annuale visibile nella card grigia in alto
+
 ### 2026-01-05 (Sessione 11 - Miglioramenti Calcolo IVA)
 - **NUOVO CAMPO `data_ricezione`**:
   - Aggiunto campo `data_ricezione` a tutte le fatture (1333 aggiornate)
