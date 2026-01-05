@@ -403,11 +403,11 @@ export default function IVA() {
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
                               <span className="small">IVA Debito:</span>
-                              <span style={{ color: "#e65100", fontWeight: 'bold' }}>€ {q.iva_debito.toFixed(2)}</span>
+                              <span style={{ color: "#e65100", fontWeight: 'bold' }}>{formatEuro(q.iva_debito)}</span>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
                               <span className="small">IVA Credito:</span>
-                              <span style={{ color: "#2e7d32", fontWeight: 'bold' }}>€ {q.iva_credito.toFixed(2)}</span>
+                              <span style={{ color: "#2e7d32", fontWeight: 'bold' }}>{formatEuro(q.iva_credito)}</span>
                             </div>
                             <div style={{ 
                               display: 'flex', 
@@ -422,7 +422,7 @@ export default function IVA() {
                                 fontWeight: 'bold',
                                 fontSize: 18
                               }}>
-                                € {q.saldo.toFixed(2)}
+                                {formatEuro(q.saldo)}
                               </span>
                             </div>
                             <div style={{ textAlign: 'center', marginTop: 8 }}>
@@ -466,10 +466,10 @@ export default function IVA() {
                             <tr key={i} style={{ borderBottom: "1px solid #eee" }}>
                               <td style={{ padding: 10, fontWeight: "bold" }}>{q.name}</td>
                               <td style={{ padding: 10, textAlign: "right", color: "#e65100" }}>
-                                € {q.iva_debito.toFixed(2)}
+                                {formatEuro(q.iva_debito)}
                               </td>
                               <td style={{ padding: 10, textAlign: "right", color: "#2e7d32" }}>
-                                € {q.iva_credito.toFixed(2)}
+                                {formatEuro(q.iva_credito)}
                               </td>
                               <td style={{ 
                                 padding: 10, 
@@ -477,7 +477,7 @@ export default function IVA() {
                                 fontWeight: "bold",
                                 color: getSaldoColor(q.saldo)
                               }}>
-                                € {q.saldo.toFixed(2)}
+                                {formatEuro(q.saldo)}
                               </td>
                               <td style={{ padding: 10, textAlign: "center" }}>
                                 <span style={{ 
