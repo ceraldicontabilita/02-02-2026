@@ -180,6 +180,23 @@ export default function GestioneDipendenti() {
     }
   };
 
+  const handleResetRiconciliazione = async () => {
+    const conferma = window.confirm(
+      `Reset dello stato di riconciliazione per l'anno ${selectedYear}?\n\n` +
+      `Questo rimuoverà lo stato "Riconciliato" da tutti i salari dell'anno ${selectedYear}, ` +
+      `permettendoti di ri-testare la riconciliazione con nuovi file.`
+    );
+    if (!conferma) return;
+    
+    try {
+      const res = await api.delete(`/api/dipendenti/salari/reset-reconciliation?anno=${selectedYear}`);
+      alert(`✅ ${res.data.message}\n\nSalari resettati: ${res.data.salari_resettati}`);
+      loadPrimaNotaSalari();
+    } catch (error) {
+      alert('Errore: ' + (error.response?.data?.detail || error.message));
+    }
+  };
+
   const handleImportEstrattoConto = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
