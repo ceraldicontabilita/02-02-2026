@@ -140,7 +140,7 @@ export default function Commercialista() {
         ];
       });
       
-      doc.autoTable({
+      autoTable(doc, {
         startY: 75,
         head: [['Data', 'Tipo', 'Importo', 'Descrizione', 'Categoria']],
         body: tableData,
