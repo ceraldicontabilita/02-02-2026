@@ -79,17 +79,11 @@ export default function IVA() {
       {/* Controlli */}
       <div className="card">
         <div className="row" style={{ alignItems: "center", gap: 15 }}>
-          <div>
-            <label style={{ marginRight: 8 }}>Anno:</label>
-            <select 
-              value={selectedYear} 
-              onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-              style={{ padding: "6px 12px" }}
-            >
-              {[2023, 2024, 2025, 2026].map(y => (
-                <option key={y} value={y}>{y}</option>
-              ))}
-            </select>
+          <div style={{ background: '#dbeafe', padding: '8px 16px', borderRadius: 8, color: '#1e40af', fontWeight: 'bold' }}>
+            📅 Anno: {selectedYear}
+            <span style={{ fontSize: 11, fontWeight: 'normal', marginLeft: 8, color: '#3b82f6' }}>
+              (cambia dalla barra laterale)
+            </span>
           </div>
           <div>
             <label style={{ marginRight: 8 }}>Mese:</label>
@@ -127,7 +121,7 @@ export default function IVA() {
             </button>
             <button 
               className={viewMode === "today" ? "primary" : ""} 
-              onClick={() => setViewMode("today")}
+              onClick={() => setViewMode("today")}}
             >
               Oggi
             </button>
