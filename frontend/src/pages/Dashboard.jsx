@@ -3,6 +3,7 @@ import { dashboardSummary, health } from "../api";
 import api from "../api";
 import { Link } from "react-router-dom";
 import { useAnnoGlobale } from "../contexts/AnnoContext";
+import { formatEuro } from "../lib/utils";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
 
 export default function Dashboard() {
@@ -47,8 +48,6 @@ export default function Dashboard() {
       }
     })();
   }, [anno]);
-
-  const formatCurrency = (val) => new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(val || 0);
 
   if (loading) {
     return (
@@ -156,16 +155,16 @@ export default function Dashboard() {
             <div style={{ display: 'flex', gap: 20, fontSize: 14 }}>
               <div>
                 <span style={{ color: '#10b981' }}>● Entrate:</span>{' '}
-                <strong>{formatCurrency(trendData.totali?.entrate)}</strong>
+                <strong>{formatEuro(trendData.totali?.entrate)}</strong>
               </div>
               <div>
                 <span style={{ color: '#ef4444' }}>● Uscite:</span>{' '}
-                <strong>{formatCurrency(trendData.totali?.uscite)}</strong>
+                <strong>{formatEuro(trendData.totali?.uscite)}</strong>
               </div>
               <div>
                 <span style={{ color: trendData.totali?.saldo >= 0 ? '#10b981' : '#ef4444' }}>● Saldo:</span>{' '}
                 <strong style={{ color: trendData.totali?.saldo >= 0 ? '#10b981' : '#ef4444' }}>
-                  {formatCurrency(trendData.totali?.saldo)}
+                  {formatEuro(trendData.totali?.saldo)}
                 </strong>
               </div>
             </div>
@@ -202,13 +201,13 @@ export default function Dashboard() {
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: 12, color: '#6b7280' }}>Media Entrate</div>
               <div style={{ fontSize: 18, fontWeight: 'bold', color: '#10b981' }}>
-                {formatCurrency(trendData.statistiche?.media_entrate_mensile)}
+                {formatEuro(trendData.statistiche?.media_entrate_mensile)}
               </div>
             </div>
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: 12, color: '#6b7280' }}>Media Uscite</div>
               <div style={{ fontSize: 18, fontWeight: 'bold', color: '#ef4444' }}>
-                {formatCurrency(trendData.statistiche?.media_uscite_mensile)}
+                {formatEuro(trendData.statistiche?.media_uscite_mensile)}
               </div>
             </div>
             <div style={{ textAlign: 'center' }}>
@@ -554,7 +553,7 @@ function ScadenzeWidget({ scadenze }) {
                 </div>
                 {s.importo > 0 && (
                   <div style={{ fontSize: 12, color: colors.text, fontWeight: 'bold' }}>
-                    € {s.importo.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+                    {formatEuro(s.importo)}
                   </div>
                 )}
               </div>
