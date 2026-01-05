@@ -917,28 +917,6 @@ export default function Commercialista() {
               )}
             </div>
           </div>
-                          disabled={sending === 'carnet' || !config.smtp_configured}
-                          data-testid="send-carnet-email"
-                          style={{
-                            flex: 1,
-                            padding: '12px',
-                            background: sending === 'carnet' ? '#ccc' : '#4caf50',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: 8,
-                            cursor: sending === 'carnet' ? 'wait' : 'pointer',
-                            fontWeight: 'bold'
-                          }}
-                        >
-                          {sending === 'carnet' ? '⏳ Invio...' : '📧 Invia Email'}
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </>
-              )}
-            </div>
-          </div>
         </div>
       )}
 
