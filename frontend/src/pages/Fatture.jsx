@@ -973,10 +973,10 @@ export default function Fatture() {
           <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 800 }}>
             <thead>
               <tr style={{ borderBottom: "2px solid #ddd", textAlign: "left" }}>
+                <th style={{ padding: 8, whiteSpace: 'nowrap' }}>Data</th>
                 <th style={{ padding: 8, whiteSpace: 'nowrap' }}>Numero</th>
                 <th style={{ padding: 8, whiteSpace: 'nowrap' }}>Tipo</th>
                 <th style={{ padding: 8, whiteSpace: 'nowrap' }}>Fornitore</th>
-                <th style={{ padding: 8, whiteSpace: 'nowrap' }}>Data</th>
                 <th style={{ padding: 8, whiteSpace: 'nowrap' }}>Importo</th>
                 <th style={{ padding: 8, whiteSpace: 'nowrap' }}>Metodo Pag.</th>
                 <th style={{ padding: 8, whiteSpace: 'nowrap' }}>Stato</th>
@@ -998,6 +998,7 @@ export default function Fatture() {
                   onMouseLeave={(e) => e.currentTarget.style.background = selectedInvoice?.id === inv.id ? "#e3f2fd" : "transparent"}
                   data-testid={`invoice-row-${inv.id}`}
                 >
+                  <td style={{ padding: 8, whiteSpace: 'nowrap' }}>{formatDateIT(inv.invoice_date) || "-"}</td>
                   <td style={{ padding: 8 }}>
                     <strong>{inv.invoice_number || "-"}</strong>
                   </td>
