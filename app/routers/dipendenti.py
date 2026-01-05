@@ -383,56 +383,6 @@ async def import_salari_excel(file: UploadFile = File(...)) -> Dict[str, Any]:
         "total_rows": sheet.max_row - 1,
         "aggregati": len(aggregati)
     }
-            # Converti importi
-            stipendio = float(stipendio_netto or 0)
-            erogato = float(importo_erogato or stipendio)
-            
-            # Crea data per il movimento (ultimo giorno del mese)
-            from calendar import monthrange
-            _, last_day = monthrange(int(anno), mese)
-            data_movimento = f"{anno}-{mese:02d}-{last_day:02d}"
-            
-            # Crea ID univoco per evitare duplicati
-            movimento_id = f"SAL-{anno}-{mese:02d}-{dipendente_nome.replace(' ', '-')}"
-            
-            # Controlla se già esiste
-            existing = await db["prima_nota_salari"].find_one({"id": movimento_id})
-            if existing:
-                skipped += 1
-                continue
-            
-            # Inserisci movimento salari
-            movimento = {
-                "id": movimento_id,
-                "dipendente": dipendente_nome,
-                "mese": mese,
-                "mese_nome": mese_str.capitalize(),
-                "anno": int(anno),
-                "data": data_movimento,
-                "stipendio_netto": round(stipendio, 2),
-                "importo_erogato": round(erogato, 2),
-                "importo": round(erogato, 2),
-                "tipo": "uscita",
-                "categoria": "SALARIO",
-                "descrizione": f"Stipendio {mese_str} {anno} - {dipendente_nome}",
-                "created_at": datetime.utcnow().isoformat(),
-                "imported": True
-            }
-            
-            await db["prima_nota_salari"].insert_one(movimento)
-            imported += 1
-            
-        except Exception as e:
-            errors.append(f"Riga {row_num}: {str(e)}")
-            skipped += 1
-    
-    return {
-        "message": f"Importazione completata",
-        "imported": imported,
-        "skipped": skipped,
-        "errors": errors[:20] if errors else [],
-        "total_rows": sheet.max_row - 1
-    }
 
 
 @router.get("/salari")
