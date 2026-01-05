@@ -74,6 +74,12 @@ Sistema ERP completo per gestione aziendale con focus su contabilità, fatturazi
 - Sezione Banca (bonifici, riconciliazione)
 - Saldi automatici
 
+### 4b. Import Estratto Conto (`/estratto-conto`) - NUOVO
+- Parser PDF per estratti conto BANCO BPM
+- Estrazione automatica movimenti (entrate/uscite)
+- Anteprima dati prima dell'import
+- Import in Prima Nota Banca con controllo duplicati
+
 ### 5. IVA (`/iva`)
 - Calcolo liquidazione periodica (mensile/trimestrale)
 - IVA debito (corrispettivi) vs IVA credito (fatture)
