@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from "react";
 import api from "../api";
+import { useAnnoGlobale } from "../contexts/AnnoContext";
 
 export default function Finanziaria() {
-  const currentYear = new Date().getFullYear();
+  const { anno: annoGlobale } = useAnnoGlobale();
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [selectedYear, setSelectedYear] = useState(currentYear);
+  const [selectedYear, setSelectedYear] = useState(annoGlobale);
 
-  // Anni disponibili (ultimi 5 anni)
-  const availableYears = [];
-  for (let y = currentYear; y >= currentYear - 4; y--) {
-    availableYears.push(y);
-  }
+  // Sincronizza con anno globale
+  useEffect(() => {
+    setSelectedYear(annoGlobale);
+  }, [annoGlobale]);
 
   useEffect(() => {
     loadSummary();
@@ -39,25 +39,18 @@ export default function Finanziaria() {
       <div className="card">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
           <div>
-            <div className="h1">📊 Situazione Finanziaria</div>
+            <div className="h1">📊 Situazione Finanziaria {selectedYear}</div>
             <div className="small">Riepilogo finanziario con IVA da Corrispettivi e Fatture</div>
           </div>
           
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <label style={{ fontWeight: "bold" }}>📅 Anno:</label>
-            <select
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-              style={{ 
-                padding: "10px 16px", 
-                borderRadius: 8, 
-                border: "2px solid #1565c0", 
-                fontSize: 16,
-                fontWeight: "bold",
-                cursor: "pointer",
-                minWidth: 100,
-                background: "#e3f2fd"
-              }}
+          <div style={{ background: '#dbeafe', padding: '10px 20px', borderRadius: 8, color: '#1e40af', fontWeight: 'bold' }}>
+            📅 Anno: {selectedYear}
+            <span style={{ fontSize: 11, fontWeight: 'normal', marginLeft: 8, color: '#3b82f6' }}>
+              (cambia dalla barra laterale)
+            </span>
+          </div>
+        </div>
+      </div>
               data-testid="finanziaria-year-selector"
             >
               {availableYears.map(y => (
