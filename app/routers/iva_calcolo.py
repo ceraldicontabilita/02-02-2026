@@ -67,12 +67,10 @@ def format_date_italian(date_str: str) -> str:
 async def get_iva_daily(date_param: str) -> Dict[str, Any]:
     """IVA giornaliera: debito (corrispettivi) vs credito (fatture).
     
+    IMPORTANTE: Usa data_ricezione per le fatture (data SDI), non invoice_date.
     Le Note Credito (TD04, TD08) vengono SOTTRATTE dal totale IVA.
     """
     db = Database.get_db()
-    
-    # Tipi documento Note Credito
-    NOTE_CREDITO_TYPES = ["TD04", "TD08"]
     
     try:
         # IVA DEBITO - Corrispettivi
@@ -80,8 +78,14 @@ async def get_iva_daily(date_param: str) -> Dict[str, Any]:
         iva_debito = sum(float(c.get('totale_iva', 0) or 0) for c in corrispettivi)
         totale_corr = sum(float(c.get('totale', 0) or 0) for c in corrispettivi)
         
-        # IVA CREDITO - Fatture (con gestione Note Credito)
-        fatture = await db["invoices"].find({"invoice_date": date_param}, {"_id": 0}).to_list(1000)
+        # IVA CREDITO - Fatture RICEVUTE nel giorno (usa data_ricezione, fallback a invoice_date)
+        fatture = await db["invoices"].find({
+            "$or": [
+                {"data_ricezione": date_param},
+                {"$and": [{"data_ricezione": {"$exists": False}}, {"invoice_date": date_param}]}
+            ]
+        }, {"_id": 0}).to_list(1000)
+        
         iva_credito = 0
         iva_note_credito = 0
         imponibile_fatture = 0
@@ -93,10 +97,10 @@ async def get_iva_daily(date_param: str) -> Dict[str, Any]:
             tipo_doc = f.get('tipo_documento', '')
             is_nota_credito = tipo_doc in NOTE_CREDITO_TYPES
             
-            # Calcola IVA
-            f_iva = float(f.get('iva', 0) or f.get('totale_iva', 0) or 0)
+            # Usa IVA dal campo o dal riepilogo_iva
+            f_iva = float(f.get('iva', 0) or 0)
             total = float(f.get('total_amount', 0) or f.get('importo_totale', 0) or 0)
-            imponibile = float(f.get('imponibile', 0) or f.get('importo_imponibile', 0) or 0)
+            imponibile = float(f.get('imponibile', 0) or 0)
             
             if f_iva == 0 and total > 0:
                 # Stima IVA al 22% se non presente
