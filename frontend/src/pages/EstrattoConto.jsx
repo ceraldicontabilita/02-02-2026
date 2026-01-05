@@ -63,7 +63,14 @@ export default function EstrattoConto() {
 
   const loadRiepilogo = async () => {
     try {
-      const res = await api.get(`/api/estratto-conto-movimenti/riepilogo?anno=${selectedYear}`);
+      const params = new URLSearchParams();
+      params.append('anno', selectedYear);
+      if (selectedMonth) params.append('mese', selectedMonth);
+      if (selectedCategoria) params.append('categoria', selectedCategoria);
+      if (selectedTipo) params.append('tipo', selectedTipo);
+      if (selectedFornitore) params.append('fornitore', selectedFornitore);
+      
+      const res = await api.get(`/api/estratto-conto-movimenti/riepilogo?${params}`);
       setRiepilogo(res.data);
     } catch (error) {
       console.error('Errore caricamento riepilogo:', error);
