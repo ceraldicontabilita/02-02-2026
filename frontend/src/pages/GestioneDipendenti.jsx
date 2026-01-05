@@ -690,7 +690,7 @@ export default function GestioneDipendenti() {
       {/* TAB: Prima Nota Salari */}
       {activeTab === 'salari' && (
         <>
-          {/* Filtri periodo + Importazione */}
+          {/* Filtri periodo */}
           <div style={{ 
             display: 'flex', 
             gap: 12, 
@@ -736,117 +736,109 @@ export default function GestioneDipendenti() {
             </select>
           </div>
           
-          {/* Pulsanti Importazione */}
+          {/* Pulsanti Importazione - NUOVI */}
           <div style={{ 
             display: 'flex', 
             gap: 12, 
             marginBottom: 20, 
             flexWrap: 'wrap'
           }}>
-            {/* Import Excel Salari */}
+            {/* Import PAGHE (buste paga) */}
             <label style={{
               padding: '10px 20px',
-              background: 'linear-gradient(135deg, #4caf50, #2e7d32)',
+              background: importingSalari ? '#9ca3af' : 'linear-gradient(135deg, #4caf50, #2e7d32)',
               color: 'white',
               border: 'none',
               borderRadius: 8,
               cursor: importingSalari ? 'wait' : 'pointer',
-              opacity: importingSalari ? 0.7 : 1,
               display: 'flex',
               alignItems: 'center',
               gap: 8,
-              fontWeight: 'bold',
-              boxShadow: '0 2px 8px rgba(76,175,80,0.3)'
+              fontWeight: 'bold'
             }}>
-              {importingSalari ? '⏳ Importando...' : '📊 Importa Buste Paga (Excel)'}
+              {importingSalari ? '⏳ Importando...' : '📊 Importa PAGHE (Excel)'}
               <input
                 type="file"
                 accept=".xlsx,.xls"
-                onChange={handleImportSalari}
+                onChange={handleImportPaghe}
                 disabled={importingSalari}
                 style={{ display: 'none' }}
               />
             </label>
             
-            {/* Import Estratto Conto per Riconciliazione */}
+            {/* Import BONIFICI */}
             <label style={{
               padding: '10px 20px',
-              background: 'linear-gradient(135deg, #2196f3, #1565c0)',
+              background: importingEstratto ? '#9ca3af' : 'linear-gradient(135deg, #2196f3, #1565c0)',
               color: 'white',
               border: 'none',
               borderRadius: 8,
               cursor: importingEstratto ? 'wait' : 'pointer',
-              opacity: importingEstratto ? 0.7 : 1,
               display: 'flex',
               alignItems: 'center',
               gap: 8,
-              fontWeight: 'bold',
-              boxShadow: '0 2px 8px rgba(33,150,243,0.3)'
+              fontWeight: 'bold'
             }}>
-              {importingEstratto ? '⏳ Riconciliando...' : '🏦 Importa Estratto Conto (CSV/Excel)'}
+              {importingEstratto ? '⏳ Importando...' : '🏦 Importa BONIFICI (Excel)'}
               <input
                 type="file"
-                accept=".xlsx,.xls,.csv"
-                onChange={handleImportEstrattoConto}
+                accept=".xlsx,.xls"
+                onChange={handleImportBonifici}
                 disabled={importingEstratto}
                 style={{ display: 'none' }}
               />
             </label>
             
-            {/* Reset Riconciliazione */}
+            {/* Export Excel */}
             <button
-              onClick={handleResetRiconciliazione}
+              onClick={handleExportSalariExcel}
+              disabled={salariMovimenti.length === 0}
               style={{
                 padding: '10px 20px',
-                background: 'linear-gradient(135deg, #9c27b0, #7b1fa2)',
+                background: salariMovimenti.length === 0 ? '#d1d5db' : 'linear-gradient(135deg, #10b981, #059669)',
                 color: 'white',
                 border: 'none',
                 borderRadius: 8,
-                cursor: 'pointer',
-                fontWeight: 'bold',
-                boxShadow: '0 2px 8px rgba(156,39,176,0.3)'
+                cursor: salariMovimenti.length === 0 ? 'not-allowed' : 'pointer',
+                fontWeight: 'bold'
               }}
-              title="Reset stato riconciliazione per ri-testare"
             >
-              🔄 Reset Riconciliazione
+              📥 Esporta Excel
             </button>
             
-            {/* Elimina anno */}
+            {/* Reset Dati */}
             <button
-              onClick={handleDeleteSalariAnno}
+              onClick={handleResetSalari}
               style={{
                 padding: '10px 20px',
-                background: 'linear-gradient(135deg, #ef5350, #c62828)',
+                background: 'linear-gradient(135deg, #ef4444, #b91c1c)',
                 color: 'white',
                 border: 'none',
                 borderRadius: 8,
                 cursor: 'pointer',
-                fontWeight: 'bold',
-                boxShadow: '0 2px 8px rgba(239,83,80,0.3)'
+                fontWeight: 'bold'
               }}
-              title={`Elimina tutti i salari del ${selectedYear}`}
             >
-              🗑️ Elimina Anno
+              🗑️ Reset Tutti i Dati
             </button>
             
             <button
               onClick={loadPrimaNotaSalari}
               style={{
                 padding: '10px 20px',
-                background: 'linear-gradient(135deg, #ff9800, #f57c00)',
+                background: 'linear-gradient(135deg, #6b7280, #4b5563)',
                 color: 'white',
                 border: 'none',
                 borderRadius: 8,
                 cursor: 'pointer',
-                fontWeight: 'bold',
-                boxShadow: '0 2px 8px rgba(255,152,0,0.3)'
+                fontWeight: 'bold'
               }}
             >
               🔄 Aggiorna
             </button>
           </div>
 
-          {/* Risultato importazione buste paga */}
+          {/* Risultato import PAGHE */}
           {importResult && (
             <div style={{
               padding: 16,
@@ -856,48 +848,23 @@ export default function GestioneDipendenti() {
               border: `1px solid ${importResult.error ? '#ef5350' : '#4caf50'}`
             }}>
               {importResult.error ? (
-                <div style={{ color: '#c62828' }}>
-                  <strong>❌ Errore:</strong> {importResult.message}
-                </div>
+                <div style={{ color: '#c62828' }}>❌ {importResult.message}</div>
               ) : (
                 <>
                   <div style={{ fontWeight: 'bold', color: '#2e7d32', marginBottom: 8 }}>
                     ✅ {importResult.message}
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 12 }}>
-                    <div>
-                      <div style={{ fontSize: 12, color: '#666' }}>Importati</div>
-                      <div style={{ fontSize: 24, fontWeight: 'bold', color: '#2e7d32' }}>{importResult.imported}</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 12, color: '#666' }}>Saltati (duplicati)</div>
-                      <div style={{ fontSize: 24, fontWeight: 'bold', color: '#f57c00' }}>{importResult.skipped}</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 12, color: '#666' }}>Totale righe</div>
-                      <div style={{ fontSize: 24, fontWeight: 'bold', color: '#1565c0' }}>{importResult.total_rows}</div>
-                    </div>
+                  <div style={{ display: 'flex', gap: 20 }}>
+                    <div><strong>{importResult.created}</strong> creati</div>
+                    <div><strong>{importResult.updated}</strong> aggiornati</div>
                   </div>
-                  {importResult.errors && importResult.errors.length > 0 && (
-                    <div style={{ marginTop: 12, fontSize: 12, color: '#c62828' }}>
-                      <strong>Errori:</strong>
-                      <ul style={{ margin: '4px 0', paddingLeft: 20 }}>
-                        {importResult.errors.slice(0, 5).map((err, i) => <li key={i}>{err}</li>)}
-                      </ul>
-                    </div>
-                  )}
                 </>
               )}
-              <button 
-                onClick={() => setImportResult(null)} 
-                style={{ marginTop: 8, fontSize: 12, cursor: 'pointer' }}
-              >
-                ✕ Chiudi
-              </button>
+              <button onClick={() => setImportResult(null)} style={{ marginTop: 8, fontSize: 12, cursor: 'pointer' }}>✕ Chiudi</button>
             </div>
           )}
 
-          {/* Risultato importazione estratto conto */}
+          {/* Risultato import BONIFICI */}
           {estrattoResult && (
             <div style={{
               padding: 16,
@@ -907,52 +874,19 @@ export default function GestioneDipendenti() {
               border: `1px solid ${estrattoResult.error ? '#ef5350' : '#2196f3'}`
             }}>
               {estrattoResult.error ? (
-                <div style={{ color: '#c62828' }}>
-                  <strong>❌ Errore:</strong> {estrattoResult.message}
-                </div>
+                <div style={{ color: '#c62828' }}>❌ {estrattoResult.message}</div>
               ) : (
                 <>
                   <div style={{ fontWeight: 'bold', color: '#1565c0', marginBottom: 8 }}>
                     🏦 {estrattoResult.message}
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 }}>
-                    <div>
-                      <div style={{ fontSize: 12, color: '#666' }}>Movimenti Banca</div>
-                      <div style={{ fontSize: 24, fontWeight: 'bold', color: '#1565c0' }}>{estrattoResult.movimenti_banca}</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 12, color: '#666' }}>Riconciliati</div>
-                      <div style={{ fontSize: 24, fontWeight: 'bold', color: '#2e7d32' }}>{estrattoResult.riconciliati}</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 12, color: '#666' }}>Già Riconciliati</div>
-                      <div style={{ fontSize: 24, fontWeight: 'bold', color: '#9e9e9e' }}>{estrattoResult.gia_riconciliati}</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 12, color: '#666' }}>Non Trovati</div>
-                      <div style={{ fontSize: 24, fontWeight: 'bold', color: '#f57c00' }}>{estrattoResult.non_trovati}</div>
-                    </div>
+                  <div style={{ display: 'flex', gap: 20 }}>
+                    <div><strong>{estrattoResult.created}</strong> creati</div>
+                    <div><strong>{estrattoResult.updated}</strong> aggiornati</div>
                   </div>
-                  {estrattoResult.dettaglio_non_trovati && estrattoResult.dettaglio_non_trovati.length > 0 && (
-                    <div style={{ marginTop: 12, fontSize: 12 }}>
-                      <strong>Bonifici non abbinati:</strong>
-                      <ul style={{ margin: '4px 0', paddingLeft: 20, maxHeight: 150, overflow: 'auto' }}>
-                        {estrattoResult.dettaglio_non_trovati.slice(0, 10).map((m, i) => (
-                          <li key={i} style={{ color: '#666' }}>
-                            {m.data} - {m.nome || 'N/D'} - {formatEuro(m.importo)}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
                 </>
               )}
-              <button 
-                onClick={() => setEstrattoResult(null)} 
-                style={{ marginTop: 8, fontSize: 12, cursor: 'pointer' }}
-              >
-                ✕ Chiudi
-              </button>
+              <button onClick={() => setEstrattoResult(null)} style={{ marginTop: 8, fontSize: 12, cursor: 'pointer' }}>✕ Chiudi</button>
             </div>
           )}
 
@@ -964,40 +898,156 @@ export default function GestioneDipendenti() {
             color: 'white',
             marginBottom: 20
           }}>
-            <h3 style={{ margin: '0 0 12px 0' }}>📒 Prima Nota Salari - {selectedMonth ? mesiNomi[selectedMonth - 1] : 'Tutti i mesi'} {selectedYear}</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 16 }}>
+            <h3 style={{ margin: '0 0 12px 0' }}>📒 Prima Nota Salari - {selectedMonth ? mesiNomi[selectedMonth - 1] : 'Anno'} {selectedYear}</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 16 }}>
               <div>
-                <div style={{ fontSize: 12, opacity: 0.8 }}>Movimenti</div>
+                <div style={{ fontSize: 12, opacity: 0.8 }}>Records</div>
                 <div style={{ fontSize: 28, fontWeight: 'bold' }}>{salariMovimenti.length}</div>
               </div>
               <div>
-                <div style={{ fontSize: 12, opacity: 0.8 }}>Riconciliati</div>
-                <div style={{ fontSize: 28, fontWeight: 'bold' }}>{salariMovimenti.filter(m => m.riconciliato).length}</div>
+                <div style={{ fontSize: 12, opacity: 0.8 }}>Totale Buste</div>
+                <div style={{ fontSize: 24, fontWeight: 'bold' }}>
+                  {formatEuro(salariMovimenti.reduce((sum, m) => sum + (m.importo_busta || 0), 0))}
+                </div>
               </div>
               <div>
-                <div style={{ fontSize: 12, opacity: 0.8 }}>Da Riconciliare</div>
-                <div style={{ fontSize: 28, fontWeight: 'bold' }}>{salariMovimenti.filter(m => !m.riconciliato).length}</div>
+                <div style={{ fontSize: 12, opacity: 0.8 }}>Totale Bonifici</div>
+                <div style={{ fontSize: 24, fontWeight: 'bold' }}>
+                  {formatEuro(salariMovimenti.reduce((sum, m) => sum + (m.importo_bonifico || 0), 0))}
+                </div>
               </div>
               <div>
-                <div style={{ fontSize: 12, opacity: 0.8 }}>Totale Uscite</div>
-                <div style={{ fontSize: 28, fontWeight: 'bold' }}>
-                  {formatEuro(salariMovimenti.reduce((sum, m) => sum + (m.importo || m.importo_erogato || 0), 0))}
+                <div style={{ fontSize: 12, opacity: 0.8 }}>Saldo</div>
+                <div style={{ fontSize: 24, fontWeight: 'bold' }}>
+                  {formatEuro(salariMovimenti.reduce((sum, m) => sum + (m.saldo || 0), 0))}
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Form nuovo movimento salari */}
-          <NuovoMovimentoSalariForm 
-            dipendenti={dipendenti} 
-            onCreated={loadPrimaNotaSalari}
-            selectedMonth={selectedMonth}
-            selectedYear={selectedYear}
-          />
-
-          {/* Tabella movimenti salari */}
-          <div style={{ background: 'white', borderRadius: 12, overflow: 'hidden', border: '1px solid #e2e8f0', marginTop: 20, overflowX: 'auto' }}>
+          {/* Tabella Prima Nota Salari - NUOVA STRUTTURA */}
+          <div style={{ background: 'white', borderRadius: 12, overflow: 'hidden', border: '1px solid #e2e8f0', overflowX: 'auto' }}>
             <div style={{ 
+              padding: '16px 20px', 
+              background: '#f8fafc', 
+              borderBottom: '1px solid #e2e8f0',
+              fontWeight: 'bold'
+            }}>
+              📋 Dettaglio - {salariMovimenti.length} record
+            </div>
+            
+            {loadingSalari ? (
+              <div style={{ padding: 40, textAlign: 'center', color: '#6b7280' }}>⏳ Caricamento...</div>
+            ) : salariMovimenti.length === 0 ? (
+              <div style={{ padding: 40, textAlign: 'center', color: '#6b7280' }}>
+                Nessun dato. Importa i file PAGHE e BONIFICI per iniziare.
+              </div>
+            ) : (
+              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
+                <thead>
+                  <tr style={{ background: '#1e3a5f', color: 'white' }}>
+                    <th style={{ padding: 12, textAlign: 'left' }}>Dipendente</th>
+                    <th style={{ padding: 12, textAlign: 'center' }}>Mese</th>
+                    <th style={{ padding: 12, textAlign: 'center' }}>Anno</th>
+                    <th style={{ padding: 12, textAlign: 'right' }}>Importo Busta</th>
+                    <th style={{ padding: 12, textAlign: 'right' }}>Importo Bonifico</th>
+                    <th style={{ padding: 12, textAlign: 'right' }}>Saldo</th>
+                    <th style={{ padding: 12, textAlign: 'right' }}>Progressivo</th>
+                    <th style={{ padding: 12, textAlign: 'center' }}>Stato</th>
+                    <th style={{ padding: 12, textAlign: 'center', width: 60 }}>Azioni</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {salariMovimenti.map((mov, idx) => (
+                    <tr 
+                      key={mov.id || idx} 
+                      style={{ 
+                        borderBottom: '1px solid #f1f5f9',
+                        background: mov.saldo > 0 ? '#fff7ed' : mov.saldo < 0 ? '#f0fdf4' : 'white'
+                      }}
+                    >
+                      <td style={{ padding: 12, fontWeight: 500 }}>{mov.dipendente}</td>
+                      <td style={{ padding: 12, textAlign: 'center' }}>{mov.mese_nome || mov.mese}</td>
+                      <td style={{ padding: 12, textAlign: 'center' }}>{mov.anno}</td>
+                      <td style={{ padding: 12, textAlign: 'right', color: '#0369a1' }}>
+                        {formatEuro(mov.importo_busta || 0)}
+                      </td>
+                      <td style={{ padding: 12, textAlign: 'right', color: '#16a34a' }}>
+                        {formatEuro(mov.importo_bonifico || 0)}
+                      </td>
+                      <td style={{ 
+                        padding: 12, 
+                        textAlign: 'right', 
+                        fontWeight: 'bold',
+                        color: mov.saldo > 0 ? '#ea580c' : mov.saldo < 0 ? '#16a34a' : '#6b7280'
+                      }}>
+                        {formatEuro(mov.saldo || 0)}
+                      </td>
+                      <td style={{ 
+                        padding: 12, 
+                        textAlign: 'right', 
+                        fontWeight: 'bold',
+                        color: mov.progressivo > 0 ? '#dc2626' : mov.progressivo < 0 ? '#16a34a' : '#6b7280'
+                      }}>
+                        {formatEuro(mov.progressivo || 0)}
+                      </td>
+                      <td style={{ padding: 12, textAlign: 'center' }}>
+                        {mov.riconciliato ? (
+                          <span style={{ 
+                            background: '#dcfce7', 
+                            color: '#16a34a', 
+                            padding: '4px 10px', 
+                            borderRadius: 20,
+                            fontSize: 12,
+                            fontWeight: 'bold'
+                          }}>
+                            ✅ OK
+                          </span>
+                        ) : (
+                          <span style={{ 
+                            background: '#fef3c7', 
+                            color: '#d97706', 
+                            padding: '4px 10px', 
+                            borderRadius: 20,
+                            fontSize: 12,
+                            fontWeight: 'bold'
+                          }}>
+                            ⏳ Da verificare
+                          </span>
+                        )}
+                      </td>
+                      <td style={{ padding: 12, textAlign: 'center' }}>
+                        <button
+                          onClick={() => handleDeleteSalario(mov.id)}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, opacity: 0.6 }}
+                          title="Elimina"
+                        >
+                          🗑️
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+          
+          {/* Legenda */}
+          <div style={{ 
+            marginTop: 16, 
+            padding: 12, 
+            background: '#f8fafc', 
+            borderRadius: 8,
+            fontSize: 13,
+            color: '#6b7280'
+          }}>
+            <strong>Legenda:</strong> 
+            <span style={{ marginLeft: 12, color: '#ea580c' }}>● Saldo positivo = busta {">"} bonifico (da recuperare)</span>
+            <span style={{ marginLeft: 12, color: '#16a34a' }}>● Saldo negativo = bonifico {">"} busta (eccedenza)</span>
+            <span style={{ marginLeft: 12, color: '#dc2626' }}>● Progressivo = accumulo saldi precedenti</span>
+          </div>
+        </>
+      )} 
               padding: '16px 20px', 
               background: '#f8fafc', 
               borderBottom: '1px solid #e2e8f0',
