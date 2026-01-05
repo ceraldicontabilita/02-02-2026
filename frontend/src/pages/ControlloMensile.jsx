@@ -660,6 +660,13 @@ export default function ControlloMensile() {
           <div style={{ fontSize: 11, opacity: 0.9 }}>📄 Doc. Commerciali</div>
           <div style={{ fontSize: 18, fontWeight: 'bold' }}>{(yearTotals.documentiCommerciali || 0).toLocaleString('it-IT')}</div>
         </div>
+        <div style={{ background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', borderRadius: 12, padding: 14, color: 'white', position: 'relative' }}>
+          <div style={{ fontSize: 11, opacity: 0.9 }}>🚫 Annulli</div>
+          <div style={{ fontSize: 18, fontWeight: 'bold' }}>{(yearTotals.annulli || 0).toLocaleString('it-IT')}</div>
+          {(yearTotals.annulli === 0 || !yearTotals.annulli) && (
+            <div style={{ fontSize: 9, opacity: 0.7, marginTop: 4 }}>N/D negli XML</div>
+          )}
+        </div>
       </div>
 
       {/* Info Box */}
