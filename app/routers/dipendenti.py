@@ -394,6 +394,338 @@ async def delete_salari_anno(anno: int) -> Dict[str, Any]:
     return {"message": f"Eliminati {result.deleted_count} salari per l'anno {anno}"}
 
 
+# ============== RICONCILIAZIONE BANCARIA SALARI ==============
+
+def normalizza_nome(nome: str) -> str:
+    """Normalizza un nome per il matching (rimuove accenti, lowercase, etc.)"""
+    if not nome:
+        return ""
+    import unicodedata
+    # Rimuovi accenti
+    nfkd = unicodedata.normalize('NFKD', nome)
+    nome_norm = ''.join([c for c in nfkd if not unicodedata.combining(c)])
+    # Lowercase e rimuovi spazi extra
+    return ' '.join(nome_norm.lower().split())
+
+
+def estrai_nome_da_descrizione(descrizione: str) -> Optional[str]:
+    """Estrae il nome del dipendente dalla descrizione del bonifico."""
+    if not descrizione:
+        return None
+    
+    desc_upper = descrizione.upper()
+    
+    # Pattern: "FAVORE NomeCognome" o "FAVORE Nome Cognome"
+    if "FAVORE" in desc_upper:
+        idx = desc_upper.find("FAVORE")
+        after = descrizione[idx + 7:].strip()
+        # Prendi fino a " - " o fine stringa
+        if " - " in after:
+            return after.split(" - ")[0].strip()
+        return after.split()[0:2] if len(after.split()) >= 2 else after.strip()
+    
+    # Pattern: "stip" indica stipendio, cerca nome prima
+    if "STIP" in desc_upper:
+        # Cerca pattern tipo "Nome stip MM YYYY"
+        parts = descrizione.split()
+        for i, p in enumerate(parts):
+            if "stip" in p.lower() and i > 0:
+                return " ".join(parts[:i]).strip()
+    
+    return None
+
+
+@router.post("/import-estratto-conto")
+async def import_estratto_conto(file: UploadFile = File(...)) -> Dict[str, Any]:
+    """
+    Importa estratto conto bancario (CSV o Excel) e riconcilia con i salari.
+    
+    Formato CSV atteso (separatore ;):
+    - Data contabile o Data valuta
+    - Importo (negativo = pagamento)
+    - Descrizione (contiene nome dipendente)
+    - Categoria (es: "Risorse Umane - Salari e stipendi")
+    """
+    db = Database.get_db()
+    
+    filename = file.filename.lower()
+    contents = await file.read()
+    
+    movimenti_banca = []
+    
+    if filename.endswith('.csv'):
+        # Parse CSV
+        import csv
+        text = contents.decode('utf-8-sig')  # Handle BOM
+        reader = csv.DictReader(io.StringIO(text), delimiter=';')
+        
+        for row in reader:
+            # Filtra solo bonifici stipendi
+            categoria = row.get('Categoria/sottocategoria', '') or row.get('Categoria', '')
+            descrizione = row.get('Descrizione', '')
+            
+            # Accetta sia "Risorse Umane - Salari" che descrizioni con "stip" o "FAVORE"
+            is_stipendio = (
+                'salari' in categoria.lower() or 
+                'stipendi' in categoria.lower() or
+                'stip' in descrizione.lower() or
+                'favore' in descrizione.lower()
+            )
+            
+            if not is_stipendio:
+                continue
+            
+            # Parse data
+            data_str = row.get('Data contabile') or row.get('Data valuta') or row.get('Data')
+            if not data_str:
+                continue
+            
+            # Parse importo (formato italiano: -1.234,56 o -1234,56)
+            importo_str = row.get('Importo', '0')
+            importo_str = importo_str.replace('.', '').replace(',', '.')
+            try:
+                importo = abs(float(importo_str))  # Prendi valore assoluto
+            except:
+                continue
+            
+            # Parse data (DD/MM/YYYY)
+            try:
+                if '/' in data_str:
+                    parts = data_str.split('/')
+                    data_obj = date(int(parts[2]), int(parts[1]), int(parts[0]))
+                else:
+                    data_obj = date.fromisoformat(data_str)
+            except:
+                continue
+            
+            movimenti_banca.append({
+                "data": data_obj,
+                "importo": importo,
+                "descrizione": descrizione,
+                "nome_estratto": estrai_nome_da_descrizione(descrizione)
+            })
+    
+    elif filename.endswith('.xlsx') or filename.endswith('.xls'):
+        # Parse Excel
+        try:
+            import openpyxl
+            wb = openpyxl.load_workbook(io.BytesIO(contents))
+            sheet = wb.active
+            
+            # Trova header
+            headers = [str(cell.value or '').lower() for cell in sheet[1]]
+            
+            for row_num in range(2, sheet.max_row + 1):
+                row_data = [sheet.cell(row=row_num, column=i+1).value for i in range(len(headers))]
+                
+                # Cerca colonne rilevanti
+                importo = None
+                data_val = None
+                descrizione = ""
+                
+                for i, h in enumerate(headers):
+                    val = row_data[i]
+                    if 'importo' in h and val:
+                        if isinstance(val, (int, float)):
+                            importo = abs(val)
+                        else:
+                            importo_str = str(val).replace('.', '').replace(',', '.')
+                            try:
+                                importo = abs(float(importo_str))
+                            except:
+                                pass
+                    elif 'data' in h and val:
+                        if isinstance(val, datetime):
+                            data_val = val.date()
+                        elif isinstance(val, date):
+                            data_val = val
+                    elif 'descri' in h and val:
+                        descrizione = str(val)
+                
+                if importo and data_val:
+                    movimenti_banca.append({
+                        "data": data_val,
+                        "importo": importo,
+                        "descrizione": descrizione,
+                        "nome_estratto": estrai_nome_da_descrizione(descrizione)
+                    })
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Errore parsing Excel: {str(e)}")
+    else:
+        raise HTTPException(status_code=400, detail="Formato file non supportato. Usa CSV o Excel.")
+    
+    # Carica tutti i salari non riconciliati
+    salari = await db["prima_nota_salari"].find(
+        {"riconciliato": {"$ne": True}},
+        {"_id": 0}
+    ).to_list(10000)
+    
+    # Crea indice per matching veloce
+    salari_index = {}
+    for s in salari:
+        key = (normalizza_nome(s.get("dipendente", "")), s.get("importo_erogato") or s.get("importo"))
+        if key not in salari_index:
+            salari_index[key] = []
+        salari_index[key].append(s)
+    
+    # Riconcilia
+    riconciliati = 0
+    non_trovati = []
+    gia_riconciliati = 0
+    
+    for mov in movimenti_banca:
+        nome_banca = mov.get("nome_estratto")
+        if isinstance(nome_banca, list):
+            nome_banca = " ".join(nome_banca)
+        
+        if not nome_banca:
+            non_trovati.append(mov)
+            continue
+        
+        nome_norm = normalizza_nome(nome_banca)
+        importo = mov["importo"]
+        
+        # Cerca match esatto (nome + importo)
+        found = False
+        for (key_nome, key_importo), salari_list in salari_index.items():
+            if abs(key_importo - importo) < 0.01:  # Tolleranza di 1 centesimo
+                # Verifica match nome (parziale)
+                if key_nome in nome_norm or nome_norm in key_nome:
+                    for salario in salari_list:
+                        if salario.get("riconciliato"):
+                            continue
+                        
+                        # Aggiorna salario come riconciliato
+                        await db["prima_nota_salari"].update_one(
+                            {"id": salario["id"]},
+                            {"$set": {
+                                "riconciliato": True,
+                                "data_riconciliazione": datetime.utcnow().isoformat(),
+                                "riferimento_banca": mov["descrizione"][:200],
+                                "data_banca": mov["data"].isoformat()
+                            }}
+                        )
+                        salario["riconciliato"] = True
+                        riconciliati += 1
+                        found = True
+                        break
+                
+                if found:
+                    break
+        
+        if not found:
+            # Controlla se è già stato riconciliato in precedenza
+            existing = await db["estratto_conto_salari"].find_one({
+                "data": mov["data"].isoformat(),
+                "importo": importo,
+                "descrizione": mov["descrizione"][:100]
+            })
+            if existing:
+                gia_riconciliati += 1
+            else:
+                non_trovati.append({
+                    "data": mov["data"].isoformat(),
+                    "importo": importo,
+                    "descrizione": mov["descrizione"][:100],
+                    "nome": nome_banca
+                })
+    
+    # Salva movimenti banca importati
+    for mov in movimenti_banca:
+        mov_record = {
+            "id": f"EC-{mov['data'].isoformat()}-{mov['importo']:.2f}",
+            "data": mov["data"].isoformat(),
+            "importo": mov["importo"],
+            "descrizione": mov["descrizione"][:200] if mov.get("descrizione") else "",
+            "nome_dipendente": mov.get("nome_estratto") if isinstance(mov.get("nome_estratto"), str) else " ".join(mov.get("nome_estratto", [])),
+            "imported_at": datetime.utcnow().isoformat()
+        }
+        
+        # Upsert per evitare duplicati
+        await db["estratto_conto_salari"].update_one(
+            {"id": mov_record["id"]},
+            {"$set": mov_record},
+            upsert=True
+        )
+    
+    return {
+        "message": "Importazione e riconciliazione completate",
+        "movimenti_banca": len(movimenti_banca),
+        "riconciliati": riconciliati,
+        "gia_riconciliati": gia_riconciliati,
+        "non_trovati": len(non_trovati),
+        "dettaglio_non_trovati": non_trovati[:20]
+    }
+
+
+@router.get("/salari/riepilogo")
+async def get_salari_riepilogo(
+    anno: Optional[int] = Query(None),
+    dipendente: Optional[str] = Query(None)
+) -> Dict[str, Any]:
+    """
+    Riepilogo salari con saldo per dipendente.
+    Saldo = Importo Busta - Bonifico Riconciliato
+    """
+    db = Database.get_db()
+    
+    query = {}
+    if anno:
+        query["anno"] = anno
+    if dipendente:
+        query["dipendente"] = {"$regex": dipendente, "$options": "i"}
+    
+    salari = await db["prima_nota_salari"].find(query, {"_id": 0}).to_list(10000)
+    
+    # Raggruppa per dipendente
+    riepilogo = {}
+    for s in salari:
+        nome = s.get("dipendente", "Sconosciuto")
+        if nome not in riepilogo:
+            riepilogo[nome] = {
+                "dipendente": nome,
+                "totale_busta": 0,
+                "totale_bonifico": 0,
+                "riconciliati": 0,
+                "non_riconciliati": 0,
+                "movimenti": []
+            }
+        
+        busta = s.get("stipendio_netto") or s.get("importo") or 0
+        bonifico = s.get("importo_erogato") or s.get("importo") or 0
+        
+        riepilogo[nome]["totale_busta"] += busta
+        riepilogo[nome]["totale_bonifico"] += bonifico
+        
+        if s.get("riconciliato"):
+            riepilogo[nome]["riconciliati"] += 1
+        else:
+            riepilogo[nome]["non_riconciliati"] += 1
+    
+    # Calcola saldo
+    for nome, data in riepilogo.items():
+        data["saldo"] = round(data["totale_busta"] - data["totale_bonifico"], 2)
+    
+    return {
+        "anno": anno,
+        "totale_dipendenti": len(riepilogo),
+        "totale_buste": sum(r["totale_busta"] for r in riepilogo.values()),
+        "totale_bonifici": sum(r["totale_bonifico"] for r in riepilogo.values()),
+        "totale_riconciliati": sum(r["riconciliati"] for r in riepilogo.values()),
+        "totale_non_riconciliati": sum(r["non_riconciliati"] for r in riepilogo.values()),
+        "dipendenti": list(riepilogo.values())
+    }
+
+
+@router.get("/dipendenti-lista")
+async def get_dipendenti_lista() -> List[str]:
+    """Lista nomi unici dipendenti dai salari."""
+    db = Database.get_db()
+    
+    dipendenti = await db["prima_nota_salari"].distinct("dipendente")
+    return sorted([d for d in dipendenti if d])
+
+
 # ============== DIPENDENTE DETAIL (must be after specific routes) ==============
 
 @router.get("/{dipendente_id}")
