@@ -730,7 +730,7 @@ export default function GestioneDipendenti() {
                   <tr style={{ background: '#f9fafb' }}>
                     <th style={{ padding: 12, textAlign: 'left', borderBottom: '1px solid #e2e8f0' }}>Dipendente</th>
                     <th style={{ padding: 12, textAlign: 'left', borderBottom: '1px solid #e2e8f0' }}>Periodo</th>
-                    <th style={{ padding: 12, textAlign: 'right', borderBottom: '1px solid #e2e8f0' }}>Stipendio Netto</th>
+                    <th style={{ padding: 12, textAlign: 'right', borderBottom: '1px solid #e2e8f0' }}>Importo Busta</th>
                     <th style={{ padding: 12, textAlign: 'right', borderBottom: '1px solid #e2e8f0' }}>Bonifico</th>
                     <th style={{ padding: 12, textAlign: 'center', borderBottom: '1px solid #e2e8f0', width: 60 }}>Azioni</th>
                   </tr>
