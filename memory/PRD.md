@@ -75,28 +75,28 @@ FATTURA XML → Parse → FATTURE DB
 
 ## Changelog
 
-### 2026-01-05 (Sessione 9 - Bug Fix Controllo Mensile + Task P1)
+### 2026-01-05 (Sessione 9 - Bug Fix + Task P1 + Task P2)
 - **BUG FIX CRITICO - Controllo Mensile**:
-  - ❌ **Problema**: La colonna "Diff." POS mostrava `posBancaDiff` (POS Banca - POS Auto) invece di `posDiff` (POS Auto - POS Cassa)
-  - ❌ **Effetto**: Differenze errate di ~€30.000 invece di ~€300
-  - ✅ **Soluzione**: Corretto il riferimento alla variabile corretta `posDiff` sia nel body che nel footer della tabella
-  - ✅ **Corretto anche**: Errore di sintassi (`}}>` duplicato) nella colonna Corrispettivi
-  - 📝 **File modificato**: `/app/frontend/src/pages/ControlloMensile.jsx`
-  - 📊 **Risultato verificato**: Gennaio 2025 ora mostra +341€ (corretto) invece di -30.601€ (errato)
+  - ❌ **Problema**: La colonna "Diff." POS mostrava `posBancaDiff` invece di `posDiff`
+  - ✅ **Soluzione**: Corretto il calcolo, ora mostra ~€300 (corretto) invece di ~€30.000 (errato)
+
+- **RINOMINA Controllo Mensile**:
+  - "POS Auto" → "POS Agenzia"
+  - "POS Manuale" → "POS Chiusura"
 
 - **P1 COMPLETATI**:
   - ✅ **Bilancio**: Nuova pagina `/bilancio` con Stato Patrimoniale e Conto Economico
     - Tab "Stato Patrimoniale": Attivo (Cassa, Banca, Crediti) vs Passivo (Debiti, Patrimonio Netto)
-    - Tab "Conto Economico": Ricavi (Corrispettivi, Altri) vs Costi (Acquisti, Altri costi)
+    - Tab "Conto Economico": Ricavi vs Costi con Utile/Perdita
     - Filtro per anno e mese
-    - Risultato con margine percentuale
-  - ✅ **Filtro Anno Globale**: Selettore anno nella sidebar che influenza tutti i dati
-    - Context `AnnoContext` con persistenza localStorage
-    - Integrato in Dashboard (ricarica dati al cambio anno)
-    - Componente `AnnoSelector` riutilizzabile
-  - ✅ **Fix Magazzino**: Pagina migliorata con tab "Catalogo Prodotti" e "Inventario Manuale"
-    - Catalogo mostra prodotti estratti dalle fatture XML
-    - Inventario manuale per prodotti aggiunti dall'utente
+  - ✅ **Filtro Anno Globale**: Selettore anno nella sidebar con persistenza localStorage
+  - ✅ **Fix Magazzino**: Tab "Catalogo Prodotti" + "Inventario Manuale"
+
+- **P2 COMPLETATI**:
+  - ✅ **Associazione Automatica Fornitore**: Quando si crea un nuovo fornitore, le fatture con la stessa P.IVA vengono automaticamente associate
+  - ✅ **Export PDF Bilancio**: Pulsante "Esporta PDF" nella pagina Bilancio genera PDF con Stato Patrimoniale e Conto Economico
+  - ✅ **Riconoscimento POS in Riconciliazione**: Pattern matching migliorato per "INC.POS", "INCAS. TRAMITE P.O.S", etc. con categoria automatica "POS"
+  - ℹ️ **Discrepanza Conteggio Fatture**: Verificato - 1328 fatture con chiavi uniche, nessun duplicato trovato. La discrepanza potrebbe essere dovuta a fatture aggiunte dopo il conteggio iniziale.
 
 ### 2026-01-05 (Sessione 8 - Ristrutturazione Architettura - FASI 2, 3, 4 COMPLETE)
 - **FASE 2 - Consolidamento Controlli Sicurezza**:
