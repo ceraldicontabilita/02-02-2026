@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import api from '../api';
 import PrimaNotaMobile from './PrimaNotaMobile';
 import { useIsMobile } from '../hooks/useData';
+import { useAnnoGlobale } from '../contexts/AnnoContext';
 
 /**
  * Prima Nota - Due sezioni separate: Cassa e Banca
