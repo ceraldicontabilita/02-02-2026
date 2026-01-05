@@ -75,7 +75,6 @@ const router = createBrowserRouter([
       { path: "haccp/non-conformita", element: <HACCP /> },
       { path: "dipendenti", element: <GestioneDipendenti /> },
       { path: "f24", element: <F24 /> },
-      { path: "paghe", element: <Paghe /> },
       { path: "finanziaria", element: <Finanziaria /> },
       { path: "assegni", element: <Assegni /> },
       { path: "gestione-assegni", element: <GestioneAssegni /> },
