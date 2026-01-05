@@ -132,40 +132,121 @@ export default function Magazzino() {
         </div>
       )}
 
-      <div className="card">
-        <div className="h1">Inventario ({products.length} prodotti)</div>
-        {loading ? (
-          <div className="small">Caricamento...</div>
-        ) : products.length === 0 ? (
-          <div className="small">Nessun prodotto in magazzino. Clicca "+ Nuovo Prodotto" per aggiungerne uno.</div>
-        ) : (
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr style={{ borderBottom: "2px solid #ddd", textAlign: "left" }}>
-                <th style={{ padding: 8 }}>Codice</th>
-                <th style={{ padding: 8 }}>Nome</th>
-                <th style={{ padding: 8 }}>Quantità</th>
-                <th style={{ padding: 8 }}>Prezzo</th>
-                <th style={{ padding: 8 }}>Categoria</th>
-                <th style={{ padding: 8 }}>Azioni</th>
-              </tr>
-            </thead>
-            <tbody>
-              {products.map((p, i) => (
-                <tr key={p.id || i} style={{ borderBottom: "1px solid #eee" }}>
-                  <td style={{ padding: 8 }}>{p.code || "-"}</td>
-                  <td style={{ padding: 8 }}>{p.name}</td>
-                  <td style={{ padding: 8 }}>{p.quantity} {p.unit}</td>
-                  <td style={{ padding: 8 }}>€ {(p.unit_price || 0).toFixed(2)}</td>
-                  <td style={{ padding: 8 }}>{p.category || "-"}</td>
-                  <td style={{ padding: 8 }}>
-                    <button onClick={() => handleDelete(p.id)} style={{ color: "#c00" }}>🗑️</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+      {/* Tabs */}
+      <div className="card" style={{ padding: 0 }}>
+        <div style={{ display: 'flex', borderBottom: '2px solid #e2e8f0' }}>
+          <button
+            onClick={() => setActiveTab('catalogo')}
+            style={{
+              flex: 1,
+              padding: '14px 20px',
+              background: activeTab === 'catalogo' ? '#1e293b' : 'transparent',
+              color: activeTab === 'catalogo' ? 'white' : '#64748b',
+              border: 'none',
+              fontWeight: 600,
+              cursor: 'pointer'
+            }}
+          >
+            Catalogo Prodotti ({catalogProducts.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('manuale')}
+            style={{
+              flex: 1,
+              padding: '14px 20px',
+              background: activeTab === 'manuale' ? '#1e293b' : 'transparent',
+              color: activeTab === 'manuale' ? 'white' : '#64748b',
+              border: 'none',
+              fontWeight: 600,
+              cursor: 'pointer'
+            }}
+          >
+            Inventario Manuale ({products.length})
+          </button>
+        </div>
+        
+        <div style={{ padding: 20 }}>
+          {loading ? (
+            <div className="small">Caricamento...</div>
+          ) : activeTab === 'catalogo' ? (
+            // Catalogo Prodotti da Fatture
+            catalogProducts.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: 40, color: '#64748b' }}>
+                <div style={{ fontSize: 48, marginBottom: 16 }}>📦</div>
+                <div>Nessun prodotto trovato nel catalogo.</div>
+                <div className="small">I prodotti verranno aggiunti automaticamente dalle fatture XML.</div>
+              </div>
+            ) : (
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead>
+                  <tr style={{ borderBottom: "2px solid #ddd", textAlign: "left", background: '#f8fafc' }}>
+                    <th style={{ padding: 12 }}>Prodotto</th>
+                    <th style={{ padding: 12 }}>Fornitore</th>
+                    <th style={{ padding: 12, textAlign: 'right' }}>Ultimo Prezzo</th>
+                    <th style={{ padding: 12, textAlign: 'right' }}>Prezzo Medio</th>
+                    <th style={{ padding: 12 }}>Ultima Fattura</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {catalogProducts.slice(0, 100).map((p, i) => (
+                    <tr key={p.id || p.product_id || i} style={{ borderBottom: "1px solid #eee" }}>
+                      <td style={{ padding: 12 }}>
+                        <div style={{ fontWeight: 500 }}>{p.description || p.name || p.descrizione}</div>
+                        {p.code && <div className="small" style={{ color: '#64748b' }}>Cod: {p.code}</div>}
+                      </td>
+                      <td style={{ padding: 12 }}>{p.supplier_name || p.fornitore || '-'}</td>
+                      <td style={{ padding: 12, textAlign: 'right', fontWeight: 600 }}>
+                        € {(p.last_price || p.ultimo_prezzo || p.unit_price || 0).toFixed(2)}
+                      </td>
+                      <td style={{ padding: 12, textAlign: 'right', color: '#64748b' }}>
+                        € {(p.avg_price || p.prezzo_medio || 0).toFixed(2)}
+                      </td>
+                      <td style={{ padding: 12, color: '#64748b' }}>
+                        {p.last_invoice_date ? formatDateIT(p.last_invoice_date) : '-'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )
+          ) : (
+            // Inventario Manuale
+            products.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: 40, color: '#64748b' }}>
+                <div style={{ fontSize: 48, marginBottom: 16 }}>📋</div>
+                <div>Nessun prodotto in inventario manuale.</div>
+                <div className="small">Clicca "+ Nuovo Prodotto" per aggiungerne uno.</div>
+              </div>
+            ) : (
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead>
+                  <tr style={{ borderBottom: "2px solid #ddd", textAlign: "left", background: '#f8fafc' }}>
+                    <th style={{ padding: 12 }}>Codice</th>
+                    <th style={{ padding: 12 }}>Nome</th>
+                    <th style={{ padding: 12 }}>Quantità</th>
+                    <th style={{ padding: 12 }}>Prezzo</th>
+                    <th style={{ padding: 12 }}>Categoria</th>
+                    <th style={{ padding: 12 }}>Azioni</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {products.map((p, i) => (
+                    <tr key={p.id || i} style={{ borderBottom: "1px solid #eee" }}>
+                      <td style={{ padding: 12 }}>{p.code || "-"}</td>
+                      <td style={{ padding: 12 }}>{p.name}</td>
+                      <td style={{ padding: 12 }}>{p.quantity} {p.unit}</td>
+                      <td style={{ padding: 12 }}>€ {(p.unit_price || 0).toFixed(2)}</td>
+                      <td style={{ padding: 12 }}>{p.category || "-"}</td>
+                      <td style={{ padding: 12 }}>
+                        <button onClick={() => handleDelete(p.id)} style={{ color: "#c00", background: 'none', border: 'none', cursor: 'pointer' }}>🗑️</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )
+          )}
+        </div>
       </div>
     </>
   );
