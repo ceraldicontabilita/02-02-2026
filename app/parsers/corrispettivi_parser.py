@@ -285,6 +285,10 @@ def parse_corrispettivo_xml(xml_content: str) -> Dict[str, Any]:
             "pagato_elettronico": pagato_elettronico,
             "numero_documenti": numero_doc_commerciali,
             
+            # Annulli e Non Riscosso
+            "totale_ammontare_annulli": totale_ammontare_annulli,
+            "pagato_non_riscosso": pagato_non_riscosso,
+            
             # IVA
             "totale_imponibile": totale_imponibile,
             "totale_iva": totale_imposta,
