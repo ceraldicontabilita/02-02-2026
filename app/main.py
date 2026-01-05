@@ -139,8 +139,6 @@ app.include_router(staff.router, prefix="/api/staff", tags=["Staff"])
 app.include_router(settings_router.router, prefix="/api/settings", tags=["Settings"])
 app.include_router(config.router, prefix="/api/config", tags=["Config"])
 app.include_router(search.router, prefix="/api/search", tags=["Search"])
-# NOTA: iva_calcolo viene registrato dopo nel file (linea 187) con priorità maggiore
-# iva.router contiene endpoint legacy con autenticazione
 app.include_router(incasso_reale.router, prefix="/api/incasso-reale", tags=["Incasso Reale"])
 app.include_router(lotti.router, prefix="/api/lotti", tags=["Lotti"])
 app.include_router(assegni.router, prefix="/api/assegni", tags=["Assegni"])
