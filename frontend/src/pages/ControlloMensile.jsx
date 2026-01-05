@@ -101,20 +101,25 @@ export default function ControlloMensile() {
         data_a: endDate
       });
 
-      // Carica dati in parallelo da TUTTE le fonti (Cassa, Banca, Corrispettivi)
-      const [cassaRes, bancaRes, corrispRes] = await Promise.all([
+      // Carica dati in parallelo da TUTTE le fonti (Cassa, Banca, Corrispettivi, Estratto Conto)
+      const [cassaRes, bancaRes, corrispRes, estrattoRes] = await Promise.all([
         api.get(`/api/prima-nota/cassa?${params}&limit=5000`).catch(() => ({ data: { movimenti: [] } })),
         api.get(`/api/prima-nota/banca?${params}&limit=5000`).catch(() => ({ data: { movimenti: [] } })),
-        api.get(`/api/corrispettivi?data_da=${startDate}&data_a=${endDate}`).catch(() => ({ data: [] }))
+        api.get(`/api/corrispettivi?data_da=${startDate}&data_a=${endDate}`).catch(() => ({ data: [] })),
+        api.get(`/api/bank-statement/movements?limit=10000`).catch(() => ({ data: { movements: [] } }))
       ]);
 
       const cassa = cassaRes.data.movimenti || [];
       const banca = bancaRes.data.movimenti || [];
       const corrispettivi = Array.isArray(corrispRes.data) ? corrispRes.data : (corrispRes.data.corrispettivi || []);
+      const estrattoConto = estrattoRes.data.movements || [];
       
-      console.log(`[ControlloMensile] Caricati: ${cassa.length} cassa, ${banca.length} banca, ${corrispettivi.length} corrispettivi per ${anno}`);
+      // Filtra estratto conto per anno
+      const estrattoAnno = estrattoConto.filter(m => m.data?.startsWith(anno.toString()));
       
-      processYearData(cassa, banca, corrispettivi);
+      console.log(`[ControlloMensile] Caricati: ${cassa.length} cassa, ${banca.length} banca, ${corrispettivi.length} corrispettivi, ${estrattoAnno.length} estratto conto per ${anno}`);
+      
+      processYearData(cassa, banca, corrispettivi, estrattoAnno);
     } catch (error) {
       console.error('Error loading year data:', error);
     } finally {
@@ -125,9 +130,9 @@ export default function ControlloMensile() {
   /**
    * PROCESSA DATI ANNUALI
    * Aggrega i dati per mese calcolando tutti i totali
-   * Include: POS Agenzia (XML), POS Chiusura (Cassa), POS Banca (accrediti INC.POS)
+   * Include: POS Agenzia (XML), POS Chiusura (Cassa), POS Banca (da Estratto Conto)
    */
-  const processYearData = (cassa, banca, corrispettivi) => {
+  const processYearData = (cassa, banca, corrispettivi, estrattoConto = []) => {
     const monthly = [];
     let yearPosAuto = 0, yearPosManual = 0, yearPosBanca = 0;
     let yearCorrispAuto = 0, yearCorrispManual = 0;
