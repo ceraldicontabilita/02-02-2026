@@ -4,9 +4,11 @@ import { formatDateIT } from "../lib/utils";
 
 export default function Magazzino() {
   const [products, setProducts] = useState([]);
+  const [catalogProducts, setCatalogProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [err, setErr] = useState("");
+  const [activeTab, setActiveTab] = useState("catalogo"); // catalogo | manuale
   const [newProduct, setNewProduct] = useState({
     name: "",
     code: "",
@@ -23,8 +25,12 @@ export default function Magazzino() {
   async function loadProducts() {
     try {
       setLoading(true);
-      const r = await api.get("/api/warehouse/products");
-      setProducts(Array.isArray(r.data) ? r.data : r.data?.items || []);
+      const [warehouseRes, catalogRes] = await Promise.all([
+        api.get("/api/warehouse/products"),
+        api.get("/api/products/catalog").catch(() => ({ data: [] }))
+      ]);
+      setProducts(Array.isArray(warehouseRes.data) ? warehouseRes.data : warehouseRes.data?.items || []);
+      setCatalogProducts(Array.isArray(catalogRes.data) ? catalogRes.data : []);
     } catch (e) {
       console.error("Error loading products:", e);
     } finally {
