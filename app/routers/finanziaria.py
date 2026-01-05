@@ -42,7 +42,7 @@ async def get_financial_summary(
         cassa_entrate = sum(r["total"] for r in cassa_result if r["_id"] == "entrata")
         cassa_uscite = sum(r["total"] for r in cassa_result if r["_id"] == "uscita")
         
-        logger.info(f"[Finanziaria] Cassa result: {cassa_result}")
+        print(f"[Finanziaria DEBUG] Cassa result: {cassa_result}")
         
         # Get Prima Nota Banca totals
         banca_pipeline = [
@@ -56,7 +56,7 @@ async def get_financial_summary(
         banca_entrate = sum(r["total"] for r in banca_result if r["_id"] == "entrata")
         banca_uscite = sum(r["total"] for r in banca_result if r["_id"] == "uscita")
         
-        logger.info(f"[Finanziaria] Banca result: {banca_result}")
+        print(f"[Finanziaria DEBUG] Banca result: {banca_result}")
         
         # Get Salari totals
         salari_pipeline = [
