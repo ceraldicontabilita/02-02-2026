@@ -4,7 +4,7 @@ import api from "../api";
 import { Link } from "react-router-dom";
 import { useAnnoGlobale } from "../contexts/AnnoContext";
 import { formatEuro } from "../lib/utils";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, PieChart, Pie, Cell } from 'recharts';
 
 export default function Dashboard() {
   const { anno } = useAnnoGlobale();
@@ -16,6 +16,10 @@ export default function Dashboard() {
   const [trendData, setTrendData] = useState(null);
   const [posCalendario, setPosCalendario] = useState(null);
   const [scadenzeData, setScadenzeData] = useState(null);
+  // Nuovi stati per grafici avanzati
+  const [speseCategoria, setSpeseCategoria] = useState(null);
+  const [confrontoAnnuale, setConfrontoAnnuale] = useState(null);
+  const [statoRiconciliazione, setStatoRiconciliazione] = useState(null);
 
   useEffect(() => {
     (async () => {
