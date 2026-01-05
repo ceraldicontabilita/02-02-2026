@@ -309,6 +309,10 @@ export default function ControlloMensile() {
         saldoCassa,
         documentiCommerciali,
         annulli,
+        pagatoNonRiscosso,
+        pagatoNonRiscossoCount,
+        ammontareAnnulli,
+        ammontareAnnulliCount,
         hasData,
         hasDiscrepancy,
         // Debug info
@@ -329,6 +333,10 @@ export default function ControlloMensile() {
       yearSaldoCassa += saldoCassa;
       yearDocumentiCommerciali += documentiCommerciali;
       yearAnnulli += annulli;
+      yearPagatoNonRiscosso += pagatoNonRiscosso;
+      yearPagatoNonRiscossoCount += pagatoNonRiscossoCount;
+      yearAmmontareAnnulli += ammontareAnnulli;
+      yearAmmontareAnnulliCount += ammontareAnnulliCount;
     }
 
     setMonthlyData(monthly);
@@ -342,7 +350,11 @@ export default function ControlloMensile() {
       versamenti: yearVersamenti,
       saldoCassa: yearSaldoCassa,
       documentiCommerciali: yearDocumentiCommerciali,
-      annulli: yearAnnulli
+      annulli: yearAnnulli,
+      pagatoNonRiscosso: yearPagatoNonRiscosso,
+      pagatoNonRiscossoCount: yearPagatoNonRiscossoCount,
+      ammontareAnnulli: yearAmmontareAnnulli,
+      ammontareAnnulliCount: yearAmmontareAnnulliCount
     });
   };
 
