@@ -101,25 +101,20 @@ export default function ControlloMensile() {
         data_a: endDate
       });
 
-      // Carica dati in parallelo da TUTTE le fonti (Cassa, Banca, Corrispettivi, Estratto Conto)
-      const [cassaRes, bancaRes, corrispRes, estrattoRes] = await Promise.all([
+      // Carica dati in parallelo da TUTTE le fonti (Cassa, Corrispettivi, Estratto Conto Banca)
+      const [cassaRes, corrispRes, estrattoRes] = await Promise.all([
         api.get(`/api/prima-nota/cassa?${params}&limit=5000`).catch(() => ({ data: { movimenti: [] } })),
-        api.get(`/api/prima-nota/banca?${params}&limit=5000`).catch(() => ({ data: { movimenti: [] } })),
         api.get(`/api/corrispettivi?data_da=${startDate}&data_a=${endDate}`).catch(() => ({ data: [] })),
-        api.get(`/api/bank-statement/movements?limit=10000`).catch(() => ({ data: { movements: [] } }))
+        api.get(`/api/bank-statement/movements?data_da=${startDate}&data_a=${endDate}&limit=10000`).catch(() => ({ data: { movements: [] } }))
       ]);
 
       const cassa = cassaRes.data.movimenti || [];
-      const banca = bancaRes.data.movimenti || [];
       const corrispettivi = Array.isArray(corrispRes.data) ? corrispRes.data : (corrispRes.data.corrispettivi || []);
       const estrattoConto = estrattoRes.data.movements || [];
       
-      // Filtra estratto conto per anno
-      const estrattoAnno = estrattoConto.filter(m => m.data?.startsWith(anno.toString()));
+      console.log(`[ControlloMensile] Caricati: ${cassa.length} cassa, ${corrispettivi.length} corrispettivi, ${estrattoConto.length} estratto conto per ${anno}`);
       
-      console.log(`[ControlloMensile] Caricati: ${cassa.length} cassa, ${banca.length} banca, ${corrispettivi.length} corrispettivi, ${estrattoAnno.length} estratto conto per ${anno}`);
-      
-      processYearData(cassa, banca, corrispettivi, estrattoAnno);
+      processYearData(cassa, corrispettivi, estrattoConto);
     } catch (error) {
       console.error('Error loading year data:', error);
     } finally {
