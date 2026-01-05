@@ -135,6 +135,42 @@ export default function EstrattoConto() {
     }
   };
 
+  const handleExportExcel = async () => {
+    try {
+      const params = new URLSearchParams();
+      params.append('anno', selectedYear);
+      if (selectedMonth) params.append('mese', selectedMonth);
+      if (selectedCategoria) params.append('categoria', selectedCategoria);
+      if (selectedFornitore) params.append('fornitore', selectedFornitore);
+      if (selectedTipo) params.append('tipo', selectedTipo);
+      
+      const response = await api.get(`/api/estratto-conto-movimenti/export-excel?${params}`, {
+        responseType: 'blob'
+      });
+      
+      // Crea link per download
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      
+      // Costruisci nome file
+      let filename = `estratto_conto_${selectedYear}`;
+      if (selectedMonth) {
+        const mesiNomi = ['gen', 'feb', 'mar', 'apr', 'mag', 'giu', 'lug', 'ago', 'set', 'ott', 'nov', 'dic'];
+        filename += `_${mesiNomi[selectedMonth - 1]}`;
+      }
+      filename += '.xlsx';
+      
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      alert('Errore export: ' + (error.response?.data?.detail || error.message));
+    }
+  };
+
   const formatData = (dataStr) => {
     if (!dataStr) return '-';
     const [anno, mese, giorno] = dataStr.split('-');
