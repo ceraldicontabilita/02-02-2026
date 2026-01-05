@@ -4,6 +4,7 @@ import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, 
   ResponsiveContainer, PieChart, Pie, Cell 
 } from 'recharts';
+import { useAnnoGlobale } from '../contexts/AnnoContext';
 
 const COLORS = ['#4caf50', '#f44336', '#ff9800', '#2196f3'];
 
@@ -12,6 +13,7 @@ const COLORS = ['#4caf50', '#f44336', '#ff9800', '#2196f3'];
  * Mostra: medie temperature, conformità %, anomalie, grafici
  */
 export default function HACCPAnalytics() {
+  const { anno: selectedYear } = useAnnoGlobale();
   const [monthlyStats, setMonthlyStats] = useState(null);
   const [yearlyStats, setYearlyStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -20,7 +22,6 @@ export default function HACCPAnalytics() {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   });
-  const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear());
   const [activeTab, setActiveTab] = useState('mensile');
 
   useEffect(() => {
