@@ -326,6 +326,26 @@ export default function Bilancio() {
               <option key={m.label} value={m.value || ''}>{m.label}</option>
             ))}
           </select>
+          
+          <button
+            onClick={() => window.open(`/api/bilancio/export-pdf?anno=${anno}`, '_blank')}
+            style={{
+              padding: '10px 20px',
+              borderRadius: 8,
+              border: 'none',
+              background: '#1e293b',
+              color: 'white',
+              fontSize: 14,
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8
+            }}
+            data-testid="export-pdf-btn"
+          >
+            📄 Esporta PDF
+          </button>
         </div>
       </div>
 
