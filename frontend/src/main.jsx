@@ -42,6 +42,7 @@ import HACCPNotifiche from "./pages/HACCPNotifiche.jsx";
 import PianoDeiConti from "./pages/PianoDeiConti.jsx";
 import Commercialista from "./pages/Commercialista.jsx";
 import Bilancio from "./pages/Bilancio.jsx";
+import Scadenze from "./pages/Scadenze.jsx";
 
 const router = createBrowserRouter([
   {
