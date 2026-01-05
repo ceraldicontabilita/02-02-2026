@@ -18,12 +18,6 @@ export default function Corrispettivi() {
   const bulkFileInputRef = useRef(null);
   const zipFileInputRef = useRef(null);
 
-  // Anni disponibili (ultimi 5 anni)
-  const availableYears = [];
-  for (let y = currentYear; y >= currentYear - 4; y--) {
-    availableYears.push(y);
-  }
-
   useEffect(() => {
     loadCorrispettivi();
   }, [selectedYear]);
