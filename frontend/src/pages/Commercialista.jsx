@@ -107,58 +107,223 @@ export default function Commercialista() {
     const doc = new jsPDF();
     const meseNome = MESI[selectedMonth + 1];
     
-    // Header
-    doc.setFontSize(20);
+    // ==========================================
+    // INTESTAZIONE AZIENDA
+    // ==========================================
+    doc.setFontSize(16);
     doc.setTextColor(30, 58, 95);
-    doc.text('Prima Nota Cassa', 14, 20);
+    doc.setFont(undefined, 'bold');
+    doc.text('CERALDI GROUP S.R.L.', 14, 18);
     
-    doc.setFontSize(14);
-    doc.setTextColor(100);
-    doc.text(`${meseNome} ${selectedYear}`, 14, 30);
+    doc.setFontSize(9);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(80);
+    doc.text('Via Roma, 123 - 80100 Napoli (NA)', 14, 24);
+    doc.text('P.IVA: 12345678901 - C.F.: 12345678901', 14, 29);
     
-    // Summary
+    // Linea separatrice
+    doc.setDrawColor(30, 58, 95);
+    doc.setLineWidth(0.5);
+    doc.line(14, 33, 196, 33);
+    
+    // ==========================================
+    // TITOLO DOCUMENTO
+    // ==========================================
+    doc.setFontSize(18);
+    doc.setTextColor(30, 58, 95);
+    doc.setFont(undefined, 'bold');
+    doc.text('PRIMA NOTA CASSA', 14, 45);
+    
     doc.setFontSize(12);
-    doc.setTextColor(0);
-    doc.text(`Totale Entrate: € ${primaNotaData.totale_entrate?.toLocaleString('it-IT', {minimumFractionDigits: 2})}`, 14, 45);
-    doc.text(`Totale Uscite: € ${primaNotaData.totale_uscite?.toLocaleString('it-IT', {minimumFractionDigits: 2})}`, 14, 52);
-    doc.setFontSize(14);
-    doc.setTextColor(primaNotaData.saldo >= 0 ? 76 : 196, primaNotaData.saldo >= 0 ? 175 : 39, primaNotaData.saldo >= 0 ? 80 : 47);
-    doc.text(`Saldo: € ${primaNotaData.saldo?.toLocaleString('it-IT', {minimumFractionDigits: 2})}`, 14, 62);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(80);
+    doc.text(`Periodo: ${meseNome} ${selectedYear}`, 14, 52);
     
-    // Table
-    if (primaNotaData.movimenti?.length > 0) {
-      const tableData = primaNotaData.movimenti.map(m => {
+    // ==========================================
+    // RIEPILOGO DETTAGLIATO
+    // ==========================================
+    // Calcola dettagli per categoria
+    const movimenti = primaNotaData.movimenti || [];
+    
+    // Entrate per categoria
+    const entrateCorresp = movimenti
+      .filter(m => (m.tipo === 'entrata' || m.type === 'entrata') && (m.categoria === 'Corrispettivi' || m.category === 'Corrispettivi'))
+      .reduce((sum, m) => sum + parseFloat(m.importo || m.amount || 0), 0);
+    
+    const entrateFinSoci = movimenti
+      .filter(m => (m.tipo === 'entrata' || m.type === 'entrata') && (m.categoria === 'Finanziamento soci' || m.category === 'Finanziamento soci'))
+      .reduce((sum, m) => sum + parseFloat(m.importo || m.amount || 0), 0);
+    
+    const entrateAltro = movimenti
+      .filter(m => (m.tipo === 'entrata' || m.type === 'entrata') && 
+        m.categoria !== 'Corrispettivi' && m.category !== 'Corrispettivi' &&
+        m.categoria !== 'Finanziamento soci' && m.category !== 'Finanziamento soci')
+      .reduce((sum, m) => sum + parseFloat(m.importo || m.amount || 0), 0);
+    
+    // Uscite per categoria  
+    const usciteFatture = movimenti
+      .filter(m => (m.tipo === 'uscita' || m.type === 'uscita') && 
+        ((m.categoria || m.category || '').toLowerCase().includes('fattura') || 
+         (m.categoria || m.category || '').toLowerCase().includes('fornitore')))
+      .reduce((sum, m) => sum + parseFloat(m.importo || m.amount || 0), 0);
+    
+    const usciteVersamenti = movimenti
+      .filter(m => (m.tipo === 'uscita' || m.type === 'uscita') && 
+        (m.categoria === 'Versamento' || m.category === 'Versamento' ||
+         (m.descrizione || m.description || '').toLowerCase().includes('versamento')))
+      .reduce((sum, m) => sum + parseFloat(m.importo || m.amount || 0), 0);
+    
+    const uscitePOS = movimenti
+      .filter(m => (m.tipo === 'uscita' || m.type === 'uscita') && 
+        (m.categoria === 'POS' || m.category === 'POS'))
+      .reduce((sum, m) => sum + parseFloat(m.importo || m.amount || 0), 0);
+    
+    const usciteAltro = movimenti
+      .filter(m => (m.tipo === 'uscita' || m.type === 'uscita') &&
+        !(m.categoria || m.category || '').toLowerCase().includes('fattura') &&
+        !(m.categoria || m.category || '').toLowerCase().includes('fornitore') &&
+        m.categoria !== 'Versamento' && m.category !== 'Versamento' &&
+        m.categoria !== 'POS' && m.category !== 'POS')
+      .reduce((sum, m) => sum + parseFloat(m.importo || m.amount || 0), 0);
+    
+    const formatEuro = (val) => `€ ${val.toLocaleString('it-IT', {minimumFractionDigits: 2})}`;
+    
+    // Box riepilogo
+    doc.setFillColor(240, 248, 255);
+    doc.roundedRect(14, 58, 182, 55, 3, 3, 'F');
+    
+    // ENTRATE
+    doc.setFontSize(11);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(39, 174, 96);
+    doc.text('ENTRATE', 20, 68);
+    
+    doc.setFontSize(9);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(60);
+    let yPos = 75;
+    
+    doc.text(`Corrispettivi:`, 25, yPos);
+    doc.text(formatEuro(entrateCorresp), 80, yPos, { align: 'right' });
+    
+    if (entrateFinSoci > 0) {
+      yPos += 5;
+      doc.text(`Finanziamento Soci:`, 25, yPos);
+      doc.text(formatEuro(entrateFinSoci), 80, yPos, { align: 'right' });
+    }
+    
+    if (entrateAltro > 0) {
+      yPos += 5;
+      doc.text(`Altre entrate:`, 25, yPos);
+      doc.text(formatEuro(entrateAltro), 80, yPos, { align: 'right' });
+    }
+    
+    // Totale entrate
+    yPos += 7;
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(39, 174, 96);
+    doc.text(`TOTALE ENTRATE:`, 25, yPos);
+    doc.text(formatEuro(primaNotaData.totale_entrate || 0), 80, yPos, { align: 'right' });
+    
+    // USCITE
+    doc.setFontSize(11);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(231, 76, 60);
+    doc.text('USCITE', 110, 68);
+    
+    doc.setFontSize(9);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(60);
+    yPos = 75;
+    
+    doc.text(`Pagamento Fatture:`, 115, yPos);
+    doc.text(formatEuro(usciteFatture), 180, yPos, { align: 'right' });
+    
+    if (usciteVersamenti > 0) {
+      yPos += 5;
+      doc.text(`Versamenti in banca:`, 115, yPos);
+      doc.text(formatEuro(usciteVersamenti), 180, yPos, { align: 'right' });
+    }
+    
+    if (uscitePOS > 0) {
+      yPos += 5;
+      doc.text(`POS / Bancomat:`, 115, yPos);
+      doc.text(formatEuro(uscitePOS), 180, yPos, { align: 'right' });
+    }
+    
+    if (usciteAltro > 0) {
+      yPos += 5;
+      doc.text(`Altre uscite:`, 115, yPos);
+      doc.text(formatEuro(usciteAltro), 180, yPos, { align: 'right' });
+    }
+    
+    // Totale uscite
+    yPos = 97;
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(231, 76, 60);
+    doc.text(`TOTALE USCITE:`, 115, yPos);
+    doc.text(formatEuro(primaNotaData.totale_uscite || 0), 180, yPos, { align: 'right' });
+    
+    // SALDO
+    const saldo = (primaNotaData.totale_entrate || 0) - (primaNotaData.totale_uscite || 0);
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(saldo >= 0 ? 39 : 231, saldo >= 0 ? 174 : 76, saldo >= 0 ? 96 : 60);
+    doc.text(`SALDO PERIODO: ${formatEuro(saldo)}`, 14, 120);
+    
+    // ==========================================
+    // TABELLA MOVIMENTI
+    // ==========================================
+    if (movimenti.length > 0) {
+      const tableData = movimenti.map(m => {
         const data = m.date || m.data || '';
         const tipo = (m.type || m.tipo || '').toLowerCase();
         const importo = parseFloat(m.amount || m.importo || 0);
         
         return [
           data.substring(0, 10),
-          tipo === 'entrata' ? 'Entrata' : 'Uscita',
-          `€ ${importo.toLocaleString('it-IT', {minimumFractionDigits: 2})}`,
-          m.description || m.descrizione || '-',
+          tipo === 'entrata' ? '↑ ENTRATA' : '↓ USCITA',
+          formatEuro(importo),
+          (m.description || m.descrizione || '-').substring(0, 50),
           m.category || m.categoria || '-'
         ];
       });
       
       autoTable(doc, {
-        startY: 75,
+        startY: 128,
         head: [['Data', 'Tipo', 'Importo', 'Descrizione', 'Categoria']],
         body: tableData,
         theme: 'striped',
-        headStyles: { fillColor: [30, 58, 95] },
-        styles: { fontSize: 9 }
+        headStyles: { 
+          fillColor: [30, 58, 95],
+          fontSize: 9,
+          fontStyle: 'bold'
+        },
+        styles: { 
+          fontSize: 8,
+          cellPadding: 3
+        },
+        columnStyles: {
+          0: { cellWidth: 22 },
+          1: { cellWidth: 22 },
+          2: { cellWidth: 25, halign: 'right' },
+          3: { cellWidth: 80 },
+          4: { cellWidth: 35 }
+        },
+        alternateRowStyles: { fillColor: [248, 250, 252] }
       });
     }
     
-    // Footer
+    // ==========================================
+    // FOOTER
+    // ==========================================
     const pageCount = doc.internal.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
       doc.setPage(i);
       doc.setFontSize(8);
       doc.setTextColor(128);
       doc.text(
-        `Ceraldi Group S.R.L. - Generato il ${new Date().toLocaleDateString('it-IT')} - Pagina ${i}/${pageCount}`,
+        `CERALDI GROUP S.R.L. - Generato il ${new Date().toLocaleDateString('it-IT')} - Pagina ${i}/${pageCount}`,
         14,
         doc.internal.pageSize.height - 10
       );
