@@ -887,6 +887,8 @@ DIPENDENTI_ALIAS = {
     # Alias manuali per casi noti
     "dissanayaka": "sankapala arachchilage jananie ayachana dissanayaka",
     "sankapala jananie ayachana": "sankapala arachchilage jananie ayachana dissanayaka",
+    "sankapala arachchilage jananie ayac": "sankapala arachchilage jananie ayachana dissanayaka",
+    "sankapala": "sankapala arachchilage jananie ayachana dissanayaka",
     "murolo": "murolo mario",
     "carotenuto": "carotenuto antonella",
     "capezzuto": "capezzuto alessandro",
