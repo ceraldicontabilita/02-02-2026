@@ -178,21 +178,21 @@ export default function IVA() {
               <div className="card" style={{ background: "#e3f2fd" }}>
                 <div className="small">Saldo IVA {selectedYear}</div>
                 <div className="kpi" style={{ color: getSaldoColor(annualData.totali?.saldo) }}>
-                  € {annualData.totali?.saldo?.toLocaleString('it-IT', {minimumFractionDigits: 2})}
+                  {formatEuro(annualData.totali?.saldo)}
                 </div>
                 <div className="small">{annualData.totali?.stato}</div>
               </div>
               <div className="card" style={{ background: "#fff3e0" }}>
                 <div className="small">IVA a Debito (Corrispettivi) {selectedYear}</div>
                 <div className="kpi" style={{ color: "#e65100" }}>
-                  € {annualData.totali?.iva_debito?.toLocaleString('it-IT', {minimumFractionDigits: 2})}
+                  {formatEuro(annualData.totali?.iva_debito)}
                 </div>
                 <div className="small">{annualData.totali?.corrispettivi_count || 0} corrispettivi</div>
               </div>
               <div className="card" style={{ background: "#e8f5e9" }}>
                 <div className="small">IVA a Credito (Fatture) {selectedYear}</div>
                 <div className="kpi" style={{ color: "#2e7d32" }}>
-                  € {annualData.totali?.iva_credito?.toLocaleString('it-IT', {minimumFractionDigits: 2})}
+                  {formatEuro(annualData.totali?.iva_credito)}
                 </div>
                 <div className="small">{annualData.totali?.fatture_count || 0} fatture</div>
               </div>
