@@ -363,21 +363,38 @@ async def import_estratto_conto_fornitori(file: UploadFile = File(...)) -> Dict[
                     best_match = fattura
         
         if best_match and best_match_score >= 10:
-            # Aggiorna fattura come pagata
-            await db["invoices"].update_one(
-                {"id": best_match["id"]},
-                {"$set": {
-                    "pagato": True,
-                    "data_pagamento": data_mov.isoformat(),
-                    "metodo_pagamento": "bonifico",
-                    "riconciliato_da_estratto": True,
-                    "riferimento_banca": mov["descrizione"][:200],
-                    "updated_at": datetime.utcnow().isoformat()
-                }}
-            )
-            best_match["pagato"] = True
-            riconciliati += 1
-            found = True
+            # Aggiorna fattura come pagata - OPERAZIONE ATOMICA
+            # Usiamo una transazione per garantire l'integrità dei dati
+            try:
+                # MongoDB 4.0+ supporta transazioni multi-documento
+                # Per singolo documento, update_one è già atomico
+                update_result = await db["invoices"].update_one(
+                    {
+                        "id": best_match["id"],
+                        "$or": [{"pagato": False}, {"pagato": {"$exists": False}}]  # Double-check non già pagata
+                    },
+                    {"$set": {
+                        "pagato": True,
+                        "data_pagamento": data_mov.isoformat(),
+                        "metodo_pagamento": "bonifico",
+                        "riconciliato_da_estratto": True,
+                        "riferimento_banca": mov["descrizione"][:200],
+                        "importo_pagamento_banca": importo,
+                        "updated_at": datetime.utcnow().isoformat()
+                    }}
+                )
+                
+                # Verifica che l'update sia avvenuto
+                if update_result.modified_count > 0:
+                    best_match["pagato"] = True
+                    riconciliati += 1
+                    found = True
+                else:
+                    # Fattura già pagata da altro processo - skip
+                    logger.warning(f"Fattura {best_match['id']} già pagata, skipping")
+            except Exception as e:
+                logger.error(f"Errore atomico riconciliazione fattura {best_match['id']}: {e}")
+                # Non interrompere il processo, continua con le altre
         
         if not found:
             non_trovati.append({
