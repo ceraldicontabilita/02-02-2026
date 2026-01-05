@@ -44,6 +44,8 @@ export default function GestioneDipendenti() {
   // Prima Nota Salari state
   const [salariMovimenti, setSalariMovimenti] = useState([]);
   const [loadingSalari, setLoadingSalari] = useState(false);
+  const [importingSalari, setImportingSalari] = useState(false);
+  const [importResult, setImportResult] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -99,17 +101,64 @@ export default function GestioneDipendenti() {
   const loadPrimaNotaSalari = async () => {
     try {
       setLoadingSalari(true);
-      const monthStr = String(selectedMonth).padStart(2, '0');
-      const data_da = `${selectedYear}-${monthStr}-01`;
-      const lastDay = new Date(selectedYear, selectedMonth, 0).getDate();
-      const data_a = `${selectedYear}-${monthStr}-${lastDay}`;
-      const res = await api.get(`/api/prima-nota/salari?data_da=${data_da}&data_a=${data_a}`).catch(() => ({ data: { movimenti: [] } }));
-      setSalariMovimenti(res.data?.movimenti || []);
+      // Usa il nuovo endpoint che supporta filtri anno/mese
+      const res = await api.get(`/api/dipendenti/salari?anno=${selectedYear}&mese=${selectedMonth}`).catch(() => ({ data: [] }));
+      setSalariMovimenti(res.data || []);
     } catch (error) {
       console.error('Error loading prima nota salari:', error);
       setSalariMovimenti([]);
     } finally {
       setLoadingSalari(false);
+    }
+  };
+
+  const handleImportSalari = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    try {
+      setImportingSalari(true);
+      setImportResult(null);
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const res = await api.post('/api/dipendenti/import-salari', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      
+      setImportResult(res.data);
+      loadPrimaNotaSalari();
+      
+    } catch (error) {
+      setImportResult({ 
+        error: true, 
+        message: error.response?.data?.detail || error.message 
+      });
+    } finally {
+      setImportingSalari(false);
+      e.target.value = ''; // Reset file input
+    }
+  };
+
+  const handleDeleteSalario = async (salarioId) => {
+    if (!window.confirm('Eliminare questo movimento salario?')) return;
+    try {
+      await api.delete(`/api/dipendenti/salari/${salarioId}`);
+      loadPrimaNotaSalari();
+    } catch (error) {
+      alert('Errore: ' + (error.response?.data?.detail || error.message));
+    }
+  };
+
+  const handleDeleteSalariAnno = async () => {
+    if (!window.confirm(`Eliminare TUTTI i salari del ${selectedYear}? Questa azione è irreversibile.`)) return;
+    try {
+      const res = await api.delete(`/api/dipendenti/salari/bulk/anno/${selectedYear}`);
+      alert(res.data.message);
+      loadPrimaNotaSalari();
+    } catch (error) {
+      alert('Errore: ' + (error.response?.data?.detail || error.message));
     }
   };
 
