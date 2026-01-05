@@ -108,7 +108,8 @@ from app.routers import (
     commercialista,
     bilancio,
     pos_accredito,
-    scadenze
+    scadenze,
+    bank_statement_parser
 )
 
 # Include public API first (no auth required)
