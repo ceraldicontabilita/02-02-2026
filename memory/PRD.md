@@ -3,7 +3,7 @@
 ## Project Overview
 Sistema ERP completo per gestione aziendale con focus su contabilità, fatturazione elettronica, magazzino e gestione fornitori.
 
-**Versione**: 2.4.0  
+**Versione**: 2.5.0  
 **Ultimo aggiornamento**: 5 Gennaio 2026  
 **Stack**: FastAPI (Python) + React + MongoDB
 
@@ -11,32 +11,54 @@ Sistema ERP completo per gestione aziendale con focus su contabilità, fatturazi
 
 ## Ultime Implementazioni (5 Gen 2026)
 
-### Riconciliazione Salari Dipendenti - COMPLETATA
+### Riconciliazione Salari Dipendenti - MIGLIORATA
 Sistema di gestione e riconciliazione automatica degli stipendi con estratti conto bancari.
 
-**Funzionalità implementate:**
+**Nuove funzionalità v2.5.0:**
+
+1. **Miglioramento Logica Riconciliazione**
+   - Matching basato su nome + importo + periodo (non solo nome+importo)
+   - Sistema di scoring per trovare il match migliore
+   - Tolleranza importo: 1% o €5
+   - Priorità ai salari del mese corretto (o mese successivo per bonifici tipici)
+   - Evita abbinamenti errati tra anni diversi
+
+2. **Reset Riconciliazione**
+   - Nuovo endpoint: `DELETE /api/dipendenti/salari/reset-reconciliation`
+   - Parametri: `anno`, `dipendente` (opzionali)
+   - Permette di ri-testare la riconciliazione dopo modifiche
+   - Pulsante "🔄 Reset Riconciliazione" nella UI
+
+3. **Supporto PDF per Estratto Conto**
+   - Il pulsante "Importa Estratto Conto" ora accetta: PDF, CSV, Excel
+   - Parser PDF per formato "Elenco Esiti Pagamenti" (BANCO BPM)
+   - Parser PDF per estratti conto standard con pattern "FAVORE"
+
+4. **UI Migliorata - Dati Centrati**
+   - Tutti i dati nella tabella Prima Nota Salari sono ora centrati
+   - Header e celle allineate al centro per migliore leggibilità
+
+**Funzionalità esistenti:**
 1. **Import Buste Paga (Excel)**
    - Endpoint: `POST /api/dipendenti/import-salari`
    - Colonne: Dipendente, Mese, Anno, Stipendio Netto, Importo Erogato
+   - Aggregazione automatica per dipendente/mese/anno
    - Gestione duplicati automatica
    - Persistenza MongoDB: collezione `prima_nota_salari`
 
 2. **Import Estratto Conto per Riconciliazione**
    - Endpoint: `POST /api/dipendenti/import-estratto-conto`
-   - Supporta: CSV (separatore `;`), Excel (.xlsx, .xls)
-   - Matching automatico: nome dipendente + importo
+   - Supporta: CSV (separatore `;`), Excel (.xlsx, .xls), PDF
+   - Matching automatico: nome dipendente + importo + periodo
    - Riconciliazione atomica e persistente
-   - Gestione duplicati e formati diversi
-   - Importi negativi = pagamenti (uscite)
    - Persistenza: collezione `estratto_conto_salari`
 
 3. **UI Pagina Dipendenti (`/dipendenti`) - Tab Prima Nota Salari**
    - Filtri: Anno, Mese, Dipendente (con dropdown)
-   - Pulsanti: "📊 Importa Buste Paga", "🏦 Importa Estratto Conto", "🗑️ Elimina Anno", "🔄 Aggiorna"
+   - Pulsanti: "📊 Importa Buste Paga", "🏦 Importa Estratto Conto (PDF/CSV/Excel)", "🔄 Reset Riconciliazione", "🗑️ Elimina Anno", "🔄 Aggiorna"
    - Riepilogo: Movimenti, Riconciliati, Da Riconciliare, Totale Uscite
-   - Tabella colonne: Dipendente, Periodo, Importo Busta, Bonifico, Saldo, Stato, Azioni
+   - Tabella colonne (CENTRATE): Dipendente, Periodo, Importo Busta, Bonifico, Saldo, Stato, Azioni
    - Stato: "✓ Riconciliato" (verde) o "⏳ Da verificare" (arancione)
-   - Saldo: Differenza tra Importo Busta e Bonifico
 
 **Collezioni MongoDB:**
 ```javascript
@@ -67,12 +89,12 @@ Sistema di gestione e riconciliazione automatica degli stipendi con estratti con
 }
 ```
 
-### Bug Fix - IVA Finanziaria vs IVA
+### Bug Fix Precedenti - IVA Finanziaria vs IVA
 - Allineato endpoint `/api/finanziaria/summary` con logica di `/api/iva/annual`
 - Entrambi usano `data_ricezione` con fallback a `invoice_date`
 - Sottraggono Note Credito (TD04, TD08) dal totale IVA
 
-### Bug Fix - Formattazione Numerica Italiana
+### Bug Fix Precedenti - Formattazione Numerica Italiana
 - Funzione `formatEuro` aggiornata con `useGrouping: true`
 - Separatore migliaia anche per numeri < 10.000 (es: € 5.830,62)
 
