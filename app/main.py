@@ -109,7 +109,8 @@ from app.routers import (
     bilancio,
     pos_accredito,
     scadenze,
-    bank_statement_parser
+    bank_statement_parser,
+    riconciliazione_fornitori
 )
 
 # Include public API first (no auth required)
