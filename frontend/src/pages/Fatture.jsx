@@ -2,23 +2,8 @@ import React, { useState, useEffect, useRef, useMemo } from "react";
 import api from "../api";
 import { formatDateIT } from "../lib/utils";
 import { UploadProgressBar } from "../components/UploadProgressBar";
-import FattureMobile from "./FattureMobile";
-import { useIsMobile } from "../hooks/useData";
 
 export default function Fatture() {
-  const isMobile = useIsMobile();
-  
-  // Se siamo su mobile, mostra la versione semplificata
-  if (isMobile) {
-    return <FattureMobile />;
-  }
-  
-  // Altrimenti, continua con la versione desktop completa
-  return <FattureDesktop />;
-}
-
-// Componente Desktop con tutte le funzionalità
-function FattureDesktop() {
   const currentYear = new Date().getFullYear();
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
