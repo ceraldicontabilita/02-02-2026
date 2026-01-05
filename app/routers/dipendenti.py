@@ -999,7 +999,7 @@ def match_nomi_fuzzy(nome1: str, nome2: str) -> bool:
 
 
 def estrai_nome_da_descrizione(descrizione: str) -> Optional[str]:
-    """Estrae il nome del dipendente dalla descrizione del bonifico."""
+    """Estrae il nome del dipendente/fornitore dalla descrizione del bonifico."""
     if not descrizione:
         return None
     
@@ -1009,10 +1009,21 @@ def estrai_nome_da_descrizione(descrizione: str) -> Optional[str]:
     if "FAVORE" in desc_upper:
         idx = desc_upper.find("FAVORE")
         after = descrizione[idx + 7:].strip()
+        
         # Prendi fino a " - " o fine stringa
         if " - " in after:
-            return after.split(" - ")[0].strip()
-        return after.split()[0:2] if len(after.split()) >= 2 else after.strip()
+            nome = after.split(" - ")[0].strip()
+        else:
+            nome = after.strip()
+        
+        # Rimuovi "NOTPROVIDE", "NOTPROVIDED", etc.
+        nome = re.sub(r'\s*NOTPROVID\w*', '', nome, flags=re.IGNORECASE)
+        
+        # Rimuovi codici e numeri alla fine (es. "FT 123")
+        nome = re.sub(r'\s+FT\s*\d+.*$', '', nome, flags=re.IGNORECASE)
+        nome = re.sub(r'\s+\d+\s*$', '', nome)
+        
+        return nome.strip() if nome.strip() else None
     
     # Pattern: "stip" indica stipendio, cerca nome prima
     if "STIP" in desc_upper:
