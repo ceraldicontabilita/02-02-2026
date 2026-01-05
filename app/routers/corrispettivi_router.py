@@ -257,12 +257,15 @@ async def upload_corrispettivo_xml(
 
 
 @router.post("/upload-xml-bulk")
-async def upload_corrispettivi_xml_bulk(files: List[UploadFile] = File(...)) -> Dict[str, Any]:
-    """Upload massivo corrispettivi XML."""
+async def upload_corrispettivi_xml_bulk(
+    files: List[UploadFile] = File(...),
+    force_update: bool = Query(False, description="Se True, aggiorna corrispettivi esistenti invece di saltarli")
+) -> Dict[str, Any]:
+    """Upload massivo corrispettivi XML. Con force_update=True, aggiorna i dati esistenti."""
     if not files:
         raise HTTPException(status_code=400, detail="Nessun file")
     
-    results = {"success": [], "errors": [], "duplicates": [], "total": len(files), "imported": 0, "failed": 0, "skipped": 0}
+    results = {"success": [], "errors": [], "duplicates": [], "updated": [], "total": len(files), "imported": 0, "failed": 0, "skipped": 0, "updated_count": 0}
     db = Database.get_db()
     
     for file in files:
@@ -293,11 +296,38 @@ async def upload_corrispettivi_xml_bulk(files: List[UploadFile] = File(...)) -> 
                 continue
             
             key = parsed.get("corrispettivo_key", "")
-            if key and await db["corrispettivi"].find_one({"corrispettivo_key": key}):
-                results["duplicates"].append({"filename": file.filename, "data": parsed.get("data")})
-                results["skipped"] += 1
+            existing = await db["corrispettivi"].find_one({"corrispettivo_key": key}) if key else None
+            
+            if existing:
+                if force_update:
+                    # UPSERT - Aggiorna esistente
+                    update_data = {
+                        "data": parsed.get("data", ""),
+                        "matricola_rt": parsed.get("matricola_rt", ""),
+                        "partita_iva": parsed.get("partita_iva", ""),
+                        "totale": float(parsed.get("totale", 0) or 0),
+                        "pagato_contanti": float(parsed.get("pagato_contanti", 0) or 0),
+                        "pagato_elettronico": float(parsed.get("pagato_elettronico", 0) or 0),
+                        "totale_iva": float(parsed.get("totale_iva", 0) or 0),
+                        "pagato_non_riscosso": float(parsed.get("pagato_non_riscosso", 0) or 0),
+                        "totale_ammontare_annulli": float(parsed.get("totale_ammontare_annulli", 0) or 0),
+                        "numero_documenti": int(parsed.get("numero_documenti", 0) or 0),
+                        "riepilogo_iva": parsed.get("riepilogo_iva", []),
+                        "filename": file.filename,
+                        "updated_at": datetime.utcnow().isoformat()
+                    }
+                    await db["corrispettivi"].update_one(
+                        {"corrispettivo_key": key},
+                        {"$set": update_data}
+                    )
+                    results["updated"].append({"filename": file.filename, "data": parsed.get("data")})
+                    results["updated_count"] += 1
+                else:
+                    results["duplicates"].append({"filename": file.filename, "data": parsed.get("data")})
+                    results["skipped"] += 1
                 continue
             
+            # INSERT - Nuovo corrispettivo
             corr = {
                 "id": str(uuid.uuid4()),
                 "corrispettivo_key": key,
@@ -308,6 +338,10 @@ async def upload_corrispettivi_xml_bulk(files: List[UploadFile] = File(...)) -> 
                 "pagato_contanti": float(parsed.get("pagato_contanti", 0) or 0),
                 "pagato_elettronico": float(parsed.get("pagato_elettronico", 0) or 0),
                 "totale_iva": float(parsed.get("totale_iva", 0) or 0),
+                "pagato_non_riscosso": float(parsed.get("pagato_non_riscosso", 0) or 0),
+                "totale_ammontare_annulli": float(parsed.get("totale_ammontare_annulli", 0) or 0),
+                "numero_documenti": int(parsed.get("numero_documenti", 0) or 0),
+                "riepilogo_iva": parsed.get("riepilogo_iva", []),
                 "filename": file.filename,
                 "created_at": datetime.utcnow().isoformat()
             }
