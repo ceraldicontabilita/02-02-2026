@@ -921,7 +921,7 @@ export default function GestioneDipendenti() {
               <div style={{ padding: 40, textAlign: 'center', color: '#6b7280' }}>
                 Nessun movimento salari per questo periodo.
                 <div style={{ marginTop: 12, fontSize: 13 }}>
-                  Usa il pulsante <strong>"📊 Importa Buste Paga"</strong> per caricare i dati dal file stipendi.
+                  Usa il pulsante <strong>&quot;📊 Importa Buste Paga&quot;</strong> per caricare i dati dal file stipendi.
                 </div>
               </div>
             ) : (
