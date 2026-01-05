@@ -73,9 +73,7 @@ export default function GestioneDipendenti() {
   }, [search, filterMansione]);
 
   useEffect(() => {
-    if (activeTab === 'paghe') {
-      loadBustePaga();
-    } else if (activeTab === 'salari') {
+    if (activeTab === 'salari') {
       loadPrimaNotaSalari();
       loadDipendentiLista();
     } else if (activeTab === 'libro-unico') {
