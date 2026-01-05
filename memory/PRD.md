@@ -3,22 +3,25 @@
 ## Project Overview
 Sistema ERP completo per gestione aziendale con focus su contabilità, fatturazione elettronica, magazzino e gestione fornitori.
 
-**Versione**: 2.1.0  
+**Versione**: 2.2.0  
 **Ultimo aggiornamento**: 5 Gennaio 2026  
 **Stack**: FastAPI (Python) + React + MongoDB
 
 ---
 
-## Architettura Post-Refactoring
+## Correzioni Recenti (5 Gen 2026)
 
-### Statistiche Codebase
-- **Router Backend**: 72 (ridotti da 86)
-- **Pagine Frontend**: 39 (ridotte da 40, +1 nuova)
-- **File eliminati**: 17 (router non usati, pagine mobile obsolete)
+### Bug Fix
+- **Anni dinamici**: Corretti selettori anno hardcoded in Bilancio, Commercialista, GestioneDipendenti, HACCPAnalytics
+- **PDF Commercialista**: Fix import jsPDF autoTable (da `doc.autoTable()` a `autoTable(doc, ...)`)
+- **PrimaNotaMobile**: Ricreato dopo eliminazione errata, con fix API endpoints
+- **Riconciliazione descrizioni**: Allargata colonna descrizione al 55% con word-wrap per mostrare testo completo
 
-### Nuove Funzionalità (5 Gen 2026)
-- **Parser PDF Estratto Conto BANCO BPM**: Import automatico movimenti bancari
-- **Fix anni dinamici**: Selettori anno ora usano anno corrente ± 2 anni
+### Nuove Funzionalità
+- **Parser PDF Estratto Conto BANCO BPM**: Import automatico movimenti bancari (testato con 788 movimenti)
+- **Pagina `/estratto-conto`**: Upload PDF → Anteprima → Import in Prima Nota Banca
+- **Pulsante "+ Prima Nota" in Riconciliazione**: Per importare movimenti mancanti dall'estratto conto
+- **API `/api/prima-nota/movimento`**: Endpoint generico per creare movimenti cassa/banca
 
 ### Struttura Directory
 ```
