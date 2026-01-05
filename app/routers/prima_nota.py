@@ -185,6 +185,103 @@ async def create_prima_nota_cassa(
     return {"message": "Movimento cassa creato", "id": movimento["id"]}
 
 
+@router.delete("/cassa/{movimento_id}")
+async def delete_movimento_cassa(
+    movimento_id: str,
+    force: bool = Query(False, description="Forza eliminazione")
+) -> Dict[str, Any]:
+    """
+    Elimina un singolo movimento cassa con validazione.
+    
+    **Regole:**
+    - Non può eliminare movimenti riconciliati
+    - Movimenti confermati richiedono force=true
+    """
+    from app.services.business_rules import BusinessRules, EntityStatus
+    
+    db = Database.get_db()
+    
+    # Recupera movimento
+    mov = await db[COLLECTION_PRIMA_NOTA_CASSA].find_one({"id": movimento_id})
+    if not mov:
+        raise HTTPException(status_code=404, detail="Movimento non trovato")
+    
+    # Valida eliminazione
+    validation = BusinessRules.can_delete_movement(mov)
+    
+    if not validation.is_valid:
+        raise HTTPException(
+            status_code=400,
+            detail={"message": "Eliminazione non consentita", "errors": validation.errors}
+        )
+    
+    if validation.warnings and not force:
+        return {
+            "status": "warning",
+            "message": "Eliminazione richiede conferma",
+            "warnings": validation.warnings,
+            "require_force": True
+        }
+    
+    # Soft-delete
+    await db[COLLECTION_PRIMA_NOTA_CASSA].update_one(
+        {"id": movimento_id},
+        {"$set": {
+            "entity_status": EntityStatus.DELETED.value,
+            "status": "deleted",
+            "deleted_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {"success": True, "message": "Movimento eliminato (archiviato)"}
+
+
+@router.delete("/banca/{movimento_id}")
+async def delete_movimento_banca(
+    movimento_id: str,
+    force: bool = Query(False, description="Forza eliminazione")
+) -> Dict[str, Any]:
+    """
+    Elimina un singolo movimento banca con validazione.
+    
+    **Regole:**
+    - Non può eliminare movimenti riconciliati
+    """
+    from app.services.business_rules import BusinessRules, EntityStatus
+    
+    db = Database.get_db()
+    
+    mov = await db[COLLECTION_PRIMA_NOTA_BANCA].find_one({"id": movimento_id})
+    if not mov:
+        raise HTTPException(status_code=404, detail="Movimento non trovato")
+    
+    validation = BusinessRules.can_delete_movement(mov)
+    
+    if not validation.is_valid:
+        raise HTTPException(
+            status_code=400,
+            detail={"message": "Eliminazione non consentita", "errors": validation.errors}
+        )
+    
+    if validation.warnings and not force:
+        return {
+            "status": "warning",
+            "warnings": validation.warnings,
+            "require_force": True
+        }
+    
+    await db[COLLECTION_PRIMA_NOTA_BANCA].update_one(
+        {"id": movimento_id},
+        {"$set": {
+            "entity_status": EntityStatus.DELETED.value,
+            "status": "deleted",
+            "deleted_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {"success": True, "message": "Movimento eliminato (archiviato)"}
+
+
 @router.delete("/cassa/delete-all")
 async def delete_all_prima_nota_cassa() -> Dict[str, Any]:
     """Elimina TUTTI i movimenti dalla prima nota cassa."""
