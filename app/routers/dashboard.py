@@ -283,3 +283,248 @@ async def get_trend_mensile(
             "saldo": [t["saldo"] for t in trend_data]
         }
     }
+
+
+@router.get(
+    "/spese-per-categoria",
+    summary="Spese per categoria",
+    description="Distribuzione spese per categoria (per grafico a torta)"
+)
+async def get_spese_per_categoria(
+    anno: int = Query(None, description="Anno di riferimento")
+) -> Dict[str, Any]:
+    """
+    Ottiene la distribuzione delle spese per categoria.
+    Usa i dati dell'estratto conto per categorie accurate.
+    """
+    db = Database.get_db()
+    
+    if not anno:
+        anno = datetime.now().year
+    
+    # Query estratto conto per categorie
+    pipeline = [
+        {"$match": {
+            "data": {"$regex": f"^{anno}"},
+            "tipo": "uscita"  # Solo uscite
+        }},
+        {"$group": {
+            "_id": "$categoria",
+            "totale": {"$sum": {"$abs": "$importo"}},
+            "count": {"$sum": 1}
+        }},
+        {"$sort": {"totale": -1}},
+        {"$limit": 10}
+    ]
+    
+    risultati = await db["estratto_conto_movimenti"].aggregate(pipeline).to_list(10)
+    
+    # Se non ci sono dati nell'estratto conto, prova con le fatture
+    if not risultati:
+        # Raggruppa per fornitore come proxy per categoria
+        pipeline_fatture = [
+            {"$match": {
+                "$or": [
+                    {"invoice_date": {"$regex": f"^{anno}"}},
+                    {"data_ricezione": {"$regex": f"^{anno}"}}
+                ]
+            }},
+            {"$group": {
+                "_id": "$supplier_name",
+                "totale": {"$sum": "$total_amount"},
+                "count": {"$sum": 1}
+            }},
+            {"$sort": {"totale": -1}},
+            {"$limit": 10}
+        ]
+        risultati = await db[Collections.INVOICES].aggregate(pipeline_fatture).to_list(10)
+    
+    # Formatta per il grafico
+    categorie = []
+    totale_spese = 0
+    
+    for r in risultati:
+        cat_nome = r["_id"] or "Non categorizzato"
+        if len(cat_nome) > 25:
+            cat_nome = cat_nome[:22] + "..."
+        
+        categorie.append({
+            "nome": cat_nome,
+            "valore": round(r["totale"], 2),
+            "count": r["count"]
+        })
+        totale_spese += r["totale"]
+    
+    # Calcola percentuali
+    for c in categorie:
+        c["percentuale"] = round((c["valore"] / totale_spese * 100) if totale_spese > 0 else 0, 1)
+    
+    return {
+        "anno": anno,
+        "categorie": categorie,
+        "totale_spese": round(totale_spese, 2),
+        "numero_categorie": len(categorie)
+    }
+
+
+@router.get(
+    "/confronto-annuale",
+    summary="Confronto con anno precedente",
+    description="Confronta i dati dell'anno con l'anno precedente"
+)
+async def get_confronto_annuale(
+    anno: int = Query(None, description="Anno di riferimento")
+) -> Dict[str, Any]:
+    """
+    Confronta le metriche chiave tra anno corrente e precedente.
+    """
+    db = Database.get_db()
+    
+    if not anno:
+        anno = datetime.now().year
+    
+    anno_prec = anno - 1
+    
+    async def get_totali_anno(a: int) -> Dict:
+        # Entrate (corrispettivi)
+        entrate_res = await db["corrispettivi"].aggregate([
+            {"$match": {"data": {"$regex": f"^{a}"}}},
+            {"$group": {"_id": None, "totale": {"$sum": "$totale"}}}
+        ]).to_list(1)
+        entrate = entrate_res[0]["totale"] if entrate_res else 0
+        
+        # Uscite (fatture)
+        uscite_res = await db[Collections.INVOICES].aggregate([
+            {"$match": {
+                "$or": [
+                    {"data_ricezione": {"$regex": f"^{a}"}},
+                    {"invoice_date": {"$regex": f"^{a}"}}
+                ]
+            }},
+            {"$group": {"_id": None, "totale": {"$sum": "$total_amount"}}}
+        ]).to_list(1)
+        uscite = uscite_res[0]["totale"] if uscite_res else 0
+        
+        # Numero fatture
+        num_fatture = await db[Collections.INVOICES].count_documents({
+            "$or": [
+                {"data_ricezione": {"$regex": f"^{a}"}},
+                {"invoice_date": {"$regex": f"^{a}"}}
+            ]
+        })
+        
+        return {
+            "anno": a,
+            "entrate": round(entrate, 2),
+            "uscite": round(uscite, 2),
+            "saldo": round(entrate - uscite, 2),
+            "num_fatture": num_fatture
+        }
+    
+    corrente = await get_totali_anno(anno)
+    precedente = await get_totali_anno(anno_prec)
+    
+    # Calcola variazioni percentuali
+    def calc_variazione(nuovo, vecchio):
+        if vecchio == 0:
+            return 100 if nuovo > 0 else 0
+        return round((nuovo - vecchio) / abs(vecchio) * 100, 1)
+    
+    variazioni = {
+        "entrate": calc_variazione(corrente["entrate"], precedente["entrate"]),
+        "uscite": calc_variazione(corrente["uscite"], precedente["uscite"]),
+        "saldo": calc_variazione(corrente["saldo"], precedente["saldo"]) if precedente["saldo"] != 0 else 0,
+        "num_fatture": calc_variazione(corrente["num_fatture"], precedente["num_fatture"])
+    }
+    
+    return {
+        "anno_corrente": corrente,
+        "anno_precedente": precedente,
+        "variazioni_percentuali": variazioni
+    }
+
+
+@router.get(
+    "/stato-riconciliazione",
+    summary="Stato riconciliazione",
+    description="Statistiche sullo stato della riconciliazione"
+)
+async def get_stato_riconciliazione(
+    anno: int = Query(None, description="Anno di riferimento")
+) -> Dict[str, Any]:
+    """
+    Ottiene statistiche dettagliate sullo stato della riconciliazione.
+    """
+    db = Database.get_db()
+    
+    if not anno:
+        anno = datetime.now().year
+    
+    # Fatture fornitori
+    fatture_totali = await db[Collections.INVOICES].count_documents({
+        "$or": [
+            {"data_ricezione": {"$regex": f"^{anno}"}},
+            {"invoice_date": {"$regex": f"^{anno}"}}
+        ]
+    })
+    
+    fatture_pagate = await db[Collections.INVOICES].count_documents({
+        "$or": [
+            {"data_ricezione": {"$regex": f"^{anno}"}},
+            {"invoice_date": {"$regex": f"^{anno}"}}
+        ],
+        "pagato": True
+    })
+    
+    # Importi fatture
+    importi_pipeline = [
+        {"$match": {
+            "$or": [
+                {"data_ricezione": {"$regex": f"^{anno}"}},
+                {"invoice_date": {"$regex": f"^{anno}"}}
+            ]
+        }},
+        {"$group": {
+            "_id": "$pagato",
+            "totale": {"$sum": "$total_amount"}
+        }}
+    ]
+    importi_res = await db[Collections.INVOICES].aggregate(importi_pipeline).to_list(10)
+    
+    importo_pagato = sum(r["totale"] for r in importi_res if r["_id"] == True)
+    importo_da_pagare = sum(r["totale"] for r in importi_res if r["_id"] != True)
+    
+    # Salari
+    salari_totali = await db["prima_nota_salari"].count_documents({
+        "anno": anno
+    })
+    
+    salari_riconciliati = await db["prima_nota_salari"].count_documents({
+        "anno": anno,
+        "riconciliato": True
+    })
+    
+    # Percentuali
+    perc_fatture = round((fatture_pagate / fatture_totali * 100) if fatture_totali > 0 else 0, 1)
+    perc_salari = round((salari_riconciliati / salari_totali * 100) if salari_totali > 0 else 0, 1)
+    
+    return {
+        "anno": anno,
+        "fatture": {
+            "totali": fatture_totali,
+            "pagate": fatture_pagate,
+            "da_pagare": fatture_totali - fatture_pagate,
+            "percentuale_pagate": perc_fatture,
+            "importo_pagato": round(importo_pagato, 2),
+            "importo_da_pagare": round(importo_da_pagare, 2)
+        },
+        "salari": {
+            "totali": salari_totali,
+            "riconciliati": salari_riconciliati,
+            "da_riconciliare": salari_totali - salari_riconciliati,
+            "percentuale_riconciliati": perc_salari
+        },
+        "riepilogo": {
+            "percentuale_globale": round((perc_fatture + perc_salari) / 2, 1) if (fatture_totali > 0 or salari_totali > 0) else 0
+        }
+    }
