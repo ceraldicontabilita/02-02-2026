@@ -180,6 +180,35 @@ export default function GestioneDipendenti() {
     }
   };
 
+  const handleImportEstrattoConto = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    try {
+      setImportingEstratto(true);
+      setEstrattoResult(null);
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const res = await api.post('/api/dipendenti/import-estratto-conto', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      
+      setEstrattoResult(res.data);
+      loadPrimaNotaSalari();
+      
+    } catch (error) {
+      setEstrattoResult({ 
+        error: true, 
+        message: error.response?.data?.detail || error.message 
+      });
+    } finally {
+      setImportingEstratto(false);
+      e.target.value = '';
+    }
+  };
+
   const handleCreate = async () => {
     if (!newDipendente.nome && !newDipendente.nome_completo) {
       alert('Nome è obbligatorio');
