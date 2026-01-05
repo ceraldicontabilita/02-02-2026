@@ -442,28 +442,28 @@ export default function Corrispettivi() {
             <div>
               <strong>Totale Corrispettivi</strong>
               <div style={{ fontSize: 24, fontWeight: "bold", color: "#1565c0" }}>
-                € {totaleGiornaliero.toFixed(2)}
+                {formatEuro(totaleGiornaliero)}
               </div>
             </div>
             <div>
               <strong>💵 Pagato Cassa</strong>
               <div style={{ fontSize: 24, fontWeight: "bold", color: "#2e7d32" }}>
-                € {totaleCassa.toFixed(2)}
+                {formatEuro(totaleCassa)}
               </div>
             </div>
             <div>
               <strong>💳 Pagato Elettronico (POS)</strong>
               <div style={{ fontSize: 24, fontWeight: "bold", color: "#9c27b0" }}>
-                € {totaleElettronico.toFixed(2)}
+                {formatEuro(totaleElettronico)}
               </div>
             </div>
             <div>
               <strong>IVA 10%</strong>
               <div style={{ fontSize: 24, fontWeight: "bold", color: "#e65100" }}>
-                € {totaleIVA.toFixed(2)}
+                {formatEuro(totaleIVA)}
               </div>
               <div className="small" style={{ color: "#666" }}>
-                Imponibile: € {totaleImponibile.toFixed(2)}
+                Imponibile: {formatEuro(totaleImponibile)}
               </div>
             </div>
           </div>
@@ -488,16 +488,16 @@ export default function Corrispettivi() {
             </div>
             <div>
               <strong>Pagamenti</strong>
-              <div className="small">💵 Cassa: € {(selectedItem.pagato_contanti || 0).toFixed(2)}</div>
-              <div className="small">💳 Elettronico: € {(selectedItem.pagato_elettronico || 0).toFixed(2)}</div>
+              <div className="small">💵 Cassa: {formatEuro(selectedItem.pagato_contanti)}</div>
+              <div className="small">💳 Elettronico: {formatEuro(selectedItem.pagato_elettronico)}</div>
               <div className="small" style={{ fontWeight: "bold", marginTop: 5 }}>
-                Totale: € {(selectedItem.totale || 0).toFixed(2)}
+                Totale: {formatEuro(selectedItem.totale)}
               </div>
             </div>
             <div>
               <strong>IVA</strong>
-              <div className="small">Imponibile: € {(selectedItem.totale_imponibile || 0).toFixed(2)}</div>
-              <div className="small">Imposta: € {(selectedItem.totale_iva || 0).toFixed(2)}</div>
+              <div className="small">Imponibile: {formatEuro(selectedItem.totale_imponibile)}</div>
+              <div className="small">Imposta: {formatEuro(selectedItem.totale_iva)}</div>
             </div>
           </div>
           
@@ -517,9 +517,9 @@ export default function Corrispettivi() {
                   {selectedItem.riepilogo_iva.map((r, i) => (
                     <tr key={i}>
                       <td>{r.aliquota_iva}% {r.natura && `(${r.natura})`}</td>
-                      <td style={{ textAlign: "right" }}>€ {(r.ammontare || 0).toFixed(2)}</td>
-                      <td style={{ textAlign: "right" }}>€ {(r.imposta || 0).toFixed(2)}</td>
-                      <td style={{ textAlign: "right" }}>€ {(r.importo_parziale || 0).toFixed(2)}</td>
+                      <td style={{ textAlign: "right" }}>{formatEuro(r.ammontare)}</td>
+                      <td style={{ textAlign: "right" }}>{formatEuro(r.imposta)}</td>
+                      <td style={{ textAlign: "right" }}>{formatEuro(r.importo_parziale)}</td>
                     </tr>
                   ))}
                 </tbody>
