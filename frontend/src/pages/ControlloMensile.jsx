@@ -538,7 +538,7 @@ export default function ControlloMensile() {
                     <td style={{ padding: 10 }}>{v.data}</td>
                     <td style={{ padding: 10 }}>{v.descrizione || v.categoria}</td>
                     <td style={{ padding: 10, textAlign: 'right', fontWeight: 'bold', color: '#16a34a' }}>
-                      {formatCurrency(Math.abs(v.importo))}
+                      {formatEuro(Math.abs(v.importo))}
                     </td>
                   </tr>
                 ))}
@@ -547,7 +547,7 @@ export default function ControlloMensile() {
                 <tr style={{ background: '#1e293b', color: 'white' }}>
                   <td colSpan={2} style={{ padding: 10, fontWeight: 'bold' }}>TOTALE</td>
                   <td style={{ padding: 10, textAlign: 'right', fontWeight: 'bold' }}>
-                    {formatCurrency(versamentiDettaglio.reduce((sum, v) => sum + Math.abs(parseFloat(v.importo) || 0), 0))}
+                    {formatEuro(versamentiDettaglio.reduce((sum, v) => sum + Math.abs(parseFloat(v.importo) || 0), 0))}
                   </td>
                 </tr>
               </tfoot>
@@ -710,36 +710,36 @@ export default function ControlloMensile() {
       }}>
         <div style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)', borderRadius: 12, padding: 14, color: 'white' }}>
           <div style={{ fontSize: 11, opacity: 0.9 }}>POS Agenzia (XML)</div>
-          <div style={{ fontSize: 18, fontWeight: 'bold' }}>{formatCurrency(yearTotals.posAuto)}</div>
+          <div style={{ fontSize: 18, fontWeight: 'bold' }}>{formatEuro(yearTotals.posAuto)}</div>
         </div>
         <div style={{ background: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)', borderRadius: 12, padding: 14, color: 'white' }}>
           <div style={{ fontSize: 11, opacity: 0.9 }}>POS Chiusura (Cassa)</div>
-          <div style={{ fontSize: 18, fontWeight: 'bold' }}>{formatCurrency(yearTotals.posManual)}</div>
+          <div style={{ fontSize: 18, fontWeight: 'bold' }}>{formatEuro(yearTotals.posManual)}</div>
         </div>
         <div style={{ background: 'linear-gradient(135deg, #ec4899 0%, #be185d 100%)', borderRadius: 12, padding: 14, color: 'white' }}>
           <div style={{ fontSize: 11, opacity: 0.9 }}>🏦 POS Banca (PDV)</div>
-          <div style={{ fontSize: 18, fontWeight: 'bold' }}>{formatCurrency(yearTotals.posBanca || 0)}</div>
+          <div style={{ fontSize: 18, fontWeight: 'bold' }}>{formatEuro(yearTotals.posBanca || 0)}</div>
           {yearTotals.posBancaCommissioni > 0 && (
             <div style={{ fontSize: 9, opacity: 0.8, marginTop: 2 }}>
-              Comm.: -{formatCurrency(yearTotals.posBancaCommissioni)}
+              Comm.: -{formatEuro(yearTotals.posBancaCommissioni)}
             </div>
           )}
         </div>
         <div style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', borderRadius: 12, padding: 14, color: 'white' }}>
           <div style={{ fontSize: 11, opacity: 0.9 }}>Corrisp. Auto (XML)</div>
-          <div style={{ fontSize: 18, fontWeight: 'bold' }}>{formatCurrency(yearTotals.corrispettiviAuto)}</div>
+          <div style={{ fontSize: 18, fontWeight: 'bold' }}>{formatEuro(yearTotals.corrispettiviAuto)}</div>
         </div>
         <div style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', borderRadius: 12, padding: 14, color: 'white' }}>
           <div style={{ fontSize: 11, opacity: 0.9 }}>Corrisp. Manuali</div>
-          <div style={{ fontSize: 18, fontWeight: 'bold' }}>{formatCurrency(yearTotals.corrispettiviManual)}</div>
+          <div style={{ fontSize: 18, fontWeight: 'bold' }}>{formatEuro(yearTotals.corrispettiviManual)}</div>
         </div>
         <div style={{ background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)', borderRadius: 12, padding: 14, color: 'white' }}>
           <div style={{ fontSize: 11, opacity: 0.9 }}>Versamenti</div>
-          <div style={{ fontSize: 18, fontWeight: 'bold' }}>{formatCurrency(yearTotals.versamenti)}</div>
+          <div style={{ fontSize: 18, fontWeight: 'bold' }}>{formatEuro(yearTotals.versamenti)}</div>
         </div>
         <div style={{ background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)', borderRadius: 12, padding: 14, color: 'white' }}>
           <div style={{ fontSize: 11, opacity: 0.9 }}>Saldo Cassa</div>
-          <div style={{ fontSize: 18, fontWeight: 'bold' }}>{formatCurrency(yearTotals.saldoCassa)}</div>
+          <div style={{ fontSize: 18, fontWeight: 'bold' }}>{formatEuro(yearTotals.saldoCassa)}</div>
         </div>
         <div style={{ background: 'linear-gradient(135deg, #64748b 0%, #475569 100%)', borderRadius: 12, padding: 14, color: 'white' }}>
           <div style={{ fontSize: 11, opacity: 0.9 }}>📄 Doc. Commerciali</div>
@@ -755,7 +755,7 @@ export default function ControlloMensile() {
         {/* Card Pagato Non Riscosso */}
         <div style={{ background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)', borderRadius: 12, padding: 14, color: 'white' }}>
           <div style={{ fontSize: 11, opacity: 0.9 }}>💰 Pagato Non Riscosso</div>
-          <div style={{ fontSize: 18, fontWeight: 'bold' }}>{formatCurrency(yearTotals.pagatoNonRiscosso || 0)}</div>
+          <div style={{ fontSize: 18, fontWeight: 'bold' }}>{formatEuro(yearTotals.pagatoNonRiscosso || 0)}</div>
           <div style={{ fontSize: 10, opacity: 0.8, marginTop: 2 }}>
             {yearTotals.pagatoNonRiscossoCount || 0} occorrenze
           </div>
@@ -763,7 +763,7 @@ export default function ControlloMensile() {
         {/* Card Ammontare Annulli */}
         <div style={{ background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)', borderRadius: 12, padding: 14, color: 'white' }}>
           <div style={{ fontSize: 11, opacity: 0.9 }}>🗑️ Ammontare Annulli</div>
-          <div style={{ fontSize: 18, fontWeight: 'bold' }}>{formatCurrency(yearTotals.ammontareAnnulli || 0)}</div>
+          <div style={{ fontSize: 18, fontWeight: 'bold' }}>{formatEuro(yearTotals.ammontareAnnulli || 0)}</div>
           <div style={{ fontSize: 10, opacity: 0.8, marginTop: 2 }}>
             {yearTotals.ammontareAnnulliCount || 0} occorrenze
           </div>
@@ -853,13 +853,13 @@ export default function ControlloMensile() {
                       {row.monthName}
                     </td>
                     <td style={{ padding: 10, borderBottom: '1px solid #e2e8f0', textAlign: 'right', background: '#f0f9ff' }}>
-                      {row.posAuto > 0 ? formatCurrency(row.posAuto) : '-'}
+                      {row.posAuto > 0 ? formatEuro(row.posAuto) : '-'}
                     </td>
                     <td style={{ padding: 10, borderBottom: '1px solid #e2e8f0', textAlign: 'right', background: '#faf5ff' }}>
-                      {row.posManual > 0 ? formatCurrency(row.posManual) : '-'}
+                      {row.posManual > 0 ? formatEuro(row.posManual) : '-'}
                     </td>
                     <td style={{ padding: 10, borderBottom: '1px solid #e2e8f0', textAlign: 'right', background: '#fdf2f8' }}>
-                      {row.posBanca > 0 ? formatCurrency(row.posBanca) : '-'}
+                      {row.posBanca > 0 ? formatEuro(row.posBanca) : '-'}
                     </td>
                     <td style={{ 
                       padding: 10, 
@@ -870,14 +870,14 @@ export default function ControlloMensile() {
                       fontSize: 12
                     }}>
                       {Math.abs(row.posDiff) > 0.01 ? (
-                        <span title="POS Agenzia (XML) - POS Chiusura">{row.posDiff > 0 ? '+' : ''}{formatCurrency(row.posDiff)}</span>
+                        <span title="POS Agenzia (XML) - POS Chiusura">{row.posDiff > 0 ? '+' : ''}{formatEuro(row.posDiff)}</span>
                       ) : '-'}
                     </td>
                     <td style={{ padding: 10, borderBottom: '1px solid #e2e8f0', textAlign: 'right', background: '#fffbeb' }}>
-                      {row.corrispAuto > 0 ? formatCurrency(row.corrispAuto) : '-'}
+                      {row.corrispAuto > 0 ? formatEuro(row.corrispAuto) : '-'}
                     </td>
                     <td style={{ padding: 10, borderBottom: '1px solid #e2e8f0', textAlign: 'right', background: '#ecfdf5' }}>
-                      {row.corrispManual > 0 ? formatCurrency(row.corrispManual) : '-'}
+                      {row.corrispManual > 0 ? formatEuro(row.corrispManual) : '-'}
                     </td>
                     <td style={{ 
                       padding: 10, 
@@ -888,11 +888,11 @@ export default function ControlloMensile() {
                       fontSize: 12
                     }}>
                       {Math.abs(row.corrispDiff) > 0.01 ? (
-                        <span>{row.corrispDiff > 0 ? '+' : ''}{formatCurrency(row.corrispDiff)}</span>
+                        <span>{row.corrispDiff > 0 ? '+' : ''}{formatEuro(row.corrispDiff)}</span>
                       ) : '-'}
                     </td>
                     <td style={{ padding: 12, borderBottom: '1px solid #e2e8f0', textAlign: 'right', background: '#f0fdf4' }}>
-                      {row.versamenti > 0 ? formatCurrency(row.versamenti) : '-'}
+                      {row.versamenti > 0 ? formatEuro(row.versamenti) : '-'}
                     </td>
                     <td style={{ 
                       padding: 12, 
@@ -902,7 +902,7 @@ export default function ControlloMensile() {
                       fontWeight: 'bold',
                       color: row.saldoCassa >= 0 ? '#16a34a' : '#dc2626'
                     }}>
-                      {formatCurrency(row.saldoCassa)}
+                      {formatEuro(row.saldoCassa)}
                     </td>
                     <td style={{ padding: 10, borderBottom: '1px solid #e2e8f0', textAlign: 'center' }}>
                       {row.hasData && (
@@ -931,27 +931,27 @@ export default function ControlloMensile() {
             <tfoot>
               <tr style={{ background: '#1e293b', color: 'white', fontWeight: 'bold', fontSize: 12 }}>
                 <td style={{ padding: 10 }}>TOTALE {anno}</td>
-                <td style={{ padding: 10, textAlign: 'right' }}>{formatCurrency(yearTotals.posAuto)}</td>
-                <td style={{ padding: 10, textAlign: 'right' }}>{formatCurrency(yearTotals.posManual)}</td>
-                <td style={{ padding: 10, textAlign: 'right' }}>{formatCurrency(yearTotals.posBanca || 0)}</td>
+                <td style={{ padding: 10, textAlign: 'right' }}>{formatEuro(yearTotals.posAuto)}</td>
+                <td style={{ padding: 10, textAlign: 'right' }}>{formatEuro(yearTotals.posManual)}</td>
+                <td style={{ padding: 10, textAlign: 'right' }}>{formatEuro(yearTotals.posBanca || 0)}</td>
                 <td style={{ 
                   padding: 10, 
                   textAlign: 'right',
                   color: Math.abs(yearTotals.posAuto - yearTotals.posManual) > 1 ? '#fbbf24' : '#22c55e'
                 }}>
-                  {formatCurrency(yearTotals.posAuto - yearTotals.posManual)}
+                  {formatEuro(yearTotals.posAuto - yearTotals.posManual)}
                 </td>
-                <td style={{ padding: 10, textAlign: 'right' }}>{formatCurrency(yearTotals.corrispettiviAuto)}</td>
-                <td style={{ padding: 10, textAlign: 'right' }}>{formatCurrency(yearTotals.corrispettiviManual)}</td>
+                <td style={{ padding: 10, textAlign: 'right' }}>{formatEuro(yearTotals.corrispettiviAuto)}</td>
+                <td style={{ padding: 10, textAlign: 'right' }}>{formatEuro(yearTotals.corrispettiviManual)}</td>
                 <td style={{ 
                   padding: 10, 
                   textAlign: 'right',
                   color: Math.abs(yearTotals.corrispettiviAuto - yearTotals.corrispettiviManual) > 1 ? '#fbbf24' : '#22c55e'
                 }}>
-                  {formatCurrency(yearTotals.corrispettiviAuto - yearTotals.corrispettiviManual)}
+                  {formatEuro(yearTotals.corrispettiviAuto - yearTotals.corrispettiviManual)}
                 </td>
-                <td style={{ padding: 10, textAlign: 'right' }}>{formatCurrency(yearTotals.versamenti)}</td>
-                <td style={{ padding: 10, textAlign: 'right' }}>{formatCurrency(yearTotals.saldoCassa)}</td>
+                <td style={{ padding: 10, textAlign: 'right' }}>{formatEuro(yearTotals.versamenti)}</td>
+                <td style={{ padding: 10, textAlign: 'right' }}>{formatEuro(yearTotals.saldoCassa)}</td>
                 <td style={{ padding: 10 }}></td>
               </tr>
             </tfoot>
@@ -997,10 +997,10 @@ export default function ControlloMensile() {
                       {formatDate(row.date)}
                     </td>
                     <td style={{ padding: 10, borderBottom: '1px solid #e2e8f0', textAlign: 'right', background: '#f0f9ff' }}>
-                      {row.posAuto > 0 ? formatCurrency(row.posAuto) : '-'}
+                      {row.posAuto > 0 ? formatEuro(row.posAuto) : '-'}
                     </td>
                     <td style={{ padding: 10, borderBottom: '1px solid #e2e8f0', textAlign: 'right', background: '#faf5ff' }}>
-                      {row.posManual > 0 ? formatCurrency(row.posManual) : '-'}
+                      {row.posManual > 0 ? formatEuro(row.posManual) : '-'}
                     </td>
                     <td style={{ 
                       padding: 10, 
@@ -1010,14 +1010,14 @@ export default function ControlloMensile() {
                       color: Math.abs(row.posDiff) > 1 ? (row.posDiff > 0 ? '#16a34a' : '#dc2626') : '#666'
                     }}>
                       {Math.abs(row.posDiff) > 0.01 ? (
-                        <span>{row.posDiff > 0 ? '+' : ''}{formatCurrency(row.posDiff)}</span>
+                        <span>{row.posDiff > 0 ? '+' : ''}{formatEuro(row.posDiff)}</span>
                       ) : '-'}
                     </td>
                     <td style={{ padding: 10, borderBottom: '1px solid #e2e8f0', textAlign: 'right', background: '#fffbeb' }}>
-                      {row.corrispettivoAuto > 0 ? formatCurrency(row.corrispettivoAuto) : '-'}
+                      {row.corrispettivoAuto > 0 ? formatEuro(row.corrispettivoAuto) : '-'}
                     </td>
                     <td style={{ padding: 10, borderBottom: '1px solid #e2e8f0', textAlign: 'right', background: '#ecfdf5' }}>
-                      {row.corrispettivoManual > 0 ? formatCurrency(row.corrispettivoManual) : '-'}
+                      {row.corrispettivoManual > 0 ? formatEuro(row.corrispettivoManual) : '-'}
                     </td>
                     <td style={{ 
                       padding: 10, 
@@ -1027,11 +1027,11 @@ export default function ControlloMensile() {
                       color: Math.abs(row.corrispettivoDiff) > 1 ? (row.corrispettivoDiff > 0 ? '#16a34a' : '#dc2626') : '#666'
                     }}>
                       {Math.abs(row.corrispettivoDiff) > 0.01 ? (
-                        <span>{row.corrispettivoDiff > 0 ? '+' : ''}{formatCurrency(row.corrispettivoDiff)}</span>
+                        <span>{row.corrispettivoDiff > 0 ? '+' : ''}{formatEuro(row.corrispettivoDiff)}</span>
                       ) : '-'}
                     </td>
                     <td style={{ padding: 10, borderBottom: '1px solid #e2e8f0', textAlign: 'right', background: '#f0fdf4' }}>
-                      {row.versamento > 0 ? formatCurrency(row.versamento) : '-'}
+                      {row.versamento > 0 ? formatEuro(row.versamento) : '-'}
                     </td>
                     <td style={{ 
                       padding: 10, 
@@ -1041,7 +1041,7 @@ export default function ControlloMensile() {
                       fontWeight: 'bold',
                       color: row.saldoCassa >= 0 ? '#16a34a' : '#dc2626'
                     }}>
-                      {formatCurrency(row.saldoCassa)}
+                      {formatEuro(row.saldoCassa)}
                     </td>
                   </tr>
                 ))
@@ -1051,28 +1051,28 @@ export default function ControlloMensile() {
               <tr style={{ background: '#1e293b', color: 'white', fontWeight: 'bold' }}>
                 <td style={{ padding: 12 }}>TOTALE {monthNames[meseSelezionato - 1].toUpperCase()}</td>
                 <td style={{ padding: 12, textAlign: 'right' }}>
-                  {formatCurrency(dailyComparison.reduce((s, d) => s + d.posAuto, 0))}
+                  {formatEuro(dailyComparison.reduce((s, d) => s + d.posAuto, 0))}
                 </td>
                 <td style={{ padding: 12, textAlign: 'right' }}>
-                  {formatCurrency(dailyComparison.reduce((s, d) => s + d.posManual, 0))}
+                  {formatEuro(dailyComparison.reduce((s, d) => s + d.posManual, 0))}
                 </td>
                 <td style={{ padding: 12, textAlign: 'right' }}>
-                  {formatCurrency(dailyComparison.reduce((s, d) => s + d.posDiff, 0))}
+                  {formatEuro(dailyComparison.reduce((s, d) => s + d.posDiff, 0))}
                 </td>
                 <td style={{ padding: 12, textAlign: 'right' }}>
-                  {formatCurrency(dailyComparison.reduce((s, d) => s + d.corrispettivoAuto, 0))}
+                  {formatEuro(dailyComparison.reduce((s, d) => s + d.corrispettivoAuto, 0))}
                 </td>
                 <td style={{ padding: 12, textAlign: 'right' }}>
-                  {formatCurrency(dailyComparison.reduce((s, d) => s + d.corrispettivoManual, 0))}
+                  {formatEuro(dailyComparison.reduce((s, d) => s + d.corrispettivoManual, 0))}
                 </td>
                 <td style={{ padding: 12, textAlign: 'right' }}>
-                  {formatCurrency(dailyComparison.reduce((s, d) => s + d.corrispettivoDiff, 0))}
+                  {formatEuro(dailyComparison.reduce((s, d) => s + d.corrispettivoDiff, 0))}
                 </td>
                 <td style={{ padding: 12, textAlign: 'right' }}>
-                  {formatCurrency(dailyComparison.reduce((s, d) => s + d.versamento, 0))}
+                  {formatEuro(dailyComparison.reduce((s, d) => s + d.versamento, 0))}
                 </td>
                 <td style={{ padding: 12, textAlign: 'right' }}>
-                  {formatCurrency(dailyComparison.reduce((s, d) => s + d.saldoCassa, 0))}
+                  {formatEuro(dailyComparison.reduce((s, d) => s + d.saldoCassa, 0))}
                 </td>
               </tr>
             </tfoot>
