@@ -622,21 +622,16 @@ export default function Commercialista() {
               <option key={idx} value={idx}>{m}</option>
             ))}
           </select>
-          <select
-            value={selectedYear}
-            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-            style={{
-              padding: '10px 15px',
-              borderRadius: 8,
-              border: '1px solid #ddd',
-              fontSize: 14,
-              minWidth: 100
-            }}
-          >
-            {[now.getFullYear() - 2, now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1].map(y => (
-              <option key={y} value={y}>{y}</option>
-            ))}
-          </select>
+          <span style={{
+            padding: '10px 15px',
+            borderRadius: 8,
+            background: '#e3f2fd',
+            fontSize: 14,
+            fontWeight: 'bold',
+            color: '#1565c0'
+          }}>
+            {selectedYear}
+          </span>
         </div>
       </div>
 
