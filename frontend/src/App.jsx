@@ -139,33 +139,60 @@ export default function App() {
         </div>
         <nav className="nav">
           {NAV_ITEMS.map((item) => (
-            <NavLink 
-              key={item.to} 
-              to={item.to} 
-              className={({ isActive }) => isActive ? "active" : ""}
-              style={{ position: 'relative' }}
-            >
-              <span style={{ fontSize: 16, marginRight: 10 }}>{item.icon}</span>
-              <span>{item.label}</span>
-              {item.hasBadge && notificheNonLette > 0 && (
-                <span style={{
-                  position: 'absolute',
-                  right: 10,
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: '#f44336',
-                  color: 'white',
-                  borderRadius: 10,
-                  padding: '2px 8px',
-                  fontSize: 11,
-                  fontWeight: 'bold',
-                  minWidth: 20,
-                  textAlign: 'center'
-                }}>
-                  {notificheNonLette}
-                </span>
-              )}
-            </NavLink>
+            item.isSubmenu ? (
+              <div key={item.label} className="nav-submenu">
+                <button 
+                  className={`nav-submenu-trigger ${openSubmenus[item.label] ? 'open' : ''}`}
+                  onClick={() => toggleSubmenu(item.label)}
+                >
+                  <span style={{ fontSize: 16, marginRight: 10 }}>{item.icon}</span>
+                  <span>{item.label}</span>
+                  <span className="submenu-arrow">{openSubmenus[item.label] ? '▼' : '▶'}</span>
+                </button>
+                {openSubmenus[item.label] && (
+                  <div className="nav-submenu-items">
+                    {item.children.map(child => (
+                      <NavLink
+                        key={child.to}
+                        to={child.to}
+                        className={({ isActive }) => `nav-submenu-item ${isActive ? "active" : ""}`}
+                      >
+                        <span style={{ fontSize: 14, marginRight: 8 }}>{child.icon}</span>
+                        <span>{child.label}</span>
+                      </NavLink>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <NavLink 
+                key={item.to} 
+                to={item.to} 
+                className={({ isActive }) => isActive ? "active" : ""}
+                style={{ position: 'relative' }}
+              >
+                <span style={{ fontSize: 16, marginRight: 10 }}>{item.icon}</span>
+                <span>{item.label}</span>
+                {item.hasBadge && notificheNonLette > 0 && (
+                  <span style={{
+                    position: 'absolute',
+                    right: 10,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: '#f44336',
+                    color: 'white',
+                    borderRadius: 10,
+                    padding: '2px 8px',
+                    fontSize: 11,
+                    fontWeight: 'bold',
+                    minWidth: 20,
+                    textAlign: 'center'
+                  }}>
+                    {notificheNonLette}
+                  </span>
+                )}
+              </NavLink>
+            )
           ))}
         </nav>
       </aside>
