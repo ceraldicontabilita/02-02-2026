@@ -205,12 +205,46 @@ async def create_invoice(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
 
 
 @router.delete("/invoices/{invoice_id}")
-async def delete_invoice(invoice_id: str) -> Dict[str, Any]:
-    """Elimina fattura."""
+async def delete_invoice(
+    invoice_id: str,
+    force: bool = Query(False, description="Forza eliminazione")
+) -> Dict[str, Any]:
+    """
+    Elimina fattura con validazione business rules.
+    
+    **Regole:**
+    - Non può eliminare fatture pagate
+    - Non può eliminare fatture registrate
+    """
+    from app.services.business_rules import BusinessRules, EntityStatus
+    from datetime import timezone
+    
     db = Database.get_db()
-    result = await db[Collections.INVOICES].delete_one({"id": invoice_id})
-    if result.deleted_count == 0:
+    invoice = await db[Collections.INVOICES].find_one({"id": invoice_id})
+    if not invoice:
         raise HTTPException(status_code=404, detail="Fattura non trovata")
+    
+    # Valida con business rules
+    validation = BusinessRules.can_delete_invoice(invoice)
+    
+    if not validation.is_valid:
+        raise HTTPException(
+            status_code=400,
+            detail={"message": "Eliminazione non consentita", "errors": validation.errors}
+        )
+    
+    if validation.warnings and not force:
+        return {"status": "warning", "warnings": validation.warnings, "require_force": True}
+    
+    # Soft-delete
+    await db[Collections.INVOICES].update_one(
+        {"id": invoice_id},
+        {"$set": {
+            "entity_status": EntityStatus.DELETED.value,
+            "status": "deleted",
+            "deleted_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
     return {"success": True, "deleted_id": invoice_id}
 
 
