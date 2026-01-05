@@ -286,12 +286,6 @@ export default function InvoiceXMLViewer({ invoice, onClose }) {
       </div>
     );
   }
-          <p>❌ {error || 'Fattura non trovata'}</p>
-          <button onClick={onClose} style={{ marginTop: 16, padding: '8px 16px' }}>Chiudi</button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div style={{ 
