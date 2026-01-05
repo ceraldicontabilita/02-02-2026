@@ -258,6 +258,7 @@ export default function ControlloMensile() {
       yearVersamenti += versamenti;
       yearSaldoCassa += saldoCassa;
       yearDocumentiCommerciali += documentiCommerciali;
+      yearAnnulli += annulli;
     }
 
     setMonthlyData(monthly);
@@ -269,7 +270,8 @@ export default function ControlloMensile() {
       corrispettiviManual: yearCorrispManual,
       versamenti: yearVersamenti,
       saldoCassa: yearSaldoCassa,
-      documentiCommerciali: yearDocumentiCommerciali
+      documentiCommerciali: yearDocumentiCommerciali,
+      annulli: yearAnnulli
     });
   };
 
