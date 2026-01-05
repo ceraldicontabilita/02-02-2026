@@ -306,12 +306,13 @@ export default function EstrattoConto() {
         flexWrap: 'wrap',
         background: '#f8fafc',
         padding: 15,
-        borderRadius: 12
+        borderRadius: 12,
+        alignItems: 'center'
       }}>
         <select
           value={selectedYear}
           onChange={(e) => { setSelectedYear(parseInt(e.target.value)); setOffset(0); }}
-          style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', minWidth: 100 }}
+          style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', width: 100 }}
         >
           {[2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017].map(y => (
             <option key={y} value={y}>{y}</option>
@@ -321,7 +322,7 @@ export default function EstrattoConto() {
         <select
           value={selectedMonth}
           onChange={(e) => { setSelectedMonth(e.target.value); setOffset(0); }}
-          style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', minWidth: 130 }}
+          style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', width: 140 }}
         >
           <option value="">Tutti i mesi</option>
           {mesiNomi.map((m, i) => (
@@ -332,18 +333,18 @@ export default function EstrattoConto() {
         <select
           value={selectedCategoria}
           onChange={(e) => { setSelectedCategoria(e.target.value); setOffset(0); }}
-          style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', minWidth: 200 }}
+          style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', width: 220 }}
         >
           <option value="">Tutte le categorie</option>
           {categorie.map((c, i) => (
-            <option key={i} value={c}>{c.length > 40 ? c.substring(0, 40) + '...' : c}</option>
+            <option key={i} value={c}>{c.length > 35 ? c.substring(0, 35) + '...' : c}</option>
           ))}
         </select>
         
         <select
           value={selectedTipo}
           onChange={(e) => { setSelectedTipo(e.target.value); setOffset(0); }}
-          style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', minWidth: 120 }}
+          style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', width: 120 }}
         >
           <option value="">Tutti i tipi</option>
           <option value="entrata">↑ Entrate</option>
