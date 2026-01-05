@@ -73,6 +73,38 @@ FATTURA XML → Parse → FATTURE DB
 
 ---
 
+## Calcolo IVA - Logica
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                           CALCOLO IVA MENSILE                            │
+└─────────────────────────────────────────────────────────────────────────┘
+
+IVA DEBITO (da versare all'Erario):
+  └──► Σ Corrispettivi.totale_iva (vendite al pubblico)
+
+IVA CREDITO (da detrarre):
+  ├──► Σ Fatture Acquisto.iva (TD01, TD02, TD24, etc.)
+  └──► - Σ Note Credito.iva (TD04, TD08) ← SOTTRARRE!
+
+SALDO IVA:
+  └──► IVA Debito - IVA Credito Netto
+       ├── Se > 0 → "Da versare"
+       └── Se < 0 → "A credito"
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ TIPI DOCUMENTO FatturaPA:                                                │
+│ - TD01: Fattura                                                         │
+│ - TD02: Acconto/Anticipo su fattura                                     │
+│ - TD04: Nota di Credito ← DA SOTTRARRE                                  │
+│ - TD06: Parcella                                                        │
+│ - TD08: Nota di Credito Semplificata ← DA SOTTRARRE                     │
+│ - TD24: Fattura Differita                                               │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
 ## Changelog
 
 ### 2026-01-05 (Sessione 10 - Fix Calcolo IVA Note Credito)
