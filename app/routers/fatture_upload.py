@@ -414,15 +414,63 @@ async def paga_fattura(invoice_id: str) -> Dict[str, Any]:
 
 
 @router.delete("/{invoice_id}")
-async def delete_invoice(invoice_id: str) -> Dict[str, Any]:
-    """Elimina una singola fattura."""
+async def delete_invoice(
+    invoice_id: str,
+    force: bool = Query(False, description="Forza eliminazione anche con warning")
+) -> Dict[str, Any]:
+    """
+    Elimina una singola fattura con validazione business rules.
+    
+    **Regole:**
+    - Non può eliminare fatture pagate
+    - Non può eliminare fatture registrate in Prima Nota
+    - Fatture con movimenti magazzino richiedono force=true
+    """
+    from app.services.business_rules import BusinessRules, EntityStatus
+    from datetime import datetime, timezone
+    
     db = Database.get_db()
     
-    result = await db[Collections.INVOICES].delete_one({"id": invoice_id})
-    
-    if result.deleted_count == 0:
+    # Recupera fattura
+    invoice = await db[Collections.INVOICES].find_one({"id": invoice_id})
+    if not invoice:
         raise HTTPException(status_code=404, detail="Fattura non trovata")
     
-    return {"success": True, "message": "Fattura eliminata"}
+    # Valida eliminazione con business rules
+    validation = BusinessRules.can_delete_invoice(invoice)
+    
+    if not validation.is_valid:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "message": "Eliminazione non consentita",
+                "errors": validation.errors
+            }
+        )
+    
+    # Se ci sono warning e non è forzata, richiedi conferma
+    if validation.warnings and not force:
+        return {
+            "status": "warning",
+            "message": "Eliminazione richiede conferma",
+            "warnings": validation.warnings,
+            "require_force": True
+        }
+    
+    # Soft-delete invece di hard-delete
+    await db[Collections.INVOICES].update_one(
+        {"id": invoice_id},
+        {"$set": {
+            "entity_status": EntityStatus.DELETED.value,
+            "status": "deleted",
+            "deleted_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {
+        "success": True,
+        "message": "Fattura eliminata (archiviata)",
+        "invoice_id": invoice_id
+    }
 
 
