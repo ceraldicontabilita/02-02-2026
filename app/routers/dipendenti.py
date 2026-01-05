@@ -469,10 +469,3 @@ async def get_portale_stats() -> Dict[str, Any]:
 
 
 # Note: buste-paga routes are defined earlier in the file to avoid route conflict with /{dipendente_id}
-    else:
-        busta["id"] = str(uuid.uuid4())
-        busta["created_at"] = datetime.utcnow().isoformat()
-        await db["buste_paga"].insert_one(busta)
-    
-    busta.pop("_id", None)
-    return busta
