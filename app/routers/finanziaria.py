@@ -27,7 +27,7 @@ async def get_financial_summary(
     end_date = f"{anno}-12-31"
     date_range = {"$gte": start_date, "$lte": end_date}
     
-    logger.info(f"[Finanziaria] Anno={anno}, date_range={date_range}")
+    print(f"[Finanziaria DEBUG] Anno={anno}, date_range={date_range}")
     
     try:
         # Get Prima Nota Cassa totals
