@@ -356,7 +356,7 @@ export default function EstrattoConto() {
           placeholder="🔍 Cerca fornitore..."
           value={selectedFornitore}
           onChange={(e) => { setSelectedFornitore(e.target.value); setOffset(0); }}
-          style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', minWidth: 180 }}
+          style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', width: 180 }}
         />
       </div>
 
