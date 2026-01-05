@@ -331,6 +331,47 @@ async def annulla_assegno(assegno_id: str) -> Dict[str, str]:
     return {"message": "Assegno annullato"}
 
 
+@router.delete("/{assegno_id}")
+async def delete_assegno(
+    assegno_id: str,
+    force: bool = Query(False, description="Forza eliminazione")
+) -> Dict[str, Any]:
+    """
+    Elimina un singolo assegno con validazione.
+    
+    **Regole:**
+    - Non può eliminare assegni emessi o incassati
+    - Non può eliminare assegni collegati a fatture
+    """
+    from app.services.business_rules import BusinessRules, EntityStatus
+    from datetime import timezone
+    
+    db = Database.get_db()
+    
+    assegno = await db[COLLECTION_ASSEGNI].find_one({"id": assegno_id})
+    if not assegno:
+        raise HTTPException(status_code=404, detail="Assegno non trovato")
+    
+    validation = BusinessRules.can_delete_assegno(assegno)
+    
+    if not validation.is_valid:
+        raise HTTPException(
+            status_code=400,
+            detail={"message": "Eliminazione non consentita", "errors": validation.errors}
+        )
+    
+    # Soft-delete
+    await db[COLLECTION_ASSEGNI].update_one(
+        {"id": assegno_id},
+        {"$set": {
+            "entity_status": EntityStatus.DELETED.value,
+            "deleted_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {"success": True, "message": "Assegno eliminato"}
+
+
 @router.delete("/clear-generated")
 async def clear_generated_assegni(stato: str = Query("vuoto")) -> Dict[str, Any]:
     """
