@@ -1066,7 +1066,7 @@ export default function Fatture() {
                   </td>
                   <td style={{ padding: 8 }} onClick={(e) => e.stopPropagation()}>
                     <button 
-                      onClick={() => setViewingInvoiceId(inv.id)}
+                      onClick={() => setViewingInvoice(inv)}
                       style={{ marginRight: 5, padding: "4px 8px", borderRadius: 4, border: "1px solid #ddd", background: "#fff", cursor: "pointer" }}
                       title="Visualizza Dettagli"
                       data-testid={`view-invoice-${inv.id}`}
