@@ -403,3 +403,273 @@ async def get_iva_today() -> Dict[str, Any]:
     """IVA di oggi."""
     today = date.today().isoformat()
     return await get_iva_daily(today)
+
+
+
+# ============== EXPORT PDF IVA ==============
+
+from fastapi.responses import StreamingResponse
+import io
+
+@router.get("/export/pdf/trimestrale/{year}/{quarter}")
+async def export_iva_trimestrale_pdf(year: int, quarter: int) -> StreamingResponse:
+    """
+    Esporta il riepilogo IVA trimestrale in PDF.
+    
+    Args:
+        year: Anno (es. 2025)
+        quarter: Trimestre (1-4)
+    
+    Returns:
+        PDF con riepilogo IVA trimestrale
+    """
+    if quarter < 1 or quarter > 4:
+        raise HTTPException(status_code=400, detail="Trimestre deve essere 1-4")
+    
+    try:
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib import colors
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+        from reportlab.lib.units import cm
+    except ImportError:
+        raise HTTPException(status_code=500, detail="reportlab non installato. Esegui: pip install reportlab")
+    
+    # Calcola mesi del trimestre
+    start_month = (quarter - 1) * 3 + 1
+    end_month = quarter * 3
+    trimestre_nome = f"Q{quarter} {year} ({MESI_ITALIANI[start_month]} - {MESI_ITALIANI[end_month]})"
+    
+    # Raccogli dati IVA per ogni mese del trimestre
+    db = Database.get_db()
+    monthly_data = []
+    tot_debito = 0
+    tot_credito = 0
+    tot_nc = 0
+    
+    for month in range(start_month, end_month + 1):
+        month_prefix = f"{year}-{month:02d}"
+        
+        # Corrispettivi (IVA Debito)
+        corr_result = await db["corrispettivi"].aggregate([
+            {"$match": {"data": {"$regex": f"^{month_prefix}"}}},
+            {"$group": {"_id": None, "total_iva": {"$sum": "$totale_iva"}, "totale": {"$sum": "$totale"}}}
+        ]).to_list(1)
+        iva_deb = corr_result[0].get("total_iva", 0) if corr_result else 0
+        
+        # Fatture normali (IVA Credito)
+        fatt_result = await db["invoices"].aggregate([
+            {"$match": {
+                "$or": [
+                    {"data_ricezione": {"$regex": f"^{month_prefix}"}},
+                    {"$and": [
+                        {"data_ricezione": {"$exists": False}},
+                        {"invoice_date": {"$regex": f"^{month_prefix}"}}
+                    ]}
+                ],
+                "tipo_documento": {"$nin": NOTE_CREDITO_TYPES}
+            }},
+            {"$group": {"_id": None, "total_iva": {"$sum": "$iva"}}}
+        ]).to_list(1)
+        iva_cred = fatt_result[0].get("total_iva", 0) if fatt_result else 0
+        
+        # Note Credito (da sottrarre)
+        nc_result = await db["invoices"].aggregate([
+            {"$match": {
+                "$or": [
+                    {"data_ricezione": {"$regex": f"^{month_prefix}"}},
+                    {"$and": [
+                        {"data_ricezione": {"$exists": False}},
+                        {"invoice_date": {"$regex": f"^{month_prefix}"}}
+                    ]}
+                ],
+                "tipo_documento": {"$in": NOTE_CREDITO_TYPES}
+            }},
+            {"$group": {"_id": None, "total_iva": {"$sum": "$iva"}}}
+        ]).to_list(1)
+        iva_nc = nc_result[0].get("total_iva", 0) if nc_result else 0
+        
+        iva_cred_netta = iva_cred - iva_nc
+        saldo = iva_deb - iva_cred_netta
+        
+        monthly_data.append({
+            "mese": MESI_ITALIANI[month],
+            "iva_debito": round(iva_deb, 2),
+            "iva_credito": round(iva_cred_netta, 2),
+            "iva_nc": round(iva_nc, 2),
+            "saldo": round(saldo, 2)
+        })
+        
+        tot_debito += iva_deb
+        tot_credito += iva_cred_netta
+        tot_nc += iva_nc
+    
+    # Genera PDF
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=2*cm, bottomMargin=2*cm)
+    elements = []
+    styles = getSampleStyleSheet()
+    
+    # Titolo
+    title_style = ParagraphStyle('Title', parent=styles['Heading1'], fontSize=18, textColor=colors.HexColor('#1e40af'), spaceAfter=20)
+    elements.append(Paragraph(f"📊 Riepilogo IVA Trimestrale", title_style))
+    elements.append(Paragraph(f"<b>{trimestre_nome}</b>", styles['Heading2']))
+    elements.append(Spacer(1, 20))
+    
+    # Tabella dati mensili
+    table_data = [["Mese", "IVA Debito", "IVA Credito", "Note Credito", "Saldo"]]
+    for m in monthly_data:
+        stato = "📈" if m['saldo'] > 0 else "📉"
+        table_data.append([
+            m['mese'],
+            f"€ {m['iva_debito']:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."),
+            f"€ {m['iva_credito']:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."),
+            f"€ {m['iva_nc']:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."),
+            f"{stato} € {m['saldo']:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        ])
+    
+    # Riga totali
+    saldo_totale = tot_debito - tot_credito
+    stato_totale = "DA VERSARE" if saldo_totale > 0 else "A CREDITO"
+    table_data.append([
+        "TOTALE TRIMESTRE",
+        f"€ {tot_debito:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."),
+        f"€ {tot_credito:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."),
+        f"€ {tot_nc:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."),
+        f"€ {abs(saldo_totale):,.2f} ({stato_totale})".replace(",", "X").replace(".", ",").replace("X", ".")
+    ])
+    
+    table = Table(table_data, colWidths=[4*cm, 3.5*cm, 3.5*cm, 3.5*cm, 4*cm])
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1e40af')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 11),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#f0f9ff')),
+        ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#e5e7eb')),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -2), [colors.white, colors.HexColor('#f8fafc')])
+    ]))
+    elements.append(table)
+    
+    elements.append(Spacer(1, 30))
+    
+    # Box riepilogativo
+    summary_style = ParagraphStyle('Summary', parent=styles['Normal'], fontSize=12, leading=18)
+    if saldo_totale > 0:
+        summary = f"""
+        <b>📋 Riepilogo Trimestrale:</b><br/>
+        • IVA a Debito (Corrispettivi): <b>€ {tot_debito:,.2f}</b><br/>
+        • IVA a Credito (Fatture): <b>€ {tot_credito:,.2f}</b><br/>
+        • Note Credito: <b>€ {tot_nc:,.2f}</b><br/><br/>
+        <font color="red"><b>⚠️ IVA DA VERSARE: € {saldo_totale:,.2f}</b></font><br/>
+        <i>Da versare entro il 16 del mese successivo al trimestre</i>
+        """.replace(",", "X").replace(".", ",").replace("X", ".")
+    else:
+        summary = f"""
+        <b>📋 Riepilogo Trimestrale:</b><br/>
+        • IVA a Debito (Corrispettivi): <b>€ {tot_debito:,.2f}</b><br/>
+        • IVA a Credito (Fatture): <b>€ {tot_credito:,.2f}</b><br/>
+        • Note Credito: <b>€ {tot_nc:,.2f}</b><br/><br/>
+        <font color="green"><b>✅ IVA A CREDITO: € {abs(saldo_totale):,.2f}</b></font><br/>
+        <i>Credito da riportare al periodo successivo o richiedere rimborso</i>
+        """.replace(",", "X").replace(".", ",").replace("X", ".")
+    
+    elements.append(Paragraph(summary, summary_style))
+    
+    # Footer
+    elements.append(Spacer(1, 40))
+    footer_style = ParagraphStyle('Footer', parent=styles['Normal'], fontSize=9, textColor=colors.gray)
+    from datetime import datetime
+    elements.append(Paragraph(f"Documento generato il {datetime.now().strftime('%d/%m/%Y %H:%M')} - Azienda Semplice ERP", footer_style))
+    
+    doc.build(elements)
+    buffer.seek(0)
+    
+    filename = f"IVA_Trimestrale_Q{quarter}_{year}.pdf"
+    return StreamingResponse(
+        buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+
+@router.get("/export/pdf/annuale/{year}")
+async def export_iva_annuale_pdf(year: int) -> StreamingResponse:
+    """Esporta il riepilogo IVA annuale completo in PDF."""
+    try:
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib import colors
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+        from reportlab.lib.units import cm
+    except ImportError:
+        raise HTTPException(status_code=500, detail="reportlab non installato")
+    
+    # Ottieni dati annuali
+    annual_data = await get_iva_annual(year)
+    
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=2*cm, bottomMargin=2*cm)
+    elements = []
+    styles = getSampleStyleSheet()
+    
+    # Titolo
+    title_style = ParagraphStyle('Title', parent=styles['Heading1'], fontSize=18, textColor=colors.HexColor('#1e40af'), spaceAfter=20)
+    elements.append(Paragraph(f"📊 Riepilogo IVA Annuale {year}", title_style))
+    elements.append(Spacer(1, 20))
+    
+    # Tabella mensile
+    table_data = [["Mese", "IVA Debito", "IVA Credito", "Note Credito", "Saldo"]]
+    for m in annual_data['monthly_data']:
+        stato = "📈" if m['saldo'] > 0 else "📉"
+        table_data.append([
+            m['mese'],
+            f"€ {m['iva_debito']:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."),
+            f"€ {m['iva_credito']:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."),
+            f"€ {m['iva_note_credito']:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."),
+            f"{stato} € {m['saldo']:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        ])
+    
+    # Totali
+    tot = annual_data['totali']
+    table_data.append([
+        "TOTALE ANNO",
+        f"€ {tot['iva_debito']:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."),
+        f"€ {tot['iva_credito']:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."),
+        f"€ {tot['iva_note_credito']:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."),
+        f"€ {abs(tot['saldo']):,.2f} ({tot['stato']})".replace(",", "X").replace(".", ",").replace("X", ".")
+    ])
+    
+    table = Table(table_data, colWidths=[3.5*cm, 3.2*cm, 3.2*cm, 3.2*cm, 4*cm])
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1e40af')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+        ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#f0f9ff')),
+        ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#e5e7eb')),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -2), [colors.white, colors.HexColor('#f8fafc')])
+    ]))
+    elements.append(table)
+    
+    # Footer
+    elements.append(Spacer(1, 40))
+    footer_style = ParagraphStyle('Footer', parent=styles['Normal'], fontSize=9, textColor=colors.gray)
+    from datetime import datetime
+    elements.append(Paragraph(f"Documento generato il {datetime.now().strftime('%d/%m/%Y %H:%M')} - Azienda Semplice ERP", footer_style))
+    
+    doc.build(elements)
+    buffer.seek(0)
+    
+    filename = f"IVA_Annuale_{year}.pdf"
+    return StreamingResponse(
+        buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
