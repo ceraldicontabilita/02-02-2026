@@ -1,5 +1,5 @@
 """Dashboard router - KPI and statistics endpoints."""
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from typing import Dict, Any, Optional
 from datetime import datetime, timedelta
 import logging
@@ -16,20 +16,44 @@ router = APIRouter()
     summary="Get dashboard summary",
     description="Get summary data for dashboard - no auth required"
 )
-async def get_summary() -> Dict[str, Any]:
+async def get_summary(
+    anno: int = Query(None, description="Anno di riferimento")
+) -> Dict[str, Any]:
     """Get summary data for dashboard - public endpoint."""
     db = Database.get_db()
     
+    if not anno:
+        anno = datetime.now().year
+    
+    data_inizio = f"{anno}-01-01"
+    data_fine = f"{anno}-12-31"
+    
     try:
-        # Get counts from various collections
-        invoices_count = await db[Collections.INVOICES].count_documents({})
+        # Get counts from various collections with year filter where applicable
+        invoices_filter = {
+            "$or": [
+                {"invoice_date": {"$gte": data_inizio, "$lte": data_fine}},
+                {"data": {"$gte": data_inizio, "$lte": data_fine}}
+            ]
+        }
+        invoices_count = await db[Collections.INVOICES].count_documents(invoices_filter)
         suppliers_count = await db[Collections.SUPPLIERS].count_documents({})
         products_count = await db[Collections.WAREHOUSE_PRODUCTS].count_documents({})
         haccp_count = await db[Collections.HACCP_TEMPERATURES].count_documents({})
         employees_count = await db[Collections.EMPLOYEES].count_documents({})
         
+        # Calcola totale fatture per l'anno
+        pipeline = [
+            {"$match": invoices_filter},
+            {"$group": {"_id": None, "total": {"$sum": "$total_amount"}}}
+        ]
+        result = await db[Collections.INVOICES].aggregate(pipeline).to_list(1)
+        total_invoices_amount = result[0]["total"] if result else 0
+        
         return {
+            "anno": anno,
             "invoices_total": invoices_count,
+            "invoices_amount": round(total_invoices_amount, 2),
             "reconciled": 0,  # TODO: calculate actual reconciled movements
             "products": products_count,
             "haccp_items": haccp_count,
@@ -39,7 +63,9 @@ async def get_summary() -> Dict[str, Any]:
     except Exception as e:
         logger.error(f"Error getting dashboard summary: {e}")
         return {
+            "anno": anno,
             "invoices_total": 0,
+            "invoices_amount": 0,
             "reconciled": 0,
             "products": 0,
             "haccp_items": 0,
