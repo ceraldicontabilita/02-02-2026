@@ -123,14 +123,23 @@ async def get_iva_daily(date_param: str) -> Dict[str, Any]:
 
 @router.get("/monthly/{year}/{month}")
 async def get_iva_monthly(year: int, month: int) -> Dict[str, Any]:
-    """IVA progressiva giornaliera per mese."""
+    """IVA progressiva giornaliera per mese.
+    
+    Le Note Credito (TD04, TD08) vengono SOTTRATTE dal totale IVA credito.
+    """
     db = Database.get_db()
+    
+    # Tipi documento Note Credito
+    NOTE_CREDITO_TYPES = ["TD04", "TD08"]
     
     try:
         _, num_days = monthrange(year, month)
         daily_data = []
         iva_debito_prog = 0
         iva_credito_prog = 0
+        iva_note_credito_prog = 0
+        imponibile_prog = 0
+        imponibile_nc_prog = 0
         
         for day in range(1, num_days + 1):
             date_str = f"{year}-{month:02d}-{day:02d}"
@@ -139,30 +148,58 @@ async def get_iva_monthly(year: int, month: int) -> Dict[str, Any]:
             corr = await db["corrispettivi"].find({"data": date_str}, {"_id": 0, "totale_iva": 1}).to_list(1000)
             iva_deb = sum(float(c.get('totale_iva', 0) or 0) for c in corr)
             
-            # Fatture
+            # Fatture con gestione Note Credito
             fatt = await db["invoices"].find({"invoice_date": date_str}, {"_id": 0}).to_list(1000)
             iva_cred = 0
+            iva_nc = 0
+            imponibile = 0
+            imponibile_nc = 0
+            
             for f in fatt:
-                f_iva = float(f.get('iva', 0) or 0)
-                if f_iva == 0:
-                    t = float(f.get('total_amount', 0) or 0)
-                    if t > 0:
-                        f_iva = t - (t / 1.22)
-                iva_cred += f_iva
+                tipo_doc = f.get('tipo_documento', '')
+                is_nota_credito = tipo_doc in NOTE_CREDITO_TYPES
+                
+                f_iva = float(f.get('iva', 0) or f.get('totale_iva', 0) or 0)
+                total = float(f.get('total_amount', 0) or f.get('importo_totale', 0) or 0)
+                f_imponibile = float(f.get('imponibile', 0) or f.get('importo_imponibile', 0) or 0)
+                
+                if f_iva == 0 and total > 0:
+                    f_iva = total - (total / 1.22)
+                if f_imponibile == 0 and total > 0:
+                    f_imponibile = total / 1.22
+                
+                if is_nota_credito:
+                    iva_nc += f_iva
+                    imponibile_nc += f_imponibile
+                else:
+                    iva_cred += f_iva
+                    imponibile += f_imponibile
+            
+            # IVA Credito Netta del giorno
+            iva_cred_netta = iva_cred - iva_nc
+            imponibile_netto = imponibile - imponibile_nc
             
             iva_debito_prog += iva_deb
-            iva_credito_prog += iva_cred
+            iva_credito_prog += iva_cred_netta
+            iva_note_credito_prog += iva_nc
+            imponibile_prog += imponibile
+            imponibile_nc_prog += imponibile_nc
             
             daily_data.append({
                 "data": f"{day:02d}/{month:02d}/{year}",
                 "giorno": day,
                 "iva_debito": round(iva_deb, 2),
-                "iva_credito": round(iva_cred, 2),
-                "saldo": round(iva_deb - iva_cred, 2),
+                "iva_credito_lordo": round(iva_cred, 2),
+                "iva_note_credito": round(iva_nc, 2),
+                "iva_credito": round(iva_cred_netta, 2),  # Netto (fatture - NC)
+                "imponibile": round(imponibile, 2),
+                "imponibile_nc": round(imponibile_nc, 2),
+                "imponibile_netto": round(imponibile_netto, 2),
+                "saldo": round(iva_deb - iva_cred_netta, 2),
                 "iva_debito_progressiva": round(iva_debito_prog, 2),
                 "iva_credito_progressiva": round(iva_credito_prog, 2),
                 "saldo_progressivo": round(iva_debito_prog - iva_credito_prog, 2),
-                "has_data": iva_deb > 0 or iva_cred > 0
+                "has_data": iva_deb > 0 or iva_cred > 0 or iva_nc > 0
             })
         
         return {
