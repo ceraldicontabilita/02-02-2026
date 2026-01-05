@@ -504,13 +504,6 @@ export default function GestioneDipendenti() {
           color="#2196f3"
         />
         <TabButton 
-          active={activeTab === 'paghe'} 
-          onClick={() => setActiveTab('paghe')}
-          icon="💰"
-          label="Paghe"
-          color="#9c27b0"
-        />
-        <TabButton 
           active={activeTab === 'salari'} 
           onClick={() => setActiveTab('salari')}
           icon="📒"
