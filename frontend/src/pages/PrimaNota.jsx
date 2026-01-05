@@ -852,3 +852,226 @@ function MovementsTable({ movimenti, tipo, loading, formatCurrency, formatDate, 
     </div>
   );
 }
+
+// Componente Modal Dettaglio Transazione
+function TransactionDetailModal({ movimento, tipo, formatCurrency, formatDate, onClose }) {
+  if (!movimento) return null;
+  
+  const isEntrata = movimento.tipo === 'entrata';
+  
+  return (
+    <div 
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0,0,0,0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000
+      }}
+      onClick={onClose}
+      data-testid="transaction-detail-modal"
+    >
+      <div 
+        style={{
+          background: 'white',
+          borderRadius: 16,
+          width: '90%',
+          maxWidth: 600,
+          maxHeight: '90vh',
+          overflow: 'auto',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div style={{
+          padding: '20px 24px',
+          borderBottom: '1px solid #e5e7eb',
+          background: isEntrata ? 'linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%)' : 'linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)',
+          borderRadius: '16px 16px 0 0'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <h2 style={{ margin: 0, fontSize: 20, color: isEntrata ? '#166534' : '#991b1b' }}>
+                {isEntrata ? '↑ DARE (Entrata)' : '↓ AVERE (Uscita)'}
+              </h2>
+              <p style={{ margin: '4px 0 0 0', fontSize: 13, color: '#6b7280' }}>
+                {tipo === 'cassa' ? '💵 Prima Nota Cassa' : '🏦 Prima Nota Banca'}
+              </p>
+            </div>
+            <button 
+              onClick={onClose}
+              style={{
+                background: 'white',
+                border: 'none',
+                borderRadius: '50%',
+                width: 36,
+                height: 36,
+                cursor: 'pointer',
+                fontSize: 18,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+              }}
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+        
+        {/* Importo Grande */}
+        <div style={{ 
+          padding: '24px', 
+          textAlign: 'center',
+          borderBottom: '1px solid #e5e7eb'
+        }}>
+          <div style={{ 
+            fontSize: 42, 
+            fontWeight: 'bold', 
+            color: isEntrata ? '#166534' : '#991b1b'
+          }}>
+            {isEntrata ? '+' : '-'}{formatCurrency(movimento.importo)}
+          </div>
+          <div style={{ fontSize: 14, color: '#6b7280', marginTop: 4 }}>
+            {formatDate(movimento.data)}
+          </div>
+        </div>
+        
+        {/* Dettagli */}
+        <div style={{ padding: '20px 24px' }}>
+          <h3 style={{ margin: '0 0 16px 0', fontSize: 14, color: '#374151', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            📋 Dettagli Transazione
+          </h3>
+          
+          <div style={{ display: 'grid', gap: 12 }}>
+            <DetailRow label="Categoria" value={movimento.categoria || '-'} icon="🏷️" />
+            <DetailRow label="Descrizione" value={movimento.descrizione || '-'} icon="📝" multiline />
+            <DetailRow label="Riferimento" value={movimento.riferimento || '-'} icon="🔗" />
+            
+            {movimento.fornitore_piva && (
+              <DetailRow label="P.IVA Fornitore" value={movimento.fornitore_piva} icon="🏢" />
+            )}
+            
+            {movimento.fattura_id && (
+              <DetailRow label="ID Fattura" value={movimento.fattura_id} icon="🧾" />
+            )}
+            
+            {movimento.corrispettivo_id && (
+              <DetailRow label="ID Corrispettivo" value={movimento.corrispettivo_id} icon="📊" />
+            )}
+            
+            {/* Dettaglio POS se presente */}
+            {movimento.pos_details && (
+              <div style={{ 
+                background: '#eff6ff', 
+                padding: 12, 
+                borderRadius: 8,
+                marginTop: 8
+              }}>
+                <div style={{ fontSize: 12, fontWeight: 'bold', color: '#1e40af', marginBottom: 8 }}>
+                  💳 Dettaglio POS
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: 11, color: '#6b7280' }}>POS 1</div>
+                    <div style={{ fontSize: 14, fontWeight: 'bold' }}>{formatCurrency(movimento.pos_details.pos1 || 0)}</div>
+                  </div>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: 11, color: '#6b7280' }}>POS 2</div>
+                    <div style={{ fontSize: 14, fontWeight: 'bold' }}>{formatCurrency(movimento.pos_details.pos2 || 0)}</div>
+                  </div>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: 11, color: '#6b7280' }}>POS 3</div>
+                    <div style={{ fontSize: 14, fontWeight: 'bold' }}>{formatCurrency(movimento.pos_details.pos3 || 0)}</div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Dettaglio Corrispettivo se presente */}
+            {movimento.dettaglio && (
+              <div style={{ 
+                background: '#fef3c7', 
+                padding: 12, 
+                borderRadius: 8,
+                marginTop: 8
+              }}>
+                <div style={{ fontSize: 12, fontWeight: 'bold', color: '#92400e', marginBottom: 8 }}>
+                  📊 Dettaglio Corrispettivo
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: 11, color: '#6b7280' }}>Contanti</div>
+                    <div style={{ fontSize: 14, fontWeight: 'bold' }}>{formatCurrency(movimento.dettaglio.contanti || 0)}</div>
+                  </div>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: 11, color: '#6b7280' }}>Elettronico</div>
+                    <div style={{ fontSize: 14, fontWeight: 'bold' }}>{formatCurrency(movimento.dettaglio.elettronico || 0)}</div>
+                  </div>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: 11, color: '#6b7280' }}>IVA</div>
+                    <div style={{ fontSize: 14, fontWeight: 'bold' }}>{formatCurrency(movimento.dettaglio.totale_iva || 0)}</div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {movimento.note && (
+              <DetailRow label="Note" value={movimento.note} icon="📌" multiline />
+            )}
+          </div>
+        </div>
+        
+        {/* Footer con metadata */}
+        <div style={{ 
+          padding: '16px 24px', 
+          borderTop: '1px solid #e5e7eb',
+          background: '#f9fafb',
+          borderRadius: '0 0 16px 16px',
+          fontSize: 11,
+          color: '#9ca3af'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+            <span>ID: {movimento.id || '-'}</span>
+            <span>Fonte: {movimento.source || 'manuale'}</span>
+            {movimento.created_at && (
+              <span>Creato: {new Date(movimento.created_at).toLocaleString('it-IT')}</span>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Componente per riga dettaglio
+function DetailRow({ label, value, icon, multiline }) {
+  return (
+    <div style={{ 
+      display: 'flex', 
+      alignItems: multiline ? 'flex-start' : 'center',
+      gap: 10,
+      padding: '8px 0',
+      borderBottom: '1px solid #f3f4f6'
+    }}>
+      <span style={{ fontSize: 16 }}>{icon}</span>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 2 }}>{label}</div>
+        <div style={{ 
+          fontSize: 14, 
+          color: '#111827',
+          whiteSpace: multiline ? 'pre-wrap' : 'nowrap',
+          wordBreak: multiline ? 'break-word' : 'normal'
+        }}>
+          {value}
+        </div>
+      </div>
+    </div>
+  );
+}
