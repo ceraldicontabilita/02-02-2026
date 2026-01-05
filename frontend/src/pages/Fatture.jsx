@@ -677,7 +677,7 @@ export default function Fatture() {
               <div className="h1" style={{ color: "#2e7d32" }}>✓ {uploadResult.message}</div>
               <div className="small">
                 <strong>Fornitore:</strong> {uploadResult.invoice?.supplier_name}<br/>
-                <strong>Importo:</strong> € {uploadResult.invoice?.total_amount?.toFixed(2)}<br/>
+                <strong>Importo:</strong> {formatEuro(uploadResult.invoice?.total_amount)}<br/>
                 <strong>Data:</strong> {uploadResult.invoice?.invoice_date}
               </div>
             </>
@@ -706,12 +706,12 @@ export default function Fatture() {
                   <ul style={{ paddingLeft: 20, marginTop: 5 }}>
                     {uploadResult.data.success.map((s, i) => (
                       <li key={i}>
-                        {s.invoice_number} - {s.supplier} - € {s.total?.toFixed(2)}
+                        {s.invoice_number} - {s.supplier} - {formatEuro(s.total)}
                       </li>
                     ))}
                   </ul>
                 </div>
-              )}
+              )}}
               
               {uploadResult.data.duplicates && uploadResult.data.duplicates.length > 0 && (
                 <div style={{ marginTop: 10 }}>
