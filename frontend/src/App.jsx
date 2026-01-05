@@ -239,15 +239,35 @@ export default function App() {
             </div>
             <div className="mobile-menu-items">
               {NAV_ITEMS.map((item) => (
-                <NavLink 
-                  key={item.to} 
-                  to={item.to}
-                  className={({ isActive }) => `mobile-menu-item ${isActive ? "active" : ""}`}
-                  onClick={() => setShowMobileMenu(false)}
-                >
-                  <span style={{ fontSize: 20 }}>{item.icon}</span>
-                  <span>{item.label}</span>
-                </NavLink>
+                item.isSubmenu ? (
+                  <React.Fragment key={item.label}>
+                    <div className="mobile-menu-submenu-header">
+                      <span style={{ fontSize: 20 }}>{item.icon}</span>
+                      <span>{item.label}</span>
+                    </div>
+                    {item.children.map(child => (
+                      <NavLink 
+                        key={child.to} 
+                        to={child.to}
+                        className={({ isActive }) => `mobile-menu-item mobile-submenu-child ${isActive ? "active" : ""}`}
+                        onClick={() => setShowMobileMenu(false)}
+                      >
+                        <span style={{ fontSize: 18 }}>{child.icon}</span>
+                        <span>{child.label}</span>
+                      </NavLink>
+                    ))}
+                  </React.Fragment>
+                ) : (
+                  <NavLink 
+                    key={item.to} 
+                    to={item.to}
+                    className={({ isActive }) => `mobile-menu-item ${isActive ? "active" : ""}`}
+                    onClick={() => setShowMobileMenu(false)}
+                  >
+                    <span style={{ fontSize: 20 }}>{item.icon}</span>
+                    <span>{item.label}</span>
+                  </NavLink>
+                )
               ))}
             </div>
           </div>
