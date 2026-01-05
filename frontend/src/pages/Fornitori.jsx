@@ -118,7 +118,7 @@ export default function Fornitori() {
 
   // Apri report fornitore (fatture)
   const openReport = (supplier) => {
-    window.location.href = `/fatture?fornitore=${encodeURIComponent(supplier.denominazione || supplier.partita_iva)}`;
+    window.location.href = `/fatture?fornitore=${encodeURIComponent(supplier.denominazione || supplier.partita_iva)}&anno=${selectedYear}`;
   };
 
   // Apri inventario fornitore
@@ -134,7 +134,7 @@ export default function Fornitori() {
     
     try {
       const piva = supplier.partita_iva || supplier.id;
-      const res = await api.get(`/api/suppliers/${piva}/inventory`);
+      const res = await api.get(`/api/suppliers/${piva}/inventory?anno=${selectedYear}`);
       setInventarioData(res.data);
     } catch (e) {
       console.error("Errore caricamento inventario:", e);
