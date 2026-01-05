@@ -1,16 +1,23 @@
 import React, { useState, useEffect } from "react";
 import api from "../api";
 import { formatDateIT, formatEuro } from "../lib/utils";
+import { useAnnoGlobale } from "../contexts/AnnoContext";
 
 export default function IVA() {
+  const { anno: annoGlobale } = useAnnoGlobale();
   const [loading, setLoading] = useState(true);
   const [todayData, setTodayData] = useState(null);
   const [annualData, setAnnualData] = useState(null);
   const [monthlyData, setMonthlyData] = useState(null);
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedYear, setSelectedYear] = useState(annoGlobale);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
-  const [viewMode, setViewMode] = useState("annual"); // annual, monthly, daily
+  const [viewMode, setViewMode] = useState("annual"); // annual, quarterly, monthly, daily
   const [err, setErr] = useState("");
+
+  // Sincronizza con anno globale quando cambia
+  useEffect(() => {
+    setSelectedYear(annoGlobale);
+  }, [annoGlobale]);
 
   const mesiItaliani = [
     "", "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
