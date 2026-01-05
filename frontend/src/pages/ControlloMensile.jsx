@@ -115,8 +115,6 @@ export default function ControlloMensile() {
       const corrispettivi = Array.isArray(corrispRes.data) ? corrispRes.data : (corrispRes.data.corrispettivi || []);
       const estrattoConto = estrattoRes.data.movements || [];
       
-      console.log(`[ControlloMensile] Caricati: ${cassa.length} cassa, ${corrispettivi.length} corrispettivi, ${estrattoConto.length} estratto conto per ${anno}`);
-      
       processYearData(cassa, corrispettivi, estrattoConto);
     } catch (error) {
       console.error('Error loading year data:', error);
