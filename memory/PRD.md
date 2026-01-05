@@ -206,17 +206,21 @@ SALDO IVA:
   - Hook condivisi: `useFatture`, `usePrimaNota`, `useCorrispettivi`, `useAssegni`, `useFornitori`
 - **Testing Completo**: 100% success rate su tutti i controlli di sicurezza
 
-### 2026-01-05 (Sessione 8 - POS Banca e Annulli)
-- **POS Banca (P0) - COMPLETATO**: Integrazione completa del calcolo POS Banca nella pagina Controllo Mensile
-  - Caricamento dati dall'estratto conto bancario (collection `estratto_conto`)
-  - Filtro automatico per movimenti POS: INC.POS, INCAS. TRAMITE P.O.S, P.O.S., etc.
-  - Card riepilogativa con totale annuale (€1.001.000,20 per 2025)
-  - Colonna "POS BANCA" nella tabella mensile con dettaglio per mese
-  - Fix bug limite API: ridotto da 10000 a 5000 (limite endpoint)
-- **Card Annulli (P1) - COMPLETATO**: Aggiunta card "Annulli" in Controllo Mensile
-  - Card rossa che mostra "0" se non ci sono dati
-  - Sottotitolo "N/D negli XML" per indicare che i dati non sono disponibili nel formato COR10
-  - Predisposto il campo `annulli` per future estensioni del parser corrispettivi
+### 2026-01-05 (Sessione 8 - POS Banca PDV + IVA Trimestrale)
+- **Fix POS Banca (P0) - COMPLETATO**: Corretta la logica di calcolo POS Banca
+  - Nuova logica: cerca "PDV 3757283" o "PDV: 3757283" nella descrizione estratto conto
+  - Importi positivi (tipo=entrata) = Accrediti POS (€570.315,75 per 2025)
+  - Importi negativi (tipo=uscita) = Commissioni/Spese POS (€3.513,26 per 2025)
+  - Aggiunta visualizzazione commissioni nella card riepilogativa
+  - Aggiornato box info "Fonti dati" con nuova logica PDV
+  - Predisposta logica sfasamento accrediti (Lun→Mar, etc.) per future implementazioni
+- **Card Annulli (P1) - COMPLETATO**: Card "Annulli" presente con valore "0" e "N/D negli XML"
+- **IVA Trimestrale (P1) - COMPLETATO**: Aggiunta vista trimestrale nella pagina Calcolo IVA
+  - Button "Trimestrale" nei controlli vista
+  - 4 card per trimestre (Q1-Q4) con IVA Debito, Credito, Saldo
+  - Tabella dettaglio trimestrale con totali
+  - Sincronizzazione con anno globale (AnnoContext)
+- **Verifica IVA Aliquote**: Confermato che il calcolo IVA già include correttamente tutte le aliquote (4%, 5%, 10%, 22%) perché il campo `iva` nelle fatture è già la somma di tutte le imposte da `riepilogo_iva`
 
 ### 2026-01-05 (Sessione 7 - Ristrutturazione Architettura - FASE 1)
 - **NUOVO Services Layer** con Business Rules centralizzate:
