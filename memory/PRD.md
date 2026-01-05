@@ -400,13 +400,23 @@ SALDO IVA:
 - [x] Area Commercialista con invio PDF via email
 - [x] Fix Stampa Carnet (singolo carnet, non tutti)
 - [x] Fix pagina Prima Nota (RISOLTO - funziona correttamente)
+- [x] Fix pagina Finanziaria bianca (bug sintassi IVA.jsx)
 - [x] **Ristrutturazione Architettura COMPLETA** (Fasi 1-4)
   - [x] Service Layer con Business Rules centralizzate
   - [x] Controlli sicurezza su tutti gli endpoint delete
   - [x] DataPropagationService per flusso dati automatico
   - [x] Hook frontend condivisi
 
-### P1 (Alta) - COMPLETATI
+### P1 (Alta) - IN CORSO
+- [x] Bilancio (Stato Patrimoniale, Conto Economico) - Nuova pagina /bilancio
+- [x] Filtro Anno Globale nella Dashboard - Context AnnoContext + selettore sidebar
+- [x] Fix pagina Magazzino - Tab Catalogo Prodotti + Inventario Manuale
+- [x] Fix Bug Controllo Mensile (Diff POS ~€30k errata → ~€300 corretta)
+- [x] Rinomina POS Auto → POS Agenzia, POS Manuale → POS Chiusura
+- [ ] **Prima Nota - Pagina Dettaglio Transazione** (cliccando su una riga)
+- [ ] **Logica sfasamento accrediti POS** (Lun→Mar, Ven→Lun, festivi)
+
+### P2 (Media) - IN CORSO
 - [x] Bilancio (Stato Patrimoniale, Conto Economico) - Nuova pagina /bilancio
 - [x] Filtro Anno Globale nella Dashboard - Context AnnoContext + selettore sidebar
 - [x] Fix pagina Magazzino - Tab Catalogo Prodotti + Inventario Manuale
