@@ -609,7 +609,7 @@ export default function ControlloMensile() {
           <div style={{ fontSize: 18, fontWeight: 'bold' }}>{formatCurrency(yearTotals.posAuto)}</div>
         </div>
         <div style={{ background: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)', borderRadius: 12, padding: 14, color: 'white' }}>
-          <div style={{ fontSize: 11, opacity: 0.9 }}>POS Manuali (Cassa)</div>
+          <div style={{ fontSize: 11, opacity: 0.9 }}>POS Chiusura (Cassa)</div>
           <div style={{ fontSize: 18, fontWeight: 'bold' }}>{formatCurrency(yearTotals.posManual)}</div>
         </div>
         <div style={{ background: 'linear-gradient(135deg, #ec4899 0%, #be185d 100%)', borderRadius: 12, padding: 14, color: 'white' }}>
@@ -649,7 +649,7 @@ export default function ControlloMensile() {
         <div>
           <strong>Fonti dati:</strong><br/>
           • <strong>POS Agenzia</strong> = pagato_elettronico da XML corrispettivi<br/>
-          • <strong>POS Manuali</strong> = Prima Nota Cassa con categoria "POS"<br/>
+          • <strong>POS Chiusura</strong> = Prima Nota Cassa con categoria "POS"<br/>
           • <strong>🏦 POS Banca</strong> = Accrediti INC.POS/INCAS. TRAMITE P.O.S dalla banca
         </div>
       </div>
@@ -683,7 +683,7 @@ export default function ControlloMensile() {
               <tr style={{ background: '#f8fafc' }}>
                 <th style={{ padding: 10, textAlign: 'left', borderBottom: '2px solid #e2e8f0' }}>Mese</th>
                 <th style={{ padding: 10, textAlign: 'right', borderBottom: '2px solid #e2e8f0', background: '#dbeafe' }}>POS Agenzia</th>
-                <th style={{ padding: 10, textAlign: 'right', borderBottom: '2px solid #e2e8f0', background: '#ede9fe' }}>POS Cassa</th>
+                <th style={{ padding: 10, textAlign: 'right', borderBottom: '2px solid #e2e8f0', background: '#ede9fe' }}>POS Chiusura</th>
                 <th style={{ padding: 10, textAlign: 'right', borderBottom: '2px solid #e2e8f0', background: '#fce7f3' }}>🏦 POS Banca</th>
                 <th style={{ padding: 10, textAlign: 'right', borderBottom: '2px solid #e2e8f0' }}>Diff.</th>
                 <th style={{ padding: 10, textAlign: 'right', borderBottom: '2px solid #e2e8f0', background: '#fef3c7' }}>Corr. Auto</th>
@@ -732,7 +732,7 @@ export default function ControlloMensile() {
                       fontSize: 12
                     }}>
                       {Math.abs(row.posDiff) > 0.01 ? (
-                        <span title="POS Auto (XML) - POS Cassa (Manuale)">{row.posDiff > 0 ? '+' : ''}{formatCurrency(row.posDiff)}</span>
+                        <span title="POS Agenzia (XML) - POS Chiusura">{row.posDiff > 0 ? '+' : ''}{formatCurrency(row.posDiff)}</span>
                       ) : '-'}
                     </td>
                     <td style={{ padding: 10, borderBottom: '1px solid #e2e8f0', textAlign: 'right', background: '#fffbeb' }}>
@@ -829,7 +829,7 @@ export default function ControlloMensile() {
               <tr style={{ background: '#f8fafc' }}>
                 <th style={{ padding: 12, textAlign: 'left', borderBottom: '2px solid #e2e8f0' }}>Data</th>
                 <th style={{ padding: 12, textAlign: 'right', borderBottom: '2px solid #e2e8f0', background: '#dbeafe' }}>POS Auto</th>
-                <th style={{ padding: 12, textAlign: 'right', borderBottom: '2px solid #e2e8f0', background: '#ede9fe' }}>POS Manuale</th>
+                <th style={{ padding: 12, textAlign: 'right', borderBottom: '2px solid #e2e8f0', background: '#ede9fe' }}>POS Chiusura</th>
                 <th style={{ padding: 12, textAlign: 'right', borderBottom: '2px solid #e2e8f0' }}>Diff. POS</th>
                 <th style={{ padding: 12, textAlign: 'right', borderBottom: '2px solid #e2e8f0', background: '#fef3c7' }}>Corrisp. Auto</th>
                 <th style={{ padding: 12, textAlign: 'right', borderBottom: '2px solid #e2e8f0', background: '#d1fae5' }}>Corrisp. Man.</th>
@@ -956,7 +956,7 @@ export default function ControlloMensile() {
             <strong style={{ color: '#3b82f6' }}>POS Auto</strong> = Σ corrispettivi.pagato_elettronico (da XML)
           </div>
           <div>
-            <strong style={{ color: '#8b5cf6' }}>POS Manuale</strong> = Σ prima_nota_cassa WHERE categoria="POS"
+            <strong style={{ color: '#8b5cf6' }}>POS Chiusura</strong> = Σ prima_nota_cassa WHERE categoria="POS"
           </div>
           <div>
             <strong style={{ color: '#f59e0b' }}>Corrisp. Auto</strong> = Σ corrispettivi.totale (da XML)
