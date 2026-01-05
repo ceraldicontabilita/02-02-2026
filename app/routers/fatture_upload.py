@@ -112,6 +112,7 @@ async def upload_fattura_xml(file: UploadFile = File(...)) -> Dict[str, Any]:
             "invoice_key": invoice_key,
             "invoice_number": parsed.get("invoice_number", ""),
             "invoice_date": parsed.get("invoice_date", ""),
+            "data_ricezione": parsed.get("invoice_date", ""),  # Default = data fattura, può essere aggiornato
             "data_scadenza": data_scadenza,
             "tipo_documento": parsed.get("tipo_documento", ""),
             "tipo_documento_desc": parsed.get("tipo_documento_desc", ""),
