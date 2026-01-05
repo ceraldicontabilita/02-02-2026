@@ -107,7 +107,8 @@ from app.routers import (
     piano_conti,
     commercialista,
     bilancio,
-    pos_accredito
+    pos_accredito,
+    scadenze
 )
 
 # Include public API first (no auth required)
