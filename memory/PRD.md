@@ -518,10 +518,16 @@ SALDO IVA:
 - [x] **Confronto anno su anno nel Bilancio** - `/api/bilancio/confronto-annuale`
 - [x] **Dashboard trend mensili** - `/api/dashboard/trend-mensile`
 
-### P4 (Future) - BACKLOG
-- [ ] Notifiche in-app per scadenze
-- [ ] Grafici interattivi frontend per trend
-- [ ] Report PDF bilancio comparativo
+### P4 (Future) - COMPLETATI ✅
+- [x] Notifiche in-app per scadenze - Sistema completo con widget Dashboard
+- [x] Widget scadenze Dashboard - Mostra prossime scadenze con urgenza
+- [x] Report PDF bilancio comparativo - Export PDF con confronto anno su anno
+- [x] Pagina Scadenze dedicata - Riepilogo IVA + lista scadenze + CRUD
+
+### P5 (Future) - BACKLOG
+- [ ] Grafici interattivi avanzati con drill-down
+- [ ] Notifiche email automatiche per scadenze imminenti
+- [ ] Import buste paga da file esterno
 
 ---
 
