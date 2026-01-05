@@ -720,7 +720,7 @@ async def export_confronto_pdf(
     # Ottieni dati confronto
     confronto = await get_confronto_annuale(anno_corrente=anno_corrente, anno_precedente=anno_precedente)
     
-    buffer = io.BytesIO()
+    buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=2*cm, bottomMargin=2*cm, leftMargin=1.5*cm, rightMargin=1.5*cm)
     elements = []
     styles = getSampleStyleSheet()
