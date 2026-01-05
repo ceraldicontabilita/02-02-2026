@@ -135,30 +135,38 @@ async def get_prima_nota_cassa_mensile(anno: int, mese: int) -> Dict[str, Any]:
     """Get Prima Nota Cassa for a specific month."""
     db = Database.get_db()
     
-    # Date range for the month
-    start_date = datetime(anno, mese, 1, 0, 0, 0, tzinfo=timezone.utc)
+    # Date range for the month - usa formato YYYY-MM per regex match
+    month_prefix = f"{anno}-{mese:02d}"
     _, last_day = monthrange(anno, mese)
-    end_date = datetime(anno, mese, last_day, 23, 59, 59, tzinfo=timezone.utc)
+    start_date = f"{anno}-{mese:02d}-01"
+    end_date = f"{anno}-{mese:02d}-{last_day:02d}"
     
-    # Query prima nota cassa movements
+    # Query prima nota cassa - collection principale
     movements = []
     
-    # Try prima_nota collection first
-    cursor = db["prima_nota"].find({
-        "tipo_conto": "cassa",
-        "$or": [
-            {"data": {"$gte": start_date.isoformat(), "$lte": end_date.isoformat()}},
-            {"date": {"$gte": start_date.isoformat(), "$lte": end_date.isoformat()}}
-        ]
+    # Try prima_nota_cassa collection (usata dal router prima_nota.py)
+    cursor = db["prima_nota_cassa"].find({
+        "data": {"$regex": f"^{month_prefix}"}
     }, {"_id": 0})
     movements = await cursor.to_list(5000)
     
-    # If empty, try cash collection
+    # If empty, try prima_nota collection with tipo_conto = cassa
+    if not movements:
+        cursor = db["prima_nota"].find({
+            "tipo_conto": "cassa",
+            "$or": [
+                {"data": {"$regex": f"^{month_prefix}"}},
+                {"date": {"$regex": f"^{month_prefix}"}}
+            ]
+        }, {"_id": 0})
+        movements = await cursor.to_list(5000)
+    
+    # If still empty, try cash collection
     if not movements:
         cursor = db["cash"].find({
             "$or": [
-                {"data": {"$gte": start_date.isoformat(), "$lte": end_date.isoformat()}},
-                {"date": {"$gte": start_date.isoformat(), "$lte": end_date.isoformat()}}
+                {"data": {"$regex": f"^{month_prefix}"}},
+                {"date": {"$regex": f"^{month_prefix}"}}
             ]
         }, {"_id": 0})
         movements = await cursor.to_list(5000)
@@ -172,9 +180,9 @@ async def get_prima_nota_cassa_mensile(anno: int, mese: int) -> Dict[str, Any]:
         importo = float(m.get("amount") or m.get("importo") or 0)
         
         if tipo.lower() in ["entrata", "income", "in"]:
-            totale_entrate += importo
+            totale_entrate += abs(importo)
         else:
-            totale_uscite += importo
+            totale_uscite += abs(importo)
     
     saldo = totale_entrate - totale_uscite
     
@@ -185,9 +193,9 @@ async def get_prima_nota_cassa_mensile(anno: int, mese: int) -> Dict[str, Any]:
                      "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"][mese],
         "movimenti": movements,
         "totale_movimenti": len(movements),
-        "totale_entrate": totale_entrate,
-        "totale_uscite": totale_uscite,
-        "saldo": saldo
+        "totale_entrate": round(totale_entrate, 2),
+        "totale_uscite": round(totale_uscite, 2),
+        "saldo": round(saldo, 2)
     }
 
 
