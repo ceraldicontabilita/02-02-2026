@@ -140,6 +140,8 @@ export default function ControlloMensile() {
     let yearVersamenti = 0, yearSaldoCassa = 0;
     let yearDocumentiCommerciali = 0;
     let yearAnnulli = 0;
+    let yearPagatoNonRiscosso = 0, yearPagatoNonRiscossoCount = 0;
+    let yearAmmontareAnnulli = 0, yearAmmontareAnnulliCount = 0;
 
     for (let month = 1; month <= 12; month++) {
       const monthStr = String(month).padStart(2, '0');
@@ -158,9 +160,19 @@ export default function ControlloMensile() {
       // Numero totale di scontrini/ricevute emessi nel mese
       const documentiCommerciali = monthCorrisp.reduce((sum, c) => sum + (parseInt(c.numero_documenti) || 0), 0);
 
-      // ============ ANNULLI (da Corrispettivi XML se disponibile) ============
-      // Numero di scontrini annullati nel mese - Campo non sempre presente negli XML
+      // ============ ANNULLI (vecchio campo - per compatibilità) ============
       const annulli = monthCorrisp.reduce((sum, c) => sum + (parseInt(c.annulli) || 0), 0);
+
+      // ============ PAGATO NON RISCOSSO (da Corrispettivi XML) ============
+      // Differenza tra (Ammontare + ImportoParziale) - (PagatoContanti + PagatoElettronico)
+      const corrispNonRiscosso = monthCorrisp.filter(c => (parseFloat(c.pagato_non_riscosso) || 0) > 0);
+      const pagatoNonRiscosso = corrispNonRiscosso.reduce((sum, c) => sum + (parseFloat(c.pagato_non_riscosso) || 0), 0);
+      const pagatoNonRiscossoCount = corrispNonRiscosso.length;
+
+      // ============ AMMONTARE ANNULLI (da Corrispettivi XML - TotaleAmmontareAnnulli) ============
+      const corrispAnnulli = monthCorrisp.filter(c => (parseFloat(c.totale_ammontare_annulli) || 0) > 0);
+      const ammontareAnnulli = corrispAnnulli.reduce((sum, c) => sum + (parseFloat(c.totale_ammontare_annulli) || 0), 0);
+      const ammontareAnnulliCount = corrispAnnulli.length;
 
       // ============ POS MANUALE (da Prima Nota Cassa) ============
       // Il POS manuale è registrato con categoria "POS" in Prima Nota Cassa
