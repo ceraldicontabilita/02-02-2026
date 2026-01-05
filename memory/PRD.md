@@ -423,32 +423,25 @@ SALDO IVA:
   - [x] DataPropagationService per flusso dati automatico
   - [x] Hook frontend condivisi
 
-### P1 (Alta) - IN CORSO
+### P1 (Alta) - COMPLETATI ✅
 - [x] Bilancio (Stato Patrimoniale, Conto Economico) - Nuova pagina /bilancio
 - [x] Filtro Anno Globale nella Dashboard - Context AnnoContext + selettore sidebar
 - [x] Fix pagina Magazzino - Tab Catalogo Prodotti + Inventario Manuale
 - [x] Fix Bug Controllo Mensile (Diff POS ~€30k errata → ~€300 corretta)
 - [x] Rinomina POS Auto → POS Agenzia, POS Manuale → POS Chiusura
-- [ ] **Prima Nota - Pagina Dettaglio Transazione** (cliccando su una riga)
-- [ ] **Logica sfasamento accrediti POS** (Lun→Mar, Ven→Lun, festivi)
+- [x] **Prima Nota - Pagina Dettaglio Transazione** (modal cliccando su riga)
+- [x] **Export PDF IVA trimestrale/annuale** (pulsanti nella pagina /iva)
 
-### P2 (Media) - IN CORSO
-- [x] Bilancio (Stato Patrimoniale, Conto Economico) - Nuova pagina /bilancio
-- [x] Filtro Anno Globale nella Dashboard - Context AnnoContext + selettore sidebar
-- [x] Fix pagina Magazzino - Tab Catalogo Prodotti + Inventario Manuale
-- [x] Fix Bug Controllo Mensile (Diff POS ~€30k errata → ~€300 corretta)
-- [x] Rinomina POS Auto → POS Agenzia, POS Manuale → POS Chiusura
-
-### P2 (Media) - IN CORSO
+### P2 (Media) - COMPLETATI ✅
 - [x] Associazione automatica dati fornitore (nuovo fornitore → fatture esistenti)
 - [x] Export PDF Bilancio (pulsante nella pagina Bilancio)
 - [x] Riconoscimento POS in Riconciliazione ("INC.POS", "INCAS. TRAMITE P.O.S")
 - [x] Discrepanza Conteggio Fatture - Verificato: 1328 fatture uniche, nessun duplicato
-- [ ] **Fix errore re-importazione XML** (upsert invece di insert)
-- [ ] **Export PDF Riepilogo IVA trimestrale**
+- [x] **Fix errore re-importazione XML** (upsert con force_update=true)
 
-### P3 (Bassa) - BACKLOG
-- [ ] **Ristrutturazione GestioneDipendenti.jsx** (schede paghe, buste paga mensili, Prima Nota Salari)
+### P3 (Bassa) - IN CORSO
+- [x] **Ristrutturazione GestioneDipendenti.jsx** (3 tab: Anagrafica, Paghe e Salari, Prima Nota Salari)
+- [ ] **Logica sfasamento accrediti POS** (Lun→Mar, Ven→Lun, festivi)
 - [ ] **Popolare Magazzino da Fatture XML**
 - [ ] Confronto anno su anno nel Bilancio
 - [ ] Dashboard con grafici trend mensili
