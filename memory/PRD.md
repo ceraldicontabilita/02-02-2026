@@ -3,7 +3,7 @@
 ## Project Overview
 Sistema ERP completo per gestione aziendale con focus su contabilità, fatturazione elettronica, magazzino e gestione fornitori.
 
-**Versione**: 2.2.0  
+**Versione**: 2.3.0  
 **Ultimo aggiornamento**: 5 Gennaio 2026  
 **Stack**: FastAPI (Python) + React + MongoDB
 
@@ -11,7 +11,13 @@ Sistema ERP completo per gestione aziendale con focus su contabilità, fatturazi
 
 ## Correzioni Recenti (5 Gen 2026)
 
-### Bug Fix
+### Bug Fix - Formattazione Numerica Italiana
+- **Formattazione Euro Consistente**: Implementata funzione `formatEuro` in `/app/frontend/src/lib/utils.js`
+- **Formato italiano**: Punto come separatore migliaia, virgola per decimali (es: € 10.098,90)
+- **Pagine aggiornate**: Dashboard, IVA, Corrispettivi, PrimaNota, Fatture, Fornitori, Bilancio, Finanziaria, Assegni, Riconciliazione
+- **Testing**: Verificato al 100% su tutte le pagine principali
+
+### Bug Fix Precedenti
 - **Anni dinamici**: Corretti selettori anno hardcoded in Bilancio, Commercialista, GestioneDipendenti, HACCPAnalytics
 - **PDF Commercialista**: Fix import jsPDF autoTable (da `doc.autoTable()` a `autoTable(doc, ...)`)
 - **PrimaNotaMobile**: Ricreato dopo eliminazione errata, con fix API endpoints
@@ -44,6 +50,8 @@ Sistema ERP completo per gestione aziendale con focus su contabilità, fatturazi
 ├── frontend/
 │   └── src/
 │       ├── pages/            # 38 pagine React
+│       ├── lib/
+│       │   └── utils.js      # Funzioni utility (formatEuro, formatDateIT)
 │       ├── contexts/
 │       │   └── AnnoContext.jsx  # Gestione anno globale
 │       └── components/
