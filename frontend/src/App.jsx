@@ -26,7 +26,6 @@ const NAV_ITEMS = [
     isSubmenu: true,
     children: [
       { to: "/dipendenti", label: "Anagrafica", icon: "👤" },
-      { to: "/paghe", label: "Paghe / Salari", icon: "💰" },
     ]
   },
   { to: "/f24", label: "F24 / Tributi", icon: "📋", short: "F24" },
