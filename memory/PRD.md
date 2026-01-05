@@ -3,13 +3,39 @@
 ## Project Overview
 Sistema ERP completo per gestione aziendale con focus su contabilità, fatturazione elettronica, magazzino e gestione fornitori.
 
-**Versione**: 2.5.0  
-**Ultimo aggiornamento**: 5 Gennaio 2026  
+**Versione**: 2.6.0  
+**Ultimo aggiornamento**: 6 Gennaio 2026  
 **Stack**: FastAPI (Python) + React + MongoDB
 
 ---
 
-## Ultime Implementazioni (5 Gen 2026)
+## Ultime Implementazioni (6 Gen 2026)
+
+### Riorganizzazione Menu Navigazione - COMPLETATA
+Il menu di navigazione principale è stato riorganizzato con sottomenu espandibili per migliorare l'usabilità.
+
+**Nuova struttura menu:**
+
+1. **Sottomenu "Dipendenti" (👥)**
+   - Anagrafica (👤) → `/dipendenti`
+   - Paghe / Salari (💰) → `/paghe`
+
+2. **Sottomenu "Import/Export" (📤)**
+   - Import/Export Dati (📁) → `/import-export`
+   - Import Estratto Conto (📥) → `/estratto-conto`
+   - Movimenti Banca (🏦) → `/estratto-conto-movimenti`
+
+**Funzionalità:**
+- I sottomenu si espandono/collassano al click
+- Si aprono automaticamente quando si naviga su una pagina al loro interno
+- Le voci attive sono evidenziate in blu
+- Supporto completo per mobile (menu a griglia con header di categoria)
+
+**File modificato:** `/app/frontend/src/App.jsx`
+
+---
+
+## Implementazioni Precedenti (5 Gen 2026)
 
 ### Riconciliazione Salari Dipendenti - MIGLIORATA
 Sistema di gestione e riconciliazione automatica degli stipendi con estratti conto bancari.
