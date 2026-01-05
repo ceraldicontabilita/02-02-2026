@@ -328,7 +328,7 @@ export default function Bilancio() {
           </select>
           
           <button
-            onClick={() => window.open(`/api/bilancio/export-pdf?anno=${anno}`, '_blank')}
+            onClick={() => window.open(`${api.defaults.baseURL}/api/bilancio/export-pdf?anno=${anno}`, '_blank')}
             style={{
               padding: '10px 20px',
               borderRadius: 8,
@@ -344,7 +344,27 @@ export default function Bilancio() {
             }}
             data-testid="export-pdf-btn"
           >
-            📄 Esporta PDF
+            📄 PDF {anno}
+          </button>
+          
+          <button
+            onClick={() => window.open(`${api.defaults.baseURL}/api/bilancio/export/pdf/confronto?anno_corrente=${anno}&anno_precedente=${anno - 1}`, '_blank')}
+            style={{
+              padding: '10px 20px',
+              borderRadius: 8,
+              border: 'none',
+              background: '#7c3aed',
+              color: 'white',
+              fontSize: 14,
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8
+            }}
+            data-testid="export-confronto-pdf-btn"
+          >
+            📊 PDF Confronto {anno - 1}/{anno}
           </button>
         </div>
       </div>
