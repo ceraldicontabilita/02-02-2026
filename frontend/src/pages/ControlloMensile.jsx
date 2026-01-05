@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
+import { formatEuro } from '../lib/utils';
 
 /**
  * =====================================================================
@@ -478,10 +479,6 @@ export default function ControlloMensile() {
     }
 
     setDailyComparison(comparison);
-  };
-
-  const formatCurrency = (value) => {
-    return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(value || 0);
   };
 
   const formatDate = (dateStr) => {
