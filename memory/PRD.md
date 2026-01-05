@@ -268,19 +268,17 @@ FATTURA XML → Parse → FATTURE DB
   - [x] DataPropagationService per flusso dati automatico
   - [x] Hook frontend condivisi
 
-### P1 (Alta)
-- [ ] Bilancio (Stato Patrimoniale, Conto Economico)
-- [ ] Filtro Anno Globale nella Dashboard
-- [ ] Fix pagina Magazzino
+### P1 (Alta) - COMPLETATI
+- [x] Bilancio (Stato Patrimoniale, Conto Economico) - Nuova pagina /bilancio
+- [x] Filtro Anno Globale nella Dashboard - Context AnnoContext + selettore sidebar
+- [x] Fix pagina Magazzino - Tab Catalogo Prodotti + Inventario Manuale
+- [x] Fix Bug Controllo Mensile (Diff POS ~€30k errata → ~€300 corretta)
 
 ### P2 (Media)
 - [ ] Associazione automatica dati fornitore (nuovo fornitore → fatture esistenti)
-- [ ] Popolare Magazzino da Fatture XML
-- [ ] Mapping prodotti descrizione → nome commerciale
 - [ ] Export PDF Bilancio
 - [ ] Discrepanza Conteggio Fatture (1326 vs 1328)
 - [ ] Riconoscimento POS in Riconciliazione ("INC.POS", "INCAS. TRAMITE P.O.S")
-- [ ] Ricerca Prodotti filtro esatto
 
 ---
 
