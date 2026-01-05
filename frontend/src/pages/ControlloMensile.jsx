@@ -164,25 +164,77 @@ export default function ControlloMensile() {
         .reduce((sum, m) => sum + Math.abs(parseFloat(m.importo) || 0), 0);
 
       // ============ POS BANCA (da Estratto Conto Bancario) ============
-      // Accrediti POS in banca identificati da descrizioni specifiche:
-      // - INC.POS = Incasso POS carte credit
-      // - INCAS. TRAMITE P.O.S = Incasso tramite terminale
-      // - Categoria "POS" già categorizzata durante import
-      const posBanca = monthEstratto
-        .filter(m => {
-          const desc = (m.descrizione || '').toUpperCase();
-          const cat = (m.categoria || '').toUpperCase();
-          return m.tipo === 'entrata' && (
-            desc.includes('INC.POS') || 
-            desc.includes('INCAS.') || 
-            desc.includes('INC. POS') ||
-            desc.includes('INCASSO POS') ||
-            desc.includes('TRAMITE P.O.S') ||
-            desc.includes('P.O.S.') ||
-            cat.includes('POS')
-          );
-        })
+      // Logica: cercare "PDV 3757283" o "PDV: 3757283" nella descrizione
+      // - Importi positivi (tipo=entrata) = Accrediti POS
+      // - Importi negativi (tipo=uscita) = Commissioni/Spese POS
+      // 
+      // SFASAMENTO ACCREDITI: Gli accrediti bancari avvengono il giorno lavorativo successivo
+      // - Lun→Mar, Mar→Mer, Mer→Gio, Gio→Ven, Ven/Sab/Dom→Lun
+      // - Se festivo → giorno lavorativo successivo
+      
+      // Filtra movimenti POS per codice PDV 3757283
+      const posBancaMovimenti = estrattoConto.filter(m => {
+        const desc = (m.descrizione || '').toUpperCase();
+        return desc.includes('PDV 3757283') || desc.includes('PDV: 3757283');
+      });
+      
+      // Calcola data accredito attesa in base alla regola di sfasamento
+      const getDataAccreditoAttesa = (dataOperazione) => {
+        const date = new Date(dataOperazione);
+        const dayOfWeek = date.getDay(); // 0=Dom, 1=Lun, 2=Mar, 3=Mer, 4=Gio, 5=Ven, 6=Sab
+        
+        // Sfasamento: +1 giorno lavorativo
+        // Ven/Sab/Dom → Lunedì
+        if (dayOfWeek === 5) { // Venerdì
+          date.setDate(date.getDate() + 3); // +3 = Lunedì
+        } else if (dayOfWeek === 6) { // Sabato
+          date.setDate(date.getDate() + 2); // +2 = Lunedì
+        } else if (dayOfWeek === 0) { // Domenica
+          date.setDate(date.getDate() + 1); // +1 = Lunedì
+        } else {
+          date.setDate(date.getDate() + 1); // +1 giorno
+        }
+        
+        // Festivi italiani (approssimazione - principali festività)
+        const festiviItaliani = [
+          '01-01', // Capodanno
+          '01-06', // Epifania
+          '04-25', // Liberazione
+          '05-01', // Festa del Lavoro
+          '06-02', // Festa della Repubblica
+          '08-15', // Ferragosto
+          '11-01', // Tutti i Santi
+          '12-08', // Immacolata
+          '12-25', // Natale
+          '12-26', // Santo Stefano
+        ];
+        
+        // Controllo festivi (loop max 5 giorni per sicurezza)
+        for (let i = 0; i < 5; i++) {
+          const mmdd = date.toISOString().slice(5, 10);
+          const dow = date.getDay();
+          if (festiviItaliani.includes(mmdd) || dow === 0 || dow === 6) {
+            date.setDate(date.getDate() + 1);
+          } else {
+            break;
+          }
+        }
+        
+        return date.toISOString().slice(0, 10);
+      };
+      
+      // Raggruppa per mese di ACCREDITO (non di operazione)
+      // La data nell'estratto conto è già la data accredito effettivo
+      const posBancaAccrediti = posBancaMovimenti
+        .filter(m => m.tipo === 'entrata' && m.data?.startsWith(monthPrefix))
         .reduce((sum, m) => sum + (parseFloat(m.importo) || 0), 0);
+      
+      const posBancaCommissioni = posBancaMovimenti
+        .filter(m => m.tipo === 'uscita' && m.data?.startsWith(monthPrefix))
+        .reduce((sum, m) => sum + (parseFloat(m.importo) || 0), 0);
+      
+      // POS Banca = Accrediti (il valore principale da mostrare)
+      const posBanca = posBancaAccrediti;
 
       // ============ CORRISPETTIVI AUTO (da XML) ============
       // Totale incassi giornalieri dai corrispettivi XML
