@@ -206,6 +206,18 @@ SALDO IVA:
   - Hook condivisi: `useFatture`, `usePrimaNota`, `useCorrispettivi`, `useAssegni`, `useFornitori`
 - **Testing Completo**: 100% success rate su tutti i controlli di sicurezza
 
+### 2026-01-05 (Sessione 8 - POS Banca e Annulli)
+- **POS Banca (P0) - COMPLETATO**: Integrazione completa del calcolo POS Banca nella pagina Controllo Mensile
+  - Caricamento dati dall'estratto conto bancario (collection `estratto_conto`)
+  - Filtro automatico per movimenti POS: INC.POS, INCAS. TRAMITE P.O.S, P.O.S., etc.
+  - Card riepilogativa con totale annuale (€1.001.000,20 per 2025)
+  - Colonna "POS BANCA" nella tabella mensile con dettaglio per mese
+  - Fix bug limite API: ridotto da 10000 a 5000 (limite endpoint)
+- **Card Annulli (P1) - COMPLETATO**: Aggiunta card "Annulli" in Controllo Mensile
+  - Card rossa che mostra "0" se non ci sono dati
+  - Sottotitolo "N/D negli XML" per indicare che i dati non sono disponibili nel formato COR10
+  - Predisposto il campo `annulli` per future estensioni del parser corrispettivi
+
 ### 2026-01-05 (Sessione 7 - Ristrutturazione Architettura - FASE 1)
 - **NUOVO Services Layer** con Business Rules centralizzate:
   - `business_rules.py`: Regole di validazione per tutte le operazioni CRUD
