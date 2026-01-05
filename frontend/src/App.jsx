@@ -82,8 +82,21 @@ export default function App() {
           <span style={{ fontSize: 20 }}>🏢</span>
           <span>Azienda Semplice</span>
         </div>
-        <div style={{ padding: '0 8px', marginBottom: 15 }}>
+        <div style={{ padding: '0 8px', marginBottom: 10 }}>
           <GlobalSearch />
+        </div>
+        <div style={{ padding: '0 8px', marginBottom: 15 }}>
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 8,
+            padding: '8px 12px',
+            background: '#f1f5f9',
+            borderRadius: 8
+          }}>
+            <span style={{ fontSize: 12, color: '#64748b' }}>Anno:</span>
+            <AnnoSelector style={{ flex: 1, border: 'none', background: 'white' }} />
+          </div>
         </div>
         <nav className="nav">
           {NAV_ITEMS.map((item) => (
