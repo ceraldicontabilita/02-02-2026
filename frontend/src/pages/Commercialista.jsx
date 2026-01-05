@@ -186,8 +186,6 @@ export default function Commercialista() {
         m.categoria !== 'POS' && m.category !== 'POS')
       .reduce((sum, m) => sum + parseFloat(m.importo || m.amount || 0), 0);
     
-    const formatEuro = (val) => `€ ${val.toLocaleString('it-IT', {minimumFractionDigits: 2})}`;
-    
     // Box riepilogo
     doc.setFillColor(240, 248, 255);
     doc.roundedRect(14, 58, 182, 55, 3, 3, 'F');
@@ -628,10 +626,6 @@ export default function Commercialista() {
     } finally {
       setSending(null);
     }
-  };
-
-  const formatEuro = (value) => {
-    return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(value || 0);
   };
 
   const formatDate = (dateStr) => {
