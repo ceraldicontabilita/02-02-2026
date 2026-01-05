@@ -116,6 +116,33 @@ SALDO IVA:
 
 ## Changelog
 
+### 2026-01-05 (Sessione 16 - Sistema Scadenze e PDF Comparativo)
+- **Sistema Notifiche/Scadenze Completo** ✅:
+  - Backend router `/api/scadenze/*` con calcolo automatico scadenze fiscali
+  - Scadenze IVA trimestrali (Q1: 16/05, Q2: 20/08, Q3: 16/11, Q4: 16/03 anno succ.)
+  - Scadenze F24/INPS mensili (16 del mese)
+  - Fatture in scadenza (30gg da data fattura)
+  - Notifiche personalizzate CRUD
+  
+- **Widget Scadenze Dashboard** ✅:
+  - Mostra prossime scadenze con colori priorità
+  - Indicatore urgenza (≤3 giorni)
+  - Link a pagina scadenze completa
+
+- **Pagina Scadenze Dedicata** ✅:
+  - Riepilogo IVA trimestrale con importi calcolati
+  - Lista tutte le scadenze con filtri
+  - Modal creazione scadenza personalizzata
+  - Azioni completa/elimina per notifiche custom
+
+- **Export PDF Bilancio Comparativo** ✅:
+  - Endpoint `/api/bilancio/export/pdf/confronto`
+  - PDF con Conto Economico e Stato Patrimoniale anno vs anno
+  - Variazioni assolute e percentuali
+  - KPI e sintesi trend
+
+**Testing**: 24/24 test passati (100%)
+
 ### 2026-01-05 (Sessione 15 - Dashboard con Grafici Interattivi)
 - **Dashboard con Grafici Trend Mensili** ✅:
   - Installato `recharts` per grafici React
