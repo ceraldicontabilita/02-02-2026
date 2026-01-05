@@ -141,29 +141,29 @@ export default function IVA() {
         </div>
       ) : (
         <>
-          {/* Card Riepilogo Oggi */}
-          {todayData && (
+          {/* Card Riepilogo Anno Selezionato */}
+          {annualData && (
             <div className="grid">
               <div className="card" style={{ background: "#e3f2fd" }}>
-                <div className="small">IVA Oggi ({todayData.data})</div>
-                <div className="kpi" style={{ color: getSaldoColor(todayData.saldo) }}>
-                  € {todayData.saldo?.toFixed(2)}
+                <div className="small">Saldo IVA {selectedYear}</div>
+                <div className="kpi" style={{ color: getSaldoColor(annualData.totali?.saldo) }}>
+                  € {annualData.totali?.saldo?.toLocaleString('it-IT', {minimumFractionDigits: 2})}
                 </div>
-                <div className="small">{todayData.stato}</div>
+                <div className="small">{annualData.totali?.stato}</div>
               </div>
               <div className="card" style={{ background: "#fff3e0" }}>
-                <div className="small">IVA a Debito (Corrispettivi)</div>
+                <div className="small">IVA a Debito (Corrispettivi) {selectedYear}</div>
                 <div className="kpi" style={{ color: "#e65100" }}>
-                  € {todayData.iva_debito?.toFixed(2)}
+                  € {annualData.totali?.iva_debito?.toLocaleString('it-IT', {minimumFractionDigits: 2})}
                 </div>
-                <div className="small">{todayData.corrispettivi?.count || 0} corrispettivi</div>
+                <div className="small">{annualData.totali?.corrispettivi_count || 0} corrispettivi</div>
               </div>
               <div className="card" style={{ background: "#e8f5e9" }}>
-                <div className="small">IVA a Credito (Fatture)</div>
+                <div className="small">IVA a Credito (Fatture) {selectedYear}</div>
                 <div className="kpi" style={{ color: "#2e7d32" }}>
-                  € {todayData.iva_credito?.toFixed(2)}
+                  € {annualData.totali?.iva_credito?.toLocaleString('it-IT', {minimumFractionDigits: 2})}
                 </div>
-                <div className="small">{todayData.fatture?.count || 0} fatture</div>
+                <div className="small">{annualData.totali?.fatture_count || 0} fatture</div>
               </div>
             </div>
           )}
