@@ -749,7 +749,6 @@ export default function ControlloMensile() {
                       color: Math.abs(row.corrispDiff) > 1 ? (row.corrispDiff > 0 ? '#16a34a' : '#dc2626') : '#666',
                       fontSize: 12
                     }}>
-                    }}>
                       {Math.abs(row.corrispDiff) > 0.01 ? (
                         <span>{row.corrispDiff > 0 ? '+' : ''}{formatCurrency(row.corrispDiff)}</span>
                       ) : '-'}
