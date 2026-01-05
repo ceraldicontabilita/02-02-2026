@@ -74,9 +74,9 @@
     }
   },
   "urls_tested": {
-    "Controllo Mensile": "https://posmonitor.preview.emergentagent.com/controllo-mensile",
-    "Prima Nota": "https://posmonitor.preview.emergentagent.com/prima-nota",
-    "Commercialista": "https://posmonitor.preview.emergentagent.com/commercialista"
+    "Controllo Mensile": "https://account-sync-9.preview.emergentagent.com/controllo-mensile",
+    "Prima Nota": "https://account-sync-9.preview.emergentagent.com/prima-nota",
+    "Commercialista": "https://account-sync-9.preview.emergentagent.com/commercialista"
   },
   "controllo_mensile_2025_data": {
     "pagato_non_riscosso": {
