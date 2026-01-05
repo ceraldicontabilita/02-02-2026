@@ -307,27 +307,16 @@ function PrimaNotaDesktop() {
         </div>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: 15 }}>
-          <label style={{ fontSize: 14, fontWeight: '500' }}>Anno:</label>
-          <select
-            value={selectedYear}
-            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-            style={{
-              padding: '10px 20px',
-              fontSize: 16,
-              fontWeight: 'bold',
-              borderRadius: 8,
-              border: 'none',
-              background: 'white',
-              color: '#1e3a5f',
-              cursor: 'pointer',
-              minWidth: 120
-            }}
-            data-testid="select-anno"
-          >
-            {availableYears.map(year => (
-              <option key={year} value={year}>{year}</option>
-            ))}
-          </select>
+          <span style={{ 
+            padding: '10px 20px',
+            fontSize: 16,
+            fontWeight: 'bold',
+            borderRadius: 8,
+            background: 'rgba(255,255,255,0.9)',
+            color: '#1e3a5f',
+          }}>
+            📅 Anno: {selectedYear}
+          </span>
           
           <button
             onClick={loadAllData}
