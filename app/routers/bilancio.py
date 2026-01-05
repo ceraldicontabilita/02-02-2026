@@ -694,3 +694,157 @@ async def _get_conto_economico_data(anno: int) -> Dict[str, Any]:
             "utile_netto": round(risultato_operativo * 0.76, 2)  # IRES 24% approx
         }
     }
+
+
+
+@router.get("/export/pdf/confronto")
+async def export_confronto_pdf(
+    anno_corrente: int = Query(...),
+    anno_precedente: int = Query(None)
+) -> StreamingResponse:
+    """
+    Esporta il bilancio comparativo anno su anno in PDF.
+    """
+    if not anno_precedente:
+        anno_precedente = anno_corrente - 1
+    
+    try:
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib import colors
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
+        from reportlab.lib.units import cm
+    except ImportError:
+        raise HTTPException(status_code=500, detail="reportlab non installato")
+    
+    # Ottieni dati confronto
+    confronto = await get_confronto_annuale(anno_corrente=anno_corrente, anno_precedente=anno_precedente)
+    
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=2*cm, bottomMargin=2*cm, leftMargin=1.5*cm, rightMargin=1.5*cm)
+    elements = []
+    styles = getSampleStyleSheet()
+    
+    # Custom styles
+    title_style = ParagraphStyle('Title', parent=styles['Heading1'], fontSize=20, textColor=colors.HexColor('#1e40af'), spaceAfter=20)
+    subtitle_style = ParagraphStyle('Subtitle', parent=styles['Heading2'], fontSize=14, textColor=colors.HexColor('#374151'), spaceAfter=10)
+    
+    # Titolo
+    elements.append(Paragraph("📊 Bilancio Comparativo", title_style))
+    elements.append(Paragraph(f"<b>{anno_precedente}</b> vs <b>{anno_corrente}</b>", subtitle_style))
+    elements.append(Spacer(1, 20))
+    
+    # Helper per formattare
+    def fmt_eur(val):
+        return f"€ {val:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    
+    def fmt_pct(val):
+        return f"{val:+.1f}%"
+    
+    def get_trend_symbol(trend):
+        if trend == "up": return "▲"
+        if trend == "down": return "▼"
+        return "="
+    
+    # CONTO ECONOMICO
+    elements.append(Paragraph("📈 CONTO ECONOMICO", subtitle_style))
+    
+    ce = confronto["conto_economico"]
+    ce_data = [
+        ["Voce", f"{anno_precedente}", f"{anno_corrente}", "Variazione", "%"],
+        ["RICAVI", "", "", "", ""],
+        ["  Corrispettivi", fmt_eur(ce["ricavi"]["corrispettivi"]["precedente"]), fmt_eur(ce["ricavi"]["corrispettivi"]["attuale"]), fmt_eur(ce["ricavi"]["corrispettivi"]["variazione"]), fmt_pct(ce["ricavi"]["corrispettivi"]["variazione_pct"])],
+        ["  Altri ricavi", fmt_eur(ce["ricavi"]["altri_ricavi"]["precedente"]), fmt_eur(ce["ricavi"]["altri_ricavi"]["attuale"]), fmt_eur(ce["ricavi"]["altri_ricavi"]["variazione"]), fmt_pct(ce["ricavi"]["altri_ricavi"]["variazione_pct"])],
+        ["  TOTALE RICAVI", fmt_eur(ce["ricavi"]["totale_ricavi"]["precedente"]), fmt_eur(ce["ricavi"]["totale_ricavi"]["attuale"]), fmt_eur(ce["ricavi"]["totale_ricavi"]["variazione"]), fmt_pct(ce["ricavi"]["totale_ricavi"]["variazione_pct"])],
+        ["COSTI", "", "", "", ""],
+        ["  Acquisti", fmt_eur(ce["costi"]["acquisti"]["precedente"]), fmt_eur(ce["costi"]["acquisti"]["attuale"]), fmt_eur(ce["costi"]["acquisti"]["variazione"]), fmt_pct(ce["costi"]["acquisti"]["variazione_pct"])],
+        ["  Costi operativi", fmt_eur(ce["costi"]["costi_operativi"]["precedente"]), fmt_eur(ce["costi"]["costi_operativi"]["attuale"]), fmt_eur(ce["costi"]["costi_operativi"]["variazione"]), fmt_pct(ce["costi"]["costi_operativi"]["variazione_pct"])],
+        ["  TOTALE COSTI", fmt_eur(ce["costi"]["totale_costi"]["precedente"]), fmt_eur(ce["costi"]["totale_costi"]["attuale"]), fmt_eur(ce["costi"]["totale_costi"]["variazione"]), fmt_pct(ce["costi"]["totale_costi"]["variazione_pct"])],
+        ["RISULTATO", "", "", "", ""],
+        ["  Utile lordo", fmt_eur(ce["risultato"]["utile_lordo"]["precedente"]), fmt_eur(ce["risultato"]["utile_lordo"]["attuale"]), fmt_eur(ce["risultato"]["utile_lordo"]["variazione"]), fmt_pct(ce["risultato"]["utile_lordo"]["variazione_pct"])],
+        ["  Utile netto", fmt_eur(ce["risultato"]["utile_netto"]["precedente"]), fmt_eur(ce["risultato"]["utile_netto"]["attuale"]), fmt_eur(ce["risultato"]["utile_netto"]["variazione"]), fmt_pct(ce["risultato"]["utile_netto"]["variazione_pct"])],
+    ]
+    
+    ce_table = Table(ce_data, colWidths=[5*cm, 3.5*cm, 3.5*cm, 3*cm, 2*cm])
+    ce_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1e40af')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('ALIGN', (1, 0), (-1, -1), 'RIGHT'),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#e5e7eb')),
+        ('BACKGROUND', (0, 1), (-1, 1), colors.HexColor('#f0f9ff')),
+        ('BACKGROUND', (0, 5), (-1, 5), colors.HexColor('#fef2f2')),
+        ('BACKGROUND', (0, 9), (-1, 9), colors.HexColor('#f0fdf4')),
+        ('FONTNAME', (0, 4), (-1, 4), 'Helvetica-Bold'),
+        ('FONTNAME', (0, 8), (-1, 8), 'Helvetica-Bold'),
+        ('FONTNAME', (0, 11), (-1, 11), 'Helvetica-Bold'),
+    ]))
+    elements.append(ce_table)
+    elements.append(Spacer(1, 30))
+    
+    # STATO PATRIMONIALE
+    elements.append(Paragraph("🏦 STATO PATRIMONIALE", subtitle_style))
+    
+    sp = confronto["stato_patrimoniale"]
+    sp_data = [
+        ["Voce", f"{anno_precedente}", f"{anno_corrente}", "Variazione", "%"],
+        ["ATTIVO", "", "", "", ""],
+        ["  Cassa", fmt_eur(sp["attivo"]["cassa"]["precedente"]), fmt_eur(sp["attivo"]["cassa"]["attuale"]), fmt_eur(sp["attivo"]["cassa"]["variazione"]), fmt_pct(sp["attivo"]["cassa"]["variazione_pct"])],
+        ["  Banca", fmt_eur(sp["attivo"]["banca"]["precedente"]), fmt_eur(sp["attivo"]["banca"]["attuale"]), fmt_eur(sp["attivo"]["banca"]["variazione"]), fmt_pct(sp["attivo"]["banca"]["variazione_pct"])],
+        ["  Crediti", fmt_eur(sp["attivo"]["crediti"]["precedente"]), fmt_eur(sp["attivo"]["crediti"]["attuale"]), fmt_eur(sp["attivo"]["crediti"]["variazione"]), fmt_pct(sp["attivo"]["crediti"]["variazione_pct"])],
+        ["  TOTALE ATTIVO", fmt_eur(sp["attivo"]["totale_attivo"]["precedente"]), fmt_eur(sp["attivo"]["totale_attivo"]["attuale"]), fmt_eur(sp["attivo"]["totale_attivo"]["variazione"]), fmt_pct(sp["attivo"]["totale_attivo"]["variazione_pct"])],
+        ["PASSIVO", "", "", "", ""],
+        ["  Debiti", fmt_eur(sp["passivo"]["debiti"]["precedente"]), fmt_eur(sp["passivo"]["debiti"]["attuale"]), fmt_eur(sp["passivo"]["debiti"]["variazione"]), fmt_pct(sp["passivo"]["debiti"]["variazione_pct"])],
+        ["  Patrimonio netto", fmt_eur(sp["passivo"]["patrimonio_netto"]["precedente"]), fmt_eur(sp["passivo"]["patrimonio_netto"]["attuale"]), fmt_eur(sp["passivo"]["patrimonio_netto"]["variazione"]), fmt_pct(sp["passivo"]["patrimonio_netto"]["variazione_pct"])],
+    ]
+    
+    sp_table = Table(sp_data, colWidths=[5*cm, 3.5*cm, 3.5*cm, 3*cm, 2*cm])
+    sp_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#059669')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('ALIGN', (1, 0), (-1, -1), 'RIGHT'),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#e5e7eb')),
+        ('BACKGROUND', (0, 1), (-1, 1), colors.HexColor('#f0fdf4')),
+        ('BACKGROUND', (0, 6), (-1, 6), colors.HexColor('#fef2f2')),
+        ('FONTNAME', (0, 5), (-1, 5), 'Helvetica-Bold'),
+        ('FONTNAME', (0, 8), (-1, 8), 'Helvetica-Bold'),
+    ]))
+    elements.append(sp_table)
+    elements.append(Spacer(1, 30))
+    
+    # KPI
+    elements.append(Paragraph("📊 INDICATORI DI PERFORMANCE", subtitle_style))
+    
+    kpi = confronto["kpi"]
+    sintesi = confronto["sintesi"]
+    
+    kpi_text = f"""
+    <b>Margine Lordo:</b> {kpi['margine_lordo_pct']['attuale']:.1f}% ({fmt_pct(kpi['margine_lordo_pct']['variazione_pct'])} vs anno prec.)<br/>
+    <b>ROI:</b> {kpi['roi_pct']['attuale']:.1f}% ({fmt_pct(kpi['roi_pct']['variazione_pct'])} vs anno prec.)<br/>
+    <b>Crescita Ricavi:</b> {fmt_pct(kpi['crescita_ricavi_pct'])}<br/>
+    <b>Crescita Costi:</b> {fmt_pct(kpi['crescita_costi_pct'])}<br/><br/>
+    <b>Sintesi:</b><br/>
+    • Ricavi: {sintesi['ricavi_trend']}<br/>
+    • Utile: {sintesi['utile_trend']}<br/>
+    • Liquidità: {sintesi['liquidita_trend']}
+    """
+    
+    elements.append(Paragraph(kpi_text, styles['Normal']))
+    
+    # Footer
+    elements.append(Spacer(1, 40))
+    footer_style = ParagraphStyle('Footer', parent=styles['Normal'], fontSize=9, textColor=colors.gray)
+    elements.append(Paragraph(f"Documento generato il {datetime.now().strftime('%d/%m/%Y %H:%M')} - Azienda Semplice ERP", footer_style))
+    
+    doc.build(elements)
+    buffer.seek(0)
+    
+    filename = f"Bilancio_Comparativo_{anno_precedente}_vs_{anno_corrente}.pdf"
+    return StreamingResponse(
+        buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
