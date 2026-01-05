@@ -870,14 +870,14 @@ export default function GestioneDipendenti() {
           />
 
           {/* Tabella movimenti salari */}
-          <div style={{ background: 'white', borderRadius: 12, overflow: 'hidden', border: '1px solid #e2e8f0', marginTop: 20 }}>
+          <div style={{ background: 'white', borderRadius: 12, overflow: 'hidden', border: '1px solid #e2e8f0', marginTop: 20, overflowX: 'auto' }}>
             <div style={{ 
               padding: '16px 20px', 
               background: '#f8fafc', 
               borderBottom: '1px solid #e2e8f0',
               fontWeight: 'bold'
             }}>
-              📋 Movimenti Salari - {mesiNomi[selectedMonth - 1]} {selectedYear}
+              📋 Movimenti Salari - {selectedMonth ? mesiNomi[selectedMonth - 1] : 'Tutti i mesi'} {selectedYear}
             </div>
             
             {loadingSalari ? (
@@ -886,38 +886,78 @@ export default function GestioneDipendenti() {
               <div style={{ padding: 40, textAlign: 'center', color: '#6b7280' }}>
                 Nessun movimento salari per questo periodo.
                 <div style={{ marginTop: 12, fontSize: 13 }}>
-                  Usa il pulsante <strong>"📥 Importa Excel"</strong> per caricare i dati dal file stipendi.
+                  Usa il pulsante <strong>"📊 Importa Buste Paga"</strong> per caricare i dati dal file stipendi.
                 </div>
               </div>
             ) : (
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 800 }}>
                 <thead>
                   <tr style={{ background: '#f9fafb' }}>
                     <th style={{ padding: 12, textAlign: 'left', borderBottom: '1px solid #e2e8f0' }}>Dipendente</th>
-                    <th style={{ padding: 12, textAlign: 'left', borderBottom: '1px solid #e2e8f0' }}>Periodo</th>
+                    <th style={{ padding: 12, textAlign: 'center', borderBottom: '1px solid #e2e8f0' }}>Periodo</th>
                     <th style={{ padding: 12, textAlign: 'right', borderBottom: '1px solid #e2e8f0' }}>Importo Busta</th>
                     <th style={{ padding: 12, textAlign: 'right', borderBottom: '1px solid #e2e8f0' }}>Bonifico</th>
+                    <th style={{ padding: 12, textAlign: 'right', borderBottom: '1px solid #e2e8f0' }}>Saldo</th>
+                    <th style={{ padding: 12, textAlign: 'center', borderBottom: '1px solid #e2e8f0' }}>Stato</th>
                     <th style={{ padding: 12, textAlign: 'center', borderBottom: '1px solid #e2e8f0', width: 60 }}>Azioni</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {salariMovimenti.map((mov, idx) => (
-                    <tr key={mov.id || idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                      <td style={{ padding: 12, fontWeight: 500 }}>
-                        {mov.dipendente || mov.nome_dipendente || '-'}
-                      </td>
-                      <td style={{ padding: 12, color: '#6b7280' }}>
-                        {mov.mese_nome || mesiNomi[mov.mese - 1]} {mov.anno}
-                      </td>
-                      <td style={{ padding: 12, textAlign: 'right' }}>
-                        {formatEuro(mov.stipendio_netto || mov.importo)}
-                      </td>
-                      <td style={{ padding: 12, textAlign: 'right', fontWeight: 'bold', color: '#ef4444' }}>
-                        {formatEuro(mov.importo_erogato || mov.importo)}
-                      </td>
-                      <td style={{ padding: 12, textAlign: 'center' }}>
-                        <button
-                          onClick={() => handleDeleteSalario(mov.id)}
+                  {salariMovimenti.map((mov, idx) => {
+                    const busta = mov.stipendio_netto || mov.importo || 0;
+                    const bonifico = mov.importo_erogato || mov.importo || 0;
+                    const saldo = busta - bonifico;
+                    
+                    return (
+                      <tr key={mov.id || idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                        <td style={{ padding: 12, fontWeight: 500 }}>
+                          {mov.dipendente || mov.nome_dipendente || '-'}
+                        </td>
+                        <td style={{ padding: 12, textAlign: 'center', color: '#6b7280' }}>
+                          {mov.mese_nome || (mov.mese ? mesiNomi[mov.mese - 1] : '-')} {mov.anno}
+                        </td>
+                        <td style={{ padding: 12, textAlign: 'right' }}>
+                          {formatEuro(busta)}
+                        </td>
+                        <td style={{ padding: 12, textAlign: 'right', fontWeight: 'bold', color: '#ef4444' }}>
+                          {formatEuro(bonifico)}
+                        </td>
+                        <td style={{ 
+                          padding: 12, 
+                          textAlign: 'right', 
+                          fontWeight: 'bold',
+                          color: saldo > 0 ? '#f57c00' : saldo < 0 ? '#2e7d32' : '#9e9e9e'
+                        }}>
+                          {saldo !== 0 ? formatEuro(saldo) : '-'}
+                        </td>
+                        <td style={{ padding: 12, textAlign: 'center' }}>
+                          {mov.riconciliato ? (
+                            <span style={{ 
+                              background: '#e8f5e9', 
+                              color: '#2e7d32', 
+                              padding: '4px 10px', 
+                              borderRadius: 20,
+                              fontSize: 12,
+                              fontWeight: 'bold'
+                            }}>
+                              ✓ Riconciliato
+                            </span>
+                          ) : (
+                            <span style={{ 
+                              background: '#fff3e0', 
+                              color: '#f57c00', 
+                              padding: '4px 10px', 
+                              borderRadius: 20,
+                              fontSize: 12,
+                              fontWeight: 'bold'
+                            }}>
+                              ⏳ Da verificare
+                            </span>
+                          )}
+                        </td>
+                        <td style={{ padding: 12, textAlign: 'center' }}>
+                          <button
+                            onClick={() => handleDeleteSalario(mov.id)}
                           style={{
                             background: 'none',
                             border: 'none',
