@@ -295,6 +295,24 @@ export default function EstrattoConto() {
         </button>
         
         <button
+          onClick={handleExportExcel}
+          disabled={movimenti.length === 0}
+          style={{
+            padding: '10px 20px',
+            background: movimenti.length === 0 
+              ? '#d1d5db' 
+              : 'linear-gradient(135deg, #10b981, #059669)',
+            color: 'white',
+            border: 'none',
+            borderRadius: 8,
+            cursor: movimenti.length === 0 ? 'not-allowed' : 'pointer',
+            fontWeight: 'bold'
+          }}
+        >
+          📊 Esporta Excel
+        </button>
+        
+        <button
           onClick={() => { setOffset(0); loadMovimenti(); loadRiepilogo(); }}
           style={{
             padding: '10px 20px',
