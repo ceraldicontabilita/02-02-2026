@@ -64,7 +64,8 @@ export default function ControlloMensile() {
     corrispettiviManual: 0,
     versamenti: 0,
     saldoCassa: 0,
-    documentiCommerciali: 0
+    documentiCommerciali: 0,
+    annulli: 0
   });
   
   // Daily detail data (when viewing a specific month)
