@@ -407,12 +407,12 @@ async def get_confronto_annuale(
     if not anno_precedente:
         anno_precedente = anno_corrente - 1
     
-    # Ottieni dati per entrambi gli anni
-    ce_corrente = await get_conto_economico(anno=anno_corrente)
-    ce_precedente = await get_conto_economico(anno=anno_precedente)
+    # Ottieni dati per entrambi gli anni usando le funzioni helper
+    ce_corrente = await _get_conto_economico_data(anno_corrente)
+    ce_precedente = await _get_conto_economico_data(anno_precedente)
     
-    sp_corrente = await get_stato_patrimoniale(anno=anno_corrente)
-    sp_precedente = await get_stato_patrimoniale(anno=anno_precedente)
+    sp_corrente = await _get_stato_patrimoniale_data(anno_corrente)
+    sp_precedente = await _get_stato_patrimoniale_data(anno_precedente)
     
     def calc_variazione(attuale: float, precedente: float) -> Dict[str, Any]:
         """Calcola variazione assoluta e percentuale."""
@@ -530,3 +530,14 @@ async def get_confronto_annuale(
             "liquidita_trend": "📈 In crescita" if confronto_sp["attivo"]["totale_attivo"]["trend"] == "up" else ("📉 In calo" if confronto_sp["attivo"]["totale_attivo"]["trend"] == "down" else "➡️ Stabile")
         }
     }
+
+
+# Helper functions per evitare problemi con Query params
+async def _get_stato_patrimoniale_data(anno: int) -> Dict[str, Any]:
+    """Helper per ottenere stato patrimoniale senza Query params."""
+    return await get_stato_patrimoniale(anno=anno)
+
+
+async def _get_conto_economico_data(anno: int) -> Dict[str, Any]:
+    """Helper per ottenere conto economico senza Query params."""
+    return await get_conto_economico(anno=anno)
