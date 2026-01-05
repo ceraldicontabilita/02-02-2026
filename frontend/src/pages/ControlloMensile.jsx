@@ -745,7 +745,7 @@ export default function ControlloMensile() {
           <strong>Fonti dati:</strong><br/>
           • <strong>POS Agenzia</strong> = pagato_elettronico da XML corrispettivi<br/>
           • <strong>POS Chiusura</strong> = Prima Nota Cassa con categoria "POS"<br/>
-          • <strong>🏦 POS Banca</strong> = Accrediti INC.POS/INCAS. TRAMITE P.O.S dalla banca
+          • <strong>🏦 POS Banca</strong> = Accrediti PDV 3757283 dall'estratto conto bancario
         </div>
       </div>
 
