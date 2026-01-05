@@ -375,7 +375,7 @@ async def import_salari_excel(file: UploadFile = File(...)) -> Dict[str, Any]:
             skipped += 1
     
     return {
-        "message": f"Importazione completata",
+        "message": "Importazione completata",
         "imported": imported,
         "updated": updated,
         "skipped": skipped,
