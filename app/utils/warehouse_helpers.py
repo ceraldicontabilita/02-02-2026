@@ -310,40 +310,28 @@ async def get_product_catalog(db, category: Optional[str] = None, search: Option
                 {"nome_normalizzato": normalize_product_name(search)}
             ]
         else:
-            # Match parziale (simili)
-            search_normalized = normalize_product_name(search)
-            query["$or"] = [
-                {"nome": {"$regex": search, "$options": "i"}},
-                {"nome_normalizzato": {"$regex": search_normalized, "$options": "i"}}
-            ]
+            # Match parziale (simili) - cerca in più campi
+            search_terms = search.split()
+            if len(search_terms) == 1:
+                query["$or"] = [
+                    {"nome": {"$regex": search, "$options": "i"}},
+                    {"nome_normalizzato": {"$regex": search, "$options": "i"}}
+                ]
+            else:
+                # Cerca tutti i termini
+                conditions = []
+                for term in search_terms:
+                    conditions.append({"nome": {"$regex": term, "$options": "i"}})
+                query["$and"] = conditions
     
-    products = await db["warehouse_inventory"].find(query, {"_id": 0}).to_list(10000)
+    # Limita risultati per performance
+    products = await db["warehouse_inventory"].find(query, {"_id": 0}).limit(500).to_list(500)
     
-    # Per ogni prodotto, trova miglior prezzo ultimi N giorni
-    date_threshold = (datetime.utcnow() - timedelta(days=days)).isoformat()
-    
+    # Restituisci prodotti con i prezzi già memorizzati (senza query aggiuntive)
     result = []
     for product in products:
-        product_id = product.get("id")
-        
-        # Cerca storico prezzi recenti
-        price_records = await db["price_history"].find({
-            "product_id": product_id,
-            "created_at": {"$gte": date_threshold}
-        }, {"_id": 0}).sort("price", 1).to_list(100)
-        
-        best_price = None
-        best_supplier = None
-        
-        if price_records:
-            best = price_records[0]
-            best_price = best.get("price")
-            best_supplier = best.get("supplier_name")
-        
-        product["best_price"] = best_price or product.get("prezzi", {}).get("min")
-        product["best_supplier"] = best_supplier or product.get("ultimo_fornitore")
-        product["price_records_count"] = len(price_records)
-        
+        product["best_price"] = product.get("prezzi", {}).get("min")
+        product["best_supplier"] = product.get("ultimo_fornitore")
         result.append(product)
     
     result.sort(key=lambda x: x.get("nome", "").lower())
