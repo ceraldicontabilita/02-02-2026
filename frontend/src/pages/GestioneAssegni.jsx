@@ -112,6 +112,28 @@ export default function GestioneAssegni() {
     }
   };
 
+  const handleDeleteCarnet = async (carnetId, carnetAssegni) => {
+    const count = carnetAssegni.length;
+    if (!window.confirm(`Sei sicuro di voler eliminare l'intero Carnet "${carnetId}" con ${count} assegni?`)) return;
+    
+    try {
+      // Elimina tutti gli assegni del carnet
+      let deleted = 0;
+      for (const assegno of carnetAssegni) {
+        try {
+          await api.delete(`/api/assegni/${assegno.id}`);
+          deleted++;
+        } catch (e) {
+          console.warn(`Errore eliminazione assegno ${assegno.numero}:`, e);
+        }
+      }
+      alert(`Carnet eliminato: ${deleted}/${count} assegni rimossi`);
+      loadData();
+    } catch (error) {
+      alert('Errore: ' + (error.response?.data?.detail || error.message));
+    }
+  };
+
   const startEdit = (assegno) => {
     setEditingId(assegno.id);
     setEditForm({
