@@ -519,10 +519,12 @@ Sistema di riconciliazione automatica tra estratti conto bancari e fatture forni
 ## Task Futuri
 
 ### P1 - Alta Priorità
+- [ ] Implementare upload massivo ZIP per Archivio Bonifici (backend)
 - [ ] Grafici interattivi avanzati (drill-down, filtri)
 
 ### P2 - Media Priorità
 - [ ] Mapping automatico fatture → piano dei conti
+- [ ] Migliorare test automatici UI (problema click sui tab)
 - [ ] Import buste paga da file esterno
 
 ### P3 - Bassa Priorità
