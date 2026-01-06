@@ -156,6 +156,121 @@ export default function Dashboard() {
         <ScadenzeWidget scadenze={scadenzeData} />
       )}
 
+      {/* Toggle Volume Affari Reale */}
+      <div style={{ 
+        background: showVolumeReale ? 'linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%)' : '#f7fafc',
+        borderRadius: 12,
+        padding: 20,
+        marginBottom: 20,
+        border: showVolumeReale ? 'none' : '2px dashed #e2e8f0',
+        transition: 'all 0.3s ease'
+      }}>
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          marginBottom: showVolumeReale && volumeRealeData ? 20 : 0
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <Lock size={20} color={showVolumeReale ? 'white' : '#718096'} />
+            <span style={{ 
+              fontWeight: 600, 
+              color: showVolumeReale ? 'white' : '#4a5568'
+            }}>
+              Volume Affari Reale
+            </span>
+            <span style={{ 
+              fontSize: 11, 
+              background: showVolumeReale ? 'rgba(255,255,255,0.2)' : '#e2e8f0',
+              color: showVolumeReale ? 'white' : '#718096',
+              padding: '2px 8px',
+              borderRadius: 4
+            }}>
+              RISERVATO
+            </span>
+          </div>
+          <button
+            onClick={handleToggleVolumeReale}
+            data-testid="toggle-volume-reale"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '8px 16px',
+              background: showVolumeReale ? 'rgba(255,255,255,0.2)' : '#667eea',
+              color: 'white',
+              border: 'none',
+              borderRadius: 8,
+              cursor: 'pointer',
+              fontWeight: 500
+            }}
+          >
+            {showVolumeReale ? <EyeOff size={16} /> : <Eye size={16} />}
+            {showVolumeReale ? 'Nascondi' : 'Mostra'}
+          </button>
+        </div>
+
+        {showVolumeReale && (
+          <div>
+            {volumeRealeLoading ? (
+              <div style={{ color: 'rgba(255,255,255,0.7)', textAlign: 'center', padding: 20 }}>
+                Caricamento...
+              </div>
+            ) : volumeRealeData ? (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 15 }}>
+                <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 8, padding: 16 }}>
+                  <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, marginBottom: 4 }}>Fatturato Ufficiale</div>
+                  <div style={{ color: 'white', fontSize: 20, fontWeight: 700 }}>{formatEuro(volumeRealeData.fatturato_ufficiale)}</div>
+                </div>
+                <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 8, padding: 16 }}>
+                  <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, marginBottom: 4 }}>Corrispettivi</div>
+                  <div style={{ color: 'white', fontSize: 20, fontWeight: 700 }}>{formatEuro(volumeRealeData.corrispettivi)}</div>
+                </div>
+                <div style={{ background: 'rgba(16,185,129,0.3)', borderRadius: 8, padding: 16 }}>
+                  <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, marginBottom: 4 }}>+ Incassi Extra</div>
+                  <div style={{ color: '#34d399', fontSize: 20, fontWeight: 700 }}>+{formatEuro(volumeRealeData.incassi_non_fatturati)}</div>
+                </div>
+                <div style={{ background: 'rgba(239,68,68,0.3)', borderRadius: 8, padding: 16 }}>
+                  <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, marginBottom: 4 }}>- Spese Extra</div>
+                  <div style={{ color: '#f87171', fontSize: 20, fontWeight: 700 }}>-{formatEuro(volumeRealeData.spese_non_fatturate)}</div>
+                </div>
+                <div style={{ 
+                  gridColumn: 'span 4', 
+                  background: 'linear-gradient(135deg, #e94560 0%, #0f3460 100%)', 
+                  borderRadius: 8, 
+                  padding: 20,
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  <div>
+                    <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 14 }}>VOLUME AFFARI REALE {anno}</div>
+                    <div style={{ color: 'white', fontSize: 32, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <TrendingUp size={28} />
+                      {formatEuro(volumeRealeData.volume_affari_reale)}
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12 }}>Ufficiale: {formatEuro(volumeRealeData.totale_ufficiale)}</div>
+                    <div style={{ 
+                      color: volumeRealeData.saldo_extra >= 0 ? '#34d399' : '#f87171', 
+                      fontSize: 14, 
+                      fontWeight: 600 
+                    }}>
+                      {volumeRealeData.saldo_extra >= 0 ? '+' : ''}{formatEuro(volumeRealeData.saldo_extra)} extra
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div style={{ color: 'rgba(255,255,255,0.7)', textAlign: 'center', padding: 20 }}>
+                Nessun dato disponibile. <Link to="/gestione-riservata" style={{ color: '#e94560' }}>Aggiungi movimenti</Link>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* KPI Cards */}
       <div className="grid">
         <div className="card">
