@@ -258,6 +258,7 @@ export default function ArchivioBonifici() {
             <div style={{ marginTop: 8, fontSize: 13, opacity: 0.9 }}>
               {uploadProgress.processed}/{uploadProgress.total} file elaborati • 
               Importati: {uploadProgress.imported} • 
+              Duplicati: {uploadProgress.duplicates || 0} • 
               Errori: {uploadProgress.errors}
             </div>
           </div>
