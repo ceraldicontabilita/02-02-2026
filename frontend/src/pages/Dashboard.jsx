@@ -716,6 +716,22 @@ export default function Dashboard() {
           <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 12, color: '#475569' }}>📄 Scarica Report PDF</div>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             <a 
+              href={`/api/contabilita/export/pdf-dichiarazione?anno=${anno}&regione=campania`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                padding: '8px 14px',
+                background: '#dc2626',
+                color: 'white',
+                borderRadius: 6,
+                textDecoration: 'none',
+                fontSize: 13,
+                fontWeight: 500
+              }}
+            >
+              🧮 Dichiarazione IRES/IRAP
+            </a>
+            <a 
               href={`/api/report-pdf/mensile?anno=${anno}&mese=${new Date().getMonth() + 1}`}
               target="_blank"
               rel="noopener noreferrer"
