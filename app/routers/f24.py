@@ -161,6 +161,109 @@ async def upload_f24_zip(
     return results
 
 
+@router.post(
+    "/upload-multiple",
+    summary="Upload multiplo PDF F24"
+)
+async def upload_f24_multiple(
+    files: List[UploadFile] = File(...),
+    current_user: Dict[str, Any] = Depends(get_current_user)
+) -> Dict[str, Any]:
+    """
+    Upload massivo di multipli PDF F24.
+    - Accetta più file PDF contemporaneamente
+    - Controlla duplicati tramite hash SHA256
+    - Salva i file e crea record nel database
+    """
+    db = Database.get_db()
+    
+    results = {
+        "total": len(files),
+        "imported": 0,
+        "duplicates": 0,
+        "errors": 0,
+        "details": []
+    }
+    
+    # Recupera hash esistenti
+    existing_hashes = set()
+    existing_docs = await db["f24_documents"].find({}, {"file_hash": 1, "_id": 0}).to_list(10000)
+    for doc in existing_docs:
+        if doc.get("file_hash"):
+            existing_hashes.add(doc["file_hash"])
+    
+    for file in files:
+        try:
+            # Verifica che sia un PDF
+            if not file.filename.lower().endswith('.pdf'):
+                results["errors"] += 1
+                results["details"].append({
+                    "file": file.filename,
+                    "status": "error",
+                    "message": "Il file non è un PDF"
+                })
+                continue
+            
+            # Leggi contenuto
+            pdf_content = await file.read()
+            
+            # Calcola hash
+            file_hash = hashlib.sha256(pdf_content).hexdigest()
+            
+            # Controlla duplicati
+            if file_hash in existing_hashes:
+                results["duplicates"] += 1
+                results["details"].append({
+                    "file": file.filename,
+                    "status": "duplicate",
+                    "message": "File già presente nel sistema"
+                })
+                continue
+            
+            # Salva file
+            file_id = str(uuid4())
+            safe_filename = os.path.basename(file.filename).replace(" ", "_")
+            stored_filename = f"{file_id}_{safe_filename}"
+            file_path = os.path.join(F24_UPLOAD_DIR, stored_filename)
+            
+            with open(file_path, 'wb') as f:
+                f.write(pdf_content)
+            
+            # Crea record
+            doc = {
+                "id": file_id,
+                "original_filename": file.filename,
+                "stored_filename": stored_filename,
+                "file_path": file_path,
+                "file_hash": file_hash,
+                "file_size": len(pdf_content),
+                "status": "pending",
+                "user_id": current_user.get("user_id"),
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+            
+            await db["f24_documents"].insert_one(doc)
+            existing_hashes.add(file_hash)
+            
+            results["imported"] += 1
+            results["details"].append({
+                "file": file.filename,
+                "status": "imported",
+                "id": file_id
+            })
+            
+        except Exception as e:
+            logger.error(f"Errore upload {file.filename}: {e}")
+            results["errors"] += 1
+            results["details"].append({
+                "file": file.filename,
+                "status": "error",
+                "message": str(e)
+            })
+    
+    return results
+
+
 @router.get(
     "/documents",
     summary="Lista documenti F24 caricati"
