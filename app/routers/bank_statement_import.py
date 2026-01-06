@@ -40,7 +40,7 @@ def parse_italian_amount(amount_str: str) -> float:
     try:
         value = float(amount_str)
         return -value if is_negative else value
-    except:
+    except (ValueError, TypeError):
         return 0.0
 
 
@@ -77,7 +77,7 @@ def parse_italian_date(date_str: str) -> str:
             return f"{date_str[4:8]}-{date_str[2:4]}-{date_str[0:2]}"
         
         return date_str
-    except:
+    except (ValueError, TypeError, IndexError):
         return date_str
 
 
@@ -351,7 +351,7 @@ def extract_movements_from_excel(content: bytes, filename: str) -> List[Dict[str
                         df = pd.read_csv(io.BytesIO(content), sep=sep, encoding=encoding)
                         if len(df.columns) >= 3:
                             break
-                    except:
+                    except Exception:
                         continue
                 if len(df.columns) >= 3:
                     break
