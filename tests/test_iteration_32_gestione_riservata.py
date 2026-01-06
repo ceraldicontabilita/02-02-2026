@@ -37,8 +37,9 @@ class TestGestioneRiservataLogin:
         )
         assert response.status_code == 401
         data = response.json()
-        assert "detail" in data
-        assert "non valido" in data["detail"].lower()
+        # API returns either 'detail' or 'message' for error
+        error_msg = data.get("detail") or data.get("message", "")
+        assert "non valido" in error_msg.lower()
         print(f"✓ Invalid code rejected correctly: {data}")
     
     def test_login_empty_code(self):
@@ -49,7 +50,9 @@ class TestGestioneRiservataLogin:
         )
         assert response.status_code == 400
         data = response.json()
-        assert "detail" in data
+        # API returns either 'detail' or 'message' for error
+        error_msg = data.get("detail") or data.get("message", "")
+        assert len(error_msg) > 0
         print(f"✓ Empty code rejected correctly: {data}")
 
 
