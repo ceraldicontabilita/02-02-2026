@@ -31,6 +31,7 @@ const NAV_ITEMS = [
   { to: "/f24", label: "F24 / Tributi", icon: "📋", short: "F24" },
   { to: "/finanziaria", label: "Finanziaria", icon: "📈", short: "Finanz." },
   { to: "/bilancio", label: "Bilancio", icon: "📊", short: "Bilancio" },
+  { to: "/contabilita", label: "Contabilità IRES/IRAP", icon: "🧮", short: "IRES" },
   { to: "/piano-dei-conti", label: "Piano dei Conti", icon: "📒", short: "Conti" },
   { to: "/commercialista", label: "Commercialista", icon: "👩‍💼", short: "Comm." },
   { to: "/pianificazione", label: "Pianificazione", icon: "📅", short: "Pianif." },
