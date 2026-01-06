@@ -502,7 +502,8 @@ function SupplierCard({ supplier, onEdit, onDelete, onViewInvoices, onChangeMeto
           {/* Badge Metodo - Cliccabile per cambio rapido */}
           <div style={{ position: 'relative' }}>
             <button
-              onClick={() => setShowMetodoMenu(!showMetodoMenu)}
+              ref={buttonRef}
+              onClick={openMenu}
               disabled={updating}
               style={{
                 padding: '6px 12px',
@@ -525,59 +526,6 @@ function SupplierCard({ supplier, onEdit, onDelete, onViewInvoices, onChangeMeto
               {updating ? '...' : metodo.label}
               <span style={{ marginLeft: '2px', fontSize: '10px' }}>▼</span>
             </button>
-
-            {/* Menu cambio metodo */}
-            {showMetodoMenu && (
-              <div 
-                style={{
-                  position: 'absolute',
-                  right: 0,
-                  top: '100%',
-                  marginTop: '4px',
-                  backgroundColor: 'white',
-                  borderRadius: '8px',
-                  boxShadow: '0 10px 40px rgba(0,0,0,0.25)',
-                  border: '1px solid #e5e7eb',
-                  overflow: 'hidden',
-                  zIndex: 9999,
-                  minWidth: '150px'
-                }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                {Object.entries(METODI_PAGAMENTO).filter(([k]) => k !== 'banca').map(([key, val]) => (
-                  <button
-                    key={key}
-                    onClick={() => handleMetodoChange(key)}
-                    style={{
-                      width: '100%',
-                      padding: '10px 14px',
-                      border: 'none',
-                      backgroundColor: metodoKey === key ? val.bg : 'white',
-                      color: val.color,
-                      fontSize: '13px',
-                      fontWeight: 500,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      textAlign: 'left',
-                      transition: 'all 0.15s'
-                    }}
-                    onMouseEnter={(e) => { if (metodoKey !== key) e.currentTarget.style.backgroundColor = '#f9fafb'; }}
-                    onMouseLeave={(e) => { if (metodoKey !== key) e.currentTarget.style.backgroundColor = 'white'; }}
-                  >
-                    <span style={{
-                      width: '8px',
-                      height: '8px',
-                      borderRadius: '50%',
-                      backgroundColor: val.color
-                    }} />
-                    {val.label}
-                    {metodoKey === key && <Check size={14} style={{ marginLeft: 'auto' }} />}
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
         </div>
       </div>
@@ -643,20 +591,72 @@ function SupplierCard({ supplier, onEdit, onDelete, onViewInvoices, onChangeMeto
         </button>
       </div>
 
-      {/* Overlay per chiudere menu - deve essere FUORI dalla card */}
-      {showMetodoMenu && (
-        <div 
-          style={{ 
-            position: 'fixed', 
-            inset: 0, 
-            zIndex: 9998,
-            background: 'transparent'
-          }}
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowMetodoMenu(false);
-          }}
-        />
+      {/* Menu dropdown con Portal - fuori dalla card */}
+      {showMetodoMenu && ReactDOM.createPortal(
+        <>
+          {/* Overlay per chiudere */}
+          <div 
+            style={{ 
+              position: 'fixed', 
+              inset: 0, 
+              zIndex: 99998,
+              background: 'transparent'
+            }}
+            onClick={() => setShowMetodoMenu(false)}
+          />
+          {/* Menu */}
+          <div 
+            style={{
+              position: 'fixed',
+              top: menuPosition.top,
+              left: menuPosition.left,
+              backgroundColor: 'white',
+              borderRadius: '10px',
+              boxShadow: '0 10px 40px rgba(0,0,0,0.25)',
+              border: '1px solid #e5e7eb',
+              overflow: 'hidden',
+              zIndex: 99999,
+              minWidth: '160px'
+            }}
+          >
+            <div style={{ padding: '8px 12px', borderBottom: '1px solid #f1f5f9', fontSize: '11px', color: '#9ca3af', fontWeight: 600 }}>
+              METODO PAGAMENTO
+            </div>
+            {Object.entries(METODI_PAGAMENTO).map(([key, val]) => (
+              <button
+                key={key}
+                onClick={() => handleMetodoChange(key)}
+                style={{
+                  width: '100%',
+                  padding: '10px 14px',
+                  border: 'none',
+                  backgroundColor: metodoKey === key ? val.bg : 'white',
+                  color: val.color,
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  textAlign: 'left',
+                  transition: 'all 0.15s'
+                }}
+                onMouseEnter={(e) => { if (metodoKey !== key) e.currentTarget.style.backgroundColor = '#f9fafb'; }}
+                onMouseLeave={(e) => { if (metodoKey !== key) e.currentTarget.style.backgroundColor = 'white'; }}
+              >
+                <span style={{
+                  width: '10px',
+                  height: '10px',
+                  borderRadius: '50%',
+                  backgroundColor: val.color
+                }} />
+                {val.label}
+                {metodoKey === key && <Check size={16} style={{ marginLeft: 'auto' }} />}
+              </button>
+            ))}
+          </div>
+        </>,
+        document.body
       )}
     </div>
   );
