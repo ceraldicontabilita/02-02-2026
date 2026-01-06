@@ -718,3 +718,211 @@ async def get_statistiche_categorizzazione() -> Dict[str, Any]:
             totale_fatture / (totale_fatture + totale_non_categorizzate) * 100, 1
         ) if (totale_fatture + totale_non_categorizzate) > 0 else 0
     }
+
+
+@router.get("/export/pdf-dichiarazione")
+async def export_pdf_dichiarazione(
+    anno: int = Query(default=2024, description="Anno fiscale"),
+    regione: str = Query(default="campania", description="Regione per aliquota IRAP")
+) -> StreamingResponse:
+    """
+    Genera un PDF con il prospetto completo per la dichiarazione dei redditi.
+    Include: Bilancio, Calcolo IRES, Calcolo IRAP, Variazioni Fiscali.
+    """
+    db = Database.get_db()
+    
+    # Raccogli dati
+    calcolatore = CalcolatoreImposte(regione=regione)
+    
+    # Saldi conti
+    conti = await db["piano_conti"].find({}, {"_id": 0}).to_list(500)
+    saldi = {c["codice"]: float(c.get("saldo", 0)) for c in conti}
+    
+    # Fatture categorizzate
+    fatture = await db["invoices"].find(
+        {"categoria_contabile": {"$exists": True}},
+        {"_id": 0}
+    ).to_list(10000)
+    
+    # Calcola imposte
+    risultato = calcolatore.calcola_imposte(saldi, fatture)
+    
+    # Crea PDF
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=1.5*cm, bottomMargin=1.5*cm)
+    styles = getSampleStyleSheet()
+    
+    # Stili personalizzati
+    title_style = ParagraphStyle('Title', parent=styles['Heading1'], fontSize=18, alignment=TA_CENTER, spaceAfter=20)
+    heading_style = ParagraphStyle('Heading', parent=styles['Heading2'], fontSize=14, spaceAfter=10, spaceBefore=15)
+    subheading_style = ParagraphStyle('SubHeading', parent=styles['Heading3'], fontSize=12, spaceAfter=8)
+    normal_style = ParagraphStyle('Normal', parent=styles['Normal'], fontSize=10)
+    right_style = ParagraphStyle('Right', parent=styles['Normal'], fontSize=10, alignment=TA_RIGHT)
+    
+    elements = []
+    
+    # Intestazione
+    elements.append(Paragraph(f"PROSPETTO DICHIARAZIONE REDDITI - ANNO {anno}", title_style))
+    elements.append(Paragraph(f"Generato il {datetime.now().strftime('%d/%m/%Y %H:%M')}", normal_style))
+    elements.append(Spacer(1, 20))
+    
+    # Sezione 1: Riepilogo Imposte
+    elements.append(Paragraph("1. RIEPILOGO IMPOSTE", heading_style))
+    
+    riepilogo_data = [
+        ["Descrizione", "Importo €"],
+        ["Utile Civilistico", f"{risultato.utile_civilistico:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")],
+        ["Reddito Imponibile IRES", f"{risultato.reddito_imponibile_ires:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")],
+        ["IRES Dovuta (24%)", f"{risultato.ires_dovuta:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")],
+        ["Base Imponibile IRAP", f"{risultato.base_imponibile_irap:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")],
+        [f"IRAP Dovuta ({calcolatore.aliquota_irap}%)", f"{risultato.irap_dovuta:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")],
+        ["TOTALE IMPOSTE", f"{risultato.totale_imposte:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")],
+        ["Aliquota Effettiva", f"{risultato.aliquota_effettiva:.2f}%"],
+    ]
+    
+    t = Table(riepilogo_data, colWidths=[10*cm, 5*cm])
+    t.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1e3a5f')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#e8f4f8')),
+        ('FONTNAME', (0, -2), (-1, -1), 'Helvetica-Bold'),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+    ]))
+    elements.append(t)
+    elements.append(Spacer(1, 20))
+    
+    # Sezione 2: Variazioni IRES in Aumento
+    elements.append(Paragraph("2. VARIAZIONI FISCALI IRES - IN AUMENTO", heading_style))
+    
+    if risultato.variazioni_aumento_ires:
+        var_aum_data = [["Descrizione", "Norma", "Importo €"]]
+        for v in risultato.variazioni_aumento_ires:
+            var_aum_data.append([
+                v.descrizione[:50],
+                v.norma_riferimento[:30] if v.norma_riferimento else "",
+                f"{v.importo:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+            ])
+        var_aum_data.append(["TOTALE VARIAZIONI IN AUMENTO", "", f"{risultato.totale_variazioni_aumento_ires:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")])
+        
+        t = Table(var_aum_data, colWidths=[8*cm, 4*cm, 3*cm])
+        t.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#d4380d')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('ALIGN', (2, 0), (2, -1), 'RIGHT'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+            ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#fff2e8')),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ]))
+        elements.append(t)
+    else:
+        elements.append(Paragraph("Nessuna variazione in aumento", normal_style))
+    
+    elements.append(Spacer(1, 15))
+    
+    # Sezione 3: Variazioni IRES in Diminuzione
+    elements.append(Paragraph("3. VARIAZIONI FISCALI IRES - IN DIMINUZIONE", heading_style))
+    
+    if risultato.variazioni_diminuzione_ires:
+        var_dim_data = [["Descrizione", "Norma", "Importo €"]]
+        for v in risultato.variazioni_diminuzione_ires:
+            var_dim_data.append([
+                v.descrizione[:50],
+                v.norma_riferimento[:30] if v.norma_riferimento else "",
+                f"{v.importo:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+            ])
+        var_dim_data.append(["TOTALE VARIAZIONI IN DIMINUZIONE", "", f"{risultato.totale_variazioni_diminuzione_ires:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")])
+        
+        t = Table(var_dim_data, colWidths=[8*cm, 4*cm, 3*cm])
+        t.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#389e0d')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('ALIGN', (2, 0), (2, -1), 'RIGHT'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+            ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#f6ffed')),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ]))
+        elements.append(t)
+    else:
+        elements.append(Paragraph("Nessuna variazione in diminuzione", normal_style))
+    
+    elements.append(PageBreak())
+    
+    # Sezione 4: Dettaglio IRAP
+    elements.append(Paragraph("4. CALCOLO IRAP - DETTAGLIO", heading_style))
+    elements.append(Paragraph(f"Regione: {regione.upper()} - Aliquota: {calcolatore.aliquota_irap}%", subheading_style))
+    
+    irap_data = [
+        ["Voce", "Importo €"],
+        ["Valore della Produzione", f"{risultato.valore_produzione_irap:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")],
+        ["(-) Deduzioni", f"{risultato.deduzioni_irap:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")],
+        ["Base Imponibile", f"{risultato.base_imponibile_irap:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")],
+        [f"IRAP Dovuta ({calcolatore.aliquota_irap}%)", f"{risultato.irap_dovuta:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")],
+    ]
+    
+    t = Table(irap_data, colWidths=[10*cm, 5*cm])
+    t.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#722ed1')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+        ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#f9f0ff')),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+    ]))
+    elements.append(t)
+    elements.append(Spacer(1, 20))
+    
+    # Sezione 5: Quadro Riassuntivo IRES
+    elements.append(Paragraph("5. QUADRO RIASSUNTIVO IRES", heading_style))
+    
+    quadro_data = [
+        ["Rigo", "Descrizione", "Importo €"],
+        ["RF1", "Utile/Perdita Civilistico", f"{risultato.utile_civilistico:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")],
+        ["RF5", "Variazioni in Aumento", f"+{risultato.totale_variazioni_aumento_ires:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")],
+        ["RF55", "Variazioni in Diminuzione", f"-{risultato.totale_variazioni_diminuzione_ires:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")],
+        ["RF63", "Reddito Imponibile", f"{risultato.reddito_imponibile_ires:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")],
+        ["RN4", "IRES Lorda (24%)", f"{risultato.ires_dovuta:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")],
+    ]
+    
+    t = Table(quadro_data, colWidths=[2*cm, 9*cm, 4*cm])
+    t.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1890ff')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('ALIGN', (2, 0), (2, -1), 'RIGHT'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+    ]))
+    elements.append(t)
+    elements.append(Spacer(1, 30))
+    
+    # Note finali
+    elements.append(Paragraph("NOTE", heading_style))
+    note_text = f"""
+    • Calcolo basato sui saldi attuali del Piano dei Conti al {datetime.now().strftime('%d/%m/%Y')}
+    • Variazioni fiscali automatiche applicate per: Telefonia (20% indeducibile IRES), 
+      Carburanti auto (80% indeducibile), Noleggio auto a lungo termine (limite deducibilità)
+    • Aliquota IRAP regione {regione.upper()}: {calcolatore.aliquota_irap}%
+    • Il presente prospetto è generato automaticamente e non sostituisce la consulenza professionale
+    """
+    elements.append(Paragraph(note_text, normal_style))
+    
+    # Genera PDF
+    doc.build(elements)
+    
+    buffer.seek(0)
+    filename = f"dichiarazione_redditi_{anno}.pdf"
+    
+    return StreamingResponse(
+        buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
