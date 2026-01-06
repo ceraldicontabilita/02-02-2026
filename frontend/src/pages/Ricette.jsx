@@ -72,6 +72,34 @@ export default function Ricette() {
     }
   }
 
+  // FUNZIONE PRODUZIONE
+  async function handleProduzione() {
+    if (!produzioneModal || quantitaProduzione < 1) return;
+    
+    setProducing(true);
+    setProduzioneResult(null);
+    
+    try {
+      const res = await api.post(`/api/ricette/${produzioneModal.id}/produci`, {
+        quantita: quantitaProduzione,
+        note: `Produzione ${quantitaProduzione}x ${produzioneModal.nome}`
+      });
+      
+      setProduzioneResult(res.data);
+      loadRicette(); // Ricarica per aggiornare eventuali stats
+    } catch (err) {
+      alert('Errore produzione: ' + (err.response?.data?.detail || err.message));
+    } finally {
+      setProducing(false);
+    }
+  }
+
+  function openProduzioneModal(ricetta) {
+    setProduzioneModal(ricetta);
+    setQuantitaProduzione(1);
+    setProduzioneResult(null);
+  }
+
   async function handleSaveRicetta() {
     if (!newRicetta.nome.trim()) {
       alert('Inserisci il nome della ricetta');
