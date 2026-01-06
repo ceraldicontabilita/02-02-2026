@@ -640,6 +640,77 @@ export default function Dashboard() {
             <span>Commercialista</span>
           </Link>
         </div>
+
+        {/* Report PDF Section */}
+        <div style={{ marginTop: 20, paddingTop: 20, borderTop: '1px solid #e2e8f0' }}>
+          <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 12, color: '#475569' }}>📄 Scarica Report PDF</div>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <a 
+              href={`${process.env.REACT_APP_BACKEND_URL}/api/report-pdf/mensile?anno=${anno}&mese=${new Date().getMonth() + 1}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                padding: '8px 14px',
+                background: '#3b82f6',
+                color: 'white',
+                borderRadius: 6,
+                textDecoration: 'none',
+                fontSize: 13,
+                fontWeight: 500
+              }}
+            >
+              📊 Report Mensile
+            </a>
+            <a 
+              href={`${process.env.REACT_APP_BACKEND_URL}/api/report-pdf/scadenze?giorni=30`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                padding: '8px 14px',
+                background: '#ef4444',
+                color: 'white',
+                borderRadius: 6,
+                textDecoration: 'none',
+                fontSize: 13,
+                fontWeight: 500
+              }}
+            >
+              ⏰ Report Scadenze
+            </a>
+            <a 
+              href={`${process.env.REACT_APP_BACKEND_URL}/api/report-pdf/dipendenti`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                padding: '8px 14px',
+                background: '#8b5cf6',
+                color: 'white',
+                borderRadius: 6,
+                textDecoration: 'none',
+                fontSize: 13,
+                fontWeight: 500
+              }}
+            >
+              👥 Report Dipendenti
+            </a>
+            <a 
+              href={`${process.env.REACT_APP_BACKEND_URL}/api/report-pdf/magazzino`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                padding: '8px 14px',
+                background: '#10b981',
+                color: 'white',
+                borderRadius: 6,
+                textDecoration: 'none',
+                fontSize: 13,
+                fontWeight: 500
+              }}
+            >
+              📦 Report Magazzino
+            </a>
+          </div>
+        </div>
       </div>
     </>
   );
