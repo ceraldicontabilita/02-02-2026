@@ -563,13 +563,38 @@ export default function OrdiniFornitori() {
             </div>
             
             <div style={{ padding: 15, borderTop: "1px solid #eee", display: "flex", gap: 10, justifyContent: "flex-end" }}>
-              <button onClick={() => handlePrintOrder(selectedOrder)} style={{ background: "#e3f2fd", color: "#1976d2" }}>
-                🖨️ Stampa PDF
+              <button 
+                onClick={() => handleDownloadPDF(selectedOrder)} 
+                style={{ background: "#e3f2fd", color: "#1976d2", padding: "8px 16px", border: "none", borderRadius: 6, cursor: "pointer" }}
+                data-testid="modal-download-pdf"
+              >
+                📄 Scarica PDF
               </button>
-              <button onClick={() => handleSendEmail(selectedOrder)} style={{ background: "#e8f5e9", color: "#2e7d32" }}>
-                📧 Invia Email
+              <button 
+                onClick={() => handlePrintOrder(selectedOrder)} 
+                style={{ background: "#f3e8ff", color: "#7c3aed", padding: "8px 16px", border: "none", borderRadius: 6, cursor: "pointer" }}
+              >
+                🖨️ Stampa
               </button>
-              <button onClick={() => setSelectedOrder(null)} style={{ background: "#f5f5f5" }}>
+              <button 
+                onClick={() => handleSendEmail(selectedOrder)} 
+                disabled={sendingEmail === selectedOrder.id}
+                style={{ 
+                  background: sendingEmail === selectedOrder.id ? "#9ca3af" : "#e8f5e9", 
+                  color: sendingEmail === selectedOrder.id ? "white" : "#2e7d32", 
+                  padding: "8px 16px", 
+                  border: "none", 
+                  borderRadius: 6, 
+                  cursor: sendingEmail === selectedOrder.id ? "not-allowed" : "pointer" 
+                }}
+                data-testid="modal-send-email"
+              >
+                {sendingEmail === selectedOrder.id ? "Invio..." : "📧 Invia Email"}
+              </button>
+              <button 
+                onClick={() => setSelectedOrder(null)} 
+                style={{ background: "#f5f5f5", padding: "8px 16px", border: "none", borderRadius: 6, cursor: "pointer" }}
+              >
                 Chiudi
               </button>
             </div>
