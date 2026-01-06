@@ -6,6 +6,8 @@ import { useAnnoGlobale } from "../contexts/AnnoContext";
 import { formatEuro } from "../lib/utils";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, PieChart, Pie, Cell } from 'recharts';
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
 export default function Dashboard() {
   const { anno } = useAnnoGlobale();
   const [h, setH] = useState(null);
