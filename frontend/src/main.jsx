@@ -44,6 +44,7 @@ import Bilancio from "./pages/Bilancio.jsx";
 import Scadenze from "./pages/Scadenze.jsx";
 import EstrattoContoImport from "./pages/EstrattoContoImport.jsx";
 import EstrattoConto from "./pages/EstrattoConto.jsx";
+import ArchivioBonifici from "./pages/ArchivioBonifici.jsx";
 
 const router = createBrowserRouter([
   {
