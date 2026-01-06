@@ -109,6 +109,56 @@ class Database:
 
 ---
 
+## Ultime Implementazioni (6 Gen 2026 - Sessione Corrente Parte 9)
+
+### 25. Produzione con Creazione Lotto - HACCP Compliant ✅ COMPLETATA
+Sistema completo per gestione produzione e tracciabilità lotti, replicando l'app di riferimento HACCP.
+
+**Formato Codice Lotto**: `NOME-PROGRESSIVO-QTÀunità-DDMMYYYY`
+- Esempio: `CAPPUCCI-001-1pz-06012026`, `CORNETTO-001-50pz-06012026`
+
+**Backend** (`/app/app/routers/ricette.py`):
+- `genera_codice_lotto(ricetta_nome, quantita, unita)` - Genera codice lotto con progressivo
+- `POST /api/ricette/produzioni` - Crea produzione con lotto
+- `GET /api/ricette/lotti` - Lista lotti con filtri e statistiche
+- `GET /api/ricette/lotti/{codice}` - Dettaglio lotto con tracciabilità
+- `PUT /api/ricette/lotti/{codice}/stato` - Aggiorna stato (disponibile/venduto/scaduto/eliminato)
+- `GET /api/ricette/produzioni` - Lista produzioni con statistiche
+
+**Tracciabilità Ingredienti per Lotto**:
+- Nome ingrediente
+- Quantità usata + unità
+- Lotto fornitore (da collezione `tracciabilita`)
+- Nome fornitore
+- Data consegna
+
+**Frontend - Ricette** (`/app/frontend/src/pages/Ricette.jsx`):
+- Filtro alfabetico A-Z
+- Pulsante "Produci" verde per ogni ricetta
+- Modale "Genera Lotto":
+  - Preview codice lotto in formato corretto
+  - Input quantità con select unità (pz/kg/g/l)
+  - Date produzione e scadenza
+  - Conservazione (frigo 2g / abbattuto 2m)
+  - Pulsante "GENERA E STAMPA"
+  - Copia codice lotto negli appunti
+
+**Frontend - Registro Lotti** (`/app/frontend/src/pages/RegistroLotti.jsx`):
+- Stats cards: Lotti Totali, Lotti Settimana, Disponibili, Scaduti
+- Filtri per stato con conteggi
+- Ricerca per codice lotto o prodotto
+- Tabella: Codice, Prodotto, Quantità, Data, Costo, Stato, Azioni
+- Espansione tracciabilità ingredienti
+- Dropdown cambio stato lotto
+
+**Collezioni MongoDB**:
+- `produzioni`: Record di ogni produzione
+- `registro_lotti`: Registro lotti per tracciabilità HACCP
+
+**Test**: 13/13 passati (iteration_33)
+
+---
+
 ## Ultime Implementazioni (6 Gen 2026 - Sessione Corrente Parte 8)
 
 ### 24. Dizionario Articoli - Mappatura Prodotti ✅ COMPLETATA
