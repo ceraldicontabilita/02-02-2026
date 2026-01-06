@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import api from "../api";
-import { ChevronDown, ChevronRight, Trash2, Edit, Upload } from "lucide-react";
+import { ChevronDown, ChevronRight, Trash2, Edit, Upload, FileArchive, CheckCircle, AlertCircle, Clock } from "lucide-react";
 import { formatEuro } from "../lib/utils";
 
 export default function F24() {
@@ -14,12 +14,79 @@ export default function F24() {
   const [expandedRows, setExpandedRows] = useState({});
   const [overwriteMode, setOverwriteMode] = useState(false);
   const [editingF24, setEditingF24] = useState(null);
+  
+  // Stati per upload ZIP massivo
+  const [zipFile, setZipFile] = useState(null);
+  const [zipUploading, setZipUploading] = useState(false);
+  const [zipProgress, setZipProgress] = useState(0);
+  const [zipResult, setZipResult] = useState(null);
+  const [f24Documents, setF24Documents] = useState([]);
+  const zipInputRef = useRef(null);
 
   useEffect(() => {
     loadF24();
     loadAlerts();
     loadDashboard();
+    loadF24Documents();
   }, []);
+  
+  async function loadF24Documents() {
+    try {
+      const res = await api.get("/api/f24/documents");
+      setF24Documents(res.data || []);
+    } catch (e) {
+      console.error("Error loading F24 documents:", e);
+    }
+  }
+  
+  async function handleZipUpload() {
+    if (!zipFile) return;
+    
+    setZipUploading(true);
+    setZipProgress(0);
+    setZipResult(null);
+    setErr("");
+    
+    try {
+      const formData = new FormData();
+      formData.append("file", zipFile);
+      
+      // Simula progresso durante upload
+      const progressInterval = setInterval(() => {
+        setZipProgress(prev => Math.min(prev + 5, 90));
+      }, 100);
+      
+      const res = await api.post("/api/f24/upload-zip", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 50) / progressEvent.total);
+          setZipProgress(percentCompleted);
+        }
+      });
+      
+      clearInterval(progressInterval);
+      setZipProgress(100);
+      setZipResult(res.data);
+      setZipFile(null);
+      if (zipInputRef.current) zipInputRef.current.value = "";
+      loadF24Documents();
+      
+    } catch (e) {
+      setErr("Upload ZIP fallito: " + (e.response?.data?.detail || e.message));
+    } finally {
+      setZipUploading(false);
+    }
+  }
+  
+  async function handleDeleteDocument(docId) {
+    if (!window.confirm("Eliminare questo documento F24?")) return;
+    try {
+      await api.delete(`/api/f24/documents/${docId}`);
+      loadF24Documents();
+    } catch (e) {
+      alert("Errore: " + (e.response?.data?.detail || e.message));
+    }
+  }
 
   async function loadF24() {
     try {
