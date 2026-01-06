@@ -61,10 +61,11 @@ async def get_payment_methods() -> List[Dict[str, Any]]:
 @router.get("/search-piva/{partita_iva}")
 async def search_by_partita_iva(partita_iva: str) -> Dict[str, Any]:
     """
-    Cerca dati azienda tramite Partita IVA usando VIES API (Commissione Europea).
-    Ritorna ragione sociale, indirizzo se disponibili.
+    Cerca dati azienda tramite Partita IVA.
+    Prova prima VIES API, poi scraping da registroaziende.it come fallback.
     """
     import httpx
+    import re
     
     # Pulisci la partita IVA
     piva = partita_iva.strip().replace(" ", "").replace("IT", "").replace("it", "")
@@ -72,60 +73,107 @@ async def search_by_partita_iva(partita_iva: str) -> Dict[str, Any]:
     if len(piva) != 11 or not piva.isdigit():
         raise HTTPException(status_code=400, detail="Partita IVA non valida (deve essere 11 cifre)")
     
+    result = {
+        "found": False,
+        "partita_iva": piva,
+        "ragione_sociale": "",
+        "indirizzo": "",
+        "cap": "",
+        "comune": "",
+        "provincia": "",
+        "nazione": "IT"
+    }
+    
     try:
-        # Chiama VIES API
         async with httpx.AsyncClient(timeout=15.0) as client:
-            response = await client.get(
-                f"https://ec.europa.eu/taxation_customs/vies/rest-api/ms/IT/vat/{piva}"
-            )
+            # 1. Prova VIES API
+            try:
+                vies_response = await client.get(
+                    f"https://ec.europa.eu/taxation_customs/vies/rest-api/ms/IT/vat/{piva}"
+                )
+                if vies_response.status_code == 200:
+                    data = vies_response.json()
+                    if data.get("isValid") and data.get("name"):
+                        result["found"] = True
+                        result["ragione_sociale"] = data.get("name", "").title()
+                        address = data.get("address", "")
+                        if address:
+                            address_parts = address.split("\n")
+                            result["indirizzo"] = address_parts[0] if address_parts else ""
+                            if len(address_parts) > 1:
+                                last_line = address_parts[-1].strip()
+                                cap_match = re.search(r'\b(\d{5})\b', last_line)
+                                if cap_match:
+                                    result["cap"] = cap_match.group(1)
+                                    rest = last_line.replace(cap_match.group(1), "").strip()
+                                    prov_match = re.search(r'\b([A-Z]{2})\s*$', rest)
+                                    if prov_match:
+                                        result["provincia"] = prov_match.group(1)
+                                        result["comune"] = rest.replace(prov_match.group(1), "").strip()
+                                    else:
+                                        result["comune"] = rest
+                        logger.info(f"VIES found: {result['ragione_sociale']}")
+                        return result
+            except Exception as e:
+                logger.warning(f"VIES API error: {e}")
             
-            if response.status_code == 200:
-                data = response.json()
+            # 2. Fallback: scraping registroaziende.it
+            try:
+                headers = {
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+                }
+                search_url = f"https://www.registroaziende.it/cerca/{piva}"
+                search_response = await client.get(search_url, headers=headers, follow_redirects=True)
                 
-                if data.get("isValid"):
-                    # Estrai indirizzo
-                    address = data.get("address", "")
-                    address_parts = address.split("\n") if address else []
+                if search_response.status_code == 200:
+                    html = search_response.text
                     
-                    result = {
-                        "found": True,
-                        "partita_iva": piva,
-                        "ragione_sociale": data.get("name", "").title(),
-                        "indirizzo_completo": address,
-                        "indirizzo": address_parts[0] if len(address_parts) > 0 else "",
-                        "cap": "",
-                        "comune": "",
-                        "provincia": "",
-                        "nazione": "IT"
-                    }
+                    # Cerca ragione sociale nel titolo o nel contenuto
+                    title_match = re.search(r'<title>([^<]+)</title>', html, re.IGNORECASE)
+                    if title_match:
+                        title = title_match.group(1)
+                        # Formato: "Nome Azienda - Città | Registro Aziende"
+                        name_match = re.match(r'^([^-|]+)', title)
+                        if name_match:
+                            name = name_match.group(1).strip()
+                            if name and "registro" not in name.lower() and "cerca" not in name.lower():
+                                result["found"] = True
+                                result["ragione_sociale"] = name
+                                logger.info(f"Registro found: {name}")
                     
-                    # Prova a parsare CAP e comune dall'indirizzo
-                    if len(address_parts) > 1:
-                        # Formato tipico: "VIA XXXX\n00123 ROMA RM"
-                        last_line = address_parts[-1].strip()
-                        import re
-                        cap_match = re.search(r'\b(\d{5})\b', last_line)
-                        if cap_match:
-                            result["cap"] = cap_match.group(1)
-                            # Rimuovi CAP dalla stringa
-                            rest = last_line.replace(cap_match.group(1), "").strip()
-                            # Cerca provincia (2 lettere maiuscole alla fine)
-                            prov_match = re.search(r'\b([A-Z]{2})\s*$', rest)
-                            if prov_match:
-                                result["provincia"] = prov_match.group(1)
-                                result["comune"] = rest.replace(prov_match.group(1), "").strip()
-                            else:
-                                result["comune"] = rest
+                    # Cerca indirizzo
+                    addr_match = re.search(r'itemprop="streetAddress"[^>]*>([^<]+)', html)
+                    if addr_match:
+                        result["indirizzo"] = addr_match.group(1).strip()
                     
-                    return result
-                else:
-                    return {
-                        "found": False,
-                        "partita_iva": piva,
-                        "message": "Partita IVA non trovata nel database VIES"
-                    }
-            else:
-                raise HTTPException(status_code=502, detail="Errore nella comunicazione con VIES API")
+                    # Cerca località
+                    loc_match = re.search(r'itemprop="addressLocality"[^>]*>([^<]+)', html)
+                    if loc_match:
+                        result["comune"] = loc_match.group(1).strip()
+                    
+                    # Cerca CAP
+                    cap_match = re.search(r'itemprop="postalCode"[^>]*>([^<]+)', html)
+                    if cap_match:
+                        result["cap"] = cap_match.group(1).strip()
+                    
+                    # Cerca provincia
+                    prov_match = re.search(r'itemprop="addressRegion"[^>]*>([^<]+)', html)
+                    if prov_match:
+                        prov = prov_match.group(1).strip()
+                        if len(prov) == 2:
+                            result["provincia"] = prov
+                    
+                    if result["found"]:
+                        return result
+                        
+            except Exception as e:
+                logger.warning(f"Registro scraping error: {e}")
+            
+            # Se non trovato
+            if not result["found"]:
+                result["message"] = "Partita IVA non trovata. Prova a cercare manualmente su registroaziende.it"
+            
+            return result
                 
     except httpx.TimeoutException:
         raise HTTPException(status_code=504, detail="Timeout nella ricerca - riprova più tardi")
