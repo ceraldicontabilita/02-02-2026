@@ -312,7 +312,9 @@ async def list_suppliers(
     if search:
         query["$or"] = [
             {"denominazione": {"$regex": search, "$options": "i"}},
-            {"partita_iva": {"$regex": search, "$options": "i"}}
+            {"ragione_sociale": {"$regex": search, "$options": "i"}},
+            {"partita_iva": {"$regex": search, "$options": "i"}},
+            {"comune": {"$regex": search, "$options": "i"}}
         ]
     if metodo_pagamento:
         query["metodo_pagamento"] = metodo_pagamento
