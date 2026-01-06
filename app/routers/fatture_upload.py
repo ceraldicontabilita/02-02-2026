@@ -672,7 +672,10 @@ async def categorize_all_movements() -> Dict[str, Any]:
         "estratto_conto_categorized": ec_updated,
         "categories_available": list(categories_map.keys())
     }
-async def update_metodo_pagamento(invoice_id: str, data: Dict[str, Any]) -> Dict[str, Any]:
+
+
+@router.put("/{invoice_id}/metodo-pagamento")
+async def update_metodo_pagamento(invoice_id: str, data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """Aggiorna il metodo di pagamento di una fattura."""
     db = Database.get_db()
     
