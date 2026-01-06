@@ -677,6 +677,14 @@ export default function Dashboard() {
       <div className="card" style={{ marginTop: 20 }}>
         <div className="h1" style={{ fontSize: 18 }}>🚀 Azioni Rapide</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 15, marginTop: 15 }}>
+          <Link to="/contabilita" style={quickActionStyle('#e0f2fe', '#0369a1')}>
+            <span style={{ fontSize: 20 }}>🧮</span>
+            <span>IRES/IRAP</span>
+          </Link>
+          <Link to="/regole-categorizzazione" style={quickActionStyle('#fef3c7', '#b45309')}>
+            <span style={{ fontSize: 20 }}>⚙️</span>
+            <span>Regole Categorie</span>
+          </Link>
           <Link to="/import-export" style={quickActionStyle('#e3f2fd', '#1565c0')}>
             <span style={{ fontSize: 20 }}>📤</span>
             <span>Import/Export</span>
