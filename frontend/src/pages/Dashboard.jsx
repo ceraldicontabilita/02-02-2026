@@ -162,6 +162,64 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Widget IRES/IRAP */}
+      {imposteData && (
+        <div className="card" style={{ marginTop: 20, background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)', color: 'white' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+            <div>
+              <div style={{ fontSize: 18, fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 8 }}>
+                🧮 Calcolo Imposte {anno}
+              </div>
+              <div style={{ fontSize: 12, opacity: 0.8 }}>Regione Campania - Aliquota IRAP {imposteData.irap?.aliquota}%</div>
+            </div>
+            <Link to="/contabilita" style={{
+              padding: '8px 16px',
+              background: 'rgba(255,255,255,0.2)',
+              color: 'white',
+              borderRadius: 6,
+              textDecoration: 'none',
+              fontSize: 13
+            }}>
+              Dettaglio →
+            </Link>
+          </div>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 15 }}>
+            <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 10, padding: 15 }}>
+              <div style={{ fontSize: 12, opacity: 0.8 }}>Utile Civilistico</div>
+              <div style={{ fontSize: 22, fontWeight: 'bold' }}>{formatEuro(imposteData.utile_civilistico)}</div>
+            </div>
+            <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 10, padding: 15 }}>
+              <div style={{ fontSize: 12, opacity: 0.8 }}>IRES Dovuta (24%)</div>
+              <div style={{ fontSize: 22, fontWeight: 'bold', color: '#fbbf24' }}>{formatEuro(imposteData.ires?.imposta_dovuta)}</div>
+            </div>
+            <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 10, padding: 15 }}>
+              <div style={{ fontSize: 12, opacity: 0.8 }}>IRAP Dovuta</div>
+              <div style={{ fontSize: 22, fontWeight: 'bold', color: '#a78bfa' }}>{formatEuro(imposteData.irap?.imposta_dovuta)}</div>
+            </div>
+            <div style={{ background: 'rgba(239,68,68,0.3)', borderRadius: 10, padding: 15 }}>
+              <div style={{ fontSize: 12, opacity: 0.8 }}>TOTALE IMPOSTE</div>
+              <div style={{ fontSize: 22, fontWeight: 'bold' }}>{formatEuro(imposteData.totale_imposte)}</div>
+              <div style={{ fontSize: 11, opacity: 0.7 }}>Aliquota effettiva: {imposteData.aliquota_effettiva?.toFixed(1)}%</div>
+            </div>
+          </div>
+          
+          {/* Variazioni fiscali sintesi */}
+          {(imposteData.ires?.totale_variazioni_aumento > 0 || imposteData.ires?.totale_variazioni_diminuzione > 0) && (
+            <div style={{ marginTop: 15, padding: 12, background: 'rgba(255,255,255,0.05)', borderRadius: 8, display: 'flex', gap: 20, fontSize: 13 }}>
+              <div>
+                <span style={{ opacity: 0.7 }}>↑ Variazioni aumento: </span>
+                <span style={{ color: '#fca5a5' }}>{formatEuro(imposteData.ires?.totale_variazioni_aumento)}</span>
+              </div>
+              <div>
+                <span style={{ opacity: 0.7 }}>↓ Variazioni diminuzione: </span>
+                <span style={{ color: '#86efac' }}>{formatEuro(imposteData.ires?.totale_variazioni_diminuzione)}</span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Trend Mensile Chart */}
       {trendData && (
         <div className="card" style={{ marginTop: 20 }}>
