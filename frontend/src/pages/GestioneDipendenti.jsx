@@ -194,6 +194,11 @@ export default function GestioneDipendenti() {
       setEstrattoResult(res.data);
       loadPrimaNotaSalari();
       
+      // Mostra info colonne mappate
+      if (res.data.colonne_mappate) {
+        console.log('Import BONIFICI - Colonne mappate:', res.data.colonne_mappate);
+      }
+      
     } catch (error) {
       setEstrattoResult({ 
         error: true, 
