@@ -401,11 +401,13 @@ async def registra_produzione(data: Dict[str, Any] = Body(...)) -> Dict[str, Any
     return {
         "success": True,
         "message": f"Produzione registrata: {quantita}x {ricetta.get('nome')}",
+        "codice_lotto": codice_lotto,
         "produzione_id": produzione["id"],
         "quantita_prodotta": produzione["quantita_prodotta"],
         "costo_totale": produzione["costo_produzione"],
         "costo_per_unita": produzione["costo_per_unita"],
-        "scarichi": scarichi
+        "scarichi": scarichi,
+        "ingredienti_tracciabilita": ingredienti_tracciabilita
     }
 
 
