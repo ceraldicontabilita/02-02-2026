@@ -118,7 +118,8 @@ from app.routers import (
     contabilita_avanzata,
     regole_categorizzazione,
     centri_costo,
-    magazzino_doppia_verita
+    magazzino_doppia_verita,
+    ricette
 )
 
 # Include public API first (no auth required)
