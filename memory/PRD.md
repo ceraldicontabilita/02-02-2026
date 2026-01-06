@@ -34,13 +34,17 @@ Completamente riscritto il sistema di gestione stipendi basato su due file Excel
 - Tabella: Dipendente, Mese, Anno, Importo Busta, Importo Bonifico, Saldo, Progressivo, Stato
 - Legenda colori: Saldo positivo (da recuperare), Saldo negativo (eccedenza)
 
-### 2. Pulizia Backend - COMPLETATA ✅
-Rimossi tutti gli endpoint obsoleti dal file `/app/app/routers/dipendenti.py`:
-- `/import-salari` - Sostituito da `/api/prima-nota-salari/import-paghe`
-- `/import-estratto-conto` - Sostituito da `/api/prima-nota-salari/import-bonifici`
-- `/salari` - Sostituito da `/api/prima-nota-salari/salari`
-- `/salari/reset-reconciliation`, `/salari/bulk/anno/{anno}`, `/salari/{salario_id}`
-- Funzioni helper associate (normalizza_nome, match_nomi_fuzzy, etc.)
+### 2. Pulizia Completa Codice Orfano - COMPLETATA ✅
+**Backend:**
+- Rimossi ~700 righe di codice obsoleto da `/app/app/routers/dipendenti.py`
+- Endpoint eliminati: `/import-salari`, `/import-estratto-conto`, `/salari/*`
+- Funzioni helper rimosse: `normalizza_nome`, `match_nomi_fuzzy`, `MESI_MAP`, etc.
+
+**Database:**
+- Eliminata collezione orfana `estratto_conto_salari` (0 documenti)
+
+**Test:**
+- Eliminato file test obsoleto `/app/tests/test_salari_dipendenti.py`
 
 ### 3. Fix Bug Pagina Dipendenti - COMPLETATA ✅
 Risolto errore JSX che causava pagina bianca su `/dipendenti`:
