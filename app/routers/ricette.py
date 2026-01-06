@@ -548,12 +548,3 @@ async def report_food_cost(
             "food_cost_medio": round(sum(r["food_cost_percentuale"] for r in report) / len(report), 1) if report else 0
         }
     }
-
-
-@router.get("/categorie")
-async def get_categorie_ricette() -> List[str]:
-    """Lista categorie ricette disponibili."""
-    db = Database.get_db()
-    
-    categorie = await db["ricette"].distinct("categoria", {"attivo": True})
-    return sorted([c for c in categorie if c])
