@@ -418,22 +418,40 @@ async def upload_regole_excel(file: UploadFile = File(...)):
 
 @router.get("/regole")
 async def get_regole() -> Dict[str, Any]:
-    """Ottiene tutte le regole di categorizzazione dal database."""
+    """Ottiene tutte le regole di categorizzazione (dal database + default)."""
     db = Database.get_db()
     
-    regole_fornitori = await db["regole_categorizzazione_fornitori"].find(
+    # Regole dal database
+    regole_fornitori_db = await db["regole_categorizzazione_fornitori"].find(
         {"attivo": True}, {"_id": 0}
     ).to_list(5000)
     
-    regole_descrizioni = await db["regole_categorizzazione_descrizioni"].find(
+    regole_descrizioni_db = await db["regole_categorizzazione_descrizioni"].find(
         {"attivo": True}, {"_id": 0}
     ).to_list(5000)
     
     categorie = await db["regole_categorie"].find({}, {"_id": 0}).to_list(100)
     
-    # Se non ci sono regole nel DB, usa default
-    if not regole_fornitori:
-        regole_fornitori = await _get_default_regole_fornitori()
+    # Carica sempre le regole di default e uniscile alle regole DB
+    regole_fornitori_default = await _get_default_regole_fornitori()
+    regole_descrizioni_default = await _get_default_regole_descrizioni()
+    
+    # Unisci: prima le regole DB (priorità), poi quelle di default
+    patterns_db_forn = {r.get("pattern", "").lower() for r in regole_fornitori_db}
+    patterns_db_desc = {r.get("pattern", "").lower() for r in regole_descrizioni_db}
+    
+    # Aggiungi regole default non presenti nel DB
+    for r in regole_fornitori_default:
+        if r["pattern"].lower() not in patterns_db_forn:
+            r["source"] = "default"
+            regole_fornitori_db.append(r)
+    
+    for r in regole_descrizioni_default:
+        if r["pattern"].lower() not in patterns_db_desc:
+            r["source"] = "default"
+            regole_descrizioni_db.append(r)
+    
+    # Se non ci sono categorie nel DB, usa default
     if not categorie:
         categorie = [{"categoria": k, **v} for k, v in DEFAULT_CATEGORIE.items()]
     
