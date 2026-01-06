@@ -1,6 +1,7 @@
 """
 Fatture XML Upload Router - Gestione upload fatture elettroniche.
 Supporta upload singolo XML, multiplo XML e file ZIP.
+Include popolamento automatico tracciabilità HACCP.
 """
 from fastapi import APIRouter, HTTPException, UploadFile, File, Query, Body
 from typing import Dict, Any, List
@@ -13,6 +14,7 @@ import io
 from app.database import Database, Collections
 from app.parsers.fattura_elettronica_parser import parse_fattura_xml
 from app.utils.warehouse_helpers import auto_populate_warehouse_from_invoice
+from app.services.tracciabilita_auto import popola_tracciabilita_da_fattura
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
