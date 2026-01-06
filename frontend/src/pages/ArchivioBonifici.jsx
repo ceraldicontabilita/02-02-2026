@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import api from '../api';
 
 const formatEuro = (value) => {
@@ -17,10 +17,6 @@ const formatDate = (dateStr) => {
 };
 
 export default function ArchivioBonifici() {
-  const [job, setJob] = useState(null);
-  const [files, setFiles] = useState([]);
-  const [processing, setProcessing] = useState(false);
-  const [progress, setProgress] = useState(0);
   const [transfers, setTransfers] = useState([]);
   const [summary, setSummary] = useState({});
   const [count, setCount] = useState(0);
@@ -29,30 +25,34 @@ export default function ArchivioBonifici() {
   const [ordinanteFilter, setOrdinanteFilter] = useState('');
   const [beneficiarioFilter, setBeneficiarioFilter] = useState('');
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState({ processed: 0, total: 0, imported: 0, errors: 0 });
+  const [files, setFiles] = useState([]);
+  const initialized = useRef(false);
 
-  // Crea o riprendi job
-  const createOrResumeJob = useCallback(async () => {
-    const existingId = localStorage.getItem('archivio-bonifici-job-id');
-    if (existingId) {
-      try {
-        const res = await api.get(`/api/archivio-bonifici/jobs/${existingId}`);
-        setJob(res.data);
-        return;
-      } catch {
-        localStorage.removeItem('archivio-bonifici-job-id');
-      }
-    }
-    const res = await api.post('/api/archivio-bonifici/jobs');
-    setJob(res.data);
-    localStorage.setItem('archivio-bonifici-job-id', res.data.id);
+  // Carica dati iniziali
+  useEffect(() => {
+    if (initialized.current) return;
+    initialized.current = true;
+    
+    loadTransfers();
+    loadSummary();
+    loadCount();
   }, []);
 
-  // Carica bonifici
-  const loadTransfers = useCallback(async () => {
+  // Ricarica quando cambiano i filtri
+  useEffect(() => {
+    if (!initialized.current) return;
+    const timer = setTimeout(() => {
+      loadTransfers();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search, yearFilter, ordinanteFilter, beneficiarioFilter]);
+
+  const loadTransfers = async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      if (job?.id) params.append('job_id', job.id);
       if (search) params.append('search', search);
       if (yearFilter) params.append('year', yearFilter);
       if (ordinanteFilter) params.append('ordinante', ordinanteFilter);
@@ -65,81 +65,89 @@ export default function ArchivioBonifici() {
     } finally {
       setLoading(false);
     }
-  }, [job?.id, search, yearFilter, ordinanteFilter, beneficiarioFilter]);
+  };
 
-  // Carica riepilogo
-  const loadSummary = useCallback(async () => {
+  const loadSummary = async () => {
     try {
       const res = await api.get('/api/archivio-bonifici/transfers/summary');
       setSummary(res.data || {});
     } catch (error) {
       console.error('Error loading summary:', error);
     }
-  }, []);
+  };
 
-  // Carica conteggio
-  const loadCount = useCallback(async () => {
+  const loadCount = async () => {
     try {
       const res = await api.get('/api/archivio-bonifici/transfers/count');
       setCount(res.data?.count || 0);
     } catch (error) {
       console.error('Error loading count:', error);
     }
-  }, []);
-
-  // Poll stato job
-  const pollJob = useCallback(async (jobId) => {
-    try {
-      const res = await api.get(`/api/archivio-bonifici/jobs/${jobId}`);
-      setJob(res.data);
-      const pct = res.data.total_files ? Math.round((res.data.processed_files / res.data.total_files) * 100) : 0;
-      setProgress(pct);
-      
-      if (res.data.status === 'completed') {
-        setProcessing(false);
-        loadTransfers();
-        loadSummary();
-        loadCount();
-      }
-    } catch (error) {
-      console.error('Error polling job:', error);
-    }
-  }, [loadTransfers, loadSummary, loadCount]);
+  };
 
   // Upload files
   const handleUpload = async () => {
-    if (!job || files.length === 0) return;
+    if (files.length === 0) {
+      alert('Seleziona almeno un file PDF o ZIP');
+      return;
+    }
     
-    const formData = new FormData();
-    files.forEach(f => formData.append('files', f));
-    
-    setProcessing(true);
-    setProgress(0);
+    setUploading(true);
+    setUploadProgress({ processed: 0, total: 0, imported: 0, errors: 0 });
     
     try {
-      await api.post(`/api/archivio-bonifici/jobs/${job.id}/upload`, formData, {
+      // 1. Crea nuovo job
+      const jobRes = await api.post('/api/archivio-bonifici/jobs');
+      const jobId = jobRes.data.id;
+      
+      // 2. Upload files
+      const formData = new FormData();
+      files.forEach(f => formData.append('files', f));
+      
+      await api.post(`/api/archivio-bonifici/jobs/${jobId}/upload`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       
-      // Poll ogni 1.5 secondi
-      const interval = setInterval(() => pollJob(job.id), 1500);
-      setTimeout(() => clearInterval(interval), 5 * 60 * 1000); // Max 5 minuti
+      // 3. Poll per stato
+      const pollInterval = setInterval(async () => {
+        try {
+          const statusRes = await api.get(`/api/archivio-bonifici/jobs/${jobId}`);
+          const job = statusRes.data;
+          
+          setUploadProgress({
+            processed: job.processed_files || 0,
+            total: job.total_files || 0,
+            imported: job.imported_files || 0,
+            errors: job.errors || 0
+          });
+          
+          if (job.status === 'completed') {
+            clearInterval(pollInterval);
+            setUploading(false);
+            setFiles([]);
+            loadTransfers();
+            loadSummary();
+            loadCount();
+            alert(`Import completato!\n\nFile elaborati: ${job.processed_files}\nBonifici importati: ${job.imported_files}\nErrori: ${job.errors}`);
+          }
+        } catch (e) {
+          console.error('Poll error:', e);
+        }
+      }, 2000);
+      
+      // Timeout dopo 10 minuti
+      setTimeout(() => {
+        clearInterval(pollInterval);
+        if (uploading) {
+          setUploading(false);
+          alert('Timeout raggiunto. Controlla lo stato dell\'import.');
+        }
+      }, 10 * 60 * 1000);
       
     } catch (error) {
-      setProcessing(false);
+      setUploading(false);
       alert('Errore upload: ' + (error.response?.data?.detail || error.message));
     }
-  };
-
-  // Nuovo job
-  const handleNewJob = async () => {
-    localStorage.removeItem('archivio-bonifici-job-id');
-    setFiles([]);
-    const res = await api.post('/api/archivio-bonifici/jobs');
-    setJob(res.data);
-    localStorage.setItem('archivio-bonifici-job-id', res.data.id);
-    setTransfers([]);
-    setProgress(0);
   };
 
   // Elimina bonifico
@@ -156,24 +164,13 @@ export default function ArchivioBonifici() {
 
   // Export
   const handleExport = (format) => {
-    const baseUrl = api.defaults.baseURL || '';
-    window.location.href = `${baseUrl}/api/archivio-bonifici/export?format=${format}${job?.id ? `&job_id=${job.id}` : ''}`;
+    const baseUrl = process.env.REACT_APP_BACKEND_URL || '';
+    window.open(`${baseUrl}/api/archivio-bonifici/export?format=${format}`, '_blank');
   };
-
-  useEffect(() => {
-    createOrResumeJob();
-    loadSummary();
-    loadCount();
-  }, [createOrResumeJob, loadSummary, loadCount]);
-
-  useEffect(() => {
-    if (job?.id) {
-      loadTransfers();
-    }
-  }, [job?.id, search, yearFilter, ordinanteFilter, beneficiarioFilter, loadTransfers]);
 
   // Calcola totali
   const totaleImporto = transfers.reduce((sum, t) => sum + (t.importo || 0), 0);
+  const progressPct = uploadProgress.total > 0 ? Math.round((uploadProgress.processed / uploadProgress.total) * 100) : 0;
 
   return (
     <div style={{ padding: 24, maxWidth: 1400, margin: '0 auto' }}>
@@ -181,7 +178,7 @@ export default function ArchivioBonifici() {
         📂 Archivio Bonifici Bancari
       </h1>
       <p style={{ color: '#64748b', marginBottom: 24 }}>
-        Carica PDF o ZIP di bonifici bancari, parsing automatico e archiviazione nel database.
+        Carica PDF o ZIP di bonifici bancari (supporta fino a 1500+ file), parsing automatico con deduplicazione.
       </p>
 
       {/* Upload Section */}
@@ -192,7 +189,7 @@ export default function ArchivioBonifici() {
         color: 'white',
         marginBottom: 24
       }}>
-        <h2 style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 16 }}>📤 Upload Massivo</h2>
+        <h2 style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 16 }}>📤 Upload Massivo PDF/ZIP</h2>
         
         <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
           <input
@@ -213,39 +210,30 @@ export default function ArchivioBonifici() {
           
           <button
             onClick={handleUpload}
-            disabled={!files.length || processing}
+            disabled={!files.length || uploading}
             style={{
               padding: '10px 20px',
               borderRadius: 8,
-              background: processing ? '#94a3b8' : '#22c55e',
+              background: uploading ? '#94a3b8' : '#22c55e',
               color: 'white',
               border: 'none',
-              cursor: processing ? 'not-allowed' : 'pointer',
+              cursor: uploading ? 'not-allowed' : 'pointer',
               fontWeight: 'bold'
             }}
             data-testid="bonifici-upload-btn"
           >
-            {processing ? '⏳ Elaborazione...' : '🚀 Avvia Import'}
-          </button>
-          
-          <button
-            onClick={handleNewJob}
-            style={{
-              padding: '10px 20px',
-              borderRadius: 8,
-              background: 'rgba(255,255,255,0.2)',
-              color: 'white',
-              border: '1px solid rgba(255,255,255,0.3)',
-              cursor: 'pointer'
-            }}
-            data-testid="bonifici-new-job-btn"
-          >
-            🔄 Nuovo Job
+            {uploading ? '⏳ Elaborazione...' : '🚀 Avvia Import'}
           </button>
         </div>
 
+        {files.length > 0 && !uploading && (
+          <div style={{ marginTop: 12, fontSize: 13, opacity: 0.9 }}>
+            📁 {files.length} file selezionati
+          </div>
+        )}
+
         {/* Progress */}
-        {processing && (
+        {uploading && (
           <div style={{ marginTop: 16 }}>
             <div style={{ 
               background: 'rgba(255,255,255,0.2)', 
@@ -256,15 +244,14 @@ export default function ArchivioBonifici() {
               <div style={{ 
                 background: '#22c55e', 
                 height: '100%', 
-                width: `${progress}%`,
+                width: `${progressPct}%`,
                 transition: 'width 0.3s'
               }} />
             </div>
             <div style={{ marginTop: 8, fontSize: 13, opacity: 0.9 }}>
-              {job?.processed_files || 0}/{job?.total_files || 0} file • 
-              Importati: {job?.imported_files || 0} • 
-              Errori: {job?.errors || 0} • 
-              Stato: {job?.status || 'unknown'}
+              {uploadProgress.processed}/{uploadProgress.total} file elaborati • 
+              Importati: {uploadProgress.imported} • 
+              Errori: {uploadProgress.errors}
             </div>
           </div>
         )}
@@ -273,7 +260,7 @@ export default function ArchivioBonifici() {
       {/* Stats Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 24 }}>
         <div style={{ background: '#f0f9ff', padding: 20, borderRadius: 12, border: '1px solid #bae6fd' }}>
-          <div style={{ fontSize: 13, color: '#0369a1' }}>Bonifici Totali</div>
+          <div style={{ fontSize: 13, color: '#0369a1' }}>Bonifici Totali in DB</div>
           <div style={{ fontSize: 32, fontWeight: 'bold', color: '#0c4a6e' }}>{count}</div>
         </div>
         <div style={{ background: '#f0fdf4', padding: 20, borderRadius: 12, border: '1px solid #bbf7d0' }}>
@@ -281,7 +268,7 @@ export default function ArchivioBonifici() {
           <div style={{ fontSize: 32, fontWeight: 'bold', color: '#166534' }}>{transfers.length}</div>
         </div>
         <div style={{ background: '#fefce8', padding: 20, borderRadius: 12, border: '1px solid #fef08a' }}>
-          <div style={{ fontSize: 13, color: '#ca8a04' }}>Totale Importi</div>
+          <div style={{ fontSize: 13, color: '#ca8a04' }}>Totale Importi Filtrati</div>
           <div style={{ fontSize: 24, fontWeight: 'bold', color: '#854d0e' }}>{formatEuro(totaleImporto)}</div>
         </div>
       </div>
@@ -391,7 +378,7 @@ export default function ArchivioBonifici() {
           <div style={{ padding: 40, textAlign: 'center', color: '#64748b' }}>⏳ Caricamento...</div>
         ) : transfers.length === 0 ? (
           <div style={{ padding: 40, textAlign: 'center', color: '#64748b' }}>
-            Nessun bonifico trovato. Carica dei PDF per iniziare.
+            Nessun bonifico trovato. Carica dei PDF o ZIP per iniziare.
           </div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
