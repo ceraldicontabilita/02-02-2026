@@ -730,7 +730,7 @@ export default function Fornitori() {
     total: suppliers.length,
     withInvoices: suppliers.filter(s => (s.fatture_count || 0) > 0).length,
     incomplete: suppliers.filter(s => !s.partita_iva || !s.email).length,
-    cash: suppliers.filter(s => s.metodo_pagamento === 'cassa').length,
+    cash: suppliers.filter(s => s.metodo_pagamento === 'contanti').length,
   };
 
   return (
