@@ -26,6 +26,7 @@ export default function IVA() {
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedYear, selectedMonth]);
 
   async function loadData() {

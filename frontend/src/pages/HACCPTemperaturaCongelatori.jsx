@@ -17,6 +17,7 @@ export default function HACCPTemperaturaCongelatori() {
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [meseCorrente]);
 
   const loadData = async () => {

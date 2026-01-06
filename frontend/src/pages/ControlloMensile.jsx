@@ -92,6 +92,7 @@ export default function ControlloMensile() {
     } else if (meseSelezionato) {
       loadMonthData(meseSelezionato);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [anno, viewMode, meseSelezionato]);
 
   /**
