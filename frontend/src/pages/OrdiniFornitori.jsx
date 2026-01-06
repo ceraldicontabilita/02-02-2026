@@ -493,6 +493,84 @@ Email: ${AZIENDA.email}
           </div>
         </div>
       </div>
+
+      {/* Modal Dettaglio Ordine */}
+      {selectedOrder && (
+        <div 
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999
+          }}
+          onClick={() => setSelectedOrder(null)}
+        >
+          <div 
+            style={{
+              background: "white",
+              borderRadius: 12,
+              width: "90%",
+              maxWidth: 700,
+              maxHeight: "80vh",
+              overflow: "auto"
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ padding: 20, borderBottom: "1px solid #eee", background: "#1a365d", color: "white", borderRadius: "12px 12px 0 0" }}>
+              <h2 style={{ margin: 0 }}>Ordine #{selectedOrder.order_number}</h2>
+              <div style={{ fontSize: 13, opacity: 0.8, marginTop: 5 }}>
+                {selectedOrder.supplier_name} | {formatDateIT(selectedOrder.created_at)}
+              </div>
+            </div>
+            
+            <div style={{ padding: 20 }}>
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead>
+                  <tr style={{ background: "#f5f5f5" }}>
+                    <th style={{ padding: 10, textAlign: "left" }}>Prodotto</th>
+                    <th style={{ padding: 10 }}>Qtà</th>
+                    <th style={{ padding: 10, textAlign: "right" }}>Prezzo</th>
+                    <th style={{ padding: 10, textAlign: "right" }}>Totale</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(selectedOrder.items || []).map((item, i) => (
+                    <tr key={i} style={{ borderBottom: "1px solid #eee" }}>
+                      <td style={{ padding: 10 }}>{item.product_name || item.description}</td>
+                      <td style={{ padding: 10, textAlign: "center" }}>{item.quantity || 1} {item.unit || "PZ"}</td>
+                      <td style={{ padding: 10, textAlign: "right" }}>€ {(item.unit_price || 0).toFixed(2)}</td>
+                      <td style={{ padding: 10, textAlign: "right", fontWeight: "bold" }}>€ {((item.unit_price || 0) * (item.quantity || 1)).toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              
+              <div style={{ marginTop: 20, textAlign: "right", borderTop: "2px solid #1a365d", paddingTop: 15 }}>
+                <div>Imponibile: € {(selectedOrder.subtotal || 0).toFixed(2)}</div>
+                <div>IVA (22%): € {((selectedOrder.subtotal || 0) * 0.22).toFixed(2)}</div>
+                <div style={{ fontSize: 20, fontWeight: "bold", color: "#1a365d", marginTop: 10 }}>
+                  TOTALE: € {((selectedOrder.subtotal || 0) * 1.22).toFixed(2)}
+                </div>
+              </div>
+            </div>
+            
+            <div style={{ padding: 15, borderTop: "1px solid #eee", display: "flex", gap: 10, justifyContent: "flex-end" }}>
+              <button onClick={() => handlePrintOrder(selectedOrder)} style={{ background: "#e3f2fd", color: "#1976d2" }}>
+                🖨️ Stampa PDF
+              </button>
+              <button onClick={() => handleSendEmail(selectedOrder)} style={{ background: "#e8f5e9", color: "#2e7d32" }}>
+                📧 Invia Email
+              </button>
+              <button onClick={() => setSelectedOrder(null)} style={{ background: "#f5f5f5" }}>
+                Chiudi
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
