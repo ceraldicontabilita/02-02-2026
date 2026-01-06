@@ -470,6 +470,37 @@ export default function Corrispettivi() {
             </button>
           </div>
           
+          {/* Upload CSV (Formato Agenzia Entrate) */}
+          <div>
+            <input
+              ref={csvFileInputRef}
+              type="file"
+              accept=".csv"
+              onChange={handleCSVUpload}
+              style={{ display: "none" }}
+              id="csv-upload"
+              data-testid="corrispettivi-csv-upload"
+            />
+            <button 
+              onClick={() => csvFileInputRef.current?.click()}
+              disabled={uploading}
+              style={{ background: "#9c27b0", color: "white" }}
+              data-testid="corrispettivi-csv-upload-btn"
+            >
+              📊 Import CSV
+            </button>
+          </div>
+          
+          {/* Download Template */}
+          <button 
+            onClick={handleDownloadTemplate}
+            disabled={uploading}
+            style={{ background: "#607d8b", color: "white" }}
+            data-testid="corrispettivi-template-btn"
+          >
+            📥 Template CSV
+          </button>
+          
           <button onClick={loadCorrispettivi} disabled={uploading} data-testid="corrispettivi-refresh-btn">
             🔄 Aggiorna
           </button>
