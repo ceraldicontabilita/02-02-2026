@@ -36,7 +36,7 @@ def parse_italian_amount(amount_str: str) -> float:
     amount_str = amount_str.replace(",", ".")
     try:
         return float(amount_str)
-    except:
+    except (ValueError, TypeError):
         return 0.0
 
 
@@ -50,7 +50,7 @@ def parse_italian_date(date_str: str) -> str:
             if len(parts) == 3:
                 return f"{parts[2]}-{parts[1].zfill(2)}-{parts[0].zfill(2)}"
         return date_str
-    except:
+    except (ValueError, TypeError, IndexError):
         return date_str
 
 
@@ -413,7 +413,7 @@ async def import_assegni_from_estratto_conto(file: UploadFile = File(...)) -> Di
                             "cells": None
                         })
                     break
-                except:
+                except Exception:
                     continue
         else:
             # Excel
