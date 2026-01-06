@@ -145,7 +145,7 @@ Risolto errore JSX che causava pagina bianca su `/dipendenti`:
 
 ### 11. Sistema Contabilità Avanzata con IRES/IRAP - COMPLETATA ✅ (6 Gen 2026)
 **Nuovi Servizi:**
-- `/app/app/services/categorizzazione_contabile.py` - Categorizzazione intelligente fatture
+- `/app/app/services/categorizzazione_contabile.py` - Categorizzazione intelligente fatture (100+ pattern)
 - `/app/app/services/calcolo_imposte.py` - Calcolo IRES/IRAP in tempo reale
 
 **Nuovi Endpoint `/api/contabilita/`:**
@@ -155,46 +155,50 @@ Risolto errore JSX che causava pagina bianca su `/dipendenti`:
 - `GET /calcolo-imposte` - Calcolo IRES (24%) e IRAP per regione
 - `GET /bilancio-dettagliato` - Bilancio con Stato Patrimoniale e Conto Economico
 - `GET /statistiche-categorizzazione` - Distribuzione categorie fatture
-- `GET /aliquote-irap` - Aliquote IRAP per tutte le regioni italiane
 
-**Categorie Merceologiche Riconosciute (30+):**
-- bevande_alcoliche, bevande_analcoliche, birra, the_infusi
-- alimentari, caffe, surgelati, pasticceria, latticini, salumi, verdure, frutta_secca
+**Categorie Merceologiche Riconosciute (35+):**
+- bevande_alcoliche, bevande_analcoliche, birra, the_infusi, caffe
+- alimentari, surgelati, pasticceria, latticini, salumi, verdure, frutta_secca, confetture, funghi
 - utenze_acqua, utenze_elettricita, utenze_gas
-- telefonia (80% deducibile), carburante, noleggio_auto (20% deducibile)
-- noleggio_attrezzature, manutenzione, ferramenta, materiale_edile
-- software_cloud, consulenze, assicurazioni, pubblicita
-- trasporti, pulizia, imballaggi, canoni_abbonamenti
-- spese_bancarie, diritti_autore, buoni_pasto, tappezzeria
+- telefonia (80% deducibile), carburante (20% uso promiscuo), noleggio_auto (20%)
+- noleggio_attrezzature, manutenzione, ferramenta, materiale_edile, imballaggi
+- software_cloud, consulenze, assicurazioni, pubblicita, sponsorizzazioni
+- trasporti, pulizia, canoni_abbonamenti, spese_bancarie, diritti_autore, buoni_pasto
+- tappezzeria, rappresentanza (75% deducibile)
 
-**Pattern Fornitori Riconosciuti (50+):**
+**Pattern Fornitori Riconosciuti (80+):**
 - KIMBO → Caffè, ARVAL → Noleggio Auto, EDENRED → Buoni Pasto
-- GB FOOD → Panetteria, LANGELLOTTI → Pulizia/DPI
-- PERFETTI VAN MELLE → Caramelle, MASTER FROST → Surgelati
-- DOLCIARIA ACQUAVIVA → Pasticceria, S.I.A.E. → Diritti autore
-- TECMARKET → Spese bancarie/POS, LEROY MERLIN → Ferramenta
+- METRO Italia, GB FOOD, LANGELLOTTI, PERFETTI VAN MELLE, MASTER FROST
+- DOLCIARIA ACQUAVIVA, S.I.A.E., TECMARKET, LEROY MERLIN
+- FEUDI DI SAN GREGORIO, SWEET DRINK, TIMAS ASCENSORI, etc.
 
 **Calcolo Imposte (Regione Campania):**
 - Utile Civilistico: €348.162,76
-- Variazioni IRES: +€32.659 (telefonia, carburante, noleggio auto)
-- Deduzione IRAP: -€1.852,93
-- Reddito imponibile IRES: €378.969,12
-- **IRES Dovuta: €90.952,59**
-- **IRAP Dovuta (Campania 4.97%): €18.529,26**
-- **Totale Imposte: €109.481,85**
-- **Aliquota Effettiva: 31.45%**
+- Variazioni IRES: +€32.556 (telefonia 20%, carburante 80%, noleggio auto 80%)
+- Deduzione IRAP: -€1.852,42
+- **IRES Dovuta: €90.928,10**
+- **IRAP Dovuta (Campania 4.97%): €18.524,16**
+- **Totale Imposte: €109.452,26**
+- **Aliquota Effettiva: 31.44%**
 
 **Statistiche Categorizzazione:**
-- 1324 fatture categorizzate (99.3% copertura)
-- Solo 141 in "merci generiche" (ridotte da 444)
-- 555 alimentari, 167 pasticceria, 79 pulizia, 73 ferramenta
+- 1324 fatture categorizzate (99.4% copertura)
+- **Solo 8 in "merci generiche"** (ridotte da 444 iniziali → 98% riduzione)
+- 564 alimentari, 176 pasticceria, 107 ferramenta, 81 pulizia
 
-**Nuova Pagina Frontend `/contabilita`:**
-- Tab "Calcolo Imposte" con dettaglio IRES/IRAP
-- Tab "Statistiche" con distribuzione categorie
-- Tab "Bilancio Dettagliato" con Conto Economico e Stato Patrimoniale
-- Selettore regione per IRAP (21 regioni)
-- Pulsante ricategorizzazione fatture
+### 12. Export Excel Commercialista - COMPLETATA ✅ (6 Gen 2026)
+**Nuovo Endpoint:**
+- `GET /api/commercialista/export-excel/{anno}/{mese}` - Export Excel mensile
+
+**Fogli Excel:**
+1. **Fatture Acquisto**: Data, N.Fattura, Fornitore, P.IVA, Categoria, Imponibile, IVA, Totale, Conto
+2. **Corrispettivi**: Data, Totale, Contante, Elettronico
+3. **Prima Nota Cassa**: Data, Descrizione, Categoria, Tipo, Importo
+4. **Riepilogo IVA**: IVA debito/credito, Saldo
+5. **Riepilogo**: Totali mensili
+
+**Frontend:**
+- Pulsante "📊 Export Excel Commercialista" nella pagina Commercialista
 
 ### 12. Pulizia Warning Frontend - COMPLETATA ✅ (6 Gen 2026)
 - Rimosso App.js obsoleto
