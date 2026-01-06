@@ -194,61 +194,58 @@ export default function OrdiniFornitori() {
     printWindow.print();
   }
 
-  // Invia ordine via email
+  // Invia ordine via email al fornitore
   async function handleSendEmail(order) {
+    // Chiedi l'email se non disponibile
+    let supplierEmail = order.supplier_email;
+    if (!supplierEmail) {
+      supplierEmail = window.prompt(
+        `Inserisci l'email del fornitore "${order.supplier_name}":`,
+        ''
+      );
+      if (!supplierEmail || !supplierEmail.includes('@')) {
+        setErr("Email non valida o annullata");
+        return;
+      }
+    }
+    
     setSendingEmail(order.id);
     setErr("");
     
     try {
-      // Prepara corpo email
-      const imponibile = order.subtotal || order.total || 0;
-      const iva = imponibile * 0.22;
-      const totale = imponibile + iva;
-      
-      const emailBody = `
-Con la presente, ${AZIENDA.nome} intende ordinare i seguenti prodotti:
-
-ORDINE N° ${order.order_number}
-Data: ${new Date(order.created_at).toLocaleDateString('it-IT')}
-
-DETTAGLIO PRODOTTI:
-${(order.items || []).map(item => 
-  `- ${item.product_name || item.description}: ${item.quantity || 1} ${item.unit || 'PZ'} @ € ${(item.unit_price || 0).toFixed(2)} = € ${((item.unit_price || 0) * (item.quantity || 1)).toFixed(2)}`
-).join('\n')}
-
-TOTALI:
-Imponibile: € ${imponibile.toFixed(2)}
-IVA (22%): € ${iva.toFixed(2)}
-TOTALE: € ${totale.toFixed(2)}
-
-${order.notes ? `Note: ${order.notes}` : ''}
-
-Cordiali saluti,
-${AZIENDA.nome}
-${AZIENDA.indirizzo} - ${AZIENDA.cap} ${AZIENDA.citta}
-P.IVA: ${AZIENDA.piva}
-Tel: ${AZIENDA.tel}
-Email: ${AZIENDA.email}
-      `.trim();
-
-      // Salva invio nel backend
-      await api.put(`/api/ordini-fornitori/${order.id}`, { 
-        status: "inviato",
-        sent_at: new Date().toISOString(),
-        email_body: emailBody
+      // Chiama il nuovo endpoint backend per invio email con PDF
+      const response = await api.post(`/api/ordini-fornitori/${order.id}/send-email`, {
+        email: supplierEmail
       });
-
-      // Apri client email
-      const subject = encodeURIComponent(`Ordine ${order.order_number} - ${AZIENDA.nome}`);
-      const body = encodeURIComponent(emailBody);
-      window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
       
-      setSuccess(`Ordine #${order.order_number} pronto per l'invio. Si aprirà il client email.`);
+      setSuccess(`✅ Email inviata con successo a ${response.data.email}! Ordine #${order.order_number} con PDF allegato.`);
       loadData();
     } catch (e) {
-      setErr("Errore preparazione email: " + (e.response?.data?.detail || e.message));
+      const errorMsg = e.response?.data?.detail || e.message;
+      setErr("Errore invio email: " + errorMsg);
     } finally {
       setSendingEmail(null);
+    }
+  }
+  
+  // Scarica PDF ordine
+  async function handleDownloadPDF(order) {
+    try {
+      const response = await api.get(`/api/ordini-fornitori/${order.id}/pdf`, {
+        responseType: 'blob'
+      });
+      
+      // Crea link per download
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Ordine_${order.order_number}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      setErr("Errore download PDF: " + (e.response?.data?.detail || e.message));
     }
   }
 
