@@ -496,7 +496,7 @@ async def get_dashboard_scadenze() -> Dict[str, Any]:
     
     # Scadenze fiscali prossime
     scadenze_fiscali = _genera_scadenze_fiscali(oggi.year, oggi.month, False)
-    scadenze_urgenti = [s for s in scadenze_fiscali if _is_prossimi_giorni(s["data_scadenza"], 15)]
+    scadenze_urgenti = [s for s in scadenze_fiscali if _is_prossimi_giorni(s.get("data", s.get("data_scadenza", "")), 15)]
     
     totale_alert = (
         (1 if fatture_urgenti > 0 else 0) +
