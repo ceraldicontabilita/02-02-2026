@@ -73,7 +73,7 @@ def extract_banco_bpm_transactions(text: str) -> List[Dict[str, Any]]:
     """
     transactions = []
     lines = text.split('\n')
-    lines = [l.strip() for l in lines if l.strip()]
+    lines = [line.strip() for line in lines if line.strip()]
     
     i = 0
     while i < len(lines) - 4:  # Minimo 5 righe per una transazione
