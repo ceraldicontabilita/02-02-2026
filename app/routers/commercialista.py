@@ -560,3 +560,155 @@ async def get_alert_status() -> Dict[str, Any]:
         "prima_nota_inviata": prima_nota_sent is not None,
         "message": f"Ricordati di inviare la Prima Nota Cassa di {mese_nome} {prev_year} al commercialista!" if show_alert else None
     }
+
+
+@router.get("/export-completo/{anno}/{mese}")
+async def export_dati_completi(anno: int, mese: int):
+    """
+    Export completo dati mensili per commercialista in formato ZIP.
+    Include: fatture, corrispettivi, prima nota, IVA, dipendenti.
+    """
+    import zipfile
+    import csv
+    from io import BytesIO, StringIO
+    from fastapi.responses import StreamingResponse
+    
+    db = Database.get_db()
+    mese_str = f"{anno}-{mese:02d}"
+    mese_nome = ["", "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
+                 "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"][mese]
+    
+    # Crea ZIP in memoria
+    zip_buffer = BytesIO()
+    
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
+        # 1. FATTURE
+        fatture = await db["invoices"].find({
+            "invoice_date": {"$regex": f"^{mese_str}"}
+        }, {"_id": 0}).to_list(10000)
+        
+        if fatture:
+            csv_buffer = StringIO()
+            writer = csv.writer(csv_buffer, delimiter=';')
+            writer.writerow(['Data', 'Numero', 'Fornitore', 'P.IVA', 'Imponibile', 'IVA', 'Totale', 'Pagamento'])
+            
+            for f in fatture:
+                writer.writerow([
+                    f.get('invoice_date', '')[:10],
+                    f.get('invoice_number', ''),
+                    f.get('supplier_name', ''),
+                    f.get('supplier_vat', ''),
+                    f.get('total_amount', 0) - f.get('total_tax', 0),
+                    f.get('total_tax', 0),
+                    f.get('total_amount', 0),
+                    f.get('metodo_pagamento', 'N/D')
+                ])
+            
+            zf.writestr(f'fatture_{mese_str}.csv', csv_buffer.getvalue())
+        
+        # 2. CORRISPETTIVI
+        corrispettivi = await db["corrispettivi"].find({
+            "$or": [
+                {"data": {"$regex": f"^{mese_str}"}},
+                {"data_trasmissione": {"$regex": f"^{mese_str}"}}
+            ]
+        }, {"_id": 0}).to_list(10000)
+        
+        if corrispettivi:
+            csv_buffer = StringIO()
+            writer = csv.writer(csv_buffer, delimiter=';')
+            writer.writerow(['Data', 'Totale', 'Contanti', 'Elettronico', 'IVA 10%', 'Matricola RT'])
+            
+            for c in corrispettivi:
+                totale = c.get('totale', 0)
+                iva = round(totale * 0.10 / 1.10, 2)
+                writer.writerow([
+                    c.get('data', c.get('data_trasmissione', ''))[:10],
+                    totale,
+                    c.get('pagato_contante', c.get('pagato_cassa', 0)),
+                    c.get('pagato_elettronico', 0),
+                    iva,
+                    c.get('matricola_rt', '')
+                ])
+            
+            zf.writestr(f'corrispettivi_{mese_str}.csv', csv_buffer.getvalue())
+        
+        # 3. PRIMA NOTA CASSA
+        prima_nota_data = await get_prima_nota_cassa_mensile(anno, mese)
+        
+        if prima_nota_data.get('movimenti'):
+            csv_buffer = StringIO()
+            writer = csv.writer(csv_buffer, delimiter=';')
+            writer.writerow(['Data', 'Descrizione', 'Categoria', 'Entrata', 'Uscita', 'Tipo'])
+            
+            for m in prima_nota_data['movimenti']:
+                importo = m.get('importo', 0)
+                writer.writerow([
+                    m.get('data', '')[:10],
+                    m.get('descrizione', m.get('causale', '')),
+                    m.get('categoria', ''),
+                    importo if importo > 0 else '',
+                    abs(importo) if importo < 0 else '',
+                    m.get('tipo', '')
+                ])
+            
+            zf.writestr(f'prima_nota_cassa_{mese_str}.csv', csv_buffer.getvalue())
+        
+        # 4. RIEPILOGO IVA
+        totale_fatture = sum(f.get('total_amount', 0) for f in fatture)
+        iva_credito = sum(f.get('total_tax', 0) for f in fatture)
+        totale_corrispettivi = sum(c.get('totale', 0) for c in corrispettivi)
+        iva_debito = round(totale_corrispettivi * 0.10 / 1.10, 2)
+        saldo_iva = iva_debito - iva_credito
+        
+        riepilogo = f"""RIEPILOGO IVA - {mese_nome} {anno}
+=====================================
+
+ACQUISTI (Fatture):
+  Numero Fatture: {len(fatture)}
+  Totale Imponibile: € {totale_fatture - iva_credito:,.2f}
+  IVA a Credito: € {iva_credito:,.2f}
+  Totale Fatture: € {totale_fatture:,.2f}
+
+VENDITE (Corrispettivi):
+  Numero Corrispettivi: {len(corrispettivi)}
+  Totale Incassato: € {totale_corrispettivi:,.2f}
+  IVA a Debito (10%): € {iva_debito:,.2f}
+
+SALDO IVA: € {saldo_iva:,.2f}
+{'DA VERSARE' if saldo_iva > 0 else 'A CREDITO'}
+
+=====================================
+Generato il {datetime.now().strftime('%d/%m/%Y %H:%M')}
+"""
+        zf.writestr(f'riepilogo_iva_{mese_str}.txt', riepilogo)
+        
+        # 5. DIPENDENTI (se ci sono buste paga)
+        buste_paga = await db["buste_paga"].find({
+            "mese": mese,
+            "anno": anno
+        }, {"_id": 0}).to_list(500)
+        
+        if buste_paga:
+            csv_buffer = StringIO()
+            writer = csv.writer(csv_buffer, delimiter=';')
+            writer.writerow(['Dipendente', 'Netto', 'Lordo', 'Contributi', 'Data Pagamento'])
+            
+            for b in buste_paga:
+                writer.writerow([
+                    b.get('dipendente_nome', ''),
+                    b.get('netto', 0),
+                    b.get('lordo', 0),
+                    b.get('contributi', 0),
+                    b.get('data_pagamento', '')
+                ])
+            
+            zf.writestr(f'buste_paga_{mese_str}.csv', csv_buffer.getvalue())
+    
+    zip_buffer.seek(0)
+    
+    return StreamingResponse(
+        zip_buffer,
+        media_type='application/zip',
+        headers={'Content-Disposition': f'attachment; filename=export_commercialista_{mese_str}.zip'}
+    )
