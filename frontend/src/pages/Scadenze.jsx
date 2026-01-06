@@ -143,6 +143,102 @@ export default function Scadenze() {
         </button>
       </div>
 
+      {/* Alert Widget - Notifiche Urgenti */}
+      {alertWidget && alertWidget.totale_alert > 0 && (
+        <div style={{
+          background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
+          borderRadius: 12,
+          padding: 20,
+          marginBottom: 20,
+          color: 'white'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 15 }}>
+            <span style={{ fontSize: 24 }}>⚠️</span>
+            <h3 style={{ margin: 0 }}>{alertWidget.totale_alert} Alert Attivi</h3>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
+            {alertWidget.libretti_sanitari?.scaduti > 0 && (
+              <div 
+                onClick={() => window.location.href = '/dipendenti'}
+                style={{
+                  background: 'rgba(255,255,255,0.15)',
+                  padding: 12,
+                  borderRadius: 8,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.25)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.15)'}
+              >
+                <div style={{ fontSize: 28, fontWeight: 700 }}>{alertWidget.libretti_sanitari.scaduti}</div>
+                <div style={{ fontSize: 12, opacity: 0.9 }}>🔴 Libretti Scaduti</div>
+              </div>
+            )}
+            {alertWidget.libretti_sanitari?.in_scadenza_30gg > 0 && (
+              <div 
+                onClick={() => window.location.href = '/dipendenti'}
+                style={{
+                  background: 'rgba(255,255,255,0.15)',
+                  padding: 12,
+                  borderRadius: 8,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.25)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.15)'}
+              >
+                <div style={{ fontSize: 28, fontWeight: 700 }}>{alertWidget.libretti_sanitari.in_scadenza_30gg}</div>
+                <div style={{ fontSize: 12, opacity: 0.9 }}>🟡 Libretti in Scadenza</div>
+              </div>
+            )}
+            {alertWidget.contratti?.in_scadenza_60gg > 0 && (
+              <div 
+                onClick={() => window.location.href = '/dipendenti'}
+                style={{
+                  background: 'rgba(255,255,255,0.15)',
+                  padding: 12,
+                  borderRadius: 8,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.25)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.15)'}
+              >
+                <div style={{ fontSize: 28, fontWeight: 700 }}>{alertWidget.contratti.in_scadenza_60gg}</div>
+                <div style={{ fontSize: 12, opacity: 0.9 }}>📋 Contratti in Scadenza</div>
+              </div>
+            )}
+            {alertWidget.f24?.da_pagare_30gg > 0 && (
+              <div 
+                onClick={() => window.location.href = '/f24'}
+                style={{
+                  background: 'rgba(255,255,255,0.15)',
+                  padding: 12,
+                  borderRadius: 8,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.25)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.15)'}
+              >
+                <div style={{ fontSize: 28, fontWeight: 700 }}>{alertWidget.f24.da_pagare_30gg}</div>
+                <div style={{ fontSize: 12, opacity: 0.9 }}>📋 F24 da Pagare</div>
+              </div>
+            )}
+            {alertWidget.fiscali?.prossime > 0 && (
+              <div style={{
+                background: 'rgba(255,255,255,0.15)',
+                padding: 12,
+                borderRadius: 8
+              }}>
+                <div style={{ fontSize: 28, fontWeight: 700 }}>{alertWidget.fiscali.prossime}</div>
+                <div style={{ fontSize: 12, opacity: 0.9 }}>📅 Scadenze Fiscali</div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Riepilogo IVA Trimestrale */}
       {scadenzeIva && (
         <div style={{ 
