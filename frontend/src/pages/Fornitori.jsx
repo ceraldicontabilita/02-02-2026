@@ -510,6 +510,7 @@ function SupplierCard({ supplier, onEdit, onDelete, onViewInvoices, onChangeMeto
             >
               <CreditCard size={12} />
               {updating ? '...' : metodo.label}
+              <span style={{ marginLeft: '2px', fontSize: '10px' }}>▼</span>
             </button>
 
             {/* Menu cambio metodo */}
