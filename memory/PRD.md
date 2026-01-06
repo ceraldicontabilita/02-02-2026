@@ -344,6 +344,35 @@ METODI_PAGAMENTO = {
 
 **Test:** Verificato salvataggio database con curl - metodo_pagamento aggiornato correttamente
 
+### 20. Sistema Alert/Notifiche Scadenze Fiscali - COMPLETATA ✅ (6 Gen 2026)
+
+**Pagina `/scadenze` potenziata con:**
+
+**Banner Alert Urgenti:**
+- Visualizza alert attivi in tempo reale (rosso)
+- Conteggio: Libretti scaduti, Libretti in scadenza, Contratti, F24, Scadenze fiscali
+- Ogni alert è cliccabile e porta alla pagina relativa
+- Dati da endpoint `/api/scadenze/dashboard-widget`
+
+**Scadenze IVA Trimestrali:**
+- Q1-Q4 con calcolo automatico IVA debito/credito
+- Indica importo da versare o situazione a credito
+- Mostra data scadenza e giorni mancanti
+
+**Lista Scadenze:**
+- Filtri per tipo (IVA, F24, FATTURA, INPS, IRPEF, CUSTOM)
+- Opzione mostra scadenze passate
+- Priorità con colori (critica, alta, media, bassa)
+- Pulsante completa/elimina per scadenze custom
+
+**Creazione Scadenze Personalizzate:**
+- Modale con form completo
+- Campi: descrizione, data, tipo, importo, priorità, note
+- Salvataggio nel database collezione `notifiche_scadenze`
+
+**Menu Laterale:**
+- Aggiunto link "🔔 Scadenze" dopo F24/Tributi
+
 ---
 
 ## Implementazioni Precedenti (6 Gen 2026)
