@@ -68,7 +68,7 @@ async def upload_f24_pdf(
         try:
             dt_obj = datetime.strptime(parsed["scadenza"], "%d/%m/%Y")
             data_scadenza = dt_obj.strftime("%Y-%m-%d")
-        except:
+        except (ValueError, TypeError):
             pass
     
     # Create F24 record
@@ -218,7 +218,7 @@ async def upload_f24_pdf_overwrite(
         try:
             dt_obj = datetime.strptime(parsed["scadenza"], "%d/%m/%Y")
             data_scadenza = dt_obj.strftime("%Y-%m-%d")
-        except:
+        except (ValueError, TypeError):
             pass
     
     # Check for existing
