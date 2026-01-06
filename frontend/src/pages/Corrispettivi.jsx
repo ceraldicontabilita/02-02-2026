@@ -189,6 +189,59 @@ export default function Corrispettivi() {
     }
   }
 
+  // Upload CSV (formato Agenzia Entrate)
+  async function handleCSVUpload(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setErr("");
+    setUploadResult(null);
+    setUploading(true);
+    setUploadProgress({ current: 0, total: 1, phase: "Elaborazione CSV..." });
+    
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      
+      const r = await api.post("/api/corrispettivi/import-csv", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+        timeout: 120000
+      });
+      
+      setUploadProgress({ current: 1, total: 1, phase: "Import completato!" });
+      setUploadResult({
+        type: "csv",
+        data: r.data
+      });
+      loadCorrispettivi();
+    } catch (e) {
+      console.error("CSV Upload error:", e);
+      setErr("Errore import CSV: " + (e.response?.data?.detail || e.message));
+    } finally {
+      setUploading(false);
+      setUploadProgress({ current: 0, total: 0, phase: "" });
+      if (csvFileInputRef.current) csvFileInputRef.current.value = "";
+    }
+  }
+
+  // Download template CSV
+  async function handleDownloadTemplate() {
+    try {
+      const response = await api.get("/api/corrispettivi/template-csv", {
+        responseType: 'blob'
+      });
+      const blob = new Blob([response.data], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'template_corrispettivi.csv';
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      setErr("Errore download template: " + (e.response?.data?.detail || e.message));
+    }
+  }
+
   async function handleDelete(id) {
     if (!window.confirm("Eliminare questo corrispettivo?")) return;
     try {
