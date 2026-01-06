@@ -497,7 +497,7 @@ async def export_estratto_conto_excel(
             try:
                 parts = data_str.split("-")
                 data_formatted = f"{parts[2]}/{parts[1]}/{parts[0]}"
-            except:
+            except (ValueError, TypeError, IndexError):
                 data_formatted = data_str
         else:
             data_formatted = ""
@@ -507,7 +507,7 @@ async def export_estratto_conto_excel(
             try:
                 parts = data_pag.split("-")
                 data_pag_formatted = f"{parts[2]}/{parts[1]}/{parts[0]}"
-            except:
+            except (ValueError, TypeError, IndexError):
                 data_pag_formatted = data_pag
         else:
             data_pag_formatted = ""
