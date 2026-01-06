@@ -135,6 +135,30 @@ export default function Ricette() {
         </p>
       </div>
 
+      {/* Pulsante Nuova Ricetta */}
+      <div style={{ marginBottom: '20px' }}>
+        <button
+          onClick={() => setShowAddModal(true)}
+          style={{
+            padding: '12px 24px',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: 600,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}
+          data-testid="add-ricetta-btn"
+        >
+          <Plus size={18} />
+          Nuova Ricetta
+        </button>
+      </div>
+
       {/* Statistiche */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', marginBottom: '24px' }}>
         <div style={{ background: '#f8fafc', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
