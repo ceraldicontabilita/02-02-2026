@@ -273,18 +273,20 @@ async def registra_produzione(data: Dict[str, Any] = Body(...)) -> Dict[str, Any
     """
     Registra un evento di produzione.
     Consuma ingredienti dal magazzino e genera prodotti finiti.
+    Formato codice lotto: NOME-PROGRESSIVO-QTÀunità-DDMMYYYY
     """
     db = Database.get_db()
     
     ricetta_id = data.get("ricetta_id")
-    quantita = data.get("quantita", 1)  # Numero di volte che si produce la ricetta
+    quantita = data.get("quantita", 1)  # Quantità da produrre
+    unita = data.get("unita", "pz")  # Unità di misura
     
     # Recupera ricetta
     ricetta = await db["ricette"].find_one({"id": ricetta_id})
     if not ricetta:
         raise HTTPException(status_code=404, detail="Ricetta non trovata")
     
-    # Verifica disponibilità ingredienti
+    # Verifica disponibilità ingredienti (solo se hanno prodotto_id collegato)
     ingredienti_mancanti = []
     for ing in ricetta.get("ingredienti", []):
         prodotto_id = ing.get("prodotto_id")
@@ -300,13 +302,8 @@ async def registra_produzione(data: Dict[str, Any] = Body(...)) -> Dict[str, Any
                         "disponibile": prodotto.get("giacenza_teorica", 0)
                     })
     
-    if ingredienti_mancanti and not data.get("force", False):
-        return {
-            "success": False,
-            "message": "Ingredienti insufficienti",
-            "ingredienti_mancanti": ingredienti_mancanti,
-            "suggerimento": "Usa force=true per produrre comunque (andrà in negativo)"
-        }
+    # Non bloccare la produzione se mancano ingredienti (forza automaticamente)
+    # L'utente può vedere il warning ma la produzione procede
     
     # Scarica ingredienti dal magazzino e raccogli info tracciabilità
     costo_produzione = 0
@@ -315,7 +312,20 @@ async def registra_produzione(data: Dict[str, Any] = Body(...)) -> Dict[str, Any
     
     for ing in ricetta.get("ingredienti", []):
         prodotto_id = ing.get("prodotto_id")
+        nome_ingrediente = ing.get("nome", "")
         qta_scarico = ing.get("quantita", 0) * quantita
+        
+        # Aggiungi sempre l'ingrediente alla tracciabilità anche senza prodotto_id
+        tracciabilita_entry = {
+            "prodotto": nome_ingrediente,
+            "prodotto_id": prodotto_id,
+            "quantita_usata": qta_scarico,
+            "unita": ing.get("unita", "g"),
+            "lotto_fornitore": None,
+            "fornitore": None,
+            "data_consegna": None,
+            "scadenza": None
+        }
         
         if prodotto_id and qta_scarico > 0:
             prodotto = await db["magazzino_doppia_verita"].find_one({"id": prodotto_id})
@@ -363,9 +373,9 @@ async def registra_produzione(data: Dict[str, Any] = Body(...)) -> Dict[str, Any
                     "costo": round(costo_ingrediente, 2)
                 })
                 
-                # Info per tracciabilità lotto
-                ingredienti_tracciabilita.append({
-                    "prodotto": prodotto.get("nome"),
+                # Aggiorna tracciabilità con info del prodotto
+                tracciabilita_entry = {
+                    "prodotto": prodotto.get("nome") or nome_ingrediente,
                     "prodotto_id": prodotto_id,
                     "quantita_usata": qta_scarico,
                     "unita": ing.get("unita", prodotto.get("unita_misura", "kg")),
@@ -373,24 +383,36 @@ async def registra_produzione(data: Dict[str, Any] = Body(...)) -> Dict[str, Any
                     "fornitore": tracciabilita_info.get("fornitore") if tracciabilita_info else prodotto.get("fornitore"),
                     "data_consegna": tracciabilita_info.get("data_consegna") if tracciabilita_info else None,
                     "scadenza": tracciabilita_info.get("scadenza") if tracciabilita_info else None
-                })
+                }
+        
+        ingredienti_tracciabilita.append(tracciabilita_entry)
     
-    # Genera codice LOTTO produzione
-    codice_lotto = genera_codice_lotto(ricetta.get("nome", "PROD"))
+    # Genera codice LOTTO produzione con il nuovo formato
+    lotto_info = await genera_codice_lotto(ricetta.get("nome", "PROD"), quantita, unita)
+    codice_lotto = lotto_info["codice_lotto"]
+    progressivo = lotto_info["progressivo"]
+    
+    # Date produzione e scadenza
+    data_produzione_str = data.get("data_produzione") or datetime.now(timezone.utc).isoformat()
+    scadenza_str = data.get("scadenza")
+    conservazione = data.get("conservazione", "frigo")
     
     # Registra produzione con LOTTO
     produzione = {
         "id": str(uuid.uuid4()),
         "codice_lotto": codice_lotto,
+        "progressivo": progressivo,
         "ricetta_id": ricetta_id,
         "ricetta_nome": ricetta.get("nome"),
         "categoria": ricetta.get("categoria"),
-        "quantita_prodotta": quantita * ricetta.get("porzioni", 1),
-        "volte_ricetta": quantita,
+        "quantita_prodotta": quantita,
+        "unita": unita,
         "costo_produzione": round(costo_produzione, 2),
-        "costo_per_unita": round(costo_produzione / max(quantita * ricetta.get("porzioni", 1), 1), 2),
+        "costo_per_unita": round(costo_produzione / max(quantita, 1), 2),
         "centro_costo": ricetta.get("centro_costo", "CDC-03"),
-        "data_produzione": datetime.now(timezone.utc).isoformat(),
+        "data_produzione": data_produzione_str,
+        "scadenza": scadenza_str,
+        "conservazione": conservazione,
         "data": datetime.utcnow().isoformat(),
         "utente": data.get("utente", "system"),
         "note": data.get("note", ""),
@@ -405,17 +427,19 @@ async def registra_produzione(data: Dict[str, Any] = Body(...)) -> Dict[str, Any
     registro_lotto = {
         "id": str(uuid.uuid4()),
         "codice_lotto": codice_lotto,
+        "progressivo": progressivo,
         "produzione_id": produzione["id"],
         "prodotto_finito": ricetta.get("nome"),
         "ricetta_id": ricetta_id,
         "categoria": ricetta.get("categoria"),
-        "quantita": quantita * ricetta.get("porzioni", 1),
-        "unita": "pz",
-        "data_produzione": datetime.now(timezone.utc).isoformat(),
-        "scadenza_stimata": None,  # Può essere calcolata in base alla ricetta
+        "quantita": quantita,
+        "unita": unita,
+        "data_produzione": data_produzione_str,
+        "scadenza_stimata": scadenza_str,
+        "conservazione": conservazione,
         "ingredienti": ingredienti_tracciabilita,
         "costo_totale": round(costo_produzione, 2),
-        "costo_unitario": round(costo_produzione / max(quantita * ricetta.get("porzioni", 1), 1), 2),
+        "costo_unitario": round(costo_produzione / max(quantita, 1), 2),
         "stato": "disponibile",
         "note": data.get("note", ""),
         "created_at": datetime.now(timezone.utc).isoformat()
@@ -424,22 +448,23 @@ async def registra_produzione(data: Dict[str, Any] = Body(...)) -> Dict[str, Any
     await db["registro_lotti"].insert_one(registro_lotto)
     
     # Aggiorna movimento con ID produzione
-    for scarico in scarichi:
-        await db["magazzino_movimenti"].update_many(
-            {"ricetta_id": ricetta_id, "produzione_id": None},
-            {"$set": {"produzione_id": produzione["id"]}}
-        )
+    await db["magazzino_movimenti"].update_many(
+        {"ricetta_id": ricetta_id, "produzione_id": None},
+        {"$set": {"produzione_id": produzione["id"]}}
+    )
     
     return {
         "success": True,
-        "message": f"Produzione registrata: {quantita}x {ricetta.get('nome')}",
+        "message": f"Produzione registrata: {quantita} {unita} di {ricetta.get('nome')}",
         "codice_lotto": codice_lotto,
+        "progressivo": progressivo,
         "produzione_id": produzione["id"],
-        "quantita_prodotta": produzione["quantita_prodotta"],
+        "quantita_prodotta": quantita,
         "costo_totale": produzione["costo_produzione"],
         "costo_per_unita": produzione["costo_per_unita"],
         "scarichi": scarichi,
-        "ingredienti_tracciabilita": ingredienti_tracciabilita
+        "ingredienti_tracciabilita": ingredienti_tracciabilita,
+        "ingredienti_mancanti": ingredienti_mancanti if ingredienti_mancanti else None
     }
 
 
