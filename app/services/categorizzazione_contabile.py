@@ -367,7 +367,9 @@ PATTERNS_DESCRIZIONE = {
         "patterns": [
             r"pulizia", r"detergent", r"igienizz", r"sanificaz",
             r"disinfettant", r"sapone", r"carta\s+igienica",
-            r"detersivo", r"cleaning"
+            r"detersivo", r"cleaning", r"amuchina", r"wettex",
+            r"guanti\s+(nitrile|lattice|vinile|monouso)",
+            r"bobine", r"rotoli\s+cassa", r"tovaglioli"
         ],
         "conto": ("05.01.08", "Prodotti per pulizia e igiene"),
         "categoria_fiscale": CategoriaFiscale.MATERIE_PRIME,
