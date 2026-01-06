@@ -216,6 +216,7 @@ app.include_router(estratto_conto.router, prefix="/api/estratto-conto-movimenti"
 app.include_router(report_pdf.router, prefix="/api/report-pdf", tags=["Report PDF"])
 app.include_router(contabilita_avanzata.router, prefix="/api/contabilita", tags=["Contabilita Avanzata"])
 app.include_router(regole_categorizzazione.router, prefix="/api/regole", tags=["Regole Categorizzazione"])
+app.include_router(dizionario_articoli.router, prefix="/api/dizionario-articoli", tags=["Dizionario Articoli"])
 
 # Nuovi moduli TeamSystem - Contabilità Analitica
 app.include_router(centri_costo.router, prefix="/api/centri-costo", tags=["Centri di Costo"])
