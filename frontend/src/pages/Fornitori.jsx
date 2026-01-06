@@ -5,8 +5,19 @@ import { useAnnoGlobale } from '../contexts/AnnoContext';
 import { 
   Search, Edit2, Trash2, Plus, FileText, Building2, 
   Phone, Mail, MapPin, CreditCard, AlertCircle, Check,
-  Users, X, Filter, Download
+  Users, X
 } from 'lucide-react';
+
+// Dizionario Metodi di Pagamento
+const METODI_PAGAMENTO = {
+  cassa: { label: 'Contanti', bg: '#dcfce7', color: '#16a34a' },
+  bonifico: { label: 'Bonifico', bg: '#dbeafe', color: '#2563eb' },
+  banca: { label: 'Bonifico', bg: '#dbeafe', color: '#2563eb' },
+  assegno: { label: 'Assegno', bg: '#fef3c7', color: '#d97706' },
+  misto: { label: 'Misto', bg: '#f3e8ff', color: '#9333ea' }
+};
+
+const getMetodo = (key) => METODI_PAGAMENTO[key] || METODI_PAGAMENTO.bonifico;
 
 const emptySupplier = {
   ragione_sociale: '',
@@ -256,10 +267,9 @@ function SupplierModal({ isOpen, onClose, supplier, onSave, saving }) {
                   onChange={(e) => handleChange('metodo_pagamento', e.target.value)}
                   style={{ width: '100%', padding: '10px 14px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '14px', backgroundColor: 'white', boxSizing: 'border-box' }}
                 >
-                  <option value="bonifico">Bonifico</option>
-                  <option value="cassa">Contanti</option>
-                  <option value="assegno">Assegno</option>
-                  <option value="misto">Misto</option>
+                  {Object.entries(METODI_PAGAMENTO).filter(([k]) => k !== 'banca').map(([key, val]) => (
+                    <option key={key} value={key}>{val.label}</option>
+                  ))}
                 </select>
               </div>
               <div>
@@ -351,19 +361,25 @@ function StatCard({ icon: Icon, label, value, color, bgColor }) {
   );
 }
 
-// Supplier Card
-function SupplierCard({ supplier, onEdit, onDelete, onViewInvoices }) {
+// Supplier Card con cambio rapido metodo
+function SupplierCard({ supplier, onEdit, onDelete, onViewInvoices, onChangeMetodo }) {
   const nome = supplier.ragione_sociale || supplier.denominazione || 'Senza nome';
   const hasIncomplete = !supplier.partita_iva || !supplier.email;
-  
-  const metodoColors = {
-    cassa: { bg: '#dcfce7', color: '#16a34a', label: 'Contanti' },
-    bonifico: { bg: '#dbeafe', color: '#2563eb', label: 'Bonifico' },
-    banca: { bg: '#dbeafe', color: '#2563eb', label: 'Bonifico' },
-    assegno: { bg: '#fef3c7', color: '#d97706', label: 'Assegno' },
-    misto: { bg: '#f3e8ff', color: '#9333ea', label: 'Misto' }
+  const metodoKey = supplier.metodo_pagamento || 'bonifico';
+  const metodo = getMetodo(metodoKey);
+  const [showMetodoMenu, setShowMetodoMenu] = useState(false);
+  const [updating, setUpdating] = useState(false);
+
+  const handleMetodoChange = async (newMetodo) => {
+    if (newMetodo === metodoKey) {
+      setShowMetodoMenu(false);
+      return;
+    }
+    setUpdating(true);
+    setShowMetodoMenu(false);
+    await onChangeMetodo(supplier.id, newMetodo);
+    setUpdating(false);
   };
-  const metodo = metodoColors[supplier.metodo_pagamento] || metodoColors.bonifico;
 
   return (
     <div style={{
@@ -372,12 +388,12 @@ function SupplierCard({ supplier, onEdit, onDelete, onViewInvoices }) {
       border: '1px solid #e5e7eb',
       overflow: 'hidden',
       transition: 'all 0.2s',
-      cursor: 'pointer'
+      position: 'relative'
     }}
     onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.1)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
     onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'translateY(0)'; }}
     >
-      {/* Card Header con colore */}
+      {/* Barra colore in alto */}
       <div style={{ 
         height: '4px', 
         background: hasIncomplete 
@@ -450,7 +466,7 @@ function SupplierCard({ supplier, onEdit, onDelete, onViewInvoices }) {
           )}
         </div>
 
-        {/* Stats */}
+        {/* Stats e Metodo Pagamento */}
         <div style={{ 
           display: 'flex', 
           alignItems: 'center', 
@@ -468,16 +484,83 @@ function SupplierCard({ supplier, onEdit, onDelete, onViewInvoices }) {
               <div style={{ fontSize: '11px', color: '#9ca3af' }}>Giorni</div>
             </div>
           </div>
-          <span style={{
-            padding: '4px 10px',
-            borderRadius: '6px',
-            fontSize: '11px',
-            fontWeight: 600,
-            backgroundColor: metodo.bg,
-            color: metodo.color
-          }}>
-            {metodo.label}
-          </span>
+          
+          {/* Badge Metodo - Cliccabile per cambio rapido */}
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={() => setShowMetodoMenu(!showMetodoMenu)}
+              disabled={updating}
+              style={{
+                padding: '6px 12px',
+                borderRadius: '8px',
+                fontSize: '12px',
+                fontWeight: 600,
+                backgroundColor: metodo.bg,
+                color: metodo.color,
+                border: `2px solid ${metodo.color}20`,
+                cursor: updating ? 'wait' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                transition: 'all 0.2s',
+                opacity: updating ? 0.6 : 1
+              }}
+              title="Clicca per cambiare metodo pagamento"
+            >
+              <CreditCard size={12} />
+              {updating ? '...' : metodo.label}
+            </button>
+
+            {/* Menu cambio metodo */}
+            {showMetodoMenu && (
+              <div style={{
+                position: 'absolute',
+                right: 0,
+                top: '100%',
+                marginTop: '4px',
+                backgroundColor: 'white',
+                borderRadius: '8px',
+                boxShadow: '0 10px 40px rgba(0,0,0,0.15)',
+                border: '1px solid #e5e7eb',
+                overflow: 'hidden',
+                zIndex: 100,
+                minWidth: '140px'
+              }}>
+                {Object.entries(METODI_PAGAMENTO).filter(([k]) => k !== 'banca').map(([key, val]) => (
+                  <button
+                    key={key}
+                    onClick={() => handleMetodoChange(key)}
+                    style={{
+                      width: '100%',
+                      padding: '10px 14px',
+                      border: 'none',
+                      backgroundColor: metodoKey === key ? val.bg : 'white',
+                      color: val.color,
+                      fontSize: '13px',
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      textAlign: 'left',
+                      transition: 'all 0.15s'
+                    }}
+                    onMouseEnter={(e) => { if (metodoKey !== key) e.currentTarget.style.backgroundColor = '#f9fafb'; }}
+                    onMouseLeave={(e) => { if (metodoKey !== key) e.currentTarget.style.backgroundColor = 'white'; }}
+                  >
+                    <span style={{
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      backgroundColor: val.color
+                    }} />
+                    {val.label}
+                    {metodoKey === key && <Check size={14} style={{ marginLeft: 'auto' }} />}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -541,6 +624,14 @@ function SupplierCard({ supplier, onEdit, onDelete, onViewInvoices }) {
           <Trash2 size={15} />
         </button>
       </div>
+
+      {/* Click fuori per chiudere menu */}
+      {showMetodoMenu && (
+        <div 
+          style={{ position: 'fixed', inset: 0, zIndex: 99 }}
+          onClick={() => setShowMetodoMenu(false)}
+        />
+      )}
     </div>
   );
 }
@@ -576,38 +667,58 @@ export default function Fornitori() {
   const filteredSuppliers = suppliers.filter(s => {
     if (filterMetodo !== 'tutti') {
       const metodo = s.metodo_pagamento || 'bonifico';
-      if (filterMetodo === 'banca' && metodo !== 'banca' && metodo !== 'bonifico') return false;
-      if (filterMetodo !== 'banca' && metodo !== filterMetodo) return false;
+      if (filterMetodo === 'bonifico' && metodo !== 'banca' && metodo !== 'bonifico') return false;
+      else if (filterMetodo !== 'bonifico' && metodo !== filterMetodo) return false;
     }
     if (filterIncomplete && s.partita_iva && s.email) return false;
     return true;
   });
 
+  // Salvataggio completo fornitore
   const handleSave = async (formData) => {
     setSaving(true);
     try {
       if (currentSupplier?.id) {
+        // UPDATE nel database
         await api.put(`/api/suppliers/${currentSupplier.id}`, formData);
       } else {
+        // INSERT nel database
         await api.post('/api/suppliers', { denominazione: formData.ragione_sociale, ...formData });
       }
       setModalOpen(false);
       setCurrentSupplier(null);
-      loadData();
+      loadData(); // Ricarica dati aggiornati
     } catch (error) {
-      alert('Errore: ' + (error.response?.data?.detail || error.message));
+      alert('Errore salvataggio: ' + (error.response?.data?.detail || error.message));
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Eliminare questo fornitore?')) return;
+  // Cambio rapido metodo pagamento - salva SUBITO nel database
+  const handleChangeMetodo = async (supplierId, newMetodo) => {
     try {
-      await api.delete(`/api/suppliers/${id}`);
-      loadData();
+      // UPDATE metodo_pagamento nel database
+      await api.put(`/api/suppliers/${supplierId}`, { metodo_pagamento: newMetodo });
+      
+      // Aggiorna lo stato locale immediatamente
+      setSuppliers(prev => prev.map(s => 
+        s.id === supplierId ? { ...s, metodo_pagamento: newMetodo } : s
+      ));
     } catch (error) {
-      alert('Errore: ' + (error.response?.data?.detail || error.message));
+      alert('Errore aggiornamento metodo: ' + (error.response?.data?.detail || error.message));
+    }
+  };
+
+  // Eliminazione fornitore dal database
+  const handleDelete = async (id) => {
+    if (!window.confirm('Eliminare questo fornitore dal database?')) return;
+    try {
+      // DELETE dal database
+      await api.delete(`/api/suppliers/${id}`);
+      loadData(); // Ricarica dati
+    } catch (error) {
+      alert('Errore eliminazione: ' + (error.response?.data?.detail || error.message));
     }
   };
 
@@ -677,7 +788,7 @@ export default function Fornitori() {
               />
             </div>
 
-            {/* Filter Metodo */}
+            {/* Filter Metodo - usa METODI_PAGAMENTO */}
             <select
               value={filterMetodo}
               onChange={(e) => setFilterMetodo(e.target.value)}
@@ -691,10 +802,9 @@ export default function Fornitori() {
               }}
             >
               <option value="tutti">Tutti i metodi</option>
-              <option value="banca">Bonifico</option>
-              <option value="cassa">Contanti</option>
-              <option value="assegno">Assegno</option>
-              <option value="misto">Misto</option>
+              {Object.entries(METODI_PAGAMENTO).filter(([k]) => k !== 'banca').map(([key, val]) => (
+                <option key={key} value={key}>{val.label}</option>
+              ))}
             </select>
 
             {/* Filter Incomplete */}
@@ -789,6 +899,7 @@ export default function Fornitori() {
                 onEdit={(s) => { setCurrentSupplier(s); setModalOpen(true); }}
                 onDelete={handleDelete}
                 onViewInvoices={handleViewInvoices}
+                onChangeMetodo={handleChangeMetodo}
               />
             ))}
           </div>
