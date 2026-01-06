@@ -123,6 +123,38 @@ function PrimaNotaDesktop() {
     }
   };
 
+  // Sincronizza corrispettivi con Prima Nota
+  const handleSyncCorrispettivi = async () => {
+    if (!window.confirm(`Vuoi importare i corrispettivi del ${selectedYear} nella Prima Nota Cassa?\nI corrispettivi già importati verranno ignorati.`)) return;
+    
+    setSyncing(true);
+    try {
+      const res = await api.post(`/api/prima-nota/cassa/sync-corrispettivi?anno=${selectedYear}`);
+      alert(`${res.data.message}\nTotale importato: € ${res.data.totale_importato?.toLocaleString('it-IT') || 0}`);
+      loadAllData();
+    } catch (error) {
+      alert('Errore sincronizzazione: ' + (error.response?.data?.detail || error.message));
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  // Sincronizza fatture pagate con Prima Nota
+  const handleSyncFatture = async () => {
+    if (!window.confirm(`Vuoi importare le fatture pagate del ${selectedYear} nella Prima Nota?\nLe fatture già importate verranno ignorate.`)) return;
+    
+    setSyncing(true);
+    try {
+      const res = await api.post(`/api/prima-nota/cassa/sync-fatture-pagate?anno=${selectedYear}`);
+      alert(`${res.data.message}\nCassa: € ${res.data.totale_cassa?.toLocaleString('it-IT') || 0}\nBanca: € ${res.data.totale_banca?.toLocaleString('it-IT') || 0}`);
+      loadAllData();
+    } catch (error) {
+      alert('Errore sincronizzazione: ' + (error.response?.data?.detail || error.message));
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   // === SAVE HANDLERS CASSA ===
   
   // Corrispettivo (DARE/Entrata) - Importo al LORDO IVA
