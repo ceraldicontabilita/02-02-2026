@@ -498,6 +498,219 @@ export default function F24() {
         
         {err && <div style={{ marginTop: 10, color: '#c00', fontSize: 14 }}>{err}</div>}
       </div>
+      
+      {/* Upload ZIP Massivo */}
+      <div style={{ 
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 
+        borderRadius: 12, 
+        padding: 24, 
+        marginBottom: 20,
+        color: 'white'
+      }}>
+        <h3 style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <FileArchive size={24} /> Upload Massivo ZIP F24
+        </h3>
+        <p style={{ opacity: 0.9, fontSize: 14, marginBottom: 20 }}>
+          Carica un file ZIP contenente più PDF F24. Il sistema rileva automaticamente i duplicati tramite hash SHA256.
+        </p>
+        
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+          <input 
+            ref={zipInputRef}
+            type="file" 
+            accept=".zip" 
+            onChange={(e) => setZipFile(e.target.files?.[0] || null)}
+            data-testid="f24-zip-input"
+            style={{ 
+              padding: 10, 
+              background: 'rgba(255,255,255,0.2)', 
+              borderRadius: 8,
+              border: '2px dashed rgba(255,255,255,0.5)',
+              color: 'white'
+            }}
+          />
+          <button 
+            onClick={handleZipUpload}
+            disabled={!zipFile || zipUploading}
+            data-testid="upload-zip-btn"
+            style={{
+              padding: '12px 24px',
+              background: zipFile && !zipUploading ? 'white' : 'rgba(255,255,255,0.3)',
+              color: zipFile && !zipUploading ? '#764ba2' : 'rgba(255,255,255,0.7)',
+              border: 'none',
+              borderRadius: 8,
+              cursor: zipFile && !zipUploading ? 'pointer' : 'not-allowed',
+              fontWeight: 'bold',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8
+            }}
+          >
+            <Upload size={18} /> 
+            {zipUploading ? 'Elaborazione...' : 'Carica ZIP'}
+          </button>
+        </div>
+        
+        {/* Progress Bar */}
+        {zipUploading && (
+          <div style={{ marginTop: 20 }}>
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              marginBottom: 8,
+              fontSize: 14
+            }}>
+              <span>Elaborazione in corso...</span>
+              <span>{zipProgress}%</span>
+            </div>
+            <div style={{ 
+              background: 'rgba(255,255,255,0.2)', 
+              borderRadius: 10, 
+              height: 12,
+              overflow: 'hidden'
+            }}>
+              <div style={{ 
+                width: `${zipProgress}%`, 
+                height: '100%', 
+                background: 'white',
+                borderRadius: 10,
+                transition: 'width 0.3s ease'
+              }} />
+            </div>
+          </div>
+        )}
+        
+        {/* Risultato Upload */}
+        {zipResult && (
+          <div style={{ 
+            marginTop: 20, 
+            background: 'rgba(255,255,255,0.95)', 
+            borderRadius: 8, 
+            padding: 16,
+            color: '#333'
+          }}>
+            <h4 style={{ margin: '0 0 12px 0', color: '#764ba2' }}>📊 Risultato Upload</h4>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 15 }}>
+              <div style={{ textAlign: 'center', padding: 10, background: '#f0f7ff', borderRadius: 6 }}>
+                <div style={{ fontSize: 24, fontWeight: 'bold', color: '#2196f3' }}>{zipResult.total}</div>
+                <div style={{ fontSize: 12, color: '#666' }}>Totale PDF</div>
+              </div>
+              <div style={{ textAlign: 'center', padding: 10, background: '#e8f5e9', borderRadius: 6 }}>
+                <div style={{ fontSize: 24, fontWeight: 'bold', color: '#4caf50' }}>{zipResult.imported}</div>
+                <div style={{ fontSize: 12, color: '#666' }}>Importati</div>
+              </div>
+              <div style={{ textAlign: 'center', padding: 10, background: '#fff3e0', borderRadius: 6 }}>
+                <div style={{ fontSize: 24, fontWeight: 'bold', color: '#ff9800' }}>{zipResult.duplicates}</div>
+                <div style={{ fontSize: 12, color: '#666' }}>Duplicati</div>
+              </div>
+              <div style={{ textAlign: 'center', padding: 10, background: '#ffebee', borderRadius: 6 }}>
+                <div style={{ fontSize: 24, fontWeight: 'bold', color: '#f44336' }}>{zipResult.errors}</div>
+                <div style={{ fontSize: 12, color: '#666' }}>Errori</div>
+              </div>
+            </div>
+            
+            {zipResult.details?.length > 0 && (
+              <details style={{ marginTop: 10 }}>
+                <summary style={{ cursor: 'pointer', color: '#666', fontSize: 13 }}>
+                  Mostra dettagli ({zipResult.details.length} file)
+                </summary>
+                <div style={{ maxHeight: 200, overflow: 'auto', marginTop: 10 }}>
+                  {zipResult.details.map((d, i) => (
+                    <div key={i} style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: 8, 
+                      padding: '6px 0',
+                      borderBottom: '1px solid #eee',
+                      fontSize: 13
+                    }}>
+                      {d.status === 'imported' && <CheckCircle size={16} color="#4caf50" />}
+                      {d.status === 'duplicate' && <Clock size={16} color="#ff9800" />}
+                      {d.status === 'error' && <AlertCircle size={16} color="#f44336" />}
+                      <span style={{ flex: 1 }}>{d.file}</span>
+                      <span style={{ 
+                        fontSize: 11, 
+                        padding: '2px 8px', 
+                        borderRadius: 4,
+                        background: d.status === 'imported' ? '#e8f5e9' : 
+                                   d.status === 'duplicate' ? '#fff3e0' : '#ffebee',
+                        color: d.status === 'imported' ? '#2e7d32' : 
+                               d.status === 'duplicate' ? '#e65100' : '#c62828'
+                      }}>
+                        {d.status === 'imported' ? 'Importato' : 
+                         d.status === 'duplicate' ? 'Duplicato' : 'Errore'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </details>
+            )}
+          </div>
+        )}
+      </div>
+      
+      {/* Documenti F24 Caricati */}
+      {f24Documents.length > 0 && (
+        <div style={{ background: 'white', borderRadius: 8, padding: 20, marginBottom: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+          <h3 style={{ marginTop: 0 }}>📁 Documenti F24 Caricati ({f24Documents.length})</h3>
+          <div style={{ maxHeight: 300, overflow: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+              <thead>
+                <tr style={{ background: '#f5f5f5' }}>
+                  <th style={{ padding: 10, textAlign: 'left' }}>File</th>
+                  <th style={{ padding: 10, textAlign: 'center' }}>Stato</th>
+                  <th style={{ padding: 10, textAlign: 'right' }}>Dimensione</th>
+                  <th style={{ padding: 10, textAlign: 'center' }}>Data</th>
+                  <th style={{ padding: 10, textAlign: 'center' }}>Azioni</th>
+                </tr>
+              </thead>
+              <tbody>
+                {f24Documents.map(doc => (
+                  <tr key={doc.id} style={{ borderBottom: '1px solid #eee' }}>
+                    <td style={{ padding: 10 }}>
+                      <div style={{ fontWeight: 500 }}>{doc.original_filename}</div>
+                      <div style={{ fontSize: 11, color: '#999' }}>da: {doc.imported_from_zip}</div>
+                    </td>
+                    <td style={{ padding: 10, textAlign: 'center' }}>
+                      <span style={{
+                        padding: '3px 10px',
+                        borderRadius: 12,
+                        fontSize: 11,
+                        background: doc.status === 'processed' ? '#e8f5e9' : '#fff3e0',
+                        color: doc.status === 'processed' ? '#2e7d32' : '#e65100'
+                      }}>
+                        {doc.status === 'processed' ? 'Elaborato' : 'In attesa'}
+                      </span>
+                    </td>
+                    <td style={{ padding: 10, textAlign: 'right', color: '#666' }}>
+                      {(doc.file_size / 1024).toFixed(1)} KB
+                    </td>
+                    <td style={{ padding: 10, textAlign: 'center', color: '#666' }}>
+                      {new Date(doc.created_at).toLocaleDateString('it-IT')}
+                    </td>
+                    <td style={{ padding: 10, textAlign: 'center' }}>
+                      <button
+                        onClick={() => handleDeleteDocument(doc.id)}
+                        style={{ 
+                          padding: '4px 8px', 
+                          background: '#ffebee', 
+                          border: 'none', 
+                          borderRadius: 4, 
+                          cursor: 'pointer',
+                          color: '#c62828'
+                        }}
+                        title="Elimina"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Upload Response */}
       {out && (
