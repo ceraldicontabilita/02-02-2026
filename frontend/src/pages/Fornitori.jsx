@@ -812,7 +812,7 @@ export default function Fornitori() {
       }
       setModalOpen(false);
       setCurrentSupplier(null);
-      loadData(debouncedSearch); // Ricarica dati aggiornati
+      reloadData(); // Ricarica dati aggiornati
     } catch (error) {
       alert('Errore salvataggio: ' + (error.response?.data?.detail || error.message));
     } finally {
@@ -842,7 +842,7 @@ export default function Fornitori() {
       // DELETE dal database
       const url = forceDelete ? `/api/suppliers/${id}?force=true` : `/api/suppliers/${id}`;
       await api.delete(url);
-      loadData(debouncedSearch); // Ricarica dati
+      reloadData(); // Ricarica dati
     } catch (error) {
       const errorMsg = error.response?.data?.detail || error.message;
       // Se ci sono fatture collegate, chiedi conferma per eliminazione forzata
