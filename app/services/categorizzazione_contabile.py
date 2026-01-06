@@ -654,6 +654,7 @@ PATTERNS_FORNITORE = {
     # Bevande alcoliche
     "distilleria|distillerie": "bevande_alcoliche",
     "tanqueray|campari|martini.*rossi": "bevande_alcoliche",
+    "drink\\s*up|coop.*eureka|asprinio": "bevande_alcoliche",
     
     # Caffe e torrefazione
     "kimbo|lavazza|illy|segafredo|costadoro|torrefazione": "caffe",
@@ -663,6 +664,10 @@ PATTERNS_FORNITORE = {
     
     # Pasticceria e dolci
     "dolciaria|acquaviva|pasticceria": "pasticceria",
+    "perfetti\\s+van\\s+melle": "pasticceria",  # Caramelle/chewing gum
+    
+    # Panetteria
+    "gb\\s*food|panetter|panificio": "pasticceria",
     
     # Alimentari generali
     "g\\.?i\\.?a\\.?l|generale\\s+ingrosso\\s+alimentar": "alimentari",
@@ -671,9 +676,18 @@ PATTERNS_FORNITORE = {
     "saima|cozzolino|nasti\\s+group|di\\s+cosmo": "alimentari",
     "cilatte|europa\\s+23|carini": "alimentari",
     "san\\s+carlo|barilla|ferrero|mulino|galbani": "alimentari",
+    "siro\\s+s\\.?r\\.?l|f\\.?lli\\s+sommella": "alimentari",
+    
+    # Materiali consumo e igiene
+    "langellotti|gtm\\s+detersivi|tommasino": "pulizia",
+    
+    # Imballaggi e carta
+    "carta\\s*[&e]?\\s*party|artecarta|alfa\\s+service": "imballaggi",
     
     # Ferramenta e utensili
     "wuerth|wurth|berner": "ferramenta",
+    "leroy\\s+merlin|bricofer|obi\\b|brico": "ferramenta",
+    "buonaiuto|scaramuzza": "materiale_edile",
     
     # Utenze
     "enel|edison|a2a|iren|sorgenia": "utenze_elettricita",
@@ -685,6 +699,8 @@ PATTERNS_FORNITORE = {
     
     # Software e cloud
     "google|microsoft|amazon\\s+aws|azure": "software_cloud",
+    "hp\\s+italy|hp\\s+instant\\s+ink": "canoni_abbonamenti",
+    "amazon\\s+business": "ferramenta",  # Acquisti vari
     
     # Assicurazioni
     "assicuraz|unipol|generali|allianz|axa": "assicurazioni",
@@ -701,14 +717,19 @@ PATTERNS_FORNITORE = {
     # Buoni pasto
     "edenred|sodexo|ticket\\s+restaurant": "buoni_pasto",
     
-    # Servizi digitali
+    # Servizi digitali e POS
     "infocert|aruba|register|legalmail": "canoni_abbonamenti",
+    "tecmarket|satispay|sumup|nexi": "spese_bancarie",
     
     # Tappezzeria
     "tappezzer|tendaggi|covino": "tappezzeria",
     
     # Birra
     "peroni|heineken|carlsberg|ab\\s+inbev": "birra",
+    "top\\s+spina": "birra",
+    
+    # Attrezzature bar/cucina
+    "fla\\s+srl|horeca|ristorazione": "ferramenta",
 }
 
 
