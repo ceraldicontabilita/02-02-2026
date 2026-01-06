@@ -324,6 +324,18 @@ PATTERNS_DESCRIZIONE = {
         "note": "Pubblicita - 100% deducibile"
     },
     
+    # SPONSORIZZAZIONI
+    "sponsorizzazioni": {
+        "patterns": [
+            r"sponsoriz", r"main\s+sponsor", r"partner\s+sponsor"
+        ],
+        "conto": ("05.02.14", "Pubblicita e marketing"),
+        "categoria_fiscale": CategoriaFiscale.PUBBLICITA,
+        "deducibilita_ires": 100,
+        "deducibilita_irap": 100,
+        "note": "Sponsorizzazioni - 100% deducibile"
+    },
+    
     # AFFITTO LOCALI
     "affitto": {
         "patterns": [
