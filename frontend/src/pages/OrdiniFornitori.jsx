@@ -423,13 +423,37 @@ Email: ${AZIENDA.email}
                       </select>
                     </td>
                     <td style={{ padding: 10 }}>
-                      <button 
-                        onClick={() => handleDeleteOrder(order.id)}
-                        style={{ background: "#ffcdd2", color: "#c62828" }}
-                        title="Elimina ordine"
-                      >
-                        🗑️
-                      </button>
+                      <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+                        <button 
+                          onClick={() => handlePrintOrder(order)}
+                          style={{ background: "#e3f2fd", color: "#1976d2", padding: "5px 10px", border: "none", borderRadius: 4, cursor: "pointer" }}
+                          title="Stampa PDF"
+                        >
+                          🖨️
+                        </button>
+                        <button 
+                          onClick={() => handleSendEmail(order)}
+                          disabled={sendingEmail === order.id}
+                          style={{ background: "#e8f5e9", color: "#2e7d32", padding: "5px 10px", border: "none", borderRadius: 4, cursor: "pointer" }}
+                          title="Invia Email"
+                        >
+                          {sendingEmail === order.id ? "..." : "📧"}
+                        </button>
+                        <button 
+                          onClick={() => setSelectedOrder(order)}
+                          style={{ background: "#fff3e0", color: "#e65100", padding: "5px 10px", border: "none", borderRadius: 4, cursor: "pointer" }}
+                          title="Dettaglio"
+                        >
+                          👁️
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteOrder(order.id)}
+                          style={{ background: "#ffcdd2", color: "#c62828", padding: "5px 10px", border: "none", borderRadius: 4, cursor: "pointer" }}
+                          title="Elimina"
+                        >
+                          🗑️
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
