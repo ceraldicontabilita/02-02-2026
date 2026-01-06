@@ -249,13 +249,7 @@ async def delete_invoice(
 
 
 # ============== SUPPLIERS ==============
-
-@router.get("/suppliers")
-async def list_suppliers(skip: int = 0, limit: int = 10000) -> List[Dict[str, Any]]:
-    """Lista fornitori."""
-    db = Database.get_db()
-    return await db[Collections.SUPPLIERS].find({}, {"_id": 0}).skip(skip).limit(limit).to_list(limit)
-
+# NOTE: GET /suppliers è gestito da suppliers.py router con supporto per filtri (search, metodo_pagamento, etc.)
 
 @router.post("/suppliers")
 async def create_supplier(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
