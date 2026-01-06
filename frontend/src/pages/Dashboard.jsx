@@ -72,6 +72,29 @@ export default function Dashboard() {
     })();
   }, [anno]);
 
+  // Carica Volume Affari Reale quando toggle attivato
+  async function loadVolumeReale() {
+    if (volumeRealeData && volumeRealeData.anno === anno) return;
+    setVolumeRealeLoading(true);
+    try {
+      const res = await api.get(`/api/gestione-riservata/volume-affari-reale?anno=${anno}`);
+      setVolumeRealeData(res.data);
+    } catch (e) {
+      console.error("Errore caricamento volume reale:", e);
+      setVolumeRealeData(null);
+    } finally {
+      setVolumeRealeLoading(false);
+    }
+  }
+
+  function handleToggleVolumeReale() {
+    const newValue = !showVolumeReale;
+    setShowVolumeReale(newValue);
+    if (newValue) {
+      loadVolumeReale();
+    }
+  }
+
   if (loading) {
     return (
       <div className="card">
