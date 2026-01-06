@@ -82,19 +82,18 @@ export default function ContabilitaAvanzata() {
 
   const handleDownloadPDF = async () => {
     try {
-      const anno = new Date().getFullYear();
-      const res = await fetch(`${API}/api/contabilita/export/pdf-dichiarazione?anno=${anno}&regione=${regione}`);
+      const res = await fetch(`${API}/api/contabilita/export/pdf-dichiarazione?anno=${selectedYear}&regione=${regione}`);
       if (res.ok) {
         const blob = await res.blob();
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `dichiarazione_redditi_${anno}.pdf`;
+        a.download = `dichiarazione_redditi_${selectedYear}.pdf`;
         document.body.appendChild(a);
         a.click();
         a.remove();
         window.URL.revokeObjectURL(url);
-        setMessage({ type: 'success', text: 'PDF dichiarazione scaricato!' });
+        setMessage({ type: 'success', text: `PDF dichiarazione ${selectedYear} scaricato!` });
       }
     } catch (err) {
       setMessage({ type: 'error', text: 'Errore download PDF' });
