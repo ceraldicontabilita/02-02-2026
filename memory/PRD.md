@@ -3,9 +3,47 @@
 ## Project Overview
 Sistema ERP completo per gestione aziendale con focus su contabilità, fatturazione elettronica, magazzino, gestione fornitori e **contabilità analitica con centri di costo**.
 
-**Versione**: 4.1.0  
+**Versione**: 4.2.0  
 **Ultimo aggiornamento**: 6 Gennaio 2026  
 **Stack**: FastAPI (Python) + React + MongoDB
+
+---
+
+## Ultime Implementazioni (6 Gen 2026 - Sessione Corrente Parte 8)
+
+### 24. Dizionario Articoli - Mappatura Prodotti ✅ COMPLETATA
+Sistema completo per mappatura automatica articoli fatture → Piano dei Conti e categorie HACCP.
+
+**Backend** (`/app/app/routers/dizionario_articoli.py`):
+- `GET /api/dizionario-articoli/estrai-articoli` - Estrazione articoli con categorizzazione
+- `POST /api/dizionario-articoli/genera-dizionario` - Genera/aggiorna dizionario da fatture
+- `GET /api/dizionario-articoli/dizionario` - Lista articoli con filtri
+- `GET /api/dizionario-articoli/statistiche` - Statistiche categorizzazione
+- `PUT /api/dizionario-articoli/articolo/{desc}` - Modifica mappatura manuale
+- `POST /api/dizionario-articoli/ricategorizza-fatture` - Applica categorie alle fatture
+- `GET /api/dizionario-articoli/cerca` - Ricerca articoli
+
+**Categorie HACCP implementate** (16 categorie):
+- carni_fresche, pesce_fresco, latticini, uova
+- frutta_verdura, surgelati, prodotti_forno, farine_cereali
+- conserve_scatolame, bevande_analcoliche, bevande_alcoliche
+- spezie_condimenti, salumi_insaccati, dolciumi_snack
+- additivi_ingredienti, non_alimentare
+
+**Pattern Matching**: 25+ categorie prodotto con regex per identificazione automatica
+
+**Frontend** (`/app/frontend/src/pages/DizionarioArticoli.jsx`):
+- Dashboard statistiche (totale articoli, confidenza mappatura)
+- Tabella articoli con categoria HACCP, conto, confidenza %
+- Filtri per categoria e articoli non mappati
+- Modal per modifica manuale mappature
+- Pulsanti "Genera Dizionario" e "Applica alle Fatture"
+
+**Risultati attuali**:
+- 6783 articoli estratti dalle fatture
+- 1101 categorizzati ad alta confidenza (>50%)
+- 1187 categorizzati a media confidenza
+- 4495 da classificare manualmente
 
 ---
 
