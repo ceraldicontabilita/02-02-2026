@@ -575,7 +575,7 @@ async def get_bilancio_dettagliato() -> Dict[str, Any]:
             sottocategoria = codice[:5]
             if sottocategoria not in bilancio["conto_economico"]["costi"]["per_categoria"]:
                 bilancio["conto_economico"]["costi"]["per_categoria"][sottocategoria] = {
-                    "nome": self._get_nome_sottocategoria(sottocategoria),
+                    "nome": _get_nome_sottocategoria(sottocategoria),
                     "voci": [],
                     "totale": 0
                 }
