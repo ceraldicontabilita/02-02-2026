@@ -553,3 +553,173 @@ async def get_utile_per_cdc(anno: int = Query(...)) -> Dict[str, Any]:
             "margine": round(ricavi_totali - costi_totali, 2)
         }
     }
+
+
+
+# ============== RIBALTAMENTO CDC ==============
+
+# Chiavi di ribaltamento standard per i centri di supporto
+CHIAVI_RIBALTAMENTO = {
+    "CDC-05": {  # Personale
+        "descrizione": "Costo personale ribaltato sui centri operativi",
+        "criteri": {
+            "CDC-01": 0.50,  # 50% Bar
+            "CDC-02": 0.50   # 50% Pasticceria
+        }
+    },
+    "CDC-06": {  # Amministrazione
+        "descrizione": "Costi amministrativi ribaltati sui centri operativi",
+        "criteri": {
+            "CDC-01": 0.50,
+            "CDC-02": 0.50
+        }
+    },
+    "CDC-03": {  # Utenze
+        "descrizione": "Utenze ribaltate sui centri operativi",
+        "criteri": {
+            "CDC-01": 0.40,
+            "CDC-02": 0.60
+        }
+    },
+    "CDC-04": {  # Manutenzione
+        "descrizione": "Manutenzione ribaltata sui centri operativi",
+        "criteri": {
+            "CDC-01": 0.35,
+            "CDC-02": 0.65
+        }
+    },
+    "CDC-07": {  # Marketing
+        "descrizione": "Marketing ribaltato sui centri operativi",
+        "criteri": {
+            "CDC-01": 0.45,
+            "CDC-02": 0.55
+        }
+    }
+}
+
+
+@router.get("/ribaltamento/chiavi")
+async def get_chiavi_ribaltamento() -> Dict[str, Any]:
+    """Restituisce le chiavi di ribaltamento configurate."""
+    return {
+        "chiavi": CHIAVI_RIBALTAMENTO,
+        "centri_supporto": [k for k in CHIAVI_RIBALTAMENTO.keys()],
+        "centri_operativi": ["CDC-01", "CDC-02"]
+    }
+
+
+@router.post("/ribaltamento/calcola")
+async def calcola_ribaltamento(anno: int = Query(...)) -> Dict[str, Any]:
+    """
+    Calcola il ribaltamento dei costi dai centri di supporto ai centri operativi.
+    Questo è il cuore della contabilità analitica TeamSystem.
+    """
+    db = Database.get_db()
+    
+    date_start = f"{anno}-01-01"
+    date_end = f"{anno}-12-31"
+    
+    # 1. Recupera i costi per centro di costo
+    costi_pipeline = [
+        {"$match": {"invoice_date": {"$gte": date_start, "$lte": date_end}}},
+        {"$group": {
+            "_id": {"$ifNull": ["$centro_costo", "CDC-99"]},
+            "totale": {"$sum": "$total_amount"},
+            "count": {"$sum": 1}
+        }}
+    ]
+    costi_per_cdc = await db[Collections.INVOICES].aggregate(costi_pipeline).to_list(50)
+    costi_dict = {c["_id"]: c["totale"] for c in costi_per_cdc}
+    
+    # 2. Inizializza i totali per i centri operativi (prima del ribaltamento)
+    costi_diretti = {
+        "CDC-01": costi_dict.get("CDC-01", 0),
+        "CDC-02": costi_dict.get("CDC-02", 0)
+    }
+    
+    # 3. Calcola i ribaltamenti
+    ribaltamenti = []
+    totale_ribaltato = {"CDC-01": 0, "CDC-02": 0}
+    
+    for cdc_supporto, config in CHIAVI_RIBALTAMENTO.items():
+        costo_supporto = costi_dict.get(cdc_supporto, 0)
+        if costo_supporto == 0:
+            continue
+            
+        for cdc_dest, quota in config["criteri"].items():
+            importo = costo_supporto * quota
+            totale_ribaltato[cdc_dest] = totale_ribaltato.get(cdc_dest, 0) + importo
+            
+            ribaltamenti.append({
+                "da_cdc": cdc_supporto,
+                "da_cdc_nome": CDC_STANDARD.get(cdc_supporto, {}).get("nome", cdc_supporto),
+                "a_cdc": cdc_dest,
+                "a_cdc_nome": CDC_STANDARD.get(cdc_dest, {}).get("nome", cdc_dest),
+                "quota_percentuale": quota * 100,
+                "importo_origine": round(costo_supporto, 2),
+                "importo_ribaltato": round(importo, 2)
+            })
+    
+    # 4. Calcola i costi pieni (diretti + ribaltati)
+    costi_pieni = {
+        "CDC-01": costi_diretti["CDC-01"] + totale_ribaltato.get("CDC-01", 0),
+        "CDC-02": costi_diretti["CDC-02"] + totale_ribaltato.get("CDC-02", 0)
+    }
+    
+    # 5. Recupera i ricavi per calcolare il margine
+    ricavi_result = await db[Collections.CORRISPETTIVI].aggregate([
+        {"$match": {"data": {"$gte": date_start, "$lte": date_end}}},
+        {"$group": {"_id": None, "totale": {"$sum": "$totale"}}}
+    ]).to_list(1)
+    ricavi_totali = ricavi_result[0]["totale"] if ricavi_result else 0
+    
+    # Stima ricavi per CDC (da implementare con dati reali)
+    ricavi_cdc = {
+        "CDC-01": ricavi_totali * 0.40,  # 40% Bar
+        "CDC-02": ricavi_totali * 0.60   # 60% Pasticceria
+    }
+    
+    # 6. Calcola margini
+    margini = {}
+    for cdc in ["CDC-01", "CDC-02"]:
+        margini[cdc] = {
+            "cdc": cdc,
+            "nome": CDC_STANDARD.get(cdc, {}).get("nome", cdc),
+            "ricavi": round(ricavi_cdc[cdc], 2),
+            "costi_diretti": round(costi_diretti[cdc], 2),
+            "costi_ribaltati": round(totale_ribaltato.get(cdc, 0), 2),
+            "costi_pieni": round(costi_pieni[cdc], 2),
+            "margine_diretto": round(ricavi_cdc[cdc] - costi_diretti[cdc], 2),
+            "margine_pieno": round(ricavi_cdc[cdc] - costi_pieni[cdc], 2),
+            "margine_percentuale": round((ricavi_cdc[cdc] - costi_pieni[cdc]) / ricavi_cdc[cdc] * 100, 1) if ricavi_cdc[cdc] > 0 else 0
+        }
+    
+    return {
+        "anno": anno,
+        "ribaltamenti": ribaltamenti,
+        "totali_ribaltati": {k: round(v, 2) for k, v in totale_ribaltato.items()},
+        "margini_per_cdc": list(margini.values()),
+        "sintesi": {
+            "ricavi_totali": round(ricavi_totali, 2),
+            "costi_diretti_totali": round(sum(costi_diretti.values()), 2),
+            "costi_ribaltati_totali": round(sum(totale_ribaltato.values()), 2),
+            "margine_aziendale": round(ricavi_totali - sum(costi_pieni.values()), 2)
+        }
+    }
+
+
+@router.post("/ribaltamento/aggiorna-chiavi")
+async def aggiorna_chiavi_ribaltamento(chiavi: Dict[str, Any] = Body(...)) -> Dict[str, str]:
+    """
+    Aggiorna le chiavi di ribaltamento.
+    Le chiavi vengono salvate nel database per persistenza.
+    """
+    db = Database.get_db()
+    
+    await db["config_ribaltamento"].update_one(
+        {"_id": "chiavi_ribaltamento"},
+        {"$set": {"chiavi": chiavi, "updated_at": datetime.utcnow().isoformat()}},
+        upsert=True
+    )
+    
+    return {"message": "Chiavi di ribaltamento aggiornate"}
