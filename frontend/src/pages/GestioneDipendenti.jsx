@@ -250,6 +250,24 @@ export default function GestioneDipendenti() {
     }
   };
 
+  // Modifica record salario
+  const handleSaveSalario = async () => {
+    if (!editingSalario) return;
+    try {
+      await api.put(`/api/prima-nota-salari/salari/${editingSalario.id}`, {
+        dipendente: editingSalario.dipendente,
+        anno: parseInt(editingSalario.anno),
+        mese: parseInt(editingSalario.mese),
+        importo_busta: parseFloat(editingSalario.importo_busta) || 0,
+        importo_bonifico: parseFloat(editingSalario.importo_bonifico) || 0
+      });
+      setEditingSalario(null);
+      loadPrimaNotaSalari();
+    } catch (error) {
+      alert('Errore: ' + (error.response?.data?.detail || error.message));
+    }
+  };
+
   // Libro Unico functions
   const loadLibroUnico = async () => {
     try {
