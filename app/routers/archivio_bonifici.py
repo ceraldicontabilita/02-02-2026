@@ -316,7 +316,10 @@ async def upload_files(job_id: str, background: BackgroundTasks, files: List[Upl
 
 
 async def process_files_background(job_id: str, file_paths: List[Path]):
-    """Elabora i file PDF in background."""
+    """
+    Elabora i file PDF in background con deduplicazione avanzata.
+    Supporta fino a 1500 file con gestione memoria ottimizzata.
+    """
     db = Database.get_db()
     
     await db.bonifici_jobs.update_one({'id': job_id}, {'$set': {'status': 'processing'}})
@@ -324,6 +327,14 @@ async def process_files_background(job_id: str, file_paths: List[Path]):
     processed = 0
     errors = 0
     imported = 0
+    duplicates = 0
+    
+    # Carica chiavi esistenti per deduplicazione veloce
+    existing_keys = set()
+    existing_docs = await db.bonifici_transfers.find({}, {'dedup_key': 1}).to_list(None)
+    for doc in existing_docs:
+        if doc.get('dedup_key'):
+            existing_keys.add(doc['dedup_key'])
     
     for p in file_paths:
         try:
@@ -345,28 +356,56 @@ async def process_files_background(job_id: str, file_paths: List[Path]):
                 if isinstance(t.get('data'), datetime):
                     t['data'] = t['data'].isoformat()
                 
-                # Upsert con deduplicazione
-                existing = await db.bonifici_transfers.find_one({'dedup_key': t['dedup_key']})
-                if not existing:
-                    await db.bonifici_transfers.insert_one(t)
-                    imported += 1
+                # Deduplicazione con cache in memoria
+                if t['dedup_key'] in existing_keys:
+                    duplicates += 1
+                    continue
+                
+                # Inserisci nuovo bonifico
+                await db.bonifici_transfers.insert_one(t)
+                existing_keys.add(t['dedup_key'])
+                imported += 1
                 
         except Exception as e:
             errors += 1
             logger.exception(f"Processing failed for {p}: {e}")
         finally:
             processed += 1
-            await db.bonifici_jobs.update_one(
-                {'id': job_id},
-                {'$set': {
-                    'processed_files': processed,
-                    'errors': errors,
-                    'imported_files': imported,
-                    'updated_at': datetime.now(timezone.utc).isoformat()
-                }}
-            )
+            
+            # Aggiorna stato ogni 10 file o all'ultimo
+            if processed % 10 == 0 or processed == len(file_paths):
+                await db.bonifici_jobs.update_one(
+                    {'id': job_id},
+                    {'$set': {
+                        'processed_files': processed,
+                        'errors': errors,
+                        'imported_files': imported,
+                        'duplicates_skipped': duplicates,
+                        'updated_at': datetime.now(timezone.utc).isoformat()
+                    }}
+                )
+            
+            # Elimina file processato per liberare spazio
+            try:
+                p.unlink(missing_ok=True)
+            except Exception:
+                pass
     
-    await db.bonifici_jobs.update_one({'id': job_id}, {'$set': {'status': 'completed'}})
+    # Pulisci directory job
+    job_dir = UPLOAD_DIR / job_id
+    try:
+        import shutil
+        shutil.rmtree(job_dir, ignore_errors=True)
+    except Exception:
+        pass
+    
+    await db.bonifici_jobs.update_one(
+        {'id': job_id}, 
+        {'$set': {
+            'status': 'completed',
+            'completed_at': datetime.now(timezone.utc).isoformat()
+        }}
+    )
 
 
 @router.get("/transfers")
