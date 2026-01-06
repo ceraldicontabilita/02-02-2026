@@ -281,6 +281,38 @@ export default function Corrispettivi() {
         </div>
       );
     }
+
+    // CSV result
+    if (uploadResult.type === "csv") {
+      const data = uploadResult.data;
+      return (
+        <div className="card" style={{ background: "#f3e5f5" }} data-testid="corrispettivi-upload-result">
+          <div className="h1" style={{ color: "#7b1fa2" }}>📊 Risultato Import CSV</div>
+          <div className="grid" style={{ marginTop: 10 }}>
+            <div style={{ background: "#c8e6c9", padding: 10, borderRadius: 8 }}>
+              <strong style={{ color: "#2e7d32", fontSize: 18 }}>✓ Nuovi: {data.importati}</strong>
+            </div>
+            <div style={{ background: "#fff3e0", padding: 10, borderRadius: 8 }}>
+              <strong style={{ color: "#e65100", fontSize: 18 }}>⟳ Aggiornati: {data.aggiornati}</strong>
+            </div>
+            <div style={{ background: "#e3f2fd", padding: 10, borderRadius: 8 }}>
+              <strong style={{ color: "#1565c0", fontSize: 18 }}>💰 {formatEuro(data.totale_importato)}</strong>
+            </div>
+          </div>
+          {data.errori && data.errori.length > 0 && (
+            <div style={{ marginTop: 15 }}>
+              <strong style={{ color: "#c62828" }}>⚠ Errori ({data.errori_count}):</strong>
+              <ul style={{ paddingLeft: 20, marginTop: 5, maxHeight: 100, overflowY: "auto", fontSize: 12 }}>
+                {data.errori.slice(0, 5).map((e, i) => (
+                  <li key={i} style={{ color: "#c62828" }}>{e}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          <button onClick={() => setUploadResult(null)} style={{ marginTop: 15 }}>Chiudi</button>
+        </div>
+      );
+    }
     
     // Bulk o ZIP result
     const data = uploadResult.data;
