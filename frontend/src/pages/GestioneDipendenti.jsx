@@ -918,14 +918,6 @@ export default function GestioneDipendenti() {
                       }}>
                         {formatEuro(mov.progressivo || 0)}
                       </td>
-                      <td style={{ 
-                        padding: 12, 
-                        textAlign: 'right', 
-                        fontWeight: 'bold',
-                        color: mov.progressivo > 0 ? '#dc2626' : mov.progressivo < 0 ? '#16a34a' : '#6b7280'
-                      }}>
-                        {formatEuro(mov.progressivo || 0)}
-                      </td>
                       <td style={{ padding: 12, textAlign: 'center' }}>
                         {mov.riconciliato ? (
                           <span style={{ 
