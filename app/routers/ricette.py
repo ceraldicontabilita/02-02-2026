@@ -276,9 +276,10 @@ async def registra_produzione(data: Dict[str, Any] = Body(...)) -> Dict[str, Any
             "suggerimento": "Usa force=true per produrre comunque (andrà in negativo)"
         }
     
-    # Scarica ingredienti dal magazzino
+    # Scarica ingredienti dal magazzino e raccogli info tracciabilità
     costo_produzione = 0
     scarichi = []
+    ingredienti_tracciabilita = []
     
     for ing in ricetta.get("ingredienti", []):
         prodotto_id = ing.get("prodotto_id")
@@ -301,6 +302,12 @@ async def registra_produzione(data: Dict[str, Any] = Body(...)) -> Dict[str, Any
                     }}
                 )
                 
+                # Cerca info tracciabilità per questo prodotto (ultimo lotto ricevuto)
+                tracciabilita_info = await db["tracciabilita"].find_one(
+                    {"prodotto": {"$regex": prodotto.get("nome", ""), "$options": "i"}},
+                    {"_id": 0, "lotto": 1, "fornitore": 1, "data_consegna": 1, "scadenza": 1}
+                )
+                
                 # Registra movimento
                 movimento = {
                     "id": str(uuid.uuid4()),
@@ -318,27 +325,71 @@ async def registra_produzione(data: Dict[str, Any] = Body(...)) -> Dict[str, Any
                 
                 scarichi.append({
                     "prodotto": prodotto.get("nome"),
+                    "prodotto_id": prodotto_id,
                     "quantita": qta_scarico,
+                    "unita": ing.get("unita", prodotto.get("unita_misura", "kg")),
                     "costo": round(costo_ingrediente, 2)
                 })
+                
+                # Info per tracciabilità lotto
+                ingredienti_tracciabilita.append({
+                    "prodotto": prodotto.get("nome"),
+                    "prodotto_id": prodotto_id,
+                    "quantita_usata": qta_scarico,
+                    "unita": ing.get("unita", prodotto.get("unita_misura", "kg")),
+                    "lotto_fornitore": tracciabilita_info.get("lotto") if tracciabilita_info else None,
+                    "fornitore": tracciabilita_info.get("fornitore") if tracciabilita_info else prodotto.get("fornitore"),
+                    "data_consegna": tracciabilita_info.get("data_consegna") if tracciabilita_info else None,
+                    "scadenza": tracciabilita_info.get("scadenza") if tracciabilita_info else None
+                })
     
-    # Registra produzione
+    # Genera codice LOTTO produzione
+    codice_lotto = genera_codice_lotto(ricetta.get("nome", "PROD"))
+    
+    # Registra produzione con LOTTO
     produzione = {
         "id": str(uuid.uuid4()),
+        "codice_lotto": codice_lotto,
         "ricetta_id": ricetta_id,
         "ricetta_nome": ricetta.get("nome"),
+        "categoria": ricetta.get("categoria"),
         "quantita_prodotta": quantita * ricetta.get("porzioni", 1),
         "volte_ricetta": quantita,
         "costo_produzione": round(costo_produzione, 2),
-        "costo_per_unita": round(costo_produzione / (quantita * ricetta.get("porzioni", 1)), 2),
+        "costo_per_unita": round(costo_produzione / max(quantita * ricetta.get("porzioni", 1), 1), 2),
         "centro_costo": ricetta.get("centro_costo", "CDC-03"),
+        "data_produzione": datetime.now(timezone.utc).isoformat(),
         "data": datetime.utcnow().isoformat(),
         "utente": data.get("utente", "system"),
         "note": data.get("note", ""),
-        "scarichi": scarichi
+        "scarichi": scarichi,
+        "ingredienti_tracciabilita": ingredienti_tracciabilita,
+        "stato": "completato"
     }
     
     await db["produzioni"].insert_one(produzione)
+    
+    # Registra nel Registro Lotti
+    registro_lotto = {
+        "id": str(uuid.uuid4()),
+        "codice_lotto": codice_lotto,
+        "produzione_id": produzione["id"],
+        "prodotto_finito": ricetta.get("nome"),
+        "ricetta_id": ricetta_id,
+        "categoria": ricetta.get("categoria"),
+        "quantita": quantita * ricetta.get("porzioni", 1),
+        "unita": "pz",
+        "data_produzione": datetime.now(timezone.utc).isoformat(),
+        "scadenza_stimata": None,  # Può essere calcolata in base alla ricetta
+        "ingredienti": ingredienti_tracciabilita,
+        "costo_totale": round(costo_produzione, 2),
+        "costo_unitario": round(costo_produzione / max(quantita * ricetta.get("porzioni", 1), 1), 2),
+        "stato": "disponibile",
+        "note": data.get("note", ""),
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db["registro_lotti"].insert_one(registro_lotto)
     
     # Aggiorna movimento con ID produzione
     for scarico in scarichi:
