@@ -203,6 +203,7 @@ app.include_router(scadenze.router, prefix="/api/scadenze", tags=["Scadenze e No
 app.include_router(bank_statement_parser.router, prefix="/api/estratto-conto", tags=["Estratto Conto Parser"])
 app.include_router(riconciliazione_fornitori.router, prefix="/api/riconciliazione-fornitori", tags=["Riconciliazione Fornitori"])
 app.include_router(estratto_conto.router, prefix="/api/estratto-conto-movimenti", tags=["Estratto Conto Movimenti"])
+app.include_router(report_pdf.router, prefix="/api/report-pdf", tags=["Report PDF"])
 
 @app.get("/")
 async def root():
