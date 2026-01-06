@@ -56,6 +56,8 @@ import UtileObiettivo from "./pages/UtileObiettivo.jsx";
 import HACCPPortal from "./pages/HACCPPortal.jsx";
 // Gestione Riservata
 import GestioneRiservata from "./pages/GestioneRiservata.jsx";
+// Dizionario Articoli
+import DizionarioArticoli from "./pages/DizionarioArticoli.jsx";
 
 const router = createBrowserRouter([
   // Portale HACCP standalone (login con codice 141574)
