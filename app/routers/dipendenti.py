@@ -631,7 +631,7 @@ async def upload_libro_unico(
                                         
                                         current_employee = None
                                         break
-                                except:
+                                except (ValueError, TypeError):
                                     continue
                             if current_employee is None:
                                 break
@@ -674,7 +674,7 @@ async def upload_libro_unico(
                             if pd.notna(val):
                                 try:
                                     netto = float(val)
-                                except:
+                                except (ValueError, TypeError):
                                     pass
                             break
                     
