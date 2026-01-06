@@ -780,6 +780,11 @@ PIANO_CONTI_ESTESO = {
     "05.01.06": {"nome": "Acquisto piccola utensileria", "categoria": "costi", "natura": "economico"},
     "05.01.07": {"nome": "Materiali di consumo e imballaggio", "categoria": "costi", "natura": "economico"},
     "05.01.08": {"nome": "Prodotti per pulizia e igiene", "categoria": "costi", "natura": "economico"},
+    "05.01.09": {"nome": "Acquisto caffe e affini", "categoria": "costi", "natura": "economico"},
+    "05.01.10": {"nome": "Acquisto surgelati", "categoria": "costi", "natura": "economico"},
+    "05.01.11": {"nome": "Acquisto prodotti da forno", "categoria": "costi", "natura": "economico"},
+    "05.01.12": {"nome": "Materiale edile e costruzioni", "categoria": "costi", "natura": "economico"},
+    "05.01.13": {"nome": "Additivi e ingredienti alimentari", "categoria": "costi", "natura": "economico"},
     
     "05.02.01": {"nome": "Costi per servizi", "categoria": "costi", "natura": "economico"},
     "05.02.02": {"nome": "Utenze (luce, gas, acqua)", "categoria": "costi", "natura": "economico"},
