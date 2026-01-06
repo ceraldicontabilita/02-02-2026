@@ -604,7 +604,7 @@ export default function Corrispettivi() {
           <li><strong>XML Multipli:</strong> Seleziona più file XML contemporaneamente</li>
           <li><strong>📦 ZIP Massivo:</strong> Carica un archivio ZIP contenente tutti i file XML dei corrispettivi</li>
           <li style={{ color: "#e65100" }}><strong>Gestione duplicati:</strong> I corrispettivi già presenti vengono automaticamente SALTATI (non duplicati)</li>
-          <li><strong>Barra di progresso:</strong> Monitora lo stato dell'upload in tempo reale</li>
+          <li><strong>Barra di progresso:</strong> Monitora lo stato dell&apos;upload in tempo reale</li>
           <li>Formato supportato: XML Agenzia delle Entrate (COR10)</li>
           <li><strong>POS Automatico:</strong> Il pagamento elettronico viene estratto automaticamente dagli XML</li>
         </ul>
