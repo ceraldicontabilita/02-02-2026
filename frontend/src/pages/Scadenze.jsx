@@ -22,6 +22,7 @@ export default function Scadenze() {
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [anno, filtroTipo, includePassate]);
 
   const loadData = async () => {

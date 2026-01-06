@@ -168,7 +168,7 @@ export default function RicercaProdotti() {
       }));
       
       // Salva ordine nel database
-      const res = await api.post('/api/orders/create', {
+      await api.post('/api/orders/create', {
         ordini: ordersData,
         totale_generale: cartTotal,
         data_creazione: new Date().toISOString(),
