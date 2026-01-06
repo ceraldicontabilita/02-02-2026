@@ -29,7 +29,7 @@ def parse_date(date_str: str) -> Optional[str]:
             day, month, year = int(parts[0]), int(parts[1]), int(parts[2])
             return f"{year}-{month:02d}-{day:02d}"
         return None
-    except:
+    except (ValueError, TypeError, IndexError):
         return None
 
 
@@ -44,7 +44,7 @@ def parse_amount(amount_str: str) -> Optional[float]:
         amount_str = amount_str.replace('.', '').replace(',', '.')
         value = float(amount_str)
         return -value if is_negative else value
-    except:
+    except (ValueError, TypeError):
         return None
 
 
