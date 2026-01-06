@@ -204,7 +204,9 @@ PATTERNS_DESCRIZIONE = {
         "patterns": [
             r"manutenz", r"riparaz", r"assistenza\s+tecnica",
             r"intervento\b", r"ricamb", r"spare\s+parts",
-            r"sostituz", r"ripristino", r"revisione"
+            r"sostituz", r"ripristino", r"revisione",
+            r"canone\s+manutenzione", r"controllo\s+semestrale",
+            r"uscita\s+tecnica", r"ascensor", r"estintore"
         ],
         "conto": ("05.02.10", "Manutenzioni e riparazioni"),
         "categoria_fiscale": CategoriaFiscale.MANUTENZIONE_ORDINARIA,
