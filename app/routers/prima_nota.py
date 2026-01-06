@@ -1233,3 +1233,153 @@ async def create_movimento_salario(data: Dict[str, Any] = Body(...)) -> Dict[str
         "movimento": movimento,
         "message": "Movimento salario registrato"
     }
+
+
+
+@router.post("/cassa/sync-corrispettivi")
+async def sync_corrispettivi_to_prima_nota(anno: int = Query(...)) -> Dict[str, Any]:
+    """
+    Sincronizza i corrispettivi dell'anno nella Prima Nota Cassa.
+    Crea un movimento di entrata per ogni corrispettivo non ancora presente.
+    """
+    db = Database.get_db()
+    
+    date_start = f"{anno}-01-01"
+    date_end = f"{anno}-12-31"
+    
+    # Recupera corrispettivi dell'anno
+    corrispettivi = await db["corrispettivi"].find(
+        {"data": {"$gte": date_start, "$lte": date_end}},
+        {"_id": 0}
+    ).to_list(10000)
+    
+    if not corrispettivi:
+        return {"message": "Nessun corrispettivo trovato", "importati": 0}
+    
+    # Recupera movimenti già presenti per evitare duplicati
+    existing = await db[COLLECTION_PRIMA_NOTA_CASSA].find(
+        {"categoria": "Corrispettivi", "data": {"$gte": date_start, "$lte": date_end}},
+        {"riferimento": 1, "_id": 0}
+    ).to_list(10000)
+    existing_refs = set(e.get("riferimento") for e in existing if e.get("riferimento"))
+    
+    importati = 0
+    totale_importato = 0
+    
+    for corr in corrispettivi:
+        corr_id = corr.get("id", "")
+        ref = f"CORR-{corr_id}"
+        
+        # Salta se già importato
+        if ref in existing_refs:
+            continue
+        
+        totale = float(corr.get("totale", 0) or 0)
+        if totale <= 0:
+            continue
+        
+        movimento = {
+            "id": str(uuid.uuid4()),
+            "data": corr.get("data"),
+            "tipo": "entrata",
+            "importo": totale,
+            "descrizione": f"Corrispettivo {corr.get('data', '')}",
+            "categoria": "Corrispettivi",
+            "riferimento": ref,
+            "source": "sync_corrispettivi",
+            "created_at": datetime.utcnow().isoformat()
+        }
+        
+        await db[COLLECTION_PRIMA_NOTA_CASSA].insert_one(movimento)
+        importati += 1
+        totale_importato += totale
+    
+    return {
+        "message": f"Sincronizzazione completata: {importati} corrispettivi importati",
+        "importati": importati,
+        "totale_importato": round(totale_importato, 2),
+        "corrispettivi_anno": len(corrispettivi)
+    }
+
+
+@router.post("/cassa/sync-fatture-pagate")
+async def sync_fatture_pagate_to_prima_nota(anno: int = Query(...)) -> Dict[str, Any]:
+    """
+    Sincronizza le fatture pagate (uscite) nella Prima Nota Cassa/Banca.
+    """
+    db = Database.get_db()
+    
+    date_start = f"{anno}-01-01"
+    date_end = f"{anno}-12-31"
+    
+    # Recupera fatture pagate dell'anno
+    fatture = await db["invoices"].find(
+        {
+            "invoice_date": {"$gte": date_start, "$lte": date_end},
+            "stato_pagamento": "pagata"
+        },
+        {"_id": 0}
+    ).to_list(10000)
+    
+    if not fatture:
+        return {"message": "Nessuna fattura pagata trovata", "importati": 0}
+    
+    # Recupera movimenti già presenti
+    existing_cassa = await db[COLLECTION_PRIMA_NOTA_CASSA].find(
+        {"categoria": "Fatture", "data": {"$gte": date_start, "$lte": date_end}},
+        {"riferimento": 1, "_id": 0}
+    ).to_list(10000)
+    existing_banca = await db[COLLECTION_PRIMA_NOTA_BANCA].find(
+        {"categoria": "Fatture", "data": {"$gte": date_start, "$lte": date_end}},
+        {"riferimento": 1, "_id": 0}
+    ).to_list(10000)
+    existing_refs = set(e.get("riferimento") for e in existing_cassa + existing_banca if e.get("riferimento"))
+    
+    importati_cassa = 0
+    importati_banca = 0
+    totale_cassa = 0
+    totale_banca = 0
+    
+    for fatt in fatture:
+        fatt_id = fatt.get("id", "")
+        ref = f"FATT-{fatt_id}"
+        
+        if ref in existing_refs:
+            continue
+        
+        totale = float(fatt.get("total_amount", 0) or 0)
+        if totale <= 0:
+            continue
+        
+        metodo = fatt.get("metodo_pagamento", "bonifico").lower()
+        fornitore = fatt.get("supplier_name") or fatt.get("cedente_denominazione", "Fornitore")
+        
+        movimento = {
+            "id": str(uuid.uuid4()),
+            "data": fatt.get("invoice_date") or fatt.get("data_pagamento"),
+            "tipo": "uscita",
+            "importo": totale,
+            "descrizione": f"Fattura {fatt.get('numero', '')} - {fornitore[:30]}",
+            "categoria": "Fatture",
+            "riferimento": ref,
+            "source": "sync_fatture",
+            "created_at": datetime.utcnow().isoformat()
+        }
+        
+        if metodo in ["contanti", "cassa"]:
+            await db[COLLECTION_PRIMA_NOTA_CASSA].insert_one(movimento)
+            importati_cassa += 1
+            totale_cassa += totale
+        else:
+            await db[COLLECTION_PRIMA_NOTA_BANCA].insert_one(movimento)
+            importati_banca += 1
+            totale_banca += totale
+    
+    return {
+        "message": f"Sincronizzazione completata",
+        "importati_cassa": importati_cassa,
+        "importati_banca": importati_banca,
+        "totale_cassa": round(totale_cassa, 2),
+        "totale_banca": round(totale_banca, 2),
+        "fatture_pagate_anno": len(fatture)
+    }
