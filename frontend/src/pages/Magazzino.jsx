@@ -147,7 +147,7 @@ export default function Magazzino() {
               cursor: 'pointer'
             }}
           >
-            Catalogo Prodotti ({catalogProducts.length})
+            📦 Catalogo Prodotti ({catalogProducts.length})
           </button>
           <button
             onClick={() => setActiveTab('manuale')}
@@ -161,7 +161,7 @@ export default function Magazzino() {
               cursor: 'pointer'
             }}
           >
-            Inventario Manuale ({products.length})
+            📋 Inventario Manuale ({products.length})
           </button>
         </div>
         
