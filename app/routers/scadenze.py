@@ -386,7 +386,7 @@ async def _get_fatture_in_scadenza(db, anno: int, include_passate: bool, giorni_
         try:
             dt = datetime.strptime(data_fatt[:10], "%Y-%m-%d")
             data_scadenza = (dt + timedelta(days=30)).strftime("%Y-%m-%d")
-        except:
+        except (ValueError, TypeError):
             continue
         
         if not include_passate and data_scadenza < oggi.isoformat():
@@ -433,7 +433,7 @@ def _giorni_mancanti(data_str: str) -> Optional[int]:
     try:
         data = datetime.strptime(data_str[:10], "%Y-%m-%d").date()
         return (data - date.today()).days
-    except:
+    except (ValueError, TypeError):
         return None
 
 
