@@ -736,37 +736,59 @@ export default function Fornitori() {
   
   // Debounce search per evitare troppe chiamate API
   const debouncedSearch = useDebounce(search, 500);
-
-  const loadData = useCallback(async (searchTerm) => {
-    try {
-      setLoading(true);
-      const params = searchTerm ? `?search=${encodeURIComponent(searchTerm)}` : '';
-      const res = await api.get(`/api/suppliers${params}`);
-      setSuppliers(res.data);
-    } catch (error) {
-      if (error.name !== 'CanceledError') {
-        console.error('Error loading suppliers:', error);
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  
+  // Ref per abort controller
+  const abortControllerRef = useRef(null);
 
   // Carica dati quando il debounced search cambia
   useEffect(() => {
-    let isMounted = true;
+    // Cancella richiesta precedente
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
     
     const fetchData = async () => {
-      if (!isMounted) return;
-      await loadData(debouncedSearch);
+      try {
+        setLoading(true);
+        const params = debouncedSearch ? `?search=${encodeURIComponent(debouncedSearch)}` : '';
+        const res = await api.get(`/api/suppliers${params}`, {
+          signal: controller.signal
+        });
+        setSuppliers(res.data);
+      } catch (error) {
+        if (error.name !== 'CanceledError' && error.code !== 'ERR_CANCELED') {
+          console.error('Error loading suppliers:', error);
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
+      }
     };
     
     fetchData();
     
     return () => {
-      isMounted = false;
+      controller.abort();
     };
-  }, [debouncedSearch, loadData]);
+  }, [debouncedSearch]);
+  
+  // Funzione per ricaricare i dati (usata dopo save/delete)
+  const reloadData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const params = debouncedSearch ? `?search=${encodeURIComponent(debouncedSearch)}` : '';
+      const res = await api.get(`/api/suppliers${params}`);
+      setSuppliers(res.data);
+    } catch (error) {
+      console.error('Error reloading suppliers:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [debouncedSearch]);
 
   const filteredSuppliers = suppliers.filter(s => {
     if (filterMetodo !== 'tutti') {
