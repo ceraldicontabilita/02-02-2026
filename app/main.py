@@ -211,6 +211,10 @@ app.include_router(report_pdf.router, prefix="/api/report-pdf", tags=["Report PD
 app.include_router(contabilita_avanzata.router, prefix="/api/contabilita", tags=["Contabilita Avanzata"])
 app.include_router(regole_categorizzazione.router, prefix="/api/regole", tags=["Regole Categorizzazione"])
 
+# Nuovi moduli TeamSystem - Contabilità Analitica
+app.include_router(centri_costo.router, prefix="/api/centri-costo", tags=["Centri di Costo"])
+app.include_router(magazzino_doppia_verita.router, prefix="/api/magazzino-dv", tags=["Magazzino Doppia Verità"])
+
 @app.get("/")
 async def root():
     """Health check endpoint."""
