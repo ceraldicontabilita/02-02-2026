@@ -198,7 +198,7 @@ export default function ControlloMensile() {
       });
       
       // Calcola data accredito attesa in base alla regola di sfasamento
-      const getDataAccreditoAttesa = (dataOperazione) => {
+      const _getDataAccreditoAttesa = (dataOperazione) => {
         const date = new Date(dataOperazione);
         const dayOfWeek = date.getDay(); // 0=Dom, 1=Lun, 2=Mar, 3=Mer, 4=Gio, 5=Ven, 6=Sab
         

@@ -94,6 +94,7 @@ export default function GestioneDipendenti() {
   useEffect(() => {
     loadData();
     loadContractTypes();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, filterMansione]);
 
   useEffect(() => {
@@ -107,6 +108,7 @@ export default function GestioneDipendenti() {
     } else if (activeTab === 'contratti') {
       loadContratti();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, selectedYear, selectedYearPrimaNota, selectedMonth, filtroDipendente]);
 
 
