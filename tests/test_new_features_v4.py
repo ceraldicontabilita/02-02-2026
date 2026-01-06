@@ -198,34 +198,42 @@ class TestDashboardEndpoints:
 class TestRegoleCategorizzazione:
     """Tests for regole categorizzazione endpoints"""
     
-    def test_get_regole_fornitori(self):
-        """Test get regole fornitori"""
-        response = requests.get(f"{BASE_URL}/api/regole-categorizzazione/fornitori")
+    def test_get_regole(self):
+        """Test get all regole"""
+        response = requests.get(f"{BASE_URL}/api/regole/regole")
         assert response.status_code == 200
         data = response.json()
-        assert isinstance(data, list), "Expected list of rules"
+        assert 'regole_fornitori' in data, "Missing regole_fornitori"
+        assert 'regole_descrizioni' in data, "Missing regole_descrizioni"
+        assert 'categorie' in data, "Missing categorie"
+        assert 'piano_conti' in data, "Missing piano_conti"
     
-    def test_get_regole_descrizioni(self):
-        """Test get regole descrizioni"""
-        response = requests.get(f"{BASE_URL}/api/regole-categorizzazione/descrizioni")
+    def test_get_regole_structure(self):
+        """Test regole response structure"""
+        response = requests.get(f"{BASE_URL}/api/regole/regole")
         assert response.status_code == 200
         data = response.json()
-        assert isinstance(data, list), "Expected list of rules"
+        
+        # Check regole_fornitori structure
+        if data.get('regole_fornitori'):
+            regola = data['regole_fornitori'][0]
+            assert 'pattern' in regola, "Missing pattern in regola fornitore"
+            assert 'categoria' in regola, "Missing categoria in regola fornitore"
     
-    def test_get_categorie(self):
-        """Test get categorie"""
-        response = requests.get(f"{BASE_URL}/api/regole-categorizzazione/categorie")
-        assert response.status_code == 200
-        data = response.json()
-        assert isinstance(data, list), "Expected list of categories"
-    
-    def test_excel_export(self):
-        """Test Excel export for regole"""
-        response = requests.get(f"{BASE_URL}/api/regole-categorizzazione/export-excel")
+    def test_excel_download(self):
+        """Test Excel download for regole"""
+        response = requests.get(f"{BASE_URL}/api/regole/download-regole")
         assert response.status_code == 200
         # Check for Excel content type
         content_type = response.headers.get('Content-Type', '')
         assert 'spreadsheet' in content_type or 'excel' in content_type or 'octet-stream' in content_type
+    
+    def test_excel_valid_xlsx(self):
+        """Test that Excel download returns valid XLSX file"""
+        response = requests.get(f"{BASE_URL}/api/regole/download-regole")
+        assert response.status_code == 200
+        # XLSX files start with PK (ZIP signature)
+        assert response.content[:2] == b'PK', "Response is not a valid XLSX file"
 
 
 if __name__ == "__main__":
