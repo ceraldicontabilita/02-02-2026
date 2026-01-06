@@ -18,11 +18,23 @@ export default function UtileObiettivo() {
   async function loadStatus() {
     setLoading(true);
     try {
-      const res = await api.get(`/api/centri-costo/utile-obiettivo/status/${anno}`);
-      setStatus(res.data);
+      const res = await api.get(`/api/centri-costo/utile-obiettivo?anno=${anno}`);
+      const data = res.data;
+      
+      // Mappa i dati dal backend al formato del frontend
+      setStatus({
+        target_utile: data.target?.utile_target_annuo || 0,
+        margine_atteso: data.target?.margine_medio_atteso || 0.15,
+        ricavi_totali: data.reale?.ricavi_totali || 0,
+        costi_totali: data.reale?.costi_totali || 0,
+        utile_attuale: data.reale?.utile_corrente || 0,
+        percentuale_raggiungimento: Math.max(0, data.analisi?.percentuale_raggiungimento || 0),
+        gap_da_colmare: Math.abs(data.analisi?.scostamento_ad_oggi || 0),
+        per_centro_costo: {}
+      });
       setSettings({
-        target_utile: res.data.target_utile || 0,
-        margine_atteso: res.data.margine_atteso || 0.15
+        target_utile: data.target?.utile_target_annuo || 0,
+        margine_atteso: data.target?.margine_medio_atteso || 0.15
       });
     } catch (err) {
       console.error('Errore caricamento status:', err);
