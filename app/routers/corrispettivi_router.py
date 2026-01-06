@@ -723,3 +723,155 @@ async def collega_vendite_ricette(
         "consumo_ingredienti": list(consumo_ingredienti.values())[:30],
         "note": "Stime basate su distribuzione uniforme. Per dati precisi, importare dettagli scontrino."
     }
+
+
+
+# ============== IMPORT CSV CORRISPETTIVI ==============
+
+@router.post("/import-csv")
+async def import_corrispettivi_csv(file: UploadFile = File(...)) -> Dict[str, Any]:
+    """
+    Importa corrispettivi da file CSV (formato Agenzia Entrate).
+    Formato atteso:
+    - Separatore: ; (punto e virgola)
+    - Numeri: "000000003605,60" (virgola decimale)
+    - Data: DD/MM/YYYY HH:MM:SS
+    - Colonne: Id invio;Matricola;Data rilevazione;Data trasmissione;Totale;Imponibile;IVA
+    """
+    import csv
+    import re
+    
+    db = Database.get_db()
+    
+    try:
+        content = await file.read()
+        # Prova diverse codifiche
+        try:
+            text = content.decode('utf-8')
+        except:
+            text = content.decode('latin-1')
+        
+        lines = text.strip().split('\n')
+        
+        # Salta header
+        if lines[0].startswith('Id invio') or 'Matricola' in lines[0]:
+            lines = lines[1:]
+        
+        importati = 0
+        aggiornati = 0
+        errori = []
+        totale_importato = 0
+        
+        for i, line in enumerate(lines):
+            try:
+                # Parse CSV con ; come separatore
+                parts = line.split(';')
+                if len(parts) < 7:
+                    continue
+                
+                # Rimuovi apici e parse dei campi
+                def clean_value(val):
+                    return val.strip().strip("'").strip('"')
+                
+                def parse_amount(val):
+                    """Parse formato "000000003605,60" -> 3605.60"""
+                    clean = clean_value(val).replace('.', '').replace(',', '.')
+                    # Rimuovi zeri iniziali ma mantieni il valore
+                    return float(clean)
+                
+                id_invio = clean_value(parts[0])
+                matricola = clean_value(parts[1])
+                data_rilevazione = clean_value(parts[2])
+                data_trasmissione = clean_value(parts[3])
+                totale = parse_amount(parts[4])
+                imponibile = parse_amount(parts[5])
+                iva = parse_amount(parts[6])
+                
+                # Parse data (DD/MM/YYYY HH:MM:SS -> YYYY-MM-DD)
+                data_match = re.match(r'(\d{2})/(\d{2})/(\d{4})', data_rilevazione)
+                if not data_match:
+                    errori.append(f"Riga {i+1}: formato data non valido: {data_rilevazione}")
+                    continue
+                
+                data_iso = f"{data_match.group(3)}-{data_match.group(2)}-{data_match.group(1)}"
+                
+                if totale <= 0:
+                    continue
+                
+                # Verifica se esiste già (stesso id_invio o stessa data con stesso importo)
+                existing = await db["corrispettivi"].find_one({
+                    "$or": [
+                        {"id_invio": id_invio},
+                        {"data": data_iso, "totale": totale}
+                    ]
+                })
+                
+                corr_doc = {
+                    "id": str(uuid.uuid4()),
+                    "id_invio": id_invio,
+                    "matricola": matricola,
+                    "data": data_iso,
+                    "data_rilevazione": data_rilevazione,
+                    "data_trasmissione": data_trasmissione,
+                    "totale": totale,
+                    "totale_imponibile": imponibile,
+                    "totale_iva": iva,
+                    "aliquota_iva": 10 if imponibile > 0 else 0,
+                    "source": "csv_import",
+                    "filename": file.filename,
+                    "created_at": datetime.utcnow().isoformat()
+                }
+                
+                if existing:
+                    # Aggiorna
+                    await db["corrispettivi"].update_one(
+                        {"_id": existing["_id"]},
+                        {"$set": {
+                            "id_invio": id_invio,
+                            "totale": totale,
+                            "totale_imponibile": imponibile,
+                            "totale_iva": iva,
+                            "updated_at": datetime.utcnow().isoformat()
+                        }}
+                    )
+                    aggiornati += 1
+                else:
+                    # Inserisci nuovo
+                    await db["corrispettivi"].insert_one(corr_doc)
+                    importati += 1
+                
+                totale_importato += totale
+                
+            except Exception as e:
+                errori.append(f"Riga {i+1}: {str(e)}")
+                continue
+        
+        return {
+            "success": True,
+            "message": f"Import completato: {importati} nuovi, {aggiornati} aggiornati",
+            "importati": importati,
+            "aggiornati": aggiornati,
+            "totale_importato": round(totale_importato, 2),
+            "errori": errori[:20] if errori else None,
+            "errori_count": len(errori)
+        }
+        
+    except Exception as e:
+        logger.error(f"Errore import CSV: {e}")
+        raise HTTPException(status_code=500, detail=f"Errore parsing CSV: {str(e)}")
+
+
+@router.get("/template-csv")
+async def get_template_csv():
+    """Restituisce un template CSV per l'import dei corrispettivi."""
+    from fastapi.responses import Response
+    
+    template = """Id invio;Matricola dispositivo;Data e ora rilevazione;Data e ora trasmissione;Ammontare delle vendite (totale in euro);Imponibile vendite (totale in euro);Imposta vendite (totale in euro);Periodo di inattivita' da;Periodo di inattivita' a
+'1234567890';'99MEY000000';01/01/2024 21:00:00;01/01/2024 21:01:00;"000000001500,00";"000000001363,64";"000000000136,36";;
+'1234567891';'99MEY000000';02/01/2024 21:00:00;02/01/2024 21:01:00;"000000002000,00";"000000001818,18";"000000000181,82";;"""
+    
+    return Response(
+        content=template,
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=template_corrispettivi.csv"}
+    )
