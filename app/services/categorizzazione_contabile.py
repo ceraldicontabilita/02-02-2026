@@ -409,7 +409,11 @@ PATTERNS_DESCRIZIONE = {
         "patterns": [
             r"cornett", r"brioche", r"croissant", r"sfoglia",
             r"pasticceria", r"torta", r"dolciar", r"ciambella",
-            r"plum\s*cake", r"biscott", r"pastiera", r"cannolo"
+            r"plum\s*cake", r"biscott", r"pastiera", r"cannolo",
+            r"pane\s+(multicereali|integrale|bianco)", r"panino",
+            r"ciabatta", r"rosetta", r"panetteria", r"focaccia",
+            r"caramel", r"chewing\s*gum", r"gomma\s+da\s+masticar",
+            r"menta\s+fredda", r"vigorsol", r"vivident", r"frisk"
         ],
         "conto": ("05.01.11", "Acquisto prodotti da forno"),
         "categoria_fiscale": CategoriaFiscale.MERCE_RIVENDITA,
