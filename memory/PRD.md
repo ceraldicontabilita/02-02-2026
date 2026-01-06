@@ -3,7 +3,7 @@
 ## Project Overview
 Sistema ERP completo per gestione aziendale con focus su contabilità, fatturazione elettronica, magazzino, gestione fornitori e **contabilità analitica con centri di costo**.
 
-**Versione**: 3.5.0  
+**Versione**: 3.6.0  
 **Ultimo aggiornamento**: 6 Gennaio 2026  
 **Stack**: FastAPI (Python) + React + MongoDB
 
@@ -35,8 +35,37 @@ Sistema ERP completo per gestione aziendale con focus su contabilità, fatturazi
 
 ### 5. Auto-Associazione Fornitori da XML - GIÀ IMPLEMENTATA ✅
 - Quando si carica una fattura XML, il fornitore viene **creato automaticamente** se non esiste
-- Funzione: `ensure_supplier_exists()` in `/app/app/routers/fatture_upload.py`
-- I dati fornitore (P.IVA, ragione sociale, indirizzo) vengono estratti dall'XML
+- Il **metodo di pagamento** viene assegnato automaticamente dal dizionario fornitore
+- File: `/app/app/routers/fatture_upload.py`
+
+### 6. Interfacce Frontend Contabilità Analitica - COMPLETATA ✅
+Nuove pagine create:
+- **Centri di Costo** (`/centri-costo`) - Visualizzazione CDC con statistiche
+- **Ricette & Food Cost** (`/ricette`) - 90 ricette con calcolo food cost
+- **Magazzino Doppia Verità** (`/magazzino-dv`) - 5338 prodotti con giacenza teorica/reale
+- **Utile Obiettivo** (`/utile-obiettivo`) - Monitoraggio target utile annuale
+
+### 7. Ribaltamenti CDC - COMPLETATA ✅
+- Endpoint: `POST /api/centri-costo/ribaltamento/calcola?anno=YYYY`
+- Redistribuzione costi centri supporto → centri operativi
+- Chiavi di ribaltamento configurate per Personale, Amministrazione, Utenze, Manutenzione, Marketing
+
+### 8. Collegamento Vendite-Magazzino - COMPLETATA ✅
+- Endpoint: `POST /api/corrispettivi/collega-vendite-ricette`
+- Stima vendite per ricetta basata su corrispettivi
+- Calcolo consumo ingredienti teorico
+- Endpoint: `POST /api/corrispettivi/scarica-magazzino` per scarico automatico
+
+---
+
+## Menu Contabilità Analitica (Nuovo)
+```
+├── Contabilità Analitica
+│   ├── Centri di Costo
+│   ├── Ricette & Food Cost
+│   ├── Magazzino Doppia Verità
+│   └── Utile Obiettivo
+```
 
 ---
 
