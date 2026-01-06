@@ -9,6 +9,53 @@ Sistema ERP completo per gestione aziendale con focus su contabilità, fatturazi
 
 ---
 
+## ⚠️ CONFIGURAZIONE DATABASE - CRITICA
+
+### Ambiente di Produzione/Preview
+```
+Tipo: MongoDB Locale (container Kubernetes)
+URI: mongodb://localhost:27017
+Database: azienda_erp_db
+```
+
+### File di Configurazione
+- **Backend .env**: `/app/backend/.env`
+  ```env
+  MONGODB_ATLAS_URI=mongodb://localhost:27017
+  DB_NAME=azienda_erp_db
+  ```
+- **Config Python**: `/app/app/config.py` - Settings class con Pydantic
+- **Database Manager**: `/app/app/database.py` - Singleton Motor AsyncIOMotorClient
+
+### Collezioni Principali (44 totali)
+| Collezione | Documenti | Descrizione |
+|------------|-----------|-------------|
+| invoices | 3376 | Fatture XML importate |
+| corrispettivi | 1050 | Corrispettivi giornalieri |
+| dizionario_articoli | 6783 | Mappatura articoli |
+| assegni | 150 | Gestione assegni |
+| centri_costo | 8 | Centri di costo |
+| suppliers | N | Anagrafica fornitori |
+
+### Regole di Integrità Dati
+1. **MAI modificare DB_NAME** - Deve essere sempre `azienda_erp_db`
+2. **Indici univoci** su `invoice_key` per evitare duplicati fatture
+3. **Soft-delete** per assegni (`deleted: true`)
+4. **Timestamps UTC** per tutti i documenti (`created_at`, `updated_at`)
+
+### Connessione (database.py)
+```python
+class Database:
+    client: AsyncIOMotorClient = None
+    db: AsyncIOMotorDatabase = None
+    
+    @classmethod
+    def get_db(cls) -> AsyncIOMotorDatabase:
+        return cls.db
+```
+
+---
+
 ## Ultime Implementazioni (6 Gen 2026 - Sessione Corrente Parte 8)
 
 ### 24. Dizionario Articoli - Mappatura Prodotti ✅ COMPLETATA
