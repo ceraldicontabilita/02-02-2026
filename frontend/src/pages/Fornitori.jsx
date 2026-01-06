@@ -363,13 +363,15 @@ function StatCard({ icon: Icon, label, value, color, bgColor }) {
 }
 
 // Supplier Card con cambio rapido metodo
-function SupplierCard({ supplier, onEdit, onDelete, onViewInvoices, onChangeMetodo }) {
+function SupplierCard({ supplier, onEdit, onDelete, onViewInvoices, onChangeMetodo, onSearchPiva }) {
   const nome = supplier.ragione_sociale || supplier.denominazione || 'Senza nome';
   const hasIncomplete = !supplier.partita_iva || !supplier.email;
+  const hasPiva = !!supplier.partita_iva;
   const metodoKey = supplier.metodo_pagamento || 'bonifico';
   const metodo = getMetodo(metodoKey);
   const [showMetodoMenu, setShowMetodoMenu] = useState(false);
   const [updating, setUpdating] = useState(false);
+  const [searching, setSearching] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const buttonRef = React.useRef(null);
 
@@ -382,6 +384,13 @@ function SupplierCard({ supplier, onEdit, onDelete, onViewInvoices, onChangeMeto
     setShowMetodoMenu(false);
     await onChangeMetodo(supplier.id, newMetodo);
     setUpdating(false);
+  };
+
+  const handleSearchPiva = async () => {
+    if (!supplier.partita_iva) return;
+    setSearching(true);
+    await onSearchPiva(supplier);
+    setSearching(false);
   };
 
   const openMenu = () => {
