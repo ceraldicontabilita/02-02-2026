@@ -518,7 +518,7 @@ export default function Commercialista() {
     // Tabella con tutti gli assegni raggruppati per carnet
     let currentY = 55;
     
-    carnetsArray.forEach((carnet, idx) => {
+    carnetsArray.forEach((carnet, _idx) => {
       // Titolo carnet
       if (currentY > 250) {
         doc.addPage();

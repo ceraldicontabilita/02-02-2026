@@ -2159,7 +2159,7 @@ function KPICard({ title, value, color, icon }) {
   );
 }
 
-function NuovoMovimentoSalariForm({ dipendenti, onCreated, selectedMonth, selectedYear }) {
+function _NuovoMovimentoSalariForm({ dipendenti, onCreated, selectedMonth, selectedYear }) {
   const [formData, setFormData] = useState({
     dipendente_id: '',
     importo: '',

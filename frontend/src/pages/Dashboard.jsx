@@ -338,7 +338,7 @@ export default function Dashboard() {
                     cx="50%"
                     cy="50%"
                     outerRadius={90}
-                    label={({ nome, percentuale }) => `${percentuale}%`}
+                    label={({ percentuale }) => `${percentuale}%`}
                     labelLine={false}
                   >
                     {speseCategoria.categorie.map((entry, index) => (
