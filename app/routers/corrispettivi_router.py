@@ -878,7 +878,7 @@ async def get_template_csv():
 
 
 
-@router.delete("/elimina-duplicati")
+@router.post("/elimina-duplicati")
 async def elimina_duplicati_corrispettivi(anno: int = Query(...)) -> Dict[str, Any]:
     """
     Elimina i corrispettivi duplicati per un anno.
