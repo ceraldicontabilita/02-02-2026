@@ -3,9 +3,28 @@
 ## Project Overview
 Sistema ERP completo per gestione aziendale con focus su contabilità, fatturazione elettronica, magazzino, gestione fornitori e **contabilità analitica con centri di costo**.
 
-**Versione**: 4.0.0  
+**Versione**: 4.1.0  
 **Ultimo aggiornamento**: 6 Gennaio 2026  
 **Stack**: FastAPI (Python) + React + MongoDB
+
+---
+
+## Ultime Implementazioni (6 Gen 2026 - Sessione Corrente Parte 7)
+
+### 23. Bilancio Istantaneo Dashboard - COMPLETATA ✅
+- **Endpoint**: `GET /api/dashboard/bilancio-istantaneo?anno=XXXX`
+- **Widget Dashboard** con 4 card colorate:
+  - RICAVI (verde): totale da fatture emesse + corrispettivi
+  - COSTI (rosso): totale fatture acquisto
+  - SALDO IVA (blu): debito - credito
+  - UTILE LORDO (verde/rosso): ricavi - costi con margine %
+- **Visualizzazione**: automatica nella dashboard principale
+- File: `/app/app/routers/dashboard.py` (linee 534-590), `/app/frontend/src/pages/Dashboard.jsx` (linee 312-383)
+
+### Verifiche Sessione Corrente
+- **Routing Dashboard**: Verificato corretto (index: true su route "/")
+- **Reindirizzamento /corrispettivi**: NON è un bug del codice - era cache del browser
+- **Test automatici**: Tutti funzionanti
 
 ---
 
