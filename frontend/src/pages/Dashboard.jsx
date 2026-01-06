@@ -43,10 +43,11 @@ export default function Dashboard() {
         ]);
         
         // Carica dati per grafici avanzati
-        const [speseRes, confrontoRes, riconcRes] = await Promise.all([
+        const [speseRes, confrontoRes, riconcRes, imposteRes] = await Promise.all([
           api.get(`/api/dashboard/spese-per-categoria?anno=${anno}`).catch(() => ({ data: null })),
           api.get(`/api/dashboard/confronto-annuale?anno=${anno}`).catch(() => ({ data: null })),
-          api.get(`/api/dashboard/stato-riconciliazione?anno=${anno}`).catch(() => ({ data: null }))
+          api.get(`/api/dashboard/stato-riconciliazione?anno=${anno}`).catch(() => ({ data: null })),
+          api.get('/api/contabilita/calcolo-imposte?regione=campania').catch(() => ({ data: null }))
         ]);
         
         setTrendData(trendRes.data);
@@ -56,6 +57,7 @@ export default function Dashboard() {
         setSpeseCategoria(speseRes.data);
         setConfrontoAnnuale(confrontoRes.data);
         setStatoRiconciliazione(riconcRes.data);
+        setImposteData(imposteRes.data);
       } catch (e) {
         console.error("Dashboard error:", e);
         setErr("Backend non raggiungibile. Verifica che il server sia attivo.");
