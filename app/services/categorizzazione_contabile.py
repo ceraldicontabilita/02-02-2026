@@ -730,7 +730,7 @@ PATTERNS_FORNITORE = {
     # Imballaggi e carta
     "carta\\s*[&e]?\\s*party|artecarta|alfa\\s+service": "imballaggi",
     "carpino|mautoneone|ste\\.?cla": "imballaggi",
-    "sanson\\s+cart": "imballaggi",  # Rotoli termici
+    "sanson\\s+cart|m&g\\s+distribuzione": "imballaggi",  # Rotoli termici
     
     # Ferramenta e utensili
     "wuerth|wurth|berner": "ferramenta",
@@ -738,12 +738,26 @@ PATTERNS_FORNITORE = {
     "buonaiuto|scaramuzza|stabium|termoidraulica": "materiale_edile",
     "climaria|freddo.*caldo": "manutenzione",  # Impianti clima
     "ferlam|cmt\\s+srl|le\\.?fer": "materiale_edile",
-    "ferramenta\\s+f\\.?lli\\s+leo": "ferramenta",
+    "ferramenta\\s+f\\.?lli\\s+leo|icommerce": "ferramenta",
     
     # Attrezzature bar/ristorazione
     "fla\\s+s\\.?r\\.?l|f\\.?lli\\s+casolaro|imperatore\\s+hotellerie": "ferramenta",
     "ve\\.?mo\\.?\\s+hotellerie|ristosubito|priolinox": "ferramenta",
     "van\\s+berkel|spillatura|novacqua": "ferramenta",
+    "metro\\s+italia|magma\\s+srl": "ferramenta",  # Grossisti HoReCa
+    "gruppo\\s+martellozzo": "bevande_alcoliche",  # Spumanti
+    
+    # Segnaletica e comunicazione
+    "targhetdirect|cartelli|insegn": "pubblicita",
+    
+    # Disinfestazione e pest control
+    "r\\.?t\\.?a\\.?\\s+romana|pest\\s*west": "pulizia",
+    
+    # Pasti esterni e ristorazione
+    "vi\\.?ma\\.?\\s+s\\.?r\\.?l|mensa|pranzo\\s+aziendale": "rappresentanza",
+    
+    # Parcheggi e pedaggi
+    "campania\\s+2|autostrad|telepass|parking": "trasporti",
     
     # Utenze
     "enel|edison|a2a|iren|sorgenia": "utenze_elettricita",
