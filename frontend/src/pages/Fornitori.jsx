@@ -87,7 +87,7 @@ function SupplierModal({ isOpen, onClose, supplier, onSave, saving }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center" data-testid="supplier-modal-overlay">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center" data-testid="supplier-modal-overlay">
       {/* Overlay */}
       <div 
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
