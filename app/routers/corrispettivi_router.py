@@ -170,7 +170,7 @@ async def upload_corrispettivo_xml(
             try:
                 xml_content = content.decode(enc)
                 break
-            except:
+            except (UnicodeDecodeError, LookupError):
                 continue
         
         if not xml_content:
@@ -281,7 +281,7 @@ async def upload_corrispettivi_xml_bulk(
                 try:
                     xml_content = content.decode(enc)
                     break
-                except:
+                except (UnicodeDecodeError, LookupError):
                     continue
             
             if not xml_content:
@@ -481,7 +481,7 @@ async def upload_corrispettivi_zip(file: UploadFile = File(...)) -> Dict[str, An
                         try:
                             xml_content = xml_bytes.decode(enc)
                             break
-                        except:
+                        except (UnicodeDecodeError, LookupError):
                             continue
                     
                     if not xml_content:
