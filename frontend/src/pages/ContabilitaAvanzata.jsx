@@ -127,8 +127,9 @@ export default function ContabilitaAvanzata() {
             data-testid="btn-download-pdf"
           >
             <FileText className="w-4 h-4" />
-          Scarica PDF Dichiarazione
-        </button>
+            Scarica PDF Dichiarazione
+          </button>
+        </div>
       </div>
 
       {/* Message */}
