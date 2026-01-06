@@ -59,6 +59,9 @@ function PrimaNotaDesktop() {
   const [savingVers, setSavingVers] = useState(false);
   const [savingMov, setSavingMov] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [importingCSV, setImportingCSV] = useState(false);
+  const cassaCSVRef = useRef(null);
+  const bancaCSVRef = useRef(null);
 
   // Nomi mesi
   const mesiNomi = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
