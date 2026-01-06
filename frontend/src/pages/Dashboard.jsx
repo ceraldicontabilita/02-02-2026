@@ -648,7 +648,7 @@ export default function Dashboard() {
           <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 12, color: '#475569' }}>📄 Scarica Report PDF</div>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             <a 
-              href={`${process.env.REACT_APP_BACKEND_URL}/api/report-pdf/mensile?anno=${anno}&mese=${new Date().getMonth() + 1}`}
+              href={`/api/report-pdf/mensile?anno=${anno}&mese=${new Date().getMonth() + 1}`}
               target="_blank"
               rel="noopener noreferrer"
               style={{
@@ -664,7 +664,7 @@ export default function Dashboard() {
               📊 Report Mensile
             </a>
             <a 
-              href={`${process.env.REACT_APP_BACKEND_URL}/api/report-pdf/scadenze?giorni=30`}
+              href="/api/report-pdf/scadenze?giorni=30"
               target="_blank"
               rel="noopener noreferrer"
               style={{
@@ -680,7 +680,7 @@ export default function Dashboard() {
               ⏰ Report Scadenze
             </a>
             <a 
-              href={`${process.env.REACT_APP_BACKEND_URL}/api/report-pdf/dipendenti`}
+              href="/api/report-pdf/dipendenti"
               target="_blank"
               rel="noopener noreferrer"
               style={{
@@ -696,7 +696,7 @@ export default function Dashboard() {
               👥 Report Dipendenti
             </a>
             <a 
-              href={`${process.env.REACT_APP_BACKEND_URL}/api/report-pdf/magazzino`}
+              href="/api/report-pdf/magazzino"
               target="_blank"
               rel="noopener noreferrer"
               style={{
