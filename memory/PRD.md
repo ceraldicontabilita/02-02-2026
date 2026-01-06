@@ -115,6 +115,34 @@ Risolto errore JSX che causava pagina bianca su `/dipendenti`:
 - Rimosso codice duplicato (linee 955-1083) nel file `GestioneDipendenti.jsx`
 - Corretti caratteri non escapati nelle stringhe JSX
 
+### 8. Report PDF - COMPLETATA ✅
+**Nuovo Router `/api/report-pdf/`:**
+- `GET /mensile?anno=&mese=` - Report mensile con fatture, corrispettivi, IVA, movimenti
+- `GET /dipendenti` - Report dipendenti con contratti e libretti
+- `GET /scadenze?giorni=30` - Report scadenze imminenti
+- `GET /magazzino` - Report magazzino con valori per categoria
+
+### 9. Widget Scadenze Dashboard - COMPLETATA ✅
+**Nuovo Endpoint `/api/scadenze/dashboard-widget`:**
+- Alert fatture da pagare (30gg)
+- Alert contratti in scadenza (60gg)
+- Alert libretti sanitari scaduti/in scadenza
+- Alert F24 da versare
+- Scadenze fiscali prossime (15gg)
+
+### 10. Mapping Fatture → Piano dei Conti - COMPLETATA ✅
+**Nuovi Endpoint `/api/piano-conti/`:**
+- `POST /registra-tutte-fatture` - Registra 1326 fatture in contabilità
+- `POST /registra-corrispettivi` - Registra 352 corrispettivi in contabilità
+
+**Risultati:**
+- Piano dei Conti completamente popolato
+- Totale Attivo: € 580.848,98
+- Totale Passivo: € 693.199,51
+- Totale Ricavi: € 865.913,52
+- Totale Costi: € 606.608,08
+- Utile: € 259.305,44
+
 ---
 
 ## Implementazioni Precedenti (6 Gen 2026)
