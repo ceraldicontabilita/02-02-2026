@@ -114,7 +114,7 @@ export default function GestioneDipendenti() {
       // Usa il NUOVO endpoint prima-nota-salari
       let url = `/api/prima-nota-salari/salari?`;
       const params = [];
-      if (selectedYear) params.push(`anno=${selectedYear}`);
+      if (selectedYearPrimaNota) params.push(`anno=${selectedYearPrimaNota}`);
       if (selectedMonth) params.push(`mese=${selectedMonth}`);
       if (filtroDipendente) params.push(`dipendente=${encodeURIComponent(filtroDipendente)}`);
       url += params.join('&');
