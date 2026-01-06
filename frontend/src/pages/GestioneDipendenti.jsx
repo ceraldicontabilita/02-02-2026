@@ -954,6 +954,14 @@ export default function GestioneDipendenti() {
                       </td>
                       <td style={{ padding: 12, textAlign: 'center' }}>
                         <button
+                          onClick={() => setEditingSalario({...mov})}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, opacity: 0.7, marginRight: 8 }}
+                          title="Modifica"
+                          data-testid={`edit-salario-${mov.id}`}
+                        >
+                          ✏️
+                        </button>
+                        <button
                           onClick={() => handleDeleteSalario(mov.id)}
                           style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, opacity: 0.6 }}
                           title="Elimina"
