@@ -587,11 +587,14 @@ async def estrai_articoli_fatture(
         desc = art["_id"]
         cat = categorizza_articolo(desc)
         
+        # Calcola totale importo dalla lista prezzi
+        totale_importo = sum_prices(art.get("prezzi", []))
+        
         articolo = {
             "descrizione": desc,
             "occorrenze": art["count"],
             "n_fornitori": len(art.get("fornitori", [])),
-            "totale_importo": round(art.get("totale_importo", 0), 2),
+            "totale_importo": round(totale_importo, 2),
             **cat
         }
         articoli.append(articolo)
