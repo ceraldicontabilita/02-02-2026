@@ -13,6 +13,19 @@ const NAV_ITEMS = [
   { to: "/prima-nota", label: "Prima Nota", icon: "📒", short: "P.Nota" },
   { to: "/controllo-mensile", label: "Controllo Mensile", icon: "📈", short: "Contr." },
   { to: "/riconciliazione", label: "Riconciliazione", icon: "🔄", short: "Riconc." },
+  // Contabilità Analitica - Sottomenu
+  { 
+    label: "Contabilità Analitica", 
+    icon: "📈", 
+    short: "Analit.",
+    isSubmenu: true,
+    children: [
+      { to: "/centri-costo", label: "Centri di Costo", icon: "🏢" },
+      { to: "/ricette", label: "Ricette & Food Cost", icon: "🍰" },
+      { to: "/magazzino-dv", label: "Magazzino Doppia Verità", icon: "📦" },
+      { to: "/utile-obiettivo", label: "Utile Obiettivo", icon: "🎯" },
+    ]
+  },
   { to: "/magazzino", label: "Magazzino", icon: "🏭", short: "Magaz." },
   { to: "/ricerca-prodotti", label: "Ricerca Prodotti", icon: "🔍", short: "Ricerca" },
   { to: "/ordini-fornitori", label: "Ordini Fornitori", icon: "📝", short: "Ordini" },
