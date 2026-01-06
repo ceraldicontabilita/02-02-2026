@@ -733,11 +733,14 @@ export default function Fornitori() {
   const [modalOpen, setModalOpen] = useState(false);
   const [currentSupplier, setCurrentSupplier] = useState(null);
   const [saving, setSaving] = useState(false);
+  
+  // Debounce search per evitare troppe chiamate API
+  const debouncedSearch = useDebounce(search, 400);
 
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async (searchTerm) => {
     try {
       setLoading(true);
-      const params = search ? `?search=${encodeURIComponent(search)}` : '';
+      const params = searchTerm ? `?search=${encodeURIComponent(searchTerm)}` : '';
       const res = await api.get(`/api/suppliers${params}`);
       setSuppliers(res.data);
     } catch (error) {
@@ -745,11 +748,12 @@ export default function Fornitori() {
     } finally {
       setLoading(false);
     }
-  }, [search]);
+  }, []);
 
+  // Carica dati quando il debounced search cambia
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    loadData(debouncedSearch);
+  }, [debouncedSearch, loadData]);
 
   const filteredSuppliers = suppliers.filter(s => {
     if (filterMetodo !== 'tutti') {
