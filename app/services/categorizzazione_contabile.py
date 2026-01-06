@@ -870,18 +870,19 @@ class CategorizzatoreContabile:
         desc_lower = descrizione.lower().strip()
         forn_lower = fornitore.lower().strip()
         
-        # 1. Prova prima con i pattern descrizione (più precisi)
+        # 1. PRIORITA' 1: Prova prima con fornitore noto (più affidabile)
+        if forn_lower:
+            for pattern, categoria in self.patterns_fornitore.items():
+                if re.search(pattern, forn_lower, re.IGNORECASE):
+                    if categoria in self.patterns_descrizione:
+                        config = self.patterns_descrizione[categoria]
+                        return self._build_result(categoria, config, confidenza=0.85)
+        
+        # 2. PRIORITA' 2: Pattern descrizione (analisi del testo)
         for categoria, config in self.patterns_descrizione.items():
             for pattern in config["patterns"]:
                 if re.search(pattern, desc_lower, re.IGNORECASE):
                     return self._build_result(categoria, config, confidenza=0.9)
-        
-        # 2. Se non trovato, prova con fornitore
-        for pattern, categoria in self.patterns_fornitore.items():
-            if re.search(pattern, forn_lower, re.IGNORECASE):
-                if categoria in self.patterns_descrizione:
-                    config = self.patterns_descrizione[categoria]
-                    return self._build_result(categoria, config, confidenza=0.7)
         
         # 3. Fallback su "Acquisto merci" generico
         return CategorizzazioneResult(
