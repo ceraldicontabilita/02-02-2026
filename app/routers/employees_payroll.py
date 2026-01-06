@@ -208,7 +208,7 @@ async def upload_payslip_pdf(file: UploadFile = File(...)) -> Dict[str, Any]:
                         import calendar
                         ultimo_giorno = calendar.monthrange(int(anno), int(mese))[1]
                         data_pagamento = f"{anno}-{mese.zfill(2)}-{str(ultimo_giorno).zfill(2)}"
-                    except:
+                    except (ValueError, TypeError):
                         data_pagamento = f"{anno}-{mese.zfill(2)}-28"
                     
                     # Verifica se esiste già un movimento salari per questo dipendente/periodo

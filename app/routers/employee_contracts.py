@@ -177,7 +177,7 @@ async def generate_contract(employee_id: str, data: Dict[str, Any] = Body(...)) 
         try:
             dt = datetime.fromisoformat(str(employee_data["data_nascita"]).replace("Z", ""))
             employee_data["data_nascita"] = dt.strftime("%d/%m/%Y")
-        except:
+        except (ValueError, TypeError):
             pass
     
     try:
