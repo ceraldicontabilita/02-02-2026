@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import api from "../api";
-import { formatDateIT } from "../lib/utils";
 
 export default function MetodiPagamento() {
   const [loading, setLoading] = useState(true);

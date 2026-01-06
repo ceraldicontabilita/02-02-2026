@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import api from "../api";
-import { formatDateIT, formatEuro } from "../lib/utils";
+import { formatEuro } from "../lib/utils";
 import { useAnnoGlobale } from "../contexts/AnnoContext";
 
 export default function IVA() {
