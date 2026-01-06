@@ -34,7 +34,7 @@ async def get_cash_service() -> CashService:
     db = Database.get_db()
     movement_repo = CashMovementRepository(db[Collections.CASH_MOVEMENTS])
     
-    return CashService(movement_repo, corrispettivo_repo)
+    return CashService(movement_repo, None)
 
 
 @router.get(
