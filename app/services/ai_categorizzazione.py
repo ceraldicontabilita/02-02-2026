@@ -129,7 +129,7 @@ Rispondi SOLO con il JSON array, nessun altro testo."""
                 api_key=api_key,
                 session_id=f"categorizzazione_{i}",
                 system_message=system_message
-            ).with_model("openai", "gpt-5.2")
+            ).with_model("anthropic", "claude-sonnet-4-5-20250929")
             
             response = await chat.send_message(UserMessage(text=user_prompt))
             
