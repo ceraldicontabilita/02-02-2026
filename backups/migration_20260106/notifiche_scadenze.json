@@ -1,0 +1,14 @@
+[
+  {
+    "_id": "695be4335885212159d3b9cc",
+    "id": "2d099fd8-5b1a-482e-a46b-f6cb8576dcf7",
+    "data_scadenza": "2026-02-15",
+    "descrizione": "Test scadenza T1",
+    "tipo": "CUSTOM",
+    "importo": 0.0,
+    "priorita": "media",
+    "note": "",
+    "completata": false,
+    "created_at": "2026-01-05T16:17:55.507044"
+  }
+]

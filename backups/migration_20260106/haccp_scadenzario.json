@@ -1,0 +1,43 @@
+[
+  {
+    "_id": "695a148b74b11eabe1174031",
+    "id": "926a201f-3812-4f22-987e-89bd09c29c72",
+    "prodotto": "TEST_Mozzarella",
+    "lotto": "LOT123",
+    "data_scadenza": "2026-01-19",
+    "quantita": 5,
+    "unita": "kg",
+    "fornitore": "Test Fornitore",
+    "posizione": "Frigo Cucina",
+    "consumato": true,
+    "created_at": "2026-01-04T07:19:39.328428",
+    "data_consumo": "2026-01-04T07:19:39.393848"
+  },
+  {
+    "_id": "695a14a274b11eabe1174037",
+    "id": "ffc84feb-b102-4ab0-a429-c9d3c19dfec1",
+    "prodotto": "TEST_Mozzarella",
+    "lotto": "LOT123",
+    "data_scadenza": "2026-01-19",
+    "quantita": 5,
+    "unita": "kg",
+    "fornitore": "Test Fornitore",
+    "posizione": "Frigo Cucina",
+    "consumato": true,
+    "created_at": "2026-01-04T07:20:02.808892",
+    "data_consumo": "2026-01-04T07:20:02.844475"
+  },
+  {
+    "_id": "695a1c7366e55dfc805649d0",
+    "id": "ca986e4e-208d-4a2c-aeb8-0b8e71597348",
+    "prodotto": "TEST_Prodotto Scadenza",
+    "lotto": "LOT123",
+    "data_scadenza": "2026-01-19",
+    "quantita": 10,
+    "unita": "pz",
+    "fornitore": "Test Fornitore",
+    "posizione": "",
+    "consumato": false,
+    "created_at": "2026-01-04T07:53:23.429736"
+  }
+]

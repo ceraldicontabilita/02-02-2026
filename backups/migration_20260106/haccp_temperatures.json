@@ -1,0 +1,12 @@
+[
+  {
+    "_id": "6959382ca42b0559adb15e32",
+    "id": "d3ed8f18-6922-429c-b77b-36e290f7a705",
+    "equipment_name": "Frigo Principale",
+    "temperature": 3.5,
+    "location": "Cucina",
+    "notes": "",
+    "recorded_at": "2026-01-03T15:39:24.247Z",
+    "created_at": "2026-01-03T15:39:24.250954"
+  }
+]

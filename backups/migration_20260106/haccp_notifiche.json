@@ -1,0 +1,17 @@
+[
+  {
+    "_id": "695a6c54e8d37359aea6446b",
+    "id": "a2ee8649-5d4e-48ca-9db7-f3b2f6ee3001",
+    "tipo": "anomalia_temperatura",
+    "categoria": "frigorifero",
+    "equipaggiamento": "Frigo Test Anomalia",
+    "temperatura": 12.5,
+    "data": "2026-01-04",
+    "ora": "08:00",
+    "messaggio": "⚠️ Temperatura anomala 12.5°C su Frigo Test Anomalia (range: 0-4°C)",
+    "severita": "alta",
+    "letta": true,
+    "created_at": "2026-01-04T13:34:12.638547",
+    "letta_at": "2026-01-04T17:44:57.118359"
+  }
+]

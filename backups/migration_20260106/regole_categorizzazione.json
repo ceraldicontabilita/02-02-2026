@@ -1,0 +1,90 @@
+[
+  {
+    "_id": "695a86e04f87260a597ce876",
+    "id": "81da331f-a8e5-45e2-a9a9-a780ca18dd78",
+    "tipo": "fornitore",
+    "pattern": "ENEL",
+    "conto_dare": "05.02.02",
+    "conto_avere": "02.01.01",
+    "descrizione": "Utenze elettricità",
+    "attiva": true,
+    "created_at": "2026-01-04T15:27:28.629282"
+  },
+  {
+    "_id": "695a86e04f87260a597ce877",
+    "id": "59c6fb10-b332-414f-9c12-98446d428def",
+    "tipo": "fornitore",
+    "pattern": "ENI|EDISON",
+    "conto_dare": "05.02.02",
+    "conto_avere": "02.01.01",
+    "descrizione": "Utenze gas",
+    "attiva": true,
+    "created_at": "2026-01-04T15:27:28.629282"
+  },
+  {
+    "_id": "695a86e04f87260a597ce878",
+    "id": "9e85958f-6888-488d-acf2-6045b83936aa",
+    "tipo": "fornitore",
+    "pattern": "TELECOM|TIM|VODAFONE|WIND",
+    "conto_dare": "05.02.01",
+    "conto_avere": "02.01.01",
+    "descrizione": "Telefonia",
+    "attiva": true,
+    "created_at": "2026-01-04T15:27:28.629282"
+  },
+  {
+    "_id": "695a86e04f87260a597ce879",
+    "id": "0ed4e28a-564e-45e7-9c19-7ba5b007c5fc",
+    "tipo": "fornitore",
+    "pattern": "ALIMENTARI|FOOD|DISTRIBUZIONE",
+    "conto_dare": "05.01.01",
+    "conto_avere": "02.01.01",
+    "descrizione": "Acquisto merci",
+    "attiva": true,
+    "created_at": "2026-01-04T15:27:28.629282"
+  },
+  {
+    "_id": "695a86e04f87260a597ce87a",
+    "id": "f19aef90-cc7f-4efb-b74f-c84704479f56",
+    "tipo": "tipo_documento",
+    "pattern": "TD01",
+    "conto_dare": "05.01.01",
+    "conto_avere": "02.01.01",
+    "descrizione": "Fattura acquisto merce",
+    "attiva": true,
+    "created_at": "2026-01-04T15:27:28.629282"
+  },
+  {
+    "_id": "695a86e04f87260a597ce87b",
+    "id": "e0653500-6481-4b77-9e8f-699407993cfd",
+    "tipo": "tipo_documento",
+    "pattern": "TD04",
+    "conto_dare": "02.01.01",
+    "conto_avere": "05.01.01",
+    "descrizione": "Nota di credito ricevuta",
+    "attiva": true,
+    "created_at": "2026-01-04T15:27:28.629282"
+  },
+  {
+    "_id": "695a86e04f87260a597ce87c",
+    "id": "8963bb06-7d58-4ba6-a5bf-fa806768b566",
+    "tipo": "pagamento",
+    "pattern": "contanti|cassa",
+    "conto_dare": "02.01.01",
+    "conto_avere": "01.01.01",
+    "descrizione": "Pagamento in contanti",
+    "attiva": true,
+    "created_at": "2026-01-04T15:27:28.629282"
+  },
+  {
+    "_id": "695a86e04f87260a597ce87d",
+    "id": "8c0780d3-4dd6-4f1e-8196-5a9e1714cd70",
+    "tipo": "pagamento",
+    "pattern": "banca|bonifico",
+    "conto_dare": "02.01.01",
+    "conto_avere": "01.01.02",
+    "descrizione": "Pagamento tramite banca",
+    "attiva": true,
+    "created_at": "2026-01-04T15:27:28.629282"
+  }
+]

@@ -1,0 +1,337 @@
+[
+  {
+    "_id": "695a29a4084ca928d32bba56",
+    "id": "a16ad9fc-3928-442f-b580-dab678d74c70",
+    "tipo": "F24",
+    "descrizione": "IVA Gennaio 2026",
+    "importo": 1500.0,
+    "scadenza": "2026-01-07",
+    "periodo_riferimento": "01/2026",
+    "codici_tributo": [
+      {
+        "codice": "6001",
+        "importo": 1500
+      }
+    ],
+    "sezione": "erario",
+    "status": "pending",
+    "created_at": "2026-01-04T08:49:40.977081"
+  },
+  {
+    "_id": "695a29a4084ca928d32bba57",
+    "id": "9a90bef6-2692-472b-a8cb-c229f230a135",
+    "tipo": "F24",
+    "descrizione": "Ritenute IRPEF Dicembre",
+    "importo": 850.0,
+    "scadenza": "2026-01-04",
+    "periodo_riferimento": "12/2025",
+    "codici_tributo": [
+      {
+        "codice": "1001",
+        "importo": 850
+      }
+    ],
+    "sezione": "erario",
+    "status": "pending",
+    "created_at": "2026-01-04T08:49:40.977098"
+  },
+  {
+    "_id": "695a29a4084ca928d32bba58",
+    "id": "68771cb2-c88c-4535-8215-6f14b37f3670",
+    "tipo": "F24",
+    "descrizione": "INPS Contributi Q4",
+    "importo": 2200.0,
+    "scadenza": "2026-01-02",
+    "periodo_riferimento": "Q4/2025",
+    "codici_tributo": [
+      {
+        "codice": "5100",
+        "importo": 2200
+      }
+    ],
+    "sezione": "inps",
+    "status": "pending",
+    "created_at": "2026-01-04T08:49:40.977103"
+  },
+  {
+    "_id": "695a5553950ab39126b50080",
+    "id": "a6ae8b99-e7c0-4799-b4a8-15828ab48627",
+    "data_scadenza": "2025-06-16",
+    "scadenza_display": "16/06/2025",
+    "codice_fiscale": "04523831214",
+    "contribuente": "CERALDI GROUP S.R.L.",
+    "banca": "BANCO BPM S.P.A.",
+    "tributi_erario": [
+      {
+        "codice": "1701",
+        "mese_riferimento": "0005",
+        "anno": "2025",
+        "debito": 0.0,
+        "credito": 101.0,
+        "tipo": "Addizionale regionale IRPEF"
+      },
+      {
+        "codice": "1001",
+        "mese_riferimento": "0005",
+        "anno": "2025",
+        "debito": 1327.0,
+        "credito": 1.0,
+        "tipo": "Ritenute su redditi di lavoro dipendente"
+      },
+      {
+        "codice": "1704",
+        "mese_riferimento": "0005",
+        "anno": "2025",
+        "debito": 0.0,
+        "credito": 632.0,
+        "tipo": "Addizionale comunale IRPEF - Acconto"
+      }
+    ],
+    "tributi_inps": [
+      {
+        "codice": "5100",
+        "causale": "5100",
+        "matricola": "CXX",
+        "sede": "80143NAPOLI",
+        "mese": "05",
+        "anno": "2025",
+        "debito": 1752.0,
+        "credito": 0
+      },
+      {
+        "codice": "DM10",
+        "causale": "DM10",
+        "matricola": "5124776507",
+        "sede": "",
+        "mese": "05",
+        "anno": "2025",
+        "debito": 5042.0,
+        "credito": 0
+      }
+    ],
+    "tributi_regioni": [
+      {
+        "codice": "3802",
+        "mese_riferimento": "0005",
+        "anno": "2024",
+        "debito": 138.0,
+        "credito": 0
+      },
+      {
+        "codice": "3847",
+        "mese_riferimento": "0005",
+        "anno": "2025",
+        "debito": 7.0,
+        "credito": 0
+      },
+      {
+        "codice": "3847",
+        "mese_riferimento": "0005",
+        "anno": "2025",
+        "debito": 35.0,
+        "credito": 0
+      },
+      {
+        "codice": "3848",
+        "mese_riferimento": "0005",
+        "anno": "2024",
+        "debito": 55.0,
+        "credito": 0
+      }
+    ],
+    "tributi_imu": [],
+    "totale_debito": 8356.0,
+    "totale_credito": 734.0,
+    "saldo_finale": 7622.0,
+    "pagato": false,
+    "filename": "f24_test.pdf",
+    "source": "pdf_upload",
+    "created_at": "2026-01-04T11:56:03.062882"
+  },
+  {
+    "_id": "695a57934c7a02987372458c",
+    "id": "2f866c97-0d5a-4322-88a8-828864430e71",
+    "data_scadenza": "2025-03-16",
+    "scadenza_display": "16/03/2025",
+    "codice_fiscale": "04523831214",
+    "contribuente": "CERALDI GROUP S.R.L.",
+    "banca": "BANCO BPM S.P.A.",
+    "tributi_erario": [
+      {
+        "codice": "1701",
+        "mese_riferimento": "0002",
+        "anno": "2025",
+        "debito": 0.0,
+        "credito": 92.0,
+        "tipo": "Addizionale regionale IRPEF"
+      },
+      {
+        "codice": "1001",
+        "mese_riferimento": "0002",
+        "anno": "2025",
+        "debito": 1712.0,
+        "credito": 30.0,
+        "tipo": "Ritenute su redditi di lavoro dipendente"
+      },
+      {
+        "codice": "1704",
+        "mese_riferimento": "0002",
+        "anno": "2025",
+        "debito": 0.0,
+        "credito": 406.0,
+        "tipo": "Addizionale comunale IRPEF - Acconto"
+      }
+    ],
+    "tributi_inps": [
+      {
+        "codice": "5100",
+        "causale": "5100",
+        "matricola": "CXX",
+        "sede": "80143NAPOLI",
+        "mese": "02",
+        "anno": "2025",
+        "debito": 2102.0,
+        "credito": 0
+      },
+      {
+        "codice": "DM10",
+        "causale": "DM10",
+        "matricola": "5124776507",
+        "sede": "",
+        "mese": "02",
+        "anno": "2025",
+        "debito": 3214.0,
+        "credito": 0
+      }
+    ],
+    "tributi_regioni": [
+      {
+        "codice": "3802",
+        "mese_riferimento": "0002",
+        "anno": "2024",
+        "debito": 140.0,
+        "credito": 0
+      },
+      {
+        "codice": "3848",
+        "mese_riferimento": "0002",
+        "anno": "2024",
+        "debito": 55.0,
+        "credito": 0
+      }
+    ],
+    "tributi_imu": [],
+    "totale_debito": 7223.0,
+    "totale_credito": 528.0,
+    "saldo_finale": 6695.0,
+    "pagato": false,
+    "filename": "f24 contributi (2).pdf",
+    "source": "pdf_upload",
+    "created_at": "2026-01-04T12:05:39.745774"
+  },
+  {
+    "_id": "695a57a34c7a02987372458d",
+    "id": "d79f2f4b-42a5-450f-90cd-d402460dc5d6",
+    "data_scadenza": "2025-08-20",
+    "scadenza_display": "20/08/2025",
+    "codice_fiscale": "04523831214",
+    "contribuente": "CERALDI GROUP S.R.L.",
+    "banca": "TEST_BANCA_UPDATED",
+    "tributi_erario": [
+      {
+        "codice": "1001",
+        "mese_riferimento": "0007",
+        "anno": "2025",
+        "debito": 1676.0,
+        "credito": 1.0,
+        "tipo": "Ritenute su redditi di lavoro dipendente"
+      },
+      {
+        "codice": "1701",
+        "mese_riferimento": "0007",
+        "anno": "2025",
+        "debito": 0.0,
+        "credito": 101.0,
+        "tipo": "Addizionale regionale IRPEF"
+      },
+      {
+        "codice": "1704",
+        "mese_riferimento": "0007",
+        "anno": "2025",
+        "debito": 0.0,
+        "credito": 772.0,
+        "tipo": "Addizionale comunale IRPEF - Acconto"
+      },
+      {
+        "codice": "1001",
+        "mese_riferimento": "0007",
+        "anno": "2025",
+        "debito": 67.0,
+        "credito": 63.0,
+        "tipo": "Ritenute su redditi di lavoro dipendente"
+      }
+    ],
+    "tributi_inps": [
+      {
+        "codice": "5100",
+        "causale": "5100",
+        "matricola": "CXX",
+        "sede": "80143NAPOLI",
+        "mese": "07",
+        "anno": "2025",
+        "debito": 1752.0,
+        "credito": 0
+      },
+      {
+        "codice": "DM10",
+        "causale": "DM10",
+        "matricola": "5124776507",
+        "sede": "",
+        "mese": "07",
+        "anno": "2025",
+        "debito": 5804.0,
+        "credito": 0
+      }
+    ],
+    "tributi_regioni": [
+      {
+        "codice": "3802",
+        "mese_riferimento": "0007",
+        "anno": "2024",
+        "debito": 138.0,
+        "credito": 0
+      },
+      {
+        "codice": "3847",
+        "mese_riferimento": "0007",
+        "anno": "2025",
+        "debito": 7.0,
+        "credito": 0
+      },
+      {
+        "codice": "3847",
+        "mese_riferimento": "0007",
+        "anno": "2025",
+        "debito": 35.0,
+        "credito": 0
+      },
+      {
+        "codice": "3848",
+        "mese_riferimento": "0007",
+        "anno": "2024",
+        "debito": 55.0,
+        "credito": 0
+      }
+    ],
+    "tributi_imu": [],
+    "totale_debito": 9534.0,
+    "totale_credito": 937.0,
+    "saldo_finale": 8597.0,
+    "pagato": false,
+    "filename": "f24 contributi (5).pdf",
+    "source": "pdf_upload",
+    "created_at": "2026-01-04T12:05:55.608278",
+    "note": "TEST_note_updated_2026-01-04T12:59:46.653536",
+    "updated_at": "2026-01-04T12:59:46.686137"
+  }
+]

@@ -1,0 +1,11 @@
+[
+  {
+    "_id": "695bc271ed8cb17c5f4aea83",
+    "tipo": "prima_nota_cassa",
+    "anno": 2025,
+    "mese": 1,
+    "email": "test@test.com",
+    "data_invio": "2026-01-05T13:53:53.670626+00:00",
+    "success": true
+  }
+]

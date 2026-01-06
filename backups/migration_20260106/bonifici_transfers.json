@@ -1,0 +1,140 @@
+[
+  {
+    "_id": "695cae545598ff8d9c0cfdad",
+    "data": "2024-07-15T00:00:00+00:00",
+    "importo": 1506.0,
+    "valuta": "EUR",
+    "ordinante": {
+      "nome": null,
+      "iban": "MB234005"
+    },
+    "beneficiario": {
+      "nome": null,
+      "iban": "IT05E0503403406000000005790"
+    },
+    "causale": "Ceraldi Antonietta saldo stip 6-24",
+    "cro_trn": "MB0B21872405",
+    "banca": null,
+    "note": null,
+    "source_file": "1__1_.pdf",
+    "job_id": "115bc143-7aec-4ec5-8892-2db7709f277f",
+    "id": "25c1b27f-a115-47fa-989e-8db1c15bfacb",
+    "dedup_key": "CRO:MB0B21872405",
+    "created_at": "2026-01-06T06:40:20.549811+00:00"
+  },
+  {
+    "_id": "695cae545598ff8d9c0cfdae",
+    "data": "2024-06-24T00:00:00+00:00",
+    "importo": 1824.0,
+    "valuta": "EUR",
+    "ordinante": {
+      "nome": null,
+      "iban": "MB234005"
+    },
+    "beneficiario": {
+      "nome": null,
+      "iban": "IT05E0503403406000000005790"
+    },
+    "causale": "Ceraldi Antonietta Stip 4-5-2024",
+    "cro_trn": "MB0B09460789",
+    "banca": null,
+    "note": null,
+    "source_file": "1__2_.pdf",
+    "job_id": "115bc143-7aec-4ec5-8892-2db7709f277f",
+    "id": "4544a8dd-0667-495b-b839-eb13eafd6c4f",
+    "dedup_key": "CRO:MB0B09460789",
+    "created_at": "2026-01-06T06:40:20.607952+00:00"
+  },
+  {
+    "_id": "695cae545598ff8d9c0cfdaf",
+    "data": "2025-06-06T00:00:00+00:00",
+    "importo": 5405.0,
+    "valuta": "EUR",
+    "ordinante": {
+      "nome": null,
+      "iban": "MB234005"
+    },
+    "beneficiario": {
+      "nome": null,
+      "iban": "IT05E0503403406000000005790"
+    },
+    "causale": "Ceraldi Antonietta stip da 1/5 2025",
+    "cro_trn": "MB0B91273864",
+    "banca": null,
+    "note": null,
+    "source_file": "1__3_.pdf",
+    "job_id": "115bc143-7aec-4ec5-8892-2db7709f277f",
+    "id": "92445e15-7379-4427-b8ab-8362f0b4ca24",
+    "dedup_key": "CRO:MB0B91273864",
+    "created_at": "2026-01-06T06:40:20.653982+00:00"
+  },
+  {
+    "_id": "695cae545598ff8d9c0cfdb0",
+    "data": "2024-12-31T00:00:00+00:00",
+    "importo": 5911.0,
+    "valuta": "EUR",
+    "ordinante": {
+      "nome": null,
+      "iban": "MB234005"
+    },
+    "beneficiario": {
+      "nome": null,
+      "iban": "IT05E0503403406000000005790"
+    },
+    "causale": "Ceraldi Antonietta stip 2024",
+    "cro_trn": "MB0B11930030",
+    "banca": null,
+    "note": null,
+    "source_file": "1__4_.pdf",
+    "job_id": "115bc143-7aec-4ec5-8892-2db7709f277f",
+    "id": "0f63c78e-94d5-4c62-83bc-4c28f0488c30",
+    "dedup_key": "CRO:MB0B11930030",
+    "created_at": "2026-01-06T06:40:20.699871+00:00"
+  },
+  {
+    "_id": "695cae545598ff8d9c0cfdb1",
+    "data": "2025-05-07T00:00:00+00:00",
+    "importo": 2549.0,
+    "valuta": "EUR",
+    "ordinante": {
+      "nome": null,
+      "iban": "MB234005"
+    },
+    "beneficiario": {
+      "nome": null,
+      "iban": "IT05E0503403406000000005790"
+    },
+    "causale": "Ceraldi Antonietta stipendio 11-12-2024",
+    "cro_trn": "MB0B75922593",
+    "banca": null,
+    "note": null,
+    "source_file": "1__5_.pdf",
+    "job_id": "115bc143-7aec-4ec5-8892-2db7709f277f",
+    "id": "03487e6c-29e0-4fc0-9869-b3718638c070",
+    "dedup_key": "CRO:MB0B75922593",
+    "created_at": "2026-01-06T06:40:20.745656+00:00"
+  },
+  {
+    "_id": "695cae545598ff8d9c0cfdb2",
+    "data": "2022-08-01T00:00:00+00:00",
+    "importo": 251.0,
+    "valuta": "EUR",
+    "ordinante": {
+      "nome": null,
+      "iban": null
+    },
+    "beneficiario": {
+      "nome": null,
+      "iban": "IT18N0305801604100571879687"
+    },
+    "causale": "Ariante stipendio luglio 2022",
+    "cro_trn": "5034900096822213480340003400IT",
+    "banca": null,
+    "note": null,
+    "source_file": "1__6_.pdf",
+    "job_id": "115bc143-7aec-4ec5-8892-2db7709f277f",
+    "id": "503ac442-d41f-4f5e-bd4f-1dff250f5e9c",
+    "dedup_key": "CRO:5034900096822213480340003400IT",
+    "created_at": "2026-01-06T06:40:20.777883+00:00"
+  }
+]

@@ -1,0 +1,101 @@
+[
+  {
+    "_id": "695c5d7d9ca8b7c9d250ec1b",
+    "id": "2b314b02-e662-473d-bd04-ce291e6d8a02",
+    "status": "created",
+    "created_at": "2026-01-06T00:55:25.047654+00:00",
+    "updated_at": "2026-01-06T00:55:25.047654+00:00",
+    "total_files": 0,
+    "processed_files": 0,
+    "errors": 0,
+    "imported_files": 0
+  },
+  {
+    "_id": "695c5da49ca8b7c9d250ec1c",
+    "id": "e7d7d059-380d-4deb-b80c-cb42a62ec76b",
+    "status": "created",
+    "created_at": "2026-01-06T00:56:04.760073+00:00",
+    "updated_at": "2026-01-06T00:56:04.760073+00:00",
+    "total_files": 0,
+    "processed_files": 0,
+    "errors": 0,
+    "imported_files": 0
+  },
+  {
+    "_id": "695c5daa9ca8b7c9d250ec1d",
+    "id": "82273588-1066-425c-9ffe-5a2aca0df59b",
+    "status": "created",
+    "created_at": "2026-01-06T00:56:10.736801+00:00",
+    "updated_at": "2026-01-06T00:56:10.736801+00:00",
+    "total_files": 0,
+    "processed_files": 0,
+    "errors": 0,
+    "imported_files": 0
+  },
+  {
+    "_id": "695c5dc29ca8b7c9d250ec1e",
+    "id": "e4b5a1c1-15b9-4add-a810-df04e391b70e",
+    "status": "created",
+    "created_at": "2026-01-06T00:56:34.549598+00:00",
+    "updated_at": "2026-01-06T00:56:34.549598+00:00",
+    "total_files": 0,
+    "processed_files": 0,
+    "errors": 0,
+    "imported_files": 0
+  },
+  {
+    "_id": "695c5f09f656e57ded5eebb7",
+    "id": "28bf9b04-5bdd-481b-80df-54b9653ec339",
+    "status": "created",
+    "created_at": "2026-01-06T01:02:01.161930+00:00",
+    "updated_at": "2026-01-06T01:02:01.161930+00:00",
+    "total_files": 0,
+    "processed_files": 0,
+    "errors": 0,
+    "imported_files": 0
+  },
+  {
+    "_id": "695c5f13f656e57ded5eebb8",
+    "id": "2a2e73c1-c8c6-4706-86a7-5617c7a87ddc",
+    "status": "created",
+    "created_at": "2026-01-06T01:02:11.378617+00:00",
+    "updated_at": "2026-01-06T01:02:11.378617+00:00",
+    "total_files": 0,
+    "processed_files": 0,
+    "errors": 0,
+    "imported_files": 0
+  },
+  {
+    "_id": "695c5f13f656e57ded5eebb9",
+    "id": "278dbbbd-62fe-48f3-9604-4fa981fa1b34",
+    "status": "created",
+    "created_at": "2026-01-06T01:02:11.492085+00:00",
+    "updated_at": "2026-01-06T01:02:11.492085+00:00",
+    "total_files": 0,
+    "processed_files": 0,
+    "errors": 0,
+    "imported_files": 0
+  },
+  {
+    "_id": "695cadd35598ff8d9c0cfdab",
+    "id": "115bc143-7aec-4ec5-8892-2db7709f277f",
+    "status": "completed",
+    "created_at": "2026-01-06T06:38:11.213653+00:00",
+    "updated_at": "2026-01-06T06:40:20.781166+00:00",
+    "total_files": 6,
+    "processed_files": 6,
+    "errors": 0,
+    "imported_files": 6
+  },
+  {
+    "_id": "695cadd35598ff8d9c0cfdac",
+    "id": "c8cbbcfe-972e-484d-96f5-61cb7e1da898",
+    "status": "created",
+    "created_at": "2026-01-06T06:38:11.216546+00:00",
+    "updated_at": "2026-01-06T06:38:11.216546+00:00",
+    "total_files": 0,
+    "processed_files": 0,
+    "errors": 0,
+    "imported_files": 0
+  }
+]
