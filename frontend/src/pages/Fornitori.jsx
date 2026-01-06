@@ -98,8 +98,16 @@ function SupplierModal({ isOpen, onClose, supplier, onSave, saving }) {
       
       {/* Modal */}
       <div 
-        className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden"
-        style={{ animation: 'modalIn 0.2s ease-out' }}
+        style={{
+          position: 'relative',
+          backgroundColor: 'white',
+          borderRadius: '16px',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          width: '100%',
+          maxWidth: '672px',
+          maxHeight: '90vh',
+          overflow: 'hidden'
+        }}
         data-testid="supplier-modal"
       >
         {/* Header */}
