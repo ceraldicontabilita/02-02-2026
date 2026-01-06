@@ -875,3 +875,69 @@ async def get_template_csv():
         media_type="text/csv",
         headers={"Content-Disposition": "attachment; filename=template_corrispettivi.csv"}
     )
+
+
+
+@router.delete("/elimina-duplicati")
+async def elimina_duplicati_corrispettivi(anno: int = Query(...)) -> Dict[str, Any]:
+    """
+    Elimina i corrispettivi duplicati per un anno.
+    Mantiene solo il record con l'importo più alto per ogni data.
+    """
+    from collections import defaultdict
+    
+    db = Database.get_db()
+    
+    date_start = f"{anno}-01-01"
+    date_end = f"{anno}-12-31"
+    
+    # Recupera tutti i corrispettivi dell'anno
+    corrs = await db["corrispettivi"].find(
+        {"data": {"$gte": date_start, "$lte": date_end}},
+        {"_id": 1, "data": 1, "totale": 1, "source": 1}
+    ).to_list(10000)
+    
+    count_prima = len(corrs)
+    
+    # Raggruppa per data
+    by_date = defaultdict(list)
+    for c in corrs:
+        by_date[c.get('data')].append(c)
+    
+    deleted = 0
+    date_con_duplicati = 0
+    
+    for data, items in by_date.items():
+        if len(items) > 1:
+            date_con_duplicati += 1
+            # Ordina per totale decrescente, tieni il primo
+            items.sort(key=lambda x: float(x.get('totale', 0) or 0), reverse=True)
+            to_delete = items[1:]  # Tutti tranne il primo
+            
+            for item in to_delete:
+                await db["corrispettivi"].delete_one({"_id": item["_id"]})
+                deleted += 1
+    
+    # Conta dopo
+    count_dopo = await db["corrispettivi"].count_documents(
+        {"data": {"$gte": date_start, "$lte": date_end}}
+    )
+    
+    # Calcola nuovo totale
+    pipeline = [
+        {"$match": {"data": {"$gte": date_start, "$lte": date_end}}},
+        {"$group": {"_id": None, "totale": {"$sum": "$totale"}}}
+    ]
+    result = await db["corrispettivi"].aggregate(pipeline).to_list(1)
+    nuovo_totale = result[0]["totale"] if result else 0
+    
+    return {
+        "success": True,
+        "message": f"Eliminati {deleted} duplicati per {anno}",
+        "anno": anno,
+        "corrispettivi_prima": count_prima,
+        "corrispettivi_dopo": count_dopo,
+        "duplicati_eliminati": deleted,
+        "date_con_duplicati": date_con_duplicati,
+        "nuovo_totale": round(nuovo_totale, 2)
+    }
