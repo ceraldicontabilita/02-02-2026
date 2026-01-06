@@ -521,6 +521,7 @@ export default function GestioneDipendenti() {
           icon="👤"
           label="Anagrafica"
           color="#2196f3"
+          testId="tab-anagrafica"
         />
         <TabButton 
           active={activeTab === 'salari'} 
@@ -528,6 +529,7 @@ export default function GestioneDipendenti() {
           icon="📒"
           label="Prima Nota"
           color="#ff9800"
+          testId="tab-prima-nota"
         />
         <TabButton 
           active={activeTab === 'libro-unico'} 
@@ -535,6 +537,7 @@ export default function GestioneDipendenti() {
           icon="📚"
           label="Libro Unico"
           color="#10b981"
+          testId="tab-libro-unico"
         />
         <TabButton 
           active={activeTab === 'libretti'} 
@@ -542,6 +545,7 @@ export default function GestioneDipendenti() {
           icon="🏥"
           label="Libretti Sanitari"
           color="#ef4444"
+          testId="tab-libretti"
         />
       </div>
 
