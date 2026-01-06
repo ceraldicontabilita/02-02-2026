@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { formatEuro } from '../lib/utils';
 import { FileText } from 'lucide-react';
+import { useAnnoGlobale } from '../contexts/AnnoContext';
 
 // Use empty string for relative URLs (same as api.js)
 const API = '';
 
 export default function ContabilitaAvanzata() {
+  const { anno: selectedYear } = useAnnoGlobale();
   const [imposte, setImposte] = useState(null);
   const [statistiche, setStatistiche] = useState(null);
   const [bilancio, setBilancio] = useState(null);
@@ -20,9 +22,9 @@ export default function ContabilitaAvanzata() {
     setLoading(true);
     try {
       const [impRes, statRes, bilRes, aliqRes] = await Promise.all([
-        fetch(`${API}/api/contabilita/calcolo-imposte?regione=${regione}`),
-        fetch(`${API}/api/contabilita/statistiche-categorizzazione`),
-        fetch(`${API}/api/contabilita/bilancio-dettagliato`),
+        fetch(`${API}/api/contabilita/calcolo-imposte?regione=${regione}&anno=${selectedYear}`),
+        fetch(`${API}/api/contabilita/statistiche-categorizzazione?anno=${selectedYear}`),
+        fetch(`${API}/api/contabilita/bilancio-dettagliato?anno=${selectedYear}`),
         fetch(`${API}/api/contabilita/aliquote-irap`)
       ]);
       
@@ -37,7 +39,7 @@ export default function ContabilitaAvanzata() {
       console.error('Errore caricamento dati:', err);
     }
     setLoading(false);
-  }, [regione]);
+  }, [regione, selectedYear]);
 
   useEffect(() => {
     fetchData();
