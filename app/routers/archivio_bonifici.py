@@ -191,12 +191,12 @@ def extract_transfers_from_text(text: str) -> List[Dict[str, Any]]:
 # ---- ENDPOINTS ----
 
 @router.post("/jobs")
-async def create_job():
+async def create_job() -> Dict[str, Any]:
     """Crea un nuovo job di import."""
     db = Database.get_db()
     job_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc)
-    job = {
+    job_data = {
         'id': job_id,
         'status': 'created',
         'created_at': now.isoformat(),
@@ -206,9 +206,8 @@ async def create_job():
         'errors': 0,
         'imported_files': 0,
     }
-    await db.bonifici_jobs.insert_one(job)
-    job.pop('_id', None)
-    return job
+    await db.bonifici_jobs.insert_one({**job_data})
+    return job_data
 
 
 @router.get("/jobs")
