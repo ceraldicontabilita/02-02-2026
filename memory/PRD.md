@@ -1,11 +1,42 @@
 # PRD - Azienda Semplice ERP
 
 ## Project Overview
-Sistema ERP completo per gestione aziendale con focus su contabilità, fatturazione elettronica, magazzino e gestione fornitori.
+Sistema ERP completo per gestione aziendale con focus su contabilità, fatturazione elettronica, magazzino, gestione fornitori e **contabilità analitica con centri di costo**.
 
-**Versione**: 3.4.0  
+**Versione**: 3.5.0  
 **Ultimo aggiornamento**: 6 Gennaio 2026  
 **Stack**: FastAPI (Python) + React + MongoDB
+
+---
+
+## Ultime Implementazioni (6 Gen 2026 - Sessione Corrente)
+
+### 1. Import Ricette - COMPLETATA ✅
+- **90 ricette** importate nel sistema (87 dal JSON utente + 3 pre-esistenti)
+- **88 ricette pasticceria**, 1 bar (Cappuccino), 1 dolci (Tiramisù)
+- Endpoint: `POST /api/ricette/import`
+- Collegamento automatico ingredienti → magazzino per calcolo food cost
+
+### 2. Fix Selettore Anno - COMPLETATA ✅
+- Aggiunto **anno 2023** al selettore globale
+- Ora disponibili: 2023, 2024, 2025, 2026, 2027
+- File modificato: `/app/frontend/src/contexts/AnnoContext.jsx`
+
+### 3. Fix Pagina IVA - COMPLETATA ✅
+- **Rimosso riepilogo IVA annuale duplicato** (c'erano card ripetute sopra la tabella)
+- I dati sono correttamente differenti per ogni mese (verificato 2024)
+- File modificato: `/app/frontend/src/pages/IVA.jsx`
+
+### 4. Fix Eliminazione Fornitore - COMPLETATA ✅
+- Corretto parsing del messaggio di errore nel frontend
+- Ora il frontend legge correttamente `error.response.data.message`
+- La modale di conferma "force delete" funziona correttamente
+- File modificato: `/app/frontend/src/pages/Fornitori.jsx`
+
+### 5. Auto-Associazione Fornitori da XML - GIÀ IMPLEMENTATA ✅
+- Quando si carica una fattura XML, il fornitore viene **creato automaticamente** se non esiste
+- Funzione: `ensure_supplier_exists()` in `/app/app/routers/fatture_upload.py`
+- I dati fornitore (P.IVA, ragione sociale, indirizzo) vengono estratti dall'XML
 
 ---
 
