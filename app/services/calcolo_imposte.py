@@ -191,6 +191,19 @@ class CalcolatoreImposte:
                 applicabile_irap=True
             ))
         
+        # Noleggio auto lungo termine: 80% non deducibile per uso promiscuo
+        costo_noleggio_auto = costi_per_tipo.get("05.02.22", {}).get("importo", 0)
+        if costo_noleggio_auto > 0:
+            # Limite annuo €3.615,20 + 80% non deducibile per uso promiscuo
+            quota_indeducibile = costo_noleggio_auto * 0.80
+            variazioni_aumento_ires.append(VariazioneFiscale(
+                descrizione="Noleggio auto uso promiscuo - quota non deducibile (80%)",
+                importo=quota_indeducibile,
+                tipo="aumento",
+                norma_riferimento="Art. 164 TUIR",
+                applicabile_irap=True
+            ))
+        
         # IMU non deducibile ai fini IRES (deducibile IRAP)
         costo_imu = costi_per_tipo.get("05.06.05", {}).get("importo", 0)
         if costo_imu > 0:
