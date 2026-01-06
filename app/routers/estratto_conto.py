@@ -171,7 +171,7 @@ async def import_estratto_conto(file: UploadFile = File(...)) -> Dict[str, Any]:
                             parts = str(v).split('/')
                             try:
                                 data_contabile = date(int(parts[2]), int(parts[1]), int(parts[0]))
-                            except:
+                            except (ValueError, TypeError, IndexError):
                                 pass
                     elif 'data valuta' in h:
                         if isinstance(v, (datetime, date)):
@@ -182,7 +182,7 @@ async def import_estratto_conto(file: UploadFile = File(...)) -> Dict[str, Any]:
                         else:
                             try:
                                 importo = float(str(v).replace('.', '').replace(',', '.'))
-                            except:
+                            except (ValueError, TypeError):
                                 pass
                     elif 'descri' in h:
                         descrizione = str(v)
