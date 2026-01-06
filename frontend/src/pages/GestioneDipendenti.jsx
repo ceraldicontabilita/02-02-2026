@@ -2130,11 +2130,13 @@ function TabButton({ active, onClick, icon, label, color, testId }) {
         fontWeight: active ? 'bold' : 'normal',
         background: active ? color : 'transparent',
         color: active ? 'white' : '#64748b',
-        transition: 'all 0.2s'
+        transition: 'all 0.2s',
+        position: 'relative',
+        zIndex: 10,
+        pointerEvents: 'auto'
       }}
     >
       <span>{icon}</span>
-      <span style={{ display: 'none', '@media (min-width: 640px)': { display: 'inline' } }}>{label}</span>
       <span className="tab-label">{label}</span>
     </button>
   );
