@@ -46,7 +46,8 @@ export default function Dashboard() {
           api.get(`/api/dashboard/trend-mensile?anno=${anno}`).catch(() => ({ data: null })),
           api.get(`/api/pos-accredito/calendario-mensile/${anno}/${new Date().getMonth() + 1}`).catch(() => ({ data: null })),
           api.get('/api/haccp-completo/notifiche?solo_non_lette=true&limit=1').catch(() => ({ data: { non_lette: 0 } })),
-          api.get('/api/scadenze/prossime?giorni=30&limit=8').catch(() => ({ data: null }))
+          api.get('/api/scadenze/prossime?giorni=30&limit=8').catch(() => ({ data: null })),
+          api.get(`/api/dashboard/bilancio-istantaneo?anno=${anno}`).catch(() => ({ data: null }))
         ]);
         
         // Carica dati per grafici avanzati
@@ -61,6 +62,7 @@ export default function Dashboard() {
         setPosCalendario(posRes.data);
         setNotificheHaccp(notifRes.data.non_lette || 0);
         setScadenzeData(scadenzeRes.data);
+        setBilancioIstantaneo(bilancioRes.data);
         setSpeseCategoria(speseRes.data);
         setConfrontoAnnuale(confrontoRes.data);
         setStatoRiconciliazione(riconcRes.data);
