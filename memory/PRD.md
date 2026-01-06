@@ -236,6 +236,38 @@ Risolto errore JSX che causava pagina bianca su `/dipendenti`:
 - 24/24 test backend passati (API + validazione + Excel)
 - Frontend verificato con tutti i 3 tab funzionanti
 
+### 14. Export PDF Dichiarazione Redditi - COMPLETATA ✅ (6 Gen 2026)
+**Nuovo Endpoint:**
+- `GET /api/contabilita/export/pdf-dichiarazione?anno=2024&regione=campania`
+
+**PDF Generato Include:**
+1. Riepilogo Imposte (Utile, Reddito Imponibile, IRES, IRAP, Totale)
+2. Variazioni Fiscali in Aumento (telefonia 20%, carburante 80%, noleggio auto)
+3. Variazioni Fiscali in Diminuzione
+4. Calcolo IRAP Dettagliato
+5. Quadro Riassuntivo IRES (righi RF1, RF5, RF55, RF63, RN4)
+
+**Frontend:**
+- Pulsante "Scarica PDF Dichiarazione" in `/contabilita`
+- Link nella sezione Report PDF della Dashboard
+
+### 15. Dashboard Widget IRES/IRAP - COMPLETATA ✅ (6 Gen 2026)
+**Nuovo Widget nella Dashboard:**
+- Calcolo Imposte anno corrente con regione Campania
+- Utile Civilistico, IRES (24%), IRAP (4.97%), Totale Imposte
+- Sintesi variazioni fiscali (aumento/diminuzione)
+- Link rapido a pagina /contabilita
+
+**Nuove Azioni Rapide:**
+- Link a IRES/IRAP
+- Link a Regole Categorizzazione
+
+### 16. Fix Tab Click GestioneDipendenti - COMPLETATA ✅ (6 Gen 2026)
+- Aggiunto `position: relative`, `zIndex: 10`, `pointerEvents: auto` ai TabButton
+- Tutti i 5 tab ora cliccabili nei test automatici
+
+**Test:** 23/23 passati (100%)
+
 ---
 
 ## Implementazioni Precedenti (6 Gen 2026)
