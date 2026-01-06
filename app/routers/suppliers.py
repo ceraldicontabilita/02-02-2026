@@ -309,13 +309,16 @@ async def list_suppliers(
     db = Database.get_db()
     
     query = {}
-    if search:
+    if search and search.strip():
+        search_term = search.strip()
+        logger.info(f"[SUPPLIERS] Searching for: '{search_term}'")
         query["$or"] = [
-            {"denominazione": {"$regex": search, "$options": "i"}},
-            {"ragione_sociale": {"$regex": search, "$options": "i"}},
-            {"partita_iva": {"$regex": search, "$options": "i"}},
-            {"comune": {"$regex": search, "$options": "i"}}
+            {"denominazione": {"$regex": search_term, "$options": "i"}},
+            {"ragione_sociale": {"$regex": search_term, "$options": "i"}},
+            {"partita_iva": {"$regex": search_term, "$options": "i"}},
+            {"comune": {"$regex": search_term, "$options": "i"}}
         ]
+        logger.info(f"[SUPPLIERS] Query: {query}")
     if metodo_pagamento:
         query["metodo_pagamento"] = metodo_pagamento
     if attivo is not None:
