@@ -201,7 +201,7 @@ async def import_estratto_conto_fornitori(file: UploadFile = File(...)) -> Dict[
             importo_str = importo_str.replace('.', '').replace(',', '.')
             try:
                 importo = abs(float(importo_str))
-            except:
+            except (ValueError, TypeError):
                 continue
             
             # Parse data (DD/MM/YYYY)
@@ -211,7 +211,7 @@ async def import_estratto_conto_fornitori(file: UploadFile = File(...)) -> Dict[
                     data_obj = date(int(parts[2]), int(parts[1]), int(parts[0]))
                 else:
                     data_obj = date.fromisoformat(data_str)
-            except:
+            except (ValueError, TypeError, IndexError):
                 continue
             
             # Estrai nome fornitore
@@ -250,7 +250,7 @@ async def import_estratto_conto_fornitori(file: UploadFile = File(...)) -> Dict[
                         else:
                             try:
                                 importo = abs(float(str(val).replace('.', '').replace(',', '.')))
-                            except:
+                            except (ValueError, TypeError):
                                 pass
                     elif 'data' in h and val:
                         if isinstance(val, datetime):
