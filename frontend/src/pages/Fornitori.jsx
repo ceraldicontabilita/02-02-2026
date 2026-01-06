@@ -735,18 +735,18 @@ export default function Fornitori() {
   const [saving, setSaving] = useState(false);
   
   // Debounce search per evitare troppe chiamate API
-  const debouncedSearch = useDebounce(search, 400);
+  const debouncedSearch = useDebounce(search, 500);
 
   const loadData = useCallback(async (searchTerm) => {
     try {
       setLoading(true);
       const params = searchTerm ? `?search=${encodeURIComponent(searchTerm)}` : '';
-      console.log('[Fornitori] Loading data with search:', searchTerm, 'URL:', `/api/suppliers${params}`);
       const res = await api.get(`/api/suppliers${params}`);
-      console.log('[Fornitori] Received', res.data.length, 'suppliers');
       setSuppliers(res.data);
     } catch (error) {
-      console.error('Error:', error);
+      if (error.name !== 'CanceledError') {
+        console.error('Error loading suppliers:', error);
+      }
     } finally {
       setLoading(false);
     }
@@ -754,7 +754,18 @@ export default function Fornitori() {
 
   // Carica dati quando il debounced search cambia
   useEffect(() => {
-    loadData(debouncedSearch);
+    let isMounted = true;
+    
+    const fetchData = async () => {
+      if (!isMounted) return;
+      await loadData(debouncedSearch);
+    };
+    
+    fetchData();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [debouncedSearch, loadData]);
 
   const filteredSuppliers = suppliers.filter(s => {
