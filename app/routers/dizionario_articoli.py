@@ -221,7 +221,8 @@ PATTERNS_ARTICOLI = {
         "patterns": [
             r"prosciutto", r"salame", r"mortadella", r"wurstel", r"bresaola",
             r"speck", r"pancetta", r"guanciale", r"coppa", r"culatello",
-            r"nduja", r"soppressata", r"capocollo"
+            r"nduja", r"soppressata", r"capocollo", r"cervellatina",
+            r"fiorucci", r"cotto\s+vellutato", r"hirschsalami", r"salami"
         ],
         "categoria_haccp": "salumi_insaccati",
         "conto": "05.01.05",
