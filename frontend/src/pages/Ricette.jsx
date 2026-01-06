@@ -292,6 +292,7 @@ export default function Ricette() {
               key={ricetta.id} 
               ricetta={ricetta} 
               onClick={() => loadDettaglioRicetta(ricetta.id)}
+              onEdit={openEditModal}
             />
           ))}
         </div>
@@ -471,7 +472,7 @@ export default function Ricette() {
   );
 }
 
-function RicettaCard({ ricetta, onClick }) {
+function RicettaCard({ ricetta, onClick, onEdit }) {
   const foodCost = ricetta.food_cost || 0;
   const prezzoVendita = ricetta.prezzo_vendita || 0;
   const target = (ricetta.food_cost_target || 0.30) * 100;
@@ -480,13 +481,11 @@ function RicettaCard({ ricetta, onClick }) {
 
   return (
     <div
-      onClick={onClick}
       style={{
         background: 'white',
         borderRadius: '12px',
         border: '1px solid #e5e7eb',
         overflow: 'hidden',
-        cursor: 'pointer',
         transition: 'all 0.2s'
       }}
       onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.1)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
@@ -511,10 +510,35 @@ function RicettaCard({ ricetta, onClick }) {
           }}>
             {ricetta.categoria?.toUpperCase() || 'ALTRO'}
           </span>
-          <span style={{ fontSize: '12px', color: '#9ca3af' }}>{ricetta.porzioni} porz.</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '12px', color: '#9ca3af' }}>{ricetta.porzioni} porz.</span>
+            <button
+              onClick={(e) => { e.stopPropagation(); onEdit(ricetta); }}
+              style={{
+                padding: '4px 8px',
+                background: '#f0f9ff',
+                color: '#0369a1',
+                border: '1px solid #bae6fd',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                fontSize: '11px',
+                fontWeight: 600
+              }}
+              data-testid={`edit-ricetta-${ricetta.id}`}
+              title="Modifica ricetta"
+            >
+              <Edit2 size={12} />
+            </button>
+          </div>
         </div>
         
-        <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#1f2937', margin: '0 0 12px 0' }}>
+        <h3 
+          onClick={onClick}
+          style={{ fontSize: '16px', fontWeight: 600, color: '#1f2937', margin: '0 0 12px 0', cursor: 'pointer' }}
+        >
           {ricetta.nome}
         </h3>
         
