@@ -430,16 +430,18 @@ export default function Fornitori() {
 
                     <div className="flex gap-1">
                       <button
-                        onClick={() => setEditingSupplier(supplier)}
+                        onClick={(e) => { e.stopPropagation(); setEditingSupplier(supplier); }}
                         className="p-2 hover:bg-blue-100 rounded text-blue-600"
                         title="Modifica"
+                        data-testid={`edit-supplier-${supplier.id}`}
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => handleDelete(supplier.id)}
+                        onClick={(e) => { e.stopPropagation(); handleDelete(supplier.id); }}
                         className="p-2 hover:bg-red-100 rounded text-red-600"
                         title="Elimina"
+                        data-testid={`delete-supplier-${supplier.id}`}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
