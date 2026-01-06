@@ -485,13 +485,15 @@ PATTERNS_ARTICOLI = {
         "conto_nome": "Prodotti per pulizia e igiene"
     },
     
-    # IMBALLAGGI
+    # IMBALLAGGI E CONTENITORI
     "imballaggi": {
         "patterns": [
             r"imballag", r"confezioni", r"vassoi", r"scatole",
             r"buste\b", r"shopper", r"pellicola", r"alluminio",
             r"carta\s*forno", r"busta\s+shop", r"bicch.*vetro",
-            r"bicch.*rock", r"bicchier"
+            r"bicch.*rock", r"bicchier", r"bicch.*oslo", r"bicch.*after",
+            r"tovaglia", r"tovaglio", r"sacchi\s+ambra", r"boxone",
+            r"theiera", r"teiera"
         ],
         "categoria_haccp": "non_alimentare",
         "conto": "05.01.07",
