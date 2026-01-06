@@ -117,6 +117,7 @@ const router = createBrowserRouter([
       { path: "bilancio", element: <Bilancio /> },
       { path: "contabilita", element: <ContabilitaAvanzata /> },
       { path: "regole-categorizzazione", element: <RegoleCategorizzazione /> },
+      { path: "dizionario-articoli", element: <DizionarioArticoli /> },
       { path: "scadenze", element: <Scadenze /> },
       { path: "archivio-bonifici", element: <ArchivioBonifici /> },
       // Contabilità Analitica
