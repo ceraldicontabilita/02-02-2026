@@ -185,9 +185,6 @@ export default function DizionarioArticoli() {
       setCategorizingAI(false);
     }
   };
-      setApplying(false);
-    }
-  };
 
   const openEditModal = (articolo) => {
     setEditingArticolo(articolo);
