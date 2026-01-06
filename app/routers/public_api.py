@@ -101,11 +101,11 @@ async def get_f24_dashboard_public() -> Dict[str, Any]:
                 else:
                     try:
                         scadenza = datetime.strptime(scadenza_str, "%d/%m/%Y").date()
-                    except:
+                    except ValueError:
                         scadenza = datetime.strptime(scadenza_str, "%Y-%m-%d").date()
                 return (scadenza - today).days
             return 999
-        except:
+        except (ValueError, TypeError):
             return 999
     
     alert_attivi = sum(1 for f24 in non_pagati if days_to_scadenza(f24.get("scadenza")) <= 7)
