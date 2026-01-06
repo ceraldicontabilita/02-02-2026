@@ -52,8 +52,15 @@ import CentriCosto from "./pages/CentriCosto.jsx";
 import Ricette from "./pages/Ricette.jsx";
 import MagazzinoDoppiaVerita from "./pages/MagazzinoDoppiaVerita.jsx";
 import UtileObiettivo from "./pages/UtileObiettivo.jsx";
+// Portale HACCP separato
+import HACCPPortal from "./pages/HACCPPortal.jsx";
 
 const router = createBrowserRouter([
+  // Portale HACCP standalone (login con codice 141574)
+  {
+    path: "/cucina",
+    element: <HACCPPortal />
+  },
   {
     path: "/",
     element: <App />,
