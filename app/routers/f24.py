@@ -41,6 +41,171 @@ CODICI_TRIBUTO_F24 = {
     "3848": {"sezione": "imu", "descrizione": "Addizionale comunale IRPEF - saldo", "tipo": "debito"},
 }
 
+# Directory per salvare i PDF F24
+F24_UPLOAD_DIR = "/app/uploads/f24"
+os.makedirs(F24_UPLOAD_DIR, exist_ok=True)
+
+
+# ============== UPLOAD ZIP MASSIVO F24 ==============
+@router.post(
+    "/upload-zip",
+    summary="Upload ZIP con PDF F24 massivo"
+)
+async def upload_f24_zip(
+    file: UploadFile = File(...),
+    current_user: Dict[str, Any] = Depends(get_current_user)
+) -> Dict[str, Any]:
+    """
+    Upload massivo di PDF F24 tramite file ZIP.
+    - Estrae tutti i PDF dal ZIP
+    - Controlla duplicati tramite hash SHA256
+    - Salva i file e crea record nel database
+    """
+    if not file.filename.lower().endswith('.zip'):
+        raise HTTPException(status_code=400, detail="Il file deve essere un archivio ZIP")
+    
+    db = Database.get_db()
+    
+    # Leggi il contenuto del file ZIP
+    try:
+        zip_content = await file.read()
+        zip_file = zipfile.ZipFile(io.BytesIO(zip_content))
+    except zipfile.BadZipFile:
+        raise HTTPException(status_code=400, detail="File ZIP non valido o corrotto")
+    
+    # Estrai info sui PDF nel ZIP
+    pdf_files = [f for f in zip_file.namelist() if f.lower().endswith('.pdf') and not f.startswith('__MACOSX')]
+    
+    if not pdf_files:
+        raise HTTPException(status_code=400, detail="Nessun file PDF trovato nel ZIP")
+    
+    results = {
+        "total": len(pdf_files),
+        "imported": 0,
+        "duplicates": 0,
+        "errors": 0,
+        "details": []
+    }
+    
+    # Recupera tutti gli hash esistenti per controllo duplicati veloce
+    existing_hashes = set()
+    existing_docs = await db["f24_documents"].find({}, {"file_hash": 1, "_id": 0}).to_list(10000)
+    for doc in existing_docs:
+        if doc.get("file_hash"):
+            existing_hashes.add(doc["file_hash"])
+    
+    # Processa ogni PDF
+    for pdf_name in pdf_files:
+        try:
+            # Estrai il contenuto del PDF
+            pdf_content = zip_file.read(pdf_name)
+            
+            # Calcola hash SHA256 per controllo duplicati
+            file_hash = hashlib.sha256(pdf_content).hexdigest()
+            
+            # Controlla se è un duplicato
+            if file_hash in existing_hashes:
+                results["duplicates"] += 1
+                results["details"].append({
+                    "file": pdf_name,
+                    "status": "duplicate",
+                    "message": "File già presente nel sistema"
+                })
+                continue
+            
+            # Genera nome file univoco
+            file_id = str(uuid4())
+            safe_filename = os.path.basename(pdf_name).replace(" ", "_")
+            stored_filename = f"{file_id}_{safe_filename}"
+            file_path = os.path.join(F24_UPLOAD_DIR, stored_filename)
+            
+            # Salva il file
+            with open(file_path, 'wb') as f:
+                f.write(pdf_content)
+            
+            # Crea record nel database
+            doc = {
+                "id": file_id,
+                "original_filename": pdf_name,
+                "stored_filename": stored_filename,
+                "file_path": file_path,
+                "file_hash": file_hash,
+                "file_size": len(pdf_content),
+                "status": "pending",  # pending, processed, error
+                "imported_from_zip": file.filename,
+                "user_id": current_user.get("user_id"),
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+            
+            await db["f24_documents"].insert_one(doc)
+            existing_hashes.add(file_hash)  # Aggiungi all'elenco per evitare duplicati nello stesso upload
+            
+            results["imported"] += 1
+            results["details"].append({
+                "file": pdf_name,
+                "status": "imported",
+                "id": file_id
+            })
+            
+        except Exception as e:
+            logger.error(f"Errore elaborazione {pdf_name}: {e}")
+            results["errors"] += 1
+            results["details"].append({
+                "file": pdf_name,
+                "status": "error",
+                "message": str(e)
+            })
+    
+    zip_file.close()
+    
+    return results
+
+
+@router.get(
+    "/documents",
+    summary="Lista documenti F24 caricati"
+)
+async def get_f24_documents(
+    skip: int = 0,
+    limit: int = 100,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+) -> List[Dict[str, Any]]:
+    """Lista dei documenti PDF F24 caricati."""
+    db = Database.get_db()
+    docs = await db["f24_documents"].find(
+        {}, 
+        {"_id": 0}
+    ).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
+    return docs
+
+
+@router.delete(
+    "/documents/{doc_id}",
+    summary="Elimina documento F24"
+)
+async def delete_f24_document(
+    doc_id: str = Path(...),
+    current_user: Dict[str, Any] = Depends(get_current_user)
+) -> Dict[str, Any]:
+    """Elimina un documento F24."""
+    db = Database.get_db()
+    
+    doc = await db["f24_documents"].find_one({"id": doc_id})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Documento non trovato")
+    
+    # Elimina il file fisico
+    if doc.get("file_path") and os.path.exists(doc["file_path"]):
+        try:
+            os.remove(doc["file_path"])
+        except Exception as e:
+            logger.warning(f"Impossibile eliminare file: {e}")
+    
+    # Elimina dal database
+    await db["f24_documents"].delete_one({"id": doc_id})
+    
+    return {"success": True, "message": "Documento eliminato"}
+
 
 # ============== CRUD F24 ==============
 @router.get(
