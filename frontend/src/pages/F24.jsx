@@ -22,6 +22,11 @@ export default function F24() {
   const [zipResult, setZipResult] = useState(null);
   const [f24Documents, setF24Documents] = useState([]);
   const zipInputRef = useRef(null);
+  
+  // Stati per upload multiplo PDF
+  const [multipleUploading, setMultipleUploading] = useState(false);
+  const [multipleProgress, setMultipleProgress] = useState(0);
+  const [multipleResult, setMultipleResult] = useState(null);
 
   useEffect(() => {
     loadF24();
@@ -36,6 +41,39 @@ export default function F24() {
       setF24Documents(res.data || []);
     } catch (e) {
       console.error("Error loading F24 documents:", e);
+    }
+  }
+  
+  async function handleMultiplePdfUpload(files) {
+    setMultipleUploading(true);
+    setMultipleProgress(0);
+    setMultipleResult(null);
+    setErr("");
+    
+    try {
+      const formData = new FormData();
+      files.forEach(file => {
+        formData.append("files", file);
+      });
+      
+      // Simula progresso
+      const progressInterval = setInterval(() => {
+        setMultipleProgress(prev => Math.min(prev + 10, 90));
+      }, 100);
+      
+      const res = await api.post("/api/f24/upload-multiple", formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+      
+      clearInterval(progressInterval);
+      setMultipleProgress(100);
+      setMultipleResult(res.data);
+      loadF24Documents();
+      
+    } catch (e) {
+      setErr("Upload PDF fallito: " + (e.response?.data?.detail || e.message));
+    } finally {
+      setMultipleUploading(false);
     }
   }
   
