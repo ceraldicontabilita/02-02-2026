@@ -218,7 +218,7 @@ export default function GestioneDipendenti() {
     try {
       let url = `/api/prima-nota-salari/export-excel?`;
       const params = [];
-      if (selectedYear) params.push(`anno=${selectedYear}`);
+      if (selectedYearPrimaNota) params.push(`anno=${selectedYearPrimaNota}`);
       if (selectedMonth) params.push(`mese=${selectedMonth}`);
       url += params.join('&');
       
@@ -228,7 +228,7 @@ export default function GestioneDipendenti() {
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;
-      const filename = selectedYear ? `prima_nota_salari_${selectedYear}.xlsx` : 'prima_nota_salari_tutti.xlsx';
+      const filename = selectedYearPrimaNota ? `prima_nota_salari_${selectedYearPrimaNota}.xlsx` : 'prima_nota_salari_tutti.xlsx';
       link.setAttribute('download', filename);
       document.body.appendChild(link);
       link.click();
