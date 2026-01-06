@@ -119,7 +119,8 @@ async def list_assegni(
     """Lista assegni con filtri."""
     db = Database.get_db()
     
-    query = {}
+    # Escludi assegni eliminati (soft-delete)
+    query = {"entity_status": {"$ne": "deleted"}}
     if stato:
         query["stato"] = stato
     if fornitore_piva:
