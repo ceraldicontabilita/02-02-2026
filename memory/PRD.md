@@ -317,29 +317,32 @@ Risolto errore JSX che causava pagina bianca su `/dipendenti`:
 - Totale Fornitori (258)
 - Con Fatture (173)
 - Dati Incompleti (148)
-- Pagamento Contanti (0)
+- Pagamento Contanti (dinamico)
 
-**Filtri Avanzati:**
-- Barra ricerca testuale (nome, P.IVA, comune)
-- Toggle panel filtri espandibile
-- Dropdown filtro metodo pagamento (Tutti/Bonifico/Contanti/Assegno/Misto)
-- Checkbox "Solo dati incompleti"
-- Pulsante reset filtri
+**Dizionario Metodi Pagamento (allineato con backend):**
+```javascript
+METODI_PAGAMENTO = {
+  contanti: { label: 'Contanti', bg: '#dcfce7', color: '#16a34a' },
+  bonifico: { label: 'Bonifico', bg: '#dbeafe', color: '#2563eb' },
+  assegno: { label: 'Assegno', bg: '#fef3c7', color: '#d97706' },
+  misto: { label: 'Misto', bg: '#f3e8ff', color: '#9333ea' },
+  carta: { label: 'Carta', bg: '#fce7f3', color: '#db2777' },
+  sepa: { label: 'SEPA', bg: '#e0e7ff', color: '#4f46e5' }
+}
+```
 
-**Modale Nuovo/Modifica Fornitore:**
-- Usa `ReactDOM.createPortal` per rendering corretto sopra tutti gli elementi
-- Header con gradiente blu
-- Sezioni organizzate: Dati Azienda, Indirizzo, Contatti, Pagamento
-- Pre-compilazione dati esistenti in modalità modifica
-- Validazione campo obbligatorio (Ragione Sociale)
-- Pulsanti Salva/Annulla/X chiudi
+**Cambio Rapido Metodo Pagamento:**
+- Click sul badge metodo apre menu dropdown
+- Selezione immediata salva nel database via `PUT /api/suppliers/{id}`
+- Aggiornamento stato locale istantaneo senza reload pagina
 
-**Test-ID Principali:**
-- `fornitori-page`, `new-supplier-btn`, `edit-supplier-{id}`
-- `supplier-modal`, `toggle-filters`, `filter-metodo`, `filter-incomplete`
-- `save-supplier-btn`, `cancel-btn`, `close-modal-btn`
+**Operazioni Database:**
+- **CREATE**: `POST /api/suppliers` - Nuovo fornitore
+- **READ**: `GET /api/suppliers` - Lista fornitori
+- **UPDATE**: `PUT /api/suppliers/{id}` - Modifica anagrafica o metodo
+- **DELETE**: `DELETE /api/suppliers/{id}` - Elimina fornitore
 
-**Test:** 100% frontend passed (iteration_25.json)
+**Test:** Verificato salvataggio database con curl - metodo_pagamento aggiornato correttamente
 
 ---
 
