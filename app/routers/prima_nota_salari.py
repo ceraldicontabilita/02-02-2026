@@ -144,14 +144,21 @@ async def import_paghe(file: UploadFile = File(...)) -> Dict[str, Any]:
     col_importo = None
     
     for c in df.columns:
-        if 'dipendente' in c or 'nome' in c:
+        if 'dipendente' in c or 'nome' in c or 'cognome' in c:
             col_dipendente = c
         elif 'mese' in c:
             col_mese = c
         elif 'anno' in c:
             col_anno = c
-        elif 'stipendio' in c or 'netto' in c or 'importo' in c:
+        elif any(x in c for x in ['stipendio', 'netto', 'busta', 'paga', 'retribuzione']):
             col_importo = c
+    
+    # Fallback: se non trova colonna specifica, cerca 'importo' (ma non 'bonifico' o 'erogato')
+    if not col_importo:
+        for c in df.columns:
+            if 'importo' in c and 'bonifico' not in c and 'erogato' not in c:
+                col_importo = c
+                break
     
     if not all([col_dipendente, col_mese, col_anno, col_importo]):
         raise HTTPException(
