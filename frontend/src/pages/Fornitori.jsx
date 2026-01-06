@@ -387,10 +387,21 @@ function SupplierCard({ supplier, onEdit, onDelete, onViewInvoices, onChangeMeto
   const openMenu = () => {
     if (buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
-      setMenuPosition({
-        top: rect.bottom + 4,
-        left: rect.right - 160
-      });
+      const menuHeight = 280; // altezza stimata del menu
+      const spaceBelow = window.innerHeight - rect.bottom;
+      
+      // Se non c'è spazio sotto, posiziona sopra
+      if (spaceBelow < menuHeight) {
+        setMenuPosition({
+          top: rect.top - menuHeight - 4,
+          left: rect.right - 170
+        });
+      } else {
+        setMenuPosition({
+          top: rect.bottom + 4,
+          left: rect.right - 170
+        });
+      }
     }
     setShowMetodoMenu(true);
   };
