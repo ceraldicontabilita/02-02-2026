@@ -3,7 +3,7 @@
 ## Project Overview
 Sistema ERP completo per gestione aziendale con focus su contabilità, fatturazione elettronica, magazzino e gestione fornitori.
 
-**Versione**: 2.8.0  
+**Versione**: 2.9.0  
 **Ultimo aggiornamento**: 6 Gennaio 2026  
 **Stack**: FastAPI (Python) + React + MongoDB
 
@@ -11,15 +11,54 @@ Sistema ERP completo per gestione aziendale con focus su contabilità, fatturazi
 
 ## Ultime Implementazioni (6 Gen 2026)
 
-### 1. Nuova Sezione Dipendenti - COMPLETATA
-Rifatto il modulo Gestione Dipendenti con 5 tab completi:
+### 1. Nuova Prima Nota Salari - COMPLETATA ✅
+Completamente riscritto il sistema di gestione stipendi basato su due file Excel:
+
+**Logica di Importazione:**
+- `paghe.xlsx`: Contiene le buste paga con importo_busta per ogni dipendente/mese
+- `bonifici_dip.xlsx`: Contiene i bonifici effettuati verso i dipendenti
+- Sistema unifica i dati e calcola saldo (busta - bonifico) e progressivo
+
+**Nuovi Endpoint (`/api/prima-nota-salari/`):**
+- `POST /import-paghe` - Import file paghe.xlsx
+- `POST /import-bonifici` - Import file bonifici_dip.xlsx  
+- `GET /salari` - Lista dati con filtri (anno, mese, dipendente)
+- `GET /dipendenti-lista` - Lista nomi dipendenti univoci
+- `GET /export-excel` - Export in Excel
+- `DELETE /salari/reset` - Reset tutti i dati
+- `DELETE /salari/{id}` - Elimina singolo record
+
+**UI Tab "Prima Nota" in `/dipendenti`:**
+- Filtri: Anno, Mese, Dipendente
+- Pulsanti: Importa PAGHE, Importa BONIFICI, Export Excel, Reset, Aggiorna
+- Tabella: Dipendente, Mese, Anno, Importo Busta, Importo Bonifico, Saldo, Progressivo, Stato
+- Legenda colori: Saldo positivo (da recuperare), Saldo negativo (eccedenza)
+
+### 2. Pulizia Backend - COMPLETATA ✅
+Rimossi tutti gli endpoint obsoleti dal file `/app/app/routers/dipendenti.py`:
+- `/import-salari` - Sostituito da `/api/prima-nota-salari/import-paghe`
+- `/import-estratto-conto` - Sostituito da `/api/prima-nota-salari/import-bonifici`
+- `/salari` - Sostituito da `/api/prima-nota-salari/salari`
+- `/salari/reset-reconciliation`, `/salari/bulk/anno/{anno}`, `/salari/{salario_id}`
+- Funzioni helper associate (normalizza_nome, match_nomi_fuzzy, etc.)
+
+### 3. Fix Bug Pagina Dipendenti - COMPLETATA ✅
+Risolto errore JSX che causava pagina bianca su `/dipendenti`:
+- Rimosso codice duplicato (linee 955-1083) nel file `GestioneDipendenti.jsx`
+- Corretti caratteri non escapati nelle stringhe JSX
+
+---
+
+## Implementazioni Precedenti (6 Gen 2026)
+
+### Nuova Sezione Dipendenti - COMPLETATA
+Rifatto il modulo Gestione Dipendenti con 4 tab:
 
 **Tab disponibili:**
 1. **👤 Anagrafica** - CRUD dipendenti (esistente, mantenuto)
-2. **💰 Paghe** - Buste paga mensili (esistente, mantenuto)
-3. **📒 Prima Nota** - Prima nota salari con riconciliazione (esistente, mantenuto)
-4. **📚 Libro Unico** - NUOVO
-5. **🏥 Libretti Sanitari** - NUOVO
+2. **📒 Prima Nota** - Prima nota salari (NUOVA LOGICA)
+3. **📚 Libro Unico** - Upload PDF/Excel buste paga
+4. **🏥 Libretti Sanitari** - Gestione scadenze certificati HACCP
 
 ### 2. Tab Libro Unico - NUOVO
 Import e gestione buste paga dal Libro Unico del Lavoro.
