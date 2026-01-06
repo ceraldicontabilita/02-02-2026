@@ -766,7 +766,7 @@ export default function Commercialista() {
         boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
       }}>
         <h3 style={{ margin: '0 0 15px 0', color: '#1a365d' }}>📅 Seleziona Periodo</h3>
-        <div style={{ display: 'flex', gap: 15, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 15, flexWrap: 'wrap', alignItems: 'center' }}>
           <select
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
@@ -792,6 +792,31 @@ export default function Commercialista() {
           }}>
             {selectedYear}
           </span>
+          
+          {/* Export Excel Button */}
+          <button
+            onClick={() => {
+              const url = `/api/commercialista/export-excel/${selectedYear}/${selectedMonth + 1}`;
+              window.open(url, '_blank');
+            }}
+            data-testid="export-excel-btn"
+            style={{
+              marginLeft: 'auto',
+              padding: '10px 20px',
+              background: 'linear-gradient(135deg, #2e7d32 0%, #43a047 100%)',
+              color: 'white',
+              border: 'none',
+              borderRadius: 8,
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              fontSize: 14
+            }}
+          >
+            📊 Export Excel Commercialista
+          </button>
         </div>
       </div>
 
