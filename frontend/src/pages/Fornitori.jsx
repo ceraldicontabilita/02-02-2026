@@ -902,7 +902,7 @@ export default function Fornitori() {
           
           if (window.confirm(msg)) {
             await api.put(`/api/suppliers/${supplier.id}`, updates);
-            loadData(debouncedSearch);
+            reloadData();
           }
         } else {
           alert(`Nessun dato nuovo trovato per ${supplier.ragione_sociale || supplier.partita_iva}.\nI dati sono già completi o non disponibili su VIES.`);
