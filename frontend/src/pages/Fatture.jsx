@@ -24,7 +24,7 @@ export default function Fatture() {
   const zipFileInputRef = useRef(null);
   
   // Anno selezionato viene dal context globale
-  const [availableYears, setAvailableYears] = useState([currentYear]);
+  const [_availableYears, setAvailableYears] = useState([currentYear]);
   
   // Filtri
   const [filters, setFilters] = useState({
@@ -57,10 +57,12 @@ export default function Fatture() {
 
   useEffect(() => {
     loadAvailableYears();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     loadInvoices();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedYear]);
 
   // Filtro locale delle fatture
