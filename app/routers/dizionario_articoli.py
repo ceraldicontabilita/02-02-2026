@@ -541,11 +541,80 @@ PATTERNS_ARTICOLI = {
         "conto_nome": "Noleggio automezzi"
     },
     
+    # COMMISSIONI POS E BANCARIE
+    "commissioni_pos": {
+        "patterns": [
+            r"canone\s+mensile\s+pos", r"comm.*tecnica", r"comm.*minima",
+            r"comm.*%.*pos", r"pagobcm", r"storno\s+comm", r"sc\s+op\s+fino",
+            r"pos\s+cless"
+        ],
+        "categoria_haccp": "non_alimentare",
+        "conto": "05.02.18",
+        "conto_nome": "Commissioni bancarie e POS"
+    },
+    
+    # SERVIZI E FATTURAZIONE
+    "servizi": {
+        "patterns": [
+            r"servizio.*produzione", r"servizio.*invio\s+fattura",
+            r"imposta\s+di\s+bollo", r"bollo\b", r"riga\s+ausiliaria",
+            r"fornitura\s+\d+", r"importo\s+totale\s+iva", r"riaccredit",
+            r"corrispettiv", r"prontotimas", r"manutenzione"
+        ],
+        "categoria_haccp": "non_alimentare",
+        "conto": "05.02.01",
+        "conto_nome": "Costi per servizi"
+    },
+    
+    # MATERIALE ELETTRICO E FERRAMENTA
+    "ferramenta": {
+        "patterns": [
+            r"schneider", r"interruttore", r"magnetotermico", r"strip\s+led",
+            r"led.*\d+w", r"lrs-\d+", r"multispot", r"guarnizion",
+            r"raccordo", r"utilfer", r"canne\s+fumarie"
+        ],
+        "categoria_haccp": "non_alimentare",
+        "conto": "05.01.06",
+        "conto_nome": "Acquisto piccola utensileria"
+    },
+    
+    # PASTA SECCA
+    "pasta": {
+        "patterns": [
+            r"spaghett", r"penne\b", r"rigatoni", r"fusilli", r"maccheroni",
+            r"tagliatelle", r"linguine", r"farfalle", r"orecchiette",
+            r"de\s*cecco", r"barilla", r"voiello", r"rummo", r"garofalo"
+        ],
+        "categoria_haccp": "farine_cereali",
+        "conto": "05.01.05",
+        "conto_nome": "Acquisto prodotti alimentari"
+    },
+    
+    # WURSTEL E AFFETTATI CONFEZIONATI
+    "wurstel": {
+        "patterns": [
+            r"wudy", r"wurstel", r"hot\s*dog", r"frank", r"aia\b"
+        ],
+        "categoria_haccp": "salumi_insaccati",
+        "conto": "05.01.05",
+        "conto_nome": "Acquisto prodotti alimentari"
+    },
+    
+    # SCONTI E OMAGGI
+    "sconti": {
+        "patterns": [
+            r"sconto\s+\d+\s+euro", r"omaggi", r"omaggio", r"altri\s+importi"
+        ],
+        "categoria_haccp": "non_alimentare",
+        "conto": "05.02.99",
+        "conto_nome": "Altri costi"
+    },
+    
     # SPESE VARIE
     "spese_varie": {
         "patterns": [
             r"spese\s*bolli", r"spese\s*fatturazione", r"spese\s*accessorie",
-            r"cancelleria", r"articolo\s*vario"
+            r"cancelleria", r"articolo\s*vario", r"art.*vario"
         ],
         "categoria_haccp": "non_alimentare",
         "conto": "05.02.01",
