@@ -209,7 +209,7 @@ async def import_paghe(file: UploadFile = File(...)) -> Dict[str, Any]:
                 {"_id": existing["_id"]},
                 {"$set": {
                     "importo_busta": round(importo_busta, 2),
-                    "saldo": round(importo_busta - (existing.get("importo_bonifico") or 0), 2),
+                    "saldo": round((existing.get("importo_bonifico") or 0) - importo_busta, 2),
                     "updated_at": datetime.utcnow().isoformat()
                 }}
             )
@@ -224,7 +224,7 @@ async def import_paghe(file: UploadFile = File(...)) -> Dict[str, Any]:
                 "mese_nome": MESI_NOMI[mese - 1],
                 "importo_busta": round(importo_busta, 2),
                 "importo_bonifico": 0,
-                "saldo": round(importo_busta, 2),
+                "saldo": round(-importo_busta, 2),  # Bonifico(0) - Busta
                 "progressivo": 0,
                 "riconciliato": False,
                 "created_at": datetime.utcnow().isoformat(),
