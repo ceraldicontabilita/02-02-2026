@@ -3,7 +3,6 @@ from fastapi import APIRouter, Depends, Query
 from typing import Dict, Any
 import logging
 
-from app.database import Database, Collections
 from app.utils.dependencies import get_current_user
 
 logger = logging.getLogger(__name__)

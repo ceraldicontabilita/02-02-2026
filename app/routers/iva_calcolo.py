@@ -512,7 +512,7 @@ async def export_iva_trimestrale_pdf(year: int, quarter: int) -> StreamingRespon
     
     # Titolo
     title_style = ParagraphStyle('Title', parent=styles['Heading1'], fontSize=18, textColor=colors.HexColor('#1e40af'), spaceAfter=20)
-    elements.append(Paragraph(f"📊 Riepilogo IVA Trimestrale", title_style))
+    elements.append(Paragraph("📊 Riepilogo IVA Trimestrale", title_style))
     elements.append(Paragraph(f"<b>{trimestre_nome}</b>", styles['Heading2']))
     elements.append(Spacer(1, 20))
     

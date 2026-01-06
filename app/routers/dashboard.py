@@ -1,7 +1,7 @@
 """Dashboard router - KPI and statistics endpoints."""
 from fastapi import APIRouter, Depends, Query
 from typing import Dict, Any, Optional
-from datetime import datetime, timedelta
+from datetime import datetime
 import logging
 
 from app.database import Database, Collections

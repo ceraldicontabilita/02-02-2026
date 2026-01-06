@@ -1,19 +1,18 @@
 """
 Report PDF Router - Generazione report PDF mensili e annuali.
 """
-from fastapi import APIRouter, Query, HTTPException
+from fastapi import APIRouter, Query
 from fastapi.responses import StreamingResponse
-from typing import Optional, Dict, Any, List
-from datetime import datetime, date, timedelta
+from datetime import datetime, timedelta
 from io import BytesIO
 import logging
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.units import cm, mm
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
-from reportlab.lib.enums import TA_CENTER, TA_RIGHT, TA_LEFT
+from reportlab.lib.units import cm
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib.enums import TA_CENTER
 
 from app.database import Database, Collections
 
@@ -140,7 +139,7 @@ async def generate_report_mensile(
     elements = []
     
     # Intestazione
-    elements.append(Paragraph(f"REPORT MENSILE", styles['TitleCustom']))
+    elements.append(Paragraph("REPORT MENSILE", styles['TitleCustom']))
     elements.append(Paragraph(f"{mese_nome} {anno}", styles['SubtitleCustom']))
     elements.append(Spacer(1, 20))
     

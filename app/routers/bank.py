@@ -12,11 +12,9 @@ from app.repositories.bank_repository import BankStatementRepository
 from app.services.bank_service import BankService
 from app.models.bank import (
     BankStatementCreate,
-    BankStatementUpdate,
     BankReconcile,
     AssegnoCreate,
-    AssegnoUpdate,
-    AssegnoResponse
+    AssegnoUpdate
 )
 from app.utils.dependencies import get_current_user
 

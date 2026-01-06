@@ -4,7 +4,7 @@ Parsa PDF/Excel/CSV estratto conto e riconcilia con Prima Nota Banca.
 Supporta formati: Intesa Sanpaolo, UniCredit, BNL, Banca Sella, generico.
 """
 from fastapi import APIRouter, HTTPException, UploadFile, File, Query
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Dict, Any, List, Optional
 from datetime import datetime
 import uuid
 import logging

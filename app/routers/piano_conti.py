@@ -3,7 +3,7 @@ Piano dei Conti Router - Contabilità Generale
 Gestione del piano dei conti secondo i principi di ragioneria italiana.
 """
 from fastapi import APIRouter, HTTPException, Body
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 from datetime import datetime
 import uuid
 import logging

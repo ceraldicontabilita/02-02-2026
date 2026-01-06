@@ -3,8 +3,8 @@ Prima Nota router - Gestione Prima Nota Cassa e Banca.
 API per registrazioni contabili automatiche da fatture.
 """
 from fastapi import APIRouter, HTTPException, Query, Body
-from typing import Dict, Any, List, Optional, Literal
-from datetime import datetime, date, timezone
+from typing import Dict, Any, Optional, Literal
+from datetime import datetime, timezone
 import uuid
 import logging
 
@@ -377,7 +377,7 @@ async def import_prima_nota_batch(data: Dict[str, Any] = Body(...)) -> Dict[str,
             errors.append(f"Banca: {str(e)}")
     
     return {
-        "message": f"Import completato",
+        "message": "Import completato",
         "cassa_created": created_cassa,
         "banca_created": created_banca,
         "errors": errors[:10] if errors else []

@@ -3,7 +3,6 @@ HACCP Report PDF Router - Generazione report PDF per ispezioni.
 """
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import StreamingResponse
-from typing import Dict, Any, Optional
 from datetime import datetime
 import io
 import logging

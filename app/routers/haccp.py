@@ -2,12 +2,10 @@
 HACCP router.
 Temperature monitoring endpoints for food safety compliance.
 """
-from fastapi import APIRouter, Depends, Query, Path, status, Response
-from fastapi.responses import StreamingResponse
+from fastapi import APIRouter, Depends, Query, Path, status
 from typing import List, Dict, Any, Optional
-from datetime import date, datetime
+from datetime import date
 import logging
-from io import BytesIO
 
 from app.database import Database, Collections
 from app.repositories.temperature_repository import (
@@ -16,15 +14,8 @@ from app.repositories.temperature_repository import (
 )
 from app.services import HACCPService
 from app.models.haccp import (
-    Temperature,
     TemperatureCreate,
-    TemperatureUpdate,
-    TemperatureResponse,
-    Equipment,
-    EquipmentCreate,
-    EquipmentUpdate,
-    GenerateMonthlyRequest,
-    TemperatureStats
+    TemperatureUpdate
 )
 from app.utils.dependencies import get_current_user, pagination_params
 

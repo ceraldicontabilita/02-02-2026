@@ -9,7 +9,7 @@ import logging
 from app.database import Database, Collections
 from app.repositories import UserRepository
 from app.services import AuthService
-from app.models import UserRegister, UserLogin, TokenResponse, UserResponse, PasswordChange
+from app.models import UserRegister, UserLogin, TokenResponse, PasswordChange
 from app.utils.dependencies import get_current_user, get_current_admin_user
 
 logger = logging.getLogger(__name__)

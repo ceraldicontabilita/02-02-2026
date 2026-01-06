@@ -1,7 +1,7 @@
 """Cash Register router - Cash movements and corrispettivi."""
 from fastapi import APIRouter, Depends, Query, Path, status
 from typing import Dict, Any, List, Optional
-from datetime import datetime, date
+from datetime import datetime
 import logging
 
 from app.database import Database, Collections

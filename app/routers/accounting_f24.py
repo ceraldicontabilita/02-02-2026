@@ -3,9 +3,7 @@ F24 Router - Modelli F24
 API endpoints per gestione modelli F24
 """
 from fastapi import APIRouter, Depends, Query, Path, status
-from fastapi.responses import StreamingResponse
 from typing import List, Dict, Any, Optional
-from datetime import date
 import logging
 
 from app.database import Database, Collections
@@ -208,7 +206,7 @@ async def upload_f24_pdf(
     
     Estrae: codice tributo, importo, periodo riferimento, scadenza
     """
-    from app.parsers.f24_parser import parse_f24_pdf, extract_f24_data_for_import
+    from app.parsers.f24_parser import parse_f24_pdf
     
     if not file.filename.lower().endswith('.pdf'):
         from fastapi import HTTPException

@@ -1,11 +1,8 @@
 """Portal router - Portal/invitation functionality."""
 from fastapi import APIRouter, Depends, status
-from typing import Dict, Any, List
-from datetime import datetime
-from uuid import uuid4
+from typing import Dict, Any
 import logging
 
-from app.database import Database
 from app.utils.dependencies import get_current_user
 
 logger = logging.getLogger(__name__)

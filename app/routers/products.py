@@ -1,5 +1,5 @@
 """Products router - Product catalog management."""
-from fastapi import APIRouter, Depends, Path, status
+from fastapi import APIRouter, Depends, status
 from typing import Dict, Any, List
 from datetime import datetime
 from uuid import uuid4

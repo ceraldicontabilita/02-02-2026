@@ -5,8 +5,8 @@ API per:
 - Importare fatture da file Excel come pagate in cassa
 - Parsare estratto conto per assegni e associarli alle fatture banca
 """
-from fastapi import APIRouter, HTTPException, Query, Body, UploadFile, File
-from typing import Dict, Any, List, Optional
+from fastapi import APIRouter, HTTPException, Body, UploadFile, File
+from typing import Dict, Any, Optional
 from datetime import datetime
 import uuid
 import logging

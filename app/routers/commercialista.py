@@ -7,8 +7,8 @@ Permette l'invio via email di:
 - Fatture pagate per cassa (PDF)
 """
 from fastapi import APIRouter, HTTPException, Body
-from typing import Dict, Any, List, Optional
-from datetime import datetime, timezone, timedelta
+from typing import Dict, Any, Optional
+from datetime import datetime, timezone
 from calendar import monthrange
 import logging
 import smtplib
@@ -17,10 +17,9 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
 from email import encoders
 import os
-import io
 import base64
 
-from app.database import Database, Collections
+from app.database import Database
 
 logger = logging.getLogger(__name__)
 router = APIRouter()

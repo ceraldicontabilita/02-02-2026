@@ -15,10 +15,7 @@ from app.services.cash_service import CashService
 from app.models.cash import (
     CashMovementCreate,
     CashMovementUpdate,
-    CashMovementResponse,
     CorrissettivoCreate,
-    CorrissettivoUpdate,
-    CorrissettivoResponse,
     CashStats
 )
 from app.utils.dependencies import get_current_user, pagination_params

@@ -1,7 +1,7 @@
 """Analytics router - Business analytics."""
 from fastapi import APIRouter, Depends, Query
 from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta
 import calendar
 
 import logging

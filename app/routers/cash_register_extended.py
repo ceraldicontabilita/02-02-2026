@@ -20,7 +20,7 @@ async def get_controllo_mensile(
     current_user: Dict[str, Any] = Depends(get_current_user)
 ) -> Dict[str, Any]:
     """Get monthly cash register control."""
-    from datetime import datetime, date
+    from datetime import datetime
     import calendar
     
     year = year or datetime.utcnow().year

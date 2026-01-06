@@ -1,5 +1,5 @@
 """Admin router - Administrative functions."""
-from fastapi import APIRouter, Depends, Path, status, Query
+from fastapi import APIRouter, Depends, Path, Query
 from typing import Dict, Any, List
 from datetime import datetime
 import logging

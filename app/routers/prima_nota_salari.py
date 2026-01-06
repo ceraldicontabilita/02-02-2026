@@ -247,7 +247,7 @@ async def import_paghe(file: UploadFile = File(...)) -> Dict[str, Any]:
     
     return {
         "success": True,
-        "message": f"Import PAGHE completato",
+        "message": "Import PAGHE completato",
         "created": created,
         "updated": updated,
         "errors": errors[:10] if errors else [],
@@ -393,7 +393,7 @@ async def import_bonifici(file: UploadFile = File(...)) -> Dict[str, Any]:
     
     return {
         "success": True,
-        "message": f"Import BONIFICI completato",
+        "message": "Import BONIFICI completato",
         "created": created,
         "updated": updated,
         "errors": errors[:10] if errors else [],
@@ -550,7 +550,7 @@ async def export_prima_nota_salari_excel(
 ):
     """Esporta prima nota salari in Excel."""
     import openpyxl
-    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from openpyxl.styles import Font, PatternFill, Alignment
     
     db = Database.get_db()
     
@@ -607,7 +607,7 @@ async def export_prima_nota_salari_excel(
     wb.save(output)
     output.seek(0)
     
-    filename = f"prima_nota_salari"
+    filename = "prima_nota_salari"
     if anno:
         filename += f"_{anno}"
     if mese:

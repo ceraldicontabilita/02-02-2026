@@ -1,5 +1,5 @@
 """Accounting Extended router - Chart of accounts and reports."""
-from fastapi import APIRouter, Depends, Query, Path
+from fastapi import APIRouter, Depends, Query
 from typing import Dict, Any, List
 from datetime import datetime
 import logging

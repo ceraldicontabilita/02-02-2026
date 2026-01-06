@@ -1,7 +1,7 @@
 """
 Simple Export Router - Export data without authentication
 """
-from fastapi import APIRouter, Query, HTTPException
+from fastapi import APIRouter, Query
 from fastapi.responses import StreamingResponse
 from typing import Optional
 from datetime import date, datetime

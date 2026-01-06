@@ -2,7 +2,7 @@
 HACCP Router completo - Temperature, Sanificazioni, Equipaggiamenti, Scadenzario.
 """
 from fastapi import APIRouter, HTTPException, Query, Body
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 from datetime import datetime, date, timedelta
 import uuid
 import logging
@@ -1081,7 +1081,6 @@ async def get_haccp_analytics_annuale(
 # ============== EXPORT PDF HACCP ==============
 
 from fastapi.responses import StreamingResponse
-import io
 
 @router.get("/export/pdf/mensile")
 async def export_haccp_pdf_mensile(
@@ -1275,7 +1274,7 @@ async def export_haccp_pdf_annuale(
     from reportlab.lib.pagesizes import A4, landscape
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.units import cm
-    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
     
     db = Database.get_db()
     
@@ -1665,8 +1664,6 @@ async def send_haccp_report_email(
     import smtplib
     from email.mime.text import MIMEText
     from email.mime.multipart import MIMEMultipart
-    from email.mime.base import MIMEBase
-    from email import encoders
     
     db = Database.get_db()
     

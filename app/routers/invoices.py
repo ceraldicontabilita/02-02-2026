@@ -8,7 +8,7 @@ from openpyxl import Workbook
 import zipfile
 import io
 from typing import List, Dict, Any, Optional
-from datetime import date, datetime
+from datetime import datetime
 import logging
 
 from app.database import Database, Collections
@@ -27,9 +27,7 @@ from app.services import (
 )
 from app.models import (
     InvoiceCreate,
-    InvoiceUpdate,
-    InvoiceResponse,
-    PaginatedInvoicesResponse
+    InvoiceUpdate
 )
 from app.utils.dependencies import get_current_user, pagination_params
 
@@ -723,8 +721,6 @@ async def get_invoices_by_month(
 
 
 
-import zipfile
-import io
 from fastapi import HTTPException
 
 # ============== UPLOAD ENDPOINTS ==============

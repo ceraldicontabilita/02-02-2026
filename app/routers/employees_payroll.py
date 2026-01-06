@@ -232,7 +232,7 @@ async def upload_payslip_pdf(file: UploadFile = File(...)) -> Dict[str, Any]:
                             "nome_dipendente": nome,
                             "periodo": periodo,
                             "source": "payslip_import",
-                            "note": f"Importato da busta paga PDF",
+                            "note": "Importato da busta paga PDF",
                             "created_at": datetime.utcnow().isoformat()
                         }
                         await db["prima_nota_salari"].insert_one(movimento_salario)

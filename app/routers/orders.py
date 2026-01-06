@@ -1,9 +1,8 @@
 """Orders router - Order management."""
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends
 from typing import Dict, Any
 import logging
 
-from app.database import Database
 from app.utils.dependencies import get_current_user
 
 logger = logging.getLogger(__name__)

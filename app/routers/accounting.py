@@ -2,7 +2,7 @@
 Accounting router.
 Handles accounting reports and financial summaries.
 """
-from fastapi import APIRouter, Depends, Query, Path
+from fastapi import APIRouter, Depends, Path
 from typing import Dict, Any, Optional
 from datetime import date
 import logging

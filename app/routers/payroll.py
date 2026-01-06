@@ -1,6 +1,5 @@
 """Payroll router - Prima nota and salary management."""
 import io
-import zipfile
 from openpyxl import load_workbook
 import re
 from fastapi import HTTPException

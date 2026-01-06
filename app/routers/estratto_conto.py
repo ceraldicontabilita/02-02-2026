@@ -5,7 +5,6 @@ Salva e visualizza tutti i movimenti bancari importati con campi strutturati.
 from fastapi import APIRouter, HTTPException, Query, UploadFile, File
 from typing import Dict, Any, List, Optional
 from datetime import datetime, date
-import uuid
 import logging
 import io
 import re

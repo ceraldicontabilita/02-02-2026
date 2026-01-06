@@ -8,7 +8,7 @@ Fornisce endpoint per:
 """
 
 from fastapi import APIRouter, Query, HTTPException
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any
 from datetime import date, datetime
 import logging
 
@@ -17,8 +17,7 @@ from app.utils.pos_accredito import (
     calcola_data_accredito_pos,
     get_calendario_sfasamento_mese,
     get_festivi_anno,
-    get_accrediti_attesi_per_data,
-    calcola_sfasamento_periodo
+    get_accrediti_attesi_per_data
 )
 
 logger = logging.getLogger(__name__)

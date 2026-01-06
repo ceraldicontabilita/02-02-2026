@@ -1,5 +1,5 @@
 """Magazzino router - Warehouse sync."""
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends
 from typing import Dict, Any
 import logging
 

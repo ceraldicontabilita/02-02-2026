@@ -1,6 +1,6 @@
 """Cart router - Shopping cart functionality."""
 from fastapi import APIRouter, Depends, Path, status
-from typing import Dict, Any, List
+from typing import Dict, Any
 import logging
 
 from app.database import Database

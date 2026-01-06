@@ -3,8 +3,8 @@ Bilancio Router - Stato Patrimoniale e Conto Economico
 """
 from fastapi import APIRouter, Query, HTTPException
 from fastapi.responses import StreamingResponse
-from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
+from typing import Dict, Any
+from datetime import datetime
 from app.database import Database, Collections
 from io import BytesIO
 import logging

@@ -1,6 +1,6 @@
 """Search router - Global search functionality."""
 from fastapi import APIRouter, Query
-from typing import Dict, Any, List
+from typing import Dict, Any
 import logging
 
 from app.database import Database, Collections

@@ -7,7 +7,6 @@ from typing import Dict, Any, List, Optional
 import logging
 import re
 from datetime import datetime
-import io
 
 logger = logging.getLogger(__name__)
 router = APIRouter()

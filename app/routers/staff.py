@@ -1,6 +1,6 @@
 """Staff router - Staff/Employee management (legacy compatibility)."""
 from fastapi import APIRouter, Depends, Path, status, UploadFile, File
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 from datetime import datetime
 import logging
 

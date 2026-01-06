@@ -1,6 +1,6 @@
 """HACCP Sanifications router - Extended with import."""
-from fastapi import APIRouter, Depends, Path, Query, status, UploadFile, File
-from typing import Dict, Any, List, Optional
+from fastapi import APIRouter, Depends, Path, status, UploadFile, File
+from typing import Dict, Any, List
 from datetime import datetime
 from uuid import uuid4
 import logging

@@ -1,6 +1,6 @@
 """Magazzino Products router."""
-from fastapi import APIRouter, Depends, Query, HTTPException
-from typing import Dict, Any, List, Optional
+from fastapi import APIRouter, Depends, Query
+from typing import Dict, Any, List
 from datetime import datetime
 import logging
 import uuid

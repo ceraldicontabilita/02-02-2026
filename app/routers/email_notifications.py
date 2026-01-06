@@ -2,7 +2,7 @@
 Email Notifications Router - Endpoint per invio notifiche email.
 """
 from fastapi import APIRouter, HTTPException, Body
-from typing import Dict, Any, List
+from typing import Dict, Any
 from datetime import datetime, timezone
 import logging
 import smtplib
