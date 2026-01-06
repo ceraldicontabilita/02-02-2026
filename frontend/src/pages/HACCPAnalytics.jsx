@@ -151,7 +151,7 @@ export default function HACCPAnalytics() {
         {activeTab === 'mensile' && (
           <button
             onClick={() => {
-              const url = `${process.env.REACT_APP_BACKEND_URL}/api/haccp-completo/export/pdf/mensile?mese=${selectedMonth}`;
+              const url = `${window.location.origin}/api/haccp-completo/export/pdf/mensile?mese=${selectedMonth}`;
               window.open(url, '_blank');
             }}
             style={{
@@ -174,7 +174,7 @@ export default function HACCPAnalytics() {
         {activeTab === 'annuale' && (
           <button
             onClick={() => {
-              const url = `${process.env.REACT_APP_BACKEND_URL}/api/haccp-completo/export/pdf/annuale?anno=${selectedYear}`;
+              const url = `${window.location.origin}/api/haccp-completo/export/pdf/annuale?anno=${selectedYear}`;
               window.open(url, '_blank');
             }}
             style={{
