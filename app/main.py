@@ -173,6 +173,7 @@ app.include_router(haccp_libro_unico.router, prefix="/api/haccp/libro-unico", ta
 app.include_router(haccp_technical_sheets.router, prefix="/api/haccp/technical-sheets", tags=["HACCP Technical Sheets"])
 app.include_router(haccp_sanifications.router, prefix="/api/haccp/sanifications", tags=["HACCP Sanifications"])
 app.include_router(haccp_auth.router, prefix="/api/haccp-auth", tags=["HACCP Auth"])
+app.include_router(gestione_riservata.router, prefix="/api/gestione-riservata", tags=["Gestione Riservata"])
 # Extended routers
 app.include_router(accounting_extended.router, prefix="/api/accounting", tags=["Accounting Extended"])
 app.include_router(portal_extended.router, prefix="/api/portal", tags=["Portal Extended"])
