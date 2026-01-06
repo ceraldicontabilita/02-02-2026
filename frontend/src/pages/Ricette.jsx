@@ -64,6 +64,57 @@ export default function Ricette() {
     }
   }
 
+  async function handleSaveRicetta() {
+    if (!newRicetta.nome.trim()) {
+      alert('Inserisci il nome della ricetta');
+      return;
+    }
+    
+    setSaving(true);
+    try {
+      const ingredientiValidi = newRicetta.ingredienti.filter(i => i.nome.trim() && i.quantita);
+      await api.post('/api/ricette', {
+        nome: newRicetta.nome,
+        categoria: newRicetta.categoria,
+        porzioni: newRicetta.porzioni,
+        prezzo_vendita: parseFloat(newRicetta.prezzo_vendita) || 0,
+        ingredienti: ingredientiValidi.map(i => ({
+          nome: i.nome,
+          quantita: parseFloat(i.quantita) || 0,
+          unita: i.unita
+        }))
+      });
+      setShowAddModal(false);
+      setNewRicetta({ nome: '', categoria: 'pasticceria', porzioni: 10, prezzo_vendita: 0, ingredienti: [{ nome: '', quantita: '', unita: 'g' }] });
+      loadRicette();
+    } catch (err) {
+      alert('Errore salvataggio: ' + (err.response?.data?.detail || err.message));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function addIngrediente() {
+    setNewRicetta(prev => ({
+      ...prev,
+      ingredienti: [...prev.ingredienti, { nome: '', quantita: '', unita: 'g' }]
+    }));
+  }
+
+  function removeIngrediente(index) {
+    setNewRicetta(prev => ({
+      ...prev,
+      ingredienti: prev.ingredienti.filter((_, i) => i !== index)
+    }));
+  }
+
+  function updateIngrediente(index, field, value) {
+    setNewRicetta(prev => ({
+      ...prev,
+      ingredienti: prev.ingredienti.map((ing, i) => i === index ? { ...ing, [field]: value } : ing)
+    }));
+  }
+
   const inTarget = ricette.filter(r => {
     const fc = r.food_cost || 0;
     const pv = r.prezzo_vendita || 0;
