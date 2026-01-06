@@ -442,11 +442,11 @@ async def generate_report_scadenze(giorni: int = Query(30, description="Giorni p
     if libretti_scadenza:
         elements.append(Paragraph(f"🏥 LIBRETTI SANITARI ({len(libretti_scadenza)})", styles['SectionTitle']))
         data = [["Dipendente", "Scadenza", "Stato"]]
-        for l in libretti_scadenza:
-            scaduto = l.get("data_scadenza") and l.get("data_scadenza") < oggi_str
+        for lib in libretti_scadenza:
+            scaduto = lib.get("data_scadenza") and lib.get("data_scadenza") < oggi_str
             data.append([
-                l.get("dipendente_nome", "-"),
-                format_date_it(l.get("data_scadenza")),
+                lib.get("dipendente_nome", "-"),
+                format_date_it(lib.get("data_scadenza")),
                 "SCADUTO" if scaduto else "In scadenza"
             ])
         t = Table(data, colWidths=[7*cm, 4*cm, 4*cm])
