@@ -93,7 +93,7 @@ export default function ArchivioBonifici() {
     }
     
     setUploading(true);
-    setUploadProgress({ processed: 0, total: 0, imported: 0, errors: 0 });
+    setUploadProgress({ processed: 0, total: 0, imported: 0, errors: 0, duplicates: 0 });
     
     try {
       // 1. Crea nuovo job
@@ -104,9 +104,15 @@ export default function ArchivioBonifici() {
       const formData = new FormData();
       files.forEach(f => formData.append('files', f));
       
-      await api.post(`/api/archivio-bonifici/jobs/${jobId}/upload`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+      const uploadRes = await api.post(`/api/archivio-bonifici/jobs/${jobId}/upload`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 300000 // 5 minuti per upload grandi
       });
+      
+      // Mostra errori estrazione ZIP se presenti
+      if (uploadRes.data.extraction_errors > 0) {
+        console.warn('ZIP extraction errors:', uploadRes.data.errors_sample);
+      }
       
       // 3. Poll per stato
       const pollInterval = setInterval(async () => {
@@ -118,7 +124,8 @@ export default function ArchivioBonifici() {
             processed: job.processed_files || 0,
             total: job.total_files || 0,
             imported: job.imported_files || 0,
-            errors: job.errors || 0
+            errors: job.errors || 0,
+            duplicates: job.duplicates_skipped || 0
           });
           
           if (job.status === 'completed') {
@@ -128,21 +135,21 @@ export default function ArchivioBonifici() {
             loadTransfers();
             loadSummary();
             loadCount();
-            alert(`Import completato!\n\nFile elaborati: ${job.processed_files}\nBonifici importati: ${job.imported_files}\nErrori: ${job.errors}`);
+            alert(`Import completato!\n\nFile elaborati: ${job.processed_files}\nBonifici importati: ${job.imported_files}\nDuplicati saltati: ${job.duplicates_skipped || 0}\nErrori: ${job.errors}`);
           }
         } catch (e) {
           console.error('Poll error:', e);
         }
       }, 2000);
       
-      // Timeout dopo 10 minuti
+      // Timeout dopo 30 minuti per file grandi
       setTimeout(() => {
         clearInterval(pollInterval);
         if (uploading) {
           setUploading(false);
           alert('Timeout raggiunto. Controlla lo stato dell\'import.');
         }
-      }, 10 * 60 * 1000);
+      }, 30 * 60 * 1000);
       
     } catch (error) {
       setUploading(false);
