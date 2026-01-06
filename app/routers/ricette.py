@@ -1,15 +1,24 @@
 """
 Ricette e Produzione Router
-Sistema di gestione ricette con calcolo food cost e scarico magazzino automatico
+Sistema di gestione ricette con calcolo food cost e scarico magazzino automatico.
+Include generazione LOTTI di produzione e registro lotti.
 """
 from fastapi import APIRouter, HTTPException, Query, Body, UploadFile, File
 from typing import Dict, Any, List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from app.database import Database, Collections
 import uuid
 import json
 
 router = APIRouter()
+
+
+def genera_codice_lotto(ricetta_nome: str) -> str:
+    """Genera un codice lotto univoco per la produzione."""
+    now = datetime.now(timezone.utc)
+    # Formato: PROD-ABC-YYYYMMDD-HHMM (ABC = prime 3 lettere ricetta)
+    prefix = ''.join(c for c in ricetta_nome.upper() if c.isalpha())[:3] or "PRD"
+    return f"PROD-{prefix}-{now.strftime('%Y%m%d')}-{now.strftime('%H%M')}"
 
 
 # ============== RICETTE ==============
