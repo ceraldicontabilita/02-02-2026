@@ -111,9 +111,12 @@ export default function GestioneDipendenti() {
     try {
       setLoadingSalari(true);
       // Usa il NUOVO endpoint prima-nota-salari
-      let url = `/api/prima-nota-salari/salari?anno=${selectedYear}`;
-      if (selectedMonth) url += `&mese=${selectedMonth}`;
-      if (filtroDipendente) url += `&dipendente=${encodeURIComponent(filtroDipendente)}`;
+      let url = `/api/prima-nota-salari/salari?`;
+      const params = [];
+      if (selectedYear) params.push(`anno=${selectedYear}`);
+      if (selectedMonth) params.push(`mese=${selectedMonth}`);
+      if (filtroDipendente) params.push(`dipendente=${encodeURIComponent(filtroDipendente)}`);
+      url += params.join('&');
       
       const res = await api.get(url).catch(() => ({ data: [] }));
       setSalariMovimenti(res.data || []);
