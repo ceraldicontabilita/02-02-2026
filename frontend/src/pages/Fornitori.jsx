@@ -844,7 +844,7 @@ export default function Fornitori() {
       await api.delete(url);
       reloadData(); // Ricarica dati
     } catch (error) {
-      const errorMsg = error.response?.data?.detail || error.message;
+      const errorMsg = error.response?.data?.detail || error.response?.data?.message || error.message;
       // Se ci sono fatture collegate, chiedi conferma per eliminazione forzata
       if (error.response?.status === 400 && errorMsg.includes('fatture collegate')) {
         if (window.confirm(`${errorMsg}\n\nVuoi eliminare comunque il fornitore?\n\nATTENZIONE: Le fatture rimarranno nel sistema ma non saranno più associate a questo fornitore.`)) {
