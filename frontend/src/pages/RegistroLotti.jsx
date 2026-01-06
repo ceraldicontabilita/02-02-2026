@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../api';
 import { formatDateIT, formatEuro } from '../lib/utils';
+import { Package, Search, Filter, ChevronDown, ChevronUp, Eye, Calendar, Factory, Layers, RefreshCw, Copy, Printer, ArrowLeft } from 'lucide-react';
 
-const STATO_COLORS = {
-  disponibile: { bg: '#dcfce7', text: '#166534' },
-  venduto: { bg: '#dbeafe', text: '#1e40af' },
-  scaduto: { bg: '#fee2e2', text: '#991b1b' },
-  eliminato: { bg: '#e5e7eb', text: '#6b7280' }
+const STATO_CONFIG = {
+  disponibile: { bg: '#dcfce7', text: '#166534', label: 'Disponibile', icon: '✅' },
+  venduto: { bg: '#dbeafe', text: '#1e40af', label: 'Venduto', icon: '💰' },
+  scaduto: { bg: '#fee2e2', text: '#991b1b', label: 'Scaduto', icon: '⚠️' },
+  eliminato: { bg: '#f3f4f6', text: '#6b7280', label: 'Eliminato', icon: '🗑️' }
 };
 
 export default function RegistroLotti() {
@@ -16,6 +18,7 @@ export default function RegistroLotti() {
   const [search, setSearch] = useState('');
   const [filterStato, setFilterStato] = useState('');
   const [selectedLotto, setSelectedLotto] = useState(null);
+  const [expandedLotto, setExpandedLotto] = useState(null);
 
   useEffect(() => {
     loadLotti();
@@ -44,187 +47,554 @@ export default function RegistroLotti() {
 
   const handleStatoChange = async (codice, nuovoStato) => {
     try {
-      await api.put(`/api/ricette/lotti/${codice}/stato`, { stato: nuovoStato });
+      await api.put(`/api/ricette/lotti/${encodeURIComponent(codice)}/stato`, { stato: nuovoStato });
       loadLotti();
     } catch (err) {
       alert('Errore aggiornamento stato');
     }
   };
 
-  const getStatoStyle = (stato) => STATO_COLORS[stato] || STATO_COLORS.disponibile;
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text);
+    alert('Copiato negli appunti!');
+  };
+
+  const getTotale = () => {
+    return Object.values(stats).reduce((acc, s) => acc + (s?.count || 0), 0);
+  };
+
+  const getLottiSettimana = () => {
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    return lotti.filter(l => new Date(l.data_produzione) >= oneWeekAgo).length;
+  };
 
   return (
-    <div style={{ padding: 24 }}>
+    <div style={{ padding: '24px', maxWidth: '1400px', margin: '0 auto' }}>
       {/* Header */}
-      <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 28, fontWeight: 700, color: '#1e3a5f', marginBottom: 8 }}>
-          📋 Registro Lotti Produzione
+      <div style={{ marginBottom: '24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '8px' }}>
+          <Link 
+            to="/ricette" 
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '6px',
+              color: '#3b82f6',
+              textDecoration: 'none',
+              fontSize: '14px'
+            }}
+          >
+            <ArrowLeft size={16} /> Torna alle Ricette
+          </Link>
+        </div>
+        <h1 style={{ 
+          fontSize: '28px', 
+          fontWeight: 700, 
+          color: '#1e293b', 
+          margin: '0 0 8px 0', 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '12px' 
+        }}>
+          <Layers size={32} style={{ color: '#3b82f6' }} />
+          Registro Lotti Produzione
         </h1>
-        <p style={{ color: '#64748b' }}>
+        <p style={{ color: '#64748b', margin: 0 }}>
           Tracciabilità completa: dal prodotto finito agli ingredienti e fornitori
         </p>
       </div>
 
-      {/* Stats */}
+      {/* Stats Cards (stile app di riferimento) */}
       <div style={{ 
         display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', 
-        gap: 12, 
-        marginBottom: 24 
+        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+        gap: '16px', 
+        marginBottom: '24px' 
       }}>
-        {Object.entries(STATO_COLORS).map(([stato, style]) => (
-          <div key={stato} style={{
-            background: 'white',
-            borderRadius: 12,
-            padding: 16,
-            borderLeft: `4px solid ${style.text}`,
-            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-            cursor: 'pointer',
-            opacity: filterStato && filterStato !== stato ? 0.5 : 1
-          }} onClick={() => setFilterStato(filterStato === stato ? '' : stato)}>
-            <div style={{ fontSize: 12, color: '#64748b', textTransform: 'capitalize' }}>{stato}</div>
-            <div style={{ fontSize: 24, fontWeight: 700, color: style.text }}>
-              {stats[stato]?.count || 0}
-            </div>
+        <div style={{
+          background: 'white',
+          borderRadius: '12px',
+          padding: '20px',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '16px'
+        }}>
+          <div style={{
+            width: '48px',
+            height: '48px',
+            borderRadius: '10px',
+            background: '#dbeafe',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <Package size={24} style={{ color: '#3b82f6' }} />
           </div>
+          <div>
+            <div style={{ fontSize: '28px', fontWeight: 700, color: '#1e293b' }}>{getTotale()}</div>
+            <div style={{ fontSize: '13px', color: '#64748b' }}>Lotti Totali</div>
+          </div>
+        </div>
+
+        <div style={{
+          background: 'white',
+          borderRadius: '12px',
+          padding: '20px',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '16px'
+        }}>
+          <div style={{
+            width: '48px',
+            height: '48px',
+            borderRadius: '10px',
+            background: '#fef3c7',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <Calendar size={24} style={{ color: '#f59e0b' }} />
+          </div>
+          <div>
+            <div style={{ fontSize: '28px', fontWeight: 700, color: '#1e293b' }}>{getLottiSettimana()}</div>
+            <div style={{ fontSize: '13px', color: '#64748b' }}>Lotti Settimana</div>
+          </div>
+        </div>
+
+        <div style={{
+          background: 'white',
+          borderRadius: '12px',
+          padding: '20px',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '16px'
+        }}>
+          <div style={{
+            width: '48px',
+            height: '48px',
+            borderRadius: '10px',
+            background: '#dcfce7',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <Factory size={24} style={{ color: '#16a34a' }} />
+          </div>
+          <div>
+            <div style={{ fontSize: '28px', fontWeight: 700, color: '#1e293b' }}>{stats.disponibile?.count || 0}</div>
+            <div style={{ fontSize: '13px', color: '#64748b' }}>Disponibili</div>
+          </div>
+        </div>
+
+        <div style={{
+          background: 'white',
+          borderRadius: '12px',
+          padding: '20px',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '16px'
+        }}>
+          <div style={{
+            width: '48px',
+            height: '48px',
+            borderRadius: '10px',
+            background: '#fee2e2',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <RefreshCw size={24} style={{ color: '#dc2626' }} />
+          </div>
+          <div>
+            <div style={{ fontSize: '28px', fontWeight: 700, color: '#1e293b' }}>{stats.scaduto?.count || 0}</div>
+            <div style={{ fontSize: '13px', color: '#64748b' }}>Scaduti</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Filtri per stato */}
+      <div style={{ 
+        display: 'flex', 
+        gap: '8px', 
+        marginBottom: '16px',
+        flexWrap: 'wrap'
+      }}>
+        <button
+          onClick={() => setFilterStato('')}
+          style={{
+            padding: '8px 16px',
+            borderRadius: '8px',
+            border: filterStato === '' ? '2px solid #3b82f6' : '1px solid #e2e8f0',
+            background: filterStato === '' ? '#eff6ff' : 'white',
+            color: filterStato === '' ? '#3b82f6' : '#64748b',
+            cursor: 'pointer',
+            fontSize: '13px',
+            fontWeight: 600
+          }}
+        >
+          Tutti ({getTotale()})
+        </button>
+        {Object.entries(STATO_CONFIG).map(([stato, config]) => (
+          <button
+            key={stato}
+            onClick={() => setFilterStato(filterStato === stato ? '' : stato)}
+            style={{
+              padding: '8px 16px',
+              borderRadius: '8px',
+              border: filterStato === stato ? `2px solid ${config.text}` : '1px solid #e2e8f0',
+              background: filterStato === stato ? config.bg : 'white',
+              color: filterStato === stato ? config.text : '#64748b',
+              cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            {config.icon} {config.label} ({stats[stato]?.count || 0})
+          </button>
         ))}
       </div>
 
-      {/* Filtri */}
+      {/* Barra di ricerca */}
       <div style={{ 
         display: 'flex', 
-        gap: 12, 
-        marginBottom: 20,
-        padding: 16,
+        gap: '12px', 
+        marginBottom: '20px',
+        padding: '16px',
         background: '#f8fafc',
-        borderRadius: 12
+        borderRadius: '12px'
       }}>
-        <input
-          type="text"
-          placeholder="🔍 Cerca lotto o prodotto..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-          style={{ padding: '10px 14px', borderRadius: 8, border: '1px solid #e2e8f0', minWidth: 250 }}
-        />
-        <button onClick={handleSearch} style={{
-          padding: '10px 16px',
-          background: '#3b82f6',
-          color: 'white',
-          border: 'none',
-          borderRadius: 8,
-          cursor: 'pointer'
-        }}>
-          Cerca
-        </button>
-        {filterStato && (
-          <button onClick={() => setFilterStato('')} style={{
-            padding: '10px 16px',
-            background: '#ef4444',
+        <div style={{ position: 'relative', flex: 1 }}>
+          <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
+          <input
+            type="text"
+            placeholder="Cerca lotto o prodotto..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+            style={{ 
+              width: '100%',
+              padding: '12px 12px 12px 40px', 
+              borderRadius: '8px', 
+              border: '1px solid #e2e8f0',
+              fontSize: '14px'
+            }}
+            data-testid="search-lotti"
+          />
+        </div>
+        <button 
+          onClick={handleSearch} 
+          style={{
+            padding: '12px 20px',
+            background: '#3b82f6',
             color: 'white',
             border: 'none',
-            borderRadius: 8,
-            cursor: 'pointer'
-          }}>
-            ✕ Reset Filtro
-          </button>
-        )}
+            borderRadius: '8px',
+            cursor: 'pointer',
+            fontWeight: 600,
+            fontSize: '14px'
+          }}
+        >
+          Cerca
+        </button>
+        <button 
+          onClick={loadLotti} 
+          style={{
+            padding: '12px 16px',
+            background: 'white',
+            color: '#64748b',
+            border: '1px solid #e2e8f0',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}
+        >
+          <RefreshCw size={16} /> Aggiorna
+        </button>
       </div>
 
-      {/* Tabella Lotti */}
+      {/* Lista Lotti */}
       <div style={{ 
         background: 'white', 
-        borderRadius: 12, 
+        borderRadius: '12px', 
         overflow: 'hidden', 
         border: '1px solid #e2e8f0' 
       }}>
         {loading ? (
-          <div style={{ padding: 40, textAlign: 'center', color: '#64748b' }}>⏳ Caricamento...</div>
+          <div style={{ padding: '60px', textAlign: 'center', color: '#64748b' }}>
+            <RefreshCw size={32} style={{ animation: 'spin 1s linear infinite', marginBottom: '16px' }} />
+            <div>Caricamento lotti...</div>
+          </div>
         ) : lotti.length === 0 ? (
-          <div style={{ padding: 40, textAlign: 'center', color: '#64748b' }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>📋</div>
-            <div style={{ fontWeight: 600 }}>Nessun lotto registrato</div>
-            <div style={{ fontSize: 13, marginTop: 8 }}>
+          <div style={{ padding: '60px', textAlign: 'center', color: '#64748b' }}>
+            <Layers size={48} style={{ color: '#cbd5e1', marginBottom: '16px' }} />
+            <div style={{ fontWeight: 600, marginBottom: '8px' }}>Nessun lotto registrato</div>
+            <div style={{ fontSize: '13px' }}>
               I lotti vengono creati automaticamente quando produci una ricetta
             </div>
+            <Link 
+              to="/ricette"
+              style={{
+                display: 'inline-block',
+                marginTop: '16px',
+                padding: '10px 20px',
+                background: '#3b82f6',
+                color: 'white',
+                borderRadius: '8px',
+                textDecoration: 'none',
+                fontSize: '14px',
+                fontWeight: 600
+              }}
+            >
+              Vai alle Ricette
+            </Link>
           </div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1000 }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '900px' }}>
               <thead>
                 <tr style={{ background: '#1e3a5f', color: 'white' }}>
-                  <th style={{ padding: 12, textAlign: 'left' }}>Codice Lotto</th>
-                  <th style={{ padding: 12, textAlign: 'left' }}>Prodotto</th>
-                  <th style={{ padding: 12, textAlign: 'center' }}>Quantità</th>
-                  <th style={{ padding: 12, textAlign: 'center' }}>Data Produzione</th>
-                  <th style={{ padding: 12, textAlign: 'right' }}>Costo</th>
-                  <th style={{ padding: 12, textAlign: 'center' }}>Stato</th>
-                  <th style={{ padding: 12, textAlign: 'center' }}>Azioni</th>
+                  <th style={{ padding: '14px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 600 }}>CODICE LOTTO</th>
+                  <th style={{ padding: '14px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 600 }}>PRODOTTO</th>
+                  <th style={{ padding: '14px 16px', textAlign: 'center', fontSize: '12px', fontWeight: 600 }}>QUANTITÀ</th>
+                  <th style={{ padding: '14px 16px', textAlign: 'center', fontSize: '12px', fontWeight: 600 }}>DATA PROD.</th>
+                  <th style={{ padding: '14px 16px', textAlign: 'right', fontSize: '12px', fontWeight: 600 }}>COSTO</th>
+                  <th style={{ padding: '14px 16px', textAlign: 'center', fontSize: '12px', fontWeight: 600 }}>STATO</th>
+                  <th style={{ padding: '14px 16px', textAlign: 'center', fontSize: '12px', fontWeight: 600 }}>AZIONI</th>
                 </tr>
               </thead>
               <tbody>
                 {lotti.map((lotto, idx) => {
-                  const statoStyle = getStatoStyle(lotto.stato);
+                  const statoConfig = STATO_CONFIG[lotto.stato] || STATO_CONFIG.disponibile;
+                  const isExpanded = expandedLotto === lotto.codice_lotto;
+                  
                   return (
-                    <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                      <td style={{ padding: 12 }}>
-                        <div style={{ fontFamily: 'monospace', fontWeight: 600, color: '#3b82f6' }}>
-                          {lotto.codice_lotto}
-                        </div>
-                      </td>
-                      <td style={{ padding: 12 }}>
-                        <div style={{ fontWeight: 500 }}>{lotto.prodotto_finito}</div>
-                        <div style={{ fontSize: 11, color: '#64748b' }}>{lotto.categoria}</div>
-                      </td>
-                      <td style={{ padding: 12, textAlign: 'center', fontWeight: 600 }}>
-                        {lotto.quantita} {lotto.unita}
-                      </td>
-                      <td style={{ padding: 12, textAlign: 'center', fontSize: 13 }}>
-                        {formatDateIT(lotto.data_produzione)}
-                      </td>
-                      <td style={{ padding: 12, textAlign: 'right' }}>
-                        <div style={{ fontWeight: 600 }}>{formatEuro(lotto.costo_totale)}</div>
-                        <div style={{ fontSize: 11, color: '#64748b' }}>
-                          {formatEuro(lotto.costo_unitario)}/pz
-                        </div>
-                      </td>
-                      <td style={{ padding: 12, textAlign: 'center' }}>
-                        <select
-                          value={lotto.stato}
-                          onChange={(e) => handleStatoChange(lotto.codice_lotto, e.target.value)}
-                          style={{
-                            padding: '4px 8px',
-                            borderRadius: 6,
-                            border: 'none',
-                            background: statoStyle.bg,
-                            color: statoStyle.text,
-                            fontWeight: 600,
-                            fontSize: 12,
-                            cursor: 'pointer'
-                          }}
-                        >
-                          <option value="disponibile">Disponibile</option>
-                          <option value="venduto">Venduto</option>
-                          <option value="scaduto">Scaduto</option>
-                          <option value="eliminato">Eliminato</option>
-                        </select>
-                      </td>
-                      <td style={{ padding: 12, textAlign: 'center' }}>
-                        <button
-                          onClick={() => setSelectedLotto(lotto)}
-                          style={{
-                            padding: '6px 12px',
-                            background: '#f1f5f9',
-                            border: 'none',
-                            borderRadius: 6,
-                            cursor: 'pointer',
-                            fontSize: 12
-                          }}
-                        >
-                          👁️ Dettagli
-                        </button>
-                      </td>
-                    </tr>
+                    <React.Fragment key={idx}>
+                      <tr style={{ 
+                        borderBottom: isExpanded ? 'none' : '1px solid #f1f5f9',
+                        background: isExpanded ? '#f8fafc' : 'white'
+                      }}>
+                        <td style={{ padding: '16px' }}>
+                          <div style={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: '8px' 
+                          }}>
+                            <div style={{ 
+                              fontFamily: 'monospace', 
+                              fontWeight: 700, 
+                              color: '#3b82f6',
+                              fontSize: '14px',
+                              background: '#eff6ff',
+                              padding: '6px 10px',
+                              borderRadius: '6px'
+                            }}>
+                              {lotto.codice_lotto}
+                            </div>
+                            <button
+                              onClick={() => copyToClipboard(lotto.codice_lotto)}
+                              style={{
+                                padding: '4px',
+                                background: 'none',
+                                border: 'none',
+                                cursor: 'pointer',
+                                color: '#94a3b8'
+                              }}
+                              title="Copia codice"
+                            >
+                              <Copy size={14} />
+                            </button>
+                          </div>
+                        </td>
+                        <td style={{ padding: '16px' }}>
+                          <div style={{ fontWeight: 600, color: '#1e293b' }}>{lotto.prodotto_finito}</div>
+                          <div style={{ fontSize: '12px', color: '#64748b' }}>{lotto.categoria || 'Altro'}</div>
+                        </td>
+                        <td style={{ padding: '16px', textAlign: 'center' }}>
+                          <span style={{ 
+                            fontWeight: 700, 
+                            fontSize: '16px',
+                            color: '#1e293b'
+                          }}>
+                            {lotto.quantita}
+                          </span>
+                          <span style={{ fontSize: '13px', color: '#64748b', marginLeft: '4px' }}>
+                            {lotto.unita}
+                          </span>
+                        </td>
+                        <td style={{ padding: '16px', textAlign: 'center' }}>
+                          <div style={{ fontSize: '14px', color: '#1e293b' }}>
+                            {formatDateIT(lotto.data_produzione)}
+                          </div>
+                          {lotto.scadenza_stimata && (
+                            <div style={{ fontSize: '11px', color: '#f59e0b' }}>
+                              Scade: {formatDateIT(lotto.scadenza_stimata)}
+                            </div>
+                          )}
+                        </td>
+                        <td style={{ padding: '16px', textAlign: 'right' }}>
+                          <div style={{ fontWeight: 600, color: '#1e293b' }}>
+                            {formatEuro(lotto.costo_totale)}
+                          </div>
+                          <div style={{ fontSize: '11px', color: '#64748b' }}>
+                            {formatEuro(lotto.costo_unitario)}/{lotto.unita}
+                          </div>
+                        </td>
+                        <td style={{ padding: '16px', textAlign: 'center' }}>
+                          <select
+                            value={lotto.stato}
+                            onChange={(e) => handleStatoChange(lotto.codice_lotto, e.target.value)}
+                            style={{
+                              padding: '6px 12px',
+                              borderRadius: '6px',
+                              border: 'none',
+                              background: statoConfig.bg,
+                              color: statoConfig.text,
+                              fontWeight: 600,
+                              fontSize: '12px',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            {Object.entries(STATO_CONFIG).map(([key, config]) => (
+                              <option key={key} value={key}>{config.label}</option>
+                            ))}
+                          </select>
+                        </td>
+                        <td style={{ padding: '16px', textAlign: 'center' }}>
+                          <button
+                            onClick={() => setExpandedLotto(isExpanded ? null : lotto.codice_lotto)}
+                            style={{
+                              padding: '8px 14px',
+                              background: isExpanded ? '#3b82f6' : '#f1f5f9',
+                              color: isExpanded ? 'white' : '#64748b',
+                              border: 'none',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              fontSize: '12px',
+                              fontWeight: 600,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px'
+                            }}
+                            data-testid={`expand-lotto-${idx}`}
+                          >
+                            {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                            {isExpanded ? 'Chiudi' : 'Dettagli'}
+                          </button>
+                        </td>
+                      </tr>
+                      
+                      {/* Riga espansa con dettagli ingredienti */}
+                      {isExpanded && (
+                        <tr>
+                          <td colSpan={7} style={{ padding: '0 16px 16px 16px', background: '#f8fafc' }}>
+                            <div style={{
+                              background: 'white',
+                              borderRadius: '10px',
+                              padding: '20px',
+                              border: '1px solid #e2e8f0'
+                            }}>
+                              <h4 style={{ 
+                                fontSize: '14px', 
+                                fontWeight: 600, 
+                                color: '#1e293b', 
+                                margin: '0 0 16px 0',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px'
+                              }}>
+                                <Package size={16} />
+                                Tracciabilità Ingredienti ({lotto.ingredienti?.length || 0})
+                              </h4>
+                              
+                              {lotto.ingredienti && lotto.ingredienti.length > 0 ? (
+                                <div style={{ overflowX: 'auto' }}>
+                                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                    <thead>
+                                      <tr style={{ background: '#f8fafc' }}>
+                                        <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '11px', fontWeight: 600, color: '#64748b' }}>INGREDIENTE</th>
+                                        <th style={{ padding: '10px 12px', textAlign: 'center', fontSize: '11px', fontWeight: 600, color: '#64748b' }}>QTÀ USATA</th>
+                                        <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '11px', fontWeight: 600, color: '#64748b' }}>LOTTO FORN.</th>
+                                        <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '11px', fontWeight: 600, color: '#64748b' }}>FORNITORE</th>
+                                        <th style={{ padding: '10px 12px', textAlign: 'center', fontSize: '11px', fontWeight: 600, color: '#64748b' }}>DATA CONS.</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {lotto.ingredienti.map((ing, i) => (
+                                        <tr key={i} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                          <td style={{ padding: '10px 12px' }}>
+                                            <span style={{ fontWeight: 500, color: '#1e293b' }}>{ing.prodotto}</span>
+                                          </td>
+                                          <td style={{ padding: '10px 12px', textAlign: 'center' }}>
+                                            <span style={{ fontWeight: 600 }}>{ing.quantita_usata}</span>
+                                            <span style={{ color: '#64748b', marginLeft: '4px' }}>{ing.unita}</span>
+                                          </td>
+                                          <td style={{ padding: '10px 12px' }}>
+                                            {ing.lotto_fornitore ? (
+                                              <span style={{ 
+                                                fontFamily: 'monospace', 
+                                                fontSize: '12px',
+                                                background: '#fef3c7',
+                                                padding: '2px 6px',
+                                                borderRadius: '4px',
+                                                color: '#92400e'
+                                              }}>
+                                                {ing.lotto_fornitore}
+                                              </span>
+                                            ) : (
+                                              <span style={{ color: '#94a3b8', fontSize: '12px' }}>N/D</span>
+                                            )}
+                                          </td>
+                                          <td style={{ padding: '10px 12px', fontSize: '13px', color: '#64748b' }}>
+                                            {ing.fornitore || 'N/D'}
+                                          </td>
+                                          <td style={{ padding: '10px 12px', textAlign: 'center', fontSize: '13px' }}>
+                                            {ing.data_consegna ? formatDateIT(ing.data_consegna) : 'N/D'}
+                                          </td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              ) : (
+                                <div style={{ 
+                                  padding: '20px', 
+                                  textAlign: 'center', 
+                                  color: '#94a3b8',
+                                  background: '#f8fafc',
+                                  borderRadius: '8px'
+                                }}>
+                                  Nessuna tracciabilità ingredienti disponibile
+                                </div>
+                              )}
+                              
+                              {/* Note */}
+                              {lotto.note && (
+                                <div style={{ 
+                                  marginTop: '16px', 
+                                  padding: '12px', 
+                                  background: '#fffbeb', 
+                                  borderRadius: '8px',
+                                  fontSize: '13px',
+                                  color: '#92400e'
+                                }}>
+                                  <strong>Note:</strong> {lotto.note}
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
                   );
                 })}
               </tbody>
@@ -233,119 +603,12 @@ export default function RegistroLotti() {
         )}
       </div>
 
-      {/* Modal Dettaglio Lotto */}
-      {selectedLotto && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }} onClick={() => setSelectedLotto(null)}>
-          <div style={{
-            background: 'white',
-            borderRadius: 16,
-            padding: 24,
-            width: '90%',
-            maxWidth: 700,
-            maxHeight: '90vh',
-            overflow: 'auto'
-          }} onClick={(e) => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <h2 style={{ margin: 0, color: '#1e3a5f' }}>
-                📋 Dettaglio Lotto
-              </h2>
-              <button onClick={() => setSelectedLotto(null)} style={{
-                background: 'none',
-                border: 'none',
-                fontSize: 24,
-                cursor: 'pointer'
-              }}>×</button>
-            </div>
-
-            {/* Info Lotto */}
-            <div style={{ 
-              background: '#f8fafc', 
-              padding: 16, 
-              borderRadius: 12, 
-              marginBottom: 20 
-            }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div>
-                  <div style={{ fontSize: 12, color: '#64748b' }}>Codice Lotto</div>
-                  <div style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 18, color: '#3b82f6' }}>
-                    {selectedLotto.codice_lotto}
-                  </div>
-                </div>
-                <div>
-                  <div style={{ fontSize: 12, color: '#64748b' }}>Prodotto</div>
-                  <div style={{ fontWeight: 600 }}>{selectedLotto.prodotto_finito}</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: 12, color: '#64748b' }}>Quantità Prodotta</div>
-                  <div style={{ fontWeight: 600 }}>{selectedLotto.quantita} {selectedLotto.unita}</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: 12, color: '#64748b' }}>Data Produzione</div>
-                  <div>{formatDateIT(selectedLotto.data_produzione)}</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: 12, color: '#64748b' }}>Costo Totale</div>
-                  <div style={{ fontWeight: 600 }}>{formatEuro(selectedLotto.costo_totale)}</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: 12, color: '#64748b' }}>Costo Unitario</div>
-                  <div>{formatEuro(selectedLotto.costo_unitario)}/pz</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Tracciabilità Ingredienti */}
-            <h3 style={{ margin: '0 0 12px 0', color: '#1e3a5f' }}>
-              🔗 Tracciabilità Ingredienti
-            </h3>
-            <div style={{ border: '1px solid #e2e8f0', borderRadius: 12, overflow: 'hidden' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ background: '#f1f5f9' }}>
-                    <th style={{ padding: 10, textAlign: 'left', fontSize: 12 }}>Ingrediente</th>
-                    <th style={{ padding: 10, textAlign: 'center', fontSize: 12 }}>Qta Usata</th>
-                    <th style={{ padding: 10, textAlign: 'left', fontSize: 12 }}>Fornitore</th>
-                    <th style={{ padding: 10, textAlign: 'center', fontSize: 12 }}>Lotto Forn.</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(selectedLotto.ingredienti || []).map((ing, idx) => (
-                    <tr key={idx} style={{ borderTop: '1px solid #e2e8f0' }}>
-                      <td style={{ padding: 10, fontSize: 13 }}>{ing.prodotto}</td>
-                      <td style={{ padding: 10, textAlign: 'center', fontSize: 13 }}>
-                        {ing.quantita_usata?.toFixed(3)} {ing.unita}
-                      </td>
-                      <td style={{ padding: 10, fontSize: 13 }}>
-                        {ing.fornitore || <span style={{ color: '#9ca3af' }}>-</span>}
-                      </td>
-                      <td style={{ padding: 10, textAlign: 'center', fontFamily: 'monospace', fontSize: 11 }}>
-                        {ing.lotto_fornitore || <span style={{ color: '#9ca3af' }}>-</span>}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {selectedLotto.note && (
-              <div style={{ marginTop: 16, padding: 12, background: '#fef3c7', borderRadius: 8 }}>
-                <strong>Note:</strong> {selectedLotto.note}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 }
