@@ -215,6 +215,7 @@ app.include_router(regole_categorizzazione.router, prefix="/api/regole", tags=["
 # Nuovi moduli TeamSystem - Contabilità Analitica
 app.include_router(centri_costo.router, prefix="/api/centri-costo", tags=["Centri di Costo"])
 app.include_router(magazzino_doppia_verita.router, prefix="/api/magazzino-dv", tags=["Magazzino Doppia Verità"])
+app.include_router(ricette.router, prefix="/api/ricette", tags=["Ricette e Produzione"])
 
 @app.get("/")
 async def root():
