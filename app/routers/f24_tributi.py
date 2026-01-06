@@ -167,14 +167,14 @@ def _days_to_scadenza(scadenza_str, today):
             else:
                 try:
                     scadenza = datetime.strptime(scadenza_str, "%d/%m/%Y").date()
-                except:
+                except ValueError:
                     scadenza = datetime.strptime(scadenza_str, "%Y-%m-%d").date()
         elif isinstance(scadenza_str, datetime):
             scadenza = scadenza_str.date()
         else:
             return 999
         return (scadenza - today).days
-    except:
+    except (ValueError, TypeError):
         return 999
 
 
