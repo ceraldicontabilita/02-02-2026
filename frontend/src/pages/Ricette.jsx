@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
 import { formatEuro } from '../lib/utils';
-import { ChefHat, Search, Filter, TrendingUp, TrendingDown, AlertTriangle, Check, Package, Plus, Trash2, Edit2 } from 'lucide-react';
+import { ChefHat, Search, Filter, TrendingUp, TrendingDown, AlertTriangle, Check, Package, Plus, Trash2, Edit2, Factory } from 'lucide-react';
 
 export default function Ricette() {
   const [ricette, setRicette] = useState([]);
@@ -13,6 +13,13 @@ export default function Ricette() {
   const [selectedRicetta, setSelectedRicetta] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingRicetta, setEditingRicetta] = useState(null);
+  
+  // Stato per produzione
+  const [produzioneModal, setProduzioneModal] = useState(null);
+  const [quantitaProduzione, setQuantitaProduzione] = useState(1);
+  const [producing, setProducing] = useState(false);
+  const [produzioneResult, setProduzioneResult] = useState(null);
+  
   const [newRicetta, setNewRicetta] = useState({
     nome: '',
     categoria: 'pasticceria',
