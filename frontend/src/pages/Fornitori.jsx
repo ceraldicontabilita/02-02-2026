@@ -515,19 +515,22 @@ function SupplierCard({ supplier, onEdit, onDelete, onViewInvoices, onChangeMeto
 
             {/* Menu cambio metodo */}
             {showMetodoMenu && (
-              <div style={{
-                position: 'absolute',
-                right: 0,
-                top: '100%',
-                marginTop: '4px',
-                backgroundColor: 'white',
-                borderRadius: '8px',
-                boxShadow: '0 10px 40px rgba(0,0,0,0.25)',
-                border: '1px solid #e5e7eb',
-                overflow: 'hidden',
-                zIndex: 9999,
-                minWidth: '150px'
-              }}>
+              <div 
+                style={{
+                  position: 'absolute',
+                  right: 0,
+                  top: '100%',
+                  marginTop: '4px',
+                  backgroundColor: 'white',
+                  borderRadius: '8px',
+                  boxShadow: '0 10px 40px rgba(0,0,0,0.25)',
+                  border: '1px solid #e5e7eb',
+                  overflow: 'hidden',
+                  zIndex: 9999,
+                  minWidth: '150px'
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
                 {Object.entries(METODI_PAGAMENTO).filter(([k]) => k !== 'banca').map(([key, val]) => (
                   <button
                     key={key}
