@@ -78,6 +78,27 @@ export default function ContabilitaAvanzata() {
     setProcessing(false);
   };
 
+  const handleDownloadPDF = async () => {
+    try {
+      const anno = new Date().getFullYear();
+      const res = await fetch(`${API}/api/contabilita/export/pdf-dichiarazione?anno=${anno}&regione=${regione}`);
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `dichiarazione_redditi_${anno}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        setMessage({ type: 'success', text: 'PDF dichiarazione scaricato!' });
+      }
+    } catch (err) {
+      setMessage({ type: 'error', text: 'Errore download PDF' });
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-900 p-6 flex items-center justify-center">
