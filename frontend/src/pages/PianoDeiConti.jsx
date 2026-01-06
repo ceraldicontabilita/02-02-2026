@@ -11,7 +11,7 @@ const CATEGORIE = {
 };
 
 export default function PianoDeiConti() {
-  const [conti, setConti] = useState([]);
+  const [_conti, setConti] = useState([]);
   const [grouped, setGrouped] = useState({});
   const [regole, setRegole] = useState([]);
   const [bilancio, setBilancio] = useState(null);

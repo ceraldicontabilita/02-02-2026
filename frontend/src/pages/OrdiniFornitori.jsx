@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import api from "../api";
-import { formatDateIT, formatEuro } from "../lib/utils";
+import { formatDateIT } from "../lib/utils";
 
 export default function OrdiniFornitori() {
   const [loading, setLoading] = useState(true);

@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import api from "../api";
-import { formatDateIT, formatEuro } from "../lib/utils";
 
 export default function RicercaProdotti() {
   const [products, setProducts] = useState([]);
@@ -19,6 +18,7 @@ export default function RicercaProdotti() {
   useEffect(() => {
     loadProducts();
     loadCategories();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [exactSearch]);  // Ricarica quando cambia il tipo di ricerca
 
   async function loadProducts() {
