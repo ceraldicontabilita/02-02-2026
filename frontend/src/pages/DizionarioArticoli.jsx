@@ -298,6 +298,22 @@ export default function DizionarioArticoli() {
         >
           {applying ? '⏳ Applicazione...' : '✅ Applica alle Fatture'}
         </button>
+        
+        <button
+          onClick={handleCategorizzaAI}
+          disabled={categorizingAI}
+          style={{
+            padding: '10px 20px',
+            background: categorizingAI ? '#9ca3af' : 'linear-gradient(135deg, #8b5cf6, #6d28d9)',
+            color: 'white',
+            border: 'none',
+            borderRadius: 8,
+            cursor: categorizingAI ? 'wait' : 'pointer',
+            fontWeight: 600
+          }}
+        >
+          {categorizingAI ? '⏳ AI in corso...' : '🤖 Categorizza con AI'}
+        </button>
       </div>
 
       {/* Filtri */}
