@@ -266,7 +266,23 @@ Risolto errore JSX che causava pagina bianca su `/dipendenti`:
 - Aggiunto `position: relative`, `zIndex: 10`, `pointerEvents: auto` ai TabButton
 - Tutti i 5 tab ora cliccabili nei test automatici
 
-**Test:** 23/23 passati (100%)
+### 17. Fix Filtro Anno Contabilità e Dashboard - COMPLETATA ✅ (6 Gen 2026)
+**Problema risolto:**
+- La pagina ContabilitaAvanzata non usava l'anno dal context globale
+- Il widget IRES/IRAP nella Dashboard non passava l'anno all'API
+- La Situazione Finanziaria già funzionava correttamente
+
+**Modifiche:**
+- `ContabilitaAvanzata.jsx`: Aggiunto `useAnnoGlobale()`, passa `anno` a tutti gli endpoint
+- `Dashboard.jsx`: Aggiunto parametro `anno` all'endpoint calcolo-imposte
+- `calcolo_imposte.py`: `calcola_imposte_da_db()` ora accetta parametro `anno` e filtra fatture/corrispettivi
+- `contabilita_avanzata.py`: Endpoint accettano parametro `anno` opzionale
+
+**Verifica Magazzino:**
+- Il magazzino mostra 2405 prodotti (estratti dalle fatture), valore €602.140,02
+- I dati sono dinamici e non richiedono collection separata
+
+**Test:** Verificato con screenshot - Anno 2026 mostra dati corretti
 
 ---
 
