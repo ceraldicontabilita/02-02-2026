@@ -278,7 +278,9 @@ PATTERNS_ARTICOLI = {
             r"bab[aà]", r"past[ai]ccer", r"torta", r"pan\s*di\s*spagna",
             r"pan\s*brioche", r"tappi", r"treccina", r"fagottino",
             r"coda.*aragosta", r"rosettine", r"ciabatta", r"focaccia",
-            r"pane\b", r"panino", r"biscott", r"frollini", r"wafer"
+            r"pane\b", r"panino", r"biscott", r"frollini", r"wafer",
+            r"krapfen", r"rustica", r"classica\s+gr", r"sfogl.*nap",
+            r"cannoli", r"caruso", r"superfarcito", r"mignon"
         ],
         "categoria_haccp": "prodotti_forno",
         "conto": "05.01.11",
@@ -290,7 +292,8 @@ PATTERNS_ARTICOLI = {
         "patterns": [
             r"farina", r"semola", r"semolato", r"manitoba", r"integrale",
             r"grano\b", r"frumento", r"caputo", r"tipo\s*00", r"tipo\s*0",
-            r"lievito", r"lievitazione", r"pasta\s+sfoglia"
+            r"lievito", r"lievitazione", r"pasta\s+sfoglia", r"amido",
+            r"artecrema"
         ],
         "categoria_haccp": "farine_cereali",
         "conto": "05.01.02",
@@ -301,7 +304,7 @@ PATTERNS_ARTICOLI = {
     "surgelati": {
         "patterns": [
             r"surgelat", r"congelat", r"frozen", r"master\s*frost",
-            r"findus", r"orogel", r"surgital", r"\-18"
+            r"findus", r"orogel", r"surgital", r"\-18", r"cubetti\s+misti"
         ],
         "categoria_haccp": "surgelati",
         "conto": "05.01.10",
@@ -323,10 +326,26 @@ PATTERNS_ARTICOLI = {
     # BEVANDE ANALCOLICHE
     "bevande_analcoliche": {
         "patterns": [
-            r"acqua\b", r"coca[\s-]*cola", r"pepsi", r"fanta", r"sprite",
-            r"aranciata", r"chinotto", r"estathe", r"the\b", r"tè\b",
+            r"coca[\s-]*cola", r"pepsi", r"fanta", r"sprite",
+            r"aranciata", r"chinotto", r"chin8", r"estathe", r"the\b", r"tè\b",
             r"succo", r"yoga", r"red\s*bull", r"monster", r"gatorade",
-            r"limonata", r"cedrata", r"energy\s*drink", r"natia", r"sorgesana"
+            r"limonata", r"cedrata", r"energy\s*drink", r"natia", r"sorgesana",
+            r"lemonsoda", r"schweppes", r"tonic[ao]", r"fever\s*tree",
+            r"crodino", r"sanbitter", r"cocktail\s+rosso", r"sanpellegrino",
+            r"ferrarelle", r"lete\b", r"vitasnella", r"lilia", r"san\s*benedetto",
+            r"primavera", r"cl\s*\d+\s*x\s*\d+.*pet", r"cl\s*\d+\s*x\s*\d+.*vap"
+        ],
+        "categoria_haccp": "bevande_analcoliche",
+        "conto": "05.01.04",
+        "conto_nome": "Acquisto bevande analcoliche"
+    },
+    
+    # ACQUA MINERALE (separato per maggiore precisione)
+    "acqua": {
+        "patterns": [
+            r"acqua\b", r"ferrarelle", r"lete\b", r"vitasnella", r"lilia\b",
+            r"san\s*benedetto", r"levissima", r"sant['']?anna", r"panna\b",
+            r"primavera\s+cl", r"naturale\s+lt", r"frizzante\s+lt"
         ],
         "categoria_haccp": "bevande_analcoliche",
         "conto": "05.01.04",
@@ -336,11 +355,12 @@ PATTERNS_ARTICOLI = {
     # BEVANDE ALCOLICHE
     "bevande_alcoliche": {
         "patterns": [
-            r"birra", r"peroni", r"heineken", r"ceres", r"beck",
+            r"birra", r"peroni", r"heineken", r"ceres", r"beck", r"tourtel",
             r"vino\b", r"prosecco", r"champagne", r"spumante",
             r"aperol", r"campari", r"spritz", r"amaro", r"limoncello",
             r"grappa", r"vodka", r"rum\b", r"whisky", r"gin\b",
-            r"liquore", r"digestivo", r"sambuca", r"fusti\b"
+            r"liquore", r"digestivo", r"sambuca", r"fusti\b",
+            r"baileys", r"punt.*mes", r"irish\s+cream"
         ],
         "categoria_haccp": "bevande_alcoliche",
         "conto": "05.01.03",
@@ -353,7 +373,8 @@ PATTERNS_ARTICOLI = {
             r"pelati", r"polpa\s+pomodoro", r"passata", r"concentrato",
             r"sottoli", r"sottacet", r"olive", r"capperi", r"carciofi.*olio",
             r"confettur", r"marmellat", r"miele\b", r"nutella",
-            r"crema.*nocciole", r"torrente"
+            r"crema.*nocciole", r"torrente", r"fagioli", r"borlotti",
+            r"legumi", r"ceci", r"lenticchie", r"piselli"
         ],
         "categoria_haccp": "conserve_scatolame",
         "conto": "05.01.05",
@@ -373,13 +394,58 @@ PATTERNS_ARTICOLI = {
         "conto_nome": "Acquisto prodotti alimentari"
     },
     
-    # DOLCIUMI E SNACK
+    # DOLCIUMI, GOMME E CARAMELLE
     "dolciumi": {
         "patterns": [
             r"cioccolat", r"caramell", r"gomme", r"chewing", r"vigorsol",
-            r"mentos", r"snack", r"patatine", r"chips", r"cracker"
+            r"mentos", r"snack", r"patatine", r"chips", r"cracker",
+            r"frisk", r"vivident", r"viv\.", r"brooklyn", r"golia",
+            r"morositas", r"tic\s*tac", r"big\s*babol", r"happydent",
+            r"chloroph", r"spearmint", r"peppermint", r"extra\s+strong",
+            r"air\s+action", r"activ\s+plus"
         ],
         "categoria_haccp": "dolciumi_snack",
+        "conto": "05.01.05",
+        "conto_nome": "Acquisto prodotti alimentari"
+    },
+    
+    # INGREDIENTI PASTICCERIA E GELATERIA
+    "ingredienti_pasticceria": {
+        "patterns": [
+            r"zucchero", r"zucch.*velo", r"impalpabile", r"neve\s+bianca",
+            r"gelatina", r"gelina", r"agar", r"pectina",
+            r"mandorl", r"nocciole", r"granella", r"pistacchi",
+            r"cioccolato.*copertura", r"surrogato", r"fondente",
+            r"crema.*rio", r"crema.*spalmabile", r"amarena",
+            r"visciola", r"margar", r"margarina", r"wiener",
+            r"melange", r"homillina", r"gateaux", r"mix\s+cake",
+            r"base\s+pasta", r"plunder", r"pirottini?", r"sottogeli",
+            r"sac\s+a\s+poche"
+        ],
+        "categoria_haccp": "additivi_ingredienti",
+        "conto": "05.01.13",
+        "conto_nome": "Additivi e ingredienti alimentari"
+    },
+    
+    # GRASSI E OLI DA CUCINA
+    "grassi": {
+        "patterns": [
+            r"strutto", r"margarina", r"burro\s+fuso", r"olio.*semi",
+            r"olio.*frittura", r"papillon", r"raffinato"
+        ],
+        "categoria_haccp": "spezie_condimenti",
+        "conto": "05.01.02",
+        "conto_nome": "Acquisto materie prime"
+    },
+    
+    # PRODOTTI VEGETALI / SOIA
+    "vegetali_soia": {
+        "patterns": [
+            r"soya", r"soia", r"valsoia", r"avena\s+drink", r"latte.*soia",
+            r"latte.*avena", r"latte.*riso", r"hopla", r"vegetale.*ml",
+            r"prep.*veget"
+        ],
+        "categoria_haccp": "latticini",
         "conto": "05.01.05",
         "conto_nome": "Acquisto prodotti alimentari"
     },
@@ -389,7 +455,8 @@ PATTERNS_ARTICOLI = {
         "patterns": [
             r"nuppy", r"olva", r"thermos", r"crema\s+gateaux",
             r"preparato", r"base\s+per", r"mix\s+per", r"aroma",
-            r"estratto", r"vanillina", r"addensante", r"pectina"
+            r"estratto", r"vanillina", r"addensante", r"pectina",
+            r"est\.\s*zuppa", r"zuppa\s+inglese"
         ],
         "categoria_haccp": "additivi_ingredienti",
         "conto": "05.01.13",
