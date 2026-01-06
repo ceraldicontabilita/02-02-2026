@@ -1,90 +1,104 @@
 <analysis>**original_problem_statement:**
-L'utente ha richiesto una serie di modifiche sostanziali all'applicazione ERP Azienda Semplice. Le richieste più recenti si sono concentrate su:
-1.  **Riorganizzazione Menu**: Creare sottomenu a discesa per Dipendenti e Import/Export per migliorare l'usabilità.
-2.  **Nuove Funzionalità (Task P1 & P2)**: Aggiungere l'esportazione Excel per l'estratto conto, una UI per la riconciliazione manuale e grafici avanzati nella dashboard.
-3.  **Refactoring Sezione Dipendenti**: Basandosi su file di esempio forniti, l'utente ha chiesto di replicare una nuova e più complessa pagina di gestione dipendenti, includendo le sezioni Libro Unico e Libretti Sanitari.
-4.  **Rimozione Funzionalità Paghe/Salari**: Eliminare completamente la vecchia sezione Paghe / Salari, inclusi i componenti UI, le route e tutti i dati associati dal database.
-5.  **Creazione Nuova Prima Nota Salari**: Sostituire la funzionalità rimossa con un sistema completamente nuovo. Questo nuovo sistema deve importare dati da due file Excel separati ( per gli stipendi e  per i pagamenti), unificarli e calcolare un saldo per ogni mese e un saldo progressivo per ogni dipendente. La logica precedente doveva essere eliminata.
+L'utente ha richiesto una serie di modifiche e nuove funzionalità per l'applicazione ERP Azienda Semplice. Le richieste più recenti includono:
+
+1.  **Correzione Bug Importazione**: Risolvere un problema per cui l'importazione del file Excel  popolava erroneamente la colonna dei bonifici anziché quella degli stipendi ().
+2.  **Logica Contabile**: Invertire la formula del saldo in Prima Nota Salari in . Un saldo positivo (verde) indica un anticipo al dipendente, mentre uno negativo (rosso) indica un arretrato.
+3.  **Gestione Duplicati**: Unificare i record duplicati (stesso dipendente, mese e anno) nella Prima Nota Salari.
+4.  **Miglioramenti UI**:
+    *   Aggiungere filtri inline direttamente sulle intestazioni della tabella Prima Nota Salari.
+    *   Aggiungere una vista Tutti gli anni per aggregare i dati.
+    *   Aggiungere un pulsante Modifica per ogni riga della tabella.
+5.  **Nuova Funzionalità Archivio Bonifici**: Basandosi su un codice di esempio fornito, implementare una nuova sezione per caricare, processare e archiviare file PDF di bonifici bancari.
+6.  **Fix Loop Infinito**: Risolvere un loop di rendering infinito nella nuova pagina .
+7.  **Upload Massivo**: Estendere la funzionalità Archivio Bonifici per supportare l'upload di file ZIP contenenti fino a 1500 PDF, con un sistema di controllo per i duplicati.
 
 **User's preferred language**: Italiano
 
 **what currently exists?**
-- Un'applicazione ERP full-stack (React + FastAPI) con un database MongoDB ().
-- Il menu di navigazione è stato riorganizzato con sottomenu a discesa.
-- Sono state implementate le funzionalità di export Excel, riconciliazione manuale e grafici avanzati per la dashboard.
-- La pagina  è stata estesa con due nuove sezioni funzionanti: Libro Unico e Libretti Sanitari.
-- La vecchia funzionalità Paghe / Salari è stata rimossa dal frontend e i suoi dati sono stati cancellati dal database.
-- È stato creato un nuovo router backend () per la nuova logica di gestione stipendi, che importa e processa correttamente i file  e .
-- Il frontend per la nuova Prima Nota Salari è stato scritto ma contiene un errore di sintassi che impedisce il rendering della pagina.
+- Un'applicazione ERP full-stack (React + FastAPI) con un database MongoDB.
+- La funzionalità Prima Nota Salari è stata corretta: ora importa correttamente i dati da  e , calcola il saldo con la formula , e gestisce i record duplicati.
+- L'interfaccia della Prima Nota Salari () è stata migliorata con filtri inline sulle intestazioni della tabella, una vista Tutti gli anni e un pulsante Modifica per ogni record.
+- È stata creata una nuova pagina, Archivio Bonifici, per l'upload e la gestione di PDF di bonifici. Il relativo backend è stato configurato in .
+- Il loop di rendering infinito sulla pagina  è stato risolto riscrivendo la logica degli  e .
+- Il backend per l'Archivio Bonifici non supporta ancora l'upload di file ZIP di grandi dimensioni né la deduplicazione avanzata.
 
 **Last working item**:
-- **Last item agent was working**: L'agente stava finalizzando l'implementazione della nuova funzionalità Prima Nota Salari. Dopo aver creato e testato con successo gli endpoint del backend per l'importazione e l'elaborazione dei dati, ha riscritto la sezione corrispondente nel file frontend . Tuttavia, questa modifica ha introdotto un errore di sintassi JSX, causando il mancato rendering (pagina bianca) dell'intera pagina .
-- **Status**: BLOCKED
-- **Agent Testing Done**: N (Il backend è stato testato con , ma il test e2e del frontend è fallito a causa della pagina bianca).
-- **Which testing method agent to use?**:  per identificare l'errore,  per verificare la UI una volta risolto il bug.
+- **Last item agent was working**: L'agente aveva appena risolto il loop infinito nella pagina  riscrivendo il file . Stava per iniziare a modificare il backend per implementare la richiesta dell'utente di gestire l'upload massivo di file ZIP.
+- **Status**: IN PROGRESS
+- **Agent Testing Done**: N (Il fix del frontend non è stato ancora verificato visivamente, e il lavoro sul backend non è iniziato).
+- **Which testing method agent to use?**:  per verificare che la pagina  non sia più in loop. Successivamente, per il backend, sarà necessario un test manuale con un file ZIP di grandi dimensioni.
 - **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
-- **Issue 1: Pagina Dipendenti non funzionante (P0)**
-- **Issue 2: Endpoint backend obsoleti non rimossi (P1)**
+- **Issue 1: Implementare upload massivo di file ZIP per Archivio Bonifici (P0)**
+- **Issue 2: Click sui tab non funzionante nei test automatici (P1)**
+- **Issue 3:  warning nel codice backend (P2)**
 
 **Issues Detail:**
-- **Issue 1: Pagina Dipendenti non funzionante (P0)**
-    - **Description**: La pagina  () è completamente bianca a causa di un errore di parsing JSX introdotto durante la riscrittura della sezione Prima Nota Salari. I log del frontend indicano un errore di sintassi.
-    - **Attempted fixes**: L'agente ha identificato la presenza di un errore tramite i log di  e , ma non ha ancora tentato una correzione.
+- **Issue 1: Implementare upload massivo di file ZIP per Archivio Bonifici (P0)**
+    - **Attempted fixes**: Il frontend della pagina è stato stabilizzato. Il lavoro sul backend non è ancora iniziato.
     - **Next debug checklist**:
-        1. Eseguire  su  per ottenere la posizione esatta dell'errore.
-        2. Esaminare attentamente il codice JSX nella sezione Prima Nota Salari (riscritta di recente) alla ricerca di tag non chiusi, parentesi graffe spaiate o altra sintassi non valida.
-        3. Correggere l'errore utilizzando .
-        4. Verificare il corretto rendering della pagina con .
-    - **Why fix this issue and what will be achieved with this?**: Risolvere questo problema è la massima priorità, poiché blocca l'accesso a tutte le funzionalità della sezione Dipendenti, inclusa la nuova Prima Nota Salari e le sezioni Libro Unico e Libretti Sanitari già funzionanti.
+        1.  Modificare l'endpoint  in .
+        2.  Implementare la gestione di file PK-�8&\��������-PKPK-�8&\�!-PK/M per estrarre e processare i PDF in background, evitando timeout dell'API.
+        3.  Prima di inserire un nuovo bonifico nel database, aggiungere una logica di deduplicazione per verificare l'esistenza di record con lo stesso ,  e .
+        4.  Aggiornare lo stato del  (file totali, processati, errori) man mano che l'elaborazione in background procede.
+    - **Why fix this issue and what will be achieved with this?**: Per completare la nuova funzionalità richiesta dall'utente, rendendola capace di gestire un grande volume di dati.
     - **Status**: IN PROGRESS
     - **Is recurring issue?**: N
+    - **Should Test frontend/backend/both after fix?**: both
+    - **Blocked on other issue**: None
+
+- **Issue 2: Click sui tab non funzionante nei test automatici (P1)**
+    - **Attempted fixes**: L'agente ha provato a usare , coordinate e JavaScript per cliccare sui tab della pagina  tramite lo , ma senza successo.
+    - **Next debug checklist**:
+        1.  Analizzare il componente  in  per eventuali stili CSS (, ) che potrebbero interferire con gli eventi di click durante l'automazione.
+        2.  Come workaround, implementare la navigazione tra tab tramite parametri URL (es. ) per facilitare i test.
+    - **Why fix this issue and what will be achieved with this?**: Risolvere questo problema, sebbene non sia un bug per l'utente, sbloccherebbe i test automatici dell'interfaccia, velocizzando lo sviluppo futuro.
+    - **Status**: NOT STARTED
+    - **Is recurring issue?**: Y
     - **Should Test frontend/backend/both after fix?**: frontend
     - **Blocked on other issue**: None
 
-- **Issue 2: Endpoint backend obsoleti non rimossi (P1)**
-    - **Description**: L'utente aveva richiesto di eliminare completamente la vecchia logica di Paghe e Salari, inclusi i router e gli endpoint. L'agente ha rimosso la parte frontend ma ha dimenticato di eliminare gli endpoint corrispondenti dal file .
+- **Issue 3:  warning nel codice backend (P2)**
     - **Attempted fixes**: Nessuno.
     - **Next debug checklist**:
-        1. Analizzare il file .
-        2. Identificare e rimuovere tutte le route relative alla vecchia gestione dei salari/buste paga (es. , , etc.).
-    - **Why fix this issue and what will be achieved with this?**: Per completare la richiesta dell'utente, mantenere il codice pulito e prevenire l'uso accidentale di logica obsoleta.
+        1.  Individuare i  in .
+        2.  Sostituirli con  per catturare eccezioni specifiche e migliorare il logging.
+    - **Why fix this issue and what will be achieved with this?**: Per migliorare la qualità del codice e la manutenibilità.
     - **Status**: NOT STARTED
     - **Is recurring issue?**: N
-    - **Should Test frontend/backend/both after fix?**: backend (verificando che gli endpoint non esistano più).
+    - **Should Test frontend/backend/both after fix?**: backend
     - **Blocked on other issue**: None
 
 **In progress Task List**:
-- **Task 1: Finalizzare la nuova Prima Nota Salari (P0)**
-    - **Where to resume**: Il backend è completo. È necessario riprendere dal debugging del file  per risolvere l'errore JSX.
-    - **What will be achieved with this?**: Una funzionalità di gestione stipendi pienamente operativa che importa dati da due file Excel, calcola saldi mensili e progressivi e li visualizza in una tabella chiara, come da richiesta dell'utente.
+- **Task 1: Completare la funzionalità Archivio Bonifici (P0)**
+    - **Where to resume**: Dal file  per implementare la logica di upload massivo e deduplicazione.
+    - **What will be achieved with this?**: Una funzionalità completa per archiviare bonifici bancari da file ZIP di grandi dimensioni.
     - **Status**: IN PROGRESS
-    - **Should Test frontend/backend/both after fix?**: frontend
-    - **Blocked on something**: Issue 1: Pagina Dipendenti non funzionante.
+    - **Should Test frontend/backend/both after fix?**: both
+    - **Blocked on something**: None
 
 **Upcoming and Future Tasks**
 - **Upcoming Tasks**:
-    - **(P1) Pulizia Backend**: Rimuovere gli endpoint obsoleti relativi ai salari dal file  (Issue 2).
+    - **(P1)** Risolvere il problema dei click sui tab per l'automazione dei test.
 - **Future Tasks**:
     - **(P2)** Gestione Contratti: Implementare una sezione dedicata alla gestione dei contratti dei dipendenti.
-    - **(P2)** Notifiche Scadenze: Aggiungere notifiche (email o UI) per le scadenze imminenti dei libretti sanitari.
-    - **(P2)** Import Massivo Libretti Sanitari: Creare una funzionalità per importare più libretti sanitari da un file Excel.
+    - **(P2)** Notifiche Scadenze: Aggiungere notifiche per le scadenze imminenti dei libretti sanitari.
+    - **(P2)** Import Massivo Libretti Sanitari: Creare una funzionalità per importare più libretti da un file Excel.
     - **(P2)** Report PDF: Generare un report PDF mensile riepilogativo per la sezione dipendenti.
 
 **Completed work in this session**
-- **Riorganizzazione Menu Navigazione**: Il menu principale in  è stato refattorizzato con sottomenu a discesa per Dipendenti e Import/Export.
-- **Export Excel**: Implementata la funzionalità di esportazione in Excel nella pagina .
-- **UI Riconciliazione Manuale**: Creata una nuova interfaccia in  per l'abbinamento manuale.
-- **Operazioni Atomiche**: La logica di riconciliazione fornitori in  è stata resa atomica usando transazioni MongoDB.
-- **Dashboard Avanzata**: Aggiunti nuovi grafici interattivi (distribuzione spese, stato riconciliazione) alla pagina .
-- **Refactoring Sezione Dipendenti**: La pagina  è stata estesa con le nuove sezioni Libro Unico e Libretti Sanitari, complete di backend.
-- **Rimozione Logica Paghe/Salari**: La vecchia funzionalità è stata rimossa dal frontend e i suoi dati sono stati cancellati dal database .
-- **Pulizia Database**: Il database , risultato vuoto, è stato eliminato.
-- **Implementazione Backend Nuova Prima Nota Salari**: Creato e testato il nuovo router  per la gestione stipendi.
+- **Fix Pagina Dipendenti**: Risolto un errore di sintassi JSX in  che causava una pagina bianca.
+- **Pulizia Codice Obsoleto**: Rimossi endpoint API, file di test () e collezioni DB () non più utilizzati.
+- **Correzione Logica Saldo**: Invertita la formula del saldo in Prima Nota Salari a  e aggiornati i colori della UI (verde/rosso) per riflettere la nuova logica contabile.
+- **Gestione Duplicati**: Implementata una funzione per unificare i record duplicati (stesso dipendente/mese/anno) nella collezione .
+- **Fix Parser Importazione**: Corretta la logica di parsing dei file Excel per distinguere correttamente tra Stipendio Netto (busta) e Importo Erogato (bonifico).
+- **Miglioramenti UI Prima Nota Salari**: Aggiunti filtri inline sulle intestazioni della tabella, un'opzione Tutti gli anni e un modale di Modifica per ogni record.
+- **Creazione Funzionalità Archivio Bonifici**: Creati la nuova pagina frontend () e il router backend () basati sul codice fornito.
+- **Fix Loop Infinito**: Risolto un loop di rendering nella pagina .
 
 **Earlier issues found/mentioned but not fixed**
-- **Warning in Fatture.jsx**: Durante l'esecuzione di , è stato segnalato più volte un warning non bloccante nel file : . Questo non è stato risolto perché considerato a bassa priorità.
+- **Warning in Fatture.jsx**: Un warning non bloccante () è ancora presente in .
 
 **Known issue recurrence from previous fork**
 - None
@@ -93,92 +107,132 @@ L'utente ha richiesto una serie di modifiche sostanziali all'applicazione ERP Az
 
 
 **Key Technical Concepts**
-- **Data Aggregation from Multiple Sources**: La nuova logica in  combina dati da due file Excel (, ) per creare un unico record unificato.
-- **Progressive Balance Calculation**: Implementazione di un calcolo di saldo progressivo () che tiene conto dei saldi dei mesi precedenti per ogni dipendente.
-- **MongoDB Transactions**: Utilizzo delle sessioni e transazioni MongoDB per garantire l'atomicità delle operazioni di riconciliazione.
-- **Dynamic Frontend Components**: L'intera sezione Prima Nota Salari è stata riscritta come un componente React dinamico e autocontenuto all'interno della pagina .
+- **Background Job Processing**: La nuova funzionalità Archivio Bonifici è stata progettata per utilizzare un sistema di job in background per processare upload di file di grandi dimensioni senza bloccare l'API.
+- **Data Unification**: È stata implementata una logica per aggregare record multipli nel database basati su criteri di duplicazione (stesso dipendente, mese, anno), sommando i loro valori.
+- **Specific Column Mapping**: La logica di importazione da Excel è stata migliorata per utilizzare parole chiave più specifiche (stipendio netto, importo erogato) ed evitare ambiguità.
+- **React Hook Debugging**: È stato identificato e risolto un loop infinito causato da una gestione errata delle dipendenze negli hook  e .
 
 **key DB schema**
-- ** (NEW LOGIC)**:
-    - : (str), : (str), : (int), : (int), : (float), : (float), : (float), : (float)
-- ****:
-    - : (str), : (str), : (datetime), : (datetime)
-- ** (NEW LOGIC for Libro Unico)**:
-    - : (str), : (int), : (int), : (float), : (str)
+- ** (NEW)**: 
+- ** (NEW)**: 
 
 **changes in tech stack**
-- Nessuno.
+- , usage: pdfplumber [-h] [--structure | --structure-text]
+                  [--format {csv,json,text}] [--types TYPES [TYPES ...]]
+                  [--include-attrs INCLUDE_ATTRS [INCLUDE_ATTRS ...]]
+                  [--exclude-attrs EXCLUDE_ATTRS [EXCLUDE_ATTRS ...]]
+                  [--laparams LAPARAMS] [--precision PRECISION]
+                  [--pages PAGES [PAGES ...]] [--indent INDENT]
+                  [infile]
+
+positional arguments:
+  infile
+
+options:
+  -h, --help            show this help message and exit
+  --structure           Write the structure tree as JSON. All other arguments
+                        except --pages, --laparams, and --indent will be
+                        ignored
+  --structure-text      Write the structure tree as JSON including text
+                        contents. All other arguments except --pages,
+                        --laparams, and --indent will be ignored
+  --format {csv,json,text}
+  --types TYPES [TYPES ...]
+  --include-attrs INCLUDE_ATTRS [INCLUDE_ATTRS ...]
+                        Include *only* these object attributes in output.
+  --exclude-attrs EXCLUDE_ATTRS [EXCLUDE_ATTRS ...]
+                        Exclude these object attributes from output.
+  --laparams LAPARAMS
+  --precision PRECISION
+  --pages PAGES [PAGES ...]
+  --indent INDENT       Indent level for JSON pretty-printing., : Nuove librerie Python installate per il parsing dei file PDF nella funzionalità Archivio Bonifici.
 
 **All files of reference**
 - **Nuovi**:
     - 
+    - 
 - **Modificati pesantemente**:
-    - 
-    - 
-- **Modificati**:
-    - 
-    - 
-    - 
-    - 
-    - 
-    - 
-    - 
     - 
     - 
 - **Eliminati**:
     - 
 
 **Areas that need refactoring**:
-- Il file  necessita di una pulizia per rimuovere gli endpoint obsoleti della vecchia gestione stipendi.
+- Il file  contiene ancora dei  che andrebbero specificati.
 
 **key api endpoints**
-- : (NUOVO) Importa i dati degli stipendi da .
-- : (NUOVO) Importa i bonifici da  e aggiorna i record esistenti.
-- : (NUOVO) Recupera i dati della prima nota salari con filtri.
-- : (NUOVO) Crea un nuovo libretto sanitario.
-- : (NUOVO) Esegue una riconciliazione manuale tra un movimento bancario e una fattura.
-- : (NUOVO) Fornisce i dati per il grafico a torta delle spese.
-- : (NUOVO) Fornisce i dati per il widget dello stato di riconciliazione.
+- : (NUOVO) Crea un nuovo job di importazione per i bonifici.
+- : (NUOVO) Carica i file per un job specifico (da modificare per supportare ZIP).
+- : (NUOVO) Aggiorna un singolo record della prima nota salari.
+- : (MODIFICATO) Importa il file degli stipendi.
+- : (MODIFICATO) Importa il file dei bonifici.
 
 **Critical Info for New Agent**
-- **PRIORITÀ ASSOLUTA**: Risolvere il bug della pagina bianca in . La pagina è inutilizzabile e blocca qualsiasi altra attività. Iniziare eseguendo  su .
-- Dopo aver risolto il bug, verificare che la nuova tabella Prima Nota Salari mostri correttamente i dati importati, inclusi i saldi e i totali progressivi.
-- Come seconda priorità, completare la richiesta dell'utente rimuovendo gli endpoint obsoleti relativi ai salari dal file .
-- Il database corretto da utilizzare è , come specificato nel file . Il database  è stato eliminato.
+- **PRIORITÀ 1**: Continuare l'implementazione della funzionalità Archivio Bonifici. Il frontend è stato stabilizzato. Il prossimo passo è implementare la logica di backend in  per gestire l'upload di file ZIP di grandi dimensioni e la deduplicazione dei record.
+- **Logica Contabile**: La logica del saldo è . Un valore positivo (verde) è un anticipo al dipendente; un valore negativo (rosso) è un arretrato. Mantenere questa convenzione.
+- **Test Automatici UI**: Lo strumento di screenshot non riesce a cliccare sui tab della pagina . Questo è un problema ricorrente che ostacola la verifica. Considerare un workaround (es. parametri URL) se la causa non viene trovata rapidamente.
 
 **documents and test reports created in this job**
 -  (aggiornato)
 
 **Last 10 User Messages and any pending HUMAN messages**
-10. **LATEST**: : L'utente richiede di eliminare tutta la vecchia logica di importazione salari e di crearne una nuova basata su due file Excel (, ), con una logica specifica per il calcolo di saldi e totali progressivi. **Stato: IN PROGRESS (BLOCCATO)**.
-9.  : L'utente chiede un chiarimento sul processo di eliminazione dei dati, notando una discrepanza nei messaggi dell'agente.
-8.  : L'utente chiede di eliminare il database  dopo aver verificato che sia vuoto. **Stato: COMPLETATO**.
-7.  : L'utente richiede l'eliminazione di tutti i dati relativi a stipendi e buste paga. **Stato: COMPLETATO**.
-6.  : L'utente incontra un errore 404. L'agente ha dedotto che stava tentando di accedere alla pagina  appena eliminata.
-5.  : L'utente chiede di rimuovere completamente la funzionalità Paghe / Salari. **Stato: PARZIALMENTE COMPLETATO (backend non pulito)**.
-4.  : L'utente carica un file  e chiede di replicare la sua struttura per la sezione dipendenti. **Stato: COMPLETATO**.
-3.  : L'utente approva l'inizio dei task P2 (grafici avanzati e operazioni atomiche). **Stato: COMPLETATO**.
-2.  : L'utente approva l'inizio dei task P1 (export Excel e UI riconciliazione manuale). **Stato: COMPLETATO**.
-1.  : L'utente approva il task P0 (riorganizzazione del menu). **Stato: COMPLETATO**.
+10. **LATEST**:  - L'utente segnala un loop infinito nella pagina Archivio Bonifici e chiede di implementare l'upload di ZIP di grandi dimensioni. **Stato: IN PROGRESS**.
+9.  - L'utente fornisce i file Excel di esempio per correggere il bug di importazione. **Stato: COMPLETATO**.
+8.  - L'utente chiede di aggiungere i filtri inline alla tabella Prima Nota Salari. **Stato: COMPLETATO**.
+7.  - L'utente segnala che la formula del saldo è errata e chiede di gestire i duplicati. **Stato: COMPLETATO**.
+6.  - L'utente chiede di correggere un record e aggiungere un pulsante Modifica alle righe. **Stato: COMPLETATO**.
+5.  - L'utente richiede una vista aggregata per tutti gli anni. **Stato: COMPLETATO**.
+4.  - L'utente chiede una pulizia generale del codice non utilizzato. **Stato: COMPLETATO**.
+3.  - L'utente chiarisce la logica contabile per i colori e i totali del saldo. **Stato: COMPLETATO**.
+2.  - L'utente fornisce un file ZIP con il codice per la nuova funzionalità Archivio Bonifici. **Stato: COMPLETATO (base implementata)**.
+1.  - L'utente segnala il bug iniziale sull'importazione delle paghe. **Stato: COMPLETATO**.
 
 **Project Health Check:**
-- **Broken**: Sì. La pagina core  non viene renderizzata, bloccando una parte significativa dell'applicazione.
+- **Broken**: No. I problemi bloccanti (pagina bianca e loop infinito) sono stati risolti.
 - **Mocked**: No.
-- **Needs Cleanup**: Sì. Il file  contiene endpoint obsoleti da rimuovere.
+- **Needs Cleanup**: Sì. Il file  ha dei  warning.
 
 **3rd Party Integrations**
-- , : Utilizzate per l'importazione/esportazione di file Excel.
-- : Libreria utilizzata per i grafici nel frontend.
-- : Disponibile per la generazione di PDF (non utilizzata attivamente nell'ultima sessione).
+- , : Per importazione/esportazione Excel.
+- : Per i grafici nel frontend.
+- , usage: pdfplumber [-h] [--structure | --structure-text]
+                  [--format {csv,json,text}] [--types TYPES [TYPES ...]]
+                  [--include-attrs INCLUDE_ATTRS [INCLUDE_ATTRS ...]]
+                  [--exclude-attrs EXCLUDE_ATTRS [EXCLUDE_ATTRS ...]]
+                  [--laparams LAPARAMS] [--precision PRECISION]
+                  [--pages PAGES [PAGES ...]] [--indent INDENT]
+                  [infile]
+
+positional arguments:
+  infile
+
+options:
+  -h, --help            show this help message and exit
+  --structure           Write the structure tree as JSON. All other arguments
+                        except --pages, --laparams, and --indent will be
+                        ignored
+  --structure-text      Write the structure tree as JSON including text
+                        contents. All other arguments except --pages,
+                        --laparams, and --indent will be ignored
+  --format {csv,json,text}
+  --types TYPES [TYPES ...]
+  --include-attrs INCLUDE_ATTRS [INCLUDE_ATTRS ...]
+                        Include *only* these object attributes in output.
+  --exclude-attrs EXCLUDE_ATTRS [EXCLUDE_ATTRS ...]
+                        Exclude these object attributes from output.
+  --laparams LAPARAMS
+  --precision PRECISION
+  --pages PAGES [PAGES ...]
+  --indent INDENT       Indent level for JSON pretty-printing., : (NUOVE) Per il parsing dei PDF.
 
 **Testing status**
-- **Testing agent used after significant changes**: NO (non in questa sessione).
-- **Troubleshoot agent used after agent stuck in loop**: NO.
-- **Test files created**: No.
-- **Known regressions**: La pagina  è regredita a uno stato non funzionante.
+- **Testing agent used after significant changes**: NO
+- **Troubleshoot agent used after agent stuck in loop**: NO
+- **Test files created**: No
+- **Known regressions**: Nessuna regressione funzionale nota. Persiste un problema con lo strumento di test automatico che non riesce a cliccare sui tab della UI.
 
 **Credentials to test flow:**
 N/A
 
 **What agent forgot to execute**
-- L'agente non ha completato la rimozione della vecchia funzionalità Paghe / Salari dal backend. Dopo aver rimosso la UI, ha chiesto all'utente se dovesse rimuovere anche gli endpoint, nonostante l'utente lo avesse già chiesto esplicitamente. La conversazione è poi andata avanti e l'azione non è stata eseguita. Questi endpoint obsoleti sono ancora presenti in .</analysis>
+- Niente di rilevante in questa sessione; l'agente ha seguito le richieste dell'utente in modo sequenziale.</analysis>
