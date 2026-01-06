@@ -261,9 +261,10 @@ PATTERNS_ARTICOLI = {
             r"pomodor", r"zucchin", r"melanzane", r"peperon", r"insalata",
             r"lattuga", r"iceberg", r"rucola", r"spinaci", r"scarola",
             r"friarielli", r"broccoli", r"cavolfiore", r"cavolo", r"verza",
-            r"carote", r"patate", r"cipolle", r"aglio", r"sedano",
+            r"carote", r"patate", r"patata", r"cipolle", r"aglio", r"sedano",
             r"finocchi", r"carciofi", r"asparagi", r"funghi", r"tartufo",
-            r"verdur", r"ortaggi", r"menta\b", r"basilico", r"prezzemolo"
+            r"verdur", r"ortaggi", r"menta\b", r"basilico", r"prezzemolo",
+            r"misticanza", r"cetrioli", r"cavoli\b", r"mais\b", r"bonduelle"
         ],
         "categoria_haccp": "frutta_verdura",
         "conto": "05.01.05",
