@@ -130,6 +130,9 @@ class Collections:
     WAREHOUSE_MOVEMENTS = "warehouse_movements"
     RIMANENZE = "rimanenze"
     
+    # Corrispettivi
+    CORRISPETTIVI = "corrispettivi"
+    
     # Employees
     EMPLOYEES = "employees"
     PAYSLIPS = "payslips"
