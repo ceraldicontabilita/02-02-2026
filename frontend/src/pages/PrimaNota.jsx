@@ -158,6 +158,60 @@ function PrimaNotaDesktop() {
     }
   };
 
+  // Import CSV Prima Nota Cassa
+  const handleImportCSVCassa = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setImportingCSV(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await api.post("/api/prima-nota/cassa/import-csv", formData);
+      alert(`${res.data.message}\nEntrate: € ${res.data.totale_entrate?.toLocaleString('it-IT')}\nUscite: € ${res.data.totale_uscite?.toLocaleString('it-IT')}`);
+      loadAllData();
+    } catch (error) {
+      alert('Errore import: ' + (error.response?.data?.detail || error.message));
+    } finally {
+      setImportingCSV(false);
+      if (cassaCSVRef.current) cassaCSVRef.current.value = "";
+    }
+  };
+
+  // Import CSV Prima Nota Banca
+  const handleImportCSVBanca = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setImportingCSV(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await api.post("/api/prima-nota/banca/import-csv", formData);
+      alert(`${res.data.message}\nEntrate: € ${res.data.totale_entrate?.toLocaleString('it-IT')}\nUscite: € ${res.data.totale_uscite?.toLocaleString('it-IT')}`);
+      loadAllData();
+    } catch (error) {
+      alert('Errore import: ' + (error.response?.data?.detail || error.message));
+    } finally {
+      setImportingCSV(false);
+      if (bancaCSVRef.current) bancaCSVRef.current.value = "";
+    }
+  };
+
+  // Download template CSV
+  const handleDownloadTemplate = async (tipo) => {
+    try {
+      const res = await api.get(`/api/prima-nota/${tipo}/template-csv`, { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `template_prima_nota_${tipo}.csv`;
+      a.click();
+    } catch (error) {
+      alert('Errore download: ' + (error.response?.data?.detail || error.message));
+    }
+  };
+
   // === SAVE HANDLERS CASSA ===
   
   // Corrispettivo (DARE/Entrata) - Importo al LORDO IVA
