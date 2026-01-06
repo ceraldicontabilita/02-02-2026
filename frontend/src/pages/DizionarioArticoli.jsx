@@ -167,6 +167,28 @@ export default function DizionarioArticoli() {
     }
   };
 
+  const handleCategorizzaAI = async () => {
+    if (!confirm('Vuoi usare Claude AI per categorizzare gli articoli non classificati? (max 50 alla volta)')) return;
+    try {
+      setCategorizingAI(true);
+      setMessage(null);
+      const res = await api.post('/api/dizionario-articoli/categorizza-ai?limite=50');
+      setMessage({
+        type: 'success',
+        text: `🤖 AI ha categorizzato ${res.data.updated} articoli su ${res.data.processed} processati`
+      });
+      loadArticoli();
+      loadStats();
+    } catch (err) {
+      setMessage({ type: 'error', text: '❌ Errore nella categorizzazione AI' });
+    } finally {
+      setCategorizingAI(false);
+    }
+  };
+      setApplying(false);
+    }
+  };
+
   const openEditModal = (articolo) => {
     setEditingArticolo(articolo);
     setEditForm({
