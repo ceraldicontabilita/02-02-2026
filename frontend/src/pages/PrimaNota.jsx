@@ -673,6 +673,7 @@ function SummaryCard({ title, value, color, icon, highlight, subtitle }) {
   );
 }
 
+// eslint-disable-next-line no-unused-vars
 function MiniStatCard({ title, value, color }) {
   return (
     <div style={{ background: 'white', borderRadius: 8, padding: 12, border: '1px solid #e5e7eb', borderLeft: `4px solid ${color}` }}>
@@ -682,6 +683,7 @@ function MiniStatCard({ title, value, color }) {
   );
 }
 
+// eslint-disable-next-line no-unused-vars
 function QuickEntryCard({ title, color, children }) {
   return (
     <div style={{ 
@@ -709,7 +711,7 @@ function MovementsTable({ movimenti, tipo, loading, formatEuro, formatDate, onDe
 
   const totalPages = Math.ceil(movimenti.length / itemsPerPage);
   const start = (currentPage - 1) * itemsPerPage;
-  const currentMovimenti = movimenti.slice(start, start + itemsPerPage);
+  const _currentMovimenti = movimenti.slice(start, start + itemsPerPage);
 
   // Calculate running balance using reduce
   const movimentiWithBalance = [...movimenti].reverse().reduce((acc, m) => {
