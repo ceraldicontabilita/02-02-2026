@@ -528,3 +528,132 @@ async def get_stato_riconciliazione(
             "percentuale_globale": round((perc_fatture + perc_salari) / 2, 1) if (fatture_totali > 0 or salari_totali > 0) else 0
         }
     }
+
+
+@router.get(
+    "/bilancio-istantaneo",
+    summary="Bilancio Istantaneo",
+    description="Calcolo rapido di Ricavi, Costi, IVA e Utile Lordo dall'analisi delle fatture XML"
+)
+async def get_bilancio_istantaneo(
+    anno: int = Query(None, description="Anno di riferimento")
+) -> Dict[str, Any]:
+    """
+    Calcola il bilancio istantaneo basato sulle fatture caricate.
+    - Ricavi: fatture emesse (invoices_emesse) o corrispettivi
+    - Costi: fatture ricevute (invoices)
+    - IVA a Debito: IVA sulle vendite
+    - IVA a Credito: IVA sugli acquisti
+    - Utile Lordo: Ricavi - Costi
+    """
+    db = Database.get_db()
+    
+    if not anno:
+        anno = datetime.now().year
+    
+    try:
+        # RICAVI: Corrispettivi + Fatture Emesse
+        corr_res = await db["corrispettivi"].aggregate([
+            {"$match": {"anno": anno}},
+            {"$group": {
+                "_id": None, 
+                "imponibile": {"$sum": "$imponibile"},
+                "iva": {"$sum": "$totale_iva"},
+                "totale": {"$sum": "$totale_giornaliero"}
+            }}
+        ]).to_list(1)
+        
+        ricavi_corr = corr_res[0] if corr_res else {"imponibile": 0, "iva": 0, "totale": 0}
+        
+        # Fatture emesse (se presenti)
+        fatt_emesse_res = await db["invoices_emesse"].aggregate([
+            {"$match": {"anno": anno}},
+            {"$group": {
+                "_id": None,
+                "imponibile": {"$sum": "$imponibile"},
+                "iva": {"$sum": "$iva"},
+                "totale": {"$sum": "$totale"}
+            }}
+        ]).to_list(1)
+        
+        ricavi_fatt = fatt_emesse_res[0] if fatt_emesse_res else {"imponibile": 0, "iva": 0, "totale": 0}
+        
+        # COSTI: Fatture ricevute
+        costi_res = await db[Collections.INVOICES].aggregate([
+            {"$match": {
+                "$or": [
+                    {"data_ricezione": {"$regex": f"^{anno}"}},
+                    {"invoice_date": {"$regex": f"^{anno}"}}
+                ]
+            }},
+            {"$group": {
+                "_id": None,
+                "imponibile": {"$sum": "$imponibile"},
+                "iva": {"$sum": "$iva"},
+                "totale": {"$sum": "$total_amount"}
+            }}
+        ]).to_list(1)
+        
+        costi = costi_res[0] if costi_res else {"imponibile": 0, "iva": 0, "totale": 0}
+        
+        # Calcoli
+        ricavi_totali = float(ricavi_corr.get("totale", 0) or 0) + float(ricavi_fatt.get("totale", 0) or 0)
+        imponibile_ricavi = float(ricavi_corr.get("imponibile", 0) or 0) + float(ricavi_fatt.get("imponibile", 0) or 0)
+        iva_debito = float(ricavi_corr.get("iva", 0) or 0) + float(ricavi_fatt.get("iva", 0) or 0)
+        
+        costi_totali = float(costi.get("totale", 0) or 0)
+        imponibile_costi = float(costi.get("imponibile", 0) or 0)
+        iva_credito = float(costi.get("iva", 0) or 0)
+        
+        utile_lordo = ricavi_totali - costi_totali
+        saldo_iva = iva_debito - iva_credito
+        
+        # Conta documenti
+        num_fatture_ricevute = await db[Collections.INVOICES].count_documents({
+            "$or": [
+                {"data_ricezione": {"$regex": f"^{anno}"}},
+                {"invoice_date": {"$regex": f"^{anno}"}}
+            ]
+        })
+        num_corrispettivi = await db["corrispettivi"].count_documents({"anno": anno})
+        
+        return {
+            "anno": anno,
+            "ricavi": {
+                "totale": round(ricavi_totali, 2),
+                "imponibile": round(imponibile_ricavi, 2),
+                "da_corrispettivi": round(float(ricavi_corr.get("totale", 0) or 0), 2),
+                "da_fatture_emesse": round(float(ricavi_fatt.get("totale", 0) or 0), 2)
+            },
+            "costi": {
+                "totale": round(costi_totali, 2),
+                "imponibile": round(imponibile_costi, 2)
+            },
+            "iva": {
+                "debito": round(iva_debito, 2),
+                "credito": round(iva_credito, 2),
+                "saldo": round(saldo_iva, 2),
+                "da_versare": round(max(0, saldo_iva), 2),
+                "a_credito": round(abs(min(0, saldo_iva)), 2)
+            },
+            "bilancio": {
+                "utile_lordo": round(utile_lordo, 2),
+                "margine_percentuale": round((utile_lordo / ricavi_totali * 100) if ricavi_totali > 0 else 0, 1)
+            },
+            "documenti": {
+                "fatture_ricevute": num_fatture_ricevute,
+                "corrispettivi": num_corrispettivi
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Errore calcolo bilancio istantaneo: {e}")
+        return {
+            "anno": anno,
+            "ricavi": {"totale": 0, "imponibile": 0},
+            "costi": {"totale": 0, "imponibile": 0},
+            "iva": {"debito": 0, "credito": 0, "saldo": 0},
+            "bilancio": {"utile_lordo": 0, "margine_percentuale": 0},
+            "documenti": {"fatture_ricevute": 0, "corrispettivi": 0},
+            "error": str(e)
+        }
