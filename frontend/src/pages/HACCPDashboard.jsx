@@ -60,11 +60,11 @@ const HACCP_MODULI = [
     description: 'Registro interventi disinfestazione'
   },
   {
-    id: 'ricezione-merci',
-    title: 'Ricezione Merci',
+    id: 'tracciabilita',
+    title: 'Tracciabilità Automatica',
     icon: '📦',
     color: '#607d8b',
-    description: 'Controllo merci in arrivo'
+    description: 'Tracciabilità popolata da fatture XML'
   },
   {
     id: 'oli-frittura',
