@@ -803,14 +803,23 @@ export default function Fornitori() {
   };
 
   // Eliminazione fornitore dal database
-  const handleDelete = async (id) => {
-    if (!window.confirm('Eliminare questo fornitore dal database?')) return;
+  const handleDelete = async (id, forceDelete = false) => {
+    if (!forceDelete && !window.confirm('Eliminare questo fornitore dal database?')) return;
     try {
       // DELETE dal database
-      await api.delete(`/api/suppliers/${id}`);
+      const url = forceDelete ? `/api/suppliers/${id}?force=true` : `/api/suppliers/${id}`;
+      await api.delete(url);
       loadData(debouncedSearch); // Ricarica dati
     } catch (error) {
-      alert('Errore eliminazione: ' + (error.response?.data?.detail || error.message));
+      const errorMsg = error.response?.data?.detail || error.message;
+      // Se ci sono fatture collegate, chiedi conferma per eliminazione forzata
+      if (error.response?.status === 400 && errorMsg.includes('fatture collegate')) {
+        if (window.confirm(`${errorMsg}\n\nVuoi eliminare comunque il fornitore?\n\nATTENZIONE: Le fatture rimarranno nel sistema ma non saranno più associate a questo fornitore.`)) {
+          handleDelete(id, true); // Riprova con force=true
+        }
+      } else {
+        alert('Errore eliminazione: ' + errorMsg);
+      }
     }
   };
 
