@@ -88,6 +88,7 @@ from app.routers import (
     comparatore,
     prima_nota,
     prima_nota_automation,
+    haccp_auth,
     dipendenti,
     haccp_completo,
     fatture_upload,
