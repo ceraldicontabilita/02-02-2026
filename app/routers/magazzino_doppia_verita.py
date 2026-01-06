@@ -565,7 +565,7 @@ async def migra_da_warehouse_inventory() -> Dict[str, Any]:
             await db["magazzino_doppia_verita"].insert_one(nuovo_prodotto)
             migrati += 1
             
-        except Exception as e:
+        except Exception:
             errori += 1
     
     return {
