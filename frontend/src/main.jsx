@@ -42,6 +42,7 @@ import PianoDeiConti from "./pages/PianoDeiConti.jsx";
 import Commercialista from "./pages/Commercialista.jsx";
 import Bilancio from "./pages/Bilancio.jsx";
 import ContabilitaAvanzata from "./pages/ContabilitaAvanzata.jsx";
+import RegoleCategorizzazione from "./pages/RegoleCategorizzazione.jsx";
 import Scadenze from "./pages/Scadenze.jsx";
 import EstrattoContoImport from "./pages/EstrattoContoImport.jsx";
 import EstrattoConto from "./pages/EstrattoConto.jsx";
@@ -94,6 +95,7 @@ const router = createBrowserRouter([
       { path: "commercialista", element: <Commercialista /> },
       { path: "bilancio", element: <Bilancio /> },
       { path: "contabilita", element: <ContabilitaAvanzata /> },
+      { path: "regole-categorizzazione", element: <RegoleCategorizzazione /> },
       { path: "scadenze", element: <Scadenze /> },
       { path: "archivio-bonifici", element: <ArchivioBonifici /> },
     ],
