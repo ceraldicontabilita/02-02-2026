@@ -175,6 +175,7 @@ app.include_router(prima_nota.router, prefix="/api/prima-nota", tags=["Prima Not
 app.include_router(prima_nota_automation.router, prefix="/api/prima-nota-auto", tags=["Prima Nota Automation"])
 app.include_router(dipendenti.router, prefix="/api/dipendenti", tags=["Dipendenti"])
 app.include_router(prima_nota_salari.router, prefix="/api/prima-nota-salari", tags=["Prima Nota Salari"])
+app.include_router(archivio_bonifici.router, prefix="/api", tags=["Archivio Bonifici"])
 app.include_router(haccp_completo.router, prefix="/api/haccp-completo", tags=["HACCP Completo"])
 
 # app.include_router(fattura24.router, prefix="/api/fattura24", tags=["Fattura24"])
