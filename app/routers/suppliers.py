@@ -532,9 +532,14 @@ async def delete_supplier(supplier_id: str, force: bool = Query(False)) -> Dict[
     if not supplier:
         raise HTTPException(status_code=404, detail="Fornitore non trovato")
     
-    # Verifica fatture collegate
+    # Verifica fatture collegate (check both cedente_piva and supplier_vat fields)
     piva = supplier.get("partita_iva")
-    invoice_count = await db[Collections.INVOICES].count_documents({"cedente_piva": piva})
+    invoice_count = await db[Collections.INVOICES].count_documents({
+        "$or": [
+            {"cedente_piva": piva},
+            {"supplier_vat": piva}
+        ]
+    })
     
     if invoice_count > 0 and not force:
         raise HTTPException(
