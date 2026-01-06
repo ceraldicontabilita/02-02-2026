@@ -152,7 +152,7 @@ Rispondi SOLO con il JSON array, nessun altro testo."""
                         "conto": cat.get("conto", "05.01.01"),
                         "confidenza": cat.get("confidenza", 0.7),
                         "ragione_ai": cat.get("ragione", ""),
-                        "categorizzato_da": "gpt-5.2"
+                        "categorizzato_da": "claude-sonnet-4.5"
                     })
             
             logger.info(f"Batch {i//batch_size + 1}: {len(categorizzazioni)} articoli categorizzati")
@@ -226,7 +226,7 @@ async def aggiorna_dizionario_con_ai(db, limite: int = 100) -> Dict[str, Any]:
                     "conto": ris["conto"],
                     "confidenza": ris["confidenza"],
                     "ragione_ai": ris.get("ragione_ai", ""),
-                    "categorizzato_da": "gpt-5.2",
+                    "categorizzato_da": "claude-sonnet-4.5",
                     "ai_updated_at": __import__("datetime").datetime.utcnow().isoformat()
                 }}
             )
