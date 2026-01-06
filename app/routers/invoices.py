@@ -128,7 +128,7 @@ async def get_anni_disponibili() -> Dict[str, Any]:
             anno = int(doc["_id"])
             if 2000 <= anno <= 2100:
                 anni.add(anno)
-        except:
+        except (ValueError, TypeError):
             pass
     
     return {"anni": sorted(list(anni), reverse=True)}

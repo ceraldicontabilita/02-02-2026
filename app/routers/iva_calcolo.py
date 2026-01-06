@@ -59,7 +59,7 @@ def format_date_italian(date_str: str) -> str:
         if len(parts) == 3:
             return f"{parts[2]}/{parts[1]}/{parts[0]}"
         return date_str
-    except:
+    except (ValueError, TypeError, IndexError):
         return date_str
 
 
