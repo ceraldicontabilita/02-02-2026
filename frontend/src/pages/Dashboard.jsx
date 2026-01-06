@@ -309,6 +309,79 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Widget Bilancio Istantaneo */}
+      {bilancioIstantaneo && (
+        <div style={{
+          background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
+          borderRadius: 12,
+          padding: 24,
+          marginTop: 20,
+          color: 'white'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+            <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
+              <TrendingUp size={24} /> Bilancio Istantaneo {anno}
+            </h3>
+            <span style={{ fontSize: 12, opacity: 0.7 }}>
+              {bilancioIstantaneo.documenti?.fatture_ricevute || 0} fatture • {bilancioIstantaneo.documenti?.corrispettivi || 0} corrispettivi
+            </span>
+          </div>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 20 }}>
+            <div style={{ background: 'rgba(16,185,129,0.2)', borderRadius: 8, padding: 16, borderLeft: '4px solid #10b981' }}>
+              <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 4 }}>RICAVI</div>
+              <div style={{ fontSize: 24, fontWeight: 700 }}>{formatEuro(bilancioIstantaneo.ricavi?.totale || 0)}</div>
+              <div style={{ fontSize: 11, opacity: 0.6 }}>
+                Corr: {formatEuro(bilancioIstantaneo.ricavi?.da_corrispettivi || 0)}
+              </div>
+            </div>
+            
+            <div style={{ background: 'rgba(239,68,68,0.2)', borderRadius: 8, padding: 16, borderLeft: '4px solid #ef4444' }}>
+              <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 4 }}>COSTI</div>
+              <div style={{ fontSize: 24, fontWeight: 700 }}>{formatEuro(bilancioIstantaneo.costi?.totale || 0)}</div>
+              <div style={{ fontSize: 11, opacity: 0.6 }}>
+                Da fatture acquisto
+              </div>
+            </div>
+            
+            <div style={{ background: 'rgba(59,130,246,0.2)', borderRadius: 8, padding: 16, borderLeft: '4px solid #3b82f6' }}>
+              <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 4 }}>SALDO IVA</div>
+              <div style={{ 
+                fontSize: 24, 
+                fontWeight: 700,
+                color: (bilancioIstantaneo.iva?.saldo || 0) >= 0 ? '#f87171' : '#34d399'
+              }}>
+                {formatEuro(bilancioIstantaneo.iva?.saldo || 0)}
+              </div>
+              <div style={{ fontSize: 11, opacity: 0.6 }}>
+                Deb: {formatEuro(bilancioIstantaneo.iva?.debito || 0)} - Cred: {formatEuro(bilancioIstantaneo.iva?.credito || 0)}
+              </div>
+            </div>
+            
+            <div style={{ 
+              background: (bilancioIstantaneo.bilancio?.utile_lordo || 0) >= 0 
+                ? 'rgba(16,185,129,0.3)' 
+                : 'rgba(239,68,68,0.3)', 
+              borderRadius: 8, 
+              padding: 16, 
+              borderLeft: `4px solid ${(bilancioIstantaneo.bilancio?.utile_lordo || 0) >= 0 ? '#10b981' : '#ef4444'}`
+            }}>
+              <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 4 }}>UTILE LORDO</div>
+              <div style={{ 
+                fontSize: 24, 
+                fontWeight: 700,
+                color: (bilancioIstantaneo.bilancio?.utile_lordo || 0) >= 0 ? '#34d399' : '#f87171'
+              }}>
+                {formatEuro(bilancioIstantaneo.bilancio?.utile_lordo || 0)}
+              </div>
+              <div style={{ fontSize: 11, opacity: 0.6 }}>
+                Margine: {bilancioIstantaneo.bilancio?.margine_percentuale || 0}%
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Widget IRES/IRAP */}
       {imposteData && (
         <div className="card" style={{ marginTop: 20, background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)', color: 'white' }}>
