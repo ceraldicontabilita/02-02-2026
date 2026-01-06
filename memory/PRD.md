@@ -3,13 +3,43 @@
 ## Project Overview
 Sistema ERP completo per gestione aziendale con focus su contabilità, fatturazione elettronica, magazzino, gestione fornitori e **contabilità analitica con centri di costo**.
 
-**Versione**: 3.7.0  
+**Versione**: 3.8.0  
 **Ultimo aggiornamento**: 6 Gennaio 2026  
 **Stack**: FastAPI (Python) + React + MongoDB
 
 ---
 
-## Ultime Implementazioni (6 Gen 2026 - Sessione Corrente Parte 3)
+## Ultime Implementazioni (6 Gen 2026 - Sessione Corrente Parte 4)
+
+### 14. Modifica Prezzi Ricette - COMPLETATA ✅
+- **Pulsante "Modifica" (icona matita)** su ogni card ricetta
+- Modale pre-compilata con tutti i campi della ricetta
+- Campo Prezzo Vendita (€) modificabile
+- Salvataggio tramite `PUT /api/ricette/{ricetta_id}`
+- Test: 14/14 backend tests passati
+- File: `/app/frontend/src/pages/Ricette.jsx`
+
+### 15. Generazione PDF Ordini Fornitori - COMPLETATA ✅
+- **Endpoint `GET /api/ordini-fornitori/{id}/pdf`**
+- PDF generato con ReportLab (A4, layout professionale)
+- Intestazione CERALDI GROUP S.R.L.
+- Tabella prodotti con colonne: Prodotto, Qtà, Unità, Prezzo Unit., Totale
+- Totali: Imponibile, IVA 22%, Totale
+- Pulsante 📄 per download PDF diretto
+- File: `/app/app/routers/ordini_fornitori.py`
+
+### 16. Invio Email Ordini con PDF Allegato - COMPLETATA ✅
+- **Endpoint `POST /api/ordini-fornitori/{id}/send-email`**
+- Email HTML formattata con riepilogo ordine
+- PDF allegato automaticamente
+- SMTP Gmail configurato (ceraldigroupsrl@gmail.com)
+- Aggiornamento automatico stato ordine a "inviato"
+- Pulsante 📧 con prompt per inserimento email fornitore
+- File: `/app/app/routers/ordini_fornitori.py`, `/app/frontend/src/pages/OrdiniFornitori.jsx`
+
+---
+
+## Implementazioni Precedenti (6 Gen 2026 - Parte 3)
 
 ### 9. Fix Metodo Pagamento Fatture - COMPLETATA ✅
 - **Risolto errore 404** quando si aggiorna il metodo di pagamento
