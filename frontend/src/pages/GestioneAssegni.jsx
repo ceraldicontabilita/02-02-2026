@@ -471,7 +471,7 @@ export default function GestioneAssegni() {
                       </td>
                     </tr>
 
-                    {/* Assegni del carnet */}
+                    {/* Assegni del carnet - Layout compatto su singola riga */}
                     {carnetAssegni.map((assegno, idx) => (
                       <tr 
                         key={assegno.id} 
@@ -481,43 +481,47 @@ export default function GestioneAssegni() {
                         }}
                       >
                         {/* Numero Assegno */}
-                        <td style={{ padding: 12 }}>
-                          <div style={{ fontFamily: 'monospace', fontWeight: 'bold', color: '#1a365d' }}>
+                        <td style={{ padding: '8px 12px' }}>
+                          <span style={{ fontFamily: 'monospace', fontWeight: 'bold', color: '#1a365d', fontSize: 13 }}>
                             {assegno.numero}
-                          </div>
+                          </span>
                         </td>
 
                         {/* Stato */}
-                        <td style={{ padding: 12, textAlign: 'center' }}>
+                        <td style={{ padding: '8px 6px', textAlign: 'center' }}>
                           <span style={{
-                            padding: '4px 12px',
-                            borderRadius: 12,
-                            fontSize: 11,
+                            padding: '3px 8px',
+                            borderRadius: 10,
+                            fontSize: 10,
                             fontWeight: 'bold',
                             background: STATI_ASSEGNO[assegno.stato]?.color || '#9e9e9e',
-                            color: 'white'
+                            color: 'white',
+                            whiteSpace: 'nowrap'
                           }}>
                             {STATI_ASSEGNO[assegno.stato]?.label || assegno.stato}
                           </span>
                         </td>
 
-                        {/* Beneficiario */}
-                        <td style={{ padding: 12 }}>
+                        {/* Beneficiario + Note in colonna unica */}
+                        <td style={{ padding: '8px 12px', maxWidth: 250 }}>
                           {editingId === assegno.id ? (
                             <input
                               type="text"
                               value={editForm.beneficiario}
                               onChange={(e) => setEditForm({ ...editForm, beneficiario: e.target.value })}
                               placeholder="Beneficiario"
-                              style={{ padding: 8, borderRadius: 4, border: '1px solid #ddd', width: '100%' }}
+                              style={{ padding: 6, borderRadius: 4, border: '1px solid #ddd', width: '100%', fontSize: 12 }}
                             />
                           ) : (
-                            assegno.beneficiario || '-'
+                            <div>
+                              <div style={{ fontWeight: 500, fontSize: 13 }}>{assegno.beneficiario || '-'}</div>
+                              {assegno.note && <div style={{ fontSize: 11, color: '#666', marginTop: 2 }}>{assegno.note}</div>}
+                            </div>
                           )}
                         </td>
 
                         {/* Importo */}
-                        <td style={{ padding: 12, textAlign: 'right' }}>
+                        <td style={{ padding: '8px 12px', textAlign: 'right' }}>
                           {editingId === assegno.id ? (
                             <input
                               type="number"
@@ -525,143 +529,56 @@ export default function GestioneAssegni() {
                               value={editForm.importo}
                               onChange={(e) => setEditForm({ ...editForm, importo: parseFloat(e.target.value) || '' })}
                               placeholder="0.00"
-                              style={{ padding: 8, borderRadius: 4, border: '1px solid #ddd', width: 100, textAlign: 'right' }}
+                              style={{ padding: 6, borderRadius: 4, border: '1px solid #ddd', width: 80, textAlign: 'right', fontSize: 12 }}
                             />
                           ) : (
-                            <span style={{ fontWeight: 'bold' }}>
+                            <span style={{ fontWeight: 'bold', fontSize: 13 }}>
                               {formatEuro(assegno.importo)}
                             </span>
                           )}
                         </td>
 
-                        {/* Data Fattura */}
-                        <td style={{ padding: 12, textAlign: 'center' }}>
+                        {/* Data + N.Fattura combinati */}
+                        <td style={{ padding: '8px 12px' }}>
                           {editingId === assegno.id ? (
-                            <input
-                              type="date"
-                              value={editForm.data_fattura}
-                              onChange={(e) => setEditForm({ ...editForm, data_fattura: e.target.value })}
-                              style={{ padding: 8, borderRadius: 4, border: '1px solid #ddd' }}
-                            />
+                            <div style={{ display: 'flex', gap: 4 }}>
+                              <input
+                                type="date"
+                                value={editForm.data_fattura}
+                                onChange={(e) => setEditForm({ ...editForm, data_fattura: e.target.value })}
+                                style={{ padding: 4, borderRadius: 4, border: '1px solid #ddd', fontSize: 11, width: 110 }}
+                              />
+                              <input
+                                type="text"
+                                value={editForm.numero_fattura}
+                                onChange={(e) => setEditForm({ ...editForm, numero_fattura: e.target.value })}
+                                placeholder="N.Fatt"
+                                style={{ padding: 4, borderRadius: 4, border: '1px solid #ddd', fontSize: 11, width: 80 }}
+                              />
+                            </div>
                           ) : (
-                            assegno.data_fattura ? new Date(assegno.data_fattura).toLocaleDateString('it-IT') : '-'
-                          )}
-                        </td>
-
-                        {/* N. Fattura */}
-                        <td style={{ padding: 12 }}>
-                          {editingId === assegno.id ? (
-                            <input
-                              type="text"
-                              value={editForm.numero_fattura}
-                              onChange={(e) => setEditForm({ ...editForm, numero_fattura: e.target.value })}
-                              placeholder="N. Fattura"
-                              style={{ padding: 8, borderRadius: 4, border: '1px solid #ddd', width: '100%' }}
-                            />
-                          ) : (
-                            <div>
-                              {assegno.numero_fattura || '-'}
-                              {assegno.fatture_collegate?.length > 1 && (
-                                <div style={{ fontSize: 10, color: '#2196f3' }}>
-                                  ({assegno.fatture_collegate.length} fatture)
-                                </div>
-                              )}
+                            <div style={{ fontSize: 12 }}>
+                              {assegno.numero_fattura && <span style={{ fontWeight: 500 }}>{assegno.numero_fattura}</span>}
+                              {assegno.fatture_collegate?.length > 1 && <span style={{ color: '#2196f3', marginLeft: 4 }}>({assegno.fatture_collegate.length})</span>}
+                              {assegno.data_fattura && <span style={{ color: '#666', marginLeft: 6 }}>{new Date(assegno.data_fattura).toLocaleDateString('it-IT')}</span>}
                             </div>
                           )}
                         </td>
 
-                        {/* Note */}
-                        <td style={{ padding: 12, maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {/* Azioni compatte */}
+                        <td style={{ padding: '8px 6px', textAlign: 'center', whiteSpace: 'nowrap' }}>
                           {editingId === assegno.id ? (
-                            <input
-                              type="text"
-                              value={editForm.note}
-                              onChange={(e) => setEditForm({ ...editForm, note: e.target.value })}
-                              placeholder="Note"
-                              style={{ padding: 8, borderRadius: 4, border: '1px solid #ddd', width: '100%' }}
-                            />
+                            <>
+                              <button onClick={handleSaveEdit} data-testid={`save-${assegno.id}`} style={{ padding: '4px 8px', background: '#4caf50', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', marginRight: 4 }}>✓</button>
+                              <button onClick={cancelEdit} style={{ padding: '4px 8px', background: '#9e9e9e', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}>✕</button>
+                            </>
                           ) : (
-                            <span style={{ fontSize: 12, color: '#666' }}>
-                              {assegno.note || '-'}
-                            </span>
+                            <>
+                              <button onClick={() => startEdit(assegno)} data-testid={`edit-${assegno.id}`} style={{ padding: '4px 6px', cursor: 'pointer', background: 'none', border: 'none' }} title="Modifica">✏️</button>
+                              <button onClick={() => openFattureModal(assegno)} data-testid={`fatture-${assegno.id}`} style={{ padding: '4px 6px', cursor: 'pointer', background: '#e3f2fd', border: 'none', borderRadius: 4 }} title="Collega Fatture">📄</button>
+                              <button onClick={() => handleDelete(assegno)} data-testid={`delete-${assegno.id}`} style={{ padding: '4px 6px', cursor: 'pointer', background: '#ffebee', border: 'none', borderRadius: 4, color: '#c62828' }} title="Elimina">✕</button>
+                            </>
                           )}
-                        </td>
-
-                        {/* Azioni */}
-                        <td style={{ padding: 12, textAlign: 'center' }}>
-                          <div style={{ display: 'flex', gap: 5, justifyContent: 'center' }}>
-                            {editingId === assegno.id ? (
-                              <>
-                                <button
-                                  onClick={handleSaveEdit}
-                                  data-testid={`save-${assegno.id}`}
-                                  style={{
-                                    padding: '6px 12px',
-                                    background: '#4caf50',
-                                    color: 'white',
-                                    border: 'none',
-                                    borderRadius: 4,
-                                    cursor: 'pointer'
-                                  }}
-                                >
-                                  ✓
-                                </button>
-                                <button
-                                  onClick={cancelEdit}
-                                  style={{
-                                    padding: '6px 12px',
-                                    background: '#9e9e9e',
-                                    color: 'white',
-                                    border: 'none',
-                                    borderRadius: 4,
-                                    cursor: 'pointer'
-                                  }}
-                                >
-                                  ✕
-                                </button>
-                              </>
-                            ) : (
-                              <>
-                                <button
-                                  onClick={() => startEdit(assegno)}
-                                  data-testid={`edit-${assegno.id}`}
-                                  style={{ padding: '6px 10px', cursor: 'pointer', background: 'none', border: 'none' }}
-                                  title="Modifica"
-                                >
-                                  ✏️
-                                </button>
-                                <button
-                                  onClick={() => openFattureModal(assegno)}
-                                  data-testid={`fatture-${assegno.id}`}
-                                  style={{
-                                    padding: '6px 10px',
-                                    cursor: 'pointer',
-                                    background: '#e3f2fd',
-                                    border: 'none',
-                                    borderRadius: 4
-                                  }}
-                                  title="Collega Fatture (max 4)"
-                                >
-                                  📄
-                                </button>
-                                <button
-                                  onClick={() => handleDelete(assegno)}
-                                  data-testid={`delete-${assegno.id}`}
-                                  style={{
-                                    padding: '6px 10px',
-                                    cursor: 'pointer',
-                                    background: '#ffebee',
-                                    border: 'none',
-                                    borderRadius: 4,
-                                    color: '#c62828'
-                                  }}
-                                  title="Elimina"
-                                >
-                                  ✕
-                                </button>
-                              </>
-                            )}
-                          </div>
                         </td>
                       </tr>
                     ))}
