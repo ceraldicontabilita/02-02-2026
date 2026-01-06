@@ -1383,3 +1383,242 @@ async def sync_fatture_pagate_to_prima_nota(anno: int = Query(...)) -> Dict[str,
         "totale_banca": round(totale_banca, 2),
         "fatture_pagate_anno": len(fatture)
     }
+
+
+
+# ============== TEMPLATE E IMPORT PRIMA NOTA CASSA ==============
+
+@router.get("/cassa/template-csv")
+async def get_template_prima_nota_cassa():
+    """Restituisce un template CSV per l'import della Prima Nota Cassa."""
+    from fastapi.responses import Response
+    
+    template = """Data;Tipo;Importo;Descrizione;Categoria;Riferimento
+2024-01-01;entrata;1500.00;Corrispettivo giornaliero;Corrispettivi;CORR-001
+2024-01-01;uscita;250.00;Pagamento fornitore ABC;Fornitori;FATT-001
+2024-01-02;entrata;2000.00;Corrispettivo giornaliero;Corrispettivi;CORR-002
+2024-01-02;uscita;150.00;Spese varie;Spese Generali;"""
+    
+    return Response(
+        content=template,
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=template_prima_nota_cassa.csv"}
+    )
+
+
+@router.post("/cassa/import-csv")
+async def import_prima_nota_cassa_csv(file: UploadFile = File(...)) -> Dict[str, Any]:
+    """
+    Importa movimenti nella Prima Nota Cassa da file CSV.
+    Formato atteso:
+    - Separatore: ; (punto e virgola)
+    - Colonne: Data;Tipo;Importo;Descrizione;Categoria;Riferimento
+    - Data: YYYY-MM-DD
+    - Tipo: entrata/uscita
+    - Importo: 1500.00 (punto decimale)
+    """
+    import csv
+    
+    db = Database.get_db()
+    
+    try:
+        content = await file.read()
+        try:
+            text = content.decode('utf-8')
+        except:
+            text = content.decode('latin-1')
+        
+        lines = text.strip().split('\n')
+        
+        # Salta header
+        if lines[0].lower().startswith('data') or 'tipo' in lines[0].lower():
+            lines = lines[1:]
+        
+        importati = 0
+        errori = []
+        totale_entrate = 0
+        totale_uscite = 0
+        
+        for i, line in enumerate(lines):
+            try:
+                # Parse CSV con ; come separatore
+                parts = line.split(';')
+                if len(parts) < 4:
+                    continue
+                
+                data = parts[0].strip()
+                tipo = parts[1].strip().lower()
+                importo = float(parts[2].strip().replace(',', '.'))
+                descrizione = parts[3].strip() if len(parts) > 3 else ""
+                categoria = parts[4].strip() if len(parts) > 4 else "Altro"
+                riferimento = parts[5].strip() if len(parts) > 5 else ""
+                
+                # Validazione
+                if tipo not in ['entrata', 'uscita']:
+                    errori.append(f"Riga {i+1}: tipo deve essere 'entrata' o 'uscita', trovato: {tipo}")
+                    continue
+                
+                if importo <= 0:
+                    continue
+                
+                # Verifica duplicati
+                existing = None
+                if riferimento:
+                    existing = await db[COLLECTION_PRIMA_NOTA_CASSA].find_one({"riferimento": riferimento})
+                
+                if existing:
+                    errori.append(f"Riga {i+1}: riferimento {riferimento} già esistente")
+                    continue
+                
+                movimento = {
+                    "id": str(uuid.uuid4()),
+                    "data": data,
+                    "tipo": tipo,
+                    "importo": importo,
+                    "descrizione": descrizione,
+                    "categoria": categoria,
+                    "riferimento": riferimento,
+                    "source": "csv_import",
+                    "filename": file.filename,
+                    "created_at": datetime.utcnow().isoformat()
+                }
+                
+                await db[COLLECTION_PRIMA_NOTA_CASSA].insert_one(movimento)
+                importati += 1
+                
+                if tipo == 'entrata':
+                    totale_entrate += importo
+                else:
+                    totale_uscite += importo
+                
+            except Exception as e:
+                errori.append(f"Riga {i+1}: {str(e)}")
+                continue
+        
+        return {
+            "success": True,
+            "message": f"Import completato: {importati} movimenti importati",
+            "importati": importati,
+            "totale_entrate": round(totale_entrate, 2),
+            "totale_uscite": round(totale_uscite, 2),
+            "saldo": round(totale_entrate - totale_uscite, 2),
+            "errori": errori[:20] if errori else None,
+            "errori_count": len(errori)
+        }
+        
+    except Exception as e:
+        logger.error(f"Errore import CSV Prima Nota: {e}")
+        raise HTTPException(status_code=500, detail=f"Errore parsing CSV: {str(e)}")
+
+
+@router.get("/banca/template-csv")
+async def get_template_prima_nota_banca():
+    """Restituisce un template CSV per l'import della Prima Nota Banca."""
+    from fastapi.responses import Response
+    
+    template = """Data;Tipo;Importo;Descrizione;Categoria;Riferimento
+2024-01-01;entrata;5000.00;Bonifico da cliente XYZ;Clienti;BON-001
+2024-01-01;uscita;1500.00;Bonifico a fornitore ABC;Fornitori;BONOUT-001
+2024-01-02;uscita;2500.00;F24 IVA;F24;F24-001"""
+    
+    return Response(
+        content=template,
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=template_prima_nota_banca.csv"}
+    )
+
+
+@router.post("/banca/import-csv")
+async def import_prima_nota_banca_csv(file: UploadFile = File(...)) -> Dict[str, Any]:
+    """
+    Importa movimenti nella Prima Nota Banca da file CSV.
+    Stesso formato di Prima Nota Cassa.
+    """
+    import csv
+    
+    db = Database.get_db()
+    
+    try:
+        content = await file.read()
+        try:
+            text = content.decode('utf-8')
+        except:
+            text = content.decode('latin-1')
+        
+        lines = text.strip().split('\n')
+        
+        # Salta header
+        if lines[0].lower().startswith('data') or 'tipo' in lines[0].lower():
+            lines = lines[1:]
+        
+        importati = 0
+        errori = []
+        totale_entrate = 0
+        totale_uscite = 0
+        
+        for i, line in enumerate(lines):
+            try:
+                parts = line.split(';')
+                if len(parts) < 4:
+                    continue
+                
+                data = parts[0].strip()
+                tipo = parts[1].strip().lower()
+                importo = float(parts[2].strip().replace(',', '.'))
+                descrizione = parts[3].strip() if len(parts) > 3 else ""
+                categoria = parts[4].strip() if len(parts) > 4 else "Altro"
+                riferimento = parts[5].strip() if len(parts) > 5 else ""
+                
+                if tipo not in ['entrata', 'uscita']:
+                    errori.append(f"Riga {i+1}: tipo deve essere 'entrata' o 'uscita'")
+                    continue
+                
+                if importo <= 0:
+                    continue
+                
+                # Verifica duplicati
+                if riferimento:
+                    existing = await db[COLLECTION_PRIMA_NOTA_BANCA].find_one({"riferimento": riferimento})
+                    if existing:
+                        errori.append(f"Riga {i+1}: riferimento {riferimento} già esistente")
+                        continue
+                
+                movimento = {
+                    "id": str(uuid.uuid4()),
+                    "data": data,
+                    "tipo": tipo,
+                    "importo": importo,
+                    "descrizione": descrizione,
+                    "categoria": categoria,
+                    "riferimento": riferimento,
+                    "source": "csv_import",
+                    "filename": file.filename,
+                    "created_at": datetime.utcnow().isoformat()
+                }
+                
+                await db[COLLECTION_PRIMA_NOTA_BANCA].insert_one(movimento)
+                importati += 1
+                
+                if tipo == 'entrata':
+                    totale_entrate += importo
+                else:
+                    totale_uscite += importo
+                
+            except Exception as e:
+                errori.append(f"Riga {i+1}: {str(e)}")
+                continue
+        
+        return {
+            "success": True,
+            "message": f"Import completato: {importati} movimenti importati",
+            "importati": importati,
+            "totale_entrate": round(totale_entrate, 2),
+            "totale_uscite": round(totale_uscite, 2),
+            "saldo": round(totale_entrate - totale_uscite, 2),
+            "errori": errori[:20] if errori else None,
+            "errori_count": len(errori)
+        }
+        
+    except Exception as e:
+        logger.error(f"Errore import CSV Prima Nota Banca: {e}")
+        raise HTTPException(status_code=500, detail=f"Errore parsing CSV: {str(e)}")
