@@ -795,6 +795,61 @@ export default function Fornitori() {
     window.location.href = `/fatture?fornitore=${encodeURIComponent(supplier.ragione_sociale || supplier.partita_iva)}&anno=${selectedYear}`;
   };
 
+  // Ricerca dati azienda tramite Partita IVA
+  const handleSearchPiva = async (supplier) => {
+    if (!supplier.partita_iva) {
+      alert('Questo fornitore non ha una Partita IVA');
+      return;
+    }
+    
+    try {
+      const res = await api.get(`/api/suppliers/search-piva/${supplier.partita_iva}`);
+      const data = res.data;
+      
+      if (data.found) {
+        // Prepara i dati da aggiornare (solo campi vuoti)
+        const updates = {};
+        if (!supplier.ragione_sociale && data.ragione_sociale) {
+          updates.ragione_sociale = data.ragione_sociale;
+        }
+        if (!supplier.indirizzo && data.indirizzo) {
+          updates.indirizzo = data.indirizzo;
+        }
+        if (!supplier.cap && data.cap) {
+          updates.cap = data.cap;
+        }
+        if (!supplier.comune && data.comune) {
+          updates.comune = data.comune;
+        }
+        if (!supplier.provincia && data.provincia) {
+          updates.provincia = data.provincia;
+        }
+        
+        if (Object.keys(updates).length > 0) {
+          // Mostra conferma
+          const msg = `Dati trovati per P.IVA ${supplier.partita_iva}:\n\n` +
+            (updates.ragione_sociale ? `Ragione Sociale: ${updates.ragione_sociale}\n` : '') +
+            (updates.indirizzo ? `Indirizzo: ${updates.indirizzo}\n` : '') +
+            (updates.cap ? `CAP: ${updates.cap}\n` : '') +
+            (updates.comune ? `Comune: ${updates.comune}\n` : '') +
+            (updates.provincia ? `Provincia: ${updates.provincia}\n` : '') +
+            '\nVuoi aggiornare il fornitore?';
+          
+          if (window.confirm(msg)) {
+            await api.put(`/api/suppliers/${supplier.id}`, updates);
+            loadData();
+          }
+        } else {
+          alert(`Nessun dato nuovo trovato per ${supplier.ragione_sociale || supplier.partita_iva}.\nI dati sono già completi o non disponibili su VIES.`);
+        }
+      } else {
+        alert(`Partita IVA ${supplier.partita_iva} non trovata nel database VIES.\n\nNota: VIES contiene solo aziende registrate per operazioni intracomunitarie UE.`);
+      }
+    } catch (error) {
+      alert('Errore ricerca: ' + (error.response?.data?.detail || error.message));
+    }
+  };
+
   const stats = {
     total: suppliers.length,
     withInvoices: suppliers.filter(s => (s.fatture_count || 0) > 0).length,
