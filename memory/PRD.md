@@ -3,9 +3,51 @@
 ## Project Overview
 Sistema ERP completo per gestione aziendale con focus su contabilità, fatturazione elettronica, magazzino, gestione fornitori e **contabilità analitica con centri di costo**.
 
-**Versione**: 4.2.0  
+**Versione**: 4.3.0  
 **Ultimo aggiornamento**: 6 Gennaio 2026  
-**Stack**: FastAPI (Python) + React + MongoDB
+**Stack**: FastAPI (Python) + React + MongoDB + Claude AI
+
+---
+
+## 🤖 INTEGRAZIONI AI - EMERGENT LLM KEY
+
+### Configurazione
+```env
+# /app/backend/.env
+EMERGENT_LLM_KEY=sk-emergent-dEc590f56Ab0b88Ed6
+```
+
+### Modello Utilizzato
+- **Claude Sonnet 4.5** (anthropic/claude-sonnet-4-5-20250929)
+- Libreria: `emergentintegrations`
+- Utilizzo: Categorizzazione automatica articoli non classificati
+
+### Servizio AI (`/app/app/services/ai_categorizzazione.py`)
+- `categorizza_articoli_con_ai()` - Batch categorizzazione
+- `categorizza_singolo_articolo()` - Singolo articolo
+- `aggiorna_dizionario_con_ai()` - Update massivo database
+
+---
+
+## 🔗 AUTOMAZIONI RELAZIONALI
+
+### 1. Upload Fattura XML → Tracciabilità HACCP (AUTOMATICO)
+Quando si carica una fattura XML:
+1. Parsing XML → estrazione linee
+2. Per ogni linea alimentare → creazione record tracciabilità
+3. Dati popolati: fornitore, lotto, data consegna, categoria HACCP, rischio
+
+**File**: `/app/app/services/tracciabilita_auto.py`
+**Collezione**: `tracciabilita`
+
+### 2. Articolo → Categoria HACCP + Piano dei Conti (AUTOMATICO)
+Pattern matching con 200+ regex per 35+ categorie prodotto.
+AI fallback per articoli non classificati.
+
+**File**: `/app/app/routers/dizionario_articoli.py`
+
+### 3. Fattura → Fornitore → Articoli Tipici
+Link automatico fornitore-articoli basato su storico fatture.
 
 ---
 
@@ -27,12 +69,13 @@ Database: azienda_erp_db
 - **Config Python**: `/app/app/config.py` - Settings class con Pydantic
 - **Database Manager**: `/app/app/database.py` - Singleton Motor AsyncIOMotorClient
 
-### Collezioni Principali (44 totali)
+### Collezioni Principali (45 totali)
 | Collezione | Documenti | Descrizione |
 |------------|-----------|-------------|
 | invoices | 3376 | Fatture XML importate |
 | corrispettivi | 1050 | Corrispettivi giornalieri |
 | dizionario_articoli | 6783 | Mappatura articoli |
+| tracciabilita | N | Record HACCP automatici |
 | assegni | 150 | Gestione assegni |
 | centri_costo | 8 | Centri di costo |
 | suppliers | N | Anagrafica fornitori |
