@@ -29,6 +29,7 @@ const NAV_ITEMS = [
     ]
   },
   { to: "/f24", label: "F24 / Tributi", icon: "📋", short: "F24" },
+  { to: "/scadenze", label: "Scadenze", icon: "🔔", short: "Scad." },
   { to: "/finanziaria", label: "Finanziaria", icon: "📈", short: "Finanz." },
   { to: "/bilancio", label: "Bilancio", icon: "📊", short: "Bilancio" },
   { to: "/contabilita", label: "Contabilità IRES/IRAP", icon: "🧮", short: "IRES" },
