@@ -95,6 +95,65 @@ export default function Ricette() {
     }
   }
 
+  // Apri modifica ricetta
+  function openEditModal(ricetta) {
+    setEditingRicetta({
+      ...ricetta,
+      ingredienti: ricetta.ingredienti || []
+    });
+  }
+
+  // Salva modifica ricetta
+  async function handleUpdateRicetta() {
+    if (!editingRicetta) return;
+    
+    setSaving(true);
+    try {
+      await api.put(`/api/ricette/${editingRicetta.id}`, {
+        nome: editingRicetta.nome,
+        categoria: editingRicetta.categoria,
+        porzioni: editingRicetta.porzioni,
+        prezzo_vendita: parseFloat(editingRicetta.prezzo_vendita) || 0,
+        ingredienti: editingRicetta.ingredienti
+      });
+      setEditingRicetta(null);
+      loadRicette();
+    } catch (err) {
+      alert('Errore aggiornamento: ' + (err.response?.data?.detail || err.message));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  // Aggiorna campo ricetta in modifica
+  function updateEditingField(field, value) {
+    setEditingRicetta(prev => ({ ...prev, [field]: value }));
+  }
+
+  // Aggiorna ingrediente in modifica
+  function updateEditingIngrediente(index, field, value) {
+    setEditingRicetta(prev => ({
+      ...prev,
+      ingredienti: prev.ingredienti.map((ing, i) => i === index ? { ...ing, [field]: value } : ing)
+    }));
+  }
+
+  // Aggiungi ingrediente in modifica
+  function addEditingIngrediente() {
+    setEditingRicetta(prev => ({
+      ...prev,
+      ingredienti: [...prev.ingredienti, { nome: '', quantita: '', unita: 'g' }]
+    }));
+  }
+
+  // Rimuovi ingrediente in modifica
+  function removeEditingIngrediente(index) {
+    setEditingRicetta(prev => ({
+      ...prev,
+      ingredienti: prev.ingredienti.filter((_, i) => i !== index)
+    }));
+  }
+
   function addIngrediente() {
     setNewRicetta(prev => ({
       ...prev,
