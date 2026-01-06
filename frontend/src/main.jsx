@@ -47,6 +47,11 @@ import Scadenze from "./pages/Scadenze.jsx";
 import EstrattoContoImport from "./pages/EstrattoContoImport.jsx";
 import EstrattoConto from "./pages/EstrattoConto.jsx";
 import ArchivioBonifici from "./pages/ArchivioBonifici.jsx";
+// Contabilità Analitica
+import CentriCosto from "./pages/CentriCosto.jsx";
+import Ricette from "./pages/Ricette.jsx";
+import MagazzinoDoppiaVerita from "./pages/MagazzinoDoppiaVerita.jsx";
+import UtileObiettivo from "./pages/UtileObiettivo.jsx";
 
 const router = createBrowserRouter([
   {
