@@ -77,7 +77,11 @@ Sistema completo per mappatura automatica articoli fatture → Piano dei Conti e
 - spezie_condimenti, salumi_insaccati, dolciumi_snack
 - additivi_ingredienti, non_alimentare
 
-**Pattern Matching**: 25+ categorie prodotto con regex per identificazione automatica
+**Pattern Matching**: 35+ categorie prodotto con 200+ regex per identificazione automatica
+- Bevande: acqua minerale, gassate, alcoliche, caffè
+- Alimentari: verdura, frutta, carni, salumi, latticini, uova
+- Pasticceria: farine, zuccheri, creme, ingredienti speciali
+- Non alimentari: pulizia, utenze elettricità, commissioni POS, ferramenta
 
 **Frontend** (`/app/frontend/src/pages/DizionarioArticoli.jsx`):
 - Dashboard statistiche (totale articoli, confidenza mappatura)
@@ -86,11 +90,11 @@ Sistema completo per mappatura automatica articoli fatture → Piano dei Conti e
 - Modal per modifica manuale mappature
 - Pulsanti "Genera Dizionario" e "Applica alle Fatture"
 
-**Risultati attuali**:
+**Risultati dopo ottimizzazione P2** (6 Gen 2026):
 - 6783 articoli estratti dalle fatture
-- 1101 categorizzati ad alta confidenza (>50%)
-- 1187 categorizzati a media confidenza
-- 4495 da classificare manualmente
+- **1748** categorizzati ad alta confidenza (>50%) - +59% rispetto iniziale
+- **1421** categorizzati a media confidenza - +20%
+- **3614** da classificare manualmente - -20%
 
 ---
 
