@@ -68,7 +68,11 @@ PATTERNS_DESCRIZIONE = {
             r"\bgin\b", r"cognac", r"brandy", r"liquore", r"aperitivo",
             r"vermut", r"vermouth", r"sambuca", r"nocino", r"digestivo",
             r"distillat", r"spirit", r"cocktail", r"tonic", r"%\s*vol",
-            r"vino\b", r"birra", r"prosecco", r"champagne", r"spumante"
+            r"vino\b", r"birra", r"prosecco", r"champagne", r"spumante",
+            r"falanghina", r"aglianico", r"fiano", r"greco\s+di\s+tufo",
+            r"verdicchio", r"gewurztraminer", r"pecorino\s+igt",
+            r"valp?olicella", r"ripasso", r"docg?\b", r"igt\b",
+            r"millesimato", r"extra\s+brut", r"extra\s+dry"
         ],
         "conto": ("05.01.03", "Acquisto bevande alcoliche"),
         "categoria_fiscale": CategoriaFiscale.MERCE_RIVENDITA,
@@ -82,7 +86,8 @@ PATTERNS_DESCRIZIONE = {
         "patterns": [
             r"acqua\s+(minerale|naturale|frizzante|tonica)", r"succo",
             r"aranciata", r"cola", r"the\s+freddo", r"energy\s+drink",
-            r"limonata", r"gassosa", r"bibita", r"bevanda"
+            r"limonata", r"gassosa", r"bibita", r"bevanda",
+            r"red\s*bull", r"monster\s+energy"
         ],
         "conto": ("05.01.04", "Acquisto bevande analcoliche"),
         "categoria_fiscale": CategoriaFiscale.MERCE_RIVENDITA,
