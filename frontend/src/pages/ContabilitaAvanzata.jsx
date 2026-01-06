@@ -9,7 +9,7 @@ export default function ContabilitaAvanzata() {
   const [imposte, setImposte] = useState(null);
   const [statistiche, setStatistiche] = useState(null);
   const [bilancio, setBilancio] = useState(null);
-  const [regione, setRegione] = useState('calabria');
+  const [regione, setRegione] = useState('campania');
   const [aliquoteIrap, setAliquoteIrap] = useState({});
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
