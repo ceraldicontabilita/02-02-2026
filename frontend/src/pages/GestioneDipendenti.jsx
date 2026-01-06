@@ -810,7 +810,7 @@ export default function GestioneDipendenti() {
             color: 'white',
             marginBottom: 20
           }}>
-            <h3 style={{ margin: '0 0 12px 0' }}>📒 Prima Nota Salari - {selectedMonth ? mesiNomi[selectedMonth - 1] : 'Anno'} {selectedYear}</h3>
+            <h3 style={{ margin: '0 0 12px 0' }}>📒 Prima Nota Salari - {selectedMonth ? mesiNomi[selectedMonth - 1] : 'Tutti i mesi'} {selectedYear || 'Tutti gli anni'}</h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 16 }}>
               <div>
                 <div style={{ fontSize: 12, opacity: 0.8 }}>Records</div>
