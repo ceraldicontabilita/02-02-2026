@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import api from '../api';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
@@ -7,6 +7,23 @@ import {
   Phone, Mail, MapPin, CreditCard, AlertCircle, Check,
   Users, X
 } from 'lucide-react';
+
+// Hook per debounce
+function useDebounce(value, delay) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+    
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+  
+  return debouncedValue;
+}
 
 // Dizionario Metodi di Pagamento - allineato con il backend
 const METODI_PAGAMENTO = {
