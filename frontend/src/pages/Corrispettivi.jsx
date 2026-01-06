@@ -16,6 +16,7 @@ export default function Corrispettivi() {
   const fileInputRef = useRef(null);
   const bulkFileInputRef = useRef(null);
   const zipFileInputRef = useRef(null);
+  const csvFileInputRef = useRef(null);
 
   useEffect(() => {
     loadCorrispettivi();
