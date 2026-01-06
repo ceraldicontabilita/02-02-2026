@@ -854,8 +854,12 @@ export default function GestioneDipendenti() {
               </div>
               <div>
                 <div style={{ fontSize: 12, opacity: 0.8 }}>Differenza</div>
-                <div style={{ fontSize: 24, fontWeight: 'bold' }}>
-                  {formatEuro(salariMovimenti.reduce((sum, m) => sum + (m.importo_busta || 0) - (m.importo_bonifico || 0), 0))}
+                <div style={{ 
+                  fontSize: 24, 
+                  fontWeight: 'bold',
+                  color: salariMovimenti.reduce((sum, m) => sum + (m.importo_bonifico || 0) - (m.importo_busta || 0), 0) >= 0 ? '#22c55e' : '#ef4444'
+                }}>
+                  {formatEuro(salariMovimenti.reduce((sum, m) => sum + (m.importo_bonifico || 0) - (m.importo_busta || 0), 0))}
                 </div>
               </div>
             </div>
