@@ -220,11 +220,11 @@ export default function Admin() {
       <div className="card">
         <div className="h1">🔗 Link Utili</div>
         <div style={{ display: 'grid', gap: 10 }}>
-          <a href={`${process.env.REACT_APP_BACKEND_URL}/docs`} target="_blank" rel="noopener noreferrer" 
+          <a href={`${BACKEND_URL}/docs`} target="_blank" rel="noopener noreferrer" 
              style={{ color: '#2196f3', textDecoration: 'none' }}>
             📖 Documentazione API (Swagger)
           </a>
-          <a href={`${process.env.REACT_APP_BACKEND_URL}/api/health`} target="_blank" rel="noopener noreferrer"
+          <a href={`${BACKEND_URL}/api/health`} target="_blank" rel="noopener noreferrer"
              style={{ color: '#2196f3', textDecoration: 'none' }}>
             🏥 Health Check Endpoint
           </a>
