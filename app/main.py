@@ -89,6 +89,7 @@ from app.routers import (
     prima_nota,
     prima_nota_automation,
     haccp_auth,
+    gestione_riservata,
     dipendenti,
     haccp_completo,
     fatture_upload,
