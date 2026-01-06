@@ -469,7 +469,11 @@ PATTERNS_ARTICOLI = {
             r"detersivo", r"detergente", r"igienizzant", r"disinfettant",
             r"sapone", r"candeggina", r"alcol", r"ammorbident",
             r"carta\s*igienica", r"rotoli.*carta", r"asciugamani\s*carta",
-            r"tovaglio", r"sacchetti"
+            r"tovaglio", r"sacchetti", r"dealo", r"panno\s*micr",
+            r"ecochem", r"ecospot", r"big\s*matik", r"big\s*brill",
+            r"brillantante", r"lavast", r"chanteclair", r"sgrassatore",
+            r"wettex", r"alba\s+pavimenti", r"alba\s+lavapavimenti",
+            r"liq.*piatti"
         ],
         "categoria_haccp": "non_alimentare",
         "conto": "05.01.08",
@@ -481,7 +485,8 @@ PATTERNS_ARTICOLI = {
         "patterns": [
             r"imballag", r"confezioni", r"vassoi", r"scatole",
             r"buste\b", r"shopper", r"pellicola", r"alluminio",
-            r"carta\s*forno", r"pirottini"
+            r"carta\s*forno", r"busta\s+shop", r"bicch.*vetro",
+            r"bicch.*rock", r"bicchier"
         ],
         "categoria_haccp": "non_alimentare",
         "conto": "05.01.07",
@@ -499,11 +504,14 @@ PATTERNS_ARTICOLI = {
         "conto_nome": "Trasporti su acquisti"
     },
     
-    # UTENZE
+    # UTENZE ELETTRICITA
     "utenze_elettricita": {
         "patterns": [
             r"energia\s*elettrica", r"kwh", r"potenza", r"kilowatt",
-            r"accisa\s*energia"
+            r"accisa\s*energia", r"spesa\s+per\s+l['']?energia",
+            r"spesa\s+oneri\s+di\s+sistema", r"energia\s+fascia\s+f",
+            r"perdite\s+di\s+rete", r"quota\s+energ", r"quota\s+fissa",
+            r"ore\s+picco", r"ore\s+fuori\s+picco", r"arim\b"
         ],
         "categoria_haccp": "non_alimentare",
         "conto": "05.02.05",
@@ -521,11 +529,12 @@ PATTERNS_ARTICOLI = {
         "conto_nome": "Telefonia e comunicazioni"
     },
     
-    # NOLEGGIO AUTO
+    # NOLEGGIO AUTO E LOCAZIONE
     "noleggio_auto": {
         "patterns": [
             r"stelvio", r"arval", r"leasys", r"noleggio\s*lungo",
-            r"canone\s*locazione.*auto", r"canone\s*servizio.*auto"
+            r"canone\s*locazione", r"canone\s*servizi",
+            r"gg\d+[a-z]+\s+canone"
         ],
         "categoria_haccp": "non_alimentare",
         "conto": "05.02.22",
