@@ -320,18 +320,61 @@ export default function GestioneDipendenti() {
     }
   };
 
-  // Ricalcola progressivi dal 2023
+  // Ricalcola progressivi dal 2023 per un dipendente specifico
   const handleRicalcolaProgressiviDal2023 = async () => {
-    if (!window.confirm('Ricalcolare tutti i progressivi partendo dal 01/01/2023?\n\nQuesto aggiornerà il saldo progressivo di tutti i dipendenti.')) return;
+    if (!ricalcoloDipendente) {
+      alert('Seleziona un dipendente');
+      return;
+    }
     try {
       setRicalcolandoProgressivi(true);
-      await api.post('/api/prima-nota-salari/ricalcola-progressivi?anno_inizio=2023');
+      await api.post(`/api/prima-nota-salari/ricalcola-progressivi?anno_inizio=2023&dipendente=${encodeURIComponent(ricalcoloDipendente)}`);
       await loadPrimaNotaSalari();
-      alert('✅ Progressivi ricalcolati dal 01/01/2023');
+      setShowRicalcoloModal(false);
+      setRicalcoloDipendente('');
+      alert(`✅ Progressivi ricalcolati dal 01/01/2023 per ${ricalcoloDipendente}`);
     } catch (error) {
       alert('Errore: ' + (error.response?.data?.detail || error.message));
     } finally {
       setRicalcolandoProgressivi(false);
+    }
+  };
+
+  // Aggiungi riga di aggiustamento saldo
+  const handleAggiungiAggiustamento = async () => {
+    if (!aggiustamentoData.dipendente) {
+      alert('Seleziona un dipendente');
+      return;
+    }
+    if (!aggiustamentoData.importo || aggiustamentoData.importo === 0) {
+      alert('Inserisci un importo');
+      return;
+    }
+    try {
+      const importo = parseFloat(aggiustamentoData.importo);
+      // Se l'importo è positivo, va nel bonifico (aumenta il saldo)
+      // Se l'importo è negativo, va nella busta (diminuisce il saldo)
+      const payload = {
+        dipendente: aggiustamentoData.dipendente,
+        anno: parseInt(aggiustamentoData.anno),
+        mese: parseInt(aggiustamentoData.mese),
+        importo_busta: importo < 0 ? Math.abs(importo) : 0,
+        importo_bonifico: importo > 0 ? importo : 0,
+        descrizione: aggiustamentoData.descrizione || 'Aggiustamento saldo'
+      };
+      await api.post('/api/prima-nota-salari/salari/aggiustamento', payload);
+      await loadPrimaNotaSalari();
+      setShowAggiustamentoModal(false);
+      setAggiustamentoData({
+        dipendente: '',
+        anno: new Date().getFullYear(),
+        mese: new Date().getMonth() + 1,
+        importo: '',
+        descrizione: 'Aggiustamento saldo commercialista'
+      });
+      alert('✅ Aggiustamento inserito');
+    } catch (error) {
+      alert('Errore: ' + (error.response?.data?.detail || error.message));
     }
   };
 
