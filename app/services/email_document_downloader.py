@@ -30,11 +30,44 @@ CATEGORIES = {
     "estratto_conto": "Estratti Conto",
     "quietanza": "Quietanze",
     "bonifico": "Bonifici",
+    "cartella_esattoriale": "Cartelle Esattoriali",
     "altro": "Altri"
+}
+
+# Mapping parole chiave -> categoria
+KEYWORD_CATEGORY_MAP = {
+    "f24": "f24",
+    "fattura": "fattura",
+    "busta paga": "busta_paga",
+    "cedolino": "busta_paga",
+    "estratto conto": "estratto_conto",
+    "quietanza": "quietanza",
+    "bonifico": "bonifico",
+    "cartella esattoriale": "cartella_esattoriale",
+    "cartella esattoria": "cartella_esattoriale",
+    "agenzia entrate riscossione": "cartella_esattoriale",
+    "equitalia": "cartella_esattoriale"
 }
 
 for cat_dir in CATEGORIES.values():
     (DOCUMENTS_DIR / cat_dir).mkdir(exist_ok=True)
+
+
+def get_category_from_keyword(keyword: str) -> str:
+    """Trova la categoria corrispondente a una parola chiave."""
+    keyword_lower = keyword.lower().strip()
+    for kw, cat in KEYWORD_CATEGORY_MAP.items():
+        if kw in keyword_lower or keyword_lower in kw:
+            return cat
+    return "altro"
+
+
+def ensure_category_folder(category: str) -> Path:
+    """Crea la cartella per una categoria se non esiste."""
+    folder_name = CATEGORIES.get(category, category.replace("_", " ").title())
+    folder_path = DOCUMENTS_DIR / folder_name
+    folder_path.mkdir(exist_ok=True)
+    return folder_path
 
 
 def decode_mime_header(header_value: str) -> str:
