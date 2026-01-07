@@ -133,6 +133,46 @@ def parse_f24_commercialista(pdf_path: str) -> Dict[str, Any]:
     # Tracks tributi già estratti per evitare duplicati
     tributi_visti = set()
     
+    def extract_importo_from_parts(parts, x_threshold_debito=DEBITO_X_MAX, x_threshold_credito=CREDITO_X_MIN):
+        """
+        Estrae importo debito e credito da una lista di (x, word) ordinata per x.
+        Ritorna (importo_debito, importo_credito)
+        """
+        debito = 0.0
+        credito = 0.0
+        
+        # Raggruppa parti vicine (euro + centesimi)
+        debito_parts = []
+        credito_parts = []
+        
+        for x, word in parts:
+            if x <= x_threshold_debito:
+                debito_parts.append((x, word))
+            elif x >= x_threshold_credito:
+                credito_parts.append((x, word))
+        
+        # Costruisci importo debito
+        if len(debito_parts) >= 2:
+            debito_parts.sort(key=lambda p: p[0])
+            euro = debito_parts[0][1].replace('.', '').replace(',', '')
+            cent = debito_parts[1][1]
+            try:
+                debito = float(euro) + float(cent) / 100
+            except:
+                pass
+        
+        # Costruisci importo credito
+        if len(credito_parts) >= 2:
+            credito_parts.sort(key=lambda p: p[0])
+            euro = credito_parts[0][1].replace('.', '').replace(',', '')
+            cent = credito_parts[1][1]
+            try:
+                credito = float(euro) + float(cent) / 100
+            except:
+                pass
+        
+        return (round(debito, 2), round(credito, 2))
+    
     for page_num, page in enumerate(doc):
         words = page.get_text('words')
         
