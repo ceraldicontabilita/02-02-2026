@@ -83,18 +83,30 @@ def parse_f24_commercialista(pdf_path: str) -> Dict[str, Any]:
     # ============================================
     
     # Codice Fiscale contribuente (11 o 16 caratteri)
+    # Può essere con spazi: "0 4 5 2 3 8 3 1 2 1 4"
     cf_patterns = [
         r'CODICE\s*FISCALE\s*[\n\s]*([A-Z0-9]{11,16})',
         r'(\d{11})\s*(?:cognome|ragione)',
         r'\b([A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z])\b',  # CF persona fisica
+        r'(\d\s*\d\s*\d\s*\d\s*\d\s*\d\s*\d\s*\d\s*\d\s*\d\s*\d)',  # CF con spazi
     ]
     for pattern in cf_patterns:
         cf_match = re.search(pattern, text, re.IGNORECASE)
         if cf_match:
-            result["dati_generali"]["codice_fiscale"] = cf_match.group(1)
-            break
+            cf = cf_match.group(1).replace(' ', '')
+            if len(cf) == 11 or len(cf) == 16:
+                result["dati_generali"]["codice_fiscale"] = cf
+                break
+    
+    # Ragione sociale
+    ragione_sociale_match = re.search(r'CERALDI\s+GROUP\s+S\.?R\.?L\.?', text, re.IGNORECASE)
+    if ragione_sociale_match:
+        result["dati_generali"]["ragione_sociale"] = "CERALDI GROUP S.R.L."
     
     # Data versamento - pattern: gg mm aaaa
+    data_patterns = [
+        r'data\s*di\s*pagamento[:\s]*(\d{2})[/\s-](\d{2})[/\s-](\d{4})',
+        r'(\d{2})\s+(\d{2})\s+(\d{4})\s*(?:SALDO|codice)',
     data_patterns = [
         r'data\s*di\s*pagamento[:\s]*(\d{2})[/\s-](\d{2})[/\s-](\d{4})',
         r'(\d{2})\s+(\d{2})\s+(\d{4})\s*(?:SALDO|codice)',
