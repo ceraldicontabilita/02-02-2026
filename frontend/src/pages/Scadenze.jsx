@@ -7,6 +7,8 @@ export default function Scadenze() {
   const { anno } = useAnnoGlobale();
   const [scadenze, setScadenze] = useState([]);
   const [scadenzeIva, setScadenzeIva] = useState(null);
+  const [scadenzeIvaMensili, setScadenzeIvaMensili] = useState(null);
+  const [vistaIva, setVistaIva] = useState('trimestrale'); // 'trimestrale' o 'mensile'
   const [alertWidget, setAlertWidget] = useState(null);
   const [loading, setLoading] = useState(true);
   const [filtroTipo, setFiltroTipo] = useState('');
@@ -35,14 +37,16 @@ export default function Scadenze() {
       params.append('include_passate', includePassate);
       params.append('limit', '50');
       
-      const [scadenzeRes, ivaRes, alertRes] = await Promise.all([
+      const [scadenzeRes, ivaRes, ivaMensileRes, alertRes] = await Promise.all([
         api.get(`/api/scadenze/tutte?${params}`),
         api.get(`/api/scadenze/iva/${anno}`),
+        api.get(`/api/scadenze/iva-mensile/${anno}`),
         api.get('/api/scadenze/dashboard-widget').catch(() => ({ data: null }))
       ]);
       
       setScadenze(scadenzeRes.data.scadenze || []);
       setScadenzeIva(ivaRes.data);
+      setScadenzeIvaMensili(ivaMensileRes.data);
       setAlertWidget(alertRes.data);
     } catch (error) {
       console.error('Error loading scadenze:', error);
