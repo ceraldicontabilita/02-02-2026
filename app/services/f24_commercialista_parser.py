@@ -350,12 +350,9 @@ def parse_f24_commercialista(pdf_path: str) -> Dict[str, Any]:
         r'\b(CXX|DM10|RC01|C10|CF10)\s+([A-Z0-9]+)\s+(\d{2})\s+(\d{4})\s+([0-9.,]+)',
     ]
     
-    # Cerca prima nella sezione INPS specifica
-    inps_section = re.search(r'SEZIONE\s*INPS(.*?)(?:SEZIONE|REGIONI|IMU|ALTRI|SALDO|$)', text, re.DOTALL | re.IGNORECASE)
-    search_text = inps_section.group(1) if inps_section else text
-    
+    # Cerca SEMPRE in tutto il testo (il template INPS del form crea confusione)
     for pattern in inps_patterns:
-        for match in re.finditer(pattern, search_text):
+        for match in re.finditer(pattern, text):
             groups = match.groups()
             
             if pattern.startswith('5100'):
