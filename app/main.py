@@ -4,7 +4,9 @@ FastAPI application with MongoDB Atlas - Refactored Modular Architecture
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
+import os
 
 from app.config import settings
 from app.database import Database
