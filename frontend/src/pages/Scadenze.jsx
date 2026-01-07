@@ -243,8 +243,8 @@ export default function Scadenze() {
         </div>
       )}
 
-      {/* Riepilogo IVA Trimestrale */}
-      {scadenzeIva && (
+      {/* Riepilogo IVA - Trimestrale e Mensile */}
+      {(scadenzeIva || scadenzeIvaMensili) && (
         <div style={{ 
           background: 'linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%)',
           borderRadius: 12,
@@ -252,47 +252,135 @@ export default function Scadenze() {
           marginBottom: 20,
           color: 'white'
         }}>
-          <h3 style={{ margin: '0 0 15px 0' }}>🧾 Scadenze IVA Trimestrali {anno}</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 15 }}>
-            {scadenzeIva.scadenze?.map((s, idx) => (
-              <div key={idx} style={{ 
-                background: 'rgba(255,255,255,0.1)', 
-                padding: 15, 
-                borderRadius: 8,
-                borderLeft: `4px solid ${s.da_versare ? '#fbbf24' : '#34d399'}`
-              }}>
-                <div style={{ fontWeight: 'bold', marginBottom: 8 }}>{s.periodo}</div>
-                <div style={{ fontSize: 13, opacity: 0.9 }}>
-                  <div>Debito: {formatEuro(s.iva_debito)}</div>
-                  <div>Credito: {formatEuro(s.iva_credito)}</div>
-                </div>
-                <div style={{ 
-                  marginTop: 10, 
-                  padding: '6px 10px', 
-                  background: s.da_versare ? '#fbbf24' : '#34d399',
-                  borderRadius: 6,
-                  color: '#000',
+          {/* Header con bottoni toggle */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 }}>
+            <h3 style={{ margin: 0 }}>🧾 Scadenze IVA {anno}</h3>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                onClick={() => setVistaIva('trimestrale')}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: 8,
+                  border: 'none',
+                  cursor: 'pointer',
                   fontWeight: 'bold',
-                  fontSize: 14,
-                  textAlign: 'center'
-                }}>
-                  {s.da_versare ? `Versare ${formatEuro(s.importo_versamento)}` : 'A credito'}
+                  background: vistaIva === 'trimestrale' ? '#fbbf24' : 'rgba(255,255,255,0.2)',
+                  color: vistaIva === 'trimestrale' ? '#000' : '#fff'
+                }}
+                data-testid="btn-vista-trimestrale"
+              >
+                📊 Trimestrale
+              </button>
+              <button
+                onClick={() => setVistaIva('mensile')}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: 8,
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                  background: vistaIva === 'mensile' ? '#34d399' : 'rgba(255,255,255,0.2)',
+                  color: vistaIva === 'mensile' ? '#000' : '#fff'
+                }}
+                data-testid="btn-vista-mensile"
+              >
+                📅 Mensile
+              </button>
+            </div>
+          </div>
+
+          {/* Vista Trimestrale */}
+          {vistaIva === 'trimestrale' && scadenzeIva && (
+            <>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 15 }}>
+                {scadenzeIva.scadenze?.map((s, idx) => (
+                  <div key={idx} style={{ 
+                    background: 'rgba(255,255,255,0.1)', 
+                    padding: 15, 
+                    borderRadius: 8,
+                    borderLeft: `4px solid ${s.da_versare ? '#fbbf24' : '#34d399'}`
+                  }}>
+                    <div style={{ fontWeight: 'bold', marginBottom: 8 }}>{s.periodo}</div>
+                    <div style={{ fontSize: 13, opacity: 0.9 }}>
+                      <div>Debito: {formatEuro(s.iva_debito)}</div>
+                      <div>Credito: {formatEuro(s.iva_credito)}</div>
+                    </div>
+                    <div style={{ 
+                      marginTop: 10, 
+                      padding: '6px 10px', 
+                      background: s.da_versare ? '#fbbf24' : '#34d399',
+                      borderRadius: 6,
+                      color: '#000',
+                      fontWeight: 'bold',
+                      fontSize: 14,
+                      textAlign: 'center'
+                    }}>
+                      {s.da_versare ? `Versare ${formatEuro(s.importo_versamento)}` : 'A credito'}
+                    </div>
+                    <div style={{ fontSize: 11, marginTop: 8, opacity: 0.8 }}>
+                      Scadenza: {formatDate(s.data_scadenza)}
+                      {s.giorni_mancanti !== null && s.giorni_mancanti >= 0 && (
+                        <span style={{ marginLeft: 8 }}>
+                          ({s.giorni_mancanti === 0 ? 'OGGI' : `tra ${s.giorni_mancanti}g`})
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {scadenzeIva.totale_da_versare > 0 && (
+                <div style={{ marginTop: 15, textAlign: 'right', fontSize: 18 }}>
+                  Totale da versare: <strong>{formatEuro(scadenzeIva.totale_da_versare)}</strong>
                 </div>
-                <div style={{ fontSize: 11, marginTop: 8, opacity: 0.8 }}>
-                  Scadenza: {formatDate(s.data_scadenza)}
-                  {s.giorni_mancanti !== null && s.giorni_mancanti >= 0 && (
-                    <span style={{ marginLeft: 8 }}>
-                      ({s.giorni_mancanti === 0 ? 'OGGI' : `tra ${s.giorni_mancanti}g`})
-                    </span>
-                  )}
+              )}
+            </>
+          )}
+
+          {/* Vista Mensile */}
+          {vistaIva === 'mensile' && scadenzeIvaMensili && (
+            <>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10 }}>
+                {scadenzeIvaMensili.scadenze?.map((s, idx) => (
+                  <div key={idx} style={{ 
+                    background: 'rgba(255,255,255,0.1)', 
+                    padding: 12, 
+                    borderRadius: 8,
+                    borderLeft: `3px solid ${s.da_versare ? '#fbbf24' : '#34d399'}`
+                  }}>
+                    <div style={{ fontWeight: 'bold', marginBottom: 6, fontSize: 13 }}>{s.mese_nome}</div>
+                    <div style={{ fontSize: 11, opacity: 0.9 }}>
+                      <div>D: {formatEuro(s.iva_debito)}</div>
+                      <div>C: {formatEuro(s.iva_credito)}</div>
+                    </div>
+                    <div style={{ 
+                      marginTop: 8, 
+                      padding: '4px 8px', 
+                      background: s.da_versare ? '#fbbf24' : '#34d399',
+                      borderRadius: 4,
+                      color: '#000',
+                      fontWeight: 'bold',
+                      fontSize: 12,
+                      textAlign: 'center'
+                    }}>
+                      {s.da_versare ? formatEuro(s.importo_versamento) : 'Credito'}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ marginTop: 15, display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
+                <div>
+                  Totale a credito: <strong style={{ color: '#34d399' }}>{formatEuro(scadenzeIvaMensili.totale_a_credito)}</strong>
+                </div>
+                <div>
+                  Totale da versare: <strong style={{ color: '#fbbf24' }}>{formatEuro(scadenzeIvaMensili.totale_da_versare)}</strong>
+                </div>
+                <div>
+                  Saldo annuale: <strong style={{ color: scadenzeIvaMensili.saldo_annuale > 0 ? '#fbbf24' : '#34d399' }}>
+                    {scadenzeIvaMensili.saldo_annuale > 0 ? `Da versare ${formatEuro(scadenzeIvaMensili.saldo_annuale)}` : `A credito ${formatEuro(Math.abs(scadenzeIvaMensili.saldo_annuale))}`}
+                  </strong>
                 </div>
               </div>
-            ))}
-          </div>
-          {scadenzeIva.totale_da_versare > 0 && (
-            <div style={{ marginTop: 15, textAlign: 'right', fontSize: 18 }}>
-              Totale da versare: <strong>{formatEuro(scadenzeIva.totale_da_versare)}</strong>
-            </div>
+            </>
           )}
         </div>
       )}
