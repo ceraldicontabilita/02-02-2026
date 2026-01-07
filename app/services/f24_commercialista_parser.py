@@ -107,9 +107,6 @@ def parse_f24_commercialista(pdf_path: str) -> Dict[str, Any]:
     data_patterns = [
         r'data\s*di\s*pagamento[:\s]*(\d{2})[/\s-](\d{2})[/\s-](\d{4})',
         r'(\d{2})\s+(\d{2})\s+(\d{4})\s*(?:SALDO|codice)',
-    data_patterns = [
-        r'data\s*di\s*pagamento[:\s]*(\d{2})[/\s-](\d{2})[/\s-](\d{4})',
-        r'(\d{2})\s+(\d{2})\s+(\d{4})\s*(?:SALDO|codice)',
         r'giorno\s*mese\s*anno\s*(\d{2})\s*(\d{2})\s*(\d{4})',
     ]
     for pattern in data_patterns:
