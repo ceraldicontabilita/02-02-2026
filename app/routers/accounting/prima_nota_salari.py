@@ -555,6 +555,73 @@ async def reset_prima_nota_salari(
     }
 
 
+@router.post("/consolida-record")
+async def consolida_record() -> Dict[str, Any]:
+    """
+    Consolida i record esistenti: unisce buste e bonifici dello stesso mese/dipendente in un'unica riga.
+    Utile dopo import separati o per pulire dati duplicati.
+    """
+    db = Database.get_db()
+    
+    # Ottieni tutti i record
+    all_records = await db["prima_nota_salari"].find({}, {"_id": 0}).to_list(10000)
+    
+    # Raggruppa per dipendente/anno/mese
+    grouped = {}
+    for r in all_records:
+        key = (r.get("dipendente"), r.get("anno"), r.get("mese"))
+        if key not in grouped:
+            grouped[key] = {"busta": 0, "bonifico": 0, "records": []}
+        grouped[key]["busta"] += r.get("importo_busta") or 0
+        grouped[key]["bonifico"] += r.get("importo_bonifico") or 0
+        grouped[key]["records"].append(r)
+    
+    # Conta quanti gruppi hanno più di un record
+    duplicates = sum(1 for v in grouped.values() if len(v["records"]) > 1)
+    
+    if duplicates == 0:
+        return {"message": "Nessun record da consolidare", "duplicates": 0}
+    
+    # Elimina tutti e ricrea consolidati
+    await db["prima_nota_salari"].delete_many({})
+    
+    created = 0
+    for (dipendente, anno, mese), data in grouped.items():
+        if not dipendente or not anno or not mese:
+            continue
+        
+        importo_busta = round(data["busta"], 2)
+        importo_bonifico = round(data["bonifico"], 2)
+        saldo = round(importo_bonifico - importo_busta, 2)
+        
+        new_record = {
+            "id": str(uuid.uuid4()),
+            "dipendente": dipendente,
+            "anno": anno,
+            "mese": mese,
+            "mese_nome": MESI_NOMI[mese - 1] if 1 <= mese <= 12 else "",
+            "importo_busta": importo_busta,
+            "importo_bonifico": importo_bonifico,
+            "saldo": saldo,
+            "progressivo": 0,
+            "riconciliato": False,
+            "created_at": datetime.utcnow().isoformat(),
+            "updated_at": datetime.utcnow().isoformat()
+        }
+        await db["prima_nota_salari"].insert_one(new_record)
+        created += 1
+    
+    # Ricalcola progressivi
+    await ricalcola_progressivi_tutti(db)
+    
+    return {
+        "message": f"Consolidamento completato",
+        "record_originali": len(all_records),
+        "record_consolidati": created,
+        "duplicati_risolti": duplicates
+    }
+
+
 @router.delete("/salari/{record_id}")
 async def delete_salario(record_id: str) -> Dict[str, str]:
     """Elimina un singolo record."""
