@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<postacert tipo="posta-certificata" errore="nessuno">
+    <intestazione>
+        <mittente>auto_napoli@massivo.pec.inail.it</mittente>
+        <destinatari tipo="certificato">ceraldigroupsrl@legalmail.it</destinatari>
+        <risposte>napoli@postacert.inail.it</risposte>
+        <oggetto>INAIL Comunica [88419670]</oggetto>
+    </intestazione>
+    <dati>
+        <gestore-emittente>InfoCert S.p.A.</gestore-emittente>
+        <data zona="+0100">
+            <giorno>16/12/2025</giorno>
+            <ora>22:07:17</ora>
+        </data>
+        <identificativo>551BC069.01A812CA.28FD24F1.E3896202.posta-certificata@legalmail.it</identificativo>
+        <msgid>&lt;88419670@pom2.inail.it&gt;</msgid>
+        <ricevuta tipo="breve" />
+    </dati>
+</postacert>
+
