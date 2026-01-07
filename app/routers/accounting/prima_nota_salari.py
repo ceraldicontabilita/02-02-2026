@@ -407,18 +407,26 @@ async def import_bonifici(file: UploadFile = File(...)) -> Dict[str, Any]:
     }
 
 
-async def ricalcola_progressivi_tutti(db, anno_inizio: int = None):
+async def ricalcola_progressivi_tutti(db, anno_inizio: int = None, dipendente_filtro: str = None):
     """
-    Ricalcola saldi e progressivi per tutti i dipendenti.
+    Ricalcola saldi e progressivi per tutti i dipendenti o uno specifico.
     
     Formula Saldo mensile: Bonifico - Busta
     - Saldo positivo = dipendente ha ricevuto più di quanto spettava (ci deve soldi)
     - Saldo negativo = dipendente ha ricevuto meno di quanto spettava (gli dobbiamo soldi)
     
     Progressivo = Somma cumulativa di tutti i saldi dall'anno_inizio (default: tutti)
+    
+    Args:
+        db: Database connection
+        anno_inizio: Anno da cui iniziare il calcolo (opzionale)
+        dipendente_filtro: Nome dipendente specifico (opzionale)
     """
-    # Ottieni tutti i dipendenti unici
-    dipendenti = await db["prima_nota_salari"].distinct("dipendente")
+    # Ottieni dipendenti da processare
+    if dipendente_filtro:
+        dipendenti = [dipendente_filtro]
+    else:
+        dipendenti = await db["prima_nota_salari"].distinct("dipendente")
     
     for dipendente in dipendenti:
         # Ordina per anno e mese (dal più vecchio al più recente)
