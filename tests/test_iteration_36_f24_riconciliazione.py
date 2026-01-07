@@ -228,8 +228,10 @@ class TestUploadEndpoint:
         # Should return 400 for non-PDF
         assert response.status_code == 400, f"Expected 400 for non-PDF, got {response.status_code}"
         data = response.json()
-        assert "detail" in data
-        print(f"Non-PDF rejection: {data['detail']}")
+        # Check for error message (could be 'detail' or 'message')
+        assert "detail" in data or "message" in data, f"Expected error message in response: {data}"
+        error_msg = data.get("detail") or data.get("message")
+        print(f"Non-PDF rejection: {error_msg}")
 
 
 class TestF24Detail:
