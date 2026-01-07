@@ -223,81 +223,41 @@ def parse_f24_commercialista(pdf_path: str) -> Dict[str, Any]:
         for match in re.finditer(erario_specific_pattern, text):
             codice = match.group(1)
             anno = match.group(2)
-            euro_part = match.group(3).strip().replace('.', '').replace(',', '.')
+            euro_part = match.group(3).strip().replace('.', '').replace(',', '')
             cent_part = match.group(4)
-        
-        # Costruisci importo: "1.211" + "90" -> 1211.90
-        try:
-            euro_val = float(euro_part) if euro_part else 0
-            debito = euro_val + float(cent_part) / 100
-        except ValueError:
-            debito = parse_importo(euro_part + '.' + cent_part)
-        
-        if debito > 0:
-            # Determina il mese dal codice tributo (es. 6011 = novembre)
-            mese = "00"
-            if codice.startswith("60"):
-                mese_num = int(codice[2:])
-                if 1 <= mese_num <= 12:
-                    mese = str(mese_num).zfill(2)
             
-            tributo = {
-                "codice_tributo": codice,
-                "rateazione": "",
-                "periodo_riferimento": parse_periodo(mese, anno),
-                "anno": anno,
-                "mese": mese,
-                "importo_debito": round(debito, 2),
-                "importo_credito": 0.0,
-                "descrizione": get_descrizione_tributo(codice)
-            }
-            result["sezione_erario"].append(tributo)
-            found_erario = True
-            logger.info(f"Estratto tributo erario (specific): {codice} - €{round(debito,2)}")
+            # Costruisci importo: "1.211" + "90" -> 1211.90
+            try:
+                euro_val = float(euro_part) if euro_part else 0
+                debito = euro_val + float(cent_part) / 100
+            except ValueError:
+                debito = 0
             
-            if codice in CODICI_RAVVEDIMENTO:
-                result["has_ravvedimento"] = True
-                result["codici_ravvedimento"].append(codice)
-    
-    # PRIORITÀ 2: Pattern standard (per F24 con formato tradizionale)
-    if not found_erario:
-        for match in re.finditer(erario_pattern, section_text):
-            codice = match.group(1)
-            rateazione = match.group(2) or ""
-            mese = match.group(3) or "00"
-            anno = match.group(4)
-            debito = parse_importo(match.group(5))
-            credito = parse_importo(match.group(6)) if match.group(6) else 0.0
-            
-            # Verifica se è un codice valido (non anno o altro numero)
-            if len(codice) == 4 and int(codice) < 9999 and debito > 0:
+            if debito > 0:
+                # Determina il mese dal codice tributo (es. 6011 = novembre)
+                mese = "00"
+                if codice.startswith("60"):
+                    mese_num = int(codice[2:])
+                    if 1 <= mese_num <= 12:
+                        mese = str(mese_num).zfill(2)
+                
                 tributo = {
                     "codice_tributo": codice,
-                    "rateazione": rateazione,
+                    "rateazione": "",
                     "periodo_riferimento": parse_periodo(mese, anno),
                     "anno": anno,
                     "mese": mese,
-                    "importo_debito": debito,
-                    "importo_credito": credito,
+                    "importo_debito": round(debito, 2),
+                    "importo_credito": 0.0,
                     "descrizione": get_descrizione_tributo(codice)
                 }
                 result["sezione_erario"].append(tributo)
                 found_erario = True
+                logger.info(f"Estratto tributo erario (specific): {codice} - €{round(debito,2)}")
                 
-                # Verifica ravvedimento
                 if codice in CODICI_RAVVEDIMENTO:
                     result["has_ravvedimento"] = True
                     result["codici_ravvedimento"].append(codice)
-    
-    # PRIORITÀ 3: Pattern semplice (fallback)
-    if not found_erario:
-        for match in re.finditer(erario_simple_pattern, text):
-            codice = match.group(1)
-            anno = match.group(2)
-            importo_str = match.group(3).strip()
-            
-            # Pulisci importo (può essere "1.211 90" -> "1211.90")
-            importo_str = re.sub(r'\s+', '', importo_str)
             importo_str = importo_str.replace(',', '.')
             # Gestisci formato italiano "1.211.90" -> "1211.90"
             parts = importo_str.split('.')
