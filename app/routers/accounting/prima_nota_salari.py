@@ -254,7 +254,9 @@ async def import_paghe(file: UploadFile = File(...)) -> Dict[str, Any]:
 async def import_bonifici(file: UploadFile = File(...)) -> Dict[str, Any]:
     """
     Importa file BONIFICI (importi erogati).
-    Formato atteso: Dipendente | Mese | Anno | Importo Erogato
+    Formati supportati:
+    - Dipendente | Mese | Anno | Importo Erogato
+    - Dipendente | Mese (data completa) | Importo Erogato
     
     REGOLA: MAI AGGREGARE - Crea un record per ogni riga del file.
     """
@@ -268,8 +270,10 @@ async def import_bonifici(file: UploadFile = File(...)) -> Dict[str, Any]:
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Errore lettura Excel: {str(e)}")
     
-    # Normalizza nomi colonne
+    # Normalizza nomi colonne (rimuovi spazi extra)
     df.columns = [c.strip().lower() for c in df.columns]
+    
+    logger.info(f"IMPORT BONIFICI - Colonne trovate: {list(df.columns)}")
     
     # Mapping colonne
     col_dipendente = None
@@ -280,27 +284,21 @@ async def import_bonifici(file: UploadFile = File(...)) -> Dict[str, Any]:
     for c in df.columns:
         if 'dipendente' in c or 'nome' in c or 'cognome' in c:
             col_dipendente = c
-        elif 'mese' in c:
+        elif 'mese' in c or 'data' in c:
             col_mese = c
         elif 'anno' in c:
             col_anno = c
-        elif any(x in c for x in ['erogato', 'bonifico', 'pagato', 'versato', 'accredito']):
+        elif any(x in c for x in ['erogato', 'bonifico', 'pagato', 'versato', 'accredito', 'importo']):
             col_importo = c
     
-    # Fallback
-    if not col_importo:
-        for c in df.columns:
-            if 'importo' in c and 'stipendio' not in c and 'netto' not in c and 'busta' not in c:
-                col_importo = c
-                break
-    
-    if not all([col_dipendente, col_mese, col_anno, col_importo]):
+    if not all([col_dipendente, col_mese, col_importo]):
         raise HTTPException(
             status_code=400, 
-            detail=f"Colonne richieste non trovate. Trovate: {list(df.columns)}"
+            detail=f"Colonne richieste non trovate. Trovate: {list(df.columns)}. Serve: dipendente, mese/data, importo"
         )
     
     logger.info(f"IMPORT BONIFICI - Righe nel file: {len(df)}")
+    logger.info(f"IMPORT BONIFICI - Mapping: dip={col_dipendente}, mese={col_mese}, anno={col_anno}, importo={col_importo}")
     
     created = 0
     errors = []
@@ -312,24 +310,39 @@ async def import_bonifici(file: UploadFile = File(...)) -> Dict[str, Any]:
             if not dipendente or dipendente == "NAN":
                 continue
             
-            # Gestisci mese (può essere numero o data)
+            # Gestisci mese e anno
             mese_val = row[col_mese]
-            if hasattr(mese_val, 'month'):
+            
+            # Se è una data completa, estrai mese e anno
+            if hasattr(mese_val, 'month') and hasattr(mese_val, 'year'):
                 mese = mese_val.month
+                anno = mese_val.year
+            elif isinstance(mese_val, str) and '-' in mese_val:
+                # Formato "2021-06-21" o simile
+                try:
+                    from dateutil import parser
+                    dt = parser.parse(mese_val)
+                    mese = dt.month
+                    anno = dt.year
+                except:
+                    mese = get_mese_numero(str(mese_val))
+                    anno = int(row[col_anno]) if col_anno else 2024
             else:
                 mese_str = str(mese_val).strip()
                 mese = get_mese_numero(mese_str)
-            if mese == 0:
-                continue
+                # Anno da colonna separata o default
+                if col_anno:
+                    anno_val = row[col_anno]
+                    if hasattr(anno_val, 'year'):
+                        anno = anno_val.year
+                    else:
+                        anno = int(anno_val)
+                else:
+                    anno = 2024  # Default
             
-            # Gestisci anno (può essere numero o data)
-            anno_val = row[col_anno]
-            if hasattr(anno_val, 'year'):
-                anno = anno_val.year
-            elif isinstance(anno_val, datetime):
-                anno = anno_val.year
-            else:
-                anno = int(anno_val)
+            if mese == 0 or mese > 12:
+                errors.append(f"Riga {idx + 2}: mese non valido ({mese_val})")
+                continue
             
             importo = float(row[col_importo]) if pd.notna(row[col_importo]) else 0
             
