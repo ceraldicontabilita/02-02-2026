@@ -128,34 +128,87 @@ def parse_f24_commercialista(pdf_path: str) -> Dict[str, Any]:
     # Esempio: 1001 0101 12 2024 2.610,51
     erario_pattern = r'\b(\d{4})\s+(\d{4})?\s*(\d{2})?\s*(\d{4})\s+([0-9.,]+)\s*([0-9.,]*)'
     
+    # Pattern alternativo per formato semplice: codice_tributo + anno + importo
+    # Esempio: 6011 \n 2025 \n 1.211 90
+    erario_simple_pattern = r'\b(6\d{3}|1\d{3}|3\d{3}|8\d{3})\s*[\n\s]+(\d{4})\s*[\n\s]+([0-9.,\s]+)'
+    
     # Cerca nella sezione ERARIO
     erario_section = re.search(r'ERARIO(.*?)(?:INPS|REGIONI|IMU|ALTRI|$)', text, re.DOTALL | re.IGNORECASE)
-    if erario_section:
-        section_text = erario_section.group(1)
+    
+    # Se non trova sezione, cerca in tutto il testo
+    section_text = erario_section.group(1) if erario_section else text
+    
+    # Prima prova pattern standard
+    found_erario = False
+    for match in re.finditer(erario_pattern, section_text):
+        codice = match.group(1)
+        rateazione = match.group(2) or ""
+        mese = match.group(3) or "00"
+        anno = match.group(4)
+        debito = parse_importo(match.group(5))
+        credito = parse_importo(match.group(6)) if match.group(6) else 0.0
         
-        for match in re.finditer(erario_pattern, section_text):
-            codice = match.group(1)
-            rateazione = match.group(2) or ""
-            mese = match.group(3) or "00"
-            anno = match.group(4)
-            debito = parse_importo(match.group(5))
-            credito = parse_importo(match.group(6)) if match.group(6) else 0.0
+        # Verifica se è un codice valido (non anno o altro numero)
+        if len(codice) == 4 and int(codice) < 9999 and debito > 0:
+            tributo = {
+                "codice_tributo": codice,
+                "rateazione": rateazione,
+                "periodo_riferimento": parse_periodo(mese, anno),
+                "anno": anno,
+                "mese": mese,
+                "importo_debito": debito,
+                "importo_credito": credito,
+                "descrizione": get_descrizione_tributo(codice)
+            }
+            result["sezione_erario"].append(tributo)
+            found_erario = True
             
-            # Verifica se è un codice valido (non anno o altro numero)
-            if len(codice) == 4 and int(codice) < 9999:
+            # Verifica ravvedimento
+            if codice in CODICI_RAVVEDIMENTO:
+                result["has_ravvedimento"] = True
+                result["codici_ravvedimento"].append(codice)
+    
+    # Se non trovato, prova pattern semplice
+    if not found_erario:
+        for match in re.finditer(erario_simple_pattern, text):
+            codice = match.group(1)
+            anno = match.group(2)
+            importo_str = match.group(3).strip()
+            
+            # Pulisci importo (può essere "1.211 90" -> "1211.90")
+            importo_str = re.sub(r'\s+', '', importo_str)
+            importo_str = importo_str.replace(',', '.')
+            # Gestisci formato italiano "1.211.90" -> "1211.90"
+            parts = importo_str.split('.')
+            if len(parts) == 3:
+                importo_str = parts[0] + parts[1] + '.' + parts[2]
+            elif len(parts) == 2 and len(parts[1]) == 2:
+                # Formato "1211.90" o "1.21190" -> converti
+                pass
+            
+            debito = parse_importo(importo_str)
+            
+            if debito > 0:
+                # Determina il mese dal codice tributo (es. 6011 = novembre)
+                mese = "00"
+                if codice.startswith("60"):
+                    mese_num = int(codice[2:])
+                    if 1 <= mese_num <= 12:
+                        mese = str(mese_num).zfill(2)
+                
                 tributo = {
                     "codice_tributo": codice,
-                    "rateazione": rateazione,
+                    "rateazione": "",
                     "periodo_riferimento": parse_periodo(mese, anno),
                     "anno": anno,
                     "mese": mese,
                     "importo_debito": debito,
-                    "importo_credito": credito,
+                    "importo_credito": 0.0,
                     "descrizione": get_descrizione_tributo(codice)
                 }
                 result["sezione_erario"].append(tributo)
+                logger.info(f"Estratto tributo erario (simple): {codice} - €{debito}")
                 
-                # Verifica ravvedimento
                 if codice in CODICI_RAVVEDIMENTO:
                     result["has_ravvedimento"] = True
                     result["codici_ravvedimento"].append(codice)
