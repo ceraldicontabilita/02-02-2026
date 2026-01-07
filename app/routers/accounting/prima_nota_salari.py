@@ -516,13 +516,29 @@ async def get_dipendenti_lista() -> List[str]:
 
 
 @router.delete("/salari/reset")
-async def reset_prima_nota_salari() -> Dict[str, Any]:
-    """Elimina tutti i record della prima nota salari."""
+async def reset_prima_nota_salari(
+    tipo: Optional[str] = Query(None, description="Tipo di record da eliminare: 'busta', 'bonifico', 'aggiustamento' o None per tutti")
+) -> Dict[str, Any]:
+    """
+    Elimina i record della prima nota salari.
+    - tipo=None: elimina TUTTI i record
+    - tipo='busta': elimina solo i record delle paghe
+    - tipo='bonifico': elimina solo i record dei bonifici
+    - tipo='aggiustamento': elimina solo i record di aggiustamento
+    """
     db = Database.get_db()
-    result = await db["prima_nota_salari"].delete_many({})
+    
+    query = {}
+    if tipo:
+        query["tipo"] = tipo
+    
+    result = await db["prima_nota_salari"].delete_many(query)
+    
+    tipo_desc = tipo if tipo else "tutti"
     return {
-        "message": f"Eliminati {result.deleted_count} record",
-        "deleted_count": result.deleted_count
+        "message": f"Eliminati {result.deleted_count} record ({tipo_desc})",
+        "deleted_count": result.deleted_count,
+        "tipo_eliminato": tipo_desc
     }
 
 
