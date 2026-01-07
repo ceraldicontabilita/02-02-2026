@@ -3,8 +3,8 @@
 ## Project Overview
 Sistema ERP completo per gestione aziendale con focus su contabilità, fatturazione elettronica, magazzino, gestione fornitori e **contabilità analitica con centri di costo**.
 
-**Versione**: 4.4.0  
-**Ultimo aggiornamento**: 6 Gennaio 2026  
+**Versione**: 4.5.0  
+**Ultimo aggiornamento**: 7 Gennaio 2026  
 **Stack**: FastAPI (Python) + React + MongoDB + Claude AI
 
 ---
