@@ -306,6 +306,21 @@ export default function GestioneDipendenti() {
     }
   };
 
+  // Ricalcola progressivi dal 2023
+  const handleRicalcolaProgressiviDal2023 = async () => {
+    if (!window.confirm('Ricalcolare tutti i progressivi partendo dal 01/01/2023?\n\nQuesto aggiornerà il saldo progressivo di tutti i dipendenti.')) return;
+    try {
+      setRicalcolandoProgressivi(true);
+      await api.post('/api/prima-nota-salari/ricalcola-progressivi?anno_inizio=2023');
+      await loadPrimaNotaSalari();
+      alert('✅ Progressivi ricalcolati dal 01/01/2023');
+    } catch (error) {
+      alert('Errore: ' + (error.response?.data?.detail || error.message));
+    } finally {
+      setRicalcolandoProgressivi(false);
+    }
+  };
+
   // Libro Unico functions
   const loadLibroUnico = async () => {
     try {
