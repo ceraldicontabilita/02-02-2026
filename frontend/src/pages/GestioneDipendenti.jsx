@@ -55,6 +55,7 @@ export default function GestioneDipendenti() {
   const [filtroTabDipendente, setFiltroTabDipendente] = useState('');
   const [filtroTabMese, setFiltroTabMese] = useState('');
   const [filtroTabAnno, setFiltroTabAnno] = useState('');
+  const [ricalcolandoProgressivi, setRicalcolandoProgressivi] = useState(false);
 
   // Libro Unico state
   const [libroUnicoSalaries, setLibroUnicoSalaries] = useState([]);
