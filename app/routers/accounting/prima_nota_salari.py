@@ -48,10 +48,18 @@ def normalize_name(name: str) -> str:
 
 
 def get_mese_numero(mese_str: str) -> int:
-    """Converte nome mese in numero."""
+    """Converte nome mese o numero in numero."""
     if not mese_str:
         return 0
-    return MESI_MAP.get(mese_str.lower().strip(), 0)
+    # Prima prova a convertire direttamente in intero
+    try:
+        mese = int(float(mese_str))
+        if 1 <= mese <= 12:
+            return mese
+    except (ValueError, TypeError):
+        pass
+    # Altrimenti cerca nel mapping
+    return MESI_MAP.get(str(mese_str).lower().strip(), 0)
 
 
 # ============== ENDPOINTS ==============
