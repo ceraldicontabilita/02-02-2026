@@ -454,11 +454,19 @@ async def ricalcola_progressivi_tutti(db, anno_inizio: int = None):
 
 
 @router.post("/ricalcola-progressivi")
-async def ricalcola_progressivi() -> Dict[str, str]:
-    """Ricalcola tutti i progressivi dipendenti."""
+async def ricalcola_progressivi(
+    anno_inizio: Optional[int] = Query(None, description="Anno da cui iniziare il calcolo del progressivo (es. 2023)")
+) -> Dict[str, Any]:
+    """
+    Ricalcola tutti i progressivi dipendenti.
+    Se anno_inizio è specificato, il progressivo parte da 0 a gennaio di quell'anno.
+    """
     db = Database.get_db()
-    await ricalcola_progressivi_tutti(db)
-    return {"message": "Progressivi ricalcolati"}
+    await ricalcola_progressivi_tutti(db, anno_inizio)
+    return {
+        "message": f"Progressivi ricalcolati{f' dal {anno_inizio}' if anno_inizio else ''}",
+        "anno_inizio": anno_inizio
+    }
 
 
 @router.get("/dipendenti-lista")
