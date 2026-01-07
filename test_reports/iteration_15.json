@@ -67,10 +67,10 @@
     }
   },
   "urls_tested": {
-    "Finanziaria": "https://productflow-22.preview.emergentagent.com/finanziaria",
-    "Prima_Nota": "https://productflow-22.preview.emergentagent.com/prima-nota",
-    "IVA": "https://productflow-22.preview.emergentagent.com/iva",
-    "Dipendenti": "https://productflow-22.preview.emergentagent.com/dipendenti"
+    "Finanziaria": "https://taxform-autosync.preview.emergentagent.com/finanziaria",
+    "Prima_Nota": "https://taxform-autosync.preview.emergentagent.com/prima-nota",
+    "IVA": "https://taxform-autosync.preview.emergentagent.com/iva",
+    "Dipendenti": "https://taxform-autosync.preview.emergentagent.com/dipendenti"
   },
   "bug_fixed": {
     "file": "/app/app/routers/dipendenti.py",

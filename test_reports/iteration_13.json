@@ -65,8 +65,8 @@
     }
   },
   "urls_tested": {
-    "Controllo Mensile": "https://productflow-22.preview.emergentagent.com/controllo-mensile",
-    "IVA": "https://productflow-22.preview.emergentagent.com/iva"
+    "Controllo Mensile": "https://taxform-autosync.preview.emergentagent.com/controllo-mensile",
+    "IVA": "https://taxform-autosync.preview.emergentagent.com/iva"
   },
   "quarterly_iva_data_2025": {
     "Q1_Gen_Feb_Mar": {
