@@ -1314,14 +1314,17 @@ export default function GestioneDipendenti() {
                 ➕ Aggiustamento Saldo
               </button>
               <button
-                onClick={() => setShowRicalcoloModal(true)}
+                onClick={handleRicalcolaProgressiviDal2023}
+                disabled={ricalcolandoProgressivi || !filtroDipendente}
                 style={{
                   padding: '10px 20px',
-                  background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+                  background: ricalcolandoProgressivi || !filtroDipendente 
+                    ? '#9ca3af' 
+                    : 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
                   color: 'white',
                   border: 'none',
                   borderRadius: 8,
-                  cursor: 'pointer',
+                  cursor: ricalcolandoProgressivi || !filtroDipendente ? 'not-allowed' : 'pointer',
                   fontWeight: 'bold',
                   fontSize: 14,
                   display: 'flex',
