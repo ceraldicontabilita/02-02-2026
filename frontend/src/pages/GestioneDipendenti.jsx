@@ -281,7 +281,7 @@ export default function GestioneDipendenti() {
     if (!window.confirm('Eliminare questo record?')) return;
     try {
       await api.delete(`/api/prima-nota-salari/salari/${recordId}`);
-      loadPrimaNotaSalari();
+      await loadPrimaNotaSalari();
     } catch (error) {
       alert('Errore: ' + (error.response?.data?.detail || error.message));
     }
