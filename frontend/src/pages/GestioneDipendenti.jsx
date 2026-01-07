@@ -1263,7 +1263,7 @@ export default function GestioneDipendenti() {
             color: 'white',
             marginBottom: 20
           }}>
-            <h3 style={{ margin: '0 0 12px 0' }}>📒 Prima Nota Salari - {selectedMonth ? mesiNomi[selectedMonth - 1] : 'Tutti i mesi'} {selectedYearPrimaNota || 'Tutti gli anni'}</h3>
+            <h3 style={{ margin: '0 0 12px 0' }}>📒 Prima Nota Salari - {selectedMonth ? mesiNomi[selectedMonth - 1] : 'Tutti i mesi'} {selectedYearPrimaNota || 'Tutti gli anni'}{filtroDipendente && ` - ${filtroDipendente}`}</h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 16 }}>
               <div>
                 <div style={{ fontSize: 12, opacity: 0.8 }}>Records</div>
@@ -1282,13 +1282,39 @@ export default function GestioneDipendenti() {
                 </div>
               </div>
               <div>
-                <div style={{ fontSize: 12, opacity: 0.8 }}>Differenza</div>
+                <div style={{ fontSize: 12, opacity: 0.8 }}>
+                  {filtroDipendente ? 'Saldo Progressivo' : 'Differenza'}
+                </div>
                 <div style={{ 
                   fontSize: 24, 
                   fontWeight: 'bold',
-                  color: salariMovimenti.reduce((sum, m) => sum + (m.importo_bonifico || 0) - (m.importo_busta || 0), 0) >= 0 ? '#22c55e' : '#ef4444'
+                  color: (() => {
+                    // Se c'è un filtro dipendente, mostra l'ultimo progressivo (ordine cronologico)
+                    if (filtroDipendente && salariMovimenti.length > 0) {
+                      // Ordina per anno e mese per trovare l'ultimo record
+                      const sorted = [...salariMovimenti].sort((a, b) => {
+                        if (a.anno !== b.anno) return b.anno - a.anno;
+                        return b.mese - a.mese;
+                      });
+                      const ultimoProgressivo = sorted[0]?.progressivo || 0;
+                      return ultimoProgressivo >= 0 ? '#22c55e' : '#ef4444';
+                    }
+                    // Altrimenti mostra la differenza totale
+                    return salariMovimenti.reduce((sum, m) => sum + (m.importo_bonifico || 0) - (m.importo_busta || 0), 0) >= 0 ? '#22c55e' : '#ef4444';
+                  })()
                 }}>
-                  {formatEuro(salariMovimenti.reduce((sum, m) => sum + (m.importo_bonifico || 0) - (m.importo_busta || 0), 0))}
+                  {(() => {
+                    // Se c'è un filtro dipendente, mostra l'ultimo progressivo
+                    if (filtroDipendente && salariMovimenti.length > 0) {
+                      const sorted = [...salariMovimenti].sort((a, b) => {
+                        if (a.anno !== b.anno) return b.anno - a.anno;
+                        return b.mese - a.mese;
+                      });
+                      return formatEuro(sorted[0]?.progressivo || 0);
+                    }
+                    // Altrimenti mostra la differenza totale
+                    return formatEuro(salariMovimenti.reduce((sum, m) => sum + (m.importo_bonifico || 0) - (m.importo_busta || 0), 0));
+                  })()}
                 </div>
               </div>
             </div>
