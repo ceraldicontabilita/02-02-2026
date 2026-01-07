@@ -183,8 +183,8 @@ export default function GestioneDipendenti() {
       });
       
       setImportResult(res.data);
-      loadPrimaNotaSalari();
-      loadDipendentiLista();
+      await loadPrimaNotaSalari();
+      await loadDipendentiLista();
       
       // Mostra info colonne mappate
       if (res.data.colonne_mappate) {
@@ -219,7 +219,7 @@ export default function GestioneDipendenti() {
       });
       
       setEstrattoResult(res.data);
-      loadPrimaNotaSalari();
+      await loadPrimaNotaSalari();
       
       // Mostra info colonne mappate
       if (res.data.colonne_mappate) {
@@ -243,8 +243,8 @@ export default function GestioneDipendenti() {
     
     try {
       await api.delete('/api/prima-nota-salari/salari/reset');
-      loadPrimaNotaSalari();
-      loadDipendentiLista();
+      await loadPrimaNotaSalari();
+      await loadDipendentiLista();
       alert('✅ Dati eliminati');
     } catch (error) {
       alert('Errore: ' + (error.response?.data?.detail || error.message));
