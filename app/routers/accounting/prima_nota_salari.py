@@ -415,7 +415,7 @@ async def ricalcola_progressivi_tutti(db):
     - Saldo positivo = dipendente ha ricevuto più di quanto spettava (ci deve soldi)
     - Saldo negativo = dipendente ha ricevuto meno di quanto spettava (gli dobbiamo soldi)
     
-    Progressivo = Σ(saldi) da inizio a mese corrente
+    Progressivo = Σ(saldi) da inizio ANNO a mese corrente (reset ogni anno)
     """
     # Ottieni tutti i dipendenti unici
     dipendenti = await db["prima_nota_salari"].distinct("dipendente")
@@ -427,8 +427,15 @@ async def ricalcola_progressivi_tutti(db):
         ).sort([("anno", 1), ("mese", 1)]).to_list(500)
         
         progressivo = 0
+        current_year = None
         
         for record in records:
+            # Reset progressivo a inizio anno
+            record_year = record.get("anno")
+            if record_year != current_year:
+                progressivo = 0
+                current_year = record_year
+            
             # Ricalcola saldo: Bonifico - Busta
             importo_busta = record.get("importo_busta", 0) or 0
             importo_bonifico = record.get("importo_bonifico", 0) or 0
