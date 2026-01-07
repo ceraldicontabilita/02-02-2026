@@ -239,7 +239,8 @@ class EmailDocumentDownloader:
     def download_attachments_from_email(
         self, 
         email_id: bytes,
-        allowed_extensions: List[str] = ['.pdf', '.xml', '.xlsx', '.xls', '.csv', '.p7m']
+        allowed_extensions: List[str] = ['.pdf', '.xml', '.xlsx', '.xls', '.csv', '.p7m'],
+        search_keywords: List[str] = None
     ) -> List[Dict[str, Any]]:
         """
         Scarica allegati da una singola email.
