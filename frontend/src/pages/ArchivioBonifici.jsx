@@ -295,7 +295,7 @@ export default function ArchivioBonifici() {
       </div>
 
       {/* Stats Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: 24 }}>
         <div style={{ background: '#f0f9ff', padding: 20, borderRadius: 12, border: '1px solid #bae6fd' }}>
           <div style={{ fontSize: 13, color: '#0369a1' }}>Bonifici Totali in DB</div>
           <div style={{ fontSize: 32, fontWeight: 'bold', color: '#0c4a6e' }}>{count}</div>
@@ -308,6 +308,54 @@ export default function ArchivioBonifici() {
           <div style={{ fontSize: 13, color: '#ca8a04' }}>Totale Importi Filtrati</div>
           <div style={{ fontSize: 24, fontWeight: 'bold', color: '#854d0e' }}>{formatEuro(totaleImporto)}</div>
         </div>
+        {/* Card Riconciliazione */}
+        <div style={{ background: riconciliazioneStats?.riconciliati > 0 ? '#f0fdf4' : '#fef2f2', padding: 20, borderRadius: 12, border: `1px solid ${riconciliazioneStats?.riconciliati > 0 ? '#bbf7d0' : '#fecaca'}` }}>
+          <div style={{ fontSize: 13, color: riconciliazioneStats?.riconciliati > 0 ? '#16a34a' : '#dc2626' }}>
+            ✓ Riconciliati
+          </div>
+          <div style={{ fontSize: 32, fontWeight: 'bold', color: riconciliazioneStats?.riconciliati > 0 ? '#166534' : '#991b1b' }}>
+            {riconciliazioneStats?.riconciliati || 0}/{riconciliazioneStats?.totale || 0}
+          </div>
+          <div style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>
+            {riconciliazioneStats?.percentuale || 0}%
+          </div>
+        </div>
+      </div>
+
+      {/* Pulsante Riconciliazione */}
+      <div style={{ 
+        background: 'linear-gradient(135deg, #0ea5e9, #0369a1)', 
+        padding: 16, 
+        borderRadius: 12, 
+        marginBottom: 24,
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        color: 'white'
+      }}>
+        <div>
+          <div style={{ fontWeight: 'bold', fontSize: 16 }}>🔗 Riconciliazione con Estratto Conto</div>
+          <div style={{ fontSize: 13, opacity: 0.9 }}>
+            Confronta i bonifici con i movimenti bancari per verificare i pagamenti effettivi
+          </div>
+        </div>
+        <button
+          onClick={handleRiconcilia}
+          disabled={riconciliando}
+          style={{
+            padding: '12px 24px',
+            borderRadius: 8,
+            background: riconciliando ? '#94a3b8' : 'white',
+            color: '#0369a1',
+            border: 'none',
+            cursor: riconciliando ? 'not-allowed' : 'pointer',
+            fontWeight: 'bold',
+            fontSize: 14
+          }}
+          data-testid="riconcilia-bonifici-btn"
+        >
+          {riconciliando ? '⏳ Riconciliazione in corso...' : '🚀 Avvia Riconciliazione'}
+        </button>
       </div>
 
       {/* Riepilogo per Anno */}
