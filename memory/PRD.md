@@ -1,13 +1,38 @@
 # PRD - Azienda Semplice ERP
 
 ## Project Overview
-**Versione**: 4.9.0  
+**Versione**: 5.0.0  
 **Ultimo aggiornamento**: 7 Gennaio 2026  
 **Stack**: FastAPI (Python) + React + MongoDB + Claude AI
 
 ---
 
 ## 🆕 AGGIORNAMENTI RECENTI (7 Gen 2026)
+
+### 🏗️ Refactoring Backend - Architettura Modulare
+**Riorganizzazione completa** del backend con struttura modulare:
+
+```
+/app/app/routers/
+├── f24/           # 7 file - Gestione F24 e Riconciliazione
+├── haccp/         # 8 file - Sistema HACCP completo
+├── accounting/    # 14 file - Contabilità e Prima Nota
+├── bank/          # 9 file - Gestione Banca
+├── warehouse/     # 11 file - Magazzino e Prodotti
+├── invoices/      # 6 file - Fatturazione
+├── employees/     # 7 file - Gestione Dipendenti
+├── reports/       # 6 file - Report e Esportazioni
+└── [altri router core]
+
+/app/app/constants/  # Costanti (codici tributo, HACCP)
+/app/app/services/   # 31 file di business logic
+```
+
+**Vantaggi:**
+- Organizzazione per dominio funzionale
+- Import modulari più puliti
+- Manutenibilità migliorata
+- Documentazione in `/app/app/ARCHITECTURE.md`
 
 ### Parser F24 Commercialista - Versione 2.0
 **Completamente riscritto** per gestire correttamente tutti i tipi di F24:
