@@ -50,6 +50,7 @@ export default function GestioneDipendenti() {
   const [importingEstratto, setImportingEstratto] = useState(false);
   const [estrattoResult, setEstrattoResult] = useState(null);
   const [editingSalario, setEditingSalario] = useState(null); // Record in modifica
+  const [anniEsclusi, setAnniEsclusi] = useState([]); // Anni esclusi dal calcolo progressivo
   
   // Filtri tabella inline
   const [filtroTabDipendente, setFiltroTabDipendente] = useState('');
