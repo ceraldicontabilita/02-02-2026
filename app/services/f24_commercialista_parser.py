@@ -67,7 +67,7 @@ def parse_f24_commercialista(pdf_path: str) -> Dict[str, Any]:
         "codici_ravvedimento": []
     }
     
-    CODICI_RAVVEDIMENTO = ['8901', '8902', '8903', '8904', '8906', '8907', '8911', '8913', '8918', '8926', '8929']
+    CODICI_RAVVEDIMENTO = ['8901', '8902', '8903', '8904', '8906', '8907', '8911', '8913', '8918', '8926', '8929', '1990', '1991', '1993', '1994']
     
     try:
         doc = fitz.open(pdf_path)
