@@ -1278,18 +1278,36 @@ export default function GestioneDipendenti() {
                 </div>
               </div>
             </div>
-            {/* Bottone Ricalcola Progressivi */}
-            <div style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end' }}>
+            {/* Bottoni Azioni */}
+            <div style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
               <button
-                onClick={handleRicalcolaProgressiviDal2023}
-                disabled={ricalcolandoProgressivi}
+                onClick={() => setShowAggiustamentoModal(true)}
                 style={{
                   padding: '10px 20px',
-                  background: ricalcolandoProgressivi ? '#9ca3af' : 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+                  background: 'linear-gradient(135deg, #10b981, #059669)',
                   color: 'white',
                   border: 'none',
                   borderRadius: 8,
-                  cursor: ricalcolandoProgressivi ? 'not-allowed' : 'pointer',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                  fontSize: 14,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8
+                }}
+                data-testid="btn-aggiustamento-saldo"
+              >
+                ➕ Aggiustamento Saldo
+              </button>
+              <button
+                onClick={() => setShowRicalcoloModal(true)}
+                style={{
+                  padding: '10px 20px',
+                  background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 8,
+                  cursor: 'pointer',
                   fontWeight: 'bold',
                   fontSize: 14,
                   display: 'flex',
@@ -1298,10 +1316,214 @@ export default function GestioneDipendenti() {
                 }}
                 data-testid="btn-ricalcola-progressivi-2023"
               >
-                {ricalcolandoProgressivi ? '⏳ Ricalcolo in corso...' : '🔄 Ricalcola Progressivi dal 2023'}
+                🔄 Ricalcola Progressivi dal 2023
               </button>
             </div>
           </div>
+
+          {/* Modal Ricalcolo Progressivi */}
+          {showRicalcoloModal && (
+            <div style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'rgba(0,0,0,0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1000
+            }}>
+              <div style={{
+                background: 'white',
+                padding: 24,
+                borderRadius: 12,
+                width: '90%',
+                maxWidth: 450,
+                boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+              }}>
+                <h3 style={{ margin: '0 0 20px 0' }}>🔄 Ricalcola Progressivi dal 2023</h3>
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ display: 'block', marginBottom: 6, fontWeight: 'bold' }}>Seleziona Dipendente *</label>
+                  <select
+                    value={ricalcoloDipendente}
+                    onChange={(e) => setRicalcoloDipendente(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: 10,
+                      borderRadius: 6,
+                      border: '1px solid #e2e8f0',
+                      fontSize: 14
+                    }}
+                  >
+                    <option value="">-- Seleziona dipendente --</option>
+                    {dipendentiLista.map(d => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
+                  </select>
+                </div>
+                <p style={{ fontSize: 13, color: '#64748b', marginBottom: 20 }}>
+                  Il progressivo verrà ricalcolato partendo da € 0,00 al 01/01/2023 per il dipendente selezionato.
+                </p>
+                <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+                  <button
+                    onClick={() => { setShowRicalcoloModal(false); setRicalcoloDipendente(''); }}
+                    style={{
+                      padding: '10px 20px',
+                      background: '#f1f5f9',
+                      border: 'none',
+                      borderRadius: 6,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Annulla
+                  </button>
+                  <button
+                    onClick={handleRicalcolaProgressiviDal2023}
+                    disabled={ricalcolandoProgressivi || !ricalcoloDipendente}
+                    style={{
+                      padding: '10px 20px',
+                      background: ricalcolandoProgressivi || !ricalcoloDipendente ? '#9ca3af' : '#3b82f6',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: 6,
+                      cursor: ricalcolandoProgressivi || !ricalcoloDipendente ? 'not-allowed' : 'pointer',
+                      fontWeight: 'bold'
+                    }}
+                  >
+                    {ricalcolandoProgressivi ? '⏳ Ricalcolo...' : '✓ Ricalcola'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Modal Aggiustamento Saldo */}
+          {showAggiustamentoModal && (
+            <div style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'rgba(0,0,0,0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1000
+            }}>
+              <div style={{
+                background: 'white',
+                padding: 24,
+                borderRadius: 12,
+                width: '90%',
+                maxWidth: 500,
+                boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+              }}>
+                <h3 style={{ margin: '0 0 20px 0' }}>➕ Aggiustamento Saldo</h3>
+                <p style={{ fontSize: 13, color: '#64748b', marginBottom: 16 }}>
+                  Inserisci una riga di aggiustamento per allineare il saldo con il commercialista.
+                </p>
+                
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ display: 'block', marginBottom: 6, fontWeight: 'bold' }}>Dipendente *</label>
+                  <select
+                    value={aggiustamentoData.dipendente}
+                    onChange={(e) => setAggiustamentoData({...aggiustamentoData, dipendente: e.target.value})}
+                    style={{ width: '100%', padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }}
+                  >
+                    <option value="">-- Seleziona dipendente --</option>
+                    {dipendentiLista.map(d => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: 6, fontWeight: 'bold' }}>Mese</label>
+                    <select
+                      value={aggiustamentoData.mese}
+                      onChange={(e) => setAggiustamentoData({...aggiustamentoData, mese: parseInt(e.target.value)})}
+                      style={{ width: '100%', padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }}
+                    >
+                      {mesiNomi.map((m, i) => (
+                        <option key={i+1} value={i+1}>{m}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: 6, fontWeight: 'bold' }}>Anno</label>
+                    <select
+                      value={aggiustamentoData.anno}
+                      onChange={(e) => setAggiustamentoData({...aggiustamentoData, anno: parseInt(e.target.value)})}
+                      style={{ width: '100%', padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }}
+                    >
+                      {[2023, 2024, 2025, 2026].map(y => (
+                        <option key={y} value={y}>{y}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ display: 'block', marginBottom: 6, fontWeight: 'bold' }}>
+                    Importo € * 
+                    <span style={{ fontWeight: 'normal', color: '#64748b', fontSize: 12 }}> (positivo = aumenta saldo, negativo = diminuisce)</span>
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={aggiustamentoData.importo}
+                    onChange={(e) => setAggiustamentoData({...aggiustamentoData, importo: e.target.value})}
+                    placeholder="Es: 150.00 o -150.00"
+                    style={{ width: '100%', padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', boxSizing: 'border-box' }}
+                  />
+                </div>
+                
+                <div style={{ marginBottom: 20 }}>
+                  <label style={{ display: 'block', marginBottom: 6, fontWeight: 'bold' }}>Descrizione</label>
+                  <input
+                    type="text"
+                    value={aggiustamentoData.descrizione}
+                    onChange={(e) => setAggiustamentoData({...aggiustamentoData, descrizione: e.target.value})}
+                    style={{ width: '100%', padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', boxSizing: 'border-box' }}
+                  />
+                </div>
+                
+                <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+                  <button
+                    onClick={() => setShowAggiustamentoModal(false)}
+                    style={{
+                      padding: '10px 20px',
+                      background: '#f1f5f9',
+                      border: 'none',
+                      borderRadius: 6,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Annulla
+                  </button>
+                  <button
+                    onClick={handleAggiungiAggiustamento}
+                    disabled={!aggiustamentoData.dipendente || !aggiustamentoData.importo}
+                    style={{
+                      padding: '10px 20px',
+                      background: !aggiustamentoData.dipendente || !aggiustamentoData.importo ? '#9ca3af' : '#10b981',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: 6,
+                      cursor: !aggiustamentoData.dipendente || !aggiustamentoData.importo ? 'not-allowed' : 'pointer',
+                      fontWeight: 'bold'
+                    }}
+                  >
+                    ✓ Inserisci Aggiustamento
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Tabella Prima Nota Salari - NUOVA STRUTTURA */}
           <div style={{ background: 'white', borderRadius: 12, overflow: 'hidden', border: '1px solid #e2e8f0', overflowX: 'auto' }}>
