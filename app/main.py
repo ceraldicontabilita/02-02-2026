@@ -250,6 +250,7 @@ app.include_router(ordini_fornitori.router, prefix="/api/ordini-fornitori", tags
 app.include_router(documents.router, prefix="/api/documents", tags=["Documents"])
 app.include_router(pianificazione.router, prefix="/api/pianificazione", tags=["Pianificazione"])
 app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
+app.include_router(verifica_coerenza.router, prefix="/api/verifica-coerenza", tags=["Verifica Coerenza Dati"])
 
 
 # =============================================================================
