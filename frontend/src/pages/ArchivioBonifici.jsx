@@ -467,9 +467,10 @@ export default function ArchivioBonifici() {
           </div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1000 }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1100 }}>
               <thead>
                 <tr style={{ background: '#1e3a5f', color: 'white' }}>
+                  <th style={{ padding: 12, textAlign: 'center', width: 50 }}>✓</th>
                   <th style={{ padding: 12, textAlign: 'left' }}>Data</th>
                   <th style={{ padding: 12, textAlign: 'right' }}>Importo</th>
                   <th style={{ padding: 12, textAlign: 'left' }}>Ordinante</th>
@@ -483,7 +484,14 @@ export default function ArchivioBonifici() {
               </thead>
               <tbody>
                 {transfers.map((t, idx) => (
-                  <tr key={t.id || idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                  <tr key={t.id || idx} style={{ borderBottom: '1px solid #f1f5f9', background: t.riconciliato ? '#f0fdf4' : 'white' }}>
+                    <td style={{ padding: 12, textAlign: 'center' }}>
+                      {t.riconciliato ? (
+                        <span style={{ color: '#16a34a', fontSize: 20 }} title={`Riconciliato: ${t.movimento_descrizione || 'Trovato in estratto conto'}`}>✅</span>
+                      ) : (
+                        <span style={{ color: '#d1d5db', fontSize: 16 }}>○</span>
+                      )}
+                    </td>
                     <td style={{ padding: 12 }}>{formatDate(t.data)}</td>
                     <td style={{ padding: 12, textAlign: 'right', fontWeight: 'bold', color: '#16a34a' }}>
                       {formatEuro(t.importo)}
