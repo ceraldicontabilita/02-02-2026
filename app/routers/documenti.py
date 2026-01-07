@@ -71,12 +71,14 @@ async def lista_documenti(
 @router.post("/scarica-da-email")
 async def scarica_documenti_email(
     background_tasks: BackgroundTasks,
-    giorni: int = Query(30, ge=1, le=365, description="Scarica email degli ultimi N giorni"),
-    folder: str = Query("INBOX", description="Cartella email")
+    giorni: int = Query(30, ge=1, le=2000, description="Scarica email degli ultimi N giorni (max 2000 per storico)"),
+    folder: str = Query("INBOX", description="Cartella email"),
+    parole_chiave: Optional[str] = Query(None, description="Parole chiave separate da virgola per filtrare email")
 ) -> Dict[str, Any]:
     """
     Scarica documenti allegati dalle email.
     Usa le credenziali configurate nel .env.
+    Se parole_chiave è specificato, cerca email con quelle parole nell'oggetto.
     """
     db = Database.get_db()
     
@@ -90,13 +92,19 @@ async def scarica_documenti_email(
             detail="Credenziali email non configurate. Imposta EMAIL_USER e EMAIL_APP_PASSWORD nel .env"
         )
     
+    # Parsing parole chiave
+    keywords = []
+    if parole_chiave:
+        keywords = [k.strip() for k in parole_chiave.split(',') if k.strip()]
+    
     try:
         result = await download_documents_from_email(
             db=db,
             email_user=email_user,
             email_password=email_password,
             since_days=giorni,
-            folder=folder
+            folder=folder,
+            search_keywords=keywords if keywords else None
         )
         
         return result
