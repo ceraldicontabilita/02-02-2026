@@ -238,6 +238,78 @@ async def get_scadenze_iva(anno: int) -> Dict[str, Any]:
     }
 
 
+
+@router.get("/iva-mensile/{anno}")
+async def get_scadenze_iva_mensile(anno: int) -> Dict[str, Any]:
+    """
+    Ottiene le scadenze IVA mensili per un anno.
+    Per regime IVA mensile: versamento entro il 16 del mese successivo.
+    """
+    db = Database.get_db()
+    
+    scadenze_mensili = []
+    
+    for mese in range(1, 13):
+        prefix = f"{anno}-{mese:02d}"
+        
+        # IVA Debito (corrispettivi)
+        result_debito = await db["corrispettivi"].aggregate([
+            {"$match": {"data": {"$regex": f"^{prefix}"}}},
+            {"$group": {"_id": None, "totale": {"$sum": "$totale_iva"}}}
+        ]).to_list(1)
+        iva_debito = result_debito[0]["totale"] if result_debito else 0
+        
+        # IVA Credito (fatture)
+        result_credito = await db[Collections.INVOICES].aggregate([
+            {"$match": {
+                "$or": [
+                    {"data_ricezione": {"$regex": f"^{prefix}"}},
+                    {"invoice_date": {"$regex": f"^{prefix}"}}
+                ]
+            }},
+            {"$group": {"_id": None, "totale": {"$sum": "$iva"}}}
+        ]).to_list(1)
+        iva_credito = result_credito[0]["totale"] if result_credito else 0
+        
+        saldo = iva_debito - iva_credito
+        
+        # Data scadenza: 16 del mese successivo
+        if mese == 12:
+            data_scad = f"{anno + 1}-01-16"
+        else:
+            data_scad = f"{anno}-{mese + 1:02d}-16"
+        
+        mesi_nomi = ['', 'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
+                    'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre']
+        
+        scadenze_mensili.append({
+            "mese": mese,
+            "mese_nome": mesi_nomi[mese],
+            "periodo": f"{mesi_nomi[mese]} {anno}",
+            "data_scadenza": data_scad,
+            "iva_debito": round(iva_debito, 2),
+            "iva_credito": round(iva_credito, 2),
+            "saldo": round(saldo, 2),
+            "da_versare": saldo > 0,
+            "importo_versamento": round(max(saldo, 0), 2),
+            "stato": "da_versare" if saldo > 0 else "a_credito",
+            "giorni_mancanti": _giorni_mancanti(data_scad)
+        })
+    
+    totale_da_versare = sum(s["importo_versamento"] for s in scadenze_mensili)
+    totale_a_credito = sum(abs(s["saldo"]) for s in scadenze_mensili if s["saldo"] < 0)
+    
+    return {
+        "anno": anno,
+        "regime": "mensile",
+        "scadenze": scadenze_mensili,
+        "totale_da_versare": round(totale_da_versare, 2),
+        "totale_a_credito": round(totale_a_credito, 2),
+        "saldo_annuale": round(totale_da_versare - totale_a_credito, 2)
+    }
+
+
+
 @router.post("/crea")
 async def crea_notifica_scadenza(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """
