@@ -343,7 +343,7 @@ async def import_bonifici(file: UploadFile = File(...)) -> Dict[str, Any]:
                 else:
                     anno = 2024  # Default
             
-            if mese == 0 or mese > 12:
+            if mese == 0 or mese > 14:
                 errors.append(f"Riga {idx + 2}: mese non valido ({mese_val})")
                 continue
             
