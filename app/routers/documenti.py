@@ -555,6 +555,109 @@ async def sync_f24_automatico(
         }
 
 
+@router.post("/processa-f24-scaricati")
+async def processa_f24_scaricati() -> Dict[str, Any]:
+    """
+    Processa tutti gli F24 già scaricati ma non ancora processati.
+    Utile se il primo sync ha fallito.
+    """
+    db = Database.get_db()
+    
+    # Trova F24 non processati
+    f24_docs = await db["documents_inbox"].find(
+        {"category": "f24", "processed": {"$ne": True}},
+        {"_id": 0}
+    ).to_list(100)
+    
+    if not f24_docs:
+        return {
+            "success": True,
+            "message": "Nessun F24 da processare",
+            "f24_processati": 0,
+            "errori": []
+        }
+    
+    f24_caricati = []
+    f24_errori = []
+    
+    from app.services.f24_commercialista_parser import parse_f24_commercialista
+    
+    for doc in f24_docs:
+        try:
+            filepath = doc.get("filepath")
+            if not filepath or not os.path.exists(filepath):
+                f24_errori.append({"file": doc["filename"], "errore": "File non trovato"})
+                continue
+            
+            parsed = parse_f24_commercialista(filepath)
+            
+            if parsed.get("success") and parsed.get("f24_data"):
+                f24_data = parsed["f24_data"]
+                
+                # Rimuovi _id
+                if "_id" in f24_data:
+                    del f24_data["_id"]
+                
+                # Aggiungi info
+                f24_data["email_source"] = {
+                    "subject": doc.get("email_subject", ""),
+                    "from": doc.get("email_from", ""),
+                    "date": doc.get("email_date", ""),
+                    "document_id": doc.get("id")
+                }
+                f24_data["auto_imported"] = True
+                f24_data["import_date"] = datetime.now(timezone.utc).isoformat()
+                
+                # Controlla duplicati
+                existing = await db["f24_commercialista"].find_one({
+                    "file_name": f24_data.get("file_name")
+                })
+                
+                if existing:
+                    # Aggiorna stato come processato ma non aggiungere
+                    await db["documents_inbox"].update_one(
+                        {"id": doc["id"]},
+                        {"$set": {"status": "processato", "processed": True, "note": "Già presente"}}
+                    )
+                    continue
+                
+                await db["f24_commercialista"].insert_one(f24_data)
+                
+                await db["documents_inbox"].update_one(
+                    {"id": doc["id"]},
+                    {"$set": {
+                        "status": "processato",
+                        "processed": True,
+                        "processed_to": "f24_commercialista",
+                        "processed_at": datetime.now(timezone.utc).isoformat()
+                    }}
+                )
+                
+                f24_caricati.append({
+                    "file": doc["filename"],
+                    "importo": f24_data.get("totali", {}).get("saldo_netto", 0),
+                    "tributi": len(f24_data.get("sezioni", {}).get("erario", {}).get("tributi", [])) +
+                              len(f24_data.get("sezioni", {}).get("inps", {}).get("tributi", []))
+                })
+            else:
+                f24_errori.append({
+                    "file": doc["filename"],
+                    "errore": parsed.get("error", "Parsing fallito")
+                })
+                
+        except Exception as e:
+            f24_errori.append({"file": doc["filename"], "errore": str(e)})
+    
+    return {
+        "success": True,
+        "f24_processati": len(f24_caricati),
+        "f24_errori": len(f24_errori),
+        "dettagli": f24_caricati,
+        "errori": f24_errori if f24_errori else None
+    }
+
+
+
 @router.get("/ultimo-sync")
 async def get_ultimo_sync() -> Dict[str, Any]:
     """Restituisce info sull'ultimo sync F24."""
