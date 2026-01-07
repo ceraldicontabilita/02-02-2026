@@ -198,13 +198,13 @@ def parse_f24_commercialista(pdf_path: str) -> Dict[str, Any]:
             row_text = ' '.join([r['word'] for r in row])
             
             # ============================================
-            # SEZIONE ERARIO - Codici 1xxx, 6xxx
+            # SEZIONE ERARIO - Codici 1xxx, 2xxx, 6xxx, 8xxx
             # Pattern: codice [rateazione] anno debito/credito
             # ============================================
             for i, item in enumerate(row):
                 word = item['word']
                 
-                if re.match(r'^(1\d{3}|6\d{3})$', word):
+                if re.match(r'^(1\d{3}|2\d{3}|6\d{3}|8\d{3})$', word):
                     codice = word
                     rateazione = ""
                     anno = ""
