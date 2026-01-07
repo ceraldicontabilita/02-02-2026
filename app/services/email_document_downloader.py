@@ -317,7 +317,8 @@ async def download_documents_from_email(
     email_user: str,
     email_password: str,
     since_days: int = 30,
-    folder: str = "INBOX"
+    folder: str = "INBOX",
+    max_emails: int = 50  # Limita per velocità
 ) -> Dict[str, Any]:
     """
     Funzione principale per scaricare documenti da email.
