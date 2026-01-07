@@ -487,7 +487,8 @@ def parse_f24_commercialista(pdf_path: str) -> Dict[str, Any]:
     totale_credito = 0.0
     
     for sezione in [result["sezione_erario"], result["sezione_inps"], 
-                    result["sezione_regioni"], result["sezione_tributi_locali"]]:
+                    result["sezione_regioni"], result["sezione_tributi_locali"],
+                    result["sezione_inail"]]:
         for item in sezione:
             totale_debito += item.get("importo_debito", 0)
             totale_credito += item.get("importo_credito", 0)
