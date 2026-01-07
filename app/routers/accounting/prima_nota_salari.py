@@ -407,7 +407,7 @@ async def import_bonifici(file: UploadFile = File(...)) -> Dict[str, Any]:
     }
 
 
-async def ricalcola_progressivi_tutti(db):
+async def ricalcola_progressivi_tutti(db, anno_inizio: int = None):
     """
     Ricalcola saldi e progressivi per tutti i dipendenti.
     
@@ -415,12 +415,8 @@ async def ricalcola_progressivi_tutti(db):
     - Saldo positivo = dipendente ha ricevuto più di quanto spettava (ci deve soldi)
     - Saldo negativo = dipendente ha ricevuto meno di quanto spettava (gli dobbiamo soldi)
     
-    Progressivo = Somma cumulativa di tutti i saldi DAL 01/01/2023 in poi
-    I record precedenti al 2023 vengono ignorati nel calcolo del progressivo.
+    Progressivo = Somma cumulativa di tutti i saldi dall'anno_inizio (default: tutti)
     """
-    # Data di inizio calcolo progressivo
-    ANNO_INIZIO_PROGRESSIVO = 2023
-    
     # Ottieni tutti i dipendenti unici
     dipendenti = await db["prima_nota_salari"].distinct("dipendente")
     
@@ -430,7 +426,7 @@ async def ricalcola_progressivi_tutti(db):
             {"dipendente": dipendente}
         ).sort([("anno", 1), ("mese", 1)]).to_list(500)
         
-        # Progressivo parte da 0 al 01/01/2023
+        # Progressivo parte da 0
         progressivo = 0
         
         for record in records:
@@ -439,17 +435,20 @@ async def ricalcola_progressivi_tutti(db):
             importo_bonifico = record.get("importo_bonifico", 0) or 0
             saldo = importo_bonifico - importo_busta
             
-            # Il progressivo si calcola solo dal 2023 in poi
+            # Il progressivo si calcola solo dall'anno_inizio in poi (se specificato)
             anno_record = record.get("anno", 0)
-            if anno_record >= ANNO_INIZIO_PROGRESSIVO:
+            if anno_inizio is None or anno_record >= anno_inizio:
                 progressivo += saldo
+                prog_value = round(progressivo, 2)
+            else:
+                prog_value = 0  # Record prima dell'anno_inizio hanno progressivo 0
             
             # Aggiorna il record con saldo e progressivo
             await db["prima_nota_salari"].update_one(
                 {"_id": record["_id"]},
                 {"$set": {
                     "saldo": round(saldo, 2),
-                    "progressivo": round(progressivo, 2) if anno_record >= ANNO_INIZIO_PROGRESSIVO else 0
+                    "progressivo": prog_value
                 }}
             )
 
