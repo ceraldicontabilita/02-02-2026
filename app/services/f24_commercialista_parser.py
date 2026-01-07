@@ -258,41 +258,6 @@ def parse_f24_commercialista(pdf_path: str) -> Dict[str, Any]:
                 if codice in CODICI_RAVVEDIMENTO:
                     result["has_ravvedimento"] = True
                     result["codici_ravvedimento"].append(codice)
-            importo_str = importo_str.replace(',', '.')
-            # Gestisci formato italiano "1.211.90" -> "1211.90"
-            parts = importo_str.split('.')
-            if len(parts) == 3:
-                importo_str = parts[0] + parts[1] + '.' + parts[2]
-            elif len(parts) == 2 and len(parts[1]) == 2:
-                # Formato "1211.90" o "1.21190" -> converti
-                pass
-            
-            debito = parse_importo(importo_str)
-            
-            if debito > 0:
-                # Determina il mese dal codice tributo (es. 6011 = novembre)
-                mese = "00"
-                if codice.startswith("60"):
-                    mese_num = int(codice[2:])
-                    if 1 <= mese_num <= 12:
-                        mese = str(mese_num).zfill(2)
-                
-                tributo = {
-                    "codice_tributo": codice,
-                    "rateazione": "",
-                    "periodo_riferimento": parse_periodo(mese, anno),
-                    "anno": anno,
-                    "mese": mese,
-                    "importo_debito": debito,
-                    "importo_credito": 0.0,
-                    "descrizione": get_descrizione_tributo(codice)
-                }
-                result["sezione_erario"].append(tributo)
-                logger.info(f"Estratto tributo erario (simple): {codice} - €{debito}")
-                
-                if codice in CODICI_RAVVEDIMENTO:
-                    result["has_ravvedimento"] = True
-                    result["codici_ravvedimento"].append(codice)
     
     # ============================================
     # SEZIONE INPS
