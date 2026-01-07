@@ -200,7 +200,7 @@ def compute_vat_liquidation_from_db(
             note_credito_count += 1
         
         # Percentuale detraibilità (default 100%)
-        detraibilita_percent = Decimal(str(inv.get("detraibilita_percent", 100) or 100))
+        detraibilita_percent = safe_decimal(inv.get("detraibilita_percent", 100) or 100)
         perc = detraibilita_percent / Decimal(100)
         
         # Usa IVA dal riepilogo_iva se disponibile
@@ -212,8 +212,8 @@ def compute_vat_liquidation_from_db(
                     continue
                 
                 aliquota = int(float(r.get("aliquota_iva", 0) or 0))
-                imponibile = Decimal(str(r.get("imponibile", 0) or 0)) * perc * sign
-                imposta = Decimal(str(r.get("imposta", 0) or 0)) * perc * sign
+                imponibile = safe_decimal(r.get("imponibile", 0) or 0) * perc * sign
+                imposta = safe_decimal(r.get("imposta", 0) or 0) * perc * sign
                 
                 iva_credito += imposta
                 
