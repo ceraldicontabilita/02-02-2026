@@ -424,8 +424,9 @@ def parse_f24_commercialista(pdf_path: str) -> Dict[str, Any]:
                         break
             
             # ============================================
-            # SEZIONE TRIBUTI LOCALI - Pattern: cod_comune 37xx/38xx rateazione anno debito/credito
+            # SEZIONE TRIBUTI LOCALI - Pattern: cod_comune 37xx/38xx/391x rateazione anno debito/credito
             # Riconosce righe con lettere all'inizio (B 9 9 0, F 8 3 9)
+            # Include anche codici IMU (391x)
             # ============================================
             is_locali_row = False
             cod_comune = ""
@@ -442,7 +443,8 @@ def parse_f24_commercialista(pdf_path: str) -> Dict[str, Any]:
                 for i, item in enumerate(row):
                     word = item['word']
                     
-                    if re.match(r'^(37\d{2}|38\d{2})$', word):
+                    # Codici tributi locali: 37xx, 38xx, 391x (IMU)
+                    if re.match(r'^(37\d{2}|38\d{2}|391\d)$', word):
                         codice = word
                         rateazione = ""
                         anno = ""
