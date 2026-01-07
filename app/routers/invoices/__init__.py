@@ -1,14 +1,14 @@
 # Invoices Module - Fatturazione
-from .invoices_main import router as invoices_router
-from .invoices_emesse import router as emesse_router
-from .invoices_export import router as export_router
-from .fatture_upload import router as upload_router
-from .corrispettivi import router as corrispettivi_router
+from . import invoices_main
+from . import invoices_emesse
+from . import invoices_export
+from . import fatture_upload
+from . import corrispettivi
 
 __all__ = [
-    'invoices_router',
-    'emesse_router',
-    'export_router',
-    'upload_router',
-    'corrispettivi_router'
+    'invoices_main',
+    'invoices_emesse',
+    'invoices_export',
+    'fatture_upload',
+    'corrispettivi'
 ]
