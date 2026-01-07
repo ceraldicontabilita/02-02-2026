@@ -126,7 +126,9 @@ from app.routers import (
     magazzino_doppia_verita,
     ricette,
     dizionario_articoli,
-    liquidazione_iva
+    liquidazione_iva,
+    comparatore_prezzi,
+    buste_paga
 )
 
 # Include public API first (no auth required)
