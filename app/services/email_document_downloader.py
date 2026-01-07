@@ -343,7 +343,7 @@ async def download_documents_from_email(
         documents, stats = downloader.download_all_attachments(
             folder=folder,
             since_date=since_date,
-            limit=200
+            limit=max_emails  # Limita il numero di email per velocità
         )
         
         # Salva nel database evitando duplicati
