@@ -172,7 +172,8 @@ async def import_paghe(file: UploadFile = File(...)) -> Dict[str, Any]:
     updated = 0
     errors = []
     
-    # Raggruppa per dipendente/mese/anno e somma gli importi
+    # Prima raggruppa per dipendente/mese/anno e SOMMA gli importi
+    # (perché possono esserci più righe per lo stesso periodo che vanno sommate)
     grouped_data = {}
     
     for idx, row in df.iterrows():
@@ -194,7 +195,7 @@ async def import_paghe(file: UploadFile = File(...)) -> Dict[str, Any]:
             
             importo = float(row[col_importo]) if pd.notna(row[col_importo]) else 0
             
-            # Chiave univoca
+            # Chiave univoca - somma tutti gli importi per lo stesso periodo
             key = (dipendente, anno, mese)
             if key not in grouped_data:
                 grouped_data[key] = 0
@@ -202,6 +203,8 @@ async def import_paghe(file: UploadFile = File(...)) -> Dict[str, Any]:
             
         except Exception as e:
             errors.append(f"Riga {idx + 2}: {str(e)}")
+    
+    logger.info(f"IMPORT PAGHE - Righe nel file: {len(df)}, Record unici dopo aggregazione: {len(grouped_data)}")
     
     # Inserisci/aggiorna nel database
     for (dipendente, anno, mese), importo_busta in grouped_data.items():
@@ -213,12 +216,13 @@ async def import_paghe(file: UploadFile = File(...)) -> Dict[str, Any]:
         })
         
         if existing:
-            # Aggiorna importo_busta
+            # Aggiorna importo_busta (SOMMA al valore esistente se già presente)
+            nuovo_importo = round(importo_busta, 2)
             await db["prima_nota_salari"].update_one(
                 {"_id": existing["_id"]},
                 {"$set": {
-                    "importo_busta": round(importo_busta, 2),
-                    "saldo": round((existing.get("importo_bonifico") or 0) - importo_busta, 2),
+                    "importo_busta": nuovo_importo,
+                    "saldo": round((existing.get("importo_bonifico") or 0) - nuovo_importo, 2),
                     "updated_at": datetime.utcnow().isoformat()
                 }}
             )
