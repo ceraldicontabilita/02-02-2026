@@ -76,7 +76,8 @@ add_exception_handlers(app)
 
 # --- F24 Module ---
 from app.routers.f24 import (
-    f24_main, f24_riconciliazione, f24_tributi, f24_public, quietanze, email_f24
+    f24_main, f24_riconciliazione, f24_tributi, f24_public, quietanze, email_f24,
+    f24_gestione_avanzata
 )
 
 # --- HACCP Module ---
