@@ -115,6 +115,7 @@ const router = createBrowserRouter([
       { path: "admin", element: <AdminPage /> },
       { path: "iva", element: <IVA /> },
       { path: "liquidazione-iva", element: <LiquidazioneIVA /> },
+      { path: "riconciliazione-f24", element: <RiconciliazioneF24 /> },
       { path: "metodi-pagamento", element: <MetodiPagamento /> },
       { path: "ordini-fornitori", element: <OrdiniFornitori /> },
       { path: "fornitori", element: <Fornitori /> },
