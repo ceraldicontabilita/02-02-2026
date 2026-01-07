@@ -3,9 +3,29 @@
 ## Project Overview
 Sistema ERP completo per gestione aziendale con focus su contabilità, fatturazione elettronica, magazzino, gestione fornitori e **contabilità analitica con centri di costo**.
 
-**Versione**: 4.7.0  
+**Versione**: 4.8.0  
 **Ultimo aggiornamento**: 7 Gennaio 2026  
 **Stack**: FastAPI (Python) + React + MongoDB + Claude AI
+
+---
+
+## 🐛 BUG FIX RECENTI
+
+### Parser F24 Commercialista - Bug Aggregazione Tributi (7 Gen 2026) ✅ RISOLTO
+**Problema**: Il parser `f24_commercialista_parser.py` aggregava erroneamente righe di tributo con lo stesso codice ma anni/periodi/importi diversi. Ad esempio, due righe per codice 3802 (2024 e 2025) venivano sommate invece di essere estratte separatamente.
+
+**Soluzione**: Refactoring del parser per usare `re.finditer` invece di `re.search`, permettendo l'iterazione su TUTTE le righe di tributo nel PDF.
+
+**Risultato dopo il fix**:
+- F24 stipendi novembre ora estrae **13 tributi erario** (invece di 11)
+- Codice 3802: 2 righe (2024: €142.88, 2025: €185.52) ✅
+- Codice 3847: 2 righe (€7.89 e €35.94) ✅
+- Codice 3797: 2 righe (€49.02 e €64.46) ✅
+- Codice 1001: 2 righe (€1288.72 e €64.46) ✅
+- Saldo netto: €10.345,68 ✅
+
+**File modificato**: `/app/app/services/f24_commercialista_parser.py`
+**Test**: 12/12 passati (iteration_37)
 
 ---
 
