@@ -56,10 +56,6 @@ export default function GestioneDipendenti() {
   const [filtroTabMese, setFiltroTabMese] = useState('');
   const [filtroTabAnno, setFiltroTabAnno] = useState('');
   const [ricalcolandoProgressivi, setRicalcolandoProgressivi] = useState(false);
-  
-  // Modal Ricalcolo Progressivi
-  const [showRicalcoloModal, setShowRicalcoloModal] = useState(false);
-  const [ricalcoloDipendente, setRicalcoloDipendente] = useState('');
   const [filtroAnnoDal2023, setFiltroAnnoDal2023] = useState(false);
   
   // Modal Aggiustamento Saldo
