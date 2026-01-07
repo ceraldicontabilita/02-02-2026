@@ -98,6 +98,7 @@ from app.routers.bank import (
     bank_main, bank_reconciliation, bank_statement_import,
     bank_statement_parser, estratto_conto, archivio_bonifici, assegni, pos_accredito
 )
+from app.routers.bank import riconciliazione_f24_banca
 
 # --- Warehouse Module ---
 from app.routers.warehouse import (
