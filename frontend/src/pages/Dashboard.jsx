@@ -124,9 +124,6 @@ export default function Dashboard() {
 
       {/* Widget Verifica Coerenza Dati */}
       <WidgetVerificaCoerenza anno={anno} />
-          </div>
-        )}
-      </div>
 
       {/* Alert Section */}
       {(notificheHaccp > 0) && (
