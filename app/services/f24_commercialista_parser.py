@@ -31,14 +31,33 @@ def parse_periodo(mese: str, anno: str) -> str:
 
 
 def extract_text_from_pdf(pdf_path: str) -> str:
-    """Estrae tutto il testo da un PDF."""
+    """Estrae tutto il testo da un PDF usando il metodo più efficace."""
     try:
         doc = fitz.open(pdf_path)
-        text = ""
+        all_text = []
+        
         for page in doc:
-            text += page.get_text()
+            # Prova prima con dict extraction (migliore per PDF con overlay)
+            blocks = page.get_text("dict")
+            page_text = []
+            
+            for block in blocks.get("blocks", []):
+                if "lines" in block:
+                    for line in block["lines"]:
+                        for span in line["spans"]:
+                            text = span.get("text", "").strip()
+                            if text:
+                                page_text.append(text)
+            
+            # Se dict ha estratto dati, usali
+            if page_text:
+                all_text.append(" ".join(page_text))
+            else:
+                # Fallback al metodo standard
+                all_text.append(page.get_text())
+        
         doc.close()
-        return text
+        return "\n".join(all_text)
     except Exception as e:
         logger.error(f"Errore estrazione PDF: {e}")
         return ""
