@@ -3,6 +3,7 @@ import { NavLink, Outlet, useLocation } from "react-router-dom";
 import api from "./api";
 import GlobalSearch from "./components/GlobalSearch";
 import { AnnoSelector } from "./contexts/AnnoContext";
+import F24EmailSync from "./components/F24EmailSync";
 
 const NAV_ITEMS = [
   { to: "/", label: "Dashboard", icon: "📊", short: "Home" },
