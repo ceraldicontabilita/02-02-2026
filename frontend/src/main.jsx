@@ -118,6 +118,7 @@ const router = createBrowserRouter([
       { path: "iva", element: <IVA /> },
       { path: "liquidazione-iva", element: <LiquidazioneIVA /> },
       { path: "riconciliazione-f24", element: <RiconciliazioneF24 /> },
+      { path: "verifica-coerenza", element: <VerificaCoerenza /> },
       { path: "metodi-pagamento", element: <MetodiPagamento /> },
       { path: "ordini-fornitori", element: <OrdiniFornitori /> },
       { path: "fornitori", element: <Fornitori /> },
