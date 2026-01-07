@@ -52,8 +52,7 @@ os.makedirs(F24_UPLOAD_DIR, exist_ok=True)
     summary="Upload ZIP con PDF F24 massivo"
 )
 async def upload_f24_zip(
-    file: UploadFile = File(...),
-    current_user: Dict[str, Any] = Depends(get_current_user)
+    file: UploadFile = File(...)
 ) -> Dict[str, Any]:
     """
     Upload massivo di PDF F24 tramite file ZIP.
