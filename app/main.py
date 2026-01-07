@@ -80,6 +80,7 @@ from app.routers import (
     pianificazione, admin, analytics, shifts, ocr_assegni, magazzino, invoices_emesse,
     cart, portal, orders,
     f24, haccp_libro_unico, haccp_technical_sheets, haccp_sanifications,
+    quietanze_f24,
     accounting_extended,
     portal_extended,
     cash_register_extended, magazzino_products,
