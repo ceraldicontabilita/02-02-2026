@@ -659,6 +659,10 @@ async def update_salario(
         "updated_at": datetime.utcnow().isoformat()
     }
     
+    # Aggiungi vincolo se presente
+    if "vincolo" in data:
+        update_data["vincolo"] = bool(data.get("vincolo"))
+    
     result = await db["prima_nota_salari"].update_one(
         {"id": record_id},
         {"$set": update_data}
