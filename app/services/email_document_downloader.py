@@ -297,20 +297,25 @@ class EmailDocumentDownloader:
                         # Calcola hash per evitare duplicati
                         file_hash = calculate_file_hash(content)
                         
-                        # Categorizza - SOLO F24
-                        category = categorize_document(filename, subject, sender)
+                        # Categorizza documento
+                        category = categorize_document(filename, subject, sender, search_keywords)
                         
-                        # Se non è F24, salta questo allegato
+                        # Se non riesce a categorizzare, usa "altro"
                         if category is None:
-                            continue
+                            category = "altro"
+                        
+                        # Assicurati che la cartella esista
+                        ensure_category_folder(category)
                         
                         # Genera nome file univoco
                         timestamp = email_date.strftime('%Y%m%d_%H%M%S')
                         safe_filename = re.sub(r'[^\w\-_\.]', '_', filename)
                         unique_filename = f"{timestamp}_{safe_filename}"
                         
-                        # Salva file
-                        category_dir = DOCUMENTS_DIR / CATEGORIES[category]
+                        # Salva file nella cartella della categoria
+                        category_folder_name = CATEGORIES.get(category, category.replace("_", " ").title())
+                        category_dir = DOCUMENTS_DIR / category_folder_name
+                        category_dir.mkdir(exist_ok=True)
                         file_path = category_dir / unique_filename
                         
                         # Evita sovrascrittura
@@ -329,7 +334,7 @@ class EmailDocumentDownloader:
                             "filename_saved": file_path.name,
                             "filepath": str(file_path),
                             "category": category,
-                            "category_label": CATEGORIES[category],
+                            "category_label": CATEGORIES.get(category, category.replace("_", " ").title()),
                             "size_bytes": len(content),
                             "file_hash": file_hash,
                             "email_subject": subject[:200],
