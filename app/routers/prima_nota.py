@@ -106,6 +106,7 @@ async def list_prima_nota_cassa(
     
     # Escludi movimenti eliminati/archiviati
     query = {"status": {"$nin": ["deleted", "archived"]}}
+    logger.info(f"Query prima_nota_cassa iniziale: {query}")
     
     # Filtro per anno
     if anno:
