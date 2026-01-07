@@ -271,7 +271,8 @@ async def import_bonifici(file: UploadFile = File(...)) -> Dict[str, Any]:
     Importa file BONIFICI (importi erogati).
     Formato atteso: Dipendente | Mese | Anno | Importo Erogato
     
-    Aggiorna/crea record nella prima_nota_salari con importo_bonifico.
+    CREA UN RECORD PER OGNI RIGA DEL FILE (non aggrega).
+    Prima elimina tutti i record di tipo 'bonifico', poi inserisce i nuovi.
     """
     import pandas as pd
     
@@ -316,14 +317,16 @@ async def import_bonifici(file: UploadFile = File(...)) -> Dict[str, Any]:
         )
     
     logger.info(f"IMPORT BONIFICI - Colonne mappate: dipendente={col_dipendente}, mese={col_mese}, anno={col_anno}, importo={col_importo}")
+    logger.info(f"IMPORT BONIFICI - Righe nel file Excel: {len(df)}")
+    
+    # PRIMA: Elimina TUTTI i record di tipo 'bonifico' esistenti
+    delete_result = await db["prima_nota_salari"].delete_many({"tipo": "bonifico"})
+    logger.info(f"IMPORT BONIFICI - Eliminati {delete_result.deleted_count} record bonifico esistenti")
     
     created = 0
-    updated = 0
     errors = []
     
-    # Raggruppa per dipendente/mese/anno e somma gli importi
-    grouped_data = {}
-    
+    # CREA UN RECORD PER OGNI RIGA (senza aggregazione)
     for idx, row in df.iterrows():
         try:
             dipendente = normalize_name(str(row[col_dipendente]))
@@ -343,38 +346,7 @@ async def import_bonifici(file: UploadFile = File(...)) -> Dict[str, Any]:
             
             importo = float(row[col_importo]) if pd.notna(row[col_importo]) else 0
             
-            # Chiave univoca
-            key = (dipendente, anno, mese)
-            if key not in grouped_data:
-                grouped_data[key] = 0
-            grouped_data[key] += importo
-            
-        except Exception as e:
-            errors.append(f"Riga {idx + 2}: {str(e)}")
-    
-    # Inserisci/aggiorna nel database
-    for (dipendente, anno, mese), importo_bonifico in grouped_data.items():
-        # Cerca record esistente
-        existing = await db["prima_nota_salari"].find_one({
-            "dipendente": dipendente,
-            "anno": anno,
-            "mese": mese
-        })
-        
-        if existing:
-            # Aggiorna importo_bonifico
-            importo_busta = existing.get("importo_busta") or 0
-            await db["prima_nota_salari"].update_one(
-                {"_id": existing["_id"]},
-                {"$set": {
-                    "importo_bonifico": round(importo_bonifico, 2),
-                    "saldo": round(importo_bonifico - importo_busta, 2),  # Bonifico - Busta
-                    "updated_at": datetime.utcnow().isoformat()
-                }}
-            )
-            updated += 1
-        else:
-            # Crea nuovo record (solo bonifico senza busta)
+            # Crea nuovo record per questa riga (tipo = 'bonifico')
             new_record = {
                 "id": str(uuid.uuid4()),
                 "dipendente": dipendente,
@@ -382,15 +354,21 @@ async def import_bonifici(file: UploadFile = File(...)) -> Dict[str, Any]:
                 "mese": mese,
                 "mese_nome": MESI_NOMI[mese - 1],
                 "importo_busta": 0,
-                "importo_bonifico": round(importo_bonifico, 2),
-                "saldo": round(importo_bonifico, 2),  # Bonifico - Busta(0) = positivo (anticipo)
+                "importo_bonifico": round(importo, 2),
+                "saldo": round(importo, 2),  # Solo bonifico
                 "progressivo": 0,
                 "riconciliato": False,
+                "tipo": "bonifico",
                 "created_at": datetime.utcnow().isoformat(),
                 "updated_at": datetime.utcnow().isoformat()
             }
             await db["prima_nota_salari"].insert_one(new_record)
             created += 1
+            
+        except Exception as e:
+            errors.append(f"Riga {idx + 2}: {str(e)}")
+    
+    logger.info(f"IMPORT BONIFICI - Record creati: {created}")
     
     # Ricalcola progressivi per tutti i dipendenti
     await ricalcola_progressivi_tutti(db)
@@ -399,7 +377,8 @@ async def import_bonifici(file: UploadFile = File(...)) -> Dict[str, Any]:
         "success": True,
         "message": "Import BONIFICI completato",
         "created": created,
-        "updated": updated,
+        "updated": 0,
+        "righe_file": len(df),
         "errors": errors[:10] if errors else [],
         "colonne_trovate": list(df.columns),
         "colonne_mappate": {
