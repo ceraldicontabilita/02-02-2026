@@ -315,7 +315,7 @@ export default function Scadenze() {
                       fontSize: 14,
                       textAlign: 'center'
                     }}>
-                      {s.da_versare ? `Versare ${formatEuro(s.importo_versamento)}` : 'A credito'}
+                      {s.da_versare ? `Versare ${formatEuro(s.importo_versamento)}` : `A credito ${formatEuro(s.a_credito || Math.abs(s.saldo || 0))}`}
                     </div>
                     <div style={{ fontSize: 11, marginTop: 8, opacity: 0.8 }}>
                       Scadenza: {formatDate(s.data_scadenza)}
@@ -362,7 +362,7 @@ export default function Scadenze() {
                       fontSize: 12,
                       textAlign: 'center'
                     }}>
-                      {s.da_versare ? formatEuro(s.importo_versamento) : 'Credito'}
+                      {s.da_versare ? formatEuro(s.importo_versamento) : `- ${formatEuro(s.a_credito || Math.abs(s.saldo || 0))}`}
                     </div>
                   </div>
                 ))}
