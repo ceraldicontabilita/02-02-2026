@@ -122,8 +122,8 @@ async def import_paghe(file: UploadFile = File(...)) -> Dict[str, Any]:
     Importa file PAGHE (stipendi netti).
     Formato atteso: Dipendente | Mese | Anno | Stipendio Netto
     
-    CREA UN RECORD PER OGNI RIGA DEL FILE (non aggrega).
-    Prima elimina tutti i record di tipo 'busta', poi inserisce i nuovi.
+    Aggrega per dipendente/mese/anno (somma gli importi se ci sono più righe).
+    Aggiorna record esistenti o ne crea di nuovi.
     """
     import pandas as pd
     
@@ -154,7 +154,7 @@ async def import_paghe(file: UploadFile = File(...)) -> Dict[str, Any]:
         elif any(x in c for x in ['stipendio', 'netto', 'busta', 'paga', 'retribuzione']):
             col_importo = c
     
-    # Fallback: se non trova colonna specifica, cerca 'importo' (ma non 'bonifico' o 'erogato')
+    # Fallback
     if not col_importo:
         for c in df.columns:
             if 'importo' in c and 'bonifico' not in c and 'erogato' not in c:
@@ -164,20 +164,13 @@ async def import_paghe(file: UploadFile = File(...)) -> Dict[str, Any]:
     if not all([col_dipendente, col_mese, col_anno, col_importo]):
         raise HTTPException(
             status_code=400, 
-            detail=f"Colonne richieste non trovate. Trovate: {list(df.columns)}. Mappate: dipendente={col_dipendente}, mese={col_mese}, anno={col_anno}, importo={col_importo}"
+            detail=f"Colonne richieste non trovate. Trovate: {list(df.columns)}"
         )
     
-    logger.info(f"IMPORT PAGHE - Colonne mappate: dipendente={col_dipendente}, mese={col_mese}, anno={col_anno}, importo={col_importo}")
-    logger.info(f"IMPORT PAGHE - Righe nel file Excel: {len(df)}")
+    logger.info(f"IMPORT PAGHE - Righe nel file: {len(df)}")
     
-    # PRIMA: Elimina TUTTI i record di tipo 'busta' esistenti
-    delete_result = await db["prima_nota_salari"].delete_many({"tipo": "busta"})
-    logger.info(f"IMPORT PAGHE - Eliminati {delete_result.deleted_count} record busta esistenti")
-    
-    created = 0
-    errors = []
-    
-    # CREA UN RECORD PER OGNI RIGA (senza aggregazione)
+    # Raggruppa per dipendente/mese/anno e SOMMA gli importi
+    grouped_data = {}
     for idx, row in df.iterrows():
         try:
             dipendente = normalize_name(str(row[col_dipendente]))
@@ -197,47 +190,63 @@ async def import_paghe(file: UploadFile = File(...)) -> Dict[str, Any]:
             
             importo = float(row[col_importo]) if pd.notna(row[col_importo]) else 0
             
-            # Crea nuovo record per questa riga (tipo = 'busta')
+            key = (dipendente, anno, mese)
+            if key not in grouped_data:
+                grouped_data[key] = 0
+            grouped_data[key] += importo
+        except Exception as e:
+            logger.warning(f"Riga {idx + 2}: {str(e)}")
+    
+    created = 0
+    updated = 0
+    
+    # Inserisci/aggiorna nel database
+    for (dipendente, anno, mese), importo_busta in grouped_data.items():
+        existing = await db["prima_nota_salari"].find_one({
+            "dipendente": dipendente,
+            "anno": anno,
+            "mese": mese
+        })
+        
+        if existing:
+            # Aggiorna importo_busta mantenendo importo_bonifico esistente
+            importo_bonifico = existing.get("importo_bonifico") or 0
+            await db["prima_nota_salari"].update_one(
+                {"_id": existing["_id"]},
+                {"$set": {
+                    "importo_busta": round(importo_busta, 2),
+                    "saldo": round(importo_bonifico - importo_busta, 2),
+                    "updated_at": datetime.utcnow().isoformat()
+                }}
+            )
+            updated += 1
+        else:
             new_record = {
                 "id": str(uuid.uuid4()),
                 "dipendente": dipendente,
                 "anno": anno,
                 "mese": mese,
                 "mese_nome": MESI_NOMI[mese - 1],
-                "importo_busta": round(importo, 2),
+                "importo_busta": round(importo_busta, 2),
                 "importo_bonifico": 0,
-                "saldo": round(-importo, 2),  # Bonifico(0) - Busta
+                "saldo": round(-importo_busta, 2),
                 "progressivo": 0,
                 "riconciliato": False,
-                "tipo": "busta",
                 "created_at": datetime.utcnow().isoformat(),
                 "updated_at": datetime.utcnow().isoformat()
             }
             await db["prima_nota_salari"].insert_one(new_record)
             created += 1
-            
-        except Exception as e:
-            errors.append(f"Riga {idx + 2}: {str(e)}")
     
-    logger.info(f"IMPORT PAGHE - Record creati: {created}")
-    
-    # Ricalcola progressivi per tutti i dipendenti
     await ricalcola_progressivi_tutti(db)
     
     return {
         "success": True,
         "message": "Import PAGHE completato",
         "created": created,
-        "updated": 0,
+        "updated": updated,
         "righe_file": len(df),
-        "errors": errors[:10] if errors else [],
-        "colonne_trovate": list(df.columns),
-        "colonne_mappate": {
-            "dipendente": col_dipendente,
-            "mese": col_mese,
-            "anno": col_anno,
-            "importo_busta": col_importo
-        }
+        "record_aggregati": len(grouped_data)
     }
 
 
