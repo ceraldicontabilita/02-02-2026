@@ -56,6 +56,20 @@ export default function GestioneDipendenti() {
   const [filtroTabMese, setFiltroTabMese] = useState('');
   const [filtroTabAnno, setFiltroTabAnno] = useState('');
   const [ricalcolandoProgressivi, setRicalcolandoProgressivi] = useState(false);
+  
+  // Modal Ricalcolo Progressivi
+  const [showRicalcoloModal, setShowRicalcoloModal] = useState(false);
+  const [ricalcoloDipendente, setRicalcoloDipendente] = useState('');
+  
+  // Modal Aggiustamento Saldo
+  const [showAggiustamentoModal, setShowAggiustamentoModal] = useState(false);
+  const [aggiustamentoData, setAggiustamentoData] = useState({
+    dipendente: '',
+    anno: new Date().getFullYear(),
+    mese: new Date().getMonth() + 1,
+    importo: '',
+    descrizione: 'Aggiustamento saldo commercialista'
+  });
 
   // Libro Unico state
   const [libroUnicoSalaries, setLibroUnicoSalaries] = useState([]);
