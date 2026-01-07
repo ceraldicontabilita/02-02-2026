@@ -1,47 +1,52 @@
-<analysis>**original_problem_statement:**
+<analysis>
+**original_problem_statement:**
 L'utente ha richiesto l'aggiunta di diverse funzionalità a un'applicazione ERP:
-1.  **Funzionalità di Produzione e Lotti**: Implementare un sistema per la produzione basata su ricette, con generazione di codici di lotto e tracciabilità degli ingredienti.
-2.  **Riconciliazione F24 a 3 Livelli**:
-    *   Download automatico di F24 via email da commercialisti/consulenti.
-    *   Parsing dei PDF F24 (sia quietanze di pagamento che modelli F24 del commercialista).
-    *   Creazione di una dashboard per riconciliare i pagamenti, confrontando i modelli F24 con le quietanze, e segnalando lo stato di ogni tributo (Pagato, Da Pagare, In Scadenza).
-3.  **Parsing Buste Paga**: Estrarre dati dai PDF delle buste paga.
-4.  **Calcolo Liquidazione IVA**: Integrare un modulo fornito dall'utente per il calcolo dell'IVA mensile e la generazione di un report PDF.
-5.  **Comparatore Prezzi Fornitori**: Integrare la logica fornita per confrontare i prezzi dei prodotti tra diversi fornitori, includendo una normalizzazione basata su AI.
+1.  **Funzionalità di Produzione e Lotti**.
+2.  **Riconciliazione F24 a 3 Livelli** (Download email, Parsing PDF, Dashboard di riconciliazione).
+3.  **Parsing Buste Paga**.
+4.  **Calcolo Liquidazione IVA**.
+5.  **Comparatore Prezzi Fornitori**.
+
+La richiesta più recente e complessa è di implementare un sistema avanzato di gestione degli F24:
+*   Gestire F24 originali e le loro versioni corrette (ravvedimento).
+*   Se viene pagato un F24 con ravvedimento, la versione originale deve essere archiviata o annullata.
+*   Se viene pagato un F24 originale in ritardo, il sistema deve segnalare che è da ravvedere.
+*   Riconciliare automaticamente i pagamenti degli F24 con i movimenti dell'estratto conto bancario.
+*   Creare un database dei singoli codici tributo pagati, filtrabile per anno, codice e sezione (Es. Erario, INPS).
+*   Generare report mensili su F24 pagati e non pagati, con un sistema di allarmi (alert).
 
 **User's preferred language**: Italiano
 
 **what currently exists?**
--   **Modulo Produzione e Lotti**: Completamente implementato (backend e frontend).
--   **Modulo Liquidazione IVA**: Completamente implementato (backend e frontend), basato sul codice fornito dall'utente.
--   **Modulo Buste Paga**: Il parser per i PDF Zucchetti () e il relativo router API () sono stati integrati. L'endpoint per l'upload è funzionante.
--   **Modulo Comparatore Prezzi**: La logica del comparatore è stata integrata nel router esistente ().
--   **Modulo Riconciliazione F24**:
-    *   **Download Email**: Servizio per scaricare allegati PDF da Gmail funzionante.
-    *   **Parser Quietanze F24**: Funzionante ().
-    *   **Parser F24 Commercialista/Consulente**: Funzionante per vari formati, ma con un bug di aggregazione in fase di correzione.
-    *   **Backend Riconciliazione**: Le API per la dashboard e la verifica dello stato dei pagamenti sono implementate.
-    *   **Frontend Dashboard**: La pagina  è stata creata e visualizza correttamente i dati forniti dal backend.
+*   I moduli di Produzione, Liquidazione IVA, Parser Buste Paga e Comparatore Prezzi sono stati implementati.
+*   **Parser F24**: Il parser per gli F24 del commercialista () è stato completamente riscritto. Ora è molto robusto e utilizza l'analisi basata sulle coordinate per distinguere correttamente tra colonne di debito e credito. Gestisce vari formati di F24 (standard, IVA, IMU, con ravvedimento) e diverse sezioni (Erario, INPS, INAIL, Regioni, Tributi Locali).
+*   **Parser Estratto Conto**: È stato implementato un parser () per i file CSV degli estratti conto di Banco BPM e un servizio API iniziale per la riconciliazione.
+*   **Refactoring Backend**: L'intera struttura dei router del backend è stata riorganizzata in un'architettura modulare basata sulle funzionalità (es. , ), migliorando l'organizzazione del codice.
+*   **Frontend**: Esiste una dashboard di base per la riconciliazione F24 ().
 
 **Last working item**:
--   **Last item agent was working**: Correzione di un bug critico nel parser F24 del consulente del lavoro (). L'utente ha segnalato che il parser accorpava erroneamente righe di tributo con lo stesso codice ma anni o periodi diversi (es. due righe per il codice 3802 venivano sommate), impedendo una corretta riconciliazione per singolo tributo/periodo.
--   **Status**: IN PROGRESS
--   **Agent Testing Done**: N (Il test stava per essere eseguito dopo la modifica del codice)
--   **Which testing method agent to use?**: manual testing by curl. L'agente deve eseguire un test mirato sul parser aggiornato usando il file  per verificare che ogni riga di tributo venga estratta come un elemento separato.
--   **User Testing Done**: N
+*   **Last item agent was working**: Avvio dell'implementazione della logica di gestione avanzata degli F24, come richiesto dall'utente. È stato creato il file di servizio  per ospitare la nuova logica complessa di gestione delle versioni originali e con ravvedimento degli F24.
+*   **Status**: IN PROGRESS
+*   **Agent Testing Done**: N
+*   **Which testing method agent to use?**: backend testing agent. Sarà necessario testare la complessa logica di business che gestisce F24 originali vs. ravveduti, la corrispondenza con l'estratto conto e gli aggiornamenti di stato. Sarà utile anche  per testare i nuovi endpoint API.
+*   **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
--   **Issue 1: Il parser F24 aggrega le righe di tributo invece di leggerle singolarmente (P0)**
--   **Issue 2: Click sui tab non funzionante nei test automatici in  (P2)**
+*   **Issue 1: Implementare la logica avanzata di gestione F24 (ravvedimento e riconciliazione) (P0)**
+*   **Issue 2: Click sui tab non funzionante nei test automatici in  (P2)**
 
 **Issues Detail:**
 -   **Issue 1:**
-    -   **Attempted fixes**: L'agente ha identificato che il problema era l'approccio di cercare pattern in modo sequenziale. Ha refattorizzato il codice in  per usare un singolo pattern  con , con l'obiettivo di iterare su tutte le righe di tributo presenti nel testo del PDF e creare un record per ciascuna.
+    -   **Attempted fixes**: È stato creato il file . La logica di base deve ancora essere scritta.
     -   **Next debug checklist**:
-        1.  Eseguire uno script di test per invocare la funzione  con il file  (proveniente da ).
-        2.  Verificare che l'output (il dizionario ) contenga una lista separata di tributi per ogni riga, specialmente per i codici 3802 (che appare due volte) e per tutti i codici segnalati dall'utente (1631, 1704, 3797, 3847, 3848).
-        3.  Se il test locale passa, ricaricare il PDF tramite l'API  e verificare che la dashboard  mostri correttamente tutti i tributi non accorpati.
-    -   **Why fix this issue and what will be achieved with this?**: Per garantire l'accuratezza della riconciliazione F24, che è una funzionalità core richiesta. L'utente deve poter tracciare lo stato di ogni singolo versamento per codice tributo e periodo.
+        1.  Implementare la logica in  per gestire i requisiti dell'utente:
+            *   Modificare lo schema del DB per F24 per includere campi come  ('originale', 'ravveduto', 'annullato') e .
+            *   Creare una funzione per identificare se un F24 è la versione ravveduta di un altro.
+            *   Aggiornare il servizio di riconciliazione bancaria per marcare lo stato corretto degli F24 in base ai pagamenti trovati sull'estratto conto.
+        2.  Creare nuovi endpoint API in un router dedicato (es. ).
+        3.  Creare una nuova collection nel DB () per archiviare i dati granulari dei tributi pagati.
+        4.  Implementare un'API per generare i report mensili richiesti.
+    -   **Why fix this issue and what will be achieved with this?**: È una funzionalità core richiesta dall'utente per automatizzare un processo finanziario critico, fornendo un tracciamento accurato di pagamenti e passività fiscali.
     -   **Status**: IN PROGRESS
     -   **Is recurring issue?**: N
     -   **Should Test frontend/backend/both after fix?**: both
@@ -56,33 +61,34 @@ L'utente ha richiesto l'aggiunta di diverse funzionalità a un'applicazione ERP:
     -   **Blocked on other issue**: None
 
 **In progress Task List**:
-Nessuno.
+-   **Task 1: Implementare il sistema avanzato di gestione F24 (P0)**
+    -   **Where to resume**: Dal file , che al momento è vuoto. È necessario scrivere la logica di business e creare le relative API.
+    -   **What will be achieved with this?**: Un sistema di riconciliazione F24 completamente automatizzato che gestisce le correzioni (ravvedimento) e fornisce report dettagliati.
+    -   **Status**: IN PROGRESS
+    -   **Should Test frontend/backend/both after fix?**: both
+    -   **Blocked on something**: None
 
 **Upcoming and Future Tasks**
--   **(P0) Testare il parsing delle buste paga**: L'utente deve fornire file PDF di buste paga per testare il parser  appena integrato.
--   **(P1) Valutare integrazione bancaria**: Completare l'analisi di Salt Edge o alternative (Plaid, Tink, Fabrick) per la riconciliazione con l'estratto conto bancario (Livello 3 del flusso F24).
--   **(P2) Implementare la logica F24 Sostitutivi**: Aggiungere la gestione degli F24 con ravvedimento, segnalando le versioni precedenti come obsolete.
--   **(P3) UI per il Comparatore Prezzi**: Integrare la funzionalità del comparatore prezzi nella pagina frontend .
-
-**Future Tasks**:
--   Gestire l'inventario fisico e la .
--   Costruire una dashboard di controllo di gestione completa e avanzata.
--   Aggiungere gestione delle non conformità ai record di tracciabilità.
+-   **Upcoming Tasks**:
+    -   **(P0) Creare Frontend per Riconciliazione Avanzata F24**: Sviluppare una nuova pagina UI per visualizzare i risultati della riconciliazione avanzata, lo stato di ogni F24 e il report mensile dei tributi pagati.
+    -   **(P1) Testare il Parsing delle Buste Paga**: L'utente deve ancora fornire file PDF di esempio per testare il .
+    -   **(P2) UI per il Comparatore Prezzi**: Integrare la funzionalità del comparatore prezzi nella pagina frontend .
+-   **Future Tasks**:
+    -   Valutare e integrare un'API bancaria (come Salt Edge, Plaid, Tink o Fabrick) per sostituire il caricamento manuale del file CSV.
+    -   Gestire l'inventario fisico e la .
+    -   Costruire una dashboard di controllo di gestione completa.
 
 **Completed work in this session**
--   **Modulo Liquidazione IVA Mensile**: Integrato codice fornito dall'utente, creato API backend e pagina frontend dedicata. Funzionalità testata con successo.
--   **Integrazione di 3 moduli forniti dall'utente**:
-    1.  **Parser Buste Paga Zucchetti**: Integrato il servizio  e l'API .
-    2.  **Database Codici Tributo**: Integrato il servizio .
-    3.  **Comparatore Prezzi**: Integrata la logica nel router esistente .
--   **Frontend per Dashboard Riconciliazione F24**: Creata la pagina  che mostra lo stato degli F24 caricati.
--   **Miglioramento Parser F24**: Migliorata significativamente la robustezza del parser  per gestire diversi formati di PDF, inclusi quelli basati su form, passando a metodi di estrazione testo più avanzati ().
+-   **Correzione Bug Critico Parser F24**: Il file  è stato completamente riscritto. Il nuovo parser ora gestisce layout complessi, distingue correttamente debiti/crediti tramite coordinate e processa vari tipi di F24 (standard, IMU, ravvedimento).
+-   **Refactoring del Backend**: L'intera directory dei router () è stata riorganizzata in una struttura modulare per migliorare l'organizzazione e la manutenibilità del codice.
+-   **Parsing Estratto Conto Bancario**: Creato un parser per i file  di Banco BPM e un'API iniziale per la riconciliazione bancaria.
+-   **Risoluzione Blocchi di Deployment**: Corretti problemi nel  e nel file  del frontend che impedivano il deployment.
 
 **Earlier issues found/mentioned but not fixed**
 -   **Issue 1: Click sui tab non funzionante nei test automatici in **. Problema ricorrente non ancora affrontato.
 
 **Known issue recurrence from previous fork**
--   **Issue recurrence in previous fork**: Il fallimento dei test automatici su .
+-   **Issue recurrence in previous fork**: Fallimento dei test automatici su .
 -   **Recurrence count**: 3+
 -   **Status**: NOT STARTED
 
@@ -90,63 +96,98 @@ Nessuno.
 
 
 **Key Technical Concepts**
--   **Debugging Frontend (Vite)**: L'agente ha affrontato un complesso problema di debug sul frontend. Inizialmente ha sospettato un errore di alias (), poi un errore , ma la causa principale si è rivelata essere uno stato instabile del server di sviluppo Vite, risolto solo dopo aver riavviato e testato incrementalmente i componenti.
--   **Refactoring del Parser PDF**: Di fronte a un bug segnalato dall'utente, l'agente è passato da un approccio di parsing basato su  (che trova solo la prima corrispondenza) a uno basato su  per iterare su *tutte* le corrispondenze di un pattern, risolvendo così un problema di aggregazione dati.
--   **Estrazione Testo da PDF Complessi**: L'agente ha imparato che  può fallire con PDF basati su form. Ha quindi adottato metodi più robusti come  e  per estrarre dati da layout non testuali.
--   **Gestione dei Conflitti di Routing**: L'agente ha identificato e risolto un conflitto di routing in FastAPI causato dalla creazione di un nuovo router () con un prefisso già in uso da un router esistente ().
+-   **Parsing PDF Avanzato con Coordinate**: L'agente è passato dall'uso di espressioni regolari a un'analisi basata su coordinate (x, y) tramite usage: pdfplumber [-h] [--structure | --structure-text]
+                  [--format {csv,json,text}] [--types TYPES [TYPES ...]]
+                  [--include-attrs INCLUDE_ATTRS [INCLUDE_ATTRS ...]]
+                  [--exclude-attrs EXCLUDE_ATTRS [EXCLUDE_ATTRS ...]]
+                  [--laparams LAPARAMS] [--precision PRECISION]
+                  [--pages PAGES [PAGES ...]] [--indent INDENT]
+                  [infile]
+
+positional arguments:
+  infile
+
+options:
+  -h, --help            show this help message and exit
+  --structure           Write the structure tree as JSON. All other arguments
+                        except --pages, --laparams, and --indent will be
+                        ignored
+  --structure-text      Write the structure tree as JSON including text
+                        contents. All other arguments except --pages,
+                        --laparams, and --indent will be ignored
+  --format {csv,json,text}
+  --types TYPES [TYPES ...]
+  --include-attrs INCLUDE_ATTRS [INCLUDE_ATTRS ...]
+                        Include *only* these object attributes in output.
+  --exclude-attrs EXCLUDE_ATTRS [EXCLUDE_ATTRS ...]
+                        Exclude these object attributes from output.
+  --laparams LAPARAMS
+  --precision PRECISION
+  --pages PAGES [PAGES ...]
+  --indent INDENT       Indent level for JSON pretty-printing. per interpretare correttamente la struttura a colonne dei PDF F24.
+-   **Refactoring Modulare del Backend**: Il backend FastAPI è stato ristrutturato da una lista piatta di router a un'architettura modulare basata su domini di business, migliorando scalabilità e manutenibilità.
+-   **Logica Finanziaria Complessa**: La nuova richiesta di gestione degli F24 introduce una logica stateful che richiede di tracciare le relazioni tra documenti (originale vs. corretto) e il loro stato di pagamento.
 
 **key DB schema**
--   **f24_commercialista**: 
--   **buste_paga**: 
+-   **f24_commercialista**: . Dovrebbe essere esteso con campi come  ('originale', 'ravveduto', 'annullato') e .
+-   **estratto_conto_movimenti**: .
+-   **(DA CREARE) codici_tributo_pagati**: .
 
 **All files of reference**
--   : File chiave per la risoluzione del bug corrente.
--   : Router che utilizza i dati del parser.
--   : Pagina frontend che visualizzerà i dati corretti.
--   : Parser per le buste paga, in attesa di file di test.
+-   : File chiave per la prossima task.
+-   : Il parser F24, ora robusto e completo.
+-   : Il parser per gli estratti conto.
+-   : Entry point dell'applicazione, ora refattorizzato.
+-   : Documentazione della nuova architettura backend.
+
+**Areas that need refactoring**:
+-   La cartella  potrebbe essere a sua volta modularizzata per rispecchiare la nuova struttura dei router (es. , ).
+
+**key api endpoints**
+-   : Carica e analizza un PDF F24.
+-   : Carica e analizza un estratto conto in formato CSV.
+-   : Esegue una riconciliazione di base tra F24 e movimenti bancari.
 
 **Critical Info for New Agent**
--   La priorità assoluta (P0) è risolvere il bug di aggregazione nel parser . La soluzione proposta (usare ) è corretta concettualmente, ma deve essere testata a fondo per assicurarsi che ogni riga di tributo dal PDF venga salvata come un oggetto separato nell'array  del documento MongoDB.
--   L'utente è molto attento e tecnico. Si aspetta che i dati siano accurati al 100%. Non accorpare o sommare nulla che non sia esplicitamente richiesto. Ogni riga sull'F24 è un'entità a sé.
--   L'intero ecosistema frontend (Vite, React) si è dimostrato sensibile a problemi di cache. In caso di errori inspiegabili sulla UI, una pulizia della cache () e un riavvio completo del servizio  è un buon primo passo.
--   Per testare il parser buste paga (), dovrai chiedere all'utente di fornire uno o più file PDF di esempio.
+-   La priorità assoluta (P0) è implementare la logica avanzata di gestione degli F24 come richiesto dall'utente. Questo include la gestione del ravvedimento, l'archiviazione delle versioni obsolete e la segnalazione di quelle da correggere.
+-   Il backend è stato appena refattorizzato. Qualsiasi nuovo codice deve seguire la struttura modulare esistente.
+-   Il parser F24 in  è ora molto stabile e non dovrebbe essere modificato a meno di nuovi formati PDF.
+-   L'integrazione con Fabrick è un'attività futura. La logica attuale deve basarsi sul file CSV dell'estratto conto caricato manualmente.
 
 **documents and test reports created in this job**
--    (Test Liquidazione IVA)
--    (Test integrazione 3 moduli)
--    (Test Dashboard Riconciliazione F24)
--   File PDF caricati dall'utente in  per il testing dei parser F24.
+-   
+-   
 
 **Last 10 User Messages and any pending HUMAN messages**
-10. L'utente ha segnalato che il parser F24 sta erroneamente accorpando più righe di tributo in una sola e che mancano diversi codici. Ha chiesto di leggere ogni riga separatamente. (PENDING FIX)
-9.  L'utente ha chiesto di spiegare e parsare un F24 del consulente del lavoro. (COMPLETED, but buggy)
-8.  L'utente ha fornito un PDF di un F24 per l'IVA di Novembre e ha chiesto di caricarlo. (COMPLETED)
-7.  L'utente ha chiesto di continuare a lavorare sulla Riconciliazione F24. (IN PROGRESS)
-6.  L'utente ha chiesto di integrare 3 file Python che ha caricato: un parser buste paga, un database di codici tributo e un comparatore prezzi. (COMPLETED)
-5.  L'utente ha caricato i 3 file Python. (COMPLETED)
-4.  L'utente ha chiesto di integrare il modulo , usare la collezione  esistente e di valutare Salt Edge. (COMPLETED)
-3.  L'utente ha fornito il file . (COMPLETED)
-2.  In attesa della risposta dell'utente al piano proposto dall'agente.
-1.  L'agente ha chiesto conferma del suo piano all'utente.
+10. **Richiesta utente (PENDING):** Implementare una logica avanzata per F24 con ravvedimento, riconciliazione bancaria e reportistica dettagliata dei tributi pagati.
+9.  **Utente (Completato):** Conferma che la logica per F24 a saldo zero è corretta e chiede di procedere.
+8.  **Agente (Completato):** Chiede chiarimenti sul motivo per cui un F24 ha saldo zero.
+7.  **Utente (Completato):** Segnala errori nel parsing del totale di un F24 e la mancanza di alcuni tributi. Questo ha portato alla riscrittura del parser.
+6.  **Agente (Completato):** Comunica la risoluzione (errata) del bug del parser.
+5.  **Utente (Completato):** Chiede di refattorizzare il backend in moduli.
+4.  **Utente (Completato):** Conferma che il nuovo parser funziona e chiede di caricare gli F24 nel DB.
+3.  **Utente (Completato):** Chiede di procedere con il piano.
+2.  **Utente (Completato):** Fornisce 3 nuovi PDF F24 complessi per il testing.
+1.  **Utente (Completato):** Chiarisce la logica di un F24 multi-pagina, confermando che sono documenti separati.
 
 **Project Health Check:**
--   **Broken**: La funzionalità di parsing degli F24 del consulente è parzialmente rotta a causa del bug di aggregazione.
--   **Mocked**: Nessuna.
+-   **Broken**: Nessuno. Il bug critico del parser F24 è stato risolto.
+-   **Mocked**: Nessuno.
 
 **3rd Party Integrations**
--   **Google/Gmail (IMAP)**: Per il download degli allegati F24.
--   **pdfplumber**: Nuova dipendenza aggiunta per il parsing dei PDF delle buste paga.
+-   **Google/Gmail (IMAP)**: Per scaricare allegati F24.
+-   **pdfplumber**: Per il parsing dei PDF.
+-   **Fabrick (Futuro)**: L'utente ha espresso interesse, ma l'implementazione non è una priorità attuale.
 
 **Testing status**
--   **Testing agent used after significant changes**: YES (usato più volte per Liquidazione IVA, integrazione moduli, e Riconciliazione F24).
--   **Troubleshoot agent used after agent stuck in loop**: NO
--   **Test files created**: , , .
--   **Known regressions**: Il parser  ha avuto una regressione funzionale (parsing errato) dopo l'introduzione di un PDF con un nuovo formato, che ha poi rivelato un bug logico più profondo (aggregazione).
+-   **Testing agent used after significant changes**: YES
+-   **Test files created**: 
+-   **Known regressions**: Una regressione importante nel parser F24 è stata identificata e risolta durante questa sessione.
 
 **Credentials to test flow:**
 -   **Email User**: 
--   **Email App Password**: 
--   (Queste credenziali sono nel file )
+-   **Email App Password**:  (disponibile in )
 
 **What agent forgot to execute**
-L'agente non ha dimenticato nulla, ma ha introdotto un bug logico nel parser F24 nel tentativo di gestire un nuovo formato di file. L'errore è stato correttamente identificato dall'utente e l'agente ha iniziato il processo di refactoring per correggerlo.</analysis>
+Nessuna dimenticanza critica. L'agente ha affrontato con successo la complessità del parsing degli F24, ha eseguito il refactoring richiesto e ha preparato il terreno per la prossima importante funzionalità richiesta dall'utente.
+</analysis>
