@@ -415,9 +415,12 @@ async def ricalcola_progressivi_tutti(db):
     - Saldo positivo = dipendente ha ricevuto più di quanto spettava (ci deve soldi)
     - Saldo negativo = dipendente ha ricevuto meno di quanto spettava (gli dobbiamo soldi)
     
-    Progressivo = Somma cumulativa di tutti i saldi dall'assunzione (SENZA reset annuale)
-    Il progressivo parte dalla prima busta paga e continua ad accumularsi mese dopo mese.
+    Progressivo = Somma cumulativa di tutti i saldi DAL 01/01/2023 in poi
+    I record precedenti al 2023 vengono ignorati nel calcolo del progressivo.
     """
+    # Data di inizio calcolo progressivo
+    ANNO_INIZIO_PROGRESSIVO = 2023
+    
     # Ottieni tutti i dipendenti unici
     dipendenti = await db["prima_nota_salari"].distinct("dipendente")
     
@@ -427,7 +430,7 @@ async def ricalcola_progressivi_tutti(db):
             {"dipendente": dipendente}
         ).sort([("anno", 1), ("mese", 1)]).to_list(500)
         
-        # Progressivo continuo dall'assunzione - MAI resettare
+        # Progressivo parte da 0 al 01/01/2023
         progressivo = 0
         
         for record in records:
@@ -436,15 +439,17 @@ async def ricalcola_progressivi_tutti(db):
             importo_bonifico = record.get("importo_bonifico", 0) or 0
             saldo = importo_bonifico - importo_busta
             
-            # Aggiunge al progressivo cumulativo
-            progressivo += saldo
+            # Il progressivo si calcola solo dal 2023 in poi
+            anno_record = record.get("anno", 0)
+            if anno_record >= ANNO_INIZIO_PROGRESSIVO:
+                progressivo += saldo
             
             # Aggiorna il record con saldo e progressivo
             await db["prima_nota_salari"].update_one(
                 {"_id": record["_id"]},
                 {"$set": {
                     "saldo": round(saldo, 2),
-                    "progressivo": round(progressivo, 2)
+                    "progressivo": round(progressivo, 2) if anno_record >= ANNO_INIZIO_PROGRESSIVO else 0
                 }}
             )
 
