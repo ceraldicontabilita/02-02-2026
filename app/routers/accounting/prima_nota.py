@@ -104,7 +104,8 @@ async def list_prima_nota_cassa(
     """Lista movimenti prima nota cassa."""
     db = Database.get_db()
     
-    query = {}
+    # Escludi movimenti eliminati/archiviati
+    query = {"status": {"$nin": ["deleted", "archived"]}}
     
     # Filtro per anno
     if anno:
