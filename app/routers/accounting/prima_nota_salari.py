@@ -256,8 +256,7 @@ async def import_bonifici(file: UploadFile = File(...)) -> Dict[str, Any]:
     Importa file BONIFICI (importi erogati).
     Formato atteso: Dipendente | Mese | Anno | Importo Erogato
     
-    Aggrega per dipendente/mese/anno (somma gli importi se ci sono più righe).
-    Aggiorna record esistenti o ne crea di nuovi.
+    REGOLA: MAI AGGREGARE - Crea un record per ogni riga del file.
     """
     import pandas as pd
     
@@ -303,9 +302,72 @@ async def import_bonifici(file: UploadFile = File(...)) -> Dict[str, Any]:
     
     logger.info(f"IMPORT BONIFICI - Righe nel file: {len(df)}")
     
-    # Raggruppa per dipendente/mese/anno e SOMMA gli importi
-    grouped_data = {}
+    created = 0
+    errors = []
+    
+    # CREA UN RECORD PER OGNI RIGA - MAI AGGREGARE
     for idx, row in df.iterrows():
+        try:
+            dipendente = normalize_name(str(row[col_dipendente]))
+            if not dipendente or dipendente == "NAN":
+                continue
+            
+            # Gestisci mese (può essere numero o data)
+            mese_val = row[col_mese]
+            if hasattr(mese_val, 'month'):
+                mese = mese_val.month
+            else:
+                mese_str = str(mese_val).strip()
+                mese = get_mese_numero(mese_str)
+            if mese == 0:
+                continue
+            
+            # Gestisci anno (può essere numero o data)
+            anno_val = row[col_anno]
+            if hasattr(anno_val, 'year'):
+                anno = anno_val.year
+            elif isinstance(anno_val, datetime):
+                anno = anno_val.year
+            else:
+                anno = int(anno_val)
+            
+            importo = float(row[col_importo]) if pd.notna(row[col_importo]) else 0
+            
+            # Crea nuovo record per OGNI riga
+            new_record = {
+                "id": str(uuid.uuid4()),
+                "dipendente": dipendente,
+                "anno": anno,
+                "mese": mese,
+                "mese_nome": MESI_NOMI[mese - 1] if 1 <= mese <= 12 else "",
+                "importo_busta": 0,
+                "importo_bonifico": round(importo, 2),
+                "saldo": round(importo, 2),
+                "progressivo": 0,
+                "riconciliato": False,
+                "tipo": "bonifico",
+                "created_at": datetime.utcnow().isoformat(),
+                "updated_at": datetime.utcnow().isoformat()
+            }
+            await db["prima_nota_salari"].insert_one(new_record)
+            created += 1
+            
+        except Exception as e:
+            errors.append(f"Riga {idx + 2}: {str(e)}")
+    
+    logger.info(f"IMPORT BONIFICI - Record creati: {created}")
+    
+    # Ricalcola progressivi
+    await ricalcola_progressivi_tutti(db)
+    
+    return {
+        "success": True,
+        "message": "Import BONIFICI completato",
+        "created": created,
+        "updated": 0,
+        "righe_file": len(df),
+        "errors": errors[:10] if errors else []
+    }
         try:
             dipendente = normalize_name(str(row[col_dipendente]))
             if not dipendente or dipendente == "NAN":
