@@ -54,54 +54,40 @@ def decode_mime_header(header_value: str) -> str:
 def categorize_document(filename: str, subject: str = "", sender: str = "") -> str:
     """
     Categorizza un documento in base al nome file, oggetto e mittente.
+    FILTRIAMO SOLO F24 - altri documenti vengono ignorati.
     """
     filename_lower = filename.lower()
     subject_lower = subject.lower()
     sender_lower = sender.lower()
     
-    # F24
-    if any(x in filename_lower for x in ['f24', 'f-24', 'tribut', 'agenzia entrate']):
+    # F24 - Pattern molto specifici
+    f24_patterns_filename = ['f24', 'f-24', 'f_24', 'mod.f24', 'modello f24']
+    f24_patterns_subject = ['f24', 'f-24', 'tribut', 'scadenza fiscal', 'versamento', 'erario', 'inps']
+    f24_patterns_sender = ['commercialista', 'studio', 'consulente', 'agenzia entrate']
+    
+    # Check filename
+    if any(x in filename_lower for x in f24_patterns_filename):
         return "f24"
-    if any(x in subject_lower for x in ['f24', 'f-24', 'tribut', 'scadenza fiscal']):
-        return "f24"
+    
+    # Check subject
+    if any(x in subject_lower for x in f24_patterns_subject):
+        # Verifica che sia PDF
+        if filename_lower.endswith('.pdf'):
+            return "f24"
+    
+    # Check sender (commercialista)
+    if any(x in sender_lower for x in f24_patterns_sender):
+        if filename_lower.endswith('.pdf'):
+            return "f24"
     
     # Quietanze F24
     if any(x in filename_lower for x in ['quietanza', 'ricevuta f24', 'pagamento f24']):
         return "quietanza"
-    if any(x in subject_lower for x in ['quietanza', 'ricevuta pagamento']):
+    if any(x in subject_lower for x in ['quietanza', 'ricevuta pagamento f24']):
         return "quietanza"
     
-    # Fatture
-    if any(x in filename_lower for x in ['fattura', 'invoice', 'fatt_', 'ft_', 'fe_']):
-        return "fattura"
-    if any(x in subject_lower for x in ['fattura', 'invoice', 'documento fiscale']):
-        return "fattura"
-    if 'sdi' in sender_lower or 'fatturapa' in sender_lower or 'pec' in sender_lower:
-        return "fattura"
-    
-    # Buste Paga
-    if any(x in filename_lower for x in ['busta', 'paga', 'cedolino', 'lul', 'libro unico']):
-        return "busta_paga"
-    if any(x in subject_lower for x in ['busta paga', 'cedolino', 'stipendio']):
-        return "busta_paga"
-    if 'paghe' in sender_lower or 'consulente lavoro' in sender_lower:
-        return "busta_paga"
-    
-    # Estratti Conto
-    if any(x in filename_lower for x in ['estratto', 'conto', 'movimenti', 'statement', 'banca']):
-        return "estratto_conto"
-    if any(x in subject_lower for x in ['estratto conto', 'movimenti conto', 'statement']):
-        return "estratto_conto"
-    if any(x in sender_lower for x in ['bpm', 'intesa', 'unicredit', 'banca', 'bank']):
-        return "estratto_conto"
-    
-    # Bonifici
-    if any(x in filename_lower for x in ['bonifico', 'sepa', 'transfer', 'cro']):
-        return "bonifico"
-    if any(x in subject_lower for x in ['bonifico', 'trasferimento', 'pagamento']):
-        return "bonifico"
-    
-    return "altro"
+    # NON è un F24 - ritorna None per ignorarlo
+    return None
 
 
 def calculate_file_hash(content: bytes) -> str:
