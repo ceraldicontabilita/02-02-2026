@@ -69,7 +69,7 @@ async def scarica_email_allegati(
             "original_filename": allegato["original_filename"],
             "email_date": allegato["email_date"],
             "email_from": allegato["email_from"]
-        })
+        }, {"_id": 0})
         
         if existing:
             allegato["status"] = "già_presente"
@@ -79,7 +79,8 @@ async def scarica_email_allegati(
         # Salva nel database
         allegato["status"] = "da_processare"
         allegato["processato"] = False
-        await db[COLL_ALLEGATI].insert_one(allegato)
+        allegato_copy = {k: v for k, v in allegato.items()}  # Copia per evitare modifica
+        await db[COLL_ALLEGATI].insert_one(allegato_copy)
         allegati_processati.append(allegato)
     
     return {
