@@ -102,70 +102,60 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "I saldi non funzionano con il bottone ricalcola neanche con i bottoni 2018 2019 2020 2021 2022"
+user_problem_statement: "Ottimizzazione prestazioni React con memo, useCallback, useMemo, code-splitting, Zustand state management"
 
 backend:
-  - task: "Ricalcola progressivi API"
+  - task: "API Prima Nota Salari"
     implemented: true
     working: true
     file: "app/routers/accounting/prima_nota_salari.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+
+frontend:
+  - task: "Refactoring GestioneDipendenti con Zustand e componenti ottimizzati"
+    implemented: true
+    working: true
+    file: "frontend/src/pages/GestioneDipendenti.jsx"
     stuck_count: 0
     priority: "high"
     needs_retesting: true
     status_history:
       - working: true
         agent: "main"
-        comment: "API endpoint /api/prima-nota-salari/ricalcola-progressivi funziona - testato con curl"
+        comment: "Refactoring completato: da 2627 a 1512 righe (-42%). Creato store Zustand, componenti memoizzati con React.memo e useCallback"
 
-frontend:
-  - task: "Bottoni esclusione anni 2018-2022"
+  - task: "Componenti Prima Nota ottimizzati"
     implemented: true
     working: true
-    file: "frontend/src/pages/GestioneDipendenti.jsx"
+    file: "frontend/src/components/prima-nota/PrimaNotaComponents.jsx"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
-      - working: false
-        agent: "user"
-        comment: "Utente ha segnalato che i saldi non funzionano con i bottoni 2018-2022"
       - working: true
         agent: "main"
-        comment: "Bug corretto: sostituito API_BASE_URL (variabile non definita) con api.post() - testato con screenshot, bottoni funzionano visivamente"
-      - working: true
-        agent: "testing"
-        comment: "✅ TESTATO CON PLAYWRIGHT: Bottoni 2018-2022 funzionano perfettamente. Visual state cambia correttamente (rosso con strikethrough quando selezionati). Reset button funziona. API calls vengono eseguite senza errori JavaScript. Ricalcolo progressivi funziona."
-
-  - task: "Modale Aggiusta Saldo chiusura"
-    implemented: true
-    working: true
-    file: "frontend/src/pages/GestioneDipendenti.jsx"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
-    status_history:
-      - working: false
-        agent: "user"
-        comment: "Utente ha segnalato che la finestra aggiusto saldo non si chiude"
-      - working: true
-        agent: "testing"
-        comment: "✅ TESTATO CON PLAYWRIGHT: Modal Aggiustamento Saldo funziona correttamente. Si apre cliccando il bottone verde 'Aggiustamento Saldo', si chiude correttamente con il bottone 'Annulla'. Modal non si chiude cliccando fuori (comportamento corretto per evitare perdita dati). Tutti i form fields sono presenti e funzionali."
+        comment: "Componenti memoizzati: YearExclusionButtons, SummaryCard, PeriodFilters, ActionButtons, VirtualizedSalariTable, AggiustamentoModal"
 
 metadata:
   created_by: "main_agent"
-  version: "1.0"
-  test_sequence: 1
+  version: "2.0"
+  test_sequence: 2
   run_ui: true
 
 test_plan:
-  current_focus: []
+  current_focus:
+    - "Verifica che Prima Nota Salari funzioni con il nuovo store Zustand"
+    - "Test bottoni esclusione anni"
+    - "Test modale Aggiustamento Saldo"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
 agent_communication:
   - agent: "main"
-    message: "Ho corretto il bug dei bottoni anni 2018-2022. Il problema era che il codice usava API_BASE_URL che non era definito. Ho sostituito le chiamate fetch con api.post(). Testa i seguenti scenari: 1) Clicca sui bottoni 2018-2022 e verifica che il ricalcolo avvenga senza errori nella console, 2) Verifica che il modale Aggiusta Saldo si apra cliccando sul bottone verde '+Aggiustamento Saldo' e si chiuda cliccando 'Annulla'"
+    message: "Ho completato il refactoring di GestioneDipendenti.jsx con ottimizzazioni React. Testa: 1) Caricamento dati Prima Nota, 2) Bottoni esclusione anni 2018-2022, 3) Modale Aggiustamento Saldo, 4) Import/Export funzionalità"
   - agent: "testing"
     message: "✅ TESTING COMPLETATO CON SUCCESSO! Entrambe le funzionalità testate funzionano perfettamente: 1) Bottoni esclusione anni 2018-2022: cambiano stato visivo correttamente (rosso con strikethrough), eseguono API calls senza errori, Reset button funziona. 2) Modal Aggiustamento Saldo: si apre e chiude correttamente, tutti i form fields presenti. Nessun errore JavaScript rilevato. Le correzioni del main agent hanno risolto completamente i problemi segnalati dall'utente."
   - agent: "testing"
