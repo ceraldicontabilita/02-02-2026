@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Ottimizzazione completa React: Code splitting, React Query, Zustand, refactoring componenti"
+user_problem_statement: "Miglioramento pagina Documenti: 1) Periodo sync ridotto a 10 giorni, 2) Campi separati per keyword personalizzate, 3) Download in background con popup stato"
 
 frontend:
   - task: "Code Splitting con React.lazy + Suspense"
@@ -150,54 +150,29 @@ frontend:
         agent: "testing"
         comment: "FINAL TEST SUCCESS: Tutti i 4 tab funzionanti (Anagrafica, Contratti, Prima Nota, Libro Unico). KPI cards, filtri, bottoni, modal, React Query caching - tutto perfetto. Nessun errore JavaScript."
 
-  - task: "LibroUnicoTab con React Query"
+  - task: "Pagina Documenti - Download background e keyword"
     implemented: true
-    working: true
-    file: "frontend/src/components/dipendenti/LibroUnicoTab.jsx"
+    working: "NA"
+    file: "frontend/src/pages/Documenti.jsx"
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
-      - working: true
-        agent: "testing"
-        comment: "SUCCESS: Filtri periodo (Mese/Anno) presenti, bottoni Upload/Export/Aggiorna funzionanti, card riepilogo verde con gradient corretto"
-
-  - task: "LibrettiSanitariTab con React Query"
-    implemented: true
-    working: true
-    file: "frontend/src/components/dipendenti/LibrettiSanitariTab.jsx"
-    priority: "high"
-
-  - task: "ContrattiTab con React Query"
-    implemented: true
-    working: true
-    file: "frontend/src/components/dipendenti/ContrattiTab.jsx"
-    priority: "high"
-    needs_retesting: false
-    status_history:
-      - working: true
-        agent: "testing"
-        comment: "SUCCESS: Header viola 'Gestione Contratti', bottoni 'Importa Excel' e 'Nuovo Contratto' funzionanti, modal si apre/chiude correttamente"
+      - working: "NA"
+        agent: "main"
+        comment: "Implementato: 1) Default 10 giorni, 2) Campo keyword personalizzate con varianti, 3) Download in background con polling stato task, 4) Popup visivo durante download"
 
 metadata:
   created_by: "main_agent"
-  version: "3.0"
-  test_sequence: 3
+  version: "4.0"
+  test_sequence: 4
   run_ui: true
 
 test_plan:
   current_focus:
-    - "Verifica tutti i tab di GestioneDipendenti"
-    - "Test React Query caching"
-  test_all: true
+    - "Pagina Documenti - verifica download in background"
+    - "Verifica campo keyword personalizzate"
+  test_all: false
 
 agent_communication:
   - agent: "main"
-    message: "Refactoring completo. Test: 1) Tab Anagrafica, 2) Tab Contratti, 3) Tab Prima Nota, 4) Tab Libro Unico, 5) Tab Libretti (se visibile)"
-  - agent: "testing"
-    message: "✅ TESTING COMPLETATO CON SUCCESSO! Entrambe le funzionalità testate funzionano perfettamente: 1) Bottoni esclusione anni 2018-2022: cambiano stato visivo correttamente (rosso con strikethrough), eseguono API calls senza errori, Reset button funziona. 2) Modal Aggiustamento Saldo: si apre e chiude correttamente, tutti i form fields presenti. Nessun errore JavaScript rilevato. Le correzioni del main agent hanno risolto completamente i problemi segnalati dall'utente."
-  - agent: "testing"
-    message: "✅ TEST COMPLETO PRIMA NOTA SALARI COMPLETATO! Verifiche effettuate: 1) Caricamento dati: SUCCESS (1682 records caricati correttamente), 2) Esclusione anni: SUCCESS (2018 escluso: 1682→1561 records, 2019 e 2020 testati), 3) Reset funzione: SUCCESS (totali ripristinati a 1682), 4) Assenza bottone 'Ricalcola Progressivi dal 2023': SUCCESS (non presente), 5) Modal Aggiusta Saldo: SUCCESS (si apre e chiude correttamente). Tutti i test richiesti sono passati con successo. La pagina Prima Nota funziona perfettamente dopo le correzioni."
-  - agent: "testing"
-    message: "✅ COMPREHENSIVE REFACTORING TEST COMPLETED SUCCESSFULLY! Test completo della pagina Prima Nota Salari dopo refactoring con Zustand: 1) CARICAMENTO DATI: SUCCESS - pagina si carica senza errori JavaScript, tab Prima Nota funziona correttamente, 1682 records visualizzati. 2) FILTRI PERIODO: SUCCESS - filtri mese/anno funzionano correttamente (testati 'Tutti i mesi' e 'Tutti gli anni'). 3) BOTTONI ESCLUSIONE ANNI: SUCCESS - bottone 2018 cambia stato visivo (bordo rosso + strikethrough), Reset button appare e funziona correttamente. 4) MODAL AGGIUSTAMENTO SALDO: SUCCESS - si apre dal bottone verde, tutti i campi form presenti (Dipendente, Mese, Anno, Importo, Descrizione), si chiude correttamente con Annulla. 5) BOTTONI AZIONI: SUCCESS - 'Importa PAGHE', 'Importa BONIFICI', 'Aggiorna' tutti presenti e cliccabili. Nessun errore JavaScript rilevato. Il refactoring con Zustand e componenti ottimizzati funziona perfettamente."
-  - agent: "testing"
-    message: "✅ FINAL COMPREHENSIVE TEST COMPLETED SUCCESSFULLY! Test completo finale di GestioneDipendenti dopo refactoring React Query: 1) TAB ANAGRAFICA: SUCCESS - pagina si carica senza errori, KPI Cards visibili (Totale Dipendenti, Dati Completi, Da Completare), tabella dipendenti presente, search input funzionante. 2) TAB CONTRATTI: SUCCESS - header viola 'Gestione Contratti' presente, bottoni 'Importa Excel' e 'Nuovo Contratto' funzionanti, modal si apre e chiude correttamente. 3) TAB PRIMA NOTA: SUCCESS - filtri periodo presenti, bottoni esclusione anni 2018-2022 funzionanti (testato 2018 con cambio stato visivo), card riepilogo arancione presente. 4) TAB LIBRO UNICO: SUCCESS - filtri periodo (Mese/Anno) presenti, bottoni Upload/Export/Aggiorna funzionanti, card riepilogo verde presente con gradient background corretto. Nessun errore JavaScript rilevato. Tutti i tab cambiano correttamente. React Query carica i dati senza errori. I modal si aprono e chiudono correttamente. Il refactoring è completamente funzionante."
+    message: "Implementate le modifiche richieste alla pagina Documenti: 1) Periodo default ridotto a 10 giorni con opzione nel dropdown, 2) Sezione keyword personalizzate con campo input e lista con checkbox, 3) Download in background con endpoint /api/documenti/scarica-da-email?background=true e polling stato task. TEST DA FARE: a) Aprire pagina documenti, b) Cliccare Impostazioni, c) Verificare periodo default 10 giorni, d) Aggiungere keyword personalizzata, e) Selezionare keyword, f) Cliccare 'Scarica da Email' e verificare popup stato in background"
