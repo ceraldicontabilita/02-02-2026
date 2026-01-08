@@ -19,32 +19,46 @@ router = APIRouter()
 @router.get("/lista")
 async def lista_operazioni(
     stato: Optional[str] = Query(None, description="Filtra per stato: da_confermare, confermato"),
+    anno: Optional[int] = Query(None, description="Filtra per anno fiscale"),
     limit: int = Query(100, ge=1, le=500)
 ) -> Dict[str, Any]:
-    """Lista operazioni da confermare."""
+    """Lista operazioni da confermare, filtrate per anno fiscale."""
     db = Database.get_db()
     
     query = {}
     if stato:
         query["stato"] = stato
+    if anno:
+        query["anno"] = anno
     
     operazioni = await db["operazioni_da_confermare"].find(
         query,
         {"_id": 0}
     ).sort("created_at", -1).limit(limit).to_list(limit)
     
-    # Statistiche
-    totale = await db["operazioni_da_confermare"].count_documents({})
-    da_confermare = await db["operazioni_da_confermare"].count_documents({"stato": "da_confermare"})
-    confermate = await db["operazioni_da_confermare"].count_documents({"stato": "confermato"})
+    # Statistiche per l'anno selezionato
+    stats_query = {"anno": anno} if anno else {}
+    totale = await db["operazioni_da_confermare"].count_documents(stats_query)
+    da_confermare = await db["operazioni_da_confermare"].count_documents({**stats_query, "stato": "da_confermare"})
+    confermate = await db["operazioni_da_confermare"].count_documents({**stats_query, "stato": "confermato"})
     
     # Totale importi da confermare
     pipeline = [
-        {"$match": {"stato": "da_confermare"}},
+        {"$match": {**stats_query, "stato": "da_confermare"}},
         {"$group": {"_id": None, "totale": {"$sum": "$importo"}}}
     ]
     totale_importo_result = await db["operazioni_da_confermare"].aggregate(pipeline).to_list(1)
     totale_importo = totale_importo_result[0]["totale"] if totale_importo_result else 0
+    
+    # Statistiche per anno (per mostrare quante fatture ci sono per ogni anno)
+    pipeline_anni = [
+        {"$group": {"_id": "$anno", "count": {"$sum": 1}, "da_confermare": {"$sum": {"$cond": [{"$eq": ["$stato", "da_confermare"]}, 1, 0]}}}},
+        {"$sort": {"_id": -1}}
+    ]
+    stats_per_anno = []
+    async for doc in db["operazioni_da_confermare"].aggregate(pipeline_anni):
+        if doc["_id"]:
+            stats_per_anno.append({"anno": doc["_id"], "totale": doc["count"], "da_confermare": doc["da_confermare"]})
     
     return {
         "operazioni": operazioni,
@@ -52,8 +66,10 @@ async def lista_operazioni(
             "totale": totale,
             "da_confermare": da_confermare,
             "confermate": confermate,
-            "totale_importo_da_confermare": totale_importo
-        }
+            "totale_importo_da_confermare": totale_importo,
+            "anno_filtro": anno
+        },
+        "stats_per_anno": stats_per_anno
     }
 
 
