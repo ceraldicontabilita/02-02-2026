@@ -43,59 +43,11 @@ export default function GestioneDipendenti() {
   // Periodo state (per Libro Unico)
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
 
-  // Libro Unico state
-  const [libroUnicoSalaries, setLibroUnicoSalaries] = useState([]);
-  const [loadingLibroUnico, setLoadingLibroUnico] = useState(false);
-  const [uploadingLibroUnico, setUploadingLibroUnico] = useState(false);
-  const [libroUnicoResult, setLibroUnicoResult] = useState(null);
-  
-  // Libretti Sanitari state
-  const [libretti, setLibretti] = useState([]);
-  const [loadingLibretti, setLoadingLibretti] = useState(false);
-  const [showLibrettoForm, setShowLibrettoForm] = useState(false);
-  const [librettoFormData, setLibrettoFormData] = useState({
-    dipendente_nome: '',
-    numero_libretto: '',
-    data_rilascio: '',
-    data_scadenza: '',
-    note: ''
-  });
-
-  // Contratti state
-  const [contratti, setContratti] = useState([]);
-  const [loadingContratti, setLoadingContratti] = useState(false);
-  const [contrattiScadenze, setContrattiScadenze] = useState({ scaduti: [], in_scadenza: [] });
-  const [showContrattoForm, setShowContrattoForm] = useState(false);
-  const [contrattoFormData, setContrattoFormData] = useState({
-    dipendente_id: '',
-    tipo_contratto: 'tempo_determinato',
-    livello: '',
-    mansione: '',
-    retribuzione_lorda: '',
-    ore_settimanali: 40,
-    data_inizio: '',
-    data_fine: '',
-    ccnl: 'Turismo - Pubblici Esercizi'
-  });
-
   useEffect(() => {
     loadData();
     loadContractTypes();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, filterMansione]);
-
-  useEffect(() => {
-    // Prima Nota ora gestito da Zustand store nel componente PrimaNotaSalariTab
-    if (activeTab === 'libro-unico') {
-      loadLibroUnico();
-    } else if (activeTab === 'libretti') {
-      loadLibretti();
-    } else if (activeTab === 'contratti') {
-      loadContratti();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, selectedYear, selectedMonth]);
-
 
   const loadData = async () => {
     try {
