@@ -318,43 +318,6 @@ export default function GestioneDipendenti() {
     }
   };
 
-  // Ricalcola progressivi dal 2023 per il dipendente selezionato nel filtro
-  const handleRicalcolaProgressiviDal2023 = async () => {
-    // Usa il dipendente dal filtro in alto
-    const dipendenteDaUsare = filtroDipendente;
-    
-    if (!dipendenteDaUsare) {
-      alert('⚠️ Seleziona prima un dipendente dal filtro in alto');
-      return;
-    }
-    
-    if (!window.confirm(`Ricalcolare i progressivi dal 01/01/2023 per ${dipendenteDaUsare}?`)) {
-      return;
-    }
-    
-    try {
-      setRicalcolandoProgressivi(true);
-      // Chiama l'endpoint di ricalcolo con reset forzato
-      await api.post(`/api/prima-nota-salari/ricalcola-progressivi?anno_inizio=2023&dipendente=${encodeURIComponent(dipendenteDaUsare)}&force_reset=true`);
-      // Attiva filtro dal 2023
-      setFiltroAnnoDal2023(true);
-      // Reset filtri tabella per mostrare tutti i mesi/anni
-      setFiltroTabMese('');
-      setFiltroTabAnno('');
-      await loadPrimaNotaSalari();
-      alert(`✅ Progressivi ricalcolati dal 01/01/2023 per ${dipendenteDaUsare}`);
-    } catch (error) {
-      alert('Errore: ' + (error.response?.data?.detail || error.message));
-    } finally {
-      setRicalcolandoProgressivi(false);
-    }
-  };
-
-  // Reset filtro dal 2023
-  const handleResetFiltroDal2023 = () => {
-    setFiltroAnnoDal2023(false);
-  };
-
   // Aggiungi riga di aggiustamento saldo
   const handleAggiungiAggiustamento = async () => {
     if (!aggiustamentoData.dipendente) {
