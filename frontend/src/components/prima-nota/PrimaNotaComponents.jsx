@@ -328,63 +328,8 @@ export const ActionButtons = memo(function ActionButtons({
 });
 
 /**
- * Riga singola della tabella - Memoizzata
- */
-const SalarioRow = memo(function SalarioRow({ data, index, style, onDelete, onEdit }) {
-  const mov = data[index];
-  if (!mov) return null;
-  
-  const saldoColor = (mov.progressivo || 0) >= 0 ? '#22c55e' : '#ef4444';
-  
-  return (
-    <div
-      style={{
-        ...style,
-        display: 'grid',
-        gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 1fr 80px',
-        alignItems: 'center',
-        borderBottom: '1px solid #f1f5f9',
-        background: index % 2 === 0 ? 'white' : '#f8fafc',
-        padding: '0 12px'
-      }}
-    >
-      <div style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis' }}>
-        {mov.dipendente}
-      </div>
-      <div style={{ textAlign: 'center' }}>{mov.mese_nome || mov.mese}</div>
-      <div style={{ textAlign: 'center' }}>{mov.anno}</div>
-      <div style={{ textAlign: 'right', color: '#dc2626' }}>
-        {mov.importo_busta ? formatEuro(mov.importo_busta) : '-'}
-      </div>
-      <div style={{ textAlign: 'right', color: '#22c55e' }}>
-        {mov.importo_bonifico ? formatEuro(mov.importo_bonifico) : '-'}
-      </div>
-      <div style={{ textAlign: 'right', fontWeight: 'bold', color: saldoColor }}>
-        {formatEuro(mov.progressivo || 0)}
-      </div>
-      <div style={{ textAlign: 'center' }}>
-        <button
-          onClick={() => onDelete(mov.id)}
-          style={{
-            padding: '4px 8px',
-            background: '#fee2e2',
-            color: '#dc2626',
-            border: 'none',
-            borderRadius: 4,
-            cursor: 'pointer',
-            fontSize: 12
-          }}
-        >
-          🗑️
-        </button>
-      </div>
-    </div>
-  );
-});
-
-/**
- * Tabella virtualizzata per performance con liste lunghe
- * Nota: react-window v2 usa List con itemSize dinamico
+ * Tabella per performance con liste lunghe
+ * Usa scroll nativo con rendering ottimizzato
  */
 export const VirtualizedSalariTable = memo(function VirtualizedSalariTable({
   data,
