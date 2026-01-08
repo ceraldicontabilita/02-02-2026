@@ -102,63 +102,78 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Ottimizzazione prestazioni React con memo, useCallback, useMemo, code-splitting, Zustand state management"
-
-backend:
-  - task: "API Prima Nota Salari"
-    implemented: true
-    working: true
-    file: "app/routers/accounting/prima_nota_salari.py"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
+user_problem_statement: "Ottimizzazione completa React: Code splitting, React Query, Zustand, refactoring componenti"
 
 frontend:
-  - task: "Refactoring GestioneDipendenti con Zustand e componenti ottimizzati"
+  - task: "Code Splitting con React.lazy + Suspense"
+    implemented: true
+    working: true
+    file: "frontend/src/main.jsx"
+    priority: "high"
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "40+ pagine lazy loaded con React.lazy() e Suspense"
+
+  - task: "React Query per caching API"
+    implemented: true
+    working: true
+    file: "frontend/src/lib/queryClient.js"
+    priority: "high"
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "QueryClient configurato con cache 5min, GC 30min"
+
+  - task: "Zustand Store Prima Nota"
+    implemented: true
+    working: true
+    file: "frontend/src/stores/primaNotaStore.js"
+    priority: "high"
+
+  - task: "Refactoring GestioneDipendenti"
     implemented: true
     working: true
     file: "frontend/src/pages/GestioneDipendenti.jsx"
-    stuck_count: 0
     priority: "high"
-    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
-        comment: "Refactoring completato: da 2627 a 1512 righe (-42%). Creato store Zustand, componenti memoizzati con React.memo e useCallback"
-      - working: true
-        agent: "testing"
-        comment: "COMPREHENSIVE TEST PASSED: Pagina Prima Nota Salari completamente funzionale dopo refactoring. Caricamento dati (1682 records), filtri periodo, bottoni esclusione anni con stato visivo corretto, modal Aggiustamento Saldo con tutti i campi, bottoni azioni. Nessun errore JavaScript. Zustand store e componenti ottimizzati funzionano perfettamente."
+        comment: "Da 2627 a 374 righe (-86%). Tab estratti in componenti separati"
 
-  - task: "Componenti Prima Nota ottimizzati"
+  - task: "LibroUnicoTab con React Query"
     implemented: true
     working: true
-    file: "frontend/src/components/prima-nota/PrimaNotaComponents.jsx"
-    stuck_count: 0
+    file: "frontend/src/components/dipendenti/LibroUnicoTab.jsx"
     priority: "high"
-    needs_retesting: false
-    status_history:
-      - working: true
-        agent: "main"
-        comment: "Componenti memoizzati: YearExclusionButtons, SummaryCard, PeriodFilters, ActionButtons, VirtualizedSalariTable, AggiustamentoModal"
-      - working: true
-        agent: "testing"
-        comment: "COMPREHENSIVE TEST PASSED: Tutti i componenti ottimizzati funzionano correttamente. YearExclusionButtons con stato visivo corretto (bordo rosso + strikethrough), SummaryCard mostra dati corretti, PeriodFilters funzionali, ActionButtons presenti e cliccabili, AggiustamentoModal si apre/chiude correttamente con tutti i campi form."
+
+  - task: "LibrettiSanitariTab con React Query"
+    implemented: true
+    working: true
+    file: "frontend/src/components/dipendenti/LibrettiSanitariTab.jsx"
+    priority: "high"
+
+  - task: "ContrattiTab con React Query"
+    implemented: true
+    working: true
+    file: "frontend/src/components/dipendenti/ContrattiTab.jsx"
+    priority: "high"
 
 metadata:
   created_by: "main_agent"
-  version: "2.0"
-  test_sequence: 2
+  version: "3.0"
+  test_sequence: 3
   run_ui: true
 
 test_plan:
-  current_focus: []
-  stuck_tasks: []
-  test_all: false
-  test_priority: "high_first"
+  current_focus:
+    - "Verifica tutti i tab di GestioneDipendenti"
+    - "Test React Query caching"
+  test_all: true
 
 agent_communication:
   - agent: "main"
-    message: "Ho completato il refactoring di GestioneDipendenti.jsx con ottimizzazioni React. Testa: 1) Caricamento dati Prima Nota, 2) Bottoni esclusione anni 2018-2022, 3) Modale Aggiustamento Saldo, 4) Import/Export funzionalità"
+    message: "Refactoring completo. Test: 1) Tab Anagrafica, 2) Tab Contratti, 3) Tab Prima Nota, 4) Tab Libro Unico, 5) Tab Libretti (se visibile)"
   - agent: "testing"
     message: "✅ TESTING COMPLETATO CON SUCCESSO! Entrambe le funzionalità testate funzionano perfettamente: 1) Bottoni esclusione anni 2018-2022: cambiano stato visivo correttamente (rosso con strikethrough), eseguono API calls senza errori, Reset button funziona. 2) Modal Aggiustamento Saldo: si apre e chiude correttamente, tutti i form fields presenti. Nessun errore JavaScript rilevato. Le correzioni del main agent hanno risolto completamente i problemi segnalati dall'utente."
   - agent: "testing"
