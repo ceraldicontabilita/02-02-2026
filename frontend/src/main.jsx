@@ -116,6 +116,9 @@ const AdminPage = lazy(() => import("./pages/Admin.jsx"));
 const MetodiPagamento = lazy(() => import("./pages/MetodiPagamento.jsx"));
 const GestioneRiservata = lazy(() => import("./pages/GestioneRiservata.jsx"));
 
+// Previsioni Acquisti
+const PrevisioniAcquisti = lazy(() => import("./pages/PrevisioniAcquisti.jsx"));
+
 // Wrapper component with Suspense
 const LazyPage = ({ children }) => (
   <Suspense fallback={<PageLoader />}>
@@ -195,6 +198,8 @@ const router = createBrowserRouter([
       { path: "registro-lotti", element: <LazyPage><RegistroLotti /></LazyPage> },
       { path: "magazzino-dv", element: <LazyPage><MagazzinoDoppiaVerita /></LazyPage> },
       { path: "utile-obiettivo", element: <LazyPage><UtileObiettivo /></LazyPage> },
+      // Previsioni Acquisti
+      { path: "previsioni-acquisti", element: <LazyPage><PrevisioniAcquisti /></LazyPage> },
     ],
   },
 ]);
