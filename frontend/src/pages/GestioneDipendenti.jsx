@@ -46,6 +46,10 @@ export default function GestioneDipendenti() {
   useEffect(() => {
     loadData();
     loadContractTypes();
+  }, []); // Load on mount
+  
+  useEffect(() => {
+    loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, filterMansione]);
 
