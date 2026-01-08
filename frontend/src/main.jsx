@@ -191,6 +191,7 @@ const router = createBrowserRouter([
       { path: "commercialista", element: <LazyPage><Commercialista /></LazyPage> },
       { path: "bilancio", element: <LazyPage><Bilancio /></LazyPage> },
       { path: "contabilita", element: <LazyPage><ContabilitaAvanzata /></LazyPage> },
+      { path: "cespiti", element: <LazyPage><GestioneCespiti /></LazyPage> },
       { path: "regole-categorizzazione", element: <LazyPage><RegoleCategorizzazione /></LazyPage> },
       { path: "dizionario-articoli", element: <LazyPage><DizionarioArticoli /></LazyPage> },
       { path: "scadenze", element: <LazyPage><Scadenze /></LazyPage> },
