@@ -158,9 +158,7 @@ metadata:
   run_ui: true
 
 test_plan:
-  current_focus:
-    - "Bottoni esclusione anni 2018-2022"
-    - "Modale Aggiusta Saldo chiusura"
+  current_focus: []
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
