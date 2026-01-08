@@ -4,7 +4,10 @@ import {
   DipendenteTable, 
   DipendenteDetailModal, 
   DipendenteNewModal, 
-  DEFAULT_DIPENDENTE 
+  DEFAULT_DIPENDENTE,
+  LibroUnicoTab,
+  LibrettiSanitariTab,
+  ContrattiTab
 } from '../components/dipendenti';
 import { PrimaNotaSalariTab } from '../components/prima-nota';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
@@ -12,7 +15,7 @@ import { formatEuro } from '../lib/utils';
 
 /**
  * Pagina Gestione Dipendenti - Ristrutturata con ottimizzazioni
- * Tab: Anagrafica | Prima Nota Salari | Libro Unico | Libretti Sanitari
+ * Tab: Anagrafica | Prima Nota Salari | Libro Unico | Libretti Sanitari | Contratti
  */
 export default function GestioneDipendenti() {
   const { anno: selectedYear, setAnno: setSelectedYear } = useAnnoGlobale();
