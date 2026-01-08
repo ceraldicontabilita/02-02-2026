@@ -115,6 +115,9 @@ frontend:
       - working: true
         agent: "main"
         comment: "Issue P0 RISOLTA: i tab usano React Query per caricare dipendenti indipendentemente. Dropdown ora ha 23 opzioni (22 dipendenti + placeholder)"
+      - working: true
+        agent: "testing"
+        comment: "✅ BACKEND VERIFICATO: API /dipendenti restituisce correttamente 22 dipendenti. Frontend dovrebbe avere 23 opzioni (22 + placeholder). Richiede test frontend per conferma completa."
 
   - task: "Pagina Previsioni Acquisti"
     implemented: true
@@ -126,6 +129,9 @@ frontend:
       - working: true
         agent: "main"
         comment: "3 metodologie implementate: medie giornaliere/settimanali, confronto anno corrente vs precedente con trend, previsioni acquisti con costo stimato"
+      - working: true
+        agent: "testing"
+        comment: "✅ BACKEND VERIFICATO: API /previsioni-acquisti/statistiche e /previsioni-acquisti/previsioni funzionano correttamente per anno 2025. Frontend dovrebbe mostrare dati statistiche e costo stimato ~€13.000. Richiede test frontend per conferma UI."
 
 backend:
   - task: "Refactoring Router Backend"
