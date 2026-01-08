@@ -254,6 +254,18 @@ export default function OperazioniDaConfermare() {
                               In anagrafica
                             </span>
                           )}
+                          {isRiconciliato && (
+                            <span style={{ 
+                              padding: '2px 8px', 
+                              background: '#22c55e', 
+                              borderRadius: 4, 
+                              fontSize: 10,
+                              color: 'white',
+                              fontWeight: 'bold'
+                            }}>
+                              ✓ RICONCILIATO
+                            </span>
+                          )}
                         </div>
                         <div style={{ display: 'flex', gap: 24, fontSize: 14, color: '#64748b' }}>
                           <span><strong>Fattura:</strong> {op.numero_fattura}</span>
@@ -267,7 +279,7 @@ export default function OperazioniDaConfermare() {
                           </span>
                         </div>
                         {/* Metodo proposto */}
-                        <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                           <span style={{ fontSize: 12, color: '#94a3b8' }}>Metodo proposto:</span>
                           <span style={{
                             padding: '4px 8px',
@@ -283,6 +295,23 @@ export default function OperazioniDaConfermare() {
                             <MetodoIcon size={12} />
                             {op.metodo_pagamento_proposto?.toUpperCase()}
                           </span>
+                          {op.numero_assegno && (
+                            <span style={{
+                              padding: '4px 8px',
+                              borderRadius: 4,
+                              background: '#fef3c7',
+                              color: '#d97706',
+                              fontSize: 12,
+                              fontWeight: 'bold'
+                            }}>
+                              Assegno #{op.numero_assegno}
+                            </span>
+                          )}
+                          {isRiconciliato && op.estratto_conto_match && (
+                            <span style={{ fontSize: 11, color: '#64748b', marginLeft: 8 }}>
+                              📄 {op.estratto_conto_match.descrizione?.slice(0, 40)}...
+                            </span>
+                          )}
                         </div>
                       </div>
 
