@@ -310,69 +310,19 @@ async def calcola_ammortamenti_anno(anno: int) -> Dict[str, Any]:
 
 
 @router.get("/{cespite_id}")
-async def calcola_ammortamenti_anno(anno: int) -> Dict[str, Any]:
-    """
-    Calcola ammortamenti per tutti i cespiti attivi per l'anno.
-    NON registra, solo preview.
-    """
+async def get_cespite(cespite_id: str) -> Dict[str, Any]:
+    """Dettaglio singolo cespite con piano ammortamento."""
     db = Database.get_db()
     
-    cespiti = await db["cespiti"].find(
-        {"stato": "attivo", "ammortamento_completato": False},
+    cespite = await db["cespiti"].find_one(
+        {"id": cespite_id},
         {"_id": 0}
-    ).to_list(1000)
+    )
     
-    ammortamenti = []
-    totale = 0
+    if not cespite:
+        raise HTTPException(status_code=404, detail="Cespite non trovato")
     
-    for cespite in cespiti:
-        valore = cespite["valore_acquisto"]
-        coeff = cespite["coefficiente_ammortamento"]
-        fondo = cespite.get("fondo_ammortamento", 0)
-        anno_acquisto = cespite["anno_acquisto"]
-        
-        # Verifica se già ammortizzato per quest'anno
-        piano = cespite.get("piano_ammortamento", [])
-        gia_ammortizzato = any(p.get("anno") == anno for p in piano)
-        
-        if gia_ammortizzato:
-            continue
-        
-        # Quota ordinaria
-        quota_ordinaria = valore * coeff / 100
-        
-        # Primo anno: dimezzata (prassi fiscale)
-        if anno == anno_acquisto:
-            quota = quota_ordinaria / 2
-        else:
-            quota = quota_ordinaria
-        
-        # Non superare valore residuo
-        valore_residuo = valore - fondo
-        quota = min(quota, valore_residuo)
-        
-        if quota > 0:
-            ammortamenti.append({
-                "cespite_id": cespite["id"],
-                "descrizione": cespite["descrizione"],
-                "categoria": cespite["categoria"],
-                "valore_acquisto": valore,
-                "fondo_precedente": round(fondo, 2),
-                "quota_anno": round(quota, 2),
-                "nuovo_fondo": round(fondo + quota, 2),
-                "nuovo_residuo": round(valore_residuo - quota, 2),
-                "completato": (valore_residuo - quota) <= 0.01,
-                "primo_anno": anno == anno_acquisto
-            })
-            totale += quota
-    
-    return {
-        "anno": anno,
-        "preview": True,
-        "ammortamenti": ammortamenti,
-        "totale_ammortamenti": round(totale, 2),
-        "num_cespiti": len(ammortamenti)
-    }
+    return cespite
 
 
 @router.post("/registra/{anno}")
