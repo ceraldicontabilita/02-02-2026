@@ -102,38 +102,55 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Implementazione sistema Operazioni da Confermare per fatture ricevute via email Aruba, con separazione per anno fiscale"
+user_problem_statement: "1) Risolvere Issue P0 dropdown dipendenti vuoto. 2) Completare funzionalità Previsioni Acquisti con 3 metodologie"
 
 frontend:
-  - task: "Pagina Operazioni da Confermare"
+  - task: "Dropdown Dipendenti in Contratti e Libretti"
     implemented: true
     working: true
-    file: "frontend/src/pages/OperazioniDaConfermare.jsx"
-    priority: "high"
-    needs_retesting: false
+    file: "frontend/src/components/dipendenti/ContrattiTab.jsx, LibrettiSanitariTab.jsx"
+    priority: "critical"
+    needs_retesting: true
     status_history:
       - working: true
         agent: "main"
-        comment: "Implementato: parser email Aruba, lista operazioni con filtro anno, pulsanti CASSA/BANCA/ASSEGNO, inserimento Prima Nota e Gestione Assegni"
+        comment: "Risolto Issue P0: i tab ContrattiTab e LibrettiSanitariTab ora usano React Query per caricare dipendenti indipendentemente dal parent, eliminando il problema del dropdown vuoto"
+
+  - task: "Pagina Previsioni Acquisti"
+    implemented: true
+    working: true
+    file: "frontend/src/pages/PrevisioniAcquisti.jsx"
+    priority: "high"
+    needs_retesting: true
+    status_history:
       - working: true
-        agent: "testing"
-        comment: "TESTING COMPLETATO CON SUCCESSO: Tutti i test richiesti verificati. 1) Caricamento Anno 2026 con statistiche corrette (10 Da Confermare, 3 Confermate, €254,56). 2) Distribuzione per anno con chips 2026/2025 e evidenziazione corretta. 3) Cambio anno a 2025 funzionante (119 Da Confermare, €92.006,82, date 2025-12-XX). 4) Conferma BANCA funzionante. 5) Conferma ASSEGNO con modal e numero #12345 funzionante. 6) Pulsante Sync Email Aruba presente e stilizzato correttamente. Nessun errore JavaScript. Tutte le funzionalità implementate e operative."
+        agent: "main"
+        comment: "Implementate 3 metodologie: 1) Statistiche con medie giornaliere/settimanali, 2) Confronto anno corrente vs precedente con trend, 3) Previsioni acquisti con costo stimato. Route aggiunta a main.jsx, voce menu in App.jsx"
+
+backend:
+  - task: "API Previsioni Acquisti"
+    implemented: true
+    working: true
+    file: "app/routers/previsioni_acquisti.py"
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Endpoint funzionanti: GET /statistiche, GET /previsioni, POST /popola-storico, GET /confronto-ordine. Database pulito, collezione acquisti_prodotti con 18858 record da 3376 fatture"
 
 metadata:
   created_by: "main_agent"
-  version: "5.0"
-  test_sequence: 5
+  version: "6.0"
+  test_sequence: 6
   run_ui: true
 
 test_plan:
   current_focus:
-    - "Pagina Operazioni da Confermare - verifica flusso completo"
+    - "Verifica dropdown dipendenti in tab Contratti e Libretti Sanitari"
+    - "Verifica pagina Previsioni Acquisti con tutte le funzionalità"
   test_all: false
 
 agent_communication:
   - agent: "main"
-    message: "Implementato sistema Operazioni da Confermare. TEST DA FARE: 1) Vai a /operazioni-da-confermare, 2) Verifica anno 2026 selezionato mostra 12 fatture da confermare, 3) Cambia anno a 2025, verifica 119 fatture, 4) Seleziona una fattura e clicca BANCA per confermarla, 5) Clicca ASSEGNO su un'altra e inserisci numero assegno, 6) Verifica che le confermate appaiano nella sezione 'Confermate'"
-  - agent: "testing"
-    message: "TESTING COMPLETATO CON SUCCESSO: Tutti i test richiesti sono stati eseguiti e verificati. La pagina Documenti funziona correttamente con tutte le nuove funzionalità implementate: 1) Caricamento pagina senza errori JavaScript, 2) KPI cards presenti e funzionanti, 3) Pannello Impostazioni si apre correttamente, 4) Periodo default 10 giorni verificato, 5) Tutte le opzioni periodo presenti (10, 30, 60, 90 giorni, 6 mesi, anno, 2 anni), 6) Parole chiave predefinite presenti e selezionabili, 7) Funzionalità F24 selezione/deselezione testata, 8) Campo keyword personalizzate funzionante con aggiunta 'Test Keyword', 9) Sezione custom keywords con checkbox e pulsante elimina, 10) Warning per nessuna keyword selezionata presente, 11) Pulsante download presente. Background download non testato per evitare elaborazione email reale. Tutte le funzionalità richieste sono implementate e funzionanti."
-  - agent: "testing"
-    message: "TESTING OPERAZIONI DA CONFERMARE COMPLETATO CON SUCCESSO: Tutti i test richiesti per la nuova pagina sono stati eseguiti e verificati. 1) ✅ Caricamento pagina con Anno 2026: pagina carica correttamente, badge 'Anno 2026' presente, statistiche mostrano 10 Da Confermare e 3 Confermate con totale €254,56. 2) ✅ Distribuzione per anno: barra azzurra 'Fatture per anno' presente con chips 2026 (10 da conf./13 tot.) e 2025 (119 da conf./119 tot.), chip 2026 evidenziato con sfondo blu. 3) ✅ Cambio anno a 2025: selettore funziona, badge diventa 'Anno 2025', statistiche aggiornate a 119 Da Confermare con €92.006,82 totale, fatture mostrano date 2025-12-XX. 4) ✅ Conferma BANCA: pulsante funziona correttamente, fattura viene confermata. 5) ✅ Conferma ASSEGNO: modal 'Inserisci Numero Assegno' si apre, inserimento numero 12345 funziona, conferma completata e appare 'ASSEGNO #12345' nella sezione Confermate. 6) ✅ Sync Email Aruba: pulsante presente con stile viola corretto. Nessun errore JavaScript rilevato. Tutte le funzionalità implementate e funzionanti."
+    message: "COMPLETATI 2 TASK PRINCIPALI: 1) Issue P0 RISOLTO - dropdown dipendenti ora funziona usando React Query. 2) Previsioni Acquisti COMPLETO con 3 metodologie. TEST DA FARE: A) Vai a /dipendenti, tab Contratti, clicca 'Nuovo Contratto' e verifica dropdown Dipendente popolato. B) Tab Libretti, clicca 'Nuovo Libretto' e verifica dropdown. C) Vai a /previsioni-acquisti, verifica statistiche 2025 con medie e trend. D) Tab Previsioni, verifica costo stimato e lista prodotti."
