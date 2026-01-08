@@ -223,15 +223,16 @@ export default function OperazioniDaConfermare() {
               {operazioni.filter(o => o.stato === 'da_confermare').map(op => {
                 const metodoProposto = getMetodoStyle(op.metodo_pagamento_proposto);
                 const MetodoIcon = metodoProposto.icon;
+                const isRiconciliato = op.riconciliato_auto;
                 
                 return (
                   <div 
                     key={op.id}
                     style={{
                       padding: 16,
-                      background: '#f8fafc',
+                      background: isRiconciliato ? '#f0fdf4' : '#f8fafc',
                       borderRadius: 12,
-                      border: '1px solid #e2e8f0'
+                      border: isRiconciliato ? '2px solid #22c55e' : '1px solid #e2e8f0'
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 }}>
