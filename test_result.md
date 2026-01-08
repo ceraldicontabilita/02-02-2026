@@ -107,25 +107,33 @@ user_problem_statement: "1) Risolvere Issue P0 dropdown dipendenti vuoto. 2) Com
 frontend:
   - task: "Dropdown Dipendenti in Contratti e Libretti"
     implemented: true
-    working: true
+    working: false
     file: "frontend/src/components/dipendenti/ContrattiTab.jsx, LibrettiSanitariTab.jsx"
     priority: "critical"
-    needs_retesting: true
+    needs_retesting: false
+    stuck_count: 1
     status_history:
       - working: true
         agent: "main"
         comment: "Risolto Issue P0: i tab ContrattiTab e LibrettiSanitariTab ora usano React Query per caricare dipendenti indipendentemente dal parent, eliminando il problema del dropdown vuoto"
+      - working: false
+        agent: "testing"
+        comment: "CRITICAL ISSUE: Pagina /dipendenti mostra spinner di caricamento infinito. Backend API /api/dipendenti funziona (restituisce 22+ dipendenti), ma React Query non risolve le chiamate. Impossibile testare dropdown perché pagina non carica completamente. Problema di integrazione frontend-backend."
 
   - task: "Pagina Previsioni Acquisti"
     implemented: true
-    working: true
+    working: false
     file: "frontend/src/pages/PrevisioniAcquisti.jsx"
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
+    stuck_count: 1
     status_history:
       - working: true
         agent: "main"
         comment: "Implementate 3 metodologie: 1) Statistiche con medie giornaliere/settimanali, 2) Confronto anno corrente vs precedente con trend, 3) Previsioni acquisti con costo stimato. Route aggiunta a main.jsx, voce menu in App.jsx"
+      - working: false
+        agent: "testing"
+        comment: "CRITICAL ISSUE: Pagina /previsioni-acquisti mostra spinner di caricamento infinito. Backend API /api/previsioni-acquisti/statistiche funziona (restituisce dati reali con prodotti come CAT.A UOVA FRESCHE, FARINA 00 CAPUTO, etc.), ma React Query non risolve le chiamate. Problema di integrazione frontend-backend."
 
 backend:
   - task: "API Previsioni Acquisti"
