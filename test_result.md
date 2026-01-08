@@ -162,6 +162,11 @@ frontend:
     working: true
     file: "frontend/src/components/dipendenti/ContrattiTab.jsx"
     priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "SUCCESS: Header viola 'Gestione Contratti', bottoni 'Importa Excel' e 'Nuovo Contratto' funzionanti, modal si apre/chiude correttamente"
 
 metadata:
   created_by: "main_agent"
