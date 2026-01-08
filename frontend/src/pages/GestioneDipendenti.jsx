@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo, useCallback } from 'react';
 import api from '../api';
 import { 
   DipendenteTable, 
@@ -6,11 +6,12 @@ import {
   DipendenteNewModal, 
   DEFAULT_DIPENDENTE 
 } from '../components/dipendenti';
+import { PrimaNotaSalariTab } from '../components/prima-nota';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
 import { formatEuro } from '../lib/utils';
 
 /**
- * Pagina Gestione Dipendenti - Ristrutturata
+ * Pagina Gestione Dipendenti - Ristrutturata con ottimizzazioni
  * Tab: Anagrafica | Prima Nota Salari | Libro Unico | Libretti Sanitari
  */
 export default function GestioneDipendenti() {
