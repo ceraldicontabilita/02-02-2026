@@ -72,7 +72,7 @@ export default function GestioneCespiti() {
     try {
       setLoading(true);
       const [cespitiRes, riepilogoRes] = await Promise.all([
-        api.get('/api/cespiti?attivi=true'),
+        api.get('/api/cespiti/?attivi=true'),
         api.get('/api/cespiti/riepilogo')
       ]);
       setCespiti(cespitiRes.data);
@@ -127,7 +127,7 @@ export default function GestioneCespiti() {
       return;
     }
     try {
-      await api.post('/api/cespiti', {
+      await api.post('/api/cespiti/', {
         ...nuovoCespite,
         valore_acquisto: parseFloat(nuovoCespite.valore_acquisto)
       });
