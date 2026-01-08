@@ -130,6 +130,11 @@ frontend:
     working: true
     file: "frontend/src/stores/primaNotaStore.js"
     priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "SUCCESS: Filtri periodo funzionanti, bottoni esclusione anni 2018-2022 con cambio stato visivo, card riepilogo arancione presente"
 
   - task: "Refactoring GestioneDipendenti"
     implemented: true
