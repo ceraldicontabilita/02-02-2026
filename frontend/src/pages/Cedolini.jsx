@@ -4,7 +4,6 @@ import { useAnnoGlobale } from '../contexts/AnnoContext';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
 import { 
   Select, 
   SelectContent, 
@@ -24,6 +23,11 @@ import {
   Building2,
   Wallet
 } from 'lucide-react';
+
+// Simple Label component
+const Label = ({ children, className = '' }) => (
+  <label className={`text-sm font-medium leading-none ${className}`}>{children}</label>
+);
 
 const MESI = [
   { value: 1, label: 'Gennaio' },
