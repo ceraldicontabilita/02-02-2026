@@ -871,6 +871,29 @@ export default function Fatture() {
                 </select>
               </div>
               
+              {/* Mostra numeri assegni se pre-compilati */}
+              {selectedInvoice.metodo_pagamento === "assegno" && selectedInvoice.numeri_assegni && (
+                <div style={{ 
+                  padding: "8px 12px", 
+                  background: "#fff3e0", 
+                  borderRadius: 8,
+                  border: "1px solid #ffb74d",
+                  marginTop: 8
+                }}>
+                  <div style={{ fontSize: 12, color: "#e65100", fontWeight: "bold" }}>
+                    📝 Numeri Assegni (da estratto conto):
+                  </div>
+                  <div style={{ fontSize: 14, fontWeight: "bold", color: "#f57c00" }}>
+                    #{selectedInvoice.numeri_assegni}
+                  </div>
+                  {selectedInvoice.riconciliazione_assegni?.tipo === "multiplo" && (
+                    <div style={{ fontSize: 11, color: "#666", marginTop: 4 }}>
+                      ⚠️ Pagamento con {selectedInvoice.riconciliazione_assegni.num_assegni} assegni
+                    </div>
+                  )}
+                </div>
+              )}
+              
               <div style={{ display: "flex", gap: 10, alignItems: "flex-end" }}>
                 {/* Stato Pagamento */}
                 <div style={{ 
