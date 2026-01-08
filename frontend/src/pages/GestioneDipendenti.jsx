@@ -81,7 +81,7 @@ export default function GestioneDipendenti() {
     try {
       const data = {
         ...newDipendente,
-        nome_completo: newDipendente.nome_completo || `${newDipendente.nome} ${newDipendente.cognome}`.trim()
+        nome_completo: newDipendente.nome_completo || `${newDipendente.cognome || ''} ${newDipendente.nome || ''}`.trim()
       };
       await api.post('/api/dipendenti', data);
       setShowForm(false);
