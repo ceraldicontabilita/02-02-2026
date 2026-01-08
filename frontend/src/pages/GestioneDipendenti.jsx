@@ -118,6 +118,20 @@ export default function GestioneDipendenti() {
     }
   };
 
+  const loadLibroUnico = async () => {
+    try {
+      setLoadingLibroUnico(true);
+      const monthStr = String(selectedMonth).padStart(2, '0');
+      const monthYear = `${selectedYear}-${monthStr}`;
+      const res = await api.get(`/api/dipendenti/libro-unico/salaries?month_year=${monthYear}`).catch(() => ({ data: [] }));
+      setLibroUnicoSalaries(res.data || []);
+    } catch (error) {
+      console.error('Error loading libro unico:', error);
+      setLibroUnicoSalaries([]);
+    } finally {
+      setLoadingLibroUnico(false);
+    }
+  };
 
   const handleUploadLibroUnico = async (e) => {
     const file = e.target.files[0];
