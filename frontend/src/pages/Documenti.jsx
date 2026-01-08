@@ -453,39 +453,6 @@ export default function Documenti() {
                       {paroleChiaveSelezionate.includes(kw.id) ? '✓ ' : ''}{kw.label}
                     </button>
                   ))}
-                  {customKeywords.map(kw => (
-                    <div key={kw.id} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <button
-                        onClick={() => toggleKeyword(kw.id)}
-                        style={{
-                          padding: '6px 12px',
-                          borderRadius: 20,
-                          border: paroleChiaveSelezionate.includes(kw.id) ? '2px solid #10b981' : '1px solid #e2e8f0',
-                          background: paroleChiaveSelezionate.includes(kw.id) ? '#dcfce7' : '#f0fdf4',
-                          color: paroleChiaveSelezionate.includes(kw.id) ? '#166534' : '#64748b',
-                          cursor: 'pointer',
-                          fontSize: 13,
-                          fontWeight: paroleChiaveSelezionate.includes(kw.id) ? 'bold' : 'normal'
-                        }}
-                      >
-                        {paroleChiaveSelezionate.includes(kw.id) ? '✓ ' : ''}{kw.label}
-                      </button>
-                      <button
-                        onClick={() => removeCustomKeyword(kw.id)}
-                        style={{
-                          padding: '2px 6px',
-                          borderRadius: 4,
-                          border: 'none',
-                          background: '#fee2e2',
-                          color: '#dc2626',
-                          cursor: 'pointer',
-                          fontSize: 12
-                        }}
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ))}
                 </div>
                 
                 {/* Aggiungi nuova parola chiave con varianti */}
