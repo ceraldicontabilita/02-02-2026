@@ -93,6 +93,7 @@ const Bilancio = lazy(() => import("./pages/Bilancio.jsx"));
 const ContabilitaAvanzata = lazy(() => import("./pages/ContabilitaAvanzata.jsx"));
 const PianoDeiConti = lazy(() => import("./pages/PianoDeiConti.jsx"));
 const Commercialista = lazy(() => import("./pages/Commercialista.jsx"));
+const GestioneCespiti = lazy(() => import("./pages/GestioneCespiti.jsx"));
 const RegoleCategorizzazione = lazy(() => import("./pages/RegoleCategorizzazione.jsx"));
 
 // Contabilità Analitica
