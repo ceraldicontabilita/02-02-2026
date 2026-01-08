@@ -91,7 +91,7 @@ export default function GestioneDipendenti() {
       loadContratti();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, selectedYear]);
+  }, [activeTab, selectedYear, selectedMonth]);
 
 
   const loadData = async () => {
