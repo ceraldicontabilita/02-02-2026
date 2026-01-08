@@ -39,8 +39,8 @@ class BudgetMensileInput(BaseModel):
 
 @router.get("/costi-ricavi")
 async def get_analisi_costi_ricavi(
-    anno: int = Query(...),
-    mese: int = Query(None)
+    anno: int,
+    mese: int = None
 ) -> Dict[str, Any]:
     """
     Analisi dettagliata costi e ricavi.
