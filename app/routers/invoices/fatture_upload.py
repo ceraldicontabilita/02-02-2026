@@ -2,14 +2,16 @@
 Fatture XML Upload Router - Gestione upload fatture elettroniche.
 Supporta upload singolo XML, multiplo XML e file ZIP.
 Include popolamento automatico tracciabilità HACCP.
+Include riconciliazione automatica con estratto conto per numeri assegni.
 """
 from fastapi import APIRouter, HTTPException, UploadFile, File, Query, Body
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta
 import uuid
 import logging
 import zipfile
 import io
+import re
 
 from app.database import Database, Collections
 from app.parsers.fattura_elettronica_parser import parse_fattura_xml
@@ -18,6 +20,111 @@ from app.services.tracciabilita_auto import popola_tracciabilita_da_fattura
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+
+async def find_check_numbers_for_invoice(db, importo: float, data_fattura: str, fornitore: str) -> Optional[Dict[str, Any]]:
+    """
+    Cerca nell'estratto conto i numeri degli assegni che corrispondono all'importo della fattura.
+    
+    Returns:
+        Dict con numeri assegni trovati o None
+    """
+    try:
+        if not importo or importo <= 0:
+            return None
+        
+        # Tolleranza importo
+        importo_min = importo - 1.0
+        importo_max = importo + 1.0
+        
+        # Range date (90 giorni prima e dopo la data fattura)
+        data_min = None
+        data_max = None
+        if data_fattura:
+            try:
+                data_doc = datetime.strptime(data_fattura, "%Y-%m-%d")
+                data_min = (data_doc - timedelta(days=90)).strftime("%Y-%m-%d")
+                data_max = (data_doc + timedelta(days=90)).strftime("%Y-%m-%d")
+            except:
+                pass
+        
+        # Cerca match singolo per importo
+        query = {
+            "tipo": "uscita",
+            "descrizione": {"$regex": "assegno", "$options": "i"},
+            "$or": [
+                {"importo": {"$gte": importo_min, "$lte": importo_max}},
+                {"importo": {"$gte": -importo_max, "$lte": -importo_min}}
+            ]
+        }
+        if data_min and data_max:
+            query["data"] = {"$gte": data_min, "$lte": data_max}
+        
+        match = await db["estratto_conto"].find_one(query, {"_id": 0})
+        
+        if match:
+            # Estrai numero assegno dalla descrizione
+            descrizione = match.get("descrizione", "")
+            numero_assegno = None
+            
+            patterns = [
+                r'NUM:\s*(\d+)',
+                r'ASSEGNO\s*N\.?\s*(\d+)',
+                r'ASS\.?\s*N?\.?\s*(\d+)',
+            ]
+            for pattern in patterns:
+                m = re.search(pattern, descrizione, re.IGNORECASE)
+                if m:
+                    numero_assegno = m.group(1)
+                    break
+            
+            if numero_assegno:
+                return {
+                    "tipo": "singolo",
+                    "numero_assegno": numero_assegno,
+                    "descrizione": descrizione,
+                    "data": match.get("data"),
+                    "importo": abs(match.get("importo", 0))
+                }
+        
+        # Se non trovato singolo, cerca combinazione assegni multipli
+        from itertools import combinations
+        
+        query_multi = {
+            "descrizione": {"$regex": "assegno", "$options": "i"}
+        }
+        if data_min and data_max:
+            query_multi["data"] = {"$gte": data_min, "$lte": data_max}
+        
+        assegni = await db["estratto_conto"].find(query_multi, {"_id": 0}).limit(50).to_list(50)
+        
+        if len(assegni) >= 2:
+            for num in [2, 3, 4]:
+                for combo in combinations(assegni, num):
+                    somma = sum(abs(a.get("importo", 0)) for a in combo)
+                    if importo_min <= somma <= importo_max:
+                        numeri = []
+                        for a in combo:
+                            for pattern in patterns:
+                                m = re.search(pattern, a.get("descrizione", ""), re.IGNORECASE)
+                                if m:
+                                    numeri.append(m.group(1))
+                                    break
+                        
+                        if numeri:
+                            return {
+                                "tipo": "multiplo",
+                                "numeri_assegni": numeri,
+                                "numero_assegno": ", ".join(numeri),
+                                "num_assegni": len(combo),
+                                "somma": somma
+                            }
+        
+        return None
+        
+    except Exception as e:
+        logger.error(f"Errore ricerca assegni per fattura: {e}")
+        return None
 
 
 async def ensure_supplier_exists(db, parsed_invoice: Dict[str, Any]) -> Dict[str, Any]:
