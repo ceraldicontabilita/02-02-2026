@@ -306,7 +306,13 @@ export default function GestioneDipendenti() {
 
 
       {/* TAB: Contratti - Componente Ottimizzato */}
-      {activeTab === 'contratti' && <ContrattiTab dipendenti={dipendenti} />}
+      {activeTab === 'contratti' && (
+        loading ? (
+          <div style={{ padding: 40, textAlign: 'center', color: '#6b7280' }}>⏳ Caricamento dipendenti...</div>
+        ) : (
+          <ContrattiTab dipendenti={dipendenti} />
+        )
+      )}
 
       {/* TAB: Prima Nota Salari - Componente Ottimizzato */}
       {activeTab === 'salari' && <PrimaNotaSalariTab />}
