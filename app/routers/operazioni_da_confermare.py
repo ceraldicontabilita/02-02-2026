@@ -323,3 +323,97 @@ async def check_fattura_esistente(
             "banca_id": in_banca.get("id") if in_banca else None
         }
     }
+
+
+
+@router.post("/riconciliazione-batch")
+async def riconciliazione_batch(
+    anno: int = Query(..., description="Anno da riconciliare"),
+    dry_run: bool = Query(True, description="Se True, simula senza modificare")
+) -> Dict[str, Any]:
+    """
+    Riconciliazione batch retroattiva.
+    Tenta di associare automaticamente le fatture XML agli estratti conto.
+    """
+    from app.services.aruba_invoice_parser import find_bank_match, find_multiple_checks_match, determine_payment_method
+    
+    db = Database.get_db()
+    
+    # Recupera fatture XML dell'anno non ancora riconciliate
+    fatture = await db["invoices"].find({
+        "invoice_date": {"$regex": f"^{anno}"},
+        "tipo_documento": {"$nin": ["TD01", "TD04", "TD24", "TD26"]},  # Solo fatture ricevute
+        "riconciliato": {"$ne": True}
+    }, {"_id": 0}).to_list(5000)
+    
+    risultati = {
+        "anno": anno,
+        "dry_run": dry_run,
+        "totale_fatture": len(fatture),
+        "riconciliate": 0,
+        "non_trovate": 0,
+        "gia_pagate": 0,
+        "dettaglio": []
+    }
+    
+    for fatt in fatture:
+        importo = float(fatt.get("total_amount", 0))
+        fornitore = fatt.get("supplier_name", "")
+        data = fatt.get("invoice_date", "")[:10]
+        
+        if importo <= 0:
+            continue
+        
+        # Cerca match singolo
+        match = await find_bank_match(db, importo, data, fornitore)
+        
+        # Se non trovato, prova assegni multipli
+        if not match:
+            match = await find_multiple_checks_match(db, importo, data, fornitore)
+        
+        if match:
+            metodo, num_assegno = determine_payment_method(match.get("descrizione", ""))
+            
+            dettaglio = {
+                "fattura_id": fatt.get("id"),
+                "fornitore": fornitore,
+                "importo": importo,
+                "data_fattura": data,
+                "match_trovato": True,
+                "metodo_suggerito": metodo,
+                "numero_assegno": num_assegno,
+                "data_pagamento": match.get("data"),
+                "descrizione_banca": match.get("descrizione", "")[:50]
+            }
+            
+            if not dry_run:
+                # Aggiorna fattura con info riconciliazione
+                await db["invoices"].update_one(
+                    {"id": fatt.get("id")},
+                    {"$set": {
+                        "riconciliato": True,
+                        "metodo_pagamento_suggerito": metodo,
+                        "numero_assegno_suggerito": num_assegno,
+                        "data_pagamento_suggerita": match.get("data"),
+                        "riconciliato_il": datetime.now(timezone.utc).isoformat()
+                    }}
+                )
+            
+            risultati["riconciliate"] += 1
+            risultati["dettaglio"].append(dettaglio)
+        else:
+            risultati["non_trovate"] += 1
+            if len(risultati["dettaglio"]) < 50:  # Limita output
+                risultati["dettaglio"].append({
+                    "fattura_id": fatt.get("id"),
+                    "fornitore": fornitore,
+                    "importo": importo,
+                    "data_fattura": data,
+                    "match_trovato": False
+                })
+    
+    risultati["percentuale_riconciliate"] = round(
+        risultati["riconciliate"] / risultati["totale_fatture"] * 100, 1
+    ) if risultati["totale_fatture"] > 0 else 0
+    
+    return risultati
