@@ -1,32 +1,45 @@
 <analysis>**original_problem_statement:**
-L'utente ha richiesto una serie di funzionalità e correzioni per un'applicazione ERP. Le richieste più recenti si sono concentrate su:
-1.  **Pagina Gestione Dipendenti:**
-    *   Correggere la logica di importazione e ricalcolo dei saldi.
-    *   Ottimizzare le prestazioni della pagina, che era diventata molto grande e lenta.
-    *   Risolvere un bug che impediva la chiusura del modale Aggiusta Saldo.
-    *   Risolvere un bug per cui il nome del dipendente appariva duplicato in varie sezioni.
-    *   Risolvere un bug per cui il menu a tendina per la selezione del dipendente nei modali Nuovo Contratto e Libretti Sanitari risultava vuoto.
-2.  **Pagina Documenti:**
-    *   Ridurre il tempo di caricamento delle email, passando da un periodo di 4 anni agli ultimi 10 giorni.
-    *   Aggiungere un campo per la ricerca di parole chiave personalizzate durante la sincronizzazione delle email.
-    *   Ridurre il tempo di visualizzazione dei popup di caricamento.
+L'utente ha richiesto l'implementazione di una serie di nuove funzionalità e correzioni per un'applicazione ERP:
+1.  **Pagina Documenti:** Modificare la pagina per ridurre il tempo di sincronizzazione delle email a 10 giorni, aggiungere un campo di input per parole chiave personalizzate e far sì che il download avvenga in background.
+2.  **Nuova Funzionalità Operazioni da Confermare:**
+    *   Creare un sistema per analizzare le email di notifica di fattura da Aruba ().
+    *   Estrarre i dati della fattura (fornitore, numero, importo) dal corpo dell'email HTML.
+    *   Popolare una nuova sezione Operazioni da Confermare dove queste fatture provvisorie vengono elencate.
+    *   L'interfaccia deve permettere all'utente di confermare il pagamento scegliendo tra CASSA, BANCA o ASSEGNO.
+    *   Una volta confermata, l'operazione deve essere registrata nella rispettiva Prima Nota (Cassa o Banca).
+    *   Il sistema deve gestire la separazione per anno fiscale, permettendo all'utente di visualizzare e gestire le operazioni anno per anno.
+3.  **Miglioramento: Riconciliazione Automatica:**
+    *   Durante l'importazione delle fatture (sia dalle email di Aruba che dai file XML), il sistema deve tentare una riconciliazione automatica con i movimenti dell'estratto conto bancario.
+    *   Se viene trovata una corrispondenza (per importo), il metodo di pagamento deve essere pre-compilato.
+    *   Se il pagamento è un assegno, il numero dell'assegno deve essere estratto dalla descrizione del movimento e pre-compilato.
+    *   Il sistema deve anche essere in grado di gestire i pagamenti di una singola fattura tramite assegni multipli.
+4.  **Nuova Funzionalità Previsioni Acquisti:**
+    *   Ogni volta che viene elaborata una fattura XML, estrarre e memorizzare tutti gli articoli e le relative quantità.
+    *   Creare una nuova pagina Previsioni Acquisti che mostri statistiche di consumo (medie giornaliere/settimanali) per ogni prodotto, basate sullo storico degli acquisti.
+    *   Il sistema dovrebbe usare queste statistiche per proporre gli acquisti per l'anno corrente, confrontando gli ordini attuali con le medie dell'anno precedente.
+5.  **Correzioni e UX:**
+    *   Risolvere un bug critico e ricorrente per cui il menu a tendina per la selezione del dipendente nei modali di Gestione Dipendenti risulta vuoto.
+    *   Risolvere un problema di responsività sulla pagina Operazioni da Confermare, dove i pulsanti di azione non erano visibili su dispositivi mobili.
+    *   Popolare il campo  nella pagina Gestione Assegni e permettere la modifica manuale dei dati.
 
 **User's preferred language**: Italiano
 
 **what currently exists?**
-*   **Architettura Frontend Ottimizzata:** La pagina  è stata quasi completamente refattorizzata. Il componente originale, che superava le 2600 righe, è stato ridotto a meno di 400 righe e ora funge da contenitore per tab separati e ottimizzati.
-*   **Componenti Tab Separati:** La logica e la UI per ciascun tab (Prima Nota Salari, Libro Unico, Contratti, Libretti Sanitari) sono state estratte in componenti dedicati (es. ).
-*   **State Management Moderno:**
-    *   **Zustand** è stato implementato per la gestione dello stato globale del tab Prima Nota Salari ().
-    *   **@tanstack/react-query** è stato installato e configurato a livello di applicazione () per la gestione del caching e del data fetching delle API.
-*   **Performance:** È stato implementato il **Code Splitting** con  e  per tutte le pagine principali, migliorando il tempo di caricamento iniziale dell'applicazione.
-*   **Pagina Documenti:** La pagina  contiene la logica per la sincronizzazione delle email. L'agente ha identificato il codice da modificare per ridurre il periodo di sincronizzazione e ha già cambiato la variabile da 1460 a 10 giorni.
+*   **Pagina Documenti Completata:** Le richieste dell'utente sono state implementate con successo. Il download delle email ora avviene in background, il periodo di default è impostato a 10 giorni e l'UI per le parole chiave è stata migliorata. La funzionalità è stata testata con successo dal testing agent.
+*   **Funzionalità Operazioni da Confermare (Quasi Completa):** È stata creata una nuova pipeline completa che:
+    *   Analizza le email HTML di Aruba e ne estrae i dati delle fatture.
+    *   Effettua una riconciliazione automatica con l'estratto conto, pre-compilando il metodo di pagamento e i numeri degli assegni singoli.
+    *   Popola una nuova pagina Operazioni da Confermare con un'interfaccia per la conferma (Cassa/Banca/Assegno).
+    *   Gestisce correttamente la separazione per anno fiscale, con un selettore di anno globale.
+    *   La pagina è stata resa responsive per i dispositivi mobili.
+*   **Logica di Riconciliazione Fatture XML:** Il processo di upload delle fatture XML è stato potenziato per includere la stessa logica di riconciliazione automatica con l'estratto conto per pre-compilare i numeri degli assegni.
+*   **Struttura per Previsioni Acquisti:** È stata creata l'infrastruttura di base (backend router, frontend page, menu item) per la nuova funzionalità di previsione degli acquisti. La logica di registrazione degli articoli durante l'upload delle fatture XML è stata aggiunta.
 
 **Last working item**:
-*   **Last item agent was working**: Implementazione delle richieste dell'utente per la pagina . Nello specifico, l'agente ha modificato il file  per ridurre il periodo di download delle email da 1460 a 10 giorni e si stava preparando ad aggiungere la funzionalità di ricerca per parole chiave personalizzate.
+*   **Last item agent was working**: L'agente stava implementando la nuova funzionalità Previsioni Acquisti. Ha creato il router backend (), la pagina frontend (), ha aggiunto la voce al menu e ha modificato il processo di upload delle fatture XML () per registrare gli articoli acquistati.
 *   **Status**: IN PROGRESS
 *   **Agent Testing Done**: N
-*   **Which testing method agent to use?**: frontend testing agent. L'agente dovrà verificare la pagina  per assicurarsi che: 1. Il periodo di sincronizzazione delle email sia effettivamente ridotto. 2. L'interfaccia per aggiungere parole chiave personalizzate funzioni. 3. Il popup di caricamento abbia una durata ridotta come richiesto.
+*   **Which testing method agent to use?**: both. Sarà necessario un test del backend per verificare il calcolo delle statistiche e un test del frontend per validare la UI della nuova pagina.
 *   **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
@@ -36,158 +49,163 @@ L'utente ha richiesto una serie di funzionalità e correzioni per un'applicazion
 
 **Issues Detail:**
 -   **Issue 1: Il dropdown dei dipendenti nei modali è vuoto (P0)**
-    -   **Attempted fixes**: L'agente ha diagnosticato il problema come un *timing issue*. I componenti dei tab (, ) vengono renderizzati e ricevono la prop  come un array vuoto, prima che la chiamata API nel componente padre () abbia terminato il caricamento dei dati. L'agente ha tentato di forzare il caricamento con un  aggiuntivo, ma senza successo.
+    -   **Attempted fixes**: Nessuno in questa sessione. Questo è un problema critico e ricorrente ereditato dall'handoff precedente che blocca la gestione dei contratti e dei libretti sanitari.
     -   **Next debug checklist**:
-        1.  Rimuovere il passaggio della prop  ai componenti dei tab.
-        2.  Creare uno store globale (es. con Zustand o utilizzando React Query) per la lista dei dipendenti.
-        3.  Fare in modo che  popoli questo store una sola volta.
-        4.  Modificare i componenti  e  affinché leggano la lista dei dipendenti direttamente dallo store globale, garantendo che i dati siano sempre disponibili e aggiornati.
-    -   **Why fix this issue and what will be achieved with this?**: È un bloccante critico che impedisce all'utente di creare nuovi contratti e libretti sanitari, due funzionalità fondamentali della pagina.
-    -   **Status**: IN PROGRESS
+        1.  Rimuovere il passaggio della prop  ai componenti dei tab (, ).
+        2.  Creare uno store globale (usando lo  già presente o React Query) per la lista dei dipendenti.
+        3.  Fare in modo che il componente padre  popoli questo store una sola volta.
+        4.  Modificare i componenti dei tab affinché leggano la lista dei dipendenti direttamente dallo store globale.
+    -   **Why fix this issue and what will be achieved with this?**: È un bloccante critico che impedisce all'utente di usare funzionalità fondamentali della pagina Gestione Dipendenti.
+    -   **Status**: NOT STARTED
     -   **Is recurring issue?**: Y
     -   **Should Test frontend/backend/both after fix?**: frontend
     -   **Blocked on other issue**: no
-
 -   **Issue 2: Anno 2018 importato come 2005 (P1)**
-    -   **Attempted fixes**: Nessuno in questa sessione. Il problema non è stato riprodotto.
-    -   **Next debug checklist**:
-        1.  Chiedere all'utente il file Excel esatto che causa l'errore.
-        2.  Chiedere uno screenshot della tabella dopo l'importazione.
-        3.  Analizzare la logica di parsing dell'anno in .
-    -   **Why fix this issue and what will be achieved with this?**: Garantisce l'integrità dei dati, che è fondamentale per tutti i calcoli successivi.
-    -   **Status**: BLOCKED (in attesa di input dall'utente)
+    -   **Attempted fixes**: Nessuno. Ereditato.
+    -   **Next debug checklist**: Chiedere all'utente il file Excel che causa l'errore e analizzare la logica di parsing in .
+    -   **Why fix this issue and what will be achieved with this?**: Garantisce l'integrità dei dati contabili.
+    -   **Status**: BLOCKED
     -   **Is recurring issue?**: N
     -   **Should Test frontend/backend/both after fix?**: backend
-
 -   **Issue 3: Parsing degli F24 scaricati da email fallisce (P2)**
-    -   **Attempted fixes**: Nessuno. Ereditato dagli handoff precedenti.
-    -   **Next debug checklist**:
-        1.  Analizzare i log del backend durante il processo di F24 per identificare l'errore specifico.
-        2.  Esaminare il codice Python responsabile del parsing dei file F24.
-    -   **Why fix this issue and what will be achieved with this?**: Completerebbe una funzionalità di automazione importante per l'utente.
+    -   **Attempted fixes**: Nessuno. Ereditato.
+    -   **Next debug checklist**: Analizzare i log del backend durante il processo di F24 per identificare l'errore.
+    -   **Why fix this issue and what will be achieved with this?**: Completa una funzionalità di automazione importante.
     -   **Status**: NOT STARTED
     -   **Is recurring issue?**: Y
     -   **Should Test frontend/backend/both after fix?**: backend
 
 **In progress Task List**:
--   **Task 1: Completare le modifiche alla pagina Documenti (P0)**
-    -   **Where to resume**: L'agente ha già modificato la variabile  a  in . I prossimi passi sono:
-        1.  Implementare un campo di input nell'UI per permettere all'utente di inserire parole chiave personalizzate per la ricerca.
-        2.  Modificare la funzione  per includere queste parole chiave nella ricerca IMAP.
-        3.  Investigare come ridurre la percezione della durata del popup di caricamento (es. mostrando un feedback più granulare o eseguendo l'operazione in background).
-    -   **What will be achieved with this?**: Si risponderà alle richieste dirette dell'utente, migliorando l'usabilità e le prestazioni della sincronizzazione dei documenti.
+-   **Task 1: Completare la funzionalità Previsioni Acquisti (P0)**
+    -   **Where to resume**: L'infrastruttura base è pronta. I prossimi passi sono:
+        1.  **Backend:** Implementare la logica in  per aggregare i dati degli articoli, calcolare le medie di consumo (giornaliere/settimanali) e fornire le previsioni.
+        2.  **Backend:** Creare un processo o un endpoint per popolare retroattivamente i dati degli acquisti dalle fatture XML già presenti nel database.
+        3.  **Frontend:** Sviluppare la UI in  per visualizzare le statistiche e le previsioni in modo chiaro e interattivo.
+    -   **What will be achieved with this?**: Fornirà all'utente uno strumento potente per la gestione strategica del magazzino e degli acquisti.
     -   **Status**: IN PROGRESS
-    -   **Should Test frontend/backend/both after fix?**: frontend
+    -   **Should Test frontend/backend/both after fix?**: both
+    -   **Blocked on something**: No.
+-   **Task 2: Implementare la gestione degli assegni multipli (P1)**
+    -   **Where to resume**: L'agente ha iniziato ad implementare la logica per trovare combinazioni di assegni che corrispondono a un importo di fattura, ma il test è andato in timeout. È necessario completare e testare questa logica.
+        1.  Finalizzare la funzione di ricerca in .
+        2.  Gestire lo stato da_verificare per i casi di corrispondenza multipla, mostrando un avviso all'utente nell'interfaccia.
+        3.  Testare il flusso end-to-end.
+    -   **What will be achieved with this?**: Renderà la riconciliazione automatica molto più robusta e precisa.
+    -   **Status**: IN PROGRESS
+    -   **Should Test frontend/backend/both after fix?**: both
     -   **Blocked on something**: No.
 
 **Upcoming and Future Tasks**
 *   **Upcoming Tasks**:
-    *   **(P1) Re-implementare la virtualizzazione delle tabelle:** Reintrodurre  (o una libreria simile) nella tabella di  per ottimizzare il rendering di liste lunghe. L'implementazione precedente era stata rimossa a causa di un problema di compatibilità.
-    *   **(P1) Finalizzare il refactoring dei tab:** Migrare la logica di data-fetching e state-management dei tab ,  e  per utilizzare  e/o Zustand, seguendo il pattern stabilito per .
+    *   **(P1) Popolare  e  in Gestione Assegni:** La UI della pagina  è stata aggiornata per mostrare e modificare questi campi. La logica di popolamento automatico durante la conferma delle operazioni è stata aggiunta, ma deve essere testata a fondo.
+    *   **(P1) Re-implementare la virtualizzazione delle tabelle:** Reintrodurre  nella tabella di  per ottimizzare le performance con grandi quantità di dati.
 *   **Future Tasks**:
-    *   **(P2) Refactoring critico dei router backend:** Eliminare i file di routing duplicati in  per risolvere un debito tecnico che potrebbe causare bug.
-    *   **(P2) Completare la logica della pagina :** Implementare la funzionalità dei pulsanti Azioni per spostare i documenti processati.
+    *   **(P2) Creare endpoint di riconciliazione batch:** Creare un endpoint per aggiornare retroattivamente le fatture XML esistenti con i numeri degli assegni trovati nell'estratto conto.
+    *   **(P2) Refactoring critico dei router backend:** Eliminare i file di routing duplicati in  per risolvere un debito tecnico.
     *   **(P3) Centralizzare tutti gli upload:** Creare una pagina di upload generica.
 
 **Completed work in this session**
-- **Refactoring Massivo e Ottimizzazione Prestazioni:**
-  - Il componente  è stato ridotto da 2627 a ~374 righe (-86%), estraendo la logica dei tab in componenti separati e ottimizzati.
-  - Implementato un'architettura moderna con **Zustand** per lo state management (), **@tanstack/react-query** per il caching delle API, e **Code Splitting** con  per il caricamento on-demand delle pagine.
-- **Bug Fix Critici:**
-  - Risolto il problema dei pulsanti di esclusione anni (2018-2022) che non aggiornavano i saldi. È stato corretto un bug che usava una variabile  non definita.
-  - Risolto il bug del modale Aggiusta Saldo che non si chiudeva.
-  - Risolto il bug dei nomi duplicati, standardizzando l'uso del campo  (formato Cognome Nome) in tutta l'applicazione.
-- **Miglioramenti UI/UX:**
-  - Rimosso il pulsante Ricalcola Progressivi dal 2023 come richiesto.
+- **Pagina Documenti (COMPLETATO):**
+    - Implementato download delle email in background con polling dello stato.
+    - UI migliorata per la gestione delle parole chiave personalizzate.
+    - Funzionalità testata con successo dal testing agent.
+- **Funzionalità Operazioni da Confermare (COMPLETATO):**
+    - Creato parser per email HTML di Aruba.
+    - Implementata riconciliazione automatica con estratto conto per pagamenti singoli (bonifici e assegni).
+    - Creata nuova pagina  con logica di conferma.
+    - Implementata la separazione per anno fiscale con selettore globale.
+- **Miglioramenti UI/UX (COMPLETATO):**
+    - Risolto problema di responsività su mobile per la pagina Operazioni da Confermare.
+- **Potenziamento Fatture XML (COMPLETATO):**
+    - Aggiunta la riconciliazione automatica con l'estratto conto per pre-compilare i numeri degli assegni anche all'arrivo di fatture XML.
 
 **Earlier issues found/mentioned but not fixed**
-- **Issue 1: Test automatici  falliscono:** Ereditato dall'handoff precedente, non affrontato.
-- **Issue 2: Definire e completare la funzionalità Vincolo:** La logica esatta deve ancora essere confermata con l'utente.
+-   **Issue 1: Test automatici  falliscono:** Ereditato dall'handoff precedente, non affrontato.
+-   **Issue 2: Definire e completare la funzionalità Vincolo:** La logica esatta deve ancora essere confermata con l'utente.
 
 **Known issue recurrence from previous fork**
-- **Issue recurrence in previous fork**: **File di routing duplicati nel backend**. Sebbene non abbia causato problemi in questa sessione, il debito tecnico rimane e rappresenta un rischio.
-- **Recurrence count**: 0
-- **Status**: NOT STARTED
+-   **Issue recurrence in previous fork**: **File di routing duplicati nel backend**. Non ha causato problemi, ma il debito tecnico rimane.
+-   **Recurrence count**: 0
+-   **Status**: NOT STARTED
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **State Management (Zustand):** Utilizzato per gestire lo stato complesso del tab Prima Nota Salari in modo centralizzato e reattivo.
-- **Data Fetching & Caching (@tanstack/react-query):** Implementato per gestire le chiamate API in modo efficiente, riducendo le richieste di rete e gestendo stati di caricamento/errore.
-- **Performance Optimization (Code Splitting):**  e  sono stati usati per caricare i componenti delle pagine solo quando necessario, accelerando il caricamento iniziale.
-- **Component-Driven Refactoring:** Un monolite UI () è stato scomposto in componenti più piccoli, specializzati e manutenibili.
-- **Custom Hooks:** Utilizzati per estrarre e riutilizzare la logica di business e di interazione con lo stato.
+- **Background Tasks & Polling:** Utilizzo di  in FastAPI e polling dal frontend per gestire operazioni a lunga durata (download email) senza bloccare l'UI.
+- **HTML Parsing:** Utilizzo di  per analizzare il corpo HTML delle email e estrarre dati strutturati.
+- **Data Reconciliation:** Implementazione di una logica complessa per far corrispondere i dati delle fatture con i movimenti bancari, basandosi su importo e analisi testuale delle descrizioni.
+- **Modular Services:** Creazione di un servizio dedicato () per la logica di parsing e riconciliazione, riutilizzato da più router.
+- **Responsive Design:** Utilizzo di classi CSS e media query implicite tramite stili inline per adattare il layout a schermi di diverse dimensioni.
 
 **key DB schema**
--   **prima_nota_salari**: 
--   **dipendenti**: 
+-   **operazioni_da_confermare**: 
+-   **prodotti_acquistati**: 
+-   **estratto_conto_movimenti**:  (utilizzata per la riconciliazione)
 
 **changes in tech stack**
--   **Aggiunti (Frontend):** , , .
+-   **Aggiunti (Backend):** 
 
 **All files of reference**
--   : Componente padre, ora notevolmente snellito.
--   : File target per le prossime modifiche richieste dall'utente.
--   : Punto di ingresso dell'app, ora configurato con  e  per il lazy loading.
--   **Nuova Architettura:** Le directory , , , e  contengono il cuore della nuova logica refattorizzata.
+*   : Contiene la logica di parsing delle email di Aruba e la riconciliazione con l'estratto conto. È il cuore della nuova automazione.
+*   : Gestisce le API per la nuova funzionalità Operazioni da Confermare.
+*   : L'interfaccia utente per la nuova funzionalità.
+*   : File modificato per integrare la logica di riconciliazione e la registrazione degli acquisti nel flusso di importazione XML.
+*   : Modificato per permettere l'associazione tra assegni e fatture.
 
 **Areas that need refactoring**:
--   **Componenti dei Tab:** I componenti , , e  dovrebbero essere ulteriormente refattorizzati per utilizzare  e custom hooks, allineandosi all'architettura di .
--   **Virtualizzazione:** La virtualizzazione della tabella in  con  deve essere ripristinata correttamente per gestire grandi quantità di dati in modo performante.
--   **Backend Routers (CRITICO):** La duplicazione dei file di routing nel backend () è un debito tecnico che deve essere risolto per evitare bug e inconsistente.
+*   **Backend Routers (CRITICO):** La duplicazione dei file di routing nel backend () rimane un debito tecnico da risolvere.
+*   **Logica di Riconciliazione:** La logica di riconciliazione è stata aggiunta sia in  sia in . Potrebbe essere ulteriormente centralizzata in un servizio dedicato per evitare duplicazioni.
 
 **key api endpoints**
--   : Recupera la lista dei dipendenti.
--   : Ricalcola i saldi progressivi.
--   : Avvia la sincronizzazione delle email (utilizzato in ).
+-   : Avvia la sincronizzazione delle email di Aruba e la riconciliazione.
+-   : Recupera le operazioni da confermare per un dato anno.
+-   : Conferma un'operazione, spostandola in Prima Nota.
+-   : (Da implementare) Recupera le statistiche e le previsioni di acquisto.
 
 **Critical Info for New Agent**
--   **Architettura Nuova:** L'applicazione ha subito un importante refactoring. Il nuovo pattern da seguire è: componenti piccoli, custom hooks per la logica, e gestione dello stato/dati con Zustand e React Query.
--   **Priorità Utente:** Le richieste immediate dell'utente sono sulla pagina : ridurre il periodo di sincronizzazione email a 10 giorni (già fatto), aggiungere un campo di ricerca per keyword, e ridurre il tempo dei popup.
--   **Bloccante Esistente:** Il bug del dropdown vuoto nei modali Nuovo Contratto e Libretti Sanitari è un problema critico da risolvere. La causa è un *timing issue* nel passaggio delle props. La soluzione migliore è usare uno store globale (Zustand/React Query) per la lista dei dipendenti, invece di passarla tramite props.
+-   **Priorità Utente:** L'utente ha guidato lo sviluppo verso nuove funzionalità complesse (, ). La priorità principale è completare queste funzionalità in corso.
+-   **Bloccante P0 Ignorato:** Il bug del dropdown vuoto per i dipendenti () è un problema critico P0 che è stato nuovamente posticipato. È fondamentale risolverlo per sbloccare una parte importante dell'applicazione.
+-   **Logica Incompleta:** La gestione degli assegni multipli è stata iniziata ma non completata. Il test è andato in timeout, quindi la logica e la stabilità devono essere verificate.
+-   **Nuova Architettura di Servizi:** La logica di business complessa (parsing, riconciliazione) viene ora estratta in file di servizio dedicati () e riutilizzata dai router. Questo è un pattern da seguire.
 
 **documents and test reports created in this job**
--    è stato aggiornato più volte per l'esecuzione del testing agent.
--   Sono stati creati numerosi file per la nuova architettura frontend (componenti, hooks, store).
+*   : Creato per documentare i requisiti della nuova funzionalità.
+*   : Aggiornato più volte per l'esecuzione dei test sulla pagina  e .
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **Utente (Msg 498):** Richiesta di modificare la pagina  (ridurre sync email a 10 giorni, aggiungere ricerca keyword, ridurre tempo popup) e ha menzionato il problema del dropdown vuoto. **Stato: IN PROGRESS.**
-2.  **Utente (Msg 380):** Riporta la duplicazione del nome del dipendente nei contratti e documenti. **Stato: COMPLETATO.**
-3.  **Utente (Msg 379):** Chiede di correggere il layout dei contratti e documenti. **Stato: COMPLETATO.**
-4.  **Utente (Msg 306):** Approva il piano di ottimizzazione completo proposto dall'agente. **Stato: COMPLETATO.**
-5.  **Utente (Msg 278):** Chiede di procedere con le altre ottimizzazioni dopo il primo refactoring. **Stato: COMPLETATO.**
-6.  **Utente (Msg 130):** Dice all'agente di continuare con il refactoring. **Stato: COMPLETATO.**
-7.  **Utente (Msg 117):** Approva l'inizio del refactoring del componente . **Stato: COMPLETATO.**
-8.  **Utente (Msg 110):** Fornisce una lista dettagliata di tecniche di ottimizzazione React da implementare. **Stato: IN PROGRESS (parzialmente completato).**
-9.  **Utente (Msg 45):** Segnala che i saldi non cambiano con i bottoni di esclusione e chiede di rimuovere un altro bottone. **Stato: COMPLETATO.**
-10. **Utente (Msg 5):** Segnala che i bottoni di ricalcolo (2018-2022) non funzionano. **Stato: COMPLETATO.**
+1.  **Utente (Msg 404):** Richiesta per una nuova feature complessa: Previsioni Acquisti basata sull'analisi storica delle fatture XML. **Stato: IN PROGRESS.**
+2.  **Utente (Msg 352):** Richiesta di assicurarsi che anche le fatture XML vengano pre-compilate con il metodo di pagamento e i numeri di assegno riconciliati. **Stato: COMPLETATO.**
+3.  **Utente (Msg 331):** Riporta che la pagina Operazioni da confermare non è responsive su mobile e chiede conferma dell'inserimento in Prima Nota. **Stato: COMPLETATO.**
+4.  **Utente (Msg 275):** Richiesta di gestire i pagamenti con assegni multipli e di migliorare la pagina Gestione Assegni aggiungendo i dettagli della fattura. **Stato: IN PROGRESS.**
+5.  **Utente (Msg 228):** Richiesta di implementare la riconciliazione automatica tra le email di Aruba e l'estratto conto. **Stato: COMPLETATO.**
+6.  **Utente (Msg 224):** Chiede conferma che le operazioni da confermare non siano state inserite in Prima Nota. **Stato: COMPLETATO.**
+7.  **Utente (Msg 185):** Richiesta critica di separare le Operazioni da confermare per anno fiscale. **Stato: COMPLETATO.**
+8.  **Utente (Msg 110):** Chiarisce che l'agente deve leggere il corpo dell'email di Aruba, non gli allegati o le email dello SDI. **Stato: COMPLETATO.**
+9.  **Utente (Msg 82):** Introduce la nuova, grande funzionalità Operazioni da Confermare per le email di Aruba. **Stato: COMPLETATO (prima versione).**
+10. **Utente (Msg 5):** Chiarisce i requisiti per la pagina Documenti (campi separati, popup in background). **Stato: COMPLETATO.**
 
 **Project Health Check:**
 *   **Broken**:
-    *   La creazione di nuovi contratti e libretti sanitari è bloccata a causa del dropdown dei dipendenti vuoto.
-    *   L'architettura del backend presenta ancora file di routing duplicati, un rischio per la stabilità a lungo termine.
+    *   La creazione di nuovi contratti e libretti sanitari nella pagina Gestione Dipendenti è bloccata a causa del dropdown dei dipendenti vuoto (Issue P0).
 *   **Mocked**: Nessuno.
 
 **3rd Party Integrations**
 *   **Google/Gmail (IMAP)**: Per scaricare email e allegati.
 *   **pdfplumber**: Per estrarre dati da file PDF.
 *   **pandas/openpyxl**: Per leggere e scrivere file Excel.
-*   **Nuove librerie frontend:**
-    *   : State management.
-    *   : Data fetching e caching.
-    *   : Per la virtualizzazione di liste (installata ma temporaneamente non utilizzata).
+*   **beautifulsoup4**: Per parsare il contenuto HTML delle email.
 
 **Testing status**
--   **Testing agent used after significant changes**: YES (utilizzato con successo dopo ogni fase principale del refactoring).
+-   **Testing agent used after significant changes**: YES (usato con successo per la pagina Documenti e per la nuova pagina Operazioni da Confermare).
 -   **Troubleshoot agent used after agent stuck in loop**: NO
 -   **Test files created**: Nessuno.
--   **Known regressions**: Nessuna regressione nota introdotta in questa sessione.
+-   **Known regressions**: Nessuna.
 
 **Credentials to test flow:**
 -   **Email User**: 
 -   **Email App Password**:  (disponibile in  come ).
 
 **What agent forgot to execute**
--   L'agente non ha creato un task specifico per re-implementare la virtualizzazione con  dopo averla temporaneamente rimossa per risolvere un bug di importazione. Questo era parte del piano di ottimizzazione approvato dall'utente.
--   Dopo aver diagnosticato il problema del dropdown vuoto, l'agente è stato reindirizzato dall'utente a un altro task prima di poter implementare una soluzione robusta, lasciando la funzionalità bloccata.</analysis>
+*   L'agente non ha risolto l'issue P0 (dropdown dipendenti vuoto) nonostante fosse un problema critico e ricorrente. È stato costantemente deprioritizzato a favore delle nuove richieste dell'utente.
+*   Il task per la gestione degli assegni multipli è stato lasciato incompleto dopo un timeout dello strumento, e l'agente è passato a un'altra richiesta dell'utente senza finalizzarlo o verificarne la stabilità.</analysis>

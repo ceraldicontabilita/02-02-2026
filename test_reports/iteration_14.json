@@ -74,9 +74,9 @@
     }
   },
   "urls_tested": {
-    "Controllo Mensile": "https://dipendenti-fix.preview.emergentagent.com/controllo-mensile",
-    "Prima Nota": "https://dipendenti-fix.preview.emergentagent.com/prima-nota",
-    "Commercialista": "https://dipendenti-fix.preview.emergentagent.com/commercialista"
+    "Controllo Mensile": "https://erp-finance-tools.preview.emergentagent.com/controllo-mensile",
+    "Prima Nota": "https://erp-finance-tools.preview.emergentagent.com/prima-nota",
+    "Commercialista": "https://erp-finance-tools.preview.emergentagent.com/commercialista"
   },
   "controllo_mensile_2025_data": {
     "pagato_non_riscosso": {
