@@ -613,6 +613,47 @@ invoices.linee → acquisti_prodotti → statistiche/previsioni
 
 ================================================================================
 
+## 🚀 PROPOSTE IMPLEMENTAZIONI FUTURE
+
+### 1. 📊 CONTABILITÀ GENERALE (Alta Priorità)
+Basate sul servizio `/app/app/services/contabilita_generale.py`:
+
+- **Libro Giornale Automatico**: Generazione automatica scritture in partita doppia da fatture, corrispettivi, pagamenti
+- **Mastrini Conti**: Visualizzazione saldi e movimenti per conto
+- **Bilancio di Verifica**: Quadratura dare/avere automatica
+- **Schede Fornitori/Clienti**: Estratto conto dettagliato
+
+### 2. 📅 OPERAZIONI DI CHIUSURA (Alta Priorità)
+- **Wizard Chiusura Esercizio**: Guida passo-passo per chiusura annuale
+- **Calcolo Automatico Ratei/Risconti**: Da contratti attivi (affitti, assicurazioni)
+- **Ammortamenti Batch**: Calcolo ammortamenti per tutti i cespiti
+- **Rilevazione Rimanenze**: Integrazione con inventario magazzino
+
+### 3. 🧾 GESTIONE IVA AVANZATA (Media Priorità)
+- **Liquidazione IVA Automatica**: Mensile/trimestrale con generazione F24
+- **Split Payment**: Gestione PA
+- **Reverse Charge**: Autofatture
+- **Dichiarazione IVA Annuale**: Pre-compilazione
+
+### 4. 👷 GESTIONE DIPENDENTI (Media Priorità)
+- **Calcolo TFR Automatico**: Rivalutazione ISTAT + 1.5%
+- **Generazione Buste Paga**: Da contratti e presenze
+- **F24 Ritenute**: Generazione automatica
+
+### 5. 📈 REPORTING AVANZATO (Bassa Priorità)
+- **Stato Patrimoniale CE/SP**: Secondo schema civilistico
+- **Conto Economico Riclassificato**: A valore aggiunto, a costi/ricavi
+- **Indici di Bilancio**: ROE, ROI, liquidità, indebitamento
+- **Cash Flow**: Rendiconto finanziario
+
+### 6. 🔔 NOTIFICHE E ALERT (Da Integrare)
+- **Scadenze F24**: ✅ IMPLEMENTATO - 9 alert attivi
+- **Scadenze Fornitori**: Pagamenti in scadenza
+- **Crediti in Sofferenza**: Clienti morosi > 90 giorni
+- **Adempimenti Fiscali**: Calendario scadenze
+
+================================================================================
+
 ## 🚨 NOTE PER AGENTI FUTURI
 
 ### Prima di ogni operazione:
