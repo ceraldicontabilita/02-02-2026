@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
 import { formatEuro, formatDateIT } from '../lib/utils';
+import { useAnnoGlobale } from '../contexts/AnnoContext';
 import { 
   RefreshCw, Mail, Building2, FileText, Check, 
-  CreditCard, Banknote, FileCheck, AlertCircle, Trash2
+  CreditCard, Banknote, FileCheck, AlertCircle, Trash2, Calendar
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 
 export default function OperazioniDaConfermare() {
+  const { anno: annoGlobale } = useAnnoGlobale();
   const [operazioni, setOperazioni] = useState([]);
   const [stats, setStats] = useState(null);
+  const [statsPerAnno, setStatsPerAnno] = useState([]);
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [confirmingId, setConfirmingId] = useState(null);
@@ -19,14 +22,15 @@ export default function OperazioniDaConfermare() {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [annoGlobale]);
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const res = await api.get('/api/operazioni-da-confermare/lista');
+      const res = await api.get(`/api/operazioni-da-confermare/lista?anno=${annoGlobale}`);
       setOperazioni(res.data.operazioni || []);
       setStats(res.data.stats);
+      setStatsPerAnno(res.data.stats_per_anno || []);
     } catch (error) {
       console.error('Errore caricamento:', error);
     } finally {
