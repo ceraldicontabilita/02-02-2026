@@ -26,31 +26,78 @@ router = APIRouter()
 
 @router.get("/f24-public/alerts")
 async def get_f24_alerts_public() -> List[Dict[str, Any]]:
-    """Alert pubblici scadenze F24."""
+    """Alert pubblici scadenze F24 da tutte le collection."""
     db = Database.get_db()
     alerts = []
     today = datetime.now(timezone.utc).date()
     
-    f24_list = await db[Collections.F24_MODELS].find({"status": {"$ne": "paid"}}, {"_id": 0}).to_list(1000)
+    # Cerca in f24_models
+    f24_models = await db["f24_models"].find({
+        "$or": [
+            {"pagato": {"$ne": True}},
+            {"pagato": {"$exists": False}}
+        ]
+    }, {"_id": 0}).to_list(1000)
     
-    for f24 in f24_list:
+    # Cerca in f24_commercialista
+    f24_comm = await db["f24_commercialista"].find({
+        "$or": [
+            {"stato": {"$ne": "PAGATO"}},
+            {"stato": {"$exists": False}}
+        ]
+    }, {"_id": 0}).to_list(1000)
+    
+    all_f24 = []
+    
+    # Processa f24_models
+    for f24 in f24_models:
+        all_f24.append({
+            "id": f24.get("id"),
+            "tipo": "F24 Model",
+            "descrizione": f24.get("contribuente", ""),
+            "importo": f24.get("saldo_finale", 0),
+            "scadenza_raw": f24.get("data_scadenza"),
+            "tributi": [t.get("codice") for t in f24.get("tributi_erario", [])][:3],
+            "source": "f24_models"
+        })
+    
+    # Processa f24_commercialista  
+    for f24 in f24_comm:
+        scadenza = f24.get("scadenza_stimata") or f24.get("dati_generali", {}).get("data_versamento")
+        tributi = [t.get("codice_tributo") for t in f24.get("sezione_erario", [])][:3]
+        importo = f24.get("totali", {}).get("saldo_netto", 0)
+        
+        all_f24.append({
+            "id": f24.get("id"),
+            "tipo": "F24 Commercialista",
+            "descrizione": f24.get("file_name", ""),
+            "importo": importo,
+            "scadenza_raw": scadenza,
+            "tributi": tributi,
+            "source": "f24_commercialista"
+        })
+    
+    # Genera alerts
+    for f24 in all_f24:
         try:
-            scadenza_str = f24.get("scadenza") or f24.get("data_versamento")
+            scadenza_str = f24.get("scadenza_raw")
             if not scadenza_str:
                 continue
             
+            # Parse scadenza in vari formati
+            scadenza = None
             if isinstance(scadenza_str, str):
                 scadenza_str = scadenza_str.replace("Z", "+00:00")
-                if "T" in scadenza_str:
-                    scadenza = datetime.fromisoformat(scadenza_str).date()
-                else:
+                for fmt in ["%Y-%m-%dT%H:%M:%S", "%Y-%m-%d", "%d/%m/%Y"]:
                     try:
-                        scadenza = datetime.strptime(scadenza_str, "%d/%m/%Y").date()
+                        scadenza = datetime.strptime(scadenza_str[:19], fmt).date()
+                        break
                     except ValueError:
-                        scadenza = datetime.strptime(scadenza_str, "%Y-%m-%d").date()
+                        continue
             elif isinstance(scadenza_str, datetime):
                 scadenza = scadenza_str.date()
-            else:
+            
+            if not scadenza:
                 continue
             
             giorni = (scadenza - today).days
@@ -69,10 +116,16 @@ async def get_f24_alerts_public() -> List[Dict[str, Any]]:
                 continue
             
             alerts.append({
-                "f24_id": f24.get("id"), "tipo": f24.get("tipo", "F24"),
-                "descrizione": f24.get("descrizione", ""), "importo": float(f24.get("importo", 0) or 0),
-                "scadenza": scadenza.isoformat(), "giorni_mancanti": giorni,
-                "severity": severity, "messaggio": msg
+                "f24_id": f24.get("id"),
+                "tipo": f24.get("tipo"),
+                "descrizione": f24.get("descrizione", ""),
+                "importo": float(f24.get("importo", 0) or 0),
+                "scadenza": scadenza.isoformat(),
+                "giorni_mancanti": giorni,
+                "severity": severity,
+                "messaggio": msg,
+                "tributi": f24.get("tributi", []),
+                "source": f24.get("source")
             })
         except Exception as e:
             logger.error(f"Error F24 alert: {e}")
