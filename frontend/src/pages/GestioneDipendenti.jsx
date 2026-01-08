@@ -37,39 +37,6 @@ export default function GestioneDipendenti() {
   const [newDipendente, setNewDipendente] = useState(DEFAULT_DIPENDENTE);
   const [generatingContract, setGeneratingContract] = useState(false);
 
-  // Periodo state
-  const [selectedMonth, setSelectedMonth] = useState(''); // '' = tutti i mesi
-  const [selectedYearPrimaNota, setSelectedYearPrimaNota] = useState(null); // null = tutti gli anni
-  
-  // Prima Nota Salari state
-  const [salariMovimenti, setSalariMovimenti] = useState([]);
-  const [loadingSalari, setLoadingSalari] = useState(false);
-  const [importingSalari, setImportingSalari] = useState(false);
-  const [importResult, setImportResult] = useState(null);
-  const [filtroDipendente, setFiltroDipendente] = useState('');
-  const [dipendentiLista, setDipendentiLista] = useState([]);
-  const [importingEstratto, setImportingEstratto] = useState(false);
-  const [estrattoResult, setEstrattoResult] = useState(null);
-  const [editingSalario, setEditingSalario] = useState(null); // Record in modifica
-  const [anniEsclusi, setAnniEsclusi] = useState([]); // Anni esclusi dal calcolo progressivo
-  
-  // Filtri tabella inline
-  const [filtroTabDipendente, setFiltroTabDipendente] = useState('');
-  const [filtroTabMese, setFiltroTabMese] = useState('');
-  const [filtroTabAnno, setFiltroTabAnno] = useState('');
-  const [ricalcolandoProgressivi, setRicalcolandoProgressivi] = useState(false);
-  const [filtroAnnoDal2023, setFiltroAnnoDal2023] = useState(false);
-  
-  // Modal Aggiustamento Saldo
-  const [showAggiustamentoModal, setShowAggiustamentoModal] = useState(false);
-  const [aggiustamentoData, setAggiustamentoData] = useState({
-    dipendente: '',
-    anno: new Date().getFullYear(),
-    mese: new Date().getMonth() + 1,
-    importo: '',
-    descrizione: 'Aggiustamento saldo commercialista'
-  });
-
   // Libro Unico state
   const [libroUnicoSalaries, setLibroUnicoSalaries] = useState([]);
   const [loadingLibroUnico, setLoadingLibroUnico] = useState(false);
