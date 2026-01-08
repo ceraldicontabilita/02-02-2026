@@ -64,7 +64,54 @@ export default function Documenti() {
     if (saved) {
       setCustomKeywords(JSON.parse(saved));
     }
+    
+    // Cleanup polling on unmount
+    return () => {
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+      }
+    };
   }, [filtroCategoria, filtroStatus]);
+
+  // Polling per task in background
+  const pollTaskStatus = useCallback(async (taskId) => {
+    try {
+      const res = await api.get(`/api/documenti/task/${taskId}`);
+      setTaskStatus(res.data);
+      
+      if (res.data.status === 'completed') {
+        // Stop polling
+        if (pollingRef.current) {
+          clearInterval(pollingRef.current);
+          pollingRef.current = null;
+        }
+        setDownloading(false);
+        loadData(); // Ricarica documenti
+        
+        // Mostra risultato
+        const stats = res.data.result?.stats;
+        if (stats) {
+          setTimeout(() => {
+            alert(`✅ Download completato!\n\nEmail controllate: ${stats.emails_checked || 0}\nDocumenti trovati: ${stats.documents_found || 0}\nNuovi documenti: ${stats.new_documents || 0}\nDuplicati saltati: ${stats.duplicates_skipped || 0}`);
+            setBackgroundTask(null);
+            setTaskStatus(null);
+          }, 500);
+        }
+      } else if (res.data.status === 'error') {
+        // Stop polling on error
+        if (pollingRef.current) {
+          clearInterval(pollingRef.current);
+          pollingRef.current = null;
+        }
+        setDownloading(false);
+        alert(`❌ Errore: ${res.data.error || 'Errore sconosciuto'}`);
+        setBackgroundTask(null);
+        setTaskStatus(null);
+      }
+    } catch (error) {
+      console.error('Errore polling task:', error);
+    }
+  }, []);
 
   const loadData = async () => {
     setLoading(true);
