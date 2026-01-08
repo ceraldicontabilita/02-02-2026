@@ -212,9 +212,9 @@ class TestChiusuraEsercizio:
         assert response.status_code == 200
         data = response.json()
         assert "anno" in data
-        # API returns pronto_chiusura, problemi_bloccanti, avvisi, completamenti
-        assert "pronto_chiusura" in data
-        print(f"✓ Verifica preliminare 2025: Pronto={data['pronto_chiusura']}")
+        # API returns pronto_per_chiusura (not pronto_chiusura)
+        assert "pronto_per_chiusura" in data
+        print(f"✓ Verifica preliminare 2025: Pronto={data['pronto_per_chiusura']}")
         if "problemi_bloccanti" in data:
             for p in data["problemi_bloccanti"]:
                 print(f"  ✗ {p.get('tipo', 'N/A')}: {p.get('messaggio', '')}")
