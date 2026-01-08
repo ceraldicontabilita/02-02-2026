@@ -695,7 +695,7 @@ export default function Documenti() {
             <div style={{ textAlign: 'center', padding: 40, color: '#64748b' }}>
               <Mail size={48} style={{ margin: '0 auto 16px', opacity: 0.3 }} />
               <p>Nessun documento trovato</p>
-              <p style={{ fontSize: 14 }}>Clicca "Scarica da Email" per iniziare</p>
+              <p style={{ fontSize: 14 }}>Clicca &quot;Scarica da Email&quot; per iniziare</p>
             </div>
           ) : (
             <div style={{ overflowX: 'auto' }}>
