@@ -132,6 +132,20 @@ export default function Assegni() {
                 value={newCheck.due_date}
                 onChange={(e) => setNewCheck({ ...newCheck, due_date: e.target.value })}
               />
+            </div>
+            <div className="row" style={{ marginTop: 10 }}>
+              <input
+                placeholder="Fornitore (per riconciliazione)"
+                value={newCheck.fornitore}
+                onChange={(e) => setNewCheck({ ...newCheck, fornitore: e.target.value })}
+                style={{ flex: 1 }}
+              />
+              <input
+                placeholder="Numero Fattura"
+                value={newCheck.numero_fattura}
+                onChange={(e) => setNewCheck({ ...newCheck, numero_fattura: e.target.value })}
+                style={{ width: 150 }}
+              />
               <button type="submit" className="primary">Registra</button>
               <button type="button" onClick={() => setShowForm(false)}>Annulla</button>
             </div>
