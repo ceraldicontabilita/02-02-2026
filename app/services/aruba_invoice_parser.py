@@ -135,6 +135,90 @@ async def find_bank_match(db, importo: float, data_documento: str, fornitore: st
         return None
 
 
+async def find_multiple_checks_match(db, importo: float, data_documento: str, fornitore: str, tolleranza_percentuale: float = 5.0) -> Optional[Dict[str, Any]]:
+    """
+    Cerca una combinazione di assegni che sommati corrispondono all'importo della fattura.
+    
+    Una fattura da €3000 può essere pagata con 3 assegni da €1000.
+    
+    Args:
+        db: Database MongoDB
+        importo: Importo della fattura
+        data_documento: Data documento fattura
+        fornitore: Nome fornitore
+        tolleranza_percentuale: Tolleranza % sulla somma (default 5%)
+    
+    Returns:
+        Dict con lista assegni trovati o None
+    """
+    try:
+        # Tolleranza sulla somma
+        tolleranza = importo * (tolleranza_percentuale / 100)
+        importo_min = importo - tolleranza
+        importo_max = importo + tolleranza
+        
+        # Range date
+        data_min = None
+        data_max = None
+        if data_documento:
+            try:
+                data_doc = datetime.strptime(data_documento, "%Y-%m-%d")
+                data_min = (data_doc - timedelta(days=90)).strftime("%Y-%m-%d")
+                data_max = (data_doc + timedelta(days=90)).strftime("%Y-%m-%d")
+            except:
+                pass
+        
+        # Cerca tutti gli assegni nel periodo
+        query = {
+            "descrizione": {"$regex": "assegno", "$options": "i"}
+        }
+        if data_min and data_max:
+            query["data"] = {"$gte": data_min, "$lte": data_max}
+        
+        cursor = db["estratto_conto"].find(query, {"_id": 0}).limit(100)
+        assegni = await cursor.to_list(100)
+        
+        if not assegni:
+            return None
+        
+        # Converti importi in valori assoluti positivi
+        for a in assegni:
+            a["importo_abs"] = abs(a.get("importo", 0))
+        
+        # Cerca combinazioni di 2, 3 o 4 assegni che sommano all'importo
+        from itertools import combinations
+        
+        for num_assegni in [2, 3, 4]:
+            for combo in combinations(assegni, num_assegni):
+                somma = sum(a["importo_abs"] for a in combo)
+                if importo_min <= somma <= importo_max:
+                    # Trovata combinazione!
+                    assegni_trovati = []
+                    for a in combo:
+                        numero_assegno = extract_check_number(a.get("descrizione", ""))
+                        assegni_trovati.append({
+                            "id": a.get("id"),
+                            "descrizione": a.get("descrizione"),
+                            "data": a.get("data"),
+                            "importo": a["importo_abs"],
+                            "numero_assegno": numero_assegno
+                        })
+                    
+                    return {
+                        "tipo": "assegni_multipli",
+                        "assegni": assegni_trovati,
+                        "somma": somma,
+                        "differenza": round(somma - importo, 2),
+                        "num_assegni": len(assegni_trovati)
+                    }
+        
+        return None
+        
+    except Exception as e:
+        logger.error(f"Errore ricerca assegni multipli: {e}")
+        return None
+
+
 def parse_aruba_email_body(html_content: str) -> Optional[Dict[str, Any]]:
     """
     Estrae i dati della fattura dal corpo HTML dell'email Aruba.
