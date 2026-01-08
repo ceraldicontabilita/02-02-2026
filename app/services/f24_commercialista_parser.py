@@ -508,26 +508,44 @@ def parse_f24_commercialista(pdf_path: str) -> Dict[str, Any]:
 
 
 def get_descrizione_tributo(codice: str) -> str:
-    """Descrizione codici tributo Erario."""
+    """Descrizione codici tributo Erario - Lista completa 2025."""
     descrizioni = {
+        # IRPEF - Ritenute lavoro dipendente
         "1001": "Ritenute su redditi di lavoro dipendente",
-        "1012": "Ritenute su indennità fine rapporto",
+        "1002": "Ritenute su emolumenti arretrati",
+        "1012": "Ritenute su indennità fine rapporto (TFR)",
+        "1004": "Ritenute su conguaglio TFR",
+        
+        # IRPEF - Ritenute lavoro autonomo
         "1040": "Ritenute su redditi di lavoro autonomo",
         "1038": "Ritenute su interessi e altri redditi di capitale",
-        "1627": "Eccedenza di versamenti di ritenute",
+        "1019": "Ritenute su provvigioni agenti",
+        
+        # IRPEF - Autotassazione
+        "4001": "IRPEF saldo",
+        "4033": "IRPEF acconto prima rata",
+        "4034": "IRPEF acconto seconda rata o unica soluzione",
+        
+        # Crediti d'imposta
+        "1627": "Eccedenza di versamenti di ritenute lavoro dipendente",
+        "1628": "Eccedenza di versamenti di ritenute lavoro autonomo",
         "1631": "Credito per trattamento integrativo L. 21/2020",
+        "1655": "Credito maturato sostituti d'imposta per erogazioni premi",
+        "1669": "Credito d'imposta art. 51 DL 50/2017",
         "1701": "Credito per prestazioni lavoro dipendente",
         "1703": "Credito d'imposta per canoni di locazione",
         "1704": "TFR pagato dal datore di lavoro",
         "1712": "Acconto addizionale comunale IRPEF",
         "1713": "Saldo addizionale comunale IRPEF",
-        "1990": "Interessi IRES - ravvedimento",
-        "1991": "Sanzione IRES - ravvedimento",
-        "1993": "Interessi IRAP - ravvedimento",
-        "1994": "Sanzione IRAP - ravvedimento",
-        "2001": "IRES - Acconto prima rata",
-        "2002": "IRES - Acconto seconda rata",
-        "2003": "IRES - Saldo",
+        
+        # IRES
+        "2001": "IRES saldo",
+        "2002": "IRES acconto prima rata",
+        "2003": "IRES acconto seconda rata o unica soluzione",
+        "2007": "Maggior acconto I rata IRES (L. 207/2024)",
+        "2008": "Maggior acconto II rata IRES (L. 207/2024)",
+        
+        # IVA - Versamenti mensili
         "6001": "IVA mensile gennaio",
         "6002": "IVA mensile febbraio",
         "6003": "IVA mensile marzo",
@@ -540,18 +558,66 @@ def get_descrizione_tributo(codice: str) -> str:
         "6010": "IVA mensile ottobre",
         "6011": "IVA mensile novembre",
         "6012": "IVA mensile dicembre",
-        "6013": "IVA acconto",
-        "6015": "IVA 1° trimestre",
-        "6099": "IVA annuale",
+        "6013": "IVA acconto dicembre",
+        "6099": "IVA annuale saldo",
+        
+        # IVA - Versamenti trimestrali
+        "6031": "IVA I trimestre",
+        "6032": "IVA II trimestre",
+        "6033": "IVA III trimestre",
+        "6034": "IVA IV trimestre",
+        "6035": "IVA annuale trimestrale",
+        
+        # IVA - Crediti
         "6494": "Interessi pagamento dilazionato - autotassazione",
+        "6497": "IVA credito da compensare",
+        
+        # IRAP
+        "3800": "IRAP saldo",
+        "3812": "IRAP acconto prima rata",
+        "3813": "IRAP acconto seconda rata o unica soluzione",
+        "3881": "Maggior acconto I rata IRAP (L. 207/2024)",
+        "3882": "Maggior acconto II rata IRAP (L. 207/2024)",
+        
+        # Addizionali regionali
+        "3801": "Addizionale regionale IRPEF - sostituto d'imposta",
+        "3802": "Addizionale regionale IRPEF - autotassazione",
+        "3805": "Addizionale regionale IRPEF - rata",
+        "3843": "Addizionale comunale IRPEF - acconto autotassazione",
+        "3844": "Addizionale comunale IRPEF - saldo autotassazione",
+        "3847": "Addizionale comunale IRPEF - acconto sostituto",
+        "3848": "Addizionale comunale IRPEF - saldo sostituto",
+        "1671": "Addizionale comunale IRPEF - sostituto d'imposta",
+        
+        # Ravvedimento operoso
+        "1990": "Interessi IRES - ravvedimento",
+        "1991": "Sanzione IRES - ravvedimento",
+        "1993": "Interessi IRAP - ravvedimento",
+        "1994": "Sanzione IRAP - ravvedimento",
         "8901": "Sanzione pecuniaria IRPEF",
         "8902": "Interessi sul ravvedimento IRPEF",
+        "8903": "Sanzione pecuniaria addizionale regionale IRPEF",
         "8904": "Sanzione pecuniaria IVA",
         "8906": "Sanzione pecuniaria sostituti d'imposta",
         "8907": "Interessi ravvedimento sostituti d'imposta",
         "8911": "Sanzione pecuniaria IRAP",
+        "8913": "Interessi ravvedimento IRAP",
         "8918": "IRES - Interessi ravvedimento",
         "8926": "Sanzione pecuniaria IRES",
+        "8929": "Sanzione per omesso o tardivo versamento contributi INPS",
+        
+        # IMU e tributi locali
+        "3912": "IMU abitazione principale",
+        "3914": "IMU terreni",
+        "3916": "IMU aree fabbricabili",
+        "3918": "IMU altri fabbricati",
+        "3919": "IMU interessi da accertamento",
+        "3920": "IMU sanzioni da accertamento",
+        "3925": "IMU immobili gruppo D - Stato",
+        "3930": "IMU immobili gruppo D - Comune",
+        
+        # Diritto annuale Camera di Commercio
+        "3850": "Diritto camerale annuale",
     }
     return descrizioni.get(codice, f"Tributo {codice}")
 
