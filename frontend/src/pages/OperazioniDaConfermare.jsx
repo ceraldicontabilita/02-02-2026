@@ -101,9 +101,25 @@ export default function OperazioniDaConfermare() {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: 28, fontWeight: 'bold', color: '#1e293b' }}>
-            📋 Operazioni da Confermare
-          </h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <h1 style={{ margin: 0, fontSize: 28, fontWeight: 'bold', color: '#1e293b' }}>
+              📋 Operazioni da Confermare
+            </h1>
+            <span style={{
+              padding: '6px 12px',
+              background: '#3b82f6',
+              color: 'white',
+              borderRadius: 20,
+              fontSize: 14,
+              fontWeight: 'bold',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6
+            }}>
+              <Calendar size={14} />
+              Anno {annoGlobale}
+            </span>
+          </div>
           <p style={{ margin: '8px 0 0', color: '#64748b' }}>
             Fatture ricevute via email in attesa di conferma metodo di pagamento
           </p>
@@ -123,6 +139,40 @@ export default function OperazioniDaConfermare() {
           </Button>
         </div>
       </div>
+
+      {/* Info distribuzione per anno */}
+      {statsPerAnno.length > 0 && (
+        <div style={{ 
+          marginBottom: 16, 
+          padding: 12, 
+          background: '#f0f9ff', 
+          borderRadius: 8,
+          border: '1px solid #bae6fd',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 16,
+          flexWrap: 'wrap'
+        }}>
+          <span style={{ fontSize: 13, color: '#0369a1', fontWeight: 'bold' }}>
+            📊 Fatture per anno:
+          </span>
+          {statsPerAnno.map(s => (
+            <span 
+              key={s.anno}
+              style={{
+                padding: '4px 10px',
+                borderRadius: 12,
+                background: s.anno === annoGlobale ? '#3b82f6' : '#e0f2fe',
+                color: s.anno === annoGlobale ? 'white' : '#0369a1',
+                fontSize: 12,
+                fontWeight: 'bold'
+              }}
+            >
+              {s.anno}: {s.da_confermare} da conf. / {s.totale} tot.
+            </span>
+          ))}
+        </div>
+      )}
 
       {/* Statistiche */}
       {stats && (
