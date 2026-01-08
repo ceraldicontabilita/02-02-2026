@@ -264,6 +264,8 @@ app.include_router(tfr.router, prefix="/api/tfr", tags=["TFR"])
 app.include_router(cespiti.router, prefix="/api/cespiti", tags=["Cespiti e Ammortamenti"])
 app.include_router(scadenzario_fornitori.router, prefix="/api/scadenzario-fornitori", tags=["Scadenzario Fornitori"])
 app.include_router(calcolo_iva.router, prefix="/api/calcolo-iva", tags=["Calcolo IVA"])
+app.include_router(controllo_gestione.router, prefix="/api/controllo-gestione", tags=["Controllo Gestione"])
+app.include_router(indici_bilancio.router, prefix="/api/indici-bilancio", tags=["Indici di Bilancio"])
 
 
 # =============================================================================
