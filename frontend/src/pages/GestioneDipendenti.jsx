@@ -1427,28 +1427,6 @@ export default function GestioneDipendenti() {
               >
                 ➕ Aggiustamento Saldo
               </button>
-              <button
-                onClick={handleRicalcolaProgressiviDal2023}
-                disabled={ricalcolandoProgressivi || !filtroDipendente}
-                style={{
-                  padding: '10px 20px',
-                  background: ricalcolandoProgressivi || !filtroDipendente 
-                    ? '#9ca3af' 
-                    : 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: 8,
-                  cursor: ricalcolandoProgressivi || !filtroDipendente ? 'not-allowed' : 'pointer',
-                  fontWeight: 'bold',
-                  fontSize: 14,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8
-                }}
-                data-testid="btn-ricalcola-progressivi-2023"
-              >
-                🔄 Ricalcola Progressivi dal 2023
-              </button>
             </div>
           </div>
 
