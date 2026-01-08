@@ -12,7 +12,7 @@
 - Calcolo stima busta paga con ore/straordinari/festività
 - Conferma cedolino con registrazione in prima_nota_salari
 - Aggiornamento automatico TFR dipendente
-- Frontend: /cedolini con form calcolo e storico
+- Frontend: /cedolini con form calcolo e storico (LAYOUT COMPATTO)
 
 ### 2. Gestione TFR (/api/tfr)
 - Situazione TFR per dipendente
@@ -25,7 +25,7 @@
 - Creazione cespite con piano ammortamento
 - Calcolo e registrazione ammortamenti annuali
 - Dismissione con plus/minusvalenza
-- Frontend: /cespiti con gestione completa
+- Frontend: /cespiti con gestione completa (LAYOUT COMPATTO)
 
 ### 4. Controllo Gestione (/api/controllo-gestione)
 - Analisi costi/ricavi per periodo
@@ -49,7 +49,7 @@
 - Fatture urgenti e scadute
 - Aging crediti
 - Cash flow previsionale
-- Frontend integrato in /cespiti
+- Frontend integrato in /cespiti (LAYOUT COMPATTO)
 
 ### 8. Calcolo IVA (/api/calcolo-iva)
 - Liquidazione mensile/trimestrale
@@ -62,6 +62,23 @@
 - Esecuzione scritture chiusura
 - Storico chiusure
 
+### 10. Riconciliazione Batch Retroattiva (/api/operazioni-da-confermare/riconciliazione-batch)
+- Riconcilia automaticamente fatture XML con estratti conto
+- Modalità dry_run per preview
+- 55.4% fatture riconciliate automaticamente (test su 312 fatture)
+
+### 11. Gestione IVA Speciale (/api/iva-speciale)
+- **Evita duplicazione IVA**: marca fatture già in corrispettivi
+- **Note di credito/resi**: registrazione e contabilizzazione
+- **Riepilogo IVA rettificato**: calcolo con esclusioni
+- Tipi NC: reso_merce, sconto_finanziario, storno_totale, storno_parziale
+
+### 12. UI Compattata
+- Pagine /cedolini, /cespiti, /operazioni-da-confermare con layout ridotto
+- Testo ridotto (text-xs, text-lg headers)
+- Card compatte, tabelle dense
+- Minimizzato scrolling verticale
+
 ## Nuove Collection MongoDB
 - `cedolini` - Cedolini confermati
 - `tfr_accantonamenti` - Accantonamenti TFR annuali
@@ -69,16 +86,17 @@
 - `cespiti` - Registro cespiti
 - `budget` - Voci budget annuali
 - `chiusure_esercizio` - Chiusure esercizio
+- `note_credito` - Note di credito/resi
 
 ## Nuovi File Router
 - cedolini.py, tfr.py, cespiti.py
 - scadenzario_fornitori.py, calcolo_iva.py
 - controllo_gestione.py, indici_bilancio.py
-- chiusura_esercizio.py
+- chiusura_esercizio.py, gestione_iva_speciale.py
 
-## Nuove Pagine Frontend
-- /cedolini - Cedolini.jsx
-- /cespiti - GestioneCespiti.jsx (include TFR e Scadenzario)
+## Test Automatici
+- /app/tests/test_iteration_38_*.py - Test moduli contabili
+- /app/tests/test_iteration_39_*.py - Test IVA speciale e UI
 
 ================================================================================
 # 📚 LEZIONE COMPLETA DI RAGIONERIA GENERALE APPLICATA
