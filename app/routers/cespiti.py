@@ -195,23 +195,121 @@ async def lista_cespiti(
     return cespiti
 
 
-@router.get("/{cespite_id}")
-async def get_cespite(cespite_id: str) -> Dict[str, Any]:
-    """Dettaglio singolo cespite con piano ammortamento."""
+@router.get("/riepilogo")
+async def get_riepilogo_cespiti() -> Dict[str, Any]:
+    """Riepilogo totale cespiti per categoria."""
     db = Database.get_db()
     
-    cespite = await db["cespiti"].find_one(
-        {"id": cespite_id},
-        {"_id": 0}
-    )
+    # Aggregazione per categoria
+    pipeline = [
+        {"$match": {"stato": "attivo"}},
+        {"$group": {
+            "_id": "$categoria",
+            "num_cespiti": {"$sum": 1},
+            "valore_acquisto_totale": {"$sum": "$valore_acquisto"},
+            "fondo_ammortamento_totale": {"$sum": "$fondo_ammortamento"},
+            "valore_residuo_totale": {"$sum": "$valore_residuo"}
+        }},
+        {"$sort": {"valore_acquisto_totale": -1}}
+    ]
     
-    if not cespite:
-        raise HTTPException(status_code=404, detail="Cespite non trovato")
+    per_categoria = await db["cespiti"].aggregate(pipeline).to_list(100)
     
-    return cespite
+    # Totali generali
+    totale_valore = sum(c["valore_acquisto_totale"] for c in per_categoria)
+    totale_fondo = sum(c["fondo_ammortamento_totale"] for c in per_categoria)
+    totale_residuo = sum(c["valore_residuo_totale"] for c in per_categoria)
+    totale_cespiti = sum(c["num_cespiti"] for c in per_categoria)
+    
+    # Arricchisci con info categoria
+    for cat in per_categoria:
+        cat_code = cat["_id"]
+        if cat_code in CATEGORIE_CESPITI:
+            cat["descrizione"] = CATEGORIE_CESPITI[cat_code]["descrizione"]
+            cat["coefficiente"] = CATEGORIE_CESPITI[cat_code]["coefficiente"]
+        cat["valore_acquisto_totale"] = round(cat["valore_acquisto_totale"], 2)
+        cat["fondo_ammortamento_totale"] = round(cat["fondo_ammortamento_totale"], 2)
+        cat["valore_residuo_totale"] = round(cat["valore_residuo_totale"], 2)
+    
+    return {
+        "totali": {
+            "num_cespiti": totale_cespiti,
+            "valore_acquisto": round(totale_valore, 2),
+            "fondo_ammortamento": round(totale_fondo, 2),
+            "valore_netto_contabile": round(totale_residuo, 2),
+            "percentuale_ammortizzata": round(totale_fondo / totale_valore * 100, 1) if totale_valore > 0 else 0
+        },
+        "per_categoria": per_categoria
+    }
 
 
 @router.get("/calcolo/{anno}")
+async def calcola_ammortamenti_anno(anno: int) -> Dict[str, Any]:
+    """
+    Calcola ammortamenti per tutti i cespiti attivi per l'anno.
+    NON registra, solo preview.
+    """
+    db = Database.get_db()
+    
+    cespiti = await db["cespiti"].find(
+        {"stato": "attivo", "ammortamento_completato": False},
+        {"_id": 0}
+    ).to_list(1000)
+    
+    ammortamenti = []
+    totale = 0
+    
+    for cespite in cespiti:
+        valore = cespite["valore_acquisto"]
+        coeff = cespite["coefficiente_ammortamento"]
+        fondo = cespite.get("fondo_ammortamento", 0)
+        anno_acquisto = cespite["anno_acquisto"]
+        
+        # Verifica se già ammortizzato per quest'anno
+        piano = cespite.get("piano_ammortamento", [])
+        gia_ammortizzato = any(p.get("anno") == anno for p in piano)
+        
+        if gia_ammortizzato:
+            continue
+        
+        # Quota ordinaria
+        quota_ordinaria = valore * coeff / 100
+        
+        # Primo anno: dimezzata (prassi fiscale)
+        if anno == anno_acquisto:
+            quota = quota_ordinaria / 2
+        else:
+            quota = quota_ordinaria
+        
+        # Non superare valore residuo
+        valore_residuo = valore - fondo
+        quota = min(quota, valore_residuo)
+        
+        if quota > 0:
+            ammortamenti.append({
+                "cespite_id": cespite["id"],
+                "descrizione": cespite["descrizione"],
+                "categoria": cespite["categoria"],
+                "valore_acquisto": valore,
+                "fondo_precedente": round(fondo, 2),
+                "quota_anno": round(quota, 2),
+                "nuovo_fondo": round(fondo + quota, 2),
+                "nuovo_residuo": round(valore_residuo - quota, 2),
+                "completato": (valore_residuo - quota) <= 0.01,
+                "primo_anno": anno == anno_acquisto
+            })
+            totale += quota
+    
+    return {
+        "anno": anno,
+        "preview": True,
+        "ammortamenti": ammortamenti,
+        "totale_ammortamenti": round(totale, 2),
+        "num_cespiti": len(ammortamenti)
+    }
+
+
+@router.get("/{cespite_id}")
 async def calcola_ammortamenti_anno(anno: int) -> Dict[str, Any]:
     """
     Calcola ammortamenti per tutti i cespiti attivi per l'anno.
