@@ -133,7 +133,7 @@ from app.routers import (
     comparatore, gestione_riservata, commercialista, scadenze,
     riconciliazione_fornitori, ordini_fornitori, payroll, documents,
     pianificazione, admin, verifica_coerenza, documenti,
-    operazioni_da_confermare
+    operazioni_da_confermare, previsioni_acquisti
 )
 
 
