@@ -136,10 +136,14 @@ frontend:
     working: true
     file: "frontend/src/pages/GestioneDipendenti.jsx"
     priority: "high"
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "Da 2627 a 374 righe (-86%). Tab estratti in componenti separati"
+      - working: true
+        agent: "testing"
+        comment: "FINAL TEST SUCCESS: Tutti i 4 tab funzionanti (Anagrafica, Contratti, Prima Nota, Libro Unico). KPI cards, filtri, bottoni, modal, React Query caching - tutto perfetto. Nessun errore JavaScript."
 
   - task: "LibroUnicoTab con React Query"
     implemented: true
