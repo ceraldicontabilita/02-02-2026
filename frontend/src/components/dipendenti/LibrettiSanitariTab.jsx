@@ -1,6 +1,7 @@
 /**
  * Tab Libretti Sanitari - Componente ottimizzato
  * Gestisce visualizzazione e gestione libretti sanitari
+ * NOTA: Usa React Query per caricare dipendenti in modo indipendente dal parent
  */
 import React, { memo, useCallback, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -15,7 +16,16 @@ const DEFAULT_FORM = {
   note: ''
 };
 
-const LibrettiSanitariTab = memo(function LibrettiSanitariTab({ dipendenti = [] }) {
+const LibrettiSanitariTab = memo(function LibrettiSanitariTab() {
+  // Carica dipendenti direttamente con React Query (non dipende dal parent)
+  const { data: dipendenti = [] } = useQuery({
+    queryKey: queryKeys.dipendenti.list({}),
+    queryFn: async () => {
+      const res = await api.get('/api/dipendenti');
+      return res.data || [];
+    },
+    staleTime: 5 * 60 * 1000, // Cache 5 minuti
+  });
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState(DEFAULT_FORM);
