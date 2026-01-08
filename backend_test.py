@@ -158,10 +158,10 @@ class BackendTester:
             "HACCP Temperature"
         )
         
-        # 11. F24 API - Test public endpoint first
+        # 11. F24 API - Test basic endpoint (may require auth)
         self.test_api_endpoint(
-            "/f24/dashboard/summary",
-            "F24 Dashboard Summary"
+            "/f24",
+            "F24 API Basic"
         )
         
         # Additional health checks
