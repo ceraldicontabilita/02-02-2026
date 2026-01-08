@@ -154,3 +154,5 @@ test_plan:
 agent_communication:
   - agent: "main"
     message: "COMPLETATI 2 TASK PRINCIPALI: 1) Issue P0 RISOLTO - dropdown dipendenti ora funziona usando React Query. 2) Previsioni Acquisti COMPLETO con 3 metodologie. TEST DA FARE: A) Vai a /dipendenti, tab Contratti, clicca 'Nuovo Contratto' e verifica dropdown Dipendente popolato. B) Tab Libretti, clicca 'Nuovo Libretto' e verifica dropdown. C) Vai a /previsioni-acquisti, verifica statistiche 2025 con medie e trend. D) Tab Previsioni, verifica costo stimato e lista prodotti."
+  - agent: "testing"
+    message: "TESTING COMPLETATO CON ISSUE CRITICO IDENTIFICATO: 1) BACKEND FUNZIONA: API /api/dipendenti restituisce 22+ dipendenti, API /api/previsioni-acquisti/statistiche funziona con dati reali. 2) FRONTEND ISSUE: Entrambe le pagine /dipendenti e /previsioni-acquisti mostrano spinner di caricamento infinito 'Caricamento...' - React Query non sta risolvendo le chiamate API. 3) CAUSA PROBABILE: Problema di integrazione frontend-backend, possibile CORS o configurazione React Query. 4) RACCOMANDAZIONE: Main agent deve investigare configurazione React Query e integrazione API."
