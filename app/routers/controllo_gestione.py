@@ -146,7 +146,7 @@ async def get_analisi_costi_ricavi(
 
 
 @router.get("/trend-mensile")
-async def get_trend_mensile(anno: int = Query(...)) -> Dict[str, Any]:
+async def get_trend_mensile(anno: int) -> Dict[str, Any]:
     """
     Trend mensile di ricavi, costi e margine.
     """
