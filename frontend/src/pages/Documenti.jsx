@@ -488,26 +488,98 @@ export default function Documenti() {
                   ))}
                 </div>
                 
-                {/* Aggiungi nuova parola chiave */}
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <input
-                    type="text"
-                    value={nuovaParolaChiave}
-                    onChange={(e) => setNuovaParolaChiave(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && addCustomKeyword()}
-                    placeholder="Aggiungi parola chiave (es: cartella esattoriale)"
-                    style={{
-                      flex: 1,
-                      padding: '8px 12px',
-                      borderRadius: 6,
-                      border: '1px solid #e2e8f0',
-                      fontSize: 13
-                    }}
-                  />
-                  <Button onClick={addCustomKeyword} variant="outline" size="sm">
-                    <Plus className="h-4 w-4 mr-1" /> Aggiungi
-                  </Button>
+                {/* Aggiungi nuova parola chiave con varianti */}
+                <div style={{ marginBottom: 12, padding: 12, background: '#f8fafc', borderRadius: 8 }}>
+                  <label style={{ display: 'block', marginBottom: 8, fontWeight: 'bold', fontSize: 12, color: '#475569' }}>
+                    ➕ Aggiungi nuova parola chiave personalizzata
+                  </label>
+                  <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                    <input
+                      type="text"
+                      value={nuovaParolaChiave}
+                      onChange={(e) => setNuovaParolaChiave(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && addCustomKeyword()}
+                      placeholder="Nome keyword (es: Cartella Esattoriale)"
+                      style={{
+                        flex: 1,
+                        padding: '8px 12px',
+                        borderRadius: 6,
+                        border: '1px solid #e2e8f0',
+                        fontSize: 13
+                      }}
+                    />
+                    <Button onClick={addCustomKeyword} variant="outline" size="sm" disabled={!nuovaParolaChiave.trim()}>
+                      <Plus className="h-4 w-4 mr-1" /> Aggiungi
+                    </Button>
+                  </div>
+                  <p style={{ fontSize: 11, color: '#94a3b8', margin: 0 }}>
+                    💡 Ogni keyword può contenere più varianti separate da virgola. Es: "cartella,ader,equitalia"
+                  </p>
                 </div>
+                
+                {/* Lista keyword personalizzate esistenti con editor varianti */}
+                {customKeywords.length > 0 && (
+                  <div style={{ marginTop: 12 }}>
+                    <label style={{ display: 'block', marginBottom: 8, fontWeight: 'bold', fontSize: 12, color: '#475569' }}>
+                      🏷️ Le tue parole chiave personalizzate
+                    </label>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {customKeywords.map(kw => (
+                        <div 
+                          key={kw.id} 
+                          style={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: 8,
+                            padding: 8,
+                            background: paroleChiaveSelezionate.includes(kw.id) ? '#dcfce7' : '#f0fdf4',
+                            borderRadius: 8,
+                            border: paroleChiaveSelezionate.includes(kw.id) ? '2px solid #10b981' : '1px solid #e2e8f0'
+                          }}
+                        >
+                          <button
+                            onClick={() => toggleKeyword(kw.id)}
+                            style={{
+                              width: 24,
+                              height: 24,
+                              borderRadius: 4,
+                              border: '1px solid #10b981',
+                              background: paroleChiaveSelezionate.includes(kw.id) ? '#10b981' : 'white',
+                              color: paroleChiaveSelezionate.includes(kw.id) ? 'white' : '#10b981',
+                              cursor: 'pointer',
+                              fontSize: 12,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                          >
+                            {paroleChiaveSelezionate.includes(kw.id) ? '✓' : ''}
+                          </button>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontWeight: 'bold', fontSize: 13, color: '#166534' }}>{kw.label}</div>
+                            <div style={{ fontSize: 11, color: '#64748b' }}>
+                              Varianti: {kw.keywords}
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => removeCustomKeyword(kw.id)}
+                            style={{
+                              padding: '4px 8px',
+                              borderRadius: 4,
+                              border: 'none',
+                              background: '#fee2e2',
+                              color: '#dc2626',
+                              cursor: 'pointer',
+                              fontSize: 11
+                            }}
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <p style={{ fontSize: 12, color: '#64748b', marginTop: 8 }}>
                   💡 Crea parole chiave personalizzate per categorizzare automaticamente i documenti.
                   Es: "cartella esattoriale" creerà una cartella "Cartelle Esattoriali".
