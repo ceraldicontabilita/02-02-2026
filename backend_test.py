@@ -158,10 +158,10 @@ class BackendTester:
             "HACCP Temperature"
         )
         
-        # 11. F24 API - Test public endpoint
+        # 11. F24 API - Test public models endpoint
         self.test_api_endpoint(
-            "/f24-public",
-            "F24 Public API"
+            "/f24-public/models",
+            "F24 Public Models"
         )
         
         # Additional health checks
