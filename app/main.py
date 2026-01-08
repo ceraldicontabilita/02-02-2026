@@ -135,7 +135,7 @@ from app.routers import (
     pianificazione, admin, verifica_coerenza, documenti,
     operazioni_da_confermare, previsioni_acquisti,
     cedolini, tfr, cespiti, scadenzario_fornitori, calcolo_iva,
-    controllo_gestione, indici_bilancio
+    controllo_gestione, indici_bilancio, chiusura_esercizio
 )
 
 
