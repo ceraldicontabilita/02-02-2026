@@ -487,9 +487,11 @@ async def fetch_aruba_invoices(
                     "metodo_pagamento_proposto": metodo_pagamento_proposto,
                     "metodo_pagamento_confermato": None,
                     "numero_assegno": numero_assegno_auto,  # Pre-compilato se trovato
-                    "stato": "da_confermare",
+                    "stato": "da_verificare" if da_verificare else "da_confermare",
                     "prima_nota_id": None,
                     "riconciliato_auto": riconciliato_auto,
+                    "da_verificare": da_verificare,  # True se assegni multipli (richiede conferma)
+                    "assegni_multipli": assegni_multipli,  # Lista assegni se pagamento multiplo
                     "estratto_conto_match": estratto_conto_match,
                     "email_date": email_date,
                     "created_at": datetime.now(timezone.utc).isoformat(),
