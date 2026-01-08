@@ -209,6 +209,7 @@ async def fetch_aruba_invoices(
 ) -> Dict[str, Any]:
     """
     Scarica le notifiche fatture da Aruba e le salva in 'operazioni_da_confermare'.
+    Include riconciliazione automatica con estratto conto bancario.
     
     Args:
         db: Database MongoDB
@@ -224,6 +225,8 @@ async def fetch_aruba_invoices(
         "invoices_found": 0,
         "new_invoices": 0,
         "duplicates_skipped": 0,
+        "riconciliate_auto": 0,
+        "non_riconciliate": 0,
         "errors": 0
     }
     
