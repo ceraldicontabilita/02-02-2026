@@ -1,9 +1,11 @@
 import React, { Suspense, lazy } from "react";
 import ReactDOM from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { QueryClientProvider } from "@tanstack/react-query";
 import App from "./App.jsx";
 import "./styles.css";
 import { AnnoProvider } from "./contexts/AnnoContext.jsx";
+import { queryClient } from "./lib/queryClient.js";
 
 // Loading Component for Suspense fallback
 const PageLoader = () => (
