@@ -220,9 +220,33 @@ export default function Assegni() {
                       </span>
                     )}
                   </td>
-                  <td style={{ padding: 8 }}>{c.bank || "-"}</td>
-                  <td style={{ padding: 8 }}>{formatDateIT(c.due_date) || "-"}</td>
-                  <td style={{ padding: 8 }}>{c.status || "pending"}</td>
+                  <td style={{ padding: 8 }}>{formatDateIT(c.due_date || c.data_scadenza) || "-"}</td>
+                  <td style={{ padding: 8 }}>{c.status || c.stato || "pending"}</td>
+                  <td style={{ padding: 8 }}>
+                    {editingId === c.id ? (
+                      <>
+                        <button 
+                          onClick={() => handleUpdateCheck(c.id)} 
+                          style={{ padding: "4px 8px", marginRight: 4, background: "#4caf50", color: "white", border: "none", borderRadius: 4, cursor: "pointer" }}
+                        >
+                          ✓
+                        </button>
+                        <button 
+                          onClick={() => setEditingId(null)} 
+                          style={{ padding: "4px 8px", background: "#999", color: "white", border: "none", borderRadius: 4, cursor: "pointer" }}
+                        >
+                          ✕
+                        </button>
+                      </>
+                    ) : (
+                      <button 
+                        onClick={() => startEdit(c)} 
+                        style={{ padding: "4px 8px", background: "#2196f3", color: "white", border: "none", borderRadius: 4, cursor: "pointer" }}
+                      >
+                        ✏️ Modifica
+                      </button>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
