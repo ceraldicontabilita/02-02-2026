@@ -55,7 +55,7 @@ function DipendenteRow({ dipendente, onView, onDelete }) {
   return (
     <tr style={{ borderBottom: '1px solid #eee' }}>
       <td style={{ padding: 12 }}>
-        <strong>{dip.nome_completo || `${dip.nome || ''} ${dip.cognome || ''}`.trim() || 'N/A'}</strong>
+        <strong>{dip.nome_completo || `${dip.cognome || ''} ${dip.nome || ''}`.trim() || 'N/A'}</strong>
         {dip.luogo_nascita && <div style={{ fontSize: 11, color: '#666' }}>📍 {dip.luogo_nascita}</div>}
       </td>
       <td style={{ padding: 12, fontFamily: 'monospace', fontSize: 12 }}>
