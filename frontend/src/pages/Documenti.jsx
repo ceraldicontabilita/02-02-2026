@@ -419,6 +419,7 @@ export default function Documenti() {
                     maxWidth: 300
                   }}
                 >
+                  <option value={10}>Ultimi 10 giorni</option>
                   <option value={30}>Ultimi 30 giorni</option>
                   <option value={60}>Ultimi 60 giorni</option>
                   <option value={90}>Ultimi 90 giorni</option>
