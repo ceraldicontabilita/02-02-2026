@@ -204,22 +204,51 @@ async def conferma_operazione(
         await db["bank_movements"].insert_one(movimento)
         prima_nota_id = movimento["id"]
         
-        # Gestione Assegni
-        assegno = {
-            "id": f"check_{operazione_id}",
-            "type": "emesso",
-            "amount": operazione["importo"],
-            "beneficiary": operazione["fornitore"],
-            "check_number": numero_assegno,
-            "bank": "",
-            "due_date": operazione["data_documento"],
-            "status": "pending",
-            "description": f"Fattura {operazione['numero_fattura']}",
-            "operazione_id": operazione_id,
-            "created_at": datetime.now(timezone.utc).isoformat()
-        }
-        await db["assegni"].insert_one(assegno)
-        assegno_id = assegno["id"]
+        # Gestione Assegni - con numero fattura e fornitore
+        # Se ci sono assegni multipli, inseriscili tutti
+        assegni_da_inserire = operazione.get("assegni_multipli") or []
+        
+        if assegni_da_inserire:
+            # Assegni multipli - inserisci ciascuno
+            assegno_ids = []
+            for idx, ass in enumerate(assegni_da_inserire):
+                assegno = {
+                    "id": f"check_{operazione_id}_{idx}",
+                    "type": "emesso",
+                    "amount": ass.get("importo"),
+                    "beneficiary": operazione["fornitore"],
+                    "check_number": ass.get("numero_assegno") or numero_assegno,
+                    "bank": "",
+                    "due_date": operazione["data_documento"],
+                    "status": "pending",
+                    "description": f"Fattura {operazione['numero_fattura']} ({idx+1}/{len(assegni_da_inserire)})",
+                    "numero_fattura": operazione["numero_fattura"],  # Campo aggiunto
+                    "fornitore": operazione["fornitore"],  # Campo aggiunto
+                    "operazione_id": operazione_id,
+                    "created_at": datetime.now(timezone.utc).isoformat()
+                }
+                await db["assegni"].insert_one(assegno)
+                assegno_ids.append(assegno["id"])
+            assegno_id = ",".join(assegno_ids)
+        else:
+            # Assegno singolo
+            assegno = {
+                "id": f"check_{operazione_id}",
+                "type": "emesso",
+                "amount": operazione["importo"],
+                "beneficiary": operazione["fornitore"],
+                "check_number": numero_assegno,
+                "bank": "",
+                "due_date": operazione["data_documento"],
+                "status": "pending",
+                "description": f"Fattura {operazione['numero_fattura']}",
+                "numero_fattura": operazione["numero_fattura"],  # Campo aggiunto
+                "fornitore": operazione["fornitore"],  # Campo aggiunto
+                "operazione_id": operazione_id,
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+            await db["assegni"].insert_one(assegno)
+            assegno_id = assegno["id"]
     
     # Aggiorna operazione
     await db["operazioni_da_confermare"].update_one(
