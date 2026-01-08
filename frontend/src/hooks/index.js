@@ -1,24 +1,5 @@
-/**
- * HOOKS INDEX
- * ===========
- * 
- * Export centralizzato di tutti gli hooks custom.
- */
-
-export {
-  // Utility hooks
-  useIsMobile,
-  useDebounce,
-  useFetch,
-  
-  // Data hooks
-  useFatture,
-  useCorrispettivi,
-  usePrimaNota,
-  useFornitori,
-  useAssegni,
-  
-  // UI hooks
-  useMessage,
-  useConfirm
-} from './useData';
+// Hooks exports
+export { usePrimaNota } from './usePrimaNota';
+export { useLibroUnico } from './useLibroUnico';
+export { useLibrettiSanitari } from './useLibrettiSanitari';
+export { useContratti } from './useContratti';
