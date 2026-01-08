@@ -307,12 +307,62 @@ export default function OperazioniDaConfermare() {
                               Assegno #{op.numero_assegno}
                             </span>
                           )}
-                          {isRiconciliato && op.estratto_conto_match && (
+                          {/* Badge per assegni multipli */}
+                          {op.assegni_multipli && op.assegni_multipli.length > 0 && (
+                            <span style={{
+                              padding: '4px 8px',
+                              borderRadius: 4,
+                              background: '#dc2626',
+                              color: 'white',
+                              fontSize: 11,
+                              fontWeight: 'bold'
+                            }}>
+                              ⚠️ {op.assegni_multipli.length} ASSEGNI
+                            </span>
+                          )}
+                          {op.da_verificare && (
+                            <span style={{
+                              padding: '4px 8px',
+                              borderRadius: 4,
+                              background: '#f97316',
+                              color: 'white',
+                              fontSize: 11,
+                              fontWeight: 'bold'
+                            }}>
+                              DA VERIFICARE
+                            </span>
+                          )}
+                          {isRiconciliato && op.estratto_conto_match && op.estratto_conto_match.tipo === 'singolo' && (
                             <span style={{ fontSize: 11, color: '#64748b', marginLeft: 8 }}>
                               📄 {op.estratto_conto_match.descrizione?.slice(0, 40)}...
                             </span>
                           )}
                         </div>
+                        {/* Dettaglio assegni multipli */}
+                        {op.assegni_multipli && op.assegni_multipli.length > 0 && (
+                          <div style={{ 
+                            marginTop: 8, 
+                            padding: 8, 
+                            background: '#fef2f2', 
+                            borderRadius: 6,
+                            border: '1px solid #fecaca'
+                          }}>
+                            <div style={{ fontSize: 11, fontWeight: 'bold', color: '#dc2626', marginBottom: 4 }}>
+                              Fattura pagata con {op.assegni_multipli.length} assegni:
+                            </div>
+                            {op.assegni_multipli.map((ass, idx) => (
+                              <div key={idx} style={{ fontSize: 11, color: '#64748b' }}>
+                                • Assegno #{ass.numero_assegno || '?'}: €{ass.importo?.toFixed(2)} ({ass.data})
+                              </div>
+                            ))}
+                            <div style={{ fontSize: 11, color: '#dc2626', marginTop: 4, fontWeight: 'bold' }}>
+                              Totale: €{op.assegni_multipli.reduce((s, a) => s + (a.importo || 0), 0).toFixed(2)}
+                              {op.estratto_conto_match?.differenza !== 0 && (
+                                <span> (diff: €{op.estratto_conto_match?.differenza})</span>
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </div>
 
                       {/* Pulsanti Azione */}
