@@ -68,17 +68,55 @@ async def lista_documenti(
     }
 
 
+# Store per tracciare task in background
+import uuid
+import asyncio
+
+# Stato dei task in memoria (in produzione usare Redis)
+_download_tasks: Dict[str, Dict] = {}
+
+
+async def _execute_email_download(task_id: str, db, email_user: str, email_password: str, 
+                                   giorni: int, folder: str, keywords: List[str]):
+    """Esegue il download in background e aggiorna lo stato del task."""
+    try:
+        _download_tasks[task_id]["status"] = "in_progress"
+        _download_tasks[task_id]["message"] = "Connessione al server email..."
+        
+        result = await download_documents_from_email(
+            db=db,
+            email_user=email_user,
+            email_password=email_password,
+            since_days=giorni,
+            folder=folder,
+            search_keywords=keywords if keywords else None
+        )
+        
+        _download_tasks[task_id]["status"] = "completed"
+        _download_tasks[task_id]["result"] = result
+        _download_tasks[task_id]["message"] = "Download completato!"
+        _download_tasks[task_id]["completed_at"] = datetime.now(timezone.utc).isoformat()
+        
+    except Exception as e:
+        logger.error(f"Errore download task {task_id}: {e}")
+        _download_tasks[task_id]["status"] = "error"
+        _download_tasks[task_id]["error"] = str(e)
+        _download_tasks[task_id]["message"] = f"Errore: {str(e)}"
+
+
 @router.post("/scarica-da-email")
 async def scarica_documenti_email(
     background_tasks: BackgroundTasks,
     giorni: int = Query(30, ge=1, le=2000, description="Scarica email degli ultimi N giorni (max 2000 per storico)"),
     folder: str = Query("INBOX", description="Cartella email"),
-    parole_chiave: Optional[str] = Query(None, description="Parole chiave separate da virgola per filtrare email")
+    parole_chiave: Optional[str] = Query(None, description="Parole chiave separate da virgola per filtrare email"),
+    background: bool = Query(False, description="Se true, esegue in background e restituisce task_id")
 ) -> Dict[str, Any]:
     """
     Scarica documenti allegati dalle email.
     Usa le credenziali configurate nel .env.
     Se parole_chiave è specificato, cerca email con quelle parole nell'oggetto.
+    Se background=true, avvia il download in background e restituisce un task_id per il polling.
     """
     db = Database.get_db()
     
@@ -97,6 +135,33 @@ async def scarica_documenti_email(
     if parole_chiave:
         keywords = [k.strip() for k in parole_chiave.split(',') if k.strip()]
     
+    if background:
+        # Modalità background: crea task e restituisce subito
+        task_id = str(uuid.uuid4())
+        _download_tasks[task_id] = {
+            "task_id": task_id,
+            "status": "pending",
+            "message": "Avvio download...",
+            "started_at": datetime.now(timezone.utc).isoformat(),
+            "giorni": giorni,
+            "keywords": keywords,
+            "result": None,
+            "error": None
+        }
+        
+        # Avvia il task in background
+        asyncio.create_task(_execute_email_download(
+            task_id, db, email_user, email_password, giorni, folder, keywords
+        ))
+        
+        return {
+            "success": True,
+            "background": True,
+            "task_id": task_id,
+            "message": "Download avviato in background. Usa /documenti/task/{task_id} per controllare lo stato."
+        }
+    
+    # Modalità sincrona (comportamento originale)
     try:
         result = await download_documents_from_email(
             db=db,
@@ -112,6 +177,26 @@ async def scarica_documenti_email(
     except Exception as e:
         logger.error(f"Errore download documenti: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/task/{task_id}")
+async def get_task_status(task_id: str) -> Dict[str, Any]:
+    """Controlla lo stato di un task di download in background."""
+    if task_id not in _download_tasks:
+        raise HTTPException(status_code=404, detail="Task non trovato")
+    
+    task = _download_tasks[task_id]
+    
+    # Pulisci task completati vecchi di 1 ora
+    current_time = datetime.now(timezone.utc)
+    for tid in list(_download_tasks.keys()):
+        t = _download_tasks[tid]
+        if t.get("completed_at"):
+            completed = datetime.fromisoformat(t["completed_at"].replace("Z", "+00:00"))
+            if (current_time - completed).total_seconds() > 3600:
+                del _download_tasks[tid]
+    
+    return task
 
 
 @router.get("/categorie")
