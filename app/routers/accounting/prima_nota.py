@@ -2089,6 +2089,66 @@ async def regenerate_prima_nota_from_invoices(anno: int = Query(..., description
     }
 
 
+@router.post("/fix-versamenti-duplicati")
+async def fix_versamenti_duplicati(anno: int = Query(None)) -> Dict[str, Any]:
+    """
+    Rimuove i versamenti duplicati che hanno importo errato.
+    Mantiene solo quelli con formato datetime nella data.
+    """
+    db = Database.get_db()
+    
+    query = {"categoria": "Versamento"}
+    if anno:
+        query["data"] = {"$regex": f"^{anno}"}
+    
+    # Trova tutti i versamenti cassa
+    versamenti_cassa = await db[COLLECTION_PRIMA_NOTA_CASSA].find(query, {"_id": 0}).to_list(10000)
+    
+    # Separa per formato data
+    datetime_format = []  # Es: "2025-12-28 00:00:00"
+    date_format = []       # Es: "2025-12-28"
+    
+    for v in versamenti_cassa:
+        data = v.get("data", "")
+        if " " in data:  # Ha formato datetime
+            datetime_format.append(v)
+        else:
+            date_format.append(v)
+    
+    # I versamenti con datetime sono quelli corretti
+    # Quelli con solo date sono i duplicati errati
+    
+    removed = 0
+    for v in date_format:
+        # Verifica se esiste un versamento corrispondente con datetime
+        data_solo = v.get("data", "")[:10]
+        corresponding = [d for d in datetime_format if d.get("data", "")[:10] == data_solo]
+        
+        if corresponding:
+            # C'è già il versamento corretto, rimuovi il duplicato
+            await db[COLLECTION_PRIMA_NOTA_CASSA].delete_one({"id": v["id"]})
+            removed += 1
+    
+    # Normalizza le date dei versamenti rimanenti (rimuovi orario)
+    for v in datetime_format:
+        data = v.get("data", "")
+        if " " in data:
+            new_data = data[:10]  # Solo YYYY-MM-DD
+            await db[COLLECTION_PRIMA_NOTA_CASSA].update_one(
+                {"id": v["id"]},
+                {"$set": {"data": new_data}}
+            )
+    
+    return {
+        "success": True,
+        "anno": anno,
+        "versamenti_datetime": len(datetime_format),
+        "versamenti_date": len(date_format),
+        "duplicati_rimossi": removed,
+        "message": f"Rimossi {removed} versamenti duplicati con importo errato"
+    }
+
+
 @router.post("/fix-categories-and-duplicates")
 async def fix_categories_and_duplicates(anno: int = Query(None, description="Anno specifico")) -> Dict[str, Any]:
     """
