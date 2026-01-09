@@ -285,10 +285,6 @@ async def calcola_stima_cedolino(input_data: CedolinoInput) -> CedolinoStima:
         giorni_lavorati=round(giorni_lavorati, 1),
         paga_oraria_usata=round(paga_oraria, 2)
     )
-        costo_totale_azienda=round(costo_totale_azienda, 2),
-        ore_lavorate=ore_lavorate,
-        giorni_lavorati=giorni_lavorati
-    )
 
 
 @router.post("/conferma")
