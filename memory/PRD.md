@@ -7,38 +7,37 @@
 ================================================================================
 
 ## Problema Risolto
-La logica contabile in Prima Nota registrava TUTTE le fatture come "uscite" indipendentemente
-dal tipo di documento. Questo causava:
-- Saldo Banca negativo errato (€-273.135,16)
-- TUTTE le fatture mostrate come "Pagamento fornitore" (uscite)
-- Calcoli finanziari completamente sbagliati
+1. La logica contabile registrava TUTTE le fatture come "uscite"
+2. C'erano movimenti orfani con date sbagliate (383 movimenti tutti datati 2026-01-04)
+3. Non c'era distinzione tra anni per i movimenti
 
 ## Soluzione Implementata
 
 ### Nuova Logica (`prima_nota.py`)
-- Introdotta funzione `determina_tipo_movimento_fattura()` che analizza il tipo_documento:
+- Funzione `determina_tipo_movimento_fattura()` che analizza il tipo_documento:
   - **TD01** (da fornitore) = USCITA (pagamento fornitore)
-  - **TD04, TD08** (note credito) = ENTRATA (rimborso fornitore)
+  - **TD04, TD08** (note credito) = ENTRATA (rimborso)
   - **TD24, TD25, TD26, TD27** (fatture attive/vendite) = ENTRATA (incasso cliente)
 
-### Endpoint di Fix
-- `POST /api/prima-nota/fix-tipo-movimento` - Corregge movimenti esistenti
-- `POST /api/prima-nota/recalculate-balances` - Ricalcola saldi
+### Nuovi Endpoint
+- `POST /api/prima-nota/fix-tipo-movimento` - Corregge tipo movimento esistenti
+- `POST /api/prima-nota/recalculate-balances?anno=XXXX` - Ricalcola saldi
+- `POST /api/prima-nota/cleanup-orphan-movements?anno=XXXX` - Elimina movimenti orfani
+- `POST /api/prima-nota/regenerate-from-invoices?anno=XXXX` - Rigenera movimenti da fatture reali
 
-### Risultati Fix
-- **638 movimenti cassa** corretti
-- **383 movimenti banca** corretti
-- Saldo Cassa 2026: €8.126,85 (positivo ✅)
-- Saldo Banca 2026: €-197.243,54 (negativo ma corretto - più pagamenti fornitori che incassi)
-- Saldo Totale: €1.579.495,39 ✅
+### Risultati Fix 2026
+- **15 fatture** elaborate correttamente
+- **Cassa**: 8 movimenti (6 fatture + 2 corrispettivi)
+  - Entrate: €10.098,90 (corrispettivi)
+  - Uscite: €176,65 (fatture contanti)
+  - Saldo: €9.922,25 ✅
+- **Banca**: 9 movimenti
+  - Uscite: €1.497,29 (fatture bonifico)
+  - Saldo: €-1.497,29 ✅
+- **Totale uscite**: €1.673,94 = esatto totale delle 15 fatture caricate
 
 ### File Modificati
-- `/app/app/routers/accounting/prima_nota.py` - Nuova logica tipo movimento + endpoint fix
-
-## Note Importanti
-- I RICAVI sulla Dashboard (€0) sono corretti: l'azienda ha caricato solo fatture PASSIVE (acquisti)
-- Per avere RICAVI occorre caricare: corrispettivi giornalieri OPPURE fatture emesse (vendite)
-- Il sistema ora distingue correttamente tra fatture attive (vendite) e passive (acquisti)
+- `/app/app/routers/accounting/prima_nota.py`
 
 ================================================================================
 # ✅ FIX MOBILE + RICERCA + INSERIMENTO - 2026-01-09
