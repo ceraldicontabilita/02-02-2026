@@ -8,3 +8,4 @@ export { MANSIONI, TIPI_CONTRATTO, DEFAULT_DIPENDENTE } from './constants';
 export { default as LibroUnicoTab } from './LibroUnicoTab';
 export { default as LibrettiSanitariTab } from './LibrettiSanitariTab';
 export { default as ContrattiTab } from './ContrattiTab';
+export { default as AccontiTab } from './AccontiTab';
