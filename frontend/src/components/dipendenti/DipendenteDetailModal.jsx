@@ -76,7 +76,26 @@ export function DipendenteDetailModal({
           <h2 style={{ margin: 0, fontSize: 16 }}>
             {editMode ? '✏️ Modifica' : '👤'} {dipendente.nome_completo || dipendente.nome}
           </h2>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer' }}>✕</button>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <button 
+              onClick={handleImportBustaPaga}
+              disabled={importingBustaPaga}
+              style={{ 
+                padding: '6px 12px', 
+                background: '#ff9800', 
+                color: 'white', 
+                border: 'none', 
+                borderRadius: 4, 
+                cursor: importingBustaPaga ? 'wait' : 'pointer',
+                fontSize: 11,
+                opacity: importingBustaPaga ? 0.7 : 1
+              }}
+              title="Importa TFR, ferie, paga base dalle buste paga PDF"
+            >
+              {importingBustaPaga ? '⏳ Importo...' : '📥 Importa da Busta Paga'}
+            </button>
+            <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer' }}>✕</button>
+          </div>
         </div>
 
         {/* Info rapide */}
