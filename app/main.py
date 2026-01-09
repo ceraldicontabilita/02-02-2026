@@ -139,10 +139,20 @@ from app.routers import (
     gestione_iva_speciale
 )
 
-# --- HACCP New System ---
-from app.routers.haccp_new import (
-    temperature_positive, temperature_negative,
-    chiusure, sanificazione
+# --- HACCP V2 System (Nuovo sistema completo) ---
+from app.routers.haccp_v2 import (
+    temperature_positive_router as haccp_temp_positive,
+    temperature_negative_router as haccp_temp_negative,
+    sanificazione_router as haccp_sanificazione,
+    disinfestazione_router as haccp_disinfestazione,
+    anomalie_router as haccp_anomalie,
+    chiusure_router as haccp_chiusure,
+    manuale_haccp_router as haccp_manuale,
+    lotti_router as haccp_lotti,
+    materie_prime_router as haccp_materie_prime,
+    ricette_router as haccp_ricette,
+    non_conformi_router as haccp_non_conformi,
+    fornitori_router as haccp_fornitori
 )
 
 
