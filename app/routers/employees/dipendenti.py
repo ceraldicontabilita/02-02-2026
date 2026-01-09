@@ -133,20 +133,43 @@ async def create_dipendente(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
         "cognome": cognome,
         "nome": nome,
         "codice_fiscale": data.get("codice_fiscale", ""),
+        "codice_dipendente": data.get("codice_dipendente", ""),  # Codice aziendale (es. 0300006)
         "matricola": data.get("matricola", ""),
         "email": data.get("email", ""),
         "telefono": data.get("telefono", ""),
         "indirizzo": data.get("indirizzo", ""),
         "data_nascita": data.get("data_nascita"),
         "luogo_nascita": data.get("luogo_nascita", ""),
-        "mansione": data.get("mansione", ""),
-        "qualifica": data.get("qualifica", data.get("mansione", "")),
-        "livello": data.get("livello", ""),
+        "mansione": data.get("mansione", ""),  # es. "CAM. DI SALA"
+        "qualifica": data.get("qualifica", ""),  # es. "OPE" (operatore)
+        "livello": data.get("livello", ""),  # es. "6 Livello Super"
         "tipo_contratto": data.get("tipo_contratto", "Tempo Indeterminato"),
         "data_assunzione": data.get("data_assunzione"),
         "data_fine_contratto": data.get("data_fine_contratto"),
         "ore_settimanali": data.get("ore_settimanali", 40),
         "iban": data.get("iban", ""),
+        # Retribuzione dettagliata
+        "paga_base": data.get("paga_base", 0),  # Paga base mensile
+        "contingenza": data.get("contingenza", 0),  # Indennità contingenza
+        "stipendio_lordo": data.get("stipendio_lordo", 0),  # Totale lordo
+        "stipendio_orario": data.get("stipendio_orario", 0),  # Paga oraria
+        # Agevolazioni fiscali
+        "agevolazioni": data.get("agevolazioni", []),  # es. ["Decontr.SUD DL104.20"]
+        # Progressivi
+        "progressivi": {
+            "tfr_accantonato": data.get("tfr_accantonato", 0),
+            "ferie_maturate": data.get("ferie_maturate", 0),
+            "ferie_godute": data.get("ferie_godute", 0),
+            "ferie_residue": data.get("ferie_residue", 0),
+            "permessi_maturati": data.get("permessi_maturati", 0),
+            "permessi_goduti": data.get("permessi_goduti", 0),
+            "permessi_residui": data.get("permessi_residui", 0),
+            "rol_maturati": data.get("rol_maturati", 0),
+            "rol_goduti": data.get("rol_goduti", 0),
+            "rol_residui": data.get("rol_residui", 0)
+        },
+        # Acconti
+        "acconti": data.get("acconti", []),
         # Libretto sanitario
         "libretto_numero": data.get("libretto_numero", ""),
         "libretto_scadenza": data.get("libretto_scadenza"),
@@ -155,6 +178,8 @@ async def create_dipendente(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
         "portale_invitato": False,
         "portale_registrato": False,
         "portale_ultimo_accesso": None,
+        # Bonifici associati
+        "bonifici_associati": data.get("bonifici_associati", []),
         # Status
         "attivo": True,
         "created_at": datetime.utcnow().isoformat(),
