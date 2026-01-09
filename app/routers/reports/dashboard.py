@@ -553,26 +553,36 @@ async def get_bilancio_istantaneo(
     
     try:
         # RICAVI: Corrispettivi + Fatture Emesse
+        # I corrispettivi usano il campo "data" (es. "2026-01-03"), non "anno"
         corr_res = await db["corrispettivi"].aggregate([
-            {"$match": {"anno": anno}},
+            {"$match": {
+                "data": {"$regex": f"^{anno}"},
+                "entity_status": {"$ne": "deleted"}  # Escludi eliminati
+            }},
             {"$group": {
                 "_id": None, 
-                "imponibile": {"$sum": "$imponibile"},
-                "iva": {"$sum": "$totale_iva"},
-                "totale": {"$sum": "$totale_giornaliero"}
+                "imponibile": {"$sum": {"$ifNull": ["$totale_imponibile", 0]}},
+                "iva": {"$sum": {"$ifNull": ["$totale_iva", 0]}},
+                "totale": {"$sum": {"$ifNull": ["$totale", 0]}}
             }}
         ]).to_list(1)
         
         ricavi_corr = corr_res[0] if corr_res else {"imponibile": 0, "iva": 0, "totale": 0}
         
-        # Fatture emesse (se presenti)
+        # Fatture emesse (se presenti) - cerca anche per data
         fatt_emesse_res = await db["invoices_emesse"].aggregate([
-            {"$match": {"anno": anno}},
+            {"$match": {
+                "$or": [
+                    {"anno": anno},
+                    {"data": {"$regex": f"^{anno}"}},
+                    {"invoice_date": {"$regex": f"^{anno}"}}
+                ]
+            }},
             {"$group": {
                 "_id": None,
-                "imponibile": {"$sum": "$imponibile"},
-                "iva": {"$sum": "$iva"},
-                "totale": {"$sum": "$totale"}
+                "imponibile": {"$sum": {"$ifNull": ["$imponibile", 0]}},
+                "iva": {"$sum": {"$ifNull": ["$iva", 0]}},
+                "totale": {"$sum": {"$ifNull": ["$totale", {"$ifNull": ["$total_amount", 0]}]}}
             }}
         ]).to_list(1)
         
