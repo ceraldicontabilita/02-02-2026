@@ -74,9 +74,9 @@
     }
   },
   "urls_tested": {
-    "Controllo Mensile": "https://finance-logic.preview.emergentagent.com/controllo-mensile",
-    "Prima Nota": "https://finance-logic.preview.emergentagent.com/prima-nota",
-    "Commercialista": "https://finance-logic.preview.emergentagent.com/commercialista"
+    "Controllo Mensile": "https://finance-tools-27.preview.emergentagent.com/controllo-mensile",
+    "Prima Nota": "https://finance-tools-27.preview.emergentagent.com/prima-nota",
+    "Commercialista": "https://finance-tools-27.preview.emergentagent.com/commercialista"
   },
   "controllo_mensile_2025_data": {
     "pagato_non_riscosso": {
