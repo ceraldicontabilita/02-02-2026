@@ -640,7 +640,7 @@ async def get_supplier(supplier_id: str) -> Dict[str, Any]:
 async def update_supplier(
     supplier_id: str,
     data: Dict[str, Any] = Body(...)
-) -> Dict[str, str]:
+) -> Dict[str, Any]:
     """
     Aggiorna dati fornitore incluso metodo pagamento.
     Se viene configurato un metodo pagamento, risolve automaticamente gli alert.
