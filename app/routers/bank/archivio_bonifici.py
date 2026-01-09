@@ -872,7 +872,9 @@ async def update_transfer(transfer_id: str, data: Dict[str, Any]):
 @router.get("/download-zip/{year}")
 async def download_bonifici_zip(year: str):
     """
-    Esporta tutti i bonifici di un anno in formato ZIP (XLSX + CSV).
+    Esporta tutti i bonifici di un anno in formato ZIP.
+    I bonifici vengono organizzati in cartelle per dipendente.
+    Ogni cartella contiene: XLSX riepilogo + file info per ogni bonifico.
     """
     db = Database.get_db()
     
@@ -889,97 +891,206 @@ async def download_bonifici_zip(year: str):
     zip_buffer = io.BytesIO()
     
     with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
-        # 1. XLSX
         from openpyxl import Workbook
         from openpyxl.styles import Font, PatternFill
         
+        # ============================================
+        # ORGANIZZA PER DIPENDENTE
+        # ============================================
+        
+        # Raggruppa bonifici per dipendente
+        per_dipendente = {}
+        senza_dipendente = []
+        
+        for t in transfers:
+            dip_id = t.get('dipendente_id')
+            dip_nome = t.get('dipendente_nome', 'Non Assegnato')
+            
+            if dip_id:
+                if dip_id not in per_dipendente:
+                    per_dipendente[dip_id] = {
+                        'nome': dip_nome,
+                        'bonifici': []
+                    }
+                per_dipendente[dip_id]['bonifici'].append(t)
+            else:
+                senza_dipendente.append(t)
+        
+        # Crea cartella per ogni dipendente
+        for dip_id, dip_data in per_dipendente.items():
+            # Nome cartella sicuro
+            folder_name = re.sub(r'[^A-Za-z0-9\s\-_àèéìòù]', '', dip_data['nome']).strip()
+            if not folder_name:
+                folder_name = f"Dipendente_{dip_id[:8]}"
+            folder_name = folder_name.replace(' ', '_')
+            
+            bonifici_dip = dip_data['bonifici']
+            
+            # Crea XLSX per questo dipendente
+            wb = Workbook()
+            ws = wb.active
+            ws.title = f"Bonifici {year}"
+            
+            headers = ['Data', 'Importo €', 'Causale', 'CRO/TRN', 'Riconciliato', 'Note']
+            for col, header in enumerate(headers, 1):
+                cell = ws.cell(row=1, column=col, value=header)
+                cell.font = Font(bold=True)
+                cell.fill = PatternFill(start_color="1e3a5f", end_color="1e3a5f", fill_type="solid")
+                cell.font = Font(bold=True, color="FFFFFF")
+            
+            totale = 0
+            for row, t in enumerate(bonifici_dip, 2):
+                importo = t.get('importo', 0)
+                totale += importo
+                ws.cell(row=row, column=1, value=t.get('data', '')[:10])
+                ws.cell(row=row, column=2, value=round(importo, 2))
+                ws.cell(row=row, column=3, value=t.get('causale', ''))
+                ws.cell(row=row, column=4, value=t.get('cro_trn', ''))
+                ws.cell(row=row, column=5, value='SI' if t.get('riconciliato') else 'NO')
+                ws.cell(row=row, column=6, value=t.get('note', ''))
+            
+            # Riga totale
+            ws.cell(row=len(bonifici_dip)+2, column=1, value='TOTALE')
+            ws.cell(row=len(bonifici_dip)+2, column=2, value=round(totale, 2))
+            ws.cell(row=len(bonifici_dip)+2, column=1).font = Font(bold=True)
+            ws.cell(row=len(bonifici_dip)+2, column=2).font = Font(bold=True)
+            
+            # Adatta colonne
+            ws.column_dimensions['A'].width = 12
+            ws.column_dimensions['B'].width = 12
+            ws.column_dimensions['C'].width = 50
+            ws.column_dimensions['D'].width = 20
+            ws.column_dimensions['E'].width = 12
+            ws.column_dimensions['F'].width = 30
+            
+            xlsx_buffer = io.BytesIO()
+            wb.save(xlsx_buffer)
+            xlsx_buffer.seek(0)
+            zf.writestr(f"{folder_name}/bonifici_{year}.xlsx", xlsx_buffer.read())
+            
+            # Crea riepilogo TXT per dipendente
+            riepilogo_dip = f"""RIEPILOGO BONIFICI {year}
+Dipendente: {dip_data['nome']}
+================================
+
+Totale bonifici: {len(bonifici_dip)}
+Totale importo: € {totale:,.2f}
+
+Dettaglio:
+"""
+            for t in bonifici_dip:
+                data = t.get('data', '')[:10]
+                importo = t.get('importo', 0)
+                causale = t.get('causale', '-')[:60]
+                riepilogo_dip += f"  {data}  € {importo:,.2f}  {causale}\n"
+            
+            zf.writestr(f"{folder_name}/riepilogo.txt", riepilogo_dip.encode('utf-8'))
+        
+        # ============================================
+        # BONIFICI NON ASSEGNATI
+        # ============================================
+        if senza_dipendente:
+            wb = Workbook()
+            ws = wb.active
+            ws.title = f"Non Assegnati {year}"
+            
+            headers = ['Data', 'Importo €', 'Beneficiario', 'IBAN', 'Causale', 'CRO/TRN', 'Riconciliato']
+            for col, header in enumerate(headers, 1):
+                cell = ws.cell(row=1, column=col, value=header)
+                cell.font = Font(bold=True)
+                cell.fill = PatternFill(start_color="dc2626", end_color="dc2626", fill_type="solid")
+                cell.font = Font(bold=True, color="FFFFFF")
+            
+            totale_na = 0
+            for row, t in enumerate(senza_dipendente, 2):
+                importo = t.get('importo', 0)
+                totale_na += importo
+                ws.cell(row=row, column=1, value=t.get('data', '')[:10])
+                ws.cell(row=row, column=2, value=round(importo, 2))
+                ws.cell(row=row, column=3, value=(t.get('beneficiario') or {}).get('nome', ''))
+                ws.cell(row=row, column=4, value=(t.get('beneficiario') or {}).get('iban', ''))
+                ws.cell(row=row, column=5, value=t.get('causale', ''))
+                ws.cell(row=row, column=6, value=t.get('cro_trn', ''))
+                ws.cell(row=row, column=7, value='SI' if t.get('riconciliato') else 'NO')
+            
+            ws.cell(row=len(senza_dipendente)+2, column=1, value='TOTALE')
+            ws.cell(row=len(senza_dipendente)+2, column=2, value=round(totale_na, 2))
+            
+            xlsx_buffer = io.BytesIO()
+            wb.save(xlsx_buffer)
+            xlsx_buffer.seek(0)
+            zf.writestr("_NON_ASSEGNATI/bonifici_non_assegnati.xlsx", xlsx_buffer.read())
+        
+        # ============================================
+        # FILE RIEPILOGO GENERALE
+        # ============================================
+        totale_generale = sum(t.get('importo', 0) for t in transfers)
+        riconciliati = sum(1 for t in transfers if t.get('riconciliato'))
+        
+        riepilogo = f"""
+RIEPILOGO BONIFICI {year}
+========================
+
+Totale bonifici: {len(transfers)}
+Totale importo: € {totale_generale:,.2f}
+
+Riconciliati: {riconciliati}
+Non riconciliati: {len(transfers) - riconciliati}
+
+PER DIPENDENTE:
+"""
+        for dip_id, dip_data in sorted(per_dipendente.items(), key=lambda x: x[1]['nome']):
+            tot_dip = sum(b.get('importo', 0) for b in dip_data['bonifici'])
+            riepilogo += f"  - {dip_data['nome']}: {len(dip_data['bonifici'])} bonifici, € {tot_dip:,.2f}\n"
+        
+        if senza_dipendente:
+            tot_na = sum(b.get('importo', 0) for b in senza_dipendente)
+            riepilogo += f"\n  - NON ASSEGNATI: {len(senza_dipendente)} bonifici, € {tot_na:,.2f}\n"
+        
+        riepilogo += f"""
+Generato il: {datetime.now().strftime('%d/%m/%Y %H:%M')}
+"""
+        zf.writestr(f"_RIEPILOGO_GENERALE_{year}.txt", riepilogo.encode('utf-8'))
+        
+        # ============================================
+        # XLSX COMPLETO (per compatibilità)
+        # ============================================
         wb = Workbook()
         ws = wb.active
-        ws.title = f"Bonifici {year}"
+        ws.title = f"Tutti i Bonifici {year}"
         
-        # Header
-        headers = ['Data', 'Importo €', 'Beneficiario', 'IBAN Beneficiario', 'Causale', 'CRO/TRN', 'Riconciliato', 'Note']
+        headers = ['Data', 'Importo €', 'Dipendente', 'Beneficiario', 'IBAN', 'Causale', 'CRO/TRN', 'Riconciliato', 'Note']
         for col, header in enumerate(headers, 1):
             cell = ws.cell(row=1, column=col, value=header)
             cell.font = Font(bold=True)
             cell.fill = PatternFill(start_color="1e3a5f", end_color="1e3a5f", fill_type="solid")
             cell.font = Font(bold=True, color="FFFFFF")
         
-        # Dati
-        totale = 0
         for row, t in enumerate(transfers, 2):
-            importo = t.get('importo', 0)
-            totale += importo
             ws.cell(row=row, column=1, value=t.get('data', '')[:10])
-            ws.cell(row=row, column=2, value=round(importo, 2))
-            ws.cell(row=row, column=3, value=(t.get('beneficiario') or {}).get('nome', ''))
-            ws.cell(row=row, column=4, value=(t.get('beneficiario') or {}).get('iban', ''))
-            ws.cell(row=row, column=5, value=t.get('causale', ''))
-            ws.cell(row=row, column=6, value=t.get('cro_trn', ''))
-            ws.cell(row=row, column=7, value='SI' if t.get('riconciliato') else 'NO')
-            ws.cell(row=row, column=8, value=t.get('note', ''))
+            ws.cell(row=row, column=2, value=round(t.get('importo', 0), 2))
+            ws.cell(row=row, column=3, value=t.get('dipendente_nome', ''))
+            ws.cell(row=row, column=4, value=(t.get('beneficiario') or {}).get('nome', ''))
+            ws.cell(row=row, column=5, value=(t.get('beneficiario') or {}).get('iban', ''))
+            ws.cell(row=row, column=6, value=t.get('causale', ''))
+            ws.cell(row=row, column=7, value=t.get('cro_trn', ''))
+            ws.cell(row=row, column=8, value='SI' if t.get('riconciliato') else 'NO')
+            ws.cell(row=row, column=9, value=t.get('note', ''))
         
-        # Totale
         ws.cell(row=len(transfers)+2, column=1, value='TOTALE')
-        ws.cell(row=len(transfers)+2, column=2, value=round(totale, 2))
-        ws.cell(row=len(transfers)+2, column=1).font = Font(bold=True)
-        ws.cell(row=len(transfers)+2, column=2).font = Font(bold=True)
-        
-        # Adatta larghezza colonne
-        ws.column_dimensions['A'].width = 12
-        ws.column_dimensions['B'].width = 12
-        ws.column_dimensions['C'].width = 30
-        ws.column_dimensions['D'].width = 30
-        ws.column_dimensions['E'].width = 40
-        ws.column_dimensions['F'].width = 20
-        ws.column_dimensions['G'].width = 12
-        ws.column_dimensions['H'].width = 30
+        ws.cell(row=len(transfers)+2, column=2, value=round(totale_generale, 2))
         
         xlsx_buffer = io.BytesIO()
         wb.save(xlsx_buffer)
         xlsx_buffer.seek(0)
-        zf.writestr(f"bonifici_{year}.xlsx", xlsx_buffer.read())
-        
-        # 2. CSV
-        import csv
-        csv_buffer = io.StringIO()
-        writer = csv.writer(csv_buffer, delimiter=';')
-        writer.writerow(headers)
-        for t in transfers:
-            writer.writerow([
-                t.get('data', '')[:10],
-                t.get('importo', 0),
-                (t.get('beneficiario') or {}).get('nome', ''),
-                (t.get('beneficiario') or {}).get('iban', ''),
-                t.get('causale', ''),
-                t.get('cro_trn', ''),
-                'SI' if t.get('riconciliato') else 'NO',
-                t.get('note', '')
-            ])
-        zf.writestr(f"bonifici_{year}.csv", csv_buffer.getvalue().encode('utf-8'))
-        
-        # 3. Riepilogo TXT
-        riconciliati = sum(1 for t in transfers if t.get('riconciliato'))
-        riepilogo = f"""
-RIEPILOGO BONIFICI {year}
-========================
-
-Totale bonifici: {len(transfers)}
-Totale importo: € {totale:,.2f}
-
-Riconciliati: {riconciliati}
-Non riconciliati: {len(transfers) - riconciliati}
-
-Generato il: {datetime.now().strftime('%d/%m/%Y %H:%M')}
-"""
-        zf.writestr(f"riepilogo_{year}.txt", riepilogo.encode('utf-8'))
+        zf.writestr(f"_TUTTI_BONIFICI_{year}.xlsx", xlsx_buffer.read())
     
     zip_buffer.seek(0)
     
     return StreamingResponse(
         zip_buffer,
         media_type="application/zip",
-        headers={"Content-Disposition": f"attachment; filename=bonifici_{year}.zip"}
+        headers={"Content-Disposition": f"attachment; filename=bonifici_{year}_per_dipendente.zip"}
     )
 
 
