@@ -3,39 +3,39 @@
 # AGGIORNATO: 2026-01-09 (Fork Session 3)
 
 ================================================================================
-# ✅ PARSER BUSTE PAGA PDF - 2026-01-09
+# ✅ PARSER BUSTE PAGA PDF MULTI-FORMATO - 2026-01-09
 ================================================================================
 
-## Funzionalità Implementate
+## Parser Migliorato per 3 Formati PDF
 
-### Parser Backend (/app/app/utils/busta_paga_parser.py)
-- ✅ Estrazione dati da PDF buste paga (pdfplumber)
-- ✅ Parsing: Paga Base, Contingenza, TFR, Ferie, Permessi, ROL, Netto
-- ✅ Supporto formato Zucchetti (struttura testata)
-- ✅ Scan automatico cartelle dipendenti
+### Formati Supportati
+1. **CSC 2017-2021**: Formato vecchio con "BOLLO ISTITUTO", "LIBRO UNICO DEL LAVORO"
+2. **Teamsystem 2022**: Formato con "Voce/i di tariffa", "MESE RETRIBUITO"  
+3. **Zucchetti 2023+**: Formato nuovo con "CodicesAzienda", struttura più chiara
 
-### API Endpoints
-- ✅ `GET /api/dipendenti/buste-paga/scan` - Scansiona tutte le cartelle e mostra progressivi
-- ✅ `GET /api/dipendenti/buste-paga/dipendente/{id}` - Lista buste paga di un dipendente
-- ✅ `POST /api/dipendenti/buste-paga/dipendente/{id}/import` - Importa progressivi nel DB
-- ✅ `POST /api/dipendenti/buste-paga/import` - Import batch (dry_run supportato)
+### Dati Estratti
+- ✅ Paga Base (oraria e mensile)
+- ✅ Contingenza (oraria e mensile)
+- ✅ TFR Accantonato (fino a €9.914)
+- ✅ Ferie: Maturate, Godute, Residue
+- ✅ Permessi: Maturati, Goduti, Residui
+- ✅ ROL: Maturati, Goduti, Residui
+- ✅ Netto del mese
 
-### Frontend
-- ✅ Pulsante "📥 Importa da Busta Paga" nella modale dipendente
-- ✅ Aggiornamento automatico dei campi dopo import
+### Risultati Test
+- **30/30** cartelle dipendenti scansionate
+- **29/30** con Paga Base estratta (96%)
+- **22/30** con TFR estratto (73%)
+- **26/30** con Ferie estratte (86%)
 
-### Dati Estratti per Dipendente
-- Paga Base mensile (€)
-- Contingenza mensile (€)
-- TFR Accantonato, Quota Anno
-- Ferie: Maturate, Godute, Residue
-- Permessi: Maturati, Goduti, Residui
-- ROL: Maturati, Goduti, Residui
-- Netto del mese
+### Bug Fix Applicati
+- Gestione valori mensili vs orari (es. 937,80000 è mensile, 5,72826 è orario)
+- Pattern regex migliorato per numeri italiani (1.234,56)
+- Parsing progressivi su righe separate (Mat./God./Sal.)
 
-### File Importati
-- 📁 `/app/documents/buste_paga/` - 30 cartelle dipendenti
-- 📄 ~1542 PDF buste paga dal 2017 al 2025
+### File
+- Parser: `/app/app/utils/busta_paga_parser.py`
+- Buste paga: `/app/documents/buste_paga/` (30 cartelle, ~1542 PDF)
 
 ================================================================================
 # ✅ FIX UI ADMIN & VERIFICA COERENZA - 2026-01-09
