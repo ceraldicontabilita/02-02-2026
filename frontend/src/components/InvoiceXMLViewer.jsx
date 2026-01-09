@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 
 /**
  * Visualizzatore Fattura XML 
- * Due modalità di visualizzazione:
- * 1. AssoSoftware - Stile moderno/commerciale
- * 2. Agenzia Entrate - Stile ufficiale/governativo
+ * Tre modalità di visualizzazione (come AssoInvoice):
+ * 1. Semplificata - Solo dati fiscalmente rilevanti
+ * 2. Completa - Tutti i dati incluse info gestionali
+ * 3. Ministeriale - Formato ufficiale Agenzia Entrate/Sogei
  */
 export default function InvoiceXMLViewer({ invoice, onClose }) {
-  const [viewMode, setViewMode] = useState('asso'); // 'asso' o 'ade'
+  const [viewMode, setViewMode] = useState('completa'); // 'semplificata', 'completa', 'ministeriale'
 
   const formatCurrency = (val) => {
     return new Intl.NumberFormat('it-IT', {
