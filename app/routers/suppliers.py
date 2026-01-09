@@ -643,6 +643,7 @@ async def update_supplier(
 ) -> Dict[str, str]:
     """
     Aggiorna dati fornitore incluso metodo pagamento.
+    Se viene configurato un metodo pagamento, risolve automaticamente gli alert.
     """
     db = Database.get_db()
     
@@ -652,9 +653,11 @@ async def update_supplier(
     data.pop("created_at", None)
     
     # Valida metodo pagamento se fornito
+    metodo_configurato = False
     if "metodo_pagamento" in data:
         if data["metodo_pagamento"] not in PAYMENT_METHODS:
             raise HTTPException(status_code=400, detail=f"Metodo pagamento non valido. Valori ammessi: {list(PAYMENT_METHODS.keys())}")
+        metodo_configurato = data["metodo_pagamento"] is not None and data["metodo_pagamento"] != ""
     
     # Calcola giorni pagamento se termini forniti
     if "termini_pagamento" in data:
@@ -664,6 +667,15 @@ async def update_supplier(
     
     data["updated_at"] = datetime.utcnow().isoformat()
     
+    # Recupera fornitore per ottenere P.IVA
+    supplier = await db[Collections.SUPPLIERS].find_one(
+        {"$or": [{"id": supplier_id}, {"partita_iva": supplier_id}]},
+        {"partita_iva": 1}
+    )
+    
+    if not supplier:
+        raise HTTPException(status_code=404, detail="Fornitore non trovato")
+    
     result = await db[Collections.SUPPLIERS].update_one(
         {"$or": [{"id": supplier_id}, {"partita_iva": supplier_id}]},
         {"$set": data}
@@ -672,7 +684,27 @@ async def update_supplier(
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Fornitore non trovato")
     
-    return {"message": "Fornitore aggiornato con successo"}
+    # Se è stato configurato un metodo pagamento, risolvi gli alert correlati
+    alerts_risolti = 0
+    if metodo_configurato and supplier.get("partita_iva"):
+        alert_result = await db["alerts"].update_many(
+            {
+                "tipo": "fornitore_senza_metodo_pagamento",
+                "fornitore_piva": supplier["partita_iva"],
+                "risolto": False
+            },
+            {"$set": {
+                "risolto": True,
+                "risolto_il": datetime.utcnow().isoformat(),
+                "note_risoluzione": f"Metodo pagamento configurato: {data.get('metodo_pagamento')}"
+            }}
+        )
+        alerts_risolti = alert_result.modified_count
+    
+    return {
+        "message": "Fornitore aggiornato con successo",
+        "alerts_risolti": alerts_risolti
+    }
 
 
 @router.post("/{supplier_id}/toggle-active")
