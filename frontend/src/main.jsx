@@ -170,6 +170,9 @@ const router = createBrowserRouter([
       { path: "haccp/tracciabilita", element: <LazyPage><HACCPTracciabilita /></LazyPage> },
       { path: "haccp/oli-frittura", element: <LazyPage><HACCP /></LazyPage> },
       { path: "haccp/non-conformita", element: <LazyPage><HACCP /></LazyPage> },
+      // HACCP New System (12 Frigoriferi / 12 Congelatori)
+      { path: "haccp/temperature-positive", element: <LazyPage><HACCPTemperaturePositive /></LazyPage> },
+      { path: "haccp/temperature-negative", element: <LazyPage><HACCPTemperatureNegative /></LazyPage> },
       { path: "dipendenti", element: <LazyPage><GestioneDipendenti /></LazyPage> },
       { path: "cedolini", element: <LazyPage><Cedolini /></LazyPage> },
       { path: "f24", element: <LazyPage><F24 /></LazyPage> },
