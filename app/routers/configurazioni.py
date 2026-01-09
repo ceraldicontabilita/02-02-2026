@@ -201,6 +201,8 @@ async def get_parole_chiave() -> Dict[str, Any]:
             "created_at": datetime.now(timezone.utc).isoformat()
         }
         await db[COLLECTION_CONFIG].insert_one(default_keywords)
+        # Rimuovi _id per la risposta
+        default_keywords.pop("_id", None)
         config = default_keywords
     
     return config
