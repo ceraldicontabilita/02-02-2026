@@ -267,12 +267,15 @@ export default function App() {
             <div className="mobile-menu-header">
               <img src="/logo-ceraldi.png" alt="Ceraldi Caffè" style={{ height: 28 }} />
               <span style={{ fontWeight: 700, fontSize: 16 }}>Menu</span>
-              <button 
-                className="mobile-menu-close"
-                onClick={() => setShowMobileMenu(false)}
-              >
-                ✕
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <NotificationBell />
+                <button 
+                  className="mobile-menu-close"
+                  onClick={() => setShowMobileMenu(false)}
+                >
+                  ✕
+                </button>
+              </div>
             </div>
             {/* Anno Selector per Mobile */}
             <div style={{ 
