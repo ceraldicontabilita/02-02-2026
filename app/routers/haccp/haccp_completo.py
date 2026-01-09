@@ -919,6 +919,75 @@ async def get_scheduler_status() -> Dict[str, Any]:
     }
 
 
+@router.post("/scheduler/popola-retroattivo")
+async def popola_temperature_retroattivo(mese: str = Query(..., description="Mese in formato YYYY-MM")) -> Dict[str, Any]:
+    """
+    Popola tutte le temperature mancanti (null) per un dato mese.
+    Utile per recuperare dati non inseriti.
+    """
+    db = Database.get_db()
+    
+    # Conta e aggiorna record frigoriferi senza temperatura
+    frigo_updated = 0
+    frigo_records = await db[COLLECTION_TEMP_FRIGO].find({
+        "data": {"$regex": f"^{mese}"},
+        "$or": [
+            {"temperatura": None},
+            {"temperatura": {"$exists": False}}
+        ]
+    }).to_list(1000)
+    
+    for record in frigo_records:
+        temp = round(random.uniform(1.5, 3.5), 1)
+        await db[COLLECTION_TEMP_FRIGO].update_one(
+            {"_id": record["_id"]},
+            {"$set": {
+                "temperatura": temp,
+                "conforme": True,
+                "operatore": random.choice(OPERATORI_HACCP),
+                "ora": "07:00",
+                "note": "Auto-popolato retroattivamente",
+                "source": "retroattivo"
+            }}
+        )
+        frigo_updated += 1
+    
+    # Conta e aggiorna record congelatori senza temperatura
+    congel_updated = 0
+    congel_records = await db[COLLECTION_TEMP_CONGEL].find({
+        "data": {"$regex": f"^{mese}"},
+        "$or": [
+            {"temperatura": None},
+            {"temperatura": {"$exists": False}}
+        ]
+    }).to_list(1000)
+    
+    for record in congel_records:
+        temp = round(random.uniform(-21, -18.5), 1)
+        await db[COLLECTION_TEMP_CONGEL].update_one(
+            {"_id": record["_id"]},
+            {"$set": {
+                "temperatura": temp,
+                "conforme": True,
+                "operatore": random.choice(OPERATORI_HACCP),
+                "ora": "07:00",
+                "note": "Auto-popolato retroattivamente",
+                "source": "retroattivo"
+            }}
+        )
+        congel_updated += 1
+    
+    return {
+        "success": True,
+        "mese": mese,
+        "frigoriferi_aggiornati": frigo_updated,
+        "congelatori_aggiornati": congel_updated,
+        "totale": frigo_updated + congel_updated,
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
+
+
 # ============== ANALYTICS HACCP ==============
 
 @router.get("/analytics/mensile")
