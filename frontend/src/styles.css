@@ -703,3 +703,211 @@ code {
     border: 1px solid #ccc;
   }
 }
+
+/* ============================================
+   UI COMPATTA - Classi di utilità aggiuntive
+   ============================================ */
+
+/* Compact Layout Utilities */
+.compact-grid {
+  display: grid;
+  gap: var(--space-sm);
+}
+
+.compact-grid-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.compact-grid-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.compact-grid-4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+@media (max-width: 768px) {
+  .compact-grid-3,
+  .compact-grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Compact Card Variants */
+.card-compact {
+  padding: var(--space-sm) var(--space-md);
+  margin-bottom: var(--space-sm);
+}
+
+.card-mini {
+  padding: var(--space-xs) var(--space-sm);
+  margin-bottom: var(--space-xs);
+  border-radius: var(--radius-sm);
+}
+
+/* Compact Stat Box */
+.stat-box {
+  background: var(--bg-tertiary);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-sm);
+  text-align: center;
+}
+
+.stat-box .stat-label {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.stat-box .stat-value {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* Compact List */
+.compact-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.compact-list li {
+  padding: var(--space-xs) var(--space-sm);
+  border-bottom: 1px solid var(--border-light);
+  font-size: var(--font-size-sm);
+}
+
+.compact-list li:last-child {
+  border-bottom: none;
+}
+
+/* Compact Badge */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+}
+
+.badge-success { background: #dcfce7; color: #16a34a; }
+.badge-warning { background: #fef3c7; color: #d97706; }
+.badge-danger { background: #fee2e2; color: #dc2626; }
+.badge-info { background: #dbeafe; color: #2563eb; }
+.badge-neutral { background: #f1f5f9; color: #64748b; }
+
+/* Compact Flex Utils */
+.flex-compact {
+  display: flex;
+  gap: var(--space-xs);
+  align-items: center;
+}
+
+.flex-between-compact {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+/* Compact Section Title */
+.section-title {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--space-sm);
+  padding-bottom: var(--space-xs);
+  border-bottom: 1px solid var(--border-light);
+}
+
+/* Compact Info Row */
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--space-xs) 0;
+  font-size: var(--font-size-sm);
+  border-bottom: 1px dashed var(--border-light);
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-row .info-label {
+  color: var(--text-muted);
+}
+
+.info-row .info-value {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+/* Company Logo */
+.company-logo {
+  height: 36px;
+  width: auto;
+  object-fit: contain;
+}
+
+.company-logo-sm {
+  height: 24px;
+  width: auto;
+  object-fit: contain;
+}
+
+.company-logo-lg {
+  height: 48px;
+  width: auto;
+  object-fit: contain;
+}
+
+/* Page Header Compact */
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.page-header .page-title {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.page-header .page-actions {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+/* Margin/Padding Compact Overrides */
+.p-compact { padding: var(--space-sm); }
+.px-compact { padding-left: var(--space-sm); padding-right: var(--space-sm); }
+.py-compact { padding-top: var(--space-xs); padding-bottom: var(--space-xs); }
+.m-compact { margin: var(--space-sm); }
+.mx-compact { margin-left: var(--space-sm); margin-right: var(--space-sm); }
+.my-compact { margin-top: var(--space-xs); margin-bottom: var(--space-xs); }
+
+/* Scrollable container */
+.scroll-compact {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.scroll-compact::-webkit-scrollbar {
+  width: 4px;
+}
+
+/* No-wrap text truncate */
+.truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
