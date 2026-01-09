@@ -3,6 +3,55 @@
 # AGGIORNATO: 2026-01-09
 
 ================================================================================
+# ✅ NUOVO SISTEMA HACCP IMPLEMENTATO - 2026-01-09
+================================================================================
+
+## Nuova Architettura HACCP (12 Frigoriferi / 12 Congelatori)
+
+### Backend - Nuovi Router
+- `/api/haccp/temperature-positive/*` - 12 schede frigoriferi annuali (0-4°C)
+- `/api/haccp/temperature-negative/*` - 12 schede congelatori annuali (-22/-18°C)
+- `/api/haccp/chiusure/*` - Calcolo automatico: Capodanno, Pasqua, Ferie 12-24 Agosto
+- `/api/haccp/sanificazione/*` - Attrezzature (giornaliera) + Apparecchi (ogni 7-10gg)
+
+### Struttura Dati (per scheda)
+```json
+{
+  "anno": 2026,
+  "frigorifero_numero": 1,  // 1-12
+  "temperature": {
+    "1": {  // Mese
+      "1": {"temp": 2.5, "operatore": "...", "timestamp": "..."},
+      "2": {...}
+    }
+  },
+  "temp_min": 0.0,
+  "temp_max": 4.0
+}
+```
+
+### Frontend - Nuove Pagine
+- `/haccp/temperature-positive` - Griglia 31x12 (giorni x frigoriferi)
+- `/haccp/temperature-negative` - Griglia 31x12 (giorni x congelatori)
+
+### Funzionalità
+- ✅ Auto-popolazione temperature per tutti i giorni passati
+- ✅ Calcolo automatico Pasqua (algoritmo Meeus/Jones/Butcher)
+- ✅ Chiusure automatiche: Capodanno, Pasqua/Pasquetta, Ferie 12-24 Agosto
+- ✅ Range termico: Frigo 0-4°C, Congel -22/-18°C
+- ✅ Operatori: Pocci Salvatore, Vincenzo Ceraldi
+- ✅ Stampa scheda PDF per ispezioni ASL
+- ✅ Riferimenti normativi: Reg. CE 852/2004, D.Lgs. 193/2007
+
+### File Creati
+- `/app/app/routers/haccp_new/temperature_positive.py`
+- `/app/app/routers/haccp_new/temperature_negative.py`
+- `/app/app/routers/haccp_new/chiusure.py`
+- `/app/app/routers/haccp_new/sanificazione.py`
+- `/app/frontend/src/pages/HACCPTemperaturePositive.jsx`
+- `/app/frontend/src/pages/HACCPTemperatureNegative.jsx`
+
+================================================================================
 # ✅ HACCP SISTEMA AUTOMATICO - CORRETTO 2026-01-09
 ================================================================================
 
