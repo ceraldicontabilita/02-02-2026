@@ -540,9 +540,9 @@ export default function Scadenze() {
                   )}
                   
                   {/* Pulsante Visualizza Fattura per scadenze tipo FATTURA */}
-                  {(s.tipo === 'FATTURA' || s.fattura_id || s.invoice_id) && (
+                  {(s.tipo === 'FATTURA' || s.source === 'fattura') && s.id && (
                     <button
-                      onClick={() => setViewingInvoice(s.fattura_id || s.invoice_id || s.id)}
+                      onClick={() => setViewingInvoice(s.id)}
                       style={{
                         padding: '6px 12px',
                         background: '#3b82f6',
@@ -556,6 +556,7 @@ export default function Scadenze() {
                         gap: 4
                       }}
                       title="Visualizza Fattura"
+                      data-testid={`view-invoice-${s.id}`}
                     >
                       📄 Vedi
                     </button>
