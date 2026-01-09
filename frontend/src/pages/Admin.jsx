@@ -113,6 +113,30 @@ export default function Admin() {
               Prossima: {new Date(schedulerStatus.jobs[0].next_run).toLocaleString('it-IT')}
             </div>
           )}
+          <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+            <button
+              onClick={async () => {
+                try {
+                  await api.post('/api/haccp-completo/scheduler/trigger-now');
+                  alert('✅ Temperature HACCP popolate per oggi!');
+                } catch (err) {
+                  alert('❌ Errore: ' + (err.response?.data?.detail || err.message));
+                }
+              }}
+              style={{
+                padding: '6px 12px',
+                background: '#9c27b0',
+                color: 'white',
+                border: 'none',
+                borderRadius: 4,
+                cursor: 'pointer',
+                fontSize: 11
+              }}
+              data-testid="btn-trigger-haccp"
+            >
+              🔄 Trigger HACCP Manuale
+            </button>
+          </div>
         </div>
         <div className="card">
           <div className="small">Stato Sistema</div>
