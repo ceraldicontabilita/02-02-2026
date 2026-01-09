@@ -22,6 +22,94 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+async def ensure_supplier_exists(db, parsed_invoice: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Verifica se il fornitore esiste nel dizionario.
+    Se non esiste, lo crea automaticamente con i dati dalla fattura
+    e genera un alert per configurare il metodo di pagamento.
+    
+    Returns:
+        Dict con info fornitore e se è stato creato/alertato
+    """
+    supplier_vat = parsed_invoice.get("supplier_vat") or ""
+    supplier_name = parsed_invoice.get("supplier_name") or "Fornitore Sconosciuto"
+    
+    result = {
+        "supplier_exists": False,
+        "supplier_created": False,
+        "alert_created": False,
+        "supplier_id": None,
+        "metodo_pagamento": None
+    }
+    
+    if not supplier_vat:
+        return result
+    
+    # Cerca fornitore esistente
+    existing = await db[Collections.SUPPLIERS].find_one(
+        {"partita_iva": supplier_vat},
+        {"_id": 0}
+    )
+    
+    if existing:
+        result["supplier_exists"] = True
+        result["supplier_id"] = existing.get("id")
+        result["metodo_pagamento"] = existing.get("metodo_pagamento")
+        return result
+    
+    # Fornitore non esiste - CREALO
+    fornitore_data = parsed_invoice.get("fornitore") or {}
+    
+    new_supplier = {
+        "id": str(uuid.uuid4()),
+        "ragione_sociale": supplier_name,
+        "partita_iva": supplier_vat,
+        "codice_fiscale": fornitore_data.get("codice_fiscale", supplier_vat),
+        "indirizzo": fornitore_data.get("indirizzo", ""),
+        "cap": fornitore_data.get("cap", ""),
+        "comune": fornitore_data.get("comune", ""),
+        "provincia": fornitore_data.get("provincia", ""),
+        "nazione": fornitore_data.get("nazione", "IT"),
+        "metodo_pagamento": None,  # DA CONFIGURARE
+        "giorni_pagamento": 30,
+        "iban": "",
+        "fatture_count": 1,
+        "source": "auto_from_invoice",
+        "created_at": datetime.utcnow().isoformat(),
+        "updated_at": datetime.utcnow().isoformat(),
+        "note": "Creato automaticamente da fattura - CONFIGURARE METODO PAGAMENTO"
+    }
+    
+    await db[Collections.SUPPLIERS].insert_one(new_supplier)
+    result["supplier_created"] = True
+    result["supplier_id"] = new_supplier["id"]
+    
+    logger.info(f"Nuovo fornitore creato: {supplier_name} (P.IVA: {supplier_vat})")
+    
+    # Crea ALERT per metodo pagamento
+    alert = {
+        "id": str(uuid.uuid4()),
+        "tipo": "fornitore_senza_metodo_pagamento",
+        "titolo": f"Configura metodo pagamento per {supplier_name}",
+        "messaggio": f"Il fornitore {supplier_name} (P.IVA: {supplier_vat}) è stato aggiunto automaticamente. Configura il metodo di pagamento nel dizionario fornitori.",
+        "fornitore_id": new_supplier["id"],
+        "fornitore_piva": supplier_vat,
+        "fornitore_nome": supplier_name,
+        "priorita": "alta",
+        "letto": False,
+        "risolto": False,
+        "created_at": datetime.utcnow().isoformat(),
+        "link": f"/fornitori?piva={supplier_vat}"
+    }
+    
+    await db["alerts"].insert_one(alert)
+    result["alert_created"] = True
+    
+    logger.info(f"Alert creato per fornitore {supplier_name}")
+    
+    return result
+
+
 async def find_check_numbers_for_invoice(db, importo: float, data_fattura: str, fornitore: str) -> Optional[Dict[str, Any]]:
     """
     Cerca nell'estratto conto i numeri degli assegni che corrispondono all'importo della fattura.
