@@ -149,10 +149,10 @@ def parse_format_csc_2017(text: str, lines: List[str]) -> Dict[str, Any]:
                     if 'Mat.' not in line and 'God.' not in line and 'Sal.' not in line:
                         result['netto_mese'] = val
     
-    # Calcola paga mensile (173.33 ore/mese standard)
-    if result['paga_base_oraria'] > 0:
+    # Calcola paga mensile (173.33 ore/mese standard) solo se non già calcolata
+    if result.get('paga_base_oraria', 0) > 0 and result.get('paga_base_mensile', 0) == 0:
         result['paga_base_mensile'] = round(result['paga_base_oraria'] * 173.33, 2)
-    if result['contingenza_oraria'] > 0:
+    if result.get('contingenza_oraria', 0) > 0 and result.get('contingenza_mensile', 0) == 0:
         result['contingenza_mensile'] = round(result['contingenza_oraria'] * 173.33, 2)
     
     return result
