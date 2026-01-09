@@ -77,6 +77,21 @@ async def auto_populate_haccp_daily():
                 }
                 await db["haccp_temperature_frigoriferi"].insert_one(record)
                 frigoriferi_created += 1
+            elif existing.get("temperatura") is None:
+                # Record esiste ma senza temperatura - aggiorniamo
+                temp = round(random.uniform(1.5, 3.5), 1)
+                await db["haccp_temperature_frigoriferi"].update_one(
+                    {"_id": existing["_id"]},
+                    {"$set": {
+                        "temperatura": temp,
+                        "conforme": True,
+                        "operatore": random.choice(OPERATORI_HACCP),
+                        "ora": ora,
+                        "note": "Auto-popolato",
+                        "source": "scheduler_auto"
+                    }}
+                )
+                frigoriferi_created += 1
         
         logger.info(f"✅ [SCHEDULER] Frigoriferi: creati {frigoriferi_created} record")
         
@@ -120,6 +135,21 @@ async def auto_populate_haccp_daily():
                     "created_at": now_iso
                 }
                 await db["haccp_temperature_congelatori"].insert_one(record)
+                congelatori_created += 1
+            elif existing.get("temperatura") is None:
+                # Record esiste ma senza temperatura - aggiorniamo
+                temp = round(random.uniform(-21, -18.5), 1)
+                await db["haccp_temperature_congelatori"].update_one(
+                    {"_id": existing["_id"]},
+                    {"$set": {
+                        "temperatura": temp,
+                        "conforme": True,
+                        "operatore": random.choice(OPERATORI_HACCP),
+                        "ora": ora,
+                        "note": "Auto-popolato",
+                        "source": "scheduler_auto"
+                    }}
+                )
                 congelatori_created += 1
         
         logger.info(f"✅ [SCHEDULER] Congelatori: creati {congelatori_created} record")
