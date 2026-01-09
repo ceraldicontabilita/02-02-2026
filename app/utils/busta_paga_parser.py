@@ -256,14 +256,19 @@ def parse_format_zucchetti_2023(text: str, lines: List[str]) -> Dict[str, Any]:
     
     for i, line in enumerate(lines):
         # Paga base, scatti, contingenza
-        if 'PAGA BASE' in line and 'SCATTI' in line and 'CONTING' in line:
+        if 'PAGA BASE' in line and ('SCATTI' in line or 'CONTING' in line):
             if i + 1 < len(lines):
                 next_line = lines[i + 1]
                 numbers = re.findall(r'[\d]+[,.][\d]+', next_line)
                 if len(numbers) >= 1:
                     result['paga_base_oraria'] = parse_italian_number(numbers[0])
-                if len(numbers) >= 3:
-                    result['contingenza_oraria'] = parse_italian_number(numbers[2])
+                # Se c'è SCATTI, contingenza è il terzo numero, altrimenti è il secondo
+                if 'SCATTI' in line:
+                    if len(numbers) >= 3:
+                        result['contingenza_oraria'] = parse_italian_number(numbers[2])
+                else:
+                    if len(numbers) >= 2:
+                        result['contingenza_oraria'] = parse_italian_number(numbers[1])
         
         # TFR
         if 'T.F.R.' in line and 'F.do' in line:
