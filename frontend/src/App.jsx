@@ -404,11 +404,18 @@ export default function App() {
           .desktop-sidebar .brand {
             display: flex;
             align-items: center;
+            justify-content: space-between;
             gap: 8px;
             font-weight: 700;
             font-size: 13px;
             padding: 8px 10px;
             margin-bottom: 12px;
+          }
+          
+          .desktop-sidebar .brand-content {
+            display: flex;
+            align-items: center;
+            gap: 8px;
           }
           
           .desktop-sidebar .nav {
