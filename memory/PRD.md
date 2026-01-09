@@ -92,6 +92,57 @@
 - `/app/frontend/src/pages/Admin.jsx` - Pulsante trigger manuale
 
 ================================================================================
+# ✅ TASK P1 COMPLETATE - SESSIONE 2026-01-09
+================================================================================
+
+## 1. UI Compatta Globale
+- ✅ Variabili CSS ridotte: font-size 12-14px, spacing ridotti del 30%
+- ✅ Sidebar compatta: 220px (da 260px), padding ridotti
+- ✅ Card compatte con margin-bottom ridotti
+- ✅ Tabelle compatte con padding 4-8px
+- ✅ Bottoni compatti con min-height 26-32px
+- File: `/app/frontend/src/styles.css`
+
+## 2. Logo Aziendale
+- ✅ Logo Ceraldi Caffè (www.ceraldicaffe.it) in sidebar desktop
+- ✅ Logo in menu mobile
+- ✅ File logo: `/app/frontend/public/logo-ceraldi.png`
+- File modificato: `/app/frontend/src/App.jsx`
+
+## 3. Filtro Annuale Globale
+- ✅ Selettore anno in sidebar (AnnoContext)
+- ✅ Tutte le pagine usano `useAnnoGlobale()` per filtrare dati
+
+## 4. Cespiti Modifica/Cancellazione
+- ✅ Endpoint `PUT /api/cespiti/{id}` per aggiornamento
+- ✅ Endpoint `DELETE /api/cespiti/{id}` per eliminazione
+- ✅ Pulsanti icona (matita/cestino) nella tabella
+- ✅ Modal editing inline
+- ✅ Blocco eliminazione se esistono ammortamenti
+- Files: `/app/app/routers/cespiti.py`, `/app/frontend/src/pages/GestioneCespiti.jsx`
+
+## 5. Cedolini Avanzati
+- ✅ Campo "Paga Oraria €" con override dinamico
+- ✅ "Ore Domenicali" con maggiorazione 15%
+- ✅ Sezione Malattia: Ore, Giorni, calcolo fasce (100%/75%/66%)
+- ✅ Campo "Assenze" per ore non retribuite
+- ✅ Toggle "Opzioni Avanzate" per UI pulita
+- Files: `/app/app/routers/cedolini.py`, `/app/frontend/src/pages/Cedolini.jsx`
+
+## 6. Archivio Bonifici Migliorato
+- ✅ Colonna "Note" nella tabella con edit inline
+- ✅ Endpoint `PATCH /api/archivio-bonifici/transfers/{id}` per note
+- ✅ Download ZIP per anno con XLSX + CSV + riepilogo TXT
+- ✅ Endpoint `GET /api/archivio-bonifici/download-zip/{year}`
+- ✅ Card anni cliccabili per download rapido
+- Files: `/app/app/routers/bank/archivio_bonifici.py`, `/app/frontend/src/pages/ArchivioBonifici.jsx`
+
+## Testing
+- Backend: 21/21 test passati (100%)
+- Frontend: Tutte le feature verificate visivamente
+- File test: `/app/tests/test_iteration_40_p1_features.py`
+
+================================================================================
 # ✅ BUG FIX P0 COMPLETATI - SESSIONE 2026-01-09
 ================================================================================
 
