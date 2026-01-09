@@ -332,6 +332,62 @@ export default function GestioneDipendenti() {
 
       {/* TAB: Libretti Sanitari - Componente Ottimizzato */}
       {activeTab === 'libretti' && <LibrettiSanitariTab />}
+
+      {/* TAB: Acconti TFR/Ferie/13ima/14ima/Prestiti */}
+      {activeTab === 'acconti' && (
+        <div style={{ background: 'white', borderRadius: 12, padding: 16 }}>
+          <h3 style={{ margin: '0 0 16px 0', fontSize: 16 }}>
+            💰 Gestione Acconti Dipendenti
+          </h3>
+          <p style={{ color: '#666', marginBottom: 16, fontSize: 13 }}>
+            Seleziona un dipendente per gestire i suoi acconti (TFR, Ferie, 13ª, 14ª, Prestiti)
+          </p>
+          
+          {/* Selettore Dipendente */}
+          <div style={{ marginBottom: 20 }}>
+            <select
+              value={selectedDipendente?.id || ''}
+              onChange={(e) => {
+                const dip = dipendenti.find(d => d.id === e.target.value);
+                setSelectedDipendente(dip || null);
+              }}
+              style={{ 
+                padding: '12px 16px', 
+                borderRadius: 8, 
+                border: '1px solid #e2e8f0',
+                fontSize: 14,
+                minWidth: 300,
+                maxWidth: '100%'
+              }}
+              data-testid="select-dipendente-acconti"
+            >
+              <option value="">-- Seleziona Dipendente --</option>
+              {dipendenti.map(d => (
+                <option key={d.id} value={d.id}>{d.nome_completo || d.nome}</option>
+              ))}
+            </select>
+          </div>
+          
+          {/* Contenuto Acconti */}
+          {selectedDipendente ? (
+            <AccontiTab 
+              dipendenteId={selectedDipendente.id} 
+              dipendenteName={selectedDipendente.nome_completo || selectedDipendente.nome}
+            />
+          ) : (
+            <div style={{ 
+              textAlign: 'center', 
+              padding: 60, 
+              color: '#9e9e9e',
+              background: '#fafafa',
+              borderRadius: 8
+            }}>
+              <div style={{ fontSize: 48, marginBottom: 12 }}>👆</div>
+              <div>Seleziona un dipendente dalla lista sopra</div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
