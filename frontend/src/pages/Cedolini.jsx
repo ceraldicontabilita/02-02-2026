@@ -75,10 +75,17 @@ export default function Cedolini() {
     try {
       setCalculating(true);
       const res = await api.post('/api/cedolini/stima', {
-        dipendente_id: selectedDipendente, mese: selectedMese, anno,
+        dipendente_id: selectedDipendente, 
+        mese: selectedMese, 
+        anno,
         ore_lavorate: parseFloat(oreLavorate) || 0,
+        paga_oraria: parseFloat(pagaOraria) || 0,
         straordinari_ore: parseFloat(straordinari) || 0,
-        festivita_ore: parseFloat(festivita) || 0
+        festivita_ore: parseFloat(festivita) || 0,
+        ore_domenicali: parseFloat(oreDomenicali) || 0,
+        ore_malattia: parseFloat(oreMalattia) || 0,
+        giorni_malattia: parseInt(giorniMalattia) || 0,
+        assenze_ore: parseFloat(assenze) || 0
       });
       setStima(res.data);
     } catch (e) { alert('Errore: ' + (e.response?.data?.detail || e.message)); } finally { setCalculating(false); }
