@@ -582,8 +582,34 @@ function SupplierCard({ supplier, onEdit, onDelete, onViewInvoices, onChangeMeto
       <div style={{ 
         display: 'flex', 
         borderTop: '1px solid #f3f4f6',
-        backgroundColor: '#f9fafb'
+        backgroundColor: '#f9fafb',
+        flexWrap: 'wrap'
       }}>
+        {/* Pulsante Fatturato Anno */}
+        {hasPiva && (
+          <button onClick={handleShowFatturato} disabled={loadingFatturato} style={{
+            flex: 1,
+            padding: '12px',
+            border: 'none',
+            backgroundColor: loadingFatturato ? '#e0f2fe' : 'transparent',
+            cursor: loadingFatturato ? 'wait' : 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '6px',
+            fontSize: '13px',
+            color: '#0284c7',
+            transition: 'all 0.2s',
+            minWidth: '90px'
+          }}
+          onMouseEnter={(e) => { if (!loadingFatturato) { e.currentTarget.style.backgroundColor = '#e0f2fe'; } }}
+          onMouseLeave={(e) => { if (!loadingFatturato) { e.currentTarget.style.backgroundColor = 'transparent'; } }}
+          title={`Visualizza fatturato ${selectedYear}`}
+          data-testid={`btn-fatturato-${supplier.id}`}
+          >
+            <TrendingUp size={15} /> {loadingFatturato ? '...' : `${selectedYear}`}
+          </button>
+        )}
         {/* Pulsante Cerca P.IVA - solo se ha P.IVA ma mancano dati */}
         {hasPiva && hasIncomplete && (
           <button onClick={handleSearchPiva} disabled={searching} style={{
