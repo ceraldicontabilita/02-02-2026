@@ -260,6 +260,29 @@ export default function HACCPDashboard() {
           >
             📅 Verifica Scadenze
           </button>
+          <button
+            onClick={async () => {
+              const mese = prompt('Inserisci mese da popolare (es. 2026-01):', new Date().toISOString().slice(0, 7));
+              if (!mese) return;
+              try {
+                const res = await api.post(`/api/haccp-completo/scheduler/popola-retroattivo?mese=${mese}`);
+                alert(`✅ Popolamento completato!\nFrigoriferi: ${res.data.frigoriferi_aggiornati}\nCongelatori: ${res.data.congelatori_aggiornati}`);
+              } catch (err) {
+                alert('❌ Errore: ' + (err.response?.data?.detail || err.message));
+              }
+            }}
+            style={{
+              padding: '10px 20px',
+              background: '#9c27b0',
+              color: 'white',
+              border: 'none',
+              borderRadius: 4,
+              cursor: 'pointer'
+            }}
+            data-testid="btn-popola-retroattivo"
+          >
+            🔄 Popola Mese Retroattivo
+          </button>
         </div>
       </div>
 
