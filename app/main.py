@@ -286,11 +286,19 @@ app.include_router(indici_bilancio.router, prefix="/api/indici-bilancio", tags=[
 app.include_router(chiusura_esercizio.router, prefix="/api/chiusura-esercizio", tags=["Chiusura Esercizio"])
 app.include_router(gestione_iva_speciale.router, prefix="/api/iva-speciale", tags=["IVA Speciale"])
 
-# --- HACCP New System (Temperature Positive/Negative) ---
-app.include_router(temperature_positive.router, prefix="/api/haccp/temperature-positive", tags=["HACCP Temperature Positive"])
-app.include_router(temperature_negative.router, prefix="/api/haccp/temperature-negative", tags=["HACCP Temperature Negative"])
-app.include_router(chiusure.router, prefix="/api/haccp/chiusure", tags=["HACCP Chiusure"])
-app.include_router(sanificazione.router, prefix="/api/haccp/sanificazione", tags=["HACCP Sanificazione"])
+# --- HACCP V2 System (Nuovo sistema completo) ---
+app.include_router(haccp_temp_positive, prefix="/api/haccp-v2", tags=["HACCP V2 Temperature Positive"])
+app.include_router(haccp_temp_negative, prefix="/api/haccp-v2", tags=["HACCP V2 Temperature Negative"])
+app.include_router(haccp_sanificazione, prefix="/api/haccp-v2", tags=["HACCP V2 Sanificazione"])
+app.include_router(haccp_disinfestazione, prefix="/api/haccp-v2", tags=["HACCP V2 Disinfestazione"])
+app.include_router(haccp_anomalie, prefix="/api/haccp-v2", tags=["HACCP V2 Anomalie"])
+app.include_router(haccp_chiusure, prefix="/api/haccp-v2", tags=["HACCP V2 Chiusure"])
+app.include_router(haccp_manuale, prefix="/api/haccp-v2", tags=["HACCP V2 Manuale"])
+app.include_router(haccp_lotti, prefix="/api/haccp-v2", tags=["HACCP V2 Lotti"])
+app.include_router(haccp_materie_prime, prefix="/api/haccp-v2", tags=["HACCP V2 Materie Prime"])
+app.include_router(haccp_ricette, prefix="/api/haccp-v2", tags=["HACCP V2 Ricette"])
+app.include_router(haccp_non_conformi, prefix="/api/haccp-v2", tags=["HACCP V2 Non Conformità"])
+app.include_router(haccp_fornitori, prefix="/api/haccp-v2", tags=["HACCP V2 Fornitori"])
 
 
 # =============================================================================
