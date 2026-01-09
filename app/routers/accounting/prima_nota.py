@@ -104,8 +104,14 @@ async def list_prima_nota_cassa(
     """Lista movimenti prima nota cassa."""
     db = Database.get_db()
     
-    # Escludi movimenti eliminati/archiviati
-    query = {"status": {"$nin": ["deleted", "archived"]}}
+    # Categorie da escludere (duplicati o errori noti)
+    CATEGORIE_ESCLUSE = ["POS_DUPLICATO"]
+    
+    # Escludi movimenti eliminati/archiviati e categorie duplicate
+    query = {
+        "status": {"$nin": ["deleted", "archived"]},
+        "categoria": {"$nin": CATEGORIE_ESCLUSE}
+    }
     
     # Filtro per anno
     if anno:
