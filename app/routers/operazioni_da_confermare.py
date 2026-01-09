@@ -23,15 +23,13 @@ async def lista_operazioni(
     limit: int = Query(100, ge=1, le=500)
 ) -> Dict[str, Any]:
     """
-    Lista operazioni da confermare - LOGICA CORRETTA.
+    Lista operazioni da confermare.
     
-    Mostra SOLO le fatture che:
-    1. NON hanno metodo_pagamento configurato O hanno "cassa_da_confermare"
-    2. NON sono state riconciliate con l'estratto conto
-    3. Il fornitore NON ha metodo_pagamento predefinito nel dizionario fornitori
+    Mostra SOLO le fatture il cui fornitore NON ha metodo_pagamento 
+    configurato nel dizionario fornitori.
     
-    Se la fattura ha un fornitore con metodo_pagamento nel dizionario, viene esclusa
-    perché il sistema userà automaticamente quel metodo.
+    Il metodo_pagamento della fattura NON viene considerato - conta SOLO
+    se il fornitore è nel dizionario con metodo associato.
     """
     db = Database.get_db()
     
@@ -41,26 +39,15 @@ async def lista_operazioni(
         {"_id": 0, "partita_iva": 1, "vat_number": 1, "metodo_pagamento": 1}
     ).to_list(10000)
     
-    # Mappa P.IVA -> metodo_pagamento
-    piva_metodo = {}
+    # Set di P.IVA fornitori con metodo configurato
+    piva_configurate = set()
     for f in fornitori_cursor:
         piva = f.get("partita_iva") or f.get("vat_number")
         if piva:
-            piva_metodo[piva] = f.get("metodo_pagamento")
+            piva_configurate.add(piva)
     
-    # Query per fatture da confermare
-    query_fatture = {
-        "$or": [
-            {"metodo_pagamento": {"$exists": False}},
-            {"metodo_pagamento": None},
-            {"metodo_pagamento": ""},
-            {"metodo_pagamento": "da_confermare"},
-            {"metodo_pagamento": "cassa_da_confermare"}
-        ],
-        "riconciliato": {"$ne": True},
-        "pagato": {"$ne": True}
-    }
-    
+    # Query per fatture dell'anno - NON consideriamo metodo_pagamento della fattura
+    query_fatture = {}
     if anno:
         query_fatture["invoice_date"] = {"$regex": f"^{anno}"}
     
@@ -68,18 +55,18 @@ async def lista_operazioni(
     fatture = await db["invoices"].find(
         query_fatture,
         {"_id": 0}
-    ).sort("invoice_date", -1).limit(limit * 2).to_list(limit * 2)
+    ).sort("invoice_date", -1).to_list(5000)
     
-    # Filtra escludendo quelle con fornitore configurato nel dizionario
+    # Filtra: mostra SOLO quelle il cui fornitore NON è nel dizionario
     operazioni = []
     for f in fatture:
         supplier_vat = f.get("supplier_vat") or f.get("cedente_piva") or ""
         
         # Se il fornitore ha metodo_pagamento nel dizionario, ESCLUDI
-        if supplier_vat and supplier_vat in piva_metodo:
+        if supplier_vat and supplier_vat in piva_configurate:
             continue
         
-        # Trasforma in formato operazione
+        # Fornitore NON nel dizionario -> mostra in operazioni da confermare
         operazioni.append({
             "id": f.get("id"),
             "fattura_id": f.get("id"),
@@ -98,10 +85,9 @@ async def lista_operazioni(
     
     # Statistiche
     totale = len(operazioni)
-    da_confermare_count = totale  # Tutte sono da confermare
     totale_importo = sum(op["importo"] for op in operazioni)
     
-    # Stats per anno (solo per fatture filtrate)
+    # Stats per anno
     anni_count = {}
     for op in operazioni:
         a = op.get("anno")
@@ -114,12 +100,12 @@ async def lista_operazioni(
         "operazioni": operazioni,
         "stats": {
             "totale": totale,
-            "da_confermare": da_confermare_count,
-            "confermate": 0,  # Le confermate non appaiono più in questa lista
+            "da_confermare": totale,
+            "confermate": 0,
             "totale_importo_da_confermare": totale_importo,
             "anno_filtro": anno,
-            "fornitori_nel_dizionario": len(piva_metodo),
-            "nota": "Mostra solo fatture senza metodo pagamento e senza fornitore nel dizionario"
+            "fornitori_nel_dizionario": len(piva_configurate),
+            "nota": "Mostra fatture il cui fornitore NON è nel dizionario fornitori"
         },
         "stats_per_anno": stats_per_anno
     }
