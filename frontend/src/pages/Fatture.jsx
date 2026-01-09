@@ -28,18 +28,24 @@ export default function Fatture() {
   // Anno selezionato viene dal context globale
   const [_availableYears, setAvailableYears] = useState([currentYear]);
   
-  // Filtri
-  const [filters, setFilters] = useState({
-    fornitore: "",
-    numeroFattura: "",
-    dataDa: "",
-    dataA: "",
-    importoMin: "",
-    importoMax: "",
-    metodoPagamento: "",
-    stato: ""
+  // Filtri - inizializzati dai query params se presenti
+  const [filters, setFilters] = useState(() => {
+    const fornitoreParam = searchParams.get('fornitore') || "";
+    return {
+      fornitore: fornitoreParam,
+      numeroFattura: "",
+      dataDa: "",
+      dataA: "",
+      importoMin: "",
+      importoMax: "",
+      metodoPagamento: "",
+      stato: ""
+    };
   });
-  const [showFilters, setShowFilters] = useState(false);
+  const [showFilters, setShowFilters] = useState(() => {
+    // Mostra filtri automaticamente se c'è un fornitore nella URL
+    return !!searchParams.get('fornitore');
+  });
   
   const METODI_PAGAMENTO = [
     { value: "cassa", label: "💵 Cassa", color: "#4caf50" },
