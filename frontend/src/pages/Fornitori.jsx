@@ -1302,8 +1302,8 @@ export default function Fornitori() {
               ) : null}
             </div>
           </div>
-        </div>,
-        document.body
+        </div>
+        </Portal>
       )}
     </div>
   );
