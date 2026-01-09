@@ -1,18 +1,23 @@
 """
 Router TFR - Gestione Trattamento Fine Rapporto
-Accantonamento, rivalutazione ISTAT e liquidazione TFR
+Accantonamento, rivalutazione ISTAT, liquidazione TFR e gestione acconti
 """
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, UploadFile, File
 from pydantic import BaseModel
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
 from uuid import uuid4
 import logging
+import os
+from pathlib import Path
 
 from app.database import Database
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
+# Cartella upload buste paga
+PAYSLIPS_FOLDER = "/app/uploads/paghe"
 
 # ============================================
 # COSTANTI TFR
