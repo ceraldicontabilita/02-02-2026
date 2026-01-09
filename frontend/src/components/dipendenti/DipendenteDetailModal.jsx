@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { MANSIONI } from './constants';
+import api from '../../api';
 
 /**
  * Modale dettaglio/modifica dipendente con tab: Anagrafica, Retribuzione, Agevolazioni, Contratti
@@ -17,8 +18,40 @@ export function DipendenteDetailModal({
   onGenerateContract 
 }) {
   const [activeTab, setActiveTab] = useState('anagrafica');
+  const [importingBustaPaga, setImportingBustaPaga] = useState(false);
+  const [importResult, setImportResult] = useState(null);
   
   if (!dipendente) return null;
+
+  // Funzione per importare i progressivi dalla busta paga
+  const handleImportBustaPaga = async () => {
+    if (!dipendente.id) return;
+    setImportingBustaPaga(true);
+    setImportResult(null);
+    try {
+      const res = await api.post(`/api/dipendenti/buste-paga/dipendente/${dipendente.id}/import`);
+      setImportResult(res.data);
+      if (res.data.success) {
+        // Aggiorna i dati locali con i progressivi importati
+        const prog = res.data.progressivi_importati;
+        if (prog) {
+          setEditData({
+            ...editData,
+            paga_base: prog.paga_base || editData.paga_base,
+            contingenza: prog.contingenza || editData.contingenza,
+            progressivi: prog.progressivi || editData.progressivi
+          });
+        }
+        alert(`✅ Progressivi importati da: ${res.data.fonte}\n\nTFR: €${prog?.progressivi?.tfr_accantonato?.toLocaleString('it-IT') || 0}\nFerie residue: ${prog?.progressivi?.ferie_residue || 0} gg\nPaga Base: €${prog?.paga_base?.toLocaleString('it-IT') || 0}`);
+      } else {
+        alert(`⚠️ ${res.data.message || 'Import non riuscito'}`);
+      }
+    } catch (e) {
+      alert('Errore: ' + (e.response?.data?.detail || e.message));
+    } finally {
+      setImportingBustaPaga(false);
+    }
+  };
 
   const tabs = [
     { id: 'anagrafica', label: '📋 Anagrafica', color: '#2196f3' },
