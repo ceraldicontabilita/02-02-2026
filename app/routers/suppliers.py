@@ -59,127 +59,181 @@ async def get_payment_methods() -> List[Dict[str, Any]]:
 
 
 @router.get("/search-piva/{partita_iva}")
-async def search_by_partita_iva(partita_iva: str) -> Dict[str, Any]:
+async def search_by_piva(partita_iva: str) -> Dict[str, Any]:
     """
-    Cerca dati azienda tramite Partita IVA.
-    Prova prima VIES API, poi scraping da registroaziende.it come fallback.
+    Cerca informazioni aziendali partendo dalla Partita IVA.
+    Utilizza più fonti in sequenza:
+    1. VIES (EU) - Validazione e dati base
+    2. Portale dati pubblici aziendali
+    3. Dati già presenti nel database locale
     """
     import httpx
     import re
     
-    # Pulisci la partita IVA
-    piva = partita_iva.strip().replace(" ", "").replace("IT", "").replace("it", "")
+    # Normalizza P.IVA
+    piva = re.sub(r'[^0-9]', '', partita_iva)
     
-    if len(piva) != 11 or not piva.isdigit():
-        raise HTTPException(status_code=400, detail="Partita IVA non valida (deve essere 11 cifre)")
+    if len(piva) != 11:
+        raise HTTPException(status_code=400, detail="Partita IVA deve essere di 11 cifre")
     
     result = {
         "found": False,
         "partita_iva": piva,
-        "ragione_sociale": "",
-        "indirizzo": "",
-        "cap": "",
-        "comune": "",
-        "provincia": "",
-        "nazione": "IT"
+        "ragione_sociale": None,
+        "indirizzo": None,
+        "cap": None,
+        "comune": None,
+        "provincia": None,
+        "nazione": "IT",
+        "codice_ateco": None,
+        "pec": None,
+        "telefono": None,
+        "source": None
     }
     
-    try:
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            # 1. Prova VIES API
+    db = Database.get_db()
+    
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        try:
+            # === FONTE 1: VIES (Validazione UE) ===
             try:
-                vies_response = await client.get(
-                    f"https://ec.europa.eu/taxation_customs/vies/rest-api/ms/IT/vat/{piva}"
-                )
-                if vies_response.status_code == 200:
-                    data = vies_response.json()
-                    if data.get("isValid") and data.get("name"):
-                        result["found"] = True
-                        result["ragione_sociale"] = data.get("name", "").title()
-                        address = data.get("address", "")
-                        if address:
-                            address_parts = address.split("\n")
-                            result["indirizzo"] = address_parts[0] if address_parts else ""
-                            if len(address_parts) > 1:
-                                last_line = address_parts[-1].strip()
-                                cap_match = re.search(r'\b(\d{5})\b', last_line)
-                                if cap_match:
-                                    result["cap"] = cap_match.group(1)
-                                    rest = last_line.replace(cap_match.group(1), "").strip()
-                                    prov_match = re.search(r'\b([A-Z]{2})\s*$', rest)
-                                    if prov_match:
-                                        result["provincia"] = prov_match.group(1)
-                                        result["comune"] = rest.replace(prov_match.group(1), "").strip()
-                                    else:
-                                        result["comune"] = rest
-                        logger.info(f"VIES found: {result['ragione_sociale']}")
-                        return result
-            except Exception as e:
-                logger.warning(f"VIES API error: {e}")
-            
-            # 2. Fallback: scraping registroaziende.it
-            try:
-                headers = {
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-                }
-                search_url = f"https://www.registroaziende.it/cerca/{piva}"
-                search_response = await client.get(search_url, headers=headers, follow_redirects=True)
+                vies_url = f"https://ec.europa.eu/taxation_customs/vies/rest-api/check-vat-number"
+                vies_resp = await client.post(vies_url, json={
+                    "countryCode": "IT",
+                    "vatNumber": piva
+                })
                 
-                if search_response.status_code == 200:
-                    html = search_response.text
-                    
-                    # Cerca ragione sociale nel titolo o nel contenuto
-                    title_match = re.search(r'<title>([^<]+)</title>', html, re.IGNORECASE)
-                    if title_match:
-                        title = title_match.group(1)
-                        # Formato: "Nome Azienda - Città | Registro Aziende"
-                        name_match = re.match(r'^([^-|]+)', title)
-                        if name_match:
-                            name = name_match.group(1).strip()
-                            if name and "registro" not in name.lower() and "cerca" not in name.lower():
-                                result["found"] = True
-                                result["ragione_sociale"] = name
-                                logger.info(f"Registro found: {name}")
-                    
-                    # Cerca indirizzo
-                    addr_match = re.search(r'itemprop="streetAddress"[^>]*>([^<]+)', html)
-                    if addr_match:
-                        result["indirizzo"] = addr_match.group(1).strip()
-                    
-                    # Cerca località
-                    loc_match = re.search(r'itemprop="addressLocality"[^>]*>([^<]+)', html)
-                    if loc_match:
-                        result["comune"] = loc_match.group(1).strip()
-                    
-                    # Cerca CAP
-                    cap_match = re.search(r'itemprop="postalCode"[^>]*>([^<]+)', html)
-                    if cap_match:
-                        result["cap"] = cap_match.group(1).strip()
-                    
-                    # Cerca provincia
-                    prov_match = re.search(r'itemprop="addressRegion"[^>]*>([^<]+)', html)
-                    if prov_match:
-                        prov = prov_match.group(1).strip()
-                        if len(prov) == 2:
-                            result["provincia"] = prov
-                    
-                    if result["found"]:
-                        return result
+                if vies_resp.status_code == 200:
+                    vies_data = vies_resp.json()
+                    if vies_data.get("valid"):
+                        result["found"] = True
+                        result["source"] = "VIES"
                         
+                        # Estrai nome
+                        name = vies_data.get("name", "")
+                        if name and name != "---":
+                            result["ragione_sociale"] = name.strip().title()
+                        
+                        # Estrai indirizzo
+                        addr = vies_data.get("address", "")
+                        if addr and addr != "---":
+                            result["indirizzo"] = addr.strip()
+                            
+                            # Prova a parsare indirizzo italiano (VIA XXX, CAP CITTA PROV)
+                            addr_match = re.search(r'(\d{5})\s+([A-Za-z\s]+?)(?:\s+([A-Z]{2}))?$', addr)
+                            if addr_match:
+                                result["cap"] = addr_match.group(1)
+                                result["comune"] = addr_match.group(2).strip().title()
+                                if addr_match.group(3):
+                                    result["provincia"] = addr_match.group(3)
+                                    
             except Exception as e:
-                logger.warning(f"Registro scraping error: {e}")
+                logger.warning(f"VIES lookup failed: {e}")
             
-            # Se non trovato
+            # === FONTE 2: Registro Aziende Pubblico ===
+            if not result["ragione_sociale"] or not result["comune"]:
+                try:
+                    reg_url = f"https://www.registroaziende.it/cerca/{piva}"
+                    headers = {
+                        "User-Agent": "Mozilla/5.0 (compatible; BusinessDataLookup/1.0)",
+                        "Accept": "text/html"
+                    }
+                    reg_resp = await client.get(reg_url, headers=headers, follow_redirects=True)
+                    
+                    if reg_resp.status_code == 200:
+                        html = reg_resp.text
+                        
+                        # Estrai ragione sociale
+                        if not result["ragione_sociale"]:
+                            name_match = re.search(r'<h1[^>]*>([^<]+)</h1>', html)
+                            if name_match:
+                                name = name_match.group(1).strip()
+                                if name and "non trovata" not in name.lower():
+                                    result["ragione_sociale"] = name
+                                    result["found"] = True
+                                    result["source"] = result["source"] or "RegistroAziende"
+                        
+                        # Estrai indirizzo
+                        if not result["indirizzo"]:
+                            addr_match = re.search(r'itemprop="streetAddress"[^>]*>([^<]+)', html)
+                            if addr_match:
+                                result["indirizzo"] = addr_match.group(1).strip()
+                        
+                        # Estrai città
+                        if not result["comune"]:
+                            loc_match = re.search(r'itemprop="addressLocality"[^>]*>([^<]+)', html)
+                            if loc_match:
+                                result["comune"] = loc_match.group(1).strip()
+                        
+                        # Estrai CAP
+                        if not result["cap"]:
+                            cap_match = re.search(r'itemprop="postalCode"[^>]*>([^<]+)', html)
+                            if cap_match:
+                                result["cap"] = cap_match.group(1).strip()
+                        
+                        # Estrai provincia
+                        if not result["provincia"]:
+                            prov_match = re.search(r'itemprop="addressRegion"[^>]*>([^<]+)', html)
+                            if prov_match:
+                                prov = prov_match.group(1).strip()
+                                if len(prov) == 2:
+                                    result["provincia"] = prov
+                                    
+                        # Estrai PEC (se presente)
+                        pec_match = re.search(r'([a-zA-Z0-9._%+-]+@pec\.[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})', html, re.IGNORECASE)
+                        if pec_match:
+                            result["pec"] = pec_match.group(1).lower()
+                            
+                except Exception as e:
+                    logger.warning(f"RegistroAziende scraping error: {e}")
+            
+            # === FONTE 3: Database locale (fatture ricevute) ===
+            if not result["ragione_sociale"]:
+                # Cerca nelle fatture già importate
+                invoice = await db["invoices"].find_one(
+                    {"$or": [
+                        {"supplier_vat": piva},
+                        {"cedente_piva": piva}
+                    ]},
+                    {"cedente_denominazione": 1, "supplier_name": 1, "supplier_address": 1}
+                )
+                if invoice:
+                    name = invoice.get("cedente_denominazione") or invoice.get("supplier_name")
+                    if name:
+                        result["ragione_sociale"] = name
+                        result["found"] = True
+                        result["source"] = result["source"] or "Database locale"
+                    if invoice.get("supplier_address"):
+                        result["indirizzo"] = invoice.get("supplier_address")
+            
+            # === FONTE 4: Anagrafica fornitori esistente ===
+            if not result["ragione_sociale"]:
+                supplier = await db[Collections.SUPPLIERS].find_one(
+                    {"partita_iva": piva},
+                    {"_id": 0, "ragione_sociale": 1, "denominazione": 1, "indirizzo": 1, "cap": 1, "comune": 1, "provincia": 1, "pec": 1}
+                )
+                if supplier:
+                    result["ragione_sociale"] = supplier.get("ragione_sociale") or supplier.get("denominazione")
+                    result["indirizzo"] = result["indirizzo"] or supplier.get("indirizzo")
+                    result["cap"] = result["cap"] or supplier.get("cap")
+                    result["comune"] = result["comune"] or supplier.get("comune")
+                    result["provincia"] = result["provincia"] or supplier.get("provincia")
+                    result["pec"] = result["pec"] or supplier.get("pec")
+                    if result["ragione_sociale"]:
+                        result["found"] = True
+                        result["source"] = result["source"] or "Database locale"
+            
+            # Messaggio finale
             if not result["found"]:
-                result["message"] = "Partita IVA non trovata. Prova a cercare manualmente su registroaziende.it"
+                result["message"] = "Partita IVA non trovata nelle fonti pubbliche. Verifica manualmente su registroimprese.it"
             
             return result
                 
-    except httpx.TimeoutException:
-        raise HTTPException(status_code=504, detail="Timeout nella ricerca - riprova più tardi")
-    except Exception as e:
-        logger.error(f"Errore ricerca PIVA: {e}")
-        raise HTTPException(status_code=500, detail=f"Errore nella ricerca: {str(e)}")
+        except httpx.TimeoutException:
+            raise HTTPException(status_code=504, detail="Timeout nella ricerca - riprova più tardi")
+        except Exception as e:
+            logger.error(f"Errore ricerca PIVA: {e}")
+            raise HTTPException(status_code=500, detail=f"Errore nella ricerca: {str(e)}")
 
 
 @router.get("/payment-terms")
