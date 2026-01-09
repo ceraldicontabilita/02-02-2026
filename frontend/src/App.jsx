@@ -151,7 +151,7 @@ export default function App() {
       {/* Desktop Sidebar */}
       <aside className="sidebar desktop-sidebar">
         <div className="brand">
-          <span style={{ fontSize: 20 }}>🏢</span>
+          <img src="/logo-ceraldi.png" alt="Ceraldi Caffè" style={{ height: 28, marginRight: 8 }} />
           <span>Azienda Semplice</span>
         </div>
         <div style={{ padding: '0 8px', marginBottom: 10 }}>
@@ -261,8 +261,8 @@ export default function App() {
         <div className="mobile-menu-overlay" onClick={() => setShowMobileMenu(false)}>
           <div className="mobile-menu" onClick={(e) => e.stopPropagation()}>
             <div className="mobile-menu-header">
-              <span style={{ fontSize: 24 }}>🏢</span>
-              <span style={{ fontWeight: 700, fontSize: 18 }}>Menu</span>
+              <img src="/logo-ceraldi.png" alt="Ceraldi Caffè" style={{ height: 28 }} />
+              <span style={{ fontWeight: 700, fontSize: 16 }}>Menu</span>
               <button 
                 className="mobile-menu-close"
                 onClick={() => setShowMobileMenu(false)}
