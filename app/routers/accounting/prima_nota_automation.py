@@ -1047,6 +1047,17 @@ async def import_pos(
                     results["skipped"] += 1
                     continue
                 
+                # CONTROLLO DUPLICATI - verifica se esiste già un POS con stessa data
+                existing_pos = await db[COLLECTION_PRIMA_NOTA_CASSA].find_one({
+                    "data": data,
+                    "categoria": "POS"
+                })
+                
+                if existing_pos:
+                    results["skipped"] += 1
+                    results["errors"].append({"row": idx + 2, "error": f"Duplicato: POS del {data} già esistente"})
+                    continue
+                
                 # Create movement in cassa as uscita (POS payments go to bank, so it's an "exit" from cassa perspective)
                 movimento = {
                     "id": str(uuid.uuid4()),
