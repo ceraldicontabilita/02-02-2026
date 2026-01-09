@@ -357,7 +357,7 @@ export default function App() {
       </main>
 
       <style>{`
-        /* Desktop Sidebar - Hidden on Mobile */
+        /* Desktop Sidebar - Hidden on Mobile - UI COMPATTA */
         .desktop-sidebar {
           display: none;
         }
@@ -367,37 +367,37 @@ export default function App() {
             display: block;
             background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
             color: white;
-            width: 260px;
+            width: 220px;
             height: 100vh;
             position: sticky;
             top: 0;
-            padding: 20px 12px;
+            padding: 12px 8px;
             overflow-y: auto;
           }
           
           .desktop-sidebar .brand {
             display: flex;
             align-items: center;
-            gap: 10px;
-            font-weight: 800;
-            font-size: 16px;
-            padding: 10px 12px;
-            margin-bottom: 20px;
+            gap: 8px;
+            font-weight: 700;
+            font-size: 13px;
+            padding: 8px 10px;
+            margin-bottom: 12px;
           }
           
           .desktop-sidebar .nav {
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: 2px;
           }
           
           .desktop-sidebar .nav a {
             display: flex;
             align-items: center;
-            padding: 10px 12px;
-            border-radius: 10px;
+            padding: 7px 10px;
+            border-radius: 6px;
             color: rgba(255, 255, 255, 0.7);
-            font-size: 14px;
+            font-size: 12px;
             transition: all 0.2s;
           }
           
@@ -409,10 +409,10 @@ export default function App() {
           .desktop-sidebar .nav a.active {
             background: #2563eb;
             color: white;
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
           }
           
-          /* Submenu styles */
+          /* Submenu styles - COMPATTI */
           .nav-submenu {
             display: flex;
             flex-direction: column;
@@ -421,10 +421,10 @@ export default function App() {
           .nav-submenu-trigger {
             display: flex;
             align-items: center;
-            padding: 10px 12px;
-            border-radius: 10px;
+            padding: 7px 10px;
+            border-radius: 6px;
             color: rgba(255, 255, 255, 0.7);
-            font-size: 14px;
+            font-size: 12px;
             transition: all 0.2s;
             background: transparent;
             border: none;
@@ -445,28 +445,28 @@ export default function App() {
           
           .submenu-arrow {
             margin-left: auto;
-            font-size: 10px;
+            font-size: 9px;
             opacity: 0.6;
           }
           
           .nav-submenu-items {
             display: flex;
             flex-direction: column;
-            gap: 2px;
-            padding-left: 20px;
-            margin-top: 4px;
-            margin-bottom: 4px;
+            gap: 1px;
+            padding-left: 16px;
+            margin-top: 2px;
+            margin-bottom: 2px;
             border-left: 2px solid rgba(255, 255, 255, 0.1);
-            margin-left: 20px;
+            margin-left: 16px;
           }
           
           .nav-submenu-item {
             display: flex;
             align-items: center;
-            padding: 8px 12px;
-            border-radius: 8px;
+            padding: 6px 10px;
+            border-radius: 5px;
             color: rgba(255, 255, 255, 0.6);
-            font-size: 13px;
+            font-size: 11px;
             transition: all 0.2s;
           }
           
@@ -489,8 +489,8 @@ export default function App() {
           left: 0;
           right: 0;
           background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
-          padding: 8px 4px;
-          padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+          padding: 6px 4px;
+          padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
           z-index: 1000;
           justify-content: space-around;
           box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.2);
