@@ -1148,6 +1148,8 @@ export default function Fornitori() {
                 onViewInvoices={handleViewInvoices}
                 onChangeMetodo={handleChangeMetodo}
                 onSearchPiva={handleSearchPiva}
+                onShowFatturato={handleShowFatturato}
+                selectedYear={selectedYear}
               />
             ))}
           </div>
