@@ -105,16 +105,53 @@ export default function ArchivioBonifici() {
   };
 
   const handleRiconcilia = async () => {
-    if (!window.confirm('Vuoi avviare la riconciliazione dei bonifici con l\'estratto conto?')) return;
+    if (!window.confirm('Vuoi avviare la riconciliazione dei bonifici con l\'estratto conto?\n\nL\'operazione verrà eseguita in background.')) return;
     
     setRiconciliando(true);
     try {
-      const res = await api.post('/api/archivio-bonifici/riconcilia');
-      alert(`✅ ${res.data.message}\n\nRiconciliati: ${res.data.riconciliati}\nNon trovati: ${res.data.non_riconciliati}`);
-      await Promise.all([loadTransfers(), loadRiconciliazioneStats()]);
+      // Avvia in background
+      const res = await api.post('/api/archivio-bonifici/riconcilia?background=true');
+      
+      if (res.data.background && res.data.task_id) {
+        // Poll per lo stato
+        const taskId = res.data.task_id;
+        let attempts = 0;
+        const maxAttempts = 60; // 2 minuti max
+        
+        const pollStatus = async () => {
+          try {
+            const statusRes = await api.get(`/api/archivio-bonifici/riconcilia/task/${taskId}`);
+            
+            if (statusRes.data.status === 'completed') {
+              const result = statusRes.data.result;
+              alert(`✅ Riconciliazione completata!\n\nRiconciliati: ${result.riconciliati}\nNon trovati: ${result.non_riconciliati}`);
+              await Promise.all([loadTransfers(), loadRiconciliazioneStats()]);
+              setRiconciliando(false);
+            } else if (statusRes.data.status === 'error') {
+              alert(`❌ Errore: ${statusRes.data.error}`);
+              setRiconciliando(false);
+            } else if (attempts < maxAttempts) {
+              attempts++;
+              setTimeout(pollStatus, 2000);
+            } else {
+              alert('⚠️ Timeout raggiunto. Verifica lo stato manualmente.');
+              setRiconciliando(false);
+            }
+          } catch (e) {
+            console.error('Poll error:', e);
+            setRiconciliando(false);
+          }
+        };
+        
+        setTimeout(pollStatus, 1000);
+      } else {
+        // Fallback sincrono
+        alert(`✅ ${res.data.message}\n\nRiconciliati: ${res.data.riconciliati}\nNon trovati: ${res.data.non_riconciliati}`);
+        await Promise.all([loadTransfers(), loadRiconciliazioneStats()]);
+        setRiconciliando(false);
+      }
     } catch (error) {
       alert(`❌ Errore: ${error.response?.data?.detail || error.message}`);
-    } finally {
       setRiconciliando(false);
     }
   };
