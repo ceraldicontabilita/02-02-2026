@@ -431,6 +431,134 @@ async def get_payment_deadlines(
     }
 
 
+@router.get("/{supplier_id}/fatturato")
+async def get_supplier_fatturato(
+    supplier_id: str,
+    anno: int = Query(..., ge=2015, le=2030, description="Anno per il calcolo del fatturato")
+) -> Dict[str, Any]:
+    """
+    Calcola il fatturato totale di un fornitore per un anno specifico.
+    Restituisce totale fatture, numero fatture, e dettaglio per mese.
+    """
+    db = Database.get_db()
+    
+    # Trova il fornitore
+    supplier = await db[Collections.SUPPLIERS].find_one(
+        {"$or": [{"id": supplier_id}, {"partita_iva": supplier_id}]},
+        {"_id": 0}
+    )
+    
+    if not supplier:
+        raise HTTPException(status_code=404, detail="Fornitore non trovato")
+    
+    piva = supplier.get("partita_iva")
+    if not piva:
+        return {
+            "fornitore": supplier.get("denominazione") or supplier.get("ragione_sociale", ""),
+            "anno": anno,
+            "totale_fatturato": 0,
+            "numero_fatture": 0,
+            "fatture_pagate": 0,
+            "fatture_non_pagate": 0,
+            "dettaglio_mensile": []
+        }
+    
+    # Costruisci il range date per l'anno
+    data_inizio = f"{anno}-01-01"
+    data_fine = f"{anno}-12-31"
+    
+    # Pipeline per calcolo totale e per mese
+    pipeline = [
+        {
+            "$match": {
+                "$or": [{"cedente_piva": piva}, {"supplier_vat": piva}],
+                "$or": [
+                    {"data_fattura": {"$gte": data_inizio, "$lte": data_fine}},
+                    {"data": {"$gte": data_inizio, "$lte": data_fine}}
+                ]
+            }
+        },
+        {
+            "$addFields": {
+                "data_effettiva": {"$ifNull": ["$data_fattura", "$data"]},
+                "mese": {
+                    "$month": {
+                        "$dateFromString": {
+                            "dateString": {"$ifNull": ["$data_fattura", "$data"]},
+                            "onError": None
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "$match": {
+                "data_effettiva": {"$gte": data_inizio, "$lte": data_fine}
+            }
+        },
+        {
+            "$group": {
+                "_id": "$mese",
+                "totale": {"$sum": "$importo_totale"},
+                "count": {"$sum": 1},
+                "pagate": {"$sum": {"$cond": [{"$eq": ["$pagato", True]}, 1, 0]}},
+                "non_pagate": {"$sum": {"$cond": [{"$ne": ["$pagato", True]}, 1, 0]}},
+                "importo_pagato": {"$sum": {"$cond": [{"$eq": ["$pagato", True]}, "$importo_totale", 0]}},
+                "importo_non_pagato": {"$sum": {"$cond": [{"$ne": ["$pagato", True]}, "$importo_totale", 0]}}
+            }
+        },
+        {"$sort": {"_id": 1}}
+    ]
+    
+    try:
+        result = await db[Collections.INVOICES].aggregate(pipeline).to_list(12)
+    except Exception as e:
+        logger.warning(f"Errore aggregation fatturato: {e}")
+        # Fallback senza aggregation mensile
+        result = []
+    
+    # Costruisci dettaglio mensile
+    mesi_nomi = ["", "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", 
+                 "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"]
+    
+    dettaglio_mensile = []
+    totale_fatturato = 0
+    totale_fatture = 0
+    fatture_pagate = 0
+    fatture_non_pagate = 0
+    importo_pagato = 0
+    importo_non_pagato = 0
+    
+    for item in result:
+        mese_num = item.get("_id")
+        if mese_num and 1 <= mese_num <= 12:
+            dettaglio_mensile.append({
+                "mese": mese_num,
+                "mese_nome": mesi_nomi[mese_num],
+                "totale": round(item.get("totale", 0), 2),
+                "numero_fatture": item.get("count", 0)
+            })
+            totale_fatturato += item.get("totale", 0)
+            totale_fatture += item.get("count", 0)
+            fatture_pagate += item.get("pagate", 0)
+            fatture_non_pagate += item.get("non_pagate", 0)
+            importo_pagato += item.get("importo_pagato", 0)
+            importo_non_pagato += item.get("importo_non_pagato", 0)
+    
+    return {
+        "fornitore": supplier.get("denominazione") or supplier.get("ragione_sociale", ""),
+        "partita_iva": piva,
+        "anno": anno,
+        "totale_fatturato": round(totale_fatturato, 2),
+        "numero_fatture": totale_fatture,
+        "fatture_pagate": fatture_pagate,
+        "fatture_non_pagate": fatture_non_pagate,
+        "importo_pagato": round(importo_pagato, 2),
+        "importo_non_pagato": round(importo_non_pagato, 2),
+        "dettaglio_mensile": dettaglio_mensile
+    }
+
+
 @router.get("/{supplier_id}")
 async def get_supplier(supplier_id: str) -> Dict[str, Any]:
     """Dettaglio singolo fornitore."""
