@@ -1950,3 +1950,141 @@ async def recalculate_all_balances(anno: int = Query(None, description="Anno spe
         }
     }
 
+
+
+@router.post("/cleanup-orphan-movements")
+async def cleanup_orphan_movements(anno: int = Query(None, description="Anno specifico (opzionale)")) -> Dict[str, Any]:
+    """
+    Pulisce i movimenti Prima Nota orfani (la cui fattura non esiste più nel DB).
+    """
+    db = Database.get_db()
+    
+    query = {"fattura_id": {"$exists": True, "$ne": None}}
+    if anno:
+        query["data"] = {"$regex": f"^{anno}"}
+    
+    # Raccoglie tutti gli ID fattura referenziati
+    orphan_cassa = 0
+    orphan_banca = 0
+    
+    # Prima Nota Cassa
+    movimenti_cassa = await db[COLLECTION_PRIMA_NOTA_CASSA].find(query, {"_id": 0, "id": 1, "fattura_id": 1}).to_list(10000)
+    for mov in movimenti_cassa:
+        fattura_id = mov.get("fattura_id")
+        if fattura_id:
+            fattura = await db["invoices"].find_one(
+                {"$or": [{"id": fattura_id}, {"invoice_key": fattura_id}]},
+                {"_id": 1}
+            )
+            if not fattura:
+                # Movimento orfano - elimina
+                await db[COLLECTION_PRIMA_NOTA_CASSA].delete_one({"id": mov["id"]})
+                orphan_cassa += 1
+    
+    # Prima Nota Banca
+    movimenti_banca = await db[COLLECTION_PRIMA_NOTA_BANCA].find(query, {"_id": 0, "id": 1, "fattura_id": 1}).to_list(10000)
+    for mov in movimenti_banca:
+        fattura_id = mov.get("fattura_id")
+        if fattura_id:
+            fattura = await db["invoices"].find_one(
+                {"$or": [{"id": fattura_id}, {"invoice_key": fattura_id}]},
+                {"_id": 1}
+            )
+            if not fattura:
+                # Movimento orfano - elimina
+                await db[COLLECTION_PRIMA_NOTA_BANCA].delete_one({"id": mov["id"]})
+                orphan_banca += 1
+    
+    return {
+        "success": True,
+        "message": f"Eliminati {orphan_cassa} movimenti cassa orfani e {orphan_banca} movimenti banca orfani",
+        "orphan_cassa_deleted": orphan_cassa,
+        "orphan_banca_deleted": orphan_banca,
+        "movimenti_cassa_analizzati": len(movimenti_cassa),
+        "movimenti_banca_analizzati": len(movimenti_banca),
+        "anno_filtro": anno
+    }
+
+
+@router.post("/regenerate-from-invoices")
+async def regenerate_prima_nota_from_invoices(anno: int = Query(..., description="Anno da rigenerare")) -> Dict[str, Any]:
+    """
+    Rigenera i movimenti Prima Nota dall'archivio fatture per un anno specifico.
+    ATTENZIONE: Elimina tutti i movimenti esistenti da fattura per quell'anno e li ricrea.
+    """
+    db = Database.get_db()
+    
+    # Step 1: Elimina movimenti esistenti da fatture per quell'anno
+    query_delete = {
+        "data": {"$regex": f"^{anno}"},
+        "source": {"$in": ["fattura_pagata", "fatture_import", "xml_upload"]}
+    }
+    
+    deleted_cassa = await db[COLLECTION_PRIMA_NOTA_CASSA].delete_many(query_delete)
+    deleted_banca = await db[COLLECTION_PRIMA_NOTA_BANCA].delete_many(query_delete)
+    
+    # Step 2: Recupera tutte le fatture dell'anno
+    fatture = await db["invoices"].find(
+        {"invoice_date": {"$regex": f"^{anno}"}},
+        {"_id": 0}
+    ).to_list(10000)
+    
+    created_cassa = 0
+    created_banca = 0
+    errors = []
+    
+    for fattura in fatture:
+        try:
+            metodo = fattura.get("metodo_pagamento", "bonifico")
+            
+            # Determina tipo movimento
+            tipo_movimento, categoria, desc_prefisso = determina_tipo_movimento_fattura(fattura)
+            
+            data_fattura = fattura.get("invoice_date") or fattura.get("data_fattura")
+            importo = float(fattura.get("total_amount", 0) or fattura.get("importo_totale", 0) or 0)
+            numero_fattura = fattura.get("invoice_number") or fattura.get("numero_fattura") or "N/A"
+            fornitore = fattura.get("supplier_name") or fattura.get("cedente_denominazione") or "Fornitore"
+            fornitore_piva = fattura.get("supplier_vat") or fattura.get("cedente_piva") or ""
+            
+            if importo <= 0:
+                continue
+            
+            descrizione = f"{desc_prefisso} {numero_fattura} - {fornitore[:40]}"
+            
+            movimento = {
+                "id": str(uuid.uuid4()),
+                "data": data_fattura,
+                "tipo": tipo_movimento,
+                "importo": importo,
+                "descrizione": descrizione,
+                "categoria": categoria,
+                "riferimento": numero_fattura,
+                "fornitore_piva": fornitore_piva,
+                "fattura_id": fattura.get("id"),
+                "tipo_documento": fattura.get("tipo_documento"),
+                "source": "fatture_import",
+                "created_at": datetime.utcnow().isoformat()
+            }
+            
+            # Inserisci in cassa o banca in base al metodo pagamento
+            if metodo in ["cassa", "contanti"]:
+                await db[COLLECTION_PRIMA_NOTA_CASSA].insert_one(movimento)
+                created_cassa += 1
+            else:
+                await db[COLLECTION_PRIMA_NOTA_BANCA].insert_one(movimento)
+                created_banca += 1
+                
+        except Exception as e:
+            errors.append(f"Fattura {fattura.get('invoice_number', 'N/A')}: {str(e)}")
+    
+    return {
+        "success": True,
+        "anno": anno,
+        "fatture_elaborate": len(fatture),
+        "movimenti_cassa_creati": created_cassa,
+        "movimenti_banca_creati": created_banca,
+        "movimenti_cassa_eliminati": deleted_cassa.deleted_count,
+        "movimenti_banca_eliminati": deleted_banca.deleted_count,
+        "errors": errors[:20] if errors else []
+    }
+
