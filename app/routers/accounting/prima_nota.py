@@ -1624,3 +1624,83 @@ async def import_prima_nota_banca_csv(file: UploadFile = File(...)) -> Dict[str,
     except Exception as e:
         logger.error(f"Errore import CSV Prima Nota Banca: {e}")
         raise HTTPException(status_code=500, detail=f"Errore parsing CSV: {str(e)}")
+
+
+# ============== ALLEGATI FATTURE ==============
+
+@router.get("/cassa/{movimento_id}/fattura")
+async def get_fattura_allegata_cassa(movimento_id: str) -> Dict[str, Any]:
+    """
+    Recupera la fattura allegata a un movimento Prima Nota Cassa.
+    Restituisce i dati della fattura XML se presente.
+    """
+    db = Database.get_db()
+    
+    # Trova il movimento
+    movimento = await db[COLLECTION_PRIMA_NOTA_CASSA].find_one(
+        {"id": movimento_id},
+        {"_id": 0}
+    )
+    
+    if not movimento:
+        raise HTTPException(status_code=404, detail="Movimento non trovato")
+    
+    fattura_id = movimento.get("fattura_id")
+    if not fattura_id:
+        raise HTTPException(status_code=404, detail="Nessuna fattura collegata a questo movimento")
+    
+    # Cerca la fattura
+    fattura = await db["invoices"].find_one(
+        {"id": fattura_id},
+        {"_id": 0}
+    )
+    
+    if not fattura:
+        raise HTTPException(status_code=404, detail="Fattura non trovata nel sistema")
+    
+    return {
+        "fattura_id": fattura_id,
+        "movimento_id": movimento_id,
+        "fattura": fattura,
+        "has_xml": bool(fattura.get("xml_content")),
+        "filename": fattura.get("filename")
+    }
+
+
+@router.get("/banca/{movimento_id}/fattura")
+async def get_fattura_allegata_banca(movimento_id: str) -> Dict[str, Any]:
+    """
+    Recupera la fattura allegata a un movimento Prima Nota Banca.
+    Restituisce i dati della fattura XML se presente.
+    """
+    db = Database.get_db()
+    
+    # Trova il movimento
+    movimento = await db[COLLECTION_PRIMA_NOTA_BANCA].find_one(
+        {"id": movimento_id},
+        {"_id": 0}
+    )
+    
+    if not movimento:
+        raise HTTPException(status_code=404, detail="Movimento non trovato")
+    
+    fattura_id = movimento.get("fattura_id")
+    if not fattura_id:
+        raise HTTPException(status_code=404, detail="Nessuna fattura collegata a questo movimento")
+    
+    # Cerca la fattura
+    fattura = await db["invoices"].find_one(
+        {"id": fattura_id},
+        {"_id": 0}
+    )
+    
+    if not fattura:
+        raise HTTPException(status_code=404, detail="Fattura non trovata nel sistema")
+    
+    return {
+        "fattura_id": fattura_id,
+        "movimento_id": movimento_id,
+        "fattura": fattura,
+        "has_xml": bool(fattura.get("xml_content")),
+        "filename": fattura.get("filename")
+    }
