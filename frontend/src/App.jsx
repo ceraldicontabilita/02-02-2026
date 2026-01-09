@@ -399,6 +399,7 @@ export default function App() {
             top: 0;
             padding: 12px 8px;
             overflow-y: auto;
+            overflow-x: visible;
           }
           
           .desktop-sidebar .brand {
