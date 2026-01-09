@@ -952,6 +952,27 @@ export default function Fornitori() {
     }
   };
 
+  // Stato per modale fatturato
+  const [fatturatoModal, setFatturatoModal] = useState({ open: false, data: null, loading: false });
+  
+  // Mostra fatturato fornitore per anno
+  const handleShowFatturato = async (supplier, anno) => {
+    if (!supplier.partita_iva) {
+      alert('Questo fornitore non ha una Partita IVA');
+      return;
+    }
+    
+    setFatturatoModal({ open: true, data: null, loading: true });
+    
+    try {
+      const res = await api.get(`/api/suppliers/${supplier.id}/fatturato?anno=${anno}`);
+      setFatturatoModal({ open: true, data: res.data, loading: false });
+    } catch (error) {
+      alert('Errore caricamento fatturato: ' + (error.response?.data?.detail || error.message));
+      setFatturatoModal({ open: false, data: null, loading: false });
+    }
+  };
+
   const stats = {
     total: suppliers.length,
     withInvoices: suppliers.filter(s => (s.fatture_count || 0) > 0).length,
