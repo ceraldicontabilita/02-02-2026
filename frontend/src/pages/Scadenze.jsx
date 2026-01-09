@@ -538,6 +538,28 @@ export default function Scadenze() {
                       </button>
                     </div>
                   )}
+                  
+                  {/* Pulsante Visualizza Fattura per scadenze tipo FATTURA */}
+                  {(s.tipo === 'FATTURA' || s.fattura_id || s.invoice_id) && (
+                    <button
+                      onClick={() => setViewingInvoice(s.fattura_id || s.invoice_id || s.id)}
+                      style={{
+                        padding: '6px 12px',
+                        background: '#3b82f6',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: 6,
+                        cursor: 'pointer',
+                        fontSize: 12,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 4
+                      }}
+                      title="Visualizza Fattura"
+                    >
+                      📄 Vedi
+                    </button>
+                  )}
                 </div>
               );
             })}
