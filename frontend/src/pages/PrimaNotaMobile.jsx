@@ -73,6 +73,74 @@ export default function PrimaNotaMobile() {
     'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'
   ];
 
+  // === FUNZIONI DI SALVATAGGIO ===
+  const handleSaveCorrispettivo = async () => {
+    if (!corrispettivo.importo) return alert('Inserisci importo');
+    setSaving(true);
+    try {
+      await api.post('/api/prima-nota/cassa', {
+        data: corrispettivo.data,
+        tipo: 'entrata',
+        importo: parseFloat(corrispettivo.importo),
+        descrizione: `Corrispettivo ${corrispettivo.data}`,
+        categoria: 'Corrispettivi',
+        source: 'manual_entry'
+      });
+      setCorrispettivo({ data: today, importo: '' });
+      loadData();
+      alert('✅ Corrispettivo salvato!');
+    } catch (error) {
+      alert('Errore: ' + (error.response?.data?.detail || error.message));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSavePos = async () => {
+    const totale = (parseFloat(pos.pos1) || 0) + (parseFloat(pos.pos2) || 0) + (parseFloat(pos.pos3) || 0);
+    if (totale === 0) return alert('Inserisci almeno un importo POS');
+    setSaving(true);
+    try {
+      await api.post('/api/prima-nota/cassa', {
+        data: pos.data,
+        tipo: 'uscita',
+        importo: totale,
+        descrizione: `POS ${pos.data} (P1:€${pos.pos1||0}, P2:€${pos.pos2||0}, P3:€${pos.pos3||0})`,
+        categoria: 'POS',
+        source: 'manual_entry'
+      });
+      setPos({ data: today, pos1: '', pos2: '', pos3: '' });
+      loadData();
+      alert('✅ POS salvato!');
+    } catch (error) {
+      alert('Errore: ' + (error.response?.data?.detail || error.message));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveVersamento = async () => {
+    if (!versamento.importo) return alert('Inserisci importo');
+    setSaving(true);
+    try {
+      await api.post('/api/prima-nota/cassa', {
+        data: versamento.data,
+        tipo: 'uscita',
+        importo: parseFloat(versamento.importo),
+        descrizione: `Versamento in banca ${versamento.data}`,
+        categoria: 'Versamenti',
+        source: 'manual_entry'
+      });
+      setVersamento({ data: today, importo: '' });
+      loadData();
+      alert('✅ Versamento salvato!');
+    } catch (error) {
+      alert('Errore: ' + (error.response?.data?.detail || error.message));
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const currentData = activeTab === 'cassa' ? movimenti.cassa : movimenti.banca;
   const currentTotali = activeTab === 'cassa' ? movimenti.totaliCassa : movimenti.totaliBanca;
 
