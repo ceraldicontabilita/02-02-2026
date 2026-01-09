@@ -7,7 +7,8 @@ import {
   DEFAULT_DIPENDENTE,
   LibroUnicoTab,
   LibrettiSanitariTab,
-  ContrattiTab
+  ContrattiTab,
+  AccontiTab
 } from '../components/dipendenti';
 import { PrimaNotaSalariTab } from '../components/prima-nota';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
