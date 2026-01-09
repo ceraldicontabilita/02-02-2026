@@ -1156,6 +1156,17 @@ async def import_corrispettivi(
                     results["skipped"] += 1
                     continue
                 
+                # CONTROLLO DUPLICATI - verifica se esiste già un corrispettivo con stessa data
+                existing_corr = await db[COLLECTION_PRIMA_NOTA_CASSA].find_one({
+                    "data": data,
+                    "categoria": "Corrispettivi"
+                })
+                
+                if existing_corr:
+                    results["skipped"] += 1
+                    results["errors"].append({"row": idx + 2, "error": f"Duplicato: corrispettivo del {data} già esistente"})
+                    continue
+                
                 # Optional: imponibile e imposta
                 imponibile = parse_italian_amount(str(row.get('imponibile', 0))) if pd.notna(row.get('imponibile')) else 0
                 imposta = parse_italian_amount(str(row.get('imposta', row.get('iva', 0)))) if pd.notna(row.get('imposta', row.get('iva'))) else 0
