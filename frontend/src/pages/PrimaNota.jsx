@@ -763,7 +763,7 @@ function PrimaNotaDesktop() {
                 <span>🏦</span> Prima Nota Banca
               </h1>
               <p style={{ margin: '4px 0 0 0', color: '#6b7280', fontSize: 14 }}>
-                Registro movimenti bancari • Solo AVERE: Fatture riconciliate (bonifico/assegno)
+                Registro movimenti bancari • DARE: POS, Versamenti • AVERE: Pagamenti fornitori
               </p>
             </div>
             {/* Pulsanti Elimina */}
