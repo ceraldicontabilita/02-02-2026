@@ -1166,20 +1166,21 @@ export default function Fornitori() {
       />
 
       {/* Modale Fatturato */}
-      {fatturatoModal.open && ReactDOM.createPortal(
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 99999,
-          padding: '20px'
-        }}>
+      {fatturatoModal.open && (
+        <Portal>
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 99999,
+            padding: '20px'
+          }}>
           <div style={{
             backgroundColor: 'white',
             borderRadius: '16px',
