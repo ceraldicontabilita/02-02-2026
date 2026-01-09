@@ -75,6 +75,30 @@ import asyncio
 # Stato dei task in memoria (in produzione usare Redis)
 _download_tasks: Dict[str, Dict] = {}
 
+# Lock globale per operazioni email/DB
+_email_operation_lock = asyncio.Lock()
+_current_operation: Optional[str] = None
+
+
+def is_email_operation_running() -> bool:
+    """Verifica se c'è un'operazione email in corso."""
+    return _email_operation_lock.locked()
+
+
+def get_current_operation() -> Optional[str]:
+    """Restituisce il nome dell'operazione in corso."""
+    return _current_operation
+
+
+@router.get("/lock-status")
+async def get_lock_status():
+    """Restituisce lo stato del lock per operazioni email/DB."""
+    return {
+        "locked": is_email_operation_running(),
+        "operation": get_current_operation(),
+        "message": f"Operazione in corso: {_current_operation}" if _current_operation else "Nessuna operazione in corso"
+    }
+
 
 async def _execute_email_download(task_id: str, db, email_user: str, email_password: str, 
                                    giorni: int, folder: str, keywords: List[str]):
