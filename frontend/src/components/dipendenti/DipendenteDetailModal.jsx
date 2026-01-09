@@ -158,6 +158,9 @@ export function DipendenteDetailModal({
         {activeTab === 'progressivi' && (
           <DipendenteFormProgressivi dipendente={dipendente} editData={editData} setEditData={setEditData} editMode={editMode} />
         )}
+        {activeTab === 'bonifici' && (
+          <DipendenteBonificiTab bonifici={bonifici} loading={loadingBonifici} onReload={loadBonifici} />
+        )}
         {activeTab === 'agevolazioni' && (
           <DipendenteFormAgevolazioni dipendente={dipendente} editData={editData} setEditData={setEditData} editMode={editMode} />
         )}
@@ -166,7 +169,7 @@ export function DipendenteDetailModal({
         )}
 
         {/* Action Buttons */}
-        {activeTab !== 'contratti' && (
+        {activeTab !== 'contratti' && activeTab !== 'bonifici' && (
           <div style={{ display: 'flex', gap: 8, marginTop: 16, justifyContent: 'flex-end' }}>
             {editMode ? (
               <>
