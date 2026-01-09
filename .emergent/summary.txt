@@ -1,180 +1,147 @@
 <analysis>**original_problem_statement:**
-L'utente ha continuato a guidare l'evoluzione dell'applicazione ERP con una serie di richieste prioritarie.
-
-**Richieste Iniziali e di Mid-Fork:**
-*   **(P0) Completamento Modulo Dipendenti:** Finalizzare la logica per la gestione dei nuovi campi dei dipendenti, che era rimasta incompleta nel fork precedente.
-*   **(P0) Parser per Buste Paga PDF:** Implementare una funzionalità per estrarre dati chiave (Paga Base, Contingenza, TFR, Ferie, Permessi) da file PDF di buste paga, gestendo formati diversi per vari anni (2017-2021, 2022, 2024+).
-*   **(P0) Importazione Massiva Dati Dipendenti:** Creare una funzionalità per aggiornare in blocco tutti i dipendenti con i dati estratti dalle buste paga.
-*   **(P0) Associazione Bonifici-Acconti:** Implementare una richiesta in sospeso da fork precedenti per associare automaticamente i bonifici bancari ai dipendenti corrispondenti e visualizzare l'associazione nell'interfaccia.
-
-**Nuovi Requisiti e Bug emersi durante il fork:**
-*   **Regressione UI:** L'agente ha accidentalmente modificato le pagine  e , rompendo la funzionalità e lo stile. L'utente ha richiesto un ripristino immediato con una modifica specifica per la pagina Admin (gestione parole chiave come tag individuali).
-*   **Problemi di Usabilità (Mobile e Desktop):**
-    *   Il selettore dell'anno non era visibile nella visualizzazione mobile.
-    *   La ricerca dei fornitori non funzionava con abbreviazioni (es. kimbo non trovava KIMBO S.P.A.) e non mostrava informazioni riassuntive (es. totale fatture).
-    *   Mancava la possibilità di inserire manualmente Corrispettivi, movimenti POS e Versamenti Bancari, specialmente da mobile.
-*   **Richiesta di Ottimizzazione:**
-    *   Disabilitare il caricamento automatico delle fatture all'apertura della Dashboard per migliorare le prestazioni.
-    *   Aggiungere una nuova funzionalità nella pagina  per cercare un fornitore e visualizzare il suo fatturato totale per un anno specifico.
+L'utente ha sollevato una serie di problemi critici e richieste di funzionalità per migliorare la logica contabile e l'usabilità dell'applicazione ERP. Le richieste principali sono:
+1.  **(P0) Logica di Importazione e Riconciliazione Fatture:** Correggere il processo di importazione delle fatture per associare automaticamente i metodi di pagamento, creare una scrittura in Prima Nota, e riconciliare con l'estratto conto bancario (impostando lo stato su riconciliato automatico se trovato, o Cassa da confermare se non trovato). Aggiungere la possibilità di visualizzare la fattura allegata dalla pagina Prima Nota Cassa.
+2.  **(P1) Dati Dashboard e Calcolo IVA Errati:** I dati finanziari sulla Dashboard (es. Utile Lordo, Ricavi) non sono corretti. Esiste una discrepanza nei calcoli dell'IVA tra diverse sezioni dell'app ( e ). L'utente chiede di unificare la logica usando quella corretta e rimuovendo i duplicati.
+3.  **(P2) Funzionalità di Visualizzazione Fatture (AssoSoftware):** Implementare un nuovo pulsante per visualizzare le fatture XML nel formato ufficiale AssoSoftware, ricercando lo stile corretto dal sito dell'Agenzia delle Entrate, e rendere questa funzionalità disponibile in tutte le sezioni dove si visualizza una fattura.
+4.  **(P3) Bug e Miglioramenti UI:**
+    *   **Ricerca P.IVA:** La ricerca per Partita IVA dei fornitori non è affidabile. Deve essere migliorata per interrogare fonti ufficiali (es. ) e completare i dati mancanti.
+    *   **Dashboard:** Rimuovere una serie di card KPI (Fatture, Fornitori, Magazzino, ecc.) per compattare la vista.
+    *   **Pagina Admin:** Risolvere un bug per cui l'eliminazione di una parola chiave ne rimuove un'altra. Aggiungere più parole chiave predefinite.
+    *   **Archivio Bonifici:** La funzione di ricerca non funziona correttamente e manca un pulsante esplicito Cerca.
+    *   **Filtro Pagina Fatture:** La pagina delle fatture non applica i filtri (fornitore, anno) passati tramite i parametri dell'URL.
+    *   **Popup Ricerca Email:** Eliminare un popup di notifica relativo alla sincronizzazione degli F24 via email.
+5.  **(P4) Errore Critico React:** L'applicazione si blocca a causa di un errore .
 
 **User's preferred language**: Italiano
 
 **what currently exists?**
-L'agente ha completato con successo la maggior parte delle richieste dell'utente.
-1.  **Modulo Dipendenti:** Ha corretto un bug nel caricamento dei dati e ha testato con successo la funzionalità di modifica e salvataggio dei nuovi campi (, , ).
-2.  **Parser PDF Multi-Formato:** Ha sviluppato un robusto parser in  che gestisce tre diversi formati di buste paga (Zucchetti vecchio, Teamsystem, Zucchetti nuovo), estraendo correttamente i dati.
-3.  **Importazione Dati:** Ha implementato un endpoint per l'importazione dei dati per un singolo dipendente (attivabile da un pulsante nella UI) e uno script per l'importazione massiva, aggiornando 21/22 dipendenti.
-4.  **Associazione Bonifici:** Ha finalmente implementato la logica per associare i bonifici ai dipendenti tramite matching della causale e ha aggiunto un nuovo tab Bonifici nella modale del dipendente per visualizzare i risultati.
-5.  **Fix UI/UX:** Ha corretto la regressione sulle pagine  e , migliorato la ricerca fornitori rendendola predittiva, e risolto i problemi di usabilità su mobile aggiungendo il selettore dell'anno e i form per l'inserimento di POS/Corrispettivi/Versamenti.
+L'agente ha lavorato su molte delle richieste dell'utente, con vari gradi di successo:
+1.  **Visualizzatore Fatture:** Ha implementato con successo un visualizzatore di fatture XML avanzato () che offre tre modalità di visualizzazione: Semplificata, Completa (stile AssoSoftware) e Ministeriale (stile Agenzia delle Entrate), con un selettore per passare da una all'altra.
+2.  **Logica IVA:** Ha identificato e rimosso la registrazione di un router duplicato e difettoso (). Ha tentato di allineare la logica di calcolo tra i diversi endpoint per risolvere le discrepanze.
+3.  **Miglioramenti UI:**
+    *   Ha rimosso le card KPI dalla .
+    *   Ha corretto il bug di eliminazione delle parole chiave in  risolvendo un problema con le  di React e ha aggiunto parole chiave predefinite.
+    *   Ha aggiunto un pulsante Cerca in .
+    *   Ha corretto la pagina  per applicare correttamente i filtri dall'URL.
+    *   Ha rimosso il popup di sincronizzazione F24.
+4.  **Errore React:** Ha implementato un  in  come soluzione temporanea per evitare che l'applicazione si blocchi, ma la causa principale dell'errore non è stata risolta.
+5.  **Logica di Importazione Fatture:** Ha iniziato un'importante modifica per correggere il flusso di importazione e riconciliazione, modificando i file ,  e .
 
 **Last working item**:
-- **Last item agent was working**: L'agente ha iniziato a lavorare sull'ultima richiesta dell'utente: 1) Rimuovere il caricamento automatico delle fatture dalla . 2) Aggiungere una card nella pagina  per la ricerca del fatturato annuale di un fornitore. L'agente ha visualizzato i file  e  per pianificare le modifiche.
-- **Status**: NOT STARTED
+- **Last item agent was working**: L'agente era nel mezzo della modifica della logica di importazione e riconciliazione delle fatture per soddisfare l'ultima e più critica richiesta dell'utente. Il lavoro consiste nell'assicurare che, durante l'upload di una fattura, il sistema associ correttamente il metodo di pagamento, crei una scrittura in Prima Nota e tenti una riconciliazione automatica con l'estratto conto.
+- **Status**: IN PROGRESS
 - **Agent Testing Done**: N
-- **Which testing method agent to use?**: backend testing agent per la nuova API del fatturato e screenshot tool per verificare le modifiche alla UI su  e .
+- **Which testing method agent to use?**: both. È necessario un test end-to-end. Per il backend, caricare un file di fattura e verificare con  o  che i dati nel database (collection , ) siano corretti. Per il frontend, usare lo screenshot tool per confermare che il pulsante per visualizzare l'allegato sia presente e funzionante in .
 - **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
-- **Issue 1: Implementare la ricerca fatturato fornitore e disabilitare il caricamento automatico (P0)**
-    - **Attempted fixes**: Nessuno. Il lavoro è appena iniziato.
-    - **Next debug checklist**:
-        1.  **Backend**: Creare un nuovo endpoint API (es. ) che calcoli la somma degli importi delle fatture per un dato fornitore e anno.
-        2.  **Frontend ():** Aggiungere una nuova card UI con un campo di ricerca per il fornitore (riutilizzando ) e un selettore di anno. Al momento della selezione, chiamare il nuovo endpoint e visualizzare il risultato.
-        3.  **Frontend ():** Individuare e commentare/rimuovere la chiamata  che innesca il caricamento delle fatture all'avvio della pagina.
-    - **Why fix this issue and what will be achieved with the fix?**: Risolve un problema di performance sulla dashboard e aggiunge una funzionalità di analisi finanziaria richiesta dall'utente.
-    - **Status**: NOT STARTED
-    - **Is recurring issue?**: N
-    - **Should Test frontend/backend/both after fix?**: both
-    - **Blocked on other issue**: No.
+- **Issue 1: (P0) Completare la correzione della logica di importazione, riconciliazione e Prima Nota.**
+  - **Description**: Questa è l'attività corrente e la massima priorità. L'implementazione è iniziata ma non è completa né testata.
+  - **Status**: IN PROGRESS
+- **Issue 2: (P1) Correggere i dati finanziari sulla Dashboard e il calcolo dell'IVA.**
+  - **Description**: L'utente ha segnalato che i dati sulla Dashboard (es. Utile Lordo) sono errati. Questo è probabilmente legato a una logica di calcolo dell'IVA ancora imperfetta, nonostante i tentativi di fix.
+  - **Status**: IN PROGRESS
+- **Issue 3: (P2) Risolvere la causa principale dell'errore React .**
+  - **Description**: L'agente ha aggiunto un  come cerotto, ma l'errore di fondo persiste e può causare instabilità.
+  - **Status**: NOT STARTED
+- **Issue 4: (P3) Migliorare l'affidabilità della ricerca P.IVA.**
+  - **Description**: L'attuale implementazione basata su scraping non è sufficiente. È necessario integrare una fonte dati più affidabile come richiesto dall'utente.
+  - **Status**: NOT STARTED
+- **Issue 5: (P4) Verificare e correggere la funzione di ricerca in .**
+  - **Description**: L'utente ha segnalato che la ricerca non funziona, nonostante l'agente creda di averla sistemata. Il comportamento anomalo (il numero di risultati aumenta dopo una ricerca) deve essere investigato.
+  - **Status**: NOT STARTED
 
 **In progress Task List**:
-Nessuna.
+- **Task 1: Terminare l'implementazione del flusso di importazione fatture.**
+  - **Where to resume**: L'agente ha modificato i file ,  e . Il prossimo passo è riavviare i servizi ed eseguire un test completo end-to-end, caricando la fattura fornita dall'utente e verificando ogni passaggio del processo.
+  - **Status**: IN PROGRESS
 
 **Upcoming and Future Tasks**
 *   **Upcoming Tasks**:
-    *   **(P1) Parser PDF per Cespiti**: Preparare il modulo Cespiti per leggere i dati da un file PDF di bilancio che l'utente fornirà.
+    *   **(P1) Parser PDF per Cespiti**: Preparare il modulo Cespiti per leggere i dati da un file PDF di bilancio.
     *   **(P2) Semplificazione Previsioni Acquisti**: Aggregare i prodotti per tipologia.
     *   **(P2) Miglioramento Ricerca Prodotti**: Affinare la logica di categorizzazione.
 *   **Future Tasks**:
     *   Nessun task futuro definito al momento.
 
 **Completed work in this session**
-- **Modulo Dipendenti (P0)**: Corretto bug () e testata la modifica/salvataggio dei nuovi campi.
-- **Parser PDF Multi-Formato (P0)**: Creato un parser in  in grado di gestire 3 diversi formati di PDF per estrarre i dati dei dipendenti.
-- **Importazione Dati Dipendenti (P0)**: Implementato import massivo via script e singolo via UI.
-- **Associazione Bonifici-Dipendenti (P0)**: Implementata la logica di associazione automatica e aggiunta la visualizzazione nel frontend con un nuovo tab Bonifici.
-- **Fix Regressioni UI**: Ripristinato lo stile e la funzionalità delle pagine  (con keyword come tag) e .
-- **Fix Usabilità Mobile/Desktop**:
-    - Aggiunto selettore anno nel menu mobile.
-    - Aggiunti form di inserimento per Corrispettivi/POS/Versamenti su .
-    - Potenziata la ricerca globale per fornitori, rendendola predittiva e mostrando il totale delle fatture.
+- Implementato un visualizzatore di fatture XML multi-vista (, , ).
+- Corretto un bug di eliminazione delle parole chiave nella pagina Admin e aggiunte nuove parole chiave predefinite.
+- Unificata parzialmente la logica di calcolo IVA rimuovendo un router duplicato.
+- Aggiunto un pulsante Cerca e implementata la creazione di ZIP per dipendente nella pagina .
+- Corretta la logica di filtraggio basata su URL nella pagina .
+- Rimosse le card KPI dalla Dashboard per un layout più compatto.
+- Rimosso il popup di notifica per la sincronizzazione degli F24.
 
 **Earlier issues found/mentioned but not fixed**
 Nessuno.
 
 **Known issue recurrence from previous fork**
-- **Issue recurrence in previous fork**: L'associazione bonifici-acconti era un'attività richiesta in fork precedenti e non eseguita.
-- **Recurrence count**: 1
-- **Status**: RESOLVED (finalmente implementata in questa sessione).
+Nessuno.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **PDF Parsing Multi-Formato**: Utilizzo di usage: pdfplumber [-h] [--structure | --structure-text]
-                  [--format {csv,json,text}] [--types TYPES [TYPES ...]]
-                  [--include-attrs INCLUDE_ATTRS [INCLUDE_ATTRS ...]]
-                  [--exclude-attrs EXCLUDE_ATTRS [EXCLUDE_ATTRS ...]]
-                  [--laparams LAPARAMS] [--precision PRECISION]
-                  [--pages PAGES [PAGES ...]] [--indent INDENT]
-                  [infile]
-
-positional arguments:
-  infile
-
-options:
-  -h, --help            show this help message and exit
-  --structure           Write the structure tree as JSON. All other arguments
-                        except --pages, --laparams, and --indent will be
-                        ignored
-  --structure-text      Write the structure tree as JSON including text
-                        contents. All other arguments except --pages,
-                        --laparams, and --indent will be ignored
-  --format {csv,json,text}
-  --types TYPES [TYPES ...]
-  --include-attrs INCLUDE_ATTRS [INCLUDE_ATTRS ...]
-                        Include *only* these object attributes in output.
-  --exclude-attrs EXCLUDE_ATTRS [EXCLUDE_ATTRS ...]
-                        Exclude these object attributes from output.
-  --laparams LAPARAMS
-  --precision PRECISION
-  --pages PAGES [PAGES ...]
-  --indent INDENT       Indent level for JSON pretty-printing. e complesse espressioni regolari per identificare il formato del PDF ed estrarre dati da layout non strutturati. La logica è centralizzata in .
-- **Fuzzy String Matching**: Algoritmo personalizzato per associare i nomi dei dipendenti presenti nelle causali dei bonifici con i nomi completi nel database.
-- **UI Responsiva e Condizionale**: Modifiche significative per migliorare l'usabilità mobile, aggiungendo componenti mancanti (, form di inserimento) e garantendo coerenza con la versione desktop.
+- **Backend**: FastAPI con MongoDB (tramite ). Logica di business complessa per calcoli contabili e riconciliazioni implementata tramite aggregation pipeline di MongoDB.
+- **Frontend**: React, , . Uso di  per modali e  per la gestione degli errori.
+- **Data Handling**: Parsing di file XML () per le fatture elettroniche, scraping web per dati aziendali.
 
 **key DB schema**
-- **bonifici_transfers**: Aggiunto (o utilizzato) il campo  per storicizzare l'associazione con un dipendente.
-- **employees**: Lo schema è stato arricchito con i dati importati dai PDF, popolando i campi ,  e l'oggetto  (, , etc.).
+- **invoices**: Documento centrale per le fatture. Campi come , , ,  sono in fase di modifica per riflettere lo stato corretto del pagamento. Contiene un riferimento () al file XML originale.
+- **prima_nota**: Collezione per le scritture contabili. È stato aggiunto un campo  per collegare la scrittura alla fattura corrispondente.
+- **bank_transactions**: Movimenti bancari importati dall'estratto conto, usati per la riconciliazione.
+- **configurations**: Memorizza impostazioni globali, incluse le  per la ricerca di documenti.
 
 **All files of reference**
-- **/app/app/utils/busta_paga_parser.py**: Contiene la logica critica per l'estrazione dei dati dai PDF.
-- **/app/frontend/src/components/dipendenti/DipendenteDetailModal.jsx**: Contiene la UI per la visualizzazione dei dati importati e dei bonifici associati.
-- **/app/app/routers/bank/archivio_bonifici.py**: Contiene gli endpoint per l'associazione bonifici-dipendenti.
-- **/app/frontend/src/pages/PrimaNotaMobile.jsx**: Contiene i nuovi form di inserimento per la versione mobile.
-- **/app/frontend/src/pages/Admin.jsx**: Contiene la UI corretta per la gestione delle parole chiave.
-- **/app/frontend/src/pages/Dashboard.jsx**: File da modificare per la prossima task.
-- **/app/frontend/src/pages/Fornitori.jsx**: File da modificare per la prossima task.
+-  (core della logica di importazione)
+-  (gestione scritture contabili)
+-  (UI per visualizzare le scritture)
+-  (una delle logiche di calcolo IVA)
+-  (l'altra logica di calcolo IVA)
+-  (dove vengono visualizzati i dati finanziari errati)
+-  (dove è stato aggiunto l'ErrorBoundary)
 
 **Areas that need refactoring**:
-Nessuna area critica che necessita di refactoring immediato.
+- **Logica di Calcolo IVA**: Esistono ancora due implementazioni separate per il calcolo dell'IVA ( e ). Devono essere consolidate in un unico servizio affidabile per garantire coerenza dei dati in tutta l'applicazione.
 
 **key api endpoints**
-- : Importa i dati dall'ultima busta paga per un singolo dipendente.
-- : Esegue il matching automatico di tutti i bonifici non associati.
-- : Recupera la lista dei bonifici associati a un dipendente.
-- : Endpoint potenziato per la ricerca predittiva.
+- : Endpoint per il caricamento delle fatture, attualmente in fase di modifica.
+- : Endpoint usato dalla pagina , la cui logica è stata modificata.
+- : Endpoint usato dalla pagina .
+- : Nuovo endpoint per recuperare il file di una fattura da una scrittura di prima nota.
+- : Ricerca dati fornitore tramite P.IVA.
+- : Rimuove una parola chiave.
 
 **Critical Info for New Agent**
-- L'utente è molto attento, reattivo e tecnico. Si aspetta che le richieste vengano comprese e implementate pienamente. Le mezze misure o le regressioni vengono notate immediatamente.
-- Non chiamare il tool  finché tutte le parti di una richiesta utente non sono state implementate E verificate (con screenshot o test ). L'agente precedente ha chiamato  più volte in modo prematuro, causando frustrazione.
-- La prossima task riguarda la dashboard e la pagina fornitori. È una priorità assoluta data dall'utente.
+- L'utente è estremamente frustrato dallo stato della logica contabile. La priorità assoluta è correggere il flusso di importazione fatture, la riconciliazione e la Prima Nota. Questa funzionalità deve essere robusta e completamente automatica.
+- L'errore  è stato solo mascherato con un . Se l'app si blocca di nuovo, la causa è lì. Indagare sui componenti che usano  o che vengono rimossi condizionalmente dal DOM.
+- Il database nell'ambiente di preview è spesso vuoto. La logica deve essere sviluppata per funzionare correttamente anche in assenza di dati e non deve fare affidamento su dati preesistenti per i test.
+- L'utente è molto preciso nel segnalare i bug. Presta la massima attenzione ai file e agli screenshot forniti per riprodurre e risolvere i problemi.
 
 **documents and test reports created in this job**
--  (cartella contenente i PDF estratti)
-- 
+Nessuno.
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **Msg 276:** L'utente esprime frustrazione perché la richiesta di collegare i bonifici agli acconti, pendente da tre fork, non è ancora stata fatta. (Richiesta P0)
-2.  **Msg 277:** L'agente si scusa e si impegna a procedere subito.
-3.  **Msg 354-356:** L'agente completa l'associazione bonifici e chiama .
-4.  **Msg 357:** L'utente risponde con una lunga lista di nuovi problemi di usabilità: selettore anno mancante su mobile, ricerca fornitori inefficace, mancanza di totali fatture, assenza di form per inserimento Corrispettivi/POS su mobile/desktop, e richiesta di ricerca predittiva. (Nuova Richiesta P0)
-5.  **Msg 431-432:** L'agente completa la lunga lista di fix e chiama .
-6.  **Msg 433:** L'utente fornisce un'altra richiesta: togliere il caricamento automatico delle fatture dalla dashboard e aggiungere una card nella sezione Fornitori per cercare il fatturato di un fornitore per anno. (Nuova Richiesta P0)
-7.  **Msg 434:** L'agente capisce e accetta di risolvere i due punti.
-8.  **Msg 257:** (Precedente) L'utente chiede di procedere con l'importazione massiva dei dati da busta paga. (Completato)
-9.  **Msg 166:** L'utente conferma che il parser PDF deve gestire più formati di file a seconda dell'anno. (Completato)
-10. **Msg 84:** L'utente conferma la priorità P0 sul parser PDF. (Completato)
+Le ultime interazioni con l'utente sono una serie di segnalazioni di bug critici. L'utente ha espresso forte frustrazione per la scorrettezza dei calcoli contabili e l'incompletezza delle funzionalità implementate. Ha caricato file di esempio e indicato esattamente dove i dati non tornano, aspettandosi una soluzione definitiva.
 
 **Project Health Check:**
-- **Broken**: Nessuna funzionalità critica è interrotta.
-- **Mocked**: Nessuno.
+- **Broken**: La logica contabile di base (importazione fatture, riconciliazione, calcolo IVA, reportistica su Dashboard) è considerata dall'utente come non funzionante o inaffidabile. Anche il frontend soffre di un'instabilità di fondo (errore ).
 
 **3rd Party Integrations**
-- **pdfplumber**: Utilizzato pesantemente per il parsing dei PDF delle buste paga.
-- **Google/Gmail (IMAP)**: Usato per scaricare email e allegati (funzionalità esistente).
-- **xml.etree.ElementTree**: Usato per il parsing delle fatture XML (funzionalità esistente).
+- **xml.etree.ElementTree**: Utilizzato per il parsing dei file XML delle fatture.
+- Nessun'altra nuova integrazione in questa sessione.
 
 **Testing status**
-- **Testing agent used after significant changes**: YES, all'inizio del fork per verificare la fix sul modulo dipendenti ().
+- **Testing agent used after significant changes**: NO
 - **Troubleshoot agent used after agent stuck in loop**: NO
-- **Test files created**:  è stato usato come script di test durante lo sviluppo.
-- **Known regressions**: Una grave regressione sulle pagine Admin e VerificaCoerenza è stata introdotta e poi corretta durante questo fork.
+- **Test files created**: Nessuno.
+- **Known regressions**: I dati sulla Dashboard sono peggiorati o sono stati evidenziati come errati dopo le modifiche.
 
 **Credentials to test flow:**
-- **Email User**: 
-- **Email App Password**: Disponibile in .
+- Non necessarie per i task attuali.
 
 **What agent forgot to execute**
-- L'agente ha ripetutamente ignorato la richiesta di associare i bonifici agli acconti, causando frustrazione all'utente. Ha risolto il problema solo dopo un sollecito diretto.
-- L'agente ha introdotto una grave regressione modificando senza motivo le pagine  e , dimostrando una mancanza di attenzione al contesto e allo scopo del task.</analysis>
+- L'agente non ha risolto la causa principale dell'errore React .
+- L'agente non ha unificato completamente la logica di calcolo dell'IVA in un unico servizio, lasciando due implementazioni separate.
+- L'agente non ha verificato nuovamente la funzionalità di ricerca in  dopo la segnalazione dell'utente, fidandosi del proprio test iniziale che però mostrava un comportamento anomalo.</analysis>
