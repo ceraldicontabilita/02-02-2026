@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { MANSIONI } from './constants';
 
 /**
- * Modale dettaglio/modifica dipendente con tab contratti
+ * Modale dettaglio/modifica dipendente con tab: Anagrafica, Retribuzione, Agevolazioni, Contratti
  */
 export function DipendenteDetailModal({ 
   dipendente, 
@@ -16,9 +16,17 @@ export function DipendenteDetailModal({
   onUpdate, 
   onGenerateContract 
 }) {
-  const [showContracts, setShowContracts] = useState(false);
+  const [activeTab, setActiveTab] = useState('anagrafica');
   
   if (!dipendente) return null;
+
+  const tabs = [
+    { id: 'anagrafica', label: '📋 Anagrafica', color: '#2196f3' },
+    { id: 'retribuzione', label: '💰 Retribuzione', color: '#4caf50' },
+    { id: 'progressivi', label: '📊 Progressivi', color: '#ff9800' },
+    { id: 'agevolazioni', label: '🎁 Agevolazioni', color: '#9c27b0' },
+    { id: 'contratti', label: '📄 Contratti', color: '#607d8b' }
+  ];
 
   return (
     <div style={{
@@ -26,84 +34,86 @@ export function DipendenteDetailModal({
       display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20
     }} onClick={onClose}>
       <div style={{
-        background: 'white', borderRadius: 12, padding: 24, maxWidth: 700, width: '100%',
+        background: 'white', borderRadius: 12, padding: 20, maxWidth: 800, width: '100%',
         maxHeight: '90vh', overflow: 'auto'
       }} onClick={e => e.stopPropagation()}>
         
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-          <h2 style={{ margin: 0 }}>
-            {editMode ? '✏️ Modifica Dipendente' : '👤 Dettaglio Dipendente'}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <h2 style={{ margin: 0, fontSize: 16 }}>
+            {editMode ? '✏️ Modifica' : '👤'} {dipendente.nome_completo || dipendente.nome}
           </h2>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 24, cursor: 'pointer' }}>✕</button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer' }}>✕</button>
+        </div>
+
+        {/* Info rapide */}
+        <div style={{ display: 'flex', gap: 16, marginBottom: 16, fontSize: 12, color: '#666', flexWrap: 'wrap' }}>
+          <span><strong>CF:</strong> {dipendente.codice_fiscale || '-'}</span>
+          <span><strong>Codice:</strong> {dipendente.codice_dipendente || dipendente.matricola || '-'}</span>
+          <span><strong>Livello:</strong> {dipendente.livello || '-'}</span>
+          <span><strong>Mansione:</strong> {dipendente.mansione || '-'}</span>
         </div>
 
         {/* Tabs */}
-        <div style={{ display: 'flex', gap: 10, marginBottom: 20, borderBottom: '2px solid #eee', paddingBottom: 10 }}>
-          <button
-            onClick={() => setShowContracts(false)}
-            style={{
-              padding: '8px 16px', border: 'none', borderRadius: 4, cursor: 'pointer',
-              background: !showContracts ? '#2196f3' : '#f5f5f5',
-              color: !showContracts ? 'white' : '#333'
-            }}
-          >
-            📋 Dati Anagrafici
-          </button>
-          <button
-            onClick={() => setShowContracts(true)}
-            style={{
-              padding: '8px 16px', border: 'none', borderRadius: 4, cursor: 'pointer',
-              background: showContracts ? '#9c27b0' : '#f5f5f5',
-              color: showContracts ? 'white' : '#333'
-            }}
-          >
-            📄 Genera Contratti
-          </button>
+        <div style={{ display: 'flex', gap: 4, marginBottom: 16, borderBottom: '2px solid #eee', paddingBottom: 8, flexWrap: 'wrap' }}>
+          {tabs.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              style={{
+                padding: '6px 12px', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: 12,
+                background: activeTab === tab.id ? tab.color : '#f5f5f5',
+                color: activeTab === tab.id ? 'white' : '#333'
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
 
-        {!showContracts ? (
-          <DipendenteForm 
-            dipendente={dipendente}
-            editData={editData}
-            setEditData={setEditData}
-            editMode={editMode}
-          />
-        ) : (
-          <ContractsSection 
-            dipendente={dipendente}
-            contractTypes={contractTypes}
-            generatingContract={generatingContract}
-            onGenerateContract={onGenerateContract}
-          />
+        {/* Tab Content */}
+        {activeTab === 'anagrafica' && (
+          <DipendenteFormAnagrafica dipendente={dipendente} editData={editData} setEditData={setEditData} editMode={editMode} />
+        )}
+        {activeTab === 'retribuzione' && (
+          <DipendenteFormRetribuzione dipendente={dipendente} editData={editData} setEditData={setEditData} editMode={editMode} />
+        )}
+        {activeTab === 'progressivi' && (
+          <DipendenteFormProgressivi dipendente={dipendente} editData={editData} setEditData={setEditData} editMode={editMode} />
+        )}
+        {activeTab === 'agevolazioni' && (
+          <DipendenteFormAgevolazioni dipendente={dipendente} editData={editData} setEditData={setEditData} editMode={editMode} />
+        )}
+        {activeTab === 'contratti' && (
+          <ContractsSection dipendente={dipendente} contractTypes={contractTypes} generatingContract={generatingContract} onGenerateContract={onGenerateContract} />
         )}
 
         {/* Action Buttons */}
-        {!showContracts && (
-          <div style={{ display: 'flex', gap: 10, marginTop: 20, justifyContent: 'flex-end' }}>
+        {activeTab !== 'contratti' && (
+          <div style={{ display: 'flex', gap: 8, marginTop: 16, justifyContent: 'flex-end' }}>
             {editMode ? (
               <>
                 <button
                   onClick={() => { setEditMode(false); setEditData({ ...dipendente }); }}
-                  style={{ padding: '10px 20px', background: '#9e9e9e', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}
+                  style={{ padding: '8px 16px', background: '#9e9e9e', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: 12 }}
                 >
                   Annulla
                 </button>
                 <button
                   onClick={onUpdate}
-                  style={{ padding: '10px 20px', background: '#4caf50', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}
+                  style={{ padding: '8px 16px', background: '#4caf50', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: 12 }}
                   data-testid="save-employee-btn"
                 >
-                  💾 Salva Modifiche
+                  💾 Salva
                 </button>
               </>
             ) : (
               <button
                 onClick={() => setEditMode(true)}
-                style={{ padding: '10px 20px', background: '#2196f3', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}
+                style={{ padding: '8px 16px', background: '#2196f3', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: 12 }}
                 data-testid="edit-employee-btn"
               >
-                ✏️ Modifica Dati
+                ✏️ Modifica
               </button>
             )}
           </div>
@@ -113,15 +123,16 @@ export function DipendenteDetailModal({
   );
 }
 
-function DipendenteForm({ dipendente, editData, setEditData, editMode }) {
+// Form Anagrafica
+function DipendenteFormAnagrafica({ dipendente, editData, setEditData, editMode }) {
   const getValue = (field) => editMode ? (editData[field] || '') : (dipendente[field] || '');
   const handleChange = (field, value) => setEditData({ ...editData, [field]: value });
 
-  const inputStyle = { padding: 8, width: '100%', borderRadius: 4, border: '1px solid #ddd' };
-  const labelStyle = { display: 'block', marginBottom: 5, fontWeight: 'bold', fontSize: 12 };
+  const inputStyle = { padding: 6, width: '100%', borderRadius: 4, border: '1px solid #ddd', fontSize: 12 };
+  const labelStyle = { display: 'block', marginBottom: 4, fontWeight: 'bold', fontSize: 11, color: '#555' };
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 15 }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
       <div>
         <label style={labelStyle}>Nome</label>
         <input type="text" value={getValue('nome')} onChange={(e) => handleChange('nome', e.target.value)} disabled={!editMode} style={inputStyle} />
@@ -129,6 +140,10 @@ function DipendenteForm({ dipendente, editData, setEditData, editMode }) {
       <div>
         <label style={labelStyle}>Cognome</label>
         <input type="text" value={getValue('cognome')} onChange={(e) => handleChange('cognome', e.target.value)} disabled={!editMode} style={inputStyle} />
+      </div>
+      <div>
+        <label style={labelStyle}>Codice Dipendente</label>
+        <input type="text" value={getValue('codice_dipendente')} onChange={(e) => handleChange('codice_dipendente', e.target.value)} disabled={!editMode} style={{ ...inputStyle, fontFamily: 'monospace' }} placeholder="es. 0300006" />
       </div>
       <div>
         <label style={labelStyle}>Codice Fiscale</label>
@@ -159,11 +174,23 @@ function DipendenteForm({ dipendente, editData, setEditData, editMode }) {
         <input type="text" value={getValue('iban')} onChange={(e) => handleChange('iban', e.target.value.toUpperCase())} disabled={!editMode} style={{ ...inputStyle, fontFamily: 'monospace' }} />
       </div>
       <div>
+        <label style={labelStyle}>Data Assunzione</label>
+        <input type="date" value={(getValue('data_assunzione') || '').split('T')[0]} onChange={(e) => handleChange('data_assunzione', e.target.value)} disabled={!editMode} style={inputStyle} />
+      </div>
+      <div>
+        <label style={labelStyle}>Qualifica (es. OPE)</label>
+        <input type="text" value={getValue('qualifica')} onChange={(e) => handleChange('qualifica', e.target.value.toUpperCase())} disabled={!editMode} style={inputStyle} placeholder="es. OPE, IMP" />
+      </div>
+      <div>
         <label style={labelStyle}>Mansione</label>
         {editMode ? (
           <select value={getValue('mansione')} onChange={(e) => handleChange('mansione', e.target.value)} style={inputStyle}>
             <option value="">Seleziona...</option>
             {MANSIONI.map(m => <option key={m} value={m}>{m}</option>)}
+            <option value="CAM. DI SALA">CAM. DI SALA</option>
+            <option value="CUOCO">CUOCO</option>
+            <option value="AIUTO CUOCO">AIUTO CUOCO</option>
+            <option value="BARISTA">BARISTA</option>
           </select>
         ) : (
           <input type="text" value={dipendente.mansione || '-'} disabled style={inputStyle} />
@@ -171,62 +198,353 @@ function DipendenteForm({ dipendente, editData, setEditData, editMode }) {
       </div>
       <div>
         <label style={labelStyle}>Livello CCNL</label>
-        <input type="text" value={getValue('livello')} onChange={(e) => handleChange('livello', e.target.value)} disabled={!editMode} placeholder="es. 5, 6S..." style={inputStyle} />
-      </div>
-      <div>
-        <label style={labelStyle}>Stipendio Orario €</label>
-        <input type="number" step="0.01" value={getValue('stipendio_orario')} onChange={(e) => handleChange('stipendio_orario', e.target.value)} disabled={!editMode} style={inputStyle} />
-      </div>
-      <div>
-        <label style={labelStyle}>Matricola</label>
-        <input type="text" value={getValue('matricola')} onChange={(e) => handleChange('matricola', e.target.value)} disabled={!editMode} style={inputStyle} />
+        {editMode ? (
+          <select value={getValue('livello')} onChange={(e) => handleChange('livello', e.target.value)} style={inputStyle}>
+            <option value="">Seleziona...</option>
+            <option value="1">1° Livello</option>
+            <option value="2">2° Livello</option>
+            <option value="3">3° Livello</option>
+            <option value="4">4° Livello</option>
+            <option value="5">5° Livello</option>
+            <option value="6">6° Livello</option>
+            <option value="6S">6° Livello Super</option>
+            <option value="7">7° Livello</option>
+            <option value="Q">Quadro</option>
+          </select>
+        ) : (
+          <input type="text" value={dipendente.livello || '-'} disabled style={inputStyle} />
+        )}
       </div>
     </div>
   );
 }
 
+// Form Retribuzione
+function DipendenteFormRetribuzione({ dipendente, editData, setEditData, editMode }) {
+  const getValue = (field) => editMode ? (editData[field] ?? '') : (dipendente[field] ?? '');
+  const handleChange = (field, value) => setEditData({ ...editData, [field]: value });
+
+  const inputStyle = { padding: 6, width: '100%', borderRadius: 4, border: '1px solid #ddd', fontSize: 12, textAlign: 'right' };
+  const labelStyle = { display: 'block', marginBottom: 4, fontWeight: 'bold', fontSize: 11, color: '#555' };
+
+  const fmt = (v) => v ? parseFloat(v).toLocaleString('it-IT', { minimumFractionDigits: 2 }) : '0,00';
+
+  return (
+    <div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 16 }}>
+        <div>
+          <label style={labelStyle}>Paga Base €</label>
+          <input type="number" step="0.01" value={getValue('paga_base')} onChange={(e) => handleChange('paga_base', parseFloat(e.target.value) || 0)} disabled={!editMode} style={inputStyle} />
+        </div>
+        <div>
+          <label style={labelStyle}>Contingenza €</label>
+          <input type="number" step="0.01" value={getValue('contingenza')} onChange={(e) => handleChange('contingenza', parseFloat(e.target.value) || 0)} disabled={!editMode} style={inputStyle} />
+        </div>
+        <div>
+          <label style={labelStyle}>Stipendio Lordo €</label>
+          <input type="number" step="0.01" value={getValue('stipendio_lordo')} onChange={(e) => handleChange('stipendio_lordo', parseFloat(e.target.value) || 0)} disabled={!editMode} style={inputStyle} />
+        </div>
+        <div>
+          <label style={labelStyle}>Stipendio Orario €</label>
+          <input type="number" step="0.01" value={getValue('stipendio_orario')} onChange={(e) => handleChange('stipendio_orario', parseFloat(e.target.value) || 0)} disabled={!editMode} style={inputStyle} />
+        </div>
+        <div>
+          <label style={labelStyle}>Ore Settimanali</label>
+          <input type="number" value={getValue('ore_settimanali')} onChange={(e) => handleChange('ore_settimanali', parseInt(e.target.value) || 40)} disabled={!editMode} style={inputStyle} />
+        </div>
+        <div>
+          <label style={labelStyle}>Tipo Contratto</label>
+          {editMode ? (
+            <select value={getValue('tipo_contratto')} onChange={(e) => handleChange('tipo_contratto', e.target.value)} style={{ ...inputStyle, textAlign: 'left' }}>
+              <option value="Tempo Indeterminato">Tempo Indeterminato</option>
+              <option value="Tempo Determinato">Tempo Determinato</option>
+              <option value="Apprendistato">Apprendistato</option>
+              <option value="Part-time">Part-time</option>
+              <option value="Stage/Tirocinio">Stage/Tirocinio</option>
+            </select>
+          ) : (
+            <input type="text" value={dipendente.tipo_contratto || '-'} disabled style={{ ...inputStyle, textAlign: 'left' }} />
+          )}
+        </div>
+      </div>
+
+      {/* Riepilogo calcolato */}
+      <div style={{ background: '#f5f5f5', padding: 12, borderRadius: 8 }}>
+        <h4 style={{ margin: '0 0 8px 0', fontSize: 12, color: '#333' }}>Riepilogo Retribuzione</h4>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, fontSize: 12 }}>
+          <div>
+            <span style={{ color: '#666' }}>Paga Base:</span>
+            <span style={{ float: 'right', fontWeight: 'bold' }}>€ {fmt(getValue('paga_base'))}</span>
+          </div>
+          <div>
+            <span style={{ color: '#666' }}>Contingenza:</span>
+            <span style={{ float: 'right', fontWeight: 'bold' }}>€ {fmt(getValue('contingenza'))}</span>
+          </div>
+          <div>
+            <span style={{ color: '#666' }}>Totale:</span>
+            <span style={{ float: 'right', fontWeight: 'bold', color: '#2196f3' }}>
+              € {fmt((parseFloat(getValue('paga_base')) || 0) + (parseFloat(getValue('contingenza')) || 0))}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Form Progressivi (TFR, Ferie, Permessi)
+function DipendenteFormProgressivi({ dipendente, editData, setEditData, editMode }) {
+  const progressivi = editMode ? (editData.progressivi || {}) : (dipendente.progressivi || {});
+  
+  const handleProgressiviChange = (field, value) => {
+    setEditData({
+      ...editData,
+      progressivi: {
+        ...(editData.progressivi || {}),
+        [field]: parseFloat(value) || 0
+      }
+    });
+  };
+
+  const inputStyle = { padding: 6, width: '100%', borderRadius: 4, border: '1px solid #ddd', fontSize: 12, textAlign: 'right' };
+  const labelStyle = { display: 'block', marginBottom: 4, fontWeight: 'bold', fontSize: 11, color: '#555' };
+  const fmt = (v) => v ? parseFloat(v).toLocaleString('it-IT', { minimumFractionDigits: 2 }) : '0,00';
+
+  return (
+    <div>
+      {/* TFR */}
+      <div style={{ background: '#e3f2fd', padding: 12, borderRadius: 8, marginBottom: 12 }}>
+        <h4 style={{ margin: '0 0 8px 0', fontSize: 12, color: '#1565c0' }}>💰 TFR</h4>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
+          <div>
+            <label style={labelStyle}>TFR Accantonato €</label>
+            <input type="number" step="0.01" value={progressivi.tfr_accantonato || ''} onChange={(e) => handleProgressiviChange('tfr_accantonato', e.target.value)} disabled={!editMode} style={inputStyle} />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'flex-end', paddingBottom: 6 }}>
+            <span style={{ fontSize: 12, color: '#666' }}>Totale maturato ad oggi</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Ferie */}
+      <div style={{ background: '#e8f5e9', padding: 12, borderRadius: 8, marginBottom: 12 }}>
+        <h4 style={{ margin: '0 0 8px 0', fontSize: 12, color: '#2e7d32' }}>🏖️ Ferie (ore)</h4>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+          <div>
+            <label style={labelStyle}>Maturate</label>
+            <input type="number" step="0.5" value={progressivi.ferie_maturate || ''} onChange={(e) => handleProgressiviChange('ferie_maturate', e.target.value)} disabled={!editMode} style={inputStyle} />
+          </div>
+          <div>
+            <label style={labelStyle}>Godute</label>
+            <input type="number" step="0.5" value={progressivi.ferie_godute || ''} onChange={(e) => handleProgressiviChange('ferie_godute', e.target.value)} disabled={!editMode} style={inputStyle} />
+          </div>
+          <div>
+            <label style={labelStyle}>Residue</label>
+            <input type="number" step="0.5" value={progressivi.ferie_residue || ''} onChange={(e) => handleProgressiviChange('ferie_residue', e.target.value)} disabled={!editMode} style={{ ...inputStyle, fontWeight: 'bold', background: '#c8e6c9' }} />
+          </div>
+        </div>
+      </div>
+
+      {/* Permessi */}
+      <div style={{ background: '#fff3e0', padding: 12, borderRadius: 8, marginBottom: 12 }}>
+        <h4 style={{ margin: '0 0 8px 0', fontSize: 12, color: '#e65100' }}>⏰ Permessi (ore)</h4>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+          <div>
+            <label style={labelStyle}>Maturati</label>
+            <input type="number" step="0.5" value={progressivi.permessi_maturati || ''} onChange={(e) => handleProgressiviChange('permessi_maturati', e.target.value)} disabled={!editMode} style={inputStyle} />
+          </div>
+          <div>
+            <label style={labelStyle}>Goduti</label>
+            <input type="number" step="0.5" value={progressivi.permessi_goduti || ''} onChange={(e) => handleProgressiviChange('permessi_goduti', e.target.value)} disabled={!editMode} style={inputStyle} />
+          </div>
+          <div>
+            <label style={labelStyle}>Residui</label>
+            <input type="number" step="0.5" value={progressivi.permessi_residui || ''} onChange={(e) => handleProgressiviChange('permessi_residui', e.target.value)} disabled={!editMode} style={{ ...inputStyle, fontWeight: 'bold', background: '#ffe0b2' }} />
+          </div>
+        </div>
+      </div>
+
+      {/* ROL */}
+      <div style={{ background: '#fce4ec', padding: 12, borderRadius: 8 }}>
+        <h4 style={{ margin: '0 0 8px 0', fontSize: 12, color: '#c2185b' }}>📅 ROL (ore)</h4>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+          <div>
+            <label style={labelStyle}>Maturati</label>
+            <input type="number" step="0.5" value={progressivi.rol_maturati || ''} onChange={(e) => handleProgressiviChange('rol_maturati', e.target.value)} disabled={!editMode} style={inputStyle} />
+          </div>
+          <div>
+            <label style={labelStyle}>Goduti</label>
+            <input type="number" step="0.5" value={progressivi.rol_goduti || ''} onChange={(e) => handleProgressiviChange('rol_goduti', e.target.value)} disabled={!editMode} style={inputStyle} />
+          </div>
+          <div>
+            <label style={labelStyle}>Residui</label>
+            <input type="number" step="0.5" value={progressivi.rol_residui || ''} onChange={(e) => handleProgressiviChange('rol_residui', e.target.value)} disabled={!editMode} style={{ ...inputStyle, fontWeight: 'bold', background: '#f8bbd9' }} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Form Agevolazioni
+function DipendenteFormAgevolazioni({ dipendente, editData, setEditData, editMode }) {
+  const agevolazioni = editMode ? (editData.agevolazioni || []) : (dipendente.agevolazioni || []);
+  const [newAgevolazione, setNewAgevolazione] = useState('');
+
+  const handleAddAgevolazione = () => {
+    if (!newAgevolazione.trim()) return;
+    setEditData({
+      ...editData,
+      agevolazioni: [...(editData.agevolazioni || []), newAgevolazione.trim()]
+    });
+    setNewAgevolazione('');
+  };
+
+  const handleRemoveAgevolazione = (index) => {
+    const updated = [...(editData.agevolazioni || [])];
+    updated.splice(index, 1);
+    setEditData({ ...editData, agevolazioni: updated });
+  };
+
+  const agevolazioniComuni = [
+    "Decontr.SUD DL104.20",
+    "Bonus Under 36",
+    "Esonero contributivo donne",
+    "Apprendistato professionalizzante",
+    "Bonus assunzione giovani",
+    "Incentivo NEET",
+    "Decontribuzione Sud 30%"
+  ];
+
+  return (
+    <div>
+      <p style={{ fontSize: 12, color: '#666', marginBottom: 12 }}>
+        Agevolazioni fiscali e contributive applicate al dipendente (es. Decontribuzione Sud, Bonus assunzioni, ecc.)
+      </p>
+
+      {/* Lista agevolazioni attive */}
+      <div style={{ marginBottom: 16 }}>
+        <h4 style={{ fontSize: 12, fontWeight: 'bold', marginBottom: 8 }}>Agevolazioni Attive</h4>
+        {agevolazioni.length === 0 ? (
+          <div style={{ padding: 16, background: '#f5f5f5', borderRadius: 8, textAlign: 'center', color: '#999', fontSize: 12 }}>
+            Nessuna agevolazione registrata
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {agevolazioni.map((ag, i) => (
+              <div key={i} style={{ 
+                background: '#e8f5e9', 
+                border: '1px solid #a5d6a7', 
+                padding: '6px 12px', 
+                borderRadius: 20,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                fontSize: 12
+              }}>
+                <span>🎁 {ag}</span>
+                {editMode && (
+                  <button 
+                    onClick={() => handleRemoveAgevolazione(i)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#c62828', fontSize: 14 }}
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Aggiungi nuova agevolazione */}
+      {editMode && (
+        <div style={{ background: '#f5f5f5', padding: 12, borderRadius: 8 }}>
+          <h4 style={{ fontSize: 12, fontWeight: 'bold', marginBottom: 8 }}>Aggiungi Agevolazione</h4>
+          
+          {/* Input manuale */}
+          <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+            <input 
+              type="text" 
+              value={newAgevolazione} 
+              onChange={(e) => setNewAgevolazione(e.target.value)}
+              placeholder="Inserisci nome agevolazione..."
+              style={{ flex: 1, padding: 8, borderRadius: 4, border: '1px solid #ddd', fontSize: 12 }}
+              onKeyDown={(e) => e.key === 'Enter' && handleAddAgevolazione()}
+            />
+            <button 
+              onClick={handleAddAgevolazione}
+              style={{ padding: '8px 16px', background: '#4caf50', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: 12 }}
+            >
+              + Aggiungi
+            </button>
+          </div>
+
+          {/* Agevolazioni comuni */}
+          <div>
+            <label style={{ fontSize: 11, color: '#666', marginBottom: 4, display: 'block' }}>Agevolazioni comuni (clicca per aggiungere):</label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+              {agevolazioniComuni.map((ag, i) => (
+                <button
+                  key={i}
+                  onClick={() => {
+                    if (!agevolazioni.includes(ag)) {
+                      setEditData({ ...editData, agevolazioni: [...(editData.agevolazioni || []), ag] });
+                    }
+                  }}
+                  disabled={agevolazioni.includes(ag)}
+                  style={{ 
+                    padding: '4px 8px', 
+                    background: agevolazioni.includes(ag) ? '#e0e0e0' : 'white', 
+                    border: '1px solid #ddd', 
+                    borderRadius: 4, 
+                    cursor: agevolazioni.includes(ag) ? 'not-allowed' : 'pointer',
+                    fontSize: 11,
+                    color: agevolazioni.includes(ag) ? '#999' : '#333'
+                  }}
+                >
+                  {ag}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Sezione Contratti (invariata)
 function ContractsSection({ dipendente, contractTypes, generatingContract, onGenerateContract }) {
   return (
     <div>
-      <p style={{ color: '#666', marginBottom: 20 }}>
+      <p style={{ color: '#666', marginBottom: 16, fontSize: 12 }}>
         Seleziona il tipo di contratto da generare per <strong>{dipendente.nome_completo || dipendente.nome}</strong>.
-        I dati del dipendente verranno automaticamente inseriti nei campi del documento.
       </p>
       
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 12 }}>
         {contractTypes.map(ct => (
           <button
             key={ct.id}
             onClick={() => onGenerateContract(ct.id)}
             disabled={generatingContract}
             style={{
-              padding: '16px 20px',
-              background: ct.id.includes('determinato') ? '#e3f2fd' : ct.id.includes('indeterminato') ? '#e8f5e9' : '#fff',
-              border: '2px solid',
-              borderColor: ct.id.includes('determinato') ? '#2196f3' : ct.id.includes('indeterminato') ? '#4caf50' : '#9e9e9e',
-              borderRadius: 10,
+              padding: 12,
+              background: 'white',
+              border: '1px solid #ddd',
+              borderRadius: 8,
               cursor: generatingContract ? 'wait' : 'pointer',
-              textAlign: 'center',
-              transition: 'all 0.2s',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              minHeight: 90
+              textAlign: 'left',
+              transition: 'all 0.2s'
             }}
-            data-testid={`generate-contract-${ct.id}`}
           >
-            <div style={{ fontWeight: 'bold', marginBottom: 8, fontSize: 14, color: '#333' }}>📄 {ct.name}</div>
-            <div style={{ fontSize: 12, color: '#666', wordBreak: 'break-word' }}>{ct.filename}</div>
+            <div style={{ fontWeight: 'bold', fontSize: 13, marginBottom: 4 }}>{ct.name}</div>
+            <div style={{ fontSize: 11, color: '#666' }}>{ct.description || 'Genera documento PDF'}</div>
           </button>
         ))}
       </div>
-      
-      {generatingContract && (
-        <div style={{ textAlign: 'center', padding: 20, color: '#666' }}>
-          ⏳ Generazione contratto in corso...
-        </div>
-      )}
     </div>
   );
 }
+
+export default DipendenteDetailModal;
