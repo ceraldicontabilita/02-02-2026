@@ -792,6 +792,7 @@ function PrimaNotaDesktop() {
             formatEuro={formatEuro}
             formatDate={formatDate}
             onDelete={(id) => handleDeleteMovimento('banca', id)}
+            onEdit={(updated) => handleEditMovimento('banca', updated)}
           />
         </section>
       )}
