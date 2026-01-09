@@ -270,7 +270,8 @@ def parse_format_zucchetti_2023(text: str, lines: List[str]) -> Dict[str, Any]:
             # La riga successiva contiene i valori
             if i + 1 < len(lines):
                 next_line = lines[i + 1]
-                numbers = re.findall(r'[\d]+[.,][\d]+', next_line)
+                # Pattern per numeri italiani come 9.914,01 o 1159,73
+                numbers = re.findall(r'[\d]+(?:\.[\d]{3})*[,][\d]+|[\d]+[,][\d]+', next_line)
                 if numbers:
                     # Il primo numero è il TFR Fondo
                     result['tfr_fondo'] = parse_italian_number(numbers[0])
