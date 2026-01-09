@@ -154,20 +154,20 @@ export default function App() {
           <img src="/logo-ceraldi.png" alt="Ceraldi Caffè" style={{ height: 28, marginRight: 8 }} />
           <span>Azienda Semplice</span>
         </div>
-        <div style={{ padding: '0 8px', marginBottom: 10 }}>
+        <div style={{ padding: '0 6px', marginBottom: 8 }}>
           <GlobalSearch />
         </div>
-        <div style={{ padding: '0 8px', marginBottom: 15 }}>
+        <div style={{ padding: '0 6px', marginBottom: 10 }}>
           <div style={{ 
             display: 'flex', 
             alignItems: 'center', 
-            gap: 8,
-            padding: '8px 12px',
+            gap: 6,
+            padding: '6px 10px',
             background: '#f1f5f9',
-            borderRadius: 8
+            borderRadius: 6
           }}>
-            <span style={{ fontSize: 12, color: '#64748b' }}>Anno:</span>
-            <AnnoSelector style={{ flex: 1, border: 'none', background: 'white' }} />
+            <span style={{ fontSize: 10, color: '#64748b' }}>Anno:</span>
+            <AnnoSelector style={{ flex: 1, border: 'none', background: 'white', fontSize: 11, padding: '4px 8px', minHeight: 26 }} />
           </div>
         </div>
         <nav className="nav">
