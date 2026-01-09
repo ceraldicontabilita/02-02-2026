@@ -151,8 +151,8 @@ export default function App() {
 
       {/* Desktop Sidebar */}
       <aside className="sidebar desktop-sidebar">
-        <div className="brand" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div className="brand">
+          <div className="brand-content">
             <img src="/logo-ceraldi.png" alt="Ceraldi Caffè" style={{ height: 28 }} />
             <span>Azienda Semplice</span>
           </div>
