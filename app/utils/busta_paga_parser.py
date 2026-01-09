@@ -83,27 +83,34 @@ def parse_format_csc_2017(text: str, lines: List[str]) -> Dict[str, Any]:
             if match:
                 result['contingenza_oraria'] = parse_italian_number(match.group(1))
         
-        # Progressivi ferie/permessi/rol - formato: Mat. X+Mat. Y+Mat. Z+
-        if 'Mat.' in line and 'God.' in line and 'Sal.' in line:
-            # Estrae tutti i numeri dopo Mat., God., Sal.
+        # Progressivi - formato su righe separate:
+        # Mat. X+Mat. Y+Mat. Z+ (Maturato)
+        # God. X+God. Y+God. Z+ (Goduto)
+        # Sal. X+Sal. Y+Sal. Z+ (Saldo)
+        
+        # Riga Mat. (maturato)
+        if line.startswith('Mat.') or 'Mat.' in line[:10]:
             mat_matches = re.findall(r'Mat\.\s*([\d.,]+)\+?', line)
-            god_matches = re.findall(r'God\.\s*([\d.,]+)\+?', line)
-            sal_matches = re.findall(r'Sal\.\s*([\d.,]+)\+?', line)
-            
             if len(mat_matches) >= 1:
                 result['ferie_maturate'] = parse_italian_number(mat_matches[0])
             if len(mat_matches) >= 2:
                 result['permessi_maturati'] = parse_italian_number(mat_matches[1])
             if len(mat_matches) >= 3:
                 result['rol_maturati'] = parse_italian_number(mat_matches[2])
-            
+        
+        # Riga God. (goduto)
+        if line.startswith('God.') or 'God.' in line[:10]:
+            god_matches = re.findall(r'God\.\s*([\d.,]+)\+?', line)
             if len(god_matches) >= 1:
                 result['ferie_godute'] = parse_italian_number(god_matches[0])
             if len(god_matches) >= 2:
                 result['permessi_goduti'] = parse_italian_number(god_matches[1])
             if len(god_matches) >= 3:
                 result['rol_goduti'] = parse_italian_number(god_matches[2])
-            
+        
+        # Riga Sal. (saldo)
+        if line.startswith('Sal.') or 'Sal.' in line[:10]:
+            sal_matches = re.findall(r'Sal\.\s*([\d.,]+)\+?', line)
             if len(sal_matches) >= 1:
                 result['ferie_saldo'] = parse_italian_number(sal_matches[0])
             if len(sal_matches) >= 2:
@@ -111,14 +118,25 @@ def parse_format_csc_2017(text: str, lines: List[str]) -> Dict[str, Any]:
             if len(sal_matches) >= 3:
                 result['rol_saldo'] = parse_italian_number(sal_matches[2])
         
-        # Netto - cerca "TOTALE NETTO" o numero grande dopo Sal.
-        if 'LIRE' in line or (',' in line and '+' in line):
-            # Cerca l'ultimo numero grande che potrebbe essere il netto
-            netto_match = re.search(r'([\d.,]+)\+?\s*$', line)
-            if netto_match:
-                val = parse_italian_number(netto_match.group(1))
-                if val > 100:  # Probabilmente è il netto
-                    result['netto_mese'] = val
+        # TFR - cerca RETRIBUZIONE T.F.R.
+        if 'T.F.R.' in line or 'T._F._R' in line:
+            numbers = re.findall(r'[\d]+[,.][\d]+', line)
+            # Prende il numero più grande che potrebbe essere il TFR accumulato
+            for num_str in numbers:
+                val = parse_italian_number(num_str)
+                if val > result['tfr_fondo'] and val > 100:
+                    result['tfr_fondo'] = val
+        
+        # Netto - riga con numeri grandi alla fine
+        if i >= len(lines) - 5:  # Ultime 5 righe
+            # Cerca un numero che potrebbe essere il netto (tra 500 e 5000)
+            numbers = re.findall(r'([\d.,]+)', line)
+            for num_str in numbers:
+                val = parse_italian_number(num_str)
+                if 200 < val < 5000 and val > result['netto_mese']:
+                    # Verifica che non sia un progressivo
+                    if 'Mat.' not in line and 'God.' not in line and 'Sal.' not in line:
+                        result['netto_mese'] = val
     
     # Calcola paga mensile (173.33 ore/mese standard)
     if result['paga_base_oraria'] > 0:
