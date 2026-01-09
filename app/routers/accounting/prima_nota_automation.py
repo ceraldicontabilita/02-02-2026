@@ -1101,7 +1101,7 @@ async def import_pos(
                     continue
                 
                 # CONTROLLO DUPLICATI - verifica se esiste già un POS con stessa data
-                existing_pos = await db[COLLECTION_PRIMA_NOTA_CASSA].find_one({
+                existing_pos = await db[COLLECTION_PRIMA_NOTA_BANCA].find_one({
                     "data": data,
                     "categoria": "POS"
                 })
@@ -1111,32 +1111,24 @@ async def import_pos(
                     results["errors"].append({"row": idx + 2, "error": f"Duplicato: POS del {data} già esistente"})
                     continue
                 
-                # Create movement in cassa as uscita (POS payments go to bank, so it's an "exit" from cassa perspective)
+                # POS = incasso elettronico -> va in BANCA come ENTRATA
                 movimento = {
                     "id": str(uuid.uuid4()),
                     "data": data,
-                    "tipo": "uscita",
+                    "tipo": "entrata",
                     "importo": totale,
                     "descrizione": f"Incasso POS giornaliero del {data}",
                     "categoria": "POS",
-                    "source": "manual_pos",
-                    "pos_details": {
-                        "pos1": pos1,
-                        "pos2": pos2,
-                        "pos3": pos3
-                    },
+                    "source": "excel_import",
                     "filename": file.filename,
                     "created_at": now
                 }
                 
-                await db[COLLECTION_PRIMA_NOTA_CASSA].insert_one(movimento)
+                await db[COLLECTION_PRIMA_NOTA_BANCA].insert_one(movimento)
                 
                 results["imported"] += 1
                 results["pos_entries"].append({
                     "data": data,
-                    "pos1": pos1,
-                    "pos2": pos2,
-                    "pos3": pos3,
                     "totale": totale
                 })
                 
