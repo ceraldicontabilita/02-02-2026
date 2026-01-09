@@ -1,6 +1,7 @@
 /* ============================================
    ERP AZIENDA SEMPLICE - Design System
    Mobile-First Responsive Design
+   UI COMPATTA - Versione 2.0
    ============================================ */
 
 /* CSS Variables */
@@ -31,28 +32,36 @@
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
   
-  /* Spacing */
-  --space-xs: 4px;
-  --space-sm: 8px;
-  --space-md: 16px;
-  --space-lg: 24px;
-  --space-xl: 32px;
-  --space-2xl: 48px;
+  /* Spacing - COMPATTO */
+  --space-xs: 2px;
+  --space-sm: 4px;
+  --space-md: 10px;
+  --space-lg: 16px;
+  --space-xl: 24px;
+  --space-2xl: 32px;
   
   /* Border Radius */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 20px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
   --radius-full: 9999px;
   
-  /* Typography */
+  /* Typography - COMPATTA */
   --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
   --font-mono: 'SF Mono', Monaco, Consolas, monospace;
+  --font-size-xs: 10px;
+  --font-size-sm: 11px;
+  --font-size-base: 12px;
+  --font-size-md: 13px;
+  --font-size-lg: 14px;
+  --font-size-xl: 16px;
+  --font-size-2xl: 18px;
+  --font-size-3xl: 22px;
   
   /* Sidebar */
-  --sidebar-width: 260px;
-  --sidebar-collapsed: 70px;
+  --sidebar-width: 220px;
+  --sidebar-collapsed: 60px;
   
   /* Transitions */
   --transition-fast: 150ms ease;
@@ -68,7 +77,7 @@
 }
 
 html {
-  font-size: 16px;
+  font-size: 13px;
   -webkit-text-size-adjust: 100%;
   -webkit-tap-highlight-color: transparent;
 }
@@ -77,7 +86,8 @@ body {
   font-family: var(--font-sans);
   background: var(--bg-primary);
   color: var(--text-primary);
-  line-height: 1.5;
+  line-height: 1.4;
+  font-size: var(--font-size-base);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -269,11 +279,11 @@ a {
    COMPONENTS
    ============================================ */
 
-/* Cards */
+/* Cards - COMPATTE */
 .card {
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   padding: var(--space-md);
   margin-bottom: var(--space-md);
   box-shadow: var(--shadow-sm);
@@ -287,6 +297,7 @@ a {
 @media (min-width: 768px) {
   .card {
     padding: var(--space-lg);
+    margin-bottom: var(--space-lg);
   }
 }
 
@@ -315,62 +326,80 @@ a {
   }
 }
 
-/* Typography */
+/* Typography - COMPATTA */
 .h1 {
-  font-size: 20px;
-  font-weight: 800;
+  font-size: var(--font-size-xl);
+  font-weight: 700;
   margin: 0 0 var(--space-sm);
   color: var(--text-primary);
 }
 
 @media (min-width: 768px) {
   .h1 {
-    font-size: 24px;
+    font-size: var(--font-size-2xl);
     margin-bottom: var(--space-md);
   }
 }
 
-.small {
-  color: var(--text-secondary);
-  font-size: 13px;
+.h2 {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  margin: 0 0 var(--space-sm);
+  color: var(--text-primary);
 }
 
-/* KPI */
+.h3 {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.small {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.text-xs {
+  font-size: var(--font-size-xs);
+}
+
+/* KPI - COMPATTI */
 .kpi {
-  font-size: 24px;
-  font-weight: 900;
+  font-size: var(--font-size-2xl);
+  font-weight: 800;
   color: var(--text-primary);
 }
 
 @media (min-width: 768px) {
   .kpi {
-    font-size: 28px;
+    font-size: var(--font-size-3xl);
   }
 }
 
 @media (min-width: 1024px) {
   .kpi {
-    font-size: 32px;
+    font-size: 26px;
   }
 }
 
-/* Buttons */
+/* Buttons - COMPATTI */
 button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-sm);
+  gap: var(--space-xs);
   border: 1px solid var(--border-color);
   background: var(--bg-secondary);
   color: var(--text-primary);
   padding: var(--space-sm) var(--space-md);
-  border-radius: var(--radius-md);
-  font-size: 14px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
   font-weight: 500;
   cursor: pointer;
   transition: all var(--transition-fast);
   white-space: nowrap;
-  min-height: 44px; /* Apple touch target */
+  min-height: 32px;
 }
 
 button:hover {
@@ -405,29 +434,48 @@ button.danger {
   border-color: var(--danger);
 }
 
-/* Form Elements */
+button.btn-sm {
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--font-size-xs);
+  min-height: 26px;
+}
+
+button.btn-xs {
+  padding: 2px 6px;
+  font-size: var(--font-size-xs);
+  min-height: 22px;
+}
+
+/* Form Elements - COMPATTI */
 input, select, textarea {
   display: block;
   width: 100%;
   border: 1px solid var(--border-color);
   background: var(--bg-secondary);
   padding: var(--space-sm) var(--space-md);
-  border-radius: var(--radius-md);
-  font-size: 16px; /* Prevent zoom on iOS */
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-base);
   font-family: inherit;
   color: var(--text-primary);
   transition: all var(--transition-fast);
-  min-height: 44px; /* Apple touch target */
+  min-height: 32px;
 }
 
 input:focus, select:focus, textarea:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12);
 }
 
 input::placeholder {
   color: var(--text-muted);
+  font-size: var(--font-size-sm);
+}
+
+input.input-sm, select.input-sm {
+  padding: 4px 8px;
+  min-height: 28px;
+  font-size: var(--font-size-sm);
 }
 
 /* Row Layout */
@@ -444,11 +492,11 @@ input::placeholder {
   }
 }
 
-/* Tables */
+/* Tables - COMPATTE */
 table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: var(--font-size-sm);
 }
 
 th, td {
@@ -461,13 +509,25 @@ th {
   background: var(--bg-tertiary);
   font-weight: 600;
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.4px;
+  padding: 6px var(--space-md);
 }
 
 tr:hover td {
   background: var(--bg-tertiary);
+}
+
+/* Table dense variant */
+table.table-dense th,
+table.table-dense td {
+  padding: 4px 8px;
+  font-size: var(--font-size-xs);
+}
+
+table.table-dense th {
+  padding: 4px 8px;
 }
 
 /* Responsive Table Wrapper */
