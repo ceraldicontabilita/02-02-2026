@@ -51,9 +51,14 @@ class CedolinoInput(BaseModel):
     anno: int
     ore_lavorate: Optional[float] = None  # Per paga oraria
     giorni_lavorati: Optional[float] = None  # Per paga giornaliera
+    paga_oraria: Optional[float] = None  # Override paga oraria dal form
     straordinari_ore: float = 0
     festivita_ore: float = 0
-    malattia_giorni: float = 0
+    ore_domenicali: float = 0  # Ore lavorate di domenica (maggiorazione)
+    ore_malattia: float = 0  # Ore in malattia
+    giorni_malattia: int = 0  # Giorni di malattia
+    assenze_ore: float = 0  # Ore di assenza non retribuite
+    malattia_giorni: float = 0  # Deprecated - usa giorni_malattia
     ferie_giorni: float = 0
     note: str = ""
 
@@ -67,6 +72,8 @@ class CedolinoStima(BaseModel):
     retribuzione_base: float
     straordinari: float
     festivita: float
+    maggiorazione_domenicale: float = 0
+    indennita_malattia: float = 0
     lordo_totale: float
     # Trattenute dipendente
     inps_dipendente: float
@@ -84,6 +91,7 @@ class CedolinoStima(BaseModel):
     # Info
     ore_lavorate: float
     giorni_lavorati: float
+    paga_oraria_usata: float = 0
 
 
 # ============================================
