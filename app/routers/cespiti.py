@@ -480,3 +480,100 @@ async def dismetti_cespite(input_data: DismissioneInput) -> Dict[str, Any]:
             "tipo_risultato": tipo_risultato
         }
     }
+
+
+class CespiteUpdate(BaseModel):
+    descrizione: Optional[str] = None
+    fornitore: Optional[str] = None
+    numero_fattura: Optional[str] = None
+    ubicazione: Optional[str] = None
+    note: Optional[str] = None
+    valore_acquisto: Optional[float] = None
+    data_acquisto: Optional[str] = None
+
+
+@router.put("/{cespite_id}")
+async def aggiorna_cespite(cespite_id: str, update_data: CespiteUpdate) -> Dict[str, Any]:
+    """
+    Aggiorna i dati di un cespite esistente.
+    Non permette modifica della categoria o del coefficiente.
+    """
+    db = Database.get_db()
+    
+    # Verifica che il cespite esista
+    cespite = await db["cespiti"].find_one({"id": cespite_id}, {"_id": 0})
+    if not cespite:
+        raise HTTPException(status_code=404, detail="Cespite non trovato")
+    
+    # Prepara i campi da aggiornare
+    update_fields = {}
+    update_dict = update_data.model_dump(exclude_unset=True)
+    
+    for key, value in update_dict.items():
+        if value is not None:
+            update_fields[key] = value
+    
+    # Se viene aggiornato il valore acquisto, ricalcola il residuo
+    if "valore_acquisto" in update_fields:
+        nuovo_valore = update_fields["valore_acquisto"]
+        fondo = cespite.get("fondo_ammortamento", 0)
+        update_fields["valore_residuo"] = nuovo_valore - fondo
+    
+    # Se viene aggiornata la data acquisto, aggiorna anche anno
+    if "data_acquisto" in update_fields:
+        update_fields["anno_acquisto"] = int(update_fields["data_acquisto"][:4])
+    
+    if not update_fields:
+        return {"success": True, "messaggio": "Nessun campo da aggiornare"}
+    
+    update_fields["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    await db["cespiti"].update_one(
+        {"id": cespite_id},
+        {"$set": update_fields}
+    )
+    
+    return {
+        "success": True,
+        "messaggio": f"Cespite '{cespite['descrizione']}' aggiornato",
+        "campi_aggiornati": list(update_fields.keys())
+    }
+
+
+@router.delete("/{cespite_id}")
+async def elimina_cespite(cespite_id: str) -> Dict[str, Any]:
+    """
+    Elimina un cespite dal sistema.
+    Attenzione: questa operazione è irreversibile.
+    Non permette l'eliminazione se ci sono ammortamenti registrati.
+    """
+    db = Database.get_db()
+    
+    # Verifica che il cespite esista
+    cespite = await db["cespiti"].find_one({"id": cespite_id}, {"_id": 0})
+    if not cespite:
+        raise HTTPException(status_code=404, detail="Cespite non trovato")
+    
+    # Verifica che non ci siano ammortamenti registrati
+    piano = cespite.get("piano_ammortamento", [])
+    if len(piano) > 0:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Impossibile eliminare: {len(piano)} quote di ammortamento già registrate. Usare la dismissione invece."
+        )
+    
+    # Elimina il cespite
+    result = await db["cespiti"].delete_one({"id": cespite_id})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=500, detail="Errore durante l'eliminazione")
+    
+    return {
+        "success": True,
+        "messaggio": f"Cespite '{cespite['descrizione']}' eliminato definitivamente",
+        "cespite_eliminato": {
+            "id": cespite_id,
+            "descrizione": cespite["descrizione"],
+            "valore_acquisto": cespite.get("valore_acquisto", 0)
+        }
+    }
