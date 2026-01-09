@@ -15,6 +15,7 @@ export default function Scadenze() {
   const [filtroTipo, setFiltroTipo] = useState('');
   const [includePassate, setIncludePassate] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [viewingInvoice, setViewingInvoice] = useState(null);
   const [nuovaScadenza, setNuovaScadenza] = useState({
     data_scadenza: '',
     descrizione: '',
