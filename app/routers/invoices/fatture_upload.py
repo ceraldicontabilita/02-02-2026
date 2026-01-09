@@ -372,16 +372,30 @@ async def upload_fattura_xml(file: UploadFile = File(...)) -> Dict[str, Any]:
         giorni_pagamento = supplier.get("giorni_pagamento", 30) if supplier else 30
         supplier_id = supplier.get("id") if supplier else None
         
-        # === RICONCILIAZIONE ASSEGNI ===
-        # Se il metodo è assegno, cerca i numeri degli assegni nell'estratto conto
+        # === RICONCILIAZIONE AUTOMATICA CON ESTRATTO CONTO ===
+        importo_fattura = parsed.get("total_amount", 0)
+        data_fattura_ricerca = parsed.get("invoice_date", "")
+        fornitore_nome = parsed.get("supplier_name", "")
+        
+        riconciliazione = await riconcilia_con_estratto_conto(
+            db, importo_fattura, data_fattura_ricerca, fornitore_nome
+        )
+        
+        # Se trovato in banca, aggiorna metodo pagamento e stato
+        riconciliato_automaticamente = False
+        if riconciliazione.get("trovato"):
+            metodo_suggerito = riconciliazione.get("metodo_suggerito", metodo_pagamento)
+            # Solo aggiorna se diverso da quello del fornitore
+            if metodo_suggerito:
+                metodo_pagamento = metodo_suggerito
+            riconciliato_automaticamente = True
+            logger.info(f"Riconciliazione automatica per fattura {parsed.get('invoice_number')}: {metodo_pagamento}")
+        
+        # === RICONCILIAZIONE ASSEGNI (per dettagli aggiuntivi) ===
         numeri_assegni = None
         riconciliazione_assegni = None
         
         if metodo_pagamento == "assegno":
-            importo_fattura = parsed.get("total_amount", 0)
-            data_fattura_ricerca = parsed.get("invoice_date", "")
-            fornitore_nome = parsed.get("supplier_name", "")
-            
             riconciliazione_assegni = await find_check_numbers_for_invoice(
                 db, importo_fattura, data_fattura_ricerca, fornitore_nome
             )
