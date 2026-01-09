@@ -36,7 +36,7 @@ const NAV_ITEMS = [
   { to: "/ricerca-prodotti", label: "Ricerca Prodotti", icon: "🔍", short: "Ricerca" },
   { to: "/ordini-fornitori", label: "Ordini Fornitori", icon: "📝", short: "Ordini" },
   { to: "/gestione-assegni", label: "Gestione Assegni", icon: "📝", short: "Assegni" },
-  { to: "/haccp", label: "HACCP", icon: "🍽️", short: "HACCP", hasBadge: true },
+  { to: "/haccp-v2", label: "HACCP V2", icon: "🍽️", short: "HACCP", hasBadge: true },
   // Dipendenti è ora un sottomenu
   { 
     label: "Dipendenti", 
