@@ -982,3 +982,193 @@ Generato il: {datetime.now().strftime('%d/%m/%Y %H:%M')}
         headers={"Content-Disposition": f"attachment; filename=bonifici_{year}.zip"}
     )
 
+
+
+# =============================================================================
+# ASSOCIAZIONE BONIFICI - DIPENDENTI
+# =============================================================================
+
+@router.post("/associa-dipendenti")
+async def associa_bonifici_dipendenti(dry_run: bool = Query(True)):
+    """
+    Associa automaticamente i bonifici ai dipendenti in base alla causale.
+    Usa il nome/cognome del dipendente per il matching.
+    
+    - dry_run=True: mostra solo le associazioni trovate senza salvare
+    - dry_run=False: salva le associazioni nel database
+    """
+    db = Database.get_db()
+    
+    # Carica dipendenti
+    dipendenti = []
+    async for dip in db.employees.find({}):
+        nome = dip.get('nome_completo') or f"{dip.get('nome', '')} {dip.get('cognome', '')}".strip()
+        nome_lower = nome.lower()
+        
+        parts = nome_lower.split()
+        cognome = dip.get('cognome', '').lower() or (parts[-1] if parts else '')
+        nome_proprio = dip.get('nome', '').lower() or (parts[0] if len(parts) > 1 else '')
+        
+        dipendenti.append({
+            'id': dip.get('id'),
+            'nome_completo': nome,
+            'nome': nome_proprio,
+            'cognome': cognome
+        })
+    
+    # Carica bonifici senza associazione
+    bonifici = await db.bonifici_transfers.find(
+        {"$or": [{"dipendente_id": None}, {"dipendente_id": {"$exists": False}}]},
+        {"_id": 0}
+    ).to_list(10000)
+    
+    associazioni = []
+    non_trovati = []
+    
+    for bon in bonifici:
+        causale = (bon.get('causale') or '').lower()
+        matched_dip = None
+        best_score = 0
+        
+        for dip in dipendenti:
+            score = 0
+            
+            # Score per cognome trovato
+            if dip['cognome'] and len(dip['cognome']) > 2 and dip['cognome'] in causale:
+                score += 2
+            
+            # Score per nome trovato
+            if dip['nome'] and len(dip['nome']) > 2 and dip['nome'] in causale:
+                score += 2
+            
+            # Bonus se entrambi trovati
+            if score == 4:
+                score += 2
+            
+            if score > best_score:
+                best_score = score
+                matched_dip = dip
+        
+        if matched_dip and best_score >= 2:
+            associazioni.append({
+                'bonifico_id': bon.get('id'),
+                'dipendente_id': matched_dip['id'],
+                'dipendente_nome': matched_dip['nome_completo'],
+                'importo': bon.get('importo'),
+                'causale': bon.get('causale'),
+                'data': str(bon.get('data'))[:10],
+                'score': best_score
+            })
+            
+            if not dry_run:
+                await db.bonifici_transfers.update_one(
+                    {"id": bon.get('id')},
+                    {"$set": {
+                        "dipendente_id": matched_dip['id'],
+                        "dipendente_nome": matched_dip['nome_completo'],
+                        "updated_at": datetime.now(timezone.utc).isoformat()
+                    }}
+                )
+        else:
+            non_trovati.append({
+                'bonifico_id': bon.get('id'),
+                'causale': bon.get('causale'),
+                'importo': bon.get('importo')
+            })
+    
+    return {
+        "success": True,
+        "dry_run": dry_run,
+        "totale_bonifici": len(bonifici),
+        "associati": len(associazioni),
+        "non_trovati": len(non_trovati),
+        "associazioni": associazioni,
+        "non_trovati_list": non_trovati[:20]
+    }
+
+
+@router.get("/dipendente/{dipendente_id}")
+async def get_bonifici_dipendente(dipendente_id: str):
+    """
+    Restituisce tutti i bonifici associati a un dipendente.
+    """
+    db = Database.get_db()
+    
+    # Verifica che il dipendente esista
+    dipendente = await db.employees.find_one({"id": dipendente_id}, {"_id": 0})
+    if not dipendente:
+        raise HTTPException(status_code=404, detail="Dipendente non trovato")
+    
+    nome = dipendente.get('nome_completo') or f"{dipendente.get('nome', '')} {dipendente.get('cognome', '')}".strip()
+    
+    # Trova bonifici associati
+    bonifici = await db.bonifici_transfers.find(
+        {"dipendente_id": dipendente_id},
+        {"_id": 0}
+    ).sort("data", -1).to_list(1000)
+    
+    # Calcola totale
+    totale = sum(b.get('importo', 0) for b in bonifici)
+    
+    return {
+        "dipendente_id": dipendente_id,
+        "dipendente_nome": nome,
+        "totale_bonifici": len(bonifici),
+        "totale_importo": round(totale, 2),
+        "bonifici": bonifici
+    }
+
+
+@router.post("/associa-manuale/{bonifico_id}")
+async def associa_manuale_bonifico(bonifico_id: str, dipendente_id: str):
+    """
+    Associa manualmente un bonifico a un dipendente.
+    """
+    db = Database.get_db()
+    
+    # Verifica bonifico
+    bonifico = await db.bonifici_transfers.find_one({"id": bonifico_id})
+    if not bonifico:
+        raise HTTPException(status_code=404, detail="Bonifico non trovato")
+    
+    # Verifica dipendente
+    dipendente = await db.employees.find_one({"id": dipendente_id}, {"_id": 0})
+    if not dipendente:
+        raise HTTPException(status_code=404, detail="Dipendente non trovato")
+    
+    nome = dipendente.get('nome_completo') or f"{dipendente.get('nome', '')} {dipendente.get('cognome', '')}".strip()
+    
+    # Aggiorna bonifico
+    await db.bonifici_transfers.update_one(
+        {"id": bonifico_id},
+        {"$set": {
+            "dipendente_id": dipendente_id,
+            "dipendente_nome": nome,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {
+        "success": True,
+        "bonifico_id": bonifico_id,
+        "dipendente_id": dipendente_id,
+        "dipendente_nome": nome
+    }
+
+
+@router.delete("/disassocia/{bonifico_id}")
+async def disassocia_bonifico(bonifico_id: str):
+    """
+    Rimuove l'associazione di un bonifico da un dipendente.
+    """
+    db = Database.get_db()
+    
+    result = await db.bonifici_transfers.update_one(
+        {"id": bonifico_id},
+        {"$unset": {"dipendente_id": "", "dipendente_nome": ""}}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Bonifico non trovato")
+    
+    return {"success": True, "bonifico_id": bonifico_id}
