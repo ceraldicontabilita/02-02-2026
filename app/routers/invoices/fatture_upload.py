@@ -657,10 +657,11 @@ async def upload_fatture_xml_bulk(files: List[UploadFile] = File(...)) -> Dict[s
                 results["skipped_duplicates"] += 1
                 continue
             
-            # Assicura che il fornitore esista nel database (crea se nuovo)
-            supplier = await ensure_supplier_exists(db, parsed)
-            supplier_id = supplier.get("id") if supplier else None
-            metodo_pagamento = supplier.get("metodo_pagamento", "bonifico") if supplier else "bonifico"
+            # Assicura che il fornitore esista nel database (crea se nuovo + alert)
+            supplier_result = await ensure_supplier_exists(db, parsed)
+            supplier_id = supplier_result.get("supplier_id")
+            supplier_created = supplier_result.get("supplier_created", False)
+            metodo_pagamento = supplier_result.get("metodo_pagamento") or "bonifico"
             
             invoice = {
                 "id": str(uuid.uuid4()),
