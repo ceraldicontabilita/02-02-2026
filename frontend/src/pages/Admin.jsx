@@ -576,8 +576,8 @@ export default function Admin() {
                       {cat.replace('_', ' ')}
                     </h5>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                      {(paroleChiave[cat] || []).map((kw, i) => (
-                        <span key={i} style={{ 
+                      {(paroleChiave[cat] || []).map((kw) => (
+                        <span key={`${cat}-${kw}`} style={{ 
                           background: '#f1f5f9', 
                           padding: '4px 10px', 
                           borderRadius: 20, 
@@ -590,6 +590,7 @@ export default function Admin() {
                           <button 
                             onClick={() => removeParolaChiave(cat, kw)} 
                             style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                            data-testid={`remove-keyword-${cat}-${kw}`}
                           >
                             <X className="w-3 h-3 text-red-500" />
                           </button>
