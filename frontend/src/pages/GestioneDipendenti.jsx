@@ -249,6 +249,14 @@ export default function GestioneDipendenti() {
           color="#ef4444"
           testId="tab-libretti"
         />
+        <TabButton 
+          active={activeTab === 'acconti'} 
+          onClick={() => setActiveTab('acconti')}
+          icon="💰"
+          label="Acconti"
+          color="#e91e63"
+          testId="tab-acconti"
+        />
       </div>
 
       {/* TAB: Anagrafica */}
