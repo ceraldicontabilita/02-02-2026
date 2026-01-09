@@ -811,8 +811,7 @@ function PrimaNotaDesktop() {
               <strong style={{ color: '#1e40af' }}>Informazioni</strong>
             </div>
             <p style={{ margin: 0, fontSize: 13, color: '#1e40af' }}>
-              La Prima Nota Banca contiene solo le <strong>uscite</strong> per fatture riconciliate con estratto conto (pagate tramite bonifico o assegno).
-              I dati vengono importati automaticamente dalla sezione Fatture quando vengono marcate come pagate.
+              La Prima Nota Banca contiene: <strong>DARE</strong> (entrate) = incassi POS + versamenti dalla cassa; <strong>AVERE</strong> (uscite) = pagamenti fornitori tramite bonifico.
             </p>
           </div>
 
