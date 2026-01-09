@@ -1101,7 +1101,7 @@ async def import_pos(
                     continue
                 
                 # CONTROLLO DUPLICATI - verifica se esiste già un POS con stessa data
-                existing_pos = await db[COLLECTION_PRIMA_NOTA_BANCA].find_one({
+                existing_pos = await db[COLLECTION_PRIMA_NOTA_CASSA].find_one({
                     "data": data,
                     "categoria": "POS"
                 })
@@ -1111,11 +1111,12 @@ async def import_pos(
                     results["errors"].append({"row": idx + 2, "error": f"Duplicato: POS del {data} già esistente"})
                     continue
                 
-                # POS = incasso elettronico -> va in BANCA come ENTRATA
+                # POS = incasso elettronico -> va in CASSA come USCITA
+                # (il denaro esce dalla cassa perché va direttamente sul conto bancario)
                 movimento = {
                     "id": str(uuid.uuid4()),
                     "data": data,
-                    "tipo": "entrata",
+                    "tipo": "uscita",
                     "importo": totale,
                     "descrizione": f"Incasso POS giornaliero del {data}",
                     "categoria": "POS",
@@ -1124,7 +1125,7 @@ async def import_pos(
                     "created_at": now
                 }
                 
-                await db[COLLECTION_PRIMA_NOTA_BANCA].insert_one(movimento)
+                await db[COLLECTION_PRIMA_NOTA_CASSA].insert_one(movimento)
                 
                 results["imported"] += 1
                 results["pos_entries"].append({
