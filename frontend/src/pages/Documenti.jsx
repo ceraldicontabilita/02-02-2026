@@ -93,8 +93,9 @@ export default function Documenti() {
       if (pollingRef.current) {
         clearInterval(pollingRef.current);
       }
+      clearInterval(lockInterval);
     };
-  }, [filtroCategoria, filtroStatus]);
+  }, [filtroCategoria, filtroStatus, downloading, backgroundTask]);
 
   // Polling per task in background
   const pollTaskStatus = useCallback(async (taskId) => {
