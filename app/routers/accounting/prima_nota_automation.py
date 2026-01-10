@@ -1128,14 +1128,16 @@ async def import_corrispettivi(
     """
     Importa corrispettivi giornalieri da file Excel.
     
-    Formato supportato (export banca/registratore cassa):
-    - Data e ora rilevazione: data del corrispettivo
-    - Ammontare delle vendite (totale in euro): totale vendite
-    - Imponibile vendite (totale in euro): imponibile
-    - Imposta vendite (totale in euro): IVA
-    
-    Oppure formato semplificato:
-    - data, totale, imponibile, imposta
+    FORMATO DEFINITIVO (XLSX del registratore di cassa):
+    - Id invio
+    - Matricola dispositivo
+    - Data e ora rilevazione (datetime)
+    - Data e ora trasmissione (datetime)
+    - Ammontare delle vendite (totale in euro)
+    - Imponibile vendite (totale in euro)
+    - Imposta vendite (totale in euro)
+    - Periodo di inattivita' da
+    - Periodo di inattivita' a
     """
     import pandas as pd
     
@@ -1155,62 +1157,58 @@ async def import_corrispettivi(
     
     try:
         if file.filename.lower().endswith('.csv'):
-            content_str = content.decode('utf-8', errors='ignore')
-            separator = ';' if ';' in content_str[:500] else ','
-            df = pd.read_csv(io.BytesIO(content), sep=separator)
+            for encoding in ['utf-8-sig', 'utf-8', 'latin-1', 'cp1252']:
+                try:
+                    df = pd.read_csv(io.BytesIO(content), sep=';', encoding=encoding)
+                    break
+                except:
+                    continue
         else:
             df = pd.read_excel(io.BytesIO(content))
         
-        # Normalizza nomi colonne
-        df.columns = df.columns.str.lower().str.strip()
+        logger.info(f"Corrispettivi - Colonne trovate: {list(df.columns)}")
         
         for idx, row in df.iterrows():
             try:
-                # Trova colonna data (supporta formato banca)
-                data = None
-                for col in ['data e ora rilevazione', 'data', 'date', 'giorno', 'data rilevazione']:
-                    if col in df.columns and pd.notna(row.get(col)):
-                        val = row[col]
-                        if hasattr(val, 'strftime'):
-                            data = val.strftime('%Y-%m-%d')
-                        else:
-                            data = parse_italian_date(str(val))
-                        break
+                # Data e ora rilevazione - colonna esatta
+                data_val = row.get('Data e ora rilevazione')
+                if pd.isna(data_val):
+                    results["skipped"] += 1
+                    continue
+                
+                # Se è datetime, formattalo
+                if hasattr(data_val, 'strftime'):
+                    data = data_val.strftime('%Y-%m-%d')
+                else:
+                    data = parse_italian_date(str(data_val))
                 
                 if not data:
                     results["skipped"] += 1
                     continue
                 
-                # Trova imponibile (formato banca)
-                imponibile = 0
-                for col in ['imponibile vendite (totale in euro)', 'imponibile', 'imponibile vendite']:
-                    if col in df.columns and pd.notna(row.get(col)):
-                        val = row[col]
-                        imponibile = float(val) if isinstance(val, (int, float)) else parse_italian_amount(str(val))
-                        break
+                # Ammontare delle vendite (totale in euro) - colonna esatta
+                totale_val = row.get('Ammontare delle vendite (totale in euro)', 0)
+                if pd.isna(totale_val):
+                    totale_val = 0
+                totale = float(totale_val) if isinstance(totale_val, (int, float)) else parse_italian_amount(str(totale_val))
                 
-                # Trova imposta/IVA (formato banca)
-                imposta = 0
-                for col in ['imposta vendite (totale in euro)', 'imposta', 'iva', 'imposta vendite']:
-                    if col in df.columns and pd.notna(row.get(col)):
-                        val = row[col]
-                        imposta = float(val) if isinstance(val, (int, float)) else parse_italian_amount(str(val))
-                        break
+                # Imponibile vendite (totale in euro) - colonna esatta
+                imponibile_val = row.get('Imponibile vendite (totale in euro)', 0)
+                if pd.isna(imponibile_val):
+                    imponibile_val = 0
+                imponibile = float(imponibile_val) if isinstance(imponibile_val, (int, float)) else parse_italian_amount(str(imponibile_val))
                 
-                # Calcola totale: imponibile + imposta
-                # Oppure usa colonna totale se presente
-                totale = 0
-                for col in ['ammontare delle vendite (totale in euro)', 'totale', 'importo', 'ammontare']:
-                    if col in df.columns and pd.notna(row.get(col)):
-                        val = row[col]
-                        totale = float(val) if isinstance(val, (int, float)) else parse_italian_amount(str(val))
-                        break
+                # Imposta vendite (totale in euro) - colonna esatta
+                imposta_val = row.get('Imposta vendite (totale in euro)', 0)
+                if pd.isna(imposta_val):
+                    imposta_val = 0
+                imposta = float(imposta_val) if isinstance(imposta_val, (int, float)) else parse_italian_amount(str(imposta_val))
                 
-                # Se non c'è totale, calcolalo come imponibile + imposta
+                # Se totale è 0 ma abbiamo imponibile/imposta, calcolalo
                 if totale == 0 and (imponibile > 0 or imposta > 0):
                     totale = imponibile + imposta
                 
-                # Se abbiamo solo totale senza dettaglio, usa il totale
+                # Salta righe con totale 0
                 if totale <= 0:
                     results["skipped"] += 1
                     continue
@@ -1223,10 +1221,10 @@ async def import_corrispettivi(
                 
                 if existing_corr:
                     results["skipped"] += 1
-                    results["errors"].append({"row": idx + 2, "error": f"Duplicato: corrispettivo del {data} già esistente"})
+                    results["errors"].append({"row": idx + 2, "error": f"Duplicato: corrispettivo del {data}"})
                     continue
                 
-                # Create movement in cassa
+                # Corrispettivi = ENTRATA in cassa
                 movimento = {
                     "id": str(uuid.uuid4()),
                     "data": data,
@@ -1234,7 +1232,7 @@ async def import_corrispettivi(
                     "importo": totale,
                     "descrizione": f"Corrispettivo giornaliero del {data}",
                     "categoria": "Corrispettivi",
-                    "source": "excel_import",
+                    "source": "xlsx_import",
                     "imponibile": imponibile,
                     "imposta": imposta,
                     "filename": file.filename,
