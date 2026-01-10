@@ -19,12 +19,15 @@ Sistema ERP completo per la gestione contabile di piccole/medie imprese italiane
 - [x] HACCPCompleto.jsx - Tailwind + lucide-react ✅
 - [x] Corrispettivi.jsx - Tailwind + lucide-react ✅
 - [x] Assegni.jsx - Tailwind + lucide-react ✅
+- [~] Fornitori.jsx - Usa già lucide-react, stili da uniformare
 - [ ] Fatture.jsx - DA AGGIORNARE
-- [ ] Fornitori.jsx - DA AGGIORNARE
 - [ ] Dashboard.jsx - DA AGGIORNARE
 - [ ] IVA.jsx - DA AGGIORNARE
 - [ ] LiquidazioneIVA.jsx - DA AGGIORNARE
 - [ ] PrimaNota.jsx - DA AGGIORNARE
+- [ ] ArchivioFattureXML.jsx - DA AGGIORNARE
+- [ ] F24.jsx - DA AGGIORNARE
+- [ ] Admin.jsx - DA AGGIORNARE
 
 ---
 
