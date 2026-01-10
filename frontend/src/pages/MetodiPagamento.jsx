@@ -353,6 +353,6 @@ export default function MetodiPagamento() {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
