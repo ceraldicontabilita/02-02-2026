@@ -554,7 +554,7 @@ async def upload_fattura_xml(file: UploadFile = File(...)) -> Dict[str, Any]:
             "invoice": invoice,
             "supplier": {
                 "id": supplier_id,
-                "nome": supplier.get("ragione_sociale") if supplier else None,
+                "nome": parsed.get("supplier_name"),
                 "created": supplier_created
             },
             "warehouse": {
