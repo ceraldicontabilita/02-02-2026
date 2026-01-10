@@ -251,7 +251,7 @@ export default function Finanziaria() {
           </div>
 
           {/* Info */}
-          <div className="card" style={{ background: "#e3f2fd" }}>
+          <div style={{ background: "#e3f2fd", borderRadius: 12, padding: 20, marginBottom: 20, boxShadow: "0 2px 8px rgba(0,0,0,0.08)", border: "1px solid #e5e7eb" }}>
             <div style={{ fontSize: 24, fontWeight: "bold", color: "#1e293b", marginBottom: 12 }}>ℹ️ Come vengono calcolati i dati</div>
             <ul style={{ paddingLeft: 20, lineHeight: 1.8 }}>
               <li><strong>Entrate/Uscite:</strong> Somma movimenti Prima Nota Cassa + Banca</li>
