@@ -129,6 +129,23 @@ Ragione Sociale;Data contabile;Data valuta;Banca;Rapporto;Importo;Divisa;Descriz
 
 ## Changelog
 
+### 2026-01-10 (Sessione 4 - FIX HACCP V2)
+- ✅ **MODULO HACCP V2 COMPLETAMENTE FUNZIONANTE**
+  - Corretto `NameError` in `/app/app/routers/haccp_v2/ricette.py`
+  - Sostituito `db` globale con `Database.get_db()` (pattern consistente con gli altri router)
+  - Aggiornato modello Pydantic `Ingrediente` per supportare oggetti {nome, quantita, unita, prodotto_id}
+  - Frontend aggiornato per gestire ingredienti come oggetti (`typeof ing === 'object' ? ing.nome : ing`)
+- ✅ **TEST AUTOMATICI PASSATI (12/12)**
+  - Ricette: GET lista, ingredienti come oggetti, filtro ricerca, POST create, DELETE
+  - Lotti: GET con items/total, POST create, DELETE
+  - Materie Prime: GET lista, POST create, DELETE
+  - File test: `/app/tests/test_iteration_43_haccp_v2.py`
+- ✅ **ENDPOINT HACCP V2 FUNZIONANTI**
+  - `GET /api/haccp-v2/ricette` → Array di 95 ricette
+  - `GET /api/haccp-v2/lotti` → {items: [], total: 0}
+  - `GET /api/haccp-v2/materie-prime` → []
+  - `POST/DELETE` per tutte le entità
+
 ### 2026-01-10 (Sessione 3 - BONIFICA P0)
 - ✅ **BONIFICA CRITICA FATTURE COMPLETATA**
   - Corrette 1319 fatture con metodo pagamento errato
