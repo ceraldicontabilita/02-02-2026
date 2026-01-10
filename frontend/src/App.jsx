@@ -10,7 +10,6 @@ const NAV_ITEMS = [
   { to: "/", label: "Dashboard", icon: "📊", short: "Home" },
   { to: "/ciclo-passivo", label: "Ciclo Passivo", icon: "📋", short: "Ciclo P." },
   { to: "/fatture-ricevute", label: "Archivio Fatture", icon: "📄", short: "Archivio" },
-  { to: "/fatture", label: "Fatture Vecchio", icon: "📁", short: "FatOld" },
   { to: "/corrispettivi", label: "Corrispettivi", icon: "🧾", short: "Corrisp." },
   { to: "/fornitori", label: "Fornitori", icon: "📦", short: "Fornitori" },
   { to: "/iva", label: "Calcolo IVA", icon: "📊", short: "IVA" },
