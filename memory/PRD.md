@@ -35,38 +35,41 @@ Sistema ERP completo per Ceraldi Group S.R.L. con moduli per contabilità, fattu
 
 ---
 
-## CHANGELOG - Dicembre 2025
+## CHANGELOG - Gennaio 2026
 
-### 10 Gennaio 2026 - Ricerca Web Ricette + Normalizzazione 1kg
+### 10 Gennaio 2026 - Ricerca Web Ricette + Importazione Massiva
 
-**Nuova Funzionalità Implementata:**
+**Nuove Funzionalità Implementate:**
 
 1. **Ricerca Web Ricette con AI (Claude Sonnet 4.5)**
-   - Cerca ricette di dolci, rosticceria napoletana e siciliana
+   - Cerca ricette di dolci, rosticceria napoletana/siciliana, contorni e basi
    - Genera ricette complete con ingredienti, quantità e procedimento
-   - Categorie supportate: dolci, rosticceria_napoletana, rosticceria_siciliana
    
 2. **Normalizzazione Automatica a 1kg**
    - Tutte le ricette vengono normalizzate a 1kg dell'ingrediente base
-   - Ingrediente base identificato automaticamente (farina, mandorle, ricotta, etc.)
-   - Fattore di moltiplicazione calcolato: `1000 / grammi_ingrediente_base`
-   - **TUTTI gli ingredienti** moltiplicati per lo stesso fattore
+   - TUTTI gli ingredienti moltiplicati per lo stesso fattore
    - Esempio: ricetta con 300g farina → fattore x3.33 → tutti ingredienti x3.33
 
-3. **Normalizzazione Ricette Esistenti**
-   - Endpoint per normalizzare tutte le ricette nel database
-   - 59 ricette normalizzate su 95 totali
-   - Statistiche visibili in UI
+3. **Importazione Massiva Completata**
+   - **63 nuove ricette importate con AI**
+   - Database totale: **158 ricette** (da 95 iniziali)
+   - **122 ricette normalizzate a 1kg** (77.2%)
 
-4. **Miglioramento Ricette con AI**
-   - Completa ricette incomplete (ingredienti mancanti, quantità assenti)
-   - Aggiunge procedimento se mancante
+**Ricette Importate per Categoria:**
+
+| Categoria | Nuove Ricette | Esempi |
+|-----------|---------------|--------|
+| Dolci | 23 | Millefoglie, Profiteroles, Sacher, Saint Honoré, Paris Brest, Torta della Nonna |
+| Rosticceria Napoletana | 12 | Calzone fritto, Casatiello, Danubio, Graffa, Pizza fritta, Taralli, Montanara |
+| Rosticceria Siciliana | 10 | Cartocciate, Iris, Sfincione, Panelle, Crispelle di riso, Cipolline |
+| Contorni | 9 | Parmigiana melanzane, Caponata, Carciofi alla romana, Patate al forno |
+| Basi | 9 | Besciamella, Crema diplomatica, Pasta brisée, Impasto pizza napoletana |
 
 **File Creati/Modificati:**
 - `/app/app/routers/haccp_v2/ricette_web_search.py` (NUOVO)
 - `/app/app/routers/haccp_v2/__init__.py` (aggiornato)
 - `/app/app/main.py` (aggiornato)
-- `/app/frontend/src/pages/RicettarioDinamico.jsx` (aggiornato completamente)
+- `/app/frontend/src/pages/RicettarioDinamico.jsx` (aggiornato)
 
 **API Endpoints:**
 - `POST /api/haccp-v2/ricette-web/cerca` - Cerca ricetta con AI
@@ -84,15 +87,15 @@ Sistema ERP completo per Ceraldi Group S.R.L. con moduli per contabilità, fattu
 
 ## ROADMAP
 
-### P0 - Alta Priorità
+### P0 - Completato ✅
 - [x] Ricerca web ricette con normalizzazione 1kg
-- [ ] Refactoring responsive dell'applicazione (in pausa)
+- [x] Importazione massiva ricette (63 nuove)
 
 ### P1 - Media Priorità
+- [ ] Refactoring responsive dell'applicazione
 - [ ] Responsive: Dashboard principale
 - [ ] Responsive: ArchivioBonifici.jsx
 - [ ] Responsive: Pagine HACCP
-- [ ] Responsive: Altre pagine ERP
 
 ### P2 - Bassa Priorità
 - [ ] Miglioramenti UX generali
@@ -114,7 +117,7 @@ Sistema ERP completo per Ceraldi Group S.R.L. con moduli per contabilità, fattu
 - Hook useResponsive per design adattivo
 
 ### Database Collections
-- `ricette` - Ricettario con normalizzazione
+- `ricette` - Ricettario con 158 ricette normalizzate
 - `lotti_materie_prime` - Tracciabilità ingredienti
 - `fatture_ricevute` - Fatture XML importate
 - `prima_nota_salari` - Operazioni salari

@@ -401,9 +401,6 @@ export default function RicettarioDinamico() {
                         {ricetta.normalizzata_1kg && (
                           <span style={styles.badge('purple')}>⚖️ 1kg</span>
                         )}
-                        {ricetta.fonte?.includes('AI') && (
-                          <span style={styles.badge('purple')}>🤖 AI</span>
-                        )}
                       </div>
                     </div>
                     {ricetta.margine !== undefined && (
