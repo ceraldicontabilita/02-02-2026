@@ -197,9 +197,34 @@ POST /api/settings/logo
 
 ---
 
+## Filtro Anno Globale (Implementato 2025-01-10)
+
+Sistema di filtro anno centralizzato per l'intera applicazione.
+
+### Architettura
+- **Contesto**: `/app/frontend/src/contexts/AnnoContext.jsx`
+- **Hook**: `useAnnoGlobale()` restituisce `{ anno, setAnno }`
+- **Selettore**: `<AnnoSelector />` posizionato nella sidebar
+- **Persistenza**: localStorage (`annoGlobale`)
+
+### Pagine Convertite
+- Dashboard, Archivio Fatture Ricevute, Controllo Mensile
+- Ciclo Passivo Integrato, Gestione Riservata
+- HACCPCompleto, HACCPCongelatoriV2, HACCPFrigoriferiV2
+- HACCPSanificazioniV2, HACCPNonConformita, HACCPSanificazione, HACCPTemperature
+- Corrispettivi, IVA, LiquidazioneIVA, Fatture, ContabilitaAvanzata, HACCPAnalytics
+
+### Comportamento
+- L'anno selezionato nella sidebar filtra tutti i dati dell'app
+- Le pagine mostrano `"ANNO (globale)"` per indicare che il valore è read-only
+- La navigazione tra mesi è limitata all'anno corrente selezionato
+
+---
+
 ## Vincoli Tecnici
 
 1. **Stili inline obbligatori** - No CSS esterno, solo `style={{...}}`
 2. **MongoDB ObjectId** - Sempre escludere `_id` nelle risposte
 3. **Normalizzazione 1kg** - Tutte le ricette devono avere ingrediente base = 1000g
 4. **Match riconciliazione** - Triplo criterio (importo + fornitore + numero fattura)
+5. **Filtro Anno** - Usare sempre `useAnnoGlobale()` per l'anno, non `useState` locale
