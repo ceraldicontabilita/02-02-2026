@@ -672,7 +672,7 @@ export default function Admin() {
                       <span style={{ fontSize: 11 }}>{schedulerStatus.last_run || 'Mai'}</span>
                     </div>
                     <Button onClick={handleTriggerHACCP} disabled={triggerLoading} size="sm" style={{ marginTop: 8 }}>
-                      {triggerLoading ? <RefreshCw className="w-4 h-4 mr-1 animate-spin" /> : <Activity style={{ width: 16, height: 16, marginRight: 4 }} />}
+                      {triggerLoading ? <RefreshCw style={{ width: 16, height: 16, marginRight: 4, animation: 'spin 1s linear infinite' }} /> : <Activity style={{ width: 16, height: 16, marginRight: 4 }} />}
                       Trigger HACCP Manuale
                     </Button>
                   </div>
