@@ -584,8 +584,8 @@ export default function Dashboard() {
       }}>
         {/* Grafico a Torta - Spese per Categoria */}
         {speseCategoria && speseCategoria.categorie && speseCategoria.categorie.length > 0 && (
-          <div className="card">
-            <div className="h1" style={{ fontSize: 18, margin: '0 0 15px 0' }}>🥧 Distribuzione Spese {anno}</div>
+          <div style={{ background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+            <h2 style={{ fontSize: 18, margin: '0 0 15px 0', fontWeight: 'bold', color: '#1e3a5f' }}>🥧 Distribuzione Spese {anno}</h2>
             <div style={{ height: 280, display: 'flex', alignItems: 'center' }}>
               <ResponsiveContainer width="60%" height="100%">
                 <PieChart>
