@@ -132,7 +132,7 @@ def estrai_scadenza(descrizione: str) -> Optional[str]:
                     if len(parts[2]) == 2:
                         parts[2] = '20' + parts[2]
                     return f"{parts[2]}-{parts[1].zfill(2)}-{parts[0].zfill(2)}"
-            except:
+            except (ValueError, IndexError):
                 pass
     return None
 
@@ -413,7 +413,7 @@ async def crea_scadenza_pagamento(db, fattura_id: str, fattura: Dict, fornitore:
             giorni = int(pagamento.get("giorni_termini", metodo_info["giorni_default"]))
             data_scadenza = data_fattura + timedelta(days=giorni)
             data_scadenza_str = data_scadenza.strftime("%Y-%m-%d")
-        except:
+        except (ValueError, TypeError, AttributeError):
             data_scadenza_str = (datetime.now() + timedelta(days=30)).strftime("%Y-%m-%d")
     
     scadenza_id = str(uuid.uuid4())
@@ -488,7 +488,7 @@ async def cerca_match_bancario(db, scadenza: Dict, tolleranza_giorni: int = 3, t
         data_scad = datetime.strptime(data_scadenza[:10], "%Y-%m-%d")
         data_min = (data_scad - timedelta(days=tolleranza_giorni)).strftime("%Y-%m-%d")
         data_max = (data_scad + timedelta(days=tolleranza_giorni)).strftime("%Y-%m-%d")
-    except:
+    except (ValueError, TypeError):
         return None
     
     # Cerca movimenti bancari compatibili
@@ -841,7 +841,7 @@ async def get_suggerimenti_match(scadenza_id: str):
         data_scad = datetime.strptime(data_scadenza[:10], "%Y-%m-%d")
         data_min = (data_scad - timedelta(days=15)).strftime("%Y-%m-%d")
         data_max = (data_scad + timedelta(days=15)).strftime("%Y-%m-%d")
-    except:
+    except (ValueError, TypeError):
         data_min = "2020-01-01"
         data_max = "2030-12-31"
     
@@ -863,7 +863,7 @@ async def get_suggerimenti_match(scadenza_id: str):
         diff_importo = abs(s.get("importo", 0) - importo)
         try:
             diff_giorni = abs((datetime.strptime(s.get("data", "")[:10], "%Y-%m-%d") - data_scad).days)
-        except:
+        except (ValueError, TypeError):
             diff_giorni = 999
         
         # Score: più basso = migliore match
