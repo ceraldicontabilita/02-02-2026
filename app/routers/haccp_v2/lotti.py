@@ -330,11 +330,14 @@ async def popola_lotti_da_fatture(anno: int = Query(default=2026)):
                 if not any(kw in descrizione.lower() for kw in food_keywords):
                     continue
             
-            # Calcola data scadenza (basata sulla categoria)
+            # Calcola data scadenza (basata sulla categoria o estratta dalla descrizione)
             try:
                 data_prod = datetime.strptime(data_fattura[:10], "%Y-%m-%d")
             except:
                 data_prod = datetime.now()
+            
+            # Prova a estrarre la scadenza dalla descrizione
+            scadenza_estratta = estrai_scadenza(descrizione)
             
             giorni_scadenza = {
                 "latticini": 7,
@@ -347,10 +350,23 @@ async def popola_lotti_da_fatture(anno: int = Query(default=2026)):
                 "altro": 30
             }
             
-            data_scad = data_prod + timedelta(days=giorni_scadenza.get(categoria, 30))
+            if scadenza_estratta:
+                data_scad_str = scadenza_estratta
+            else:
+                data_scad = data_prod + timedelta(days=giorni_scadenza.get(categoria, 30))
+                data_scad_str = data_scad.strftime("%Y-%m-%d")
+            
+            # Estrai codice lotto dalla descrizione
+            lotto_estratto = estrai_codice_lotto(descrizione)
             
             # Conta progressivo
             count = await db["haccp_lotti"].count_documents({"data_produzione": data_fattura[:10]})
+            
+            # Usa il lotto estratto dalla descrizione se presente, altrimenti genera uno nuovo
+            if lotto_estratto:
+                numero_lotto = lotto_estratto
+            else:
+                numero_lotto = genera_numero_lotto(data_prod, count + lotti_creati + 1)
             
             lotto = {
                 "id": str(uuid.uuid4()),
@@ -359,14 +375,16 @@ async def popola_lotti_da_fatture(anno: int = Query(default=2026)):
                 "fornitore": fornitore_nome[:100],
                 "fattura_riferimento": fattura.get("numero", ""),
                 "data_produzione": data_fattura[:10],
-                "data_scadenza": data_scad.strftime("%Y-%m-%d"),
-                "numero_lotto": genera_numero_lotto(data_prod, count + lotti_creati + 1),
+                "data_scadenza": data_scad_str,
+                "numero_lotto": numero_lotto,
+                "lotto_originale": lotto_estratto,  # Salva il lotto originale estratto
                 "quantita": linea.get("quantita", 1),
                 "unita_misura": linea.get("unita_misura", "pz"),
                 "allergeni": detect_allergeni(descrizione),
                 "progressivo": count + lotti_creati + 1,
                 "created_at": datetime.now(timezone.utc).isoformat(),
-                "source": "fattura_xml"
+                "source": "fattura_xml",
+                "lotto_auto_estratto": lotto_estratto is not None  # Flag per indicare se il lotto è stato estratto
             }
             
             await db["haccp_lotti"].insert_one(lotto)
