@@ -308,13 +308,13 @@ export default function RicercaProdotti() {
           </button>
         </div>
         
-        {err && <div className="small" style={{ color: "#c00", marginTop: 10 }}>{err}</div>}
+        {err && <div style={{ ...smallStyle, color: "#c00", marginTop: 10 }}>{err}</div>}
       </div>
 
       {/* Carrello */}
       {cartItemCount > 0 && (
-        <div className="card" style={{ background: "#e3f2fd" }}>
-          <div className="h1">
+        <div style={{ ...cardStyle, background: "#dbeafe" }}>
+          <div style={h1Style}>
             🛒 Carrello ({cartItemCount} prodotti)
             <span style={{ float: "right", color: "#1565c0" }}>€{cartTotal.toFixed(2)}</span>
           </div>
