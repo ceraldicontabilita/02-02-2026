@@ -159,10 +159,10 @@ class TestPrimaNotaVersamenti:
     def test_08_import_versamenti_automation_endpoint(self):
         """Test that import-versamenti endpoint exists and only writes to cassa"""
         # Check if the endpoint exists (we can't test file upload easily, but we can verify the endpoint)
-        # The endpoint is POST /api/prima-nota-automation/import-versamenti
+        # The endpoint is POST /api/prima-nota-auto/import-versamenti
         # We'll just verify the endpoint structure by checking the automation stats
         
-        response = self.session.get(f"{BASE_URL}/api/prima-nota-automation/stats")
+        response = self.session.get(f"{BASE_URL}/api/prima-nota-auto/stats")
         assert response.status_code == 200, f"Automation stats failed: {response.status_code}"
         
         data = response.json()
