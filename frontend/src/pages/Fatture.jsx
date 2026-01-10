@@ -533,7 +533,7 @@ export default function Fatture() {
                 onChange={(e) => setNewInvoice({ ...newInvoice, data: e.target.value })}
               />
             </div>
-            <div className="row">
+            <div style={{ display: 'flex', gap: 10 }}>
               <input
                 placeholder="Descrizione"
                 style={{ flex: 1 }}
