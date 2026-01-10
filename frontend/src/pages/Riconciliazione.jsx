@@ -2,32 +2,179 @@ import React, { useState, useEffect } from "react";
 import api from "../api";
 import { formatEuro } from "../lib/utils";
 
+// Stile comune (stesso di OperazioniDaConfermare)
+const pageStyle = {
+  container: {
+    padding: '24px',
+    maxWidth: '1400px',
+    margin: '0 auto',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+  },
+  header: {
+    marginBottom: '24px',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    flexWrap: 'wrap',
+    gap: '16px'
+  },
+  title: {
+    margin: 0,
+    fontSize: '28px',
+    fontWeight: 'bold',
+    color: '#1e293b',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px'
+  },
+  subtitle: {
+    margin: '4px 0 0 0',
+    color: '#64748b',
+    fontSize: '14px'
+  },
+  statsGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+    gap: '16px',
+    marginBottom: '24px'
+  },
+  statCard: (color) => ({
+    background: `linear-gradient(135deg, ${color}15, ${color}08)`,
+    borderRadius: '12px',
+    padding: '20px',
+    border: `1px solid ${color}30`
+  }),
+  statValue: (color) => ({
+    fontSize: '32px',
+    fontWeight: 'bold',
+    color: color,
+    margin: 0
+  }),
+  statLabel: {
+    fontSize: '13px',
+    color: '#64748b',
+    marginTop: '4px'
+  },
+  card: {
+    background: 'white',
+    borderRadius: '12px',
+    border: '1px solid #e2e8f0',
+    overflow: 'hidden',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+    marginBottom: '24px'
+  },
+  cardHeader: {
+    padding: '16px 20px',
+    borderBottom: '1px solid #e2e8f0',
+    background: '#f8fafc',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center'
+  },
+  cardTitle: {
+    margin: 0,
+    fontSize: '16px',
+    fontWeight: '600',
+    color: '#1e293b'
+  },
+  table: {
+    width: '100%',
+    borderCollapse: 'collapse',
+    fontSize: '14px'
+  },
+  th: {
+    padding: '12px 16px',
+    textAlign: 'left',
+    fontWeight: '600',
+    color: '#475569',
+    borderBottom: '2px solid #e2e8f0',
+    background: '#f8fafc'
+  },
+  td: {
+    padding: '12px 16px',
+    borderBottom: '1px solid #f1f5f9',
+    color: '#334155'
+  },
+  badge: (color) => ({
+    display: 'inline-flex',
+    alignItems: 'center',
+    padding: '4px 10px',
+    borderRadius: '20px',
+    fontSize: '12px',
+    fontWeight: '600',
+    background: `${color}15`,
+    color: color
+  }),
+  button: (variant = 'primary') => ({
+    padding: '8px 16px',
+    borderRadius: '8px',
+    border: 'none',
+    cursor: 'pointer',
+    fontWeight: '500',
+    fontSize: '13px',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '6px',
+    transition: 'all 0.2s',
+    ...(variant === 'primary' ? {
+      background: '#3b82f6',
+      color: 'white'
+    } : variant === 'success' ? {
+      background: '#10b981',
+      color: 'white'
+    } : variant === 'danger' ? {
+      background: '#ef4444',
+      color: 'white'
+    } : {
+      background: '#f1f5f9',
+      color: '#475569',
+      border: '1px solid #e2e8f0'
+    })
+  }),
+  tabs: {
+    display: 'flex',
+    gap: '4px',
+    marginBottom: '24px',
+    background: '#f1f5f9',
+    padding: '4px',
+    borderRadius: '10px',
+    width: 'fit-content'
+  },
+  tab: (active) => ({
+    padding: '10px 20px',
+    borderRadius: '8px',
+    border: 'none',
+    cursor: 'pointer',
+    fontWeight: '500',
+    fontSize: '14px',
+    transition: 'all 0.2s',
+    background: active ? 'white' : 'transparent',
+    color: active ? '#1e293b' : '#64748b',
+    boxShadow: active ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+  }),
+  emptyState: {
+    textAlign: 'center',
+    padding: '60px 20px',
+    color: '#64748b'
+  }
+};
+
 export default function Riconciliazione() {
-  const [file, setFile] = useState(null);
-  const [results, setResults] = useState(null);
   const [stats, setStats] = useState(null);
-  const [fornitoriStats, setFornitoriStats] = useState(null);
-  const [err, setErr] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState("import");
-  const [tipoRiconciliazione, setTipoRiconciliazione] = useState("banca"); // "banca" | "fornitori"
-  const [_addingToPrimaNota, setAddingToPrimaNota] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("automatica");
+  const [processing, setProcessing] = useState(false);
   
-  // Stato per riconciliazione manuale
+  // Dati per riconciliazione manuale
   const [movimentiNonRiconciliati, setMovimentiNonRiconciliati] = useState([]);
   const [fattureNonPagate, setFattureNonPagate] = useState([]);
   const [selectedMovimento, setSelectedMovimento] = useState(null);
   const [matchingFatture, setMatchingFatture] = useState([]);
-  const [loadingManuale, setLoadingManuale] = useState(false);
-  const [searchFornitore, setSearchFornitore] = useState("");
-  const [riconciliazioneInCorso, setRiconciliazioneInCorso] = useState(false);
 
   useEffect(() => {
     loadStats();
-    loadFornitoriStats();
   }, []);
 
-  // Carica dati per riconciliazione manuale quando si apre il tab
   useEffect(() => {
     if (activeTab === "manuale") {
       loadMovimentiNonRiconciliati();
@@ -35,16 +182,24 @@ export default function Riconciliazione() {
     }
   }, [activeTab]);
 
+  const loadStats = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get("/api/riconciliazione-auto/stats-riconciliazione");
+      setStats(res.data);
+    } catch (e) {
+      console.error("Errore caricamento stats:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const loadMovimentiNonRiconciliati = async () => {
     try {
-      setLoadingManuale(true);
-      // Carica movimenti dall'estratto conto che non sono stati riconciliati
-      const res = await api.get("/api/estratto-conto-movimenti/movimenti?tipo=uscita&limit=500");
+      const res = await api.get("/api/estratto-conto-movimenti/movimenti?riconciliato=false&limit=200");
       setMovimentiNonRiconciliati(res.data.movimenti || []);
     } catch (e) {
-      console.error("Errore caricamento movimenti:", e);
-    } finally {
-      setLoadingManuale(false);
+      console.error("Errore:", e);
     }
   };
 
@@ -53,22 +208,19 @@ export default function Riconciliazione() {
       const res = await api.get("/api/invoices/list?paid=false&limit=500");
       setFattureNonPagate(res.data.invoices || res.data || []);
     } catch (e) {
-      console.error("Errore caricamento fatture:", e);
+      console.error("Errore:", e);
     }
   };
 
-  // Quando si seleziona un movimento, trova fatture con importo simile
   const handleSelectMovimento = (mov) => {
     setSelectedMovimento(mov);
     const importoMov = Math.abs(mov.importo);
     
-    // Trova fatture con importo simile (±10% o ±€50)
     const tolleranza = Math.max(importoMov * 0.1, 50);
     const matching = fattureNonPagate.filter(f => {
       const importoFattura = parseFloat(f.total_amount || f.importo || 0);
       return Math.abs(importoFattura - importoMov) <= tolleranza;
     }).sort((a, b) => {
-      // Ordina per similarità di importo
       const diffA = Math.abs(parseFloat(a.total_amount || a.importo || 0) - importoMov);
       const diffB = Math.abs(parseFloat(b.total_amount || b.importo || 0) - importoMov);
       return diffA - diffB;
@@ -77,11 +229,32 @@ export default function Riconciliazione() {
     setMatchingFatture(matching);
   };
 
-  // Riconcilia manualmente movimento e fattura
+  const eseguiRiconciliazioneAutomatica = async () => {
+    setProcessing(true);
+    try {
+      const res = await api.post('/api/riconciliazione-auto/riconcilia-estratto-conto');
+      alert(`✅ Riconciliazione completata!\n\n` +
+        `Movimenti analizzati: ${res.data.movimenti_analizzati}\n` +
+        `Riconciliati: ${res.data.totale_riconciliati}\n` +
+        `- Fatture: ${res.data.riconciliati_fatture}\n` +
+        `- POS: ${res.data.riconciliati_pos}\n` +
+        `- Versamenti: ${res.data.riconciliati_versamenti}\n` +
+        `- F24: ${res.data.riconciliati_f24}\n\n` +
+        `Da confermare: ${res.data.dubbi}\n` +
+        `Non trovati: ${res.data.non_trovati}`
+      );
+      loadStats();
+    } catch (e) {
+      alert(`Errore: ${e.response?.data?.detail || e.message}`);
+    } finally {
+      setProcessing(false);
+    }
+  };
+
   const handleRiconciliaManuale = async (fattura) => {
     if (!selectedMovimento || !fattura) return;
     
-    setRiconciliazioneInCorso(true);
+    setProcessing(true);
     try {
       await api.post("/api/riconciliazione-fornitori/riconcilia-manuale", {
         movimento_id: selectedMovimento.id,
@@ -90,980 +263,253 @@ export default function Riconciliazione() {
         data_movimento: selectedMovimento.data
       });
       
-      // Aggiorna le liste
       setSelectedMovimento(null);
       setMatchingFatture([]);
       loadFattureNonPagate();
       loadMovimentiNonRiconciliati();
-      loadFornitoriStats();
+      loadStats();
       
       alert("✅ Riconciliazione completata!");
     } catch (e) {
-      alert("❌ Errore: " + (e.response?.data?.detail || e.message));
+      alert(`Errore: ${e.response?.data?.detail || e.message}`);
     } finally {
-      setRiconciliazioneInCorso(false);
+      setProcessing(false);
     }
   };
 
-  const loadStats = async () => {
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '-';
     try {
-      const res = await api.get("/api/bank-statement/stats");
-      setStats(res.data);
-    } catch (e) {
-      console.error("Error loading stats:", e);
-    }
-  };
-
-  const loadFornitoriStats = async () => {
-    try {
-      const res = await api.get("/api/riconciliazione-fornitori/riepilogo-fornitori");
-      setFornitoriStats(res.data);
-    } catch (e) {
-      console.error("Error loading fornitori stats:", e);
-    }
-  };
-
-  // Funzione per aggiungere movimento non trovato a Prima Nota
-  const handleAddToPrimaNota = async (item) => {
-    setAddingToPrimaNota(item.descrizione);
-    try {
-      const data = {
-        data: item.data,
-        tipo: "banca",
-        tipo_movimento: item.tipo,
-        importo: item.importo,
-        descrizione: item.descrizione,
-        fonte: "estratto_conto_import",
-        riconciliato: true
-      };
-      
-      await api.post("/api/prima-nota/movimento", data);
-      
-      // Rimuovi dalla lista not_found_details
-      setResults(prev => ({
-        ...prev,
-        not_found_details: prev.not_found_details.filter(i => 
-          !(i.data === item.data && i.importo === item.importo && i.descrizione === item.descrizione)
-        ),
-        not_found: (prev.not_found || 0) - 1,
-        reconciled: (prev.reconciled || 0) + 1
-      }));
-      
-      loadStats();
-    } catch (e) {
-      setErr(`Errore aggiunta Prima Nota: ${e.response?.data?.detail || e.message}`);
-    } finally {
-      setAddingToPrimaNota(null);
-    }
-  };
-
-  async function onUpload() {
-    setErr("");
-    setResults(null);
-    if (!file) return setErr("Seleziona un file.");
-    
-    setLoading(true);
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      
-      // Scegli endpoint in base al tipo
-      const endpoint = tipoRiconciliazione === "fornitori" 
-        ? "/api/riconciliazione-fornitori/import-estratto-conto-fornitori"
-        : "/api/bank-statement/import";
-      
-      const res = await api.post(endpoint, formData, {
-        headers: { "Content-Type": "multipart/form-data" }
-      });
-      
-      // Normalizza la risposta
-      const normalizedResults = tipoRiconciliazione === "fornitori" 
-        ? {
-            success: true,
-            movements_found: res.data.movimenti_banca,
-            reconciled: res.data.riconciliati,
-            not_found: res.data.non_trovati,
-            not_found_details: res.data.dettaglio_non_trovati?.map(d => ({
-              data: d.data,
-              descrizione: d.descrizione,
-              importo: d.importo,
-              nome: d.nome,
-              tipo: "uscita"
-            })),
-            message: res.data.message
-          }
-        : res.data;
-      
-      setResults(normalizedResults);
-      loadStats();
-      loadFornitoriStats();
-      
-      if (res.data.success || res.data.riconciliati > 0 || res.data.total > 0) {
-        setFile(null);
-      }
-    } catch (e) {
-      setErr("Upload fallito. " + (e.response?.data?.detail || e.message));
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  const handleResetFornitori = async () => {
-    if (!window.confirm("Reset riconciliazione fornitori? Le fatture torneranno 'non pagate'.")) return;
-    
-    try {
-      const res = await api.delete("/api/riconciliazione-fornitori/reset-riconciliazione-fornitori");
-      alert(`Reset completato: ${res.data.fatture_resettate} fatture resettate`);
-      loadFornitoriStats();
-    } catch (e) {
-      setErr("Errore reset: " + (e.response?.data?.detail || e.message));
-    }
+      return new Date(dateStr).toLocaleDateString('it-IT');
+    } catch { return dateStr; }
   };
 
   return (
-    <div style={{ padding: "clamp(12px, 3vw, 20px)" }}>
+    <div style={pageStyle.container} data-testid="riconciliazione-page">
       {/* Header */}
-      <div style={{ marginBottom: 20 }}>
-        <h1 style={{ margin: 0, fontSize: "clamp(20px, 5vw, 28px)" }}>
-          🏦 Riconciliazione Bancaria
-        </h1>
-        <p style={{ color: "#666", margin: "8px 0 0 0" }}>
-          Importa estratto conto e riconcilia automaticamente
-        </p>
-      </div>
-
-      {/* Tipo Riconciliazione Toggle */}
-      <div style={{ 
-        display: "flex", 
-        gap: 10, 
-        marginBottom: 20,
-        padding: 5,
-        background: "#f1f5f9",
-        borderRadius: 10,
-        width: "fit-content"
-      }}>
-        <button
-          onClick={() => setTipoRiconciliazione("banca")}
-          data-testid="tipo-banca"
-          style={{
-            padding: "10px 20px",
-            background: tipoRiconciliazione === "banca" ? "#3b82f6" : "transparent",
-            color: tipoRiconciliazione === "banca" ? "white" : "#64748b",
-            border: "none",
-            borderRadius: 8,
-            fontWeight: "bold",
-            cursor: "pointer"
-          }}
-        >
-          🏦 Prima Nota Banca
-        </button>
-        <button
-          onClick={() => setTipoRiconciliazione("fornitori")}
-          data-testid="tipo-fornitori"
-          style={{
-            padding: "10px 20px",
-            background: tipoRiconciliazione === "fornitori" ? "#8b5cf6" : "transparent",
-            color: tipoRiconciliazione === "fornitori" ? "white" : "#64748b",
-            border: "none",
-            borderRadius: 8,
-            fontWeight: "bold",
-            cursor: "pointer"
-          }}
-        >
-          📦 Fatture Fornitori
-        </button>
-      </div>
-
-      {/* Stats Cards - Banca */}
-      {tipoRiconciliazione === "banca" && stats && (
-        <div style={{ 
-          display: "grid", 
-          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", 
-          gap: 15, 
-          marginBottom: 25 
-        }}>
-          <div style={{ 
-            background: "#f0f9ff", 
-            borderRadius: 12, 
-            padding: 15, 
-            textAlign: "center",
-            border: "1px solid #bae6fd"
-          }}>
-            <div style={{ fontSize: 28, fontWeight: "bold", color: "#0284c7" }}>
-              {stats.movimenti_banca_totali}
-            </div>
-            <div style={{ fontSize: 12, color: "#0369a1" }}>Movimenti Banca</div>
-          </div>
-          <div style={{ 
-            background: "#f0fdf4", 
-            borderRadius: 12, 
-            padding: 15, 
-            textAlign: "center",
-            border: "1px solid #bbf7d0"
-          }}>
-            <div style={{ fontSize: 28, fontWeight: "bold", color: "#16a34a" }}>
-              {stats.movimenti_riconciliati}
-            </div>
-            <div style={{ fontSize: 12, color: "#15803d" }}>Riconciliati</div>
-          </div>
-          <div style={{ 
-            background: "#fef3c7", 
-            borderRadius: 12, 
-            padding: 15, 
-            textAlign: "center",
-            border: "1px solid #fde68a"
-          }}>
-            <div style={{ fontSize: 28, fontWeight: "bold", color: "#d97706" }}>
-              {stats.movimenti_non_riconciliati}
-            </div>
-            <div style={{ fontSize: 12, color: "#b45309" }}>Da Riconciliare</div>
-          </div>
-          <div style={{ 
-            background: "#f3e8ff", 
-            borderRadius: 12, 
-            padding: 15, 
-            textAlign: "center",
-            border: "1px solid #e9d5ff"
-          }}>
-            <div style={{ fontSize: 28, fontWeight: "bold", color: "#9333ea" }}>
-              {stats.percentuale_riconciliazione}%
-            </div>
-            <div style={{ fontSize: 12, color: "#7e22ce" }}>% Riconciliazione</div>
-          </div>
+      <div style={pageStyle.header}>
+        <div>
+          <h1 style={pageStyle.title}>
+            <span>🔄</span> Riconciliazione Bancaria
+          </h1>
+          <p style={pageStyle.subtitle}>
+            Associa i movimenti dell'estratto conto con fatture, POS, versamenti e F24
+          </p>
         </div>
-      )}
-
-      {/* Stats Cards - Fornitori */}
-      {tipoRiconciliazione === "fornitori" && fornitoriStats && (
-        <div style={{ 
-          display: "grid", 
-          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", 
-          gap: 15, 
-          marginBottom: 25 
-        }}>
-          <div style={{ 
-            background: "#faf5ff", 
-            borderRadius: 12, 
-            padding: 15, 
-            textAlign: "center",
-            border: "1px solid #e9d5ff"
-          }}>
-            <div style={{ fontSize: 28, fontWeight: "bold", color: "#7c3aed" }}>
-              {fornitoriStats.totale_fatture}
-            </div>
-            <div style={{ fontSize: 12, color: "#6d28d9" }}>Fatture Totali</div>
-          </div>
-          <div style={{ 
-            background: "#f0fdf4", 
-            borderRadius: 12, 
-            padding: 15, 
-            textAlign: "center",
-            border: "1px solid #bbf7d0"
-          }}>
-            <div style={{ fontSize: 28, fontWeight: "bold", color: "#16a34a" }}>
-              {fornitoriStats.fatture_pagate}
-            </div>
-            <div style={{ fontSize: 12, color: "#15803d" }}>Fatture Pagate</div>
-          </div>
-          <div style={{ 
-            background: "#fef3c7", 
-            borderRadius: 12, 
-            padding: 15, 
-            textAlign: "center",
-            border: "1px solid #fde68a"
-          }}>
-            <div style={{ fontSize: 28, fontWeight: "bold", color: "#d97706" }}>
-              {fornitoriStats.fatture_non_pagate}
-            </div>
-            <div style={{ fontSize: 12, color: "#b45309" }}>Da Pagare</div>
-          </div>
-          <div style={{ 
-            background: "#fee2e2", 
-            borderRadius: 12, 
-            padding: 15, 
-            textAlign: "center",
-            border: "1px solid #fecaca"
-          }}>
-            <div style={{ fontSize: 24, fontWeight: "bold", color: "#dc2626" }}>
-              {formatEuro(fornitoriStats.importo_da_pagare)}
-            </div>
-            <div style={{ fontSize: 12, color: "#b91c1c" }}>Tot. Da Pagare</div>
-          </div>
-        </div>
-      )}
-
-      {/* Actions Bar */}
-      <div style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
-        {tipoRiconciliazione === "banca" && (
-          <>
-            <a
-              href="/api/exports/riconciliazione?format=xlsx"
-              target="_blank"
-              rel="noopener noreferrer"
-              data-testid="export-excel-btn"
-              style={{
-                padding: "10px 20px",
-                background: "#059669",
-                color: "white",
-                border: "none",
-                borderRadius: 8,
-                fontWeight: "bold",
-                cursor: "pointer",
-                textDecoration: "none",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8
-              }}
-            >
-              📊 Export Excel
-            </a>
-            <a
-              href="/api/exports/riconciliazione?format=xlsx&solo_non_riconciliati=true"
-              target="_blank"
-              rel="noopener noreferrer"
-              data-testid="export-non-reconciled-btn"
-              style={{
-                padding: "10px 20px",
-                background: "#d97706",
-                color: "white",
-                border: "none",
-                borderRadius: 8,
-                fontWeight: "bold",
-                cursor: "pointer",
-                textDecoration: "none",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8
-              }}
-            >
-              ⚠️ Export Non Riconciliati
-            </a>
-          </>
-        )}
-        {tipoRiconciliazione === "fornitori" && (
-          <button
-            onClick={handleResetFornitori}
-            data-testid="reset-fornitori-btn"
-            style={{
-              padding: "10px 20px",
-              background: "#9333ea",
-              color: "white",
-              border: "none",
-              borderRadius: 8,
-              fontWeight: "bold",
-              cursor: "pointer"
-            }}
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button 
+            style={pageStyle.button('outline')} 
+            onClick={loadStats}
+            disabled={loading}
           >
-            🔄 Reset Riconciliazione
+            🔄 Aggiorna
           </button>
-        )}
+        </div>
       </div>
+
+      {/* Stats Cards */}
+      {stats && (
+        <div style={pageStyle.statsGrid}>
+          <div style={pageStyle.statCard('#3b82f6')}>
+            <p style={pageStyle.statValue('#3b82f6')}>{stats.estratto_conto?.totali || 0}</p>
+            <p style={pageStyle.statLabel}>Movimenti Totali EC</p>
+          </div>
+          <div style={pageStyle.statCard('#10b981')}>
+            <p style={pageStyle.statValue('#10b981')}>{stats.estratto_conto?.riconciliati || 0}</p>
+            <p style={pageStyle.statLabel}>Riconciliati</p>
+          </div>
+          <div style={pageStyle.statCard('#8b5cf6')}>
+            <p style={pageStyle.statValue('#8b5cf6')}>{stats.estratto_conto?.automatici || 0}</p>
+            <p style={pageStyle.statLabel}>Automatici</p>
+          </div>
+          <div style={pageStyle.statCard('#f59e0b')}>
+            <p style={pageStyle.statValue('#f59e0b')}>{stats.operazioni_da_confermare || 0}</p>
+            <p style={pageStyle.statLabel}>Da Confermare</p>
+          </div>
+        </div>
+      )}
 
       {/* Tabs */}
-      <div style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
-        <button
-          onClick={() => setActiveTab("import")}
-          data-testid="tab-import"
-          style={{
-            padding: "12px 24px",
-            background: activeTab === "import" ? "#3b82f6" : "#e5e7eb",
-            color: activeTab === "import" ? "white" : "#374151",
-            border: "none",
-            borderRadius: 8,
-            fontWeight: "bold",
-            cursor: "pointer"
-          }}
+      <div style={pageStyle.tabs}>
+        <button 
+          style={pageStyle.tab(activeTab === 'automatica')}
+          onClick={() => setActiveTab('automatica')}
         >
-          📥 Import Estratto Conto
+          ⚡ Automatica
         </button>
-        <button
-          onClick={() => setActiveTab("manuale")}
-          data-testid="tab-manuale"
-          style={{
-            padding: "12px 24px",
-            background: activeTab === "manuale" ? "#f59e0b" : "#e5e7eb",
-            color: activeTab === "manuale" ? "white" : "#374151",
-            border: "none",
-            borderRadius: 8,
-            fontWeight: "bold",
-            cursor: "pointer"
-          }}
+        <button 
+          style={pageStyle.tab(activeTab === 'manuale')}
+          onClick={() => setActiveTab('manuale')}
         >
-          🔗 Riconciliazione Manuale
-        </button>
-        <button
-          onClick={() => setActiveTab("istruzioni")}
-          data-testid="tab-istruzioni"
-          style={{
-            padding: "12px 24px",
-            background: activeTab === "istruzioni" ? "#10b981" : "#e5e7eb",
-            color: activeTab === "istruzioni" ? "white" : "#374151",
-            border: "none",
-            borderRadius: 8,
-            fontWeight: "bold",
-            cursor: "pointer"
-          }}
-        >
-          📋 Istruzioni
+          ✋ Manuale
         </button>
       </div>
 
-      {/* Import Tab */}
-      {activeTab === "import" && (
-        <div style={{ 
-          background: "white", 
-          borderRadius: 12, 
-          padding: 25,
-          border: "1px solid #e5e7eb",
-          marginBottom: 20
-        }}>
-          <h2 style={{ margin: "0 0 15px 0", fontSize: 18 }}>
-            📄 Carica Estratto Conto
-          </h2>
-          <p style={{ color: "#666", marginBottom: 20, fontSize: 14 }}>
-            {tipoRiconciliazione === "banca" 
-              ? "Carica l'estratto conto bancario per la riconciliazione automatica con i movimenti in Prima Nota Banca."
-              : "Carica l'estratto conto per abbinare automaticamente i bonifici alle fatture fornitori non pagate."
-            }
-          </p>
-          
-          <div style={{ display: "flex", gap: 15, flexWrap: "wrap", alignItems: "center" }}>
-            <input 
-              type="file" 
-              accept=".xlsx,.xls,.csv" 
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
-              data-testid="file-input"
-              style={{
-                flex: 1,
-                minWidth: 250,
-                padding: 12,
-                border: "2px dashed #d1d5db",
-                borderRadius: 8,
-                background: "#f9fafb"
-              }}
-            />
+      {/* Tab Automatica */}
+      {activeTab === 'automatica' && (
+        <div style={pageStyle.card}>
+          <div style={pageStyle.cardHeader}>
+            <h2 style={pageStyle.cardTitle}>Riconciliazione Automatica</h2>
             <button 
-              onClick={onUpload} 
-              disabled={loading || !file}
-              data-testid="upload-btn"
-              style={{
-                padding: "12px 30px",
-                background: loading || !file ? "#9ca3af" : tipoRiconciliazione === "fornitori" ? "#8b5cf6" : "#3b82f6",
-                color: "white",
-                border: "none",
-                borderRadius: 8,
-                fontWeight: "bold",
-                cursor: loading || !file ? "not-allowed" : "pointer",
-                minWidth: 200
-              }}
+              style={pageStyle.button('primary')}
+              onClick={eseguiRiconciliazioneAutomatica}
+              disabled={processing}
             >
-              {loading ? "⏳ Elaborazione..." : tipoRiconciliazione === "fornitori" ? "📦 Riconcilia Fornitori" : "📤 Carica e Riconcilia"}
+              {processing ? '⏳ Elaborazione...' : '⚡ Avvia Riconciliazione'}
             </button>
           </div>
-          
-          {err && (
-            <div style={{ 
-              marginTop: 15, 
-              padding: 12, 
-              background: "#fef2f2", 
-              color: "#dc2626",
-              borderRadius: 8,
-              border: "1px solid #fecaca"
-            }}>
-              ❌ {err}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Instructions Tab */}
-      {activeTab === "istruzioni" && (
-        <div style={{ 
-          background: "white", 
-          borderRadius: 12, 
-          padding: 25,
-          border: "1px solid #e5e7eb"
-        }}>
-          <h2 style={{ margin: "0 0 15px 0", fontSize: 18 }}>📋 Istruzioni per la Riconciliazione</h2>
-          
-          {tipoRiconciliazione === "banca" ? (
-            <div style={{ display: "grid", gap: 20 }}>
-              <div style={{ background: "#f8fafc", padding: 15, borderRadius: 8 }}>
-                <h3 style={{ margin: "0 0 10px 0", fontSize: 16, color: "#1e40af" }}>
-                  📁 Formati Supportati
-                </h3>
-                <ul style={{ margin: 0, paddingLeft: 20, color: "#475569" }}>
-                  <li><strong>PDF</strong> - Estratto conto in formato PDF (preferito)</li>
-                  <li><strong>Excel (.xlsx, .xls)</strong> - Fogli Excel esportati dalla banca</li>
-                  <li><strong>CSV</strong> - File CSV con separatore punto e virgola</li>
-                </ul>
-              </div>
-              
-              <div style={{ background: "#f8fafc", padding: 15, borderRadius: 8 }}>
-                <h3 style={{ margin: "0 0 10px 0", fontSize: 16, color: "#059669" }}>
-                  🔄 Come Funziona
-                </h3>
-                <ol style={{ margin: 0, paddingLeft: 20, color: "#475569" }}>
-                  <li>Il sistema estrae automaticamente i movimenti dal file</li>
-                  <li>Ogni movimento viene confrontato con Prima Nota Banca</li>
-                  <li>I movimenti con stessa data, tipo e importo (±1%) vengono riconciliati</li>
-                  <li>I movimenti riconciliati vengono marcati nel database</li>
-                </ol>
-              </div>
-            </div>
-          ) : (
-            <div style={{ display: "grid", gap: 20 }}>
-              <div style={{ background: "#faf5ff", padding: 15, borderRadius: 8 }}>
-                <h3 style={{ margin: "0 0 10px 0", fontSize: 16, color: "#7c3aed" }}>
-                  📦 Riconciliazione Fornitori
-                </h3>
-                <ol style={{ margin: 0, paddingLeft: 20, color: "#475569" }}>
-                  <li>Carica l&apos;estratto conto bancario (CSV o Excel)</li>
-                  <li>Il sistema cerca i bonifici con categoria &quot;Fornitori&quot;</li>
-                  <li>Abbina automaticamente con le fatture non pagate</li>
-                  <li>Matching basato su: nome fornitore + importo + data</li>
-                  <li>Le fatture abbinate vengono marcate come &quot;pagate&quot;</li>
-                </ol>
-              </div>
-              
-              <div style={{ background: "#fef3c7", padding: 15, borderRadius: 8 }}>
-                <h3 style={{ margin: "0 0 10px 0", fontSize: 16, color: "#b45309" }}>
-                  ⚠️ Note
-                </h3>
-                <ul style={{ margin: 0, paddingLeft: 20, color: "#78350f" }}>
-                  <li>Il file deve contenere la categoria &quot;Fornitori&quot; per filtrare i bonifici</li>
-                  <li>Il nome fornitore viene estratto dalla descrizione (pattern &quot;FAVORE NomeFornitore&quot;)</li>
-                  <li>Tolleranza importo: 1% o €5</li>
-                  <li>Usa &quot;Reset Riconciliazione&quot; per ri-testare</li>
-                </ul>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Manual Reconciliation Tab */}
-      {activeTab === "manuale" && (
-        <div style={{ 
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: 20,
-          marginBottom: 20
-        }}>
-          {/* Left Panel - Movimenti Estratto Conto */}
-          <div style={{ 
-            background: "white", 
-            borderRadius: 12, 
-            padding: 20,
-            border: "1px solid #e5e7eb",
-            maxHeight: "70vh",
-            overflow: "hidden",
-            display: "flex",
-            flexDirection: "column"
-          }}>
-            <h3 style={{ margin: "0 0 15px 0", fontSize: 16, color: "#1e40af" }}>
-              🏦 Movimenti Banca (Uscite)
-            </h3>
-            <p style={{ fontSize: 13, color: "#6b7280", marginBottom: 15 }}>
-              Seleziona un movimento per trovare fatture corrispondenti
+          <div style={{ padding: '40px', textAlign: 'center' }}>
+            <p style={{ fontSize: '48px', marginBottom: '16px' }}>🤖</p>
+            <h3 style={{ color: '#1e293b', marginBottom: '12px' }}>Riconciliazione Intelligente</h3>
+            <p style={{ color: '#64748b', maxWidth: '500px', margin: '0 auto 24px' }}>
+              Il sistema analizzerà automaticamente i movimenti dell'estratto conto e cercherà 
+              corrispondenze con fatture, POS, versamenti e F24 importati.
             </p>
-            
-            {/* Filtro fornitore */}
-            <input
-              type="text"
-              placeholder="🔍 Filtra per fornitore..."
-              value={searchFornitore}
-              onChange={(e) => setSearchFornitore(e.target.value)}
-              style={{
-                padding: 10,
-                border: "1px solid #e2e8f0",
-                borderRadius: 8,
-                marginBottom: 15,
-                width: "100%"
-              }}
-            />
-            
-            <div style={{ flex: 1, overflowY: "auto" }}>
-              {loadingManuale ? (
-                <div style={{ textAlign: "center", padding: 20, color: "#6b7280" }}>
-                  Caricamento...
-                </div>
-              ) : movimentiNonRiconciliati.length === 0 ? (
-                <div style={{ textAlign: "center", padding: 20, color: "#6b7280" }}>
-                  Nessun movimento trovato. Importa un estratto conto prima.
-                </div>
-              ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  {movimentiNonRiconciliati
-                    .filter(m => !searchFornitore || 
-                      (m.fornitore || "").toLowerCase().includes(searchFornitore.toLowerCase()) ||
-                      (m.descrizione_originale || "").toLowerCase().includes(searchFornitore.toLowerCase())
-                    )
-                    .slice(0, 100)
-                    .map((mov, idx) => (
-                      <div
-                        key={mov.id || idx}
-                        onClick={() => handleSelectMovimento(mov)}
-                        style={{
-                          padding: 12,
-                          background: selectedMovimento?.id === mov.id ? "#dbeafe" : "#f8fafc",
-                          border: selectedMovimento?.id === mov.id ? "2px solid #3b82f6" : "1px solid #e2e8f0",
-                          borderRadius: 8,
-                          cursor: "pointer",
-                          transition: "all 0.2s"
-                        }}
-                      >
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <span style={{ fontWeight: 600, color: "#dc2626" }}>
-                            {formatEuro(Math.abs(mov.importo))}
-                          </span>
-                          <span style={{ fontSize: 12, color: "#6b7280" }}>
-                            {mov.data ? mov.data.split("-").reverse().join("/") : ""}
-                          </span>
-                        </div>
-                        <div style={{ fontSize: 13, color: "#374151", marginTop: 4 }}>
-                          {mov.fornitore || "Fornitore non identificato"}
-                        </div>
-                        {mov.numero_fattura && (
-                          <div style={{ fontSize: 11, color: "#0369a1", marginTop: 2 }}>
-                            Rif: {mov.numero_fattura.substring(0, 40)}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                </div>
-              )}
+            <div style={{ 
+              background: '#f8fafc', 
+              borderRadius: '12px', 
+              padding: '20px', 
+              maxWidth: '400px', 
+              margin: '0 auto',
+              textAlign: 'left'
+            }}>
+              <p style={{ margin: '0 0 8px', fontSize: '13px', color: '#64748b' }}>
+                <strong>Criteri di match:</strong>
+              </p>
+              <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '13px', color: '#64748b' }}>
+                <li>Fatture: numero + importo (±0.01€)</li>
+                <li>POS: logica calendario (Lun-Gio: +1g, Ven-Dom: somma→Lun)</li>
+                <li>Versamenti: data + importo esatto</li>
+                <li>F24: importo esatto</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tab Manuale */}
+      {activeTab === 'manuale' && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+          {/* Movimenti non riconciliati */}
+          <div style={pageStyle.card}>
+            <div style={pageStyle.cardHeader}>
+              <h2 style={pageStyle.cardTitle}>Movimenti Estratto Conto</h2>
+              <span style={{ fontSize: '12px', color: '#64748b' }}>
+                {movimentiNonRiconciliati.length} non riconciliati
+              </span>
+            </div>
+            <div style={{ maxHeight: '500px', overflow: 'auto' }}>
+              <table style={pageStyle.table}>
+                <thead>
+                  <tr>
+                    <th style={pageStyle.th}>Data</th>
+                    <th style={pageStyle.th}>Descrizione</th>
+                    <th style={{ ...pageStyle.th, textAlign: 'right' }}>Importo</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {movimentiNonRiconciliati.slice(0, 50).map((mov) => (
+                    <tr 
+                      key={mov.id}
+                      onClick={() => handleSelectMovimento(mov)}
+                      style={{ 
+                        cursor: 'pointer',
+                        background: selectedMovimento?.id === mov.id ? '#eff6ff' : 'white'
+                      }}
+                    >
+                      <td style={pageStyle.td}>{formatDate(mov.data)}</td>
+                      <td style={{ ...pageStyle.td, maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {mov.descrizione || mov.descrizione_originale || '-'}
+                      </td>
+                      <td style={{ ...pageStyle.td, textAlign: 'right', fontWeight: '600', color: mov.importo < 0 ? '#dc2626' : '#16a34a' }}>
+                        {formatEuro(mov.importo)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
 
-          {/* Right Panel - Fatture Suggerite */}
-          <div style={{ 
-            background: "white", 
-            borderRadius: 12, 
-            padding: 20,
-            border: "1px solid #e5e7eb",
-            maxHeight: "70vh",
-            overflow: "hidden",
-            display: "flex",
-            flexDirection: "column"
-          }}>
-            <h3 style={{ margin: "0 0 15px 0", fontSize: 16, color: "#7c3aed" }}>
-              📄 Fatture Suggerite
-            </h3>
-            
+          {/* Fatture matching */}
+          <div style={pageStyle.card}>
+            <div style={pageStyle.cardHeader}>
+              <h2 style={pageStyle.cardTitle}>
+                {selectedMovimento ? 'Fatture Compatibili' : 'Seleziona un movimento'}
+              </h2>
+              {selectedMovimento && (
+                <span style={pageStyle.badge('#3b82f6')}>
+                  {formatEuro(Math.abs(selectedMovimento.importo))}
+                </span>
+              )}
+            </div>
             {!selectedMovimento ? (
-              <div style={{ 
-                flex: 1, 
-                display: "flex", 
-                alignItems: "center", 
-                justifyContent: "center",
-                color: "#9ca3af",
-                textAlign: "center"
-              }}>
-                <div>
-                  <div style={{ fontSize: 40, marginBottom: 10 }}>👈</div>
-                  <div>Seleziona un movimento dalla lista a sinistra</div>
-                </div>
+              <div style={pageStyle.emptyState}>
+                <p>👈 Seleziona un movimento dall'elenco a sinistra</p>
+              </div>
+            ) : matchingFatture.length === 0 ? (
+              <div style={pageStyle.emptyState}>
+                <p>Nessuna fattura con importo simile trovata</p>
               </div>
             ) : (
-              <>
-                {/* Movimento selezionato */}
-                <div style={{ 
-                  padding: 12, 
-                  background: "#fef3c7", 
-                  borderRadius: 8, 
-                  marginBottom: 15,
-                  border: "1px solid #fde68a"
-                }}>
-                  <div style={{ fontWeight: 600, color: "#b45309" }}>Movimento selezionato:</div>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginTop: 5 }}>
-                    <span>{selectedMovimento.fornitore || "N/D"}</span>
-                    <span style={{ fontWeight: "bold", color: "#dc2626" }}>
-                      {formatEuro(Math.abs(selectedMovimento.importo))}
-                    </span>
-                  </div>
-                </div>
-                
-                <p style={{ fontSize: 13, color: "#6b7280", marginBottom: 10 }}>
-                  {matchingFatture.length > 0 
-                    ? `${matchingFatture.length} fatture con importo simile (±10%):`
-                    : "Nessuna fattura con importo simile trovata."
-                  }
-                </p>
-                
-                <div style={{ flex: 1, overflowY: "auto" }}>
-                  {matchingFatture.length === 0 ? (
-                    <div style={{ textAlign: "center", padding: 20 }}>
-                      <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 15 }}>
-                        Mostrando tutte le fatture non pagate:
-                      </div>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                        {fattureNonPagate.slice(0, 20).map((fattura, idx) => (
-                          <div
-                            key={fattura._id || fattura.id || idx}
-                            style={{
-                              padding: 12,
-                              background: "#f8fafc",
-                              border: "1px solid #e2e8f0",
-                              borderRadius: 8
-                            }}
-                          >
-                            <div style={{ display: "flex", justifyContent: "space-between" }}>
-                              <span style={{ fontWeight: 500 }}>
-                                {fattura.supplier_name || fattura.fornitore || "N/D"}
-                              </span>
-                              <span style={{ fontWeight: "bold", color: "#dc2626" }}>
-                                {formatEuro(parseFloat(fattura.total_amount || fattura.importo || 0))}
-                              </span>
-                            </div>
-                            <div style={{ fontSize: 12, color: "#6b7280", marginTop: 4 }}>
-                              {fattura.invoice_number || fattura.numero_fattura || "N/D"} - {fattura.invoice_date || fattura.data || ""}
-                            </div>
-                            <button
-                              onClick={() => handleRiconciliaManuale(fattura)}
-                              disabled={riconciliazioneInCorso}
-                              style={{
-                                marginTop: 8,
-                                padding: "6px 12px",
-                                background: riconciliazioneInCorso ? "#9ca3af" : "#10b981",
-                                color: "white",
-                                border: "none",
-                                borderRadius: 6,
-                                fontSize: 12,
-                                cursor: riconciliazioneInCorso ? "not-allowed" : "pointer",
-                                width: "100%"
-                              }}
-                            >
-                              {riconciliazioneInCorso ? "⏳ Elaborazione..." : "✓ Riconcilia questa fattura"}
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ) : (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                      {matchingFatture.map((fattura, idx) => (
-                        <div
-                          key={fattura._id || fattura.id || idx}
-                          style={{
-                            padding: 12,
-                            background: "#f0fdf4",
-                            border: "1px solid #bbf7d0",
-                            borderRadius: 8
-                          }}
-                        >
-                          <div style={{ display: "flex", justifyContent: "space-between" }}>
-                            <span style={{ fontWeight: 500, color: "#166534" }}>
-                              {fattura.supplier_name || fattura.fornitore || "N/D"}
-                            </span>
-                            <span style={{ fontWeight: "bold", color: "#16a34a" }}>
-                              {formatEuro(parseFloat(fattura.total_amount || fattura.importo || 0))}
-                            </span>
-                          </div>
-                          <div style={{ fontSize: 12, color: "#15803d", marginTop: 4 }}>
-                            {fattura.invoice_number || fattura.numero_fattura || "N/D"} - {fattura.invoice_date || fattura.data || ""}
-                          </div>
-                          <div style={{ fontSize: 11, color: "#059669", marginTop: 2 }}>
-                            Differenza: {formatEuro(Math.abs(parseFloat(fattura.total_amount || fattura.importo || 0) - Math.abs(selectedMovimento.importo)))}
-                          </div>
+              <div style={{ maxHeight: '500px', overflow: 'auto' }}>
+                <table style={pageStyle.table}>
+                  <thead>
+                    <tr>
+                      <th style={pageStyle.th}>Fornitore</th>
+                      <th style={pageStyle.th}>N. Fatt.</th>
+                      <th style={{ ...pageStyle.th, textAlign: 'right' }}>Importo</th>
+                      <th style={{ ...pageStyle.th, textAlign: 'center' }}>Azione</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {matchingFatture.map((f) => (
+                      <tr key={f._id || f.id}>
+                        <td style={{ ...pageStyle.td, maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {f.supplier_name || f.cedente_denominazione || '-'}
+                        </td>
+                        <td style={pageStyle.td}>{f.invoice_number || f.numero_fattura || '-'}</td>
+                        <td style={{ ...pageStyle.td, textAlign: 'right', fontWeight: '600' }}>
+                          {formatEuro(f.total_amount || f.importo)}
+                        </td>
+                        <td style={{ ...pageStyle.td, textAlign: 'center' }}>
                           <button
-                            onClick={() => handleRiconciliaManuale(fattura)}
-                            disabled={riconciliazioneInCorso}
-                            style={{
-                              marginTop: 8,
-                              padding: "6px 12px",
-                              background: riconciliazioneInCorso ? "#9ca3af" : "#10b981",
-                              color: "white",
-                              border: "none",
-                              borderRadius: 6,
-                              fontSize: 12,
-                              cursor: riconciliazioneInCorso ? "not-allowed" : "pointer",
-                              width: "100%"
-                            }}
+                            style={{ ...pageStyle.button('success'), padding: '6px 12px' }}
+                            onClick={() => handleRiconciliaManuale(f)}
+                            disabled={processing}
                           >
-                            {riconciliazioneInCorso ? "⏳ Elaborazione..." : "✓ Riconcilia questa fattura"}
+                            ✓ Riconcilia
                           </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
         </div>
       )}
 
-      {/* Results */}
-      {results && (
-        <div style={{ 
-          background: "white", 
-          borderRadius: 12, 
-          padding: 25,
-          border: "1px solid #e5e7eb",
-          marginTop: 20
-        }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-            <h2 style={{ margin: 0, fontSize: 18 }}>
-              📊 Risultato Riconciliazione {tipoRiconciliazione === "fornitori" ? "Fornitori" : ""}
-            </h2>
-            <button
-              onClick={() => setResults(null)}
-              style={{
-                padding: "8px 16px",
-                background: "#ef4444",
-                color: "white",
-                border: "none",
-                borderRadius: 6,
-                cursor: "pointer"
-              }}
-            >
-              ✕ Chiudi
-            </button>
-          </div>
-
-          {/* Summary */}
-          <div style={{ 
-            display: "grid", 
-            gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", 
-            gap: 15, 
-            marginBottom: 20 
-          }}>
-            <div style={{ 
-              background: results.success ? "#dcfce7" : "#fee2e2", 
-              padding: 15, 
-              borderRadius: 8, 
-              textAlign: "center" 
-            }}>
-              <div style={{ fontSize: 24, fontWeight: "bold" }}>
-                {results.movements_found || 0}
-              </div>
-              <div style={{ fontSize: 12 }}>Movimenti Trovati</div>
-            </div>
-            <div style={{ background: "#dcfce7", padding: 15, borderRadius: 8, textAlign: "center" }}>
-              <div style={{ fontSize: 24, fontWeight: "bold", color: "#16a34a" }}>
-                {results.reconciled || 0}
-              </div>
-              <div style={{ fontSize: 12, color: "#15803d" }}>
-                {tipoRiconciliazione === "fornitori" ? "Fatture Pagate" : "Riconciliati"}
-              </div>
-            </div>
-            <div style={{ background: "#fef3c7", padding: 15, borderRadius: 8, textAlign: "center" }}>
-              <div style={{ fontSize: 24, fontWeight: "bold", color: "#d97706" }}>
-                {results.not_found || 0}
-              </div>
-              <div style={{ fontSize: 12, color: "#b45309" }}>Non Trovati</div>
-            </div>
-          </div>
-
-          {/* Message */}
-          {results.message && (
-            <div style={{ 
-              padding: 12, 
-              background: results.success ? "#f0fdf4" : "#fef2f2", 
-              borderRadius: 8,
-              marginBottom: 20,
-              color: results.success ? "#166534" : "#dc2626"
-            }}>
-              ✅ {results.message}
-            </div>
-          )}
-
-          {/* Reconciled Details */}
-          {results.reconciled_details?.length > 0 && (
-            <div style={{ marginBottom: 20 }}>
-              <h3 style={{ margin: "0 0 10px 0", fontSize: 16, color: "#16a34a" }}>
-                ✅ Movimenti Riconciliati ({results.reconciled_details.length})
-              </h3>
-              <div style={{ maxHeight: 300, overflow: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-                  <thead>
-                    <tr style={{ background: "#f0fdf4" }}>
-                      <th style={{ padding: 8, textAlign: "left", borderBottom: "1px solid #ddd" }}>Data</th>
-                      <th style={{ padding: 8, textAlign: "left", borderBottom: "1px solid #ddd" }}>Descrizione EC</th>
-                      <th style={{ padding: 8, textAlign: "right", borderBottom: "1px solid #ddd" }}>Importo</th>
-                      <th style={{ padding: 8, textAlign: "left", borderBottom: "1px solid #ddd" }}>Prima Nota</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {results.reconciled_details.map((item, idx) => (
-                      <tr key={idx} style={{ background: idx % 2 ? "#fafafa" : "white" }}>
-                        <td style={{ padding: 8, borderBottom: "1px solid #eee" }}>{item.estratto_conto?.data}</td>
-                        <td style={{ padding: 8, borderBottom: "1px solid #eee" }}>{item.estratto_conto?.descrizione}</td>
-                        <td style={{ padding: 8, textAlign: "right", borderBottom: "1px solid #eee" }}>
-                          {formatEuro(item.estratto_conto?.importo)}
-                        </td>
-                        <td style={{ padding: 8, borderBottom: "1px solid #eee" }}>
-                          {item.prima_nota?.descrizione}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {/* Not Found Details */}
-          {results.not_found_details?.length > 0 && (
-            <div>
-              <h3 style={{ margin: "0 0 10px 0", fontSize: 16, color: "#d97706" }}>
-                ⚠️ {tipoRiconciliazione === "fornitori" ? "Bonifici Non Abbinati" : "Movimenti Non Trovati"} ({results.not_found_details.length})
-              </h3>
-              <div style={{ maxHeight: 400, overflow: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, tableLayout: "fixed" }}>
-                  <thead>
-                    <tr style={{ background: "#fef3c7" }}>
-                      <th style={{ padding: 8, textAlign: "center", borderBottom: "1px solid #ddd", width: "100px" }}>Data</th>
-                      <th style={{ padding: 8, textAlign: "center", borderBottom: "1px solid #ddd", width: "150px" }}>Fornitore</th>
-                      <th style={{ padding: 8, textAlign: "center", borderBottom: "1px solid #ddd", width: "45%" }}>Descrizione</th>
-                      <th style={{ padding: 8, textAlign: "center", borderBottom: "1px solid #ddd", width: "100px" }}>Importo</th>
-                      {tipoRiconciliazione === "banca" && (
-                        <th style={{ padding: 8, textAlign: "center", borderBottom: "1px solid #ddd", width: "100px" }}>Azione</th>
-                      )}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {results.not_found_details.map((item, idx) => (
-                      <tr key={idx} style={{ background: idx % 2 ? "#fafafa" : "white" }}>
-                        <td style={{ padding: 8, textAlign: "center", borderBottom: "1px solid #eee" }}>{item.data}</td>
-                        <td style={{ padding: 8, textAlign: "center", borderBottom: "1px solid #eee", fontWeight: 500 }}>
-                          {item.nome || "-"}
-                        </td>
-                        <td style={{ padding: 8, textAlign: "center", borderBottom: "1px solid #eee", wordWrap: "break-word", whiteSpace: "normal" }}>
-                          {item.descrizione?.substring(0, 80)}
-                        </td>
-                        <td style={{ padding: 8, textAlign: "center", borderBottom: "1px solid #eee" }}>
-                          {formatEuro(item.importo)}
-                        </td>
-                        {tipoRiconciliazione === "banca" && (
-                          <td style={{ padding: 8, textAlign: "center", borderBottom: "1px solid #eee" }}>
-                            <button
-                              onClick={() => handleAddToPrimaNota(item)}
-                              style={{
-                                padding: "4px 8px",
-                                background: "#3b82f6",
-                                color: "white",
-                                border: "none",
-                                borderRadius: 4,
-                                fontSize: 11,
-                                cursor: "pointer"
-                              }}
-                              title="Aggiungi a Prima Nota Banca"
-                            >
-                              + Prima Nota
-                            </button>
-                          </td>
-                        )}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
+      {/* Info Box */}
+      <div style={{ 
+        marginTop: '24px', 
+        padding: '16px 20px', 
+        background: '#eff6ff', 
+        border: '1px solid #3b82f6', 
+        borderRadius: '12px' 
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+          <span style={{ fontSize: '20px' }}>ℹ️</span>
+          <strong style={{ color: '#1e40af' }}>Come funziona</strong>
         </div>
-      )}
+        <p style={{ margin: 0, fontSize: '13px', color: '#1e40af' }}>
+          <strong>Automatica:</strong> Il sistema cerca corrispondenze esatte tra estratto conto e documenti importati.
+          I match dubbi vengono salvati nella pagina "Operazioni da Confermare".
+          <br />
+          <strong>Manuale:</strong> Seleziona un movimento e associalo manualmente alla fattura corrispondente.
+        </p>
+      </div>
     </div>
   );
 }
