@@ -418,11 +418,11 @@ export default function LiquidazioneIVA() {
       </div>
 
       {/* Riepilogo Annuale */}
-      <div className="card" style={{ marginBottom: 20 }}>
-        <div className="card-header">
-          <h3 className="card-title">📅 Riepilogo Annuale {anno}</h3>
-          <button onClick={caricaRiepilogoAnnuale} className="btn btn-outline btn-sm" data-testid="btn-riepilogo-annuale">
-            <RefreshCw size={14} className={loading ? 'loading-spinner' : ''} />
+      <div style={{ ...cardStyle }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 'bold', color: '#1e3a5f' }}>📅 Riepilogo Annuale {anno}</h3>
+          <button onClick={caricaRiepilogoAnnuale} style={{ padding: '8px 14px', background: '#e5e7eb', color: '#374151', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: '600', fontSize: 13 }} data-testid="btn-riepilogo-annuale">
+            <RefreshCw size={14} style={loading ? { animation: 'spin 1s linear infinite' } : {}} />
             Carica
           </button>
         </div>
