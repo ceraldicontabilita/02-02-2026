@@ -384,10 +384,9 @@ export default function Magazzino() {
           ) : (
             // Inventario Manuale
             products.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: 40, color: '#64748b' }}>
-                <div style={{ fontSize: 48, marginBottom: 16 }}>📋</div>
-                <div>Nessun prodotto in inventario manuale.</div>
-                <div className="small">Clicca "+ Nuovo Prodotto" per aggiungerne uno.</div>
+              <div style={{ fontSize: 14, color: '#6b7280', padding: 40, textAlign: 'center' }}>
+                📦 Nessun prodotto nel magazzino<br/>
+                <span style={{ fontSize: 12 }}>Clicca "+ Nuovo Prodotto" per aggiungerne uno.</span>
               </div>
             ) : (
               <table style={{ width: "100%", borderCollapse: "collapse" }}>
