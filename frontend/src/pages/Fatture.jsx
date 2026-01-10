@@ -448,7 +448,7 @@ export default function Fatture() {
           <div>
             <h1 style={{ margin: 0, fontSize: 22, fontWeight: 'bold' }}>📋 Fatture Elettroniche</h1>
             <p style={{ margin: '4px 0 0 0', fontSize: 13, opacity: 0.9 }}>
-              Carica fatture XML FatturaPA o inseriscile manualmente
+              Gestione fatture XML FatturaPA
             </p>
           </div>
           
@@ -467,75 +467,28 @@ export default function Fatture() {
         </div>
         
         <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
-          {/* Upload singolo */}
-          <div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".xml"
-              onChange={handleUploadXML}
-              style={{ display: "none" }}
-              id="xml-upload"
-              data-testid="fatture-single-upload"
-            />
-            <button 
-              className="primary" 
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-              data-testid="fatture-single-upload-btn"
-            >
-              📄 Carica XML Singolo
-            </button>
-          </div>
-          
-          {/* Upload massivo - XML multipli */}
-          <div>
-            <input
-              ref={bulkFileInputRef}
-              type="file"
-              accept=".xml"
-              multiple
-              onChange={handleBulkUploadXML}
-              style={{ display: "none" }}
-              id="xml-bulk-upload"
-              data-testid="fatture-bulk-upload"
-            />
-            <button 
-              onClick={() => bulkFileInputRef.current?.click()}
-              disabled={uploading}
-              style={{ background: "#4caf50", color: "white", fontWeight: "bold" }}
-              data-testid="fatture-bulk-upload-btn"
-            >
-              📁 Upload XML Multipli
-            </button>
-          </div>
-          
-          {/* Upload ZIP */}
-          <div>
-            <input
-              ref={zipFileInputRef}
-              type="file"
-              accept=".zip"
-              onChange={handleZipUpload}
-              style={{ display: "none" }}
-              id="zip-upload"
-              data-testid="fatture-zip-upload"
-            />
-            <button 
-              onClick={() => zipFileInputRef.current?.click()}
-              disabled={uploading}
-              style={{ background: "#ff9800", color: "white", fontWeight: "bold" }}
-              data-testid="fatture-zip-upload-btn"
-            >
-              📦 Upload ZIP Massivo
-            </button>
-          </div>
+          <a 
+            href="/import-export"
+            style={{ 
+              padding: "8px 16px",
+              background: "#3b82f6",
+              color: "white",
+              fontWeight: "bold",
+              borderRadius: 6,
+              textDecoration: "none",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6
+            }}
+          >
+            📥 Importa Fatture
+          </a>
           
           <button onClick={() => setShowForm(!showForm)}>
             ✏️ Nuova Manuale
           </button>
           
-          <button onClick={loadInvoices} disabled={uploading}>
+          <button onClick={loadInvoices}>
             🔄 Aggiorna
           </button>
           
@@ -550,9 +503,6 @@ export default function Fatture() {
             🔍 Filtri {activeFiltersCount > 0 && `(${activeFiltersCount})`}
           </button>
         </div>
-        
-        {/* Barra di Progresso */}
-        {uploading && <UploadProgressBar progress={uploadProgress} />}
         
         {err && (
           <div style={{ marginTop: 10, color: "#c00", padding: 10, background: "#ffebee", borderRadius: 4 }} data-testid="fatture-error">
