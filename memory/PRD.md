@@ -136,6 +136,11 @@ Ragione Sociale;Data contabile;Data valuta;Banca;Rapporto;Importo;Divisa;Descriz
 - ✅ Eliminati 66 versamenti errati dalla Prima Nota Banca
 - ✅ Fix routing FastAPI: endpoint parametrici ora dopo quelli specifici
 - ✅ Aggiornati messaggi informativi nel frontend Prima Nota Banca
+- ✅ **Prima Nota Banca ora visualizza l'Estratto Conto Bancario**
+- ✅ Svuotata la collection prima_nota_banca (57 movimenti)
+- ✅ Rimosso pulsante "Elimina tutti Versamenti" dalla sezione Banca
+- ✅ Rimosso endpoint DELETE /api/prima-nota/banca/delete-versamenti
+- ✅ Tabella Banca in modalità sola lettura (no Modifica/Elimina)
 - ✅ Test completi: Backend 14/14 (100%), Frontend verificato
 
 ### 2026-01-10 (Sessione 1)
