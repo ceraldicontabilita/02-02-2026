@@ -376,7 +376,7 @@ export default function Documenti() {
 
       {/* Azione Download Email */}
       <Card style={{ marginBottom: 24, background: 'linear-gradient(135deg, #1e40af, #7c3aed)' }}>
-        <CardContent className="pt-6">
+        <CardContent style={{ paddingTop: 24 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'white', flexWrap: 'wrap', gap: 16 }}>
             <div>
               <div style={{ fontSize: 20, fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 8 }}>
