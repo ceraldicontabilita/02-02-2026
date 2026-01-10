@@ -148,7 +148,7 @@ export default function PrevisioniAcquisti() {
         )}
         
         <Button onClick={loadData} disabled={loading} variant="outline" style={{ padding: '8px 12px' }}>
-          <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+          <RefreshCw style={loading ? { animation: 'spin 1s linear infinite', height: 16, width: 16 } : { height: 16, width: 16 }} />
         </Button>
         
         <Button onClick={handlePopolaStorico} disabled={popolando} style={{ background: '#059669', color: 'white', padding: '8px 12px', fontSize: 12 }}>
