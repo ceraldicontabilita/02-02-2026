@@ -363,12 +363,23 @@ async def import_estratto_conto(file: UploadFile = File(...)) -> Dict[str, Any]:
         await db["estratto_conto_movimenti"].insert_one(record)
         inserted += 1
     
+    # ===== RICONCILIAZIONE AUTOMATICA =====
+    # Dopo l'import, avvia la riconciliazione automatica
+    riconciliazione_results = None
+    try:
+        from app.routers.accounting.riconciliazione_automatica import riconcilia_estratto_conto
+        riconciliazione_results = await riconcilia_estratto_conto()
+    except Exception as e:
+        logger.error(f"Errore riconciliazione automatica: {e}")
+        riconciliazione_results = {"error": str(e)}
+    
     return {
         "message": "Importazione estratto conto completata",
         "movimenti_trovati": len(movimenti),
         "movimenti_importati": inserted,
         "inseriti": inserted,
-        "duplicati_saltati": duplicates
+        "duplicati_saltati": duplicates,
+        "riconciliazione_automatica": riconciliazione_results
     }
 
 
