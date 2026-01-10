@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import api from "../api";
-import { formatDateIT, formatEuro } from "../lib/utils";
+import { formatDateIT } from "../lib/utils";
 
-// Dati azienda Ceraldi per intestazione email/PDF
+// Dati azienda per intestazione email/PDF
 const AZIENDA = {
   nome: "CERALDI GROUP S.R.L.",
   indirizzo: "Via Example, 123",
@@ -11,6 +11,163 @@ const AZIENDA = {
   piva: "12345678901",
   email: "ordini@ceraldi.it",
   tel: "+39 06 12345678"
+};
+
+const styles = {
+  container: {
+    padding: 20,
+    maxWidth: 1400,
+    margin: '0 auto'
+  },
+  card: {
+    background: 'white',
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 20,
+    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+    border: '1px solid #e5e7eb'
+  },
+  cardOrange: {
+    background: '#fff7ed',
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 20,
+    border: '1px solid #fed7aa'
+  },
+  cardGreen: {
+    background: '#f0fdf4',
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 20,
+    border: '1px solid #bbf7d0'
+  },
+  header: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1e293b',
+    marginBottom: 12,
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8
+  },
+  subtitle: {
+    fontSize: 14,
+    color: '#64748b',
+    marginBottom: 16
+  },
+  row: {
+    display: 'flex',
+    gap: 12,
+    alignItems: 'center',
+    flexWrap: 'wrap'
+  },
+  btnPrimary: {
+    padding: '10px 18px',
+    background: '#3b82f6',
+    color: 'white',
+    border: 'none',
+    borderRadius: 8,
+    cursor: 'pointer',
+    fontWeight: '600',
+    fontSize: 14
+  },
+  btnSuccess: {
+    padding: '10px 18px',
+    background: '#10b981',
+    color: 'white',
+    border: 'none',
+    borderRadius: 8,
+    cursor: 'pointer',
+    fontWeight: '600',
+    fontSize: 14
+  },
+  btnSecondary: {
+    padding: '8px 14px',
+    background: '#f1f5f9',
+    color: '#475569',
+    border: '1px solid #e2e8f0',
+    borderRadius: 6,
+    cursor: 'pointer',
+    fontSize: 13
+  },
+  error: {
+    background: '#fef2f2',
+    color: '#dc2626',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+    border: '1px solid #fecaca'
+  },
+  success: {
+    background: '#f0fdf4',
+    color: '#166534',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+    border: '1px solid #bbf7d0'
+  },
+  table: {
+    width: '100%',
+    borderCollapse: 'collapse',
+    fontSize: 14
+  },
+  th: {
+    padding: 12,
+    textAlign: 'left',
+    fontWeight: '600',
+    color: '#475569',
+    borderBottom: '2px solid #e2e8f0',
+    background: '#f8fafc'
+  },
+  td: {
+    padding: 12,
+    borderBottom: '1px solid #f1f5f9'
+  },
+  supplierCard: {
+    background: 'white',
+    padding: 16,
+    borderRadius: 10,
+    marginBottom: 16,
+    border: '1px solid #fed7aa'
+  },
+  emptyState: {
+    textAlign: 'center',
+    padding: 40,
+    color: '#64748b'
+  },
+  modal: {
+    position: 'fixed',
+    inset: 0,
+    background: 'rgba(0,0,0,0.5)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 9999
+  },
+  modalContent: {
+    background: 'white',
+    borderRadius: 12,
+    width: '90%',
+    maxWidth: 700,
+    maxHeight: '80vh',
+    overflow: 'auto'
+  },
+  modalHeader: {
+    padding: 20,
+    borderBottom: '1px solid #eee',
+    background: '#1e3a5f',
+    color: 'white',
+    borderRadius: '12px 12px 0 0'
+  },
+  grid4: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+    gap: 16
+  },
+  statCard: {
+    textAlign: 'center',
+    padding: 12
+  }
 };
 
 export default function OrdiniFornitori() {
@@ -65,7 +222,6 @@ export default function OrdiniFornitori() {
       const res = await api.post("/api/ordini-fornitori", orderData);
       setSuccess(`Ordine #${res.data.order_number} generato per ${supplier.supplier}`);
       
-      // Rimuovi items dal carrello
       for (const item of supplier.items) {
         try {
           await api.delete(`/api/comparatore/cart/${item.id}`);
@@ -103,7 +259,6 @@ export default function OrdiniFornitori() {
     }
   }
 
-  // Genera PDF dell'ordine
   function handlePrintOrder(order) {
     const printWindow = window.open('', '_blank');
     const imponibile = order.subtotal || order.total || 0;
@@ -138,32 +293,14 @@ export default function OrdiniFornitori() {
           <div class="info">${AZIENDA.indirizzo} - ${AZIENDA.cap} ${AZIENDA.citta}</div>
           <div class="info">P.IVA: ${AZIENDA.piva} | Tel: ${AZIENDA.tel} | Email: ${AZIENDA.email}</div>
         </div>
-        
         <div class="order-info">
-          <div class="order-box">
-            <strong>ORDINE N°</strong><br/>
-            <span style="font-size: 24px; color: #1a365d;">#${order.order_number}</span>
-          </div>
-          <div class="order-box">
-            <strong>DATA</strong><br/>
-            ${new Date(order.created_at).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' })}
-          </div>
-          <div class="order-box">
-            <strong>FORNITORE</strong><br/>
-            ${order.supplier_name}
-          </div>
+          <div class="order-box"><strong>ORDINE N°</strong><br/><span style="font-size: 24px; color: #1a365d;">#${order.order_number}</span></div>
+          <div class="order-box"><strong>DATA</strong><br/>${new Date(order.created_at).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' })}</div>
+          <div class="order-box"><strong>FORNITORE</strong><br/>${order.supplier_name}</div>
         </div>
-        
         <h3 style="color: #1a365d;">DETTAGLIO PRODOTTI</h3>
         <table>
-          <thead>
-            <tr>
-              <th>Prodotto</th>
-              <th>Quantità</th>
-              <th style="text-align: right;">Prezzo Unit.</th>
-              <th style="text-align: right;">Totale</th>
-            </tr>
-          </thead>
+          <thead><tr><th>Prodotto</th><th>Quantità</th><th style="text-align: right;">Prezzo Unit.</th><th style="text-align: right;">Totale</th></tr></thead>
           <tbody>
             ${(order.items || []).map(item => `
               <tr>
@@ -175,18 +312,13 @@ export default function OrdiniFornitori() {
             `).join('')}
           </tbody>
         </table>
-        
         <div class="totals">
           <div>Imponibile: € ${imponibile.toFixed(2)}</div>
           <div>IVA (22%): € ${iva.toFixed(2)}</div>
           <div class="total-row">TOTALE: € ${totale.toFixed(2)}</div>
         </div>
-        
         ${order.notes ? `<div style="margin-top: 30px; padding: 15px; background: #fff3cd; border-radius: 8px;"><strong>Note:</strong> ${order.notes}</div>` : ''}
-        
-        <div class="footer">
-          Documento generato il ${new Date().toLocaleDateString('it-IT')} - ${AZIENDA.nome}
-        </div>
+        <div class="footer">Documento generato il ${new Date().toLocaleDateString('it-IT')} - ${AZIENDA.nome}</div>
       </body>
       </html>
     `);
@@ -194,15 +326,10 @@ export default function OrdiniFornitori() {
     printWindow.print();
   }
 
-  // Invia ordine via email al fornitore
   async function handleSendEmail(order) {
-    // Chiedi l'email se non disponibile
     let supplierEmail = order.supplier_email;
     if (!supplierEmail) {
-      supplierEmail = window.prompt(
-        `Inserisci l'email del fornitore "${order.supplier_name}":`,
-        ''
-      );
+      supplierEmail = window.prompt(`Inserisci email del fornitore "${order.supplier_name}":`, '');
       if (!supplierEmail || !supplierEmail.includes('@')) {
         setErr("Email non valida o annullata");
         return;
@@ -213,11 +340,7 @@ export default function OrdiniFornitori() {
     setErr("");
     
     try {
-      // Chiama il nuovo endpoint backend per invio email con PDF
-      const response = await api.post(`/api/ordini-fornitori/${order.id}/send-email`, {
-        email: supplierEmail
-      });
-      
+      const response = await api.post(`/api/ordini-fornitori/${order.id}/send-email`, { email: supplierEmail });
       setSuccess(`✅ Email inviata con successo a ${response.data.email}! Ordine #${order.order_number} con PDF allegato.`);
       loadData();
     } catch (e) {
@@ -228,14 +351,9 @@ export default function OrdiniFornitori() {
     }
   }
   
-  // Scarica PDF ordine
   async function handleDownloadPDF(order) {
     try {
-      const response = await api.get(`/api/ordini-fornitori/${order.id}/pdf`, {
-        responseType: 'blob'
-      });
-      
-      // Crea link per download
+      const response = await api.get(`/api/ordini-fornitori/${order.id}/pdf`, { responseType: 'blob' });
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -249,101 +367,85 @@ export default function OrdiniFornitori() {
     }
   }
 
-  const getStatusColor = (status) => {
-    const colors = {
-      "bozza": { bg: "#f5f5f5", color: "#666" },
-      "inviato": { bg: "#e3f2fd", color: "#1976d2" },
-      "confermato": { bg: "#fff3e0", color: "#f57c00" },
-      "consegnato": { bg: "#e8f5e9", color: "#388e3c" },
-      "annullato": { bg: "#ffcdd2", color: "#c62828" }
+  const getStatusStyle = (status) => {
+    const map = {
+      "bozza": { bg: "#f1f5f9", color: "#64748b" },
+      "inviato": { bg: "#dbeafe", color: "#1e40af" },
+      "confermato": { bg: "#fef3c7", color: "#92400e" },
+      "consegnato": { bg: "#dcfce7", color: "#166534" },
+      "annullato": { bg: "#fef2f2", color: "#dc2626" }
     };
-    return colors[status] || colors["bozza"];
+    return map[status] || map["bozza"];
   };
 
   return (
-    <>
-      <div className="card">
-        <div className="h1">Ordini Fornitori</div>
-        <div className="small" style={{ marginBottom: 15 }}>
+    <div style={styles.container} data-testid="ordini-fornitori-page">
+      {/* Header */}
+      <div style={styles.card}>
+        <h1 style={{ margin: 0, fontSize: 28, fontWeight: 'bold', color: '#1e293b' }}>
+          📦 Ordini Fornitori
+        </h1>
+        <p style={styles.subtitle}>
           Genera ordini ai fornitori partendo dal carrello comparatore prezzi.
-        </div>
+        </p>
 
-        {err && (
-          <div style={{ background: "#ffcdd2", color: "#c62828", padding: 10, borderRadius: 4, marginBottom: 15 }}>
-            {err}
-          </div>
-        )}
-
-        {success && (
-          <div style={{ background: "#c8e6c9", color: "#2e7d32", padding: 10, borderRadius: 4, marginBottom: 15 }}>
-            {success}
-          </div>
-        )}
+        {err && <div style={styles.error}>{err}</div>}
+        {success && <div style={styles.success}>{success}</div>}
       </div>
 
       {/* Carrello per Fornitore */}
       {cart.by_supplier.length > 0 && (
-        <div className="card" style={{ background: "#fff3e0" }}>
-          <div className="h1">🛒 Carrello - Prodotti da Ordinare</div>
-          <div className="small" style={{ marginBottom: 15 }}>
+        <div style={styles.cardOrange}>
+          <h2 style={styles.header}>🛒 Carrello - Prodotti da Ordinare</h2>
+          <p style={styles.subtitle}>
             {cart.total_items} prodotti | Totale: <strong>€ {cart.total_amount.toFixed(2)}</strong>
-          </div>
+          </p>
 
           {cart.by_supplier.map((supplier, i) => (
-            <div 
-              key={i} 
-              style={{ 
-                background: "white", 
-                padding: 15, 
-                borderRadius: 8, 
-                marginBottom: 15,
-                border: "1px solid #ffe0b2"
-              }}
-            >
-              <div className="row" style={{ justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+            <div key={i} style={styles.supplierCard}>
+              <div style={{ ...styles.row, justifyContent: 'space-between', marginBottom: 12 }}>
                 <div>
-                  <strong style={{ fontSize: 16 }}>{supplier.supplier}</strong>
-                  <span style={{ marginLeft: 10, color: "#666" }}>
+                  <strong style={{ fontSize: 16, color: '#1e293b' }}>{supplier.supplier}</strong>
+                  <span style={{ marginLeft: 10, color: '#64748b', fontSize: 13 }}>
                     {supplier.items.length} prodotti
                   </span>
                 </div>
-                <div>
-                  <span style={{ fontSize: 18, fontWeight: "bold", color: "#e65100", marginRight: 15 }}>
+                <div style={styles.row}>
+                  <span style={{ fontSize: 20, fontWeight: 'bold', color: '#ea580c' }}>
                     € {supplier.subtotal.toFixed(2)}
                   </span>
                   <button 
-                    className="primary"
+                    style={styles.btnSuccess}
                     onClick={() => handleGenerateOrder(supplier)}
                     disabled={generatingOrder === supplier.supplier}
+                    data-testid={`genera-ordine-${i}`}
                   >
-                    {generatingOrder === supplier.supplier ? "Generazione..." : "📝 Genera Ordine"}
+                    {generatingOrder === supplier.supplier ? "⏳ Generazione..." : "📝 Genera Ordine"}
                   </button>
                 </div>
               </div>
 
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+              <table style={styles.table}>
                 <thead>
-                  <tr style={{ borderBottom: "1px solid #eee", textAlign: "left" }}>
-                    <th style={{ padding: 5 }}>Prodotto</th>
-                    <th style={{ padding: 5 }}>Quantità</th>
-                    <th style={{ padding: 5, textAlign: "right" }}>Prezzo Unit.</th>
-                    <th style={{ padding: 5, textAlign: "right" }}>Totale</th>
+                  <tr>
+                    <th style={styles.th}>Prodotto</th>
+                    <th style={styles.th}>Quantità</th>
+                    <th style={{ ...styles.th, textAlign: 'right' }}>Prezzo Unit.</th>
+                    <th style={{ ...styles.th, textAlign: 'right' }}>Totale</th>
                   </tr>
                 </thead>
                 <tbody>
                   {supplier.items.map((item, j) => (
-                    <tr key={j} style={{ borderBottom: "1px solid #f5f5f5" }}>
-                      <td style={{ padding: 5 }}>
+                    <tr key={j}>
+                      <td style={styles.td}>
                         <strong>{item.normalized_name || item.original_description}</strong>
                         {item.normalized_name && item.original_description !== item.normalized_name && (
-                          <div className="small" style={{ color: "#999" }}>
-                            {item.original_description}
-                          </div>
+                          <div style={{ fontSize: 12, color: '#94a3b8' }}>{item.original_description}</div>
                         )}
                       </td>
-                      <td style={{ padding: 5 }}>{item.quantity || 1} {item.unit || "PZ"}</td>
-                      <td style={{ padding: 5, textAlign: "right" }}>€ {item.price?.toFixed(2)}</td>
-                      <td style={{ padding: 5, textAlign: "right", fontWeight: "bold" }}>
+                      <td style={styles.td}>{item.quantity || 1} {item.unit || "PZ"}</td>
+                      <td style={{ ...styles.td, textAlign: 'right' }}>€ {item.price?.toFixed(2)}</td>
+                      <td style={{ ...styles.td, textAlign: 'right', fontWeight: 'bold' }}>
                         € {((item.price || 0) * (item.quantity || 1)).toFixed(2)}
                       </td>
                     </tr>
@@ -356,175 +458,118 @@ export default function OrdiniFornitori() {
       )}
 
       {/* Lista Ordini */}
-      <div className="card">
-        <div className="h1">📋 Storico Ordini ({orders.length})</div>
+      <div style={styles.card}>
+        <h2 style={styles.header}>📋 Storico Ordini ({orders.length})</h2>
 
         {loading ? (
-          <div className="small">Caricamento...</div>
+          <div style={styles.emptyState}>
+            <div style={{ fontSize: 32, marginBottom: 12 }}>⏳</div>
+            <p>Caricamento...</p>
+          </div>
         ) : orders.length === 0 ? (
-          <div className="small" style={{ color: "#999" }}>
-            Nessun ordine generato. Aggiungi prodotti al carrello dalla pagina "Ricerca Prodotti".
+          <div style={styles.emptyState}>
+            <div style={{ fontSize: 48, marginBottom: 16 }}>📭</div>
+            <p style={{ margin: 0 }}>Nessun ordine generato</p>
+            <p style={{ margin: '8px 0 0 0', fontSize: 14 }}>
+              Aggiungi prodotti al carrello dalla pagina &quot;Ricerca Prodotti&quot;
+            </p>
           </div>
         ) : (
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr style={{ borderBottom: "2px solid #ddd", textAlign: "left" }}>
-                <th style={{ padding: 10 }}>N° Ordine</th>
-                <th style={{ padding: 10 }}>Data</th>
-                <th style={{ padding: 10 }}>Fornitore</th>
-                <th style={{ padding: 10 }}>Prodotti</th>
-                <th style={{ padding: 10, textAlign: "right" }}>Totale</th>
-                <th style={{ padding: 10 }}>Stato</th>
-                <th style={{ padding: 10 }}>Azioni</th>
-              </tr>
-            </thead>
-            <tbody>
-              {orders.map((order, i) => {
-                const statusStyle = getStatusColor(order.status);
-                return (
-                  <tr key={order.id || i} style={{ borderBottom: "1px solid #eee" }}>
-                    <td style={{ padding: 10, fontWeight: "bold" }}>
-                      #{order.order_number}
-                    </td>
-                    <td style={{ padding: 10 }}>
-                      {formatDateIT(order.created_at)}
-                    </td>
-                    <td style={{ padding: 10 }}>
-                      <strong>{order.supplier_name}</strong>
-                    </td>
-                    <td style={{ padding: 10 }}>
-                      {order.items?.length || 0} prodotti
-                    </td>
-                    <td style={{ padding: 10, textAlign: "right", fontWeight: "bold" }}>
-                      € {(order.total || order.subtotal || 0).toFixed(2)}
-                    </td>
-                    <td style={{ padding: 10 }}>
-                      <select
-                        value={order.status}
-                        onChange={(e) => handleUpdateStatus(order.id, e.target.value)}
-                        style={{ 
-                          background: statusStyle.bg, 
-                          color: statusStyle.color,
-                          border: "none",
-                          padding: "5px 10px",
-                          borderRadius: 15,
-                          fontWeight: "bold",
-                          cursor: "pointer"
-                        }}
-                      >
-                        <option value="bozza">Bozza</option>
-                        <option value="inviato">Inviato</option>
-                        <option value="confermato">Confermato</option>
-                        <option value="consegnato">Consegnato</option>
-                        <option value="annullato">Annullato</option>
-                      </select>
-                    </td>
-                    <td style={{ padding: 10 }}>
-                      <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
-                        <button 
-                          onClick={() => handleDownloadPDF(order)}
-                          style={{ background: "#e3f2fd", color: "#1976d2", padding: "5px 10px", border: "none", borderRadius: 4, cursor: "pointer" }}
-                          title="Scarica PDF"
-                          data-testid={`download-pdf-${order.id}`}
+          <div style={{ overflowX: 'auto' }}>
+            <table style={styles.table}>
+              <thead>
+                <tr>
+                  <th style={styles.th}>N° Ordine</th>
+                  <th style={styles.th}>Data</th>
+                  <th style={styles.th}>Fornitore</th>
+                  <th style={styles.th}>Prodotti</th>
+                  <th style={{ ...styles.th, textAlign: 'right' }}>Totale</th>
+                  <th style={styles.th}>Stato</th>
+                  <th style={styles.th}>Azioni</th>
+                </tr>
+              </thead>
+              <tbody>
+                {orders.map((order, i) => {
+                  const statusStyle = getStatusStyle(order.status);
+                  return (
+                    <tr key={order.id || i}>
+                      <td style={{ ...styles.td, fontWeight: 'bold' }}>#{order.order_number}</td>
+                      <td style={styles.td}>{formatDateIT(order.created_at)}</td>
+                      <td style={styles.td}><strong>{order.supplier_name}</strong></td>
+                      <td style={styles.td}>{order.items?.length || 0} prodotti</td>
+                      <td style={{ ...styles.td, textAlign: 'right', fontWeight: 'bold' }}>
+                        € {(order.total || order.subtotal || 0).toFixed(2)}
+                      </td>
+                      <td style={styles.td}>
+                        <select
+                          value={order.status}
+                          onChange={(e) => handleUpdateStatus(order.id, e.target.value)}
+                          style={{ 
+                            background: statusStyle.bg, 
+                            color: statusStyle.color,
+                            border: 'none',
+                            padding: '6px 12px',
+                            borderRadius: 20,
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            fontSize: 12
+                          }}
                         >
-                          📄
-                        </button>
-                        <button 
-                          onClick={() => handlePrintOrder(order)}
-                          style={{ background: "#f3e8ff", color: "#7c3aed", padding: "5px 10px", border: "none", borderRadius: 4, cursor: "pointer" }}
-                          title="Stampa"
-                        >
-                          🖨️
-                        </button>
-                        <button 
-                          onClick={() => handleSendEmail(order)}
-                          disabled={sendingEmail === order.id}
-                          style={{ background: "#e8f5e9", color: "#2e7d32", padding: "5px 10px", border: "none", borderRadius: 4, cursor: "pointer" }}
-                          title="Invia Email"
-                        >
-                          {sendingEmail === order.id ? "..." : "📧"}
-                        </button>
-                        <button 
-                          onClick={() => setSelectedOrder(order)}
-                          style={{ background: "#fff3e0", color: "#e65100", padding: "5px 10px", border: "none", borderRadius: 4, cursor: "pointer" }}
-                          title="Dettaglio"
-                        >
-                          👁️
-                        </button>
-                        <button 
-                          onClick={() => handleDeleteOrder(order.id)}
-                          style={{ background: "#ffcdd2", color: "#c62828", padding: "5px 10px", border: "none", borderRadius: 4, cursor: "pointer" }}
-                          title="Elimina"
-                        >
-                          🗑️
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                          <option value="bozza">Bozza</option>
+                          <option value="inviato">Inviato</option>
+                          <option value="confermato">Confermato</option>
+                          <option value="consegnato">Consegnato</option>
+                          <option value="annullato">Annullato</option>
+                        </select>
+                      </td>
+                      <td style={styles.td}>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <button onClick={() => handleDownloadPDF(order)} style={styles.btnSecondary} title="Scarica PDF" data-testid={`download-pdf-${order.id}`}>📄</button>
+                          <button onClick={() => handlePrintOrder(order)} style={styles.btnSecondary} title="Stampa">🖨️</button>
+                          <button onClick={() => handleSendEmail(order)} disabled={sendingEmail === order.id} style={styles.btnSecondary} title="Invia Email">
+                            {sendingEmail === order.id ? "..." : "📧"}
+                          </button>
+                          <button onClick={() => setSelectedOrder(order)} style={styles.btnSecondary} title="Dettaglio">👁️</button>
+                          <button onClick={() => handleDeleteOrder(order.id)} style={{ ...styles.btnSecondary, background: '#fef2f2', color: '#dc2626' }} title="Elimina">🗑️</button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
       {/* Riepilogo */}
-      <div className="card" style={{ background: "#e8f5e9" }}>
-        <div className="h1">Riepilogo</div>
-        <div className="grid">
-          <div>
-            <strong>Ordini Totali</strong>
-            <div style={{ fontSize: 24, fontWeight: "bold", color: "#2e7d32" }}>
-              {orders.length}
-            </div>
+      <div style={styles.cardGreen}>
+        <h2 style={styles.header}>📊 Riepilogo</h2>
+        <div style={styles.grid4}>
+          <div style={styles.statCard}>
+            <div style={{ fontSize: 28, fontWeight: 'bold', color: '#166534' }}>{orders.length}</div>
+            <div style={{ fontSize: 13, color: '#64748b' }}>Ordini Totali</div>
           </div>
-          <div>
-            <strong>In Bozza</strong>
-            <div style={{ fontSize: 24, fontWeight: "bold", color: "#666" }}>
-              {orders.filter(o => o.status === "bozza").length}
-            </div>
+          <div style={styles.statCard}>
+            <div style={{ fontSize: 28, fontWeight: 'bold', color: '#64748b' }}>{orders.filter(o => o.status === "bozza").length}</div>
+            <div style={{ fontSize: 13, color: '#64748b' }}>In Bozza</div>
           </div>
-          <div>
-            <strong>Inviati</strong>
-            <div style={{ fontSize: 24, fontWeight: "bold", color: "#1976d2" }}>
-              {orders.filter(o => o.status === "inviato").length}
-            </div>
+          <div style={styles.statCard}>
+            <div style={{ fontSize: 28, fontWeight: 'bold', color: '#1e40af' }}>{orders.filter(o => o.status === "inviato").length}</div>
+            <div style={{ fontSize: 13, color: '#64748b' }}>Inviati</div>
           </div>
-          <div>
-            <strong>Consegnati</strong>
-            <div style={{ fontSize: 24, fontWeight: "bold", color: "#388e3c" }}>
-              {orders.filter(o => o.status === "consegnato").length}
-            </div>
+          <div style={styles.statCard}>
+            <div style={{ fontSize: 28, fontWeight: 'bold', color: '#059669' }}>{orders.filter(o => o.status === "consegnato").length}</div>
+            <div style={{ fontSize: 13, color: '#64748b' }}>Consegnati</div>
           </div>
         </div>
       </div>
 
       {/* Modal Dettaglio Ordine */}
       {selectedOrder && (
-        <div 
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.5)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 9999
-          }}
-          onClick={() => setSelectedOrder(null)}
-        >
-          <div 
-            style={{
-              background: "white",
-              borderRadius: 12,
-              width: "90%",
-              maxWidth: 700,
-              maxHeight: "80vh",
-              overflow: "auto"
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div style={{ padding: 20, borderBottom: "1px solid #eee", background: "#1a365d", color: "white", borderRadius: "12px 12px 0 0" }}>
+        <div style={styles.modal} onClick={() => setSelectedOrder(null)}>
+          <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div style={styles.modalHeader}>
               <h2 style={{ margin: 0 }}>Ordine #{selectedOrder.order_number}</h2>
               <div style={{ fontSize: 13, opacity: 0.8, marginTop: 5 }}>
                 {selectedOrder.supplier_name} | {formatDateIT(selectedOrder.created_at)}
@@ -532,75 +577,47 @@ export default function OrdiniFornitori() {
             </div>
             
             <div style={{ padding: 20 }}>
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <table style={styles.table}>
                 <thead>
-                  <tr style={{ background: "#f5f5f5" }}>
-                    <th style={{ padding: 10, textAlign: "left" }}>Prodotto</th>
-                    <th style={{ padding: 10 }}>Qtà</th>
-                    <th style={{ padding: 10, textAlign: "right" }}>Prezzo</th>
-                    <th style={{ padding: 10, textAlign: "right" }}>Totale</th>
+                  <tr>
+                    <th style={styles.th}>Prodotto</th>
+                    <th style={styles.th}>Qtà</th>
+                    <th style={{ ...styles.th, textAlign: 'right' }}>Prezzo</th>
+                    <th style={{ ...styles.th, textAlign: 'right' }}>Totale</th>
                   </tr>
                 </thead>
                 <tbody>
                   {(selectedOrder.items || []).map((item, i) => (
-                    <tr key={i} style={{ borderBottom: "1px solid #eee" }}>
-                      <td style={{ padding: 10 }}>{item.product_name || item.description}</td>
-                      <td style={{ padding: 10, textAlign: "center" }}>{item.quantity || 1} {item.unit || "PZ"}</td>
-                      <td style={{ padding: 10, textAlign: "right" }}>€ {(item.unit_price || 0).toFixed(2)}</td>
-                      <td style={{ padding: 10, textAlign: "right", fontWeight: "bold" }}>€ {((item.unit_price || 0) * (item.quantity || 1)).toFixed(2)}</td>
+                    <tr key={i}>
+                      <td style={styles.td}>{item.product_name || item.description}</td>
+                      <td style={{ ...styles.td, textAlign: 'center' }}>{item.quantity || 1} {item.unit || "PZ"}</td>
+                      <td style={{ ...styles.td, textAlign: 'right' }}>€ {(item.unit_price || 0).toFixed(2)}</td>
+                      <td style={{ ...styles.td, textAlign: 'right', fontWeight: 'bold' }}>€ {((item.unit_price || 0) * (item.quantity || 1)).toFixed(2)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
               
-              <div style={{ marginTop: 20, textAlign: "right", borderTop: "2px solid #1a365d", paddingTop: 15 }}>
+              <div style={{ marginTop: 20, textAlign: 'right', borderTop: '2px solid #1e3a5f', paddingTop: 15 }}>
                 <div>Imponibile: € {(selectedOrder.subtotal || 0).toFixed(2)}</div>
                 <div>IVA (22%): € {((selectedOrder.subtotal || 0) * 0.22).toFixed(2)}</div>
-                <div style={{ fontSize: 20, fontWeight: "bold", color: "#1a365d", marginTop: 10 }}>
+                <div style={{ fontSize: 20, fontWeight: 'bold', color: '#1e3a5f', marginTop: 10 }}>
                   TOTALE: € {((selectedOrder.subtotal || 0) * 1.22).toFixed(2)}
                 </div>
               </div>
             </div>
             
-            <div style={{ padding: 15, borderTop: "1px solid #eee", display: "flex", gap: 10, justifyContent: "flex-end" }}>
-              <button 
-                onClick={() => handleDownloadPDF(selectedOrder)} 
-                style={{ background: "#e3f2fd", color: "#1976d2", padding: "8px 16px", border: "none", borderRadius: 6, cursor: "pointer" }}
-                data-testid="modal-download-pdf"
-              >
-                📄 Scarica PDF
-              </button>
-              <button 
-                onClick={() => handlePrintOrder(selectedOrder)} 
-                style={{ background: "#f3e8ff", color: "#7c3aed", padding: "8px 16px", border: "none", borderRadius: 6, cursor: "pointer" }}
-              >
-                🖨️ Stampa
-              </button>
-              <button 
-                onClick={() => handleSendEmail(selectedOrder)} 
-                disabled={sendingEmail === selectedOrder.id}
-                style={{ 
-                  background: sendingEmail === selectedOrder.id ? "#9ca3af" : "#e8f5e9", 
-                  color: sendingEmail === selectedOrder.id ? "white" : "#2e7d32", 
-                  padding: "8px 16px", 
-                  border: "none", 
-                  borderRadius: 6, 
-                  cursor: sendingEmail === selectedOrder.id ? "not-allowed" : "pointer" 
-                }}
-                data-testid="modal-send-email"
-              >
+            <div style={{ padding: 15, borderTop: '1px solid #eee', display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button onClick={() => handleDownloadPDF(selectedOrder)} style={{ ...styles.btnSecondary, background: '#dbeafe', color: '#1e40af' }} data-testid="modal-download-pdf">📄 Scarica PDF</button>
+              <button onClick={() => handlePrintOrder(selectedOrder)} style={{ ...styles.btnSecondary, background: '#f3e8ff', color: '#7c3aed' }}>🖨️ Stampa</button>
+              <button onClick={() => handleSendEmail(selectedOrder)} disabled={sendingEmail === selectedOrder.id} style={{ ...styles.btnSecondary, background: '#dcfce7', color: '#166534' }} data-testid="modal-send-email">
                 {sendingEmail === selectedOrder.id ? "Invio..." : "📧 Invia Email"}
               </button>
-              <button 
-                onClick={() => setSelectedOrder(null)} 
-                style={{ background: "#f5f5f5", padding: "8px 16px", border: "none", borderRadius: 6, cursor: "pointer" }}
-              >
-                Chiudi
-              </button>
+              <button onClick={() => setSelectedOrder(null)} style={styles.btnSecondary}>Chiudi</button>
             </div>
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }
