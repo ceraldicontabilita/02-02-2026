@@ -77,7 +77,7 @@ export default function VerificaCoerenza() {
           </p>
         </div>
         <Button onClick={loadAll} disabled={loading} data-testid="btn-ricarica-verifica">
-          <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+          <RefreshCw style={loading ? { animation: 'spin 1s linear infinite', height: 16, width: 16, marginRight: 8 } : { height: 16, width: 16, marginRight: 8 }} />
           Ricarica
         </Button>
       </div>
