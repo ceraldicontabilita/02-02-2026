@@ -1485,8 +1485,8 @@ async def get_dati_etichetta(lotto_id: str):
             "fornitore": lotto.get("fornitore", ""),
             "data_scadenza": lotto.get("data_scadenza", ""),
             "fattura_numero": lotto.get("fattura_numero") or lotto.get("fattura_riferimento", ""),
-            "fattura_data": lotto.get("fattura_data", ""),
-            "quantita": f"{lotto.get('quantita_iniziale', 0)} {lotto.get('unita_misura', 'pz')}",
+            "fattura_data": lotto.get("fattura_data") or lotto.get("data_produzione", ""),
+            "quantita": f"{lotto.get('quantita_iniziale') or lotto.get('quantita', 0)} {lotto.get('unita_misura', 'pz')}",
             "qr_data": fattura_url
         }
     }
