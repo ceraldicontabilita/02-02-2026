@@ -379,6 +379,63 @@ async def get_bank_pending_invoices(
         "invoices": results
     }
 
+
+@router.post(
+    "/paga-anno/{anno}",
+    response_model=Dict[str, Any],
+    summary="Paga tutte le fatture di un anno",
+    description="Marca come pagate tutte le fatture XML di un determinato anno"
+)
+async def paga_fatture_anno(
+    anno: int = Path(..., description="Anno delle fatture da pagare (es. 2024)")
+) -> Dict[str, Any]:
+    """
+    Marca come pagate tutte le fatture di un anno specifico.
+    
+    **Nota:** Questa operazione è irreversibile.
+    """
+    db = Database.get_db()
+    now = datetime.utcnow().isoformat()
+    
+    # Query per trovare fatture dell'anno non pagate
+    query = {
+        "$or": [
+            {"data": {"$regex": f"^{anno}"}},
+            {"invoice_date": {"$regex": f"^{anno}"}},
+            {"data_fattura": {"$regex": f"^{anno}"}}
+        ],
+        "pagato": {"$ne": True}
+    }
+    
+    # Conta prima
+    count_before = await db[Collections.INVOICES].count_documents(query)
+    
+    if count_before == 0:
+        return {
+            "success": True,
+            "message": f"Nessuna fattura del {anno} da pagare",
+            "fatture_pagate": 0
+        }
+    
+    # Aggiorna tutte come pagate
+    result = await db[Collections.INVOICES].update_many(
+        query,
+        {"$set": {
+            "pagato": True,
+            "paid": True,
+            "data_pagamento": now,
+            "note_pagamento": f"Pagata automaticamente - batch {anno}"
+        }}
+    )
+    
+    return {
+        "success": True,
+        "message": f"Pagate {result.modified_count} fatture del {anno}",
+        "fatture_pagate": result.modified_count,
+        "anno": anno
+    }
+
+
 @router.get(
     "/{invoice_id}",
     response_model=Dict[str, Any],
