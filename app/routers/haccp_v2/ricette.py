@@ -21,14 +21,24 @@ def set_pulisci_funzione(funzione):
 
 # ==================== MODELLI ====================
 
-class RicettaCreate(BaseModel):
+class Ingrediente(BaseModel):
+    model_config = ConfigDict(extra="allow")
     nome: str
-    ingredienti: List[str] = []
+    quantita: Optional[float] = 0
+    unita: Optional[str] = ""
+    prodotto_id: Optional[str] = None
 
-class Ricetta(RicettaCreate):
-    model_config = ConfigDict(extra="ignore")
+class RicettaCreate(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    nome: str
+    ingredienti: List[Ingrediente] = []
+
+class Ricetta(BaseModel):
+    model_config = ConfigDict(extra="allow")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    nome: str
+    ingredienti: List[Ingrediente] = []
+    created_at: Optional[str] = None
 
 # ==================== ENDPOINTS ====================
 
