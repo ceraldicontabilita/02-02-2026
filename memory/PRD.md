@@ -150,6 +150,11 @@ Ragione Sociale;Data contabile;Data valuta;Banca;Rapporto;Importo;Divisa;Descriz
   - Dubbi salvati in operazioni_da_confermare
 - ✅ Nuovo router `/api/riconciliazione-auto/` con endpoint riconcilia-estratto-conto
 - ✅ Import estratto conto ora avvia automaticamente la riconciliazione
+- ✅ **UNIFORMAZIONE STILE UI**
+  - Creato `/app/frontend/src/styles/common.css` con stile comune
+  - Riscritta pagina `/operazioni-da-confermare` con nuovo stile
+  - Riscritta pagina `/riconciliazione` con nuovo stile
+  - Entrambe le pagine ora usano lo stesso design system
 
 ### 2026-01-10 (Sessione 1)
 - ✅ **CENTRALIZZAZIONE IMPORT COMPLETATA**
