@@ -563,8 +563,7 @@ export default function ImportExport() {
       extension: ".csv",
       endpoint: "/api/prima-nota-auto/import-versamenti",
       desc: "CSV singoli/multipli, ZIP, ZIP annidati. Duplicati ignorati automaticamente",
-      templateUrl: "/api/import-templates/versamenti",
-      isBatch: true
+      templateUrl: "/api/import-templates/versamenti"
     },
     { 
       id: "pos", 
@@ -573,8 +572,7 @@ export default function ImportExport() {
       extension: ".xlsx",
       endpoint: "/api/prima-nota-auto/import-pos",
       desc: "XLSX singoli/multipli, ZIP, ZIP annidati. Duplicati ignorati automaticamente",
-      templateUrl: "/api/import-templates/pos",
-      isBatch: true
+      templateUrl: "/api/import-templates/pos"
     },
     { 
       id: "corrispettivi", 
@@ -583,8 +581,7 @@ export default function ImportExport() {
       extension: ".xlsx",
       endpoint: "/api/prima-nota-auto/import-corrispettivi",
       desc: "XLSX singoli/multipli, ZIP, ZIP annidati. Duplicati ignorati automaticamente",
-      templateUrl: "/api/import-templates/corrispettivi",
-      isBatch: true
+      templateUrl: "/api/import-templates/corrispettivi"
     },
     { 
       id: "estratto-conto", 
@@ -593,8 +590,7 @@ export default function ImportExport() {
       extension: ".csv",
       endpoint: "/api/estratto-conto-movimenti/import",
       desc: "CSV singoli/multipli, ZIP, ZIP annidati. Duplicati ignorati automaticamente",
-      templateUrl: "/api/import-templates/estratto-conto",
-      isBatch: true
+      templateUrl: "/api/import-templates/estratto-conto"
     },
     { 
       id: "f24", 
