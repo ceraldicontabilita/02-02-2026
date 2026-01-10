@@ -8,7 +8,36 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Building2, Users, Calendar, Calculator, AlertTriangle, Plus, Pencil, Trash2, X, Check } from 'lucide-react';
 
-const Label = ({ children }) => <label className="text-xs font-medium text-slate-600">{children}</label>;
+const styles = {
+  container: { padding: 12, maxWidth: 1200, margin: '0 auto' },
+  header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
+  title: { fontSize: 18, fontWeight: 'bold', color: '#1e293b', display: 'flex', alignItems: 'center', gap: 8 },
+  label: { fontSize: 11, fontWeight: '500', color: '#475569', marginBottom: 4, display: 'block' },
+  grid2: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 },
+  grid3: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 },
+  grid4: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 },
+  card: { background: 'white', borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.1)', marginBottom: 12 },
+  cardContent: { padding: 8 },
+  input: { height: 28, fontSize: 12 },
+  btn: { height: 28, fontSize: 12 },
+  statBox: (bg) => ({ background: bg, padding: 8, borderRadius: 6, textAlign: 'center' }),
+  statLabel: (color) => ({ fontSize: 11, color: color }),
+  statValue: (color) => ({ fontSize: 18, fontWeight: 'bold', color: color }),
+  table: { width: '100%', fontSize: 12, borderCollapse: 'collapse' },
+  th: { padding: '4px 8px', textAlign: 'left', background: '#f8fafc', fontWeight: '600', color: '#475569' },
+  thRight: { padding: '4px 8px', textAlign: 'right', background: '#f8fafc', fontWeight: '600', color: '#475569' },
+  thCenter: { padding: '4px 8px', textAlign: 'center', background: '#f8fafc', fontWeight: '600', color: '#475569' },
+  td: { padding: '4px 8px', borderBottom: '1px solid #f1f5f9' },
+  tdRight: { padding: '4px 8px', borderBottom: '1px solid #f1f5f9', textAlign: 'right' },
+  tdCenter: { padding: '4px 8px', borderBottom: '1px solid #f1f5f9', textAlign: 'center' },
+  row: { display: 'flex', alignItems: 'center', gap: 8 },
+  icon: { width: 12, height: 12 },
+  iconMd: { width: 16, height: 16 },
+  iconLg: { width: 20, height: 20 },
+  small: { fontSize: 11, color: '#64748b' },
+  urgentBox: { background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: 8, marginBottom: 12 },
+  formCard: { background: 'white', border: '1px solid #bfdbfe', borderRadius: 8, padding: 8, marginBottom: 12 }
+};
 
 export default function GestioneCespiti() {
   const { anno } = useAnnoGlobale();
@@ -38,14 +67,14 @@ export default function GestioneCespiti() {
       setCespiti(c.data); setRiepilogoCespiti(r.data);
     } catch (e) { console.error(e); } finally { setLoading(false); }
   };
-  const loadCategorie = async () => { try { const r = await api.get('/api/cespiti/categorie'); setCategorie(r.data.categorie); } catch (e) {} };
-  const loadTFR = async () => { try { setLoading(true); const r = await api.get(`/api/tfr/riepilogo-aziendale?anno=${anno}`); setRiepilogoTFR(r.data); } catch (e) {} finally { setLoading(false); } };
+  const loadCategorie = async () => { try { const r = await api.get('/api/cespiti/categorie'); setCategorie(r.data.categorie); } catch (e) { console.error(e); } };
+  const loadTFR = async () => { try { setLoading(true); const r = await api.get(`/api/tfr/riepilogo-aziendale?anno=${anno}`); setRiepilogoTFR(r.data); } catch (e) { console.error(e); } finally { setLoading(false); } };
   const loadScadenzario = async () => {
     try {
       setLoading(true);
       const [s, u] = await Promise.all([api.get(`/api/scadenzario-fornitori/?anno=${anno}`), api.get('/api/scadenzario-fornitori/urgenti')]);
       setScadenzario(s.data); setUrgenti(u.data);
-    } catch (e) {} finally { setLoading(false); }
+    } catch (e) { console.error(e); } finally { setLoading(false); }
   };
 
   const handleCreaCespite = async () => {
@@ -64,175 +93,119 @@ export default function GestioneCespiti() {
 
   const handleEditCespite = (cespite) => {
     setEditingCespite(cespite.id);
-    setEditData({
-      descrizione: cespite.descrizione,
-      fornitore: cespite.fornitore || '',
-      note: cespite.note || '',
-      valore_acquisto: cespite.valore_acquisto,
-      data_acquisto: cespite.data_acquisto
-    });
+    setEditData({ descrizione: cespite.descrizione, fornitore: cespite.fornitore || '', note: cespite.note || '', valore_acquisto: cespite.valore_acquisto, data_acquisto: cespite.data_acquisto });
   };
 
   const handleSaveEdit = async () => {
     try {
       await api.put(`/api/cespiti/${editingCespite}`, editData);
-      setEditingCespite(null);
-      setEditData({});
-      loadCespiti();
-    } catch (e) {
-      alert('Errore: ' + (e.response?.data?.detail || e.message));
-    }
+      setEditingCespite(null); setEditData({}); loadCespiti();
+    } catch (e) { alert('Errore: ' + (e.response?.data?.detail || e.message)); }
   };
 
-  const handleCancelEdit = () => {
-    setEditingCespite(null);
-    setEditData({});
-  };
+  const handleCancelEdit = () => { setEditingCespite(null); setEditData({}); };
 
   const handleDeleteCespite = async (cespite) => {
     if (!window.confirm(`Eliminare il cespite "${cespite.descrizione}"?\n\nQuesta operazione è irreversibile.`)) return;
-    try {
-      await api.delete(`/api/cespiti/${cespite.id}`);
-      loadCespiti();
-    } catch (e) {
-      alert('Errore: ' + (e.response?.data?.detail || e.message));
-    }
+    try { await api.delete(`/api/cespiti/${cespite.id}`); loadCespiti(); } catch (e) { alert('Errore: ' + (e.response?.data?.detail || e.message)); }
   };
 
   const fmt = (v) => v != null ? new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(v) : '-';
 
   return (
-    <div className="p-3 space-y-3" data-testid="gestione-cespiti-page">
-      <div className="flex items-center justify-between">
-        <h1 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-          <Building2 className="w-5 h-5 text-indigo-600" /> Cespiti & TFR
-        </h1>
-        <span className="text-sm font-semibold text-slate-600">{anno}</span>
+    <div style={styles.container} data-testid="gestione-cespiti-page">
+      <div style={styles.header}>
+        <h1 style={styles.title}><Building2 style={{ ...styles.iconLg, color: '#4f46e5' }} /> Cespiti &amp; TFR</h1>
+        <span style={{ fontSize: 14, fontWeight: '600', color: '#475569' }}>{anno}</span>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="h-8">
-          <TabsTrigger value="cespiti" className="text-xs h-7 px-3"><Building2 className="w-3 h-3 mr-1" />Cespiti</TabsTrigger>
-          <TabsTrigger value="tfr" className="text-xs h-7 px-3"><Users className="w-3 h-3 mr-1" />TFR</TabsTrigger>
-          <TabsTrigger value="scadenzario" className="text-xs h-7 px-3"><Calendar className="w-3 h-3 mr-1" />Scadenzario</TabsTrigger>
+        <TabsList style={{ height: 32 }}>
+          <TabsTrigger value="cespiti" style={{ fontSize: 12, height: 28, padding: '0 12px' }}><Building2 style={styles.icon} />Cespiti</TabsTrigger>
+          <TabsTrigger value="tfr" style={{ fontSize: 12, height: 28, padding: '0 12px' }}><Users style={styles.icon} />TFR</TabsTrigger>
+          <TabsTrigger value="scadenzario" style={{ fontSize: 12, height: 28, padding: '0 12px' }}><Calendar style={styles.icon} />Scadenzario</TabsTrigger>
         </TabsList>
 
         {/* CESPITI */}
-        <TabsContent value="cespiti" className="mt-2 space-y-2">
+        <TabsContent value="cespiti" style={{ marginTop: 8 }}>
           {riepilogoCespiti && (
-            <div className="grid grid-cols-4 gap-2">
-              <div className="bg-blue-50 p-2 rounded text-center"><p className="text-xs text-blue-600">Cespiti</p><p className="text-lg font-bold text-blue-800">{riepilogoCespiti.totali.num_cespiti}</p></div>
-              <div className="bg-green-50 p-2 rounded text-center"><p className="text-xs text-green-600">Val. Acq.</p><p className="text-lg font-bold text-green-800">{fmt(riepilogoCespiti.totali.valore_acquisto)}</p></div>
-              <div className="bg-amber-50 p-2 rounded text-center"><p className="text-xs text-amber-600">Fondo</p><p className="text-lg font-bold text-amber-800">{fmt(riepilogoCespiti.totali.fondo_ammortamento)}</p></div>
-              <div className="bg-purple-50 p-2 rounded text-center"><p className="text-xs text-purple-600">Netto</p><p className="text-lg font-bold text-purple-800">{fmt(riepilogoCespiti.totali.valore_netto_contabile)}</p></div>
+            <div style={{ ...styles.grid4, marginBottom: 12 }}>
+              <div style={styles.statBox('#eff6ff')}><p style={styles.statLabel('#2563eb')}>Cespiti</p><p style={styles.statValue('#1e40af')}>{riepilogoCespiti.totali.num_cespiti}</p></div>
+              <div style={styles.statBox('#f0fdf4')}><p style={styles.statLabel('#16a34a')}>Val. Acq.</p><p style={styles.statValue('#166534')}>{fmt(riepilogoCespiti.totali.valore_acquisto)}</p></div>
+              <div style={styles.statBox('#fffbeb')}><p style={styles.statLabel('#d97706')}>Fondo</p><p style={styles.statValue('#b45309')}>{fmt(riepilogoCespiti.totali.fondo_ammortamento)}</p></div>
+              <div style={styles.statBox('#faf5ff')}><p style={styles.statLabel('#9333ea')}>Netto</p><p style={styles.statValue('#7c3aed')}>{fmt(riepilogoCespiti.totali.valore_netto_contabile)}</p></div>
             </div>
           )}
-          <div className="flex gap-2">
-            <Button onClick={() => setShowForm(!showForm)} size="sm" className="h-7 text-xs"><Plus className="w-3 h-3 mr-1" />Nuovo</Button>
-            <Button onClick={handleCalcolaAmm} variant="outline" size="sm" className="h-7 text-xs"><Calculator className="w-3 h-3 mr-1" />Ammort. {anno}</Button>
+          <div style={{ ...styles.row, marginBottom: 8 }}>
+            <Button onClick={() => setShowForm(!showForm)} size="sm" style={styles.btn}><Plus style={styles.icon} />Nuovo</Button>
+            <Button onClick={handleCalcolaAmm} variant="outline" size="sm" style={styles.btn}><Calculator style={styles.icon} />Ammort. {anno}</Button>
           </div>
           {showForm && (
-            <Card className="border-blue-200 shadow-sm">
-              <CardContent className="p-2 space-y-2">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                  <div><Label>Descrizione*</Label><Input value={nuovoCespite.descrizione} onChange={(e) => setNuovoCespite({...nuovoCespite, descrizione: e.target.value})} className="h-7 text-xs" placeholder="Es: Forno" /></div>
-                  <div><Label>Categoria*</Label>
-                    <Select value={nuovoCespite.categoria} onValueChange={(v) => setNuovoCespite({...nuovoCespite, categoria: v})}>
-                      <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="..." /></SelectTrigger>
-                      <SelectContent>{categorie.map(c => <SelectItem key={c.codice} value={c.codice} className="text-xs">{c.descrizione} ({c.coefficiente}%)</SelectItem>)}</SelectContent>
-                    </Select>
-                  </div>
-                  <div><Label>Data Acq.*</Label><Input type="date" value={nuovoCespite.data_acquisto} onChange={(e) => setNuovoCespite({...nuovoCespite, data_acquisto: e.target.value})} className="h-7 text-xs" /></div>
-                  <div><Label>Valore*</Label><Input type="number" value={nuovoCespite.valore_acquisto} onChange={(e) => setNuovoCespite({...nuovoCespite, valore_acquisto: e.target.value})} className="h-7 text-xs" placeholder="0" /></div>
+            <div style={styles.formCard}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 8 }}>
+                <div><label style={styles.label}>Descrizione*</label><Input value={nuovoCespite.descrizione} onChange={(e) => setNuovoCespite({...nuovoCespite, descrizione: e.target.value})} style={styles.input} placeholder="Es: Forno" /></div>
+                <div><label style={styles.label}>Categoria*</label>
+                  <Select value={nuovoCespite.categoria} onValueChange={(v) => setNuovoCespite({...nuovoCespite, categoria: v})}>
+                    <SelectTrigger style={{ height: 28, fontSize: 12 }}><SelectValue placeholder="..." /></SelectTrigger>
+                    <SelectContent>{categorie.map(c => <SelectItem key={c.codice} value={c.codice}>{c.descrizione} ({c.coefficiente}%)</SelectItem>)}</SelectContent>
+                  </Select>
                 </div>
-                <div className="flex gap-2">
-                  <Button onClick={handleCreaCespite} size="sm" className="h-7 text-xs">Salva</Button>
-                  <Button onClick={() => setShowForm(false)} variant="outline" size="sm" className="h-7 text-xs">Annulla</Button>
-                </div>
-              </CardContent>
-            </Card>
+                <div><label style={styles.label}>Data Acq.*</label><Input type="date" value={nuovoCespite.data_acquisto} onChange={(e) => setNuovoCespite({...nuovoCespite, data_acquisto: e.target.value})} style={styles.input} /></div>
+                <div><label style={styles.label}>Valore*</label><Input type="number" value={nuovoCespite.valore_acquisto} onChange={(e) => setNuovoCespite({...nuovoCespite, valore_acquisto: e.target.value})} style={styles.input} placeholder="0" /></div>
+              </div>
+              <div style={styles.row}>
+                <Button onClick={handleCreaCespite} size="sm" style={styles.btn}>Salva</Button>
+                <Button onClick={() => setShowForm(false)} variant="outline" size="sm" style={styles.btn}>Annulla</Button>
+              </div>
+            </div>
           )}
-          <Card className="shadow-sm">
-            <CardContent className="p-2">
-              {loading ? <div className="text-center py-2 text-xs text-slate-500">Caricamento...</div>
-              : cespiti.length === 0 ? <div className="text-center py-2 text-xs text-slate-500">Nessun cespite</div>
+          <div style={styles.card}>
+            <div style={styles.cardContent}>
+              {loading ? <div style={{ textAlign: 'center', padding: 8, ...styles.small }}>Caricamento...</div>
+              : cespiti.length === 0 ? <div style={{ textAlign: 'center', padding: 8, ...styles.small }}>Nessun cespite</div>
               : (
-                <table className="w-full text-xs">
-                  <thead className="bg-slate-100">
+                <table style={styles.table}>
+                  <thead>
                     <tr>
-                      <th className="px-2 py-1 text-left">Descrizione</th>
-                      <th className="px-2 py-1 text-left">Categoria</th>
-                      <th className="px-2 py-1 text-center">%</th>
-                      <th className="px-2 py-1 text-right">Valore</th>
-                      <th className="px-2 py-1 text-right">Fondo</th>
-                      <th className="px-2 py-1 text-right">Residuo</th>
-                      <th className="px-2 py-1 text-center w-20">Azioni</th>
+                      <th style={styles.th}>Descrizione</th>
+                      <th style={styles.th}>Categoria</th>
+                      <th style={styles.thCenter}>%</th>
+                      <th style={styles.thRight}>Valore</th>
+                      <th style={styles.thRight}>Fondo</th>
+                      <th style={styles.thRight}>Residuo</th>
+                      <th style={{ ...styles.thCenter, width: 80 }}>Azioni</th>
                     </tr>
                   </thead>
                   <tbody>
                     {cespiti.map((c, i) => (
-                      <tr key={i} className="border-b hover:bg-slate-50">
+                      <tr key={i}>
                         {editingCespite === c.id ? (
                           <>
-                            <td className="px-2 py-1">
-                              <Input 
-                                value={editData.descrizione} 
-                                onChange={(e) => setEditData({...editData, descrizione: e.target.value})}
-                                className="h-6 text-xs"
-                              />
-                            </td>
-                            <td className="px-2 py-1 text-slate-600">{c.categoria}</td>
-                            <td className="px-2 py-1 text-center">{c.coefficiente_ammortamento}%</td>
-                            <td className="px-2 py-1 text-right">
-                              <Input 
-                                type="number"
-                                value={editData.valore_acquisto} 
-                                onChange={(e) => setEditData({...editData, valore_acquisto: parseFloat(e.target.value)})}
-                                className="h-6 text-xs w-20 text-right"
-                              />
-                            </td>
-                            <td className="px-2 py-1 text-right text-amber-600">{fmt(c.fondo_ammortamento)}</td>
-                            <td className="px-2 py-1 text-right font-semibold">{fmt(c.valore_residuo)}</td>
-                            <td className="px-2 py-1 text-center">
-                              <div className="flex gap-1 justify-center">
-                                <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={handleSaveEdit}>
-                                  <Check className="w-3 h-3 text-green-600" />
-                                </Button>
-                                <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={handleCancelEdit}>
-                                  <X className="w-3 h-3 text-slate-500" />
-                                </Button>
+                            <td style={styles.td}><Input value={editData.descrizione} onChange={(e) => setEditData({...editData, descrizione: e.target.value})} style={{ height: 24, fontSize: 11 }} /></td>
+                            <td style={{ ...styles.td, color: '#475569' }}>{c.categoria}</td>
+                            <td style={styles.tdCenter}>{c.coefficiente_ammortamento}%</td>
+                            <td style={styles.tdRight}><Input type="number" value={editData.valore_acquisto} onChange={(e) => setEditData({...editData, valore_acquisto: parseFloat(e.target.value)})} style={{ height: 24, fontSize: 11, width: 80, textAlign: 'right' }} /></td>
+                            <td style={{ ...styles.tdRight, color: '#d97706' }}>{fmt(c.fondo_ammortamento)}</td>
+                            <td style={{ ...styles.tdRight, fontWeight: '600' }}>{fmt(c.valore_residuo)}</td>
+                            <td style={styles.tdCenter}>
+                              <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
+                                <Button size="sm" variant="ghost" style={{ height: 24, width: 24, padding: 0 }} onClick={handleSaveEdit}><Check style={{ width: 12, height: 12, color: '#16a34a' }} /></Button>
+                                <Button size="sm" variant="ghost" style={{ height: 24, width: 24, padding: 0 }} onClick={handleCancelEdit}><X style={{ width: 12, height: 12, color: '#64748b' }} /></Button>
                               </div>
                             </td>
                           </>
                         ) : (
                           <>
-                            <td className="px-2 py-1 font-medium">{c.descrizione}</td>
-                            <td className="px-2 py-1 text-slate-600">{c.categoria}</td>
-                            <td className="px-2 py-1 text-center">{c.coefficiente_ammortamento}%</td>
-                            <td className="px-2 py-1 text-right">{fmt(c.valore_acquisto)}</td>
-                            <td className="px-2 py-1 text-right text-amber-600">{fmt(c.fondo_ammortamento)}</td>
-                            <td className="px-2 py-1 text-right font-semibold">{fmt(c.valore_residuo)}</td>
-                            <td className="px-2 py-1 text-center">
-                              <div className="flex gap-1 justify-center">
-                                <Button 
-                                  size="sm" 
-                                  variant="ghost" 
-                                  className="h-6 w-6 p-0" 
-                                  onClick={() => handleEditCespite(c)}
-                                  title="Modifica"
-                                >
-                                  <Pencil className="w-3 h-3 text-blue-600" />
-                                </Button>
-                                <Button 
-                                  size="sm" 
-                                  variant="ghost" 
-                                  className="h-6 w-6 p-0" 
-                                  onClick={() => handleDeleteCespite(c)}
-                                  title="Elimina"
-                                  disabled={c.piano_ammortamento?.length > 0}
-                                >
-                                  <Trash2 className="w-3 h-3 text-red-600" />
-                                </Button>
+                            <td style={{ ...styles.td, fontWeight: '500' }}>{c.descrizione}</td>
+                            <td style={{ ...styles.td, color: '#475569' }}>{c.categoria}</td>
+                            <td style={styles.tdCenter}>{c.coefficiente_ammortamento}%</td>
+                            <td style={styles.tdRight}>{fmt(c.valore_acquisto)}</td>
+                            <td style={{ ...styles.tdRight, color: '#d97706' }}>{fmt(c.fondo_ammortamento)}</td>
+                            <td style={{ ...styles.tdRight, fontWeight: '600' }}>{fmt(c.valore_residuo)}</td>
+                            <td style={styles.tdCenter}>
+                              <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
+                                <Button size="sm" variant="ghost" style={{ height: 24, width: 24, padding: 0 }} onClick={() => handleEditCespite(c)} title="Modifica"><Pencil style={{ width: 12, height: 12, color: '#2563eb' }} /></Button>
+                                <Button size="sm" variant="ghost" style={{ height: 24, width: 24, padding: 0 }} onClick={() => handleDeleteCespite(c)} title="Elimina" disabled={c.piano_ammortamento?.length > 0}><Trash2 style={{ width: 12, height: 12, color: '#dc2626' }} /></Button>
                               </div>
                             </td>
                           </>
@@ -242,66 +215,66 @@ export default function GestioneCespiti() {
                   </tbody>
                 </table>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </TabsContent>
 
         {/* TFR */}
-        <TabsContent value="tfr" className="mt-2 space-y-2">
+        <TabsContent value="tfr" style={{ marginTop: 8 }}>
           {riepilogoTFR && (
             <>
-              <div className="grid grid-cols-3 gap-2">
-                <div className="bg-indigo-50 p-2 rounded text-center"><p className="text-xs text-indigo-600">Fondo TFR</p><p className="text-xl font-bold text-indigo-800">{fmt(riepilogoTFR.totale_fondo_tfr)}</p></div>
-                <div className="bg-green-50 p-2 rounded text-center"><p className="text-xs text-green-600">Accantonato {anno}</p><p className="text-lg font-bold text-green-800">{fmt(riepilogoTFR.accantonamenti_anno.totale_accantonato)}</p></div>
-                <div className="bg-red-50 p-2 rounded text-center"><p className="text-xs text-red-600">Liquidato {anno}</p><p className="text-lg font-bold text-red-800">{fmt(riepilogoTFR.liquidazioni_anno.totale_netto)}</p></div>
+              <div style={{ ...styles.grid3, marginBottom: 12 }}>
+                <div style={styles.statBox('#eef2ff')}><p style={styles.statLabel('#4f46e5')}>Fondo TFR</p><p style={styles.statValue('#4338ca')}>{fmt(riepilogoTFR.totale_fondo_tfr)}</p></div>
+                <div style={styles.statBox('#f0fdf4')}><p style={styles.statLabel('#16a34a')}>Accantonato {anno}</p><p style={styles.statValue('#166534')}>{fmt(riepilogoTFR.accantonamenti_anno.totale_accantonato)}</p></div>
+                <div style={styles.statBox('#fef2f2')}><p style={styles.statLabel('#dc2626')}>Liquidato {anno}</p><p style={styles.statValue('#b91c1c')}>{fmt(riepilogoTFR.liquidazioni_anno.totale_netto)}</p></div>
               </div>
-              <Card className="shadow-sm">
-                <CardHeader className="py-1 px-2"><CardTitle className="text-xs">TFR per Dipendente</CardTitle></CardHeader>
-                <CardContent className="p-2">
-                  {riepilogoTFR.dettaglio_dipendenti.length === 0 ? <div className="text-xs text-slate-500 text-center">Nessun TFR</div>
-                  : <div className="space-y-1">{riepilogoTFR.dettaglio_dipendenti.map((d, i) => (
-                    <div key={i} className="flex justify-between items-center p-1.5 bg-slate-50 rounded text-xs">
-                      <span>{d.nome}</span><span className="font-bold text-indigo-700">{fmt(d.tfr_accantonato)}</span>
+              <div style={styles.card}>
+                <div style={{ padding: '4px 8px', borderBottom: '1px solid #f1f5f9' }}><span style={{ fontSize: 12, fontWeight: '600' }}>TFR per Dipendente</span></div>
+                <div style={styles.cardContent}>
+                  {riepilogoTFR.dettaglio_dipendenti.length === 0 ? <div style={{ ...styles.small, textAlign: 'center' }}>Nessun TFR</div>
+                  : <div>{riepilogoTFR.dettaglio_dipendenti.map((d, i) => (
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 8px', background: '#f8fafc', borderRadius: 4, marginBottom: 4, fontSize: 12 }}>
+                      <span>{d.nome}</span><span style={{ fontWeight: 'bold', color: '#4f46e5' }}>{fmt(d.tfr_accantonato)}</span>
                     </div>
                   ))}</div>}
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </>
           )}
         </TabsContent>
 
         {/* SCADENZARIO */}
-        <TabsContent value="scadenzario" className="mt-2 space-y-2">
+        <TabsContent value="scadenzario" style={{ marginTop: 8 }}>
           {urgenti && urgenti.num_urgenti > 0 && (
-            <div className="bg-red-50 border border-red-200 rounded p-2">
-              <div className="flex items-center gap-2 text-red-700 text-xs font-semibold mb-1">
-                <AlertTriangle className="w-4 h-4" />Urgenti: {urgenti.num_urgenti} fatture
+            <div style={styles.urgentBox}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#b91c1c', fontSize: 12, fontWeight: '600', marginBottom: 8 }}>
+                <AlertTriangle style={styles.iconMd} />Urgenti: {urgenti.num_urgenti} fatture
               </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div className="bg-white p-1.5 rounded text-center"><p className="text-xs text-red-600">Scadute</p><p className="font-bold text-red-800">{urgenti.num_scadute} | {fmt(urgenti.totale_scaduto)}</p></div>
-                <div className="bg-white p-1.5 rounded text-center"><p className="text-xs text-amber-600">In Scadenza</p><p className="font-bold text-amber-800">{urgenti.num_urgenti - urgenti.num_scadute} | {fmt(urgenti.totale_urgente - urgenti.totale_scaduto)}</p></div>
+              <div style={styles.grid2}>
+                <div style={{ background: 'white', padding: 6, borderRadius: 4, textAlign: 'center' }}><p style={styles.statLabel('#dc2626')}>Scadute</p><p style={{ fontWeight: 'bold', color: '#b91c1c' }}>{urgenti.num_scadute} | {fmt(urgenti.totale_scaduto)}</p></div>
+                <div style={{ background: 'white', padding: 6, borderRadius: 4, textAlign: 'center' }}><p style={styles.statLabel('#d97706')}>In Scadenza</p><p style={{ fontWeight: 'bold', color: '#b45309' }}>{urgenti.num_urgenti - urgenti.num_scadute} | {fmt(urgenti.totale_urgente - urgenti.totale_scaduto)}</p></div>
               </div>
             </div>
           )}
           {scadenzario && (
             <>
-              <div className="grid grid-cols-4 gap-2">
-                <div className="bg-slate-50 p-2 rounded text-center"><p className="text-xs text-slate-600">Fatture</p><p className="text-lg font-bold">{scadenzario.riepilogo.totale_fatture}</p></div>
-                <div className="bg-blue-50 p-2 rounded text-center"><p className="text-xs text-blue-600">Da Pagare</p><p className="text-lg font-bold text-blue-800">{fmt(scadenzario.riepilogo.totale_da_pagare)}</p></div>
-                <div className="bg-red-50 p-2 rounded text-center"><p className="text-xs text-red-600">Scaduto</p><p className="text-lg font-bold text-red-800">{fmt(scadenzario.riepilogo.totale_scaduto)}</p></div>
-                <div className="bg-amber-50 p-2 rounded text-center"><p className="text-xs text-amber-600">7gg</p><p className="text-lg font-bold text-amber-800">{scadenzario.riepilogo.num_prossimi_7gg}</p></div>
+              <div style={{ ...styles.grid4, marginBottom: 12 }}>
+                <div style={styles.statBox('#f8fafc')}><p style={styles.statLabel('#475569')}>Fatture</p><p style={{ fontSize: 18, fontWeight: 'bold' }}>{scadenzario.riepilogo.totale_fatture}</p></div>
+                <div style={styles.statBox('#eff6ff')}><p style={styles.statLabel('#2563eb')}>Da Pagare</p><p style={styles.statValue('#1e40af')}>{fmt(scadenzario.riepilogo.totale_da_pagare)}</p></div>
+                <div style={styles.statBox('#fef2f2')}><p style={styles.statLabel('#dc2626')}>Scaduto</p><p style={styles.statValue('#b91c1c')}>{fmt(scadenzario.riepilogo.totale_scaduto)}</p></div>
+                <div style={styles.statBox('#fffbeb')}><p style={styles.statLabel('#d97706')}>7gg</p><p style={styles.statValue('#b45309')}>{scadenzario.riepilogo.num_prossimi_7gg}</p></div>
               </div>
-              <Card className="shadow-sm">
-                <CardHeader className="py-1 px-2"><CardTitle className="text-xs">Top Fornitori</CardTitle></CardHeader>
-                <CardContent className="p-2">
-                  <div className="space-y-1">{scadenzario.per_fornitore.slice(0, 8).map((f, i) => (
-                    <div key={i} className="flex justify-between items-center p-1.5 bg-slate-50 rounded text-xs">
-                      <span className="truncate max-w-[200px]">{f.fornitore} <span className="text-slate-400">({f.num_fatture})</span></span>
-                      <span className="font-bold">{fmt(f.totale)}</span>
+              <div style={styles.card}>
+                <div style={{ padding: '4px 8px', borderBottom: '1px solid #f1f5f9' }}><span style={{ fontSize: 12, fontWeight: '600' }}>Top Fornitori</span></div>
+                <div style={styles.cardContent}>
+                  <div>{scadenzario.per_fornitore.slice(0, 8).map((f, i) => (
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 8px', background: '#f8fafc', borderRadius: 4, marginBottom: 4, fontSize: 12 }}>
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 200 }}>{f.fornitore} <span style={{ color: '#94a3b8' }}>({f.num_fatture})</span></span>
+                      <span style={{ fontWeight: 'bold' }}>{fmt(f.totale)}</span>
                     </div>
                   ))}</div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </>
           )}
         </TabsContent>
