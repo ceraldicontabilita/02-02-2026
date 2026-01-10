@@ -318,7 +318,7 @@ export default function ImportExport() {
     const multiRef = useRef(null);
     const zipRef = useRef(null);
     
-    const { id, label, icon, extension, endpoint, desc, templateUrl, isBatch, isBonifici } = config;
+    const { id, label, icon, extension, endpoint, desc, templateUrl, isBonifici } = config;
     
     const isActive = activeImport === id;
     const fileAccept = extension === '.xml' ? '.xml' :
@@ -330,9 +330,7 @@ export default function ImportExport() {
       const file = e.target.files?.[0];
       if (!file) return;
       
-      if (isBatch) {
-        await processBatchFile(file, { endpoint, type: id });
-      } else if (isBonifici) {
+      if (isBonifici) {
         await processBonifici([file]);
       } else {
         await processFiles([file], { extension, endpoint, type: id, extractZip: false });
