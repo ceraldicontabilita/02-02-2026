@@ -3,7 +3,37 @@
 ## Overview
 Sistema ERP completo per la gestione contabile di piccole/medie imprese italiane. Include gestione fatture, prima nota, riconciliazione bancaria, IVA, F24, HACCP e report.
 
-## MODULO HACCP AVANZATO E RICETTARIO DINAMICO (2026-01-10) ✅ COMPLETATO
+## NUOVE FUNZIONALITÀ (2026-01-10) ✅ COMPLETATO
+
+### 1. Associazione Bonifici ↔ Prima Nota Salari
+- **Dropdown associazione**: Nella tabella bonifici, colonna "Associa a Salario" con menu a tendina
+- **Ricerca automatica**: Mostra operazioni compatibili da Prima Nota Salari (importo ±10%, data ±30gg)
+- **Score compatibilità**: Calcola percentuale match (importo, data, nome causale)
+- **Endpoints**:
+  - `GET /api/archivio-bonifici/operazioni-salari/{bonifico_id}` - Cerca operazioni compatibili
+  - `POST /api/archivio-bonifici/associa-salario` - Associa bonifico a operazione
+  - `DELETE /api/archivio-bonifici/disassocia-salario/{bonifico_id}` - Rimuovi associazione
+
+### 2. Libro degli Allergeni (Reg. UE 1169/2011)
+- **14 allergeni obbligatori UE** rilevati automaticamente dagli ingredienti
+- **Pagina frontend**: `/libro-allergeni` con tabella ingredienti/allergeni stampabile
+- **Funzionalità PDF**: Stampa libro da esporre nel locale
+- **Modificabile**: Aggiungi/rimuovi voci manuali
+- **Statistiche**: 86 ingredienti, 30 con allergeni, 6 tipi rilevati
+- **Endpoints**:
+  - `GET /api/haccp-v2/allergeni/elenco` - Lista 14 allergeni UE
+  - `GET /api/haccp-v2/allergeni/libro` - Genera libro completo
+  - `POST /api/haccp-v2/allergeni/libro/voce` - Aggiungi voce manuale
+  - `GET /api/haccp-v2/allergeni/ricetta/{id}` - Allergeni per etichetta
+
+### 3. Allergeni nelle Etichette
+- **Box allergeni evidenziato** nell'etichetta lotto (sfondo giallo, testo rosso)
+- **Formato**: "⚠️ CONTIENE: GLUTINE, LATTE, UOVA"
+- **Rilevamento automatico** dal nome ingrediente
+
+---
+
+## MODULO HACCP AVANZATO E RICETTARIO DINAMICO ✅ COMPLETATO
 
 ### Ricettario Dinamico XML-Driven
 - **Collegamento ingredienti a fatture XML**: Ogni ingrediente può essere tracciato alla fattura di origine
