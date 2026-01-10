@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from "react";
 import api from "../api";
 import { formatDateIT, formatEuro } from "../lib/utils";
-import { 
-  FileCheck, Plus, RefreshCw, Edit, Check, X, ArrowUp, ArrowDown
-} from "lucide-react";
 
 export default function Assegni() {
   const [checks, setChecks] = useState([]);
@@ -79,60 +76,94 @@ export default function Assegni() {
     });
   }
 
+  const inputStyle = {
+    padding: '10px 12px',
+    borderRadius: 8,
+    border: '2px solid #e5e7eb',
+    fontSize: 14,
+    width: '100%',
+    boxSizing: 'border-box'
+  };
+
   return (
-    <div className="max-w-7xl mx-auto p-4 space-y-6">
+    <div style={{ padding: 20, maxWidth: 1400, margin: '0 auto' }}>
+      
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-emerald-500 rounded-xl flex items-center justify-center text-white">
-            <FileCheck size={24} />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Gestione Assegni</h1>
-            <p className="text-sm text-gray-500">Registro assegni emessi e ricevuti</p>
-          </div>
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        marginBottom: 20,
+        padding: '15px 20px',
+        background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
+        borderRadius: 12,
+        color: 'white',
+        flexWrap: 'wrap',
+        gap: 10
+      }}>
+        <div>
+          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 'bold' }}>📝 Gestione Assegni</h1>
+          <p style={{ margin: '4px 0 0 0', fontSize: 13, opacity: 0.9 }}>
+            Registro assegni emessi e ricevuti
+          </p>
         </div>
-        <div className="flex gap-2">
+        <div style={{ display: 'flex', gap: 10 }}>
           <button 
             onClick={() => setShowForm(!showForm)}
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-medium transition"
+            style={{ 
+              padding: '10px 20px',
+              background: '#4caf50',
+              color: 'white',
+              border: 'none',
+              borderRadius: 8,
+              cursor: 'pointer',
+              fontWeight: 'bold'
+            }}
           >
-            <Plus size={16} /> Nuovo Assegno
+            ➕ Nuovo Assegno
           </button>
           <button 
             onClick={loadChecks}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition"
+            style={{ 
+              padding: '10px 20px',
+              background: 'rgba(255,255,255,0.2)',
+              color: 'white',
+              border: 'none',
+              borderRadius: 8,
+              cursor: 'pointer',
+              fontWeight: '600'
+            }}
           >
-            <RefreshCw size={16} /> Aggiorna
+            🔄 Aggiorna
           </button>
         </div>
       </div>
 
       {err && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2">
-          <X size={16} /> {err}
+        <div style={{ padding: 12, background: '#fee2e2', border: '1px solid #fecaca', borderRadius: 8, color: '#dc2626', marginBottom: 20 }}>
+          ❌ {err}
         </div>
       )}
 
       {/* Form Nuovo Assegno */}
       {showForm && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h2 className="text-lg font-bold mb-4">Registra Assegno</h2>
-          <form onSubmit={handleCreateCheck} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div style={{ background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', marginBottom: 20 }}>
+          <h2 style={{ margin: '0 0 16px 0', fontSize: 18 }}>📝 Registra Assegno</h2>
+          <form onSubmit={handleCreateCheck}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 16 }}>
               <div>
-                <label className="text-sm font-medium text-gray-700">Tipo</label>
+                <label style={{ display: 'block', marginBottom: 6, fontSize: 13, fontWeight: '600' }}>Tipo</label>
                 <select
                   value={newCheck.type}
                   onChange={(e) => setNewCheck({ ...newCheck, type: e.target.value })}
-                  className="w-full mt-1 px-3 py-2 border border-gray-200 rounded-lg"
+                  style={inputStyle}
                 >
                   <option value="emesso">Emesso (da pagare)</option>
                   <option value="ricevuto">Ricevuto (da incassare)</option>
                 </select>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700">Importo €</label>
+                <label style={{ display: 'block', marginBottom: 6, fontSize: 13, fontWeight: '600' }}>Importo €</label>
                 <input
                   type="number"
                   step="0.01"
@@ -140,82 +171,82 @@ export default function Assegni() {
                   value={newCheck.amount}
                   onChange={(e) => setNewCheck({ ...newCheck, amount: e.target.value })}
                   required
-                  className="w-full mt-1 px-3 py-2 border border-gray-200 rounded-lg"
+                  style={inputStyle}
                 />
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700">Beneficiario/Emittente</label>
+                <label style={{ display: 'block', marginBottom: 6, fontSize: 13, fontWeight: '600' }}>Beneficiario/Emittente</label>
                 <input
                   placeholder="Nome"
                   value={newCheck.beneficiary}
                   onChange={(e) => setNewCheck({ ...newCheck, beneficiary: e.target.value })}
                   required
-                  className="w-full mt-1 px-3 py-2 border border-gray-200 rounded-lg"
+                  style={inputStyle}
                 />
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 16 }}>
               <div>
-                <label className="text-sm font-medium text-gray-700">Numero Assegno</label>
+                <label style={{ display: 'block', marginBottom: 6, fontSize: 13, fontWeight: '600' }}>Numero Assegno</label>
                 <input
                   placeholder="N. Assegno"
                   value={newCheck.check_number}
                   onChange={(e) => setNewCheck({ ...newCheck, check_number: e.target.value })}
-                  className="w-full mt-1 px-3 py-2 border border-gray-200 rounded-lg"
+                  style={inputStyle}
                 />
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700">Banca</label>
+                <label style={{ display: 'block', marginBottom: 6, fontSize: 13, fontWeight: '600' }}>Banca</label>
                 <input
                   placeholder="Nome banca"
                   value={newCheck.bank}
                   onChange={(e) => setNewCheck({ ...newCheck, bank: e.target.value })}
-                  className="w-full mt-1 px-3 py-2 border border-gray-200 rounded-lg"
+                  style={inputStyle}
                 />
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700">Scadenza</label>
+                <label style={{ display: 'block', marginBottom: 6, fontSize: 13, fontWeight: '600' }}>Scadenza</label>
                 <input
                   type="date"
                   value={newCheck.due_date}
                   onChange={(e) => setNewCheck({ ...newCheck, due_date: e.target.value })}
-                  className="w-full mt-1 px-3 py-2 border border-gray-200 rounded-lg"
+                  style={inputStyle}
                 />
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 16 }}>
               <div>
-                <label className="text-sm font-medium text-gray-700">Fornitore (per riconciliazione)</label>
+                <label style={{ display: 'block', marginBottom: 6, fontSize: 13, fontWeight: '600' }}>Fornitore (per riconciliazione)</label>
                 <input
                   placeholder="Nome fornitore"
                   value={newCheck.fornitore}
                   onChange={(e) => setNewCheck({ ...newCheck, fornitore: e.target.value })}
-                  className="w-full mt-1 px-3 py-2 border border-gray-200 rounded-lg"
+                  style={inputStyle}
                 />
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700">Numero Fattura</label>
+                <label style={{ display: 'block', marginBottom: 6, fontSize: 13, fontWeight: '600' }}>Numero Fattura</label>
                 <input
                   placeholder="N. Fattura"
                   value={newCheck.numero_fattura}
                   onChange={(e) => setNewCheck({ ...newCheck, numero_fattura: e.target.value })}
-                  className="w-full mt-1 px-3 py-2 border border-gray-200 rounded-lg"
+                  style={inputStyle}
                 />
               </div>
             </div>
-            <div className="flex gap-2 justify-end">
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
               <button 
                 type="button" 
                 onClick={() => setShowForm(false)}
-                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition"
+                style={{ padding: '10px 20px', background: '#e5e7eb', color: '#374151', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: '600' }}
               >
                 Annulla
               </button>
               <button 
                 type="submit"
-                className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-medium transition"
+                style={{ padding: '10px 20px', background: '#4caf50', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 'bold' }}
               >
-                Registra
+                ✅ Registra
               </button>
             </div>
           </form>
@@ -223,105 +254,109 @@ export default function Assegni() {
       )}
 
       {/* Lista Assegni */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-100">
-          <h2 className="text-lg font-bold">Elenco Assegni ({checks.length})</h2>
-          <p className="text-sm text-gray-500 mt-1">
+      <div style={{ background: 'white', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', overflow: 'hidden' }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid #e5e7eb' }}>
+          <h2 style={{ margin: 0, fontSize: 18 }}>📋 Elenco Assegni ({checks.length})</h2>
+          <p style={{ margin: '4px 0 0 0', fontSize: 13, color: '#6b7280' }}>
             Compila Fornitore e N. Fattura per aiutare la riconciliazione automatica
           </p>
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-12">
-            <RefreshCw className="animate-spin text-emerald-500" size={32} />
+          <div style={{ padding: 40, textAlign: 'center', color: '#6b7280' }}>
+            ⏳ Caricamento...
           </div>
         ) : checks.length === 0 ? (
-          <div className="text-center py-12">
-            <FileCheck size={48} className="mx-auto text-gray-300 mb-4" />
-            <p className="text-gray-500">Nessun assegno registrato</p>
+          <div style={{ padding: 40, textAlign: 'center' }}>
+            <div style={{ fontSize: 48, marginBottom: 16 }}>📝</div>
+            <div style={{ color: '#6b7280' }}>Nessun assegno registrato</div>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-100">
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Tipo</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Numero</th>
-                  <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">Importo</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Beneficiario</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Fornitore</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">N. Fattura</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Scadenza</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Stato</th>
-                  <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700">Azioni</th>
+                <tr style={{ background: '#f9fafb', borderBottom: '2px solid #e5e7eb' }}>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', fontSize: 13 }}>Tipo</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', fontSize: 13 }}>Numero</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'right', fontWeight: '600', fontSize: 13 }}>Importo</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', fontSize: 13 }}>Beneficiario</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', fontSize: 13 }}>Fornitore</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', fontSize: 13 }}>N. Fattura</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', fontSize: 13 }}>Scadenza</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', fontSize: 13 }}>Stato</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'center', fontWeight: '600', fontSize: 13 }}>Azioni</th>
                 </tr>
               </thead>
               <tbody>
                 {checks.map((c, i) => (
-                  <tr key={c.id || i} className="border-b border-gray-50 hover:bg-gray-50">
-                    <td className="px-4 py-3">
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${
-                        c.type === "emesso" ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"
-                      }`}>
-                        {c.type === "emesso" ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
-                        {c.type === "emesso" ? "Emesso" : "Ricevuto"}
+                  <tr key={c.id || i} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                    <td style={{ padding: '12px 16px' }}>
+                      <span style={{ 
+                        padding: '4px 10px', 
+                        borderRadius: 6, 
+                        fontSize: 11, 
+                        fontWeight: '600',
+                        background: c.type === "emesso" ? '#fee2e2' : '#dcfce7',
+                        color: c.type === "emesso" ? '#dc2626' : '#16a34a'
+                      }}>
+                        {c.type === "emesso" ? "⬆️ Emesso" : "⬇️ Ricevuto"}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm">{c.check_number || c.numero || "-"}</td>
-                    <td className="px-4 py-3 text-right font-bold">{formatEuro(c.amount || c.importo)}</td>
-                    <td className="px-4 py-3 text-sm">{c.beneficiary || c.beneficiario || "-"}</td>
-                    <td className="px-4 py-3">
+                    <td style={{ padding: '12px 16px', fontSize: 13 }}>{c.check_number || c.numero || "-"}</td>
+                    <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 'bold' }}>{formatEuro(c.amount || c.importo)}</td>
+                    <td style={{ padding: '12px 16px', fontSize: 13 }}>{c.beneficiary || c.beneficiario || "-"}</td>
+                    <td style={{ padding: '12px 16px' }}>
                       {editingId === c.id ? (
                         <input
                           value={editData.fornitore || ""}
                           onChange={(e) => setEditData({ ...editData, fornitore: e.target.value })}
-                          className="w-full px-2 py-1 border border-gray-200 rounded text-sm"
+                          style={{ padding: '6px 10px', border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 13, width: '100%' }}
                           placeholder="Fornitore"
                         />
                       ) : (
-                        <span className={c.fornitore ? "text-gray-900" : "text-gray-400"}>{c.fornitore || "-"}</span>
+                        <span style={{ color: c.fornitore ? '#111' : '#9ca3af' }}>{c.fornitore || "-"}</span>
                       )}
                     </td>
-                    <td className="px-4 py-3">
+                    <td style={{ padding: '12px 16px' }}>
                       {editingId === c.id ? (
                         <input
                           value={editData.numero_fattura || ""}
                           onChange={(e) => setEditData({ ...editData, numero_fattura: e.target.value })}
-                          className="w-24 px-2 py-1 border border-gray-200 rounded text-sm"
+                          style={{ padding: '6px 10px', border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 13, width: 80 }}
                           placeholder="N. Fatt."
                         />
                       ) : (
-                        <span className={c.numero_fattura ? "text-gray-900" : "text-gray-400"}>{c.numero_fattura || "-"}</span>
+                        <span style={{ color: c.numero_fattura ? '#111' : '#9ca3af' }}>{c.numero_fattura || "-"}</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-sm">{formatDateIT(c.due_date || c.data_scadenza) || "-"}</td>
-                    <td className="px-4 py-3">
-                      <span className="px-2 py-0.5 bg-amber-100 text-amber-700 rounded text-xs font-medium">
+                    <td style={{ padding: '12px 16px', fontSize: 13 }}>{formatDateIT(c.due_date || c.data_scadenza) || "-"}</td>
+                    <td style={{ padding: '12px 16px' }}>
+                      <span style={{ padding: '4px 10px', background: '#fef3c7', color: '#d97706', borderRadius: 6, fontSize: 11, fontWeight: '600' }}>
                         {c.status || c.stato || "pending"}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-center">
+                    <td style={{ padding: '12px 16px', textAlign: 'center' }}>
                       {editingId === c.id ? (
-                        <div className="flex gap-1 justify-center">
+                        <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
                           <button 
                             onClick={() => handleUpdateCheck(c.id)} 
-                            className="p-1.5 bg-green-100 hover:bg-green-200 text-green-700 rounded"
+                            style={{ padding: '6px 10px', background: '#dcfce7', color: '#16a34a', border: 'none', borderRadius: 6, cursor: 'pointer' }}
                           >
-                            <Check size={14} />
+                            ✅
                           </button>
                           <button 
                             onClick={() => setEditingId(null)} 
-                            className="p-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded"
+                            style={{ padding: '6px 10px', background: '#e5e7eb', color: '#374151', border: 'none', borderRadius: 6, cursor: 'pointer' }}
                           >
-                            <X size={14} />
+                            ✕
                           </button>
                         </div>
                       ) : (
                         <button 
                           onClick={() => startEdit(c)} 
-                          className="p-1.5 hover:bg-blue-50 text-blue-600 rounded"
+                          style={{ padding: '6px 10px', background: '#dbeafe', color: '#2563eb', border: 'none', borderRadius: 6, cursor: 'pointer' }}
                         >
-                          <Edit size={16} />
+                          ✏️
                         </button>
                       )}
                     </td>
