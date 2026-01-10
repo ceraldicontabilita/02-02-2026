@@ -787,10 +787,10 @@ export default function HACCPCompleto() {
           )}
 
           {/* HACCP Views */}
-          {activeTab === 'disinfestazione' && <DisinfestazioneView />}
-          {activeTab === 'sanificazione' && <SanificazioneView />}
-          {activeTab === 'temp-neg' && <TemperatureNegativeView />}
-          {activeTab === 'temp-pos' && <TemperaturePositiveView />}
+          {activeTab === 'disinfestazione' && <DisinfestazioneView annoGlobale={annoGlobale} />}
+          {activeTab === 'sanificazione' && <SanificazioneView annoGlobale={annoGlobale} />}
+          {activeTab === 'temp-neg' && <TemperatureNegativeView annoGlobale={annoGlobale} />}
+          {activeTab === 'temp-pos' && <TemperaturePositiveView annoGlobale={annoGlobale} />}
           {activeTab === 'anomalie' && <AnomalieView />}
           {activeTab === 'manuale' && <ManualeHACCPView />}
         </>
