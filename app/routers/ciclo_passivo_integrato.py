@@ -1428,7 +1428,7 @@ async def scarico_produzione_fefo(
                 },
                 {
                     "conto": "MAGAZZINO",
-                    "descrizione": f"Rettifica giacenza",
+                    "descrizione": "Rettifica giacenza",
                     "dare": 0,
                     "avere": valore_totale_scarico
                 }
