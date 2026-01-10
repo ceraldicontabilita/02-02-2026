@@ -233,11 +233,12 @@ export default function Magazzino() {
         </div>
       )}
 
+      {/* Form Nuovo Prodotto */}
       {showForm && (
-        <div className="card">
-          <div className="h1">Nuovo Prodotto</div>
+        <div style={cardStyle}>
+          <h2 style={{ margin: '0 0 16px 0', fontSize: 18, fontWeight: 'bold', color: '#1e3a5f' }}>➕ Nuovo Prodotto</h2>
           <form onSubmit={handleCreateProduct}>
-            <div className="row" style={{ marginBottom: 10 }}>
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
               <input
                 placeholder="Nome Prodotto"
                 value={newProduct.name}
