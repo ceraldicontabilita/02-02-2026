@@ -1312,22 +1312,6 @@ async def import_corrispettivi_xml(
     except Exception as e:
         logger.error(f"Error importing corrispettivi XML: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-        await db[COLLECTION_PRIMA_NOTA_CASSA].insert_one(movimento)
-        
-        results["imported"] = 1
-        results["corrispettivi"].append({
-            "data": data,
-            "totale_lordo": totale_lordo,
-            "pagato_contanti": pagato_contanti,
-            "pagato_elettronico": pagato_elettronico,
-            "imponibile": totale_imponibile,
-            "imposta": totale_imposta,
-            "dettaglio_iva": dettaglio_iva
-        })
-        
-        return {
-            "success": True,
-            "message": f"Importato corrispettivo del {data}: €{totale_lordo:.2f}",
             **results
         }
         
