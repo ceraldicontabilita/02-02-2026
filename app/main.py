@@ -159,7 +159,8 @@ from app.routers.haccp_v2 import (
     ricettario_dinamico_router as haccp_ricettario,
     non_conformi_router as haccp_non_conformi,
     fornitori_router as haccp_fornitori,
-    libro_allergeni_router as haccp_allergeni
+    libro_allergeni_router as haccp_allergeni,
+    ricette_web_search_router as haccp_ricette_web
 )
 
 
