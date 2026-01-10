@@ -79,15 +79,20 @@ export default function Assegni() {
   }
 
   return (
-    <>
-      <div className="card">
-        <div className="h1">Gestione Assegni</div>
-        <div className="row">
-          <button className="primary" onClick={() => setShowForm(!showForm)}>+ Nuovo Assegno</button>
-          <button onClick={loadChecks}>🔄 Aggiorna</button>
+    <div className="page-container">
+      {/* Header */}
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">📝 Gestione Assegni</h1>
+          <p className="page-subtitle">Registro assegni emessi e ricevuti</p>
         </div>
-        {err && <div className="small" style={{ color: "#c00", marginTop: 10 }}>{err}</div>}
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn btn-primary" onClick={() => setShowForm(!showForm)}>+ Nuovo Assegno</button>
+          <button className="btn btn-outline" onClick={loadChecks}>🔄 Aggiorna</button>
+        </div>
       </div>
+      
+      {err && <div style={{ padding: 12, background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8, color: "#dc2626", marginBottom: 20 }}>{err}</div>}
 
       {showForm && (
         <div className="card">
