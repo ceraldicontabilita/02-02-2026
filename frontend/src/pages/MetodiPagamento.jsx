@@ -281,9 +281,9 @@ export default function MetodiPagamento() {
                         }}>
                           {f.metodo_pagamento}
                         </span>
-                        <div className="small" style={{ color: "#666", marginTop: 2 }}>
+                        <span style={{ fontSize: 12, color: '#6b7280', display: 'block', marginTop: 2 }}>
                           {f.descrizione_metodo}
-                        </div>
+                        </span>
                       </td>
                       <td style={{ padding: 10, fontWeight: "bold" }}>
                         {f.giorni_pagamento} gg
