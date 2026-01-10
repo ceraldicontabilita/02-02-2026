@@ -34,11 +34,16 @@ export default function HACCPCompleto() {
       const [mpRes, ricRes, lotRes] = await Promise.all([
         api.get('/api/haccp-v2/materie-prime').catch(() => ({ data: [] })),
         api.get('/api/haccp-v2/ricette').catch(() => ({ data: [] })),
-        api.get('/api/haccp-v2/lotti').catch(() => ({ data: [] }))
+        api.get('/api/haccp-v2/lotti').catch(() => ({ data: { items: [] } }))
       ]);
-      setMateriePrime(mpRes.data || []);
-      setRicette(ricRes.data || []);
-      setLotti(lotRes.data || []);
+      // Gestisci sia array che oggetti con items
+      const mp = Array.isArray(mpRes.data) ? mpRes.data : (mpRes.data?.items || []);
+      const ric = Array.isArray(ricRes.data) ? ricRes.data : (ricRes.data?.items || []);
+      const lot = Array.isArray(lotRes.data) ? lotRes.data : (lotRes.data?.items || []);
+      
+      setMateriePrime(mp);
+      setRicette(ric);
+      setLotti(lot);
     } catch (e) { console.error(e); }
     setLoading(false);
   };
