@@ -258,6 +258,6 @@ export default function Assegni() {
           </table>
         )}
       </div>
-    </>
+    </div>
   );
 }
