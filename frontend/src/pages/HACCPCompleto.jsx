@@ -287,7 +287,7 @@ const SanificazioneView = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Card className="p-4">
-            <h3 className="font-bold text-blue-700 mb-3 flex items-center gap-2"><Refrigerator size={18}/> Frigoriferi</h3>
+            <h3 className="font-bold text-blue-700 mb-3 flex items-center gap-2"><Thermometer size={18}/> Frigoriferi</h3>
             <div className="grid grid-cols-4 gap-2">
               {Array.from({length: 12}, (_, i) => {
                 const sanifs = getSanificazioniMese('frigoriferi', i+1);
