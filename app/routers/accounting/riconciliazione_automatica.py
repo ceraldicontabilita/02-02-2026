@@ -545,6 +545,37 @@ async def riconcilia_estratto_conto() -> Dict[str, Any]:
     }
 
 
+
+@router.delete("/reset-riconciliazione")
+async def reset_riconciliazione() -> Dict[str, Any]:
+    """
+    Resetta completamente la riconciliazione:
+    - Elimina tutte le operazioni da confermare
+    - Rimuove i flag di riconciliazione dall'estratto conto
+    """
+    db = Database.get_db()
+    
+    # Elimina operazioni da confermare
+    r1 = await db[COLLECTION_OPERAZIONI_DA_CONFERMARE].delete_many({})
+    
+    # Reset estratto conto
+    r2 = await db[COLLECTION_ESTRATTO_CONTO].update_many(
+        {},
+        {"$unset": {
+            "riconciliato": "",
+            "riconciliato_automaticamente": "",
+            "tipo_riconciliazione": "",
+            "dettagli_riconciliazione": ""
+        }}
+    )
+    
+    return {
+        "success": True,
+        "operazioni_eliminate": r1.deleted_count,
+        "movimenti_resettati": r2.modified_count
+    }
+
+
 @router.get("/stats-riconciliazione")
 async def get_stats_riconciliazione() -> Dict[str, Any]:
     """Statistiche sulla riconciliazione."""
