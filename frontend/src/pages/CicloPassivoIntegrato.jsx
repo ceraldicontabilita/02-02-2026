@@ -646,7 +646,7 @@ export default function CicloPassivoIntegrato() {
                 ) : (
                   <div>
                     <h4 style={{ margin: '0 0 8px 0', color: '#dc2626' }}>
-                      ❌ Errore durante l'import
+                      ❌ Errore durante import
                     </h4>
                     <p style={{ color: '#b91c1c' }}>{uploadResult.error}</p>
                   </div>
