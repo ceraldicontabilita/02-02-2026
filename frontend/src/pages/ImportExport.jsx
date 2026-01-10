@@ -136,9 +136,13 @@ export default function ImportExport() {
             errors.push({ file: xmlFile.name, error: res.data.error || "Errore sconosciuto" });
           }
         } catch (e) {
-          const errorMsg = e.response?.data?.detail || e.message;
-          // Check if it's a duplicate error
-          if (errorMsg.toLowerCase().includes('duplicat') || errorMsg.toLowerCase().includes('esiste già')) {
+          const errorMsg = e.response?.data?.detail || e.response?.data?.message || e.message;
+          const statusCode = e.response?.status;
+          // Check if it's a duplicate error (HTTP 409 or message contains duplicate keywords)
+          if (statusCode === 409 || 
+              errorMsg.toLowerCase().includes('duplicat') || 
+              errorMsg.toLowerCase().includes('esiste già') ||
+              errorMsg.toLowerCase().includes('già presente')) {
             duplicates++;
           } else {
             errors.push({ file: xmlFile.name, error: errorMsg });
