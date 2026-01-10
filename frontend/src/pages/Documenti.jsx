@@ -613,7 +613,7 @@ export default function Documenti() {
           border: '2px solid #3b82f6',
           background: 'linear-gradient(135deg, #eff6ff, #dbeafe)'
         }}>
-          <CardContent className="pt-4">
+          <CardContent style={{ paddingTop: 16 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
               <div style={{ 
                 width: 48, 
