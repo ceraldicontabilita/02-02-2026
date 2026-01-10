@@ -1,0 +1,453 @@
+"""
+Sistema di Sincronizzazione Dati Relazionali
+=============================================
+Questo modulo gestisce la sincronizzazione automatica dei dati tra:
+- Fatture XML (invoices)
+- Prima Nota Cassa (prima_nota_cassa)
+- Prima Nota Banca (prima_nota_banca)
+- Corrispettivi (corrispettivi)
+- Fornitori (suppliers)
+
+REGOLE FONDAMENTALI:
+1. Se modifico una fattura → aggiorno prima nota cassa/banca collegata
+2. Se modifico prima nota → aggiorno fattura collegata
+3. Se modifico corrispettivo → aggiorno prima nota cassa (entrata)
+4. Entrate Cassa = Corrispettivi (imponibile + IVA = totale lordo)
+"""
+from fastapi import APIRouter, HTTPException, Body
+from typing import Dict, Any, List, Optional
+from datetime import datetime, timezone
+import uuid
+import logging
+
+from app.database import Database
+
+logger = logging.getLogger(__name__)
+router = APIRouter(prefix="/sync", tags=["Sincronizzazione Dati"])
+
+
+# ==================== COSTANTI ====================
+
+COLLECTIONS = {
+    "invoices": "invoices",
+    "prima_nota_cassa": "prima_nota_cassa",
+    "prima_nota_banca": "prima_nota_banca",
+    "corrispettivi": "corrispettivi",
+    "suppliers": "suppliers"
+}
+
+
+# ==================== FUNZIONI DI SINCRONIZZAZIONE ====================
+
+async def sync_fattura_to_prima_nota(fattura_id: str, db) -> Dict[str, Any]:
+    """
+    Sincronizza una fattura con la prima nota.
+    Se metodo_pagamento = "Cassa" → prima_nota_cassa
+    Se metodo_pagamento = "Bonifico" o altro → prima_nota_banca
+    """
+    fattura = await db["invoices"].find_one({"id": fattura_id}, {"_id": 0})
+    if not fattura:
+        return {"success": False, "error": "Fattura non trovata"}
+    
+    metodo = fattura.get("metodo_pagamento", "")
+    importo = fattura.get("total_amount") or fattura.get("importo_totale") or 0
+    fornitore = fattura.get("supplier_name") or fattura.get("cedente_denominazione") or ""
+    numero = fattura.get("invoice_number") or fattura.get("numero_fattura") or ""
+    data_pag = fattura.get("data_pagamento") or fattura.get("invoice_date") or ""
+    
+    if not metodo:
+        return {"success": False, "error": "Metodo pagamento non specificato"}
+    
+    # Determina collection target
+    if metodo.lower() in ["cassa", "contanti"]:
+        collection = "prima_nota_cassa"
+    else:
+        collection = "prima_nota_banca"
+    
+    # Cerca movimento esistente collegato
+    movimento_esistente = await db[collection].find_one({
+        "fattura_id": fattura_id
+    }, {"_id": 0})
+    
+    movimento_data = {
+        "fattura_id": fattura_id,
+        "data": data_pag[:10] if data_pag else datetime.now().strftime("%Y-%m-%d"),
+        "tipo": "uscita",
+        "importo": importo,
+        "descrizione": f"Fattura {numero} - {fornitore}",
+        "categoria": "Fornitori",
+        "metodo": "contanti" if collection == "prima_nota_cassa" else "bonifico",
+        "fornitore": fornitore,
+        "numero_fattura": numero,
+        "anno": int(data_pag[:4]) if data_pag else datetime.now().year,
+        "mese": int(data_pag[5:7]) if data_pag else datetime.now().month,
+        "riconciliato": True,
+        "pagato": fattura.get("pagato", False),
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    if movimento_esistente:
+        # Aggiorna
+        await db[collection].update_one(
+            {"fattura_id": fattura_id},
+            {"$set": movimento_data}
+        )
+        return {"success": True, "action": "updated", "collection": collection}
+    else:
+        # Crea nuovo
+        movimento_data["id"] = str(uuid.uuid4())
+        movimento_data["created_at"] = datetime.now(timezone.utc).isoformat()
+        await db[collection].insert_one(movimento_data)
+        return {"success": True, "action": "created", "collection": collection}
+
+
+async def sync_corrispettivo_to_prima_nota(corrispettivo_id: str, db) -> Dict[str, Any]:
+    """
+    Sincronizza un corrispettivo con la prima nota cassa.
+    ENTRATA = IMPONIBILE + IVA (totale lordo)
+    """
+    corr = await db["corrispettivi"].find_one({"id": corrispettivo_id}, {"_id": 0})
+    if not corr:
+        return {"success": False, "error": "Corrispettivo non trovato"}
+    
+    # Calcola totale entrata = imponibile + IVA
+    totale_lordo = corr.get("totale_lordo") or (
+        (corr.get("totale_imponibile") or 0) + (corr.get("totale_iva") or 0)
+    )
+    
+    data_corr = corr.get("data", "")
+    
+    # Cerca movimento esistente collegato
+    movimento_esistente = await db["prima_nota_cassa"].find_one({
+        "corrispettivo_id": corrispettivo_id
+    }, {"_id": 0})
+    
+    movimento_data = {
+        "corrispettivo_id": corrispettivo_id,
+        "data": data_corr,
+        "tipo": "entrata",
+        "importo": totale_lordo,  # IMPONIBILE + IVA
+        "descrizione": f"Corrispettivi del {data_corr}",
+        "categoria": "Corrispettivi",
+        "metodo": "contanti",
+        "anno": int(data_corr[:4]) if data_corr else datetime.now().year,
+        "mese": int(data_corr[5:7]) if data_corr else datetime.now().month,
+        "riconciliato": False,
+        "dettaglio": {
+            "imponibile": corr.get("totale_imponibile", 0),
+            "iva": corr.get("totale_iva", 0),
+            "num_scontrini": corr.get("numero_scontrini", 0)
+        },
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    if movimento_esistente:
+        await db["prima_nota_cassa"].update_one(
+            {"corrispettivo_id": corrispettivo_id},
+            {"$set": movimento_data}
+        )
+        return {"success": True, "action": "updated"}
+    else:
+        movimento_data["id"] = str(uuid.uuid4())
+        movimento_data["created_at"] = datetime.now(timezone.utc).isoformat()
+        await db["prima_nota_cassa"].insert_one(movimento_data)
+        return {"success": True, "action": "created"}
+
+
+async def match_fatture_con_prima_nota_cassa(db) -> Dict[str, Any]:
+    """
+    Cerca fatture XML che corrispondono a movimenti in prima nota cassa.
+    Match per: numero fattura + fornitore + importo
+    Se trova match → associa metodo_pagamento = "Cassa" alla fattura
+    """
+    results = {
+        "matched": 0,
+        "not_matched": 0,
+        "details": []
+    }
+    
+    # Prendi tutti i movimenti prima nota cassa (uscite = pagamenti fatture)
+    movimenti_cassa = await db["prima_nota_cassa"].find({
+        "tipo": "uscita",
+        "categoria": "Fornitori"
+    }, {"_id": 0}).to_list(10000)
+    
+    for mov in movimenti_cassa:
+        numero = mov.get("numero_fattura", "").strip()
+        fornitore = mov.get("fornitore", "").strip().upper()
+        importo = mov.get("importo", 0)
+        
+        if not numero or not importo:
+            continue
+        
+        # Cerca fattura corrispondente
+        fattura = await db["invoices"].find_one({
+            "$and": [
+                {"$or": [
+                    {"invoice_number": {"$regex": numero, "$options": "i"}},
+                    {"numero_fattura": {"$regex": numero, "$options": "i"}}
+                ]},
+                {"$or": [
+                    {"total_amount": {"$gte": importo - 0.10, "$lte": importo + 0.10}},
+                    {"importo_totale": {"$gte": importo - 0.10, "$lte": importo + 0.10}}
+                ]}
+            ]
+        }, {"_id": 0})
+        
+        if fattura:
+            # Trovato! Aggiorna fattura con metodo pagamento Cassa
+            await db["invoices"].update_one(
+                {"id": fattura["id"]},
+                {"$set": {
+                    "metodo_pagamento": "Cassa",
+                    "pagato": True,
+                    "paid": True,
+                    "data_pagamento": mov.get("data"),
+                    "prima_nota_cassa_id": mov.get("id"),
+                    "updated_at": datetime.now(timezone.utc).isoformat()
+                }}
+            )
+            
+            # Aggiorna anche il movimento con riferimento fattura
+            await db["prima_nota_cassa"].update_one(
+                {"id": mov["id"]},
+                {"$set": {
+                    "fattura_id": fattura["id"],
+                    "riconciliato": True,
+                    "updated_at": datetime.now(timezone.utc).isoformat()
+                }}
+            )
+            
+            results["matched"] += 1
+            results["details"].append({
+                "movimento_id": mov.get("id"),
+                "fattura_id": fattura["id"],
+                "numero": numero,
+                "importo": importo
+            })
+        else:
+            results["not_matched"] += 1
+    
+    return results
+
+
+async def set_fatture_non_cassa_to_banca(db) -> Dict[str, Any]:
+    """
+    Le fatture senza metodo_pagamento o non in cassa → default Bonifico (banca)
+    """
+    result = await db["invoices"].update_many(
+        {
+            "$or": [
+                {"metodo_pagamento": {"$exists": False}},
+                {"metodo_pagamento": None},
+                {"metodo_pagamento": ""}
+            ]
+        },
+        {"$set": {
+            "metodo_pagamento": "Bonifico",
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {
+        "updated": result.modified_count,
+        "message": f"{result.modified_count} fatture impostate a Bonifico (banca)"
+    }
+
+
+# ==================== ENDPOINTS ====================
+
+@router.post("/match-fatture-cassa")
+async def api_match_fatture_cassa() -> Dict[str, Any]:
+    """
+    Cerca corrispondenze tra fatture XML e prima nota cassa.
+    Le fatture trovate vengono marcate come pagate in Cassa.
+    """
+    db = Database.get_db()
+    result = await match_fatture_con_prima_nota_cassa(db)
+    return result
+
+
+@router.post("/fatture-to-banca")
+async def api_fatture_to_banca() -> Dict[str, Any]:
+    """
+    Imposta le fatture senza metodo pagamento a Bonifico (banca).
+    """
+    db = Database.get_db()
+    result = await set_fatture_non_cassa_to_banca(db)
+    return result
+
+
+@router.post("/sync-fattura/{fattura_id}")
+async def api_sync_fattura(fattura_id: str) -> Dict[str, Any]:
+    """
+    Sincronizza una fattura con la prima nota corrispondente.
+    """
+    db = Database.get_db()
+    result = await sync_fattura_to_prima_nota(fattura_id, db)
+    return result
+
+
+@router.post("/sync-corrispettivo/{corrispettivo_id}")
+async def api_sync_corrispettivo(corrispettivo_id: str) -> Dict[str, Any]:
+    """
+    Sincronizza un corrispettivo con la prima nota cassa.
+    Crea movimento di ENTRATA = imponibile + IVA.
+    """
+    db = Database.get_db()
+    result = await sync_corrispettivo_to_prima_nota(corrispettivo_id, db)
+    return result
+
+
+@router.post("/sync-all-corrispettivi")
+async def api_sync_all_corrispettivi(anno: int = Body(..., embed=True)) -> Dict[str, Any]:
+    """
+    Sincronizza tutti i corrispettivi di un anno con la prima nota cassa.
+    """
+    db = Database.get_db()
+    
+    corrispettivi = await db["corrispettivi"].find(
+        {"data": {"$regex": f"^{anno}"}},
+        {"_id": 0, "id": 1}
+    ).to_list(1000)
+    
+    created = 0
+    updated = 0
+    errors = 0
+    
+    for corr in corrispettivi:
+        try:
+            result = await sync_corrispettivo_to_prima_nota(corr["id"], db)
+            if result.get("action") == "created":
+                created += 1
+            elif result.get("action") == "updated":
+                updated += 1
+        except Exception as e:
+            logger.error(f"Errore sync corrispettivo {corr['id']}: {e}")
+            errors += 1
+    
+    return {
+        "anno": anno,
+        "totale_corrispettivi": len(corrispettivi),
+        "created": created,
+        "updated": updated,
+        "errors": errors
+    }
+
+
+@router.put("/update-fattura-everywhere/{fattura_id}")
+async def api_update_fattura_everywhere(
+    fattura_id: str, 
+    data: Dict[str, Any] = Body(...)
+) -> Dict[str, Any]:
+    """
+    Aggiorna una fattura e propaga le modifiche in tutte le collection collegate.
+    LOGICA RELAZIONALE: modifica una volta, aggiorna ovunque.
+    """
+    db = Database.get_db()
+    
+    # Campi aggiornabili
+    allowed = ["metodo_pagamento", "pagato", "data_pagamento", "importo", "note"]
+    update_data = {k: v for k, v in data.items() if k in allowed}
+    
+    if not update_data:
+        raise HTTPException(status_code=400, detail="Nessun campo valido")
+    
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    # Sincronizza pagato/paid
+    if "pagato" in update_data:
+        update_data["paid"] = update_data["pagato"]
+    
+    # 1. Aggiorna fattura
+    result = await db["invoices"].update_one(
+        {"id": fattura_id},
+        {"$set": update_data}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Fattura non trovata")
+    
+    updates = {"invoices": 1}
+    
+    # 2. Aggiorna prima nota cassa se collegata
+    pn_cassa = await db["prima_nota_cassa"].update_one(
+        {"fattura_id": fattura_id},
+        {"$set": {
+            "importo": update_data.get("importo") if "importo" in update_data else None,
+            "pagato": update_data.get("pagato"),
+            "data": update_data.get("data_pagamento"),
+            "updated_at": update_data["updated_at"]
+        }}
+    )
+    if pn_cassa.modified_count > 0:
+        updates["prima_nota_cassa"] = 1
+    
+    # 3. Aggiorna prima nota banca se collegata
+    pn_banca = await db["prima_nota_banca"].update_one(
+        {"fattura_id": fattura_id},
+        {"$set": {
+            "importo": update_data.get("importo") if "importo" in update_data else None,
+            "pagato": update_data.get("pagato"),
+            "data": update_data.get("data_pagamento"),
+            "updated_at": update_data["updated_at"]
+        }}
+    )
+    if pn_banca.modified_count > 0:
+        updates["prima_nota_banca"] = 1
+    
+    # 4. Se cambia metodo pagamento, sposta tra cassa e banca
+    if "metodo_pagamento" in update_data:
+        metodo = update_data["metodo_pagamento"]
+        fattura = await db["invoices"].find_one({"id": fattura_id}, {"_id": 0})
+        
+        if metodo.lower() in ["cassa", "contanti"]:
+            # Rimuovi da banca, aggiungi a cassa
+            await db["prima_nota_banca"].delete_one({"fattura_id": fattura_id})
+            await sync_fattura_to_prima_nota(fattura_id, db)
+            updates["moved_to"] = "prima_nota_cassa"
+        else:
+            # Rimuovi da cassa, aggiungi a banca
+            await db["prima_nota_cassa"].delete_one({"fattura_id": fattura_id})
+            await sync_fattura_to_prima_nota(fattura_id, db)
+            updates["moved_to"] = "prima_nota_banca"
+    
+    return {
+        "success": True,
+        "fattura_id": fattura_id,
+        "updates": updates
+    }
+
+
+@router.get("/stato-sincronizzazione")
+async def api_stato_sincronizzazione() -> Dict[str, Any]:
+    """
+    Restituisce lo stato di sincronizzazione del sistema.
+    """
+    db = Database.get_db()
+    
+    fatture_totali = await db["invoices"].count_documents({})
+    fatture_cassa = await db["invoices"].count_documents({"metodo_pagamento": "Cassa"})
+    fatture_banca = await db["invoices"].count_documents({"metodo_pagamento": "Bonifico"})
+    fatture_pagate = await db["invoices"].count_documents({"pagato": True})
+    
+    pn_cassa_uscite = await db["prima_nota_cassa"].count_documents({"tipo": "uscita"})
+    pn_cassa_entrate = await db["prima_nota_cassa"].count_documents({"tipo": "entrata"})
+    pn_banca = await db["prima_nota_banca"].count_documents({})
+    
+    corrispettivi = await db["corrispettivi"].count_documents({})
+    
+    return {
+        "fatture": {
+            "totali": fatture_totali,
+            "pagate": fatture_pagate,
+            "cassa": fatture_cassa,
+            "banca": fatture_banca
+        },
+        "prima_nota_cassa": {
+            "uscite": pn_cassa_uscite,
+            "entrate": pn_cassa_entrate
+        },
+        "prima_nota_banca": pn_banca,
+        "corrispettivi": corrispettivi
+    }
