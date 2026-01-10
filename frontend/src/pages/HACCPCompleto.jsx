@@ -456,7 +456,7 @@ export default function HACCPCompleto() {
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, padding: 10, background: '#f9fafb', borderRadius: 8, minHeight: 50 }}>
                 {formRicetta.ingredienti.map((ing, i) => (
                   <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'white', border: '1px solid #e5e7eb', padding: '4px 8px', borderRadius: 4, fontSize: 13 }}>
-                    {ing} <button onClick={() => setFormRicetta({...formRicetta, ingredienti: formRicetta.ingredienti.filter((_, idx) => idx !== i)})} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: 0 }}>×</button>
+                    {typeof ing === 'object' ? ing.nome : ing} <button onClick={() => setFormRicetta({...formRicetta, ingredienti: formRicetta.ingredienti.filter((_, idx) => idx !== i)})} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: 0 }}>×</button>
                   </span>
                 ))}
                 {formRicetta.ingredienti.length === 0 && <span style={{ color: '#9ca3af', fontSize: 13 }}>Nessun ingrediente</span>}
