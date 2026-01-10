@@ -264,15 +264,22 @@ async def riconcilia_estratto_conto() -> Dict[str, Any]:
                         # Più fatture con STESSO importo esatto - va confermato manualmente
                         confidence = "medio"
                         match_type = "fatture_multiple"
+                        # Ordina per data (più recente prima) e aggiungi data
+                        fatture_ordinate = sorted(
+                            fatture_esatte,
+                            key=lambda f: f.get("data", f.get("invoice_date", "1900-01-01")),
+                            reverse=True
+                        )
                         match_details = {
                             "fatture_candidate": [
                                 {
                                     "id": str(f.get("_id", f.get("id"))),
                                     "numero": f.get("numero_fattura") or f.get("invoice_number"),
                                     "fornitore": f.get("cedente_denominazione") or f.get("supplier_name"),
-                                    "importo": f.get("importo_totale") or f.get("total_amount")
+                                    "importo": f.get("importo_totale") or f.get("total_amount"),
+                                    "data": f.get("data") or f.get("invoice_date") or f.get("data_fattura")
                                 }
-                                for f in fatture_esatte[:5]
+                                for f in fatture_ordinate[:10]
                             ],
                             "motivo_dubbio": f"Trovate {len(fatture_esatte)} fatture con stesso importo esatto"
                         }
