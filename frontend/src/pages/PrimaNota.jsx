@@ -1037,20 +1037,20 @@ function MovementsTable({ movimenti, tipo, loading, formatEuro, formatDate, onDe
                     {mov.categoria || '-'}
                   </span>
                 </td>
-                <td style={{ padding: 10, maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {mov.descrizione || '-'}
+                <td style={{ padding: '8px 10px', maxWidth: 400, wordBreak: 'break-word', whiteSpace: 'pre-wrap', fontSize: 12, lineHeight: 1.3 }}>
+                  {mov.descrizione || mov.descrizione_originale || '-'}
                 </td>
-                <td style={{ padding: 10, textAlign: 'right', color: '#166534', fontWeight: mov.tipo === 'entrata' ? 'bold' : 'normal' }}>
+                <td style={{ padding: '8px 10px', textAlign: 'right', color: '#166534', fontWeight: mov.tipo === 'entrata' ? 'bold' : 'normal' }}>
                   {mov.tipo === 'entrata' ? formatEuro(mov.importo) : '-'}
                 </td>
-                <td style={{ padding: 10, textAlign: 'right', color: '#991b1b', fontWeight: mov.tipo === 'uscita' ? 'bold' : 'normal' }}>
+                <td style={{ padding: '8px 10px', textAlign: 'right', color: '#991b1b', fontWeight: mov.tipo === 'uscita' ? 'bold' : 'normal' }}>
                   {mov.tipo === 'uscita' ? formatEuro(mov.importo) : '-'}
                 </td>
-                <td style={{ padding: 10, textAlign: 'right', fontWeight: 'bold', color: mov.saldoProgressivo >= 0 ? '#166534' : '#991b1b' }}>
+                <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 'bold', color: mov.saldoProgressivo >= 0 ? '#166534' : '#991b1b' }}>
                   {formatEuro(mov.saldoProgressivo)}
                 </td>
                 {!readOnly && (
-                  <td style={{ padding: 10, textAlign: 'center', whiteSpace: 'nowrap' }}>
+                  <td style={{ padding: '8px 10px', textAlign: 'center', whiteSpace: 'nowrap' }}>
                     <button 
                       onClick={(e) => { e.stopPropagation(); setEditingMovimento(mov); }}
                       style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, marginRight: 8 }}
