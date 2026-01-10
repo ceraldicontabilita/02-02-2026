@@ -3,6 +3,7 @@ import api from "../api";
 
 export default function ImportExport() {
   const [loading, setLoading] = useState(false);
+  const [activeImport, setActiveImport] = useState(null);
   const [message, setMessage] = useState({ type: "", text: "" });
   const [importResults, setImportResults] = useState(null);
   
@@ -16,319 +17,192 @@ export default function ImportExport() {
     imported: 0,
     errors: []
   });
-  
-  // File refs
-  const versamentoFileRef = useRef(null);
-  const posFileRef = useRef(null);
-  const corrispettiviFileRef = useRef(null);
-  const f24FileRef = useRef(null);
-  const pagheFileRef = useRef(null);
-  const estrattoContoFileRef = useRef(null);
-  const bonificiFileRef = useRef(null);
-  
-  // Fatture XML refs - separati per tipo
-  const xmlSingleRef = useRef(null);
-  const xmlMultipleRef = useRef(null);
-  const xmlZipRef = useRef(null);
 
   const showMessage = (type, text) => {
     setMessage({ type, text });
     setTimeout(() => setMessage({ type: "", text: "" }), 8000);
   };
 
-  // ========== FATTURE XML IMPORT - 3 Modalità ==========
-  
-  const extractZipContents = async (file) => {
+  // Progress bar percentage
+  const progressPercent = uploadProgress.total > 0 
+    ? Math.round((uploadProgress.current / uploadProgress.total) * 100) 
+    : 0;
+
+  // ========== GENERIC IMPORT FUNCTIONS ==========
+
+  // Extract files from ZIP
+  const extractFromZip = async (file, extension) => {
     const JSZip = (await import('jszip')).default;
     const zip = await JSZip.loadAsync(file);
-    const xmlFiles = [];
+    const extractedFiles = [];
     
     for (const [filename, zipEntry] of Object.entries(zip.files)) {
-      if (filename.toLowerCase().endsWith('.xml') && !zipEntry.dir) {
+      if (filename.toLowerCase().endsWith(extension) && !zipEntry.dir) {
         const content = await zipEntry.async('blob');
-        xmlFiles.push(new File([content], filename, { type: 'application/xml' }));
+        const mimeType = extension === '.xml' ? 'application/xml' : 
+                        extension === '.pdf' ? 'application/pdf' :
+                        extension === '.csv' ? 'text/csv' :
+                        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+        extractedFiles.push(new File([content], filename, { type: mimeType }));
       }
       // Handle nested ZIPs
       if (filename.toLowerCase().endsWith('.zip') && !zipEntry.dir) {
         const nestedContent = await zipEntry.async('blob');
         const nestedFile = new File([nestedContent], filename, { type: 'application/zip' });
-        const nestedXmls = await extractZipContents(nestedFile);
-        xmlFiles.push(...nestedXmls);
+        const nestedFiles = await extractFromZip(nestedFile, extension);
+        extractedFiles.push(...nestedFiles);
       }
     }
-    return xmlFiles;
+    return extractedFiles;
   };
 
-  // Upload singolo XML
-  const handleXmlSingleUpload = async () => {
-    const file = xmlSingleRef.current?.files[0];
-    if (!file) {
-      showMessage("error", "Seleziona un file XML");
-      return;
-    }
+  // Generic file processor
+  const processFiles = async (files, config) => {
+    const { extension, endpoint, type, extractZip = true } = config;
     
     setLoading(true);
+    setActiveImport(type);
     setUploadProgress({
       active: true,
       current: 0,
-      total: 1,
-      filename: file.name,
+      total: 0,
+      filename: "Preparazione...",
       duplicates: 0,
       imported: 0,
       errors: []
     });
 
-    const formData = new FormData();
-    formData.append("file", file);
-
     try {
-      const res = await api.post("/api/fatture/upload-xml", formData, {
-        headers: { "Content-Type": "multipart/form-data" }
+      let allFiles = [];
+      
+      // Process each input file
+      for (const file of files) {
+        if (file.name.toLowerCase().endsWith('.zip') && extractZip) {
+          const extracted = await extractFromZip(file, extension);
+          allFiles.push(...extracted);
+        } else if (file.name.toLowerCase().endsWith(extension)) {
+          allFiles.push(file);
+        }
+      }
+
+      if (allFiles.length === 0) {
+        showMessage("error", `Nessun file ${extension.toUpperCase().replace('.', '')} trovato`);
+        setLoading(false);
+        setUploadProgress(prev => ({ ...prev, active: false }));
+        return;
+      }
+
+      setUploadProgress(prev => ({
+        ...prev,
+        total: allFiles.length,
+        filename: `Trovati ${allFiles.length} file da elaborare`
+      }));
+
+      let imported = 0;
+      let duplicates = 0;
+      let errors = [];
+
+      for (let i = 0; i < allFiles.length; i++) {
+        const currentFile = allFiles[i];
+        
+        setUploadProgress(prev => ({
+          ...prev,
+          current: i + 1,
+          filename: currentFile.name
+        }));
+
+        const formData = new FormData();
+        formData.append("file", currentFile);
+
+        try {
+          const res = await api.post(endpoint, formData, {
+            headers: { "Content-Type": "multipart/form-data" }
+          });
+
+          if (res.data.success !== false && !res.data.error) {
+            if (res.data.duplicate) {
+              duplicates++;
+            } else {
+              imported++;
+            }
+          } else {
+            errors.push({ file: currentFile.name, error: res.data.error || "Errore" });
+          }
+        } catch (e) {
+          const errorMsg = e.response?.data?.detail || e.response?.data?.message || e.message;
+          const statusCode = e.response?.status;
+          if (statusCode === 409 || 
+              errorMsg.toLowerCase().includes('duplicat') || 
+              errorMsg.toLowerCase().includes('esiste già') ||
+              errorMsg.toLowerCase().includes('già presente')) {
+            duplicates++;
+          } else {
+            errors.push({ file: currentFile.name, error: errorMsg });
+          }
+        }
+
+        setUploadProgress(prev => ({
+          ...prev,
+          imported,
+          duplicates,
+          errors: [...errors]
+        }));
+
+        // Small delay to not overload server
+        if (i < allFiles.length - 1) {
+          await new Promise(r => setTimeout(r, 50));
+        }
+      }
+
+      setImportResults({
+        type,
+        total_files: allFiles.length,
+        imported,
+        duplicates,
+        errors: errors.length
       });
 
-      if (res.data.success !== false) {
-        setUploadProgress(prev => ({ ...prev, imported: 1, current: 1 }));
-        showMessage("success", "Fattura XML importata con successo");
-      }
-    } catch (e) {
-      const errorMsg = e.response?.data?.detail || e.message;
-      const statusCode = e.response?.status;
-      if (statusCode === 409 || errorMsg.toLowerCase().includes('duplicat') || errorMsg.toLowerCase().includes('già presente')) {
-        setUploadProgress(prev => ({ ...prev, duplicates: 1, current: 1 }));
-        showMessage("success", "Fattura già presente (duplicato ignorato)");
+      if (errors.length === 0) {
+        showMessage("success", `Importati ${imported} file. ${duplicates} duplicati ignorati.`);
       } else {
-        setUploadProgress(prev => ({ ...prev, errors: [{ file: file.name, error: errorMsg }], current: 1 }));
-        showMessage("error", errorMsg);
+        showMessage("error", `Importati ${imported} file. ${duplicates} duplicati. ${errors.length} errori.`);
       }
+
+    } catch (e) {
+      showMessage("error", "Errore durante l'import: " + e.message);
     } finally {
       setLoading(false);
-      xmlSingleRef.current.value = "";
+      setActiveImport(null);
       setTimeout(() => setUploadProgress(prev => ({ ...prev, active: false })), 2000);
     }
   };
 
-  // Upload multiplo XML
-  const handleXmlMultipleUpload = async () => {
-    const files = xmlMultipleRef.current?.files;
-    if (!files || files.length === 0) {
-      showMessage("error", "Seleziona uno o più file XML");
-      return;
-    }
-
-    await processMultipleXmlFiles(Array.from(files), "XML multipli");
-    xmlMultipleRef.current.value = "";
-  };
-
-  // Upload ZIP
-  const handleXmlZipUpload = async () => {
-    const files = xmlZipRef.current?.files;
-    if (!files || files.length === 0) {
-      showMessage("error", "Seleziona uno o più file ZIP");
-      return;
-    }
-
-    setLoading(true);
-    setUploadProgress({
-      active: true,
-      current: 0,
-      total: 0,
-      filename: "Estrazione ZIP...",
-      duplicates: 0,
-      imported: 0,
-      errors: []
-    });
-
-    try {
-      // Estrai tutti gli XML dagli ZIP
-      let allXmlFiles = [];
-      for (const file of files) {
-        const xmlFiles = await extractZipContents(file);
-        allXmlFiles.push(...xmlFiles);
-      }
-
-      if (allXmlFiles.length === 0) {
-        showMessage("error", "Nessun file XML trovato negli ZIP");
-        setLoading(false);
-        setUploadProgress(prev => ({ ...prev, active: false }));
-        return;
-      }
-
-      await processMultipleXmlFiles(allXmlFiles, "ZIP");
-    } catch (e) {
-      showMessage("error", "Errore durante l'estrazione dello ZIP: " + e.message);
-      setLoading(false);
-      setUploadProgress(prev => ({ ...prev, active: false }));
-    }
-    
-    xmlZipRef.current.value = "";
-  };
-
-  // Funzione comune per processare più file XML
-  const processMultipleXmlFiles = async (xmlFiles, source) => {
-    setLoading(true);
-    setUploadProgress({
-      active: true,
-      current: 0,
-      total: xmlFiles.length,
-      filename: `Trovati ${xmlFiles.length} file XML da ${source}`,
-      duplicates: 0,
-      imported: 0,
-      errors: []
-    });
-
-    let imported = 0;
-    let duplicates = 0;
-    let errors = [];
-
-    for (let i = 0; i < xmlFiles.length; i++) {
-      const xmlFile = xmlFiles[i];
-      
-      setUploadProgress(prev => ({
-        ...prev,
-        current: i + 1,
-        filename: xmlFile.name
-      }));
-
-      const formData = new FormData();
-      formData.append("file", xmlFile);
-
-      try {
-        const res = await api.post("/api/fatture/upload-xml", formData, {
-          headers: { "Content-Type": "multipart/form-data" }
-        });
-
-        if (res.data.success !== false) {
-          if (res.data.duplicate) {
-            duplicates++;
-          } else {
-            imported++;
-          }
-        } else {
-          errors.push({ file: xmlFile.name, error: res.data.error || "Errore sconosciuto" });
-        }
-      } catch (e) {
-        const errorMsg = e.response?.data?.detail || e.response?.data?.message || e.message;
-        const statusCode = e.response?.status;
-        if (statusCode === 409 || 
-            errorMsg.toLowerCase().includes('duplicat') || 
-            errorMsg.toLowerCase().includes('esiste già') ||
-            errorMsg.toLowerCase().includes('già presente')) {
-          duplicates++;
-        } else {
-          errors.push({ file: xmlFile.name, error: errorMsg });
-        }
-      }
-
-      setUploadProgress(prev => ({
-        ...prev,
-        imported,
-        duplicates,
-        errors: [...errors]
-      }));
-
-      // Piccola pausa per non sovraccaricare il server
-      if (i < xmlFiles.length - 1) {
-        await new Promise(r => setTimeout(r, 50));
-      }
-    }
-
-    setImportResults({
-      type: "fatture_xml",
-      total_files: xmlFiles.length,
-      imported,
-      duplicates,
-      errors: errors.length
-    });
-
-    if (errors.length === 0) {
-      showMessage("success", `Importate ${imported} fatture. ${duplicates} duplicati ignorati.`);
-    } else {
-      showMessage("error", `Importate ${imported} fatture. ${duplicates} duplicati. ${errors.length} errori.`);
-    }
-
-    setLoading(false);
-    setTimeout(() => setUploadProgress(prev => ({ ...prev, active: false })), 2000);
-  };
-
-  // ========== OTHER IMPORT FUNCTIONS ==========
-  
-  const handleImportVersamenti = async () => {
-    const file = versamentoFileRef.current?.files[0];
-    if (!file) {
-      showMessage("error", "Seleziona un file CSV per i versamenti");
-      return;
-    }
+  // Special handler for batch endpoints (corrispettivi, pos, versamenti)
+  const processBatchFile = async (file, config) => {
+    const { endpoint, type } = config;
     
     setLoading(true);
+    setActiveImport(type);
+    
     const formData = new FormData();
     formData.append("file", file);
     
     try {
-      const res = await api.post("/api/prima-nota-auto/import-versamenti", formData);
+      const res = await api.post(endpoint, formData);
       setImportResults(res.data);
-      showMessage("success", `Importati ${res.data.imported || 0} versamenti`);
-      versamentoFileRef.current.value = "";
+      showMessage("success", `Importati ${res.data.imported || res.data.inseriti || res.data.movimenti_importati || 0} record`);
     } catch (e) {
-      showMessage("error", e.response?.data?.detail || "Errore import versamenti");
+      showMessage("error", e.response?.data?.detail || "Errore import");
     } finally {
       setLoading(false);
+      setActiveImport(null);
     }
   };
 
-  const handleImportPOS = async () => {
-    const file = posFileRef.current?.files[0];
-    if (!file) {
-      showMessage("error", "Seleziona un file Excel per i dati POS");
-      return;
-    }
-    
+  // Special handler for bonifici (uses job system)
+  const processBonifici = async (files) => {
     setLoading(true);
-    const formData = new FormData();
-    formData.append("file", file);
-    
-    try {
-      const res = await api.post("/api/prima-nota-auto/import-pos", formData);
-      setImportResults(res.data);
-      showMessage("success", `Importati ${res.data.imported || 0} movimenti POS`);
-      posFileRef.current.value = "";
-    } catch (e) {
-      showMessage("error", e.response?.data?.detail || "Errore import POS");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleImportCorrispettivi = async () => {
-    const file = corrispettiviFileRef.current?.files[0];
-    if (!file) {
-      showMessage("error", "Seleziona un file Excel per i corrispettivi");
-      return;
-    }
-    
-    setLoading(true);
-    const formData = new FormData();
-    formData.append("file", file);
-    
-    try {
-      const res = await api.post("/api/prima-nota-auto/import-corrispettivi", formData);
-      setImportResults(res.data);
-      showMessage("success", `Importati ${res.data.imported || 0} corrispettivi`);
-      corrispettiviFileRef.current.value = "";
-    } catch (e) {
-      showMessage("error", e.response?.data?.detail || "Errore import corrispettivi");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleImportF24 = async () => {
-    const files = f24FileRef.current?.files;
-    if (!files || files.length === 0) {
-      showMessage("error", "Seleziona file PDF o ZIP contenenti F24");
-      return;
-    }
-    
-    setLoading(true);
+    setActiveImport('bonifici');
     setUploadProgress({
       active: true,
       current: 0,
@@ -340,266 +214,9 @@ export default function ImportExport() {
     });
 
     try {
-      let allPdfFiles = [];
-      
-      for (const file of files) {
-        if (file.name.toLowerCase().endsWith('.zip')) {
-          const JSZip = (await import('jszip')).default;
-          const zip = await JSZip.loadAsync(file);
-          for (const [filename, zipEntry] of Object.entries(zip.files)) {
-            if (filename.toLowerCase().endsWith('.pdf') && !zipEntry.dir) {
-              const content = await zipEntry.async('blob');
-              allPdfFiles.push(new File([content], filename, { type: 'application/pdf' }));
-            }
-          }
-        } else if (file.name.toLowerCase().endsWith('.pdf')) {
-          allPdfFiles.push(file);
-        }
-      }
-
-      if (allPdfFiles.length === 0) {
-        showMessage("error", "Nessun file PDF trovato");
-        setUploadProgress(prev => ({ ...prev, active: false }));
-        setLoading(false);
-        return;
-      }
-
-      setUploadProgress(prev => ({
-        ...prev,
-        total: allPdfFiles.length,
-        filename: `Trovati ${allPdfFiles.length} PDF F24`
-      }));
-
-      let imported = 0;
-      let duplicates = 0;
-      let errors = [];
-
-      for (let i = 0; i < allPdfFiles.length; i++) {
-        const pdfFile = allPdfFiles[i];
-        
-        setUploadProgress(prev => ({
-          ...prev,
-          current: i + 1,
-          filename: pdfFile.name
-        }));
-
-        const formData = new FormData();
-        formData.append("file", pdfFile);
-
-        try {
-          const res = await api.post("/api/f24-public/upload", formData);
-          if (res.data.success !== false) {
-            imported++;
-          } else {
-            errors.push({ file: pdfFile.name, error: res.data.error || "Errore" });
-          }
-        } catch (e) {
-          const errorMsg = e.response?.data?.detail || e.message;
-          const statusCode = e.response?.status;
-          if (statusCode === 409 || errorMsg.toLowerCase().includes('duplicat') || errorMsg.toLowerCase().includes('già presente')) {
-            duplicates++;
-          } else {
-            errors.push({ file: pdfFile.name, error: errorMsg });
-          }
-        }
-
-        setUploadProgress(prev => ({
-          ...prev,
-          imported,
-          duplicates,
-          errors: [...errors]
-        }));
-
-        await new Promise(r => setTimeout(r, 100));
-      }
-
-      setImportResults({
-        type: "f24",
-        total_files: allPdfFiles.length,
-        imported,
-        duplicates,
-        errors: errors.length
-      });
-
-      if (errors.length === 0) {
-        showMessage("success", `Importati ${imported} F24. ${duplicates} duplicati ignorati.`);
-      } else {
-        showMessage("error", `Importati ${imported} F24. ${duplicates} duplicati. ${errors.length} errori.`);
-      }
-
-      f24FileRef.current.value = "";
-    } catch (e) {
-      showMessage("error", "Errore durante l'import: " + e.message);
-    } finally {
-      setLoading(false);
-      setTimeout(() => {
-        setUploadProgress(prev => ({ ...prev, active: false }));
-      }, 2000);
-    }
-  };
-
-  const handleImportPaghe = async () => {
-    const files = pagheFileRef.current?.files;
-    if (!files || files.length === 0) {
-      showMessage("error", "Seleziona file PDF o ZIP contenenti buste paga");
-      return;
-    }
-    
-    setLoading(true);
-    setUploadProgress({
-      active: true,
-      current: 0,
-      total: 0,
-      filename: "Preparazione...",
-      duplicates: 0,
-      imported: 0,
-      errors: []
-    });
-
-    try {
-      let allPdfFiles = [];
-      
-      for (const file of files) {
-        if (file.name.toLowerCase().endsWith('.zip')) {
-          const JSZip = (await import('jszip')).default;
-          const zip = await JSZip.loadAsync(file);
-          for (const [filename, zipEntry] of Object.entries(zip.files)) {
-            if (filename.toLowerCase().endsWith('.pdf') && !zipEntry.dir) {
-              const content = await zipEntry.async('blob');
-              allPdfFiles.push(new File([content], filename, { type: 'application/pdf' }));
-            }
-          }
-        } else if (file.name.toLowerCase().endsWith('.pdf')) {
-          allPdfFiles.push(file);
-        }
-      }
-
-      if (allPdfFiles.length === 0) {
-        showMessage("error", "Nessun file PDF trovato");
-        setUploadProgress(prev => ({ ...prev, active: false }));
-        setLoading(false);
-        return;
-      }
-
-      setUploadProgress(prev => ({
-        ...prev,
-        total: allPdfFiles.length,
-        filename: `Trovati ${allPdfFiles.length} PDF buste paga`
-      }));
-
-      let imported = 0;
-      let duplicates = 0;
-      let errors = [];
-
-      for (let i = 0; i < allPdfFiles.length; i++) {
-        const pdfFile = allPdfFiles[i];
-        
-        setUploadProgress(prev => ({
-          ...prev,
-          current: i + 1,
-          filename: pdfFile.name
-        }));
-
-        const formData = new FormData();
-        formData.append("file", pdfFile);
-
-        try {
-          const res = await api.post("/api/employees/paghe/upload-pdf", formData);
-          if (res.data.success !== false) {
-            imported++;
-          } else {
-            errors.push({ file: pdfFile.name, error: res.data.error || "Errore" });
-          }
-        } catch (e) {
-          const errorMsg = e.response?.data?.detail || e.message;
-          const statusCode = e.response?.status;
-          if (statusCode === 409 || errorMsg.toLowerCase().includes('duplicat') || errorMsg.toLowerCase().includes('già presente')) {
-            duplicates++;
-          } else {
-            errors.push({ file: pdfFile.name, error: errorMsg });
-          }
-        }
-
-        setUploadProgress(prev => ({
-          ...prev,
-          imported,
-          duplicates,
-          errors: [...errors]
-        }));
-
-        await new Promise(r => setTimeout(r, 100));
-      }
-
-      setImportResults({
-        type: "paghe",
-        total_files: allPdfFiles.length,
-        imported,
-        duplicates,
-        errors: errors.length
-      });
-
-      if (errors.length === 0) {
-        showMessage("success", `Importate ${imported} buste paga. ${duplicates} duplicati ignorati.`);
-      } else {
-        showMessage("error", `Importate ${imported} buste paga. ${duplicates} duplicati. ${errors.length} errori.`);
-      }
-
-      pagheFileRef.current.value = "";
-    } catch (e) {
-      showMessage("error", "Errore durante l'import: " + e.message);
-    } finally {
-      setLoading(false);
-      setTimeout(() => {
-        setUploadProgress(prev => ({ ...prev, active: false }));
-      }, 2000);
-    }
-  };
-
-  const handleImportEstrattoConto = async () => {
-    const file = estrattoContoFileRef.current?.files[0];
-    if (!file) {
-      showMessage("error", "Seleziona un file CSV dell'estratto conto bancario");
-      return;
-    }
-    
-    setLoading(true);
-    const formData = new FormData();
-    formData.append("file", file);
-    
-    try {
-      const res = await api.post("/api/estratto-conto-movimenti/import", formData);
-      setImportResults(res.data);
-      showMessage("success", `Importati ${res.data.movimenti_importati || res.data.inseriti || 0} movimenti dall'estratto conto`);
-      estrattoContoFileRef.current.value = "";
-    } catch (e) {
-      showMessage("error", e.response?.data?.detail || "Errore import estratto conto");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleImportBonifici = async () => {
-    const files = bonificiFileRef.current?.files;
-    if (!files || files.length === 0) {
-      showMessage("error", "Seleziona file PDF o ZIP contenenti bonifici bancari");
-      return;
-    }
-    
-    setLoading(true);
-    setUploadProgress({
-      active: true,
-      current: 0,
-      total: 0,
-      filename: "Preparazione...",
-      duplicates: 0,
-      imported: 0,
-      errors: []
-    });
-
-    try {
-      // 1. Crea job
+      // 1. Create job
       const jobRes = await api.post("/api/archivio-bonifici/jobs");
-      const jobId = jobRes.data.job_id;
+      const jobId = jobRes.data.job_id || jobRes.data.id;
 
       // 2. Upload files
       const formData = new FormData();
@@ -611,7 +228,7 @@ export default function ImportExport() {
         timeout: 300000
       });
 
-      // 3. Polling per progress
+      // 3. Poll for progress
       const pollProgress = async () => {
         try {
           const statusRes = await api.get(`/api/archivio-bonifici/jobs/${jobId}/status`);
@@ -643,6 +260,7 @@ export default function ImportExport() {
             }
             
             setLoading(false);
+            setActiveImport(null);
             setTimeout(() => setUploadProgress(prev => ({ ...prev, active: false })), 2000);
             return;
           }
@@ -650,6 +268,7 @@ export default function ImportExport() {
           setTimeout(pollProgress, 1000);
         } catch (e) {
           setLoading(false);
+          setActiveImport(null);
           showMessage("error", "Errore durante il polling: " + e.message);
         }
       };
@@ -663,13 +282,13 @@ export default function ImportExport() {
         pollProgress();
       } else {
         setLoading(false);
+        setActiveImport(null);
         showMessage("error", "Nessun file PDF trovato negli archivi");
         setUploadProgress(prev => ({ ...prev, active: false }));
       }
-
-      bonificiFileRef.current.value = "";
     } catch (e) {
       setLoading(false);
+      setActiveImport(null);
       showMessage("error", "Errore upload: " + (e.response?.data?.detail || e.message));
       setUploadProgress(prev => ({ ...prev, active: false }));
     }
@@ -692,88 +311,320 @@ export default function ImportExport() {
     }
   };
 
+  // ========== IMPORT CARD COMPONENT ==========
+  
+  const ImportCard = ({ config }) => {
+    const singleRef = useRef(null);
+    const multiRef = useRef(null);
+    const zipRef = useRef(null);
+    
+    const { id, label, icon, extension, endpoint, desc, templateUrl, isBatch, isBonifici } = config;
+    
+    const isActive = activeImport === id;
+    const fileAccept = extension === '.xml' ? '.xml' :
+                       extension === '.pdf' ? '.pdf' :
+                       extension === '.csv' ? '.csv' :
+                       '.xlsx,.xls';
+    
+    const handleSingle = async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      
+      if (isBatch) {
+        await processBatchFile(file, { endpoint, type: id });
+      } else if (isBonifici) {
+        await processBonifici([file]);
+      } else {
+        await processFiles([file], { extension, endpoint, type: id, extractZip: false });
+      }
+      e.target.value = '';
+    };
+    
+    const handleMultiple = async (e) => {
+      const files = e.target.files;
+      if (!files || files.length === 0) return;
+      
+      if (isBonifici) {
+        await processBonifici(Array.from(files));
+      } else {
+        await processFiles(Array.from(files), { extension, endpoint, type: id, extractZip: false });
+      }
+      e.target.value = '';
+    };
+    
+    const handleZip = async (e) => {
+      const files = e.target.files;
+      if (!files || files.length === 0) return;
+      
+      if (isBonifici) {
+        await processBonifici(Array.from(files));
+      } else {
+        await processFiles(Array.from(files), { extension, endpoint, type: id, extractZip: true });
+      }
+      e.target.value = '';
+    };
+    
+    return (
+      <div 
+        style={{ 
+          background: "white", 
+          borderRadius: 12, 
+          padding: 20,
+          border: "1px solid #e5e7eb",
+          boxShadow: "0 2px 4px rgba(0,0,0,0.05)"
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 15 }}>
+          <span style={{ fontSize: 28 }}>{icon}</span>
+          <div>
+            <div style={{ fontWeight: "bold", fontSize: 16 }}>{label}</div>
+            <div style={{ fontSize: 12, color: "#666" }}>{desc}</div>
+          </div>
+        </div>
+
+        {/* Template download link */}
+        {templateUrl && (
+          <a 
+            href="#"
+            onClick={(e) => { e.preventDefault(); handleDownloadTemplate(templateUrl); }}
+            style={{ 
+              display: "inline-block",
+              marginBottom: 12,
+              fontSize: 12,
+              color: "#3b82f6",
+              textDecoration: "none"
+            }}
+          >
+            📥 Scarica Template Vuoto
+          </a>
+        )}
+
+        {/* Progress Bar */}
+        {isActive && uploadProgress.active && (
+          <div style={{ marginBottom: 15, background: "#f8fafc", borderRadius: 8, padding: 10 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5, fontSize: 12, color: "#666" }}>
+              <span style={{ maxWidth: '60%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {uploadProgress.filename}
+              </span>
+              <span>{uploadProgress.current} / {uploadProgress.total} ({progressPercent}%)</span>
+            </div>
+            <div style={{ 
+              height: 8, 
+              background: "#e5e7eb", 
+              borderRadius: 4,
+              overflow: "hidden"
+            }}>
+              <div style={{
+                height: "100%",
+                width: `${progressPercent}%`,
+                background: "#3b82f6",
+                transition: "width 0.3s ease",
+                borderRadius: 4
+              }} />
+            </div>
+            <div style={{ display: "flex", gap: 15, marginTop: 6, fontSize: 11 }}>
+              <span style={{ color: "#16a34a" }}>✅ {uploadProgress.imported}</span>
+              <span style={{ color: "#ca8a04" }}>⚠️ {uploadProgress.duplicates}</span>
+              <span style={{ color: "#dc2626" }}>❌ {uploadProgress.errors.length}</span>
+            </div>
+          </div>
+        )}
+        
+        {/* 3 Buttons */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {/* Single file */}
+          <div>
+            <input
+              type="file"
+              ref={singleRef}
+              accept={fileAccept}
+              onChange={handleSingle}
+              style={{ display: "none" }}
+              data-testid={`import-${id}-single-file`}
+            />
+            <button
+              onClick={() => singleRef.current?.click()}
+              disabled={loading}
+              style={{
+                width: "100%",
+                padding: "10px 16px",
+                background: loading ? "#9ca3af" : "#3b82f6",
+                color: "white",
+                border: "none",
+                borderRadius: 6,
+                fontWeight: 500,
+                fontSize: 14,
+                cursor: loading ? "wait" : "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8
+              }}
+              data-testid={`import-${id}-single-btn`}
+            >
+              📄 Carica {extension.toUpperCase().replace('.', '')} Singolo
+            </button>
+          </div>
+
+          {/* Multiple files */}
+          {!isBatch && (
+            <div>
+              <input
+                type="file"
+                ref={multiRef}
+                accept={fileAccept}
+                multiple
+                onChange={handleMultiple}
+                style={{ display: "none" }}
+                data-testid={`import-${id}-multi-file`}
+              />
+              <button
+                onClick={() => multiRef.current?.click()}
+                disabled={loading}
+                style={{
+                  width: "100%",
+                  padding: "10px 16px",
+                  background: loading ? "#9ca3af" : "#10b981",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 6,
+                  fontWeight: 500,
+                  fontSize: 14,
+                  cursor: loading ? "wait" : "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8
+                }}
+                data-testid={`import-${id}-multi-btn`}
+              >
+                📁 Upload {extension.toUpperCase().replace('.', '')} Multipli
+              </button>
+            </div>
+          )}
+
+          {/* ZIP upload */}
+          {!isBatch && (
+            <div>
+              <input
+                type="file"
+                ref={zipRef}
+                accept=".zip"
+                multiple
+                onChange={handleZip}
+                style={{ display: "none" }}
+                data-testid={`import-${id}-zip-file`}
+              />
+              <button
+                onClick={() => zipRef.current?.click()}
+                disabled={loading}
+                style={{
+                  width: "100%",
+                  padding: "10px 16px",
+                  background: loading ? "#9ca3af" : "#f59e0b",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 6,
+                  fontWeight: 500,
+                  fontSize: 14,
+                  cursor: loading ? "wait" : "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8
+                }}
+                data-testid={`import-${id}-zip-btn`}
+              >
+                📦 Upload ZIP Massivo
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   // ========== IMPORTS CONFIG ==========
   
   const imports = [
     { 
+      id: "fatture-xml",
+      label: "Import Fatture XML", 
+      icon: "📄", 
+      extension: ".xml",
+      endpoint: "/api/fatture/upload-xml",
+      desc: "XML singoli/multipli, ZIP, ZIP annidati. Duplicati ignorati automaticamente",
+      templateUrl: null
+    },
+    { 
       id: "versamenti", 
       label: "Versamenti in Banca", 
       icon: "🏦", 
-      ref: versamentoFileRef, 
-      handler: handleImportVersamenti,
-      accept: ".csv",
-      desc: "CSV: Ragione Sociale, Data contabile, Data valuta, Banca, Rapporto, Importo, Divisa, Descrizione, Categoria/sottocategoria, Hashtag",
-      templateUrl: "/api/import-templates/versamenti"
+      extension: ".csv",
+      endpoint: "/api/prima-nota-auto/import-versamenti",
+      desc: "CSV singoli/multipli, ZIP, ZIP annidati. Duplicati ignorati automaticamente",
+      templateUrl: "/api/import-templates/versamenti",
+      isBatch: true
     },
     { 
       id: "pos", 
       label: "Incassi POS", 
       icon: "💳", 
-      ref: posFileRef, 
-      handler: handleImportPOS,
-      accept: ".xlsx,.xls",
-      desc: "XLSX: DATA, CONTO, IMPORTO",
-      templateUrl: "/api/import-templates/pos"
+      extension: ".xlsx",
+      endpoint: "/api/prima-nota-auto/import-pos",
+      desc: "XLSX singoli/multipli, ZIP, ZIP annidati. Duplicati ignorati automaticamente",
+      templateUrl: "/api/import-templates/pos",
+      isBatch: true
     },
     { 
       id: "corrispettivi", 
       label: "Corrispettivi", 
       icon: "🧾", 
-      ref: corrispettiviFileRef, 
-      handler: handleImportCorrispettivi,
-      accept: ".xlsx,.xls",
-      desc: "XLSX: Data e ora rilevazione, Ammontare vendite, Imponibile, Imposta",
-      templateUrl: "/api/import-templates/corrispettivi"
+      extension: ".xlsx",
+      endpoint: "/api/prima-nota-auto/import-corrispettivi",
+      desc: "XLSX singoli/multipli, ZIP, ZIP annidati. Duplicati ignorati automaticamente",
+      templateUrl: "/api/import-templates/corrispettivi",
+      isBatch: true
     },
     { 
       id: "estratto-conto", 
       label: "Estratto Conto Bancario", 
       icon: "🏦", 
-      ref: estrattoContoFileRef, 
-      handler: handleImportEstrattoConto,
-      accept: ".csv",
-      desc: "CSV: Ragione Sociale, Data contabile, Data valuta, Banca, Rapporto, Importo, Divisa, Descrizione, Categoria/sottocategoria, Hashtag",
-      templateUrl: "/api/import-templates/estratto-conto"
+      extension: ".csv",
+      endpoint: "/api/estratto-conto-movimenti/import",
+      desc: "CSV singoli/multipli, ZIP, ZIP annidati. Duplicati ignorati automaticamente",
+      templateUrl: "/api/import-templates/estratto-conto",
+      isBatch: true
     },
     { 
       id: "f24", 
       label: "F24 Contributi", 
       icon: "📋", 
-      ref: f24FileRef, 
-      handler: handleImportF24,
-      accept: ".pdf,.zip",
-      multiple: true,
-      desc: "PDF singoli, multipli o ZIP. Duplicati ignorati automaticamente",
+      extension: ".pdf",
+      endpoint: "/api/f24-public/upload",
+      desc: "PDF singoli/multipli, ZIP, ZIP annidati. Duplicati ignorati automaticamente",
       templateUrl: null
     },
     { 
       id: "paghe", 
       label: "Buste Paga", 
       icon: "💰", 
-      ref: pagheFileRef, 
-      handler: handleImportPaghe,
-      accept: ".pdf,.zip",
-      multiple: true,
-      desc: "PDF singoli, multipli o ZIP. Netto inserito in Prima Nota Salari",
+      extension: ".pdf",
+      endpoint: "/api/employees/paghe/upload-pdf",
+      desc: "PDF singoli/multipli, ZIP, ZIP annidati. Duplicati ignorati automaticamente",
       templateUrl: null
     },
     { 
       id: "bonifici", 
       label: "Archivio Bonifici", 
       icon: "📑", 
-      ref: bonificiFileRef, 
-      handler: handleImportBonifici,
-      accept: ".pdf,.zip",
-      multiple: true,
-      desc: "PDF o ZIP contenenti bonifici bancari. Parsing automatico con deduplicazione",
-      templateUrl: null
+      extension: ".pdf",
+      endpoint: "/api/archivio-bonifici/jobs",
+      desc: "PDF singoli/multipli, ZIP, ZIP annidati. Duplicati ignorati automaticamente",
+      templateUrl: null,
+      isBonifici: true
     }
   ];
-
-  // Progress bar percentage
-  const progressPercent = uploadProgress.total > 0 
-    ? Math.round((uploadProgress.current / uploadProgress.total) * 100) 
-    : 0;
 
   return (
     <div style={{ padding: "clamp(12px, 3vw, 20px)" }}>
@@ -803,240 +654,8 @@ export default function ImportExport() {
 
       {/* Import Grid */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 20 }}>
-        
-        {/* Fatture XML Import Card - Con 3 pulsanti */}
-        <div 
-          style={{ 
-            background: "white", 
-            borderRadius: 12, 
-            padding: 20,
-            border: "1px solid #e5e7eb",
-            boxShadow: "0 2px 4px rgba(0,0,0,0.05)"
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 15 }}>
-            <span style={{ fontSize: 28 }}>📄</span>
-            <div>
-              <div style={{ fontWeight: "bold", fontSize: 16 }}>Import Fatture XML</div>
-              <div style={{ fontSize: 12, color: "#666" }}>
-                XML singoli/multipli, ZIP, ZIP annidati. Duplicati ignorati automaticamente
-              </div>
-            </div>
-          </div>
-
-          {/* Progress Bar */}
-          {uploadProgress.active && (
-            <div style={{ marginBottom: 15, background: "#f8fafc", borderRadius: 8, padding: 10 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5, fontSize: 12, color: "#666" }}>
-                <span>{uploadProgress.filename}</span>
-                <span>{uploadProgress.current} / {uploadProgress.total} ({progressPercent}%)</span>
-              </div>
-              <div style={{ 
-                height: 8, 
-                background: "#e5e7eb", 
-                borderRadius: 4,
-                overflow: "hidden"
-              }}>
-                <div style={{
-                  height: "100%",
-                  width: `${progressPercent}%`,
-                  background: "#3b82f6",
-                  transition: "width 0.3s ease",
-                  borderRadius: 4
-                }} />
-              </div>
-              <div style={{ display: "flex", gap: 15, marginTop: 6, fontSize: 11 }}>
-                <span style={{ color: "#16a34a" }}>✅ {uploadProgress.imported}</span>
-                <span style={{ color: "#ca8a04" }}>⚠️ {uploadProgress.duplicates}</span>
-                <span style={{ color: "#dc2626" }}>❌ {uploadProgress.errors.length}</span>
-              </div>
-            </div>
-          )}
-          
-          {/* 3 Pulsanti per XML */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {/* XML Singolo */}
-            <div>
-              <input
-                type="file"
-                ref={xmlSingleRef}
-                accept=".xml"
-                style={{ display: "none" }}
-                data-testid="import-xml-single-file"
-              />
-              <button
-                onClick={() => xmlSingleRef.current?.click()}
-                disabled={loading}
-                style={{
-                  width: "100%",
-                  padding: "10px 16px",
-                  background: loading ? "#9ca3af" : "#3b82f6",
-                  color: "white",
-                  border: "none",
-                  borderRadius: 6,
-                  fontWeight: 500,
-                  fontSize: 14,
-                  cursor: loading ? "wait" : "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 8
-                }}
-                data-testid="import-xml-single-btn"
-              >
-                📄 Carica XML Singolo
-              </button>
-              <input
-                type="file"
-                ref={xmlSingleRef}
-                accept=".xml"
-                onChange={handleXmlSingleUpload}
-                style={{ display: "none" }}
-              />
-            </div>
-
-            {/* XML Multipli */}
-            <div>
-              <input
-                type="file"
-                ref={xmlMultipleRef}
-                accept=".xml"
-                multiple
-                onChange={handleXmlMultipleUpload}
-                style={{ display: "none" }}
-                data-testid="import-xml-multiple-file"
-              />
-              <button
-                onClick={() => xmlMultipleRef.current?.click()}
-                disabled={loading}
-                style={{
-                  width: "100%",
-                  padding: "10px 16px",
-                  background: loading ? "#9ca3af" : "#10b981",
-                  color: "white",
-                  border: "none",
-                  borderRadius: 6,
-                  fontWeight: 500,
-                  fontSize: 14,
-                  cursor: loading ? "wait" : "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 8
-                }}
-                data-testid="import-xml-multiple-btn"
-              >
-                📁 Upload XML Multipli
-              </button>
-            </div>
-
-            {/* ZIP Massivo */}
-            <div>
-              <input
-                type="file"
-                ref={xmlZipRef}
-                accept=".zip"
-                multiple
-                onChange={handleXmlZipUpload}
-                style={{ display: "none" }}
-                data-testid="import-xml-zip-file"
-              />
-              <button
-                onClick={() => xmlZipRef.current?.click()}
-                disabled={loading}
-                style={{
-                  width: "100%",
-                  padding: "10px 16px",
-                  background: loading ? "#9ca3af" : "#f59e0b",
-                  color: "white",
-                  border: "none",
-                  borderRadius: 6,
-                  fontWeight: 500,
-                  fontSize: 14,
-                  cursor: loading ? "wait" : "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 8
-                }}
-                data-testid="import-xml-zip-btn"
-              >
-                📦 Upload ZIP Massivo
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Other Import Cards */}
-        {imports.map((imp) => (
-          <div 
-            key={imp.id}
-            style={{ 
-              background: "white", 
-              borderRadius: 12, 
-              padding: 20,
-              border: "1px solid #e5e7eb",
-              boxShadow: "0 2px 4px rgba(0,0,0,0.05)"
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-              <span style={{ fontSize: 28 }}>{imp.icon}</span>
-              <div>
-                <div style={{ fontWeight: "bold", fontSize: 16 }}>{imp.label}</div>
-                <div style={{ fontSize: 12, color: "#666" }}>{imp.desc}</div>
-              </div>
-            </div>
-            
-            {imp.templateUrl && (
-              <a 
-                href="#"
-                onClick={(e) => { e.preventDefault(); handleDownloadTemplate(imp.templateUrl); }}
-                style={{ 
-                  display: "inline-block",
-                  marginBottom: 10,
-                  fontSize: 12,
-                  color: "#3b82f6",
-                  textDecoration: "none"
-                }}
-              >
-                📥 Scarica Template Vuoto
-              </a>
-            )}
-            
-            <input
-              type="file"
-              ref={imp.ref}
-              accept={imp.accept}
-              multiple={imp.multiple || false}
-              style={{ 
-                width: "100%", 
-                padding: 10, 
-                border: "2px dashed #d1d5db",
-                borderRadius: 8,
-                marginBottom: 10,
-                background: "#f9fafb"
-              }}
-              data-testid={`import-${imp.id}-file`}
-            />
-            
-            <button
-              onClick={imp.handler}
-              disabled={loading}
-              style={{
-                width: "100%",
-                padding: "12px 20px",
-                background: loading ? "#9ca3af" : "#3b82f6",
-                color: "white",
-                border: "none",
-                borderRadius: 8,
-                fontWeight: "bold",
-                cursor: loading ? "wait" : "pointer"
-              }}
-              data-testid={`import-${imp.id}-btn`}
-            >
-              {loading ? "⏳ Importazione..." : `📥 Importa ${imp.label}`}
-            </button>
-          </div>
+        {imports.map((config) => (
+          <ImportCard key={config.id} config={config} />
         ))}
       </div>
 
@@ -1050,9 +669,26 @@ export default function ImportExport() {
           border: "1px solid #bae6fd"
         }}>
           <h4 style={{ margin: "0 0 10px 0" }}>📊 Risultato Importazione</h4>
-          <pre style={{ margin: 0, fontSize: 12, overflow: "auto" }}>
-            {JSON.stringify(importResults, null, 2)}
-          </pre>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 10 }}>
+            <div style={{ background: "#dcfce7", padding: 10, borderRadius: 6, textAlign: "center" }}>
+              <div style={{ fontSize: 24, fontWeight: "bold", color: "#16a34a" }}>{importResults.imported}</div>
+              <div style={{ fontSize: 12, color: "#166534" }}>Importati</div>
+            </div>
+            <div style={{ background: "#fef3c7", padding: 10, borderRadius: 6, textAlign: "center" }}>
+              <div style={{ fontSize: 24, fontWeight: "bold", color: "#ca8a04" }}>{importResults.duplicates}</div>
+              <div style={{ fontSize: 12, color: "#92400e" }}>Duplicati</div>
+            </div>
+            <div style={{ background: "#fee2e2", padding: 10, borderRadius: 6, textAlign: "center" }}>
+              <div style={{ fontSize: 24, fontWeight: "bold", color: "#dc2626" }}>{importResults.errors}</div>
+              <div style={{ fontSize: 12, color: "#991b1b" }}>Errori</div>
+            </div>
+          </div>
+          <button 
+            onClick={() => setImportResults(null)} 
+            style={{ marginTop: 10, padding: "6px 12px", background: "#e5e7eb", border: "none", borderRadius: 4, cursor: "pointer" }}
+          >
+            Chiudi
+          </button>
         </div>
       )}
     </div>
