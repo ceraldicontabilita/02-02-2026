@@ -4,7 +4,6 @@ import api from "../api";
 export default function ImportExport() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
-  const [activeTab, setActiveTab] = useState("import");
   const [importResults, setImportResults] = useState(null);
   
   // Progress tracking
@@ -18,7 +17,7 @@ export default function ImportExport() {
     errors: []
   });
   
-  // File refs for other imports
+  // File refs
   const versamentoFileRef = useRef(null);
   const posFileRef = useRef(null);
   const corrispettiviFileRef = useRef(null);
@@ -26,18 +25,19 @@ export default function ImportExport() {
   const pagheFileRef = useRef(null);
   const estrattoContoFileRef = useRef(null);
   
-  // Fatture XML/ZIP upload ref
-  const fattureXmlRef = useRef(null);
+  // Fatture XML refs - separati per tipo
+  const xmlSingleRef = useRef(null);
+  const xmlMultipleRef = useRef(null);
+  const xmlZipRef = useRef(null);
 
   const showMessage = (type, text) => {
     setMessage({ type, text });
     setTimeout(() => setMessage({ type: "", text: "" }), 8000);
   };
 
-  // ========== FATTURE XML/ZIP IMPORT ==========
+  // ========== FATTURE XML IMPORT - 3 Modalità ==========
   
   const extractZipContents = async (file) => {
-    // Use JSZip to extract contents
     const JSZip = (await import('jszip')).default;
     const zip = await JSZip.loadAsync(file);
     const xmlFiles = [];
@@ -49,20 +49,80 @@ export default function ImportExport() {
       }
       // Handle nested ZIPs
       if (filename.toLowerCase().endsWith('.zip') && !zipEntry.dir) {
-        const nestedBlob = await zipEntry.async('blob');
-        const nestedFile = new File([nestedBlob], filename, { type: 'application/zip' });
+        const nestedContent = await zipEntry.async('blob');
+        const nestedFile = new File([nestedContent], filename, { type: 'application/zip' });
         const nestedXmls = await extractZipContents(nestedFile);
         xmlFiles.push(...nestedXmls);
       }
     }
-    
     return xmlFiles;
   };
 
-  const handleFattureXmlImport = async () => {
-    const files = fattureXmlRef.current?.files;
+  // Upload singolo XML
+  const handleXmlSingleUpload = async () => {
+    const file = xmlSingleRef.current?.files[0];
+    if (!file) {
+      showMessage("error", "Seleziona un file XML");
+      return;
+    }
+    
+    setLoading(true);
+    setUploadProgress({
+      active: true,
+      current: 0,
+      total: 1,
+      filename: file.name,
+      duplicates: 0,
+      imported: 0,
+      errors: []
+    });
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await api.post("/api/fatture/upload-xml", formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+
+      if (res.data.success !== false) {
+        setUploadProgress(prev => ({ ...prev, imported: 1, current: 1 }));
+        showMessage("success", "Fattura XML importata con successo");
+      }
+    } catch (e) {
+      const errorMsg = e.response?.data?.detail || e.message;
+      const statusCode = e.response?.status;
+      if (statusCode === 409 || errorMsg.toLowerCase().includes('duplicat') || errorMsg.toLowerCase().includes('già presente')) {
+        setUploadProgress(prev => ({ ...prev, duplicates: 1, current: 1 }));
+        showMessage("success", "Fattura già presente (duplicato ignorato)");
+      } else {
+        setUploadProgress(prev => ({ ...prev, errors: [{ file: file.name, error: errorMsg }], current: 1 }));
+        showMessage("error", errorMsg);
+      }
+    } finally {
+      setLoading(false);
+      xmlSingleRef.current.value = "";
+      setTimeout(() => setUploadProgress(prev => ({ ...prev, active: false })), 2000);
+    }
+  };
+
+  // Upload multiplo XML
+  const handleXmlMultipleUpload = async () => {
+    const files = xmlMultipleRef.current?.files;
     if (!files || files.length === 0) {
-      showMessage("error", "Seleziona file XML o ZIP contenenti fatture");
+      showMessage("error", "Seleziona uno o più file XML");
+      return;
+    }
+
+    await processMultipleXmlFiles(Array.from(files), "XML multipli");
+    xmlMultipleRef.current.value = "";
+  };
+
+  // Upload ZIP
+  const handleXmlZipUpload = async () => {
+    const files = xmlZipRef.current?.files;
+    if (!files || files.length === 0) {
+      showMessage("error", "Seleziona uno o più file ZIP");
       return;
     }
 
@@ -71,120 +131,122 @@ export default function ImportExport() {
       active: true,
       current: 0,
       total: 0,
-      filename: "Preparazione...",
+      filename: "Estrazione ZIP...",
       duplicates: 0,
       imported: 0,
       errors: []
     });
 
     try {
-      // Collect all XML files (from direct XMLs and extracted from ZIPs)
+      // Estrai tutti gli XML dagli ZIP
       let allXmlFiles = [];
-      
       for (const file of files) {
-        if (file.name.toLowerCase().endsWith('.zip')) {
-          const extractedXmls = await extractZipContents(file);
-          allXmlFiles.push(...extractedXmls);
-        } else if (file.name.toLowerCase().endsWith('.xml')) {
-          allXmlFiles.push(file);
-        }
+        const xmlFiles = await extractZipContents(file);
+        allXmlFiles.push(...xmlFiles);
       }
 
       if (allXmlFiles.length === 0) {
-        showMessage("error", "Nessun file XML trovato nei file selezionati");
-        setUploadProgress(prev => ({ ...prev, active: false }));
+        showMessage("error", "Nessun file XML trovato negli ZIP");
         setLoading(false);
+        setUploadProgress(prev => ({ ...prev, active: false }));
         return;
+      }
+
+      await processMultipleXmlFiles(allXmlFiles, "ZIP");
+    } catch (e) {
+      showMessage("error", "Errore durante l'estrazione dello ZIP: " + e.message);
+      setLoading(false);
+      setUploadProgress(prev => ({ ...prev, active: false }));
+    }
+    
+    xmlZipRef.current.value = "";
+  };
+
+  // Funzione comune per processare più file XML
+  const processMultipleXmlFiles = async (xmlFiles, source) => {
+    setLoading(true);
+    setUploadProgress({
+      active: true,
+      current: 0,
+      total: xmlFiles.length,
+      filename: `Trovati ${xmlFiles.length} file XML da ${source}`,
+      duplicates: 0,
+      imported: 0,
+      errors: []
+    });
+
+    let imported = 0;
+    let duplicates = 0;
+    let errors = [];
+
+    for (let i = 0; i < xmlFiles.length; i++) {
+      const xmlFile = xmlFiles[i];
+      
+      setUploadProgress(prev => ({
+        ...prev,
+        current: i + 1,
+        filename: xmlFile.name
+      }));
+
+      const formData = new FormData();
+      formData.append("file", xmlFile);
+
+      try {
+        const res = await api.post("/api/fatture/upload-xml", formData, {
+          headers: { "Content-Type": "multipart/form-data" }
+        });
+
+        if (res.data.success !== false) {
+          if (res.data.duplicate) {
+            duplicates++;
+          } else {
+            imported++;
+          }
+        } else {
+          errors.push({ file: xmlFile.name, error: res.data.error || "Errore sconosciuto" });
+        }
+      } catch (e) {
+        const errorMsg = e.response?.data?.detail || e.response?.data?.message || e.message;
+        const statusCode = e.response?.status;
+        if (statusCode === 409 || 
+            errorMsg.toLowerCase().includes('duplicat') || 
+            errorMsg.toLowerCase().includes('esiste già') ||
+            errorMsg.toLowerCase().includes('già presente')) {
+          duplicates++;
+        } else {
+          errors.push({ file: xmlFile.name, error: errorMsg });
+        }
       }
 
       setUploadProgress(prev => ({
         ...prev,
-        total: allXmlFiles.length,
-        filename: `Trovati ${allXmlFiles.length} file XML`
-      }));
-
-      // Process each XML file
-      let imported = 0;
-      let duplicates = 0;
-      let errors = [];
-
-      for (let i = 0; i < allXmlFiles.length; i++) {
-        const xmlFile = allXmlFiles[i];
-        
-        setUploadProgress(prev => ({
-          ...prev,
-          current: i + 1,
-          filename: xmlFile.name
-        }));
-
-        const formData = new FormData();
-        formData.append("file", xmlFile);
-        formData.append("check_duplicates", "true");
-
-        try {
-          const res = await api.post("/api/fatture/upload-xml", formData, {
-            headers: { "Content-Type": "multipart/form-data" }
-          });
-
-          if (res.data.success) {
-            if (res.data.duplicate) {
-              duplicates++;
-            } else {
-              imported++;
-            }
-          } else {
-            errors.push({ file: xmlFile.name, error: res.data.error || "Errore sconosciuto" });
-          }
-        } catch (e) {
-          const errorMsg = e.response?.data?.detail || e.response?.data?.message || e.message;
-          const statusCode = e.response?.status;
-          // Check if it's a duplicate error (HTTP 409 or message contains duplicate keywords)
-          if (statusCode === 409 || 
-              errorMsg.toLowerCase().includes('duplicat') || 
-              errorMsg.toLowerCase().includes('esiste già') ||
-              errorMsg.toLowerCase().includes('già presente')) {
-            duplicates++;
-          } else {
-            errors.push({ file: xmlFile.name, error: errorMsg });
-          }
-        }
-
-        setUploadProgress(prev => ({
-          ...prev,
-          imported,
-          duplicates,
-          errors: [...errors]
-        }));
-
-        // Small delay to prevent overwhelming the server
-        await new Promise(r => setTimeout(r, 100));
-      }
-
-      // Final results
-      setImportResults({
-        type: "fatture_xml",
-        total_files: allXmlFiles.length,
         imported,
         duplicates,
-        errors: errors.length,
-        error_details: errors
-      });
+        errors: [...errors]
+      }));
 
-      if (errors.length === 0) {
-        showMessage("success", `Importate ${imported} fatture. ${duplicates} duplicati ignorati.`);
-      } else {
-        showMessage("error", `Importate ${imported} fatture. ${duplicates} duplicati. ${errors.length} errori.`);
+      // Piccola pausa per non sovraccaricare il server
+      if (i < xmlFiles.length - 1) {
+        await new Promise(r => setTimeout(r, 50));
       }
-
-      fattureXmlRef.current.value = "";
-    } catch (e) {
-      showMessage("error", "Errore durante l'import: " + e.message);
-    } finally {
-      setLoading(false);
-      setTimeout(() => {
-        setUploadProgress(prev => ({ ...prev, active: false }));
-      }, 2000);
     }
+
+    setImportResults({
+      type: "fatture_xml",
+      total_files: xmlFiles.length,
+      imported,
+      duplicates,
+      errors: errors.length
+    });
+
+    if (errors.length === 0) {
+      showMessage("success", `Importate ${imported} fatture. ${duplicates} duplicati ignorati.`);
+    } else {
+      showMessage("error", `Importate ${imported} fatture. ${duplicates} duplicati. ${errors.length} errori.`);
+    }
+
+    setLoading(false);
+    setTimeout(() => setUploadProgress(prev => ({ ...prev, active: false })), 2000);
   };
 
   // ========== OTHER IMPORT FUNCTIONS ==========
@@ -192,7 +254,7 @@ export default function ImportExport() {
   const handleImportVersamenti = async () => {
     const file = versamentoFileRef.current?.files[0];
     if (!file) {
-      showMessage("error", "Seleziona un file Excel per i versamenti");
+      showMessage("error", "Seleziona un file CSV per i versamenti");
       return;
     }
     
@@ -277,7 +339,6 @@ export default function ImportExport() {
     });
 
     try {
-      // Collect all PDF files (from direct PDFs and extracted from ZIPs)
       let allPdfFiles = [];
       
       for (const file of files) {
@@ -395,7 +456,6 @@ export default function ImportExport() {
     });
 
     try {
-      // Collect all PDF files (from direct PDFs and extracted from ZIPs)
       let allPdfFiles = [];
       
       for (const file of files) {
@@ -497,7 +557,7 @@ export default function ImportExport() {
   const handleImportEstrattoConto = async () => {
     const file = estrattoContoFileRef.current?.files[0];
     if (!file) {
-      showMessage("error", "Seleziona un file CSV o Excel dell'estratto conto bancario");
+      showMessage("error", "Seleziona un file CSV dell'estratto conto bancario");
       return;
     }
     
@@ -506,7 +566,6 @@ export default function ImportExport() {
     formData.append("file", file);
     
     try {
-      // Usa l'endpoint per CSV/Excel
       const res = await api.post("/api/estratto-conto-movimenti/import", formData);
       setImportResults(res.data);
       showMessage("success", `Importati ${res.data.movimenti_importati || res.data.inseriti || 0} movimenti dall'estratto conto`);
@@ -518,33 +577,25 @@ export default function ImportExport() {
     }
   };
 
-  // ========== EXPORT FUNCTIONS (Solo Excel) ==========
+  // ========== DOWNLOAD TEMPLATE ==========
   
-  const handleExport = async (dataType) => {
-    setLoading(true);
+  const handleDownloadTemplate = async (templateUrl) => {
     try {
-      const res = await api.get(`/api/exports/${dataType}`, {
-        params: { format: "xlsx" },
-        responseType: "blob"
-      });
-      
-      const blob = new Blob([res.data], { 
-        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" 
-      });
+      const res = await api.get(templateUrl, { responseType: "blob" });
+      const blob = new Blob([res.data]);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${dataType}_export_${new Date().toISOString().slice(0,10)}.xlsx`;
+      a.download = templateUrl.split('/').pop() + (templateUrl.includes('csv') ? '.csv' : '.xlsx');
       a.click();
       window.URL.revokeObjectURL(url);
-      showMessage("success", `Export ${dataType} completato!`);
     } catch (e) {
-      showMessage("error", "Errore export: " + (e.response?.data?.detail || e.message));
-    } finally {
-      setLoading(false);
+      showMessage("error", "Errore download template");
     }
   };
 
+  // ========== IMPORTS CONFIG ==========
+  
   const imports = [
     { 
       id: "versamenti", 
@@ -610,18 +661,6 @@ export default function ImportExport() {
     }
   ];
 
-  const exports = [
-    { type: "invoices", label: "Fatture", icon: "📄" },
-    { type: "suppliers", label: "Fornitori", icon: "🏢" },
-    { type: "products", label: "Prodotti Magazzino", icon: "📦" },
-    { type: "employees", label: "Dipendenti", icon: "👥" },
-    { type: "cash", label: "Prima Nota Cassa", icon: "💵" },
-    { type: "bank", label: "Prima Nota Banca", icon: "🏦" },
-    { type: "salari", label: "Prima Nota Salari", icon: "💰" },
-    { type: "haccp", label: "HACCP Temperature", icon: "🌡️" },
-    { type: "riconciliazione", label: "Riconciliazione Bancaria", icon: "🔄" }
-  ];
-
   // Progress bar percentage
   const progressPercent = uploadProgress.total > 0 
     ? Math.round((uploadProgress.current / uploadProgress.total) * 100) 
@@ -632,10 +671,10 @@ export default function ImportExport() {
       {/* Header */}
       <div style={{ marginBottom: 20 }}>
         <h1 style={{ margin: 0, fontSize: "clamp(20px, 5vw, 28px)" }}>
-          📥 Import / Export Dati
+          📥 Import Dati
         </h1>
         <p style={{ color: "#666", margin: "8px 0 0 0" }}>
-          Gestione centralizzata import ed export dati
+          Gestione centralizzata importazione dati
         </p>
       </div>
 
@@ -653,113 +692,71 @@ export default function ImportExport() {
         </div>
       )}
 
-      {/* Tabs */}
-      <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
-        <button
-          onClick={() => setActiveTab("import")}
-          data-testid="tab-import"
-          style={{
-            padding: "12px 24px",
-            background: activeTab === "import" ? "#3b82f6" : "#e5e7eb",
-            color: activeTab === "import" ? "white" : "#374151",
-            border: "none",
-            borderRadius: 8,
-            fontWeight: "bold",
-            cursor: "pointer"
+      {/* Import Grid */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 20 }}>
+        
+        {/* Fatture XML Import Card - Con 3 pulsanti */}
+        <div 
+          style={{ 
+            background: "white", 
+            borderRadius: 12, 
+            padding: 20,
+            border: "1px solid #e5e7eb",
+            boxShadow: "0 2px 4px rgba(0,0,0,0.05)"
           }}
         >
-          📥 Import
-        </button>
-        <button
-          onClick={() => setActiveTab("export")}
-          data-testid="tab-export"
-          style={{
-            padding: "12px 24px",
-            background: activeTab === "export" ? "#10b981" : "#e5e7eb",
-            color: activeTab === "export" ? "white" : "#374151",
-            border: "none",
-            borderRadius: 8,
-            fontWeight: "bold",
-            cursor: "pointer"
-          }}
-        >
-          📤 Export
-        </button>
-      </div>
-
-      {/* Import Section */}
-      {activeTab === "import" && (
-        <>
-          {/* Other Imports Grid - including Fatture XML */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 20 }}>
-            
-            {/* Fatture XML/ZIP Import Card - Same style as others */}
-            <div 
-              style={{ 
-                background: "white", 
-                borderRadius: 12, 
-                padding: 20,
-                border: "1px solid #e5e7eb",
-                boxShadow: "0 2px 4px rgba(0,0,0,0.05)"
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-                <span style={{ fontSize: 28 }}>📄</span>
-                <div>
-                  <div style={{ fontWeight: "bold", fontSize: 16 }}>Import Fatture XML</div>
-                  <div style={{ fontSize: 12, color: "#666" }}>
-                    XML singoli/multipli, ZIP, ZIP annidati. I duplicati vengono ignorati automaticamente
-                  </div>
-                </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 15 }}>
+            <span style={{ fontSize: 28 }}>📄</span>
+            <div>
+              <div style={{ fontWeight: "bold", fontSize: 16 }}>Import Fatture XML</div>
+              <div style={{ fontSize: 12, color: "#666" }}>
+                XML singoli/multipli, ZIP, ZIP annidati. Duplicati ignorati automaticamente
               </div>
+            </div>
+          </div>
 
+          {/* Progress Bar */}
+          {uploadProgress.active && (
+            <div style={{ marginBottom: 15, background: "#f8fafc", borderRadius: 8, padding: 10 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5, fontSize: 12, color: "#666" }}>
+                <span>{uploadProgress.filename}</span>
+                <span>{uploadProgress.current} / {uploadProgress.total} ({progressPercent}%)</span>
+              </div>
+              <div style={{ 
+                height: 8, 
+                background: "#e5e7eb", 
+                borderRadius: 4,
+                overflow: "hidden"
+              }}>
+                <div style={{
+                  height: "100%",
+                  width: `${progressPercent}%`,
+                  background: "#3b82f6",
+                  transition: "width 0.3s ease",
+                  borderRadius: 4
+                }} />
+              </div>
+              <div style={{ display: "flex", gap: 15, marginTop: 6, fontSize: 11 }}>
+                <span style={{ color: "#16a34a" }}>✅ {uploadProgress.imported}</span>
+                <span style={{ color: "#ca8a04" }}>⚠️ {uploadProgress.duplicates}</span>
+                <span style={{ color: "#dc2626" }}>❌ {uploadProgress.errors.length}</span>
+              </div>
+            </div>
+          )}
+          
+          {/* 3 Pulsanti per XML */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {/* XML Singolo */}
+            <div>
               <input
                 type="file"
-                ref={fattureXmlRef}
-                accept=".xml,.zip"
-                multiple
-                style={{ 
-                  width: "100%", 
-                  padding: 10, 
-                  border: "1px solid #e5e7eb",
-                  borderRadius: 6,
-                  marginBottom: 10,
-                  fontSize: 13
-                }}
-                data-testid="import-fatture-xml-file"
+                ref={xmlSingleRef}
+                accept=".xml"
+                style={{ display: "none" }}
+                data-testid="import-xml-single-file"
               />
-              
-              {/* Progress Bar */}
-              {uploadProgress.active && (
-                <div style={{ marginBottom: 10, background: "#f8fafc", borderRadius: 8, padding: 10 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5, fontSize: 12, color: "#666" }}>
-                    <span>{uploadProgress.filename}</span>
-                    <span>{uploadProgress.current} / {uploadProgress.total} ({progressPercent}%)</span>
-                  </div>
-                  <div style={{ 
-                    height: 8, 
-                    background: "#e5e7eb", 
-                    borderRadius: 4,
-                    overflow: "hidden"
-                  }}>
-                    <div style={{
-                      height: "100%",
-                      width: `${progressPercent}%`,
-                      background: "#3b82f6",
-                      transition: "width 0.3s ease",
-                      borderRadius: 4
-                    }} />
-                  </div>
-                  <div style={{ display: "flex", gap: 15, marginTop: 6, fontSize: 11 }}>
-                    <span style={{ color: "#16a34a" }}>✅ {uploadProgress.imported}</span>
-                    <span style={{ color: "#ca8a04" }}>⚠️ {uploadProgress.duplicates}</span>
-                    <span style={{ color: "#dc2626" }}>❌ {uploadProgress.errors.length}</span>
-                  </div>
-                </div>
-              )}
-              
               <button
-                onClick={handleFattureXmlImport}
+                onClick={() => xmlSingleRef.current?.click()}
                 disabled={loading}
                 style={{
                   width: "100%",
@@ -770,212 +767,183 @@ export default function ImportExport() {
                   borderRadius: 6,
                   fontWeight: 500,
                   fontSize: 14,
-                  cursor: loading ? "wait" : "pointer"
+                  cursor: loading ? "wait" : "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8
                 }}
-                data-testid="import-fatture-xml-btn"
+                data-testid="import-xml-single-btn"
               >
-                {loading ? "⏳ Importazione..." : "📥 Importa"}
+                📄 Carica XML Singolo
               </button>
+              <input
+                type="file"
+                ref={xmlSingleRef}
+                accept=".xml"
+                onChange={handleXmlSingleUpload}
+                style={{ display: "none" }}
+              />
             </div>
-            {imports.map((imp) => (
-              <div 
-                key={imp.id} 
-                style={{ 
-                  background: "white", 
-                  borderRadius: 12, 
-                  padding: 20,
-                  border: "1px solid #e5e7eb",
-                  boxShadow: "0 2px 4px rgba(0,0,0,0.05)"
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-                  <span style={{ fontSize: 28 }}>{imp.icon}</span>
-                  <div>
-                    <div style={{ fontWeight: "bold", fontSize: 16 }}>{imp.label}</div>
-                    <div style={{ fontSize: 12, color: "#666" }}>{imp.desc}</div>
-                  </div>
-                </div>
-                
-                {/* Template Download Button */}
-                {imp.templateUrl && (
-                  <a
-                    href={`${api.defaults.baseURL}${imp.templateUrl}`}
-                    download
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: 6,
-                      padding: "8px 12px",
-                      background: "#f0f9ff",
-                      color: "#0369a1",
-                      border: "1px solid #bae6fd",
-                      borderRadius: 6,
-                      marginBottom: 10,
-                      fontSize: 13,
-                      textDecoration: "none",
-                      fontWeight: 500
-                    }}
-                    data-testid={`download-template-${imp.id}`}
-                  >
-                    📥 Scarica Template Vuoto
-                  </a>
-                )}
-                
-                <input
-                  type="file"
-                  ref={imp.ref}
-                  accept={imp.accept}
-                  multiple={imp.multiple || false}
-                  style={{ 
-                    width: "100%", 
-                    padding: 10, 
-                    border: "2px dashed #d1d5db",
-                    borderRadius: 8,
-                    marginBottom: 10,
-                    background: "#f9fafb"
-                  }}
-                  data-testid={`import-${imp.id}-file`}
-                />
-                
-                <button
-                  onClick={imp.handler}
-                  disabled={loading}
-                  style={{
-                    width: "100%",
-                    padding: "12px 20px",
-                    background: loading ? "#9ca3af" : "#3b82f6",
-                    color: "white",
-                    border: "none",
-                    borderRadius: 8,
-                    fontWeight: "bold",
-                    cursor: loading ? "wait" : "pointer"
-                  }}
-                  data-testid={`import-${imp.id}-btn`}
-                >
-                  {loading ? "⏳ Importazione..." : `📥 Importa ${imp.label}`}
-                </button>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
 
-      {/* Export Section - Solo Excel */}
-      {activeTab === "export" && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 15 }}>
-          {exports.map((exp) => (
-            <div 
-              key={exp.type} 
-              style={{ 
-                background: "white", 
-                borderRadius: 12, 
-                padding: 20,
-                border: "1px solid #e5e7eb",
-                textAlign: "center"
-              }}
-            >
-              <div style={{ fontSize: 36, marginBottom: 10 }}>{exp.icon}</div>
-              <div style={{ fontWeight: "bold", marginBottom: 15, fontSize: 14 }}>{exp.label}</div>
+            {/* XML Multipli */}
+            <div>
+              <input
+                type="file"
+                ref={xmlMultipleRef}
+                accept=".xml"
+                multiple
+                onChange={handleXmlMultipleUpload}
+                style={{ display: "none" }}
+                data-testid="import-xml-multiple-file"
+              />
               <button
-                onClick={() => handleExport(exp.type)}
+                onClick={() => xmlMultipleRef.current?.click()}
                 disabled={loading}
                 style={{
                   width: "100%",
-                  padding: "12px 16px",
-                  background: "#10b981",
+                  padding: "10px 16px",
+                  background: loading ? "#9ca3af" : "#10b981",
                   color: "white",
                   border: "none",
-                  borderRadius: 8,
-                  cursor: "pointer",
-                  fontWeight: "bold"
+                  borderRadius: 6,
+                  fontWeight: 500,
+                  fontSize: 14,
+                  cursor: loading ? "wait" : "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8
                 }}
-                data-testid={`export-${exp.type}`}
+                data-testid="import-xml-multiple-btn"
               >
-                📊 Export Excel
+                📁 Upload XML Multipli
               </button>
             </div>
-          ))}
+
+            {/* ZIP Massivo */}
+            <div>
+              <input
+                type="file"
+                ref={xmlZipRef}
+                accept=".zip"
+                multiple
+                onChange={handleXmlZipUpload}
+                style={{ display: "none" }}
+                data-testid="import-xml-zip-file"
+              />
+              <button
+                onClick={() => xmlZipRef.current?.click()}
+                disabled={loading}
+                style={{
+                  width: "100%",
+                  padding: "10px 16px",
+                  background: loading ? "#9ca3af" : "#f59e0b",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 6,
+                  fontWeight: 500,
+                  fontSize: 14,
+                  cursor: loading ? "wait" : "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8
+                }}
+                data-testid="import-xml-zip-btn"
+              >
+                📦 Upload ZIP Massivo
+              </button>
+            </div>
+          </div>
         </div>
-      )}
+
+        {/* Other Import Cards */}
+        {imports.map((imp) => (
+          <div 
+            key={imp.id}
+            style={{ 
+              background: "white", 
+              borderRadius: 12, 
+              padding: 20,
+              border: "1px solid #e5e7eb",
+              boxShadow: "0 2px 4px rgba(0,0,0,0.05)"
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+              <span style={{ fontSize: 28 }}>{imp.icon}</span>
+              <div>
+                <div style={{ fontWeight: "bold", fontSize: 16 }}>{imp.label}</div>
+                <div style={{ fontSize: 12, color: "#666" }}>{imp.desc}</div>
+              </div>
+            </div>
+            
+            {imp.templateUrl && (
+              <a 
+                href="#"
+                onClick={(e) => { e.preventDefault(); handleDownloadTemplate(imp.templateUrl); }}
+                style={{ 
+                  display: "inline-block",
+                  marginBottom: 10,
+                  fontSize: 12,
+                  color: "#3b82f6",
+                  textDecoration: "none"
+                }}
+              >
+                📥 Scarica Template Vuoto
+              </a>
+            )}
+            
+            <input
+              type="file"
+              ref={imp.ref}
+              accept={imp.accept}
+              multiple={imp.multiple || false}
+              style={{ 
+                width: "100%", 
+                padding: 10, 
+                border: "2px dashed #d1d5db",
+                borderRadius: 8,
+                marginBottom: 10,
+                background: "#f9fafb"
+              }}
+              data-testid={`import-${imp.id}-file`}
+            />
+            
+            <button
+              onClick={imp.handler}
+              disabled={loading}
+              style={{
+                width: "100%",
+                padding: "12px 20px",
+                background: loading ? "#9ca3af" : "#3b82f6",
+                color: "white",
+                border: "none",
+                borderRadius: 8,
+                fontWeight: "bold",
+                cursor: loading ? "wait" : "pointer"
+              }}
+              data-testid={`import-${imp.id}-btn`}
+            >
+              {loading ? "⏳ Importazione..." : `📥 Importa ${imp.label}`}
+            </button>
+          </div>
+        ))}
+      </div>
 
       {/* Import Results */}
       {importResults && (
         <div style={{ 
-          marginTop: 30, 
-          background: "#f8fafc", 
-          borderRadius: 12, 
-          padding: 20,
-          border: "1px solid #e2e8f0"
+          marginTop: 20, 
+          padding: 15, 
+          background: "#f0f9ff", 
+          borderRadius: 8,
+          border: "1px solid #bae6fd"
         }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 15 }}>
-            <h3 style={{ margin: 0 }}>📋 Risultato Importazione</h3>
-            <button
-              onClick={() => setImportResults(null)}
-              style={{
-                padding: "8px 16px",
-                background: "#ef4444",
-                color: "white",
-                border: "none",
-                borderRadius: 6,
-                cursor: "pointer"
-              }}
-            >
-              ✕ Chiudi
-            </button>
-          </div>
-          
-          {importResults.type === "fatture_xml" ? (
-            <div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 15, marginBottom: 15 }}>
-                <div style={{ background: "#e0f2fe", padding: 15, borderRadius: 8, textAlign: "center" }}>
-                  <div style={{ fontSize: 24, fontWeight: "bold", color: "#0284c7" }}>{importResults.total_files}</div>
-                  <div style={{ fontSize: 12, color: "#0369a1" }}>File Processati</div>
-                </div>
-                <div style={{ background: "#dcfce7", padding: 15, borderRadius: 8, textAlign: "center" }}>
-                  <div style={{ fontSize: 24, fontWeight: "bold", color: "#16a34a" }}>{importResults.imported}</div>
-                  <div style={{ fontSize: 12, color: "#15803d" }}>Importate</div>
-                </div>
-                <div style={{ background: "#fef3c7", padding: 15, borderRadius: 8, textAlign: "center" }}>
-                  <div style={{ fontSize: 24, fontWeight: "bold", color: "#d97706" }}>{importResults.duplicates}</div>
-                  <div style={{ fontSize: 12, color: "#b45309" }}>Duplicati</div>
-                </div>
-                <div style={{ background: "#fee2e2", padding: 15, borderRadius: 8, textAlign: "center" }}>
-                  <div style={{ fontSize: 24, fontWeight: "bold", color: "#dc2626" }}>{importResults.errors}</div>
-                  <div style={{ fontSize: 12, color: "#b91c1c" }}>Errori</div>
-                </div>
-              </div>
-              
-              {importResults.error_details?.length > 0 && (
-                <div style={{ background: "#fef2f2", padding: 15, borderRadius: 8 }}>
-                  <strong style={{ color: "#dc2626" }}>Dettagli Errori:</strong>
-                  <ul style={{ margin: "10px 0 0 0", paddingLeft: 20 }}>
-                    {importResults.error_details.slice(0, 10).map((err, idx) => (
-                      <li key={idx} style={{ fontSize: 12, color: "#991b1b", marginBottom: 5 }}>
-                        <strong>{err.file}:</strong> {err.error}
-                      </li>
-                    ))}
-                    {importResults.error_details.length > 10 && (
-                      <li style={{ fontSize: 12, color: "#666" }}>
-                        ...e altri {importResults.error_details.length - 10} errori
-                      </li>
-                    )}
-                  </ul>
-                </div>
-              )}
-            </div>
-          ) : (
-            <pre style={{ 
-              background: "#1e293b", 
-              color: "#e2e8f0", 
-              padding: 15, 
-              borderRadius: 8,
-              overflow: "auto",
-              fontSize: 12
-            }}>
-              {JSON.stringify(importResults, null, 2)}
-            </pre>
-          )}
+          <h4 style={{ margin: "0 0 10px 0" }}>📊 Risultato Importazione</h4>
+          <pre style={{ margin: 0, fontSize: 12, overflow: "auto" }}>
+            {JSON.stringify(importResults, null, 2)}
+          </pre>
         </div>
       )}
     </div>
