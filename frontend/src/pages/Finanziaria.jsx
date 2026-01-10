@@ -80,7 +80,7 @@ export default function Finanziaria() {
           </div>
 
           {/* Sezione IVA - Corrispettivi vs Fatture */}
-          <div className="card" style={{ background: "#f5f5f5" }}>
+          <div style={{ background: "#f5f5f5", borderRadius: 12, padding: 20, marginBottom: 20, boxShadow: "0 2px 8px rgba(0,0,0,0.08)", border: "1px solid #e5e7eb" }}>
             <div style={{ fontSize: 24, fontWeight: "bold", color: "#1e293b", marginBottom: 12 }}>🧾 Riepilogo IVA {selectedYear}</div>
             <div className="small" style={{ marginBottom: 15 }}>
               IVA estratta automaticamente da Corrispettivi XML (vendite) e Fatture XML (acquisti)
