@@ -8,7 +8,41 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Calculator, Users, FileText, CheckCircle, Clock, Building2, Sun, HeartPulse, Calendar } from 'lucide-react';
 
-const Label = ({ children }) => <label className="text-xs font-medium text-slate-600">{children}</label>;
+const styles = {
+  container: { padding: 12, maxWidth: 1200, margin: '0 auto' },
+  header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
+  title: { fontSize: 18, fontWeight: 'bold', color: '#1e293b', display: 'flex', alignItems: 'center', gap: 8 },
+  row: { display: 'flex', alignItems: 'center', gap: 8 },
+  label: { fontSize: 11, fontWeight: '500', color: '#475569', marginBottom: 4, display: 'block' },
+  grid2: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 },
+  grid3: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 },
+  grid4: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 },
+  card: { background: 'white', borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.1)', marginBottom: 12 },
+  cardHeader: { padding: '8px 12px', borderBottom: '1px solid #f1f5f9' },
+  cardTitle: { fontSize: 13, fontWeight: '600', color: '#1e293b', display: 'flex', alignItems: 'center', gap: 4 },
+  cardContent: { padding: 12 },
+  input: { height: 32, fontSize: 12 },
+  btn: { height: 32, fontSize: 12, width: '100%' },
+  statBox: (bg, color) => ({ background: bg, padding: 8, borderRadius: 6, textAlign: 'center' }),
+  statLabel: (color) => ({ fontSize: 11, color: color }),
+  statValue: (color) => ({ fontSize: 18, fontWeight: 'bold', color: color }),
+  table: { width: '100%', fontSize: 12, borderCollapse: 'collapse' },
+  th: { padding: '6px 8px', textAlign: 'left', background: '#f8fafc', fontWeight: '600', color: '#475569' },
+  thRight: { padding: '6px 8px', textAlign: 'right', background: '#f8fafc', fontWeight: '600', color: '#475569' },
+  td: { padding: '6px 8px', borderBottom: '1px solid #f1f5f9' },
+  tdRight: { padding: '6px 8px', borderBottom: '1px solid #f1f5f9', textAlign: 'right' },
+  advancedBox: { background: '#f8fafc', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', marginTop: 8 },
+  resultCard: { background: '#eff6ff', borderRadius: 8, border: '1px solid #bfdbfe' },
+  resultHeader: { padding: '8px 12px', background: '#dbeafe', borderRadius: '8px 8px 0 0' },
+  nettoBox: { background: '#dcfce7', padding: 8, borderRadius: 6, border: '1px solid #86efac', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+  whiteBox: { background: 'white', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 8, fontSize: 12 },
+  gridRow: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4, marginBottom: 4 },
+  small: { fontSize: 11, color: '#64748b' },
+  icon: { width: 12, height: 12, marginRight: 4 },
+  iconMd: { width: 16, height: 16 },
+  iconLg: { width: 20, height: 20 }
+};
+
 const MESI = ['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
 
 export default function Cedolini() {
@@ -19,7 +53,6 @@ export default function Cedolini() {
   const [calculating, setCalculating] = useState(false);
   const [selectedDipendente, setSelectedDipendente] = useState('');
   const [selectedMese, setSelectedMese] = useState(new Date().getMonth() + 1);
-  // Ore e voci avanzate
   const [oreLavorate, setOreLavorate] = useState('160');
   const [pagaOraria, setPagaOraria] = useState('');
   const [straordinari, setStraordinari] = useState('0');
@@ -43,7 +76,6 @@ export default function Cedolini() {
     } catch (e) { console.error(e); }
   };
 
-  // Quando si seleziona un dipendente, carica la paga oraria
   useEffect(() => {
     if (selectedDipendente) {
       const dip = dipendenti.find(d => d.id === selectedDipendente);
@@ -75,9 +107,7 @@ export default function Cedolini() {
     try {
       setCalculating(true);
       const res = await api.post('/api/cedolini/stima', {
-        dipendente_id: selectedDipendente, 
-        mese: selectedMese, 
-        anno,
+        dipendente_id: selectedDipendente, mese: selectedMese, anno,
         ore_lavorate: parseFloat(oreLavorate) || 0,
         paga_oraria: parseFloat(pagaOraria) || 0,
         straordinari_ore: parseFloat(straordinari) || 0,
@@ -104,201 +134,215 @@ export default function Cedolini() {
   const fmt = (v) => v != null ? new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(v) : '-';
 
   return (
-    <div className="p-3 space-y-3" data-testid="cedolini-page">
-      {/* Header compatto */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-          <FileText className="w-5 h-5 text-blue-600" /> Cedolini Paga
+    <div style={styles.container} data-testid="cedolini-page">
+      {/* Header */}
+      <div style={styles.header}>
+        <h1 style={styles.title}>
+          <FileText style={{ ...styles.iconLg, color: '#2563eb' }} /> Cedolini Paga
         </h1>
-        <div className="flex items-center gap-2">
+        <div style={styles.row}>
           <Select value={selectedMese.toString()} onValueChange={(v) => setSelectedMese(parseInt(v))}>
-            <SelectTrigger className="w-24 h-8 text-xs"><SelectValue /></SelectTrigger>
+            <SelectTrigger style={{ width: 96, height: 32, fontSize: 12 }}><SelectValue /></SelectTrigger>
             <SelectContent>
               {MESI.map((m, i) => <SelectItem key={i} value={(i+1).toString()}>{m}</SelectItem>)}
             </SelectContent>
           </Select>
-          <span className="text-sm font-semibold text-slate-600">{anno}</span>
+          <span style={{ fontSize: 14, fontWeight: '600', color: '#475569' }}>{anno}</span>
         </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="h-8">
-          <TabsTrigger value="calcola" className="text-xs h-7 px-3"><Calculator className="w-3 h-3 mr-1" />Calcola</TabsTrigger>
-          <TabsTrigger value="storico" className="text-xs h-7 px-3"><FileText className="w-3 h-3 mr-1" />Storico</TabsTrigger>
+        <TabsList style={{ height: 32 }}>
+          <TabsTrigger value="calcola" style={{ fontSize: 12, height: 28, padding: '0 12px' }}>
+            <Calculator style={styles.icon} />Calcola
+          </TabsTrigger>
+          <TabsTrigger value="storico" style={{ fontSize: 12, height: 28, padding: '0 12px' }}>
+            <FileText style={styles.icon} />Storico
+          </TabsTrigger>
         </TabsList>
 
         {/* TAB CALCOLA */}
-        <TabsContent value="calcola" className="mt-2">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        <TabsContent value="calcola" style={{ marginTop: 8 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: stima ? '1fr 1fr' : '1fr', gap: 12 }}>
             {/* Form */}
-            <Card className="shadow-sm">
-              <CardHeader className="py-2 px-3">
-                <CardTitle className="text-sm flex items-center gap-1"><Users className="w-4 h-4 text-blue-600" />Dati</CardTitle>
-              </CardHeader>
-              <CardContent className="p-3 space-y-2">
-                <div>
-                  <Label>Dipendente</Label>
+            <div style={styles.card}>
+              <div style={styles.cardHeader}>
+                <div style={styles.cardTitle}><Users style={{ ...styles.iconMd, color: '#2563eb' }} />Dati</div>
+              </div>
+              <div style={styles.cardContent}>
+                <div style={{ marginBottom: 8 }}>
+                  <label style={styles.label}>Dipendente</label>
                   <Select value={selectedDipendente} onValueChange={setSelectedDipendente}>
-                    <SelectTrigger className="h-8 text-xs" data-testid="dipendente-select"><SelectValue placeholder="Seleziona..." /></SelectTrigger>
+                    <SelectTrigger style={{ height: 32, fontSize: 12 }} data-testid="dipendente-select"><SelectValue placeholder="Seleziona..." /></SelectTrigger>
                     <SelectContent>
-                      {dipendenti.map(d => <SelectItem key={d.id} value={d.id} className="text-xs">{d.nome_completo}</SelectItem>)}
+                      {dipendenti.map(d => <SelectItem key={d.id} value={d.id}>{d.nome_completo}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
                 
-                {/* Paga Oraria */}
-                <div className="grid grid-cols-2 gap-2">
+                <div style={{ ...styles.grid2, marginBottom: 8 }}>
                   <div>
-                    <Label>Paga Oraria €</Label>
-                    <Input 
-                      type="number" 
-                      step="0.01"
-                      value={pagaOraria} 
-                      onChange={(e) => setPagaOraria(e.target.value)} 
-                      className="h-8 text-xs" 
-                      placeholder="Es: 9.50"
-                    />
+                    <label style={styles.label}>Paga Oraria €</label>
+                    <Input type="number" step="0.01" value={pagaOraria} onChange={(e) => setPagaOraria(e.target.value)} style={styles.input} placeholder="Es: 9.50" />
                   </div>
                   <div>
-                    <Label>Ore Lavorate</Label>
-                    <Input type="number" value={oreLavorate} onChange={(e) => setOreLavorate(e.target.value)} className="h-8 text-xs" />
+                    <label style={styles.label}>Ore Lavorate</label>
+                    <Input type="number" value={oreLavorate} onChange={(e) => setOreLavorate(e.target.value)} style={styles.input} />
                   </div>
                 </div>
                 
-                {/* Ore Base */}
-                <div className="grid grid-cols-3 gap-2">
-                  <div><Label>Straord.</Label><Input type="number" value={straordinari} onChange={(e) => setStraordinari(e.target.value)} className="h-8 text-xs" /></div>
-                  <div><Label>Festività</Label><Input type="number" value={festivita} onChange={(e) => setFestivita(e.target.value)} className="h-8 text-xs" /></div>
+                <div style={{ ...styles.grid3, marginBottom: 8 }}>
+                  <div><label style={styles.label}>Straord.</label><Input type="number" value={straordinari} onChange={(e) => setStraordinari(e.target.value)} style={styles.input} /></div>
+                  <div><label style={styles.label}>Festività</label><Input type="number" value={festivita} onChange={(e) => setFestivita(e.target.value)} style={styles.input} /></div>
                   <div>
-                    <Label className="flex items-center gap-1"><Sun className="w-3 h-3 text-amber-500" />Domenicali</Label>
-                    <Input type="number" value={oreDomenicali} onChange={(e) => setOreDomenicali(e.target.value)} className="h-8 text-xs" />
+                    <label style={{ ...styles.label, display: 'flex', alignItems: 'center', gap: 4 }}><Sun style={{ width: 12, height: 12, color: '#f59e0b' }} />Domenicali</label>
+                    <Input type="number" value={oreDomenicali} onChange={(e) => setOreDomenicali(e.target.value)} style={styles.input} />
                   </div>
                 </div>
                 
-                {/* Toggle Avanzate */}
                 <button 
                   type="button"
                   onClick={() => setShowAdvanced(!showAdvanced)}
-                  className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                  style={{ fontSize: 12, color: '#2563eb', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, marginBottom: 8 }}
                 >
                   {showAdvanced ? '▼' : '▶'} Opzioni Avanzate (Malattia, Assenze)
                 </button>
                 
-                {/* Sezione Avanzata */}
                 {showAdvanced && (
-                  <div className="bg-slate-50 p-2 rounded border space-y-2">
-                    <div className="grid grid-cols-3 gap-2">
+                  <div style={styles.advancedBox}>
+                    <div style={styles.grid3}>
                       <div>
-                        <Label className="flex items-center gap-1"><HeartPulse className="w-3 h-3 text-red-500" />Ore Malattia</Label>
-                        <Input type="number" value={oreMalattia} onChange={(e) => setOreMalattia(e.target.value)} className="h-8 text-xs" />
+                        <label style={{ ...styles.label, display: 'flex', alignItems: 'center', gap: 4 }}><HeartPulse style={{ width: 12, height: 12, color: '#ef4444' }} />Ore Malattia</label>
+                        <Input type="number" value={oreMalattia} onChange={(e) => setOreMalattia(e.target.value)} style={styles.input} />
                       </div>
                       <div>
-                        <Label className="flex items-center gap-1"><Calendar className="w-3 h-3 text-red-500" />GG Malattia</Label>
-                        <Input type="number" value={giorniMalattia} onChange={(e) => setGiorniMalattia(e.target.value)} className="h-8 text-xs" />
+                        <label style={{ ...styles.label, display: 'flex', alignItems: 'center', gap: 4 }}><Calendar style={{ width: 12, height: 12, color: '#ef4444' }} />GG Malattia</label>
+                        <Input type="number" value={giorniMalattia} onChange={(e) => setGiorniMalattia(e.target.value)} style={styles.input} />
                       </div>
                       <div>
-                        <Label>Assenze (ore)</Label>
-                        <Input type="number" value={assenze} onChange={(e) => setAssenze(e.target.value)} className="h-8 text-xs" />
+                        <label style={styles.label}>Assenze (ore)</label>
+                        <Input type="number" value={assenze} onChange={(e) => setAssenze(e.target.value)} style={styles.input} />
                       </div>
                     </div>
-                    <p className="text-xs text-slate-500">
-                      Malattia: 100% primi 3gg, 75% 4-20gg, 66% oltre.
-                    </p>
+                    <p style={{ ...styles.small, marginTop: 8 }}>Malattia: 100% primi 3gg, 75% 4-20gg, 66% oltre.</p>
                   </div>
                 )}
                 
-                <Button onClick={handleCalcola} disabled={calculating || !selectedDipendente} className="w-full h-8 text-xs">
-                  {calculating ? <Clock className="w-3 h-3 mr-1 animate-spin" /> : <Calculator className="w-3 h-3 mr-1" />}
+                <Button onClick={handleCalcola} disabled={calculating || !selectedDipendente} style={styles.btn}>
+                  {calculating ? <Clock style={{ ...styles.icon, animation: 'spin 1s linear infinite' }} /> : <Calculator style={styles.icon} />}
                   {calculating ? 'Calcolo...' : 'Calcola'}
                 </Button>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
             {/* Risultato */}
             {stima && (
-              <Card className="border-blue-200 bg-blue-50/30 shadow-sm">
-                <CardHeader className="py-2 px-3 bg-blue-100/50">
-                  <CardTitle className="text-sm flex items-center justify-between">
-                    <span>Stima - {stima.dipendente_nome}</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-3 space-y-2">
-                  {/* Lordo */}
-                  <div className="bg-white p-2 rounded border text-xs">
-                    <div className="font-semibold text-slate-700 mb-1">Lordo</div>
-                    <div className="grid grid-cols-2 gap-1">
-                      <span className="text-slate-500">Base:</span><span className="text-right">{fmt(stima.retribuzione_base)}</span>
-                      {stima.straordinari > 0 && <><span className="text-slate-500">Straord:</span><span className="text-right">{fmt(stima.straordinari)}</span></>}
-                      <span className="font-semibold border-t pt-1">Totale:</span><span className="text-right font-bold border-t pt-1">{fmt(stima.lordo_totale)}</span>
+              <div style={styles.resultCard}>
+                <div style={styles.resultHeader}>
+                  <div style={{ fontSize: 13, fontWeight: '600', color: '#1e40af' }}>Stima - {stima.dipendente_nome}</div>
+                </div>
+                <div style={{ padding: 12 }}>
+                  <div style={styles.whiteBox}>
+                    <div style={{ fontWeight: '600', color: '#475569', marginBottom: 4 }}>Lordo</div>
+                    <div style={styles.gridRow}>
+                      <span style={{ color: '#64748b' }}>Base:</span><span style={{ textAlign: 'right' }}>{fmt(stima.retribuzione_base)}</span>
+                    </div>
+                    {stima.straordinari > 0 && (
+                      <div style={styles.gridRow}>
+                        <span style={{ color: '#64748b' }}>Straord:</span><span style={{ textAlign: 'right' }}>{fmt(stima.straordinari)}</span>
+                      </div>
+                    )}
+                    <div style={{ ...styles.gridRow, borderTop: '1px solid #e2e8f0', paddingTop: 4, marginTop: 4 }}>
+                      <span style={{ fontWeight: '600' }}>Totale:</span><span style={{ textAlign: 'right', fontWeight: 'bold' }}>{fmt(stima.lordo_totale)}</span>
                     </div>
                   </div>
-                  {/* Trattenute */}
-                  <div className="bg-white p-2 rounded border text-xs">
-                    <div className="font-semibold text-slate-700 mb-1">Trattenute</div>
-                    <div className="grid grid-cols-2 gap-1">
-                      <span className="text-slate-500">INPS:</span><span className="text-right text-red-600">-{fmt(stima.inps_dipendente)}</span>
-                      <span className="text-slate-500">IRPEF:</span><span className="text-right text-red-600">-{fmt(stima.irpef_netta)}</span>
-                      <span className="font-semibold border-t pt-1">Totale:</span><span className="text-right font-bold text-red-600 border-t pt-1">-{fmt(stima.totale_trattenute)}</span>
+                  
+                  <div style={styles.whiteBox}>
+                    <div style={{ fontWeight: '600', color: '#475569', marginBottom: 4 }}>Trattenute</div>
+                    <div style={styles.gridRow}>
+                      <span style={{ color: '#64748b' }}>INPS:</span><span style={{ textAlign: 'right', color: '#dc2626' }}>-{fmt(stima.inps_dipendente)}</span>
+                    </div>
+                    <div style={styles.gridRow}>
+                      <span style={{ color: '#64748b' }}>IRPEF:</span><span style={{ textAlign: 'right', color: '#dc2626' }}>-{fmt(stima.irpef_netta)}</span>
+                    </div>
+                    <div style={{ ...styles.gridRow, borderTop: '1px solid #e2e8f0', paddingTop: 4, marginTop: 4 }}>
+                      <span style={{ fontWeight: '600' }}>Totale:</span><span style={{ textAlign: 'right', fontWeight: 'bold', color: '#dc2626' }}>-{fmt(stima.totale_trattenute)}</span>
                     </div>
                   </div>
-                  {/* Netto */}
-                  <div className="bg-green-100 p-2 rounded border-green-300 border flex justify-between items-center">
-                    <span className="font-semibold text-green-800 text-sm">NETTO</span>
-                    <span className="text-xl font-bold text-green-700" data-testid="netto-result">{fmt(stima.netto_in_busta)}</span>
+                  
+                  <div style={styles.nettoBox}>
+                    <span style={{ fontWeight: '600', color: '#166534', fontSize: 14 }}>NETTO</span>
+                    <span style={{ fontSize: 20, fontWeight: 'bold', color: '#15803d' }} data-testid="netto-result">{fmt(stima.netto_in_busta)}</span>
                   </div>
-                  {/* Costo Azienda */}
-                  <div className="bg-white p-2 rounded border text-xs">
-                    <div className="flex justify-between items-center">
-                      <span className="text-slate-600"><Building2 className="w-3 h-3 inline mr-1" />Costo Azienda</span>
-                      <span className="font-bold text-purple-700">{fmt(stima.costo_totale_azienda)}</span>
+                  
+                  <div style={{ ...styles.whiteBox, marginTop: 8 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ color: '#475569' }}><Building2 style={{ width: 12, height: 12, display: 'inline', marginRight: 4 }} />Costo Azienda</span>
+                      <span style={{ fontWeight: 'bold', color: '#7c3aed' }}>{fmt(stima.costo_totale_azienda)}</span>
                     </div>
                   </div>
-                  <Button onClick={handleConferma} className="w-full h-8 text-xs bg-green-600 hover:bg-green-700">
-                    <CheckCircle className="w-3 h-3 mr-1" />Conferma
+                  
+                  <Button onClick={handleConferma} style={{ ...styles.btn, background: '#16a34a', marginTop: 8 }}>
+                    <CheckCircle style={styles.icon} />Conferma
                   </Button>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             )}
           </div>
         </TabsContent>
 
         {/* TAB STORICO */}
-        <TabsContent value="storico" className="mt-2 space-y-3">
+        <TabsContent value="storico" style={{ marginTop: 8 }}>
           {riepilogo && riepilogo.num_cedolini > 0 && (
-            <div className="grid grid-cols-4 gap-2">
-              <div className="bg-blue-50 p-2 rounded text-center"><p className="text-xs text-blue-600">Cedolini</p><p className="text-lg font-bold text-blue-800">{riepilogo.num_cedolini}</p></div>
-              <div className="bg-green-50 p-2 rounded text-center"><p className="text-xs text-green-600">Lordo</p><p className="text-lg font-bold text-green-800">{fmt(riepilogo.totale_lordo)}</p></div>
-              <div className="bg-emerald-50 p-2 rounded text-center"><p className="text-xs text-emerald-600">Netto</p><p className="text-lg font-bold text-emerald-800">{fmt(riepilogo.totale_netto)}</p></div>
-              <div className="bg-purple-50 p-2 rounded text-center"><p className="text-xs text-purple-600">Costo Az.</p><p className="text-lg font-bold text-purple-800">{fmt(riepilogo.totale_costo_azienda)}</p></div>
+            <div style={{ ...styles.grid4, marginBottom: 12 }}>
+              <div style={styles.statBox('#eff6ff', '#2563eb')}>
+                <p style={styles.statLabel('#2563eb')}>Cedolini</p>
+                <p style={styles.statValue('#1e40af')}>{riepilogo.num_cedolini}</p>
+              </div>
+              <div style={styles.statBox('#f0fdf4', '#16a34a')}>
+                <p style={styles.statLabel('#16a34a')}>Lordo</p>
+                <p style={styles.statValue('#166534')}>{fmt(riepilogo.totale_lordo)}</p>
+              </div>
+              <div style={styles.statBox('#ecfdf5', '#059669')}>
+                <p style={styles.statLabel('#059669')}>Netto</p>
+                <p style={styles.statValue('#047857')}>{fmt(riepilogo.totale_netto)}</p>
+              </div>
+              <div style={styles.statBox('#faf5ff', '#9333ea')}>
+                <p style={styles.statLabel('#9333ea')}>Costo Az.</p>
+                <p style={styles.statValue('#7c3aed')}>{fmt(riepilogo.totale_costo_azienda)}</p>
+              </div>
             </div>
           )}
-          <Card className="shadow-sm">
-            <CardContent className="p-2">
-              {loading ? <div className="text-center py-4 text-xs text-slate-500">Caricamento...</div>
-              : cedolini.length === 0 ? <div className="text-center py-4 text-xs text-slate-500">Nessun cedolino</div>
-              : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-xs">
-                    <thead className="bg-slate-100">
+          
+          <div style={styles.card}>
+            <div style={{ padding: 8 }}>
+              {loading ? (
+                <div style={{ textAlign: 'center', padding: 16, color: '#64748b', fontSize: 12 }}>Caricamento...</div>
+              ) : cedolini.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: 16, color: '#64748b', fontSize: 12 }}>Nessun cedolino</div>
+              ) : (
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={styles.table}>
+                    <thead>
                       <tr>
-                        <th className="px-2 py-1 text-left">Dipendente</th>
-                        <th className="px-2 py-1 text-right">Ore</th>
-                        <th className="px-2 py-1 text-right">Lordo</th>
-                        <th className="px-2 py-1 text-right">Netto</th>
-                        <th className="px-2 py-1 text-right">Costo Az.</th>
-                        <th className="px-2 py-1 text-center">Stato</th>
+                        <th style={styles.th}>Dipendente</th>
+                        <th style={styles.thRight}>Ore</th>
+                        <th style={styles.thRight}>Lordo</th>
+                        <th style={styles.thRight}>Netto</th>
+                        <th style={styles.thRight}>Costo Az.</th>
+                        <th style={{ ...styles.th, textAlign: 'center' }}>Stato</th>
                       </tr>
                     </thead>
                     <tbody>
                       {cedolini.map((c, i) => (
-                        <tr key={i} className="border-b hover:bg-slate-50">
-                          <td className="px-2 py-1.5 font-medium">{c.dipendente_nome}</td>
-                          <td className="px-2 py-1.5 text-right">{c.ore_lavorate}</td>
-                          <td className="px-2 py-1.5 text-right">{fmt(c.lordo)}</td>
-                          <td className="px-2 py-1.5 text-right font-semibold text-green-700">{fmt(c.netto)}</td>
-                          <td className="px-2 py-1.5 text-right text-purple-700">{fmt(c.costo_azienda)}</td>
-                          <td className="px-2 py-1.5 text-center">
-                            {c.pagato ? <span className="text-green-600 text-xs">✓</span> : <span className="text-yellow-600 text-xs">⏳</span>}
+                        <tr key={i}>
+                          <td style={{ ...styles.td, fontWeight: '500' }}>{c.dipendente_nome}</td>
+                          <td style={styles.tdRight}>{c.ore_lavorate}</td>
+                          <td style={styles.tdRight}>{fmt(c.lordo)}</td>
+                          <td style={{ ...styles.tdRight, fontWeight: '600', color: '#15803d' }}>{fmt(c.netto)}</td>
+                          <td style={{ ...styles.tdRight, color: '#7c3aed' }}>{fmt(c.costo_azienda)}</td>
+                          <td style={{ ...styles.td, textAlign: 'center' }}>
+                            {c.pagato ? <span style={{ color: '#16a34a' }}>✓</span> : <span style={{ color: '#ca8a04' }}>⏳</span>}
                           </td>
                         </tr>
                       ))}
@@ -306,8 +350,8 @@ export default function Cedolini() {
                   </table>
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
