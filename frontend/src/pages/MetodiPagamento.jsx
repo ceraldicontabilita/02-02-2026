@@ -89,76 +89,73 @@ export default function MetodiPagamento() {
     return colors[codice] || "#666";
   };
 
+  const cardStyle = { background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', border: '1px solid #e5e7eb', marginBottom: 20 };
+  const btnPrimary = { padding: '10px 20px', background: '#4caf50', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 'bold', fontSize: 14 };
+  const btnSecondary = { padding: '10px 20px', background: '#e5e7eb', color: '#374151', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: '600', fontSize: 14 };
+  const inputStyle = { padding: '10px 12px', borderRadius: 8, border: '2px solid #e5e7eb', fontSize: 14 };
+
   return (
-    <>
-      <div className="card">
-        <div className="h1">Metodi Pagamento Fornitori</div>
-        <div className="small" style={{ marginBottom: 15 }}>
-          Configura i metodi di pagamento preferiti per ogni fornitore. I dati possono essere importati automaticamente dalle fatture.
+    <div style={{ padding: 20, maxWidth: 1400, margin: '0 auto' }}>
+      {/* Header */}
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        marginBottom: 20,
+        padding: '15px 20px',
+        background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
+        borderRadius: 12,
+        color: 'white'
+      }}>
+        <div>
+          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 'bold' }}>💳 Metodi Pagamento Fornitori</h1>
+          <p style={{ margin: '4px 0 0 0', fontSize: 13, opacity: 0.9 }}>Configura i metodi di pagamento preferiti per ogni fornitore</p>
         </div>
-
-        <div className="row" style={{ gap: 10, marginBottom: 15 }}>
-          <button 
-            className="primary" 
-            onClick={handleImportFromInvoices}
-            disabled={loading}
-          >
-            📥 Importa da Fatture
-          </button>
-          <button onClick={loadData} disabled={loading}>
-            🔄 Aggiorna
-          </button>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button style={btnPrimary} onClick={handleImportFromInvoices} disabled={loading}>📥 Importa da Fatture</button>
+          <button style={btnSecondary} onClick={loadData} disabled={loading}>🔄 Aggiorna</button>
         </div>
-
-        {err && (
-          <div style={{ background: "#ffcdd2", color: "#c62828", padding: 10, borderRadius: 4, marginBottom: 15 }}>
-            {err}
-          </div>
-        )}
-
-        {success && (
-          <div style={{ background: "#c8e6c9", color: "#2e7d32", padding: 10, borderRadius: 4, marginBottom: 15 }}>
-            {success}
-          </div>
-        )}
       </div>
 
+      {err && <div style={{ padding: 16, background: "#fee2e2", border: "1px solid #fecaca", borderRadius: 8, color: "#dc2626", marginBottom: 20 }}>❌ {err}</div>}
+      {success && <div style={{ padding: 16, background: "#dcfce7", border: "1px solid #86efac", borderRadius: 8, color: "#16a34a", marginBottom: 20 }}>✅ {success}</div>}
+
       {/* Metodi Default */}
-      <div className="card">
-        <div className="h1">Metodi Disponibili</div>
+      <div style={cardStyle}>
+        <h2 style={{ margin: '0 0 16px 0', fontSize: 18, fontWeight: 'bold', color: '#1e3a5f' }}>📋 Metodi Disponibili</h2>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
           {metodiDefault.map((m, i) => (
             <div 
               key={i} 
               style={{ 
-                background: "#f5f5f5", 
+                background: "#f9fafb", 
                 padding: "8px 15px", 
                 borderRadius: 20,
                 borderLeft: `4px solid ${getMetodoColor(m.codice)}`
               }}
             >
               <strong>{m.codice}</strong>
-              <span style={{ marginLeft: 8, color: "#666" }}>{m.descrizione}</span>
-              <span style={{ marginLeft: 8, color: "#999", fontSize: 12 }}>({m.giorni_default}gg)</span>
+              <span style={{ marginLeft: 8, color: "#6b7280" }}>{m.descrizione}</span>
+              <span style={{ marginLeft: 8, color: "#9ca3af", fontSize: 12 }}>({m.giorni_default}gg)</span>
             </div>
           ))}
         </div>
       </div>
 
       {/* Ricerca */}
-      <div className="card">
+      <div style={cardStyle}>
         <input
           type="text"
           placeholder="🔍 Cerca fornitore per nome o P.IVA..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          style={{ width: "100%", padding: 10 }}
+          style={{ ...inputStyle, width: "100%" }}
         />
       </div>
 
       {/* Lista Fornitori */}
-      <div className="card">
-        <div className="h1">Fornitori Configurati ({filteredFornitori.length})</div>
+      <div style={cardStyle}>
+        <h2 style={{ margin: '0 0 16px 0', fontSize: 18, fontWeight: 'bold', color: '#1e3a5f' }}>📦 Fornitori Configurati ({filteredFornitori.length})</h2>
         
         {loading ? (
           <div className="small">Caricamento...</div>
