@@ -109,8 +109,27 @@ export default function LibroAllergeni() {
     try {
       const res = await fetch(`${API}/api/haccp-v2/allergeni/libro`);
       const data = await res.json();
-      setLibro(data.libro_allergeni || []);
-      setStats(data.statistiche_allergeni || {});
+      
+      // Filtra ingredienti: rimuovi quelli invalidi (errori Excel) e quelli senza allergeni
+      const libroFiltrato = (data.libro_allergeni || []).filter(voce => {
+        // Escludi ingredienti con nomi invalidi (errori Excel)
+        const nomeInvalido = !voce.ingrediente || 
+          voce.ingrediente.startsWith('#') || 
+          voce.ingrediente.startsWith('=') ||
+          voce.ingrediente.length < 2;
+        
+        // Includi solo se ha almeno un allergene
+        const haAllergeni = voce.allergeni && voce.allergeni.length > 0;
+        
+        return !nomeInvalido && haAllergeni;
+      });
+      
+      setLibro(libroFiltrato);
+      setStats({
+        ...data.statistiche_allergeni,
+        ingredienti_con_allergeni: libroFiltrato.length,
+        totale_originale: (data.libro_allergeni || []).length
+      });
       setAzienda(data.azienda || '');
       setIndirizzo(data.indirizzo || '');
       setDataGenerazione(data.data_generazione || '');
