@@ -429,7 +429,7 @@ async def upload_fattura_xml(file: UploadFile = File(...)) -> Dict[str, Any]:
         numeri_assegni = None
         riconciliazione_assegni = None
         
-        if metodo_pagamento == "assegno":
+        if metodo_pagamento and metodo_pagamento.lower() == "assegno":
             riconciliazione_assegni = await find_check_numbers_for_invoice(
                 db, importo_fattura, data_fattura_ricerca, fornitore_nome
             )
