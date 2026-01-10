@@ -3,6 +3,40 @@
 ## Overview
 Sistema ERP completo per la gestione contabile di piccole/medie imprese italiane. Include gestione fatture, prima nota, riconciliazione bancaria, IVA, F24, HACCP e report.
 
+## CICLO PASSIVO INTEGRATO (2026-01-10) ✅ COMPLETATO
+
+### Descrizione
+Sistema completamente integrato per la gestione del ciclo passivo aziendale. Quando si importa una fattura XML, il sistema esegue automaticamente:
+1. **Magazzino**: Carico merce + creazione lotti HACCP
+2. **Prima Nota**: Scritture contabili Dare/Avere
+3. **Scadenziario**: Creazione scadenze di pagamento
+4. **Riconciliazione**: Tentativo match automatico con movimenti bancari
+
+### Endpoints Backend (`/api/ciclo-passivo/`)
+- `POST /import-integrato` - Import singola fattura XML con workflow completo
+- `POST /import-integrato-batch` - Import multiplo XML
+- `GET /dashboard-riconciliazione` - Dashboard con statistiche e scadenze
+- `GET /suggerimenti-match/{scadenza_id}` - Suggerimenti match bancari
+- `POST /match-manuale` - Riconciliazione manuale scadenza-transazione
+- `POST /scarico-produzione` - Scarico materie prime per produzione
+- `GET /tracciabilita-lotto/{lotto_id}` - Tracciabilità completa lotto
+
+### Frontend (`/ciclo-passivo`)
+4 Tab:
+1. **Import XML**: Upload drag&drop con spiegazione workflow
+2. **Scadenze Aperte**: Lista scadenze con bottone "Riconcilia"
+3. **Riconciliazione**: Split view per match manuale
+4. **Storico Pagamenti**: Pagamenti completati
+
+### File Principali
+- `/app/app/routers/ciclo_passivo_integrato.py` - Backend completo
+- `/app/frontend/src/pages/CicloPassivoIntegrato.jsx` - Frontend completo
+
+### Test
+- `/app/tests/test_ciclo_passivo_integrato.py` - 11 test (100% passed)
+
+---
+
 ## NUOVO SISTEMA FATTURE RICEVUTE (2026-01-10)
 
 ### Architettura Stabile
