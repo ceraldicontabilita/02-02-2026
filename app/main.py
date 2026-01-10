@@ -93,7 +93,8 @@ from app.routers.accounting import (
     accounting_main, accounting_extended, accounting_f24,
     prima_nota, prima_nota_automation, prima_nota_salari,
     piano_conti, bilancio, centri_costo, contabilita_avanzata,
-    regole_categorizzazione, iva_calcolo, liquidazione_iva
+    regole_categorizzazione, iva_calcolo, liquidazione_iva,
+    riconciliazione_automatica
 )
 
 # --- Bank Module ---
