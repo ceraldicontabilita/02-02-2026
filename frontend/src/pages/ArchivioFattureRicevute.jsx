@@ -268,9 +268,9 @@ export default function ArchivioFatture() {
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
           <div>
             <label style={{ fontSize: 12, color: '#6b7280', display: 'block', marginBottom: 4 }}>Anno</label>
-            <select value={anno} onChange={(e) => setAnno(e.target.value)} style={{ ...selectStyle, minWidth: 100 }}>
-              {anni.map(a => <option key={a} value={a}>{a}</option>)}
-            </select>
+            <div style={{ ...selectStyle, minWidth: 100, background: '#f1f5f9', color: '#64748b', fontWeight: 600 }} data-testid="anno-display">
+              {anno} <span style={{ fontSize: 10, opacity: 0.7 }}>(globale)</span>
+            </div>
           </div>
           <div>
             <label style={{ fontSize: 12, color: '#6b7280', display: 'block', marginBottom: 4 }}>Mese</label>
