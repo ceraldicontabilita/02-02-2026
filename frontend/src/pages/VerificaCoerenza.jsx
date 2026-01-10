@@ -149,7 +149,7 @@ export default function VerificaCoerenza() {
             <Receipt style={{ width: 16, height: 16, marginRight: 8 }} /> Riepilogo
           </TabsTrigger>
           <TabsTrigger value="iva" style={{ padding: '10px 16px', borderRadius: 8 }}>
-            <TrendingUp className="w-4 h-4 mr-2" /> IVA Mensile
+            <TrendingUp style={{ width: 16, height: 16, marginRight: 8 }} /> IVA Mensile
           </TabsTrigger>
           <TabsTrigger value="discrepanze" style={{ padding: '10px 16px', borderRadius: 8 }}>
             <AlertTriangle className="w-4 h-4 mr-2" /> Discrepanze
