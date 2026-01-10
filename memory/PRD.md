@@ -3,6 +3,49 @@
 ## Overview
 Sistema ERP completo per la gestione contabile di piccole/medie imprese italiane. Include gestione fatture, prima nota, riconciliazione bancaria, IVA, F24, HACCP e report.
 
+## MODULO HACCP AVANZATO E RICETTARIO DINAMICO (2026-01-10) ✅ IN PROGRESS
+
+### Ricettario Dinamico XML-Driven
+- **Collegamento ingredienti a fatture XML**: Ogni ingrediente può essere tracciato alla fattura di origine
+- **Aggiornamento automatico**: Costi e lotti aggiornati all'importazione fatture
+- **Regola rotazione 30gg**: Dati scadono solo se presente fattura più recente
+- **Tracciabilità completa**: Fattura → Lotto → Ingrediente → Ricetta
+
+### Endpoints Ricettario (`/api/haccp-v2/ricettario/`)
+| Endpoint | Metodo | Descrizione |
+|----------|--------|-------------|
+| `/` | GET | Lista ricette con food cost |
+| `/{id}` | GET | Dettaglio con tracciabilità ingredienti |
+| `/aggiorna-da-fattura` | POST | Aggiorna ricette da fattura XML |
+| `/verifica-rotazione` | POST | Verifica regola 30gg |
+| `/tracciabilita/{id}` | GET | Report tracciabilità completo |
+| `/ingredienti-non-tracciati` | GET | Lista ingredienti senza fattura |
+
+### Schede HACCP Non Conformità
+- **Registro prodotti non conformi**: Scaduti, danneggiati, temperatura fuori range
+- **Firma digitale operatore**: Timestamp + ID operatore su ogni registrazione
+- **Gravità e azioni correttive**: Smaltimento, reso, declassamento
+- **Statistiche mensili/annuali**
+
+### Endpoints Non Conformità (`/api/haccp-v2/non-conformi/`)
+| Endpoint | Metodo | Descrizione |
+|----------|--------|-------------|
+| `/` | GET/POST | Lista/Registra non conformità |
+| `/motivi-azioni` | GET | Motivi e azioni disponibili |
+| `/scheda-mensile/{anno}/{mese}` | GET | Scheda per registro HACCP |
+| `/{id}` | GET/PUT/DELETE | Dettaglio/Aggiorna/Elimina |
+| `/statistiche/{anno}` | GET | Statistiche annuali |
+
+### Frontend JSX (Stili Inline)
+- `/app/frontend/src/pages/HACCPNonConformita.jsx` - Registro non conformità
+- `/app/frontend/src/pages/RicettarioDinamico.jsx` - Ricettario con tracciabilità XML
+
+### Route Frontend
+- `/haccp-v2/non-conformita` - Registro Non Conformità
+- `/ricettario-dinamico` o `/haccp-v2/ricettario` - Ricettario Dinamico
+
+---
+
 ## WORKFLOW "DALL'XML ALL'ETICHETTA" (2026-01-10) ✅ COMPLETATO
 
 ### Descrizione Completa
