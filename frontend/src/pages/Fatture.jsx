@@ -181,23 +181,7 @@ export default function Fatture() {
     }
   }
 
-  async function handleUploadXML(e) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    
-    setErr("");
-    setUploadResult(null);
-    setUploading(true);
-    setUploadProgress({ current: 0, total: 100, phase: "Caricamento file..." });
-    
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      
-      const r = await api.post("/api/fatture/upload-xml", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-        onUploadProgress: (progressEvent) => {
-          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+  async function handleCreateInvoice(e) {
           setUploadProgress({ current: percentCompleted, total: 100, phase: `Upload: ${percentCompleted}%` });
         }
       });
