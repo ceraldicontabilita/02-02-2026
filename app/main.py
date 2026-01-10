@@ -321,6 +321,9 @@ app.include_router(haccp_fornitori, prefix="/api/haccp-v2", tags=["HACCP V2 Forn
 app.include_router(haccp_allergeni, prefix="/api/haccp-v2", tags=["HACCP V2 Libro Allergeni"])
 app.include_router(haccp_ricette_web, prefix="/api/haccp-v2", tags=["HACCP V2 Ricette Web Search"])
 
+# --- Sincronizzazione Relazionale ---
+app.include_router(sync_relazionale.router, prefix="/api", tags=["Sincronizzazione Relazionale"])
+
 # --- Configurazioni Sistema ---
 app.include_router(configurazioni.router, prefix="/api/config", tags=["Configurazioni"])
 
