@@ -215,7 +215,7 @@ export default function HACCPSection() {
               fontWeight: 600
             }}
           >
-            <RefreshCw size={18} className={loading ? 'spin' : ''} />
+            <RefreshCw size={18} style={loading ? { animation: 'spin 1s linear infinite' } : {}} />
             Aggiorna
           </button>
         </div>
