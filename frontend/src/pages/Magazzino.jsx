@@ -267,21 +267,23 @@ export default function Magazzino() {
                 <option value="mt">Metri</option>
               </select>
             </div>
-            <div className="row">
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
               <input
                 type="number"
                 step="0.01"
                 placeholder="Prezzo €"
                 value={newProduct.price}
                 onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
+                style={inputStyle}
               />
               <input
                 placeholder="Categoria"
                 value={newProduct.category}
                 onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
+                style={inputStyle}
               />
-              <button type="submit" className="primary">Salva</button>
-              <button type="button" onClick={() => setShowForm(false)}>Annulla</button>
+              <button type="submit" style={btnPrimary}>✅ Salva</button>
+              <button type="button" style={btnSecondary} onClick={() => setShowForm(false)}>Annulla</button>
             </div>
           </form>
         </div>
