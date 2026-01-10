@@ -71,10 +71,16 @@ Riferimento completo: `/app/memory/DESIGN_SYSTEM.md`
 - [x] Corrispettivi.jsx ✅
 - [x] Assegni.jsx ✅
 - [x] ArchivioFattureRicevute.jsx ✅
-- [~] Fornitori.jsx - parziale
-- [ ] Fatture.jsx - da aggiornare
-- [ ] Dashboard.jsx - da aggiornare
-- [ ] IVA.jsx - da aggiornare
+- [x] Dashboard.jsx ✅ (10-01-2026)
+- [x] IVA.jsx ✅ (10-01-2026)
+- [x] Fatture.jsx ✅ (10-01-2026)
+- [x] LiquidazioneIVA.jsx ✅ (parziale, 10-01-2026)
+- [x] Fornitori.jsx ✅ (già inline)
+- [ ] ContabilitaAvanzata.jsx - da aggiornare (153 classi)
+- [ ] GestioneCespiti.jsx - da aggiornare (101 classi)
+- [ ] Cedolini.jsx - da aggiornare (90 classi)
+- [ ] Admin.jsx - da aggiornare (30 classi)
+- [ ] Altre ~30 pagine - da aggiornare
 
 ---
 
