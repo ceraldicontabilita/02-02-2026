@@ -734,7 +734,7 @@ async def registra_pagamento_fattura(
         await db[COLLECTION_PRIMA_NOTA_CASSA].insert_one(movimento_cassa)
         risultato["cassa"] = movimento_cassa["id"]
         
-    elif metodo_pagamento in ["banca", "bonifico", "assegno", "riba", "carta", "sepa", "mav", "rav", "rid", "f24"]:
+    elif metodo_pagamento.lower() in ["banca", "bonifico", "assegno", "riba", "carta", "sepa", "mav", "rav", "rid", "f24"]:
         # Tutto in banca
         movimento_banca = {
             "id": str(uuid.uuid4()),
