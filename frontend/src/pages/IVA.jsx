@@ -65,104 +65,93 @@ export default function IVA() {
   }
 
   return (
-    <>
-      <div className="h1">Calcolo IVA</div>
-      <div className="small" style={{ marginBottom: 20 }}>
-        Riepilogo IVA: debito da corrispettivi, credito da fatture passive
+    <div className="page-container">
+      {/* Header */}
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">🧾 Calcolo IVA</h1>
+          <p className="page-subtitle">
+            Riepilogo IVA: debito da corrispettivi, credito da fatture passive
+          </p>
+        </div>
       </div>
 
       {err && (
-        <div className="card" style={{ background: "#ffcdd2", color: "#c62828" }}>
+        <div style={{ padding: 16, background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8, color: "#dc2626", marginBottom: 20 }}>
           {err}
         </div>
       )}
 
       {/* Controlli */}
-      <div className="card">
-        <div className="row" style={{ alignItems: "center", gap: 15, flexWrap: 'wrap' }}>
-          <div style={{ background: '#dbeafe', padding: '8px 16px', borderRadius: 8, color: '#1e40af', fontWeight: 'bold' }}>
-            📅 Anno: {selectedYear}
-            <span style={{ fontSize: 11, fontWeight: 'normal', marginLeft: 8, color: '#3b82f6' }}>
-              (cambia dalla barra laterale)
-            </span>
-          </div>
-          <div>
-            <label style={{ marginRight: 8 }}>Mese:</label>
-            <select 
-              value={selectedMonth} 
-              onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-              style={{ padding: "6px 12px" }}
-            >
-              {mesiItaliani.slice(1).map((m, i) => (
-                <option key={i+1} value={i+1}>{m}</option>
-              ))}
-            </select>
-          </div>
-          
-          {/* Export PDF Buttons */}
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <button
-              onClick={() => {
-                const quarter = Math.ceil(selectedMonth / 3);
-                window.open(`${api.defaults.baseURL}/api/iva/export/pdf/trimestrale/${selectedYear}/${quarter}`, '_blank');
-              }}
-              style={{
-                padding: '6px 12px',
-                background: '#059669',
-                color: 'white',
-                border: 'none',
-                borderRadius: 6,
-                cursor: 'pointer',
-                fontSize: 13
-              }}
-              data-testid="export-pdf-quarter"
-            >
-              📄 PDF Q{Math.ceil(selectedMonth / 3)}
-            </button>
-            <button
-              onClick={() => {
-                window.open(`${api.defaults.baseURL}/api/iva/export/pdf/annuale/${selectedYear}`, '_blank');
-              }}
-              style={{
-                padding: '6px 12px',
-                background: '#7c3aed',
-                color: 'white',
-                border: 'none',
-                borderRadius: 6,
-                cursor: 'pointer',
-                fontSize: 13
-              }}
-              data-testid="export-pdf-annual"
-            >
-              📄 PDF Annuale
-            </button>
-          </div>
-          
-          <div style={{ marginLeft: "auto", display: 'flex', gap: 5, flexWrap: 'wrap' }}>
-            <button 
-              className={viewMode === "annual" ? "primary" : ""} 
-              onClick={() => setViewMode("annual")}
-            >
-              Annuale
-            </button>
-            <button 
-              className={viewMode === "quarterly" ? "primary" : ""} 
-              onClick={() => setViewMode("quarterly")}
-            >
-              Trimestrale
-            </button>
-            <button 
-              className={viewMode === "monthly" ? "primary" : ""} 
-              onClick={() => setViewMode("monthly")}
-            >
-              Mensile
-            </button>
-            <button 
-              className={viewMode === "today" ? "primary" : ""} 
-              onClick={() => setViewMode("today")}
-            >
-              Oggi
-            </button>
+      <div className="card" style={{ marginBottom: 20 }}>
+        <div className="card-content">
+          <div style={{ display: "flex", alignItems: "center", gap: 15, flexWrap: 'wrap' }}>
+            <div style={{ background: '#dbeafe', padding: '8px 16px', borderRadius: 8, color: '#1e40af', fontWeight: 'bold' }}>
+              📅 Anno: {selectedYear}
+            </div>
+            <div>
+              <label style={{ marginRight: 8, fontSize: 14 }}>Mese:</label>
+              <select 
+                value={selectedMonth} 
+                onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid #e2e8f0" }}
+              >
+                {mesiItaliani.slice(1).map((m, i) => (
+                  <option key={i+1} value={i+1}>{m}</option>
+                ))}
+              </select>
+            </div>
+            
+            {/* Export PDF Buttons */}
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <button
+                onClick={() => {
+                  const quarter = Math.ceil(selectedMonth / 3);
+                  window.open(`${api.defaults.baseURL}/api/iva/export/pdf/trimestrale/${selectedYear}/${quarter}`, '_blank');
+                }}
+                className="btn btn-success"
+                data-testid="export-pdf-quarter"
+              >
+                📄 PDF Q{Math.ceil(selectedMonth / 3)}
+              </button>
+              <button
+                onClick={() => {
+                  window.open(`${api.defaults.baseURL}/api/iva/export/pdf/annuale/${selectedYear}`, '_blank');
+                }}
+                className="btn"
+                style={{ background: '#7c3aed', color: 'white' }}
+                data-testid="export-pdf-annual"
+              >
+                📄 PDF Annuale
+              </button>
+            </div>
+            
+            <div style={{ marginLeft: "auto", display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <button 
+                className={`btn ${viewMode === "annual" ? "btn-primary" : "btn-outline"}`}
+                onClick={() => setViewMode("annual")}
+              >
+                Annuale
+              </button>
+              <button 
+                className={`btn ${viewMode === "quarterly" ? "btn-primary" : "btn-outline"}`}
+                onClick={() => setViewMode("quarterly")}
+              >
+                Trimestrale
+              </button>
+              <button 
+                className={`btn ${viewMode === "monthly" ? "btn-primary" : "btn-outline"}`}
+                onClick={() => setViewMode("monthly")}
+              >
+                Mensile
+              </button>
+              <button 
+                className={`btn ${viewMode === "today" ? "btn-primary" : "btn-outline"}`}
+                onClick={() => setViewMode("today")}
+              >
+                Oggi
+              </button>
+            </div>
           </div>
         </div>
       </div>
