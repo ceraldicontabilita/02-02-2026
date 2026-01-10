@@ -307,7 +307,7 @@ export default function ImportExport() {
   const handleImportEstrattoConto = async () => {
     const file = estrattoContoFileRef.current?.files[0];
     if (!file) {
-      showMessage("error", "Seleziona un file PDF dell'estratto conto bancario");
+      showMessage("error", "Seleziona un file CSV o Excel dell'estratto conto bancario");
       return;
     }
     
@@ -316,10 +316,10 @@ export default function ImportExport() {
     formData.append("file", file);
     
     try {
-      // Prima importa direttamente
-      const res = await api.post("/api/estratto-conto/import?auto_riconcilia=false", formData);
+      // Usa l'endpoint per CSV/Excel
+      const res = await api.post("/api/estratto-conto-movimenti/import", formData);
       setImportResults(res.data);
-      showMessage("success", `Importati ${res.data.movimenti_importati || 0} movimenti dall'estratto conto`);
+      showMessage("success", `Importati ${res.data.movimenti_importati || res.data.inseriti || 0} movimenti dall'estratto conto`);
       estrattoContoFileRef.current.value = "";
     } catch (e) {
       showMessage("error", e.response?.data?.detail || "Errore import estratto conto");
