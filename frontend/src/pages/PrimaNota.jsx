@@ -443,24 +443,6 @@ function PrimaNotaDesktop() {
           </span>
           
           <button
-            onClick={handleSyncCorrispettivi}
-            disabled={syncing}
-            style={{
-              padding: '8px 14px',
-              background: syncing ? '#999' : '#4caf50',
-              color: 'white',
-              border: 'none',
-              borderRadius: 8,
-              cursor: syncing ? 'not-allowed' : 'pointer',
-              fontWeight: '600',
-              fontSize: 12
-            }}
-            title="Importa corrispettivi in Prima Nota Cassa"
-          >
-            {syncing ? '...' : '📥 Sync Corrispettivi'}
-          </button>
-          
-          <button
             onClick={handleSyncFatture}
             disabled={syncing}
             style={{
