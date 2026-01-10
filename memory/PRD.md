@@ -5,29 +5,40 @@ Sistema ERP completo per la gestione contabile di piccole/medie imprese italiane
 
 ## Design System
 
-**REGOLA FONDAMENTALE**: Tutte le pagine devono seguire lo stile Tailwind + lucide-react definito in `/app/memory/DESIGN_SYSTEM.md`.
+**REGOLA FONDAMENTALE**: Tutte le pagine devono usare **STILI INLINE JAVASCRIPT** (`style={{ }}`), MAI Tailwind CSS.
 
-### Principi UI
-- **Primary Color**: emerald-500 (#10b981)
-- **Card**: `bg-white rounded-xl shadow-sm border border-gray-100`
-- **Button Primary**: `bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg`
-- **Button Secondary**: `bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg`
-- **Icone**: Solo lucide-react, MAI emoji
-- **Tabelle**: Header `bg-gray-50`, righe con `hover:bg-gray-50`
+Riferimento completo: `/app/memory/DESIGN_SYSTEM.md`
 
-### Pagine Aggiornate con Nuovo Stile
-- [x] HACCPCompleto.jsx - Tailwind + lucide-react ✅
-- [x] Corrispettivi.jsx - Tailwind + lucide-react ✅
-- [x] Assegni.jsx - Tailwind + lucide-react ✅
-- [~] Fornitori.jsx - Usa già lucide-react, stili da uniformare
-- [ ] Fatture.jsx - DA AGGIORNARE
-- [ ] Dashboard.jsx - DA AGGIORNARE
-- [ ] IVA.jsx - DA AGGIORNARE
-- [ ] LiquidazioneIVA.jsx - DA AGGIORNARE
-- [ ] PrimaNota.jsx - DA AGGIORNARE
-- [ ] ArchivioFattureXML.jsx - DA AGGIORNARE
-- [ ] F24.jsx - DA AGGIORNARE
-- [ ] Admin.jsx - DA AGGIORNARE
+### Stile Standard
+```jsx
+// Header pagina
+<div style={{ 
+  padding: '15px 20px',
+  background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
+  borderRadius: 12,
+  color: 'white'
+}}>
+
+// Card
+<div style={{ background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+
+// Button
+<button style={{ padding: '10px 20px', background: '#4caf50', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 'bold' }}>
+```
+
+### Icone
+- Usare **EMOJI**, non lucide-react
+- Esempi: 📒 📊 💰 📅 ✏️ 🗑️ ➕ 🔄 ✅ ❌ ⚠️
+
+### Pagine con Stile Corretto
+- [x] PrimaNota.jsx ✅
+- [x] HACCPCompleto.jsx ✅
+- [x] Corrispettivi.jsx ✅
+- [x] Assegni.jsx ✅
+- [~] Fornitori.jsx - parziale
+- [ ] Fatture.jsx - da aggiornare
+- [ ] Dashboard.jsx - da aggiornare
+- [ ] IVA.jsx - da aggiornare
 
 ---
 
