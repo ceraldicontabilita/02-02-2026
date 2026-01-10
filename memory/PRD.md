@@ -3,116 +3,68 @@
 ## Overview
 Sistema ERP completo per la gestione contabile di piccole/medie imprese italiane. Include gestione fatture, prima nota, riconciliazione bancaria, IVA, F24, e report.
 
-## Core Features Implemented
+## Architettura Import Centralizzato
 
-### Modulo Fatture & XML
-- Import fatture XML FatturaPA (singole, multiple, ZIP, ZIP annidati)
-- Visualizzatore fatture standard AssoSoftware
-- Estrazione automatica dati cedente/cessionario
+**PRINCIPIO FONDAMENTALE**: Tutti gli import sono centralizzati in `/import-export`. Le altre pagine mostrano solo i dati e rimandano a Import/Export per il caricamento.
 
-### Modulo Prima Nota
-- **Cassa**: Entrate (Corrispettivi), Uscite (POS, Versamenti)
-- **Banca**: Attualmente vuota per richiesta utente
+### Pagina Import Dati (`/import-export`)
 
-### Modulo Import/Export
-- Template Excel/CSV scaricabili per ogni tipo di importazione
-- Import fatture XML/ZIP
-- Import estratto conto bancario CSV
-- Export dati in Excel
+| Tipo | Formato | Descrizione |
+|------|---------|-------------|
+| **Fatture XML** | XML singolo, XML multipli, ZIP | 3 pulsanti separati: Carica XML Singolo, Upload XML Multipli, Upload ZIP Massivo |
+| **Versamenti** | CSV | Formato banca con 10 colonne |
+| **Incassi POS** | XLSX | DATA, CONTO, IMPORTO |
+| **Corrispettivi** | XLSX | Export registratore cassa telematico |
+| **Estratto Conto** | CSV | Formato banca con 10 colonne |
+| **F24 Contributi** | PDF/ZIP | PDF singoli, multipli o ZIP massivo |
+| **Buste Paga** | PDF/ZIP | PDF singoli, multipli o ZIP massivo |
+| **Archivio Bonifici** | PDF/ZIP | PDF o ZIP con parsing automatico |
+
+### Pagine Solo Visualizzazione (senza upload)
+
+- `/fatture` - Solo visualizzazione fatture + link a Import
+- `/f24` - Solo visualizzazione F24 + link a Import
+- `/archivio-bonifici` - Solo visualizzazione bonifici + link a Import
+
+---
 
 ## Parser DEFINITIVI - Formati File Banca
 
 ### 1. CORRISPETTIVI (XLSX)
-**File**: Export dal registratore di cassa telematico
-
 **Intestazioni ESATTE**:
 ```
 Id invio | Matricola dispositivo | Data e ora rilevazione | Data e ora trasmissione | Ammontare delle vendite (totale in euro) | Imponibile vendite (totale in euro) | Imposta vendite (totale in euro) | Periodo di inattivita' da | Periodo di inattivita' a
 ```
-
-**Campi usati dal parser**:
-- `Data e ora rilevazione` → data del corrispettivo
-- `Ammontare delle vendite (totale in euro)` → totale vendite
-- `Imponibile vendite (totale in euro)` → imponibile (opzionale)
-- `Imposta vendite (totale in euro)` → IVA (opzionale)
-
 **Endpoint**: `POST /api/prima-nota-auto/import-corrispettivi`
 
----
-
 ### 2. POS (XLSX)
-**File**: Export incassi POS giornalieri
-
 **Intestazioni ESATTE**:
 ```
 DATA | CONTO | IMPORTO
 ```
-
-**Esempio**:
-```
-2025-01-01 | pos | 323.5
-2025-01-02 | pos | 1655.6
-```
-
-**Campi usati dal parser**:
-- `DATA` → data operazione (formato YYYY-MM-DD o datetime)
-- `IMPORTO` → importo giornaliero (numero decimale)
-- `CONTO` → ignorato (sempre "pos")
-
 **Endpoint**: `POST /api/prima-nota-auto/import-pos`
 
----
-
-### 3. VERSAMENTI (CSV)
-**File**: Export versamenti contanti in banca
-**Delimitatore**: `;`
-
+### 3. VERSAMENTI (CSV ;)
 **Intestazioni ESATTE**:
 ```
 Ragione Sociale;Data contabile;Data valuta;Banca;Rapporto;Importo;Divisa;Descrizione;Categoria/sottocategoria;Hashtag
 ```
-
-**Esempio**:
-```
-CERALDI GROUP S.R.L.;29/12/2025;29/12/2025;05034 - BANCO BPM S.P.A.;5462 - 03406 - 178800005462;10460;EUR;VERS. CONTANTI - VVVVV;Ricavi - Deposito contanti;
-```
-
-**Campi usati dal parser**:
-- `Data contabile` → data operazione (formato DD/MM/YYYY)
-- `Importo` → importo versamento (numero intero o decimale)
-- `Descrizione` → descrizione movimento
-
 **Endpoint**: `POST /api/prima-nota-auto/import-versamenti`
 
+### 4. ESTRATTO CONTO (CSV ;)
+**Intestazioni**: Identiche ai versamenti
+**Endpoint**: `POST /api/estratto-conto-movimenti/import`
+
 ---
 
-### 4. ESTRATTO CONTO (CSV)
-**File**: Export completo movimenti bancari
-**Delimitatore**: `;`
+## Logica Contabile Prima Nota
 
-**Intestazioni ESATTE**:
-```
-Ragione Sociale;Data contabile;Data valuta;Banca;Rapporto;Importo;Divisa;Descrizione;Categoria/sottocategoria;Hashtag
-```
+**SACRA - NON MODIFICARE SENZA RICHIESTA ESPLICITA**
 
-**Esempio**:
-```
-CERALDI GROUP S.R.L.;08/01/2026;08/01/2026;05034 - BANCO BPM S.P.A.;5462 - 03406 - 178800005462;254,5;EUR;INCAS. TRAMITE P.O.S - NUMIA-PGBNT DEL 07/01/26;Ricavi - Incasso tramite POS;
-```
-
-**Campi usati dal parser**:
-- `Ragione Sociale` → nome azienda
-- `Data contabile` → data operazione (formato DD/MM/YYYY)
-- `Data valuta` → data valuta
-- `Banca` → nome banca e codice
-- `Rapporto` → numero rapporto/conto
-- `Importo` → importo con virgola decimale (positivo=entrata, negativo=uscita)
-- `Divisa` → valuta (EUR)
-- `Descrizione` → descrizione movimento
-- `Categoria/sottocategoria` → categoria contabile
-- `Hashtag` → tag opzionale
-
-**Endpoint**: `POST /api/estratto-conto-movimenti/import`
+| Registro | Entrate | Uscite |
+|----------|---------|--------|
+| **CASSA** | Corrispettivi | POS, Versamenti |
+| **BANCA** | Vuota | Vuota |
 
 ---
 
@@ -127,6 +79,8 @@ CERALDI GROUP S.R.L.;08/01/2026;08/01/2026;05034 - BANCO BPM S.P.A.;5462 - 03406
 │   │   └── prima_nota_automation.py    # Parser corrispettivi, POS, versamenti
 │   ├── bank/
 │   │   └── estratto_conto.py           # Parser estratto conto CSV
+│   ├── f24/
+│   │   └── f24_public.py               # Upload F24 + endpoint PDF
 │   ├── invoices/
 │   │   └── fatture_upload.py
 │   └── import_templates.py             # Template DEFINITIVI
@@ -138,7 +92,10 @@ CERALDI GROUP S.R.L.;08/01/2026;08/01/2026;05034 - BANCO BPM S.P.A.;5462 - 03406
 ```
 /app/frontend/src/
 ├── pages/
-│   ├── ImportExport.jsx                # Pagina import con descrizioni aggiornate
+│   ├── ImportExport.jsx      # CENTRALE - Tutti gli import
+│   ├── Fatture.jsx           # Solo visualizzazione
+│   ├── F24.jsx               # Solo visualizzazione + viewer PDF
+│   ├── ArchivioBonifici.jsx  # Solo visualizzazione
 │   ├── PrimaNota.jsx
 │   └── ...
 └── App.jsx
@@ -147,22 +104,25 @@ CERALDI GROUP S.R.L.;08/01/2026;08/01/2026;05034 - BANCO BPM S.P.A.;5462 - 03406
 ### Key Collections (MongoDB)
 - `prima_nota_cassa` - Movimenti cassa (Corrispettivi, POS, Versamenti)
 - `prima_nota_banca` - Movimenti banca (vuota)
-- `estratto_conto_movimenti` - Movimenti da estratto conto completo
+- `estratto_conto_movimenti` - Movimenti estratto conto
+- `invoices` - Fatture XML
+- `f24_models` - Modelli F24 con PDF (base64)
+- `bank_transfers` - Bonifici bancari
 
 ---
 
 ## Changelog
 
 ### 2026-01-10
-- ✅ Parser DEFINITIVI aggiornati con intestazioni esatte dai file banca
-- ✅ Template riscritti (corrispettivi.xlsx, pos.xlsx, versamenti.csv, estratto_conto.csv)
-- ✅ Card Import Fatture XML ridisegnata in stile uniforme con le altre
-- ✅ Fix rilevamento duplicati fatture XML (HTTP 409 + "già presente")
-- ✅ F24 e Buste Paga: aggiunto supporto Upload Massivo ZIP e Upload Multiplo PDF
-- ✅ Pagina /f24: rimosso tutte le sezioni di upload (ora solo visualizzazione)
-- ✅ Pagina /f24: aggiunto pulsante "PDF" per visualizzare il documento originale
-- ✅ Backend: endpoint GET /api/f24-public/pdf/{f24_id} per servire PDF originali
-- ✅ Frontend aggiornato con descrizioni corrette dei formati
+- ✅ **CENTRALIZZAZIONE IMPORT COMPLETATA**
+- ✅ Rimossi tutti gli export dalla pagina Import/Export
+- ✅ Import Fatture XML: 3 pulsanti separati (XML Singolo, XML Multipli, ZIP Massivo)
+- ✅ Rimosso upload da `/fatture` - solo visualizzazione + link Import
+- ✅ Rimosso upload da `/f24` - solo visualizzazione + viewer PDF
+- ✅ Rimosso upload da `/archivio-bonifici` - solo visualizzazione + link Import
+- ✅ Aggiunto import Archivio Bonifici a Import/Export
+- ✅ Parser DEFINITIVI con intestazioni esatte dai file banca
+- ✅ Fix rilevamento duplicati (HTTP 409 + "già presente")
 
 ### 2026-01-09
 - ✅ Logica contabile Prima Nota finalizzata
@@ -189,6 +149,8 @@ CERALDI GROUP S.R.L.;08/01/2026;08/01/2026;05034 - BANCO BPM S.P.A.;5462 - 03406
 ---
 
 ## Critical Notes
-1. **Parser DEFINITIVI** - Usare SOLO le intestazioni documentate sopra
-2. **Logica contabile Prima Nota** - Non modificare senza richiesta esplicita
-3. **Coerenza UI** - Seguire stile Shadcn/UI delle pagine ridisegnate
+
+1. **Import centralizzato** - TUTTI gli import vanno in `/import-export`
+2. **Parser DEFINITIVI** - Usare SOLO le intestazioni documentate
+3. **Logica contabile Prima Nota** - Non modificare senza richiesta esplicita
+4. **Coerenza UI** - Seguire stile Shadcn/UI delle pagine ridisegnate
