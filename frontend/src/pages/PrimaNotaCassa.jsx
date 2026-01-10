@@ -229,6 +229,7 @@ export default function PrimaNotaCassa() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
 
@@ -239,6 +240,6 @@ export default function PrimaNotaCassa() {
           onClose={() => setViewingInvoice(null)}
         />
       )}
-    </>
+    </div>
   );
 }
