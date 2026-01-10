@@ -13,6 +13,7 @@ Moduli:
 - Lotti di Produzione
 - Materie Prime
 - Ricette
+- Ricettario Dinamico (XML-Driven)
 - Non Conformità
 """
 from .temperature_positive import router as temperature_positive_router
@@ -25,6 +26,7 @@ from .manuale_haccp import router as manuale_haccp_router
 from .lotti import router as lotti_router
 from .materie_prime import router as materie_prime_router
 from .ricette import router as ricette_router
+from .ricettario_dinamico import router as ricettario_dinamico_router
 from .non_conformi import router as non_conformi_router
 from .fornitori import router as fornitori_router
 
@@ -39,6 +41,7 @@ __all__ = [
     'lotti_router',
     'materie_prime_router',
     'ricette_router',
+    'ricettario_dinamico_router',
     'non_conformi_router',
     'fornitori_router'
 ]
