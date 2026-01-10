@@ -718,7 +718,7 @@ export default function Admin() {
               </CardHeader>
               <CardContent style={{ padding: 16 }}>
                 <p style={{ fontSize: 12, color: '#64748b', marginBottom: 12 }}>
-                  Esporta tutte le fatture dell'anno {anno} in formato Excel.
+                  Esporta tutte le fatture dell&apos;anno {anno} in formato Excel.
                 </p>
                 <Button 
                   onClick={() => window.open(`${api.defaults.baseURL}/api/exports/invoices?anno=${anno}`, '_blank')}
@@ -737,7 +737,7 @@ export default function Admin() {
               </CardHeader>
               <CardContent style={{ padding: 16 }}>
                 <p style={{ fontSize: 12, color: '#64748b', marginBottom: 12 }}>
-                  Esporta prima nota cassa/banca dell'anno {anno}.
+                  Esporta prima nota cassa/banca dell&apos;anno {anno}.
                 </p>
                 <div style={{ display: 'grid', gap: 8 }}>
                   <Button 
