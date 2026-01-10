@@ -1,45 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useResponsive } from '../hooks/useResponsive';
 
 const API = '';
 
-const styles = {
-  page: { padding: 24, maxWidth: 1200, margin: '0 auto', background: '#f8fafc', minHeight: '100vh' },
-  header: { 
-    padding: '20px 24px', 
-    background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', 
-    borderRadius: 12, 
-    color: 'white',
-    marginBottom: 24
-  },
-  card: { background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', marginBottom: 16 },
-  btnPrimary: { padding: '10px 20px', background: '#f59e0b', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 'bold', fontSize: 14 },
-  btnSecondary: { padding: '10px 20px', background: '#e5e7eb', color: '#374151', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: '600', fontSize: 14 },
-  btnSuccess: { padding: '10px 20px', background: '#16a34a', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 'bold', fontSize: 14 },
-  btnDanger: { padding: '8px 12px', background: '#fee2e2', color: '#dc2626', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12 },
-  input: { padding: '10px 12px', borderRadius: 8, border: '2px solid #e5e7eb', fontSize: 14, width: '100%', boxSizing: 'border-box' },
-  table: { width: '100%', borderCollapse: 'collapse', fontSize: 14 },
-  th: { padding: '12px 16px', textAlign: 'left', borderBottom: '2px solid #e5e7eb', background: '#fef3c7', fontWeight: 600 },
-  td: { padding: '12px 16px', borderBottom: '1px solid #f3f4f6' },
-  allergeneBadge: { 
-    display: 'inline-flex', 
-    alignItems: 'center', 
-    gap: 4, 
-    padding: '4px 10px', 
-    background: '#fef3c7', 
-    color: '#92400e', 
-    borderRadius: 20, 
-    fontSize: 12, 
-    fontWeight: 600,
-    marginRight: 6,
-    marginBottom: 4
-  },
-  printArea: {
-    fontFamily: 'Arial, sans-serif',
-    fontSize: 12
-  }
-};
-
-// Area di stampa PDF
+// Area di stampa PDF (non responsive - formato fisso per stampa)
 const PrintableLibro = React.forwardRef(({ libro, azienda, indirizzo, dataGenerazione }, ref) => (
   <div ref={ref} style={{ padding: 40, fontFamily: 'Arial, sans-serif', background: 'white' }}>
     {/* Intestazione */}
