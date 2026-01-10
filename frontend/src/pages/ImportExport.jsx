@@ -259,29 +259,120 @@ export default function ImportExport() {
   };
 
   const handleImportF24 = async () => {
-    const file = f24FileRef.current?.files[0];
-    if (!file) {
-      showMessage("error", "Seleziona un file PDF F24");
+    const files = f24FileRef.current?.files;
+    if (!files || files.length === 0) {
+      showMessage("error", "Seleziona file PDF o ZIP contenenti F24");
       return;
     }
     
     setLoading(true);
-    const formData = new FormData();
-    formData.append("file", file);
-    
+    setUploadProgress({
+      active: true,
+      current: 0,
+      total: 0,
+      filename: "Preparazione...",
+      duplicates: 0,
+      imported: 0,
+      errors: []
+    });
+
     try {
-      const res = await api.post("/api/f24/upload-pdf", formData);
-      setImportResults(res.data);
-      if (res.data.success) {
-        showMessage("success", `F24 importato: €${res.data.saldo_finale?.toFixed(2)} - Scadenza ${res.data.scadenza}`);
-      } else {
-        showMessage("error", res.data.error || "Errore import F24");
+      // Collect all PDF files (from direct PDFs and extracted from ZIPs)
+      let allPdfFiles = [];
+      
+      for (const file of files) {
+        if (file.name.toLowerCase().endsWith('.zip')) {
+          const JSZip = (await import('jszip')).default;
+          const zip = await JSZip.loadAsync(file);
+          for (const [filename, zipEntry] of Object.entries(zip.files)) {
+            if (filename.toLowerCase().endsWith('.pdf') && !zipEntry.dir) {
+              const content = await zipEntry.async('blob');
+              allPdfFiles.push(new File([content], filename, { type: 'application/pdf' }));
+            }
+          }
+        } else if (file.name.toLowerCase().endsWith('.pdf')) {
+          allPdfFiles.push(file);
+        }
       }
+
+      if (allPdfFiles.length === 0) {
+        showMessage("error", "Nessun file PDF trovato");
+        setUploadProgress(prev => ({ ...prev, active: false }));
+        setLoading(false);
+        return;
+      }
+
+      setUploadProgress(prev => ({
+        ...prev,
+        total: allPdfFiles.length,
+        filename: `Trovati ${allPdfFiles.length} PDF F24`
+      }));
+
+      let imported = 0;
+      let duplicates = 0;
+      let errors = [];
+
+      for (let i = 0; i < allPdfFiles.length; i++) {
+        const pdfFile = allPdfFiles[i];
+        
+        setUploadProgress(prev => ({
+          ...prev,
+          current: i + 1,
+          filename: pdfFile.name
+        }));
+
+        const formData = new FormData();
+        formData.append("file", pdfFile);
+
+        try {
+          const res = await api.post("/api/f24-public/upload", formData);
+          if (res.data.success !== false) {
+            imported++;
+          } else {
+            errors.push({ file: pdfFile.name, error: res.data.error || "Errore" });
+          }
+        } catch (e) {
+          const errorMsg = e.response?.data?.detail || e.message;
+          const statusCode = e.response?.status;
+          if (statusCode === 409 || errorMsg.toLowerCase().includes('duplicat') || errorMsg.toLowerCase().includes('già presente')) {
+            duplicates++;
+          } else {
+            errors.push({ file: pdfFile.name, error: errorMsg });
+          }
+        }
+
+        setUploadProgress(prev => ({
+          ...prev,
+          imported,
+          duplicates,
+          errors: [...errors]
+        }));
+
+        await new Promise(r => setTimeout(r, 100));
+      }
+
+      setImportResults({
+        type: "f24",
+        total_files: allPdfFiles.length,
+        imported,
+        duplicates,
+        errors: errors.length
+      });
+
+      if (errors.length === 0) {
+        showMessage("success", `Importati ${imported} F24. ${duplicates} duplicati ignorati.`);
+      } else {
+        showMessage("error", `Importati ${imported} F24. ${duplicates} duplicati. ${errors.length} errori.`);
+      }
+
       f24FileRef.current.value = "";
     } catch (e) {
-      showMessage("error", e.response?.data?.detail || "Errore import F24");
+      showMessage("error", "Errore durante l'import: " + e.message);
     } finally {
       setLoading(false);
+      setTimeout(() => {
+        setUploadProgress(prev => ({ ...prev, active: false }));
+      }, 2000);
     }
   };
 
