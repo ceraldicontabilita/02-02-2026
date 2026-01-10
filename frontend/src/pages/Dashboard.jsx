@@ -496,8 +496,8 @@ export default function Dashboard() {
 
       {/* IVA Trend Chart */}
       {trendData && (
-        <div className="card" style={{ marginTop: 20 }}>
-          <div className="h1" style={{ fontSize: 18, margin: '0 0 15px 0' }}>📊 Trend IVA {anno}</div>
+        <div style={{ background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', marginTop: 20 }}>
+          <h2 style={{ fontSize: 18, margin: '0 0 15px 0', fontWeight: 'bold', color: '#1e3a5f' }}>📊 Trend IVA {anno}</h2>
           <div style={{ height: 200, width: '100%' }}>
             <ResponsiveContainer>
               <LineChart data={trendData.trend_mensile} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
