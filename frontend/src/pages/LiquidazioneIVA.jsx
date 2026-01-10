@@ -427,8 +427,8 @@ export default function LiquidazioneIVA() {
           </button>
         </div>
         {riepilogoAnnuale && (
-          <div className="card-content" style={{ padding: 0, overflow: 'auto' }}>
-            <table className="data-table">
+          <div style={{ padding: 0, overflow: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
               <thead>
                 <tr>
                   <th>Mese</th>
