@@ -119,13 +119,13 @@ export default function HACCPCompleto() {
   };
 
   // Filtri
-  const materieFiltrate = materiePrime.filter(m => {
+  const materieFiltrate = (materiePrime || []).filter(m => {
     if (letteraFiltro && !m.materia_prima?.toUpperCase().startsWith(letteraFiltro)) return false;
     if (searchMaterie && !m.materia_prima?.toLowerCase().includes(searchMaterie.toLowerCase())) return false;
     return true;
   });
 
-  const ricetteFiltrate = ricette.filter(r => {
+  const ricetteFiltrate = (ricette || []).filter(r => {
     if (letteraFiltro && !r.nome?.toUpperCase().startsWith(letteraFiltro)) return false;
     if (searchRicette && !r.nome?.toLowerCase().includes(searchRicette.toLowerCase())) return false;
     return true;
