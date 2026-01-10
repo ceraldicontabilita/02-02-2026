@@ -254,6 +254,7 @@ const router = createBrowserRouter([
       { path: "haccp-v2/ricettario", element: <LazyPage><RicettarioDinamico /></LazyPage> },
       { path: "haccp-v2/sanificazione", element: <LazyPage><HACCPSanificazione /></LazyPage> },
       { path: "haccp-v2/temperature", element: <LazyPage><HACCPTemperature /></LazyPage> },
+      { path: "libro-allergeni", element: <LazyPage><LibroAllergeni /></LazyPage> },
       { path: "ricettario-dinamico", element: <LazyPage><RicettarioDinamico /></LazyPage> },
       { path: "dipendenti", element: <LazyPage><GestioneDipendenti /></LazyPage> },
       { path: "cedolini", element: <LazyPage><Cedolini /></LazyPage> },
