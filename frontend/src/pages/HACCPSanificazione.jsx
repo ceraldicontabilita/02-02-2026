@@ -41,7 +41,7 @@ export default function HACCPSanificazione() {
   const [items, setItems] = useState([]);
   const [attrezzature, setAttrezzature] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [anno, setAnno] = useState(new Date().getFullYear());
+  const { anno } = useAnnoGlobale(); // Anno dal contesto globale
   const [mese, setMese] = useState(new Date().getMonth() + 1);
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({

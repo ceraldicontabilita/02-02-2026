@@ -49,8 +49,8 @@ export default function HACCPNonConformita() {
   const [showModal, setShowModal] = useState(false);
   const [stats, setStats] = useState({});
   
-  // Filtri
-  const [anno, setAnno] = useState(new Date().getFullYear());
+  // Filtri - Anno dal contesto globale
+  const { anno } = useAnnoGlobale();
   const [mese, setMese] = useState(new Date().getMonth() + 1);
   const [statoFiltro, setStatoFiltro] = useState('');
   

@@ -48,7 +48,7 @@ const styles = {
 
 export default function HACCPTemperature() {
   const [tipo, setTipo] = useState('positivi'); // positivi o negativi
-  const [anno, setAnno] = useState(new Date().getFullYear());
+  const { anno } = useAnnoGlobale(); // Anno dal contesto globale
   const [mese, setMese] = useState(new Date().getMonth() + 1);
   const [scheda, setScheda] = useState(null);
   const [frigoriferi, setFrigoriferi] = useState([]);
