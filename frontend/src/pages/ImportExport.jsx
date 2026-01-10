@@ -826,6 +826,7 @@ export default function ImportExport() {
                   type="file"
                   ref={imp.ref}
                   accept={imp.accept}
+                  multiple={imp.multiple || false}
                   style={{ 
                     width: "100%", 
                     padding: 10, 
