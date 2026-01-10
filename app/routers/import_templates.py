@@ -122,24 +122,36 @@ async def template_pos():
 
 @router.get("/corrispettivi")
 async def template_corrispettivi():
-    """Template per importazione corrispettivi giornalieri."""
+    """Template per importazione corrispettivi giornalieri - formato registratore cassa."""
     wb = create_styled_workbook()
     ws = wb.active
     ws.title = "Corrispettivi"
     
-    headers = ["data", "totale", "pagato_contanti", "pagato_elettronico", "imponibile", "iva"]
+    headers = [
+        "Id invio", 
+        "Matricola dispositivo", 
+        "Data e ora rilevazione", 
+        "Data e ora trasmissione", 
+        "Ammontare delle vendite (totale in euro)", 
+        "Imponibile vendite (totale in euro)", 
+        "Imposta vendite (totale in euro)", 
+        "Periodo di inattivita' da", 
+        "Periodo di inattivita' a"
+    ]
     descriptions = [
-        "Formato: YYYY-MM-DD",
-        "Totale corrispettivo (€)",
-        "Pagato in contanti (€)",
-        "Pagato elettronico (€)",
+        "ID trasmissione",
+        "Matricola RT",
+        "Data chiusura",
+        "Data invio",
+        "Totale vendite (€)",
         "Imponibile (€)",
-        "IVA (€)"
+        "IVA (€)",
+        "Inizio inattività",
+        "Fine inattività"
     ]
     
     style_header_row(ws, headers, descriptions)
-    add_example_row(ws, ["2025-01-15", 4187.42, 1911.92, 2275.50, 3432.31, 755.11])
-    add_example_row(ws, ["2025-01-16", 3850.00, 1500.00, 2350.00, 3155.74, 694.26], start_row=4)
+    add_example_row(ws, ["'2709633383'", "'99MEY026532'", "2025-01-02", "2025-01-02", 3264.55, 3264.55, 326.45, "", ""])
     
     output = io.BytesIO()
     wb.save(output)
