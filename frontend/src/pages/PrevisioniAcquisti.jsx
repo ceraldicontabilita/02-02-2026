@@ -200,7 +200,7 @@ export default function PrevisioniAcquisti() {
               </>
             ) : (
               <>
-                <Package className="h-5 w-5" />
+                <Package style={{ height: 20, width: 20 }} />
                 Acquisti Previsti ({filteredData.length} prodotti)
               </>
             )}
