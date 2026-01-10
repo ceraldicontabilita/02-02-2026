@@ -847,15 +847,14 @@ function PrimaNotaDesktop() {
             ))}
           </div>
 
-          {/* Movements Table Banca */}
+          {/* Movements Table Banca - Estratto Conto (sola lettura) */}
           <MovementsTable 
             movimenti={bancaData.movimenti || []}
             tipo="banca"
             loading={loading}
             formatEuro={formatEuro}
             formatDate={formatDate}
-            onDelete={(id) => handleDeleteMovimento('banca', id)}
-            onEdit={(updated) => handleEditMovimento('banca', updated)}
+            readOnly={true}
           />
         </section>
       )}
