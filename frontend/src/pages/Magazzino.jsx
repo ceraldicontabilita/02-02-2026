@@ -419,6 +419,6 @@ export default function Magazzino() {
           )}
         </div>
       </div>
-    </>
+    </div>
   );
 }
