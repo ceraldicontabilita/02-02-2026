@@ -57,31 +57,28 @@ def add_example_row(ws, example_data, start_row=3):
 
 @router.get("/versamenti")
 async def template_versamenti():
-    """Template per importazione versamenti in banca."""
+    """Template per importazione versamenti in banca - formato banca."""
     wb = create_styled_workbook()
     ws = wb.active
     ws.title = "Versamenti"
     
-    headers = ["data", "importo", "descrizione"]
+    headers = ["Ragione Sociale", "Data contabile", "Data valuta", "Banca", "Rapporto", "Importo", "Divisa", "Descrizione", "Causale", "Saldo", "Competenza"]
     descriptions = [
-        "Formato: YYYY-MM-DD o DD/MM/YYYY",
-        "Importo del versamento (€)",
-        "Descrizione opzionale"
+        "Nome azienda",
+        "Data operazione",
+        "Data valuta",
+        "Nome banca",
+        "N. rapporto",
+        "Importo (€)",
+        "EUR",
+        "Descrizione movimento",
+        "Codice causale",
+        "Saldo progressivo",
+        "Tipo competenza"
     ]
     
     style_header_row(ws, headers, descriptions)
-    add_example_row(ws, ["2025-01-15", 5000.00, "Versamento contanti cassa"])
-    add_example_row(ws, ["2025-01-20", 3500.50, "Versamento POS"], start_row=4)
-    
-    # Info sheet
-    info_ws = wb.create_sheet("INFO")
-    info_ws["A1"] = "ISTRUZIONI IMPORTAZIONE VERSAMENTI"
-    info_ws["A1"].font = Font(bold=True, size=14)
-    info_ws["A3"] = "1. Compilare le colonne data, importo e descrizione"
-    info_ws["A4"] = "2. La data deve essere nel formato YYYY-MM-DD o DD/MM/YYYY"
-    info_ws["A5"] = "3. L'importo deve essere un numero (usare . o , come separatore decimale)"
-    info_ws["A6"] = "4. La descrizione è opzionale"
-    info_ws["A8"] = "NOTA: Le righe con intestazioni o esempi verranno ignorate automaticamente"
+    add_example_row(ws, ["AZIENDA SRL", "16/12/2025", "16/12/2025", "BANCA XYZ", "123456", "4500", "EUR", "VERS. CONTANTI", "48", "100000", "Ricavi - Deposito contanti"])
     
     output = io.BytesIO()
     wb.save(output)
