@@ -120,7 +120,7 @@ export default function HACCPCompleto() {
   const generaLotto = async () => {
     if (!selectedRicettaForLotto) return;
     try {
-      const res = await api.post(`/api/haccp-v2/genera-lotto/${encodeURIComponent(selectedRicettaForLotto.nome)}`, null, {
+      const res = await api.post(`/api/haccp-v2/lotti/genera-da-ricetta/${encodeURIComponent(selectedRicettaForLotto.nome)}`, null, {
         params: { data_produzione: formLotto.data_produzione, data_scadenza: formLotto.data_scadenza, quantita: formLotto.quantita, unita_misura: formLotto.unita_misura }
       });
       if (res.data) printEtichetta(res.data);
