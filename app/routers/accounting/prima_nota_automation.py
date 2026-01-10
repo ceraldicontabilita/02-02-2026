@@ -6,7 +6,7 @@ API per:
 - Parsare estratto conto per assegni e associarli alle fatture banca
 """
 from fastapi import APIRouter, HTTPException, Body, UploadFile, File
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from datetime import datetime
 import uuid
 import logging
