@@ -45,6 +45,10 @@ export default function ArchivioFatture() {
   const [stato, setStato] = useState(searchParams.get('stato') || '');
   const [search, setSearch] = useState('');
   
+  // Modal stampa etichette
+  const [showEtichette, setShowEtichette] = useState(false);
+  const [selectedFatturaId, setSelectedFatturaId] = useState(null);
+  
   // Genera anni per select (ultimi 5 anni)
   const anni = Array.from({ length: 5 }, (_, i) => currentYear - i);
 
