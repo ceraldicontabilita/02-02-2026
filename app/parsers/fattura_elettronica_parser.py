@@ -287,6 +287,11 @@ def parse_fattura_xml(xml_content: str) -> Dict[str, Any]:
             "pagamento": pagamento,
             "supplier_name": fornitore.get("denominazione", ""),
             "supplier_vat": fornitore.get("partita_iva", ""),
+            "allegati": allegati,
+            "has_pdf": len([a for a in allegati if a.get("formato", "").upper() == "PDF"]) > 0,
+            "totali_coerenti": totali_coerenti,
+            "differenza_totali": differenza_totali,
+            "somma_righe": somma_righe,
             "raw_xml_parsed": True
         }
         
