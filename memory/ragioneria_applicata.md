@@ -166,7 +166,30 @@ await db["prima_nota_cassa"].insert_one(movimento)
 - **Rispetta la partita doppia**: ogni registrazione ha un momento specifico
 - **Riconciliazione accurata**: l'estratto conto bancario è il documento ufficiale per i movimenti banca
 
+## 9. PRIMA NOTA BANCA = ESTRATTO CONTO
+
+### Architettura Corrente
+La **Prima Nota Banca** non è più una collection separata ma visualizza direttamente i movimenti importati dall'**estratto conto bancario**.
+
+### Flusso Dati
+```
+[File CSV Estratto Conto] 
+    → Import via /api/estratto-conto-movimenti/import
+    → Salvato in collection "estratto_conto_movimenti"
+    → Visualizzato nella pagina Prima Nota → Sezione BANCA
+```
+
+### Collection Utilizzate
+- `prima_nota_cassa`: Movimenti contanti (Corrispettivi, POS, Versamenti)
+- `estratto_conto_movimenti`: Movimenti bancari dall'estratto conto (visualizzati come "Prima Nota Banca")
+- `prima_nota_banca`: **DEPRECATA** - non più utilizzata attivamente
+
+### Perché questa scelta?
+1. **Evita duplicazioni**: L'estratto conto è l'unica fonte di verità per i movimenti bancari
+2. **Semplifica il flusso**: L'utente importa l'estratto conto e vede subito i dati nella Prima Nota
+3. **Rispetta la contabilità**: I movimenti bancari devono corrispondere all'estratto conto ufficiale
+
 ---
 
 *Documento creato: Dicembre 2025*
-*Ultima modifica: Dicembre 2025*
+*Ultima modifica: Gennaio 2026*
