@@ -556,7 +556,7 @@ export default function Fatture() {
             <button onClick={() => setSelectedInvoice(null)} style={{ background: "#eee", border: "none", fontSize: 18, cursor: "pointer", padding: "5px 10px", borderRadius: 4 }}>✕</button>
           </div>
           
-          <div className="grid">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 16 }}>
             <div>
               <strong>Fornitore</strong>
               <div>{selectedInvoice.fornitore?.denominazione || selectedInvoice.supplier_name}</div>
