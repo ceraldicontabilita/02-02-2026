@@ -1078,23 +1078,25 @@ function MovementsTable({ movimenti, tipo, loading, formatEuro, formatDate, onDe
                 <td style={{ padding: 10, textAlign: 'right', fontWeight: 'bold', color: mov.saldoProgressivo >= 0 ? '#166534' : '#991b1b' }}>
                   {formatEuro(mov.saldoProgressivo)}
                 </td>
-                <td style={{ padding: 10, textAlign: 'center', whiteSpace: 'nowrap' }}>
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); setEditingMovimento(mov); }}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, marginRight: 8 }}
-                    title="Modifica"
-                    data-testid={`edit-movimento-${mov.id}`}
-                  >
-                    ✏️
-                  </button>
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); onDelete(mov.id); }}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14 }}
-                    title="Elimina"
-                  >
-                    🗑️
-                  </button>
-                </td>
+                {!readOnly && (
+                  <td style={{ padding: 10, textAlign: 'center', whiteSpace: 'nowrap' }}>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); setEditingMovimento(mov); }}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, marginRight: 8 }}
+                      title="Modifica"
+                      data-testid={`edit-movimento-${mov.id}`}
+                    >
+                      ✏️
+                    </button>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); onDelete(mov.id); }}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14 }}
+                      title="Elimina"
+                    >
+                      🗑️
+                    </button>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
@@ -1103,7 +1105,7 @@ function MovementsTable({ movimenti, tipo, loading, formatEuro, formatDate, onDe
 
       {movimenti.length === 0 && (
         <div style={{ padding: 40, textAlign: 'center', color: '#6b7280' }}>
-          Nessun movimento trovato
+          {readOnly ? 'Nessun movimento nell\'estratto conto. Importa un file CSV dalla pagina Import/Export.' : 'Nessun movimento trovato'}
         </div>
       )}
 
