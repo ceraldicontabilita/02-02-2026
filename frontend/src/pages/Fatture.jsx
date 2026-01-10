@@ -880,6 +880,6 @@ export default function Fatture() {
           onClose={() => setViewingInvoice(null)} 
         />
       )}
-    </>
+    </div>
   );
 }
