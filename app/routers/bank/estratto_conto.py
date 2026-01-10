@@ -68,14 +68,19 @@ def estrai_fornitore_pulito(descrizione: str) -> Optional[str]:
 @router.post("/import")
 async def import_estratto_conto(file: UploadFile = File(...)) -> Dict[str, Any]:
     """
-    Importa estratto conto bancario e salva tutti i movimenti con campi strutturati:
-    - data: data contabile
-    - fornitore: nome estratto dalla descrizione
-    - importo: importo del movimento
-    - numero_fattura: numero fatture pagate (se presente dopo NOTPROVIDE)
-    - data_pagamento: data valuta
-    - categoria: categoria del movimento
-    - descrizione_originale: descrizione completa originale
+    Importa estratto conto bancario e salva tutti i movimenti con campi strutturati.
+    
+    Formato CSV atteso (delimitatore ';'):
+    - Ragione Sociale: nome azienda
+    - Data contabile: data in formato DD/MM/YYYY
+    - Data valuta: data valuta in formato DD/MM/YYYY
+    - Banca: nome banca e codice
+    - Rapporto: numero rapporto/conto
+    - Importo: importo con virgola decimale (es: 254,5)
+    - Divisa: valuta (EUR)
+    - Descrizione: descrizione del movimento
+    - Categoria/sottocategoria: categoria del movimento
+    - Hashtag: tag opzionale
     
     Evita duplicati controllando data + importo + descrizione.
     """
@@ -87,23 +92,80 @@ async def import_estratto_conto(file: UploadFile = File(...)) -> Dict[str, Any]:
     movimenti = []
     
     if filename.endswith('.csv'):
-        text = contents.decode('utf-8-sig')
+        # Prova diversi encoding
+        text = None
+        for encoding in ['utf-8-sig', 'utf-8', 'latin-1', 'cp1252']:
+            try:
+                text = contents.decode(encoding)
+                break
+            except (UnicodeDecodeError, Exception):
+                continue
+        
+        if not text:
+            raise HTTPException(status_code=400, detail="Impossibile decodificare il file CSV")
+        
         reader = csv.DictReader(io.StringIO(text), delimiter=';')
         
         for row in reader:
-            # Estrai dati
-            data_contabile = row.get('Data contabile', '')
-            data_valuta = row.get('Data valuta', '')
-            importo_str = row.get('Importo', '0')
-            descrizione = row.get('Descrizione', '')
-            categoria = row.get('Categoria/sottocategoria', '') or row.get('Categoria', '')
+            # Estrai dati con supporto per varianti di nomi colonna
+            # Supporta sia formato con virgolette che senza
             
-            # Parse importo
+            # Ragione sociale
+            ragione_sociale = row.get('Ragione Sociale', '') or row.get('"Ragione Sociale"', '')
+            
+            # Data contabile
+            data_contabile = (
+                row.get('Data contabile', '') or 
+                row.get('"Data contabile"', '') or
+                row.get('Data', '')
+            ).strip().strip('"')
+            
+            # Data valuta
+            data_valuta = (
+                row.get('Data valuta', '') or 
+                row.get('"Data valuta"', '') or
+                row.get('Data valut.', '')
+            ).strip().strip('"')
+            
+            # Banca
+            banca = (row.get('Banca', '') or row.get('"Banca"', '')).strip().strip('"')
+            
+            # Rapporto (numero conto)
+            rapporto = (row.get('Rapporto', '') or row.get('"Rapporto"', '')).strip().strip('"')
+            
+            # Importo - può essere con virgola come separatore decimale
+            importo_str = (
+                row.get('Importo', '0') or 
+                row.get('"Importo"', '0')
+            ).strip().strip('"')
+            
+            # Parse importo: rimuovi punti migliaia, sostituisci virgola con punto
             importo_str = importo_str.replace('.', '').replace(',', '.')
             try:
                 importo = float(importo_str)
             except (ValueError, TypeError):
                 continue
+            
+            # Divisa
+            divisa = (row.get('Divisa', 'EUR') or row.get('"Divisa"', 'EUR')).strip().strip('"')
+            
+            # Descrizione
+            descrizione = (
+                row.get('Descrizione', '') or 
+                row.get('"Descrizione"', '') or
+                row.get('Descrizion', '')
+            ).strip().strip('"')
+            
+            # Categoria
+            categoria = (
+                row.get('Categoria/sottocategoria', '') or 
+                row.get('"Categoria/sottocategoria"', '') or
+                row.get('Categoria', '') or
+                row.get('"Categoria"', '')
+            ).strip().strip('"')
+            
+            # Hashtag
+            hashtag = (row.get('Hashtag', '') or row.get('"Hashtag"', '')).strip().strip('"')
             
             # Parse data contabile (DD/MM/YYYY)
             try:
@@ -124,20 +186,25 @@ async def import_estratto_conto(file: UploadFile = File(...)) -> Dict[str, Any]:
             except (ValueError, TypeError, IndexError):
                 pass
             
-            # Estrai fornitore/beneficiario
+            # Estrai fornitore/beneficiario dalla descrizione
             fornitore = estrai_fornitore_pulito(descrizione)
             
-            # Estrai numero fattura
+            # Estrai numero fattura dalla descrizione
             numero_fattura = estrai_numero_fattura(descrizione)
             
             movimenti.append({
                 "data": data_obj,
+                "ragione_sociale": ragione_sociale.strip().strip('"') if ragione_sociale else None,
                 "fornitore": fornitore,
                 "importo": importo,
                 "numero_fattura": numero_fattura,
                 "data_pagamento": data_pagamento,
                 "categoria": categoria,
                 "descrizione_originale": descrizione,
+                "banca": banca,
+                "rapporto": rapporto,
+                "divisa": divisa,
+                "hashtag": hashtag,
                 "tipo": "uscita" if importo < 0 else "entrata"
             })
     
