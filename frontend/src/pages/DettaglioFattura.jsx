@@ -283,6 +283,7 @@ export default function DettaglioFattura() {
               onChange={(e) => updateMetodoPagamento(e.target.value)}
               style={styles.select}
               disabled={saving}
+              data-testid="metodo-pagamento-select"
             >
               <option value="">-- Seleziona --</option>
               <option value="Bonifico">Bonifico</option>
@@ -291,6 +292,12 @@ export default function DettaglioFattura() {
               <option value="RiBa">RiBa</option>
               <option value="Carta">Carta di Credito</option>
             </select>
+            {fornitore?.metodo_pagamento && (
+              <p style={styles.hint}>
+                Default fornitore: {fornitore.metodo_pagamento}
+                {fornitore.giorni_pagamento > 0 && ` (${fornitore.giorni_pagamento}gg)`}
+              </p>
+            )}
           </div>
           
           {fattura.data_pagamento && (
