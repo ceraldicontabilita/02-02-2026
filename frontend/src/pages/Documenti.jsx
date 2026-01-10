@@ -624,7 +624,7 @@ export default function Documenti() {
                 alignItems: 'center',
                 justifyContent: 'center'
               }}>
-                <Loader2 className="h-6 w-6 text-white animate-spin" />
+                <Loader2 style={{ height: 24, width: 24, color: 'white', animation: 'spin 1s linear infinite' }} />
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 'bold', fontSize: 16, color: '#1e40af', marginBottom: 4 }}>
