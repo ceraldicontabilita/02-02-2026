@@ -427,6 +427,14 @@ export default function HACCPCompleto() {
               <button style={styles.btnPrimary} onClick={() => navigate('/fornitori')}>Vai ai Fornitori</button>
             </div>
           )}
+
+          {/* ========== SEZIONI HACCP ========== */}
+          {activeTab === 'disinfestazione' && <DisinfestazioneView />}
+          {activeTab === 'sanificazione' && <SanificazioneView />}
+          {activeTab === 'temp-neg' && <TemperatureNegativeView />}
+          {activeTab === 'temp-pos' && <TemperaturePositiveView />}
+          {activeTab === 'anomalie' && <AnomalieView />}
+          {activeTab === 'manuale' && <ManualeHACCPView />}
         </>
       )}
 
