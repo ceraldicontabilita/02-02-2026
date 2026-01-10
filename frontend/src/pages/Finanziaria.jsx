@@ -71,7 +71,7 @@ export default function Finanziaria() {
                 <div>🏦 Banca: {formatEuro(summary?.banca?.uscite)} <span style={{fontSize: 10, color: '#666'}}>(incl. salari e F24)</span></div>
               </div>
             </div>
-            <div className="card" style={{ background: summary?.balance >= 0 ? "#e3f2fd" : "#fff3e0" }}>
+            <div style={{ background: summary?.balance >= 0 ? "#e3f2fd" : "#fff3e0", borderRadius: 12, padding: 20, marginBottom: 20, boxShadow: "0 2px 8px rgba(0,0,0,0.08)", border: "1px solid #e5e7eb" }}>
               <div style={{ fontSize: 13, color: "#64748b" }}>📈 Saldo</div>
               <div style={{ fontSize: 32, fontWeight: "bold" }} style={{ color: summary?.balance >= 0 ? "#1565c0" : "#e65100" }}>
                 {formatEuro(summary?.balance)}
