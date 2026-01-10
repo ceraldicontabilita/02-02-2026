@@ -780,6 +780,145 @@ export default function Admin() {
           </div>
         </TabsContent>
 
+        {/* TAB SINCRONIZZAZIONE */}
+        <TabsContent value="sync">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
+            
+            {/* Status Sincronizzazione */}
+            <Card>
+              <CardHeader style={{ padding: '12px 16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <CardTitle style={{ fontSize: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <Activity style={{ width: 16, height: 16 }} /> Stato Sincronizzazione
+                  </CardTitle>
+                  <Button size="sm" variant="outline" onClick={loadSyncStatus} disabled={syncLoading}>
+                    <RefreshCw style={{ width: 14, height: 14 }} />
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent style={{ padding: 16 }}>
+                {syncStatus ? (
+                  <div style={{ display: 'grid', gap: 8 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #e5e7eb' }}>
+                      <span style={{ color: '#64748b', fontSize: 13 }}>Fatture Totali</span>
+                      <span style={{ fontWeight: 600 }}>{fmt(syncStatus.fatture?.totali)}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #e5e7eb' }}>
+                      <span style={{ color: '#64748b', fontSize: 13 }}>Fatture Pagate</span>
+                      <span style={{ fontWeight: 600, color: '#16a34a' }}>{fmt(syncStatus.fatture?.pagate)}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #e5e7eb' }}>
+                      <span style={{ color: '#64748b', fontSize: 13 }}>Fatture → Cassa</span>
+                      <span style={{ fontWeight: 600 }}>{fmt(syncStatus.fatture?.cassa)}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #e5e7eb' }}>
+                      <span style={{ color: '#64748b', fontSize: 13 }}>Fatture → Banca</span>
+                      <span style={{ fontWeight: 600 }}>{fmt(syncStatus.fatture?.banca)}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #e5e7eb' }}>
+                      <span style={{ color: '#64748b', fontSize: 13 }}>Prima Nota Cassa (Entrate)</span>
+                      <span style={{ fontWeight: 600, color: '#16a34a' }}>{fmt(syncStatus.prima_nota_cassa?.entrate)}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #e5e7eb' }}>
+                      <span style={{ color: '#64748b', fontSize: 13 }}>Prima Nota Cassa (Uscite)</span>
+                      <span style={{ fontWeight: 600, color: '#dc2626' }}>{fmt(syncStatus.prima_nota_cassa?.uscite)}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0' }}>
+                      <span style={{ color: '#64748b', fontSize: 13 }}>Corrispettivi</span>
+                      <span style={{ fontWeight: 600 }}>{fmt(syncStatus.corrispettivi)}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ color: '#64748b', textAlign: 'center', padding: 20 }}>Caricamento...</div>
+                )}
+              </CardContent>
+            </Card>
+            
+            {/* Verifica Corrispettivi */}
+            <Card>
+              <CardHeader style={{ padding: '12px 16px' }}>
+                <CardTitle style={{ fontSize: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <AlertTriangle style={{ width: 16, height: 16 }} /> Verifica Entrate {anno}
+                </CardTitle>
+              </CardHeader>
+              <CardContent style={{ padding: 16 }}>
+                <p style={{ fontSize: 12, color: '#64748b', marginBottom: 12 }}>
+                  Verifica che le entrate da corrispettivi includano l&apos;IVA (Imponibile + IVA).
+                </p>
+                <Button onClick={verificaEntrateCorrette} disabled={syncLoading} style={{ width: '100%', marginBottom: 12 }}>
+                  {syncLoading ? 'Verifica in corso...' : 'Verifica Corrispettivi'}
+                </Button>
+                
+                {verificaCorrispettivi && (
+                  <div style={{ 
+                    background: verificaCorrispettivi.status === 'OK' ? '#f0fdf4' : '#fef2f2', 
+                    border: `1px solid ${verificaCorrispettivi.status === 'OK' ? '#86efac' : '#fecaca'}`,
+                    borderRadius: 8, 
+                    padding: 12,
+                    marginTop: 8
+                  }}>
+                    <div style={{ 
+                      fontWeight: 600, 
+                      color: verificaCorrispettivi.status === 'OK' ? '#16a34a' : '#dc2626',
+                      marginBottom: 8
+                    }}>
+                      {verificaCorrispettivi.status === 'OK' ? '✓ Tutti i corrispettivi sono corretti' : '⚠ Correzione necessaria'}
+                    </div>
+                    <div style={{ fontSize: 12, color: '#374151' }}>
+                      <div>Movimenti: {verificaCorrispettivi.totale_movimenti}</div>
+                      <div>Corretti: {verificaCorrispettivi.corretti} | Errati: {verificaCorrispettivi.errati}</div>
+                      {verificaCorrispettivi.differenza_totale > 0 && (
+                        <div style={{ color: '#dc2626', fontWeight: 600, marginTop: 4 }}>
+                          Differenza: €{verificaCorrispettivi.differenza_totale?.toLocaleString('it-IT')}
+                        </div>
+                      )}
+                    </div>
+                    
+                    {verificaCorrispettivi.status !== 'OK' && (
+                      <Button 
+                        onClick={correggiCorrispettivi} 
+                        disabled={syncLoading}
+                        style={{ width: '100%', marginTop: 12, background: '#dc2626' }}
+                      >
+                        Correggi Importi (Aggiungi IVA)
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            
+            {/* Azioni Sincronizzazione */}
+            <Card>
+              <CardHeader style={{ padding: '12px 16px' }}>
+                <CardTitle style={{ fontSize: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <RefreshCw style={{ width: 16, height: 16 }} /> Azioni Sincronizzazione
+                </CardTitle>
+              </CardHeader>
+              <CardContent style={{ padding: 16, display: 'grid', gap: 12 }}>
+                <div>
+                  <p style={{ fontSize: 12, color: '#64748b', marginBottom: 8 }}>
+                    Cerca corrispondenze tra fatture XML e pagamenti in Prima Nota Cassa.
+                  </p>
+                  <Button onClick={matchFattureCassa} disabled={syncLoading} variant="outline" style={{ width: '100%' }}>
+                    Match Fatture ↔ Cassa
+                  </Button>
+                </div>
+                
+                <div>
+                  <p style={{ fontSize: 12, color: '#64748b', marginBottom: 8 }}>
+                    Imposta le fatture senza metodo pagamento a &quot;Bonifico&quot; (banca).
+                  </p>
+                  <Button onClick={impostaFattureBanca} disabled={syncLoading} variant="outline" style={{ width: '100%' }}>
+                    Fatture → Bonifico
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+            
+          </div>
+        </TabsContent>
+
         {/* TAB ESPORTAZIONI */}
         <TabsContent value="export">
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
