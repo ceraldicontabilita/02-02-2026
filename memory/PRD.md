@@ -3,6 +3,41 @@
 ## Overview
 Sistema ERP completo per la gestione contabile di piccole/medie imprese italiane. Include gestione fatture, prima nota, riconciliazione bancaria, IVA, F24, HACCP e report.
 
+## NUOVO SISTEMA FATTURE RICEVUTE (2026-01-10)
+
+### Architettura Stabile
+Il sistema è stato ristrutturato per gestire SOLO fatture passive (ricevute dai fornitori) con:
+
+**Collections MongoDB:**
+- `fornitori` - Anagrafica fornitori (chiave: partita_iva)
+- `fatture_ricevute` - Fatture passive
+- `dettaglio_righe_fatture` - Righe dettaglio di ogni fattura
+- `allegati_fatture` - PDF allegati decodificati da base64
+
+**Logica di Import XML (Standard FatturaPA):**
+1. **Anagrafica**: Estrazione da `<CedentePrestatore>`. Se P.IVA non esiste → crea fornitore
+2. **Testata**: Estrazione da `<DatiGeneraliDocumento>` (Data, Numero, ImportoTotale)
+3. **Righe**: Cicla su `<DettaglioLinee>` e salva in collection separata
+4. **Allegati**: Decodifica PDF da `<Allegati>` base64
+
+**Controlli:**
+- ✅ Duplicati: P.IVA + Numero Documento
+- ✅ Coerenza totali: Somma righe + IVA vs Totale Documento
+- ✅ Stato "anomala" se totali non corrispondono
+
+**Endpoints:**
+- `POST /api/fatture-ricevute/import-xml` - Singolo XML
+- `POST /api/fatture-ricevute/import-xml-multipli` - Multipli XML
+- `POST /api/fatture-ricevute/import-zip` - ZIP (anche annidati)
+- `GET /api/fatture-ricevute/archivio` - Lista con filtri
+- `GET /api/fatture-ricevute/fattura/{id}` - Dettaglio con righe
+- `GET /api/fatture-ricevute/fattura/{id}/pdf/{allegato_id}` - Download PDF
+
+**Frontend:**
+- Pagina `/fatture-ricevute` - Archivio Fatture con filtri Anno/Mese/Fornitore/Stato
+
+---
+
 ## Design System
 
 **REGOLA FONDAMENTALE**: Tutte le pagine devono usare **STILI INLINE JAVASCRIPT** (`style={{ }}`), MAI Tailwind CSS.
@@ -35,6 +70,7 @@ Riferimento completo: `/app/memory/DESIGN_SYSTEM.md`
 - [x] HACCPCompleto.jsx ✅
 - [x] Corrispettivi.jsx ✅
 - [x] Assegni.jsx ✅
+- [x] ArchivioFattureRicevute.jsx ✅
 - [~] Fornitori.jsx - parziale
 - [ ] Fatture.jsx - da aggiornare
 - [ ] Dashboard.jsx - da aggiornare
