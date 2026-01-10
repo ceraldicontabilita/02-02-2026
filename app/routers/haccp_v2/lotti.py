@@ -300,6 +300,7 @@ async def popola_lotti_da_fatture(anno: int = Query(default=2026)):
     }, {"_id": 0}).to_list(5000)
     
     lotti_creati = 0
+    lotti_con_codice_estratto = 0
     prodotti_processati = set()
     
     for fattura in fatture:
