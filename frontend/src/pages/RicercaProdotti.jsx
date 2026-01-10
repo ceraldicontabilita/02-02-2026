@@ -259,7 +259,7 @@ export default function RicercaProdotti() {
                       <span style={{ color: "#2e7d32", fontWeight: "bold" }}>
                         €{(s.best_price || 0).toFixed(2)}
                       </span>
-                      <div className="small" style={{ color: "#999" }}>
+                      <div style={{ ...smallStyle, color: "#999" }}>
                         Match: {s.match_score}%
                       </div>
                     </div>
