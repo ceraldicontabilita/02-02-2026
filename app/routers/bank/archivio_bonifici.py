@@ -1283,3 +1283,194 @@ async def disassocia_bonifico(bonifico_id: str):
         raise HTTPException(status_code=404, detail="Bonifico non trovato")
     
     return {"success": True, "bonifico_id": bonifico_id}
+
+
+# =============================================================================
+# ASSOCIAZIONE BONIFICI ↔ PRIMA NOTA SALARI
+# =============================================================================
+
+@router.get("/operazioni-salari/{bonifico_id}")
+async def get_operazioni_salari_compatibili(bonifico_id: str):
+    """
+    Cerca operazioni in Prima Nota Salari compatibili con il bonifico.
+    Filtra per:
+    - Importo simile (±5%)
+    - Data vicina (±30 giorni)
+    - Non già associate
+    """
+    db = Database.get_db()
+    
+    # Recupera bonifico
+    bonifico = await db.bonifici_transfers.find_one({"id": bonifico_id}, {"_id": 0})
+    if not bonifico:
+        raise HTTPException(status_code=404, detail="Bonifico non trovato")
+    
+    importo = abs(bonifico.get("importo", 0))
+    data_bonifico = bonifico.get("data", "")
+    causale = bonifico.get("causale", "").lower()
+    
+    # Cerca in prima_nota_salari
+    query = {
+        "salario_associato": {"$ne": True}
+    }
+    
+    # Filtra per importo ±10%
+    if importo > 0:
+        query["$or"] = [
+            {"importo": {"$gte": importo * 0.9, "$lte": importo * 1.1}},
+            {"netto": {"$gte": importo * 0.9, "$lte": importo * 1.1}}
+        ]
+    
+    operazioni = await db.prima_nota_salari.find(query, {"_id": 0}).sort("data", -1).to_list(50)
+    
+    # Calcola score di compatibilità
+    risultati = []
+    for op in operazioni:
+        score = 0
+        op_importo = op.get("importo") or op.get("netto", 0)
+        op_data = op.get("data", "")
+        op_desc = (op.get("descrizione", "") + " " + op.get("dipendente", "")).lower()
+        
+        # Score importo (max 50)
+        if importo > 0 and op_importo > 0:
+            diff_pct = abs(importo - op_importo) / importo * 100
+            if diff_pct < 1:
+                score += 50
+            elif diff_pct < 5:
+                score += 40
+            elif diff_pct < 10:
+                score += 20
+        
+        # Score data (max 30)
+        if data_bonifico and op_data:
+            try:
+                from datetime import timedelta
+                d1 = datetime.fromisoformat(data_bonifico.replace("Z", "+00:00")) if isinstance(data_bonifico, str) else data_bonifico
+                d2 = datetime.fromisoformat(op_data.replace("Z", "+00:00")) if isinstance(op_data, str) else op_data
+                diff_days = abs((d1 - d2).days)
+                if diff_days <= 3:
+                    score += 30
+                elif diff_days <= 7:
+                    score += 20
+                elif diff_days <= 30:
+                    score += 10
+            except:
+                pass
+        
+        # Score causale match (max 20)
+        if causale:
+            dipendente = op.get("dipendente", "").lower()
+            if dipendente and dipendente in causale:
+                score += 20
+            elif any(word in causale for word in ["stipendio", "salario", "netto", "busta"]):
+                score += 10
+        
+        if score > 0:
+            risultati.append({
+                **op,
+                "compatibilita_score": score,
+                "importo_display": op_importo
+            })
+    
+    # Ordina per score
+    risultati.sort(key=lambda x: x.get("compatibilita_score", 0), reverse=True)
+    
+    return {
+        "bonifico": {
+            "id": bonifico_id,
+            "importo": importo,
+            "data": data_bonifico,
+            "causale": bonifico.get("causale")
+        },
+        "operazioni_compatibili": risultati[:10]  # Max 10 risultati
+    }
+
+
+@router.post("/associa-salario")
+async def associa_bonifico_salario(
+    bonifico_id: str = Query(...),
+    operazione_id: str = Query(...)
+):
+    """
+    Associa un bonifico a un'operazione di Prima Nota Salari.
+    """
+    db = Database.get_db()
+    
+    # Verifica bonifico
+    bonifico = await db.bonifici_transfers.find_one({"id": bonifico_id})
+    if not bonifico:
+        raise HTTPException(status_code=404, detail="Bonifico non trovato")
+    
+    # Verifica operazione
+    operazione = await db.prima_nota_salari.find_one({"id": operazione_id}, {"_id": 0})
+    if not operazione:
+        raise HTTPException(status_code=404, detail="Operazione salari non trovata")
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    # Aggiorna bonifico
+    await db.bonifici_transfers.update_one(
+        {"id": bonifico_id},
+        {"$set": {
+            "salario_associato": True,
+            "operazione_salario_id": operazione_id,
+            "operazione_salario_desc": operazione.get("descrizione") or operazione.get("dipendente"),
+            "operazione_salario_data": operazione.get("data"),
+            "operazione_salario_importo": operazione.get("importo") or operazione.get("netto"),
+            "data_associazione": now,
+            "updated_at": now
+        }}
+    )
+    
+    # Aggiorna operazione salari
+    await db.prima_nota_salari.update_one(
+        {"id": operazione_id},
+        {"$set": {
+            "bonifico_associato": True,
+            "bonifico_id": bonifico_id,
+            "updated_at": now
+        }}
+    )
+    
+    return {
+        "success": True,
+        "bonifico_id": bonifico_id,
+        "operazione_id": operazione_id,
+        "descrizione": operazione.get("descrizione") or operazione.get("dipendente")
+    }
+
+
+@router.delete("/disassocia-salario/{bonifico_id}")
+async def disassocia_bonifico_salario(bonifico_id: str):
+    """
+    Rimuove l'associazione bonifico ↔ operazione salari.
+    """
+    db = Database.get_db()
+    
+    bonifico = await db.bonifici_transfers.find_one({"id": bonifico_id})
+    if not bonifico:
+        raise HTTPException(status_code=404, detail="Bonifico non trovato")
+    
+    operazione_id = bonifico.get("operazione_salario_id")
+    
+    # Rimuovi associazione dal bonifico
+    await db.bonifici_transfers.update_one(
+        {"id": bonifico_id},
+        {"$unset": {
+            "salario_associato": "",
+            "operazione_salario_id": "",
+            "operazione_salario_desc": "",
+            "operazione_salario_data": "",
+            "operazione_salario_importo": "",
+            "data_associazione": ""
+        }}
+    )
+    
+    # Rimuovi riferimento dall'operazione
+    if operazione_id:
+        await db.prima_nota_salari.update_one(
+            {"id": operazione_id},
+            {"$unset": {"bonifico_associato": "", "bonifico_id": ""}}
+        )
+    
+    return {"success": True, "bonifico_id": bonifico_id}
