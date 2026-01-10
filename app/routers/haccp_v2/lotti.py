@@ -410,6 +410,21 @@ async def reset_lotti():
     return {"success": True, "deleted": result.deleted_count}
 
 
+@router.post("/test-parsing")
+async def test_parsing_lotto(descrizione: str = Query(..., description="Descrizione da testare")):
+    """
+    Testa il parsing di una descrizione per estrarre codice lotto e scadenza.
+    Utile per verificare che il parser funzioni correttamente.
+    """
+    return {
+        "descrizione": descrizione,
+        "codice_lotto_estratto": estrai_codice_lotto(descrizione),
+        "scadenza_estratta": estrai_scadenza(descrizione),
+        "categoria": detect_categoria(descrizione),
+        "allergeni": detect_allergeni(descrizione)
+    }
+
+
 # ==================== GENERA LOTTO DA RICETTA ====================
 
 @router.post("/genera-da-ricetta/{nome_ricetta}")
