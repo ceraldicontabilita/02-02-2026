@@ -228,3 +228,41 @@ Sistema di filtro anno centralizzato per l'intera applicazione.
 3. **Normalizzazione 1kg** - Tutte le ricette devono avere ingrediente base = 1000g
 4. **Match riconciliazione** - Triplo criterio (importo + fornitore + numero fattura)
 5. **Filtro Anno** - Usare sempre `useAnnoGlobale()` per l'anno, non `useState` locale
+6. **Entrate Cassa** - SEMPRE imponibile + IVA (totale lordo), MAI solo imponibile
+
+---
+
+## Sincronizzazione Dati Relazionale (Implementato 2025-01-10)
+
+Sistema di propagazione modifiche tra moduli contabili.
+
+### Principio
+> **MODIFICA UNA VOLTA → AGGIORNA OVUNQUE**
+
+### Relazioni
+```
+CORRISPETTIVI ────→ PRIMA NOTA CASSA (ENTRATA = imponibile + IVA)
+FATTURE XML ──┬──→ PRIMA NOTA CASSA (se metodo = "Cassa")
+              └──→ PRIMA NOTA BANCA (se metodo = "Bonifico")
+```
+
+### API Sincronizzazione
+| Endpoint | Descrizione |
+|----------|-------------|
+| `GET /api/sync/stato-sincronizzazione` | Status sistema |
+| `POST /api/sync/match-fatture-cassa` | Match fatture ↔ prima nota cassa |
+| `POST /api/sync/fatture-to-banca` | Imposta fatture a Bonifico |
+| `PUT /api/sync/update-fattura-everywhere/{id}` | Aggiorna fattura ovunque |
+| `GET /api/prima-nota/cassa/verifica-entrate-corrispettivi` | Verifica importi |
+| `POST /api/prima-nota/cassa/fix-corrispettivi-importo` | Correggi importi |
+
+### UI Admin
+Tab "Sincronizzazione" in `/admin` per gestire:
+- Stato sincronizzazione
+- Verifica e correzione entrate corrispettivi
+- Match fatture con prima nota cassa
+- Impostazione metodo pagamento default
+
+### File Implementazione
+- Backend: `/app/app/routers/sync_relazionale.py`
+- Documentazione: `/app/memory/LOGICA_RELAZIONALE.md`
