@@ -104,13 +104,13 @@ export default function Finanziaria() {
               
               {/* IVA Credito (Fatture) */}
               <div style={{ background: "#e8f5e9", padding: 15, borderRadius: 8 }}>
-                <div style={{ fontSize: 13, color: "#64748b",{{ fontWeight: "bold", color: "#2e7d32" }}>
+                <div style={{ fontSize: 13, color: "#64748b", fontWeight: "bold", color: "#2e7d32" }}>
                   📥 IVA a CREDITO (Fatture)
                 </div>
                 <div style={{ fontSize: 28, fontWeight: "bold", color: "#2e7d32", marginTop: 5 }}>
                   {formatEuro(summary?.vat_credit)}
                 </div>
-                <div style={{ fontSize: 13, color: "#64748b",{{ marginTop: 8, color: "#666" }}>
+                <div style={{ fontSize: 13, color: "#64748b", marginTop: 8, color: "#666" }}>
                   Da {summary?.fatture?.count || 0} fatture
                   <br />
                   Totale acquisti: {formatEuro(summary?.fatture?.totale)}
@@ -123,7 +123,7 @@ export default function Finanziaria() {
                 padding: 15, 
                 borderRadius: 8 
               }}>
-                <div style={{ fontSize: 13, color: "#64748b",{{ fontWeight: "bold" }}>
+                <div style={{ fontSize: 13, color: "#64748b", fontWeight: "bold" }}>
                   ⚖️ Saldo IVA
                 </div>
                 <div style={{ 
@@ -134,7 +134,7 @@ export default function Finanziaria() {
                 }}>
                   {formatEuro(summary?.vat_balance)}
                 </div>
-                <div style={{ fontSize: 13, color: "#64748b",{{ marginTop: 8 }}>
+                <div style={{ fontSize: 13, color: "#64748b", marginTop: 8 }}>
                   <span style={{ 
                     background: summary?.vat_balance > 0 ? "#c62828" : "#2e7d32",
                     color: "white",
