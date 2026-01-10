@@ -286,8 +286,8 @@ export default function Fatture() {
   }
 
   return (
-    <>
-      <div className="card">
+    <div className="page-container">
+      <div className="card" style={{ marginBottom: 20 }}>
         {/* HEADER CON SELETTORE ANNO */}
         <div style={{ 
           display: 'flex', 
