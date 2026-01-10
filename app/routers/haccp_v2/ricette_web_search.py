@@ -183,7 +183,7 @@ Se manca il procedimento, aggiungilo."""
             api_key=api_key,
             session_id=f"migliora-{uuid.uuid4()}",
             system_message=system_message
-        ).with_model("openai", "gpt-5.2")
+        ).with_model("anthropic", "claude-sonnet-4-5-20250929")
         
         response = await chat.send_message(UserMessage(text=user_prompt))
         
