@@ -3,13 +3,22 @@
 ## Overview
 Sistema ERP completo per la gestione contabile di piccole/medie imprese italiane. Include gestione fatture, prima nota, riconciliazione bancaria, IVA, F24, HACCP e report.
 
-## MODULO HACCP AVANZATO E RICETTARIO DINAMICO (2026-01-10) ✅ IN PROGRESS
+## MODULO HACCP AVANZATO E RICETTARIO DINAMICO (2026-01-10) ✅ COMPLETATO
 
 ### Ricettario Dinamico XML-Driven
 - **Collegamento ingredienti a fatture XML**: Ogni ingrediente può essere tracciato alla fattura di origine
-- **Aggiornamento automatico**: Costi e lotti aggiornati all'importazione fatture
+- **Aggiornamento automatico**: Costi e lotti aggiornati all'importazione fatture (Hook in ciclo_passivo_integrato.py)
 - **Regola rotazione 30gg**: Dati scadono solo se presente fattura più recente
 - **Tracciabilità completa**: Fattura → Lotto → Ingrediente → Ricetta
+
+### Integrazione Automatica Import XML
+All'importazione di una fattura XML tramite `/api/ciclo-passivo/import-integrato`:
+1. Parse XML e creazione fattura
+2. Carico magazzino + Lotti HACCP
+3. Scrittura Prima Nota
+4. Creazione scadenza pagamento
+5. Riconciliazione automatica
+6. **NUOVO: Aggiornamento automatico ricettario** - Aggiorna costi/lotti nelle ricette
 
 ### Endpoints Ricettario (`/api/haccp-v2/ricettario/`)
 | Endpoint | Metodo | Descrizione |
@@ -43,6 +52,13 @@ Sistema ERP completo per la gestione contabile di piccole/medie imprese italiane
 ### Route Frontend
 - `/haccp-v2/non-conformita` - Registro Non Conformità
 - `/ricettario-dinamico` o `/haccp-v2/ricettario` - Ricettario Dinamico
+
+### Menu Sidebar (App.jsx)
+Menu HACCP espandibile con:
+- Dashboard HACCP
+- Ricettario Dinamico
+- Non Conformità
+- Registro Lotti
 
 ---
 
