@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import api from '../api';
 import { formatEuro } from '../lib/utils';
+import { useAnnoGlobale } from '../contexts/AnnoContext';
 
 /**
  * Ciclo Passivo Integrato
