@@ -422,7 +422,7 @@ export default function RicercaProdotti() {
                     <div style={{ color: "#2e7d32", fontSize: 18, fontWeight: "bold" }}>
                       €{(p.best_price || p.prezzi?.avg || 0).toFixed(2)}
                     </div>
-                    <div className="small" style={{ color: "#666" }}>
+                    <div style={smallStyle}>
                       {p.best_supplier?.substring(0, 20)}
                     </div>
                   </div>
