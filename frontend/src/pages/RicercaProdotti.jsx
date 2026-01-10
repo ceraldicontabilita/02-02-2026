@@ -508,6 +508,6 @@ export default function RicercaProdotti() {
           <li><strong>Carrello:</strong> Aggiungi prodotti al carrello per creare ordini raggruppati per fornitore</li>
         </ul>
       </div>
-    </>
+    </div>
   );
 }
