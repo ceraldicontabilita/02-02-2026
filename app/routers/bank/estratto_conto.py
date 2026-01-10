@@ -344,12 +344,17 @@ async def import_estratto_conto(file: UploadFile = File(...)) -> Dict[str, Any]:
         record = {
             "id": mov_id,
             "data": mov["data"].isoformat(),
+            "ragione_sociale": mov.get("ragione_sociale"),
             "fornitore": mov["fornitore"],
             "importo": mov["importo"],
             "numero_fattura": mov["numero_fattura"],
             "data_pagamento": mov["data_pagamento"].isoformat() if mov["data_pagamento"] else None,
             "categoria": mov["categoria"],
             "descrizione_originale": mov["descrizione_originale"],
+            "banca": mov.get("banca"),
+            "rapporto": mov.get("rapporto"),
+            "divisa": mov.get("divisa", "EUR"),
+            "hashtag": mov.get("hashtag"),
             "tipo": mov["tipo"],
             "descrizione_hash": desc_hash,
             "created_at": datetime.utcnow().isoformat()
@@ -361,6 +366,7 @@ async def import_estratto_conto(file: UploadFile = File(...)) -> Dict[str, Any]:
     return {
         "message": "Importazione estratto conto completata",
         "movimenti_trovati": len(movimenti),
+        "movimenti_importati": inserted,
         "inseriti": inserted,
         "duplicati_saltati": duplicates
     }
