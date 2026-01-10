@@ -340,19 +340,7 @@ export default function EtichettaLotto({
   const [currentPreview, setCurrentPreview] = useState(null);
   const [message, setMessage] = useState(null);
 
-  useEffect(() => {
-    loadLotti();
-  }, [lottoId, fatturaId]);
-
-  // Inietta stili stampa
-  useEffect(() => {
-    const styleEl = document.createElement('style');
-    styleEl.textContent = printStyles;
-    document.head.appendChild(styleEl);
-    return () => document.head.removeChild(styleEl);
-  }, []);
-
-  const loadLotti = async () => {
+  const loadLotti = useCallback(async () => {
     setLoading(true);
     try {
       if (lottoId) {
@@ -377,7 +365,19 @@ export default function EtichettaLotto({
     } finally {
       setLoading(false);
     }
-  };
+  }, [lottoId, fatturaId]);
+
+  useEffect(() => {
+    loadLotti();
+  }, [loadLotti]);
+
+  // Inietta stili stampa
+  useEffect(() => {
+    const styleEl = document.createElement('style');
+    styleEl.textContent = printStyles;
+    document.head.appendChild(styleEl);
+    return () => document.head.removeChild(styleEl);
+  }, []);
 
   const toggleLotto = async (id) => {
     if (selectedLotti.includes(id)) {
