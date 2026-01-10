@@ -214,6 +214,70 @@ export default function Admin() {
     }
   };
 
+  // ========== FUNZIONI SINCRONIZZAZIONE ==========
+  
+  async function loadSyncStatus() {
+    try {
+      const r = await api.get("/api/sync/stato-sincronizzazione");
+      setSyncStatus(r.data);
+    } catch (e) {
+      console.error("Error loading sync status:", e);
+    }
+  }
+  
+  async function verificaEntrateCorrette() {
+    setSyncLoading(true);
+    try {
+      const r = await api.get(`/api/prima-nota/cassa/verifica-entrate-corrispettivi?anno=${anno}`);
+      setVerificaCorrispettivi(r.data);
+    } catch (e) {
+      console.error("Error verifica:", e);
+    }
+    setSyncLoading(false);
+  }
+  
+  async function correggiCorrispettivi() {
+    if (!window.confirm(`Correggere gli importi corrispettivi per l'anno ${anno}?\n\nQuesta operazione aggiungerà l'IVA agli importi registrati.`)) return;
+    setSyncLoading(true);
+    try {
+      const r = await api.post(`/api/prima-nota/cassa/fix-corrispettivi-importo?anno=${anno}`);
+      alert(`Corretti ${r.data.corretti} movimenti.\nDifferenza totale: €${r.data.totale_differenza_euro?.toLocaleString('it-IT')}`);
+      await verificaEntrateCorrette();
+      await loadSyncStatus();
+    } catch (e) {
+      console.error("Error fix:", e);
+      alert("Errore durante la correzione");
+    }
+    setSyncLoading(false);
+  }
+  
+  async function matchFattureCassa() {
+    setSyncLoading(true);
+    try {
+      const r = await api.post("/api/sync/match-fatture-cassa");
+      alert(`Match completato:\n- Trovate: ${r.data.matched}\n- Non trovate: ${r.data.not_matched}`);
+      await loadSyncStatus();
+    } catch (e) {
+      console.error("Error match:", e);
+      alert("Errore durante il match");
+    }
+    setSyncLoading(false);
+  }
+  
+  async function impostaFattureBanca() {
+    if (!window.confirm("Impostare tutte le fatture senza metodo pagamento a 'Bonifico'?")) return;
+    setSyncLoading(true);
+    try {
+      const r = await api.post("/api/sync/fatture-to-banca");
+      alert(`Aggiornate ${r.data.updated} fatture`);
+      await loadSyncStatus();
+    } catch (e) {
+      console.error("Error:", e);
+      alert("Errore");
+    }
+    setSyncLoading(false);
+  }
+
   const fmt = (n) => n?.toLocaleString('it-IT') || '0';
 
   return (
