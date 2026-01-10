@@ -799,7 +799,7 @@ function PrimaNotaDesktop() {
 
           {/* Summary Cards Banca */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 20 }}>
-            <SummaryCard title="Totale Entrate (DARE)" value={formatEuro(bancaData.totale_entrate)} color="#10b981" icon="📈" subtitle="POS + Versamenti" />
+            <SummaryCard title="Totale Entrate (DARE)" value={formatEuro(bancaData.totale_entrate)} color="#10b981" icon="📈" subtitle="Incassi clienti (bonifici)" />
             <SummaryCard title="Totale Uscite (AVERE)" value={formatEuro(bancaData.totale_uscite)} color="#ef4444" icon="📉" subtitle="Pagamenti fornitori" />
             <SummaryCard title="Saldo Banca" value={formatEuro(bancaData.saldo)} color={bancaData.saldo >= 0 ? '#10b981' : '#ef4444'} icon="💰" highlight />
           </div>
