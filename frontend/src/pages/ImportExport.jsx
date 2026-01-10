@@ -177,28 +177,6 @@ export default function ImportExport() {
     }
   };
 
-  // Special handler for batch endpoints (corrispettivi, pos, versamenti)
-  const processBatchFile = async (file, config) => {
-    const { endpoint, type } = config;
-    
-    setLoading(true);
-    setActiveImport(type);
-    
-    const formData = new FormData();
-    formData.append("file", file);
-    
-    try {
-      const res = await api.post(endpoint, formData);
-      setImportResults(res.data);
-      showMessage("success", `Importati ${res.data.imported || res.data.inseriti || res.data.movimenti_importati || 0} record`);
-    } catch (e) {
-      showMessage("error", e.response?.data?.detail || "Errore import");
-    } finally {
-      setLoading(false);
-      setActiveImport(null);
-    }
-  };
-
   // Special handler for bonifici (uses job system)
   const processBonifici = async (files) => {
     setLoading(true);
