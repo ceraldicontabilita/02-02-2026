@@ -240,27 +240,35 @@ class TestRegressionDashboard:
 
 
 class TestRegressionFatture:
-    """Regression tests for Fatture Ricevute"""
+    """Regression tests for Fatture Ricevute (Ciclo Passivo)"""
     
-    def test_get_fatture_ricevute(self):
-        """GET /api/ciclo-passivo/fatture - Returns received invoices"""
-        response = requests.get(f"{BASE_URL}/api/ciclo-passivo/fatture?limit=5")
+    def test_get_lotti(self):
+        """GET /api/ciclo-passivo/lotti - Returns lotti list"""
+        response = requests.get(f"{BASE_URL}/api/ciclo-passivo/lotti?limit=5")
         assert response.status_code == 200
         data = response.json()
         
-        assert "fatture" in data or isinstance(data, list)
+        assert "items" in data or isinstance(data, list)
 
 
 class TestRegressionPrimaNota:
     """Regression tests for Prima Nota"""
     
-    def test_get_prima_nota(self):
-        """GET /api/prima-nota - Returns prima nota entries"""
-        response = requests.get(f"{BASE_URL}/api/prima-nota?limit=5")
+    def test_get_prima_nota_cassa(self):
+        """GET /api/prima-nota/cassa - Returns prima nota cassa entries"""
+        response = requests.get(f"{BASE_URL}/api/prima-nota/cassa?limit=5")
         assert response.status_code == 200
         data = response.json()
         
-        assert "operazioni" in data or isinstance(data, list)
+        assert "movimenti" in data
+        
+    def test_get_prima_nota_banca(self):
+        """GET /api/prima-nota/banca - Returns prima nota banca entries"""
+        response = requests.get(f"{BASE_URL}/api/prima-nota/banca?limit=5")
+        assert response.status_code == 200
+        data = response.json()
+        
+        assert "movimenti" in data
 
 
 if __name__ == "__main__":
