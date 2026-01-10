@@ -291,7 +291,7 @@ export default function LiquidazioneIVA() {
                 <div>
                   <h4 style={{ color: '#16a34a', marginBottom: 12 }}>📉 IVA a Credito (Acquisti)</h4>
                   {Object.keys(result.purchase_detail || {}).length > 0 ? (
-                    <table className="data-table">
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                       <thead>
                         <tr style={{ background: '#f0fdf4' }}>
                           <th>Aliquota</th>
