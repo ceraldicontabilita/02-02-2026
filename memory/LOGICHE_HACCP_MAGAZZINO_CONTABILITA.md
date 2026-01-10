@@ -620,7 +620,7 @@ SCHEMA:
   "iva_4": 4.00,
   "totale_imponibile": 1100.00,
   "totale_iva": 200.00,
-  "totale_lordo": 1300.00,
+  "totale_lordo": 1300.00,   ← QUESTO È L'IMPORTO ENTRATA CASSA!
   "incasso_contanti": 500.00,
   "incasso_pos": 800.00,
   "numero_scontrini": 145,
@@ -629,9 +629,27 @@ SCHEMA:
   "created_at": "ISO timestamp"
 }
 
+⚠️ CALCOLO ENTRATA CASSA DA CORRISPETTIVI:
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                                                             │
+│  ENTRATA CASSA = IMPONIBILE + IVA = TOTALE LORDO                           │
+│                                                                             │
+│  Esempio:                                                                   │
+│  - Imponibile 22%: €800.00                                                  │
+│  - IVA 22%: €176.00                                                         │
+│  - Imponibile 10%: €200.00                                                  │
+│  - IVA 10%: €20.00                                                          │
+│  ─────────────────────────────────────                                      │
+│  TOTALE ENTRATA CASSA: €1.196,00 (imponibile + IVA)                        │
+│                                                                             │
+│  ❌ ERRORE: usare solo €1.000,00 (solo imponibile)                         │
+│  ✅ CORRETTO: usare €1.196,00 (imponibile + IVA)                           │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
 FLUSSO:
-Corrispettivo → Sync → Prima Nota Cassa (entrata)
-               → Registro IVA vendite
+Corrispettivo → Prima Nota Cassa (entrata = totale_lordo)
+             → Registro IVA vendite (per dichiarazione)
 ```
 
 ## 3.7 Riconciliazione Bancaria
