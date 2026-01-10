@@ -177,7 +177,7 @@ export default function PrevisioniAcquisti() {
       {/* Riepilogo Previsioni */}
       {activeTab === 'previsioni' && costoTotale > 0 && (
         <Card style={{ marginBottom: 16, background: 'linear-gradient(135deg, #8b5cf6, #6366f1)' }}>
-          <CardContent className="pt-4">
+          <CardContent style={{ paddingTop: 16 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'white' }}>
               <div>
                 <div style={{ fontSize: 13, opacity: 0.9 }}>Costo stimato prossime {settimanePrevisione} settimane</div>
