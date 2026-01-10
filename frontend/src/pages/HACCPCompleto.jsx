@@ -162,20 +162,20 @@ export default function HACCPCompleto() {
       {/* Stats */}
       <div className="row" style={{ gap: 15, marginBottom: 20 }}>
         <div className="card" style={{ flex: 1, textAlign: "center", borderLeft: "4px solid #3b82f6" }}>
-          <div style={{ fontSize: 28, fontWeight: 700, color: "#3b82f6" }}>{materiePrime.length}</div>
+          <div style={{ fontSize: 28, fontWeight: 700, color: "#3b82f6" }}>{(materiePrime || []).length}</div>
           <div className="small">Materie Prime</div>
         </div>
         <div className="card" style={{ flex: 1, textAlign: "center", borderLeft: "4px solid #10b981" }}>
-          <div style={{ fontSize: 28, fontWeight: 700, color: "#10b981" }}>{ricette.length}</div>
+          <div style={{ fontSize: 28, fontWeight: 700, color: "#10b981" }}>{(ricette || []).length}</div>
           <div className="small">Ricette</div>
         </div>
         <div className="card" style={{ flex: 1, textAlign: "center", borderLeft: "4px solid #8b5cf6" }}>
-          <div style={{ fontSize: 28, fontWeight: 700, color: "#8b5cf6" }}>{lotti.length}</div>
+          <div style={{ fontSize: 28, fontWeight: 700, color: "#8b5cf6" }}>{(lotti || []).length}</div>
           <div className="small">Lotti Totali</div>
         </div>
         <div className="card" style={{ flex: 1, textAlign: "center", borderLeft: "4px solid #f59e0b" }}>
           <div style={{ fontSize: 28, fontWeight: 700, color: "#f59e0b" }}>
-            {lotti.filter(l => { const d = new Date(l.created_at); const week = new Date(); week.setDate(week.getDate() - 7); return d >= week; }).length}
+            {(lotti || []).filter(l => { const d = new Date(l.created_at); const week = new Date(); week.setDate(week.getDate() - 7); return d >= week; }).length}
           </div>
           <div className="small">Lotti Settimana</div>
         </div>
