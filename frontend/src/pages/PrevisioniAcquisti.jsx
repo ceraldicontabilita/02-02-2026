@@ -195,7 +195,7 @@ export default function PrevisioniAcquisti() {
           <CardTitle style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {activeTab === 'statistiche' ? (
               <>
-                <BarChart3 className="h-5 w-5" />
+                <BarChart3 style={{ height: 20, width: 20 }} />
                 Consumi {annoGlobale} vs {annoGlobale - 1}
               </>
             ) : (
