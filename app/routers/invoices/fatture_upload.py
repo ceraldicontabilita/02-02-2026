@@ -6,7 +6,7 @@ Include riconciliazione automatica con estratto conto per numeri assegni.
 """
 from fastapi import APIRouter, HTTPException, UploadFile, File, Query, Body
 from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import uuid
 import logging
 import zipfile
