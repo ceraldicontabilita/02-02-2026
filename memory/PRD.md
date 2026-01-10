@@ -1,124 +1,205 @@
 # PRD - Azienda in Cloud ERP
 
-## Descrizione Progetto
-Sistema ERP completo per Ceraldi Group S.R.L. con moduli per contabilità, fatturazione, magazzino e HACCP.
+## Panoramica
+Sistema ERP completo per **Ceraldi Group S.R.L.** - gestione contabilità, fatturazione, magazzino e HACCP per attività di ristorazione/bar.
 
-## Requisiti Principali Completati
-
-### 1. Sistema HACCP Completo
-- Temperature positive/negative
-- Sanificazione e disinfestazione  
-- Anomalie e chiusure
-- Gestione lotti e materie prime
-- Ricettario dinamico collegato a fatture XML
-- Gestione non conformità
-- Libro allergeni stampabile
-
-### 2. Modulo Contabilità
-- Prima nota con categorizzazione automatica
-- Prima nota salari
-- Piano dei conti e bilancio
-- Gestione IVA e liquidazioni
-- Riconciliazione bancaria
-- Gestione bonifici con associazione salari
-
-### 3. Gestione Documenti
-- Import fatture XML
-- Ciclo passivo integrato
-- Archivio documenti email
-- Export PDF/Excel
-
-### 4. Magazzino
-- Gestione prodotti e lotti
-- Tracciabilità completa
-- Dizionario articoli
+**Stack Tecnologico:**
+- Backend: FastAPI (Python) + MongoDB
+- Frontend: React + Stili JavaScript inline
+- AI: Claude Sonnet 4.5 via Emergent LLM Key
 
 ---
 
-## CHANGELOG - Gennaio 2026
+## Moduli Principali
 
-### 10 Gennaio 2026 - Ricerca Web Ricette + Importazione Massiva
+### 1. Contabilità
+- **Prima Nota Cassa/Banca** - Registrazione movimenti
+- **Prima Nota Salari** - Gestione paghe dipendenti
+- **Piano dei Conti** - Struttura contabile
+- **Bilancio** - Stato patrimoniale e conto economico
+- **IVA** - Calcolo, liquidazione, F24
+- **Riconciliazione Bancaria** - Match automatico estratto conto ↔ fatture
 
-**Nuove Funzionalità Implementate:**
+### 2. Fatturazione
+- **Ciclo Passivo** - Fatture fornitori (XML)
+- **Archivio Fatture** - Storico documenti
+- **Import XML** - Parsing fatture elettroniche Aruba
 
-1. **Ricerca Web Ricette con AI (Claude Sonnet 4.5)**
-   - Cerca ricette di dolci, rosticceria napoletana/siciliana, contorni e basi
-   - Genera ricette complete con ingredienti, quantità e procedimento
-   
-2. **Normalizzazione Automatica a 1kg**
-   - Tutte le ricette vengono normalizzate a 1kg dell'ingrediente base
-   - TUTTI gli ingredienti moltiplicati per lo stesso fattore
-   - Esempio: ricetta con 300g farina → fattore x3.33 → tutti ingredienti x3.33
+### 3. Magazzino
+- **Gestione Prodotti** - Anagrafica articoli
+- **Lotti** - Tracciabilità completa
+- **Dizionario Articoli** - Mappatura codici
 
-3. **Importazione Massiva Completata**
-   - **63 nuove ricette importate con AI**
-   - Database totale: **158 ricette** (da 95 iniziali)
-   - **122 ricette normalizzate a 1kg** (77.2%)
+### 4. HACCP
+- **Temperature** - Controllo celle positive/negative
+- **Sanificazione** - Registro pulizie
+- **Ricettario Dinamico** - Ricette con tracciabilità ingredienti
+- **Non Conformità** - Gestione anomalie
+- **Libro Allergeni** - Registro stampabile PDF
+- **Etichette Lotto** - Stampa con allergeni
 
-**Ricette Importate per Categoria:**
-
-| Categoria | Nuove Ricette | Esempi |
-|-----------|---------------|--------|
-| Dolci | 23 | Millefoglie, Profiteroles, Sacher, Saint Honoré, Paris Brest, Torta della Nonna |
-| Rosticceria Napoletana | 12 | Calzone fritto, Casatiello, Danubio, Graffa, Pizza fritta, Taralli, Montanara |
-| Rosticceria Siciliana | 10 | Cartocciate, Iris, Sfincione, Panelle, Crispelle di riso, Cipolline |
-| Contorni | 9 | Parmigiana melanzane, Caponata, Carciofi alla romana, Patate al forno |
-| Basi | 9 | Besciamella, Crema diplomatica, Pasta brisée, Impasto pizza napoletana |
-
-**File Creati/Modificati:**
-- `/app/app/routers/haccp_v2/ricette_web_search.py` (NUOVO)
-- `/app/app/routers/haccp_v2/__init__.py` (aggiornato)
-- `/app/app/main.py` (aggiornato)
-- `/app/frontend/src/pages/RicettarioDinamico.jsx` (aggiornato)
-
-**API Endpoints:**
-- `POST /api/haccp-v2/ricette-web/cerca` - Cerca ricetta con AI
-- `POST /api/haccp-v2/ricette-web/importa` - Importa ricetta nel database
-- `POST /api/haccp-v2/ricette-web/normalizza-esistenti` - Normalizza tutte le ricette
-- `POST /api/haccp-v2/ricette-web/migliora` - Migliora ricetta con AI
-- `GET /api/haccp-v2/ricette-web/suggerimenti` - Suggerimenti per categoria
-- `GET /api/haccp-v2/ricette-web/statistiche-normalizzazione` - Stats normalizzazione
-
-**Tecnologie:**
-- Claude Sonnet 4.5 via Emergent LLM Key
-- emergentintegrations library
+### 5. Gestione Email
+- **Sync Aruba** - Download notifiche fatture
+- **Parsing HTML** - Estrazione dati (fornitore, importo, data, numero)
+- **Operazioni da Confermare** - Workflow approvazione
 
 ---
 
-## ROADMAP
+## Funzionalità Chiave Implementate
 
-### P0 - Completato ✅
-- [x] Ricerca web ricette con normalizzazione 1kg
-- [x] Importazione massiva ricette (63 nuove)
+### Ricerca Web Ricette con AI
+- Ricerca ricette online con Claude Sonnet 4.5
+- Categorie: dolci, rosticceria napoletana, rosticceria siciliana, contorni, basi
+- **Normalizzazione automatica a 1kg** dell'ingrediente base
+- Formula: `fattore = 1000 / grammi_ingrediente_base`
+- Tutti gli ingredienti moltiplicati per lo stesso fattore
 
-### P1 - Media Priorità
-- [ ] Refactoring responsive dell'applicazione
-- [ ] Responsive: Dashboard principale
-- [ ] Responsive: ArchivioBonifici.jsx
-- [ ] Responsive: Pagine HACCP
+### Riconciliazione Automatica Migliorata
+Sistema a punteggio (score) con 3 criteri:
+1. **Importo esatto** (±0.05€) → +10 punti
+2. **Nome fornitore** nella descrizione → +5 punti
+3. **Numero fattura** nella descrizione → +5 punti
 
-### P2 - Bassa Priorità
-- [ ] Miglioramenti UX generali
-- [ ] Ottimizzazione performance
-- [ ] Test automatizzati
+Logica:
+- Score ≥ 15 → Riconciliazione automatica sicura
+- Score 10-14 → Riconcilia se unica fattura
+- Score = 10 → Da confermare manualmente
+
+### Associazione Bonifici ↔ Salari
+- Dropdown suggerimenti in Archivio Bonifici
+- Match per importo e periodo
+- Collegamento a prima_nota_salari
 
 ---
 
-## Architettura Tecnica
+## Schema Database (MongoDB)
 
-### Backend
-- FastAPI (Python)
-- MongoDB
-- emergentintegrations per AI
+### Collezioni Principali
+```
+invoices                    # Fatture ricevute (XML)
+suppliers                   # Anagrafica fornitori
+cash_movements              # Prima nota cassa
+bank_movements              # Prima nota banca
+prima_nota_salari           # Movimenti salari
+estratto_conto_movimenti    # Estratto conto importato
+operazioni_da_confermare    # Workflow approvazione
+archivio_bonifici           # Bonifici emessi
+ricette                     # Ricettario (158 ricette)
+lotti_materie_prime         # Tracciabilità ingredienti
+settings_assets             # Logo e asset aziendali
+```
 
-### Frontend
-- React
-- Stili JavaScript inline (no CSS esterno)
-- Hook useResponsive per design adattivo
+### Schema Ricette
+```javascript
+{
+  id: String,
+  nome: String,
+  categoria: String,  // "dolci", "rosticceria_napoletana", etc.
+  ingredienti: [{
+    nome: String,
+    quantita: Number,
+    unita: String
+  }],
+  ingrediente_base: String,  // "farina", "mandorle", etc.
+  normalizzata_1kg: Boolean,
+  fattore_normalizzazione: Number,
+  procedimento: String,
+  fonte: String,  // "AI Generated - Claude Sonnet 4.5"
+  created_at: DateTime
+}
+```
 
-### Database Collections
-- `ricette` - Ricettario con 158 ricette normalizzate
-- `lotti_materie_prime` - Tracciabilità ingredienti
-- `fatture_ricevute` - Fatture XML importate
-- `prima_nota_salari` - Operazioni salari
-- `archivio_bonifici` - Bonifici bancari
+---
+
+## API Endpoints Principali
+
+### HACCP - Ricette Web Search
+```
+POST /api/haccp-v2/ricette-web/cerca
+POST /api/haccp-v2/ricette-web/importa
+POST /api/haccp-v2/ricette-web/normalizza-esistenti
+POST /api/haccp-v2/ricette-web/migliora
+GET  /api/haccp-v2/ricette-web/suggerimenti
+GET  /api/haccp-v2/ricette-web/statistiche-normalizzazione
+```
+
+### Riconciliazione
+```
+POST /api/riconciliazione-auto/riconcilia-estratto-conto
+GET  /api/riconciliazione-auto/stats-riconciliazione
+GET  /api/riconciliazione-auto/operazioni-dubbi
+POST /api/riconciliazione-auto/conferma-operazione/{id}
+```
+
+### Operazioni da Confermare
+```
+GET  /api/operazioni-da-confermare/lista
+POST /api/operazioni-da-confermare/sync-email
+POST /api/operazioni-da-confermare/{id}/conferma
+```
+
+### Settings
+```
+GET  /api/settings/logo
+POST /api/settings/logo
+```
+
+---
+
+## Architettura File
+
+```
+/app
+├── app/
+│   ├── main.py                          # Entry point FastAPI
+│   ├── database.py                      # Connessione MongoDB
+│   ├── routers/
+│   │   ├── accounting/
+│   │   │   └── riconciliazione_automatica.py  # Match triplo
+│   │   ├── haccp_v2/
+│   │   │   ├── ricette_web_search.py    # AI search + normalizzazione
+│   │   │   ├── ricettario_dinamico.py   # Gestione ricette
+│   │   │   ├── libro_allergeni.py       # PDF allergeni
+│   │   │   └── ...
+│   │   ├── operazioni_da_confermare.py  # Workflow email
+│   │   ├── settings.py                  # Logo e config
+│   │   └── ...
+│   └── services/
+│       ├── aruba_invoice_parser.py      # Parsing email Aruba
+│       └── ...
+├── frontend/
+│   └── src/
+│       ├── App.jsx                      # Layout principale
+│       ├── pages/
+│       │   ├── RicettarioDinamico.jsx   # UI ricettario + search AI
+│       │   ├── OperazioniDaConfermare.jsx
+│       │   ├── Dashboard.jsx
+│       │   └── ...
+│       ├── hooks/
+│       │   └── useResponsive.js         # Hook responsive
+│       └── public/
+│           └── logo-ceraldi.png         # Logo bianco
+└── memory/
+    ├── PRD.md                           # Questo file
+    ├── CHANGELOG.md                     # Storico modifiche
+    └── ROADMAP.md                       # Task futuri
+```
+
+---
+
+## Integrazioni Esterne
+
+| Servizio | Uso | Chiave |
+|----------|-----|--------|
+| Claude Sonnet 4.5 | Ricerca ricette AI | EMERGENT_LLM_KEY |
+| MongoDB | Database | MONGO_URL |
+| Aruba Email | Notifiche fatture | EMAIL_ADDRESS, EMAIL_PASSWORD |
+
+---
+
+## Vincoli Tecnici
+
+1. **Stili inline obbligatori** - No CSS esterno, solo `style={{...}}`
+2. **MongoDB ObjectId** - Sempre escludere `_id` nelle risposte
+3. **Normalizzazione 1kg** - Tutte le ricette devono avere ingrediente base = 1000g
+4. **Match riconciliazione** - Triplo criterio (importo + fornitore + numero fattura)
