@@ -266,7 +266,7 @@ export default function LibroAllergeni() {
           <p style={{ margin: 0, fontSize: 12, color: '#6b7280', textTransform: 'uppercase' }}>Con Allergeni</p>
           <p style={{ margin: '8px 0 0 0', fontSize: 28, fontWeight: 'bold', color: '#dc2626' }}>{ingredientiConAllergeni}</p>
         </div>
-        <div style={{ ...styles.card, borderLeft: '4px solid '#16a34a' }}>
+        <div style={{ ...styles.card, borderLeft: '4px solid #16a34a' }}>
           <p style={{ margin: 0, fontSize: 12, color: '#6b7280', textTransform: 'uppercase' }}>Allergeni Rilevati</p>
           <p style={{ margin: '8px 0 0 0', fontSize: 28, fontWeight: 'bold', color: '#16a34a' }}>{Object.keys(stats).length}</p>
         </div>
