@@ -61,7 +61,7 @@ export default function Finanziaria() {
                 Cassa: {formatEuro(summary?.cassa?.entrate)} | Banca: {formatEuro(summary?.banca?.entrate)}
               </div>
             </div>
-            <div className="card" style={{ background: "#ffebee" }}>
+            <div style={{ background: "#ffebee", borderRadius: 12, padding: 20, marginBottom: 20, boxShadow: "0 2px 8px rgba(0,0,0,0.08)", border: "1px solid #e5e7eb" }}>
               <div style={{ fontSize: 13, color: "#64748b" }}>💸 Uscite Totali (Cassa + Banca)</div>
               <div style={{ fontSize: 32, fontWeight: "bold" }} style={{ color: "#c62828" }}>
                 {formatEuro(summary?.total_expenses)}
