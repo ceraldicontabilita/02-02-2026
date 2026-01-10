@@ -506,7 +506,7 @@ export default function Fatture() {
         <div style={{ background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', border: '1px solid #e5e7eb' }}>
           <h2 style={{ margin: '0 0 16px 0', fontSize: 18, fontWeight: 'bold', color: '#1e3a5f' }}>Nuova Fattura Manuale</h2>
           <form onSubmit={handleCreateInvoice}>
-            <div className="row" style={{ marginBottom: 10 }}>
+            <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
               <input
                 placeholder="Numero Fattura"
                 value={newInvoice.numero}
