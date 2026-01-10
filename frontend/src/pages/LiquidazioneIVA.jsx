@@ -186,16 +186,16 @@ export default function LiquidazioneIVA() {
 
       {/* Risultato Liquidazione */}
       {result && (
-        <div className="stats-grid" style={{ marginBottom: 20 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16, marginBottom: 20 }}>
           {/* Card IVA Debito */}
-          <div className="stat-card red">
+          <div style={{ background: 'linear-gradient(135deg, rgba(220, 38, 38, 0.08), rgba(220, 38, 38, 0.04))', border: '1px solid rgba(220, 38, 38, 0.2)', borderRadius: 12, padding: 20 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
                 <p style={{ fontSize: 13, color: '#64748b', marginBottom: 4 }}>IVA a Debito</p>
-                <p className="stat-value red" data-testid="iva-debito">
+                <p style={{ fontSize: 28, fontWeight: 'bold', color: '#dc2626', margin: '0 0 4px 0' }} data-testid="iva-debito">
                   {formatEuro(result.iva_debito)}
                 </p>
-                <p className="stat-label">
+                <p style={{ fontSize: 13, color: '#6b7280' }}>
                   {result.statistiche?.corrispettivi_count || 0} corrispettivi
                 </p>
               </div>
@@ -204,14 +204,14 @@ export default function LiquidazioneIVA() {
           </div>
 
           {/* Card IVA Credito */}
-          <div className="stat-card green">
+          <div style={{ background: 'linear-gradient(135deg, rgba(22, 163, 74, 0.08), rgba(22, 163, 74, 0.04))', border: '1px solid rgba(22, 163, 74, 0.2)', borderRadius: 12, padding: 20 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
                 <p style={{ fontSize: 13, color: '#64748b', marginBottom: 4 }}>IVA a Credito</p>
-                <p className="stat-value green" data-testid="iva-credito">
+                <p style={{ fontSize: 28, fontWeight: 'bold', color: '#16a34a', margin: '0 0 4px 0' }} data-testid="iva-credito">
                   {formatEuro(result.iva_credito)}
                 </p>
-                <p className="stat-label">
+                <p style={{ fontSize: 13, color: '#6b7280' }}>
                   {result.statistiche?.fatture_incluse || 0} fatture 
                   {result.statistiche?.note_credito > 0 && ` (${result.statistiche.note_credito} NC)`}
                 </p>
@@ -221,7 +221,9 @@ export default function LiquidazioneIVA() {
           </div>
 
           {/* Card Saldo */}
-          <div className="stat-card" style={{
+          <div style={{
+            borderRadius: 12,
+            padding: 20,
             background: result.iva_da_versare > 0 
               ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(245, 158, 11, 0.04))'
               : 'linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(59, 130, 246, 0.04))',
@@ -234,10 +236,10 @@ export default function LiquidazioneIVA() {
                 <p style={{ fontSize: 13, color: '#64748b', marginBottom: 4 }}>
                   {result.iva_da_versare > 0 ? 'IVA da Versare' : 'Credito da Riportare'}
                 </p>
-                <p className="stat-value" style={{ color: result.iva_da_versare > 0 ? '#f59e0b' : '#3b82f6' }} data-testid="saldo-iva">
+                <p style={{ fontSize: 28, fontWeight: 'bold', color: result.iva_da_versare > 0 ? '#f59e0b' : '#3b82f6', margin: '0 0 4px 0' }} data-testid="saldo-iva">
                   {formatEuro(result.iva_da_versare > 0 ? result.iva_da_versare : result.credito_da_riportare)}
                 </p>
-                <p className="stat-label">{result.stato}</p>
+                <p style={{ fontSize: 13, color: '#6b7280' }}>{result.stato}</p>
               </div>
               <FileText size={32} style={{ color: result.iva_da_versare > 0 ? '#fcd34d' : '#93c5fd' }} />
             </div>
@@ -247,36 +249,35 @@ export default function LiquidazioneIVA() {
 
       {/* Dettaglio per Aliquota */}
       {result && (
-        <div className="card" style={{ marginBottom: 20 }}>
+        <div style={{ background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', border: '1px solid #e5e7eb', marginBottom: 20 }}>
           <div 
-            className="card-header" 
-            style={{ cursor: 'pointer' }}
+            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', marginBottom: showDettaglio ? 16 : 0 }}
             onClick={() => setShowDettaglio(!showDettaglio)}
           >
-            <h3 className="card-title">📋 Dettaglio per Aliquota IVA</h3>
+            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 'bold', color: '#1e3a5f' }}>📋 Dettaglio per Aliquota IVA</h3>
             {showDettaglio ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
           </div>
           {showDettaglio && (
-            <div className="card-content">
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+            <div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24 }}>
                 {/* IVA Debito per Aliquota */}
                 <div>
-                  <h4 style={{ color: '#dc2626', marginBottom: 12 }}>📈 IVA a Debito (Corrispettivi)</h4>
+                  <h4 style={{ color: '#dc2626', marginBottom: 12, fontSize: 15 }}>📈 IVA a Debito (Corrispettivi)</h4>
                   {Object.keys(result.sales_detail || {}).length > 0 ? (
-                    <table className="data-table">
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
                       <thead>
-                        <tr style={{ background: '#fef2f2' }}>
-                          <th>Aliquota</th>
-                          <th style={{ textAlign: 'right' }}>Imponibile</th>
-                          <th style={{ textAlign: 'right' }}>IVA</th>
+                        <tr style={{ background: '#fef2f2', borderBottom: '2px solid #fecaca' }}>
+                          <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: '600' }}>Aliquota</th>
+                          <th style={{ padding: '10px 12px', textAlign: 'right', fontWeight: '600' }}>Imponibile</th>
+                          <th style={{ padding: '10px 12px', textAlign: 'right', fontWeight: '600' }}>IVA</th>
                         </tr>
                       </thead>
                       <tbody>
                         {Object.entries(result.sales_detail).map(([aliq, val]) => (
-                          <tr key={aliq}>
-                            <td>{aliq}%</td>
-                            <td style={{ textAlign: 'right' }}>{formatEuro(val.imponibile)}</td>
-                            <td style={{ textAlign: 'right' }}>{formatEuro(val.iva)}</td>
+                          <tr key={aliq} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                            <td style={{ padding: '10px 12px' }}>{aliq}%</td>
+                            <td style={{ padding: '10px 12px', textAlign: 'right' }}>{formatEuro(val.imponibile)}</td>
+                            <td style={{ padding: '10px 12px', textAlign: 'right' }}>{formatEuro(val.iva)}</td>
                           </tr>
                         ))}
                       </tbody>
