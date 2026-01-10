@@ -700,9 +700,9 @@ async def correggi_metodi_pagamento() -> Dict[str, Any]:
             {"$set": update_set, "$unset": update_unset}
         )
         
-        if "Bonifico" in metodo_attuale:
-            results["bonifico_errati"] += 1
-        elif "Assegno" in metodo_attuale:
+        if metodo_attuale.lower() in ["bonifico", "banca", "sepa"]:
+            results["bancario_errati"] += 1
+        elif "assegno" in metodo_attuale.lower():
             results["assegno_errati"] += 1
         
         results["totale_corrette"] += 1
