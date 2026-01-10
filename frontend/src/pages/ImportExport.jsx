@@ -550,9 +550,11 @@ export default function ImportExport() {
       id: "corrispettivi", 
       label: "Corrispettivi", 
       icon: "🧾", 
-      extension: ".xlsx",
+      extension: ".xlsx,.xml",
+      accept: ".xlsx,.xls,.xml",
       endpoint: "/api/prima-nota-auto/import-corrispettivi",
-      desc: "XLSX singoli/multipli, ZIP, ZIP annidati. Duplicati ignorati automaticamente",
+      endpointXml: "/api/prima-nota-auto/import-corrispettivi-xml",
+      desc: "XLSX (CSV) o XML singoli/multipli, ZIP. LORDO = imponibile + imposta. Duplicati ignorati",
       templateUrl: "/api/import-templates/corrispettivi"
     },
     { 
