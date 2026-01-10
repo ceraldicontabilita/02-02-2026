@@ -140,6 +140,8 @@ const HACCPSanificazioniV2 = lazy(() => import("./pages/HACCPSanificazioniV2.jsx
 const HACCPManualeV2 = lazy(() => import("./pages/HACCPManualeV2.jsx"));
 const HACCPNonConformita = lazy(() => import("./pages/HACCPNonConformita.jsx"));
 const RicettarioDinamico = lazy(() => import("./pages/RicettarioDinamico.jsx"));
+const HACCPSanificazione = lazy(() => import("./pages/HACCPSanificazione.jsx"));
+const HACCPTemperature = lazy(() => import("./pages/HACCPTemperature.jsx"));
 
 // F24 & Tributi
 const F24 = lazy(() => import("./pages/F24.jsx"));
