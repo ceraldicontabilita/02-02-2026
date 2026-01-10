@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../api';
 import EtichettaLotto from '../components/EtichettaLotto';
+import { useAnnoGlobale } from '../contexts/AnnoContext';
 
 const MESI = [
   { value: '', label: 'Tutti i mesi' },
