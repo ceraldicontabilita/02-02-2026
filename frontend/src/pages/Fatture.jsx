@@ -552,7 +552,8 @@ export default function Fatture() {
         <div style={{ background: "#f0f9ff", padding: 20, borderRadius: 12, border: "2px solid #1565c0" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
             <h2 style={{ margin: 0, fontSize: 18, fontWeight: 'bold', color: '#1e3a5f' }}>
-            <span>📄 Dettaglio Fattura {selectedInvoice.invoice_number}</span>
+              📄 Dettaglio Fattura {selectedInvoice.invoice_number}
+            </h2>
             <button onClick={() => setSelectedInvoice(null)} style={{ background: "#eee", border: "none", fontSize: 18, cursor: "pointer", padding: "5px 10px", borderRadius: 4 }}>✕</button>
           </div>
           
