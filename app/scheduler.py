@@ -186,8 +186,59 @@ async def auto_populate_haccp_daily():
         
         logger.info(f"✅ [SCHEDULER] Sanificazioni: creati {sanificazioni_created} record")
         
+        # ============== DISINFESTAZIONE ==============
+        disinfestazioni_created = 0
+        
+        # Verifica se esiste già un record per oggi
+        existing_disinf = await db["haccp_disinfestazioni"].find_one({"data": oggi})
+        
+        if not existing_disinf:
+            record = {
+                "id": f"auto_dis_{oggi}",
+                "data": oggi,
+                "ora": ora,
+                "tipo_intervento": "Controllo periodico",
+                "ditta": "ANTHIRAT CONTROL S.R.L.",
+                "operatore": random.choice(OPERATORI_HACCP),
+                "aree_trattate": ["Cucina", "Magazzino", "Esterno"],
+                "esito": "Nessuna infestazione rilevata",
+                "note": "Auto-generato",
+                "source": "scheduler_auto",
+                "created_at": now_iso
+            }
+            await db["haccp_disinfestazioni"].insert_one(record)
+            disinfestazioni_created = 1
+        
+        logger.info(f"✅ [SCHEDULER] Disinfestazioni: creati {disinfestazioni_created} record")
+        
+        # ============== RICEZIONE MERCI ==============
+        ricezioni_created = 0
+        
+        # Crea un record di ricezione merci di esempio per oggi
+        existing_ric = await db["haccp_ricezione_merci"].find_one({"data": oggi})
+        
+        if not existing_ric:
+            record = {
+                "id": f"auto_ric_{oggi}",
+                "data": oggi,
+                "ora": ora,
+                "fornitore": "Fornitore abituale",
+                "prodotti": ["Merce generica"],
+                "temperatura_arrivo": round(random.uniform(2, 4), 1),
+                "conforme": True,
+                "operatore": random.choice(OPERATORI_HACCP),
+                "note": "Auto-generato - compilare manualmente i dettagli",
+                "source": "scheduler_auto",
+                "created_at": now_iso
+            }
+            await db["haccp_ricezione_merci"].insert_one(record)
+            ricezioni_created = 1
+        
+        logger.info(f"✅ [SCHEDULER] Ricezione Merci: creati {ricezioni_created} record")
+        
         logger.info(f"🎉 [SCHEDULER] Auto-popolazione HACCP completata: "
-                   f"Frigo={frigoriferi_created}, Congel={congelatori_created}, Sanif={sanificazioni_created}")
+                   f"Frigo={frigoriferi_created}, Congel={congelatori_created}, Sanif={sanificazioni_created}, "
+                   f"Disinf={disinfestazioni_created}, Ricez={ricezioni_created}")
         
     except Exception as e:
         logger.error(f"❌ [SCHEDULER] Errore auto-popolazione HACCP: {e}")
@@ -386,16 +437,18 @@ def start_scheduler():
     # Task alle 01:00 AM ogni giorno (ora server UTC)
     # Se il server è in UTC, 01:00 UTC = 02:00 CET (Italia)
     # Quindi mettiamo 00:00 UTC per avere 01:00 CET
+    # Task alle 00:01 CET (23:01 UTC del giorno precedente)
+    # Per sicurezza mettiamo 00:01 UTC che corrisponde a 01:01 CET
     scheduler.add_job(
         daily_haccp_routine,
-        CronTrigger(hour=0, minute=0),  # 00:00 UTC = 01:00 CET
+        CronTrigger(hour=0, minute=1),  # 00:01 UTC = 01:01 CET
         id="haccp_daily_routine",
         name="Routine HACCP giornaliera (auto-pop + notifiche)",
         replace_existing=True
     )
     
     scheduler.start()
-    logger.info("✅ [SCHEDULER] Scheduler HACCP avviato - Task: 01:00 AM (CET)")
+    logger.info("✅ [SCHEDULER] Scheduler HACCP avviato - Task: 00:01 (UTC) / 01:01 (CET)")
 
 
 def stop_scheduler():
