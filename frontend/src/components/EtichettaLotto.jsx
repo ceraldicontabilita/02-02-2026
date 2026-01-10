@@ -294,6 +294,11 @@ export function Etichetta({ dati, baseUrl = '' }) {
     return dateStr;
   };
 
+  // Formatta allergeni per visualizzazione
+  const allergeniText = dati.allergeni?.length > 0 
+    ? dati.allergeni.map(a => a.toUpperCase()).join(', ')
+    : null;
+
   return (
     <div style={styles.etichetta} className="etichetta-print-area">
       {/* Header */}
@@ -326,6 +331,14 @@ export function Etichetta({ dati, baseUrl = '' }) {
             <p style={styles.scadenzaLabel}>SCADENZA</p>
             <p style={styles.scadenzaValue}>{formatDate(dati.data_scadenza)}</p>
           </div>
+          
+          {/* Box Allergeni - EVIDENZIATO */}
+          {allergeniText && (
+            <div style={styles.allergeniBox}>
+              <p style={styles.allergeniLabel}>⚠️ CONTIENE:</p>
+              <p style={styles.allergeniList}>{allergeniText}</p>
+            </div>
+          )}
         </div>
         
         {/* Colonna QR */}
