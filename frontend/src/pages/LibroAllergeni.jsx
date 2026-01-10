@@ -511,72 +511,69 @@ export default function LibroAllergeni() {
 
       {/* Modale Aggiungi Voce */}
       {showModal && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
-        }} onClick={() => setShowModal(false)}>
-          <div style={{ background: 'white', borderRadius: 16, padding: 24, maxWidth: 500, width: '90%', maxHeight: '90vh', overflow: 'auto' }} onClick={e => e.stopPropagation()}>
-            <h2 style={{ margin: '0 0 20px 0', fontSize: 20 }}>➕ Aggiungi Ingrediente</h2>
+        <div style={s.modalOverlay} onClick={() => setShowModal(false)}>
+          <div style={s.modalContent} onClick={e => e.stopPropagation()}>
+            <h2 style={{ margin: '0 0 20px 0', fontSize: isMobile ? 18 : 20 }}>➕ Aggiungi Ingrediente</h2>
             
             <form onSubmit={handleAddVoce}>
               <div style={{ marginBottom: 16 }}>
-                <label style={{ display: 'block', marginBottom: 6, fontWeight: 500, fontSize: 14 }}>
+                <label style={{ display: 'block', marginBottom: 6, fontWeight: 500, fontSize: isMobile ? 12 : 14 }}>
                   Nome Ingrediente *
                 </label>
                 <input
                   type="text"
                   value={form.ingrediente}
                   onChange={(e) => setForm({ ...form, ingrediente: e.target.value })}
-                  style={styles.input}
+                  style={s.input}
                   placeholder="Es: Farina di grano"
                   required
                 />
               </div>
 
               <div style={{ marginBottom: 16 }}>
-                <label style={{ display: 'block', marginBottom: 6, fontWeight: 500, fontSize: 14 }}>
+                <label style={{ display: 'block', marginBottom: 6, fontWeight: 500, fontSize: isMobile ? 12 : 14 }}>
                   Allergeni Contenuti
                 </label>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: isMobile ? 4 : 8 }}>
                   {Object.entries(allergeniUE).map(([codice, info]) => (
                     <button
                       key={codice}
                       type="button"
                       onClick={() => toggleAllergene(codice)}
                       style={{
-                        padding: '6px 12px',
+                        padding: isMobile ? '4px 8px' : '6px 12px',
                         borderRadius: 20,
                         border: 'none',
                         cursor: 'pointer',
-                        fontSize: 12,
+                        fontSize: isMobile ? 10 : 12,
                         fontWeight: 500,
                         background: form.allergeni.includes(codice) ? '#fef3c7' : '#f3f4f6',
                         color: form.allergeni.includes(codice) ? '#92400e' : '#6b7280'
                       }}
                     >
-                      {info.icona} {info.nome}
+                      {info.icona} {!isMobile && info.nome}
                     </button>
                   ))}
                 </div>
               </div>
 
               <div style={{ marginBottom: 20 }}>
-                <label style={{ display: 'block', marginBottom: 6, fontWeight: 500, fontSize: 14 }}>
+                <label style={{ display: 'block', marginBottom: 6, fontWeight: 500, fontSize: isMobile ? 12 : 14 }}>
                   Note
                 </label>
                 <textarea
                   value={form.note}
                   onChange={(e) => setForm({ ...form, note: e.target.value })}
-                  style={{ ...styles.input, minHeight: 60, resize: 'vertical' }}
+                  style={{ ...s.input, minHeight: 60, resize: 'vertical' }}
                   placeholder="Note aggiuntive..."
                 />
               </div>
 
-              <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
-                <button type="button" onClick={() => setShowModal(false)} style={styles.btnSecondary}>
+              <div style={{ display: 'flex', gap: isMobile ? 8 : 12, justifyContent: 'flex-end' }}>
+                <button type="button" onClick={() => setShowModal(false)} style={s.btnSecondary}>
                   Annulla
                 </button>
-                <button type="submit" style={styles.btnSuccess}>
+                <button type="submit" style={s.btnSuccess}>
                   ✓ Aggiungi
                 </button>
               </div>
