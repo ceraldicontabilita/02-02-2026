@@ -413,7 +413,7 @@ export default function Documenti() {
               >
                 {downloading ? (
                   <>
-                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    <RefreshCw style={{ height: 16, width: 16, marginRight: 8, animation: 'spin 1s linear infinite' }} />
                     Download in corso...
                   </>
                 ) : (
