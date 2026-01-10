@@ -54,19 +54,19 @@ export default function Finanziaria() {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16 }}>
             <div style={{ background: "#e8f5e9", borderRadius: 12, padding: 20, marginBottom: 20, boxShadow: "0 2px 8px rgba(0,0,0,0.08)", border: "1px solid #e5e7eb" }}>
               <div style={{ fontSize: 13, color: "#64748b" }}>💰 Entrate Totali</div>
-              <div style={{ fontSize: 32, fontWeight: "bold" }} style={{ color: "#2e7d32" }}>
+              <div style={{ fontSize: 32, fontWeight: "bold", color: "#2e7d32" }}>
                 {formatEuro(summary?.total_income)}
               </div>
-              <div style={{ fontSize: 13, color: "#64748b",{{ marginTop: 5 }}>
+              <div style={{ fontSize: 13, color: "#64748b", marginTop: 5 }}>
                 Cassa: {formatEuro(summary?.cassa?.entrate)} | Banca: {formatEuro(summary?.banca?.entrate)}
               </div>
             </div>
             <div style={{ background: "#ffebee", borderRadius: 12, padding: 20, marginBottom: 20, boxShadow: "0 2px 8px rgba(0,0,0,0.08)", border: "1px solid #e5e7eb" }}>
               <div style={{ fontSize: 13, color: "#64748b" }}>💸 Uscite Totali (Cassa + Banca)</div>
-              <div style={{ fontSize: 32, fontWeight: "bold" }} style={{ color: "#c62828" }}>
+              <div style={{ fontSize: 32, fontWeight: "bold", color: "#c62828" }}>
                 {formatEuro(summary?.total_expenses)}
               </div>
-              <div style={{ fontSize: 13, color: "#64748b",{{ marginTop: 5, lineHeight: 1.5 }}>
+              <div style={{ fontSize: 13, color: "#64748b", marginTop: 5, lineHeight: 1.5 }}>
                 <div>🏪 Cassa: <strong>{formatEuro(summary?.cassa?.uscite)}</strong></div>
                 <div>🏦 Banca: {formatEuro(summary?.banca?.uscite)} <span style={{fontSize: 10, color: '#666'}}>(incl. salari e F24)</span></div>
               </div>
