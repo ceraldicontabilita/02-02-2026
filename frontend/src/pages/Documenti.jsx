@@ -717,8 +717,8 @@ export default function Documenti() {
       {/* Lista Documenti */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
+          <CardTitle style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <FileText style={{ height: 20, width: 20 }} />
             Documenti ({documents.length})
           </CardTitle>
         </CardHeader>
