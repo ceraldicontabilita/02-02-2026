@@ -93,6 +93,7 @@ const Dashboard = lazy(() => import("./pages/Dashboard.jsx"));
 
 // Fatture & Contabilità
 const Fatture = lazy(() => import("./pages/Fatture.jsx"));
+const ArchivioFattureRicevute = lazy(() => import("./pages/ArchivioFattureRicevute.jsx"));
 const Corrispettivi = lazy(() => import("./pages/Corrispettivi.jsx"));
 const PrimaNota = lazy(() => import("./pages/PrimaNota.jsx"));
 const PrimaNotaCassa = lazy(() => import("./pages/PrimaNotaCassa.jsx"));
