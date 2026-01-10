@@ -629,6 +629,94 @@ async def esegui_riconciliazione(db, scadenza_id: str, transazione_id: str) -> D
     return {"success": True, "riconciliazione_id": riconciliazione["id"]}
 
 
+async def aggiorna_ricettario_da_fattura(db, fattura_id: str) -> Dict[str, Any]:
+    """
+    MODULO RICETTARIO DINAMICO
+    Aggiorna automaticamente le ricette che contengono prodotti presenti nella fattura.
+    
+    Logica:
+    1. Trova tutti i lotti creati da questa fattura
+    2. Per ogni prodotto nel lotto, cerca ricette con ingrediente corrispondente
+    3. Aggiorna ingrediente con: costo, lotto, fornitore, scadenza dalla fattura
+    """
+    # Trova lotti della fattura
+    lotti = await db[COL_LOTTI].find(
+        {"fattura_id": fattura_id},
+        {"_id": 0}
+    ).to_list(500)
+    
+    if not lotti:
+        return {"ricette_aggiornate": 0, "message": "Nessun lotto trovato per questa fattura"}
+    
+    # Recupera info fattura
+    fattura = await db[COL_FATTURE].find_one(
+        {"id": fattura_id},
+        {"_id": 0, "id": 1, "numero_documento": 1, "data_documento": 1, 
+         "fornitore_denominazione": 1, "fornitore_piva": 1}
+    )
+    
+    ricette_aggiornate = 0
+    prodotti_processati = []
+    
+    for lotto in lotti:
+        prodotto_nome = lotto.get("prodotto_nome", lotto.get("descrizione", ""))
+        if not prodotto_nome:
+            continue
+        
+        # Cerca ricette che contengono questo prodotto come ingrediente
+        ricette = await db["ricette"].find(
+            {"ingredienti.nome": {"$regex": prodotto_nome, "$options": "i"}},
+            {"_id": 0}
+        ).to_list(100)
+        
+        for ricetta in ricette:
+            ingredienti_aggiornati = []
+            modificata = False
+            
+            for ing in ricetta.get("ingredienti", []):
+                nome_ing = ing.get("nome", "").lower()
+                prodotto_lower = prodotto_nome.lower()
+                
+                # Match parziale o completo
+                if prodotto_lower in nome_ing or nome_ing in prodotto_lower:
+                    # Aggiorna ingrediente con dati dalla fattura
+                    ing_nuovo = {
+                        **ing,
+                        "fattura_id": fattura.get("id") if fattura else fattura_id,
+                        "fattura_numero": fattura.get("numero_documento") if fattura else None,
+                        "fattura_data": fattura.get("data_documento") if fattura else None,
+                        "fornitore": fattura.get("fornitore_denominazione") if fattura else None,
+                        "fornitore_piva": fattura.get("fornitore_piva") if fattura else None,
+                        "lotto_fornitore": lotto.get("lotto_fornitore", lotto.get("lotto_originale_fornitore")),
+                        "lotto_interno": lotto.get("lotto_interno", lotto.get("id_lotto_interno")),
+                        "scadenza": lotto.get("scadenza", lotto.get("data_scadenza")),
+                        "costo_unitario": lotto.get("prezzo_unitario", 0),
+                        "data_aggiornamento": datetime.now(timezone.utc).isoformat()
+                    }
+                    ingredienti_aggiornati.append(ing_nuovo)
+                    modificata = True
+                else:
+                    ingredienti_aggiornati.append(ing)
+            
+            if modificata:
+                await db["ricette"].update_one(
+                    {"id": ricetta["id"]},
+                    {"$set": {
+                        "ingredienti": ingredienti_aggiornati,
+                        "updated_at": datetime.now(timezone.utc).isoformat()
+                    }}
+                )
+                ricette_aggiornate += 1
+        
+        prodotti_processati.append(prodotto_nome)
+    
+    return {
+        "ricette_aggiornate": ricette_aggiornate,
+        "prodotti_processati": prodotti_processati[:10],  # Limita output
+        "totale_prodotti": len(prodotti_processati)
+    }
+
+
 # ==================== ENDPOINT PRINCIPALE: IMPORT INTEGRATO ====================
 
 @router.post("/import-integrato")
