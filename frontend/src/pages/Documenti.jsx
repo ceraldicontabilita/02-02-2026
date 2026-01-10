@@ -725,7 +725,7 @@ export default function Documenti() {
         <CardContent>
           {loading ? (
             <div style={{ textAlign: 'center', padding: 40, color: '#64748b' }}>
-              <RefreshCw className="animate-spin" style={{ margin: '0 auto 16px' }} size={32} />
+              <RefreshCw style={{ margin: '0 auto 16px', animation: 'spin 1s linear infinite' }} size={32} />
               Caricamento...
             </div>
           ) : documents.length === 0 ? (
