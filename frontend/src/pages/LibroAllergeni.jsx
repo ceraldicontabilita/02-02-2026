@@ -196,57 +196,227 @@ export default function LibroAllergeni() {
 
   const ingredientiConAllergeni = libro.filter(v => v.allergeni.length > 0).length;
 
+  const { isMobile, isTablet, device } = useResponsive();
+
+  // Stili responsive
+  const s = {
+    page: { 
+      padding: isMobile ? 12 : isTablet ? 16 : 24, 
+      maxWidth: 1200, 
+      margin: '0 auto', 
+      background: '#f8fafc', 
+      minHeight: '100vh' 
+    },
+    header: { 
+      padding: isMobile ? '16px 12px' : '20px 24px', 
+      background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', 
+      borderRadius: 12, 
+      color: 'white',
+      marginBottom: isMobile ? 16 : 24
+    },
+    headerContent: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: isMobile ? 'flex-start' : 'center',
+      flexDirection: isMobile ? 'column' : 'row',
+      gap: isMobile ? 12 : 16
+    },
+    title: { 
+      margin: 0, 
+      fontSize: isMobile ? 18 : isTablet ? 20 : 24, 
+      fontWeight: 'bold', 
+      display: 'flex', 
+      alignItems: 'center', 
+      gap: 8 
+    },
+    subtitle: { 
+      margin: '8px 0 0 0', 
+      opacity: 0.9, 
+      fontSize: isMobile ? 12 : 14 
+    },
+    headerButtons: { 
+      display: 'flex', 
+      gap: isMobile ? 8 : 12,
+      flexWrap: 'wrap'
+    },
+    btnPrimary: { 
+      padding: isMobile ? '8px 12px' : '10px 20px', 
+      background: 'white', 
+      color: '#f59e0b', 
+      border: 'none', 
+      borderRadius: 8, 
+      cursor: 'pointer', 
+      fontWeight: 'bold', 
+      fontSize: isMobile ? 12 : 14 
+    },
+    btnSecondary: { 
+      padding: isMobile ? '8px 12px' : '10px 20px', 
+      background: '#e5e7eb', 
+      color: '#374151', 
+      border: 'none', 
+      borderRadius: 8, 
+      cursor: 'pointer', 
+      fontWeight: '600', 
+      fontSize: isMobile ? 12 : 14 
+    },
+    btnSuccess: { 
+      padding: isMobile ? '8px 12px' : '10px 20px', 
+      background: '#16a34a', 
+      color: 'white', 
+      border: 'none', 
+      borderRadius: 8, 
+      cursor: 'pointer', 
+      fontWeight: 'bold', 
+      fontSize: isMobile ? 12 : 14 
+    },
+    statsGrid: { 
+      display: 'grid', 
+      gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)', 
+      gap: isMobile ? 10 : 16, 
+      marginBottom: isMobile ? 16 : 24 
+    },
+    card: { 
+      background: 'white', 
+      borderRadius: 12, 
+      padding: isMobile ? 12 : 20, 
+      boxShadow: '0 2px 8px rgba(0,0,0,0.08)', 
+      marginBottom: isMobile ? 12 : 16 
+    },
+    statLabel: { 
+      margin: 0, 
+      fontSize: isMobile ? 10 : 12, 
+      color: '#6b7280', 
+      textTransform: 'uppercase' 
+    },
+    statValue: { 
+      margin: '8px 0 0 0', 
+      fontSize: isMobile ? 22 : 28, 
+      fontWeight: 'bold' 
+    },
+    filterRow: { 
+      display: 'flex', 
+      gap: isMobile ? 8 : 16, 
+      alignItems: 'center',
+      flexDirection: isMobile ? 'column' : 'row'
+    },
+    input: { 
+      padding: isMobile ? '8px 10px' : '10px 12px', 
+      borderRadius: 8, 
+      border: '2px solid #e5e7eb', 
+      fontSize: 14, 
+      width: '100%', 
+      boxSizing: 'border-box',
+      maxWidth: isMobile ? '100%' : 400
+    },
+    tableContainer: { 
+      overflowX: 'auto', 
+      WebkitOverflowScrolling: 'touch',
+      margin: isMobile ? '0 -12px' : 0,
+      padding: isMobile ? '0 12px' : 0
+    },
+    table: { 
+      width: '100%', 
+      borderCollapse: 'collapse', 
+      fontSize: isMobile ? 11 : isTablet ? 12 : 14,
+      minWidth: isMobile ? 500 : 'auto'
+    },
+    th: { 
+      padding: isMobile ? '8px 6px' : '12px 16px', 
+      textAlign: 'left', 
+      borderBottom: '2px solid #e5e7eb', 
+      background: '#fef3c7', 
+      fontWeight: 600 
+    },
+    td: { 
+      padding: isMobile ? '8px 6px' : '12px 16px', 
+      borderBottom: '1px solid #f3f4f6' 
+    },
+    badge: { 
+      display: 'inline-flex', 
+      alignItems: 'center', 
+      gap: 4, 
+      padding: isMobile ? '3px 6px' : '4px 10px', 
+      background: '#fef3c7', 
+      color: '#92400e', 
+      borderRadius: 20, 
+      fontSize: isMobile ? 10 : 12, 
+      fontWeight: 600,
+      marginRight: 4,
+      marginBottom: 4
+    },
+    modalOverlay: {
+      position: 'fixed', 
+      top: 0, 
+      left: 0, 
+      right: 0, 
+      bottom: 0,
+      background: 'rgba(0,0,0,0.5)', 
+      display: 'flex', 
+      alignItems: 'center', 
+      justifyContent: 'center', 
+      zIndex: 1000,
+      padding: isMobile ? 12 : 24
+    },
+    modalContent: { 
+      background: 'white', 
+      borderRadius: 16, 
+      padding: isMobile ? 16 : 24, 
+      width: isMobile ? '100%' : '90%',
+      maxWidth: 500, 
+      maxHeight: '90vh', 
+      overflow: 'auto' 
+    }
+  };
+
   return (
-    <div style={styles.page}>
+    <div style={s.page}>
       {/* Header */}
-      <div style={styles.header}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
+      <div style={s.header}>
+        <div style={s.headerContent}>
           <div>
-            <h1 style={{ margin: 0, fontSize: 24, fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 10 }}>
-              📋 Libro degli Allergeni
-            </h1>
-            <p style={{ margin: '8px 0 0 0', opacity: 0.9, fontSize: 14 }}>
-              {azienda} • Reg. UE 1169/2011
-            </p>
+            <h1 style={s.title}>📋 Libro degli Allergeni</h1>
+            <p style={s.subtitle}>{azienda} • Reg. UE 1169/2011</p>
           </div>
-          <div style={{ display: 'flex', gap: 12 }}>
-            <button onClick={() => setShowModal(true)} style={{ ...styles.btnPrimary, background: 'white', color: '#f59e0b' }}>
-              ➕ Aggiungi Voce
+          <div style={s.headerButtons}>
+            <button onClick={() => setShowModal(true)} style={s.btnPrimary}>
+              {isMobile ? '➕' : '➕ Aggiungi Voce'}
             </button>
-            <button onClick={handlePrint} style={{ ...styles.btnPrimary, background: 'white', color: '#f59e0b' }} data-testid="btn-stampa">
-              🖨️ Stampa PDF
+            <button onClick={handlePrint} style={s.btnPrimary} data-testid="btn-stampa">
+              {isMobile ? '🖨️' : '🖨️ Stampa PDF'}
             </button>
           </div>
         </div>
       </div>
 
       {/* Statistiche */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: 24 }}>
-        <div style={{ ...styles.card, borderLeft: '4px solid #f59e0b' }}>
-          <p style={{ margin: 0, fontSize: 12, color: '#6b7280', textTransform: 'uppercase' }}>Ingredienti Totali</p>
-          <p style={{ margin: '8px 0 0 0', fontSize: 28, fontWeight: 'bold', color: '#1f2937' }}>{libro.length}</p>
+      <div style={s.statsGrid}>
+        <div style={{ ...s.card, borderLeft: '4px solid #f59e0b' }}>
+          <p style={s.statLabel}>Ingredienti Totali</p>
+          <p style={{ ...s.statValue, color: '#1f2937' }}>{libro.length}</p>
         </div>
-        <div style={{ ...styles.card, borderLeft: '4px solid #dc2626' }}>
-          <p style={{ margin: 0, fontSize: 12, color: '#6b7280', textTransform: 'uppercase' }}>Con Allergeni</p>
-          <p style={{ margin: '8px 0 0 0', fontSize: 28, fontWeight: 'bold', color: '#dc2626' }}>{ingredientiConAllergeni}</p>
+        <div style={{ ...s.card, borderLeft: '4px solid #dc2626' }}>
+          <p style={s.statLabel}>Con Allergeni</p>
+          <p style={{ ...s.statValue, color: '#dc2626' }}>{ingredientiConAllergeni}</p>
         </div>
-        <div style={{ ...styles.card, borderLeft: '4px solid #16a34a' }}>
-          <p style={{ margin: 0, fontSize: 12, color: '#6b7280', textTransform: 'uppercase' }}>Allergeni Rilevati</p>
-          <p style={{ margin: '8px 0 0 0', fontSize: 28, fontWeight: 'bold', color: '#16a34a' }}>{Object.keys(stats).length}</p>
-        </div>
+        {!isMobile && (
+          <div style={{ ...s.card, borderLeft: '4px solid #16a34a' }}>
+            <p style={s.statLabel}>Allergeni Rilevati</p>
+            <p style={{ ...s.statValue, color: '#16a34a' }}>{Object.keys(stats).length}</p>
+          </div>
+        )}
       </div>
 
       {/* Ricerca */}
-      <div style={{ ...styles.card, display: 'flex', gap: 16, alignItems: 'center' }}>
+      <div style={{ ...s.card, ...s.filterRow }}>
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          style={{ ...styles.input, maxWidth: 400 }}
+          style={s.input}
           placeholder="🔍 Cerca ingrediente o allergene..."
           data-testid="search-allergeni"
         />
-        <button onClick={loadLibro} style={styles.btnSecondary}>🔄 Aggiorna</button>
+        <button onClick={loadLibro} style={s.btnSecondary}>🔄 {!isMobile && 'Aggiorna'}</button>
       </div>
 
       {/* Legenda Allergeni */}
