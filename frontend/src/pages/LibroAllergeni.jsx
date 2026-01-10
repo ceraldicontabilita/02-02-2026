@@ -420,69 +420,71 @@ export default function LibroAllergeni() {
       </div>
 
       {/* Legenda Allergeni */}
-      <div style={styles.card}>
-        <h3 style={{ margin: '0 0 12px 0', fontSize: 14, fontWeight: 600 }}>⚠️ 14 Allergeni Obbligatori UE</h3>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+      <div style={s.card}>
+        <h3 style={{ margin: '0 0 12px 0', fontSize: isMobile ? 12 : 14, fontWeight: 600 }}>⚠️ 14 Allergeni Obbligatori UE</h3>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: isMobile ? 4 : 8 }}>
           {Object.entries(allergeniUE).map(([codice, info]) => (
             <span key={codice} style={{
-              ...styles.allergeneBadge,
+              ...s.badge,
               background: stats[codice] ? '#fef3c7' : '#f3f4f6',
               color: stats[codice] ? '#92400e' : '#9ca3af'
             }}>
-              {info.icona} {info.nome} {stats[codice] ? `(${stats[codice]})` : ''}
+              {info.icona} {!isMobile && info.nome} {stats[codice] ? `(${stats[codice]})` : ''}
             </span>
           ))}
         </div>
       </div>
 
       {/* Tabella Libro */}
-      <div style={styles.card}>
-        <h3 style={{ margin: '0 0 16px 0', fontSize: 16, fontWeight: 600 }}>📖 Elenco Ingredienti e Allergeni</h3>
+      <div style={s.card}>
+        <h3 style={{ margin: '0 0 16px 0', fontSize: isMobile ? 14 : 16, fontWeight: 600 }}>📖 Elenco Ingredienti e Allergeni</h3>
         
         {loading ? (
-          <p style={{ textAlign: 'center', padding: 40, color: '#6b7280' }}>⏳ Caricamento...</p>
+          <p style={{ textAlign: 'center', padding: isMobile ? 20 : 40, color: '#6b7280' }}>⏳ Caricamento...</p>
         ) : libroFiltrato.length === 0 ? (
-          <p style={{ textAlign: 'center', padding: 40, color: '#6b7280' }}>Nessun ingrediente trovato</p>
+          <p style={{ textAlign: 'center', padding: isMobile ? 20 : 40, color: '#6b7280' }}>Nessun ingrediente trovato</p>
         ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={styles.table} data-testid="tabella-allergeni">
+          <div style={s.tableContainer}>
+            <table style={s.table} data-testid="tabella-allergeni">
               <thead>
                 <tr>
-                  <th style={styles.th}>Ingrediente</th>
-                  <th style={styles.th}>Allergeni</th>
-                  <th style={styles.th}>Presente in</th>
-                  <th style={{ ...styles.th, width: 80 }}>Azioni</th>
+                  <th style={s.th}>Ingrediente</th>
+                  <th style={s.th}>Allergeni</th>
+                  {!isMobile && <th style={s.th}>Presente in</th>}
+                  <th style={{ ...s.th, width: isMobile ? 50 : 80 }}>Azioni</th>
                 </tr>
               </thead>
               <tbody>
                 {libroFiltrato.map((voce, idx) => (
                   <tr key={idx} style={{ background: voce.allergeni.length > 0 ? '#fffbeb' : 'white' }}>
-                    <td style={styles.td}>
-                      <strong>{voce.ingrediente}</strong>
-                      {voce.manuale && <span style={{ marginLeft: 8, fontSize: 10, color: '#6b7280' }}>(manuale)</span>}
+                    <td style={s.td}>
+                      <strong style={{ fontSize: isMobile ? 11 : 'inherit' }}>{voce.ingrediente}</strong>
+                      {voce.manuale && <span style={{ marginLeft: 4, fontSize: 9, color: '#6b7280' }}>(M)</span>}
                     </td>
-                    <td style={styles.td}>
+                    <td style={s.td}>
                       {voce.allergeni_dettaglio.length > 0 ? (
                         voce.allergeni_dettaglio.map((a, i) => (
-                          <span key={i} style={styles.allergeneBadge}>
-                            {a.icona} {a.nome}
+                          <span key={i} style={s.badge}>
+                            {a.icona} {!isMobile && a.nome}
                           </span>
                         ))
                       ) : (
-                        <span style={{ color: '#9ca3af', fontSize: 12 }}>Nessun allergene</span>
+                        <span style={{ color: '#9ca3af', fontSize: isMobile ? 10 : 12 }}>-</span>
                       )}
                     </td>
-                    <td style={styles.td}>
-                      <span style={{ fontSize: 11, color: '#6b7280' }}>
-                        {voce.ricette_collegate.slice(0, 3).join(', ')}
-                        {voce.ricette_collegate.length > 3 && ` +${voce.ricette_collegate.length - 3}`}
-                      </span>
-                    </td>
-                    <td style={styles.td}>
+                    {!isMobile && (
+                      <td style={s.td}>
+                        <span style={{ fontSize: 11, color: '#6b7280' }}>
+                          {voce.ricette_collegate.slice(0, 3).join(', ')}
+                          {voce.ricette_collegate.length > 3 && ` +${voce.ricette_collegate.length - 3}`}
+                        </span>
+                      </td>
+                    )}
+                    <td style={s.td}>
                       {voce.manuale && (
                         <button
                           onClick={() => handleDeleteVoce(voce.id)}
-                          style={styles.btnDanger}
+                          style={{ padding: '4px 8px', background: '#fee2e2', color: '#dc2626', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 10 }}
                         >
                           🗑️
                         </button>
