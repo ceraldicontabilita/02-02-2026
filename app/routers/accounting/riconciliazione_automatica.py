@@ -644,19 +644,20 @@ async def correggi_metodi_pagamento() -> Dict[str, Any]:
         "totale_corrette": 0
     }
     
-    # CASO 1: Fatture con "Bonifico" ma senza in_banca=true
-    fatture_bonifico = await db[Collections.INVOICES].find({
-        "metodo_pagamento": "Bonifico",
+    # CASO 1: Fatture con metodo bancario (bonifico, banca, sepa) ma senza in_banca=true
+    # Case-insensitive per catturare tutte le varianti
+    fatture_bancarie = await db[Collections.INVOICES].find({
+        "metodo_pagamento": {"$regex": "^(bonifico|banca|sepa)$", "$options": "i"},
         "in_banca": {"$ne": True}
     }).to_list(5000)
     
     # CASO 2: Fatture con "Assegno" (qualsiasi variante) ma senza in_banca=true
     fatture_assegno = await db[Collections.INVOICES].find({
-        "metodo_pagamento": {"$regex": "^Assegno", "$options": "i"},
+        "metodo_pagamento": {"$regex": "^assegno", "$options": "i"},
         "in_banca": {"$ne": True}
     }).to_list(5000)
     
-    fatture_errate = fatture_bonifico + fatture_assegno
+    fatture_errate = fatture_bancarie + fatture_assegno
     
     for fattura in fatture_errate:
         piva = fattura.get("cedente_partita_iva") or fattura.get("supplier_vat")
