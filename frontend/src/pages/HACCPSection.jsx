@@ -24,10 +24,40 @@ const HACCP_SECTIONS = [
   {
     id: 'lotti-produzione',
     title: 'Lotti di Produzione',
-    subtitle: 'Gestione lotti e tracciabilità prodotti',
+    subtitle: 'Gestione lotti, materie prime e ricette',
     icon: Boxes,
     color: '#1e40af',
     bgGradient: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)',
+    route: '/haccp/lotti',
+    stats: ['lotti_attivi', 'prodotti_settimana']
+  },
+  {
+    id: 'materie-prime',
+    title: 'Materie Prime',
+    subtitle: 'Anagrafica ingredienti e fornitori',
+    icon: Package,
+    color: '#8b5cf6',
+    bgGradient: 'linear-gradient(135deg, #6d28d9 0%, #a78bfa 100%)',
+    route: '/haccp/materie-prime',
+    stats: ['totale', 'con_allergeni']
+  },
+  {
+    id: 'ricette',
+    title: 'Ricette & Produzione',
+    subtitle: 'Schede tecniche, allergeni e produci lotto',
+    icon: ChefHat,
+    color: '#ec4899',
+    bgGradient: 'linear-gradient(135deg, #be185d 0%, #f472b6 100%)',
+    route: '/haccp/ricette',
+    stats: ['totale', 'con_allergeni']
+  },
+  {
+    id: 'tracciabilita',
+    title: 'Tracciabilità Automatica',
+    subtitle: 'Prodotti tracciati da fatture XML',
+    icon: Package,
+    color: '#0ea5e9',
+    bgGradient: 'linear-gradient(135deg, #0369a1 0%, #38bdf8 100%)',
     route: '/haccp/tracciabilita',
     stats: ['lotti_attivi', 'prodotti_settimana']
   },
@@ -38,7 +68,7 @@ const HACCP_SECTIONS = [
     icon: Thermometer,
     color: '#f59e0b',
     bgGradient: 'linear-gradient(135deg, #d97706 0%, #fbbf24 100%)',
-    route: '/haccp/frigoriferi',
+    route: '/haccp/temperature-frigoriferi',
     stats: ['frigoriferi_monitorati', 'anomalie_giorno']
   },
   {
@@ -48,7 +78,7 @@ const HACCP_SECTIONS = [
     icon: Snowflake,
     color: '#0ea5e9',
     bgGradient: 'linear-gradient(135deg, #0369a1 0%, #38bdf8 100%)',
-    route: '/haccp/congelatori',
+    route: '/haccp/temperature-congelatori',
     stats: ['congelatori_monitorati', 'anomalie_giorno']
   },
   {
@@ -72,16 +102,6 @@ const HACCP_SECTIONS = [
     stats: ['interventi_anno', 'prossimo']
   },
   {
-    id: 'manuale-haccp',
-    title: 'Manuale HACCP',
-    subtitle: 'Documentazione e procedure',
-    icon: FileText,
-    color: '#6366f1',
-    bgGradient: 'linear-gradient(135deg, #4338ca 0%, #818cf8 100%)',
-    route: '/haccp/manuale',
-    stats: ['documenti', 'ultima_revisione']
-  },
-  {
     id: 'non-conformita',
     title: 'Non Conformità',
     subtitle: 'Gestione anomalie e azioni correttive',
@@ -90,26 +110,6 @@ const HACCP_SECTIONS = [
     bgGradient: 'linear-gradient(135deg, #b91c1c 0%, #f87171 100%)',
     route: '/haccp/non-conformita',
     stats: ['aperte', 'risolte_mese']
-  },
-  {
-    id: 'materie-prime',
-    title: 'Materie Prime',
-    subtitle: 'Anagrafica ingredienti e fornitori',
-    icon: Package,
-    color: '#8b5cf6',
-    bgGradient: 'linear-gradient(135deg, #6d28d9 0%, #a78bfa 100%)',
-    route: '/haccp/materie-prime',
-    stats: ['totale', 'con_allergeni']
-  },
-  {
-    id: 'ricette',
-    title: 'Ricette',
-    subtitle: 'Schede tecniche e allergeni',
-    icon: ChefHat,
-    color: '#ec4899',
-    bgGradient: 'linear-gradient(135deg, #be185d 0%, #f472b6 100%)',
-    route: '/haccp/ricette',
-    stats: ['totale', 'con_allergeni']
   }
 ];
 
