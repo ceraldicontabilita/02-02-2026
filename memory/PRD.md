@@ -266,3 +266,29 @@ Tab "Sincronizzazione" in `/admin` per gestire:
 ### File Implementazione
 - Backend: `/app/app/routers/sync_relazionale.py`
 - Documentazione: `/app/memory/LOGICA_RELAZIONALE.md`
+
+---
+
+## Modulo HACCP Riorganizzato (Implementato 2025-01-10)
+
+### Sezioni Principali (/haccp)
+| Card | Descrizione | Route |
+|------|-------------|-------|
+| 📖 Ricettario Dinamico | Gestione ricette, ingredienti e schede tecniche | `/ricettario-dinamico` |
+| ⚠️ Libro Allergeni | Elenco ingredienti con allergeni (Reg. UE 1169/2011) | `/libro-allergeni` |
+| 🌡️ Temperature | Frigoriferi (0/+4°C) e Congelatori (-22/-18°C) | `/haccp-v2/frigoriferi` |
+| 🧹 Sanificazione | Registro pulizia e sanificazione locali | `/haccp-v2/sanificazioni` |
+| 🚫 Non Conformità | Gestione anomalie e azioni correttive | `/haccp-v2/non-conformita` |
+| 📋 Registro Lotti | Tracciabilità lotti, materie prime e produzioni | `/haccp/lotti` |
+
+### Libro Allergeni
+- Filtra automaticamente ingredienti invalidi (es. `#ref!`, `=formula`)
+- Mostra SOLO ingredienti con allergeni
+- Aggiornamento automatico quando si aggiungono ricette
+- 14 allergeni UE obbligatori (Reg. UE 1169/2011)
+
+### Pagine V2 (Attive)
+- `HACCPFrigoriferiV2.jsx` - Temperature frigoriferi
+- `HACCPCongelatoriV2.jsx` - Temperature congelatori  
+- `HACCPSanificazioniV2.jsx` - Registro sanificazioni
+- `HACCPNonConformita.jsx` - Gestione non conformità
