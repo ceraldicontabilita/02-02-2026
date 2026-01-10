@@ -102,22 +102,22 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="card card-compact">
-        <div className="h1">Dashboard</div>
-        <div className="small">Caricamento in corso...</div>
+      <div style={{ background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', border: '1px solid #e5e7eb' }}>
+        <h1 style={{ margin: '0 0 16px 0', fontSize: 22, fontWeight: 'bold', color: '#1e3a5f' }}>Dashboard</h1>
+        <p style={{ color: '#6b7280' }}>⏳ Caricamento in corso...</p>
       </div>
     );
   }
 
   return (
     <>
-      <div className="card card-compact" style={{ marginBottom: 12 }}>
+      <div style={{ background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', border: '1px solid #e5e7eb', marginBottom: 12 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div className="h1" style={{ marginBottom: 0 }}>Dashboard {anno}</div>
+          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 'bold', color: '#1e3a5f' }}>Dashboard {anno}</h1>
           {err ? (
-            <div className="small" style={{ color: "#c00" }}>{err}</div>
+            <span style={{ color: "#dc2626", fontSize: 14 }}>{err}</span>
           ) : (
-            <div className="small badge badge-success">
+            <span style={{ padding: '4px 10px', background: '#dcfce7', color: '#16a34a', borderRadius: 6, fontSize: 12, fontWeight: '600' }}>
               ✓ Backend connesso
             </div>
           )}
