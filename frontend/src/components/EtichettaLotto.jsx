@@ -159,6 +159,29 @@ const styles = {
     margin: 0
   },
   
+  // Allergeni evidenziati
+  allergeniBox: {
+    marginTop: '2mm',
+    padding: '2mm',
+    background: '#fef3c7',
+    border: '1px solid #f59e0b',
+    borderRadius: '2mm'
+  },
+  allergeniLabel: {
+    fontSize: '8px',
+    fontWeight: 'bold',
+    color: '#92400e',
+    margin: '0 0 1mm 0',
+    textTransform: 'uppercase'
+  },
+  allergeniList: {
+    fontSize: '9px',
+    fontWeight: 'bold',
+    color: '#dc2626',
+    margin: 0,
+    lineHeight: 1.4
+  },
+  
   // Footer etichetta
   etichettaFooter: {
     marginTop: '2mm',
