@@ -869,12 +869,22 @@ async def get_automation_stats() -> Dict[str, Any]:
 
 @router.post("/import-versamenti")
 async def import_versamenti(
-    file: UploadFile = File(..., description="File Excel con versamenti")
+    file: UploadFile = File(..., description="File CSV versamenti formato banca")
 ) -> Dict[str, Any]:
     """
-    Importa versamenti in banca da file Excel.
+    Importa versamenti in banca da file CSV.
     
-    Colonne attese: data, importo, descrizione (opzionale)
+    FORMATO DEFINITIVO (CSV con delimitatore ;):
+    - Ragione Sociale
+    - Data contabile (DD/MM/YYYY)
+    - Data valuta (DD/MM/YYYY)
+    - Banca
+    - Rapporto
+    - Importo
+    - Divisa
+    - Descrizione
+    - Categoria/sottocategoria
+    - Hashtag
     """
     import pandas as pd
     
@@ -894,82 +904,76 @@ async def import_versamenti(
     
     try:
         if file.filename.lower().endswith('.csv'):
-            # Rileva automaticamente il separatore (italiano usa ; europeo usa ,)
-            content_str = content.decode('utf-8', errors='ignore')
-            separator = ';' if ';' in content_str[:500] else ','
-            df = pd.read_csv(io.BytesIO(content), sep=separator)
+            # CSV con delimitatore ;
+            for encoding in ['utf-8-sig', 'utf-8', 'latin-1', 'cp1252']:
+                try:
+                    df = pd.read_csv(io.BytesIO(content), sep=';', encoding=encoding)
+                    break
+                except:
+                    continue
         else:
             df = pd.read_excel(io.BytesIO(content))
         
-        # Normalizza nomi colonne
-        df.columns = df.columns.str.lower().str.strip()
+        logger.info(f"Versamenti - Colonne trovate: {list(df.columns)}")
         
         for idx, row in df.iterrows():
             try:
-                # Trova colonna data (supporta vari formati)
-                data = None
-                for col in ['data', 'date', 'giorno', 'data contabile', 'data valuta']:
-                    if col in df.columns and pd.notna(row.get(col)):
-                        data = parse_italian_date(str(row[col]))
-                        break
-                
-                # Trova colonna importo
-                importo = 0
-                for col in ['importo', 'amount', 'valore', 'versamento']:
-                    if col in df.columns and pd.notna(row.get(col)):
-                        val = row[col]
-                        # Se è già un numero, usalo direttamente
-                        if isinstance(val, (int, float)):
-                            importo = float(val)
-                        else:
-                            importo = parse_italian_amount(str(val))
-                        break
-                
-                if not data or importo <= 0:
+                # Data contabile (formato DD/MM/YYYY)
+                data_str = str(row.get('Data contabile', '')).strip()
+                if not data_str or data_str == 'nan':
                     results["skipped"] += 1
                     continue
                 
-                descrizione = str(row.get('descrizione', row.get('description', 'Versamento'))) if pd.notna(row.get('descrizione', row.get('description'))) else f"Versamento del {data}"
+                data = parse_italian_date(data_str)
+                if not data:
+                    results["skipped"] += 1
+                    continue
                 
-                # CONTROLLO DUPLICATI - verifica se esiste già un versamento con stessa data e importo
-                existing_banca = await db[COLLECTION_PRIMA_NOTA_BANCA].find_one({
+                # Importo
+                importo_val = row.get('Importo', 0)
+                if pd.isna(importo_val):
+                    results["skipped"] += 1
+                    continue
+                
+                if isinstance(importo_val, (int, float)):
+                    importo = float(importo_val)
+                else:
+                    importo = parse_italian_amount(str(importo_val))
+                
+                if importo <= 0:
+                    results["skipped"] += 1
+                    continue
+                
+                # Descrizione
+                descrizione = str(row.get('Descrizione', '')).strip()
+                if not descrizione or descrizione == 'nan':
+                    descrizione = f"Versamento del {data}"
+                
+                # CONTROLLO DUPLICATI
+                existing_cassa = await db[COLLECTION_PRIMA_NOTA_CASSA].find_one({
                     "data": data,
                     "importo": importo,
                     "categoria": "Versamento"
                 })
                 
-                if existing_banca:
+                if existing_cassa:
                     results["skipped"] += 1
-                    results["errors"].append({"row": idx + 2, "error": f"Duplicato: versamento del {data} di €{importo} già esistente"})
+                    results["errors"].append({"row": idx + 2, "error": f"Duplicato: versamento del {data} di €{importo}"})
                     continue
                 
-                # Crea movimento in banca (entrata) e cassa (uscita)
-                movimento_banca = {
-                    "id": str(uuid.uuid4()),
-                    "data": data,
-                    "tipo": "entrata",
-                    "importo": importo,
-                    "descrizione": descrizione,
-                    "categoria": "Versamento",
-                    "source": "excel_import",
-                    "filename": file.filename,
-                    "created_at": now
-                }
-                
+                # Versamento = USCITA dalla cassa (soldi vanno in banca)
                 movimento_cassa = {
                     "id": str(uuid.uuid4()),
                     "data": data,
                     "tipo": "uscita",
                     "importo": importo,
-                    "descrizione": f"Versamento in banca - {descrizione}",
+                    "descrizione": descrizione,
                     "categoria": "Versamento",
-                    "source": "excel_import",
+                    "source": "csv_import",
                     "filename": file.filename,
-                    "linked_banca_id": movimento_banca["id"],
                     "created_at": now
                 }
                 
-                await db[COLLECTION_PRIMA_NOTA_BANCA].insert_one(movimento_banca)
                 await db[COLLECTION_PRIMA_NOTA_CASSA].insert_one(movimento_cassa)
                 
                 results["imported"] += 1
