@@ -70,7 +70,6 @@ const NAV_ITEMS = [
     isSubmenu: true,
     children: [
       { to: "/import-export", label: "Import/Export Dati", icon: "📁" },
-      { to: "/estratto-conto-movimenti", label: "Movimenti Banca", icon: "🏦" },
       { to: "/archivio-bonifici", label: "Archivio Bonifici PDF", icon: "📂" },
     ]
   },
