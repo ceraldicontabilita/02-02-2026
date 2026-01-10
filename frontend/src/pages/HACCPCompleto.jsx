@@ -321,14 +321,14 @@ export default function HACCPCompleto() {
                       <div style={styles.itemSub}>{ricetta.ingredienti?.length || 0} ingredienti</div>
                       <div style={{ marginTop: 6 }}>
                         {ricetta.ingredienti?.slice(0, 5).map((ing, i) => (
-                          <span key={i} style={styles.badge}>{ing}</span>
+                          <span key={i} style={styles.badge}>{typeof ing === 'object' ? ing.nome : ing}</span>
                         ))}
                         {ricetta.ingredienti?.length > 5 && <span style={{ fontSize: 11, color: '#9ca3af' }}>+{ricetta.ingredienti.length - 5}</span>}
                       </div>
                     </div>
                     <div style={{ display: 'flex', gap: 4 }}>
                       <button style={{ ...styles.iconBtn, color: '#10b981' }} onClick={() => { setSelectedRicettaForLotto(ricetta); setFormLotto({ data_produzione: new Date().toISOString().split('T')[0], data_scadenza: '', quantita: 1, unita_misura: 'pz' }); setShowModalLotto(true); }} title="Genera Lotto">🏭</button>
-                      <button style={styles.iconBtn} onClick={() => { setEditingItem(ricetta); setFormRicetta({ nome: ricetta.nome, ingredienti: [...(ricetta.ingredienti || [])] }); setShowModalRicetta(true); }}>✏️</button>
+                      <button style={styles.iconBtn} onClick={() => { setEditingItem(ricetta); setFormRicetta({ nome: ricetta.nome, ingredienti: (ricetta.ingredienti || []).map(ing => typeof ing === 'object' ? ing.nome : ing) }); setShowModalRicetta(true); }}>✏️</button>
                       <button style={styles.iconBtn} onClick={() => deleteRicetta(ricetta.id)}>🗑️</button>
                     </div>
                   </div>
