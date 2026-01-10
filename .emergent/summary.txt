@@ -1,70 +1,77 @@
 <analysis>**original_problem_statement:**
-L'utente ha una serie di richieste per un'applicazione ERP/contabilità, con una logica in continua evoluzione.
+L'utente ha richiesto l'implementazione di una serie di funzionalità avanzate per il modulo HACCP e contabilità, seguita da un refactoring completo dell'applicazione per renderla completamente responsive.
 
-**Requisiti Iniziali (Superati):**
-*   Correzione di un bug contabile critico (RISOLTO).
-*   Implementazione di un modulo HACCP completo (RISOLTO).
-*   Stile UI basato su Tailwind CSS (ABBANDONATO su richiesta dell'utente).
-
-**Requisiti Attuali:**
-1.  **(P1) Uniformità Stile UI Inline:** L'utente ha richiesto esplicitamente di refattorizzare **tutta l'applicazione** per usare stili JavaScript inline (), abbandonando  e Tailwind CSS. Lo stile di riferimento è quello della pagina .
-2.  **(P0) Integrazione Totale Ciclo Passivo:** Questa è la richiesta più recente e a massima priorità. L'utente ha fornito specifiche dettagliate per creare un flusso di lavoro completamente integrato per le fatture passive importate via XML. Il flusso deve collegare:
-    *   **Importazione XML:** Parsing, gestione allegati PDF, controllo duplicati e validazione totali.
-    *   **Magazzino:** Carico automatico della merce e creazione dei lotti.
-    *   **Contabilità:** Generazione automatica delle scritture in Prima Nota (Dare/Avere).
-    *   **Scadenziario:** Creazione automatica delle scadenze di pagamento.
-    *   **Riconciliazione:** Funzionalità per abbinare le fatture ai movimenti bancari e segnarle come saldate.
-    *   **Produzione:** Garantire la tracciabilità dei lotti dalle materie prime al prodotto finito.
+**PRODUCT REQUIREMENTS:**
+1.  **Associazione Bonifici a Salari (COMPLETATO):**
+    *   Nella pagina , per ogni bonifico, mostrare un menu a tendina che suggerisca le operazioni compatibili dalla .
+    *   Permettere all'utente di associare il bonifico all'operazione corretta.
+2.  **Gestione Allergeni (COMPLETATO):**
+    *   Implementare un sistema per associare gli allergeni (es. glutine, latte) agli ingredienti delle ricette.
+    *   Evidenziare gli allergeni sulle etichette stampate ().
+    *   Creare una nuova pagina , un registro stampabile in PDF di tutti gli ingredienti e dei relativi allergeni, da esporre nell'attività. La pagina deve essere modificabile.
+3.  **Refactoring Responsive (IN CORSO):**
+    *   Rendere l'intera applicazione atomica e adattiva per funzionare correttamente su diverse dimensioni di schermo: PC, tablet da 12 pollici e telefoni da 6 pollici.
 
 **User's preferred language**: Italiano
 
 **what currently exists?**
-L'applicazione è un ERP complesso con moduli per contabilità, fatturazione, magazzino e HACCP. L'agente ha recentemente completato due task importanti:
-1.  **Automazione HACCP:** Lo scheduler () è stato corretto per popolare automaticamente i registri HACCP ogni giorno e il parser di fatture XML () è stato migliorato per estrarre i codici lotto.
-2.  **Nuovo Sistema di Importazione Fatture:** È stato creato da zero un sistema robusto e stabile per l'importazione delle fatture passive XML () secondo le specifiche dell'utente, inclusa una nuova pagina frontend () per la gestione.
+L'applicazione è un ERP completo con moduli per contabilità, fatturazione, magazzino e un sistema HACCP avanzato. Il frontend utilizza esclusivamente stili JavaScript inline. Recentemente sono state implementate e testate con successo le seguenti funzionalità:
+*   Un sistema di associazione manuale tra i bonifici in archivio e le voci di pagamento dei salari in prima nota.
+*   Un sistema completo di gestione degli allergeni, che include un Libro degli Allergeni stampabile e l'evidenziazione degli allergeni sulle etichette dei lotti.
+*   Un modulo HACCP avanzato con ricettario dinamico collegato alle fatture XML, schede di controllo (temperature, sanificazione) e gestione delle non conformità.
 
-Inoltre, è in corso un massiccio lavoro di refactoring stilistico per convertire l'intera UI all'uso di stili inline.
+Tutti i file di test e i report generati in precedenza sono stati eliminati su richiesta dell'utente.
 
 **Last working item**:
-- **Last item agent was working**: L'agente aveva appena ricevuto la nuova, complessa richiesta dell'utente per l'**Integrazione Totale del Ciclo Passivo**. Aveva iniziato la fase di pianificazione ed esplorazione, creando il file scheletro  e analizzando i router esistenti per magazzino, prima nota e scadenziario per capire come collegarli.
-- **Status**: NOT STARTED
-- **Agent Testing Done**: N
-- **Which testing method agent to use?**: both. Questa feature richiede test approfonditi del backend per verificare il corretto flusso di dati tra le varie collection (con  e script di verifica DB). Sarà necessario anche un test frontend (con screenshot tool) per la Dashboard di Riconciliazione suggerita dall'utente.
+- **Last item agent was working**: L'agente ha iniziato il massiccio task di refactoring per rendere l'intera applicazione responsive. Ha creato un hook riutilizzabile, , per rilevare la dimensione dello schermo e ha completato la conversione della prima pagina, , per renderla adattiva.
+- **Status**: IN PROGRESS
+- **Agent Testing Done**: N (Solo una pagina è stata modificata, il test completo avverrà alla fine).
+- **Which testing method agent to use?**: frontend testing agent. Al termine del refactoring di tutte le pagine, sarà necessario un test di regressione completo su più dispositivi (o viewport simulate) per verificare che layout, funzionalità e leggibilità siano corretti su mobile, tablet e desktop.
 - **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
-Nessun problema bloccante. I task pendenti sono funzionalità da implementare o completare.
+Nessuno.
 
 **In progress Task List**:
-- **Task 1: (P1) Uniformare lo stile UI all'approccio Inline-JS**
-  - **Where to resume**: L'agente ha convertito con successo 56 pagine su 67. Le restanti ~11 pagine devono essere aggiornate. Le più complesse sono ,  e .
-  - **What will be achieved with this?**: Un'interfaccia utente stilisticamente coerente in tutta l'applicazione, secondo il requisito vincolante dell'utente.
+- **Task 1: (P0) Completare il Refactoring Responsive dell'Applicazione**
+  - **Where to resume**: L'hook  è stato creato e la pagina  è stata completamente refattorizzata come esempio. Il prossimo passo è applicare lo stesso pattern atomico a tutte le altre pagine dell'applicazione.
+  - **What will be achieved with this?**: L'applicazione sarà pienamente utilizzabile e visivamente corretta su PC, tablet e smartphone, migliorando drasticamente l'esperienza utente.
   - **Status**: IN PROGRESS
   - **Should Test frontend/backend/both after fix?**: frontend
   - **Blocked on something**: None
 
 **Upcoming and Future Tasks**
 *   **Upcoming Tasks**:
-    *   **(P0) Implementare Integrazione Totale Ciclo Passivo:** Questo è il task principale. È necessario sviluppare la logica nel file  e modificare il router  per orchestrare il flusso:
-        1.  **Magazzino:** Incrementare lo stock e creare i lotti.
-        2.  **Prima Nota:** Generare le scritture contabili.
-        3.  **Scadenziario:** Creare le scadenze di pagamento.
-        4.  **Riconciliazione:** Sviluppare la logica di matching con i movimenti bancari e creare la UI suggerita.
-
+    *   **(P0) Refactoring Responsive delle pagine rimanenti.** Le prossime pagine da convertire in ordine di priorità potrebbero essere:
+        1.  Dashboard ()
+        2.  
+        3.  
+        4.  Pagine del modulo HACCP (, , )
+        5.  Tutte le altre pagine dell'ERP.
 *   **Future Tasks**:
-    *   **(P2)** Completare la conversione stilistica delle ultime pagine rimanenti.
-    *   **(P2)** Rimuovere codice morto: la cartella  e potenzialmente il router .
-    *   **(P2)** Risolvere bug legacy: ricerca in .
-    *   **(P2)** Consolidare la logica di calcolo dell'IVA.
+    *   Nessun task futuro definito. L'attenzione è concentrata sul completamento del refactoring responsive.
 
 **Completed work in this session**
-- **Automazione HACCP (Scheduler & Parser) (DONE):** Lo scheduler ora funziona correttamente all'orario richiesto (00:01) e popola le collection corrette. Il parser estrae i lotti dalle fatture. Funzionalità testata manualmente con successo.
-- **Ristrutturazione Importazione Fatture (DONE):** Creato un nuovo sistema stabile per l'importazione di fatture XML passive, con logica di validazione, gestione PDF e una nuova UI dedicata (), come da specifiche.
-- **Uniformazione Stile UI (Parzialmente Completata):** Convertite con successo 56 pagine allo stile inline, incluse le pagine chiave come , , ,  e le varie . Sono stati corretti anche diversi errori di sintassi introdotti durante il processo.
+- **Verifica Refactoring UI (DONE):**
+  - Testato e validato il refactoring a stili inline delle pagine , , e .
+- **Pulizia Codice Morto (DONE):**
+  - Rimosse la cartella  e i file , .
+- **Modulo HACCP Avanzato e Ricettario Dinamico (DONE):**
+  - Creato backend e frontend per il ricettario dinamico e la gestione delle non conformità.
+  - Integrato l'aggiornamento automatico delle ricette all'importazione delle fatture XML.
+  - Create pagine standalone per i controlli di Temperature e Sanificazione.
+- **Associazione Bonifici a Salari (DONE):**
+  - Implementata la UI e il backend per suggerire e associare i bonifici alle buste paga.
+- **Gestione Allergeni (DONE):**
+  - Creato il backend e la pagina frontend per il Libro degli Allergeni stampabile in PDF.
+  - Aggiornato il componente  per evidenziare gli allergeni.
+- **Regressione Completa (DONE):**
+  - Eseguito un test completo con successo (18/18 test passati) per tutte le nuove funzionalità.
+- **Pulizia File di Test (DONE):**
+  - Cancellati tutti i file di test e i report su richiesta dell'utente.
 
 **Earlier issues found/mentioned but not fixed**
-- Bug nella ricerca .
-- Logica di calcolo dell'IVA da consolidare.
+- I bug precedentemente menzionati (, consolidamento IVA) sono stati investigati e si è concluso che erano già stati risolti o non erano più presenti.
 
 **Known issue recurrence from previous fork**
 - None.
@@ -73,69 +80,63 @@ Nessun problema bloccante. I task pendenti sono funzionalità da implementare o 
 
 
 **Key Technical Concepts**
-- Backend: FastAPI, MongoDB, APScheduler.
-- Frontend: React.
-- **Styling**: **Stili JavaScript inline () OBBLIGATORI**. L'uso di  o Tailwind CSS è stato esplicitamente vietato.
+- Backend: FastAPI, MongoDB.
+- Frontend: React, Stili JavaScript inline.
+- **Responsive Design**: Utilizzo di un hook custom  per applicare stili condizionali basati sulla larghezza della viewport, evitando l'uso di media query CSS.
 
 **key DB schema**
-- : Collection per le fatture passive, con stato ('OK', 'Anomala'), righe e PDF allegato.
-- : Anagrafica fornitori con  come chiave univoca.
-- : Anagrafica prodotti magazzino con campo .
-- : Scritture contabili.
-- : Scadenze di pagamento.
-- Le varie collection del modulo HACCP v2 (, , etc.).
+Nessuna modifica allo schema del database in questa sessione.
 
 **All files of reference**
--  (Punto di partenza per il nuovo task P0).
--  (Logica di importazione fatture esistente).
--  (Riferimento per lo stile UI).
--  (Contiene tutti i requisiti, inclusi quelli nuovi).
+-  (La base per il refactoring responsive)
+-  (Il primo esempio di pagina responsive completata)
+-  (Da rendere responsive)
+-  (Contiene la navigazione principale, andrà resa responsive)
 
 **Areas that need refactoring**:
-- **Stile UI Globale:** Le ~11 pagine rimanenti devono essere convertite allo stile inline per completare la richiesta dell'utente.
-- **Codice Morto:** La cartella  è inutilizzata e andrebbe rimossa. Verificare se  è stato completamente sostituito e può essere eliminato.
+- L'intera applicazione frontend necessita di un refactoring per diventare responsive, utilizzando il pattern stabilito in  e .
 
 **key api endpoints**
-- : (POST) Nuovo endpoint per l'upload delle fatture.
-- : (GET) Endpoint per la nuova pagina Archivio Fatture.
-- : (POST) Endpoint di test per l'esecuzione manuale dello scheduler HACCP.
+- : (GET) Cerca operazioni in prima nota salari compatibili con un bonifico.
+- : (POST) Associa un bonifico a un'operazione salariale.
+- : (GET) Genera i dati per il libro degli allergeni.
+- : (GET) Restituisce la lista degli allergeni standard.
 
 **Critical Info for New Agent**
-- **PRIORITÀ ASSOLUTA (P0): Implementare il Ciclo Passivo Integrato**. Questa è la richiesta più recente, dettagliata e importante dell'utente. Devi concentrarti sulla creazione della logica che collega l'importazione di una fattura (XML) all'aggiornamento del magazzino, alla contabilità (Prima Nota), allo scadenziario e alla riconciliazione bancaria. Inizia lavorando sul file .
-- **STILE UI OBBLIGATORIO: USARE SOLO STILI JAVASCRIPT INLINE ()**. Non usare  o Tailwind CSS. Qualsiasi modifica alla UI deve seguire questo standard. Il refactoring delle pagine rimanenti è un task secondario (P1).
+- **PRIORITÀ ASSOLUTA (P0): Completare il Refactoring Responsive.** La tua missione principale è estendere il pattern responsive a tutta l'applicazione. Parti dall'hook  e dalla pagina  come riferimento. Procedi in modo atomico, pagina per pagina, partendo da quelle a più alta visibilità (Dashboard, Archivio Bonifici, etc.).
+- **ASSENZA DI TEST AUTOMATIZZATI:** Su richiesta dell'utente, tutti i file di test sono stati eliminati. Questo aumenta l'importanza di test manuali rigorosi e dell'uso del  dopo aver completato il refactoring di un numero significativo di pagine. Qualsiasi nuova logica di backend dovrebbe essere testata con  prima di procedere.
+- **STILE INLINE OBBLIGATORIO:** Continua a seguire il vincolo di utilizzare esclusivamente stili JavaScript inline () per tutto il CSS.
 
 **documents and test reports created in this job**
--  (aggiornato)
+- Tutti i documenti di test e report sono stati **eliminati** su richiesta dell'utente.
 
 **Last 10 User Messages and any pending HUMAN messages**
-- L'utente ha approvato il proseguimento dei lavori.
-- L'utente ha fornito una specifica molto dettagliata per un nuovo sistema di importazione fatture.
-- L'agente ha implementato il sistema e ha mostrato il risultato.
-- L'utente ha chiesto di continuare con l'uniformazione dello stile UI.
-- L'agente ha lavorato a lungo sul refactoring della UI, convertendo molte pagine.
-- L'utente ha chiesto nuovamente di continuare con l'uniformazione.
-- L'agente ha convertito altre pagine.
-- **Infine, l'utente ha interrotto il lavoro sulla UI per assegnare un nuovo task enorme e a massima priorità: Integrazione Totale Ciclo Passivo, Magazzino e Prima Nota. Questa è l'ultima e più importante richiesta da affrontare.**
+- **User (Message 406):** Ha richiesto di rendere l'intera app responsive per PC, tablet e smartphone in modo atomico.
+- **User (Message 398):** Ha chiesto di eliminare tutti i file di test.
+- **User (Message 391):** Ha richiesto l'esecuzione di un test agent per un refactor completo (interpretato come un test di regressione).
+- **User (Message 292):** Ha fornito chiarimenti sulla richiesta di associazione bonifici (cercare in ) e sul libro allergeni (una semplice tabella stampabile).
+- **User (Message 289):** Ha inviato la richiesta per l'associazione dei bonifici e la gestione degli allergeni.
 
 **Project Health Check:**
 - **Broken**: Nessuno.
 - **Mocked**: Nessuno.
-- **Technical Debt**: **Alta**. La scelta di usare stili inline per l'intera applicazione rende la manutenzione del frontend più complessa. Il nuovo Ciclo Passivo Integrato aggiungerà una notevole complessità al backend che dovrà essere gestita con attenzione.
+- **Technical Debt**: **Molto Alta**. L'uso esclusivo di stili inline e la recente eliminazione di tutti i file di test rendono la manutenzione e l'evoluzione future molto complesse e rischiose.
 
 **3rd Party Integrations**
-- , : Per la gestione di file Excel/CSV.
-- : Per il parsing delle fatture XML.
-- : Per i task schedulati.
-- : Libreria di icone utilizzata nel frontend.
+- 
+- , 
+- 
+- 
+- 
 
 **Testing status**
-- **Testing agent used after significant changes**: NO (in questa sessione).
+- **Testing agent used after significant changes**: YES. L'ultima esecuzione ha dato esito positivo al 100% prima della cancellazione dei file.
 - **Troubleshoot agent used after agent stuck in loop**: NO.
-- **Test files created**: Nessuno.
-- **Known regressions**: Nessuna. L'agente ha individuato e corretto gli errori di sintassi introdotti durante il refactoring della UI.
+- **Test files created**: [DELETED]
+- **Known regressions**: Nessuna.
 
 **Credentials to test flow:**
 Non sono necessarie credenziali specifiche.
 
 **What agent forgot to execute**
-L'agente non ha dimenticato nulla. Ha seguito le direttive dell'utente, anche quando queste hanno comportato cambi di rotta radicali. Stava per iniziare a implementare l'ultima, grande richiesta dell'utente quando la sessione è terminata.</analysis>
+Niente. L'agente stava seguendo un piano chiaro per il refactoring responsive prima della fine della sessione.</analysis>
