@@ -211,13 +211,16 @@ Ragione Sociale;Data contabile;Data valuta;Banca;Rapporto;Importo;Divisa;Descriz
 ### P0 - Critical
 - [x] ~~Fix logica contabile Prima Nota (versamenti solo in Cassa)~~ ✅ RISOLTO
 - [x] ~~Riconciliazione automatica estratto conto~~ ✅ IMPLEMENTATO
+- [x] ~~Bonifica fatture con metodo pagamento errato~~ ✅ COMPLETATO (1319 fatture corrette)
 
 ### P1 - High
-- [ ] Fix UX pagina /riconciliazione (bottoni percepiti come non funzionanti)
-- [ ] Completare arricchimento dati fornitori (email/PEC)
-- [ ] Aggiornare pagina /operazioni-da-confermare per mostrare match dubbi riconciliazione
+- [ ] Uniformità stilistica UI (2/~60 pagine completate)
+- [ ] Re-importazione dati POS e Versamenti per Prima Nota Cassa
+- [ ] Migliorare intelligenza riconciliazione automatica
 
 ### P2 - Medium
+- [ ] Fix UX pagina /riconciliazione (bottoni percepiti come non funzionanti)
+- [ ] Completare arricchimento dati fornitori (email/PEC)
 - [ ] Implementare importazione PDF generica
 - [ ] Parser PDF per Cespiti
 
