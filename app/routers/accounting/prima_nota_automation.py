@@ -1006,9 +1006,10 @@ async def import_pos(
     """
     Importa incassi POS giornalieri da file Excel.
     
-    Formati supportati:
-    1. Colonne: data, pos1, pos2, pos3, totale
-    2. Colonne: DATA, CONTO, IMPORTO (formato banca)
+    FORMATO DEFINITIVO (XLSX):
+    - DATA (formato YYYY-MM-DD o datetime)
+    - CONTO (sempre "pos")
+    - IMPORTO (numero decimale)
     """
     import pandas as pd
     
@@ -1028,83 +1029,51 @@ async def import_pos(
     
     try:
         if file.filename.lower().endswith('.csv'):
-            # Rileva separatore
-            content_str = content.decode('utf-8', errors='ignore')
-            separator = ';' if ';' in content_str[:500] else ','
-            df = pd.read_csv(io.BytesIO(content), sep=separator)
+            for encoding in ['utf-8-sig', 'utf-8', 'latin-1', 'cp1252']:
+                try:
+                    df = pd.read_csv(io.BytesIO(content), sep=';', encoding=encoding)
+                    break
+                except:
+                    continue
         else:
             df = pd.read_excel(io.BytesIO(content))
         
-        df.columns = df.columns.str.lower().str.strip()
+        logger.info(f"POS - Colonne trovate: {list(df.columns)}")
         
         for idx, row in df.iterrows():
             try:
-                # Trova colonna data
-                data = None
-                for col in ['data', 'date', 'giorno']:
-                    if col in df.columns and pd.notna(row.get(col)):
-                        val = row[col]
-                        # Se è già datetime, formattalo
-                        if hasattr(val, 'strftime'):
-                            data = val.strftime('%Y-%m-%d')
-                        else:
-                            data = parse_italian_date(str(val))
-                        break
+                # DATA - colonna esatta
+                data_val = row.get('DATA')
+                if pd.isna(data_val):
+                    results["skipped"] += 1
+                    continue
+                
+                # Se è datetime, formattalo
+                if hasattr(data_val, 'strftime'):
+                    data = data_val.strftime('%Y-%m-%d')
+                else:
+                    data = parse_italian_date(str(data_val))
                 
                 if not data:
                     results["skipped"] += 1
                     continue
                 
-                # Cerca importo in vari formati
-                totale = 0
+                # IMPORTO - colonna esatta
+                importo_val = row.get('IMPORTO', 0)
+                if pd.isna(importo_val):
+                    results["skipped"] += 1
+                    continue
                 
-                # Formato 1: colonna singola "importo"
-                if 'importo' in df.columns and pd.notna(row.get('importo')):
-                    val = row['importo']
-                    if isinstance(val, (int, float)):
-                        totale = float(val)
-                    else:
-                        totale = parse_italian_amount(str(val))
-                
-                # Formato 2: colonne pos1, pos2, pos3, totale
-                elif any(col in df.columns for col in ['pos1', 'pos 1', 'totale', 'total']):
-                    pos1 = 0
-                    pos2 = 0
-                    pos3 = 0
-                    
-                    for col in ['pos1', 'pos 1']:
-                        if col in df.columns and pd.notna(row.get(col)):
-                            val = row[col]
-                            pos1 = float(val) if isinstance(val, (int, float)) else parse_italian_amount(str(val))
-                            break
-                    
-                    for col in ['pos2', 'pos 2']:
-                        if col in df.columns and pd.notna(row.get(col)):
-                            val = row[col]
-                            pos2 = float(val) if isinstance(val, (int, float)) else parse_italian_amount(str(val))
-                            break
-                    
-                    for col in ['pos3', 'pos 3']:
-                        if col in df.columns and pd.notna(row.get(col)):
-                            val = row[col]
-                            pos3 = float(val) if isinstance(val, (int, float)) else parse_italian_amount(str(val))
-                            break
-                    
-                    # Cerca totale o calcola
-                    for col in ['totale', 'total']:
-                        if col in df.columns and pd.notna(row.get(col)):
-                            val = row[col]
-                            totale = float(val) if isinstance(val, (int, float)) else parse_italian_amount(str(val))
-                            break
-                    
-                    if totale == 0:
-                        totale = pos1 + pos2 + pos3
+                if isinstance(importo_val, (int, float)):
+                    totale = float(importo_val)
+                else:
+                    totale = parse_italian_amount(str(importo_val))
                 
                 if totale <= 0:
                     results["skipped"] += 1
                     continue
                 
-                # CONTROLLO DUPLICATI - verifica se esiste già un POS con stessa data
+                # CONTROLLO DUPLICATI
                 existing_pos = await db[COLLECTION_PRIMA_NOTA_CASSA].find_one({
                     "data": data,
                     "categoria": "POS"
@@ -1112,11 +1081,10 @@ async def import_pos(
                 
                 if existing_pos:
                     results["skipped"] += 1
-                    results["errors"].append({"row": idx + 2, "error": f"Duplicato: POS del {data} già esistente"})
+                    results["errors"].append({"row": idx + 2, "error": f"Duplicato: POS del {data}"})
                     continue
                 
-                # POS = incasso elettronico -> va in CASSA come USCITA
-                # (il denaro esce dalla cassa perché va direttamente sul conto bancario)
+                # POS = USCITA dalla cassa (soldi vanno sul conto bancario)
                 movimento = {
                     "id": str(uuid.uuid4()),
                     "data": data,
@@ -1124,7 +1092,7 @@ async def import_pos(
                     "importo": totale,
                     "descrizione": f"Incasso POS giornaliero del {data}",
                     "categoria": "POS",
-                    "source": "excel_import",
+                    "source": "xlsx_import",
                     "filename": file.filename,
                     "created_at": now
                 }
