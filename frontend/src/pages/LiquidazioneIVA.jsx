@@ -452,7 +452,14 @@ export default function LiquidazioneIVA() {
                       {m.credito_da_riportare > 0 ? formatEuro(m.credito_da_riportare) : '-'}
                     </td>
                     <td style={{ textAlign: 'center' }}>
-                      <span className={`badge ${
+                      <span style={{ 
+                        padding: '4px 10px', 
+                        borderRadius: 6, 
+                        fontSize: 12, 
+                        fontWeight: '600',
+                        background: mese.saldo_iva > 0 ? '#fee2e2' : '#dcfce7',
+                        color: mese.saldo_iva > 0 ? '#dc2626' : '#16a34a'
+                      }}>
                         m.stato === 'Da versare' ? 'amber' :
                         m.stato === 'A credito' ? 'blue' : 'gray'
                       }`}>
