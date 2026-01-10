@@ -104,6 +104,15 @@ class NonConformitaUpdate(BaseModel):
 
 # ==================== ENDPOINTS ====================
 
+@router.get("/motivi-azioni")
+async def get_motivi_azioni() -> Dict[str, Any]:
+    """Lista motivi e azioni disponibili per UI."""
+    return {
+        "motivi": MOTIVI_NON_CONFORMITA,
+        "azioni": AZIONI_CORRETTIVE,
+        "operatori": OPERATORI_HACCP
+    }
+
 @router.get("")
 async def lista_non_conformita(
     anno: Optional[int] = Query(None),
