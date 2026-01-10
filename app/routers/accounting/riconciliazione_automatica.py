@@ -450,7 +450,11 @@ async def riconcilia_estratto_conto() -> Dict[str, Any]:
                     )
             
             # ===== AGGIORNA MOVIMENTO ESTRATTO CONTO =====
-            if match_found or confidence in ["medio", "basso"]:
+            # Salva solo se c'è un match effettivo O se ci sono fatture candidate
+            has_candidates = (match_type == "fatture_multiple" and 
+                            len(match_details.get("fatture_candidate", [])) > 0)
+            
+            if match_found or has_candidates:
                 update_data = {
                     "updated_at": now
                 }
