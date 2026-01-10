@@ -713,7 +713,8 @@ async def import_fattura_integrato(file: UploadFile = File(...)):
         mag_result = await processa_carico_magazzino(
             db, fattura_id, fornitore, 
             parsed.get("linee", []),
-            parsed.get("invoice_date", "")
+            parsed.get("invoice_date", ""),
+            numero_doc
         )
         risultato["magazzino"] = mag_result
     except Exception as e:
