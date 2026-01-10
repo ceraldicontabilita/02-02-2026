@@ -870,8 +870,8 @@ export default function Dashboard() {
       )}
 
       {/* Quick Actions */}
-      <div className="card" style={{ marginTop: 20 }}>
-        <div className="h1" style={{ fontSize: 18 }}>🚀 Azioni Rapide</div>
+      <div style={{ background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', marginTop: 20 }}>
+        <h2 style={{ fontSize: 18, fontWeight: 'bold', color: '#1e3a5f' }}>🚀 Azioni Rapide</h2>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 15, marginTop: 15 }}>
           <Link to="/contabilita" style={quickActionStyle('#e0f2fe', '#0369a1')}>
             <span style={{ fontSize: 20 }}>🧮</span>
