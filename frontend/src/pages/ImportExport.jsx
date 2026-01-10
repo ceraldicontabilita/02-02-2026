@@ -75,18 +75,26 @@ export default function ImportExport() {
     try {
       let allFiles = [];
       
+      // Supporta estensioni multiple (es. ".xlsx,.xml")
+      const extensions = extension.split(',').map(e => e.trim().toLowerCase());
+      
       // Process each input file
       for (const file of files) {
-        if (file.name.toLowerCase().endsWith('.zip') && extractZip) {
-          const extracted = await extractFromZip(file, extension);
-          allFiles.push(...extracted);
-        } else if (file.name.toLowerCase().endsWith(extension)) {
+        const fileName = file.name.toLowerCase();
+        
+        if (fileName.endsWith('.zip') && extractZip) {
+          // Per i ZIP, estrai tutti i tipi supportati
+          for (const ext of extensions) {
+            const extracted = await extractFromZip(file, ext);
+            allFiles.push(...extracted);
+          }
+        } else if (extensions.some(ext => fileName.endsWith(ext))) {
           allFiles.push(file);
         }
       }
 
       if (allFiles.length === 0) {
-        showMessage("error", `Nessun file ${extension.toUpperCase().replace('.', '')} trovato`);
+        showMessage("error", `Nessun file ${extensions.map(e => e.toUpperCase().replace('.', '')).join('/')} trovato`);
         setLoading(false);
         setUploadProgress(prev => ({ ...prev, active: false }));
         return;
