@@ -1312,15 +1312,6 @@ async def import_corrispettivi_xml(
     except Exception as e:
         logger.error(f"Error importing corrispettivi XML: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-            **results
-        }
-        
-    except ET.ParseError as e:
-        logger.error(f"XML Parse Error: {e}")
-        raise HTTPException(status_code=400, detail=f"Errore parsing XML: {str(e)}")
-    except Exception as e:
-        logger.error(f"Error importing corrispettivi XML: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/import-corrispettivi-xml-multipli")
