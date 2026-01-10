@@ -286,7 +286,7 @@ export default function VerificaCoerenza() {
             <Card>
               <CardHeader style={{ padding: '12px 16px' }}>
                 <CardTitle style={{ fontSize: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <FileText className="h-4 w-4 text-orange-600" />
+                  <FileText style={{ height: 16, width: 16, color: '#ea580c' }} />
                   Bonifici vs Banca
                 </CardTitle>
               </CardHeader>
