@@ -362,8 +362,8 @@ export default function ImportExport() {
       icon: "🏦", 
       ref: versamentoFileRef, 
       handler: handleImportVersamenti,
-      accept: ".xlsx,.xls,.csv",
-      desc: "Importa versamenti da file Excel (data, importo, descrizione)",
+      accept: ".csv",
+      desc: "CSV: Ragione Sociale, Data contabile, Data valuta, Banca, Rapporto, Importo, Divisa, Descrizione, Categoria/sottocategoria, Hashtag",
       templateUrl: "/api/import-templates/versamenti"
     },
     { 
@@ -372,8 +372,8 @@ export default function ImportExport() {
       icon: "💳", 
       ref: posFileRef, 
       handler: handleImportPOS,
-      accept: ".xlsx,.xls,.csv",
-      desc: "Importa incassi POS giornalieri (data, POS1, POS2, POS3, totale)",
+      accept: ".xlsx,.xls",
+      desc: "XLSX: DATA, CONTO, IMPORTO",
       templateUrl: "/api/import-templates/pos"
     },
     { 
@@ -382,8 +382,8 @@ export default function ImportExport() {
       icon: "🧾", 
       ref: corrispettiviFileRef, 
       handler: handleImportCorrispettivi,
-      accept: ".xlsx,.xls,.csv",
-      desc: "Importa corrispettivi giornalieri (data, importo, imponibile)",
+      accept: ".xlsx,.xls",
+      desc: "XLSX: Data e ora rilevazione, Ammontare vendite, Imponibile, Imposta",
       templateUrl: "/api/import-templates/corrispettivi"
     },
     { 
@@ -392,8 +392,8 @@ export default function ImportExport() {
       icon: "🏦", 
       ref: estrattoContoFileRef, 
       handler: handleImportEstrattoConto,
-      accept: ".xlsx,.xls,.csv",
-      desc: "Importa estratto conto bancario CSV/Excel (Ragione Sociale, Data contabile, Importo, Descrizione, Categoria)",
+      accept: ".csv",
+      desc: "CSV: Ragione Sociale, Data contabile, Data valuta, Banca, Rapporto, Importo, Divisa, Descrizione, Categoria/sottocategoria, Hashtag",
       templateUrl: "/api/import-templates/estratto-conto"
     },
     { 
