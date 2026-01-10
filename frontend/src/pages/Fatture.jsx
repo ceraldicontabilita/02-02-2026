@@ -721,7 +721,7 @@ export default function Fatture() {
           {selectedInvoice.pagamento && selectedInvoice.pagamento.data_scadenza && (
             <div style={{ marginTop: 15 }}>
               <strong>Pagamento</strong>
-              <div className="small">
+              <div style={{ fontSize: 13, color: '#6b7280' }}>
                 Scadenza: {formatDateIT(selectedInvoice.pagamento.data_scadenza)}<br/>
                 {selectedInvoice.pagamento.istituto_finanziario && `Banca: ${selectedInvoice.pagamento.istituto_finanziario}`}
               </div>
@@ -734,9 +734,9 @@ export default function Fatture() {
       <div style={{ background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', border: '1px solid #e5e7eb' }}>
         <h2 style={{ margin: '0 0 16px 0', fontSize: 18, fontWeight: 'bold', color: '#1e3a5f' }}>Elenco Fatture ({filteredInvoices.length}{activeFiltersCount > 0 ? ` / ${invoices.length}` : ""})</h2>
         {loading ? (
-          <div className="small">Caricamento...</div>
+          <div style={{ fontSize: 13, color: '#6b7280', padding: 20 }}>⏳ Caricamento...</div>
         ) : filteredInvoices.length === 0 ? (
-          <div className="small">
+          <div style={{ fontSize: 13, color: '#6b7280', padding: 20 }}>
             {activeFiltersCount > 0 ? (
               <>
                 Nessuna fattura trovata con i filtri selezionati.<br/>
