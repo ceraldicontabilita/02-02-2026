@@ -1170,11 +1170,16 @@ async def get_lotti_fattura(fattura_id: str):
     """
     Restituisce tutti i lotti generati da una specifica fattura.
     Utile per la stampa etichette.
+    Supporta sia fattura_id (UUID completo) che fattura_riferimento (ID corto).
     """
     db = Database.get_db()
     
+    # Cerca per fattura_id (UUID completo) o fattura_riferimento (ID corto)
     lotti = await db[COL_LOTTI].find(
-        {"fattura_id": fattura_id},
+        {"$or": [
+            {"fattura_id": fattura_id},
+            {"fattura_riferimento": fattura_id[:8] if len(fattura_id) > 8 else fattura_id}
+        ]},
         {"_id": 0}
     ).sort("numero_linea_fattura", 1).to_list(1000)
     
