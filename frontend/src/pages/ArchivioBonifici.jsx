@@ -199,6 +199,53 @@ export default function ArchivioBonifici() {
     }
   };
 
+  // Carica operazioni salari compatibili per associazione
+  const loadOperazioniCompatibili = async (bonifico_id) => {
+    setLoadingOperazioni(true);
+    try {
+      const res = await api.get(`/api/archivio-bonifici/operazioni-salari/${bonifico_id}`);
+      setOperazioniCompatibili(res.data.operazioni_compatibili || []);
+    } catch (error) {
+      console.error('Errore caricamento operazioni:', error);
+      setOperazioniCompatibili([]);
+    }
+    setLoadingOperazioni(false);
+  };
+
+  // Toggle dropdown associazione
+  const toggleAssociaDropdown = (bonifico_id) => {
+    if (associaDropdown === bonifico_id) {
+      setAssociaDropdown(null);
+      setOperazioniCompatibili([]);
+    } else {
+      setAssociaDropdown(bonifico_id);
+      loadOperazioniCompatibili(bonifico_id);
+    }
+  };
+
+  // Associa bonifico a operazione salari
+  const handleAssocia = async (bonifico_id, operazione_id) => {
+    try {
+      await api.post(`/api/archivio-bonifici/associa-salario?bonifico_id=${bonifico_id}&operazione_id=${operazione_id}`);
+      setAssociaDropdown(null);
+      setOperazioniCompatibili([]);
+      loadTransfers();
+    } catch (error) {
+      alert('Errore associazione: ' + (error.response?.data?.detail || error.message));
+    }
+  };
+
+  // Disassocia bonifico
+  const handleDisassocia = async (bonifico_id) => {
+    if (!window.confirm('Rimuovere associazione?')) return;
+    try {
+      await api.delete(`/api/archivio-bonifici/disassocia-salario/${bonifico_id}`);
+      loadTransfers();
+    } catch (error) {
+      alert('Errore: ' + error.message);
+    }
+  };
+
   // Calcola totali
   const totaleImporto = transfers.reduce((sum, t) => sum + (t.importo || 0), 0);
 
