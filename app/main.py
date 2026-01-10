@@ -156,6 +156,7 @@ from app.routers.haccp_v2 import (
     lotti_router as haccp_lotti,
     materie_prime_router as haccp_materie_prime,
     ricette_router as haccp_ricette,
+    ricettario_dinamico_router as haccp_ricettario,
     non_conformi_router as haccp_non_conformi,
     fornitori_router as haccp_fornitori
 )
