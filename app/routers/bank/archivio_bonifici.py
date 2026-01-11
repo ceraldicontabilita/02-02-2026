@@ -1474,3 +1474,239 @@ async def disassocia_bonifico_salario(bonifico_id: str):
         )
     
     return {"success": True, "bonifico_id": bonifico_id}
+
+
+
+@router.post("/transfers/{bonifico_id}/link-estratto-conto")
+async def link_bonifico_to_estratto_conto(
+    bonifico_id: str, 
+    estratto_conto_id: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Collega un bonifico PDF a un movimento dell'estratto conto.
+    Se estratto_conto_id non è fornito, cerca automaticamente per importo e data.
+    """
+    db = Database.get_db()
+    
+    # Trova il bonifico
+    bonifico = await db.bonifici_transfers.find_one({"id": bonifico_id}, {"_id": 0})
+    if not bonifico:
+        raise HTTPException(status_code=404, detail="Bonifico non trovato")
+    
+    movimento_ec = None
+    
+    if estratto_conto_id:
+        # Link manuale
+        movimento_ec = await db["estratto_conto"].find_one({"id": estratto_conto_id}, {"_id": 0})
+        if not movimento_ec:
+            raise HTTPException(status_code=404, detail="Movimento estratto conto non trovato")
+    else:
+        # Cerca automaticamente
+        importo_bonifico = bonifico.get("importo", 0)
+        data_bonifico = bonifico.get("data")
+        
+        if isinstance(data_bonifico, datetime):
+            data_str = data_bonifico.strftime("%Y-%m-%d")
+        elif isinstance(data_bonifico, str):
+            data_str = data_bonifico[:10]
+        else:
+            data_str = None
+        
+        # Cerca movimento per importo simile e data
+        query = {"tipo": "uscita"}
+        
+        if importo_bonifico:
+            query["importo"] = {
+                "$gte": abs(importo_bonifico) - 1,
+                "$lte": abs(importo_bonifico) + 1
+            }
+        
+        if data_str:
+            # Cerca nella stessa data o giorno prima/dopo
+            query["data"] = {"$regex": f"^{data_str[:8]}"}  # Stesso mese
+        
+        # Preferisci movimenti non ancora associati
+        candidates = await db["estratto_conto"].find(
+            {**query, "bonifico_pdf_id": {"$exists": False}},
+            {"_id": 0}
+        ).limit(10).to_list(10)
+        
+        # Match per importo esatto prima
+        for c in candidates:
+            if abs(c.get("importo", 0) - abs(importo_bonifico)) < 0.10:
+                movimento_ec = c
+                break
+        
+        if not movimento_ec and candidates:
+            movimento_ec = candidates[0]
+    
+    if not movimento_ec:
+        return {
+            "success": False,
+            "message": "Nessun movimento estratto conto trovato per questo bonifico"
+        }
+    
+    # Aggiorna il bonifico con il link all'estratto conto
+    await db.bonifici_transfers.update_one(
+        {"id": bonifico_id},
+        {"$set": {
+            "estratto_conto_id": movimento_ec.get("id"),
+            "estratto_conto_data": movimento_ec.get("data"),
+            "estratto_conto_importo": movimento_ec.get("importo"),
+            "estratto_conto_desc": movimento_ec.get("descrizione", "")[:100],
+            "linked_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    # Aggiorna l'estratto conto con il link al bonifico PDF
+    await db["estratto_conto"].update_one(
+        {"id": movimento_ec.get("id")},
+        {"$set": {
+            "bonifico_pdf_id": bonifico_id,
+            "bonifico_pdf_file": bonifico.get("file_name"),
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {
+        "success": True,
+        "bonifico_id": bonifico_id,
+        "estratto_conto_id": movimento_ec.get("id"),
+        "message": f"Bonifico collegato al movimento del {movimento_ec.get('data')}"
+    }
+
+
+@router.post("/riconcilia-automatico")
+async def riconcilia_bonifici_automatico(anno: Optional[int] = Query(None)) -> Dict[str, Any]:
+    """
+    Riconcilia automaticamente i bonifici PDF con i movimenti dell'estratto conto
+    basandosi su importo, data e beneficiario.
+    """
+    db = Database.get_db()
+    
+    # Trova bonifici non ancora collegati
+    query_bonifici = {"estratto_conto_id": {"$exists": False}}
+    if anno:
+        query_bonifici["data"] = {"$regex": f"^{anno}-"}
+    
+    bonifici = await db.bonifici_transfers.find(query_bonifici, {"_id": 0}).to_list(5000)
+    
+    # Trova movimenti estratto conto non collegati
+    query_ec = {
+        "tipo": "uscita",
+        "bonifico_pdf_id": {"$exists": False}
+    }
+    if anno:
+        query_ec["data"] = {"$regex": f"^{anno}"}
+    
+    movimenti_ec = await db["estratto_conto"].find(query_ec, {"_id": 0}).to_list(10000)
+    
+    # Indicizza movimenti per importo
+    ec_by_importo = {}
+    for m in movimenti_ec:
+        imp = round(abs(m.get("importo", 0)), 2)
+        if imp not in ec_by_importo:
+            ec_by_importo[imp] = []
+        ec_by_importo[imp].append(m)
+    
+    riconciliati = 0
+    non_trovati = []
+    
+    for bonifico in bonifici:
+        importo = round(abs(bonifico.get("importo", 0) or 0), 2)
+        data_bonifico = bonifico.get("data")
+        
+        if isinstance(data_bonifico, datetime):
+            data_str = data_bonifico.strftime("%Y-%m-%d")
+        elif isinstance(data_bonifico, str):
+            data_str = str(data_bonifico)[:10]
+        else:
+            data_str = None
+        
+        # Cerca per importo
+        match = None
+        candidates = ec_by_importo.get(importo, [])
+        
+        for c in candidates:
+            c_data = c.get("data", "")[:10]
+            # Preferisci match con stessa data o giorno vicino
+            if data_str and c_data:
+                if c_data == data_str or abs((datetime.fromisoformat(c_data) - datetime.fromisoformat(data_str[:10])).days) <= 3:
+                    match = c
+                    break
+        
+        if not match and candidates:
+            # Prendi il primo disponibile
+            match = candidates[0]
+        
+        if match:
+            # Collega
+            await db.bonifici_transfers.update_one(
+                {"id": bonifico.get("id")},
+                {"$set": {
+                    "estratto_conto_id": match.get("id"),
+                    "estratto_conto_data": match.get("data"),
+                    "estratto_conto_importo": match.get("importo"),
+                    "linked_at": datetime.now(timezone.utc).isoformat()
+                }}
+            )
+            
+            await db["estratto_conto"].update_one(
+                {"id": match.get("id")},
+                {"$set": {
+                    "bonifico_pdf_id": bonifico.get("id"),
+                    "bonifico_pdf_file": bonifico.get("file_name"),
+                    "updated_at": datetime.now(timezone.utc).isoformat()
+                }}
+            )
+            
+            # Rimuovi dalla lista per evitare duplicati
+            ec_by_importo[importo].remove(match)
+            riconciliati += 1
+        else:
+            non_trovati.append({
+                "id": bonifico.get("id"),
+                "importo": importo,
+                "data": data_str,
+                "beneficiario": (bonifico.get("beneficiario") or {}).get("nome", "")
+            })
+    
+    return {
+        "success": True,
+        "riconciliati": riconciliati,
+        "non_trovati_count": len(non_trovati),
+        "non_trovati_sample": non_trovati[:10],
+        "message": f"Riconciliati {riconciliati} bonifici PDF con estratto conto"
+    }
+
+
+@router.get("/transfers/{bonifico_id}/pdf")
+async def get_bonifico_pdf(bonifico_id: str):
+    """
+    Restituisce il PDF del bonifico se disponibile.
+    """
+    db = Database.get_db()
+    
+    bonifico = await db.bonifici_transfers.find_one({"id": bonifico_id})
+    if not bonifico:
+        raise HTTPException(status_code=404, detail="Bonifico non trovato")
+    
+    # Cerca il file PDF salvato
+    pdf_content = bonifico.get("pdf_content")  # Base64
+    if not pdf_content:
+        raise HTTPException(status_code=404, detail="PDF non disponibile per questo bonifico")
+    
+    import base64
+    try:
+        pdf_bytes = base64.b64decode(pdf_content)
+    except Exception:
+        raise HTTPException(status_code=500, detail="Errore decodifica PDF")
+    
+    filename = bonifico.get("file_name", "bonifico.pdf")
+    
+    return StreamingResponse(
+        io.BytesIO(pdf_bytes),
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'inline; filename="{filename}"'}
+    )
+
