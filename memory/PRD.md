@@ -30,8 +30,21 @@ Usare SEMPRE tag `<a>` con `target="_blank"`:
 
 ### 3. Pagine Legacy
 **NON creare versioni separate per mobile/desktop.**
-- Usa CSS responsive direttamente
-- Elimina pagine legacy duplicate (es. PrimaNotaMobile.jsx)
+- Usa CSS responsive direttamente (`gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))'`)
+- Elimina pagine legacy duplicate
+- **Pagine eliminate il 2026-01-11:**
+  - `PrimaNotaBanca.jsx`
+  - `PrimaNotaCassa.jsx`
+  - `PrimaNotaMobile.jsx`
+
+### 4. Tab/Sezioni Importanti
+Rendere i tab **sticky** (posizione fissa) su mobile per permettere navigazione veloce:
+```jsx
+position: 'sticky',
+top: 0,
+zIndex: 100,
+background: '#f9fafb'
+```
 
 ---
 
