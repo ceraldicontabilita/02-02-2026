@@ -298,8 +298,6 @@ async def riconcilia_estratto_conto() -> Dict[str, Any]:
                             {"total_amount": {"$gte": importo * 0.5, "$lte": importo * 2}}
                         ]}
                     ]
-                    ],
-                    "pagato": {"$ne": True}
                 }).to_list(50)
                 
                 # Calcola score per ogni fattura
@@ -308,15 +306,24 @@ async def riconcilia_estratto_conto() -> Dict[str, Any]:
                     score = 0
                     fornitore_fatt = f.get("cedente_denominazione") or f.get("supplier_name") or ""
                     numero_fatt = f.get("numero_fattura") or f.get("invoice_number") or ""
+                    data_fatt = f.get("data") or f.get("invoice_date") or ""
+                    data_scadenza = f.get("data_scadenza") or ""
                     
-                    # Score 1: Importo esatto (già filtrato, ma confermiamo)
+                    # Score 1: Importo esatto (+10) vs importo parziale (+3)
                     imp_fatt = f.get("importo_totale") or f.get("total_amount") or 0
                     if abs(imp_fatt - importo) <= 0.05:
-                        score += 10
+                        score += 10  # Match esatto
+                    elif abs(imp_fatt - importo) <= imp_fatt * 0.1:  # ±10%
+                        score += 5  # Match quasi esatto
+                    else:
+                        score += 2  # Match parziale (possibile rata)
                     
-                    # Score 2: Match fornitore nella descrizione EC
-                    if match_fornitore_descrizione(fornitore_fatt, descrizione):
-                        score += 5
+                    # Score 2: Match fornitore nella descrizione EC (con fuzzy)
+                    fornitore_match = match_fornitore_descrizione(fornitore_fatt, descrizione)
+                    if fornitore_match == 2:
+                        score += 5  # Match esatto
+                    elif fornitore_match == 1:
+                        score += 3  # Match fuzzy
                     
                     # Score 3: Match numero fattura nella descrizione EC
                     if match_numero_fattura_descrizione(numero_fatt, descrizione):
@@ -327,6 +334,17 @@ async def riconcilia_estratto_conto() -> Dict[str, Any]:
                         num_fatt_clean = re.sub(r'^(FT|FAT|FATT|INV|N\.?|NR\.?)\s*', '', numero_fatt.upper())
                         if num_fattura_ec in num_fatt_clean or num_fatt_clean in num_fattura_ec:
                             score += 5
+                    
+                    # Score 5: Data movimento vicina a data scadenza (+2)
+                    if data_ec and data_scadenza:
+                        try:
+                            dt_ec = datetime.fromisoformat(data_ec.replace('Z', '+00:00')) if isinstance(data_ec, str) else data_ec
+                            dt_scad = datetime.fromisoformat(data_scadenza.replace('Z', '+00:00')) if isinstance(data_scadenza, str) else data_scadenza
+                            diff_days = abs((dt_ec - dt_scad).days)
+                            if diff_days <= 7:
+                                score += 2
+                        except:
+                            pass
                     
                     fatture_scored.append((f, score))
                 
