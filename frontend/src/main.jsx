@@ -146,6 +146,7 @@ const Ricette = lazy(() => import("./pages/Ricette.jsx"));
 const DizionarioProdotti = lazy(() => import("./pages/DizionarioProdotti.jsx"));
 const RegistroLotti = lazy(() => import("./pages/RegistroLotti.jsx"));
 const MagazzinoDoppiaVerita = lazy(() => import("./pages/MagazzinoDoppiaVerita.jsx"));
+const Inventario = lazy(() => import("./pages/Inventario.jsx"));
 const UtileObiettivo = lazy(() => import("./pages/UtileObiettivo.jsx"));
 
 // Import/Export
