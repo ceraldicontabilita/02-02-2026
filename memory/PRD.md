@@ -397,4 +397,15 @@ Le ricette sono ora gestite dalla pagina `/ricette` (Ricette & Food Cost) con fo
   - **CicloPassivoIntegrato.jsx**: Aggiunto pulsante "📄" per le scadenze con fattura associata  
   - **Riconciliazione.jsx**: Aggiunto pulsante "📄" per le fatture matching
   - **Scadenze.jsx**: Aggiunto pulsante "📄 PDF" accanto ai dettagli per scadenze fattura
+- **Visualizzazione Fatture Migliorata**: 
+  - Template HTML migliorato per fatture senza XML (stile blu professionale)
+  - Caricamento automatico righe da `dettaglio_righe_fatture`
+  - Visualizzazione dati fornitore completi (CF, indirizzo, città)
+  - Sezione cliente/destinatario
+  - Sezione dati pagamento (modalità, scadenza, IBAN)
+- **Riconciliazione Automatica v3 (Task P2)**:
+  - Fuzzy matching per nomi fornitori usando `rapidfuzz`
+  - Match parziale importi per pagamenti a rate (±10% tolleranza)
+  - Score basato su data scadenza vicina al movimento
+  - Risultato test: 109 movimenti riconciliati automaticamente
 
