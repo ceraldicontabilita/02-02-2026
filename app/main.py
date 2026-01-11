@@ -266,6 +266,9 @@ app.include_router(import_templates.router, prefix="/api/import-templates", tags
 # --- Dizionario Prodotti (Food Cost & Tracciabilità) ---
 app.include_router(dizionario_prodotti.router, prefix="/api/dizionario-prodotti", tags=["Dizionario Prodotti"])
 
+# --- Inventario ---
+app.include_router(inventario.router, prefix="/api", tags=["Inventario"])
+
 # --- Sincronizzazione Relazionale ---
 app.include_router(sync_relazionale.router, prefix="/api", tags=["Sincronizzazione Relazionale"])
 
