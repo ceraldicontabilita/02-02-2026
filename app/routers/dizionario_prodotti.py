@@ -158,6 +158,39 @@ async def get_prodotti_dizionario(
     }
 
 
+@router.get("/fornitori")
+async def get_fornitori_dizionario() -> Dict[str, Any]:
+    """
+    Lista fornitori presenti nel dizionario prodotti con conteggio.
+    """
+    db = Database.get_db()
+    
+    pipeline = [
+        {"$group": {
+            "_id": "$fornitore_nome",
+            "count": {"$sum": 1},
+            "con_prezzo": {"$sum": {"$cond": [{"$gt": ["$prezzo_per_kg", 0]}, 1, 0]}},
+            "senza_prezzo": {"$sum": {"$cond": [{"$or": [
+                {"$eq": ["$prezzo_per_kg", None]},
+                {"$eq": ["$prezzo_per_kg", 0]}
+            ]}, 1, 0]}}
+        }},
+        {"$sort": {"count": -1}},
+        {"$limit": 100}
+    ]
+    
+    fornitori = []
+    async for doc in db[COLLECTION_DIZIONARIO].aggregate(pipeline):
+        fornitori.append({
+            "nome": doc["_id"] or "Sconosciuto",
+            "totale_prodotti": doc["count"],
+            "con_prezzo": doc["con_prezzo"],
+            "senza_prezzo": doc["senza_prezzo"]
+        })
+    
+    return {"fornitori": fornitori}
+
+
 @router.post("/prodotti/scan-fatture")
 async def scan_fatture_per_prodotti(
     anno: int = Query(default=2025),
