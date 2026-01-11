@@ -735,6 +735,10 @@ async def riconcilia_stipendi_automatico(anno: Optional[int] = Query(None)) -> D
             if len(parts) >= 2:
                 nome_inv = " ".join(reversed(parts))
                 dipendenti_map[nome_inv] = {"nome": nome}
+            # Aggiungi anche singoli cognomi/nomi (per match parziale)
+            for p in parts:
+                if len(p) > 3:  # Solo parole significative
+                    dipendenti_map[p] = {"nome": nome}
     
     # Se vuota, prova con collezione dipendenti
     if not dipendenti_map:
