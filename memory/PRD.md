@@ -392,4 +392,9 @@ Le ricette sono ora gestite dalla pagina `/ricette` (Ricette & Food Cost) con fo
   - Endpoint `GET /api/magazzino-dv/fornitori-esclusi` per visualizzare i fornitori con flag attivo
   - UI nella pagina "Magazzino Doppia Verità" con pulsante "Pulizia Fornitori Esclusi" e pannello di conferma
   - La pulizia rimuove prodotti da `warehouse_inventory` e `magazzino_doppia_verita`
+- **Pulsanti PDF Fatture su tutte le pagine**:
+  - **Fatture.jsx**: Aggiunto pulsante "📄 PDF" per visualizzare fatture in formato AssoInvoice
+  - **CicloPassivoIntegrato.jsx**: Aggiunto pulsante "📄" per le scadenze con fattura associata  
+  - **Riconciliazione.jsx**: Aggiunto pulsante "📄" per le fatture matching
+  - **Scadenze.jsx**: Aggiunto pulsante "📄 PDF" accanto ai dettagli per scadenze fattura
 
