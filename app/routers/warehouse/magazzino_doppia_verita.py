@@ -29,10 +29,12 @@ async def list_prodotti_magazzino(
     search: Optional[str] = Query(None),
     solo_differenze: bool = Query(False, description="Mostra solo prodotti con differenze"),
     solo_scorte_basse: bool = Query(False),
-    categoria: Optional[str] = Query(None)
+    categoria: Optional[str] = Query(None),
+    anno: Optional[int] = Query(None, description="Filtra per anno di creazione prodotto")
 ) -> Dict[str, Any]:
     """
     Lista prodotti con giacenza teorica e reale.
+    Filtra per anno se specificato.
     """
     db = Database.get_db()
     
@@ -41,7 +43,8 @@ async def list_prodotti_magazzino(
         query["$or"] = [
             {"nome": {"$regex": search, "$options": "i"}},
             {"codice": {"$regex": search, "$options": "i"}},
-            {"fornitore": {"$regex": search, "$options": "i"}}
+            {"fornitore": {"$regex": search, "$options": "i"}},
+            {"fornitore_principale": {"$regex": search, "$options": "i"}}
         ]
     
     if solo_differenze:
@@ -52,6 +55,10 @@ async def list_prodotti_magazzino(
     
     if categoria:
         query["categoria"] = categoria
+    
+    # Filtra per anno se specificato
+    if anno:
+        query["created_at"] = {"$regex": f"^{anno}"}
     
     prodotti = await db["magazzino_doppia_verita"].find(
         query, {"_id": 0}
