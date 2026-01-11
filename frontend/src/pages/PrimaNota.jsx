@@ -1163,7 +1163,32 @@ function TransactionDetailModal({ movimento, tipo, formatEuro, formatDate, onClo
             )}
             
             {movimento.fattura_id && (
-              <DetailRow label="ID Fattura" value={movimento.fattura_id} icon="🧾" />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <DetailRow label="ID Fattura" value={movimento.fattura_id} icon="🧾" />
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    window.open(`${process.env.REACT_APP_BACKEND_URL}/api/fatture-ricevute/fattura/${movimento.fattura_id}/view-assoinvoice`, '_blank');
+                  }}
+                  style={{
+                    padding: '6px 12px',
+                    background: '#2196f3',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: 6,
+                    cursor: 'pointer',
+                    fontSize: 12,
+                    fontWeight: 'bold',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4
+                  }}
+                  title="Visualizza Fattura in formato AssoInvoice"
+                  data-testid={`view-fattura-${movimento.id}`}
+                >
+                  📄 Vedi PDF
+                </button>
+              </div>
             )}
             
             {movimento.corrispettivo_id && (
