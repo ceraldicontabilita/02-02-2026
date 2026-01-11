@@ -875,7 +875,7 @@ async def get_movimenti_stipendi(
     db = Database.get_db()
     
     query = {
-        "descrizione_originale": {"$regex": "VOSTRA DISPOSIZIONE|VS\\.DISP", "$options": "i"},
+        "descrizione": {"$regex": "VOSTRA DISPOSIZIONE|VS\\.DISP", "$options": "i"},
         "tipo": "uscita"
     }
     
@@ -888,7 +888,7 @@ async def get_movimenti_stipendi(
             {"riconciliato_salario": False}
         ]
     
-    movimenti = await db["estratto_conto_movimenti"].find(query, {"_id": 0}).sort("data", -1).to_list(1000)
+    movimenti = await db["estratto_conto"].find(query, {"_id": 0}).sort("data", -1).to_list(1000)
     
     # Raggruppa per dipendente se riconciliato
     per_dipendente = {}
