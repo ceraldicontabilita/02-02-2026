@@ -227,7 +227,19 @@ async def processa_carico_magazzino(db, fattura_id: str, fornitore: Dict, linee:
     """
     Processa il carico a magazzino per ogni riga della fattura.
     Crea movimenti di carico, aggiorna giacenze e genera lotti HACCP con tracciabilità completa.
+    
+    NOTA: I fornitori con flag esclude_magazzino=True vengono saltati.
     """
+    # Controlla se il fornitore è escluso dal magazzino
+    if fornitore.get("esclude_magazzino", False):
+        return {
+            "movimenti_creati": 0,
+            "lotti_creati": 0,
+            "lotti": [],
+            "skipped": True,
+            "reason": "Fornitore escluso dal magazzino"
+        }
+    
     movimenti_creati = 0
     lotti_creati = 0
     lotti_dettaglio = []
