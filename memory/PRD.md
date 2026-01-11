@@ -379,3 +379,17 @@ Il modulo HACCP completo (Temperature, Sanificazione, Ricettario Dinamico, Libro
 
 ### Sistema Ricette Semplificato
 Le ricette sono ora gestite dalla pagina `/ricette` (Ricette & Food Cost) con focus sul calcolo del costo ingredienti, senza le funzionalità HACCP precedenti.
+
+---
+
+## Changelog - Gennaio 2026
+
+### 2026-01-11
+- **Foglio Stile AssoInvoice**: Implementato il foglio di stile `FoglioStileAssoSoftware.xsl` fornito dall'utente per la visualizzazione delle fatture XML in formato HTML professionale.
+- **Salvataggio XML Content**: Modificato l'import delle fatture (`/api/fatture-ricevute/import-xml`, `import-xml-multipli`, `import-zip`) per salvare il contenuto XML originale nel campo `xml_content`, necessario per la trasformazione XSL.
+- **Pulizia Magazzino Fornitori Esclusi**: Implementata funzionalità completa:
+  - Endpoint `POST /api/magazzino-dv/pulizia-fornitori-esclusi` (dry_run per anteprima, effettivo per rimozione)
+  - Endpoint `GET /api/magazzino-dv/fornitori-esclusi` per visualizzare i fornitori con flag attivo
+  - UI nella pagina "Magazzino Doppia Verità" con pulsante "Pulizia Fornitori Esclusi" e pannello di conferma
+  - La pulizia rimuove prodotti da `warehouse_inventory` e `magazzino_doppia_verita`
+
