@@ -575,10 +575,29 @@ export default function Scadenze() {
                         alignItems: 'center',
                         gap: 4
                       }}
-                      title="Visualizza Fattura"
+                      title="Visualizza Fattura (Modal)"
                       data-testid={`view-invoice-${s.fattura_id || s.id}`}
                     >
-                      {loadingInvoice ? '⏳' : '📄'} Vedi
+                      {loadingInvoice ? '⏳' : '👁️'} Dettagli
+                    </button>
+                    <button
+                      onClick={() => window.open(`/api/fatture-ricevute/fattura/${s.fattura_id || s.id}/view-assoinvoice`, '_blank')}
+                      style={{
+                        padding: '6px 12px',
+                        background: '#10b981',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: 6,
+                        cursor: 'pointer',
+                        fontSize: 12,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 4
+                      }}
+                      title="Visualizza PDF Fattura"
+                      data-testid={`pdf-invoice-${s.fattura_id || s.id}`}
+                    >
+                      📄 PDF
                     </button>
                   )}
                 </div>
