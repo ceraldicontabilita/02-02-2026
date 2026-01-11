@@ -1005,9 +1005,12 @@ function MovementsTable({ movimenti, tipo, loading, formatEuro, formatDate, onDe
                 </td>
                 <td style={{ padding: '6px 8px', textAlign: 'center' }}>
                   {mov.fattura_id ? (
-                    <button
-                      onClick={() => window.open(`/api/fatture-ricevute/fattura/${mov.fattura_id}/view-assoinvoice`, '_blank')}
+                    <a
+                      href={`/api/fatture-ricevute/fattura/${mov.fattura_id}/view-assoinvoice`}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       style={{
+                        display: 'inline-block',
                         padding: '4px 10px',
                         background: '#2196f3',
                         color: 'white',
@@ -1015,17 +1018,21 @@ function MovementsTable({ movimenti, tipo, loading, formatEuro, formatDate, onDe
                         borderRadius: 4,
                         cursor: 'pointer',
                         fontSize: 10,
-                        fontWeight: 'bold'
+                        fontWeight: 'bold',
+                        textDecoration: 'none'
                       }}
                       title="Visualizza Fattura AssoInvoice"
                       data-testid={`view-fattura-${mov.id || idx}`}
                     >
                       📄 Vedi
-                    </button>
+                    </a>
                   ) : mov.bonifico_pdf_id ? (
-                    <button
-                      onClick={() => window.open(`/api/archivio-bonifici/transfers/${mov.bonifico_pdf_id}/pdf`, '_blank')}
+                    <a
+                      href={`/api/archivio-bonifici/transfers/${mov.bonifico_pdf_id}/pdf`}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       style={{
+                        display: 'inline-block',
                         padding: '4px 10px',
                         background: '#9c27b0',
                         color: 'white',
@@ -1033,13 +1040,14 @@ function MovementsTable({ movimenti, tipo, loading, formatEuro, formatDate, onDe
                         borderRadius: 4,
                         cursor: 'pointer',
                         fontSize: 10,
-                        fontWeight: 'bold'
+                        fontWeight: 'bold',
+                        textDecoration: 'none'
                       }}
                       title="Visualizza Bonifico PDF"
                       data-testid={`view-bonifico-${mov.id || idx}`}
                     >
                       📎 PDF
-                    </button>
+                    </a>
                   ) : (
                     <span style={{ color: '#9ca3af', fontSize: 10 }}>-</span>
                   )}
