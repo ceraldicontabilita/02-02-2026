@@ -296,6 +296,31 @@ async def api_fatture_to_banca() -> Dict[str, Any]:
     return result
 
 
+@router.get("/fatture-cassa-dettaglio")
+async def api_fatture_cassa_dettaglio() -> Dict[str, Any]:
+    """
+    Restituisce dettaglio fatture associate a pagamenti in cassa.
+    """
+    db = Database.get_db()
+    
+    # Fatture con prima_nota_cassa_id popolato
+    fatture_cassa = await db["invoices"].find({
+        "prima_nota_cassa_id": {"$exists": True, "$ne": None}
+    }, {"_id": 0, "id": 1, "invoice_number": 1, "supplier_name": 1, "total_amount": 1, "metodo_pagamento": 1}).to_list(1000)
+    
+    # Movimenti prima nota cassa con fattura_id
+    movimenti_con_fattura = await db["prima_nota_cassa"].find({
+        "fattura_id": {"$exists": True, "$ne": None}
+    }, {"_id": 0, "id": 1, "descrizione": 1, "importo": 1, "fattura_id": 1}).to_list(1000)
+    
+    return {
+        "fatture_associate_cassa": len(fatture_cassa),
+        "movimenti_con_fattura": len(movimenti_con_fattura),
+        "esempi_fatture": fatture_cassa[:10],
+        "esempi_movimenti": movimenti_con_fattura[:10]
+    }
+
+
 @router.post("/sync-fattura/{fattura_id}")
 async def api_sync_fattura(fattura_id: str) -> Dict[str, Any]:
     """
