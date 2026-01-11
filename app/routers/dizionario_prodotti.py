@@ -100,6 +100,7 @@ def normalizza_nome_prodotto(descrizione: str) -> str:
 async def get_prodotti_dizionario(
     search: Optional[str] = None,
     fornitore_id: Optional[str] = None,
+    fornitore_nome: Optional[str] = None,
     solo_senza_peso: bool = False,
     solo_senza_prezzo: bool = False,
     limit: int = 100,
@@ -110,20 +111,37 @@ async def get_prodotti_dizionario(
     """
     db = Database.get_db()
     
-    query = {}
+    # Build query con $and per combinare filtri
+    and_conditions = []
+    
     if search:
-        query["$or"] = [
-            {"descrizione": {"$regex": search, "$options": "i"}},
-            {"nome_normalizzato": {"$regex": search.lower(), "$options": "i"}},
-            {"aliases": {"$regex": search, "$options": "i"}}
-        ]
+        and_conditions.append({
+            "$or": [
+                {"descrizione": {"$regex": search, "$options": "i"}},
+                {"nome_normalizzato": {"$regex": search.lower(), "$options": "i"}},
+                {"aliases": {"$regex": search, "$options": "i"}}
+            ]
+        })
+    
     if fornitore_id:
-        query["fornitore_id"] = fornitore_id
+        and_conditions.append({"fornitore_id": fornitore_id})
+    
+    if fornitore_nome:
+        and_conditions.append({"fornitore_nome": {"$regex": fornitore_nome, "$options": "i"}})
+    
     if solo_senza_peso:
-        query["peso_grammi"] = None
+        and_conditions.append({"peso_grammi": None})
+    
     if solo_senza_prezzo:
-        query["$or"] = query.get("$or", [])
-        query["prezzo_per_kg"] = {"$in": [None, 0]}
+        and_conditions.append({
+            "$or": [
+                {"prezzo_per_kg": None},
+                {"prezzo_per_kg": {"$exists": False}},
+                {"prezzo_per_kg": 0}
+            ]
+        })
+    
+    query = {"$and": and_conditions} if and_conditions else {}
     
     # Count totale per paginazione
     totale = await db[COLLECTION_DIZIONARIO].count_documents(query)
