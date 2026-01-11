@@ -163,21 +163,39 @@ async def match_fatture_con_prima_nota_cassa(db) -> Dict[str, Any]:
     results = {
         "matched": 0,
         "not_matched": 0,
+        "already_linked": 0,
         "details": []
     }
     
-    # Prendi tutti i movimenti prima nota cassa (uscite = pagamenti fatture)
+    # Prendi tutti i movimenti prima nota cassa - pagamenti fornitori
+    # Categoria può essere "Pagamento fornitore" o "Fornitori"
     movimenti_cassa = await db["prima_nota_cassa"].find({
         "tipo": "uscita",
-        "categoria": "Fornitori"
+        "$or": [
+            {"categoria": "Pagamento fornitore"},
+            {"categoria": "Fornitori"},
+            {"categoria": {"$regex": "fornitore", "$options": "i"}}
+        ],
+        "fattura_id": {"$exists": False}  # Solo quelli non ancora associati
     }, {"_id": 0}).to_list(10000)
     
     for mov in movimenti_cassa:
-        numero = mov.get("numero_fattura", "").strip()
-        fornitore = mov.get("fornitore", "").strip().upper()
+        # Prova a estrarre numero fattura dalla descrizione o dal campo riferimento
+        riferimento = mov.get("riferimento", "")
+        descrizione = mov.get("descrizione", "")
         importo = mov.get("importo", 0)
         
+        # Estrai numero fattura
+        numero = riferimento
+        if not numero and "fattura" in descrizione.lower():
+            # Prova a estrarre da descrizione tipo "Pagamento fattura 123 - Fornitore"
+            import re
+            match = re.search(r'fattura\s+(\S+)', descrizione, re.IGNORECASE)
+            if match:
+                numero = match.group(1)
+        
         if not numero or not importo:
+            results["not_matched"] += 1
             continue
         
         # Cerca fattura corrispondente
@@ -188,8 +206,8 @@ async def match_fatture_con_prima_nota_cassa(db) -> Dict[str, Any]:
                     {"numero_fattura": {"$regex": numero, "$options": "i"}}
                 ]},
                 {"$or": [
-                    {"total_amount": {"$gte": importo - 0.10, "$lte": importo + 0.10}},
-                    {"importo_totale": {"$gte": importo - 0.10, "$lte": importo + 0.10}}
+                    {"total_amount": {"$gte": importo - 0.50, "$lte": importo + 0.50}},
+                    {"importo_totale": {"$gte": importo - 0.50, "$lte": importo + 0.50}}
                 ]}
             ]
         }, {"_id": 0})
