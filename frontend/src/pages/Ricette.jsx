@@ -33,18 +33,66 @@ export default function Ricette() {
     porzioni: 10,
     prezzo_vendita: 0,
     allergeni: [],
-    ingredienti: [{ nome: '', quantita: '', unita: 'g' }]
+    ingredienti: [{ nome: '', quantita: '', unita: 'g', prodotto_id: null }]
   });
   const [saving, setSaving] = useState(false);
 
   // Filtro alfabetico
   const [letterFilter, setLetterFilter] = useState('');
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+  
+  // Dizionario prodotti per autocomplete
+  const [prodottiSuggestions, setProdottiSuggestions] = useState([]);
+  const [searchingProdotti, setSearchingProdotti] = useState(false);
+  const [activeIngredientIndex, setActiveIngredientIndex] = useState(null);
+  const [foodCost, setFoodCost] = useState(null);
+  const [dizionarioStats, setDizionarioStats] = useState(null);
 
   useEffect(() => {
     loadRicette();
     loadCategorie();
+    loadDizionarioStats();
   }, [search, categoria, letterFilter]);
+  
+  async function loadDizionarioStats() {
+    try {
+      const res = await api.get('/api/dizionario-prodotti/stats');
+      setDizionarioStats(res.data);
+    } catch (e) {
+      console.log('Dizionario stats non disponibile');
+    }
+  }
+  
+  async function searchProdotti(query) {
+    if (!query || query.length < 2) {
+      setProdottiSuggestions([]);
+      return;
+    }
+    setSearchingProdotti(true);
+    try {
+      const res = await api.get(`/api/dizionario-prodotti/prodotti/search-per-ingrediente?ingrediente=${encodeURIComponent(query)}`);
+      setProdottiSuggestions(res.data.prodotti || []);
+    } catch (e) {
+      console.error('Errore ricerca prodotti:', e);
+    }
+    setSearchingProdotti(false);
+  }
+  
+  async function calcolaFoodCostRicetta(ingredienti) {
+    try {
+      const payload = ingredienti.filter(i => i.nome && i.quantita).map(i => ({
+        nome: i.nome,
+        quantita_grammi: parseFloat(i.quantita) || 0,
+        prodotto_id: i.prodotto_id
+      }));
+      if (payload.length === 0) return;
+      
+      const res = await api.post('/api/dizionario-prodotti/calcola-food-cost', payload);
+      setFoodCost(res.data);
+    } catch (e) {
+      console.error('Errore calcolo food cost:', e);
+    }
+  }
 
   async function loadRicette() {
     setLoading(true);
