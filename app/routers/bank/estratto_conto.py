@@ -749,10 +749,9 @@ async def riconcilia_stipendi_automatico(anno: Optional[int] = Query(None)) -> D
     
     logger.info(f"Caricati {len(dipendenti_map)} nomi dipendenti")
     
-    # Cerca i bonifici "VOSTRA DISPOSIZIONE" non ancora riconciliati
+    # Cerca i bonifici "VOSTRA DISPOSIZIONE" con nome dipendente non ancora riconciliati
     query = {
-        "descrizione_originale": {"$regex": "VOSTRA DISPOSIZIONE|VS\\.DISP", "$options": "i"},
-        "tipo": "uscita",
+        "descrizione_originale": {"$regex": "VOSTRA DISPOSIZIONE.*FAVORE|FAVORE.*", "$options": "i"},
         "$or": [
             {"riconciliato_salario": {"$exists": False}},
             {"riconciliato_salario": False}
