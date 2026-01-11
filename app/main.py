@@ -141,25 +141,6 @@ from app.routers import (
     gestione_iva_speciale, configurazioni, alerts, import_templates
 )
 
-# --- HACCP V2 System (Nuovo sistema completo) ---
-from app.routers.haccp_v2 import (
-    temperature_positive_router as haccp_temp_positive,
-    temperature_negative_router as haccp_temp_negative,
-    sanificazione_router as haccp_sanificazione,
-    disinfestazione_router as haccp_disinfestazione,
-    anomalie_router as haccp_anomalie,
-    chiusure_router as haccp_chiusure,
-    manuale_haccp_router as haccp_manuale,
-    lotti_router as haccp_lotti,
-    materie_prime_router as haccp_materie_prime,
-    ricette_router as haccp_ricette,
-    ricettario_dinamico_router as haccp_ricettario,
-    non_conformi_router as haccp_non_conformi,
-    fornitori_router as haccp_fornitori,
-    libro_allergeni_router as haccp_allergeni,
-    ricette_web_search_router as haccp_ricette_web
-)
-
 
 # =============================================================================
 # ROUTER REGISTRATION
