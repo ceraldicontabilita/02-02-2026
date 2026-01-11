@@ -66,19 +66,58 @@ export default function Ricette() {
     }
   }
   
-  async function searchProdotti(query) {
+  // NUOVO: Apri modal selezione prodotto
+  function openProdottiModal(target, index) {
+    setProdottiModalTarget(target);
+    setProdottiModalIndex(index);
+    setProdottiSearch('');
+    setProdottiList([]);
+    setShowProdottiModal(true);
+  }
+  
+  // NUOVO: Cerca prodotti nel modal
+  async function searchProdottiModal(query) {
+    setProdottiSearch(query);
     if (!query || query.length < 2) {
-      setProdottiSuggestions([]);
+      setProdottiList([]);
       return;
     }
-    setSearchingProdotti(true);
+    setLoadingProdotti(true);
     try {
       const res = await api.get(`/api/dizionario-prodotti/prodotti/search-per-ingrediente?ingrediente=${encodeURIComponent(query)}`);
-      setProdottiSuggestions(res.data.prodotti || []);
+      setProdottiList(res.data.prodotti || []);
     } catch (e) {
       console.error('Errore ricerca prodotti:', e);
     }
-    setSearchingProdotti(false);
+    setLoadingProdotti(false);
+  }
+  
+  // NUOVO: Seleziona prodotto dal modal
+  function selectProdottoFromModal(prodotto) {
+    if (prodottiModalTarget === 'edit' && editingRicetta) {
+      setEditingRicetta(prev => ({
+        ...prev,
+        ingredienti: prev.ingredienti.map((ing, i) => i === prodottiModalIndex ? {
+          ...ing,
+          nome: prodotto.descrizione,
+          prodotto_id: prodotto.id,
+          fornitore: prodotto.fornitore_nome,
+          prezzo_kg: prodotto.prezzo_per_kg
+        } : ing)
+      }));
+    } else if (prodottiModalTarget === 'new') {
+      setNewRicetta(prev => ({
+        ...prev,
+        ingredienti: prev.ingredienti.map((ing, i) => i === prodottiModalIndex ? {
+          ...ing,
+          nome: prodotto.descrizione,
+          prodotto_id: prodotto.id,
+          fornitore: prodotto.fornitore_nome,
+          prezzo_kg: prodotto.prezzo_per_kg
+        } : ing)
+      }));
+    }
+    setShowProdottiModal(false);
   }
   
   async function calcolaFoodCostRicetta(ingredienti) {
