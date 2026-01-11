@@ -1007,10 +1007,7 @@ function MovementsTable({ movimenti, tipo, loading, formatEuro, formatDate, onDe
                 <td style={{ padding: '6px 8px', textAlign: 'center' }}>
                   {mov.fattura_id ? (
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        window.open(`/api/fatture-ricevute/fattura/${mov.fattura_id}/view-assoinvoice`, '_blank');
-                      }}
+                      onClick={() => window.open(`/api/fatture-ricevute/fattura/${mov.fattura_id}/view-assoinvoice`, '_blank')}
                       style={{
                         padding: '4px 10px',
                         background: '#2196f3',
@@ -1021,17 +1018,14 @@ function MovementsTable({ movimenti, tipo, loading, formatEuro, formatDate, onDe
                         fontSize: 10,
                         fontWeight: 'bold'
                       }}
-                      title="Visualizza Fattura"
-                      data-testid={`view-fattura-table-${mov.id || idx}`}
+                      title="Visualizza Fattura AssoInvoice"
+                      data-testid={`view-fattura-${mov.id || idx}`}
                     >
                       📄 Vedi
                     </button>
                   ) : mov.bonifico_pdf_id ? (
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        window.open(`/api/archivio-bonifici/transfers/${mov.bonifico_pdf_id}/pdf`, '_blank');
-                      }}
+                      onClick={() => window.open(`/api/archivio-bonifici/transfers/${mov.bonifico_pdf_id}/pdf`, '_blank')}
                       style={{
                         padding: '4px 10px',
                         background: '#9c27b0',
@@ -1043,7 +1037,7 @@ function MovementsTable({ movimenti, tipo, loading, formatEuro, formatDate, onDe
                         fontWeight: 'bold'
                       }}
                       title="Visualizza Bonifico PDF"
-                      data-testid={`view-bonifico-table-${mov.id || idx}`}
+                      data-testid={`view-bonifico-${mov.id || idx}`}
                     >
                       📎 PDF
                     </button>
@@ -1054,7 +1048,7 @@ function MovementsTable({ movimenti, tipo, loading, formatEuro, formatDate, onDe
                 {!readOnly && (
                   <td style={{ padding: '6px 8px', textAlign: 'center', whiteSpace: 'nowrap' }}>
                     <button 
-                      onClick={(e) => { e.stopPropagation(); setEditingMovimento(mov); }}
+                      onClick={() => setEditingMovimento(mov)}
                       style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, marginRight: 8 }}
                       title="Modifica"
                       data-testid={`edit-movimento-${mov.id}`}
@@ -1062,7 +1056,7 @@ function MovementsTable({ movimenti, tipo, loading, formatEuro, formatDate, onDe
                       ✏️
                     </button>
                     <button 
-                      onClick={(e) => { e.stopPropagation(); onDelete(mov.id); }}
+                      onClick={() => onDelete(mov.id)}
                       style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14 }}
                       title="Elimina"
                     >
