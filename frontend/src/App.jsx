@@ -31,6 +31,7 @@ const NAV_ITEMS = [
       { to: "/dizionario-prodotti", label: "Dizionario Prodotti", icon: "📚" },
       { to: "/registro-lotti", label: "Registro Lotti", icon: "📋" },
       { to: "/magazzino-dv", label: "Magazzino Doppia Verità", icon: "📦" },
+      { to: "/inventario", label: "Inventario", icon: "📝" },
       { to: "/utile-obiettivo", label: "Utile Obiettivo", icon: "🎯" },
     ]
   },
