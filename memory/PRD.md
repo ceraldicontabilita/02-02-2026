@@ -23,6 +23,7 @@ Sistema ERP completo per **Ceraldi Group S.R.L.** - gestione contabilità, fattu
 - **Ciclo Passivo** - Fatture fornitori (XML)
 - **Archivio Fatture** - Storico documenti
 - **Import XML** - Parsing fatture elettroniche Aruba
+- **Visualizzazione AssoInvoice** - Trasformazione XML→HTML con foglio stile XSL (NUOVO 2026-01-11)
 
 ### 3. Magazzino
 - **Gestione Prodotti** - Anagrafica articoli
