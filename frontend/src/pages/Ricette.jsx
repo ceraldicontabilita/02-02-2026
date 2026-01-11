@@ -323,27 +323,6 @@ export default function Ricette() {
     }));
   }
 
-  function selectProdottoForEditing(index, prodotto) {
-    setEditingRicetta(prev => ({
-      ...prev,
-      ingredienti: prev.ingredienti.map((ing, i) => i === index ? {
-        ...ing,
-        nome: prodotto.descrizione,
-        prodotto_id: prodotto.id,
-        fornitore: prodotto.fornitore_nome,
-        prezzo_kg: prodotto.prezzo_per_kg
-      } : ing)
-    }));
-    setProdottiSuggestions([]);
-    setActiveIngredientIndex(null);
-    // Ricalcola food cost
-    setTimeout(() => {
-      if (editingRicetta) {
-        calcolaFoodCostRicetta(editingRicetta.ingredienti);
-      }
-    }, 100);
-  }
-
   function removeEditingIngrediente(index) {
     setEditingRicetta(prev => ({
       ...prev,
