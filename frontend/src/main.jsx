@@ -143,6 +143,7 @@ const RegoleCategorizzazione = lazy(() => import("./pages/RegoleCategorizzazione
 // Contabilità Analitica
 const CentriCosto = lazy(() => import("./pages/CentriCosto.jsx"));
 const Ricette = lazy(() => import("./pages/Ricette.jsx"));
+const DizionarioProdotti = lazy(() => import("./pages/DizionarioProdotti.jsx"));
 const RegistroLotti = lazy(() => import("./pages/RegistroLotti.jsx"));
 const MagazzinoDoppiaVerita = lazy(() => import("./pages/MagazzinoDoppiaVerita.jsx"));
 const UtileObiettivo = lazy(() => import("./pages/UtileObiettivo.jsx"));
