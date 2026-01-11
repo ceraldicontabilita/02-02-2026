@@ -514,32 +514,41 @@ function PrimaNotaDesktop() {
         </div>
       </div>
       
-      {/* SECTION BUTTONS */}
-      <div style={{ display: 'flex', gap: 16, marginBottom: 24 }}>
+      {/* SECTION BUTTONS - Sticky su mobile */}
+      <div style={{ 
+        display: 'flex', 
+        gap: 8, 
+        marginBottom: 16,
+        position: 'sticky',
+        top: 0,
+        zIndex: 100,
+        background: '#f9fafb',
+        padding: '8px 0'
+      }}>
         <button
           data-testid="btn-prima-nota-cassa"
           onClick={() => setActiveSection('cassa')}
           style={{
             flex: 1,
-            padding: '20px 24px',
-            fontSize: 18,
+            padding: '12px 16px',
+            fontSize: 14,
             fontWeight: 'bold',
             background: activeSection === 'cassa' 
               ? 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)' 
               : '#f3f4f6',
             color: activeSection === 'cassa' ? 'white' : '#374151',
             border: 'none',
-            borderRadius: 12,
+            borderRadius: 10,
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: 12,
+            gap: 8,
             boxShadow: activeSection === 'cassa' ? '0 4px 15px rgba(79, 70, 229, 0.4)' : 'none'
           }}
         >
-          <span style={{ fontSize: 24 }}>💵</span>
-          PRIMA NOTA CASSA {selectedYear}
+          <span style={{ fontSize: 18 }}>💵</span>
+          CASSA {selectedYear}
         </button>
         
         <button
@@ -547,15 +556,15 @@ function PrimaNotaDesktop() {
           onClick={() => setActiveSection('banca')}
           style={{
             flex: 1,
-            padding: '20px 24px',
-            fontSize: 18,
+            padding: '12px 16px',
+            fontSize: 14,
             fontWeight: 'bold',
             background: activeSection === 'banca' 
               ? 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)' 
               : '#f3f4f6',
             color: activeSection === 'banca' ? 'white' : '#374151',
             border: 'none',
-            borderRadius: 12,
+            borderRadius: 10,
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
