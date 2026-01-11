@@ -133,7 +133,9 @@ function PrimaNotaDesktop() {
         descrizione: m.descrizione || m.descrizione_originale || '',
         categoria: m.categoria || 'Movimento bancario',
         // Preserva fattura_id dalla risposta API (può essere nel root o in dettagli_riconciliazione)
-        fattura_id: m.fattura_id || m.dettagli_riconciliazione?.fattura_id || null
+        fattura_id: m.fattura_id || m.dettagli_riconciliazione?.fattura_id || null,
+        // Preserva bonifico_pdf_id per visualizzare PDF bonifico
+        bonifico_pdf_id: m.bonifico_pdf_id || null
       }));
       
       setBancaData({
