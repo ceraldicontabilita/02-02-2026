@@ -193,7 +193,7 @@ async def generate_contract(employee_id: str, data: Dict[str, Any] = Body(...)) 
     """
     ensure_dirs()
     
-    contract_type = data.get("contract_type")
+    contract_type = data.get("contract_type") or data.get("contract_type_id")
     additional_data = data.get("additional_data", {})
     
     # Find contract type
