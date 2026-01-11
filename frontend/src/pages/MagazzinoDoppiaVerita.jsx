@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
 import { formatEuro } from '../lib/utils';
+import { useAnnoGlobale } from '../contexts/AnnoContext';
 import { Package, Search, AlertTriangle, Check, ArrowUpDown, RefreshCw } from 'lucide-react';
 
 export default function MagazzinoDoppiaVerita() {
+  const { anno } = useAnnoGlobale();
   const [prodotti, setProdotti] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -14,7 +16,7 @@ export default function MagazzinoDoppiaVerita() {
 
   useEffect(() => {
     loadProdotti();
-  }, [search, soloDifferenze, soloScorteBasse]);
+  }, [search, soloDifferenze, soloScorteBasse, anno]);
 
   async function loadProdotti() {
     setLoading(true);
@@ -23,7 +25,8 @@ export default function MagazzinoDoppiaVerita() {
       if (search) params.append('search', search);
       if (soloDifferenze) params.append('solo_differenze', 'true');
       if (soloScorteBasse) params.append('solo_scorte_basse', 'true');
-      params.append('limit', '200');
+      params.append('anno', anno.toString());
+      params.append('limit', '500');
       
       const res = await api.get(`/api/magazzino-dv/prodotti?${params.toString()}`);
       setProdotti(res.data.prodotti || []);
