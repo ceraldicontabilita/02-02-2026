@@ -519,9 +519,3 @@ async def api_stato_sincronizzazione() -> Dict[str, Any]:
         "prima_nota_banca": pn_banca,
         "corrispettivi": corrispettivi
     }
-            "uscite": pn_cassa_uscite,
-            "entrate": pn_cassa_entrate
-        },
-        "prima_nota_banca": pn_banca,
-        "corrispettivi": corrispettivi
-    }
