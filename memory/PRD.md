@@ -1,12 +1,11 @@
 # PRD - Azienda in Cloud ERP
 
 ## Panoramica
-Sistema ERP completo per **Ceraldi Group S.R.L.** - gestione contabilità, fatturazione, magazzino e HACCP per attività di ristorazione/bar.
+Sistema ERP completo per **Ceraldi Group S.R.L.** - gestione contabilità, fatturazione, magazzino per attività di ristorazione/bar.
 
 **Stack Tecnologico:**
 - Backend: FastAPI (Python) + MongoDB
 - Frontend: React + Stili JavaScript inline
-- AI: Claude Sonnet 4.5 via Emergent LLM Key
 
 ---
 
@@ -30,18 +29,51 @@ Sistema ERP completo per **Ceraldi Group S.R.L.** - gestione contabilità, fattu
 - **Lotti** - Tracciabilità completa
 - **Dizionario Articoli** - Mappatura codici
 
-### 4. HACCP
-- **Temperature** - Controllo celle positive/negative
-- **Sanificazione** - Registro pulizie
-- **Ricettario Dinamico** - Ricette con tracciabilità ingredienti
-- **Non Conformità** - Gestione anomalie
-- **Libro Allergeni** - Registro stampabile PDF
-- **Etichette Lotto** - Stampa con allergeni
+### 4. Contabilità Analitica (AGGIORNATO 2026-01-11)
+- **Ricette & Food Cost** - Ricette con calcolo automatico del costo ingredienti
+- **Dizionario Prodotti** - Catalogo prodotti estratti dalle fatture per il food cost
+- **Centri di Costo** - Allocazione costi per centro
+- **Registro Lotti** - Tracciabilità lotti produzione
 
 ### 5. Gestione Email
 - **Sync Aruba** - Download notifiche fatture
 - **Parsing HTML** - Estrazione dati (fornitore, importo, data, numero)
 - **Operazioni da Confermare** - Workflow approvazione
+
+---
+
+## ⭐ Sistema Food Cost (NUOVO - 2026-01-11)
+
+### Funzionalità
+Sistema completo per il calcolo automatico del costo ingredienti nelle ricette.
+
+#### Dizionario Prodotti
+- **Scansione automatica fatture** → estrazione di tutti i prodotti acquistati
+- **Parser intelligente** per estrarre pesi dalle descrizioni (es. "KG.25", "500G", "1LT")
+- **Calcolo prezzo/kg** automatico basato su prezzo unitario e peso
+- **6,611 prodotti** estratti, ~44% con prezzo/kg calcolato
+- **Inserimento manuale peso** per prodotti senza peso rilevato
+
+#### Ricette & Food Cost
+- **Autocompletamento ingredienti** da dizionario prodotti
+- **Calcolo food cost** automatico basato su quantità e prezzo/kg
+- **Indicatore completezza** (es. "3/5 ingredienti con prezzo")
+- **Warning** per ingredienti senza prezzo nel dizionario
+
+### API Endpoints
+```
+# Dizionario Prodotti
+GET  /api/dizionario-prodotti/stats
+GET  /api/dizionario-prodotti/prodotti
+POST /api/dizionario-prodotti/prodotti/scan-fatture?anno=2026
+GET  /api/dizionario-prodotti/prodotti/search-per-ingrediente?ingrediente=farina
+PUT  /api/dizionario-prodotti/prodotti/{id}/peso
+POST /api/dizionario-prodotti/calcola-food-cost
+```
+
+### Pagine Frontend
+- `/ricette` - Ricette con calcolo food cost
+- `/dizionario-prodotti` - Gestione dizionario prodotti
 
 ---
 
