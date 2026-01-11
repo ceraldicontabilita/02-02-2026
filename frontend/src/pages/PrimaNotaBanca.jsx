@@ -72,10 +72,17 @@ export default function PrimaNotaBanca() {
   }
 
   // Apre la fattura associata in formato AssoInvoice
-  function openFattura(fatturaId) {
+  function openFattura(movimento) {
+    // Il fattura_id può essere in dettagli_riconciliazione o direttamente nel movimento
+    const fatturaId = movimento.dettagli_riconciliazione?.fattura_id || movimento.fattura_id;
     if (!fatturaId) return;
     // Apre in una nuova finestra
     window.open(`${process.env.REACT_APP_BACKEND_URL}/api/fatture-ricevute/fattura/${fatturaId}/view-assoinvoice`, '_blank');
+  }
+
+  // Verifica se il movimento ha una fattura associata
+  function hasFattura(movimento) {
+    return movimento.dettagli_riconciliazione?.fattura_id || movimento.fattura_id;
   }
 
   // Filtra movimenti
