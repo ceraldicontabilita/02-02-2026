@@ -80,6 +80,29 @@ POST /api/dizionario-prodotti/calcola-food-cost
 
 ## Funzionalità Chiave Implementate
 
+### Visualizzazione Fatture AssoInvoice (NUOVO - 2026-01-11)
+Sistema per visualizzare le fatture elettroniche in formato HTML leggibile usando il foglio stile AssoInvoice.
+
+#### Endpoint
+```
+GET /api/fatture-ricevute/fattura/{id}/view-assoinvoice
+```
+
+#### Funzionalità
+- **Trasformazione XSL** → Se la fattura ha XML, usa il foglio stile XSL per generare HTML professionale
+- **Fallback HTML** → Se XML non disponibile, genera HTML dai dati strutturati
+- **Pulsante stampa** → Ogni fattura ha un pulsante per stampare/salvare come PDF
+- **Integrazione Prima Nota Banca** → I movimenti con fattura associata mostrano pulsante "📄 Vedi"
+- **Integrazione Gestione Assegni** → Gli assegni con fattura collegata mostrano pulsante "📄 Vedi"
+
+#### File Coinvolti
+- `/app/app/routers/invoices/fatture_ricevute.py` - Endpoint view_fattura_assoinvoice
+- `/app/app/static/FoglioStileAssoSoftware.xsl` - Foglio stile XSL
+- `/app/frontend/src/pages/PrimaNotaBanca.jsx` - 262 pulsanti "Vedi" (anno 2025)
+- `/app/frontend/src/pages/GestioneAssegni.jsx` - 134 pulsanti "Vedi"
+
+---
+
 ### Ricerca Web Ricette con AI
 - Ricerca ricette online con Claude Sonnet 4.5
 - Categorie: dolci, rosticceria napoletana, rosticceria siciliana, contorni, basi
