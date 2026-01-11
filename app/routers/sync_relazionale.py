@@ -470,12 +470,35 @@ async def api_stato_sincronizzazione() -> Dict[str, Any]:
     db = Database.get_db()
     
     fatture_totali = await db["invoices"].count_documents({})
-    fatture_cassa = await db["invoices"].count_documents({"metodo_pagamento": "Cassa"})
-    fatture_banca = await db["invoices"].count_documents({"metodo_pagamento": "Bonifico"})
-    fatture_pagate = await db["invoices"].count_documents({"pagato": True})
+    fatture_cassa = await db["invoices"].count_documents({
+        "$or": [
+            {"metodo_pagamento": "Cassa"},
+            {"metodo_pagamento": "cassa"},
+            {"metodo_pagamento": {"$regex": "cassa", "$options": "i"}}
+        ]
+    })
+    fatture_banca = await db["invoices"].count_documents({
+        "$or": [
+            {"metodo_pagamento": "Bonifico"},
+            {"metodo_pagamento": "bonifico"}
+        ]
+    })
+    fatture_pagate = await db["invoices"].count_documents({
+        "$or": [{"pagato": True}, {"paid": True}]
+    })
+    fatture_senza_metodo = await db["invoices"].count_documents({
+        "$or": [
+            {"metodo_pagamento": {"$exists": False}},
+            {"metodo_pagamento": None},
+            {"metodo_pagamento": ""}
+        ]
+    })
     
     pn_cassa_uscite = await db["prima_nota_cassa"].count_documents({"tipo": "uscita"})
     pn_cassa_entrate = await db["prima_nota_cassa"].count_documents({"tipo": "entrata"})
+    pn_cassa_con_fattura = await db["prima_nota_cassa"].count_documents({
+        "fattura_id": {"$exists": True, "$ne": None}
+    })
     pn_banca = await db["prima_nota_banca"].count_documents({})
     
     corrispettivi = await db["corrispettivi"].count_documents({})
@@ -485,9 +508,17 @@ async def api_stato_sincronizzazione() -> Dict[str, Any]:
             "totali": fatture_totali,
             "pagate": fatture_pagate,
             "cassa": fatture_cassa,
-            "banca": fatture_banca
+            "banca": fatture_banca,
+            "senza_metodo": fatture_senza_metodo
         },
         "prima_nota_cassa": {
+            "uscite": pn_cassa_uscite,
+            "entrate": pn_cassa_entrate,
+            "con_fattura": pn_cassa_con_fattura
+        },
+        "prima_nota_banca": pn_banca,
+        "corrispettivi": corrispettivi
+    }
             "uscite": pn_cassa_uscite,
             "entrate": pn_cassa_entrate
         },
