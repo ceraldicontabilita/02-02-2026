@@ -1220,57 +1220,40 @@ export default function Ricette() {
                 
                 <div style={{ maxHeight: '300px', overflow: 'auto' }}>
                   {(editingRicetta.ingredienti || []).map((ing, idx) => (
-                    <div key={idx} style={{ marginBottom: '12px', padding: '10px', background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
-                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', position: 'relative' }}>
-                        <div style={{ flex: 2, position: 'relative' }}>
-                          <input
-                            type="text"
-                            value={ing.nome || ''}
-                            onChange={(e) => {
-                              updateEditingIngrediente(idx, 'nome', e.target.value);
-                              setActiveIngredientIndex(idx);
-                              searchProdotti(e.target.value);
-                            }}
-                            onFocus={() => setActiveIngredientIndex(idx)}
-                            placeholder="🔍 Cerca prodotto..."
-                            style={{ width: '100%', padding: '8px 10px', border: '1px solid #e5e7eb', borderRadius: '6px', fontSize: '13px' }}
-                          />
-                          {/* Dropdown autocomplete */}
-                          {activeIngredientIndex === idx && prodottiSuggestions.length > 0 && (
-                            <div style={{
-                              position: 'absolute',
-                              top: '100%',
-                              left: 0,
-                              right: 0,
-                              background: 'white',
-                              border: '1px solid #e5e7eb',
-                              borderRadius: '8px',
-                              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                              zIndex: 1000,
-                              maxHeight: '200px',
-                              overflow: 'auto'
-                            }}>
-                              {prodottiSuggestions.map((prod, pIdx) => (
-                                <div
-                                  key={pIdx}
-                                  onClick={() => selectProdottoForEditing(idx, prod)}
-                                  style={{
-                                    padding: '10px 12px',
-                                    cursor: 'pointer',
-                                    borderBottom: '1px solid #f3f4f6',
-                                    fontSize: '12px'
-                                  }}
-                                  onMouseEnter={(e) => e.target.style.background = '#f0f9ff'}
-                                  onMouseLeave={(e) => e.target.style.background = 'white'}
-                                >
-                                  <div style={{ fontWeight: 600, color: '#1e3a5f' }}>{prod.descrizione}</div>
-                                  <div style={{ color: '#64748b', fontSize: '11px', marginTop: '2px' }}>
-                                    {prod.fornitore_nome} • {prod.prezzo_per_kg ? `€${prod.prezzo_per_kg.toFixed(2)}/kg` : 'Prezzo N/D'}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
+                    <div key={idx} style={{ marginBottom: '12px', padding: '12px', background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        {/* Nome ingrediente + pulsante cerca */}
+                        <div style={{ flex: 2 }}>
+                          <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                            <input
+                              type="text"
+                              value={ing.nome || ''}
+                              onChange={(e) => updateEditingIngrediente(idx, 'nome', e.target.value)}
+                              placeholder="Nome ingrediente"
+                              style={{ flex: 1, padding: '8px 10px', border: '1px solid #e5e7eb', borderRadius: '6px', fontSize: '13px' }}
+                            />
+                            <button
+                              onClick={() => openProdottiModal('edit', idx)}
+                              style={{
+                                padding: '8px 12px',
+                                background: '#3b82f6',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                fontSize: '12px',
+                                fontWeight: 500,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                whiteSpace: 'nowrap'
+                              }}
+                              title="Cerca nel dizionario prodotti"
+                            >
+                              <Search size={14} />
+                              Dizionario
+                            </button>
+                          </div>
                         </div>
                         <input
                           type="number"
@@ -1299,8 +1282,9 @@ export default function Ricette() {
                       </div>
                       {/* Info prodotto associato */}
                       {ing.prodotto_id && (
-                        <div style={{ marginTop: '6px', fontSize: '11px', color: '#059669', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <Check size={12} /> Associato: {ing.fornitore || 'N/D'} • {ing.prezzo_kg ? `€${ing.prezzo_kg.toFixed(2)}/kg` : ''}
+                        <div style={{ marginTop: '8px', padding: '6px 10px', background: '#dcfce7', borderRadius: '6px', fontSize: '12px', color: '#15803d', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <Check size={14} />
+                          <span><strong>{ing.fornitore || 'Fornitore N/D'}</strong> • {ing.prezzo_kg ? `€${ing.prezzo_kg.toFixed(2)}/kg` : 'Prezzo N/D'}</span>
                         </div>
                       )}
                     </div>
