@@ -1023,7 +1023,8 @@ function MovementsTable({ movimenti, tipo, loading, formatEuro, formatDate, onDe
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        window.open(`${process.env.REACT_APP_BACKEND_URL}/api/fatture-ricevute/fattura/${mov.fattura_id}/view-assoinvoice`, '_blank');
+                        // Usa path relativo per funzionare sia in dev che in produzione
+                        window.open(`/api/fatture-ricevute/fattura/${mov.fattura_id}/view-assoinvoice`, '_blank');
                       }}
                       style={{
                         padding: '4px 10px',
