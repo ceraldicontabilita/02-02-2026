@@ -173,8 +173,16 @@ class TestFattureRicevuteArchivio:
         assert "total" in data, "Response should have total count"
     
     def test_fattura_dettaglio(self):
-        """Test getting fattura detail"""
-        fattura_id = "43faf328-3d00-4930-9832-245085a1b56d"
+        """Test getting fattura detail from fatture_ricevute collection"""
+        # First get a valid fattura_id from the archivio
+        archivio_response = requests.get(f"{BASE_URL}/api/fatture-ricevute/archivio?anno=2025&limit=1")
+        assert archivio_response.status_code == 200
+        
+        items = archivio_response.json().get("items", [])
+        if len(items) == 0:
+            pytest.skip("No fatture in archivio to test")
+        
+        fattura_id = items[0]["id"]
         response = requests.get(f"{BASE_URL}/api/fatture-ricevute/fattura/{fattura_id}")
         
         assert response.status_code == 200, f"Expected 200, got {response.status_code}"
