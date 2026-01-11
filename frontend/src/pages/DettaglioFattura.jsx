@@ -220,8 +220,10 @@ export default function DettaglioFattura() {
         </div>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
           {/* Pulsante Visualizza AssoInvoice */}
-          <button
-            onClick={() => window.open(`/api/fatture-ricevute/fattura/${id}/view-assoinvoice`, '_blank')}
+          <a
+            href={`/api/fatture-ricevute/fattura/${id}/view-assoinvoice`}
+            target="_blank"
+            rel="noopener noreferrer"
             style={{
               padding: '10px 16px',
               background: '#2196f3',
@@ -230,14 +232,15 @@ export default function DettaglioFattura() {
               borderRadius: 8,
               cursor: 'pointer',
               fontWeight: 'bold',
-              display: 'flex',
+              display: 'inline-flex',
               alignItems: 'center',
-              gap: 8
+              gap: 8,
+              textDecoration: 'none'
             }}
             data-testid="view-assoinvoice-btn"
           >
             📄 Visualizza PDF
-          </button>
+          </a>
           <span style={styles.badge(fattura.pagato ? 'green' : 'red')}>
             {fattura.pagato ? '✓ Pagata' : '○ Da pagare'}
           </span>
