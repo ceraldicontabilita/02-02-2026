@@ -1198,7 +1198,8 @@ function TransactionDetailModal({ movimento, tipo, formatEuro, formatDate, onClo
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    window.open(`${process.env.REACT_APP_BACKEND_URL}/api/fatture-ricevute/fattura/${movimento.fattura_id}/view-assoinvoice`, '_blank');
+                    // Usa path relativo per funzionare sia in dev che in produzione
+                    window.open(`/api/fatture-ricevute/fattura/${movimento.fattura_id}/view-assoinvoice`, '_blank');
                   }}
                   style={{
                     padding: '6px 12px',
