@@ -188,7 +188,6 @@ const router = createBrowserRouter([
       { path: "fatture-ricevute/:id", element: <LazyPage><DettaglioFattura /></LazyPage> },
       { path: "corrispettivi", element: <LazyPage><Corrispettivi /></LazyPage> },
       { path: "prima-nota-cassa", element: <LazyPage><PrimaNotaCassa /></LazyPage> },
-      { path: "prima-nota-banca", element: <LazyPage><PrimaNotaBanca /></LazyPage> },
       { path: "prima-nota", element: <LazyPage><PrimaNota /></LazyPage> },
       { path: "operazioni-da-confermare", element: <LazyPage><OperazioniDaConfermare /></LazyPage> },
       { path: "riconciliazione", element: <LazyPage><Riconciliazione /></LazyPage> },
