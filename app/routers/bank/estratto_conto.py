@@ -767,7 +767,7 @@ async def riconcilia_stipendi_automatico(anno: Optional[int] = Query(None)) -> D
     non_trovati = []
     
     for bonifico in bonifici:
-        desc = bonifico.get("descrizione_originale", "").upper()
+        desc = bonifico.get("descrizione", "").upper()
         importo = abs(bonifico.get("importo", 0))
         data = bonifico.get("data", "")
         
