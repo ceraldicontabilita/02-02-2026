@@ -474,13 +474,15 @@ export default function Riconciliazione() {
                         </td>
                         <td style={{ ...pageStyle.td, textAlign: 'center' }}>
                           <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
-                            <button
-                              style={{ ...pageStyle.button('outline'), padding: '6px 10px' }}
-                              onClick={() => window.open(`/api/fatture-ricevute/fattura/${f._id || f.id}/view-assoinvoice`, '_blank')}
+                            <a
+                              style={{ ...pageStyle.button('outline'), padding: '6px 10px', textDecoration: 'none' }}
+                              href={`/api/fatture-ricevute/fattura/${f._id || f.id}/view-assoinvoice`}
+                              target="_blank"
+                              rel="noopener noreferrer"
                               title="Visualizza fattura"
                             >
                               📄
-                            </button>
+                            </a>
                             <button
                               style={{ ...pageStyle.button('success'), padding: '6px 12px' }}
                               onClick={() => handleRiconciliaManuale(f)}
