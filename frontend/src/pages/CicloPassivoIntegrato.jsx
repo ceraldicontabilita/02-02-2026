@@ -704,16 +704,28 @@ export default function CicloPassivoIntegrato() {
                         <span style={styles.badge('#f59e0b')}>Da pagare</span>
                       </td>
                       <td style={styles.td}>
-                        <button 
-                          style={styles.button('primary')}
-                          onClick={() => {
-                            setActiveTab('riconciliazione');
-                            handleSelectScadenza(s);
-                          }}
-                          data-testid={`btn-riconcilia-${s.id}`}
-                        >
-                          🔗 Riconcilia
-                        </button>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          {s.fattura_id && (
+                            <button 
+                              style={{ ...styles.button('secondary'), padding: '6px 10px' }}
+                              onClick={() => window.open(`/api/fatture-ricevute/fattura/${s.fattura_id}/view-assoinvoice`, '_blank')}
+                              data-testid={`btn-pdf-${s.id}`}
+                              title="Visualizza fattura"
+                            >
+                              📄
+                            </button>
+                          )}
+                          <button 
+                            style={styles.button('primary')}
+                            onClick={() => {
+                              setActiveTab('riconciliazione');
+                              handleSelectScadenza(s);
+                            }}
+                            data-testid={`btn-riconcilia-${s.id}`}
+                          >
+                            🔗 Riconcilia
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
