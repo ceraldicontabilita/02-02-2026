@@ -33,26 +33,36 @@ def parse_peso_da_descrizione(descrizione: str) -> Dict[str, Any]:
     - "AQV CROI STR CIN CRM BTR 95G 4.94KG" -> peso_totale: 4.94, unita: "kg"
     - "OLIO EXTRAVERGINE 1L" -> peso_totale: 1, unita: "l"
     - "FARINA 00 25KG" -> peso_totale: 25, unita: "kg"
+    - "FARINA 00 CAPUTO RINFORZ.KG.25" -> peso_totale: 25, unita: "kg"
+    - "DA KG.5" -> peso_totale: 5, unita: "kg"
     """
     desc_upper = descrizione.upper()
     
-    # Pattern per peso in kg (es. 4.94KG, 25 KG)
-    kg_match = re.search(r'(\d+[.,]?\d*)\s*KG', desc_upper)
+    # Pattern per peso in kg - supporta:
+    # 25KG, 25 KG, KG.25, KG 25, DA KG.5, KG1, 4.94KG
+    kg_match = re.search(r'(?:DA\s+)?KG[.\s]*(\d+[.,]?\d*)|(\d+[.,]?\d*)\s*KG(?:\s|$|\.)', desc_upper)
     if kg_match:
-        peso = float(kg_match.group(1).replace(',', '.'))
+        peso_str = kg_match.group(1) or kg_match.group(2)
+        peso = float(peso_str.replace(',', '.'))
         return {"peso_totale": peso, "unita_peso": "kg", "peso_grammi": peso * 1000}
     
-    # Pattern per peso in grammi (es. 500G, 250 GR)
-    g_match = re.search(r'(\d+[.,]?\d*)\s*G(?:R)?(?:\s|$)', desc_upper)
+    # Pattern per peso in grammi (es. 500G, 250 GR, G.500)
+    g_match = re.search(r'(?:DA\s+)?G[.\s]*(\d+[.,]?\d*)|(\d+[.,]?\d*)\s*G(?:R)?(?:\s|$|\.)', desc_upper)
     if g_match:
-        peso = float(g_match.group(1).replace(',', '.'))
-        return {"peso_totale": peso, "unita_peso": "g", "peso_grammi": peso}
+        peso_str = g_match.group(1) or g_match.group(2)
+        peso = float(peso_str.replace(',', '.'))
+        # Evita match falsi positivi troppo grandi (es. codici prodotto)
+        if peso <= 10000:
+            return {"peso_totale": peso, "unita_peso": "g", "peso_grammi": peso}
     
-    # Pattern per litri (es. 1L, 0.75L, 750ML)
-    l_match = re.search(r'(\d+[.,]?\d*)\s*L(?:T|TR)?(?:\s|$)', desc_upper)
+    # Pattern per litri (es. 1L, 0.75L, 750ML, LT.5)
+    l_match = re.search(r'(?:DA\s+)?L(?:T|TR)?[.\s]*(\d+[.,]?\d*)|(\d+[.,]?\d*)\s*L(?:T|TR)?(?:\s|$|\.)', desc_upper)
     if l_match:
-        litri = float(l_match.group(1).replace(',', '.'))
-        return {"peso_totale": litri, "unita_peso": "l", "peso_grammi": litri * 1000}
+        peso_str = l_match.group(1) or l_match.group(2)
+        if peso_str:
+            litri = float(peso_str.replace(',', '.'))
+            if litri <= 100:  # Evita match falsi positivi
+                return {"peso_totale": litri, "unita_peso": "l", "peso_grammi": litri * 1000}
     
     ml_match = re.search(r'(\d+[.,]?\d*)\s*ML', desc_upper)
     if ml_match:
