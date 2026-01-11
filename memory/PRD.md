@@ -9,6 +9,32 @@ Sistema ERP completo per **Ceraldi Group S.R.L.** - gestione contabilità, fattu
 
 ---
 
+## ⚠️ REGOLE SVILUPPO OBBLIGATORIE
+
+### 1. Test Multi-Dispositivo
+**OGNI modifica a una pagina DEVE essere testata su:**
+- Desktop (1920x800)
+- Mobile (375x667 o simile)
+- Tablet (768x1024)
+
+### 2. Link e Pulsanti
+**NON usare `window.open()` per aprire link esterni.** 
+Usare SEMPRE tag `<a>` con `target="_blank"`:
+```jsx
+// ❌ NON FARE
+<button onClick={() => window.open(url, '_blank')}>Apri</button>
+
+// ✅ FARE COSÌ
+<a href={url} target="_blank" rel="noopener noreferrer">Apri</a>
+```
+
+### 3. Pagine Legacy
+**NON creare versioni separate per mobile/desktop.**
+- Usa CSS responsive direttamente
+- Elimina pagine legacy duplicate (es. PrimaNotaMobile.jsx)
+
+---
+
 ## Moduli Principali
 
 ### 1. Contabilità
