@@ -280,11 +280,11 @@ export default function DettaglioFattura() {
           </div>
           <div>
             <p style={styles.label}>Partita IVA</p>
-            <p style={styles.value}>{fattura.supplier_vat || fattura.cedente_piva || '-'}</p>
+            <p style={styles.value}>{fattura.supplier_vat || fattura.fornitore_partita_iva || fattura.cedente_piva || '-'}</p>
           </div>
           <div>
             <p style={styles.label}>Codice Fiscale</p>
-            <p style={styles.value}>{fattura.fornitore?.codice_fiscale || '-'}</p>
+            <p style={styles.value}>{fattura.fornitore?.codice_fiscale || fattura.fornitore_codice_fiscale || '-'}</p>
           </div>
         </div>
       </div>
