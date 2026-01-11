@@ -442,6 +442,7 @@ async def import_fatture_xml_multipli(files: List[UploadFile] = File(...)):
                 "causali": parsed.get("causali", []),
                 "riepilogo_iva": parsed.get("riepilogo_iva", []),
                 "filename": file.filename,
+                "xml_content": xml_content,  # Contenuto XML per visualizzazione AssoInvoice
                 "created_at": datetime.now(timezone.utc).isoformat(),
                 "updated_at": datetime.now(timezone.utc).isoformat()
             }
