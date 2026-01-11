@@ -219,7 +219,134 @@ export default function MagazzinoDoppiaVerita() {
         >
           <RefreshCw size={16} /> Aggiorna
         </button>
+        <button
+          onClick={anteprimaPulizia}
+          disabled={puliziaInCorso}
+          style={{
+            padding: '10px 16px',
+            background: '#fef2f2',
+            border: '1px solid #fecaca',
+            borderRadius: '8px',
+            cursor: puliziaInCorso ? 'not-allowed' : 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            fontSize: '14px',
+            color: '#dc2626'
+          }}
+          data-testid="btn-pulizia-magazzino"
+        >
+          <Trash2 size={16} /> Pulizia Fornitori Esclusi
+        </button>
       </div>
+
+      {/* Pannello Pulizia Fornitori Esclusi */}
+      {fornitoriEsclusi && (
+        <div style={{ 
+          marginBottom: '24px', 
+          padding: '20px', 
+          background: '#fef2f2', 
+          borderRadius: '12px', 
+          border: '1px solid #fecaca' 
+        }}>
+          <h3 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: 600, color: '#dc2626', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Trash2 size={20} />
+            Pulizia Prodotti da Fornitori Esclusi
+          </h3>
+          
+          {fornitoriEsclusi.fornitori_esclusi === 0 ? (
+            <p style={{ color: '#6b7280', margin: 0 }}>
+              Nessun fornitore con flag "Esclude Magazzino" attivo. 
+              Per escludere un fornitore, vai nella pagina <strong>Fornitori</strong> e attiva il checkbox "Esclude dal Magazzino".
+            </p>
+          ) : (
+            <>
+              <p style={{ color: '#374151', margin: '0 0 16px 0' }}>
+                <strong>{fornitoriEsclusi.fornitori_esclusi}</strong> fornitori esclusi dal magazzino. 
+                <strong style={{ color: '#dc2626' }}> {fornitoriEsclusi.totale_prodotti || 0}</strong> prodotti verranno rimossi.
+              </p>
+              
+              {fornitoriEsclusi.fornitori_dettaglio?.length > 0 && (
+                <div style={{ marginBottom: '16px' }}>
+                  <div style={{ fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '8px' }}>Fornitori coinvolti:</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                    {fornitoriEsclusi.fornitori_dettaglio.map((f, i) => (
+                      <span key={i} style={{
+                        padding: '4px 12px',
+                        background: '#fee2e2',
+                        borderRadius: '6px',
+                        fontSize: '13px',
+                        color: '#b91c1c'
+                      }}>
+                        {f.nome}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {fornitoriEsclusi.anteprima_prodotti?.length > 0 && (
+                <div style={{ marginBottom: '16px' }}>
+                  <div style={{ fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '8px' }}>
+                    Anteprima prodotti da rimuovere (primi 50):
+                  </div>
+                  <div style={{ 
+                    maxHeight: '150px', 
+                    overflowY: 'auto', 
+                    background: 'white', 
+                    borderRadius: '8px', 
+                    padding: '12px',
+                    border: '1px solid #fecaca'
+                  }}>
+                    {fornitoriEsclusi.anteprima_prodotti.map((p, i) => (
+                      <div key={i} style={{ 
+                        padding: '4px 0', 
+                        borderBottom: i < fornitoriEsclusi.anteprima_prodotti.length - 1 ? '1px solid #f3f4f6' : 'none',
+                        fontSize: '13px',
+                        color: '#374151'
+                      }}>
+                        <strong>{p.nome}</strong> - {p.fornitore} (giac: {p.giacenza})
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button
+                  onClick={eseguiPulizia}
+                  disabled={puliziaInCorso || (fornitoriEsclusi.totale_prodotti || 0) === 0}
+                  style={{
+                    padding: '10px 20px',
+                    background: '#dc2626',
+                    border: 'none',
+                    borderRadius: '8px',
+                    color: 'white',
+                    cursor: puliziaInCorso || (fornitoriEsclusi.totale_prodotti || 0) === 0 ? 'not-allowed' : 'pointer',
+                    fontWeight: 600,
+                    opacity: puliziaInCorso || (fornitoriEsclusi.totale_prodotti || 0) === 0 ? 0.5 : 1
+                  }}
+                  data-testid="btn-conferma-pulizia"
+                >
+                  {puliziaInCorso ? 'Pulizia in corso...' : 'Conferma Rimozione'}
+                </button>
+                <button
+                  onClick={() => setFornitoriEsclusi(null)}
+                  style={{
+                    padding: '10px 20px',
+                    background: 'white',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '8px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Annulla
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Tabella Prodotti */}
       {loading ? (
