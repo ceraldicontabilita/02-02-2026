@@ -338,6 +338,41 @@ async def aggiorna_peso_prodotto(
     }
 
 
+@router.put("/prodotti/{prodotto_id}")
+async def update_prodotto(
+    prodotto_id: str,
+    data: Dict[str, Any] = Body(...)
+) -> Dict[str, Any]:
+    """
+    Aggiorna un prodotto nel dizionario.
+    Principalmente per correggere/impostare il prezzo_per_kg manualmente.
+    """
+    db = Database.get_db()
+    
+    update_fields = {"updated_at": datetime.now(timezone.utc).isoformat()}
+    
+    if "prezzo_per_kg" in data and data["prezzo_per_kg"] is not None:
+        update_fields["prezzo_per_kg"] = round(float(data["prezzo_per_kg"]), 4)
+        update_fields["prezzo_manuale"] = True  # Flag per indicare modifica manuale
+    
+    if "prezzo_unitario_manuale" in data and data["prezzo_unitario_manuale"] is not None:
+        update_fields["prezzo_unitario_manuale"] = float(data["prezzo_unitario_manuale"])
+    
+    result = await db[COLLECTION_DIZIONARIO].update_one(
+        {"id": prodotto_id},
+        {"$set": update_fields}
+    )
+    
+    if result.modified_count == 0:
+        return {"success": False, "message": "Prodotto non trovato o nessuna modifica"}
+    
+    return {
+        "success": True,
+        "prodotto_id": prodotto_id,
+        "updated_fields": list(update_fields.keys())
+    }
+
+
 @router.put("/prodotti/{prodotto_id}/alias")
 async def aggiungi_alias_prodotto(
     prodotto_id: str,
