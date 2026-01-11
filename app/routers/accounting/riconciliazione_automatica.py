@@ -281,13 +281,23 @@ async def riconcilia_estratto_conto() -> Dict[str, Any]:
                 num_assegno = extract_assegno_number(descrizione)
                 supplier_name_ec = extract_supplier_name(descrizione)
                 
-                # NUOVO: Cerca fattura con match TRIPLO (importo + fornitore + numero fattura)
-                # Priorità: match completo > match parziale > match solo importo
+                # RICERCA MIGLIORATA: 
+                # 1. Match esatto importo (±0.05€)
+                # 2. Match parziale importo (pagamento rate - 10% tolleranza)
                 
+                # Query per fatture candidate (importo esatto O importo parziale)
                 fatture_candidate = await db[Collections.INVOICES].find({
-                    "$or": [
-                        {"importo_totale": {"$gte": importo - 0.05, "$lte": importo + 0.05}},
-                        {"total_amount": {"$gte": importo - 0.05, "$lte": importo + 0.05}}
+                    "$and": [
+                        {"pagato": {"$ne": True}},
+                        {"$or": [
+                            # Match esatto
+                            {"importo_totale": {"$gte": importo - 0.05, "$lte": importo + 0.05}},
+                            {"total_amount": {"$gte": importo - 0.05, "$lte": importo + 0.05}},
+                            # Match parziale (il pagamento è circa 50-200% della fattura)
+                            {"importo_totale": {"$gte": importo * 0.5, "$lte": importo * 2}},
+                            {"total_amount": {"$gte": importo * 0.5, "$lte": importo * 2}}
+                        ]}
+                    ]
                     ],
                     "pagato": {"$ne": True}
                 }).to_list(50)
