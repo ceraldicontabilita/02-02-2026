@@ -189,6 +189,27 @@ export default function DizionarioProdotti() {
         
         <div style={{ flex: 1 }} />
         
+        {/* Filtro Fornitore */}
+        <select
+          value={fornitoreFilter}
+          onChange={(e) => { setFornitoreFilter(e.target.value); setOffset(0); }}
+          style={{
+            padding: '8px 12px',
+            border: '1px solid #e5e7eb',
+            borderRadius: '6px',
+            fontSize: '13px',
+            minWidth: '200px',
+            background: 'white'
+          }}
+        >
+          <option value="">Tutti i fornitori</option>
+          {fornitori.map((f, idx) => (
+            <option key={idx} value={f.nome}>
+              {f.nome} ({f.senza_prezzo} senza prezzo)
+            </option>
+          ))}
+        </select>
+        
         <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px' }}>
           <input
             type="checkbox"
