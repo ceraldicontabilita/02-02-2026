@@ -53,6 +53,7 @@ const emptySupplier = {
   iban: '',
   metodo_pagamento: 'bonifico',
   giorni_pagamento: 30,
+  esclude_magazzino: false,
   note: ''
 };
 
