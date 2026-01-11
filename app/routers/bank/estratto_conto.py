@@ -791,21 +791,30 @@ async def riconcilia_stipendi_automatico(anno: Optional[int] = Query(None)) -> D
                 dip_trovato = dipendenti_map[after_clean]
                 nome_trovato = after_clean
             else:
-                # 2. Match parziale
-                for nome, dip in dipendenti_map.items():
-                    if nome in after_clean or after_clean in nome:
-                        dip_trovato = dip
-                        nome_trovato = nome
+                # 2. Match per singola parola del nome estratto (cerca cognome)
+                after_parts = [p.strip() for p in after_clean.split() if len(p.strip()) > 2]
+                for part in after_parts:
+                    if part in dipendenti_map:
+                        dip_trovato = dipendenti_map[part]
+                        nome_trovato = part
                         break
-                    # 3. Match per cognome
-                    parts = nome.split()
-                    for p in parts:
-                        if len(p) > 3 and p in after_clean:
+                
+                # 3. Match parziale se non trovato
+                if not dip_trovato:
+                    for nome, dip in dipendenti_map.items():
+                        if nome in after_clean or after_clean in nome:
                             dip_trovato = dip
                             nome_trovato = nome
                             break
-                    if dip_trovato:
-                        break
+                        # Match per cognome
+                        parts = nome.split()
+                        for p in parts:
+                            if len(p) > 3 and p in after_clean:
+                                dip_trovato = dip
+                                nome_trovato = nome
+                                break
+                        if dip_trovato:
+                            break
         
         if dip_trovato:
             # Aggiorna l'estratto conto
