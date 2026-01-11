@@ -600,17 +600,41 @@ async def import_fatture_zip(file: UploadFile = File(...)):
 
 # ==================== HELPER FUNCTIONS ====================
 
-def generate_invoice_html(fattura: Dict) -> str:
+def generate_invoice_html(fattura: Dict, righe_fattura: List[Dict] = None) -> str:
     """
     Genera HTML per la fattura dai dati strutturati quando XML non è disponibile.
+    
+    Args:
+        fattura: Dati della fattura
+        righe_fattura: Lista delle righe (se non fornita, usa fattura.get('linee'))
     """
     numero = fattura.get('invoice_number') or fattura.get('numero_documento', 'N/A')
     data = fattura.get('invoice_date') or fattura.get('data_documento', 'N/A')
-    fornitore = fattura.get('supplier_name') or fattura.get('fornitore_ragione_sociale', 'N/A')
-    piva = fattura.get('supplier_vat') or fattura.get('fornitore_partita_iva', 'N/A')
+    fornitore_obj = fattura.get('fornitore', {})
+    fornitore = fattura.get('supplier_name') or fattura.get('fornitore_ragione_sociale') or fornitore_obj.get('denominazione', 'N/A')
+    piva = fattura.get('supplier_vat') or fattura.get('fornitore_partita_iva') or fornitore_obj.get('partita_iva', 'N/A')
+    cf = fornitore_obj.get('codice_fiscale', '')
+    indirizzo = fornitore_obj.get('indirizzo', '')
+    cap = fornitore_obj.get('cap', '')
+    comune = fornitore_obj.get('comune', '')
+    provincia = fornitore_obj.get('provincia', '')
+    
     totale = fattura.get('total_amount') or fattura.get('importo_totale', 0)
     imponibile = fattura.get('imponibile') or fattura.get('taxable_amount', 0)
     iva = fattura.get('iva') or fattura.get('vat_amount', 0)
+    
+    # Dati cliente (destinatario)
+    cliente = fattura.get('cliente', {})
+    cliente_denominazione = cliente.get('denominazione', '')
+    cliente_piva = cliente.get('partita_iva', '')
+    cliente_indirizzo = cliente.get('indirizzo', '')
+    cliente_comune = cliente.get('comune', '')
+    
+    # Dati pagamento
+    pagamento = fattura.get('pagamento', {})
+    mod_pagamento = pagamento.get('modalita_descrizione') or pagamento.get('modalita', '')
+    data_scadenza = pagamento.get('data_scadenza', '')
+    iban = pagamento.get('iban', '')
     
     # Formatta importi
     def fmt_euro(val):
@@ -619,28 +643,75 @@ def generate_invoice_html(fattura: Dict) -> str:
         except:
             return "€ 0,00"
     
-    # Righe fattura
-    linee = fattura.get('linee') or fattura.get('line_items') or []
+    # Righe fattura - usa quelle passate o cerca in fattura
+    linee = righe_fattura or fattura.get('linee') or fattura.get('line_items') or []
     righe_html = ""
     for idx, riga in enumerate(linee, 1):
         desc = riga.get('descrizione') or riga.get('description', '')
+        # Pulisci descrizione da spazi eccessivi
+        desc = ' '.join(desc.split())
         qta = riga.get('quantita') or riga.get('quantity', 1)
+        um = riga.get('unita_misura') or riga.get('unit', '')
         prezzo = riga.get('prezzo_unitario') or riga.get('unit_price', 0)
         importo = riga.get('prezzo_totale') or riga.get('amount', 0)
         aliquota = riga.get('aliquota_iva') or riga.get('vat_rate', 22)
         
         righe_html += f"""
         <tr>
-            <td>{idx}</td>
+            <td style="text-align:center">{idx}</td>
             <td>{desc}</td>
-            <td style="text-align:right">{qta}</td>
+            <td style="text-align:center">{qta} {um}</td>
             <td style="text-align:right">{fmt_euro(prezzo)}</td>
-            <td style="text-align:right">{aliquota}%</td>
+            <td style="text-align:center">{aliquota}%</td>
             <td style="text-align:right">{fmt_euro(importo)}</td>
         </tr>"""
     
     if not righe_html:
-        righe_html = "<tr><td colspan='6' style='text-align:center;color:#999'>Dettaglio righe non disponibile</td></tr>"
+        righe_html = "<tr><td colspan='6' style='text-align:center;color:#999;padding:20px'>Dettaglio righe non disponibile</td></tr>"
+    
+    # Sezione cliente HTML (solo se presente)
+    cliente_html = ""
+    if cliente_denominazione:
+        cliente_html = f"""
+        <div class="section">
+            <div class="section-title">Destinatario (Cessionario/Committente)</div>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Ragione Sociale</div>
+                    <div class="info-value">{cliente_denominazione}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Partita IVA</div>
+                    <div class="info-value">{cliente_piva}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Indirizzo</div>
+                    <div class="info-value">{cliente_indirizzo} - {cliente_comune}</div>
+                </div>
+            </div>
+        </div>"""
+    
+    # Sezione pagamento HTML (solo se presente)
+    pagamento_html = ""
+    if mod_pagamento or iban:
+        pagamento_html = f"""
+        <div class="section">
+            <div class="section-title">Dati Pagamento</div>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Modalità</div>
+                    <div class="info-value">{mod_pagamento}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Scadenza</div>
+                    <div class="info-value">{data_scadenza}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">IBAN</div>
+                    <div class="info-value">{iban}</div>
+                </div>
+            </div>
+        </div>"""
     
     html = f"""<!DOCTYPE html>
 <html>
@@ -649,40 +720,148 @@ def generate_invoice_html(fattura: Dict) -> str:
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fattura {numero}</title>
     <style>
-        body {{ font-family: Arial, sans-serif; padding: 20px; max-width: 1000px; margin: 0 auto; background: #f5f5f5; }}
-        .invoice-container {{ background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
-        .header {{ display: flex; justify-content: space-between; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #4caf50; }}
-        .invoice-title {{ font-size: 28px; font-weight: bold; color: #1a365d; }}
-        .invoice-number {{ font-size: 18px; color: #666; }}
-        .section {{ margin-bottom: 25px; }}
-        .section-title {{ font-size: 14px; font-weight: bold; color: #4caf50; margin-bottom: 10px; text-transform: uppercase; }}
-        .info-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }}
+        * {{ box-sizing: border-box; }}
+        body {{ 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            padding: 20px; 
+            max-width: 1100px; 
+            margin: 0 auto; 
+            background: #f0f2f5; 
+            color: #333;
+        }}
+        .invoice-container {{ 
+            background: white; 
+            padding: 40px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1); 
+        }}
+        .header {{ 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: flex-start;
+            margin-bottom: 35px; 
+            padding-bottom: 25px; 
+            border-bottom: 3px solid #2563eb; 
+        }}
+        .invoice-title {{ 
+            font-size: 32px; 
+            font-weight: 700; 
+            color: #1e3a8a; 
+            letter-spacing: 2px;
+        }}
+        .invoice-number {{ 
+            font-size: 20px; 
+            color: #6b7280; 
+            margin-top: 5px;
+        }}
+        .invoice-date {{
+            text-align: right;
+            background: #eff6ff;
+            padding: 15px 20px;
+            border-radius: 8px;
+        }}
+        .section {{ margin-bottom: 30px; }}
+        .section-title {{ 
+            font-size: 13px; 
+            font-weight: 700; 
+            color: #2563eb; 
+            margin-bottom: 12px; 
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-left: 4px solid #2563eb;
+            padding-left: 10px;
+        }}
+        .info-grid {{ 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); 
+            gap: 20px; 
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+        }}
         .info-item {{ }}
-        .info-label {{ font-size: 12px; color: #999; margin-bottom: 3px; }}
-        .info-value {{ font-size: 16px; font-weight: 500; color: #333; }}
-        table {{ width: 100%; border-collapse: collapse; margin-top: 15px; }}
-        th {{ background: #f8f9fa; padding: 12px 10px; text-align: left; font-size: 12px; color: #666; border-bottom: 2px solid #e5e7eb; }}
-        td {{ padding: 12px 10px; border-bottom: 1px solid #f3f4f6; font-size: 14px; }}
-        .totals {{ margin-top: 20px; text-align: right; }}
-        .totals-row {{ display: flex; justify-content: flex-end; gap: 30px; padding: 8px 0; }}
-        .totals-label {{ color: #666; }}
-        .totals-value {{ font-weight: bold; min-width: 120px; text-align: right; }}
-        .totals-final {{ font-size: 20px; color: #4caf50; border-top: 2px solid #4caf50; padding-top: 15px; margin-top: 10px; }}
+        .info-label {{ font-size: 11px; color: #9ca3af; margin-bottom: 4px; text-transform: uppercase; }}
+        .info-value {{ font-size: 15px; font-weight: 600; color: #1f2937; }}
+        table {{ 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 15px; 
+            font-size: 14px;
+        }}
+        thead tr {{
+            background: #1e3a8a;
+            color: white;
+        }}
+        th {{ 
+            padding: 14px 12px; 
+            text-align: left; 
+            font-size: 12px; 
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }}
+        td {{ 
+            padding: 14px 12px; 
+            border-bottom: 1px solid #e5e7eb; 
+        }}
+        tbody tr:hover {{
+            background: #f8fafc;
+        }}
+        tbody tr:last-child td {{
+            border-bottom: none;
+        }}
+        .totals {{ 
+            margin-top: 30px; 
+            text-align: right;
+            background: #f8fafc;
+            padding: 25px;
+            border-radius: 8px;
+        }}
+        .totals-row {{ 
+            display: flex; 
+            justify-content: flex-end; 
+            gap: 40px; 
+            padding: 10px 0; 
+        }}
+        .totals-label {{ color: #6b7280; font-size: 14px; }}
+        .totals-value {{ font-weight: 600; min-width: 130px; text-align: right; font-size: 16px; }}
+        .totals-final {{ 
+            font-size: 22px; 
+            color: #1e3a8a; 
+            border-top: 3px solid #2563eb; 
+            padding-top: 20px; 
+            margin-top: 15px; 
+        }}
+        .totals-final .totals-value {{
+            font-size: 24px;
+            color: #1e3a8a;
+        }}
         .print-btn {{
             position: fixed;
             top: 20px;
             right: 20px;
-            padding: 10px 20px;
-            background: #4caf50;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #2563eb, #1e40af);
             color: white;
             border: none;
             border-radius: 8px;
             cursor: pointer;
             font-size: 14px;
+            font-weight: 600;
             z-index: 1000;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+            transition: all 0.2s;
         }}
-        .print-btn:hover {{ background: #45a049; }}
-        @media print {{ .print-btn {{ display: none; }} }}
+        .print-btn:hover {{ 
+            background: linear-gradient(135deg, #1e40af, #1e3a8a);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
+        }}
+        @media print {{ 
+            .print-btn {{ display: none; }} 
+            body {{ background: white; padding: 0; }}
+            .invoice-container {{ box-shadow: none; padding: 20px; }}
+        }}
     </style>
 </head>
 <body>
@@ -694,14 +873,14 @@ def generate_invoice_html(fattura: Dict) -> str:
                 <div class="invoice-title">FATTURA</div>
                 <div class="invoice-number">N. {numero}</div>
             </div>
-            <div style="text-align:right">
+            <div class="invoice-date">
                 <div class="info-label">Data Documento</div>
-                <div class="info-value">{data}</div>
+                <div class="info-value" style="font-size: 18px;">{data}</div>
             </div>
         </div>
         
         <div class="section">
-            <div class="section-title">Fornitore</div>
+            <div class="section-title">Cedente / Prestatore (Fornitore)</div>
             <div class="info-grid">
                 <div class="info-item">
                     <div class="info-label">Ragione Sociale</div>
@@ -711,20 +890,34 @@ def generate_invoice_html(fattura: Dict) -> str:
                     <div class="info-label">Partita IVA</div>
                     <div class="info-value">{piva}</div>
                 </div>
+                <div class="info-item">
+                    <div class="info-label">Codice Fiscale</div>
+                    <div class="info-value">{cf}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Indirizzo</div>
+                    <div class="info-value">{indirizzo}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Città</div>
+                    <div class="info-value">{cap} {comune} ({provincia})</div>
+                </div>
             </div>
         </div>
         
+        {cliente_html}
+        
         <div class="section">
-            <div class="section-title">Dettaglio Righe</div>
+            <div class="section-title">Dettaglio Beni / Servizi</div>
             <table>
                 <thead>
                     <tr>
-                        <th>#</th>
+                        <th style="width:50px;text-align:center">#</th>
                         <th>Descrizione</th>
-                        <th style="text-align:right">Qta</th>
-                        <th style="text-align:right">Prezzo Unit.</th>
-                        <th style="text-align:right">IVA %</th>
-                        <th style="text-align:right">Importo</th>
+                        <th style="width:100px;text-align:center">Qta</th>
+                        <th style="width:120px;text-align:right">Prezzo Unit.</th>
+                        <th style="width:80px;text-align:center">IVA</th>
+                        <th style="width:130px;text-align:right">Importo</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -732,6 +925,8 @@ def generate_invoice_html(fattura: Dict) -> str:
                 </tbody>
             </table>
         </div>
+        
+        {pagamento_html}
         
         <div class="totals">
             <div class="totals-row">
