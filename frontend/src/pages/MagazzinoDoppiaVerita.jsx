@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../api';
 import { formatEuro } from '../lib/utils';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
-import { Package, Search, AlertTriangle, Check, ArrowUpDown, RefreshCw } from 'lucide-react';
+import { Package, Search, AlertTriangle, Check, ArrowUpDown, RefreshCw, Trash2 } from 'lucide-react';
 
 export default function MagazzinoDoppiaVerita() {
   const { anno } = useAnnoGlobale();
@@ -13,6 +13,8 @@ export default function MagazzinoDoppiaVerita() {
   const [soloScorteBasse, setSoloScorteBasse] = useState(false);
   const [stats, setStats] = useState({});
   const [selectedProdotto, setSelectedProdotto] = useState(null);
+  const [fornitoriEsclusi, setFornitoriEsclusi] = useState(null);
+  const [puliziaInCorso, setPuliziaInCorso] = useState(false);
 
   useEffect(() => {
     loadProdotti();
