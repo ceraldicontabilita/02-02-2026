@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import api from '../api';
-import PrimaNotaMobile from './PrimaNotaMobile';
-import { useIsMobile } from '../hooks/useData';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
 import { formatEuro } from '../lib/utils';
 
@@ -17,14 +15,7 @@ import { formatEuro } from '../lib/utils';
  * - Dati da estratto conto
  */
 export default function PrimaNota() {
-  const isMobile = useIsMobile();
-  
-  // Se siamo su mobile, mostra la versione ottimizzata
-  if (isMobile) {
-    return <PrimaNotaMobile />;
-  }
-  
-  // Desktop version
+  // La pagina è responsive e funziona sia su desktop che mobile
   return <PrimaNotaDesktop />;
 }
 
