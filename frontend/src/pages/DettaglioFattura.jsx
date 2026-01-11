@@ -253,11 +253,11 @@ export default function DettaglioFattura() {
         <div style={styles.grid}>
           <div>
             <p style={styles.label}>Numero Fattura</p>
-            <p style={styles.value}>{fattura.invoice_number || fattura.numero_fattura}</p>
+            <p style={styles.value}>{fattura.invoice_number || fattura.numero_documento || fattura.numero_fattura || '-'}</p>
           </div>
           <div>
             <p style={styles.label}>Data Documento</p>
-            <p style={styles.value}>{formatDate(fattura.invoice_date || fattura.data_fattura)}</p>
+            <p style={styles.value}>{formatDate(fattura.invoice_date || fattura.data_documento || fattura.data_fattura)}</p>
           </div>
           <div>
             <p style={styles.label}>Data Scadenza</p>
@@ -276,7 +276,7 @@ export default function DettaglioFattura() {
         <div style={styles.grid}>
           <div>
             <p style={styles.label}>Ragione Sociale</p>
-            <p style={styles.value}>{fattura.supplier_name || fattura.cedente_denominazione}</p>
+            <p style={styles.value}>{fattura.supplier_name || fattura.fornitore_ragione_sociale || fattura.cedente_denominazione || '-'}</p>
           </div>
           <div>
             <p style={styles.label}>Partita IVA</p>
