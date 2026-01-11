@@ -669,6 +669,139 @@ async def get_archivio_fatture(
     }
 
 
+# IMPORTANTE: Questi endpoint con path più specifici DEVONO essere definiti
+# PRIMA di /fattura/{fattura_id} per evitare conflitti di routing
+
+@router.get("/fattura/{fattura_id}/view-assoinvoice")
+async def view_fattura_assoinvoice(fattura_id: str):
+    """
+    Visualizza la fattura XML in formato AssoInvoice (HTML).
+    Usa il foglio di stile XSL per trasformare l'XML in HTML leggibile.
+    """
+    from fastapi.responses import HTMLResponse
+    import lxml.etree as ET
+    import os
+    
+    db = Database.get_db()
+    
+    # Cerca prima in fatture_ricevute
+    fattura = await db[COL_FATTURE_RICEVUTE].find_one({"id": fattura_id}, {"_id": 0})
+    
+    # Se non trovata, cerca in invoices (collezione principale)
+    if not fattura:
+        fattura = await db["invoices"].find_one({"id": fattura_id}, {"_id": 0})
+    
+    if not fattura:
+        raise HTTPException(status_code=404, detail="Fattura non trovata")
+    
+    # Recupera XML content
+    xml_content = fattura.get("xml_content")
+    
+    if not xml_content:
+        # Genera HTML alternativo con i dati della fattura
+        html_content = generate_invoice_html(fattura)
+        return HTMLResponse(content=html_content, status_code=200)
+    
+    try:
+        # Carica il foglio di stile XSL
+        xsl_path = os.path.join(os.path.dirname(__file__), '..', '..', 'static', 'FoglioStileAssoSoftware.xsl')
+        xsl_path = os.path.abspath(xsl_path)
+        
+        if not os.path.exists(xsl_path):
+            raise HTTPException(status_code=500, detail="Foglio stile XSL non trovato")
+        
+        # Parse XML and XSL
+        xml_doc = ET.fromstring(xml_content.encode('utf-8'))
+        xsl_doc = ET.parse(xsl_path)
+        transform = ET.XSLT(xsl_doc)
+        
+        # Apply transformation
+        html_doc = transform(xml_doc)
+        html_content = str(html_doc)
+        
+        # Wrap with proper HTML structure
+        full_html = f"""<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fattura {fattura.get('invoice_number') or fattura.get('numero_documento', '')}</title>
+    <style>
+        body {{ font-family: Arial, sans-serif; padding: 20px; max-width: 1000px; margin: 0 auto; }}
+        table {{ border-collapse: collapse; width: 100%; }}
+        th, td {{ border: 1px solid #ddd; padding: 8px; text-align: left; }}
+        th {{ background-color: #f4f4f4; }}
+        .print-btn {{
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            z-index: 1000;
+        }}
+        .print-btn:hover {{ background: #45a049; }}
+        @media print {{ .print-btn {{ display: none; }} }}
+    </style>
+</head>
+<body>
+    <button class="print-btn" onclick="window.print()">🖨️ Stampa</button>
+    {html_content}
+</body>
+</html>"""
+        
+        return HTMLResponse(content=full_html, status_code=200)
+        
+    except ET.XMLSyntaxError as e:
+        logger.error(f"XML Syntax Error: {e}")
+        # Fallback: genera HTML dai dati
+        html_content = generate_invoice_html(fattura)
+        return HTMLResponse(content=html_content, status_code=200)
+    except Exception as e:
+        logger.error(f"Error transforming XML: {e}")
+        # Fallback: genera HTML dai dati
+        html_content = generate_invoice_html(fattura)
+        return HTMLResponse(content=html_content, status_code=200)
+
+
+@router.get("/fattura/{fattura_id}/pdf/{allegato_id}")
+async def download_pdf_allegato(fattura_id: str, allegato_id: str):
+    """
+    Scarica PDF allegato alla fattura.
+    """
+    from fastapi.responses import Response
+    
+    db = Database.get_db()
+    
+    allegato = await db[COL_ALLEGATI].find_one(
+        {"id": allegato_id, "fattura_id": fattura_id}
+    )
+    
+    if not allegato:
+        raise HTTPException(status_code=404, detail="Allegato non trovato")
+    
+    base64_data = allegato.get("base64_data")
+    if not base64_data:
+        raise HTTPException(status_code=404, detail="Dati PDF non disponibili")
+    
+    try:
+        pdf_bytes = base64.b64decode(base64_data)
+    except Exception:
+        raise HTTPException(status_code=500, detail="Errore decodifica PDF")
+    
+    nome_file = allegato.get("nome_file", "allegato.pdf")
+    
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{nome_file}"'}
+    )
+
+
 @router.get("/fattura/{fattura_id}")
 async def get_fattura_dettaglio(fattura_id: str):
     """
