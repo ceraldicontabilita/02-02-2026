@@ -304,6 +304,31 @@ function SupplierModal({ isOpen, onClose, supplier, onSave, saving }) {
                 />
               </div>
             </div>
+            
+            {/* Esclude Magazzino */}
+            <div style={{ 
+              padding: '14px', 
+              background: form.esclude_magazzino ? '#fef3c7' : '#f8fafc', 
+              borderRadius: '10px',
+              border: form.esclude_magazzino ? '1px solid #fbbf24' : '1px solid #e2e8f0'
+            }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={form.esclude_magazzino || false}
+                  onChange={(e) => handleChange('esclude_magazzino', e.target.checked)}
+                  style={{ width: '18px', height: '18px', accentColor: '#f59e0b' }}
+                />
+                <div>
+                  <div style={{ fontSize: '14px', fontWeight: 600, color: '#374151' }}>
+                    Esclude dal Magazzino
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>
+                    I prodotti di questo fornitore NON verranno caricati in magazzino (es. manutenzione, servizi, ferramenta)
+                  </div>
+                </div>
+              </label>
+            </div>
           </div>
         </div>
 
