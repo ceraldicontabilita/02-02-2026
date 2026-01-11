@@ -45,12 +45,22 @@ export default function DizionarioProdotti() {
     }
   }
 
+  async function loadFornitori() {
+    try {
+      const res = await api.get('/api/dizionario-prodotti/fornitori');
+      setFornitori(res.data.fornitori || []);
+    } catch (e) {
+      console.error('Errore caricamento fornitori:', e);
+    }
+  }
+
   async function loadProdotti() {
     setLoading(true);
     try {
       const params = new URLSearchParams();
       if (search) params.append('search', search);
       if (soloSenzaPrezzo) params.append('solo_senza_prezzo', 'true');
+      if (fornitoreFilter) params.append('fornitore_nome', fornitoreFilter);
       params.append('limit', limit.toString());
       params.append('offset', offset.toString());
       
