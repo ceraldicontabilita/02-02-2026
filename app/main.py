@@ -263,6 +263,9 @@ app.include_router(gestione_iva_speciale.router, prefix="/api/iva-speciale", tag
 app.include_router(alerts.router, prefix="/api/alerts", tags=["Alert Sistema"])
 app.include_router(import_templates.router, prefix="/api/import-templates", tags=["Import Templates"])
 
+# --- Dizionario Prodotti (Food Cost & Tracciabilità) ---
+app.include_router(dizionario_prodotti.router, prefix="/api/dizionario-prodotti", tags=["Dizionario Prodotti"])
+
 # --- Sincronizzazione Relazionale ---
 app.include_router(sync_relazionale.router, prefix="/api", tags=["Sincronizzazione Relazionale"])
 
