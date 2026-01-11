@@ -161,15 +161,6 @@ app.include_router(quietanze.router, prefix="/api/quietanze-f24", tags=["Quietan
 app.include_router(email_f24.router, prefix="/api/email-f24", tags=["Email F24"])
 app.include_router(f24_gestione_avanzata.router, prefix="/api/f24-avanzato", tags=["F24 Gestione Avanzata"])
 
-# --- HACCP Module ---
-app.include_router(haccp_main.router, prefix="/api/haccp", tags=["HACCP"])
-app.include_router(haccp_completo.router, prefix="/api/haccp-completo", tags=["HACCP Completo"])
-app.include_router(haccp_libro_unico.router, prefix="/api/haccp/libro-unico", tags=["HACCP Libro Unico"])
-app.include_router(haccp_technical_sheets.router, prefix="/api/haccp/technical-sheets", tags=["HACCP Technical Sheets"])
-app.include_router(haccp_sanifications.router, prefix="/api/haccp/sanifications", tags=["HACCP Sanifications"])
-app.include_router(haccp_report_pdf.router, prefix="/api/haccp-report", tags=["HACCP Report PDF"])
-app.include_router(haccp_auth.router, prefix="/api/haccp-auth", tags=["HACCP Auth"])
-
 # --- Accounting Module ---
 app.include_router(accounting_main.router, prefix="/api/accounting", tags=["Accounting"])
 app.include_router(accounting_extended.router, prefix="/api/accounting", tags=["Accounting Extended"])
