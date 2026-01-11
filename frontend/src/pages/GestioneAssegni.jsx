@@ -600,7 +600,7 @@ export default function GestioneAssegni() {
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    window.open(`${process.env.REACT_APP_BACKEND_URL}/api/fatture-ricevute/fattura/${assegno.fattura_collegata}/view-assoinvoice`, '_blank');
+                                    window.open(`/api/fatture-ricevute/fattura/${assegno.fattura_collegata}/view-assoinvoice`, '_blank');
                                   }}
                                   style={{
                                     padding: '3px 8px',
