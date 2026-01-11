@@ -101,7 +101,9 @@ async def get_prodotti_dizionario(
     search: Optional[str] = None,
     fornitore_id: Optional[str] = None,
     solo_senza_peso: bool = False,
-    limit: int = 100
+    solo_senza_prezzo: bool = False,
+    limit: int = 100,
+    offset: int = 0
 ) -> Dict[str, Any]:
     """
     Lista prodotti dal dizionario con prezzi e pesi.
@@ -119,14 +121,22 @@ async def get_prodotti_dizionario(
         query["fornitore_id"] = fornitore_id
     if solo_senza_peso:
         query["peso_grammi"] = None
+    if solo_senza_prezzo:
+        query["$or"] = query.get("$or", [])
+        query["prezzo_per_kg"] = {"$in": [None, 0]}
+    
+    # Count totale per paginazione
+    totale = await db[COLLECTION_DIZIONARIO].count_documents(query)
     
     prodotti = await db[COLLECTION_DIZIONARIO].find(
         query, {"_id": 0}
-    ).sort("descrizione", 1).limit(limit).to_list(limit)
+    ).sort("descrizione", 1).skip(offset).limit(limit).to_list(limit)
     
     return {
         "prodotti": prodotti,
-        "totale": len(prodotti)
+        "totale": totale,
+        "limit": limit,
+        "offset": offset
     }
 
 
