@@ -278,6 +278,19 @@ export default function Admin() {
     setSyncLoading(false);
   }
 
+  async function matchFattureBanca() {
+    setSyncLoading(true);
+    try {
+      const r = await api.post("/api/sync/match-fatture-banca");
+      alert(`Match completato:\n- Associate: ${r.data.matched}\n- Non trovate: ${r.data.not_matched}`);
+      await loadSyncStatus();
+    } catch (e) {
+      console.error("Error match banca:", e);
+      alert("Errore durante il match");
+    }
+    setSyncLoading(false);
+  }
+
   const fmt = (n) => n?.toLocaleString('it-IT') || '0';
 
   return (
