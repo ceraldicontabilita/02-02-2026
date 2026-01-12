@@ -366,13 +366,31 @@ async def conferma_cedolino(stima: CedolinoStima) -> Dict[str, Any]:
 
 @router.get("/lista/{anno}/{mese}")
 async def lista_cedolini(anno: int, mese: int) -> List[Dict[str, Any]]:
-    """Lista cedolini per mese"""
+    """Lista cedolini per mese con informazioni sui bonifici associati"""
     db = Database.get_db()
     
     cedolini = await db["cedolini"].find(
         {"anno": anno, "mese": mese},
         {"_id": 0}
     ).to_list(1000)
+    
+    # Arricchisci con info bonifici dalla prima_nota_salari
+    for c in cedolini:
+        dipendente_id = c.get("dipendente_id")
+        if dipendente_id:
+            # Cerca nella prima nota salari se c'è un bonifico associato per questo dipendente/mese
+            prima_nota = await db["prima_nota_salari"].find_one(
+                {
+                    "dipendente_id": dipendente_id,
+                    "anno": anno,
+                    "mese": mese,
+                    "bonifico_id": {"$exists": True, "$ne": None, "$ne": ""}
+                },
+                {"_id": 0, "bonifico_id": 1, "bonifico_associato": 1}
+            )
+            if prima_nota and prima_nota.get("bonifico_id"):
+                c["bonifico_id"] = prima_nota.get("bonifico_id")
+                c["salario_associato"] = True
     
     return cedolini
 
