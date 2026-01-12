@@ -14,6 +14,7 @@ import re
 import hashlib
 import zipfile
 import logging
+import asyncio
 
 # PDF parsing
 from pdfminer.high_level import extract_text
