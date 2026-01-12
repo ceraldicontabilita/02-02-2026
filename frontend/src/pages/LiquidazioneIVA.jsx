@@ -465,12 +465,9 @@ export default function LiquidazioneIVA() {
                         borderRadius: 6, 
                         fontSize: 12, 
                         fontWeight: '600',
-                        background: mese.saldo_iva > 0 ? '#fee2e2' : '#dcfce7',
-                        color: mese.saldo_iva > 0 ? '#dc2626' : '#16a34a'
+                        background: m.stato === 'Da versare' ? '#fef3c7' : m.stato === 'A credito' ? '#dbeafe' : '#f3f4f6',
+                        color: m.stato === 'Da versare' ? '#b45309' : m.stato === 'A credito' ? '#1d4ed8' : '#6b7280'
                       }}>
-                        m.stato === 'Da versare' ? 'amber' :
-                        m.stato === 'A credito' ? 'blue' : 'gray'
-                      }`}>
                         {m.stato}
                       </span>
                     </td>
