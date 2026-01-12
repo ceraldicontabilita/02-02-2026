@@ -1360,18 +1360,31 @@ async def get_operazioni_salari_compatibili(bonifico_id: str):
             except:
                 pass
         
-        # Score causale match (max 20)
-        if causale:
-            dipendente = op.get("dipendente", "").lower()
-            if dipendente and dipendente in causale:
-                score += 20
-            elif any(word in causale for word in ["stipendio", "salario", "netto", "busta"]):
-                score += 10
+        # Score causale/beneficiario match (max 30)
+        dipendente = op.get("dipendente", "").lower()
+        if dipendente:
+            # Match nome dipendente nella causale
+            if dipendente in causale:
+                score += 30
+            # Match nome dipendente nel beneficiario
+            elif beneficiario and dipendente in beneficiario:
+                score += 25
+            # Match parziale (cognome)
+            else:
+                cognome = dipendente.split()[-1] if dipendente else ""
+                if cognome and len(cognome) > 3:
+                    if cognome in causale or cognome in beneficiario:
+                        score += 15
         
-        if score > 0:
+        # Bonus per parole chiave stipendio
+        if any(word in causale for word in ["stipendio", "salario", "netto", "busta", "stip"]):
+            score += 10
+        
+        # Include anche risultati con score 0 se importo match
+        if score >= 0:
             risultati.append({
                 **op,
-                "compatibilita_score": score,
+                "compatibilita_score": max(score, 10) if op_importo > 0 else score,  # Min 10 se importo presente
                 "importo_display": op_importo
             })
     
@@ -1383,9 +1396,10 @@ async def get_operazioni_salari_compatibili(bonifico_id: str):
             "id": bonifico_id,
             "importo": importo,
             "data": data_bonifico,
-            "causale": bonifico.get("causale")
+            "causale": bonifico.get("causale"),
+            "beneficiario": beneficiario
         },
-        "operazioni_compatibili": risultati[:10]  # Max 10 risultati
+        "operazioni_compatibili": risultati[:15]  # Max 15 risultati
     }
 
 
