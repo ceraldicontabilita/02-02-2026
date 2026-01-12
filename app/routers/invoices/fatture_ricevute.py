@@ -773,6 +773,135 @@ def generate_invoice_html(fattura: Dict, righe_fattura: List[Dict] = None) -> st
             </div>
         </div>"""
     
+
+
+
+@router.post("/rielabora-integrazione")
+async def rielabora_integrazione_fatture(
+    anno: int = Query(..., description="Anno delle fatture da rielaborare"),
+    dry_run: bool = Query(default=True, description="Se True, mostra anteprima senza modificare")
+):
+    """
+    Rielabora le fatture esistenti applicando l'integrazione ciclo passivo:
+    - Magazzino (se fornitore non escluso)
+    - Prima Nota
+    - Scadenziario
+    - Riconciliazione automatica
+    
+    Utile per fatture importate prima dell'implementazione dell'integrazione automatica.
+    """
+    db = Database.get_db()
+    
+    # Trova fatture dell'anno senza integrazione completata
+    query = {
+        "data_documento": {"$regex": f"^{anno}"},
+        "$or": [
+            {"integrazione_completata": {"$exists": False}},
+            {"integrazione_completata": False}
+        ]
+    }
+    
+    fatture = await db[COL_FATTURE_RICEVUTE].find(query, {"_id": 0}).to_list(500)
+    
+    if dry_run:
+        return {
+            "dry_run": True,
+            "anno": anno,
+            "fatture_da_elaborare": len(fatture),
+            "anteprima": [
+                {
+                    "id": f.get("id"),
+                    "numero": f.get("numero_documento"),
+                    "fornitore": f.get("fornitore_ragione_sociale"),
+                    "importo": f.get("importo_totale"),
+                    "data": f.get("data_documento")
+                }
+                for f in fatture[:20]
+            ]
+        }
+    
+    risultati = {
+        "fatture_elaborate": 0,
+        "prima_nota_creati": 0,
+        "scadenze_create": 0,
+        "riconciliazioni_auto": 0,
+        "errori": [],
+        "dettagli": []
+    }
+    
+    for fattura in fatture:
+        fattura_id = fattura.get("id")
+        try:
+            # Recupera fornitore
+            fornitore = await db[COL_FORNITORI].find_one(
+                {"partita_iva": fattura.get("fornitore_partita_iva")},
+                {"_id": 0}
+            )
+            
+            if not fornitore:
+                risultati["errori"].append({
+                    "fattura": fattura.get("numero_documento"),
+                    "errore": "Fornitore non trovato"
+                })
+                continue
+            
+            fornitore_obj = {
+                "id": fornitore.get("id"),
+                "partita_iva": fornitore.get("partita_iva"),
+                "ragione_sociale": fornitore.get("ragione_sociale"),
+                "esclude_magazzino": fornitore.get("esclude_magazzino", False)
+            }
+            
+            dettaglio = {"fattura": fattura.get("numero_documento"), "operazioni": []}
+            
+            # 1. PRIMA NOTA
+            try:
+                scrittura_id = await genera_scrittura_prima_nota(db, fattura_id, fattura, fornitore_obj)
+                await db[COL_FATTURE_RICEVUTE].update_one(
+                    {"id": fattura_id},
+                    {"$set": {"prima_nota_id": scrittura_id}}
+                )
+                risultati["prima_nota_creati"] += 1
+                dettaglio["operazioni"].append("prima_nota")
+            except Exception as e:
+                dettaglio["operazioni"].append(f"prima_nota_errore: {str(e)}")
+            
+            # 2. SCADENZIARIO
+            try:
+                scadenza_id = await crea_scadenza_pagamento(db, fattura_id, fattura, fornitore_obj)
+                if scadenza_id:
+                    risultati["scadenze_create"] += 1
+                    dettaglio["operazioni"].append("scadenza")
+                    
+                    # 3. RICONCILIAZIONE AUTOMATICA
+                    scadenza = await db[COL_SCADENZIARIO].find_one({"id": scadenza_id}, {"_id": 0})
+                    if scadenza:
+                        match = await cerca_match_bancario(db, scadenza)
+                        if match:
+                            await esegui_riconciliazione(db, scadenza_id, match.get("id"))
+                            risultati["riconciliazioni_auto"] += 1
+                            dettaglio["operazioni"].append("riconciliazione_auto")
+            except Exception as e:
+                dettaglio["operazioni"].append(f"scadenziario_errore: {str(e)}")
+            
+            # Aggiorna flag integrazione
+            await db[COL_FATTURE_RICEVUTE].update_one(
+                {"id": fattura_id},
+                {"$set": {"integrazione_completata": True, "updated_at": datetime.now(timezone.utc).isoformat()}}
+            )
+            
+            risultati["fatture_elaborate"] += 1
+            risultati["dettagli"].append(dettaglio)
+            
+        except Exception as e:
+            logger.error(f"Errore rielaborazione {fattura.get('numero_documento')}: {e}")
+            risultati["errori"].append({
+                "fattura": fattura.get("numero_documento"),
+                "errore": str(e)
+            })
+    
+    return risultati
+
     # Sezione pagamento HTML (solo se presente)
     pagamento_html = ""
     if mod_pagamento or iban:
