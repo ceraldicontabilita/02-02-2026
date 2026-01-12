@@ -880,7 +880,8 @@ async def rielabora_integrazione_fatture(
                     if scadenza:
                         match = await cerca_match_bancario(db, scadenza)
                         if match:
-                            await esegui_riconciliazione(db, scadenza_id, match.get("id"))
+                            source_col = match.get("source_collection", "estratto_conto_movimenti")
+                            await esegui_riconciliazione(db, scadenza_id, match.get("id"), source_col)
                             risultati["riconciliazioni_auto"] += 1
                             dettaglio["operazioni"].append("riconciliazione_auto")
             except Exception as e:
@@ -1606,7 +1607,8 @@ async def elabora_fatture_legacy(
                     if scadenza:
                         match = await cerca_match_bancario(db, scadenza)
                         if match:
-                            await esegui_riconciliazione(db, scadenza_id, match.get("id"))
+                            source_col = match.get("source_collection", "estratto_conto_movimenti")
+                            await esegui_riconciliazione(db, scadenza_id, match.get("id"), source_col)
                             risultati["riconciliazioni_auto"] += 1
                             dettaglio["operazioni"].append("riconciliazione_auto")
             except Exception as e:
