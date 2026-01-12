@@ -210,28 +210,74 @@ export default function Fatture() {
       if (response.data?.require_force) {
         const warnings = response.data.warnings || [];
         const entita = response.data.entita_correlate || {};
+        const stato = response.data.stato_registrazione || {};
         
-        let messaggio = "⚠️ ATTENZIONE - Questa fattura ha dati registrati:\n\n";
+        // Costruisci messaggio dettagliato con formattazione migliorata
+        let messaggio = "╔═══════════════════════════════════════════╗\n";
+        messaggio += "║   ⚠️ ELIMINAZIONE FATTURA - ATTENZIONE!   ║\n";
+        messaggio += "╚═══════════════════════════════════════════╝\n\n";
         
-        if (entita.prima_nota_banca > 0 || entita.prima_nota_cassa > 0) {
-          messaggio += `• ${entita.prima_nota_banca + entita.prima_nota_cassa} movimenti Prima Nota\n`;
-        }
-        if (entita.scadenze > 0) {
-          messaggio += `• ${entita.scadenze} scadenze pagamento\n`;
-        }
-        if (entita.movimenti_magazzino > 0) {
-          messaggio += `• ${entita.movimenti_magazzino} movimenti magazzino\n`;
-        }
-        if (entita.assegni_collegati > 0) {
-          messaggio += `• ${entita.assegni_collegati} assegni collegati\n`;
+        // Info fattura
+        messaggio += "📄 FATTURA DA ELIMINARE\n";
+        messaggio += "────────────────────────────────────────────\n";
+        
+        // Riepilogo entità correlate
+        const totalEntita = (entita.prima_nota_banca || 0) + 
+                          (entita.prima_nota_cassa || 0) + 
+                          (entita.scadenze || 0) + 
+                          (entita.movimenti_magazzino || 0) + 
+                          (entita.assegni_collegati || 0);
+        
+        if (totalEntita > 0) {
+          messaggio += "\n📋 ENTITÀ CORRELATE CHE VERRANNO ELIMINATE:\n";
+          messaggio += "────────────────────────────────────────────\n";
+          
+          if (entita.prima_nota_banca > 0) {
+            messaggio += `  🏦 ${entita.prima_nota_banca} registrazione/i Prima Nota BANCA\n`;
+          }
+          if (entita.prima_nota_cassa > 0) {
+            messaggio += `  💵 ${entita.prima_nota_cassa} registrazione/i Prima Nota CASSA\n`;
+          }
+          if (entita.scadenze > 0) {
+            messaggio += `  📅 ${entita.scadenze} scadenza/e di pagamento\n`;
+          }
+          if (entita.movimenti_magazzino > 0) {
+            messaggio += `  📦 ${entita.movimenti_magazzino} movimento/i di magazzino\n`;
+          }
+          if (entita.assegni_collegati > 0) {
+            messaggio += `  📝 ${entita.assegni_collegati} assegno/i collegato/i\n`;
+          }
+          
+          messaggio += "\n⚠️ QUESTE OPERAZIONI NON SONO REVERSIBILI!\n";
         }
         
-        messaggio += "\nTutti questi dati verranno eliminati/archiviati.\n\nConfermi l'eliminazione?";
+        if (stato.registrata) {
+          messaggio += "\n❗ La fattura risulta REGISTRATA in contabilità.\n";
+        }
         
+        messaggio += "\n────────────────────────────────────────────\n";
+        messaggio += "Sei ASSOLUTAMENTE SICURO di voler procedere?";
+        
+        // Prima conferma
         if (!window.confirm(messaggio)) return;
         
-        // Seconda chiamata con force=true
+        // Seconda conferma esplicita per operazioni critiche
+        if (totalEntita > 0 || stato.registrata) {
+          const confermaFinale = window.confirm(
+            "🔴 ULTIMA CONFERMA RICHIESTA 🔴\n\n" +
+            "Stai per eliminare definitivamente:\n" +
+            `• 1 fattura\n` +
+            `• ${totalEntita} entità correlate\n\n` +
+            "Digita OK per confermare l'eliminazione definitiva."
+          );
+          if (!confermaFinale) return;
+        }
+        
+        // Chiamata finale con force=true
         await api.delete(`/api/fatture/${id}?force=true`);
+        
+        // Notifica successo
+        alert(`✅ Fattura eliminata con successo!\n\nEliminati anche ${totalEntita} record correlati.`);
       }
       
       loadInvoices();
