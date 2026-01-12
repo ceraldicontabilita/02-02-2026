@@ -699,6 +699,107 @@ export default function ArchivioBonifici() {
                         </div>
                       )}
                     </td>
+                    {/* NUOVA COLONNA: Associa a Fattura */}
+                    <td style={{ padding: 8, position: 'relative' }}>
+                      {t.fattura_associata ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span style={{ 
+                            background: '#dbeafe', 
+                            color: '#1d4ed8', 
+                            padding: '4px 8px', 
+                            borderRadius: 6, 
+                            fontSize: 10,
+                            fontWeight: 500
+                          }}>
+                            📄 {t.fattura_numero?.substring(0, 15) || 'Associata'}
+                          </span>
+                          <button
+                            onClick={() => handleDisassociaFattura(t.id)}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 10, color: '#dc2626' }}
+                            title="Rimuovi associazione"
+                          >
+                            ✗
+                          </button>
+                        </div>
+                      ) : (
+                        <div>
+                          <button
+                            onClick={() => toggleAssociaFatturaDropdown(t.id)}
+                            style={{
+                              padding: '4px 10px',
+                              background: associaFatturaDropdown === t.id ? '#1d4ed8' : '#f1f5f9',
+                              color: associaFatturaDropdown === t.id ? 'white' : '#475569',
+                              border: 'none',
+                              borderRadius: 6,
+                              cursor: 'pointer',
+                              fontSize: 11,
+                              fontWeight: 500
+                            }}
+                            data-testid={`btn-associa-fattura-${t.id}`}
+                          >
+                            {associaFatturaDropdown === t.id ? '▼ Scegli' : '📄 Fattura'}
+                          </button>
+                          {/* Dropdown fatture */}
+                          {associaFatturaDropdown === t.id && (
+                            <div style={{
+                              position: 'absolute',
+                              top: '100%',
+                              left: 0,
+                              zIndex: 100,
+                              background: 'white',
+                              border: '1px solid #e2e8f0',
+                              borderRadius: 8,
+                              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                              minWidth: 300,
+                              maxHeight: 250,
+                              overflowY: 'auto'
+                            }}>
+                              {loadingFatture ? (
+                                <div style={{ padding: 16, textAlign: 'center', color: '#6b7280' }}>⏳ Caricamento...</div>
+                              ) : fattureCompatibili.length === 0 ? (
+                                <div style={{ padding: 16, textAlign: 'center', color: '#6b7280', fontSize: 11 }}>
+                                  Nessuna fattura compatibile trovata
+                                </div>
+                              ) : (
+                                fattureCompatibili.map((f, idx) => (
+                                  <div
+                                    key={f.id || idx}
+                                    onClick={() => handleAssociaFattura(t.id, f.id, f.collection)}
+                                    style={{
+                                      padding: '10px 12px',
+                                      borderBottom: '1px solid #f1f5f9',
+                                      cursor: 'pointer',
+                                      transition: 'background 0.1s'
+                                    }}
+                                    onMouseOver={(e) => e.currentTarget.style.background = '#eff6ff'}
+                                    onMouseOut={(e) => e.currentTarget.style.background = 'white'}
+                                  >
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                      <span style={{ fontWeight: 500, fontSize: 11 }}>
+                                        {f.numero_fattura || 'N/A'} - {f.fornitore?.substring(0, 20) || ''}
+                                      </span>
+                                      <span style={{ 
+                                        background: f.compatibilita_score >= 70 ? '#dcfce7' : f.compatibilita_score >= 40 ? '#fef3c7' : '#fee2e2',
+                                        color: f.compatibilita_score >= 70 ? '#16a34a' : f.compatibilita_score >= 40 ? '#d97706' : '#dc2626',
+                                        padding: '2px 6px',
+                                        borderRadius: 4,
+                                        fontSize: 9,
+                                        fontWeight: 600
+                                      }}>
+                                        {f.compatibilita_score}%
+                                      </span>
+                                    </div>
+                                    <div style={{ fontSize: 10, color: '#6b7280', marginTop: 4 }}>
+                                      {formatDate(f.data_fattura)} • {formatEuro(f.importo)}
+                                    </div>
+                                  </div>
+                                ))
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </td>
                     <td style={{ padding: 8 }}>
                       {editingNote === t.id ? (
                         <div style={{ display: 'flex', gap: 4 }}>
@@ -706,7 +807,7 @@ export default function ArchivioBonifici() {
                             type="text"
                             value={noteText}
                             onChange={(e) => setNoteText(e.target.value)}
-                            style={{ padding: 4, borderRadius: 4, border: '1px solid #e2e8f0', fontSize: 11, width: 100 }}
+                            style={{ padding: 4, borderRadius: 4, border: '1px solid #e2e8f0', fontSize: 11, width: 80 }}
                             autoFocus
                           />
                           <button onClick={() => handleSaveNote(t.id)} style={{ padding: '2px 6px', background: '#16a34a', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: 10 }}>✓</button>
@@ -718,7 +819,7 @@ export default function ArchivioBonifici() {
                           style={{ cursor: 'pointer', color: t.note ? '#1e3a5f' : '#94a3b8', fontSize: 11 }}
                           title="Clicca per modificare"
                         >
-                          {t.note || '+ Aggiungi nota'}
+                          {t.note || '+ Nota'}
                         </div>
                       )}
                     </td>
