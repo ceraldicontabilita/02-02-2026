@@ -123,15 +123,57 @@ class PayslipPDFParser:
         if not cf:
             return None
         
-        # Estrai dati
+        # Estrai dati base
         nome = self._extract_employee_name(text)
         periodo = self._extract_periodo(text)
         
-        # Estrai importi
+        # Estrai importi base
         retrib_tfr = self._extract_amount(text, 'retribuzione_tfr')
         netto = self._extract_amount(text, 'netto_mese')
         competenze = self._extract_amount(text, 'totale_competenze')
         trattenute = self._extract_amount(text, 'totale_trattenute')
+        
+        # === NUOVI DATI ESTRATTI ===
+        
+        # Ore lavorate
+        ore_ordinarie = self._extract_amount(text, 'ore_ordinarie')
+        ore_straordinarie = self._extract_amount(text, 'ore_straordinarie')
+        
+        # Pattern alternativo per ore dalla tabella (formato Zucchetti)
+        if ore_ordinarie == 0:
+            ore_match = re.search(r'(\d+)\s+(\d+)\s+(\d+)[,.]?(\d*)\s+(?:ORE|ore|\d+[,.])', text)
+            if ore_match:
+                ore_ordinarie = float(ore_match.group(3) + ('.' + ore_match.group(4) if ore_match.group(4) else ''))
+        
+        # Paga
+        paga_base = self._extract_amount(text, 'paga_base')
+        contingenza = self._extract_amount(text, 'contingenza')
+        paga_oraria = paga_base + contingenza if paga_base > 0 else 0
+        
+        # Qualifica e livello
+        livello = self._extract_pattern(text, 'livello')
+        qualifica = self._extract_pattern(text, 'qualifica')
+        
+        # Part-time
+        part_time_match = re.search(self.PATTERNS['part_time'], text)
+        part_time_percent = self._parse_italian_number(part_time_match.group(1)) if part_time_match else 100.0
+        
+        # Ferie e permessi
+        ferie_data = self._extract_ferie(text)
+        permessi_data = self._extract_permessi(text)
+        
+        # TFR progressivi
+        tfr_quota_anno = self._extract_amount(text, 'tfr_quota_anno')
+        tfr_fondo = self._extract_amount(text, 'tfr_fondo')
+        
+        # Matricola
+        matricola = self._extract_matricola(text)
+        
+        # Data assunzione
+        data_assunzione = self._extract_pattern(text, 'data_assunzione')
+        
+        # IBAN (se presente)
+        iban = self._extract_pattern(text, 'iban')
         
         # Se non ci sono dati significativi, salta
         if retrib_tfr == 0 and netto == 0 and competenze == 0:
