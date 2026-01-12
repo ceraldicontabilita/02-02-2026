@@ -233,8 +233,12 @@ export default function ArchivioBonifici() {
     setLoadingOperazioni(false);
   };
 
-  // Toggle dropdown associazione
+  // Toggle dropdown associazione SALARI
   const toggleAssociaDropdown = (bonifico_id) => {
+    // Chiudi dropdown fatture se aperto
+    setAssociaFatturaDropdown(null);
+    setFattureCompatibili([]);
+    
     if (associaDropdown === bonifico_id) {
       setAssociaDropdown(null);
       setOperazioniCompatibili([]);
