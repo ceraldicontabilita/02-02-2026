@@ -996,6 +996,7 @@ export default function GestioneAssegni() {
             </table>
           </div>
         </div>
+        </>
       )}
 
       {/* Generate Modal */}
