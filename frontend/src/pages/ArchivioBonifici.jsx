@@ -285,6 +285,10 @@ export default function ArchivioBonifici() {
   };
 
   const toggleAssociaFatturaDropdown = (bonifico_id) => {
+    // Chiudi dropdown salari se aperto
+    setAssociaDropdown(null);
+    setOperazioniCompatibili([]);
+    
     if (associaFatturaDropdown === bonifico_id) {
       setAssociaFatturaDropdown(null);
       setFattureCompatibili([]);
