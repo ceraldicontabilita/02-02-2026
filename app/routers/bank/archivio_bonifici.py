@@ -1727,30 +1727,46 @@ async def get_fatture_compatibili(bonifico_id: str):
     causale = (bonifico.get("causale") or "").lower()
     beneficiario = ((bonifico.get("beneficiario") or {}).get("nome") or "").lower()
     
-    # Cerca in invoices (collezione principale consolidata)
-    query = {
-        "fattura_associata": {"$ne": True}
-    }
+    # Pipeline con deduplicazione per numero fattura + fornitore
+    match_stage = {"fattura_associata": {"$ne": True}}
     
-    # Filtra per importo ±15%
     if importo > 0:
-        query["$or"] = [
+        match_stage["$or"] = [
             {"totale_documento": {"$gte": importo * 0.85, "$lte": importo * 1.15}},
             {"importo_totale": {"$gte": importo * 0.85, "$lte": importo * 1.15}},
             {"total_amount": {"$gte": importo * 0.85, "$lte": importo * 1.15}}
         ]
     
-    fatture = await db.invoices.find(query, {"_id": 0}).to_list(100)
+    pipeline = [
+        {"$match": match_stage},
+        # Deduplica per numero fattura + P.IVA fornitore
+        {"$group": {
+            "_id": {
+                "numero": {"$ifNull": ["$invoice_number", "$numero_documento"]},
+                "piva": {"$ifNull": ["$supplier_vat", "$fornitore.partita_iva"]}
+            },
+            "doc": {"$first": "$$ROOT"}
+        }},
+        {"$replaceRoot": {"newRoot": "$doc"}},
+        {"$sort": {"invoice_date": -1}},
+        {"$limit": 50}
+    ]
     
-    # Cerca anche legacy (deprecated - per retrocompatibilità)
-    # invoices_legacy = await db.invoices.find(query, {"_id": 0}).to_list(100)
-    
-    # Unisci risultati (solo invoices ora)
-    all_fatture = fatture
+    fatture = await db.invoices.aggregate(pipeline).to_list(50)
     
     # Calcola score di compatibilità
     risultati = []
-    for f in all_fatture:
+    seen_keys = set()  # Extra deduplicazione
+    
+    for f in fatture:
+        # Chiave univoca
+        num = f.get("invoice_number") or f.get("numero_documento", "")
+        piva = f.get("supplier_vat") or (f.get("fornitore", {}) or {}).get("partita_iva", "")
+        key = f"{num}_{piva}"
+        if key in seen_keys:
+            continue
+        seen_keys.add(key)
+        
         score = 0
         f_importo = f.get("totale_documento") or f.get("importo_totale") or f.get("total_amount", 0)
         f_data = f.get("data_documento") or f.get("invoice_date", "")
