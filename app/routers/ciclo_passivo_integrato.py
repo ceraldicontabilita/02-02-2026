@@ -1781,7 +1781,7 @@ async def scarico_produzione_fefo(
             "source": "scarico_fefo",
             "created_at": datetime.now(timezone.utc).isoformat()
         }
-        await db[COL_PRIMA_NOTA].insert_one(rettifica)
+        await db[COL_PRIMA_NOTA_BANCA].insert_one(rettifica)
         prima_nota_id = rettifica["id"]
     
     return {
