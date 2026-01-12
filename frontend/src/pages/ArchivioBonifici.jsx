@@ -754,11 +754,29 @@ export default function ArchivioBonifici() {
                               maxHeight: 250,
                               overflowY: 'auto'
                             }}>
+                              {/* Banner IBAN Match */}
+                              {dipendenteIbanMatch && !loadingOperazioni && (
+                                <div style={{ 
+                                  background: '#ecfdf5', 
+                                  borderBottom: '2px solid #16a34a', 
+                                  padding: '8px 12px',
+                                  fontSize: 10
+                                }}>
+                                  <div style={{ fontWeight: 600, color: '#16a34a' }}>
+                                    🔗 IBAN riconosciuto
+                                  </div>
+                                  <div style={{ color: '#166534', marginTop: 2 }}>
+                                    Dipendente: <strong>{dipendenteIbanMatch.nome_display}</strong>
+                                  </div>
+                                </div>
+                              )}
                               {loadingOperazioni ? (
                                 <div style={{ padding: 16, textAlign: 'center', color: '#6b7280' }}>⏳ Caricamento...</div>
                               ) : operazioniCompatibili.length === 0 ? (
                                 <div style={{ padding: 16, textAlign: 'center', color: '#6b7280', fontSize: 11 }}>
-                                  Nessuna operazione salari compatibile trovata
+                                  {dipendenteIbanMatch 
+                                    ? `Nessuna operazione in Prima Nota Salari per ${dipendenteIbanMatch.nome_display}` 
+                                    : 'Nessuna operazione salari compatibile trovata'}
                                 </div>
                               ) : (
                                 operazioniCompatibili.map((op, idx) => (
