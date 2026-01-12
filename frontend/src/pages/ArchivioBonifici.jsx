@@ -249,6 +249,50 @@ export default function ArchivioBonifici() {
     }
   };
 
+  // === NUOVE FUNZIONI PER FATTURE ===
+  const loadFattureCompatibili = async (bonifico_id) => {
+    setLoadingFatture(true);
+    try {
+      const res = await api.get(`/api/archivio-bonifici/fatture-compatibili/${bonifico_id}`);
+      setFattureCompatibili(res.data.fatture_compatibili || []);
+    } catch (error) {
+      console.error('Errore caricamento fatture:', error);
+      setFattureCompatibili([]);
+    }
+    setLoadingFatture(false);
+  };
+
+  const toggleAssociaFatturaDropdown = (bonifico_id) => {
+    if (associaFatturaDropdown === bonifico_id) {
+      setAssociaFatturaDropdown(null);
+      setFattureCompatibili([]);
+    } else {
+      setAssociaFatturaDropdown(bonifico_id);
+      loadFattureCompatibili(bonifico_id);
+    }
+  };
+
+  const handleAssociaFattura = async (bonifico_id, fattura_id, collection) => {
+    try {
+      await api.post(`/api/archivio-bonifici/associa-fattura?bonifico_id=${bonifico_id}&fattura_id=${fattura_id}&collection=${collection}`);
+      setAssociaFatturaDropdown(null);
+      setFattureCompatibili([]);
+      loadTransfers();
+    } catch (error) {
+      alert('Errore associazione fattura: ' + (error.response?.data?.detail || error.message));
+    }
+  };
+
+  const handleDisassociaFattura = async (bonifico_id) => {
+    if (!window.confirm('Rimuovere associazione fattura?')) return;
+    try {
+      await api.delete(`/api/archivio-bonifici/disassocia-fattura/${bonifico_id}`);
+      loadTransfers();
+    } catch (error) {
+      alert('Errore: ' + error.message);
+    }
+  };
+
   // Calcola totali
   const totaleImporto = transfers.reduce((sum, t) => sum + (t.importo || 0), 0);
 
