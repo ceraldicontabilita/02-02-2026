@@ -573,8 +573,9 @@ export default function ArchivioBonifici() {
                   <th style={{ padding: 8, textAlign: 'left' }}>Beneficiario</th>
                   <th style={{ padding: 8, textAlign: 'left' }}>Causale</th>
                   <th style={{ padding: 8, textAlign: 'left' }}>CRO/TRN</th>
-                  <th style={{ padding: 8, textAlign: 'left', width: 200 }}>Associa a Salario</th>
-                  <th style={{ padding: 8, textAlign: 'left', width: 120 }}>Note</th>
+                  <th style={{ padding: 8, textAlign: 'left', width: 180 }}>Associa Salario</th>
+                  <th style={{ padding: 8, textAlign: 'left', width: 180 }}>Associa Fattura</th>
+                  <th style={{ padding: 8, textAlign: 'left', width: 100 }}>Note</th>
                   <th style={{ padding: 8, textAlign: 'center', width: 50 }}>🗑️</th>
                 </tr>
               </thead>
