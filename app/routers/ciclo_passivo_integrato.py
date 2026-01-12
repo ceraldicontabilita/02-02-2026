@@ -23,6 +23,13 @@ import re
 from app.database import Database
 from app.parsers.fattura_elettronica_parser import parse_fattura_xml
 
+# Fuzzy matching per nomi fornitori
+try:
+    from rapidfuzz import fuzz
+    FUZZY_AVAILABLE = True
+except ImportError:
+    FUZZY_AVAILABLE = False
+
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
