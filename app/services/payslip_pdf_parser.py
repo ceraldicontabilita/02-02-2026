@@ -188,6 +188,23 @@ class PayslipPDFParser:
             'netto_mese': round(netto, 2),
             'totale_competenze': round(competenze, 2),
             'totale_trattenute': round(trattenute, 2),
+            # NUOVI CAMPI
+            'ore_ordinarie': round(ore_ordinarie, 2),
+            'ore_straordinarie': round(ore_straordinarie, 2),
+            'ore_totali': round(ore_ordinarie + ore_straordinarie, 2),
+            'paga_base': round(paga_base, 5),
+            'contingenza': round(contingenza, 5),
+            'paga_oraria': round(paga_oraria, 5),
+            'livello': livello,
+            'qualifica': qualifica,
+            'part_time_percent': part_time_percent,
+            'ferie': ferie_data,
+            'permessi': permessi_data,
+            'tfr_quota_anno': round(tfr_quota_anno, 2),
+            'tfr_fondo': round(tfr_fondo, 2),
+            'matricola': matricola,
+            'data_assunzione': data_assunzione,
+            'iban': iban,
             'raw_text_preview': text[:500]  # Per debug
         }
     
