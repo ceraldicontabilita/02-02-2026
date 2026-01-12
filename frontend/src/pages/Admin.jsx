@@ -696,6 +696,11 @@ export default function Admin() {
           </Card>
         </TabsContent>
 
+        {/* TAB FATTURE */}
+        <TabsContent value="fatture">
+          <FattureAdminTab />
+        </TabsContent>
+
         {/* TAB SISTEMA */}
         <TabsContent value="system">
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
