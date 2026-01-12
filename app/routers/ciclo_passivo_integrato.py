@@ -538,22 +538,20 @@ async def crea_scadenza_pagamento(db, fattura_id: str, fattura: Dict, fornitore:
 
 # ==================== MODULO 4: RICONCILIAZIONE ====================
 
-async def cerca_match_bancario(db, scadenza: Dict, tolleranza_giorni: int = 30, tolleranza_importo: float = 0.50) -> Optional[Dict]:
+async def cerca_match_bancario(db, scadenza: Dict, tolleranza_giorni: int = 30, tolleranza_importo: float = 0.50, include_suggerimenti: bool = False) -> Optional[Dict]:
     """
     Cerca un match tra la scadenza e i movimenti bancari.
     
-    Criteri di match RIGOROSI (per evitare falsi positivi):
-    1. Match ESATTO IMPORTO + NOME: Importo identico (±€0.50) E nome fornitore nel campo 'fornitore'
-    2. Match IMPORTO SIMILE + NOME FORTE: Importo simile (±5%) E nome fornitore confermato
-    3. Match SOLO IMPORTO ESATTO: Se nessun altro match, accetta solo se importo è perfettamente uguale
+    Criteri di match:
+    1. ALTA CONFIDENZA (automatico): Importo identico (±€1) E nome fornitore confermato
+    2. MEDIA CONFIDENZA (automatico per importi >€100): Importo esatto senza conferma nome
+    3. SUGGERIMENTO (solo se include_suggerimenti=True): Importo simile, richiede verifica manuale
     
-    NON matcha mai se:
-    - L'importo differisce più del 10% senza conferma nome
-    - Il movimento è già stato usato per altra scadenza
+    Args:
+        include_suggerimenti: Se True, ritorna anche match a bassa confidenza
     """
     importo = abs(float(scadenza.get("importo_totale", 0)))
     data_scadenza = scadenza.get("data_scadenza")
-    data_fattura = scadenza.get("data_fattura")
     fornitore_nome = (scadenza.get("fornitore_nome") or "").strip()
     fornitore_nome_lower = fornitore_nome.lower()
     numero_fattura = scadenza.get("numero_fattura", "")
@@ -563,26 +561,24 @@ async def cerca_match_bancario(db, scadenza: Dict, tolleranza_giorni: int = 30, 
     
     try:
         data_scad = datetime.strptime(data_scadenza[:10], "%Y-%m-%d")
-        # Cerca da 90 giorni prima della scadenza fino a 30 giorni dopo
-        data_min = (data_scad - timedelta(days=90)).strftime("%Y-%m-%d")
+        # Range ampio: da 120 giorni prima a 30 dopo la scadenza
+        data_min = (data_scad - timedelta(days=120)).strftime("%Y-%m-%d")
         data_max = (data_scad + timedelta(days=tolleranza_giorni)).strftime("%Y-%m-%d")
     except (ValueError, TypeError):
         return None
     
-    # Prepara parole chiave del fornitore (min 4 caratteri, escluse parole comuni)
+    # Parole chiave del fornitore (min 4 caratteri)
     parole_comuni = {"srl", "spa", "snc", "sas", "sapa", "srls", "ltd", "gmbh", "s.r.l.", "s.p.a.", 
-                     "di", "e", "del", "della", "dei", "gruppo", "group", "italia", "italy", "europe"}
+                     "di", "e", "del", "della", "dei", "gruppo", "group", "italia", "italy", "europe", "sede", "secondaria"}
     parole_fornitore = [p.lower() for p in fornitore_nome.split() if len(p) >= 4 and p.lower() not in parole_comuni]
-    
-    # Prima parola significativa del fornitore (più importante)
     prima_parola = parole_fornitore[0] if parole_fornitore else ""
     
-    # --- STEP 1: MATCH ESATTO per importo (±€0.50) ---
+    # --- STEP 1: Cerca movimenti con importo esatto (±€1) ---
     query_esatto = {
         "tipo": {"$in": ["uscita", "addebito"]},
         "$or": [
-            {"importo": {"$gte": importo - 0.50, "$lte": importo + 0.50}},
-            {"importo": {"$gte": -importo - 0.50, "$lte": -importo + 0.50}}
+            {"importo": {"$gte": importo - 1.0, "$lte": importo + 1.0}},
+            {"importo": {"$gte": -importo - 1.0, "$lte": -importo + 1.0}}
         ],
         "data": {"$gte": data_min, "$lte": data_max},
         "fattura_id": {"$exists": False}
@@ -590,104 +586,82 @@ async def cerca_match_bancario(db, scadenza: Dict, tolleranza_giorni: int = 30, 
     
     movimenti_esatti = await db["estratto_conto_movimenti"].find(query_esatto, {"_id": 0}).to_list(50)
     
-    # Prima cerca match con nome fornitore confermato
+    # ALTA CONFIDENZA: Importo esatto + nome fornitore
     for mov in movimenti_esatti:
         mov_fornitore = (mov.get("fornitore") or "").lower()
         descrizione_orig = (mov.get("descrizione_originale") or "").lower()
         testo_completo = f"{mov_fornitore} {descrizione_orig}"
         
-        # Match diretto sul nome fornitore
-        if mov_fornitore and prima_parola and prima_parola in mov_fornitore:
-            mov["source_collection"] = "estratto_conto_movimenti"
-            mov["match_type"] = "exact_amount_name"
-            mov["match_score"] = 95
-            return mov
+        # Verifica match nome
+        nome_match = False
+        if prima_parola:
+            if prima_parola in testo_completo:
+                nome_match = True
+            elif FUZZY_AVAILABLE and mov_fornitore:
+                if fuzz.partial_ratio(fornitore_nome_lower, mov_fornitore) >= 75:
+                    nome_match = True
         
-        # Match su parole chiave nella descrizione
-        if prima_parola and prima_parola in testo_completo:
+        if nome_match:
             mov["source_collection"] = "estratto_conto_movimenti"
-            mov["match_type"] = "exact_amount_desc"
-            mov["match_score"] = 90
+            mov["match_type"] = "alta_confidenza"
+            mov["match_score"] = 95
+            mov["confidence"] = "HIGH"
             return mov
     
-    # Se importo esatto senza match nome, accetta solo se importo > €100 (meno ambiguo)
+    # MEDIA CONFIDENZA: Importo esatto per importi > €100 (senza conferma nome)
     if movimenti_esatti and importo >= 100:
         mov = movimenti_esatti[0]
-        mov["source_collection"] = "estratto_conto_movimenti"
-        mov["match_type"] = "exact_amount_only"
-        mov["match_score"] = 70
-        return mov
-    
-    # --- STEP 2: MATCH FUZZY con tolleranza importo più ampia (ma RICHIEDE match nome) ---
-    if fornitore_nome and FUZZY_AVAILABLE and prima_parola:
-        # Tolleranza: max 5% dell'importo o €5, quale sia maggiore
-        tolleranza_fuzzy = max(importo * 0.05, 5.0)
+        importo_mov = abs(float(mov.get("importo", 0)))
+        diff = abs(importo - importo_mov)
         
-        query_fuzzy = {
+        # Solo se importo è veramente vicino (€1)
+        if diff <= 1.0:
+            mov["source_collection"] = "estratto_conto_movimenti"
+            mov["match_type"] = "media_confidenza"
+            mov["match_score"] = 75
+            mov["confidence"] = "MEDIUM"
+            mov["note"] = "Importo esatto ma nome fornitore non confermato"
+            return mov
+    
+    # --- STEP 2: Match IBAN/riferimento fattura (se disponibile) ---
+    # Cerca nel numero fattura o IBAN se presente nella descrizione
+    if numero_fattura and len(numero_fattura) >= 4:
+        for mov in movimenti_esatti:
+            descrizione_orig = (mov.get("descrizione_originale") or "").lower()
+            if numero_fattura.lower() in descrizione_orig:
+                mov["source_collection"] = "estratto_conto_movimenti"
+                mov["match_type"] = "riferimento_fattura"
+                mov["match_score"] = 90
+                mov["confidence"] = "HIGH"
+                return mov
+    
+    # --- STEP 3: SUGGERIMENTI (solo se richiesto) ---
+    if include_suggerimenti:
+        # Tolleranza più ampia: 10% o €20 minimo
+        tolleranza_sugg = max(importo * 0.10, 20.0)
+        
+        query_sugg = {
             "tipo": {"$in": ["uscita", "addebito"]},
             "$or": [
-                {"importo": {"$gte": importo - tolleranza_fuzzy, "$lte": importo + tolleranza_fuzzy}},
-                {"importo": {"$gte": -importo - tolleranza_fuzzy, "$lte": -importo + tolleranza_fuzzy}}
+                {"importo": {"$gte": importo - tolleranza_sugg, "$lte": importo + tolleranza_sugg}},
+                {"importo": {"$gte": -importo - tolleranza_sugg, "$lte": -importo + tolleranza_sugg}}
             ],
             "data": {"$gte": data_min, "$lte": data_max},
             "fattura_id": {"$exists": False}
         }
         
-        movimenti_fuzzy = await db["estratto_conto_movimenti"].find(query_fuzzy, {"_id": 0}).to_list(100)
+        movimenti_sugg = await db["estratto_conto_movimenti"].find(query_sugg, {"_id": 0}).to_list(20)
         
-        best_match = None
-        best_score = 0
-        
-        for mov in movimenti_fuzzy:
-            mov_fornitore = (mov.get("fornitore") or "").lower()
-            descrizione_orig = (mov.get("descrizione_originale") or "").lower()
-            descrizione = (mov.get("descrizione") or "").lower()
-            testo_completo = f"{mov_fornitore} {descrizione_orig} {descrizione}"
-            
-            score = 0
-            nome_confermato = False
-            
-            # Verifica presenza nome fornitore (OBBLIGATORIO per fuzzy)
-            if prima_parola in testo_completo:
-                nome_confermato = True
-                score = 70  # Base score per match nome
-                
-                # Bonus per match più precisi
-                if mov_fornitore and prima_parola in mov_fornitore:
-                    score += 15  # Nome nel campo fornitore
-                
-                # Bonus per numero fattura
-                if numero_fattura and numero_fattura.lower() in testo_completo:
-                    score += 10
-                
-                # Bonus per importo molto vicino
-                importo_mov = abs(float(mov.get("importo", 0)))
-                diff_importo = abs(importo - importo_mov)
-                if diff_importo < 1.0:
-                    score += 10
-                elif diff_importo < 3.0:
-                    score += 5
-            
-            # Match fuzzy sul nome (solo se non trovato diretto)
-            if not nome_confermato and FUZZY_AVAILABLE:
-                if mov_fornitore:
-                    fuzzy_score = fuzz.partial_ratio(fornitore_nome_lower, mov_fornitore)
-                    if fuzzy_score >= 80:  # Soglia alta per fuzzy
-                        nome_confermato = True
-                        score = 60 + (fuzzy_score - 80)  # 60-80 range
-            
-            # Accetta solo se nome è confermato E score > best
-            if nome_confermato and score > best_score:
-                best_score = score
-                best_match = mov
-        
-        if best_match and best_score >= 65:  # Soglia minima per accettare
-            best_match["source_collection"] = "estratto_conto_movimenti"
-            best_match["match_type"] = "fuzzy_confirmed"
-            best_match["match_score"] = min(100, int(best_score))
-            return best_match
+        if movimenti_sugg:
+            # Prendi il più vicino per importo
+            best = min(movimenti_sugg, key=lambda m: abs(abs(float(m.get("importo", 0))) - importo))
+            best["source_collection"] = "estratto_conto_movimenti"
+            best["match_type"] = "suggerimento"
+            best["match_score"] = 50
+            best["confidence"] = "LOW"
+            best["note"] = "Richiede verifica manuale"
+            return best
     
-    # --- STEP 3: Nessun match trovato ---
     return None
 
 
