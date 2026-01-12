@@ -763,25 +763,41 @@ export default function ArchivioBonifici() {
                                       padding: '10px 12px',
                                       borderBottom: '1px solid #f1f5f9',
                                       cursor: 'pointer',
-                                      transition: 'background 0.1s'
+                                      transition: 'background 0.1s',
+                                      background: op.iban_match ? '#ecfdf5' : 'white'
                                     }}
-                                    onMouseOver={(e) => e.currentTarget.style.background = '#f0f9ff'}
-                                    onMouseOut={(e) => e.currentTarget.style.background = 'white'}
+                                    onMouseOver={(e) => e.currentTarget.style.background = op.iban_match ? '#dcfce7' : '#f0f9ff'}
+                                    onMouseOut={(e) => e.currentTarget.style.background = op.iban_match ? '#ecfdf5' : 'white'}
                                   >
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                       <span style={{ fontWeight: 500, fontSize: 11 }}>
+                                        {op.iban_match && <span style={{ color: '#16a34a', marginRight: 4 }}>🔗</span>}
                                         {op.dipendente || op.descrizione || 'Operazione'}
                                       </span>
-                                      <span style={{ 
-                                        background: op.compatibilita_score >= 70 ? '#dcfce7' : op.compatibilita_score >= 40 ? '#fef3c7' : '#fee2e2',
-                                        color: op.compatibilita_score >= 70 ? '#16a34a' : op.compatibilita_score >= 40 ? '#d97706' : '#dc2626',
-                                        padding: '2px 6px',
-                                        borderRadius: 4,
-                                        fontSize: 9,
-                                        fontWeight: 600
-                                      }}>
-                                        {op.compatibilita_score}%
-                                      </span>
+                                      <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                                        {op.iban_match && (
+                                          <span style={{ 
+                                            background: '#16a34a', 
+                                            color: 'white', 
+                                            padding: '2px 6px', 
+                                            borderRadius: 4, 
+                                            fontSize: 8, 
+                                            fontWeight: 600 
+                                          }}>
+                                            IBAN ✓
+                                          </span>
+                                        )}
+                                        <span style={{ 
+                                          background: op.compatibilita_score >= 70 ? '#dcfce7' : op.compatibilita_score >= 40 ? '#fef3c7' : '#fee2e2',
+                                          color: op.compatibilita_score >= 70 ? '#16a34a' : op.compatibilita_score >= 40 ? '#d97706' : '#dc2626',
+                                          padding: '2px 6px',
+                                          borderRadius: 4,
+                                          fontSize: 9,
+                                          fontWeight: 600
+                                        }}>
+                                          {op.compatibilita_score}%
+                                        </span>
+                                      </div>
                                     </div>
                                     <div style={{ fontSize: 10, color: '#6b7280', marginTop: 4, display: 'flex', justifyContent: 'space-between' }}>
                                       <span>{op.anno && op.mese ? `${op.mese}/${op.anno}` : formatDate(op.data)}</span>
