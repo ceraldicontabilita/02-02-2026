@@ -1678,6 +1678,221 @@ async def riconcilia_bonifici_automatico(anno: Optional[int] = Query(None)) -> D
             )
             
             # Rimuovi dalla lista per evitare duplicati
+
+
+# =============================================================================
+# ASSOCIAZIONE BONIFICI A FATTURE
+# =============================================================================
+
+@router.get("/fatture-compatibili/{bonifico_id}")
+async def get_fatture_compatibili(bonifico_id: str):
+    """
+    Cerca fatture ricevute compatibili con il bonifico.
+    Filtra per:
+    - Importo simile (±10%)
+    - Data vicina (±60 giorni)
+    - Fornitore nel beneficiario/causale
+    """
+    db = Database.get_db()
+    
+    # Recupera bonifico
+    bonifico = await db.bonifici_transfers.find_one({"id": bonifico_id}, {"_id": 0})
+    if not bonifico:
+        raise HTTPException(status_code=404, detail="Bonifico non trovato")
+    
+    importo = abs(bonifico.get("importo", 0))
+    data_bonifico = bonifico.get("data", "")
+    causale = (bonifico.get("causale") or "").lower()
+    beneficiario = ((bonifico.get("beneficiario") or {}).get("nome") or "").lower()
+    
+    # Cerca in fatture_ricevute
+    query = {
+        "fattura_associata": {"$ne": True}
+    }
+    
+    # Filtra per importo ±15%
+    if importo > 0:
+        query["$or"] = [
+            {"totale_documento": {"$gte": importo * 0.85, "$lte": importo * 1.15}},
+            {"importo_totale": {"$gte": importo * 0.85, "$lte": importo * 1.15}},
+            {"total_amount": {"$gte": importo * 0.85, "$lte": importo * 1.15}}
+        ]
+    
+    fatture = await db.fatture_ricevute.find(query, {"_id": 0}).to_list(100)
+    
+    # Cerca anche in invoices
+    invoices = await db.invoices.find(query, {"_id": 0}).to_list(100)
+    
+    # Unisci risultati
+    all_fatture = fatture + invoices
+    
+    # Calcola score di compatibilità
+    risultati = []
+    for f in all_fatture:
+        score = 0
+        f_importo = f.get("totale_documento") or f.get("importo_totale") or f.get("total_amount", 0)
+        f_data = f.get("data_documento") or f.get("invoice_date", "")
+        fornitore = (f.get("fornitore", {}) or {})
+        f_fornitore = (fornitore.get("denominazione") or fornitore.get("ragione_sociale") or f.get("supplier_name") or "").lower()
+        
+        # Score importo (max 50)
+        if importo > 0 and f_importo > 0:
+            diff_pct = abs(importo - f_importo) / importo * 100
+            if diff_pct < 1:
+                score += 50
+            elif diff_pct < 5:
+                score += 40
+            elif diff_pct < 10:
+                score += 25
+            elif diff_pct < 15:
+                score += 15
+        
+        # Score fornitore match (max 40)
+        if f_fornitore:
+            # Match esatto nel beneficiario
+            if f_fornitore in beneficiario or beneficiario in f_fornitore:
+                score += 40
+            # Match nella causale
+            elif f_fornitore in causale:
+                score += 30
+            # Match parziale (prime parole)
+            else:
+                parole_fornitore = [p for p in f_fornitore.split() if len(p) > 3]
+                for parola in parole_fornitore[:2]:
+                    if parola in causale or parola in beneficiario:
+                        score += 15
+                        break
+        
+        # Score data (max 10)
+        if data_bonifico and f_data:
+            try:
+                d1 = datetime.fromisoformat(str(data_bonifico).replace("Z", "+00:00")) if isinstance(data_bonifico, str) else data_bonifico
+                d2 = datetime.fromisoformat(str(f_data).replace("Z", "+00:00")) if isinstance(f_data, str) else f_data
+                diff_days = abs((d1 - d2).days)
+                if diff_days <= 7:
+                    score += 10
+                elif diff_days <= 30:
+                    score += 5
+            except:
+                pass
+        
+        if score > 0:
+            risultati.append({
+                "id": f.get("id"),
+                "numero_fattura": f.get("numero_documento") or f.get("invoice_number"),
+                "data_fattura": f_data,
+                "fornitore": f_fornitore.title() if f_fornitore else "N/A",
+                "importo": f_importo,
+                "compatibilita_score": score,
+                "collection": "fatture_ricevute" if f in fatture else "invoices"
+            })
+    
+    # Ordina per score
+    risultati.sort(key=lambda x: x.get("compatibilita_score", 0), reverse=True)
+    
+    return {
+        "bonifico": {
+            "id": bonifico_id,
+            "importo": importo,
+            "data": data_bonifico,
+            "causale": bonifico.get("causale"),
+            "beneficiario": beneficiario
+        },
+        "fatture_compatibili": risultati[:15]
+    }
+
+
+@router.post("/associa-fattura")
+async def associa_bonifico_fattura(
+    bonifico_id: str = Query(...),
+    fattura_id: str = Query(...),
+    collection: str = Query(default="fatture_ricevute")
+):
+    """
+    Associa un bonifico a una fattura ricevuta.
+    """
+    db = Database.get_db()
+    now = datetime.now(timezone.utc).isoformat()
+    
+    # Verifica bonifico
+    bonifico = await db.bonifici_transfers.find_one({"id": bonifico_id})
+    if not bonifico:
+        raise HTTPException(status_code=404, detail="Bonifico non trovato")
+    
+    # Verifica fattura
+    coll = db[collection]
+    fattura = await coll.find_one({"id": fattura_id})
+    if not fattura:
+        raise HTTPException(status_code=404, detail="Fattura non trovata")
+    
+    # Aggiorna bonifico
+    await db.bonifici_transfers.update_one(
+        {"id": bonifico_id},
+        {"$set": {
+            "fattura_associata": True,
+            "fattura_id": fattura_id,
+            "fattura_numero": fattura.get("numero_documento") or fattura.get("invoice_number"),
+            "fattura_fornitore": (fattura.get("fornitore", {}) or {}).get("denominazione") or fattura.get("supplier_name"),
+            "fattura_importo": fattura.get("totale_documento") or fattura.get("importo_totale") or fattura.get("total_amount"),
+            "data_associazione": now,
+            "updated_at": now
+        }}
+    )
+    
+    # Aggiorna fattura
+    await coll.update_one(
+        {"id": fattura_id},
+        {"$set": {
+            "bonifico_associato": True,
+            "bonifico_id": bonifico_id,
+            "updated_at": now
+        }}
+    )
+    
+    return {
+        "success": True,
+        "bonifico_id": bonifico_id,
+        "fattura_id": fattura_id,
+        "fattura_numero": fattura.get("numero_documento") or fattura.get("invoice_number")
+    }
+
+
+@router.delete("/disassocia-fattura/{bonifico_id}")
+async def disassocia_bonifico_fattura(bonifico_id: str):
+    """
+    Rimuove l'associazione bonifico ↔ fattura.
+    """
+    db = Database.get_db()
+    
+    bonifico = await db.bonifici_transfers.find_one({"id": bonifico_id})
+    if not bonifico:
+        raise HTTPException(status_code=404, detail="Bonifico non trovato")
+    
+    fattura_id = bonifico.get("fattura_id")
+    
+    # Rimuovi associazione dal bonifico
+    await db.bonifici_transfers.update_one(
+        {"id": bonifico_id},
+        {"$unset": {
+            "fattura_associata": "",
+            "fattura_id": "",
+            "fattura_numero": "",
+            "fattura_fornitore": "",
+            "fattura_importo": "",
+            "data_associazione": ""
+        }}
+    )
+    
+    # Rimuovi riferimento dalla fattura
+    if fattura_id:
+        for coll_name in ["fatture_ricevute", "invoices"]:
+            await db[coll_name].update_one(
+                {"id": fattura_id},
+                {"$unset": {"bonifico_associato": "", "bonifico_id": ""}}
+            )
+    
+    return {"success": True, "bonifico_id": bonifico_id}
+
             ec_by_importo[importo].remove(match)
             riconciliati += 1
         else:
