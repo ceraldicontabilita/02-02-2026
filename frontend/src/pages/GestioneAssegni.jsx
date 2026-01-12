@@ -372,28 +372,29 @@ export default function GestioneAssegni() {
   };
 
   return (
-    <div style={{ padding: 20, maxWidth: 1400, margin: '0 auto' }}>
-      <h1 style={{ marginBottom: 5, color: '#1a365d' }}>Gestione Assegni</h1>
-      <p style={{ color: '#666', marginBottom: 25 }}>
+    <div style={{ padding: '16px', maxWidth: 1400, margin: '0 auto' }}>
+      <h1 style={{ marginBottom: 5, color: '#1a365d', fontSize: 'clamp(1.5rem, 4vw, 2rem)' }}>Gestione Assegni</h1>
+      <p style={{ color: '#666', marginBottom: 20, fontSize: 14 }}>
         Genera, collega e controlla i tuoi assegni in un'unica schermata
       </p>
 
-      {/* Action Bar */}
-      <div style={{ display: 'flex', gap: 10, marginBottom: 25, flexWrap: 'wrap', alignItems: 'center' }}>
+      {/* Action Bar - responsive */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
         <button
           onClick={() => setShowGenerate(true)}
           data-testid="genera-assegni-btn"
           style={{
-            padding: '10px 20px',
+            padding: '10px 16px',
             background: '#4caf50',
             color: 'white',
             border: 'none',
             borderRadius: 8,
             cursor: 'pointer',
-            fontWeight: 'bold'
+            fontWeight: 'bold',
+            fontSize: 13
           }}
         >
-          + Genera 10 Assegni
+          + Genera Assegni
         </button>
         
         <button
@@ -401,33 +402,184 @@ export default function GestioneAssegni() {
           disabled={autoAssociating}
           data-testid="auto-associa-btn"
           style={{
-            padding: '10px 20px',
+            padding: '10px 16px',
             background: autoAssociating ? '#ccc' : '#2196f3',
             color: 'white',
             border: 'none',
             borderRadius: 8,
             cursor: autoAssociating ? 'not-allowed' : 'pointer',
-            fontWeight: 'bold'
+            fontWeight: 'bold',
+            fontSize: 13
           }}
         >
-          {autoAssociating ? 'Associando...' : 'Auto-Associa Fatture'}
+          {autoAssociating ? 'Associando...' : 'Auto-Associa'}
+        </button>
+        
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          data-testid="toggle-filters-btn"
+          style={{
+            padding: '10px 16px',
+            background: showFilters ? '#1a365d' : 'transparent',
+            color: showFilters ? 'white' : '#1a365d',
+            border: '1px solid #1a365d',
+            borderRadius: 8,
+            cursor: 'pointer',
+            fontWeight: 'bold',
+            fontSize: 13
+          }}
+        >
+          🔍 Filtri {(filterFornitore || filterImportoMin || filterImportoMax || filterNumeroAssegno || filterNumeroFattura) && '●'}
         </button>
         
         <button
           onClick={handleClearEmpty}
           data-testid="svuota-btn"
           style={{
-            padding: '10px 20px',
+            padding: '10px 16px',
             background: 'transparent',
             color: '#666',
             border: '1px solid #ddd',
             borderRadius: 8,
-            cursor: 'pointer'
+            cursor: 'pointer',
+            fontSize: 13
           }}
         >
-          Svuota assegni generati
+          Svuota
         </button>
       </div>
+
+      {/* PANNELLO FILTRI */}
+      {showFilters && (
+        <div style={{ 
+          background: '#f8fafc', 
+          borderRadius: 12, 
+          padding: 16, 
+          marginBottom: 20,
+          border: '1px solid #e2e8f0'
+        }}>
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', 
+            gap: 12 
+          }}>
+            <div>
+              <label style={{ fontSize: 12, color: '#666', display: 'block', marginBottom: 4 }}>Fornitore/Beneficiario</label>
+              <input
+                type="text"
+                value={filterFornitore}
+                onChange={(e) => setFilterFornitore(e.target.value)}
+                placeholder="Cerca fornitore..."
+                data-testid="filter-fornitore"
+                style={{ 
+                  width: '100%', 
+                  padding: '8px 12px', 
+                  border: '1px solid #ddd', 
+                  borderRadius: 6,
+                  fontSize: 14
+                }}
+              />
+            </div>
+            
+            <div>
+              <label style={{ fontSize: 12, color: '#666', display: 'block', marginBottom: 4 }}>Importo Min (€)</label>
+              <input
+                type="number"
+                value={filterImportoMin}
+                onChange={(e) => setFilterImportoMin(e.target.value)}
+                placeholder="0.00"
+                data-testid="filter-importo-min"
+                style={{ 
+                  width: '100%', 
+                  padding: '8px 12px', 
+                  border: '1px solid #ddd', 
+                  borderRadius: 6,
+                  fontSize: 14
+                }}
+              />
+            </div>
+            
+            <div>
+              <label style={{ fontSize: 12, color: '#666', display: 'block', marginBottom: 4 }}>Importo Max (€)</label>
+              <input
+                type="number"
+                value={filterImportoMax}
+                onChange={(e) => setFilterImportoMax(e.target.value)}
+                placeholder="99999"
+                data-testid="filter-importo-max"
+                style={{ 
+                  width: '100%', 
+                  padding: '8px 12px', 
+                  border: '1px solid #ddd', 
+                  borderRadius: 6,
+                  fontSize: 14
+                }}
+              />
+            </div>
+            
+            <div>
+              <label style={{ fontSize: 12, color: '#666', display: 'block', marginBottom: 4 }}>N. Assegno</label>
+              <input
+                type="text"
+                value={filterNumeroAssegno}
+                onChange={(e) => setFilterNumeroAssegno(e.target.value)}
+                placeholder="Cerca assegno..."
+                data-testid="filter-numero-assegno"
+                style={{ 
+                  width: '100%', 
+                  padding: '8px 12px', 
+                  border: '1px solid #ddd', 
+                  borderRadius: 6,
+                  fontSize: 14
+                }}
+              />
+            </div>
+            
+            <div>
+              <label style={{ fontSize: 12, color: '#666', display: 'block', marginBottom: 4 }}>N. Fattura</label>
+              <input
+                type="text"
+                value={filterNumeroFattura}
+                onChange={(e) => setFilterNumeroFattura(e.target.value)}
+                placeholder="Cerca fattura..."
+                data-testid="filter-numero-fattura"
+                style={{ 
+                  width: '100%', 
+                  padding: '8px 12px', 
+                  border: '1px solid #ddd', 
+                  borderRadius: 6,
+                  fontSize: 14
+                }}
+              />
+            </div>
+            
+            <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+              <button
+                onClick={resetFilters}
+                data-testid="reset-filters-btn"
+                style={{
+                  padding: '8px 16px',
+                  background: '#ef4444',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 6,
+                  cursor: 'pointer',
+                  fontSize: 13
+                }}
+              >
+                Reset Filtri
+              </button>
+            </div>
+          </div>
+          
+          {/* Riepilogo filtri attivi */}
+          {(filterFornitore || filterImportoMin || filterImportoMax || filterNumeroAssegno || filterNumeroFattura) && (
+            <div style={{ marginTop: 12, fontSize: 13, color: '#1a365d' }}>
+              <strong>Risultati:</strong> {filteredAssegni.length} assegni trovati su {assegni.length} totali
+            </div>
+          )}
+        </div>
+      )}
       
       {/* Risultato Auto-Associazione */}
       {autoAssocResult && (
