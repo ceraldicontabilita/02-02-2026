@@ -727,9 +727,9 @@ export default function ArchivioBonifici() {
                             ✓ {t.operazione_salario_desc?.substring(0, 20) || 'Associato'}
                           </span>
                           <button
-                            onClick={() => handleDisassocia(t.id)}
+                            onClick={() => handleDisassocia(t.id, t.operazione_salario_desc)}
                             style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 10, color: '#dc2626' }}
-                            title="Rimuovi associazione"
+                            title="Rimuovi associazione (doppia conferma)"
                           >
                             ✗
                           </button>
