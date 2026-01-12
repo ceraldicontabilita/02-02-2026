@@ -1476,3 +1476,155 @@ async def get_statistiche(anno: Optional[int] = Query(None)):
         "totale_iva": round(totali.get("totale_iva", 0), 2),
         "fornitori_unici": len(fornitori_unici)
     }
+
+
+
+@router.post("/elabora-fatture-legacy")
+async def elabora_fatture_legacy(
+    anno: int = Query(..., description="Anno delle fatture da elaborare"),
+    dry_run: bool = Query(default=True, description="Se True, mostra anteprima senza modificare")
+):
+    """
+    Elabora fatture dalla collezione legacy 'invoices' applicando l'integrazione ciclo passivo:
+    - Prima Nota
+    - Scadenziario
+    - Riconciliazione automatica
+    
+    Utile per fatture caricate nella vecchia collezione.
+    """
+    db = Database.get_db()
+    
+    # Trova fatture dell'anno nella collezione legacy
+    query = {
+        "invoice_date": {"$regex": f"^{anno}"}
+    }
+    
+    fatture = await db["invoices"].find(query, {"_id": 0}).to_list(500)
+    
+    if dry_run:
+        return {
+            "dry_run": True,
+            "anno": anno,
+            "collezione": "invoices",
+            "fatture_da_elaborare": len(fatture),
+            "anteprima": [
+                {
+                    "id": f.get("id"),
+                    "numero": f.get("invoice_number"),
+                    "fornitore": f.get("supplier_name"),
+                    "importo": f.get("total_amount"),
+                    "data": f.get("invoice_date"),
+                    "ha_prima_nota": f.get("prima_nota_id") is not None
+                }
+                for f in fatture[:20]
+            ]
+        }
+    
+    risultati = {
+        "fatture_elaborate": 0,
+        "prima_nota_creati": 0,
+        "scadenze_create": 0,
+        "riconciliazioni_auto": 0,
+        "gia_elaborate": 0,
+        "errori": [],
+        "dettagli": []
+    }
+    
+    for fattura in fatture:
+        fattura_id = fattura.get("id")
+        
+        # Salta se già elaborata
+        if fattura.get("prima_nota_id"):
+            risultati["gia_elaborate"] += 1
+            continue
+            
+        try:
+            # Cerca fornitore per P.IVA
+            supplier_vat = fattura.get("supplier_vat", "")
+            fornitore = await db[COL_FORNITORI].find_one(
+                {"partita_iva": supplier_vat},
+                {"_id": 0}
+            )
+            
+            if not fornitore:
+                # Crea fornitore se non esiste
+                nuovo_fornitore = {
+                    "id": str(uuid.uuid4()),
+                    "partita_iva": supplier_vat,
+                    "ragione_sociale": fattura.get("supplier_name", ""),
+                    "esclude_magazzino": False,
+                    "created_at": datetime.now(timezone.utc).isoformat()
+                }
+                await db[COL_FORNITORI].insert_one(nuovo_fornitore)
+                fornitore = nuovo_fornitore
+            
+            fornitore_obj = {
+                "id": fornitore.get("id"),
+                "partita_iva": fornitore.get("partita_iva"),
+                "ragione_sociale": fornitore.get("ragione_sociale"),
+                "esclude_magazzino": fornitore.get("esclude_magazzino", False)
+            }
+            
+            # Adatta struttura fattura per le funzioni integrate
+            fattura_adattata = {
+                "id": fattura_id,
+                "numero_documento": fattura.get("invoice_number"),
+                "data_documento": fattura.get("invoice_date"),
+                "importo_totale": fattura.get("total_amount", 0),
+                "imponibile": fattura.get("imponibile", fattura.get("total_amount", 0) / 1.22),
+                "iva": fattura.get("iva", fattura.get("total_amount", 0) - fattura.get("total_amount", 0) / 1.22),
+                "fornitore_partita_iva": supplier_vat,
+                "fornitore_ragione_sociale": fattura.get("supplier_name"),
+                "pagamento": fattura.get("pagamento", {})
+            }
+            
+            dettaglio = {"fattura": fattura.get("invoice_number"), "operazioni": []}
+            
+            # 1. PRIMA NOTA
+            try:
+                scrittura_id = await genera_scrittura_prima_nota(db, fattura_id, fattura_adattata, fornitore_obj)
+                await db["invoices"].update_one(
+                    {"id": fattura_id},
+                    {"$set": {"prima_nota_id": scrittura_id}}
+                )
+                risultati["prima_nota_creati"] += 1
+                dettaglio["operazioni"].append("prima_nota")
+            except Exception as e:
+                dettaglio["operazioni"].append(f"prima_nota_errore: {str(e)}")
+            
+            # 2. SCADENZIARIO
+            try:
+                scadenza_id = await crea_scadenza_pagamento(db, fattura_id, fattura_adattata, fornitore_obj)
+                if scadenza_id:
+                    risultati["scadenze_create"] += 1
+                    dettaglio["operazioni"].append("scadenza")
+                    
+                    # 3. RICONCILIAZIONE AUTOMATICA
+                    scadenza = await db[COL_SCADENZIARIO].find_one({"id": scadenza_id}, {"_id": 0})
+                    if scadenza:
+                        match = await cerca_match_bancario(db, scadenza)
+                        if match:
+                            await esegui_riconciliazione(db, scadenza_id, match.get("id"))
+                            risultati["riconciliazioni_auto"] += 1
+                            dettaglio["operazioni"].append("riconciliazione_auto")
+            except Exception as e:
+                dettaglio["operazioni"].append(f"scadenziario_errore: {str(e)}")
+            
+            # Aggiorna flag integrazione sulla collezione invoices
+            await db["invoices"].update_one(
+                {"id": fattura_id},
+                {"$set": {"integrazione_completata": True, "updated_at": datetime.now(timezone.utc).isoformat()}}
+            )
+            
+            risultati["fatture_elaborate"] += 1
+            risultati["dettagli"].append(dettaglio)
+            
+        except Exception as e:
+            logger.error(f"Errore elaborazione legacy {fattura.get('invoice_number')}: {e}")
+            risultati["errori"].append({
+                "fattura": fattura.get("invoice_number"),
+                "errore": str(e)
+            })
+    
+    return risultati
+
