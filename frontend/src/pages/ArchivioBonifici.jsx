@@ -863,9 +863,9 @@ export default function ArchivioBonifici() {
                             📄 {t.fattura_numero?.substring(0, 15) || 'Associata'}
                           </span>
                           <button
-                            onClick={() => handleDisassociaFattura(t.id)}
+                            onClick={() => handleDisassociaFattura(t.id, t.fattura_numero)}
                             style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 10, color: '#dc2626' }}
-                            title="Rimuovi associazione"
+                            title="Rimuovi associazione (doppia conferma)"
                           >
                             ✗
                           </button>
