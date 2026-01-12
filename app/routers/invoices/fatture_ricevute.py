@@ -1278,19 +1278,34 @@ async def view_fattura_assoinvoice(fattura_id: str):
     """
     Visualizza la fattura XML in formato AssoInvoice (HTML).
     Usa il foglio di stile XSL per trasformare l'XML in HTML leggibile.
+    Supporta sia UUID che ObjectId come identificatore.
     """
     from fastapi.responses import HTMLResponse
     import lxml.etree as ET
     import os
+    from bson import ObjectId
     
     db = Database.get_db()
     
-    # Cerca prima in fatture_ricevute
+    fattura = None
+    
+    # Prima prova con UUID (campo id)
     fattura = await db[COL_FATTURE_RICEVUTE].find_one({"id": fattura_id}, {"_id": 0})
     
-    # Se non trovata, cerca in invoices (collezione principale)
     if not fattura:
         fattura = await db["invoices"].find_one({"id": fattura_id}, {"_id": 0})
+    
+    # Se non trovata, prova con ObjectId
+    if not fattura:
+        try:
+            if len(fattura_id) == 24:  # Lunghezza tipica ObjectId
+                oid = ObjectId(fattura_id)
+                fattura = await db["invoices"].find_one({"_id": oid})
+                if fattura:
+                    # Rimuovi _id per evitare problemi di serializzazione
+                    fattura = {k: v for k, v in fattura.items() if k != "_id"}
+        except Exception:
+            pass
     
     if not fattura:
         raise HTTPException(status_code=404, detail="Fattura non trovata")
