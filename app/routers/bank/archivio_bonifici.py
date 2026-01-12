@@ -1307,8 +1307,8 @@ async def get_operazioni_salari_compatibili(bonifico_id: str):
     
     importo = abs(bonifico.get("importo", 0))
     data_bonifico = bonifico.get("data", "")
-    causale = bonifico.get("causale", "").lower()
-    beneficiario = (bonifico.get("beneficiario", {}) or {}).get("nome", "").lower()
+    causale = (bonifico.get("causale") or "").lower()
+    beneficiario = ((bonifico.get("beneficiario") or {}).get("nome") or "").lower()
     
     # Cerca in prima_nota_salari
     query = {
