@@ -322,8 +322,14 @@ export default function ArchivioBonifici() {
     }
   };
 
-  const handleDisassociaFattura = async (bonifico_id) => {
-    if (!window.confirm('Rimuovere associazione fattura?')) return;
+  const handleDisassociaFattura = async (bonifico_id, fattura_numero) => {
+    const msg1 = `Rimuovere associazione con fattura "${fattura_numero || 'N/D'}"?`;
+    if (!window.confirm(msg1)) return;
+    
+    // Seconda conferma
+    const msg2 = `⚠️ CONFERMA RIMOZIONE\n\nQuesta azione rimuoverà l'associazione tra il bonifico e la fattura.\n\nSei sicuro di voler procedere?`;
+    if (!window.confirm(msg2)) return;
+    
     try {
       await api.delete(`/api/archivio-bonifici/disassocia-fattura/${bonifico_id}`);
       loadTransfers();
