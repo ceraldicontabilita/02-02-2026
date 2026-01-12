@@ -1892,22 +1892,6 @@ async def disassocia_bonifico_fattura(bonifico_id: str):
             )
     
     return {"success": True, "bonifico_id": bonifico_id}
-
-            ec_by_importo[importo].remove(match)
-            riconciliati += 1
-        else:
-            non_trovati.append({
-                "id": bonifico.get("id"),
-                "importo": importo,
-                "data": data_str,
-                "beneficiario": (bonifico.get("beneficiario") or {}).get("nome", "")
-            })
-    
-    return {
-        "success": True,
-        "riconciliati": riconciliati,
-        "non_trovati_count": len(non_trovati),
-        "non_trovati_sample": non_trovati[:10],
         "message": f"Riconciliati {riconciliati} bonifici PDF con estratto conto"
     }
 
