@@ -190,6 +190,7 @@ const router = createBrowserRouter([
       { path: "prima-nota", element: <LazyPage><PrimaNota /></LazyPage> },
       { path: "operazioni-da-confermare", element: <LazyPage><OperazioniDaConfermare /></LazyPage> },
       { path: "riconciliazione", element: <LazyPage><Riconciliazione /></LazyPage> },
+      { path: "dashboard-riconciliazione", element: <LazyPage><DashboardRiconciliazione /></LazyPage> },
       { path: "estratto-conto", element: <LazyPage><EstrattoContoImport /></LazyPage> },
       { path: "magazzino", element: <LazyPage><Magazzino /></LazyPage> },
       { path: "ricerca-prodotti", element: <LazyPage><RicercaProdotti /></LazyPage> },
