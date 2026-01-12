@@ -1597,21 +1597,36 @@ async def get_operazioni_salari_compatibili(bonifico_id: str):
     
     operazioni = await db.prima_nota_salari.aggregate(pipeline).to_list(50)
     
-    # Calcola score di compatibilità
+    # === STEP 3: Calcola score di compatibilità ===
     risultati = []
-    seen_keys = set()  # Extra deduplicazione
+    seen_keys = set()
     
     for op in operazioni:
-        # Chiave univoca
+        # Chiave univoca per deduplicazione
         key = f"{op.get('dipendente', '')}_{op.get('importo_busta', 0)}_{op.get('anno', '')}_{op.get('mese', '')}"
         if key in seen_keys:
             continue
         seen_keys.add(key)
         
         score = 0
+        iban_match = False
         op_importo = op.get("importo_busta") or op.get("importo_bonifico") or op.get("importo") or op.get("netto", 0)
         op_data = op.get("data", "")
-        op_desc = (op.get("descrizione", "") + " " + op.get("dipendente", "")).lower()
+        dipendente = op.get("dipendente", "").lower()
+        
+        # === BONUS IBAN (max 100) ===
+        # Se il dipendente dell'operazione corrisponde al dipendente trovato per IBAN
+        if dipendente_iban_match and dipendente:
+            nome_iban = dipendente_iban_match.get("nome_display", "").lower()
+            # Match nome dipendente (fuzzy)
+            if nome_iban:
+                # Match esatto o parziale
+                parti_nome = nome_iban.split()
+                parti_dip = dipendente.split()
+                match_count = sum(1 for p in parti_nome if any(p in d or d in p for d in parti_dip if len(d) > 2))
+                if match_count >= 2 or nome_iban in dipendente or dipendente in nome_iban:
+                    score += 100
+                    iban_match = True
         
         # Score importo (max 50)
         if importo > 0 and op_importo > 0:
@@ -1627,8 +1642,8 @@ async def get_operazioni_salari_compatibili(bonifico_id: str):
         if data_bonifico and op_data:
             try:
                 from datetime import timedelta
-                d1 = datetime.fromisoformat(data_bonifico.replace("Z", "+00:00")) if isinstance(data_bonifico, str) else data_bonifico
-                d2 = datetime.fromisoformat(op_data.replace("Z", "+00:00")) if isinstance(op_data, str) else op_data
+                d1 = datetime.fromisoformat(str(data_bonifico).replace("Z", "+00:00")) if isinstance(data_bonifico, str) else data_bonifico
+                d2 = datetime.fromisoformat(str(op_data).replace("Z", "+00:00")) if isinstance(op_data, str) else op_data
                 diff_days = abs((d1 - d2).days)
                 if diff_days <= 3:
                     score += 30
@@ -1640,35 +1655,32 @@ async def get_operazioni_salari_compatibili(bonifico_id: str):
                 pass
         
         # Score causale/beneficiario match (max 30)
-        dipendente = op.get("dipendente", "").lower()
-        if dipendente:
-            # Match nome dipendente nella causale
+        if dipendente and not iban_match:
             if dipendente in causale:
                 score += 30
-            # Match nome dipendente nel beneficiario
-            elif beneficiario and dipendente in beneficiario:
+            elif beneficiario_nome and dipendente in beneficiario_nome:
                 score += 25
-            # Match parziale (cognome)
             else:
                 cognome = dipendente.split()[-1] if dipendente else ""
                 if cognome and len(cognome) > 3:
-                    if cognome in causale or cognome in beneficiario:
+                    if cognome in causale or (beneficiario_nome and cognome in beneficiario_nome):
                         score += 15
         
         # Bonus per parole chiave stipendio
         if any(word in causale for word in ["stipendio", "salario", "netto", "busta", "stip"]):
             score += 10
         
-        # Include anche risultati con score 0 se importo match
+        # Include risultato
         if score >= 0:
             risultati.append({
                 **op,
-                "compatibilita_score": max(score, 10) if op_importo > 0 else score,  # Min 10 se importo presente
-                "importo_display": op_importo
+                "compatibilita_score": max(score, 10) if op_importo > 0 else score,
+                "importo_display": op_importo,
+                "iban_match": iban_match
             })
     
-    # Ordina per score
-    risultati.sort(key=lambda x: x.get("compatibilita_score", 0), reverse=True)
+    # Ordina per score (IBAN match prima)
+    risultati.sort(key=lambda x: (x.get("iban_match", False), x.get("compatibilita_score", 0)), reverse=True)
     
     return {
         "bonifico": {
@@ -1676,9 +1688,11 @@ async def get_operazioni_salari_compatibili(bonifico_id: str):
             "importo": importo,
             "data": data_bonifico,
             "causale": bonifico.get("causale"),
-            "beneficiario": beneficiario
+            "beneficiario": beneficiario_nome,
+            "beneficiario_iban": beneficiario_iban
         },
-        "operazioni_compatibili": risultati[:15]  # Max 15 risultati
+        "dipendente_iban_match": dipendente_iban_match,
+        "operazioni_compatibili": risultati[:15]
     }
 
 
