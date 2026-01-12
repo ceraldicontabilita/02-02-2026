@@ -339,11 +339,22 @@ async def process_files_background(job_id: str, file_paths: List[Path]):
     for p in file_paths:
         try:
             text = read_pdf_text(p)
-            if not text.strip():
+            
+            transfers = extract_transfers_from_text(text) if text.strip() else []
+            
+            # Fallback: estrai dati dal nome file se il parsing PDF fallisce
+            if not transfers or (transfers and not transfers[0].get('importo')):
+                filename_data = parse_filename_data(p.name)
+                if filename_data:
+                    if transfers:
+                        # Arricchisci con dati dal filename
+                        transfers[0].update({k: v for k, v in filename_data.items() if v and not transfers[0].get(k)})
+                    else:
+                        transfers = [filename_data]
+            
+            if not transfers:
                 errors += 1
                 continue
-            
-            transfers = extract_transfers_from_text(text)
             
             for t in transfers:
                 t['source_file'] = p.name
