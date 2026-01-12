@@ -492,4 +492,24 @@ Le ricette sono ora gestite dalla pagina `/ricette` (Ricette & Food Cost) con fo
 - **SCADENZIARIO INTEGRATO**:
   - Nuovo endpoint `/api/scadenzario-fornitori/scadenze-integrate` per visualizzare scadenze dalla collezione `scadenziario_fornitori`
 
+### 2026-01-12 (sessione 2)
+- **RESPONSIVE GestioneAssegni.jsx**:
+  - Layout a card su mobile con raggruppamento per carnet
+  - Tabella desktop con tutte le colonne
+  - Nessuno scroll orizzontale su mobile
+
+- **FILTRI GESTIONE ASSEGNI**:
+  - Filtro per Fornitore/Beneficiario
+  - Filtro per Importo Min/Max
+  - Filtro per Numero Assegno
+  - Filtro per Numero Fattura (collegata)
+  - Pulsante "Reset Filtri"
+  - Riepilogo risultati filtrati
+
+- **FUZZY MATCHING RICONCILIAZIONE**:
+  - Integrato rapidfuzz per match sul nome fornitore nella descrizione bancaria
+  - Match prioritario su importo esatto, poi fuzzy matching
+  - Score minimo 60% per match fuzzy
+  - Bonus per numero fattura nella descrizione
+
 
