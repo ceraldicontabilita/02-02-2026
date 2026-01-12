@@ -466,4 +466,16 @@ Le ricette sono ora gestite dalla pagina `/ricette` (Ricette & Food Cost) con fo
   - **CicloPassivoIntegrato.jsx**: Aggiornato `splitView` da `1fr 1fr` a `repeat(auto-fit, minmax(300px, 1fr))` per responsive.
 - **Test Responsive 100% superato**: Tutte le pagine principali ora sono responsive senza scroll orizzontale su mobile (testato a 375px viewport).
 
+- **INTEGRAZIONE CICLO PASSIVO COMPLETATA**:
+  - Ora l'import delle fatture XML (endpoint `/api/fatture-ricevute/import-xml`) genera AUTOMATICAMENTE:
+    - Movimento in Prima Nota Banca (categoria "Fornitori")
+    - Scadenza nello scadenziario_fornitori (30 giorni default o data dal XML)
+    - Tentativo di riconciliazione automatica con movimenti bancari
+  - Aggiunto endpoint `/api/fatture-ricevute/elabora-fatture-legacy` per rielaborare fatture esistenti dalla collezione `invoices`
+  - 17 fatture 2026 rielaborate con successo: 17 Prima Nota + 17 Scadenze
+
+- **FIX COLLEZIONI PRIMA NOTA**:
+  - La funzione `genera_scrittura_prima_nota` ora scrive in `prima_nota_banca` invece di `prima_nota` (collezione errata)
+  - Struttura documento allineata con schema esistente (data, tipo, categoria, descrizione, importo, riferimenti)
+
 
