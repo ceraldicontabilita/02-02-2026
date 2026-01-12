@@ -478,4 +478,18 @@ Le ricette sono ora gestite dalla pagina `/ricette` (Ricette & Food Cost) con fo
   - La funzione `genera_scrittura_prima_nota` ora scrive in `prima_nota_banca` invece di `prima_nota` (collezione errata)
   - Struttura documento allineata con schema esistente (data, tipo, categoria, descrizione, importo, riferimenti)
 
+- **PULIZIA MAGAZZINO AUTOMATICA**:
+  - Quando si imposta `esclude_magazzino=True` su un fornitore, i suoi prodotti vengono automaticamente rimossi dal magazzino
+  - Modificato endpoint PUT `/api/suppliers/{id}` per eseguire pulizia automatica
+  - Feedback visivo nel frontend quando prodotti vengono rimossi
+
+- **RICONCILIAZIONE AUTOMATICA MIGLIORATA**:
+  - Aggiunto endpoint `/api/scadenzario-fornitori/riconcilia-automatica` per riconciliazione batch
+  - Cerca match in `estratto_conto_movimenti` (principale) e `bank_transactions` (fallback)
+  - Gestisce importi negativi (uscite) e cerca in range temporale più ampio (60 giorni prima della scadenza)
+  - 2 riconciliazioni automatiche eseguite per 2026
+
+- **SCADENZIARIO INTEGRATO**:
+  - Nuovo endpoint `/api/scadenzario-fornitori/scadenze-integrate` per visualizzare scadenze dalla collezione `scadenziario_fornitori`
+
 
