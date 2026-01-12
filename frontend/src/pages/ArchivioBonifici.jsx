@@ -35,6 +35,9 @@ export default function ArchivioBonifici() {
   const [associaDropdown, setAssociaDropdown] = useState(null); // ID bonifico con dropdown aperto
   const [operazioniCompatibili, setOperazioniCompatibili] = useState([]);
   const [loadingOperazioni, setLoadingOperazioni] = useState(false);
+  const [fattureCompatibili, setFattureCompatibili] = useState([]);
+  const [associaFatturaDropdown, setAssociaFatturaDropdown] = useState(null);
+  const [loadingFatture, setLoadingFatture] = useState(false);
   const initialized = useRef(false);
 
   // Carica dati iniziali
