@@ -255,10 +255,44 @@ export default function GestioneAssegni() {
     }
   };
 
-  // Raggruppa assegni per carnet (primi 10 cifre del numero)
+  // FILTRO ASSEGNI LATO CLIENT
+  const filteredAssegni = assegni.filter(a => {
+    // Filtro fornitore/beneficiario
+    if (filterFornitore && !a.beneficiario?.toLowerCase().includes(filterFornitore.toLowerCase())) {
+      return false;
+    }
+    // Filtro importo min
+    if (filterImportoMin && (parseFloat(a.importo) || 0) < parseFloat(filterImportoMin)) {
+      return false;
+    }
+    // Filtro importo max
+    if (filterImportoMax && (parseFloat(a.importo) || 0) > parseFloat(filterImportoMax)) {
+      return false;
+    }
+    // Filtro numero assegno
+    if (filterNumeroAssegno && !a.numero?.toLowerCase().includes(filterNumeroAssegno.toLowerCase())) {
+      return false;
+    }
+    // Filtro numero fattura
+    if (filterNumeroFattura && !a.numero_fattura?.toLowerCase().includes(filterNumeroFattura.toLowerCase())) {
+      return false;
+    }
+    return true;
+  });
+
+  // Reset filtri
+  const resetFilters = () => {
+    setFilterFornitore('');
+    setFilterImportoMin('');
+    setFilterImportoMax('');
+    setFilterNumeroAssegno('');
+    setFilterNumeroFattura('');
+  };
+
+  // Raggruppa assegni per carnet (primi 10 cifre del numero) - usa filteredAssegni
   const groupByCarnet = () => {
     const groups = {};
-    assegni.forEach(a => {
+    filteredAssegni.forEach(a => {
       const prefix = a.numero?.split('-')[0] || 'Senza Carnet';
       if (!groups[prefix]) groups[prefix] = [];
       groups[prefix].push(a);
