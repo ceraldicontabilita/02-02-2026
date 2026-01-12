@@ -458,3 +458,12 @@ Le ricette sono ora gestite dalla pagina `/ricette` (Ricette & Food Cost) con fo
   - Pulsante "📄 Vedi PDF" in ArchivioFattureRicevute apre AssoInvoice
   - Template HTML migliorato per fatture senza XML content (stile blu professionale)
 
+### 2026-01-12
+- **Refactoring Responsive Design Completato**:
+  - **Fatture.jsx**: Implementato layout a card per mobile (breakpoint 768px), tabella per desktop. Nessuno scroll orizzontale su mobile.
+  - **ArchivioFattureRicevute.jsx**: Corretto errore JSX (fragment non chiuso), implementato layout card mobile/tabella desktop.
+  - **Riconciliazione.jsx**: Aggiornato layout tab "Manuale" da `1fr 1fr` a `repeat(auto-fit, minmax(300px, 1fr))` per impilare le colonne su mobile.
+  - **CicloPassivoIntegrato.jsx**: Aggiornato `splitView` da `1fr 1fr` a `repeat(auto-fit, minmax(300px, 1fr))` per responsive.
+- **Test Responsive 100% superato**: Tutte le pagine principali ora sono responsive senza scroll orizzontale su mobile (testato a 375px viewport).
+
+
