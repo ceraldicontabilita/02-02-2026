@@ -402,3 +402,94 @@ async def get_aging_fornitori() -> Dict[str, Any]:
             for k, v in aging.items()
         }
     }
+
+
+
+@router.get("/scadenze-integrate")
+async def get_scadenze_integrate(
+    anno: int = Query(None, description="Anno di riferimento"),
+    stato: str = Query("aperte", description="aperte, pagate, tutte")
+) -> Dict[str, Any]:
+    """
+    Restituisce le scadenze dalla collezione scadenziario_fornitori 
+    (create dall'integrazione ciclo passivo).
+    """
+    db = Database.get_db()
+    
+    oggi = datetime.now().strftime("%Y-%m-%d")
+    if not anno:
+        anno = datetime.now().year
+    
+    # Query base
+    query = {
+        "data_scadenza": {"$regex": f"^{anno}"}
+    }
+    
+    if stato == "aperte":
+        query["pagato"] = {"$ne": True}
+    elif stato == "pagate":
+        query["pagato"] = True
+    
+    scadenze = await db["scadenziario_fornitori"].find(
+        query, {"_id": 0}
+    ).sort("data_scadenza", 1).to_list(1000)
+    
+    # Calcola totali
+    totale_da_pagare = 0
+    totale_scaduto = 0
+    data_oggi = datetime.strptime(oggi, "%Y-%m-%d")
+    
+    scadenze_per_periodo = {
+        "scadute": [],
+        "oggi": [],
+        "prossimi_7_giorni": [],
+        "prossimi_30_giorni": [],
+        "oltre_30_giorni": []
+    }
+    
+    for s in scadenze:
+        importo = float(s.get("importo_totale", 0))
+        totale_da_pagare += importo
+        
+        data_scad_str = s.get("data_scadenza", oggi)
+        try:
+            data_scad = datetime.strptime(data_scad_str[:10], "%Y-%m-%d")
+        except:
+            data_scad = data_oggi
+        
+        giorni = (data_scad - data_oggi).days
+        s["giorni_alla_scadenza"] = giorni
+        
+        # Normalizza campi per la UI
+        s["importo"] = importo
+        s["fornitore"] = s.get("fornitore_nome", "")
+        s["numero_fattura"] = s.get("numero_fattura", "")
+        
+        if giorni < 0:
+            scadenze_per_periodo["scadute"].append(s)
+            totale_scaduto += importo
+        elif giorni == 0:
+            scadenze_per_periodo["oggi"].append(s)
+        elif giorni <= 7:
+            scadenze_per_periodo["prossimi_7_giorni"].append(s)
+        elif giorni <= 30:
+            scadenze_per_periodo["prossimi_30_giorni"].append(s)
+        else:
+            scadenze_per_periodo["oltre_30_giorni"].append(s)
+    
+    return {
+        "anno": anno,
+        "data_riferimento": oggi,
+        "riepilogo": {
+            "totale_scadenze": len(scadenze),
+            "totale_da_pagare": round(totale_da_pagare, 2),
+            "totale_scaduto": round(totale_scaduto, 2),
+            "num_scadute": len(scadenze_per_periodo["scadute"]),
+            "num_in_scadenza_oggi": len(scadenze_per_periodo["oggi"]),
+            "num_prossimi_7gg": len(scadenze_per_periodo["prossimi_7_giorni"]),
+            "num_prossimi_30gg": len(scadenze_per_periodo["prossimi_30_giorni"])
+        },
+        "scadenze": scadenze_per_periodo,
+        "lista_completa": scadenze
+    }
+
