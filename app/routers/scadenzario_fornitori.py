@@ -10,6 +10,7 @@ from uuid import uuid4
 import logging
 
 from app.database import Database
+from app.routers.ciclo_passivo_integrato import cerca_match_bancario, esegui_riconciliazione
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
