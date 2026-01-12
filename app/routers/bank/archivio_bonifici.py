@@ -399,11 +399,101 @@ async def process_files_background(job_id: str, file_paths: List[Path]):
     except Exception:
         pass
     
+    # AUTO-ASSOCIAZIONE: Cerca match automatici per i nuovi bonifici
+    auto_associated_salari = 0
+    auto_associated_fatture = 0
+    
+    if imported > 0:
+        try:
+            # Prendi i bonifici appena importati
+            new_bonifici = await db.bonifici_transfers.find(
+                {"job_id": job_id, "salario_associato": {"$ne": True}, "fattura_associata": {"$ne": True}},
+                {"_id": 0}
+            ).to_list(500)
+            
+            for bonifico in new_bonifici:
+                importo = abs(bonifico.get("importo", 0))
+                beneficiario_nome = ((bonifico.get("beneficiario") or {}).get("nome") or "").lower()
+                causale = (bonifico.get("causale") or "").lower()
+                
+                if importo <= 0:
+                    continue
+                
+                # 1. Cerca match SALARI (score >= 80)
+                salari_match = await db.prima_nota_salari.find_one({
+                    "salario_associato": {"$ne": True},
+                    "$or": [
+                        {"importo_busta": {"$gte": importo * 0.98, "$lte": importo * 1.02}},
+                        {"importo_bonifico": {"$gte": importo * 0.98, "$lte": importo * 1.02}}
+                    ]
+                }, {"_id": 0})
+                
+                if salari_match:
+                    dipendente = (salari_match.get("dipendente") or "").lower()
+                    # Verifica match nome dipendente
+                    if dipendente and (dipendente in beneficiario_nome or dipendente in causale or 
+                                       beneficiario_nome in dipendente):
+                        # Associa automaticamente
+                        await db.bonifici_transfers.update_one(
+                            {"id": bonifico["id"]},
+                            {"$set": {
+                                "salario_associato": True,
+                                "operazione_salario_id": salari_match.get("id"),
+                                "operazione_salario_desc": f"{salari_match.get('dipendente', '')} - {salari_match.get('anno', '')}/{salari_match.get('mese', '')}",
+                                "auto_associated": True,
+                                "updated_at": datetime.now(timezone.utc).isoformat()
+                            }}
+                        )
+                        await db.prima_nota_salari.update_one(
+                            {"id": salari_match.get("id")},
+                            {"$set": {"salario_associato": True, "bonifico_id": bonifico["id"]}}
+                        )
+                        auto_associated_salari += 1
+                        continue
+                
+                # 2. Cerca match FATTURE (score >= 80)
+                fattura_match = await db.invoices.find_one({
+                    "fattura_associata": {"$ne": True},
+                    "$or": [
+                        {"total_amount": {"$gte": importo * 0.98, "$lte": importo * 1.02}},
+                        {"importo_totale": {"$gte": importo * 0.98, "$lte": importo * 1.02}},
+                        {"totale_documento": {"$gte": importo * 0.98, "$lte": importo * 1.02}}
+                    ]
+                }, {"_id": 0})
+                
+                if fattura_match:
+                    fornitore = (fattura_match.get("supplier_name") or 
+                                (fattura_match.get("fornitore", {}) or {}).get("denominazione") or "").lower()
+                    # Verifica match nome fornitore
+                    if fornitore and (fornitore in beneficiario_nome or fornitore in causale or
+                                     beneficiario_nome in fornitore):
+                        # Associa automaticamente
+                        await db.bonifici_transfers.update_one(
+                            {"id": bonifico["id"]},
+                            {"$set": {
+                                "fattura_associata": True,
+                                "fattura_id": fattura_match.get("id"),
+                                "fattura_numero": fattura_match.get("invoice_number") or fattura_match.get("numero_documento"),
+                                "fattura_fornitore": fattura_match.get("supplier_name") or (fattura_match.get("fornitore", {}) or {}).get("denominazione"),
+                                "auto_associated": True,
+                                "updated_at": datetime.now(timezone.utc).isoformat()
+                            }}
+                        )
+                        await db.invoices.update_one(
+                            {"id": fattura_match.get("id")},
+                            {"$set": {"bonifico_associato": True, "bonifico_id": bonifico["id"]}}
+                        )
+                        auto_associated_fatture += 1
+        except Exception as e:
+            logger.error(f"Auto-association error: {e}")
+    
     await db.bonifici_jobs.update_one(
         {'id': job_id}, 
         {'$set': {
             'status': 'completed',
-            'completed_at': datetime.now(timezone.utc).isoformat()
+            'completed_at': datetime.now(timezone.utc).isoformat(),
+            'auto_associated_salari': auto_associated_salari,
+            'auto_associated_fatture': auto_associated_fatture
         }}
     )
 
