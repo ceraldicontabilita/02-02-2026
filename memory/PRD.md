@@ -269,7 +269,14 @@ Tutte le pagine principali supportano layout mobile:
 - ✅ Fuzzy matching per riconciliazione automatica
 
 ### 2026-01-12 (continua)
-- ✅ Migliorato algoritmo riconciliazione automatica con 3 livelli di confidenza:
+- ✅ Migliorato algoritmo riconciliazione automatica con 3 livelli di confidenza
+- ✅ **Archivio Bonifici - Associazione Salari**: Corretto il sistema di ricerca operazioni compatibili (usava campi sbagliati: `importo` invece di `importo_busta`)
+- ✅ **Archivio Bonifici - Associazione Fatture**: Aggiunto nuovo sistema per associare bonifici a fatture ricevute con:
+  - Endpoint `/api/archivio-bonifici/fatture-compatibili/{bonifico_id}` per cercare fatture compatibili
+  - Endpoint `/api/archivio-bonifici/associa-fattura` per associare bonifico a fattura
+  - Endpoint `/api/archivio-bonifici/disassocia-fattura/{bonifico_id}` per rimuovere associazione
+  - UI con dropdown e score di compatibilità (50-100%)
+- ✅ **Fix Bug LiquidazioneIVA**: Risolto errore `cardStyle is not defined`
   - **ALTA**: Match solo quando importo esatto (±€1) E nome fornitore confermato
   - **MEDIA**: Match quando importo esatto per importi > €100
   - **SUGGERIMENTO**: Match per importi simili (±10%) - richiede verifica manuale
