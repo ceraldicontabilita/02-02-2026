@@ -607,23 +607,36 @@ async def esegui_riconciliazione(db, scadenza_id: str, transazione_id: str, sour
         }
     )
     
-    # Aggiorna transazione bancaria
-    await db[COL_BANK_TRANSACTIONS].update_one(
-        {"id": transazione_id},
-        {
-            "$set": {
-                "riconciliato": True,
-                "scadenza_id": scadenza_id,
-                "updated_at": now
+    # Aggiorna transazione bancaria nella collezione corretta
+    if source_collection == "estratto_conto_movimenti":
+        await db["estratto_conto_movimenti"].update_one(
+            {"id": transazione_id},
+            {
+                "$set": {
+                    "fattura_id": scadenza_id,  # Per estratto_conto usa fattura_id
+                    "riconciliato": True,
+                    "updated_at": now
+                }
             }
-        }
-    )
+        )
+    else:
+        await db[COL_BANK_TRANSACTIONS].update_one(
+            {"id": transazione_id},
+            {
+                "$set": {
+                    "riconciliato": True,
+                    "scadenza_id": scadenza_id,
+                    "updated_at": now
+                }
+            }
+        )
     
     # Crea record riconciliazione
     riconciliazione = {
         "id": str(uuid.uuid4()),
         "scadenza_id": scadenza_id,
         "transazione_id": transazione_id,
+        "source_collection": source_collection,
         "tipo": "automatica",
         "data_riconciliazione": now,
         "created_at": now
