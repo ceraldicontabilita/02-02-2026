@@ -308,6 +308,20 @@ Tutte le pagine principali supportano layout mobile:
   - Evidenzia fatture senza metodo
   - Azione massiva "Imposta Bonifico" con conferma
 - ✅ **Doppia conferma eliminazione**: Aggiunta riconferma per disassociazione Bonifici↔Salari e Bonifici↔Fatture
+- ✅ **Parser buste paga migliorato**: Estrazione dati estesa:
+  - Ore ordinarie/straordinarie
+  - Paga base, contingenza, paga oraria
+  - Livello, qualifica, part-time %
+  - Ferie (residuo/maturato/goduto/saldo)
+  - Permessi, TFR, matricola, IBAN
+- ✅ **Dashboard Statistiche Riconciliazione**: Nuova pagina `/dashboard-riconciliazione`
+  - KPI cards: bonifici riconciliati, associati salario/fattura, importi
+  - Dettagli: stato bonifici, scadenziario, salari e dipendenti
+  - Trend ultimi 6 mesi con grafici
+- ✅ **UI eliminazione fattura migliorata**: 
+  - Messaggio dettagliato con riepilogo entità correlate
+  - Doppia conferma per operazioni critiche
+  - Notifica successo con conteggio record eliminati
 
 ### 2026-01-11
 - ✅ Integrazione ciclo passivo (Import → Prima Nota → Scadenze)
