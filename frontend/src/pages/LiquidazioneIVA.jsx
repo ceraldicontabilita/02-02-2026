@@ -371,8 +371,7 @@ export default function LiquidazioneIVA() {
               <button 
                 onClick={eseguiConfronto}
                 disabled={!confronto.debito || !confronto.credito}
-                style={{ padding: '10px 20px', background: '#4caf50', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 'bold', fontSize: 14 }}
-                style={{ background: '#7c3aed', color: 'white' }}
+                style={{ padding: '10px 20px', background: '#7c3aed', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 'bold', fontSize: 14 }}
                 data-testid="btn-confronta"
               >
                 Confronta
