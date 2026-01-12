@@ -710,6 +710,7 @@ function DipendenteBonificiTab({ bonifici, loading, onReload }) {
                 <th style={{ padding: 8, textAlign: 'right', borderBottom: '2px solid #ddd' }}>Importo</th>
                 <th style={{ padding: 8, textAlign: 'left', borderBottom: '2px solid #ddd' }}>Causale</th>
                 <th style={{ padding: 8, textAlign: 'center', borderBottom: '2px solid #ddd' }}>Stato</th>
+                <th style={{ padding: 8, textAlign: 'center', borderBottom: '2px solid #ddd' }}>PDF</th>
               </tr>
             </thead>
             <tbody>
