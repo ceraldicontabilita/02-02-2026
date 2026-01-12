@@ -511,8 +511,8 @@ export default function LiquidazioneIVA() {
       <div style={{ marginTop: 20, padding: 16, background: '#f0f9ff', borderRadius: 8, fontSize: 13, color: '#1e3a5f' }}>
         <strong>ℹ️ Note sul calcolo</strong>
         <ul style={{ margin: '8px 0 0 16px', padding: 0, lineHeight: 1.8 }}>
-          <li><strong>IVA a Debito</strong>: calcolata dalla somma dell'IVA sui corrispettivi del periodo</li>
-          <li><strong>IVA a Credito</strong>: calcolata dalla somma dell'IVA sulle fatture d'acquisto ricevute nel periodo</li>
+          <li><strong>IVA a Debito</strong>: calcolata dalla somma dell&apos;IVA sui corrispettivi del periodo</li>
+          <li><strong>IVA a Credito</strong>: calcolata dalla somma dell&apos;IVA sulle fatture d&apos;acquisto ricevute nel periodo</li>
           <li><strong>Deroghe temporali</strong>: applicate regola 15 giorni e 12 giorni per fatture mese precedente</li>
           <li><strong>Note di Credito</strong> (TD04, TD08): sottratte dal totale IVA credito</li>
           <li>Regime IVA: <strong>Ordinario per competenza</strong></li>
