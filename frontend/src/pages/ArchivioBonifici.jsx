@@ -783,8 +783,9 @@ export default function ArchivioBonifici() {
                                         {op.compatibilita_score}%
                                       </span>
                                     </div>
-                                    <div style={{ fontSize: 10, color: '#6b7280', marginTop: 4 }}>
-                                      {formatDate(op.data)} • {formatEuro(op.importo_display)}
+                                    <div style={{ fontSize: 10, color: '#6b7280', marginTop: 4, display: 'flex', justifyContent: 'space-between' }}>
+                                      <span>{op.anno && op.mese ? `${op.mese}/${op.anno}` : formatDate(op.data)}</span>
+                                      <span style={{ fontWeight: 600 }}>{formatEuro(op.importo_display)}</span>
                                     </div>
                                   </div>
                                 ))
