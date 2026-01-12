@@ -1797,6 +1797,7 @@ async def associa_bonifico_salario(
 ):
     """
     Associa un bonifico a un'operazione di Prima Nota Salari.
+    Aggiorna anche dipendente_id per mostrare il bonifico nella pagina dipendenti.
     """
     db = Database.get_db()
     
@@ -1812,21 +1813,46 @@ async def associa_bonifico_salario(
     
     now = datetime.now(timezone.utc).isoformat()
     
-    # Aggiorna bonifico
+    # Trova dipendente_id dall'operazione o cercando per nome
+    dipendente_id = operazione.get("dipendente_id")
+    dipendente_nome = operazione.get("dipendente") or operazione.get("descrizione")
+    
+    # Se non c'è dipendente_id nell'operazione, cerca per nome
+    if not dipendente_id and dipendente_nome:
+        # Cerca dipendente per nome
+        dipendente = await db.employees.find_one(
+            {"$or": [
+                {"nome_completo": {"$regex": dipendente_nome, "$options": "i"}},
+                {"cognome": {"$regex": dipendente_nome.split()[-1] if dipendente_nome else "", "$options": "i"}}
+            ]},
+            {"_id": 0, "id": 1, "nome_completo": 1, "nome": 1, "cognome": 1}
+        )
+        if dipendente:
+            dipendente_id = dipendente.get("id")
+            dipendente_nome = dipendente.get("nome_completo") or f"{dipendente.get('nome', '')} {dipendente.get('cognome', '')}".strip()
+    
+    # Aggiorna bonifico con dipendente_id
+    update_data = {
+        "salario_associato": True,
+        "operazione_salario_id": operazione_id,
+        "operazione_salario_desc": dipendente_nome,
+        "operazione_salario_data": operazione.get("data"),
+        "operazione_salario_importo": operazione.get("importo") or operazione.get("netto"),
+        "data_associazione": now,
+        "updated_at": now
+    }
+    
+    # Aggiungi dipendente_id se trovato
+    if dipendente_id:
+        update_data["dipendente_id"] = dipendente_id
+        update_data["dipendente_nome"] = dipendente_nome
+    
     await db.bonifici_transfers.update_one(
         {"id": bonifico_id},
-        {"$set": {
-            "salario_associato": True,
-            "operazione_salario_id": operazione_id,
-            "operazione_salario_desc": operazione.get("descrizione") or operazione.get("dipendente"),
-            "operazione_salario_data": operazione.get("data"),
-            "operazione_salario_importo": operazione.get("importo") or operazione.get("netto"),
-            "data_associazione": now,
-            "updated_at": now
-        }}
+        {"$set": update_data}
     )
     
-    # Aggiorna operazione salari
+    # Aggiorna operazione salari con bonifico_id
     await db.prima_nota_salari.update_one(
         {"id": operazione_id},
         {"$set": {
@@ -1840,7 +1866,8 @@ async def associa_bonifico_salario(
         "success": True,
         "bonifico_id": bonifico_id,
         "operazione_id": operazione_id,
-        "descrizione": operazione.get("descrizione") or operazione.get("dipendente")
+        "dipendente_id": dipendente_id,
+        "descrizione": dipendente_nome
     }
 
 
