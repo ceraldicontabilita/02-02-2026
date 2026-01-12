@@ -33,7 +33,7 @@ class PayslipPDFParser:
         'contingenza': r'CONTING\.?[:\s]*([0-9.,]+)',
         'livello': r"(\d+'?\s*Livello|\d+°\s*Livello|Livello\s*\d+)",
         'qualifica': r'(CAMERIERE|CUOCO|BARISTA|AIUTO CUOCO|LAVAPIATTI|PIZZAIOLO|COMMIS|CHEF|RECEPTIONIST)',
-        'part_time': r'Part\s*Time\s*([0-9.,]+)%',
+        'part_time': r'Part\s*Time\s*(\d+)[,.]?(\d*)\s*%',
         'iban': r'IT[0-9]{2}[A-Z][0-9]{10}[0-9A-Z]{12}',
         'ferie_maturate': r'Ferie[:\s]*([0-9.,]+)\s+([0-9.,]+)\s+([0-9.,]+)',  # Residuo, Maturato, Goduto
         'permessi': r'Permessi[:\s]*([0-9.,]+)\s+([0-9.,]+)',
