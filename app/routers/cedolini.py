@@ -384,7 +384,7 @@ async def lista_cedolini(anno: int, mese: int) -> List[Dict[str, Any]]:
                     "dipendente_id": dipendente_id,
                     "anno": anno,
                     "mese": mese,
-                    "bonifico_id": {"$exists": True, "$ne": None, "$ne": ""}
+                    "bonifico_id": {"$exists": True, "$nin": [None, ""]}
                 },
                 {"_id": 0, "bonifico_id": 1, "bonifico_associato": 1}
             )
