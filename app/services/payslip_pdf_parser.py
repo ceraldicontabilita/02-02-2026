@@ -111,6 +111,53 @@ class PayslipPDFParser:
             return self._parse_italian_number(match.group(1))
         return 0.0
     
+    def _extract_pattern(self, text: str, pattern_name: str) -> Optional[str]:
+        """Estrae un valore testuale usando un pattern specifico."""
+        pattern = self.PATTERNS.get(pattern_name)
+        if not pattern:
+            return None
+        match = re.search(pattern, text, re.IGNORECASE)
+        if match:
+            # Restituisce il primo gruppo o l'intero match
+            return match.group(1) if match.lastindex else match.group(0)
+        return None
+    
+    def _extract_ferie(self, text: str) -> Dict[str, float]:
+        """Estrae dati ferie: residuo, maturato, goduto, saldo."""
+        result = {'residuo': 0, 'maturato': 0, 'goduto': 0, 'saldo': 0}
+        # Cerca riga ferie con numeri
+        ferie_match = re.search(r'Ferie\s+([0-9.,]+)\s+([0-9.,]+)\s+([0-9.,]+)\s+([0-9.,]+)?', text, re.IGNORECASE)
+        if ferie_match:
+            result['residuo'] = self._parse_italian_number(ferie_match.group(1))
+            result['maturato'] = self._parse_italian_number(ferie_match.group(2))
+            result['goduto'] = self._parse_italian_number(ferie_match.group(3))
+            if ferie_match.group(4):
+                result['saldo'] = self._parse_italian_number(ferie_match.group(4))
+            else:
+                result['saldo'] = result['residuo'] + result['maturato'] - result['goduto']
+        return result
+    
+    def _extract_permessi(self, text: str) -> Dict[str, float]:
+        """Estrae dati permessi."""
+        result = {'maturato': 0, 'goduto': 0, 'saldo': 0}
+        permessi_match = re.search(r'Permessi\s+([0-9.,]+)\s+([0-9.,]+)\s*([0-9.,]+)?', text, re.IGNORECASE)
+        if permessi_match:
+            result['maturato'] = self._parse_italian_number(permessi_match.group(1))
+            result['goduto'] = self._parse_italian_number(permessi_match.group(2))
+            if permessi_match.group(3):
+                result['saldo'] = self._parse_italian_number(permessi_match.group(3))
+            else:
+                result['saldo'] = result['maturato'] - result['goduto']
+        return result
+    
+    def _extract_matricola(self, text: str) -> Optional[str]:
+        """Estrae il numero di matricola."""
+        # Prova pattern "Nr. 12345" o "Matricola: 12345"
+        match = re.search(r'Nr\.\s*(\d+)|Matricola[:\s]*(\d+)', text)
+        if match:
+            return match.group(1) or match.group(2)
+        return None
+    
     def parse_page(self, page) -> Optional[Dict[str, Any]]:
         """Analizza una singola pagina del PDF."""
         text = page.extract_text() or ""
