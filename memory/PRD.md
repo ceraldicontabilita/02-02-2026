@@ -302,6 +302,12 @@ Tutte le pagine principali supportano layout mobile:
   - Banner "🔗 IBAN riconosciuto" nel dropdown associazione
   - Badge "IBAN ✓" verde per evidenziare match
 - ✅ **Link "Vedi" fattura in Gestione Assegni**: Verificato funzionante con collezione `invoices`
+- ✅ **RIPRISTINATO**: Annullata associazione errata di 1334 fatture con metodo pagamento "Bonifico"
+- ✅ **Tab Admin "Fatture"**: Nuovo tab per gestire metodi di pagamento fatture
+  - Stats metodi pagamento con conteggi
+  - Evidenzia fatture senza metodo
+  - Azione massiva "Imposta Bonifico" con conferma
+- ✅ **Doppia conferma eliminazione**: Aggiunta riconferma per disassociazione Bonifici↔Salari e Bonifici↔Fatture
 
 ### 2026-01-11
 - ✅ Integrazione ciclo passivo (Import → Prima Nota → Scadenze)
