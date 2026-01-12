@@ -542,17 +542,17 @@ async def cerca_match_bancario(db, scadenza: Dict, tolleranza_giorni: int = 30, 
     """
     Cerca un match tra la scadenza e i movimenti bancari.
     
-    Criteri di match:
-    - Importo uguale (tolleranza 10 cent o valore assoluto per importi negativi)
-    - Data dalla fattura fino a 30 giorni dopo la scadenza
-    - Movimento di tipo uscita/addebito
+    Criteri di match (in ordine di priorità):
+    1. Match ESATTO: Importo uguale + stessa data range
+    2. Match FUZZY: Importo simile + nome fornitore nella descrizione
     
     Cerca prima in estratto_conto_movimenti (principale), poi in bank_transactions.
     """
     importo = abs(float(scadenza.get("importo_totale", 0)))
     data_scadenza = scadenza.get("data_scadenza")
     data_fattura = scadenza.get("data_fattura")
-    fornitore_nome = scadenza.get("fornitore_nome", "")
+    fornitore_nome = scadenza.get("fornitore_nome", "").lower()
+    numero_fattura = scadenza.get("numero_fattura", "")
     
     if not data_scadenza or not importo:
         return None
@@ -565,27 +565,70 @@ async def cerca_match_bancario(db, scadenza: Dict, tolleranza_giorni: int = 30, 
     except (ValueError, TypeError):
         return None
     
-    # Prima cerca in estratto_conto_movimenti - gestisce importi negativi
-    # Gli importi negativi in estratto_conto rappresentano uscite
+    # --- STEP 1: MATCH ESATTO per importo ---
     query_estratto = {
         "tipo": {"$in": ["uscita", "addebito"]},
         "$or": [
-            # Importo positivo
             {"importo": {"$gte": importo - tolleranza_importo, "$lte": importo + tolleranza_importo}},
-            # Importo negativo (valore assoluto)
             {"importo": {"$gte": -importo - tolleranza_importo, "$lte": -importo + tolleranza_importo}}
         ],
         "data": {"$gte": data_min, "$lte": data_max},
-        "fattura_id": {"$exists": False}  # Non già riconciliato
+        "fattura_id": {"$exists": False}
     }
     
     movimento = await db["estratto_conto_movimenti"].find_one(query_estratto, {"_id": 0})
     
     if movimento:
         movimento["source_collection"] = "estratto_conto_movimenti"
+        movimento["match_type"] = "exact_amount"
         return movimento
     
-    # Fallback: cerca in bank_transactions
+    # --- STEP 2: MATCH FUZZY su nome fornitore nella descrizione ---
+    if fornitore_nome and FUZZY_AVAILABLE:
+        # Cerca movimenti con importo più ampio ma nome fornitore nella descrizione
+        tolleranza_fuzzy = max(importo * 0.05, 5.0)  # 5% o €5 minimo
+        query_fuzzy = {
+            "tipo": {"$in": ["uscita", "addebito"]},
+            "$or": [
+                {"importo": {"$gte": importo - tolleranza_fuzzy, "$lte": importo + tolleranza_fuzzy}},
+                {"importo": {"$gte": -importo - tolleranza_fuzzy, "$lte": -importo + tolleranza_fuzzy}}
+            ],
+            "data": {"$gte": data_min, "$lte": data_max},
+            "fattura_id": {"$exists": False}
+        }
+        
+        movimenti_candidati = await db["estratto_conto_movimenti"].find(query_fuzzy, {"_id": 0}).to_list(50)
+        
+        best_match = None
+        best_score = 0
+        
+        for mov in movimenti_candidati:
+            descrizione = (mov.get("descrizione_originale", "") + " " + mov.get("descrizione", "")).lower()
+            
+            # Calcola score fuzzy
+            score = fuzz.partial_ratio(fornitore_nome, descrizione)
+            
+            # Bonus se il numero fattura appare nella descrizione
+            if numero_fattura and numero_fattura.lower() in descrizione:
+                score += 20
+            
+            # Bonus per parole chiave del fornitore
+            parole_fornitore = [p for p in fornitore_nome.split() if len(p) > 3]
+            for parola in parole_fornitore:
+                if parola in descrizione:
+                    score += 10
+            
+            if score > best_score and score >= 60:  # Soglia minima 60%
+                best_score = score
+                best_match = mov
+        
+        if best_match:
+            best_match["source_collection"] = "estratto_conto_movimenti"
+            best_match["match_type"] = "fuzzy_name"
+            best_match["match_score"] = best_score
+            return best_match
+    
+    # --- STEP 3: Fallback su bank_transactions ---
     query_bank = {
         "tipo": {"$in": ["uscita", "addebito", "bonifico_uscita"]},
         "$or": [
@@ -600,6 +643,7 @@ async def cerca_match_bancario(db, scadenza: Dict, tolleranza_giorni: int = 30, 
     
     if movimento:
         movimento["source_collection"] = "bank_transactions"
+        movimento["match_type"] = "exact_amount"
     
     return movimento
 
