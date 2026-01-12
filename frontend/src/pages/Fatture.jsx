@@ -751,7 +751,71 @@ export default function Fatture() {
             )}
           </div>
         ) : (
-          <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+          <>
+          {/* Layout Card per Mobile */}
+          <div className="mobile-cards" style={{ display: 'none' }}>
+            <style>{`
+              @media (max-width: 768px) {
+                .mobile-cards { display: block !important; }
+                .desktop-table { display: none !important; }
+              }
+            `}</style>
+            {filteredInvoices.map((inv, i) => (
+              <div 
+                key={inv.id || i}
+                onClick={() => setSelectedInvoice(inv)}
+                style={{
+                  background: selectedInvoice?.id === inv.id ? "#e3f2fd" : "white",
+                  border: '1px solid #e5e7eb',
+                  borderRadius: 12,
+                  padding: 16,
+                  marginBottom: 12,
+                  cursor: 'pointer'
+                }}
+                data-testid={`invoice-card-${inv.id}`}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                  <div>
+                    <div style={{ fontWeight: 'bold', fontSize: 15 }}>{inv.invoice_number || "-"}</div>
+                    <div style={{ fontSize: 12, color: '#6b7280' }}>{formatDateIT(inv.invoice_date)}</div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontWeight: 'bold', fontSize: 16, color: '#1e40af' }}>{formatEuro(inv.total_amount || 0)}</div>
+                    {inv.tipo_documento && getTipoDocBadge(inv.tipo_documento)}
+                  </div>
+                </div>
+                <div style={{ fontSize: 14, color: '#374151', marginBottom: 8 }}>
+                  {inv.supplier_name || inv.fornitore?.denominazione || "-"}
+                </div>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                  <select
+                    value={inv.metodo_pagamento || ""}
+                    onChange={(e) => { e.stopPropagation(); handleUpdateMetodoPagamento(inv.id, e.target.value); }}
+                    onClick={(e) => e.stopPropagation()}
+                    style={{ padding: '4px 8px', borderRadius: 6, border: '1px solid #d1d5db', fontSize: 12, flex: 1 }}
+                  >
+                    <option value="">-- Metodo --</option>
+                    <option value="Bonifico">Bonifico</option>
+                    <option value="Cassa">Cassa</option>
+                    <option value="Assegno">Assegno</option>
+                    <option value="RiBa">RiBa</option>
+                  </select>
+                  <a 
+                    href={`/api/fatture-ricevute/fattura/${inv.id}/view-assoinvoice`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    style={{ padding: '6px 12px', background: '#2196f3', color: 'white', borderRadius: 6, textDecoration: 'none', fontSize: 12, fontWeight: 'bold' }}
+                  >
+                    📄 PDF
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          {/* Tabella Desktop */}
+          <div className="desktop-table" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
           <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 800 }}>
             <thead>
               <tr style={{ borderBottom: "2px solid #ddd", textAlign: "left" }}>
