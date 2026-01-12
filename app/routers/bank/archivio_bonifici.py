@@ -645,6 +645,53 @@ async def delete_transfer(transfer_id: str):
     return {'deleted': True}
 
 
+@router.get("/transfers/{transfer_id}/pdf")
+async def get_bonifico_pdf(transfer_id: str):
+    """
+    Restituisce il PDF originale del bonifico se disponibile.
+    Cerca il file nella directory di upload usando il source_file.
+    """
+    db = Database.get_db()
+    
+    # Recupera bonifico
+    bonifico = await db.bonifici_transfers.find_one({"id": transfer_id}, {"_id": 0})
+    if not bonifico:
+        raise HTTPException(status_code=404, detail="Bonifico non trovato")
+    
+    source_file = bonifico.get("source_file", "")
+    job_id = bonifico.get("job_id", "")
+    
+    if not source_file:
+        raise HTTPException(status_code=404, detail="File PDF non disponibile per questo bonifico")
+    
+    # Cerca il file in varie posizioni
+    possible_paths = [
+        UPLOAD_DIR / job_id / source_file,
+        UPLOAD_DIR / source_file,
+        Path(f"/tmp/bonifici_uploads/{job_id}/{source_file}"),
+        Path(f"/tmp/bonifici_uploads/{source_file}"),
+    ]
+    
+    pdf_path = None
+    for p in possible_paths:
+        if p.exists():
+            pdf_path = p
+            break
+    
+    if not pdf_path:
+        # Il file è stato cancellato dopo l'elaborazione (normale comportamento)
+        raise HTTPException(
+            status_code=404, 
+            detail="Il file PDF originale non è più disponibile. I file vengono rimossi dopo l'elaborazione per risparmiare spazio."
+        )
+    
+    return StreamingResponse(
+        open(pdf_path, "rb"),
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'inline; filename="{source_file}"'}
+    )
+
+
 @router.delete("/transfers/bulk")
 async def bulk_delete(job_id: Optional[str] = None):
     """Elimina tutti i bonifici di un job."""
