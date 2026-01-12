@@ -331,7 +331,7 @@ async def process_files_background(job_id: str, file_paths: List[Path]):
     
     # Carica chiavi esistenti per deduplicazione veloce
     existing_keys = set()
-    existing_docs = await db.bonifici_transfers.find({}, {'dedup_key': 1}).to_list(None)
+    existing_docs = await db.bonifici_transfers.find({}, {'_id': 0, 'dedup_key': 1}).to_list(50000)
     for doc in existing_docs:
         if doc.get('dedup_key'):
             existing_keys.add(doc['dedup_key'])
