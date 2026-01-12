@@ -331,6 +331,7 @@ export default function Cedolini() {
                         <th style={styles.thRight}>Netto</th>
                         <th style={styles.thRight}>Costo Az.</th>
                         <th style={{ ...styles.th, textAlign: 'center' }}>Stato</th>
+                        <th style={{ ...styles.th, textAlign: 'center' }}>Bonifico</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -343,6 +344,23 @@ export default function Cedolini() {
                           <td style={{ ...styles.tdRight, color: '#7c3aed' }}>{fmt(c.costo_azienda)}</td>
                           <td style={{ ...styles.td, textAlign: 'center' }}>
                             {c.pagato ? <span style={{ color: '#16a34a' }}>✓</span> : <span style={{ color: '#ca8a04' }}>⏳</span>}
+                          </td>
+                          <td style={{ ...styles.td, textAlign: 'center' }}>
+                            {c.bonifico_id ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                style={{ height: 24, fontSize: 10, padding: '0 8px' }}
+                                onClick={() => window.open(`${process.env.REACT_APP_BACKEND_URL}/api/archivio-bonifici/transfers/${c.bonifico_id}/pdf`, '_blank')}
+                                title="Vedi PDF bonifico"
+                              >
+                                📄 PDF
+                              </Button>
+                            ) : c.salario_associato ? (
+                              <span style={{ color: '#3b82f6', fontSize: 10 }}>✓ Associato</span>
+                            ) : (
+                              <span style={{ color: '#94a3b8', fontSize: 10 }}>-</span>
+                            )}
                           </td>
                         </tr>
                       ))}
