@@ -408,79 +408,50 @@ async def processa_carico_magazzino(db, fattura_id: str, fornitore: Dict, linee:
 
 async def genera_scrittura_prima_nota(db, fattura_id: str, fattura: Dict, fornitore: Dict) -> str:
     """
-    Genera automaticamente la scrittura contabile in Prima Nota.
+    Genera automaticamente il movimento in Prima Nota BANCA.
+    Le fatture passive generano movimenti in BANCA (pagamento fornitori via bonifico/assegno).
     
-    Schema Dare/Avere:
-    - DARE: Costo (Imponibile) + IVA a Credito
-    - AVERE: Debito vs Fornitore (Totale)
+    La struttura segue lo schema delle collezioni esistenti:
+    - prima_nota_banca per pagamenti bancari
+    - prima_nota_cassa per contanti (non usato per fatture passive)
     """
     centro_costo = detect_centro_costo(fornitore, "")
     
-    imponibile = float(fattura.get("imponibile", 0))
-    iva = float(fattura.get("iva", 0))
     totale = float(fattura.get("importo_totale", 0))
+    data_doc = fattura.get("data_documento", datetime.now(timezone.utc).strftime("%Y-%m-%d"))
     
-    scrittura_id = str(uuid.uuid4())
-    data_registrazione = datetime.now(timezone.utc).isoformat()
+    movimento_id = str(uuid.uuid4())
     
-    scrittura = {
-        "id": scrittura_id,
-        "tipo": "fattura_passiva",
-        "data_registrazione": data_registrazione,
-        "data_documento": fattura.get("data_documento"),
-        "numero_documento": fattura.get("numero_documento"),
-        "descrizione": f"Fattura {fattura.get('numero_documento')} - {fornitore.get('ragione_sociale')}",
+    # Struttura movimento Prima Nota Banca
+    movimento = {
+        "id": movimento_id,
+        "data": data_doc,
+        "tipo": "uscita",  # Fattura passiva = uscita
+        "categoria": "Fornitori",
+        "descrizione": f"Pagamento fattura {fattura.get('numero_documento')} - {fornitore.get('ragione_sociale', '')}",
+        "importo": totale,
         
         # Riferimenti
         "fattura_id": fattura_id,
         "fornitore_id": fornitore.get("id"),
         "fornitore_piva": fornitore.get("partita_iva"),
         "fornitore_nome": fornitore.get("ragione_sociale"),
+        "numero_documento": fattura.get("numero_documento"),
         
-        # Importi
-        "imponibile": imponibile,
-        "iva": iva,
-        "totale": totale,
-        
-        # Centro di costo
+        # Metadati
         "centro_costo": centro_costo,
-        
-        # Movimenti contabili
-        "movimenti": [
-            {
-                "conto": "COSTI_ACQUISTO",
-                "descrizione": f"Costo merci/servizi - {fornitore.get('ragione_sociale')}",
-                "dare": imponibile,
-                "avere": 0,
-                "centro_costo": centro_costo
-            },
-            {
-                "conto": "IVA_CREDITO",
-                "descrizione": f"IVA a credito - Fatt. {fattura.get('numero_documento')}",
-                "dare": iva,
-                "avere": 0,
-                "centro_costo": None
-            },
-            {
-                "conto": "DEBITI_FORNITORI",
-                "descrizione": f"Debito vs {fornitore.get('ragione_sociale')}",
-                "dare": 0,
-                "avere": totale,
-                "centro_costo": None
-            }
-        ],
-        
-        # Stato
-        "stato": "registrata",
-        "validata": True,
+        "note": f"Generato automaticamente da import fattura",
         "source": "import_xml_integrato",
-        "created_at": data_registrazione
+        "stato": "registrato",
+        
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat()
     }
     
-    await db[COL_PRIMA_NOTA].insert_one(scrittura)
-    logger.info(f"✅ Scrittura Prima Nota generata: {scrittura_id[:8]}")
+    await db[COL_PRIMA_NOTA_BANCA].insert_one(movimento)
+    logger.info(f"✅ Movimento Prima Nota Banca generato: {movimento_id[:8]}")
     
-    return scrittura_id
+    return movimento_id
 
 
 # ==================== MODULO 3: SCADENZIARIO ====================
