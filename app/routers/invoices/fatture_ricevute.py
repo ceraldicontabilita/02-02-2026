@@ -1219,13 +1219,16 @@ async def get_archivio_fatture(
     if search:
         query["$or"] = [
             {"numero_documento": {"$regex": search, "$options": "i"}},
+            {"invoice_number": {"$regex": search, "$options": "i"}},
             {"fornitore_ragione_sociale": {"$regex": search, "$options": "i"}},
-            {"fornitore_partita_iva": {"$regex": search, "$options": "i"}}
+            {"fornitore_partita_iva": {"$regex": search, "$options": "i"}},
+            {"supplier_name": {"$regex": search, "$options": "i"}},
+            {"supplier_vat": {"$regex": search, "$options": "i"}}
         ]
     
-    # Query
+    # Query - ordina per data documento (supporta entrambi i formati)
     cursor = db[COL_FATTURE_RICEVUTE].find(query, {"_id": 0})
-    cursor = cursor.sort("data_documento", -1).skip(skip).limit(limit)
+    cursor = cursor.sort([("invoice_date", -1), ("data_documento", -1)]).skip(skip).limit(limit)
     fatture = await cursor.to_list(limit)
     
     # Conteggio totale
