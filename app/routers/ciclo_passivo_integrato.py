@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 # ==================== COLLECTIONS ====================
-COL_FATTURE = "fatture_ricevute"
+COL_FATTURE = "invoices"  # Consolidato: usa invoices come collezione principale
 COL_FORNITORI = "fornitori"
 COL_RIGHE = "dettaglio_righe_fatture"
 COL_MAGAZZINO = "warehouse_stocks"
