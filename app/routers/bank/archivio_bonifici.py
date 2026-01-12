@@ -1705,7 +1705,7 @@ async def get_fatture_compatibili(bonifico_id: str):
     causale = (bonifico.get("causale") or "").lower()
     beneficiario = ((bonifico.get("beneficiario") or {}).get("nome") or "").lower()
     
-    # Cerca in fatture_ricevute
+    # Cerca in invoices (collezione principale consolidata)
     query = {
         "fattura_associata": {"$ne": True}
     }
@@ -1718,7 +1718,7 @@ async def get_fatture_compatibili(bonifico_id: str):
             {"total_amount": {"$gte": importo * 0.85, "$lte": importo * 1.15}}
         ]
     
-    fatture = await db.fatture_ricevute.find(query, {"_id": 0}).to_list(100)
+    fatture = await db.invoices.find(query, {"_id": 0}).to_list(100)
     
     # Cerca anche in invoices
     invoices = await db.invoices.find(query, {"_id": 0}).to_list(100)
