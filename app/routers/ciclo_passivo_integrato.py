@@ -539,9 +539,12 @@ async def cerca_match_bancario(db, scadenza: Dict, tolleranza_giorni: int = 3, t
     - Importo uguale (tolleranza €0.05)
     - Data entro ±3 giorni dalla scadenza
     - Movimento di tipo uscita/addebito
+    
+    Cerca prima in estratto_conto_movimenti (principale), poi in bank_transactions.
     """
     importo = scadenza.get("importo_totale", 0)
     data_scadenza = scadenza.get("data_scadenza")
+    fornitore_nome = scadenza.get("fornitore_nome", "")
     
     if not data_scadenza or not importo:
         return None
@@ -553,20 +556,37 @@ async def cerca_match_bancario(db, scadenza: Dict, tolleranza_giorni: int = 3, t
     except (ValueError, TypeError):
         return None
     
-    # Cerca movimenti bancari compatibili
-    query = {
+    # Prima cerca in estratto_conto_movimenti (principale)
+    query_estratto = {
+        "tipo": {"$in": ["uscita", "addebito"]},
+        "importo": {"$gte": importo - tolleranza_importo, "$lte": importo + tolleranza_importo},
+        "data": {"$gte": data_min, "$lte": data_max},
+        "fattura_id": {"$exists": False}  # Non già riconciliato
+    }
+    
+    movimento = await db["estratto_conto_movimenti"].find_one(query_estratto, {"_id": 0})
+    
+    if movimento:
+        movimento["source_collection"] = "estratto_conto_movimenti"
+        return movimento
+    
+    # Fallback: cerca in bank_transactions
+    query_bank = {
         "tipo": {"$in": ["uscita", "addebito", "bonifico_uscita"]},
         "importo": {"$gte": importo - tolleranza_importo, "$lte": importo + tolleranza_importo},
         "data": {"$gte": data_min, "$lte": data_max},
         "riconciliato": {"$ne": True}
     }
     
-    movimento = await db[COL_BANK_TRANSACTIONS].find_one(query, {"_id": 0})
+    movimento = await db[COL_BANK_TRANSACTIONS].find_one(query_bank, {"_id": 0})
+    
+    if movimento:
+        movimento["source_collection"] = "bank_transactions"
     
     return movimento
 
 
-async def esegui_riconciliazione(db, scadenza_id: str, transazione_id: str) -> Dict:
+async def esegui_riconciliazione(db, scadenza_id: str, transazione_id: str, source_collection: str = "estratto_conto_movimenti") -> Dict:
     """
     Esegue la riconciliazione tra scadenza e movimento bancario.
     """
