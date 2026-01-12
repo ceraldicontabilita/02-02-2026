@@ -1517,7 +1517,8 @@ async def get_operazioni_salari_compatibili(bonifico_id: str):
     Cerca operazioni in Prima Nota Salari compatibili con il bonifico.
     Filtra per:
     - Importo simile (±10%)
-    - Non già associate
+    - Non già associate (salario_associato != True)
+    - Non già collegate ad altri bonifici (bonifico_id non esiste o è vuoto)
     - DEDUPLICA per dipendente+importo+anno+mese
     """
     db = Database.get_db()
@@ -1527,21 +1528,40 @@ async def get_operazioni_salari_compatibili(bonifico_id: str):
     if not bonifico:
         raise HTTPException(status_code=404, detail="Bonifico non trovato")
     
-    importo = abs(bonifico.get("importo", 0))
+    # Fix: gestisce None esplicito
+    raw_importo = bonifico.get("importo")
+    importo = abs(float(raw_importo)) if raw_importo is not None else 0
     data_bonifico = bonifico.get("data", "")
     causale = (bonifico.get("causale") or "").lower()
     beneficiario = ((bonifico.get("beneficiario") or {}).get("nome") or "").lower()
     
     # Pipeline di aggregazione con deduplicazione
-    match_stage = {"salario_associato": {"$ne": True}}
+    # IMPORTANTE: Escludi operazioni già associate a QUALSIASI bonifico
+    match_stage = {
+        "salario_associato": {"$ne": True},
+        "$or": [
+            {"bonifico_id": {"$exists": False}},
+            {"bonifico_id": None},
+            {"bonifico_id": ""}
+        ]
+    }
     
     if importo > 0:
-        match_stage["$or"] = [
-            {"importo_busta": {"$gte": importo * 0.9, "$lte": importo * 1.1}},
-            {"importo_bonifico": {"$gte": importo * 0.9, "$lte": importo * 1.1}},
-            {"importo": {"$gte": importo * 0.9, "$lte": importo * 1.1}},
-            {"netto": {"$gte": importo * 0.9, "$lte": importo * 1.1}}
+        match_stage["$and"] = [
+            {"$or": [
+                {"bonifico_id": {"$exists": False}},
+                {"bonifico_id": None},
+                {"bonifico_id": ""}
+            ]},
+            {"$or": [
+                {"importo_busta": {"$gte": importo * 0.9, "$lte": importo * 1.1}},
+                {"importo_bonifico": {"$gte": importo * 0.9, "$lte": importo * 1.1}},
+                {"importo": {"$gte": importo * 0.9, "$lte": importo * 1.1}},
+                {"netto": {"$gte": importo * 0.9, "$lte": importo * 1.1}}
+            ]}
         ]
+        # Rimuovi il $or originale perché ora è in $and
+        del match_stage["$or"]
     
     pipeline = [
         {"$match": match_stage},
