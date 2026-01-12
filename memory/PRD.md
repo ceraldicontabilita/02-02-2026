@@ -322,6 +322,12 @@ Tutte le pagine principali supportano layout mobile:
   - Messaggio dettagliato con riepilogo entità correlate
   - Doppia conferma per operazioni critiche
   - Notifica successo con conteggio record eliminati
+- ✅ **Bonifici in pagina Dipendenti** (COMPLETATO):
+  - Tab "🏦 Bonifici" nel dettaglio dipendente mostra tutti i bonifici associati
+  - Colonne: Data, Importo, Causale, Stato (Riconciliato/In attesa), **PDF**
+  - **Bottone "📄 PDF"** per visualizzare il PDF del bonifico
+  - Associazione automatica dipendente_id quando si associa bonifico↔salario in Archivio Bonifici
+  - Migrazione dati: 105 bonifici aggiornati con dipendente_id
 
 ### 2026-01-11
 - ✅ Integrazione ciclo passivo (Import → Prima Nota → Scadenze)
