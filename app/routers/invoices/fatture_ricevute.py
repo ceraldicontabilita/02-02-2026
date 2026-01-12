@@ -34,9 +34,9 @@ from app.routers.ciclo_passivo_integrato import (
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-# Collection names
-COL_FORNITORI = "fornitori"
-COL_FATTURE_RICEVUTE = "fatture_ricevute"
+# Collection names - STANDARDIZZATE (usa invoices e suppliers come principale)
+COL_FORNITORI = "suppliers"  # Cambiato da "fornitori" a "suppliers"
+COL_FATTURE_RICEVUTE = "invoices"  # Cambiato da "fatture_ricevute" a "invoices"
 COL_DETTAGLIO_RIGHE = "dettaglio_righe_fatture"
 COL_ALLEGATI = "allegati_fatture"
 
