@@ -248,6 +248,7 @@ export default function ArchivioBonifici() {
     if (associaDropdown === bonifico_id) {
       setAssociaDropdown(null);
       setOperazioniCompatibili([]);
+      setDipendenteIbanMatch(null);
     } else {
       setAssociaDropdown(bonifico_id);
       loadOperazioniCompatibili(bonifico_id);
