@@ -761,7 +761,11 @@ async def _execute_riconciliazione_batch(task_id: str):
         for bonifico in bonifici:
             processed += 1
             
-            bonifico_importo = abs(bonifico.get("importo", 0))
+            # Fix: gestisce None esplicito per importo
+            raw_importo = bonifico.get("importo")
+            if raw_importo is None:
+                continue
+            bonifico_importo = abs(float(raw_importo))
             bonifico_data_str = bonifico.get("data", "")
             
             try:
@@ -888,7 +892,11 @@ async def riconcilia_bonifici_con_estratto(
     movimenti_usati = set()
     
     for bonifico in bonifici:
-        bonifico_importo = abs(bonifico.get("importo", 0))
+        # Fix: gestisce None esplicito per importo
+        raw_importo = bonifico.get("importo")
+        if raw_importo is None:
+            continue
+        bonifico_importo = abs(float(raw_importo))
         bonifico_data_str = bonifico.get("data", "")
         
         try:
@@ -905,7 +913,11 @@ async def riconcilia_bonifici_con_estratto(
             if idx in movimenti_usati:
                 continue
             
-            mov_importo = abs(mov.get("importo", 0))
+            # Fix: gestisce None esplicito per importo movimento
+            raw_mov_importo = mov.get("importo")
+            if raw_mov_importo is None:
+                continue
+            mov_importo = abs(float(raw_mov_importo))
             mov_data_str = mov.get("data", "")
             
             try:
