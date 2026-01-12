@@ -1885,7 +1885,7 @@ async def disassocia_bonifico_fattura(bonifico_id: str):
     
     # Rimuovi riferimento dalla fattura
     if fattura_id:
-        for coll_name in ["fatture_ricevute", "invoices"]:
+        for coll_name in ["invoices"]:  # Consolidato: solo invoices
             await db[coll_name].update_one(
                 {"id": fattura_id},
                 {"$unset": {"bonifico_associato": "", "bonifico_id": ""}}
