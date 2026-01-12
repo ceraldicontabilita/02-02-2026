@@ -1784,7 +1784,7 @@ async def get_fatture_compatibili(bonifico_id: str):
                 "fornitore": f_fornitore.title() if f_fornitore else "N/A",
                 "importo": f_importo,
                 "compatibilita_score": score,
-                "collection": "fatture_ricevute" if f in fatture else "invoices"
+                "collection": "invoices"  # Collezione consolidata
             })
     
     # Ordina per score
