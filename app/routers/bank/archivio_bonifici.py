@@ -1516,11 +1516,12 @@ async def disassocia_bonifico(bonifico_id: str):
 async def get_operazioni_salari_compatibili(bonifico_id: str):
     """
     Cerca operazioni in Prima Nota Salari compatibili con il bonifico.
-    Filtra per:
-    - Importo simile (±10%)
-    - Non già associate (salario_associato != True)
-    - Non già collegate ad altri bonifici (bonifico_id non esiste o è vuoto)
-    - DEDUPLICA per dipendente+importo+anno+mese
+    Priorità di matching:
+    1. IBAN del beneficiario = IBAN del dipendente (score +100)
+    2. Importo simile (±10%)
+    3. Nome dipendente in causale/beneficiario
+    
+    Esclude operazioni già associate ad altri bonifici.
     """
     db = Database.get_db()
     
@@ -1534,10 +1535,24 @@ async def get_operazioni_salari_compatibili(bonifico_id: str):
     importo = abs(float(raw_importo)) if raw_importo is not None else 0
     data_bonifico = bonifico.get("data", "")
     causale = (bonifico.get("causale") or "").lower()
-    beneficiario = ((bonifico.get("beneficiario") or {}).get("nome") or "").lower()
+    beneficiario_nome = ((bonifico.get("beneficiario") or {}).get("nome") or "").lower()
+    beneficiario_iban = ((bonifico.get("beneficiario") or {}).get("iban") or "").upper().replace(" ", "")
     
-    # Pipeline di aggregazione con deduplicazione
-    # IMPORTANTE: Escludi operazioni già associate a QUALSIASI bonifico
+    # === STEP 1: Cerca dipendente per IBAN ===
+    dipendente_iban_match = None
+    if beneficiario_iban and len(beneficiario_iban) > 10:
+        # Cerca dipendente con IBAN corrispondente (case-insensitive)
+        dipendente_iban_match = await db.employees.find_one(
+            {"iban": {"$regex": f"^{beneficiario_iban}$", "$options": "i"}},
+            {"_id": 0, "id": 1, "nome_completo": 1, "nome": 1, "cognome": 1, "iban": 1}
+        )
+        if dipendente_iban_match:
+            dipendente_iban_match["nome_display"] = (
+                dipendente_iban_match.get("nome_completo") or 
+                f"{dipendente_iban_match.get('nome', '')} {dipendente_iban_match.get('cognome', '')}".strip()
+            )
+    
+    # === STEP 2: Pipeline per operazioni compatibili ===
     match_stage = {
         "salario_associato": {"$ne": True},
         "$or": [
@@ -1561,12 +1576,10 @@ async def get_operazioni_salari_compatibili(bonifico_id: str):
                 {"netto": {"$gte": importo * 0.9, "$lte": importo * 1.1}}
             ]}
         ]
-        # Rimuovi il $or originale perché ora è in $and
         del match_stage["$or"]
     
     pipeline = [
         {"$match": match_stage},
-        # Deduplica per dipendente + importo + anno + mese
         {"$group": {
             "_id": {
                 "dipendente": "$dipendente",
@@ -1577,7 +1590,7 @@ async def get_operazioni_salari_compatibili(bonifico_id: str):
             "doc": {"$first": "$$ROOT"}
         }},
         {"$replaceRoot": {"newRoot": "$doc"}},
-        {"$project": {"_id": 0}},  # Esclude _id DOPO replaceRoot
+        {"$project": {"_id": 0}},
         {"$sort": {"anno": -1, "mese": -1}},
         {"$limit": 50}
     ]
