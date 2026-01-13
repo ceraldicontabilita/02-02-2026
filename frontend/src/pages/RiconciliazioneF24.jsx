@@ -175,6 +175,8 @@ export default function RiconciliazioneF24() {
   const SummaryCard = ({ title, value, subtitle, color, icon, highlight, onClick }) => (
     <div 
       onClick={onClick}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
       style={{
         background: highlight ? `linear-gradient(135deg, ${color} 0%, ${color}dd 100%)` : 'white',
         borderRadius: 12,
@@ -184,20 +186,31 @@ export default function RiconciliazioneF24() {
         color: highlight ? 'white' : 'inherit',
         cursor: onClick ? 'pointer' : 'default',
         transition: 'transform 0.15s, box-shadow 0.15s',
+        userSelect: 'none',
       }}
-      onMouseEnter={(e) => onClick && (e.currentTarget.style.transform = 'translateY(-2px)', e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)')}
-      onMouseLeave={(e) => onClick && (e.currentTarget.style.transform = 'translateY(0)', e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)')}
+      onMouseEnter={(e) => {
+        if (onClick) {
+          e.currentTarget.style.transform = 'translateY(-2px)';
+          e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (onClick) {
+          e.currentTarget.style.transform = 'translateY(0)';
+          e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)';
+        }
+      }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, pointerEvents: 'none' }}>
         <span style={{ fontSize: 20 }}>{icon}</span>
         <span style={{ fontSize: 12, color: highlight ? 'rgba(255,255,255,0.8)' : '#6b7280', textTransform: 'uppercase', fontWeight: 500 }}>
           {title}
         </span>
       </div>
-      <div style={{ fontSize: 24, fontWeight: 700, color: highlight ? 'white' : color }}>
+      <div style={{ fontSize: 24, fontWeight: 700, color: highlight ? 'white' : color, pointerEvents: 'none' }}>
         {value}
       </div>
-      <div style={{ fontSize: 11, color: highlight ? 'rgba(255,255,255,0.7)' : '#9ca3af', marginTop: 2 }}>
+      <div style={{ fontSize: 11, color: highlight ? 'rgba(255,255,255,0.7)' : '#9ca3af', marginTop: 2, pointerEvents: 'none' }}>
         {subtitle}
       </div>
     </div>
