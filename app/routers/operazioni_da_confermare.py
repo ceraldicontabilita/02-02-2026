@@ -502,3 +502,382 @@ async def riconciliazione_batch(
     ) if risultati["totale_fatture"] > 0 else 0
     
     return risultati
+
+
+
+# ============================================================================
+#                     RICONCILIAZIONE SMART
+# ============================================================================
+
+@router.get("/smart/analizza")
+async def analizza_movimenti_smart(
+    limit: int = Query(100, description="Numero massimo di movimenti da analizzare"),
+    solo_non_riconciliati: bool = Query(True, description="Solo movimenti non riconciliati")
+) -> Dict[str, Any]:
+    """
+    Analizza i movimenti dell'estratto conto e restituisce suggerimenti di riconciliazione.
+    
+    Tipi riconosciuti:
+    - commissione_pos: American Express e simili
+    - commissione_bancaria: INT. E COMP., COMM.SU BONIFICI
+    - stipendio: VOSTRA DISPOSIZIONE + nome dipendente
+    - f24: I24 AGENZIA ENTRATE
+    - fattura_sdd: Addebiti diretti SDD con fornitori (Leasys, ARVAL, etc.)
+    - fattura_bonifico: Bonifici con numeri fattura nella causale
+    """
+    from app.services.riconciliazione_smart import analizza_estratto_conto_batch
+    
+    try:
+        risultati = await analizza_estratto_conto_batch(limit, solo_non_riconciliati)
+        return risultati
+    except Exception as e:
+        logger.exception(f"Errore analisi smart: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/smart/movimento/{movimento_id}")
+async def analizza_singolo_movimento(movimento_id: str) -> Dict[str, Any]:
+    """
+    Analizza un singolo movimento e restituisce suggerimenti dettagliati.
+    """
+    from app.services.riconciliazione_smart import analizza_movimento
+    
+    db = Database.get_db()
+    movimento = await db.estratto_conto_movimenti.find_one(
+        {"id": movimento_id},
+        {"_id": 0}
+    )
+    
+    if not movimento:
+        raise HTTPException(status_code=404, detail="Movimento non trovato")
+    
+    analisi = await analizza_movimento(movimento)
+    return analisi
+
+
+@router.post("/smart/riconcilia-auto")
+async def riconcilia_automatico(
+    movimento_ids: List[str] = Body(..., description="Lista di ID movimenti da riconciliare")
+) -> Dict[str, Any]:
+    """
+    Riconcilia automaticamente i movimenti che hanno match esatto.
+    Solo per movimenti con associazione_automatica=True.
+    """
+    from app.services.riconciliazione_smart import analizza_movimento
+    
+    db = Database.get_db()
+    
+    risultati = {
+        "elaborati": 0,
+        "riconciliati": 0,
+        "errori": [],
+        "dettagli": []
+    }
+    
+    for mov_id in movimento_ids:
+        movimento = await db.estratto_conto_movimenti.find_one(
+            {"id": mov_id},
+            {"_id": 0}
+        )
+        
+        if not movimento:
+            risultati["errori"].append(f"Movimento {mov_id} non trovato")
+            continue
+        
+        risultati["elaborati"] += 1
+        
+        analisi = await analizza_movimento(movimento)
+        
+        if not analisi.get("associazione_automatica"):
+            risultati["errori"].append(f"Movimento {mov_id}: non riconciliabile automaticamente")
+            continue
+        
+        # Aggiorna il movimento come riconciliato
+        update_data = {
+            "riconciliato": True,
+            "riconciliato_auto": True,
+            "tipo_riconciliazione": analisi["tipo"],
+            "categoria": analisi.get("categoria_suggerita"),
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+        # Se è una commissione, salva direttamente
+        if analisi["tipo"] in ["commissione_pos", "commissione_bancaria"]:
+            await db.estratto_conto_movimenti.update_one(
+                {"id": mov_id},
+                {"$set": update_data}
+            )
+            risultati["riconciliati"] += 1
+            risultati["dettagli"].append({
+                "movimento_id": mov_id,
+                "tipo": analisi["tipo"],
+                "categoria": analisi.get("categoria_suggerita")
+            })
+        
+        # Per altri tipi, associa se c'è match
+        elif analisi.get("suggerimenti"):
+            sugg = analisi["suggerimenti"][0]
+            update_data["associato_a"] = {
+                "tipo": sugg.get("tipo"),
+                "id": sugg.get("id")
+            }
+            
+            await db.estratto_conto_movimenti.update_one(
+                {"id": mov_id},
+                {"$set": update_data}
+            )
+            
+            # Marca come pagato l'elemento associato
+            if sugg.get("tipo") == "f24":
+                await db.f24.update_one(
+                    {"id": sugg.get("id")},
+                    {"$set": {"pagato": True, "data_pagamento": movimento.get("data")}}
+                )
+            elif sugg.get("tipo") == "fattura":
+                await db.invoices.update_one(
+                    {"id": sugg.get("id")},
+                    {"$set": {"pagato": True, "data_pagamento": movimento.get("data")}}
+                )
+            elif sugg.get("tipo") == "stipendio":
+                await db.cedolini.update_one(
+                    {"id": sugg.get("id")},
+                    {"$set": {"pagato": True, "data_pagamento": movimento.get("data")}}
+                )
+            
+            risultati["riconciliati"] += 1
+            risultati["dettagli"].append({
+                "movimento_id": mov_id,
+                "tipo": analisi["tipo"],
+                "associato_a": sugg
+            })
+    
+    return risultati
+
+
+@router.post("/smart/riconcilia-manuale")
+async def riconcilia_manuale(
+    data: Dict[str, Any] = Body(...)
+) -> Dict[str, Any]:
+    """
+    Riconcilia manualmente un movimento con elementi selezionati dall'utente.
+    
+    Body:
+    {
+        "movimento_id": str,
+        "tipo": "fattura" | "stipendio" | "f24" | "categoria",
+        "associazioni": [{"id": str, ...}],  # Per fatture/stipendi multipli
+        "categoria": str  # Per categorizzazione semplice
+    }
+    """
+    db = Database.get_db()
+    
+    movimento_id = data.get("movimento_id")
+    tipo = data.get("tipo")
+    associazioni = data.get("associazioni", [])
+    categoria = data.get("categoria")
+    
+    if not movimento_id:
+        raise HTTPException(status_code=400, detail="movimento_id richiesto")
+    
+    movimento = await db.estratto_conto_movimenti.find_one(
+        {"id": movimento_id},
+        {"_id": 0}
+    )
+    
+    if not movimento:
+        raise HTTPException(status_code=404, detail="Movimento non trovato")
+    
+    update_data = {
+        "riconciliato": True,
+        "riconciliato_auto": False,
+        "tipo_riconciliazione": tipo,
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    if categoria:
+        update_data["categoria"] = categoria
+    
+    if associazioni:
+        update_data["associazioni"] = associazioni
+        
+        # Marca come pagati gli elementi associati
+        for assoc in associazioni:
+            assoc_id = assoc.get("id")
+            if not assoc_id:
+                continue
+            
+            if tipo == "fattura":
+                await db.invoices.update_one(
+                    {"id": assoc_id},
+                    {"$set": {
+                        "pagato": True, 
+                        "data_pagamento": movimento.get("data"),
+                        "movimento_bancario_id": movimento_id
+                    }}
+                )
+            elif tipo == "stipendio":
+                await db.cedolini.update_one(
+                    {"id": assoc_id},
+                    {"$set": {
+                        "pagato": True, 
+                        "data_pagamento": movimento.get("data"),
+                        "movimento_bancario_id": movimento_id
+                    }}
+                )
+            elif tipo == "f24":
+                await db.f24.update_one(
+                    {"id": assoc_id},
+                    {"$set": {
+                        "pagato": True, 
+                        "data_pagamento": movimento.get("data"),
+                        "movimento_bancario_id": movimento_id
+                    }}
+                )
+    
+    await db.estratto_conto_movimenti.update_one(
+        {"id": movimento_id},
+        {"$set": update_data}
+    )
+    
+    # Se è stipendio e c'è dipendente, salva anche in archivio bonifici
+    if tipo == "stipendio" and associazioni:
+        for assoc in associazioni:
+            dipendente_id = assoc.get("dipendente_id")
+            if dipendente_id:
+                bonifico_data = {
+                    "id": str(uuid.uuid4()),
+                    "data": movimento.get("data"),
+                    "importo": movimento.get("importo"),
+                    "causale": movimento.get("descrizione_originale"),
+                    "beneficiario_nome": assoc.get("dipendente_nome"),
+                    "tipo": "stipendio",
+                    "dipendente_id": dipendente_id,
+                    "cedolino_id": assoc.get("id"),
+                    "movimento_bancario_id": movimento_id,
+                    "created_at": datetime.now(timezone.utc).isoformat()
+                }
+                await db.bonifici.insert_one(bonifico_data)
+    
+    return {
+        "success": True,
+        "movimento_id": movimento_id,
+        "tipo": tipo,
+        "associazioni": len(associazioni) if associazioni else 0
+    }
+
+
+@router.get("/smart/cerca-fatture")
+async def cerca_fatture_per_associazione(
+    fornitore: Optional[str] = Query(None, description="Nome fornitore"),
+    importo: Optional[float] = Query(None, description="Importo da matchare"),
+    data_max: Optional[str] = Query(None, description="Data massima fattura (YYYY-MM-DD)")
+) -> Dict[str, Any]:
+    """
+    Cerca fatture per associazione manuale.
+    Se importo specificato, cerca anche combinazioni che sommano all'importo.
+    """
+    from app.services.riconciliazione_smart import cerca_fatture_fornitore, trova_combinazioni_somma
+    
+    db = Database.get_db()
+    
+    fatture = await cerca_fatture_fornitore(db, fornitore, data_max=data_max)
+    
+    result = {
+        "fatture": [{
+            "id": f.get("id"),
+            "numero": f.get("invoice_number") or f.get("numero_fattura"),
+            "data": f.get("invoice_date") or f.get("data_fattura"),
+            "importo": f.get("total_amount") or f.get("importo_totale"),
+            "fornitore": f.get("supplier_name") or f.get("fornitore"),
+            "pagato": f.get("pagato", False)
+        } for f in fatture],
+        "totale": len(fatture)
+    }
+    
+    # Cerca combinazioni se importo specificato
+    if importo:
+        combos = trova_combinazioni_somma(fatture, abs(importo))
+        result["combinazioni_suggerite"] = [[{
+            "id": f.get("id"),
+            "numero": f.get("invoice_number") or f.get("numero_fattura"),
+            "importo": f.get("total_amount") or f.get("importo_totale")
+        } for f in combo] for combo in combos]
+    
+    return result
+
+
+@router.get("/smart/cerca-stipendi")
+async def cerca_stipendi_per_associazione(
+    dipendente: Optional[str] = Query(None, description="Nome dipendente"),
+    importo: Optional[float] = Query(None, description="Importo da matchare")
+) -> Dict[str, Any]:
+    """
+    Cerca stipendi per associazione manuale.
+    """
+    from app.services.riconciliazione_smart import cerca_dipendente_per_nome, cerca_stipendi_non_pagati, trova_combinazioni_somma
+    
+    db = Database.get_db()
+    
+    dipendente_found = None
+    if dipendente:
+        dipendente_found = await cerca_dipendente_per_nome(db, dipendente)
+    
+    dipendente_id = dipendente_found.get("id") if dipendente_found else None
+    stipendi = await cerca_stipendi_non_pagati(db, dipendente_id, abs(importo) if importo else None)
+    
+    result = {
+        "dipendente": {
+            "id": dipendente_found.get("id"),
+            "nome": dipendente_found.get("nome_completo") or dipendente_found.get("full_name")
+        } if dipendente_found else None,
+        "stipendi": [{
+            "id": s.get("id"),
+            "dipendente_id": s.get("dipendente_id"),
+            "periodo": s.get("periodo"),
+            "netto": s.get("netto"),
+            "lordo": s.get("lordo"),
+            "pagato": s.get("pagato", False)
+        } for s in stipendi],
+        "totale": len(stipendi)
+    }
+    
+    # Cerca combinazioni se importo specificato
+    if importo and stipendi:
+        combos = trova_combinazioni_somma(
+            [{"total_amount": s.get("netto"), **s} for s in stipendi],
+            abs(importo)
+        )
+        result["combinazioni_suggerite"] = [[{
+            "id": s.get("id"),
+            "periodo": s.get("periodo"),
+            "netto": s.get("netto")
+        } for s in combo] for combo in combos]
+    
+    return result
+
+
+@router.get("/smart/cerca-f24")
+async def cerca_f24_per_associazione(
+    importo: Optional[float] = Query(None, description="Importo da matchare"),
+    data_scadenza: Optional[str] = Query(None, description="Data scadenza massima (YYYY-MM-DD)")
+) -> Dict[str, Any]:
+    """
+    Cerca F24 non pagati per associazione.
+    """
+    from app.services.riconciliazione_smart import cerca_f24_non_pagati
+    
+    db = Database.get_db()
+    
+    f24_list = await cerca_f24_non_pagati(db, abs(importo) if importo else None, data_scadenza)
+    
+    return {
+        "f24": [{
+            "id": f.get("id"),
+            "periodo": f.get("periodo"),
+            "descrizione": f.get("descrizione"),
+            "importo_totale": f.get("importo_totale"),
+            "data_scadenza": f.get("data_scadenza"),
+            "pagato": f.get("pagato", False)
+        } for f in f24_list],
+        "totale": len(f24_list)
+    }
