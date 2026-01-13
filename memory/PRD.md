@@ -428,12 +428,22 @@ Tutte le pagine principali supportano layout mobile:
     - **IMU/Tributi Locali** (50+ codici): 3912-3966, 3901-3907, 3944-3957, 3850-3852...
   - File aggiornato: `/app/app/services/parser_f24.py`
 
-- ✅ **TEST VALIDAZIONE**: Parser testato con successo su 5 PDF F24 reali:
-  - F24 ravvedimento IRES/IRAP → Nessuna duplicazione
-  - F24 ravvedimento saldo IRES 2022 → IRES correttamente in ERARIO
-  - F24 IVA acconto → IVA correttamente in ERARIO
-  - F24 IMU → IMU correttamente in TRIBUTI LOCALI
-  - F24 contributi → INPS, ERARIO e REGIONI separati correttamente
+- ✅ **SUPPORTO CAMERA DI COMMERCIO (3850/3851/3852)**:
+  - Aggiunto pattern per codice ente "N A" (due lettere separate)
+  - Aggiunto pattern per codice ente "NA" (due lettere insieme)
+  - Codici 3850 (diritto camerale), 3851 (interessi), 3852 (sanzioni) ora estratti correttamente
+
+- ✅ **CASCADE DELETE F24**: Implementato delete con pulizia relazioni
+  - Elimina movimenti collegati in `prima_nota_banca`
+  - Sgancia quietanze associate
+  - Elimina alert correlati
+  - Rimuove file PDF fisico (su delete definitivo)
+
+- ✅ **PREPARAZIONE PARSER AI (Gemini)**: File creato ma non attivo
+  - File: `/app/app/services/parser_f24_gemini.py`
+  - La chiave Emergent attuale non supporta Gemini (solo Claude)
+  - Claude non supporta `FileContentWithMimeType` per PDF
+  - **Soluzione futura**: Convertire PDF in immagini + Claude, oppure usare Google Document AI
 
 ---
 
