@@ -73,8 +73,20 @@ export default function RiconciliazioneSmart() {
     setProcessing('auto');
     try {
       const res = await api.post('/api/operazioni-da-confermare/smart/riconcilia-auto', autoIds);
+      
+      // Rimuovi i movimenti riconciliati dalla lista senza ricaricare
+      const riconciliatiIds = res.data.dettagli?.map(d => d.movimento_id) || autoIds;
+      setAnalisi(prev => ({
+        ...prev,
+        movimenti: prev.movimenti.filter(m => !riconciliatiIds.includes(m.movimento_id)),
+        stats: {
+          ...prev.stats,
+          totale: prev.stats.totale - res.data.riconciliati,
+          auto_riconciliabili: prev.stats.auto_riconciliabili - res.data.riconciliati
+        }
+      }));
+      
       alert(`✅ Riconciliati: ${res.data.riconciliati}/${res.data.elaborati}`);
-      loadAnalisi();
     } catch (e) {
       alert(`Errore: ${e.response?.data?.detail || e.message}`);
     } finally {
@@ -91,7 +103,22 @@ export default function RiconciliazioneSmart() {
         associazioni,
         categoria
       });
-      loadAnalisi();
+      
+      // Rimuovi il movimento dalla lista senza ricaricare
+      setAnalisi(prev => ({
+        ...prev,
+        movimenti: prev.movimenti.filter(m => m.movimento_id !== movimento.movimento_id),
+        stats: {
+          ...prev.stats,
+          totale: prev.stats.totale - 1,
+          [movimento.tipo]: Math.max(0, (prev.stats[movimento.tipo] || 0) - 1),
+          auto_riconciliabili: movimento.associazione_automatica 
+            ? prev.stats.auto_riconciliabili - 1 
+            : prev.stats.auto_riconciliabili
+        }
+      }));
+      
+      setExpandedMov(null);
     } catch (e) {
       alert(`Errore: ${e.response?.data?.detail || e.message}`);
     } finally {
