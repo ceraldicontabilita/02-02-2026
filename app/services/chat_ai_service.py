@@ -161,30 +161,13 @@ Usa il grassetto (**testo**) per evidenziare informazioni importanti."""
         
         # Cerca fatture
         if any(kw in query_lower for kw in ["fattura", "fatture", "fornitore", "fornitori", "pagato", "pagamento", "fatturato", "acquisti", "speso"]):
-            # Query base - NON filtra per pagato, mostra tutto
-            fatture_query = {}
+            # Trova il fornitore dalla query
+            fornitore_found = trova_fornitore(query)
             
-            # Estrai possibile nome fornitore dalla query
-            # Pattern comuni: "fattura di X", "fatturato di X", "quanto ho speso con X"
-            # Pulisci la query da punteggiatura
-            import re
-            clean_query = re.sub(r'[?!.,;:]', '', query)
-            words = clean_query.split()
-            fornitore_found = None
-            for i, word in enumerate(words):
-                if word.lower() in ["di", "da", "a", "per", "con"] and i + 1 < len(words):
-                    # Prendi tutte le parole dopo fino a fine frase o parola chiave
-                    remaining = words[i+1:]
-                    fornitore_name = []
-                    for w in remaining:
-                        if w.lower() in ["nel", "del", "anno", "mese", "quanto", "quante", "totale"]:
-                            break
-                        fornitore_name.append(w)
-                    if fornitore_name:
-                        fornitore_found = " ".join(fornitore_name[:3])  # Max 3 parole
-                        break
+            # Query con filtro anno
+            fatture_query = filtro_anno("invoice_date")
             
-            if fornitore_found and len(fornitore_found) > 2:
+            if fornitore_found and len(fornitore_found) > 1:
                 fatture_query["$or"] = [
                     {"supplier_name": {"$regex": fornitore_found, "$options": "i"}},
                     {"fornitore_ragione_sociale": {"$regex": fornitore_found, "$options": "i"}},
@@ -195,7 +178,7 @@ Usa il grassetto (**testo**) per evidenziare informazioni importanti."""
                 fatture_query,
                 {"_id": 0, "id": 1, "invoice_number": 1, "invoice_date": 1, 
                  "supplier_name": 1, "cedente_denominazione": 1, "total_amount": 1, "pagato": 1}
-            ).sort("invoice_date", -1).limit(50).to_list(50)
+            ).sort("invoice_date", -1).limit(100).to_list(100)
             
             results["fatture"] = fatture
             
@@ -204,9 +187,18 @@ Usa il grassetto (**testo**) per evidenziare informazioni importanti."""
                 totale_fatturato = sum(f.get("total_amount", 0) or 0 for f in fatture)
                 totale_pagate = sum(f.get("total_amount", 0) or 0 for f in fatture if f.get("pagato"))
                 totale_da_pagare = sum(f.get("total_amount", 0) or 0 for f in fatture if not f.get("pagato"))
+                num_pagate = len([f for f in fatture if f.get("pagato")])
+                num_da_pagare = len([f for f in fatture if not f.get("pagato")])
+                
+                # Nome fornitore dal primo risultato
+                nome_fornitore = fatture[0].get("supplier_name") or fatture[0].get("cedente_denominazione") or fornitore_found
+                
                 results["statistiche_fornitore"] = {
-                    "fornitore": fornitore_found,
+                    "fornitore": nome_fornitore,
+                    "anno": anno,
                     "num_fatture": len(fatture),
+                    "num_pagate": num_pagate,
+                    "num_da_pagare": num_da_pagare,
                     "totale_fatturato": totale_fatturato,
                     "totale_pagate": totale_pagate,
                     "totale_da_pagare": totale_da_pagare
