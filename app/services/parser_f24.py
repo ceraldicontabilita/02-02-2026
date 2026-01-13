@@ -1092,18 +1092,96 @@ def get_descrizione_tributo_regioni(codice: str) -> str:
 
 
 def get_descrizione_tributo_locale(codice: str) -> str:
-    """Descrizione codici tributo locali."""
+    """
+    Descrizione codici tributo locali (sezione IMU/LOCALI F24).
+    Include IMU, TASI, TARI, addizionali comunali, ecc.
+    Fonte: https://www1.agenziaentrate.gov.it/servizi/codici/ricerca/
+    """
     descrizioni = {
-        "3797": "Addizionale comunale IRPEF - acconto",
-        "3844": "Addizionale comunale IRPEF - saldo",
-        "3847": "Addizionale comunale IRPEF trattenuta dal sostituto - acconto",
-        "3848": "Addizionale comunale IRPEF trattenuta dal sostituto - saldo",
+        # ============================================
+        # Addizionale comunale IRPEF
+        # ============================================
         "1671": "Addizionale comunale IRPEF - sostituto d'imposta",
-        "3914": "IMU - terreni",
-        "3916": "IMU - aree fabbricabili",
-        "3917": "IMU - quota Stato",
-        "3918": "IMU - altri fabbricati",
-        "3919": "IMU - interessi",
+        "3797": "Addizionale comunale IRPEF - acconto autotassazione",
+        "3843": "Addizionale comunale IRPEF - acconto autotassazione",
+        "3844": "Addizionale comunale IRPEF - saldo autotassazione",
+        "3847": "Addizionale comunale IRPEF trattenuta sostituto - acconto",
+        "3848": "Addizionale comunale IRPEF trattenuta sostituto - saldo",
+        
+        # ============================================
+        # IMU - Imposta Municipale Unica
+        # ============================================
+        "3912": "IMU abitazione principale e pertinenze",
+        "3913": "IMU fabbricati rurali strumentali - comune",
+        "3914": "IMU terreni - comune",
+        "3915": "IMU terreni - Stato",
+        "3916": "IMU aree fabbricabili - comune",
+        "3917": "IMU aree fabbricabili - Stato",
+        "3918": "IMU altri fabbricati - comune",
+        "3919": "IMU interessi accertamento - comune",
+        "3920": "IMU sanzioni accertamento - comune",
+        "3923": "IMU imposta - comune",
+        "3924": "IMU imposta - Stato",
+        "3925": "IMU fabbricati gruppo D - Stato",
+        "3926": "ISCOP imposta di scopo",
+        "3927": "ISCOP interessi",
+        "3928": "ISCOP sanzioni",
+        "3930": "IMU fabbricati gruppo D - comune (incremento)",
+        
+        # ============================================
+        # TOSAP/COSAP
+        # ============================================
+        "3931": "TOSAP/COSAP occupazione permanente",
+        "3932": "TOSAP/COSAP occupazione temporanea",
+        "3933": "TOSAP/COSAP interessi",
+        "3934": "TOSAP/COSAP sanzioni",
+        
+        # ============================================
+        # ICI (vecchia imposta - pre IMU)
+        # ============================================
+        "3901": "ICI abitazione principale",
+        "3902": "ICI terreni agricoli",
+        "3903": "ICI aree fabbricabili",
+        "3904": "ICI altri fabbricati",
+        "3906": "ICI interessi",
+        "3907": "ICI sanzioni",
+        
+        # ============================================
+        # TARES
+        # ============================================
+        "3944": "TARES imposta",
+        "3945": "TARES interessi",
+        "3946": "TARES sanzioni",
+        "3950": "TARI tariffa rifiuti",
+        "3951": "TARI interessi",
+        "3952": "TARI sanzioni",
+        "3955": "TARES maggiorazione",
+        "3956": "TARES maggiorazione interessi",
+        "3957": "TARES maggiorazione sanzioni",
+        
+        # ============================================
+        # TASI
+        # ============================================
+        "3958": "TASI abitazione principale e pertinenze",
+        "3959": "TASI fabbricati rurali strumentali",
+        "3960": "TASI aree fabbricabili",
+        "3961": "TASI altri fabbricati",
+        "3962": "TASI interessi accertamento",
+        "3963": "TASI sanzioni accertamento",
+        
+        # ============================================
+        # ICP/CIMP (Pubblicità)
+        # ============================================
+        "3964": "ICP/CIMP imposta pubblicità",
+        "3965": "ICP/CIMP interessi",
+        "3966": "ICP/CIMP sanzioni",
+        
+        # ============================================
+        # Camera di Commercio
+        # ============================================
+        "3850": "Diritto camerale annuale",
+        "3851": "Diritto camerale interessi",
+        "3852": "Diritto camerale sanzioni",
     }
     return descrizioni.get(codice, f"Tributo locale {codice}")
 
