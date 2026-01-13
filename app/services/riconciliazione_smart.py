@@ -523,6 +523,7 @@ async def analizza_estratto_conto_batch(limit: int = 100, solo_non_riconciliati:
     risultati = []
     stats = {
         "totale": len(movimenti),
+        "incasso_pos": 0,
         "commissione_pos": 0,
         "commissione_bancaria": 0,
         "stipendio": 0,
