@@ -51,7 +51,7 @@ Formatta gli importi in euro (€) e le date in formato italiano (GG/MM/AAAA).""
             api_key=EMERGENT_KEY,
             session_id=self.session_id,
             system_message=self.system_message
-        ).with_model("openai", "gpt-5.2")
+        ).with_model("anthropic", "claude-sonnet-4-5")
     
     async def transcribe_audio(self, audio_file, language: str = "it") -> str:
         """Converte audio in testo usando Whisper."""
