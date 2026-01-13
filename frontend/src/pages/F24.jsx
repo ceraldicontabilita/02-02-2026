@@ -89,7 +89,7 @@ export default function F24() {
   async function handleMarkAsPaid(f24Id) {
     if (!window.confirm('Segnare questo F24 come pagato?')) return;
     try {
-      await api.put(`/api/f24/${f24Id}`, { status: 'paid' });
+      await api.put(`/api/f24-public/models/${f24Id}/pagato`);
       loadF24();
       loadAlerts();
       loadDashboard();
