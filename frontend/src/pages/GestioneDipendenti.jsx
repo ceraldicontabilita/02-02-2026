@@ -4,26 +4,14 @@ import {
   DipendenteTable, 
   DipendenteDetailModal, 
   DipendenteNewModal, 
-  DEFAULT_DIPENDENTE,
-  LibroUnicoTab,
-  LibrettiSanitariTab,
-  ContrattiTab,
-  AccontiTab
+  DEFAULT_DIPENDENTE
 } from '../components/dipendenti';
-import { PrimaNotaSalariTab } from '../components/prima-nota';
-import { useAnnoGlobale } from '../contexts/AnnoContext';
-import { formatEuro } from '../lib/utils';
 
 /**
- * Pagina Gestione Dipendenti - Ristrutturata con ottimizzazioni
- * Tab: Anagrafica | Prima Nota Salari | Libro Unico | Libretti Sanitari | Contratti
+ * Pagina Gestione Dipendenti - Solo Anagrafica
+ * Le altre sezioni sono ora accessibili dal menu laterale
  */
 export default function GestioneDipendenti() {
-  const { anno: selectedYear, setAnno: setSelectedYear } = useAnnoGlobale();
-  
-  // Tab state
-  const [activeTab, setActiveTab] = useState('anagrafica');
-  
   // Data state
   const [dipendenti, setDipendenti] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -38,20 +26,15 @@ export default function GestioneDipendenti() {
   const [editMode, setEditMode] = useState(false);
   const [editData, setEditData] = useState({});
   const [showForm, setShowForm] = useState(false);
-  const [newDipendente, setNewDipendente] = useState(DEFAULT_DIPENDENTE);
   const [generatingContract, setGeneratingContract] = useState(false);
-
-  // Periodo state (per Libro Unico)
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
 
   useEffect(() => {
     loadData();
     loadContractTypes();
-  }, []); // Load on mount
+  }, []);
   
   useEffect(() => {
     loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, filterMansione]);
 
   const loadData = async () => {
@@ -75,38 +58,6 @@ export default function GestioneDipendenti() {
       setContractTypes(res.data);
     } catch (error) {
       console.error('Error loading contract types:', error);
-    }
-  };
-
-  const handleCreate = async () => {
-    if (!newDipendente.nome && !newDipendente.nome_completo) {
-      alert('Nome è obbligatorio');
-      return;
-    }
-    try {
-      const data = {
-        ...newDipendente,
-        nome_completo: newDipendente.nome_completo || `${newDipendente.cognome || ''} ${newDipendente.nome || ''}`.trim()
-      };
-      await api.post('/api/dipendenti', data);
-      setShowForm(false);
-      setNewDipendente(DEFAULT_DIPENDENTE);
-      loadData();
-    } catch (error) {
-      alert('Errore: ' + (error.response?.data?.detail || error.message));
-    }
-  };
-
-  const handleUpdate = async () => {
-    if (!selectedDipendente?.id) return;
-    try {
-      await api.put(`/api/dipendenti/${selectedDipendente.id}`, editData);
-      setSelectedDipendente({ ...selectedDipendente, ...editData });
-      setEditMode(false);
-      loadData();
-      alert('Dati aggiornati con successo!');
-    } catch (error) {
-      alert('Errore: ' + (error.response?.data?.detail || error.message));
     }
   };
 
@@ -172,7 +123,6 @@ export default function GestioneDipendenti() {
   // Helpers
   const uniqueMansioni = [...new Set(dipendenti.map(d => d.mansione).filter(Boolean))];
   const completeCount = dipendenti.filter(d => d.codice_fiscale && d.email && d.telefono).length;
-  const mesiNomi = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
 
   return (
     <div style={{ padding: 'clamp(12px, 3vw, 20px)' }}>
