@@ -244,8 +244,18 @@ Usa il grassetto (**testo**) per evidenziare informazioni importanti."""
             
             if data["fatture"]:
                 context_parts.append("FATTURE TROVATE:")
-                for f in data["fatture"]:
-                    context_parts.append(f"- N.{f.get('invoice_number')} del {f.get('invoice_date')} - {f.get('supplier_name')} - €{f.get('total_amount', 0):.2f} - {'Pagata' if f.get('pagato') else 'Da pagare'}")
+                for f in data["fatture"][:20]:  # Mostra max 20
+                    fornitore = f.get('supplier_name') or f.get('cedente_denominazione') or 'N/D'
+                    context_parts.append(f"- N.{f.get('invoice_number')} del {f.get('invoice_date')} - {fornitore} - €{f.get('total_amount', 0):.2f} - {'Pagata' if f.get('pagato') else 'Da pagare'}")
+                
+                # Aggiungi statistiche se presenti
+                if data.get("statistiche_fornitore"):
+                    stats = data["statistiche_fornitore"]
+                    context_parts.append(f"\nSTATISTICHE {stats['fornitore'].upper()}:")
+                    context_parts.append(f"- Numero fatture: {stats['num_fatture']}")
+                    context_parts.append(f"- Totale fatturato: €{stats['totale_fatturato']:.2f}")
+                    context_parts.append(f"- Già pagate: €{stats['totale_pagate']:.2f}")
+                    context_parts.append(f"- Da pagare: €{stats['totale_da_pagare']:.2f}")
             
             if data["dipendenti"]:
                 context_parts.append("\nDIPENDENTI TROVATI:")
