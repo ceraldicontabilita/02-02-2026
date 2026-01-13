@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
 import { formatEuro, formatDateIT } from '../lib/utils';
-import { ChefHat, Search, Filter, TrendingUp, TrendingDown, AlertTriangle, Check, Package, Plus, Trash2, Edit2, Factory, Printer, Copy, Calendar } from 'lucide-react';
+import { ChefHat, Search, Filter, TrendingUp, TrendingDown, AlertTriangle, Check, Package, Plus, Trash2, Edit2, Factory, Printer, Copy, Calendar, Tag, Clock } from 'lucide-react';
 
 export default function Ricette() {
   const [ricette, setRicette] = useState([]);
@@ -50,6 +50,13 @@ export default function Ricette() {
   const [loadingProdotti, setLoadingProdotti] = useState(false);
   const [foodCost, setFoodCost] = useState(null);
   const [dizionarioStats, setDizionarioStats] = useState(null);
+  
+  // NUOVO: Modal lotti fornitore
+  const [showLottiModal, setShowLottiModal] = useState(false);
+  const [lottiModalIndex, setLottiModalIndex] = useState(null);
+  const [lottiList, setLottiList] = useState([]);
+  const [lottiSearch, setLottiSearch] = useState('');
+  const [loadingLotti, setLoadingLotti] = useState(false);
 
   useEffect(() => {
     loadRicette();
