@@ -1121,7 +1121,7 @@ function FattureAdminTab() {
           <div style={{ display: 'grid', gap: 12 }}>
             <div style={{ padding: 12, background: '#f8fafc', borderRadius: 8 }}>
               <p style={{ fontSize: 12, color: '#475569', marginBottom: 8 }}>
-                Imposta metodo di pagamento <strong>"Bonifico"</strong> per tutte le fatture che non hanno un metodo specificato.
+                Imposta metodo di pagamento <strong>&quot;Bonifico&quot;</strong> per tutte le fatture che non hanno un metodo specificato.
               </p>
               
               {confirmAction?.type === 'set_metodo' ? (
@@ -1150,7 +1150,7 @@ function FattureAdminTab() {
                   disabled={loading || (fattureStats?.senza_metodo === 0)}
                   style={{ width: '100%' }}
                 >
-                  🏦 Imposta "Bonifico" ({fattureStats?.senza_metodo || 0} fatture)
+                  🏦 Imposta &quot;Bonifico&quot; ({fattureStats?.senza_metodo || 0} fatture)
                 </Button>
               )}
             </div>
