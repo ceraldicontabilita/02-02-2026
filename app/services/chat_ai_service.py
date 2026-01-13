@@ -91,7 +91,10 @@ Usa il grassetto (**testo**) per evidenziare informazioni importanti."""
             
             # Estrai possibile nome fornitore dalla query
             # Pattern comuni: "fattura di X", "fatturato di X", "quanto ho speso con X"
-            words = query.split()
+            # Pulisci la query da punteggiatura
+            import re
+            clean_query = re.sub(r'[?!.,;:]', '', query)
+            words = clean_query.split()
             fornitore_found = None
             for i, word in enumerate(words):
                 if word.lower() in ["di", "da", "a", "per", "con"] and i + 1 < len(words):
@@ -99,7 +102,7 @@ Usa il grassetto (**testo**) per evidenziare informazioni importanti."""
                     remaining = words[i+1:]
                     fornitore_name = []
                     for w in remaining:
-                        if w.lower() in ["nel", "del", "anno", "mese", "?", "quanto", "quante"]:
+                        if w.lower() in ["nel", "del", "anno", "mese", "quanto", "quante", "totale"]:
                             break
                         fornitore_name.append(w)
                     if fornitore_name:
