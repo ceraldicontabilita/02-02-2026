@@ -348,19 +348,19 @@ export default function ArchivioFatture() {
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
                   <div>
-                    <div style={{ fontWeight: 'bold', fontSize: 15 }}>{f.numero_documento}</div>
-                    <div style={{ fontSize: 12, color: '#6b7280' }}>{f.data_documento}</div>
+                    <div style={{ fontWeight: 'bold', fontSize: 15 }}>{f.invoice_number || f.numero_documento}</div>
+                    <div style={{ fontSize: 12, color: '#6b7280' }}>{f.invoice_date || f.data_documento}</div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontWeight: 'bold', fontSize: 16, color: '#1e40af' }}>{formatCurrency(f.importo_totale)}</div>
+                    <div style={{ fontWeight: 'bold', fontSize: 16, color: '#1e40af' }}>{formatCurrency(f.total_amount || f.importo_totale)}</div>
                     {getStatoBadge(f)}
                   </div>
                 </div>
                 <div style={{ fontSize: 14, color: '#374151', marginBottom: 4 }}>
-                  {f.fornitore_ragione_sociale}
+                  {f.supplier_name || f.fornitore_ragione_sociale}
                 </div>
                 <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 12 }}>
-                  P.IVA: {f.fornitore_partita_iva}
+                  P.IVA: {f.supplier_vat || f.fornitore_partita_iva}
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#6b7280', marginBottom: 12 }}>
                   <span>Imponibile: {formatCurrency(f.imponibile)}</span>
