@@ -256,19 +256,6 @@ const router = createBrowserRouter([
     ]
   }
 ]);
-      { path: "ricette", element: <LazyPage><Ricette /></LazyPage> },
-      { path: "dizionario-prodotti", element: <LazyPage><DizionarioProdotti /></LazyPage> },
-      { path: "registro-lotti", element: <LazyPage><RegistroLotti /></LazyPage> },
-      { path: "magazzino-dv", element: <LazyPage><MagazzinoDoppiaVerita /></LazyPage> },
-      { path: "inventario", element: <LazyPage><Inventario /></LazyPage> },
-      { path: "utile-obiettivo", element: <LazyPage><UtileObiettivo /></LazyPage> },
-      // Previsioni Acquisti
-      { path: "previsioni-acquisti", element: <LazyPage><PrevisioniAcquisti /></LazyPage> },
-      // Ciclo Passivo Integrato
-      { path: "ciclo-passivo", element: <LazyPage><CicloPassivoIntegrato /></LazyPage> },
-    ],
-  },
-]);
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
