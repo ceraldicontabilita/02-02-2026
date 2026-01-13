@@ -374,6 +374,99 @@ export default function GestioneAssegni() {
     doc.save(`Carnet_${carnetId}.pdf`);
   };
 
+  // Toggle selezione assegno
+  const toggleSelectAssegno = (assegnoId) => {
+    setSelectedAssegni(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(assegnoId)) {
+        newSet.delete(assegnoId);
+      } else {
+        newSet.add(assegnoId);
+      }
+      return newSet;
+    });
+  };
+
+  // Seleziona/Deseleziona tutti (filtrati)
+  const toggleSelectAll = () => {
+    if (selectedAssegni.size === filteredAssegni.length) {
+      setSelectedAssegni(new Set());
+    } else {
+      setSelectedAssegni(new Set(filteredAssegni.map(a => a.id)));
+    }
+  };
+
+  // Genera PDF per assegni selezionati
+  const generateSelectedPDF = () => {
+    if (selectedAssegni.size === 0) {
+      alert('Seleziona almeno un assegno');
+      return;
+    }
+
+    const selectedList = filteredAssegni.filter(a => selectedAssegni.has(a.id));
+    const doc = new jsPDF();
+    
+    // Header
+    doc.setFontSize(20);
+    doc.setTextColor(76, 175, 80);
+    doc.text('Report Assegni Selezionati', 14, 20);
+    
+    doc.setFontSize(12);
+    doc.setTextColor(100);
+    doc.text(`Data: ${new Date().toLocaleDateString('it-IT')}`, 14, 30);
+    
+    // Summary
+    const totale = selectedList.reduce((sum, a) => sum + (parseFloat(a.importo) || 0), 0);
+    doc.setFontSize(12);
+    doc.setTextColor(0);
+    doc.text(`Numero Assegni: ${selectedList.length}`, 14, 40);
+    doc.setFontSize(14);
+    doc.setTextColor(76, 175, 80);
+    doc.text(`Totale: ${formatEuro(totale)}`, 14, 50);
+    
+    // Table
+    const tableData = selectedList.map(a => [
+      a.numero || '-',
+      STATI_ASSEGNO[a.stato]?.label || a.stato || '-',
+      (a.beneficiario || '-').substring(0, 30),
+      formatEuro(a.importo),
+      a.data_fattura?.substring(0, 10) || '-',
+      a.numero_fattura || '-'
+    ]);
+    
+    doc.autoTable({
+      startY: 60,
+      head: [['N. Assegno', 'Stato', 'Beneficiario', 'Importo', 'Data Fatt.', 'N. Fattura']],
+      body: tableData,
+      theme: 'striped',
+      headStyles: { fillColor: [76, 175, 80] },
+      styles: { fontSize: 9 },
+      columnStyles: {
+        0: { cellWidth: 35 },
+        2: { cellWidth: 45 },
+        3: { cellWidth: 25, halign: 'right' }
+      }
+    });
+    
+    // Footer
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(128);
+      doc.text(
+        `Ceraldi Group S.R.L. - Generato il ${new Date().toLocaleDateString('it-IT')} - Pagina ${i}/${pageCount}`,
+        14,
+        doc.internal.pageSize.height - 10
+      );
+    }
+    
+    doc.save(`Assegni_Selezionati_${new Date().toISOString().slice(0, 10)}.pdf`);
+    
+    // Clear selection after print
+    setSelectedAssegni(new Set());
+  };
+
   return (
     <div style={{ padding: '16px', maxWidth: 1400, margin: '0 auto' }}>
       <h1 style={{ marginBottom: 5, color: '#1a365d', fontSize: 'clamp(1.5rem, 4vw, 2rem)' }}>Gestione Assegni</h1>
