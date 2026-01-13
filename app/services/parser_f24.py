@@ -214,21 +214,17 @@ def parse_f24_commercialista(pdf_path: str) -> Dict[str, Any]:
             # Check se la riga inizia con codice regione (0 X o 0X o XX dove XX è 01-21)
             first_words = [r['word'] for r in row[:4]] if len(row) >= 4 else []
             is_riga_regioni = False
-            cod_regione_trovato = ""
             
             if len(first_words) >= 2:
                 # Pattern "0 X" dove X è cifra (0 5 -> 05)
                 if first_words[0] == '0' and re.match(r'^\d$', first_words[1]):
                     is_riga_regioni = True
-                    cod_regione_trovato = first_words[0] + first_words[1]
                 # Pattern "0X" codice regione diretto (01-09)
                 elif re.match(r'^0[1-9]$', first_words[0]):
                     is_riga_regioni = True
-                    cod_regione_trovato = first_words[0]
                 # Pattern "XX" codice regione 10-21
                 elif re.match(r'^(1[0-9]|2[0-1])$', first_words[0]):
                     is_riga_regioni = True
-                    cod_regione_trovato = first_words[0]
             
             # Processa ERARIO solo se NON è una riga regioni
             if not is_riga_regioni:
