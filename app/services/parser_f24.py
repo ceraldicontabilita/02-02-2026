@@ -199,29 +199,52 @@ def parse_f24_commercialista(pdf_path: str) -> Dict[str, Any]:
             row_text = ' '.join([r['word'] for r in row])
             
             # ============================================
-            # SEZIONE ERARIO - Codici 1xxx, 2xxx, 6xxx, 8xxx, 3xxx (IRAP)
+            # SEZIONE ERARIO - Codici 1xxx, 2xxx, 6xxx, 8xxx
             # Pattern: codice [rateazione] anno debito/credito
-            # IMPORTANTE: Non processare se la riga inizia con codice regione (es: "0 5")
+            # IMPORTANTE: 
+            # - I codici 3xxx (IRAP) vanno SEMPRE nella sezione REGIONI
+            # - Non processare se la riga ha un codice regione
             # ============================================
             
+            # Lista codici che vanno SEMPRE nella sezione REGIONI (IRAP)
+            CODICI_SOLO_REGIONI = {'3800', '3801', '3802', '3803', '3805', '3812', '3813', 
+                                  '3858', '3881', '3882', '3883', '4070', '1868',
+                                  '1993', '8907'}  # Ravvedimento IRAP
+            
             # Check se la riga inizia con codice regione (0 X o 0X o XX dove XX è 01-21)
-            first_words = [r['word'] for r in row[:3]] if len(row) >= 3 else []
+            first_words = [r['word'] for r in row[:4]] if len(row) >= 4 else []
             is_riga_regioni = False
+            cod_regione_trovato = ""
+            
             if len(first_words) >= 2:
-                # Pattern "0 X" dove X è cifra
+                # Pattern "0 X" dove X è cifra (0 5 -> 05)
                 if first_words[0] == '0' and re.match(r'^\d$', first_words[1]):
                     is_riga_regioni = True
-                # Pattern "0X" codice regione diretto
+                    cod_regione_trovato = first_words[0] + first_words[1]
+                # Pattern "0X" codice regione diretto (01-09)
                 elif re.match(r'^0[1-9]$', first_words[0]):
                     is_riga_regioni = True
+                    cod_regione_trovato = first_words[0]
+                # Pattern "XX" codice regione 10-21
+                elif re.match(r'^(1[0-9]|2[0-1])$', first_words[0]):
+                    is_riga_regioni = True
+                    cod_regione_trovato = first_words[0]
             
+            # Processa ERARIO solo se NON è una riga regioni
             if not is_riga_regioni:
                 for i, item in enumerate(row):
                     word = item['word']
                     
-                    # Include anche 3xxx per IRAP quando non ha codice regione
-                    if re.match(r'^(1\d{3}|2\d{3}|3\d{3}|6\d{3}|8\d{3})$', word):
+                    # Codici ERARIO: 1xxx, 2xxx, 6xxx, 8xxx 
+                    # ESCLUDI i codici 3xxx (IRAP) che vanno in REGIONI
+                    # ESCLUDI anche codici IRAP specifici (1993, 8907) senza codice regione
+                    if re.match(r'^(1\d{3}|2\d{3}|6\d{3}|8\d{3})$', word):
                         codice = word
+                        
+                        # Se è un codice IRAP (1993, 8907), salta - andrà in REGIONI
+                        if codice in CODICI_SOLO_REGIONI:
+                            continue
+                        
                         rateazione = ""
                         anno = ""
                         
