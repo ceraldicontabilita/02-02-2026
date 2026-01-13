@@ -376,13 +376,10 @@ export default function RiconciliazioneF24() {
                   </td>
                   <td style={{ padding: 12, textAlign: 'center' }}>
                     <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
-                      {f24.status === 'da_pagare' && (
-                        <label style={{ cursor: 'pointer' }}>
-                          <input type="file" accept=".pdf" style={{ display: 'none' }} onChange={(e) => handleUploadQuietanza(e, f24.id)} />
-                          <span style={{ padding: '6px 10px', background: '#10b981', color: 'white', borderRadius: 6, fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                            📄 Quietanza
-                          </span>
-                        </label>
+                      {f24.status === 'pagato' && f24.protocollo_quietanza && (
+                        <span style={{ padding: '4px 8px', background: '#d1fae5', color: '#065f46', borderRadius: 6, fontSize: 11 }}>
+                          📄 {f24.protocollo_quietanza?.slice(-8) || 'Quietanza'}
+                        </span>
                       )}
                       <button
                         onClick={() => handleDeleteF24(f24.id)}
