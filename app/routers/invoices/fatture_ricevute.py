@@ -1348,7 +1348,11 @@ async def get_statistiche(anno: Optional[int] = Query(None)):
     # Query base - include sia fatture migrate che nuove
     query = {}
     if anno:
-        query["data_documento"] = {"$regex": f"^{anno}"}
+        # Supporta entrambi i formati data
+        query["$or"] = [
+            {"data_documento": {"$regex": f"^{anno}"}},
+            {"invoice_date": {"$regex": f"^{anno}"}}
+        ]
     
     # Conteggi
     totale = await db[COL_FATTURE_RICEVUTE].count_documents(query)
@@ -1356,12 +1360,12 @@ async def get_statistiche(anno: Optional[int] = Query(None)):
     pagate = await db[COL_FATTURE_RICEVUTE].count_documents({**query, "pagato": True})
     con_pdf = await db[COL_FATTURE_RICEVUTE].count_documents({**query, "has_pdf": True})
     
-    # Totale importi
+    # Totale importi - somma sia importo_totale che total_amount
     pipeline = [
         {"$match": query},
         {"$group": {
             "_id": None,
-            "totale_importo": {"$sum": "$importo_totale"},
+            "totale_importo": {"$sum": {"$ifNull": ["$importo_totale", "$total_amount"]}},
             "totale_imponibile": {"$sum": "$imponibile"},
             "totale_iva": {"$sum": "$iva"}
         }}
@@ -1370,17 +1374,19 @@ async def get_statistiche(anno: Optional[int] = Query(None)):
     result = await db[COL_FATTURE_RICEVUTE].aggregate(pipeline).to_list(1)
     totali = result[0] if result else {"totale_importo": 0, "totale_imponibile": 0, "totale_iva": 0}
     
-    # Fornitori unici
-    fornitori_unici = await db[COL_FATTURE_RICEVUTE].distinct("fornitore_partita_iva", query)
+    # Fornitori unici - include entrambi i campi
+    fornitori1 = await db[COL_FATTURE_RICEVUTE].distinct("fornitore_partita_iva", query)
+    fornitori2 = await db[COL_FATTURE_RICEVUTE].distinct("supplier_vat", query)
+    fornitori_unici = set(fornitori1 + fornitori2) - {None, ""}
     
     return {
         "totale_fatture": totale,
         "fatture_anomale": anomale,
         "fatture_pagate": pagate,
         "fatture_con_pdf": con_pdf,
-        "totale_importo": round(totali.get("totale_importo", 0), 2),
-        "totale_imponibile": round(totali.get("totale_imponibile", 0), 2),
-        "totale_iva": round(totali.get("totale_iva", 0), 2),
+        "totale_importo": round(totali.get("totale_importo", 0) or 0, 2),
+        "totale_imponibile": round(totali.get("totale_imponibile", 0) or 0, 2),
+        "totale_iva": round(totali.get("totale_iva", 0) or 0, 2),
         "fornitori_unici": len(fornitori_unici)
     }
 
