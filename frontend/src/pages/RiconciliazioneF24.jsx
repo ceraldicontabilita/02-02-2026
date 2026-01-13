@@ -434,6 +434,139 @@ export default function RiconciliazioneF24() {
           La riconciliazione con l&apos;estratto conto bancario è il controllo finale.
         </div>
       </div>
+
+      {/* Modal F24 Pagati con Associazioni */}
+      {showPagatiModal && (
+        <div style={{ 
+          position: 'fixed', 
+          top: 0, 
+          left: 0, 
+          right: 0, 
+          bottom: 0, 
+          background: 'rgba(0,0,0,0.5)', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          zIndex: 1000 
+        }}>
+          <div style={{ 
+            background: 'white', 
+            borderRadius: 16, 
+            padding: 24, 
+            maxWidth: 900, 
+            width: '90%', 
+            maxHeight: '80vh', 
+            overflow: 'auto' 
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <h2 style={{ margin: 0, fontSize: 20 }}>✅ F24 Pagati - Associazioni</h2>
+              <button 
+                onClick={() => setShowPagatiModal(false)}
+                style={{ background: 'none', border: 'none', fontSize: 24, cursor: 'pointer', color: '#6b7280' }}
+              >
+                ×
+              </button>
+            </div>
+
+            {pagatiList.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: 40, color: '#6b7280' }}>
+                <div style={{ fontSize: 48, marginBottom: 16 }}>📭</div>
+                <div>Nessun F24 pagato</div>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {pagatiList.map((f24) => {
+                  // Trova la quietanza associata
+                  const quietanza = quietanzeList.find(q => q.id === f24.quietanza_id);
+                  
+                  return (
+                    <div key={f24.id} style={{ 
+                      border: '1px solid #e5e7eb', 
+                      borderRadius: 12, 
+                      padding: 16,
+                      background: '#f9fafb'
+                    }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: 16, alignItems: 'start' }}>
+                        {/* F24 Commercialista */}
+                        <div style={{ background: 'white', borderRadius: 8, padding: 12, border: '1px solid #dbeafe' }}>
+                          <div style={{ fontSize: 11, color: '#3b82f6', fontWeight: 600, marginBottom: 8 }}>📤 F24 COMMERCIALISTA</div>
+                          <div style={{ fontWeight: 600 }}>{f24.file_name || 'F24'}</div>
+                          <div style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>
+                            Scadenza: {f24.dati_generali?.data_versamento || '-'}
+                          </div>
+                          <div style={{ fontSize: 16, fontWeight: 700, color: '#1e40af', marginTop: 8 }}>
+                            {formatEuro(f24.totali?.saldo_netto || 0)}
+                          </div>
+                          <div style={{ fontSize: 11, color: '#6b7280', marginTop: 8 }}>
+                            ERARIO: {f24.sezione_erario?.length || 0} | 
+                            INPS: {f24.sezione_inps?.length || 0} | 
+                            REGIONI: {f24.sezione_regioni?.length || 0}
+                          </div>
+                        </div>
+
+                        {/* Arrow */}
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px 0' }}>
+                          <div style={{ fontSize: 24 }}>🔗</div>
+                          <div style={{ fontSize: 11, color: '#10b981', fontWeight: 600 }}>
+                            {f24.match_percentage ? `${Math.round(f24.match_percentage)}%` : 'MATCH'}
+                          </div>
+                        </div>
+
+                        {/* Quietanza */}
+                        <div style={{ background: 'white', borderRadius: 8, padding: 12, border: '1px solid #d1fae5' }}>
+                          <div style={{ fontSize: 11, color: '#10b981', fontWeight: 600, marginBottom: 8 }}>📄 QUIETANZA ADE</div>
+                          {quietanza ? (
+                            <>
+                              <div style={{ fontWeight: 600 }}>{quietanza.filename || 'Quietanza'}</div>
+                              <div style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>
+                                Pagamento: {quietanza.data_pagamento || '-'}
+                              </div>
+                              <div style={{ fontSize: 16, fontWeight: 700, color: '#065f46', marginTop: 8 }}>
+                                {formatEuro(quietanza.saldo || 0)}
+                              </div>
+                              {quietanza.protocollo_telematico && (
+                                <div style={{ fontSize: 10, color: '#6b7280', marginTop: 8, fontFamily: 'monospace' }}>
+                                  Protocollo: {quietanza.protocollo_telematico}
+                                </div>
+                              )}
+                            </>
+                          ) : f24.protocollo_quietanza ? (
+                            <>
+                              <div style={{ fontWeight: 600 }}>Quietanza associata</div>
+                              <div style={{ fontSize: 10, color: '#6b7280', marginTop: 8, fontFamily: 'monospace' }}>
+                                Protocollo: {f24.protocollo_quietanza}
+                              </div>
+                            </>
+                          ) : (
+                            <div style={{ color: '#9ca3af', fontStyle: 'italic' }}>
+                              Nessuna quietanza caricata
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Differenza importo */}
+                      {f24.differenza_importo && Math.abs(f24.differenza_importo) > 0.01 && (
+                        <div style={{ 
+                          marginTop: 12, 
+                          padding: 8, 
+                          background: f24.differenza_importo > 0 ? '#fef3c7' : '#dcfce7',
+                          borderRadius: 6,
+                          fontSize: 12,
+                          color: f24.differenza_importo > 0 ? '#92400e' : '#166534'
+                        }}>
+                          ⚠️ Differenza: {formatEuro(f24.differenza_importo)} 
+                          {f24.differenza_importo > 0 ? ' (ravvedimento?)' : ''}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
