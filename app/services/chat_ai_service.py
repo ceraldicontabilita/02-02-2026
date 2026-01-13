@@ -7,6 +7,7 @@ Utilizza:
 - Claude Sonnet 4.5 per generare risposte (via Emergent)
 """
 import os
+import re
 import uuid
 import logging
 from datetime import datetime, timezone
@@ -23,6 +24,45 @@ logger = logging.getLogger(__name__)
 
 # Chiave API Emergent (funziona sempre)
 EMERGENT_KEY = os.getenv("EMERGENT_LLM_KEY")
+
+# Mappatura nomi comuni -> regex per ricerca fuzzy fornitori
+FORNITORI_ALIAS = {
+    "kimbo": "kimbo",
+    "metro": "metro",
+    "coop": "coop",
+    "conad": "conad",
+    "aia": "aia",
+    "barilla": "barilla",
+    "ferrero": "ferrero",
+    "lavazza": "lavazza",
+    "illy": "illy",
+    "coca cola": "coca.?cola",
+    "pepsi": "pepsi",
+    "nestle": "nestl",
+    "unilever": "unilever",
+    "kraft": "kraft",
+    "heinz": "heinz",
+    "danone": "danone",
+    "parmalat": "parmalat",
+    "granarolo": "granarolo",
+    "galbani": "galbani",
+    "mutti": "mutti",
+    "de cecco": "de.?cecco",
+    "divella": "divella",
+    "voiello": "voiello",
+    "rana": "rana",
+    "amadori": "amadori",
+    "beretta": "beretta",
+    "citterio": "citterio",
+    "negroni": "negroni",
+    "rovagnati": "rovagnati",
+    "enel": "enel",
+    "eni": "eni",
+    "tim": "telecom|tim\\b",
+    "vodafone": "vodafone",
+    "wind": "wind",
+    "fastweb": "fastweb",
+}
 
 
 class ChatAIService:
