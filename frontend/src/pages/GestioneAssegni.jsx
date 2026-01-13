@@ -511,6 +511,29 @@ export default function GestioneAssegni() {
           {autoAssociating ? 'Associando...' : 'Auto-Associa'}
         </button>
         
+        {/* Pulsante Stampa Selezionati */}
+        {selectedAssegni.size > 0 && (
+          <button
+            onClick={generateSelectedPDF}
+            data-testid="stampa-selezionati-btn"
+            style={{
+              padding: '10px 16px',
+              background: '#9c27b0',
+              color: 'white',
+              border: 'none',
+              borderRadius: 8,
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              fontSize: 13,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6
+            }}
+          >
+            🖨️ Stampa {selectedAssegni.size} Selezionati
+          </button>
+        )}
+        
         <button
           onClick={() => setShowFilters(!showFilters)}
           data-testid="toggle-filters-btn"
