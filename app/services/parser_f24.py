@@ -372,27 +372,34 @@ def parse_f24_commercialista(pdf_path: str) -> Dict[str, Any]:
                         })
             
             # ============================================
-            # SEZIONE REGIONI - Pattern: cod_regione 3xxx rateazione anno debito/credito
-            # Codici 3xxx = IRAP, addizionali regionali, tributi locali
-            # Riconosce righe con "0 5" prima del codice 3xxx
+            # SEZIONE REGIONI - Pattern: cod_regione codice rateazione anno debito/credito
+            # Codici 3xxx = IRAP, addizionali regionali
+            # Codici 8xxx = Sanzioni IRAP (quando hanno codice regione)
+            # Codici 1xxx = Interessi ravvedimento (quando hanno codice regione)
+            # Riconosce righe con "0 X" dove X è una cifra (es: "0 5" = regione 05)
             # ============================================
-            # Verifica se è una riga regioni (ha "0 5" all'inizio)
             is_regioni_row = False
             cod_regione = ""
             if len(row) >= 3:
                 first_words = [r['word'] for r in row[:4]]
-                # Pattern "0 5" = codice regione 05
+                # Pattern "0 X" dove X è una cifra = codice regione
                 if len(first_words) >= 2 and first_words[0] == '0' and re.match(r'^\d$', first_words[1]):
                     cod_regione = first_words[0] + first_words[1]
+                    is_regioni_row = True
+                # Pattern "XX" come codice regione diretto (01-21)
+                elif len(first_words) >= 1 and re.match(r'^(0[1-9]|1\d|2[0-1])$', first_words[0]):
+                    cod_regione = first_words[0]
                     is_regioni_row = True
             
             if is_regioni_row:
                 for i, item in enumerate(row):
                     word = item['word']
                     
-                    # Codici regionali: 3xxx (IRAP, addizionale IRPEF, tributi locali)
-                    # Include 3800-3899, 3790-3799, 3810-3819, ecc.
-                    if re.match(r'^3\d{3}$', word):
+                    # Codici regionali: 
+                    # - 3xxx (IRAP, addizionale IRPEF)
+                    # - 8xxx (sanzioni IRAP - es. 8907)
+                    # - 1xxx (interessi ravvedimento - es. 1993)
+                    if re.match(r'^(3\d{3}|8\d{3}|1\d{3})$', word):
                         codice = word
                         rateazione = ""
                         anno = ""
@@ -401,7 +408,7 @@ def parse_f24_commercialista(pdf_path: str) -> Dict[str, Any]:
                             nw = row[j]['word']
                             if nw in [',', '+/–']:
                                 continue
-                            if re.match(r'^00\d{2}$', nw) and not rateazione:
+                            if re.match(r'^0[0-9]{3}$', nw) and not rateazione:
                                 rateazione = nw
                             elif re.match(r'^20\d{2}$', nw) and not anno:
                                 anno = nw
