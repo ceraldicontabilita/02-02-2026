@@ -52,8 +52,12 @@ const NAV_ITEMS = [
     isSubmenu: true,
     children: [
       { to: "/dipendenti", label: "Anagrafica Dipendenti", icon: "👤" },
-      { to: "/cedolini", label: "Cedolini / Buste Paga", icon: "📄" },
+      { to: "/dipendenti-contratti", label: "Contratti", icon: "📄" },
+      { to: "/cedolini", label: "Cedolini / Buste Paga", icon: "📋" },
       { to: "/prima-nota-salari", label: "Prima Nota Salari", icon: "💰" },
+      { to: "/dipendenti-libro-unico", label: "Libro Unico", icon: "📚" },
+      { to: "/dipendenti-libretti", label: "Libretti Sanitari", icon: "🏥" },
+      { to: "/dipendenti-acconti", label: "Acconti", icon: "💵" },
       { to: "/tfr", label: "TFR e Accantonamenti", icon: "🏢" },
     ]
   },

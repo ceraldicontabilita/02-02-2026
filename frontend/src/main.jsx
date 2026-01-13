@@ -111,8 +111,12 @@ const EstrattoContoImport = lazy(() => import("./pages/EstrattoContoImport.jsx")
 
 // === DIPENDENTI ===
 const GestioneDipendenti = lazy(() => import("./pages/GestioneDipendenti.jsx"));
+const DipendenteContratti = lazy(() => import("./pages/DipendenteContratti.jsx"));
 const Cedolini = lazy(() => import("./pages/Cedolini.jsx"));
 const PrimaNotaSalari = lazy(() => import("./pages/PrimaNotaSalari.jsx"));
+const DipendenteLibroUnico = lazy(() => import("./pages/DipendenteLibroUnico.jsx"));
+const DipendenteLibretti = lazy(() => import("./pages/DipendenteLibretti.jsx"));
+const DipendenteAcconti = lazy(() => import("./pages/DipendenteAcconti.jsx"));
 const TFR = lazy(() => import("./pages/TFR.jsx"));
 
 // === FISCO & TRIBUTI ===
@@ -203,8 +207,12 @@ const router = createBrowserRouter([
       
       // === DIPENDENTI ===
       { path: "dipendenti", element: <LazyPage><GestioneDipendenti /></LazyPage> },
+      { path: "dipendenti-contratti", element: <LazyPage><DipendenteContratti /></LazyPage> },
       { path: "cedolini", element: <LazyPage><Cedolini /></LazyPage> },
       { path: "prima-nota-salari", element: <LazyPage><PrimaNotaSalari /></LazyPage> },
+      { path: "dipendenti-libro-unico", element: <LazyPage><DipendenteLibroUnico /></LazyPage> },
+      { path: "dipendenti-libretti", element: <LazyPage><DipendenteLibretti /></LazyPage> },
+      { path: "dipendenti-acconti", element: <LazyPage><DipendenteAcconti /></LazyPage> },
       { path: "tfr", element: <LazyPage><TFR /></LazyPage> },
       
       // === FISCO & TRIBUTI ===
