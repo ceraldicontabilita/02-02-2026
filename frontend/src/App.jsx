@@ -158,10 +158,10 @@ const NAV_ITEMS = [
 // Mobile nav - show only essential items
 const MOBILE_NAV = [
   { to: "/", label: "Home", icon: "🏠" },
-  { to: "/fatture", label: "Fatture", icon: "📄" },
-  { to: "/prima-nota", label: "Prima Nota", icon: "📒" },
-  { to: "/magazzino", label: "Magazzino", icon: "📦" },
-  { to: "/more", label: "Altro", icon: "☰", isMenu: true },
+  { to: "/fatture-ricevute", label: "Fatture", icon: "📄" },
+  { to: "/riconciliazione-smart", label: "Banca", icon: "🏦" },
+  { to: "/dipendenti", label: "Dipend.", icon: "👥" },
+  { to: "/more", label: "Menu", icon: "☰", isMenu: true },
 ];
 
 export default function App() {
