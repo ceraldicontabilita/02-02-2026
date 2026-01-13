@@ -8,6 +8,7 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
 from app.database import Database
 from app.services.parser_f24 import parse_f24_commercialista, confronta_codici_tributo
+from app.services.parser_f24_gemini import parse_f24_with_gemini
 from app.services.f24_parser import parse_quietanza_f24
 import os
 import uuid
@@ -24,6 +25,9 @@ COLL_F24_COMMERCIALISTA = "f24_commercialista"
 COLL_QUIETANZE = "quietanze_f24"
 COLL_F24_ALERTS = "f24_riconciliazione_alerts"
 
+# Flag per usare Gemini come parser principale
+USE_GEMINI_PARSER = True
+
 
 # ============================================
 # UPLOAD F24 COMMERCIALISTA
@@ -31,12 +35,16 @@ COLL_F24_ALERTS = "f24_riconciliazione_alerts"
 
 @router.post("/commercialista/upload")
 async def upload_f24_commercialista(
-    file: UploadFile = File(...)
+    file: UploadFile = File(...),
+    use_gemini: bool = Query(True, description="Usa Gemini AI per parsing (più accurato)")
 ) -> Dict[str, Any]:
     """
     Upload F24 ricevuto dalla commercialista (PDF).
     Estrae codici tributo e lo inserisce come "DA PAGARE".
     Usa chiave univoca per evitare duplicati.
+    
+    - use_gemini=True: Usa Gemini AI (OCR + AI, più accurato)
+    - use_gemini=False: Usa parser PyMuPDF (più veloce)
     """
     if not file.filename.lower().endswith('.pdf'):
         raise HTTPException(status_code=400, detail="Il file deve essere un PDF")
@@ -53,12 +61,28 @@ async def upload_f24_commercialista(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Errore salvataggio: {str(e)}")
     
-    # Parsing
+    # Parsing con Gemini o fallback a PyMuPDF
+    parser_used = "gemini" if use_gemini else "pymupdf"
     try:
-        parsed = parse_f24_commercialista(file_path)
+        if use_gemini:
+            logger.info(f"Parsing F24 con Gemini: {file.filename}")
+            parsed = await parse_f24_with_gemini(file_path)
+            
+            # Se Gemini fallisce, usa PyMuPDF come fallback
+            if "error" in parsed:
+                logger.warning(f"Gemini fallito, uso PyMuPDF: {parsed.get('error')}")
+                parsed = parse_f24_commercialista(file_path)
+                parser_used = "pymupdf_fallback"
+        else:
+            parsed = parse_f24_commercialista(file_path)
     except Exception as e:
         logger.error(f"Errore parsing F24: {e}")
-        raise HTTPException(status_code=500, detail=f"Errore parsing: {str(e)}")
+        # Fallback a PyMuPDF se Gemini fallisce
+        try:
+            parsed = parse_f24_commercialista(file_path)
+            parser_used = "pymupdf_fallback"
+        except Exception as e2:
+            raise HTTPException(status_code=500, detail=f"Errore parsing: {str(e2)}")
     
     if "error" in parsed:
         raise HTTPException(status_code=400, detail=parsed["error"])
