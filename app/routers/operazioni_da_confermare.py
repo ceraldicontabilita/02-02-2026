@@ -805,13 +805,24 @@ async def cerca_fatture_per_associazione(
         ("data_documento", -1)
     ]).limit(limit).to_list(limit)
     
+    def get_fornitore_nome(f):
+        """Estrae il nome fornitore, gestendo sia stringhe che oggetti."""
+        fornitore = f.get("supplier_name") or f.get("fornitore_ragione_sociale") or f.get("cedente_denominazione")
+        if fornitore:
+            return fornitore
+        # Se fornitore è un oggetto
+        forn_obj = f.get("fornitore")
+        if isinstance(forn_obj, dict):
+            return forn_obj.get("denominazione") or forn_obj.get("ragione_sociale") or str(forn_obj)
+        return forn_obj if isinstance(forn_obj, str) else None
+    
     result = {
         "fatture": [{
             "id": f.get("id"),
             "numero": f.get("invoice_number") or f.get("numero_fattura") or f.get("numero_documento"),
             "data": f.get("invoice_date") or f.get("data_fattura") or f.get("data_documento"),
             "importo": f.get("total_amount") or f.get("importo_totale"),
-            "fornitore": f.get("supplier_name") or f.get("fornitore_ragione_sociale") or f.get("fornitore"),
+            "fornitore": get_fornitore_nome(f),
             "pagato": f.get("pagato", False)
         } for f in fatture],
         "totale": len(fatture)
@@ -824,7 +835,7 @@ async def cerca_fatture_per_associazione(
             "id": f.get("id"),
             "numero": f.get("invoice_number") or f.get("numero_fattura") or f.get("numero_documento"),
             "importo": f.get("total_amount") or f.get("importo_totale"),
-            "fornitore": f.get("supplier_name") or f.get("fornitore_ragione_sociale")
+            "fornitore": get_fornitore_nome(f)
         } for f in combo] for combo in combos]
     
     return result
