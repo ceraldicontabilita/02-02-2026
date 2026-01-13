@@ -388,6 +388,19 @@ Tutte le pagine principali supportano layout mobile:
     - Risposte formattate con markdown
     - Mostra dati trovati nel database
 
+### 2026-01-13 (sessione corrente)
+- ✅ **Parser Estratto Conto Carta di Credito Nexi/Banco BPM**: Nuovo parser per importare estratti conto carte Nexi
+  - Backend: Parser `/app/app/parsers/estratto_conto_nexi_parser.py`
+  - Estrae metadata: intestatario, numero carta (mascherato), scadenza, totali mese
+  - Estrae transazioni con categorizzazione automatica (Amazon, Spotify, Carburante, ecc.)
+  - Supporta rimborsi (importi negativi)
+  - API endpoints in `/api/estratto-conto/`:
+    - `POST /api/estratto-conto/parse-nexi` - Parse PDF e restituisce dati
+    - `POST /api/estratto-conto/import-nexi?anno=XXXX` - Importa nel database
+    - `GET /api/estratto-conto/nexi/movimenti` - Lista movimenti con filtri e statistiche per categoria
+  - Collezione MongoDB: `estratto_conto_nexi`
+  - Categorie auto-riconosciute: E-commerce Amazon, Abbonamento Spotify/Netflix, Carburante, Supermercato, Ristorazione, Trasporti, Assicurazione, Utenze, Bonifico Internazionale
+
 ---
 
 ## 📊 NOTE SULLA RICONCILIAZIONE AUTOMATICA
@@ -406,6 +419,10 @@ L'algoritmo di riconciliazione NON trova molti match automatici perché:
 ---
 
 ## 🚀 PROSSIMI TASK
+
+### P0 - Priorità Critica
+- [ ] UI per importare estratti conto Nexi da frontend
+- [ ] Automazione download email per estratti conto (ricerca keyword, scarica allegati PDF)
 
 ### P1 - Priorità Alta
 - [ ] Errore visualizzazione "PRELIEVO ASSEGNO" (segnalato dall'utente - investigare frontend)
