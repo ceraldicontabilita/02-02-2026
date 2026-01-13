@@ -108,21 +108,56 @@ Usa il grassetto (**testo**) per evidenziare informazioni importanti."""
             logger.error(f"Errore trascrizione audio: {e}")
             raise
     
-    async def search_relevant_data(self, query: str) -> Dict[str, Any]:
-        """Cerca dati rilevanti nel database basandosi sulla query."""
+    async def search_relevant_data(self, query: str, anno: int = None) -> Dict[str, Any]:
+        """Cerca dati rilevanti nel database basandosi sulla query e anno."""
         db = Database.get_db()
         results = {
             "fatture": [],
             "dipendenti": [],
             "cedolini": [],
             "movimenti_bancari": [],
-            "f24": []
+            "f24": [],
+            "statistiche_fornitore": None
         }
         
         query_lower = query.lower()
         
-        # Estrai possibili nomi di persone/aziende dalla query
-        # Pattern comuni: "fattura di X", "stipendio di X", "pagato X"
+        # Anno di default: corrente
+        if not anno:
+            anno = datetime.now().year
+        
+        # Estrai anno dalla query se specificato (es. "fatture 2024", "nel 2023")
+        anno_match = re.search(r'\b(20\d{2})\b', query)
+        if anno_match:
+            anno = int(anno_match.group(1))
+        
+        # Helper per creare filtro anno su campo data
+        def filtro_anno(campo_data: str) -> Dict:
+            return {campo_data: {"$regex": f"^{anno}"}}
+        
+        # Estrai nome fornitore dalla query con fuzzy matching
+        def trova_fornitore(q: str) -> Optional[str]:
+            clean_q = re.sub(r'[?!.,;:]', '', q).lower()
+            words = clean_q.split()
+            
+            # Prima cerca nei pattern comuni
+            for i, word in enumerate(words):
+                if word in ["di", "da", "a", "per", "con"] and i + 1 < len(words):
+                    remaining = words[i+1:]
+                    fornitore_words = []
+                    for w in remaining:
+                        if w in ["nel", "del", "anno", "mese", "quanto", "quante", "totale", "2020", "2021", "2022", "2023", "2024", "2025", "2026"]:
+                            break
+                        fornitore_words.append(w)
+                    if fornitore_words:
+                        return " ".join(fornitore_words[:3])
+            
+            # Cerca match diretto con alias conosciuti
+            for alias, regex in FORNITORI_ALIAS.items():
+                if alias in clean_q:
+                    return regex
+            
+            return None
         
         # Cerca fatture
         if any(kw in query_lower for kw in ["fattura", "fatture", "fornitore", "fornitori", "pagato", "pagamento", "fatturato", "acquisti", "speso"]):
