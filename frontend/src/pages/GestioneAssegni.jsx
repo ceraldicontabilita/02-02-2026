@@ -805,7 +805,7 @@ export default function GestioneAssegni() {
                     <div 
                       key={assegno.id}
                       style={{
-                        background: idx % 2 === 0 ? 'white' : '#fafafa',
+                        background: selectedAssegni.has(assegno.id) ? '#e8f5e9' : (idx % 2 === 0 ? 'white' : '#fafafa'),
                         padding: 12,
                         borderBottom: '1px solid #eee',
                         borderLeft: '1px solid #eee',
@@ -813,9 +813,15 @@ export default function GestioneAssegni() {
                         ...(idx === carnetAssegni.length - 1 ? { borderRadius: '0 0 8px 8px' } : {})
                       }}
                     >
-                      {/* Row 1: Numero + Stato + Importo */}
+                      {/* Row 1: Checkbox + Numero + Stato + Importo */}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <input
+                            type="checkbox"
+                            checked={selectedAssegni.has(assegno.id)}
+                            onChange={() => toggleSelectAssegno(assegno.id)}
+                            style={{ width: 18, height: 18, cursor: 'pointer' }}
+                          />
                           <span style={{ fontFamily: 'monospace', fontWeight: 'bold', color: '#1a365d', fontSize: 13 }}>
                             {assegno.numero?.split('-')[1] || assegno.numero}
                           </span>
