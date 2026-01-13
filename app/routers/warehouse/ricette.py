@@ -766,3 +766,224 @@ async def report_food_cost(
             "food_cost_medio": round(sum(r["food_cost_percentuale"] for r in report) / len(report), 1) if report else 0
         }
     }
+
+
+
+# ============== LOTTI FORNITORE PER INGREDIENTI ==============
+
+@router.get("/lotti-fornitore/cerca")
+async def cerca_lotti_fornitore(
+    prodotto: Optional[str] = Query(None, description="Nome prodotto/ingrediente da cercare"),
+    fornitore_piva: Optional[str] = Query(None, description="Partita IVA fornitore"),
+    solo_con_scadenza: bool = Query(False, description="Solo lotti con scadenza")
+) -> Dict[str, Any]:
+    """
+    Cerca lotti fornitore disponibili per un ingrediente.
+    Cerca sia nella collezione tracciabilita che in dettaglio_righe_fatture.
+    """
+    db = Database.get_db()
+    lotti = []
+    
+    # Cerca nella tracciabilita
+    query_tracc = {}
+    if prodotto:
+        query_tracc["$or"] = [
+            {"prodotto": {"$regex": prodotto, "$options": "i"}},
+            {"descrizione_completa": {"$regex": prodotto, "$options": "i"}}
+        ]
+    if fornitore_piva:
+        query_tracc["fornitore_piva"] = fornitore_piva
+    if solo_con_scadenza:
+        query_tracc["scadenza"] = {"$ne": None}
+    
+    tracc_records = await db.tracciabilita.find(
+        query_tracc,
+        {"_id": 0, "id": 1, "prodotto": 1, "lotto": 1, "scadenza": 1, "fornitore": 1, 
+         "fornitore_piva": 1, "data_consegna": 1, "quantita": 1, "unita_misura": 1}
+    ).sort("data_consegna", -1).limit(50).to_list(50)
+    
+    for rec in tracc_records:
+        lotti.append({
+            "id": rec.get("id"),
+            "source": "tracciabilita",
+            "prodotto": rec.get("prodotto"),
+            "lotto_fornitore": rec.get("lotto"),
+            "scadenza": rec.get("scadenza"),
+            "fornitore": rec.get("fornitore"),
+            "fornitore_piva": rec.get("fornitore_piva"),
+            "data_consegna": rec.get("data_consegna"),
+            "quantita": rec.get("quantita"),
+            "unita_misura": rec.get("unita_misura")
+        })
+    
+    # Cerca in dettaglio_righe_fatture (join con invoices per fornitore)
+    query_righe = {"lotto_fornitore": {"$ne": None}}
+    if prodotto:
+        query_righe["descrizione"] = {"$regex": prodotto, "$options": "i"}
+    if solo_con_scadenza:
+        query_righe["data_scadenza"] = {"$ne": None}
+    
+    righe_records = await db.dettaglio_righe_fatture.find(
+        query_righe,
+        {"_id": 0, "id": 1, "fattura_id": 1, "descrizione": 1, "lotto_fornitore": 1, 
+         "data_scadenza": 1, "quantita": 1, "unita_misura": 1}
+    ).sort("created_at", -1).limit(50).to_list(50)
+    
+    # Arricchisci con dati fornitore dalla fattura
+    for riga in righe_records:
+        fattura = await db.invoices.find_one(
+            {"id": riga.get("fattura_id")},
+            {"_id": 0, "fornitore_ragione_sociale": 1, "fornitore_partita_iva": 1, "data_documento": 1}
+        )
+        
+        # Filtro per fornitore se specificato
+        if fornitore_piva and fattura and fattura.get("fornitore_partita_iva") != fornitore_piva:
+            continue
+        
+        lotti.append({
+            "id": riga.get("id"),
+            "source": "fattura",
+            "prodotto": riga.get("descrizione"),
+            "lotto_fornitore": riga.get("lotto_fornitore"),
+            "scadenza": riga.get("data_scadenza"),
+            "fornitore": fattura.get("fornitore_ragione_sociale") if fattura else None,
+            "fornitore_piva": fattura.get("fornitore_partita_iva") if fattura else None,
+            "data_consegna": fattura.get("data_documento") if fattura else None,
+            "quantita": riga.get("quantita"),
+            "unita_misura": riga.get("unita_misura")
+        })
+    
+    # Rimuovi duplicati per lotto
+    lotti_unici = {}
+    for l in lotti:
+        key = f"{l['lotto_fornitore']}_{l['prodotto']}"
+        if key not in lotti_unici or (l.get('scadenza') and not lotti_unici[key].get('scadenza')):
+            lotti_unici[key] = l
+    
+    return {
+        "lotti": list(lotti_unici.values()),
+        "totale": len(lotti_unici)
+    }
+
+
+@router.post("/{ricetta_id}/ingredienti/{ingrediente_idx}/lotto")
+async def associa_lotto_ingrediente(
+    ricetta_id: str,
+    ingrediente_idx: int,
+    data: Dict[str, Any] = Body(...)
+) -> Dict[str, Any]:
+    """
+    Associa un lotto fornitore a un ingrediente della ricetta.
+    
+    Args:
+        ricetta_id: ID della ricetta
+        ingrediente_idx: Indice dell'ingrediente nella lista
+        data: { lotto_fornitore: str, scadenza: str, fornitore: str }
+    """
+    db = Database.get_db()
+    
+    ricetta = await db["ricette"].find_one({"id": ricetta_id})
+    if not ricetta:
+        raise HTTPException(status_code=404, detail="Ricetta non trovata")
+    
+    ingredienti = ricetta.get("ingredienti", [])
+    if ingrediente_idx < 0 or ingrediente_idx >= len(ingredienti):
+        raise HTTPException(status_code=400, detail="Indice ingrediente non valido")
+    
+    # Aggiorna l'ingrediente con i dati del lotto
+    ingredienti[ingrediente_idx]["lotto_fornitore"] = data.get("lotto_fornitore")
+    ingredienti[ingrediente_idx]["scadenza_lotto"] = data.get("scadenza")
+    ingredienti[ingrediente_idx]["fornitore_lotto"] = data.get("fornitore")
+    ingredienti[ingrediente_idx]["data_associazione_lotto"] = datetime.now(timezone.utc).isoformat()
+    
+    # Salva
+    await db["ricette"].update_one(
+        {"id": ricetta_id},
+        {"$set": {
+            "ingredienti": ingredienti,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {
+        "success": True,
+        "message": f"Lotto {data.get('lotto_fornitore')} associato all'ingrediente",
+        "ingrediente": ingredienti[ingrediente_idx]
+    }
+
+
+@router.delete("/{ricetta_id}/ingredienti/{ingrediente_idx}/lotto")
+async def rimuovi_lotto_ingrediente(
+    ricetta_id: str,
+    ingrediente_idx: int
+) -> Dict[str, Any]:
+    """Rimuove l'associazione del lotto da un ingrediente."""
+    db = Database.get_db()
+    
+    ricetta = await db["ricette"].find_one({"id": ricetta_id})
+    if not ricetta:
+        raise HTTPException(status_code=404, detail="Ricetta non trovata")
+    
+    ingredienti = ricetta.get("ingredienti", [])
+    if ingrediente_idx < 0 or ingrediente_idx >= len(ingredienti):
+        raise HTTPException(status_code=400, detail="Indice ingrediente non valido")
+    
+    # Rimuovi dati lotto
+    ingredienti[ingrediente_idx].pop("lotto_fornitore", None)
+    ingredienti[ingrediente_idx].pop("scadenza_lotto", None)
+    ingredienti[ingrediente_idx].pop("fornitore_lotto", None)
+    ingredienti[ingrediente_idx].pop("data_associazione_lotto", None)
+    
+    await db["ricette"].update_one(
+        {"id": ricetta_id},
+        {"$set": {
+            "ingredienti": ingredienti,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {"success": True, "message": "Associazione lotto rimossa"}
+
+
+@router.get("/{ricetta_id}/lotti-ingredienti")
+async def get_lotti_ingredienti_ricetta(ricetta_id: str) -> Dict[str, Any]:
+    """
+    Ottiene tutti i lotti associati agli ingredienti di una ricetta.
+    Utile per la tracciabilità HACCP.
+    """
+    db = Database.get_db()
+    
+    ricetta = await db["ricette"].find_one({"id": ricetta_id}, {"_id": 0})
+    if not ricetta:
+        raise HTTPException(status_code=404, detail="Ricetta non trovata")
+    
+    ingredienti_con_lotto = []
+    ingredienti_senza_lotto = []
+    
+    for idx, ing in enumerate(ricetta.get("ingredienti", [])):
+        ing_data = {
+            "indice": idx,
+            "nome": ing.get("nome"),
+            "quantita": ing.get("quantita"),
+            "unita": ing.get("unita"),
+            "prodotto_id": ing.get("prodotto_id")
+        }
+        
+        if ing.get("lotto_fornitore"):
+            ing_data["lotto_fornitore"] = ing.get("lotto_fornitore")
+            ing_data["scadenza_lotto"] = ing.get("scadenza_lotto")
+            ing_data["fornitore_lotto"] = ing.get("fornitore_lotto")
+            ingredienti_con_lotto.append(ing_data)
+        else:
+            ingredienti_senza_lotto.append(ing_data)
+    
+    return {
+        "ricetta_id": ricetta_id,
+        "ricetta_nome": ricetta.get("nome"),
+        "ingredienti_con_lotto": ingredienti_con_lotto,
+        "ingredienti_senza_lotto": ingredienti_senza_lotto,
+        "totale_ingredienti": len(ricetta.get("ingredienti", [])),
+        "percentuale_tracciabilita": round(
+            len(ingredienti_con_lotto) / max(len(ricetta.get("ingredienti", [])), 1) * 100, 1
+        )
+    }
