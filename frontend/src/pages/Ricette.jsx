@@ -1661,6 +1661,218 @@ export default function Ricette() {
           </div>
         </div>
       )}
+
+      {/* ================================================ */}
+      {/* MODAL: Cerca Lotti Fornitore                     */}
+      {/* ================================================ */}
+      {showLottiModal && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0,0,0,0.6)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 99999,
+          padding: '20px'
+        }} onClick={() => setShowLottiModal(false)}>
+          <div
+            style={{
+              background: 'white',
+              borderRadius: '16px',
+              width: '100%',
+              maxWidth: '600px',
+              maxHeight: '80vh',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div style={{ 
+              padding: '20px 24px', 
+              borderBottom: '1px solid #e5e7eb', 
+              background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'
+            }}>
+              <h2 style={{ 
+                fontSize: '18px', 
+                fontWeight: 700, 
+                color: 'white', 
+                margin: 0,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px'
+              }}>
+                <Tag size={22} />
+                Cerca Lotto Fornitore
+              </h2>
+              <p style={{ margin: '8px 0 0', fontSize: '13px', color: 'rgba(255,255,255,0.9)' }}>
+                Cerca un lotto dalla tracciabilità o dalle fatture importate
+              </p>
+            </div>
+            
+            {/* Search */}
+            <div style={{ padding: '16px 24px', borderBottom: '1px solid #e5e7eb' }}>
+              <div style={{ position: 'relative' }}>
+                <Search size={18} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
+                <input
+                  type="text"
+                  value={lottiSearch}
+                  onChange={(e) => searchLottiFornitore(e.target.value)}
+                  placeholder="Cerca per nome prodotto..."
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px 12px 44px',
+                    border: '2px solid #e5e7eb',
+                    borderRadius: '10px',
+                    fontSize: '15px',
+                    outline: 'none',
+                    transition: 'border 0.2s'
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = '#f59e0b'}
+                  onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
+                  autoFocus
+                  data-testid="search-lotti-input"
+                />
+              </div>
+            </div>
+
+            {/* Results */}
+            <div style={{ flex: 1, overflow: 'auto', maxHeight: '400px' }}>
+              {loadingLotti ? (
+                <div style={{ padding: '60px 24px', textAlign: 'center', color: '#64748b' }}>
+                  Ricerca lotti...
+                </div>
+              ) : lottiList.length === 0 ? (
+                <div style={{ padding: '60px 24px', textAlign: 'center' }}>
+                  {lottiSearch.length < 2 ? (
+                    <>
+                      <Tag size={40} style={{ color: '#cbd5e1', marginBottom: '12px' }} />
+                      <div style={{ color: '#64748b', fontWeight: 500 }}>Cerca un lotto</div>
+                      <div style={{ color: '#94a3b8', fontSize: '13px', marginTop: '4px' }}>
+                        Digita almeno 2 caratteri per cercare
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <AlertTriangle size={40} style={{ color: '#f59e0b', marginBottom: '12px' }} />
+                      <div style={{ color: '#64748b', fontWeight: 500 }}>Nessun lotto trovato</div>
+                      <div style={{ color: '#94a3b8', fontSize: '13px', marginTop: '4px' }}>
+                        Prova con un altro termine di ricerca
+                      </div>
+                    </>
+                  )}
+                </div>
+              ) : (
+                <div>
+                  <div style={{ padding: '8px 24px', background: '#fef3c7', fontSize: '11px', color: '#92400e', fontWeight: 600 }}>
+                    {lottiList.length} LOTTI TROVATI
+                  </div>
+                  {lottiList.map((lotto, idx) => (
+                    <div
+                      key={idx}
+                      onClick={() => selectLottoFromModal(lotto)}
+                      style={{
+                        padding: '14px 24px',
+                        cursor: 'pointer',
+                        borderBottom: '1px solid #f1f5f9',
+                        transition: 'background 0.15s'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = '#fffbeb'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'white'}
+                      data-testid={`select-lotto-${idx}`}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px' }}>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontWeight: 600, color: '#1e293b', fontSize: '14px', marginBottom: '4px' }}>
+                            {lotto.prodotto?.substring(0, 50)}
+                          </div>
+                          <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '4px' }}>
+                            {lotto.fornitore || 'Fornitore N/D'}
+                          </div>
+                          <div style={{ 
+                            display: 'inline-flex', 
+                            alignItems: 'center', 
+                            gap: '6px',
+                            padding: '4px 10px',
+                            background: '#fef3c7',
+                            borderRadius: '6px',
+                            fontSize: '12px',
+                            color: '#92400e',
+                            fontWeight: 600
+                          }}>
+                            <Tag size={12} />
+                            {lotto.lotto_fornitore}
+                          </div>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                          {lotto.scadenza ? (
+                            <div style={{ 
+                              padding: '4px 10px', 
+                              background: '#dcfce7', 
+                              borderRadius: '6px', 
+                              fontSize: '12px', 
+                              fontWeight: 500, 
+                              color: '#15803d',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}>
+                              <Clock size={12} />
+                              {lotto.scadenza}
+                            </div>
+                          ) : (
+                            <div style={{ 
+                              padding: '4px 10px', 
+                              background: '#f1f5f9', 
+                              borderRadius: '6px', 
+                              fontSize: '12px', 
+                              color: '#64748b' 
+                            }}>
+                              Scadenza N/D
+                            </div>
+                          )}
+                          {lotto.data_consegna && (
+                            <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px' }}>
+                              Consegna: {lotto.data_consegna}
+                            </div>
+                          )}
+                          <div style={{ fontSize: '10px', color: '#cbd5e1', marginTop: '4px', fontStyle: 'italic' }}>
+                            da {lotto.source === 'tracciabilita' ? 'Tracciabilità' : 'Fattura'}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div style={{ padding: '14px 24px', borderTop: '1px solid #e5e7eb', background: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ fontSize: '12px', color: '#64748b' }}>
+                I lotti vengono estratti automaticamente dalle fatture XML
+              </div>
+              <button
+                onClick={() => setShowLottiModal(false)}
+                style={{ 
+                  padding: '10px 20px', 
+                  background: '#e2e8f0', 
+                  border: 'none', 
+                  borderRadius: '8px', 
+                  cursor: 'pointer', 
+                  fontSize: '14px', 
+                  fontWeight: 500,
+                  color: '#475569'
+                }}
+              >
+                Chiudi
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
