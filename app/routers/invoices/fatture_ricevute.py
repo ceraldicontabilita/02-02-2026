@@ -147,6 +147,7 @@ async def check_duplicato(db, partita_iva: str, numero_documento: str) -> Option
 async def salva_dettaglio_righe(db, fattura_id: str, linee: List[Dict]) -> int:
     """
     Salva le righe dettaglio della fattura in una collection separata.
+    Include estrazione automatica lotto fornitore e scadenza dalla descrizione.
     
     Returns:
         Numero righe salvate
@@ -178,6 +179,10 @@ async def salva_dettaglio_righe(db, fattura_id: str, linee: List[Dict]) -> int:
             "prezzo_totale": prezzo_totale,
             "aliquota_iva": aliquota_iva,
             "natura_iva": linea.get("natura", ""),
+            # Dati lotto fornitore estratti dal parser XML
+            "lotto_fornitore": linea.get("lotto_fornitore"),
+            "data_scadenza": linea.get("scadenza_prodotto"),
+            "lotto_estratto_auto": linea.get("lotto_estratto_automaticamente", False),
             "created_at": datetime.now(timezone.utc).isoformat()
         }
         righe_da_inserire.append(riga)
