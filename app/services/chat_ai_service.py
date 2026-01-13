@@ -85,29 +85,54 @@ Usa il grassetto (**testo**) per evidenziare informazioni importanti."""
         # Pattern comuni: "fattura di X", "stipendio di X", "pagato X"
         
         # Cerca fatture
-        if any(kw in query_lower for kw in ["fattura", "fatture", "fornitore", "fornitori", "pagato", "pagamento"]):
-            # Cerca per nome fornitore menzionato
-            fatture_query = {"pagato": {"$ne": True}}
+        if any(kw in query_lower for kw in ["fattura", "fatture", "fornitore", "fornitori", "pagato", "pagamento", "fatturato", "acquisti", "speso"]):
+            # Query base - NON filtra per pagato, mostra tutto
+            fatture_query = {}
             
-            # Estrai possibile nome fornitore
+            # Estrai possibile nome fornitore dalla query
+            # Pattern comuni: "fattura di X", "fatturato di X", "quanto ho speso con X"
             words = query.split()
+            fornitore_found = None
             for i, word in enumerate(words):
-                if word.lower() in ["di", "da", "a", "per"] and i + 1 < len(words):
-                    fornitore_name = " ".join(words[i+1:i+3])
-                    if len(fornitore_name) > 2:
-                        fatture_query["$or"] = [
-                            {"supplier_name": {"$regex": fornitore_name, "$options": "i"}},
-                            {"fornitore_ragione_sociale": {"$regex": fornitore_name, "$options": "i"}}
-                        ]
+                if word.lower() in ["di", "da", "a", "per", "con"] and i + 1 < len(words):
+                    # Prendi tutte le parole dopo fino a fine frase o parola chiave
+                    remaining = words[i+1:]
+                    fornitore_name = []
+                    for w in remaining:
+                        if w.lower() in ["nel", "del", "anno", "mese", "?", "quanto", "quante"]:
+                            break
+                        fornitore_name.append(w)
+                    if fornitore_name:
+                        fornitore_found = " ".join(fornitore_name[:3])  # Max 3 parole
                         break
+            
+            if fornitore_found and len(fornitore_found) > 2:
+                fatture_query["$or"] = [
+                    {"supplier_name": {"$regex": fornitore_found, "$options": "i"}},
+                    {"fornitore_ragione_sociale": {"$regex": fornitore_found, "$options": "i"}},
+                    {"cedente_denominazione": {"$regex": fornitore_found, "$options": "i"}}
+                ]
             
             fatture = await db.invoices.find(
                 fatture_query,
                 {"_id": 0, "id": 1, "invoice_number": 1, "invoice_date": 1, 
-                 "supplier_name": 1, "total_amount": 1, "pagato": 1}
-            ).sort("invoice_date", -1).limit(10).to_list(10)
+                 "supplier_name": 1, "cedente_denominazione": 1, "total_amount": 1, "pagato": 1}
+            ).sort("invoice_date", -1).limit(50).to_list(50)
             
             results["fatture"] = fatture
+            
+            # Calcola statistiche per il fornitore
+            if fornitore_found and fatture:
+                totale_fatturato = sum(f.get("total_amount", 0) or 0 for f in fatture)
+                totale_pagate = sum(f.get("total_amount", 0) or 0 for f in fatture if f.get("pagato"))
+                totale_da_pagare = sum(f.get("total_amount", 0) or 0 for f in fatture if not f.get("pagato"))
+                results["statistiche_fornitore"] = {
+                    "fornitore": fornitore_found,
+                    "num_fatture": len(fatture),
+                    "totale_fatturato": totale_fatturato,
+                    "totale_pagate": totale_pagate,
+                    "totale_da_pagare": totale_da_pagare
+                }
         
         # Cerca dipendenti e stipendi
         if any(kw in query_lower for kw in ["dipendente", "dipendenti", "stipendio", "salario", "busta", "cedolino", "paga"]):
