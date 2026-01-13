@@ -136,6 +136,7 @@ async def upload_f24_commercialista(
         "f24_key": f24_key,
         "file_name": file.filename,
         "file_path": file_path,
+        "parser_used": parser_used,  # Traccia quale parser è stato usato
         "dati_generali": parsed.get("dati_generali", {}),
         "sezione_erario": parsed.get("sezione_erario", []),
         "sezione_inps": parsed.get("sezione_inps", []),
