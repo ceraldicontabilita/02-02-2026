@@ -4,7 +4,7 @@ Permette di fare domande vocali o testuali su fatture, stipendi, buste paga, dip
 
 Utilizza:
 - OpenAI Whisper per speech-to-text
-- GPT-5.2 per generare risposte basate sui dati del database
+- GPT-4o per generare risposte basate sui dati del database
 """
 import os
 import uuid
@@ -12,17 +12,18 @@ import logging
 from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
 from dotenv import load_dotenv
-
-from emergentintegrations.llm.chat import LlmChat, UserMessage
-from emergentintegrations.llm.openai import OpenAISpeechToText
+from openai import AsyncOpenAI
 
 from app.database import Database
 
 load_dotenv()
 logger = logging.getLogger(__name__)
 
-# Chiave API
-EMERGENT_KEY = os.getenv("EMERGENT_LLM_KEY")
+# Chiave API OpenAI
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
+# Client OpenAI
+client = AsyncOpenAI(api_key=OPENAI_API_KEY)
 
 
 class ChatAIService:
@@ -30,10 +31,10 @@ class ChatAIService:
     
     def __init__(self, session_id: str = None):
         self.session_id = session_id or str(uuid.uuid4())
-        self.stt = OpenAISpeechToText(api_key=EMERGENT_KEY)
+        self.conversation_history = []
         
         # System message che descrive il contesto e i dati disponibili
-        self.system_message = """Sei un assistente AI per un'applicazione di gestione aziendale.
+        self.system_message = """Sei un assistente AI per un'applicazione di gestione aziendale italiana.
 Hai accesso ai seguenti dati:
 - Fatture ricevute (fornitori, importi, date, stati pagamento)
 - Buste paga e cedolini dei dipendenti (stipendi, ore lavorate, straordinari, contributi)
@@ -45,24 +46,19 @@ Hai accesso ai seguenti dati:
 Quando l'utente fa una domanda, ti verranno forniti i dati rilevanti estratti dal database.
 Rispondi in modo chiaro, conciso e in italiano.
 Se non trovi i dati richiesti, dillo chiaramente.
-Formatta gli importi in euro (€) e le date in formato italiano (GG/MM/AAAA)."""
-
-        self.chat = LlmChat(
-            api_key=EMERGENT_KEY,
-            session_id=self.session_id,
-            system_message=self.system_message
-        ).with_model("anthropic", "claude-sonnet-4-5")
+Formatta gli importi in euro (€) e le date in formato italiano (GG/MM/AAAA).
+Usa il grassetto (**testo**) per evidenziare informazioni importanti."""
     
     async def transcribe_audio(self, audio_file, language: str = "it") -> str:
         """Converte audio in testo usando Whisper."""
         try:
-            response = await self.stt.transcribe(
-                file=audio_file,
+            response = await client.audio.transcriptions.create(
                 model="whisper-1",
+                file=audio_file,
                 language=language,
-                response_format="json"
+                response_format="text"
             )
-            return response.text
+            return response
         except Exception as e:
             logger.error(f"Errore trascrizione audio: {e}")
             raise
