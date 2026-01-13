@@ -251,10 +251,9 @@ Usa il grassetto (**testo**) per evidenziare informazioni importanti."""
             for mese_nome, mese_num in mesi.items():
                 if mese_nome in query_lower:
                     # Cerca anno
-                    import re
-                    anno_match = re.search(r'20\d{2}', query)
-                    if anno_match:
-                        periodo = f"{anno_match.group()}-{mese_num}"
+                    anno_match_periodo = re.search(r'20\d{2}', query)
+                    if anno_match_periodo:
+                        periodo = f"{anno_match_periodo.group()}-{mese_num}"
                         buste_query["periodo"] = {"$regex": f"^{periodo}"}
                     break
             
