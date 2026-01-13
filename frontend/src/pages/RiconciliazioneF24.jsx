@@ -15,6 +15,9 @@ export default function RiconciliazioneF24() {
   const [filterStatus, setFilterStatus] = useState('da_pagare');
   const [searchCodice, setSearchCodice] = useState('');
   const [searchResult, setSearchResult] = useState(null);
+  const [showPagatiModal, setShowPagatiModal] = useState(false);
+  const [pagatiList, setPagatiList] = useState([]);
+  const [quietanzeList, setQuietanzeList] = useState([]);
 
   const loadDashboard = useCallback(async () => {
     try {
@@ -42,6 +45,22 @@ export default function RiconciliazioneF24() {
       console.error('Errore caricamento alerts:', err);
     }
   }, []);
+
+  const loadPagatiDetails = async () => {
+    try {
+      // Carica F24 pagati
+      const f24Response = await api.get('/api/f24-riconciliazione/commercialista?status=pagato');
+      setPagatiList(f24Response.data.f24_list || []);
+      
+      // Carica quietanze
+      const quietanzeResponse = await api.get('/api/f24-riconciliazione/quietanze');
+      setQuietanzeList(quietanzeResponse.data.quietanze || []);
+      
+      setShowPagatiModal(true);
+    } catch (err) {
+      console.error('Errore caricamento dettagli pagati:', err);
+    }
+  };
 
   useEffect(() => {
     const loadAll = async () => {
