@@ -39,8 +39,8 @@ export default function ChatAI() {
     setIsLoading(true);
     
     try {
-      // Ottieni anno selezionato dal localStorage (impostato dalla Navbar)
-      const selectedYear = localStorage.getItem('selectedYear') || new Date().getFullYear();
+      // Ottieni anno selezionato dal localStorage (impostato dalla AnnoContext)
+      const selectedYear = localStorage.getItem('annoGlobale') || new Date().getFullYear();
       
       const res = await api.post('/api/chat-ai/ask', {
         question,
