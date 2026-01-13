@@ -23,12 +23,20 @@ logger = logging.getLogger(__name__)
 
 # ==================== PATTERN DEFINITIONS ====================
 
-# Pattern per categorie automatiche (senza associazione)
-PATTERN_COMMISSIONI_POS = [
-    r"AMERICAN\s*EXPRESS",
-    r"NUMIA.*AMEX",
+# Pattern per INCASSI POS (entrate - non commissioni!)
+PATTERN_INCASSI_POS = [
+    r"INC\.POS\s*CARTE\s*CREDIT",
+    r"INCAS\.\s*TRAMITE\s*P\.O\.S",
+    r"NUMIA.*(?:PGBNT|INTER)",  # NUMIA-PGBNT, NUMIA-INTER sono incassi
 ]
 
+# Pattern per commissioni POS (solo ADDEBITI American Express, non incassi)
+PATTERN_COMMISSIONI_POS = [
+    r"ADDEBITO.*AMERICAN\s*EXPRESS",
+    r"SDD.*AMERICAN\s*EXPRESS",
+]
+
+# Pattern per commissioni bancarie
 PATTERN_COMMISSIONI_BANCARIE = [
     r"INT\.\s*E\s*COMP\.\s*-\s*COMPETENZE",
     r"COMM\.SU\s*BONIFICI",
