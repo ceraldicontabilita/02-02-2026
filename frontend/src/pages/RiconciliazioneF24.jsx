@@ -71,16 +71,26 @@ export default function RiconciliazioneF24() {
     }
   };
 
-  const handleUploadQuietanza = async (e, f24Id) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleUploadQuietanza = async (e) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
     try {
       const formData = new FormData();
-      formData.append('file', file);
-      formData.append('f24_commercialista_id', f24Id);
-      await api.post('/api/f24-riconciliazione/quietanza/upload', formData);
-      alert('✅ Quietanza caricata e F24 riconciliato!');
+      for (let i = 0; i < files.length; i++) {
+        formData.append('files', files[i]);
+      }
+      
+      const response = await api.post('/api/f24-riconciliazione/quietanze/upload-multiplo', formData);
+      const data = response.data;
+      
+      let message = `✅ Caricati: ${data.totale_caricati}\n`;
+      message += `🔗 Matchati con F24: ${data.totale_matchati}\n`;
+      if (data.totale_senza_match > 0) {
+        message += `⚠️ Senza match: ${data.totale_senza_match}`;
+      }
+      
+      alert(message);
       await Promise.all([loadDashboard(), loadF24List(), loadAlerts()]);
     } catch (err) {
       alert(`❌ Errore: ${err.response?.data?.detail || err.message}`);
