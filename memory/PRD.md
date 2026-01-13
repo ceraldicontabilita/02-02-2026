@@ -401,6 +401,18 @@ Tutte le pagine principali supportano layout mobile:
   - Collezione MongoDB: `estratto_conto_nexi`
   - Categorie auto-riconosciute: E-commerce Amazon, Abbonamento Spotify/Netflix, Carburante, Supermercato, Ristorazione, Trasporti, Assicurazione, Utenze, Bonifico Internazionale
 
+- ✅ **Gestione Assegni - Selezione Multipla e Stampa PDF**:
+  - Aggiunta checkbox per selezionare singoli assegni o tutti
+  - Pulsante "🖨️ Stampa X Selezionati" appare quando ci sono selezioni
+  - Genera PDF con report degli assegni selezionati (numero, stato, beneficiario, importo, fattura)
+  - Le righe selezionate hanno sfondo verde chiaro per evidenziarle
+
+- ✅ **Gestione Assegni - Filtri Fixed/Sticky**:
+  - Pannello filtri rimane fisso in alto quando si scorre la pagina
+  - Sempre accessibile per modificare rapidamente i criteri di ricerca
+  - Pulsante "✕" per chiudere velocemente i filtri
+  - Mostra conteggio risultati in tempo reale
+
 ---
 
 ## 📊 NOTE SULLA RICONCILIAZIONE AUTOMATICA
