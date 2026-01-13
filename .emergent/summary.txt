@@ -1,178 +1,191 @@
 <analysis>**original_problem_statement:**
-L'utente ha richiesto una serie di interventi focalizzati sul refactoring dell'UI, il miglioramento dei parser di documenti e la correzione di bug. Le richieste principali includono:
-1.  **Refactoring Menu Dipendenti:** Spostare i tab dalla pagina  al menu di navigazione laterale come sottomenu, e successivamente riorganizzare ulteriormente questo sottomenu aggiungendo nuove voci (Retribuzione, Progressivi, ecc.).
-2.  **Miglioramento Parser:**
-    *   **F24:** Correggere il parser F24 che non leggeva correttamente tutti i codici tributo (es. 2501, 2502, 2503). Questo è un problema persistente e critico.
-    *   **Buste Paga:** Creare un nuovo parser per le buste paga in formato Zucchetti fornite dall'utente.
-3.  **Miglioramento UI/UX:**
-    *   Rendere coerente il layout di tutte le pagine della sezione Dipendenti con uno stile a due colonne (lista a sinistra, dettaglio a destra).
-    *   Rimuovere la pagina di  manuale, lasciando solo la .
-    *   Migliorare la  aggiungendo una fase di conferma: le associazioni automatiche devono essere spostate in una sezione Da Confermare per la revisione dell'utente.
+L'utente ha richiesto un'ampia revisione dell'applicazione, con un focus principale sulla gestione degli F24. Le richieste includono:
+1.  **Refactoring Parser F24 (Critico):** Risolvere in modo definitivo il problema del parser F24 che non estraeva correttamente tutti i codici tributo, in particolare i codici IRAP (3800, 3812, 3813) e i tributi locali (IMU, etc.). L'utente ha richiesto di abbandonare le regex in favore di un metodo più robusto.
+2.  **Unificazione Interfaccia F24:** Unire le pagine  e  in un'unica interfaccia centralizzata per gestire l'intero ciclo di vita degli F24: caricamento, visualizzazione, pagamento, riconciliazione con quietanze e cancellazione.
+3.  **Miglioramento Riconciliazione:**
+    *   Implementare l'upload massivo sia per gli F24 che per le quietanze.
+    *   Creare un processo di Riconciliazione automatica che associ le quietanze agli F24 corretti.
+    *   Rendere le card riepilogative (es. F24 Pagati) cliccabili per visualizzare in un modale i dettagli delle associazioni, incluse le discrepanze di importo.
 4.  **Correzione Bug:**
-    *   Risolvere un errore che impediva l'eliminazione degli F24 dalla pagina .
-    *   Risolvere un problema sulla pagina  che non funzionava correttamente.
-5.  **Qualità del Codice:** Risolvere tutti gli errori e i warning di linting nel frontend per avere un codice pulito, e chiarire se sia opportuno o meno migrare a TypeScript (decisione: non migrare).
-6.  **Nuove Funzionalità:** L'utente ha menzionato la necessità di caricare dati da file XML per  e .
+    *   Risolvere un errore  sul pulsante Paga.
+    *   Risolvere un errore  durante l'eliminazione di un F24.
+    *   Impedire che il caricamento di nuovi F24 cancelli quelli esistenti, implementando una chiave di univocità.
+5.  **Miglioramento UI/UX:** Rendere le righe della tabella F24 espandibili per mostrare il dettaglio di tutti i tributi estratti.
+6.  **Integrazione Parser Buste Paga:** Integrare il parser per le buste paga Zucchetti, già creato ma non utilizzato.
+7.  **Nuove Funzionalità (XML):** Aggiungere la possibilità di caricare dati da file XML per  e .
 
 **User's preferred language**: Italiano
 
 **what currently exists?**
-L'applicazione è stata oggetto di un profondo refactoring. La navigazione della sezione Dipendenti è stata spostata in un sottomenu laterale a più livelli. Le pagine di questa sezione (, , , ) ora condividono un layout a due colonne coerente. La  è stata potenziata con un flusso di revisione a due fasi (Da Confermare e Da Conciliare). È stato corretto il bug che impediva la cancellazione degli F24 ed è stata rimossa la vecchia pagina di riconciliazione manuale. Il codice frontend è stato ripulito da quasi 100 errori di linting. Sono stati creati o modificati parser per F24 e buste paga, ma il parser F24 rimane inaffidabile.
+L'applicazione ha subito un'importante trasformazione nella gestione degli F24. Il parser F24 () è stato completamente riscritto utilizzando  per un'estrazione basata su coordinate e analisi testuale, abbandonando le fragili espressioni regolari. Ora è in grado di estrarre correttamente tributi da tutte le sezioni (ERARIO, INPS, REGIONI, IMU/Locali), inclusi i codici IRAP che prima venivano saltati.
+
+L'interfaccia utente è stata unificata nella pagina  (), che ora centralizza tutte le funzionalità. Questa pagina include:
+*   Bottoni per il caricamento massivo di F24 e Quietanze.
+*   Un bottone Riconcilia che avvia un processo di matching automatico tra F24 e quietanze.
+*   Card riepilogative cliccabili che aprono modali con i dettagli delle liste (F24 da Pagare, Pagati, Quietanze, Alert).
+*   Una tabella di F24 con righe espandibili per visualizzare il dettaglio di tutti i tributi estratti.
+
+Sono stati corretti numerosi bug, tra cui gli errori 403 (Paga) e 400 (Elimina), ed è stata implementata una logica di deduplica per gli upload.
 
 **Last working item**:
-- **Last item agent was working**: L'agente stava affrontando il problema persistente del parser F24. L'utente ha segnalato con uno screenshot che il parser estrae solo un singolo tributo (ERARIO: 1) da un documento che ne contiene diversi, e che l'interfaccia utente non permette nemmeno di visualizzare il dettaglio di quel singolo tributo. L'agente ha effettuato una ricerca web per trovare tecniche di parsing più robuste per i PDF F24.
+- **Last item agent was working**: L'agente stava perfezionando il parser F24 () per risolvere un problema di duplicazione e per completare la lista dei codici tributo. In particolare, stava affrontando il fatto che alcuni codici (es. , sanzione IRAP) venivano erroneamente inclusi sia nella sezione ERARIO che in quella REGIONI. Inoltre, l'utente aveva chiesto di integrare tutti i codici tributo dal sito dell'Agenzia delle Entrate e di correggere l'estrazione dei codici  e  da specifici file PDF.
 - **Status**: IN PROGRESS
-- **Agent Testing Done**: N
-- **Which testing method agent to use?**: backend testing agent per validare il nuovo parser, seguito da frontend testing agent per verificare la corretta visualizzazione dei dati nell'interfaccia.
+- **Agent Testing Done**: Y
+- **Which testing method agent to use?**: backend testing agent per validare il parser contro tutti i PDF F24 forniti, assicurandosi che non ci siano duplicati né codici mancanti. Successivamente, frontend testing agent per verificare che la UI nella pagina  mostri correttamente i totali per sezione e i dettagli espansi.
 - **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
-- **Issue 1**: (P0 - CRITICAL) Il parser F24 è inaffidabile e non estrae tutti i tributi.
-- **Issue 2**: (P1) Il parser delle buste paga necessita di integrazione e verifica.
-- **Issue 3**: (P2) Mancata gestione delle transazioni PRELIEVO ASSEGNO nella riconciliazione.
+- **Issue 1**: (P0) Il parser F24, sebbene molto migliorato, crea ancora duplicati per alcuni tributi.
+- **Issue 2**: (P1) Il parser delle buste paga è pronto ma non integrato.
+- **Issue 3**: (P2) La gestione delle transazioni PRELIEVO ASSEGNO non è stata ancora implementata.
+- **Issue 4**: (P2) La logica di matching F24-Quietanza è basica e ha prodotto associazioni errate (es. F24 da 200€ associato a quietanza da 838€).
 
 **Issues Detail**:
 - **Issue 1**:
-  - **Description**: Il parser F24 in  utilizza espressioni regolari che si sono dimostrate fragili. Non riesce a estrarre tutte le righe dei tributi dalla sezione ERARIO. Inoltre, l'interfaccia utente nella pagina  ha un bug che non permette di espandere i dettagli dei tributi estratti.
-  - **Attempted fixes**: L'agente ha modificato più volte le regex e il dizionario dei codici tributo, ma senza risolvere il problema di fondo.
+  - **Description**: Il parser F24 in , durante l'analisi della sezione ERARIO, cattura anche righe che appartengono alla sezione REGIONI, specialmente quando un codice tributo regionale (es. sanzione IRAP ) inizia con una cifra () che il pattern ERARIO riconosce. Questo causa la visualizzazione dello stesso tributo in due sezioni diverse.
+  - **Attempted fixes**: L'agente ha ampliato i pattern di riconoscimento per la sezione REGIONI per includere più codici, ma non ha aggiunto una logica di esclusione nella sezione ERARIO per evitare la doppia cattura.
   - **Next debug checklist**:
-    1.  Abbandonare l'approccio basato esclusivamente su regex.
-    2.  Riscrivere il parser in  utilizzando un metodo più robusto, come l'estrazione basata su coordinate con PyMuPDF, come suggerito dalla ricerca web effettuata.
-    3.  Creare uno script di test per validare l'output del nuovo parser su un PDF di esempio.
-    4.  Correggere il componente React nella pagina  per risolvere il bug del menu a tendina che non si espande.
-  - **Why fix this issue and what will be achieved with the fix?**: È una funzionalità fondamentale per la gestione fiscale. La sua correzione permetterà un tracciamento accurato dei pagamenti delle imposte.
+    1.  Modificare la funzione di parsing della sezione ERARIO in  per aggiungere un controllo: se una riga contiene un codice regione valido (es. 0 5), deve essere ignorata da questo parser e lasciata a quello delle REGIONI.
+    2.  Completare la richiesta dell'utente di collezionare TUTTI i codici tributo dal sito dell'Agenzia delle Entrate, non solo quelli IRAP, per rendere il dizionario del parser il più completo possibile.
+    3.  Eseguire test di regressione su tutti i PDF F24 forniti per garantire che la correzione non introduca nuovi problemi.
+  - **Why fix this issue and what will be achieved with the fix?**: Risolverà le discrepanze nei totali e fornirà un riepilogo dei tributi corretto al 100%, aumentando l'affidabilità della funzione più critica dell'app.
   - **Status**: IN PROGRESS
   - **Is recurring issue?**: Y
   - **Should Test frontend/backend/both after fix?**: Both
   - **Blocked on other issue**: No.
 
 - **Issue 2**:
-  - **Description**: L'agente ha creato un parser per le buste paga (), ma non è stato integrato. Manca un'interfaccia per l'upload e la logica per salvare i dati estratti.
-  - **Attempted fixes**: Il parser è stato creato e migliorato in base all'analisi dei PDF.
-  - **Next debug checklist**:
-    1.  Chiedere all'utente dove devono essere salvati i dati estratti (es. ).
-    2.  Implementare l'endpoint API e la logica di servizio per utilizzare il parser e salvare i dati.
-    3.  Creare un'interfaccia frontend per consentire all'utente di caricare i file PDF delle buste paga.
-  - **Why fix this issue and what will be achieved with the fix?**: Automatizza l'inserimento dei dati relativi alle paghe dei dipendenti, una richiesta esplicita dell'utente.
+  - **Description**: Esiste un parser per le buste paga Zucchetti (), ma manca l'infrastruttura per utilizzarlo: non c'è un endpoint API dedicato né un'interfaccia frontend per l'upload dei file.
   - **Status**: NOT STARTED
   - **Is recurring issue?**: N
   - **Should Test frontend/backend/both after fix?**: Both
-  - **Blocked on other issue**: No.
 
 - **Issue 3**:
-  - **Description**: Un problema segnalato in una sessione precedente in cui le transazioni PRELIEVO ASSEGNO non vengono gestite o categorizzate in modo specifico nella Riconciliazione Smart.
-  - **Attempted fixes**: Nessuno.
-  - **Next debug checklist**:
-    1.  Discutere con l'utente quale sia il comportamento atteso per queste transazioni.
-    2.  Implementare la logica di associazione in .
-  - **Why fix this issue and what will be achieved with the fix?**: Completerà la logica di riconciliazione automatica.
+  - **Description**: Una richiesta pendente da una sessione precedente per gestire correttamente le transazioni PRELIEVO ASSEGNO nella Riconciliazione Smart.
   - **Status**: NOT STARTED
   - **Is recurring issue?**: Y
   - **Should Test frontend/backend/both after fix?**: Backend
-  - **Blocked on other issue**: No.
+
+- **Issue 4**:
+  - **Description**: L'algoritmo di riconciliazione automatica tra F24 e quietanze è troppo semplice (probabilmente basato solo sulla vicinanza dell'importo) e crea associazioni errate, causando confusione.
+  - **Next debug checklist**:
+    1.  Rivedere la logica nell'endpoint .
+    2.  Migliorare l'algoritmo affinché consideri più fattori: importo esatto, data di pagamento vicina alla scadenza, e idealmente corrispondenza di alcuni codici tributo.
+    3.  Introdurre una soglia di confidenza per i match automatici.
+  - **Why fix this issue and what will be achieved with the fix?**: Renderà la funzione di riconciliazione automatica affidabile e veramente utile, riducendo il lavoro manuale.
+  - **Status**: NOT STARTED
+  - **Is recurring issue?**: N
+  - **Should Test frontend/backend/both after fix?**: Both
 
 **In progress Task List**:
 Nessuno.
 
 **Upcoming and Future Tasks**
 - **Upcoming Tasks**:
-    - **(P1) Caricamento  da XML**: Implementare la funzionalità per importare i dati dei salari da file XML.
-    - **(P1) Caricamento dati Fornitori da XML**: Implementare l'importazione da XML nella pagina .
-    - **(P2) Frontend per Upload Estratti Conto (Nexi)**: Creare l'interfaccia utente per caricare i file PDF degli estratti conto Nexi, utilizzando il parser già esistente.
+  - **(P1) Integrazione Parser Buste Paga**: Creare l'endpoint e l'UI per l'upload e il parsing delle buste paga.
+  - **(P1) Caricamento  da XML**: Implementare la funzionalità per importare i dati dei salari da file XML.
+  - **(P1) Caricamento dati Fornitori da XML**: Implementare l'importazione da XML nella pagina .
 - **Future Tasks**:
-    - **(P3) Implementare la sezione HACCP**: Sviluppare da zero le funzionalità relative a HACCP, dato che il rollback non è stato effettuato.
-    - **(P3) Automazione Download Email per Estratti Conto**.
-    - **(P3) Calcolo Food Cost nelle Ricette**.
-    - **(P3) Export Excel Magazzino**.
-    - **(P3) Notifiche Email Scadenze**.
+  - **(P2) Frontend per Upload Estratti Conto (Nexi)**.
+  - **(P3) Implementare la sezione HACCP**.
+  - **(P3) Automazione Download Email per Estratti Conto**.
 
 **Completed work in this session**
-- **Refactoring Menu e Pagine Dipendenti**: Riorganizzata la navigazione in un sottomenu laterale e standardizzato il layout delle pagine , ,  e .
-- **Miglioramento **: Introdotto un flusso di lavoro con una scheda Da Confermare per la revisione manuale delle associazioni automatiche.
-- **Correzione Funzionalità F24**: Implementato l'endpoint  mancante per l'eliminazione degli F24 e risolto il bug dall'interfaccia.
-- **Pulizia Codice Frontend**: Risolti circa 99 errori e warning di linting in tutti i file  del progetto, migliorando la qualità e la stabilità del codice.
-- **Rimozione **: Eliminata la pagina e la rotta non più necessarie.
+- **Risoluzione Criticità Parser F24**: Il parser è stato riscritto per utilizzare  ed è ora in grado di leggere correttamente la maggior parte dei tributi, inclusi IRAP (, ) e tributi locali, risolvendo il blocco principale dell'utente.
+- **Unificazione Pagina F24**: Le pagine  e  sono state fuse in un'unica, potente pagina  () che centralizza tutte le operazioni.
+- **Miglioramento UI/UX F24**:
+  - Implementato l'upload massivo per F24 e quietanze.
+  - Aggiunto un pulsante Riconcilia per il matching automatico.
+  - Le card riepilogative e le righe della tabella sono ora interattive (cliccabili/espandibili) e mostrano dettagli in modali o sezioni a comparsa.
+- **Bug Fixing**:
+  - Risolti gli errori  (Paga) e  (Elimina) negli endpoint F24.
+  - Implementata una chiave di univocità () per prevenire la sovrascrittura di dati durante l'upload.
+- **Refactoring Codice**:
+  - Rinominato e riorganizzato il codice del parser in .
+  - Aggiornati tutti gli  nel backend per puntare al nuovo parser.
+  - La pagina  è stata completamente riscritta per integrare tutte le nuove funzionalità.
 
 **Earlier issues found/mentioned but not fixed**
 - **Gestione PRELIEVO ASSEGNO**: Issue ricorrente da una fork precedente, non ancora affrontata.
 
 **Known issue recurrence from previous fork**
 - **Issue recurrence in previous fork**: Mancata gestione delle transazioni PRELIEVO ASSEGNO.
-- **Recurrence count**: 2+
+- **Recurrence count**: 3+
 - **Status**: NOT STARTED
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **UI/UX Refactoring (React)**: Transizione da una navigazione basata su tab interni a una pagina a una navigazione globale e gerarchica nella barra laterale, migliorando l'architettura dell'informazione. Standardizzazione dei layout delle pagine per coerenza visiva.
-- **State Management (React)**: Intenso utilizzo di ,  e . È stato eseguito un importante lavoro di linting per applicare le rules of hooks di React e migliorare la stabilità.
-- **PDF Parsing (Python/PyMuPDF)**: L'approccio basato su regex per il parsing degli F24 si è dimostrato inaffidabile. La sessione si è conclusa con la necessità di passare a un metodo più robusto come l'estrazione basata su coordinate.
-- **API Development (FastAPI)**: Aggiunta di un nuovo endpoint  a un router esistente per implementare una funzionalità mancante richiesta dall'utente.
+- **PDF Parsing (Python/PyMuPDF)**: Utilizzo avanzato di PyMuPDF per estrarre testo e le sue coordinate, permettendo un parsing strutturato basato sulla posizione degli elementi nel PDF, superando i limiti delle regex.
+- **UI/UX (React)**: Creazione di un'interfaccia complessa e unificata con stato gestito tramite  e . Implementazione di componenti interattivi come modali, tab, card cliccabili e righe di tabella espandibili.
+- **API Development (FastAPI)**: Aggiunta di nuovi endpoint per operazioni complesse come la riconciliazione batch (), l'upload multiplo di file e la gestione idempotente delle risorse tramite chiavi univoche.
+- **Data Deduplication**: Introduzione di una chiave composita ( +  + ) per identificare univocamente un F24 ed evitare duplicati nel database.
 
 **key DB schema**
-Nessuna modifica allo schema del database.
+Nessuna modifica allo schema, ma la logica applicativa ora utilizza il campo  nella collection degli F24 per la deduplica.
 
 **changes in tech stack**
 Nessun cambiamento.
 
 **All files of reference**
-- : Il parser F24 che necessita di una riscrittura completa.
--  (o file simile per la pagina ): Il componente frontend con il bug di visualizzazione dei tributi.
-- : La pagina con il nuovo flusso di conferma.
-- : Contiene la logica della nuova navigazione a sottomenu.
-- : Esempio del nuovo layout a due colonne.
-- : Il router backend per la gestione degli F24.
-- : Il nuovo parser per le buste paga da integrare.
+- : Il cuore della logica di parsing F24, dove va risolto il problema della duplicazione.
+- : Il router FastAPI che contiene tutti gli endpoint per la gestione F24, incluso quello per la riconciliazione da migliorare.
+- : La pagina React unificata che contiene tutta l'interfaccia utente per la gestione F24.
+- : File di routing principale di React.
 
 **Areas that need refactoring**:
-- **F24 Parser**: Il file  deve essere riscritto da zero utilizzando una tecnica più affidabile dell'attuale approccio basato su regex.
+- La funzione  in  necessita di un algoritmo di matching più intelligente per evitare associazioni errate.
+- Il file  è molto lungo; potrebbe beneficiare di una struttura a classi per organizzare meglio le logiche di parsing delle diverse sezioni.
 
 **key api endpoints**
-- : (Creato in questa sessione) Elimina un documento F24 caricato dal commercialista.
-- : (Esistente) Endpoint per il caricamento delle buste paga, da integrare con il nuovo parser.
+- : (Creato) Esegue il matching automatico tra F24 e quietanze.
+- : (Creato) Permette l'upload massivo di file di quietanza.
+- : (Modificato) Endpoint per l'upload di F24 con logica di deduplica.
+- : (Modificato) Reso più robusto per gestire tentativi di eliminazione multipla.
+- : (Creato) Segna un F24 come pagato manualmente.
+- : (Creato) Fornisce il file PDF di un F24 per la visualizzazione nel frontend.
 
 **Critical Info for New Agent**
-- **Il Rollback non è un'opzione**: L'utente non è riuscito a eseguire il rollback. I dati persi (, ) sono da considerarsi irrecuperabili. Qualsiasi funzionalità correlata deve essere ricostruita prevedendo l'inserimento manuale dei dati. Non suggerire nuovamente il rollback.
-- **Priorità assoluta sul Parser F24**: Il problema del parser F24 è il bloccante principale e la maggiore fonte di frustrazione per l'utente. La prossima azione deve essere la sua riscrittura con un metodo robusto (es. estrazione basata su coordinate), abbandonando l'attuale approccio con regex.
-- **Focus sulle richieste dell'utente**: Le priorità attuali sono: 1) Correggere il parser F24, 2) Integrare il parser delle buste paga, 3) Introdurre l'importazione da XML per salari e fornitori. Ignorare le altre attività a meno che l'utente non le richieda esplicitamente.
+- **La priorità assoluta è il parser F24**: L'utente è molto attento ai dettagli. Ogni codice tributo mancante o duplicato verrà notato. Risolvere il problema della doppia contabilizzazione (ERARIO/REGIONI) è il prossimo passo fondamentale.
+- **Completezza dei dati**: L'utente ha chiesto esplicitamente di usare il sito dell'Agenzia delle Entrate come fonte per tutti i codici tributo. Questa operazione va completata.
+- **UI Unificata**: Non creare nuove pagine per la gestione F24. Tutto il lavoro deve convergere sulla pagina , migliorandola ulteriormente.
+- **Affidabilità della Riconciliazione**: L'algoritmo di matching automatico è il prossimo punto debole da affrontare dopo il parser. Un matching inaffidabile rende la funzione inutile.
 
 **documents and test reports created in this job**
 Nessuno.
 
 **Last 10 User Messages and any pending HUMAN messages**
-- **10. (PENDING)** Segnala che il parser F24 non funziona, non legge tutti i tributi e l'interfaccia ha un bug sulla visualizzazione dei dettagli. Chiede di cercare aiuto esterno per risolvere.
-- **9.** Segnala che non può eliminare gli F24. (COMPLETATO)
-- **8.** Segnala un errore 405 sulla pagina di riconciliazione F24. (RISOLTO - era temporaneo)
-- **7.** Chiede di migliorare sia il parser delle buste paga sia quello degli F24. (IN PROGRESS)
-- **6.** Chiede di migliorare la  aggiungendo una fase di conferma. (COMPLETATO)
-- **5.** Chiede un parere su TypeScript e accetta di rimanere su JSX, indicando nuove priorità (Riconciliazione, Prima Nota Salari da XML, Gestione Fornitori). (CHIARITO)
-- **4.** Chiede di correggere tutti gli errori di linting nel frontend. (COMPLETATO)
-- **3.** Chiede se è il caso di passare a TypeScript. (CHIARITO)
-- **2.** Richiede numerose correzioni: UI delle pagine dipendenti, coerenza grafica e una nuova correzione al parser F24 per codici specifici. (PARZIALMENTE COMPLETATO)
-- **1.** Fornisce PDF di buste paga e chiede di creare il parser, eliminare la riconciliazione manuale e riorganizzare il sottomenu Dipendenti. (COMPLETATO)
+- **10. (PENDING)** Richiede di scaricare tutti i codici tributo dal sito dell'Agenzia delle Entrate. Segnala che mancano i codici  e  da specifici file PDF e chiede di migliorare la visualizzazione della sezione REGIONI.
+- **9.** Segnala che le due pagine F24 sono identiche e mancano le funzionalità della vecchia pagina di riconciliazione. (RISOLTO, le pagine sono state unite correttamente).
+- **8.** Risponde a una domanda dell'agente sulla riconciliazione, specificando che l'associazione non è stata fatta con l'estratto conto. Chiede di poter vedere l'associazione F24/quietanza e di rendere le righe espandibili. (IMPLEMENTATO)
+- **7.** Segnala che l'associazione automatica F24/quietanza è errata e che le card non sono tutte cliccabili. Chiede di aggiungere un upload massivo per gli F24 e un bottone Riconcilia. (IMPLEMENTATO)
+- **6.** Riassume le correzioni: parser rinominato, errore 403 risolto. Spiega il flusso desiderato per le quietanze (upload multiplo, matching automatico, doppio controllo con protocollo). (IMPLEMENTATO)
+- **5.** Chiede di rinominare il parser per evitare confusione. Chiede spiegazioni sulla differenza tra  e  e sulla funzione quietanza. Segnala errore 403 sui bottoni Paga. (RISOLTO)
+- **4.** Segnala che i tributi locali/IMU (3847, 3848) sono stati estratti ma non sono visibili nell'interfaccia. (RISOLTO, aggiunta sezione IMU nel frontend).
+- **3.** Conferma che i tributi da lui indicati sono stati estratti correttamente.
+- **2.** Fornisce un PDF F24 e un file JNLP, chiedendo di analizzarli perché il parser non legge tutti i tributi. (RISOLTO, il parser è stato corretto e ora li legge).
+- **1.** Fornisce un file ZIP e un JNLP, menzionando che mancano dei tributi e chiedendo se possono essere utili per la lettura degli F24. (ANALIZZATO, ha portato all'aggiunta di nuovi codici IMU/locali).
 
 **Project Health Check:**
-- **Broken**: **SÌ**. La funzionalità di parsing e visualizzazione degli F24, fondamentale per l'utente, è rotta.
-- **Mocked**: Le nuove pagine della sezione Dipendenti (, , ecc.) sono placeholder. La funzionalità HACCP è completamente assente.
-- **Technical Debt**: Il parser F24 () rappresenta un debito tecnico significativo. È complesso, fragile e richiede una riscrittura completa.
+- **Broken**: NO. Le funzionalità critiche sono state ripristinate e notevolmente migliorate. Ci sono ancora imprecisioni da risolvere.
+- **Mocked**: La sezione HACCP è assente. L'integrazione del parser delle buste paga è mancante.
+- **Technical Debt**: Il file  è funzionale ma molto esteso e complesso. La logica di matching in  è ancora troppo semplice e rappresenta un debito da saldare per rendere la funzione affidabile.
 
 **3rd Party Integrations**
-Nessuna nuova integrazione aggiunta in questa sessione. Le integrazioni esistenti sono:
-- : Per l'LLM .
-- : Per la ricerca fuzzy.
--  (fitz): Per il parsing dei PDF.
--  / : Per la generazione di PDF.
+-  (fitz): Utilizzato intensamente per il parsing dei PDF.
+- Nessuna nuova integrazione.
 
 **Testing status**
 - **Testing agent used after significant changes**: NO
 - **Troubleshoot agent used after agent stuck in loop**: NO
 - **Test files created**: Nessuno.
-- **Known regressions**: Nessuna nuova regressione, ma il problema del parser F24 è peggiorato o la sua inefficacia è diventata più evidente.
+- **Known regressions**: Nessuna.
 
 **Credentials to test flow:**
 Nessuna.
 
 **What agent forgot to execute**
-- Non ha affrontato il task in sospeso dalla sessione precedente sulla gestione dei PRELIEVO ASSEGNO.
-- Non ha implementato le nuove funzionalità richieste dall'utente riguardo all'importazione da XML per  e .</analysis>
+- Non ha completato la richiesta di scaricare **tutti** i codici tributo dal sito dell'Agenzia delle Entrate, concentrandosi solo su quelli IRAP e su quelli presenti nei file forniti.
+- Non ha ancora affrontato il task pendente sulla gestione dei PRELIEVO ASSEGNO.
+- Non ha iniziato a lavorare sull'integrazione del parser delle buste paga o sull'importazione da XML.</analysis>
