@@ -181,16 +181,16 @@ export default function ChatAI() {
 
   return (
     <>
-      {/* Floating Button */}
+      {/* Floating Button - Posizionato più in alto per non coprire il menu mobile */}
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
           style={{
             position: 'fixed',
-            bottom: '24px',
-            right: '24px',
-            width: '60px',
-            height: '60px',
+            bottom: '100px', // Più in alto per non coprire la nav mobile
+            right: '20px',
+            width: '56px',
+            height: '56px',
             borderRadius: '50%',
             background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
             border: 'none',
@@ -200,7 +200,7 @@ export default function ChatAI() {
             alignItems: 'center',
             justifyContent: 'center',
             color: 'white',
-            zIndex: 9998,
+            zIndex: 998, // Sotto il menu mobile (1000)
             transition: 'transform 0.2s, box-shadow 0.2s'
           }}
           onMouseEnter={(e) => {
@@ -213,28 +213,31 @@ export default function ChatAI() {
           }}
           data-testid="chat-ai-button"
         >
-          <MessageCircle size={28} />
+          <MessageCircle size={26} />
         </button>
       )}
 
-      {/* Chat Window */}
+      {/* Chat Window - Responsive */}
       {isOpen && (
         <div
           style={{
             position: 'fixed',
-            bottom: '24px',
-            right: '24px',
-            width: '400px',
-            maxWidth: 'calc(100vw - 48px)',
-            height: '600px',
-            maxHeight: 'calc(100vh - 100px)',
+            bottom: '100px', // Più in alto su mobile
+            right: '16px',
+            width: 'min(380px, calc(100vw - 32px))',
+            height: 'min(500px, calc(100vh - 180px))',
             background: 'white',
-            borderRadius: '20px',
+            borderRadius: '16px',
             boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
             display: 'flex',
             flexDirection: 'column',
             overflow: 'hidden',
-            zIndex: 9999
+            zIndex: 999,
+            resize: 'both', // Permette ridimensionamento
+            minWidth: '300px',
+            minHeight: '300px',
+            maxWidth: 'calc(100vw - 32px)',
+            maxHeight: 'calc(100vh - 120px)'
           }}
           data-testid="chat-ai-window"
         >
