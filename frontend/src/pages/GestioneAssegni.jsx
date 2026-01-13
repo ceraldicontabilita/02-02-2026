@@ -338,7 +338,7 @@ export default function GestioneAssegni() {
       (a.note || '-').substring(0, 20)
     ]);
     
-    doc.autoTable({
+    autoTable(doc, {
       startY: 65,
       head: [['N. Assegno', 'Stato', 'Beneficiario', 'Importo', 'Data Fatt.', 'N. Fattura', 'Note']],
       body: tableData,
