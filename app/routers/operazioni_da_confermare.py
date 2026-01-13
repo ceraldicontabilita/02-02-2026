@@ -772,25 +772,46 @@ async def riconcilia_manuale(
 async def cerca_fatture_per_associazione(
     fornitore: Optional[str] = Query(None, description="Nome fornitore"),
     importo: Optional[float] = Query(None, description="Importo da matchare"),
-    data_max: Optional[str] = Query(None, description="Data massima fattura (YYYY-MM-DD)")
+    data_max: Optional[str] = Query(None, description="Data massima fattura (YYYY-MM-DD)"),
+    limit: int = Query(50, description="Limite risultati")
 ) -> Dict[str, Any]:
     """
     Cerca fatture per associazione manuale.
     Se importo specificato, cerca anche combinazioni che sommano all'importo.
+    Restituisce sempre le ultime fatture non pagate se nessun filtro è specificato.
     """
-    from app.services.riconciliazione_smart import cerca_fatture_fornitore, trova_combinazioni_somma
+    from app.services.riconciliazione_smart import trova_combinazioni_somma
     
     db = Database.get_db()
     
-    fatture = await cerca_fatture_fornitore(db, fornitore, data_max=data_max)
+    # Query base: fatture non pagate
+    query = {"pagato": {"$ne": True}}
+    
+    if fornitore and len(fornitore) >= 2:
+        query["$or"] = [
+            {"supplier_name": {"$regex": fornitore, "$options": "i"}},
+            {"fornitore_ragione_sociale": {"$regex": fornitore, "$options": "i"}},
+            {"cedente_denominazione": {"$regex": fornitore, "$options": "i"}}
+        ]
+    
+    if data_max:
+        query["$or"] = query.get("$or", []) + [
+            {"invoice_date": {"$lte": data_max}},
+            {"data_documento": {"$lte": data_max}}
+        ]
+    
+    fatture = await db.invoices.find(query, {"_id": 0}).sort([
+        ("invoice_date", -1), 
+        ("data_documento", -1)
+    ]).limit(limit).to_list(limit)
     
     result = {
         "fatture": [{
             "id": f.get("id"),
-            "numero": f.get("invoice_number") or f.get("numero_fattura"),
-            "data": f.get("invoice_date") or f.get("data_fattura"),
+            "numero": f.get("invoice_number") or f.get("numero_fattura") or f.get("numero_documento"),
+            "data": f.get("invoice_date") or f.get("data_fattura") or f.get("data_documento"),
             "importo": f.get("total_amount") or f.get("importo_totale"),
-            "fornitore": f.get("supplier_name") or f.get("fornitore"),
+            "fornitore": f.get("supplier_name") or f.get("fornitore_ragione_sociale") or f.get("fornitore"),
             "pagato": f.get("pagato", False)
         } for f in fatture],
         "totale": len(fatture)
@@ -801,8 +822,9 @@ async def cerca_fatture_per_associazione(
         combos = trova_combinazioni_somma(fatture, abs(importo))
         result["combinazioni_suggerite"] = [[{
             "id": f.get("id"),
-            "numero": f.get("invoice_number") or f.get("numero_fattura"),
-            "importo": f.get("total_amount") or f.get("importo_totale")
+            "numero": f.get("invoice_number") or f.get("numero_fattura") or f.get("numero_documento"),
+            "importo": f.get("total_amount") or f.get("importo_totale"),
+            "fornitore": f.get("supplier_name") or f.get("fornitore_ragione_sociale")
         } for f in combo] for combo in combos]
     
     return result
