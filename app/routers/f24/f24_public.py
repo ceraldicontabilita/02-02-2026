@@ -43,16 +43,28 @@ async def upload_f24_pdf(
     - F24 contributi INPS
     
     Estrae: codice tributo, importo, periodo riferimento, scadenza
+    Usa parser basato su coordinate PyMuPDF per maggiore affidabilità.
     """
-    from app.parsers.f24_parser import parse_f24_pdf
+    import tempfile
+    import os
+    from app.services.f24_commercialista_parser import parse_f24_commercialista
     
     if not file.filename.lower().endswith('.pdf'):
         raise HTTPException(status_code=400, detail="Solo file PDF supportati")
     
     pdf_bytes = await file.read()
     
-    # Parse PDF
-    parsed = parse_f24_pdf(pdf_bytes)
+    # Salva temporaneamente il PDF per il parser
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
+        tmp_file.write(pdf_bytes)
+        tmp_path = tmp_file.name
+    
+    try:
+        # Parse PDF usando il parser robusto basato su coordinate
+        parsed = parse_f24_commercialista(tmp_path)
+    finally:
+        # Rimuovi file temporaneo
+        os.unlink(tmp_path)
     
     if "error" in parsed and parsed["error"]:
         return {
@@ -64,34 +76,110 @@ async def upload_f24_pdf(
     # Get database
     db = Database.get_db()
     
-    # Convert scadenza to ISO format
-    data_scadenza = None
-    if parsed.get("scadenza"):
-        try:
-            dt_obj = datetime.strptime(parsed["scadenza"], "%d/%m/%Y")
-            data_scadenza = dt_obj.strftime("%Y-%m-%d")
-        except (ValueError, TypeError):
-            pass
+    # Convert data_versamento to data_scadenza
+    data_scadenza = parsed.get("dati_generali", {}).get("data_versamento")
+    
+    # Converti formato tributi per compatibilità con frontend
+    tributi_erario = []
+    for t in parsed.get("sezione_erario", []):
+        tributi_erario.append({
+            "codice_tributo": t.get("codice_tributo"),
+            "codice": t.get("codice_tributo"),
+            "rateazione": t.get("rateazione", ""),
+            "periodo_riferimento": t.get("periodo_riferimento", ""),
+            "anno_riferimento": t.get("anno", ""),
+            "anno": t.get("anno", ""),
+            "mese": t.get("mese", ""),
+            "importo_debito": t.get("importo_debito", 0),
+            "importo_credito": t.get("importo_credito", 0),
+            "importo": t.get("importo_debito", 0),
+            "descrizione": t.get("descrizione", ""),
+            "riferimento": t.get("periodo_riferimento", "")
+        })
+    
+    tributi_inps = []
+    for t in parsed.get("sezione_inps", []):
+        tributi_inps.append({
+            "codice_sede": t.get("codice_sede", ""),
+            "causale": t.get("causale", ""),
+            "causale_contributo": t.get("causale", ""),
+            "matricola": t.get("matricola", ""),
+            "periodo_da": t.get("mese", ""),
+            "periodo_a": t.get("anno", ""),
+            "periodo_riferimento": t.get("periodo_riferimento", ""),
+            "importo_debito": t.get("importo_debito", 0),
+            "importo_credito": t.get("importo_credito", 0),
+            "importo": t.get("importo_debito", 0),
+            "descrizione": t.get("descrizione", "")
+        })
+    
+    tributi_regioni = []
+    for t in parsed.get("sezione_regioni", []):
+        tributi_regioni.append({
+            "codice_tributo": t.get("codice_tributo"),
+            "codice": t.get("codice_tributo"),
+            "codice_regione": t.get("codice_regione", ""),
+            "codice_ente": t.get("codice_regione", ""),
+            "periodo_riferimento": t.get("periodo_riferimento", ""),
+            "importo_debito": t.get("importo_debito", 0),
+            "importo_credito": t.get("importo_credito", 0),
+            "importo": t.get("importo_debito", 0),
+            "descrizione": t.get("descrizione", "")
+        })
+    
+    tributi_imu = []
+    for t in parsed.get("sezione_tributi_locali", []):
+        tributi_imu.append({
+            "codice_tributo": t.get("codice_tributo"),
+            "codice": t.get("codice_tributo"),
+            "codice_comune": t.get("codice_comune", ""),
+            "codice_ente": t.get("codice_comune", ""),
+            "periodo_riferimento": t.get("periodo_riferimento", ""),
+            "importo_debito": t.get("importo_debito", 0),
+            "importo_credito": t.get("importo_credito", 0),
+            "importo": t.get("importo_debito", 0),
+            "descrizione": t.get("descrizione", "")
+        })
+    
+    # Aggiungi anche INAIL se presente
+    for t in parsed.get("sezione_inail", []):
+        tributi_inps.append({
+            "codice_sede": t.get("codice_sede", ""),
+            "causale": "INAIL",
+            "causale_contributo": t.get("causale", "INAIL"),
+            "matricola": t.get("codice_ditta", ""),
+            "periodo_da": "",
+            "periodo_a": "",
+            "periodo_riferimento": t.get("numero_riferimento", ""),
+            "importo_debito": t.get("importo_debito", 0),
+            "importo_credito": t.get("importo_credito", 0),
+            "importo": t.get("importo_debito", 0),
+            "descrizione": t.get("descrizione", "")
+        })
+    
+    totali = parsed.get("totali", {})
     
     # Create F24 record
     f24_id = str(uuid.uuid4())
     f24_record = {
         "id": f24_id,
         "data_scadenza": data_scadenza,
-        "scadenza_display": parsed.get("scadenza"),
-        "codice_fiscale": parsed.get("codice_fiscale"),
-        "contribuente": parsed.get("contribuente"),
-        "banca": parsed.get("banca"),
-        "tributi_erario": parsed.get("tributi_erario", []),
-        "tributi_inps": parsed.get("tributi_inps", []),
-        "tributi_regioni": parsed.get("tributi_regioni", []),
-        "tributi_imu": parsed.get("tributi_imu", []),
-        "totale_debito": parsed.get("totale_debito", 0),
-        "totale_credito": parsed.get("totale_credito", 0),
-        "saldo_finale": parsed.get("saldo_finale", 0),
+        "scadenza_display": data_scadenza,
+        "codice_fiscale": parsed.get("dati_generali", {}).get("codice_fiscale"),
+        "contribuente": parsed.get("dati_generali", {}).get("ragione_sociale"),
+        "banca": parsed.get("dati_generali", {}).get("banca"),
+        "tipo_f24": parsed.get("dati_generali", {}).get("tipo_f24", "F24"),
+        "tributi_erario": tributi_erario,
+        "tributi_inps": tributi_inps,
+        "tributi_regioni": tributi_regioni,
+        "tributi_imu": tributi_imu,
+        "totale_debito": totali.get("totale_debito", 0),
+        "totale_credito": totali.get("totale_credito", 0),
+        "saldo_finale": totali.get("saldo_finale", 0),
+        "has_ravvedimento": parsed.get("has_ravvedimento", False),
         "pagato": False,
         "filename": file.filename,
-        "pdf_data": base64.b64encode(pdf_bytes).decode('utf-8'),  # Store PDF as base64
+        "pdf_data": base64.b64encode(pdf_bytes).decode('utf-8'),
         "source": "pdf_upload",
         "created_at": datetime.utcnow().isoformat()
     }
@@ -99,8 +187,7 @@ async def upload_f24_pdf(
     # Check for duplicates
     existing = await db["f24_models"].find_one({
         "data_scadenza": data_scadenza,
-        "codice_fiscale": parsed.get("codice_fiscale"),
-        "saldo_finale": parsed.get("saldo_finale")
+        "saldo_finale": totali.get("saldo_finale", 0)
     })
     
     if existing:
@@ -109,19 +196,19 @@ async def upload_f24_pdf(
     # Insert into database
     await db["f24_models"].insert_one(f24_record)
     
-    logger.info(f"F24 importato: {f24_id} - Scadenza {data_scadenza} - €{parsed.get('saldo_finale', 0):.2f}")
+    logger.info(f"F24 importato: {f24_id} - Scadenza {data_scadenza} - €{totali.get('saldo_finale', 0):.2f}")
     
     return {
         "success": True,
         "id": f24_id,
         "scadenza": data_scadenza,
-        "contribuente": parsed.get("contribuente"),
-        "saldo_finale": parsed.get("saldo_finale"),
+        "contribuente": parsed.get("dati_generali", {}).get("ragione_sociale"),
+        "saldo_finale": totali.get("saldo_finale", 0),
         "tributi": {
-            "erario": len(parsed.get("tributi_erario", [])),
-            "inps": len(parsed.get("tributi_inps", [])),
-            "regioni": len(parsed.get("tributi_regioni", [])),
-            "imu": len(parsed.get("tributi_imu", []))
+            "erario": len(tributi_erario),
+            "inps": len(tributi_inps),
+            "regioni": len(tributi_regioni),
+            "imu": len(tributi_imu)
         },
         "filename": file.filename
     }
