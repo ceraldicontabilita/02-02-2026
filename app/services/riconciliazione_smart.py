@@ -102,8 +102,16 @@ def estrai_numeri_fattura(descrizione: str) -> List[str]:
     return result
 
 
+def is_incasso_pos(descrizione: str) -> bool:
+    """Verifica se è un incasso POS (entrata)."""
+    for pattern in PATTERN_INCASSI_POS:
+        if re.search(pattern, descrizione, re.IGNORECASE):
+            return True
+    return False
+
+
 def is_commissione_pos(descrizione: str) -> bool:
-    """Verifica se è una commissione POS."""
+    """Verifica se è una commissione POS (addebito American Express)."""
     for pattern in PATTERN_COMMISSIONI_POS:
         if re.search(pattern, descrizione, re.IGNORECASE):
             return True
