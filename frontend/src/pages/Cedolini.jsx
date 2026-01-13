@@ -42,6 +42,17 @@ export default function Cedolini() {
     }
   }, [anno]);
 
+  const loadDipendenti = async () => {
+    try {
+      const res = await api.get('/api/dipendenti');
+      setDipendenti(res.data.filter(d => d.status === 'attivo' || d.status === 'active' || !d.status));
+    } catch (e) {
+      console.error('Errore:', e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     loadDipendenti();
   }, []);
