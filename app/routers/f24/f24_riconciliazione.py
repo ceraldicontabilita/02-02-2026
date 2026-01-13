@@ -847,3 +847,111 @@ async def get_quietanza(quietanza_id: str) -> Dict[str, Any]:
         raise HTTPException(status_code=404, detail="Quietanza non trovata")
     
     return quietanza
+
+
+@router.post("/riconcilia-tutto")
+async def riconcilia_tutto() -> Dict[str, Any]:
+    """
+    Riassegna automaticamente tutte le quietanze agli F24.
+    
+    Algoritmo migliorato:
+    1. Confronta per importo ESATTO (tolleranza €0.50)
+    2. Se non trova, confronta per codici tributo (>=80% match)
+    3. Aggiorna stato F24 e crea associazioni
+    """
+    db = Database.get_db()
+    
+    # Reset associazioni esistenti sugli F24 da_pagare
+    await db[COLL_F24_COMMERCIALISTA].update_many(
+        {"status": "da_pagare"},
+        {"$set": {"quietanza_id": None, "protocollo_quietanza": None, "riconciliato_quietanza": False}}
+    )
+    
+    # Recupera tutti gli F24 da pagare
+    f24_da_pagare = await db[COLL_F24_COMMERCIALISTA].find(
+        {"status": "da_pagare"},
+        {"_id": 0}
+    ).to_list(1000)
+    
+    # Recupera tutte le quietanze non associate
+    quietanze = await db[COLL_QUIETANZE].find({}, {"_id": 0}).to_list(1000)
+    
+    # Reset associazioni quietanze
+    await db[COLL_QUIETANZE].update_many({}, {"$set": {"f24_associati": []}})
+    
+    f24_riconciliati = 0
+    nuovi_match = 0
+    
+    # Per ogni F24, cerca la quietanza con importo più simile
+    for f24 in f24_da_pagare:
+        saldo_f24 = f24.get("totali", {}).get("saldo_netto", 0)
+        
+        best_match = None
+        best_diff = float('inf')
+        
+        for quietanza in quietanze:
+            saldo_quietanza = quietanza.get("saldo", 0)
+            diff = abs(saldo_f24 - saldo_quietanza)
+            
+            # Match esatto per importo (tolleranza €0.50)
+            if diff < 0.50 and diff < best_diff:
+                best_match = quietanza
+                best_diff = diff
+        
+        # Se non trova match per importo, prova per codici tributo
+        if not best_match:
+            codici_f24 = set()
+            for t in f24.get("sezione_erario", []):
+                if t.get("codice_tributo"):
+                    codici_f24.add(t["codice_tributo"])
+            for t in f24.get("sezione_inps", []):
+                if t.get("causale"):
+                    codici_f24.add(t["causale"])
+            
+            if codici_f24:
+                for quietanza in quietanze:
+                    codici_quietanza = set(quietanza.get("codici_tributo", []))
+                    if codici_quietanza:
+                        comuni = codici_f24.intersection(codici_quietanza)
+                        match_pct = (len(comuni) / len(codici_f24)) * 100 if codici_f24 else 0
+                        
+                        if match_pct >= 80:
+                            best_match = quietanza
+                            break
+        
+        # Se trovato match, aggiorna
+        if best_match:
+            await db[COLL_F24_COMMERCIALISTA].update_one(
+                {"id": f24["id"]},
+                {"$set": {
+                    "status": "pagato",
+                    "quietanza_id": best_match["id"],
+                    "protocollo_quietanza": best_match.get("protocollo_telematico"),
+                    "data_pagamento_quietanza": best_match.get("data_pagamento"),
+                    "differenza_importo": round(saldo_f24 - best_match.get("saldo", 0), 2),
+                    "riconciliato_quietanza": True,
+                    "updated_at": datetime.now(timezone.utc).isoformat()
+                }}
+            )
+            
+            await db[COLL_QUIETANZE].update_one(
+                {"id": best_match["id"]},
+                {"$addToSet": {"f24_associati": f24["id"]}}
+            )
+            
+            f24_riconciliati += 1
+            nuovi_match += 1
+            
+            # Rimuovi questa quietanza dalle disponibili per evitare duplicati
+            quietanze = [q for q in quietanze if q["id"] != best_match["id"]]
+    
+    # Pulisci vecchi alert
+    await db[COLL_F24_ALERTS].delete_many({"tipo": "quietanza_senza_match"})
+    
+    return {
+        "success": True,
+        "f24_riconciliati": f24_riconciliati,
+        "nuovi_match": nuovi_match,
+        "f24_rimasti_da_pagare": len(f24_da_pagare) - f24_riconciliati
+    }
+
