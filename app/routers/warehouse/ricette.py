@@ -855,10 +855,10 @@ async def cerca_lotti_fornitore(
     
     # Rimuovi duplicati per lotto
     lotti_unici = {}
-    for l in lotti:
-        key = f"{l['lotto_fornitore']}_{l['prodotto']}"
-        if key not in lotti_unici or (l.get('scadenza') and not lotti_unici[key].get('scadenza')):
-            lotti_unici[key] = l
+    for lotto_item in lotti:
+        key = f"{lotto_item['lotto_fornitore']}_{lotto_item['prodotto']}"
+        if key not in lotti_unici or (lotto_item.get('scadenza') and not lotti_unici[key].get('scadenza')):
+            lotti_unici[key] = lotto_item
     
     return {
         "lotti": list(lotti_unici.values()),
