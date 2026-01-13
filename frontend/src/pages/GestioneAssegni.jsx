@@ -239,6 +239,9 @@ export default function GestioneAssegni() {
   const [autoAssociating, setAutoAssociating] = useState(false);
   const [autoAssocResult, setAutoAssocResult] = useState(null);
   
+  // Selezione multipla per stampa PDF
+  const [selectedAssegni, setSelectedAssegni] = useState(new Set());
+  
   const handleAutoAssocia = async () => {
     if (!window.confirm('Vuoi avviare l\'auto-associazione degli assegni alle fatture?\n\nIl sistema cercherà di abbinare:\n1. Assegni con importo uguale a fatture\n2. Assegni multipli con stesso importo a fatture di importo maggiore')) return;
     
