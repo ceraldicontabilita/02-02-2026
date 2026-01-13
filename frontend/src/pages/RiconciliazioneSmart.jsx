@@ -5,7 +5,8 @@ import { RefreshCw, Zap, Users, FileText, CreditCard, Building2, Check, X, Chevr
 
 // Colori per tipo
 const TIPO_COLORS = {
-  commissione_pos: { bg: '#fef3c7', color: '#92400e', icon: '💳' },
+  incasso_pos: { bg: '#d1fae5', color: '#059669', icon: '💳' },
+  commissione_pos: { bg: '#fef3c7', color: '#92400e', icon: '💸' },
   commissione_bancaria: { bg: '#e0e7ff', color: '#3730a3', icon: '🏦' },
   stipendio: { bg: '#dcfce7', color: '#166534', icon: '👤' },
   f24: { bg: '#fee2e2', color: '#991b1b', icon: '📄' },
@@ -15,6 +16,7 @@ const TIPO_COLORS = {
 };
 
 const TIPO_LABELS = {
+  incasso_pos: 'Incasso POS',
   commissione_pos: 'Commissione POS',
   commissione_bancaria: 'Commissione Bancaria',
   stipendio: 'Stipendio',
