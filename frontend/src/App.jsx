@@ -9,74 +9,149 @@ import ChatAI from "./components/ChatAI";
 
 const NAV_ITEMS = [
   { to: "/", label: "Dashboard", icon: "📊", short: "Home" },
-  { to: "/ciclo-passivo", label: "Ciclo Passivo", icon: "📋", short: "Ciclo P." },
-  { to: "/fatture-ricevute", label: "Archivio Fatture", icon: "📄", short: "Archivio" },
-  { to: "/corrispettivi", label: "Corrispettivi", icon: "🧾", short: "Corrisp." },
-  { to: "/fornitori", label: "Fornitori", icon: "📦", short: "Fornitori" },
-  { to: "/iva", label: "Calcolo IVA", icon: "📊", short: "IVA" },
-  { to: "/liquidazione-iva", label: "Liquidazione IVA", icon: "🧮", short: "Liquid." },
-  { to: "/riconciliazione-f24", label: "Riconciliazione F24", icon: "📋", short: "F24" },
-  { to: "/prima-nota", label: "Prima Nota", icon: "📒", short: "P.Nota" },
-  { to: "/riconciliazione-smart", label: "⚡ Riconciliazione Smart", icon: "⚡", short: "Smart" },
-  { to: "/controllo-mensile", label: "Controllo Mensile", icon: "📈", short: "Contr." },
-  { to: "/riconciliazione", label: "Riconciliazione", icon: "🔄", short: "Riconc." },
-  { to: "/dashboard-riconciliazione", label: "Dashboard Riconc.", icon: "📈", short: "Dash.Ric." },
-  // Contabilità Analitica - Sottomenu
+  
+  // === CICLO PASSIVO / ACQUISTI ===
   { 
-    label: "Contabilità Analitica", 
-    icon: "📈", 
-    short: "Analit.",
+    label: "Acquisti", 
+    icon: "📋", 
+    short: "Acquisti",
     isSubmenu: true,
     children: [
-      { to: "/centri-costo", label: "Centri di Costo", icon: "🏢" },
-      { to: "/ricette", label: "Ricette & Food Cost", icon: "🍰" },
-      { to: "/dizionario-prodotti", label: "Dizionario Prodotti", icon: "📚" },
-      { to: "/registro-lotti", label: "Registro Lotti", icon: "📋" },
-      { to: "/magazzino-dv", label: "Magazzino Doppia Verità", icon: "📦" },
-      { to: "/inventario", label: "Inventario", icon: "📝" },
-      { to: "/utile-obiettivo", label: "Utile Obiettivo", icon: "🎯" },
+      { to: "/ciclo-passivo", label: "Ciclo Passivo", icon: "📋" },
+      { to: "/fatture-ricevute", label: "Archivio Fatture", icon: "📄" },
+      { to: "/fornitori", label: "Fornitori", icon: "📦" },
+      { to: "/ordini-fornitori", label: "Ordini Fornitori", icon: "📝" },
+      { to: "/previsioni-acquisti", label: "Previsioni", icon: "📊" },
     ]
   },
-  { to: "/magazzino", label: "Magazzino", icon: "🏭", short: "Magaz." },
-  { to: "/previsioni-acquisti", label: "Previsioni Acquisti", icon: "📊", short: "Previs." },
-  { to: "/ricerca-prodotti", label: "Ricerca Prodotti", icon: "🔍", short: "Ricerca" },
-  { to: "/ordini-fornitori", label: "Ordini Fornitori", icon: "📝", short: "Ordini" },
-  { to: "/gestione-assegni", label: "Gestione Assegni", icon: "📝", short: "Assegni" },
-  // Dipendenti è ora un sottomenu
+  
+  // === VENDITE / CORRISPETTIVI ===
+  { to: "/corrispettivi", label: "Corrispettivi", icon: "🧾", short: "Corrisp." },
+  
+  // === BANCA / PAGAMENTI ===
+  { 
+    label: "Banca & Pagamenti", 
+    icon: "🏦", 
+    short: "Banca",
+    isSubmenu: true,
+    children: [
+      { to: "/prima-nota", label: "Prima Nota Cassa/Banca", icon: "📒" },
+      { to: "/riconciliazione-smart", label: "Riconciliazione Smart", icon: "⚡" },
+      { to: "/riconciliazione", label: "Riconciliazione Manuale", icon: "🔄" },
+      { to: "/dashboard-riconciliazione", label: "Dashboard Riconc.", icon: "📈" },
+      { to: "/gestione-assegni", label: "Gestione Assegni", icon: "📝" },
+      { to: "/archivio-bonifici", label: "Archivio Bonifici", icon: "📂" },
+    ]
+  },
+  
+  // === DIPENDENTI / PERSONALE ===
   { 
     label: "Dipendenti", 
     icon: "👥", 
     short: "Dipend.",
     isSubmenu: true,
     children: [
-      { to: "/dipendenti", label: "Anagrafica", icon: "👤" },
-      { to: "/cedolini", label: "Cedolini Paga", icon: "📄" },
+      { to: "/dipendenti", label: "Anagrafica Dipendenti", icon: "👤" },
+      { to: "/cedolini", label: "Cedolini / Buste Paga", icon: "📄" },
+      { to: "/prima-nota-salari", label: "Prima Nota Salari", icon: "💰" },
+      { to: "/tfr", label: "TFR e Accantonamenti", icon: "🏢" },
     ]
   },
-  { to: "/f24", label: "F24 / Tributi", icon: "📋", short: "F24" },
-  { to: "/scadenze", label: "Scadenze", icon: "🔔", short: "Scad." },
-  { to: "/verifica-coerenza", label: "Verifica Coerenza", icon: "✅", short: "Verif." },
-  { to: "/documenti", label: "Documenti Email", icon: "📨", short: "Doc." },
-  { to: "/finanziaria", label: "Finanziaria", icon: "📈", short: "Finanz." },
-  { to: "/bilancio", label: "Bilancio", icon: "📊", short: "Bilancio" },
-  { to: "/contabilita", label: "Contabilità IRES/IRAP", icon: "🧮", short: "IRES" },
-  { to: "/cespiti", label: "Cespiti e TFR", icon: "🏢", short: "Cespiti" },
-  { to: "/regole-categorizzazione", label: "Regole Categorizzazione", icon: "⚙️", short: "Regole" },
-  { to: "/dizionario-articoli", label: "Dizionario Articoli", icon: "📦", short: "Dizion." },
-  { to: "/piano-dei-conti", label: "Piano dei Conti", icon: "📒", short: "Conti" },
-  { to: "/commercialista", label: "Commercialista", icon: "👩‍💼", short: "Comm." },
-  { to: "/pianificazione", label: "Pianificazione", icon: "📅", short: "Pianif." },
-  // Import/Export è ora un sottomenu
+  
+  // === FISCO / TRIBUTI ===
   { 
-    label: "Import/Export", 
-    icon: "📤", 
-    short: "Import",
+    label: "Fisco & Tributi", 
+    icon: "🏛️", 
+    short: "Fisco",
     isSubmenu: true,
     children: [
-      { to: "/import-export", label: "Import/Export Dati", icon: "📁" },
-      { to: "/archivio-bonifici", label: "Archivio Bonifici PDF", icon: "📂" },
+      { to: "/iva", label: "Calcolo IVA", icon: "📊" },
+      { to: "/liquidazione-iva", label: "Liquidazione IVA", icon: "🧮" },
+      { to: "/f24", label: "F24 / Tributi", icon: "📋" },
+      { to: "/riconciliazione-f24", label: "Riconciliazione F24", icon: "🔄" },
+      { to: "/contabilita", label: "IRES / IRAP", icon: "🧮" },
     ]
   },
+  
+  // === MAGAZZINO ===
+  { 
+    label: "Magazzino", 
+    icon: "📦", 
+    short: "Magaz.",
+    isSubmenu: true,
+    children: [
+      { to: "/magazzino", label: "Giacenze", icon: "🏭" },
+      { to: "/inventario", label: "Inventario", icon: "📝" },
+      { to: "/ricerca-prodotti", label: "Ricerca Prodotti", icon: "🔍" },
+      { to: "/dizionario-articoli", label: "Dizionario Articoli", icon: "📦" },
+      { to: "/magazzino-dv", label: "Doppia Verità", icon: "⚖️" },
+    ]
+  },
+  
+  // === HACCP / SICUREZZA ALIMENTARE ===
+  { 
+    label: "HACCP", 
+    icon: "🛡️", 
+    short: "HACCP",
+    isSubmenu: true,
+    children: [
+      { to: "/haccp-temperature", label: "Temperature Frigo/Congel.", icon: "🌡️" },
+      { to: "/haccp-sanificazioni", label: "Sanificazioni", icon: "🧹" },
+      { to: "/haccp-lotti", label: "Tracciabilità Lotti", icon: "📋" },
+      { to: "/haccp-ricezione", label: "Ricezione Merci", icon: "📥" },
+      { to: "/haccp-scadenze", label: "Scadenziario HACCP", icon: "⏰" },
+      { to: "/registro-lotti", label: "Registro Lotti", icon: "📋" },
+    ]
+  },
+  
+  // === CUCINA / PRODUZIONE ===
+  { 
+    label: "Cucina", 
+    icon: "🍳", 
+    short: "Cucina",
+    isSubmenu: true,
+    children: [
+      { to: "/ricette", label: "Ricette & Food Cost", icon: "🍰" },
+      { to: "/dizionario-prodotti", label: "Dizionario Prodotti", icon: "📚" },
+      { to: "/centri-costo", label: "Centri di Costo", icon: "🏢" },
+      { to: "/utile-obiettivo", label: "Utile Obiettivo", icon: "🎯" },
+    ]
+  },
+  
+  // === CONTABILITÀ / BILANCIO ===
+  { 
+    label: "Contabilità", 
+    icon: "📈", 
+    short: "Contab.",
+    isSubmenu: true,
+    children: [
+      { to: "/bilancio", label: "Bilancio", icon: "📊" },
+      { to: "/controllo-mensile", label: "Controllo Mensile", icon: "📈" },
+      { to: "/piano-dei-conti", label: "Piano dei Conti", icon: "📒" },
+      { to: "/cespiti", label: "Cespiti", icon: "🏢" },
+      { to: "/finanziaria", label: "Finanziaria", icon: "💹" },
+    ]
+  },
+  
+  // === SCADENZE ===
+  { to: "/scadenze", label: "Scadenze", icon: "🔔", short: "Scad." },
+  
+  // === STRUMENTI ===
+  { 
+    label: "Strumenti", 
+    icon: "🔧", 
+    short: "Tools",
+    isSubmenu: true,
+    children: [
+      { to: "/documenti", label: "Documenti Email", icon: "📨" },
+      { to: "/import-export", label: "Import/Export", icon: "📁" },
+      { to: "/regole-categorizzazione", label: "Regole Categorie", icon: "⚙️" },
+      { to: "/verifica-coerenza", label: "Verifica Coerenza", icon: "✅" },
+      { to: "/commercialista", label: "Commercialista", icon: "👩‍💼" },
+      { to: "/pianificazione", label: "Pianificazione", icon: "📅" },
+    ]
+  },
+  
   { to: "/admin", label: "Admin", icon: "⚙️", short: "Admin" },
 ];
 
