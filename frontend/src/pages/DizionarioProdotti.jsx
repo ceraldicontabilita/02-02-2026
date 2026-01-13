@@ -72,10 +72,6 @@ export default function DizionarioProdotti() {
   useEffect(() => {
     loadProdotti();
   }, [loadProdotti]);
-      console.error('Errore caricamento prodotti:', e);
-    }
-    setLoading(false);
-  }
 
   async function scanFatture() {
     setScanning(true);
