@@ -99,25 +99,63 @@ export default function RiconciliazioneSmart() {
     }
   };
 
-  const openAssociaModal = (movimento, tipo) => {
+  const openAssociaModal = async (movimento, tipo) => {
     setModalData({ movimento, tipo });
     setSearchResults([]);
-    setSearchQuery('');
+    setSelectedItems({});
     setShowModal(true);
-  };
-
-  const searchForAssociation = async (query, tipo, movimento) => {
-    if (query.length < 2) return;
     
+    // Ricerca automatica all'apertura
     setSearchLoading(true);
     try {
       let url = '';
       const importo = Math.abs(movimento.importo);
       
       if (tipo === 'fattura') {
-        url = `/api/operazioni-da-confermare/smart/cerca-fatture?fornitore=${encodeURIComponent(query)}&importo=${importo}`;
+        // Cerca tutte le fatture non pagate con importo simile
+        url = `/api/operazioni-da-confermare/smart/cerca-fatture?importo=${importo}`;
+        // Se c'è un fornitore estratto, usalo
+        if (movimento.fornitore_estratto) {
+          url += `&fornitore=${encodeURIComponent(movimento.fornitore_estratto)}`;
+        }
+        setSearchQuery(movimento.fornitore_estratto || '');
       } else if (tipo === 'stipendio') {
-        url = `/api/operazioni-da-confermare/smart/cerca-stipendi?dipendente=${encodeURIComponent(query)}&importo=${importo}`;
+        // Cerca tutti gli stipendi non pagati
+        url = `/api/operazioni-da-confermare/smart/cerca-stipendi?importo=${importo}`;
+        if (movimento.nome_estratto) {
+          url += `&dipendente=${encodeURIComponent(movimento.nome_estratto)}`;
+        }
+        setSearchQuery(movimento.nome_estratto || '');
+      } else if (tipo === 'f24') {
+        url = `/api/operazioni-da-confermare/smart/cerca-f24?importo=${importo}`;
+        setSearchQuery('');
+      }
+      
+      const res = await api.get(url);
+      setSearchResults(res.data);
+    } catch (e) {
+      console.error('Errore ricerca iniziale:', e);
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  const searchForAssociation = async (query, tipo, movimento) => {
+    setSearchLoading(true);
+    try {
+      let url = '';
+      const importo = Math.abs(movimento.importo);
+      
+      if (tipo === 'fattura') {
+        url = `/api/operazioni-da-confermare/smart/cerca-fatture?importo=${importo}`;
+        if (query && query.length >= 2) {
+          url += `&fornitore=${encodeURIComponent(query)}`;
+        }
+      } else if (tipo === 'stipendio') {
+        url = `/api/operazioni-da-confermare/smart/cerca-stipendi?importo=${importo}`;
+        if (query && query.length >= 2) {
+          url += `&dipendente=${encodeURIComponent(query)}`;
+        }
       } else if (tipo === 'f24') {
         url = `/api/operazioni-da-confermare/smart/cerca-f24?importo=${importo}`;
       }
