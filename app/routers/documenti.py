@@ -588,7 +588,7 @@ async def sync_f24_automatico(
                     continue
                 
                 # Chiama il parser F24 con il filepath
-                from app.services.f24_commercialista_parser import parse_f24_commercialista
+                from app.services.parser_f24 import parse_f24_commercialista
                 
                 parsed = parse_f24_commercialista(filepath)
                 
@@ -717,7 +717,7 @@ async def processa_f24_scaricati() -> Dict[str, Any]:
     f24_caricati = []
     f24_errori = []
     
-    from app.services.f24_commercialista_parser import parse_f24_commercialista
+    from app.services.parser_f24 import parse_f24_commercialista
     
     for doc in f24_docs:
         try:

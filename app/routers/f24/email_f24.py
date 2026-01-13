@@ -7,7 +7,7 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
 from app.database import Database
 from app.services.email_downloader import download_and_process_emails, get_mittenti_configurati
-from app.services.f24_commercialista_parser import parse_f24_commercialista
+from app.services.parser_f24 import parse_f24_commercialista
 from app.services.f24_parser import parse_quietanza_f24
 from app.services.codici_tributo_db import get_info_codice_tributo, classifica_f24_per_mittente
 import os

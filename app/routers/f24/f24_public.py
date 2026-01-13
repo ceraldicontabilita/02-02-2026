@@ -47,7 +47,7 @@ async def upload_f24_pdf(
     """
     import tempfile
     import os
-    from app.services.f24_commercialista_parser import parse_f24_commercialista
+    from app.services.parser_f24 import parse_f24_commercialista
     
     if not file.filename.lower().endswith('.pdf'):
         raise HTTPException(status_code=400, detail="Solo file PDF supportati")
@@ -311,7 +311,7 @@ async def upload_f24_pdf_overwrite(
     """
     import tempfile
     import os
-    from app.services.f24_commercialista_parser import parse_f24_commercialista
+    from app.services.parser_f24 import parse_f24_commercialista
     
     if not file.filename.lower().endswith('.pdf'):
         raise HTTPException(status_code=400, detail="Solo file PDF supportati")
