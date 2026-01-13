@@ -324,6 +324,184 @@ async def import_bank_statement(
 async def preview_statement() -> Dict[str, Any]:
     return {
         "message": "Usa POST /api/estratto-conto/parse per caricare un PDF",
-        "supported_banks": ["BANCO BPM"],
-        "expected_format": "Estratto conto corrente ordinario PDF"
+        "supported_banks": ["BANCO BPM", "Nexi Carta di Credito"],
+        "expected_format": "Estratto conto corrente ordinario PDF o estratto conto carta Nexi"
+    }
+
+
+@router.post("/parse-nexi", summary="Parse Nexi credit card statement PDF")
+async def parse_nexi_statement(file: UploadFile = File(...)) -> Dict[str, Any]:
+    """
+    Analizza un PDF di estratto conto carta di credito Nexi/Banco BPM.
+    
+    Estrae:
+    - Metadata (data, intestatario, numero carta, totali)
+    - Lista transazioni con categorizzazione automatica
+    """
+    if not file.filename.lower().endswith('.pdf'):
+        raise HTTPException(status_code=400, detail="Il file deve essere un PDF")
+    
+    try:
+        from app.parsers.estratto_conto_nexi_parser import parse_estratto_conto_nexi
+        
+        content = await file.read()
+        result = parse_estratto_conto_nexi(content)
+        result["filename"] = file.filename
+        
+        if result.get("success"):
+            return {
+                "success": True,
+                "data": result,
+                "message": f"Estratte {result.get('totale_transazioni', 0)} transazioni"
+            }
+        else:
+            raise HTTPException(status_code=400, detail=result.get("error", "Errore nel parsing"))
+        
+    except Exception as e:
+        logger.error(f"Errore parsing Nexi PDF: {e}")
+        raise HTTPException(status_code=500, detail=f"Errore parsing PDF: {str(e)}")
+
+
+@router.post("/import-nexi", summary="Import Nexi statement to database")
+async def import_nexi_statement(
+    file: UploadFile = File(...),
+    anno: int = Query(..., description="Anno di riferimento")
+) -> Dict[str, Any]:
+    """
+    Importa l'estratto conto carta Nexi nel database.
+    
+    Salva le transazioni in una collezione dedicata 'estratto_conto_nexi'
+    per successiva riconciliazione.
+    """
+    from app.database import Database
+    from datetime import datetime, timezone
+    import uuid
+    
+    # Prima fai il parsing
+    await file.seek(0)
+    parse_result = await parse_nexi_statement(file)
+    
+    if not parse_result.get("success"):
+        raise HTTPException(status_code=400, detail="Errore nel parsing del PDF")
+    
+    data = parse_result["data"]
+    transazioni = data.get("transazioni", [])
+    metadata = data.get("metadata", {})
+    
+    if not transazioni:
+        return {"success": False, "message": "Nessuna transazione trovata", "imported": 0}
+    
+    db = Database.get_db()
+    imported = 0
+    skipped = 0
+    errors = []
+    
+    # ID univoco per questo import
+    import_id = str(uuid.uuid4())[:8]
+    import_timestamp = datetime.now(timezone.utc).isoformat()
+    
+    for tx in transazioni:
+        try:
+            data_tx = tx.get("data")
+            importo = tx.get("importo")
+            descrizione = tx.get("descrizione", "")
+            
+            if not data_tx or importo is None:
+                skipped += 1
+                continue
+            
+            # Controlla duplicati
+            existing = await db["estratto_conto_nexi"].find_one({
+                "data": data_tx,
+                "importo": importo,
+                "descrizione": descrizione
+            })
+            
+            if existing:
+                skipped += 1
+                continue
+            
+            record = {
+                "id": f"nexi-{import_id}-{imported}",
+                "data": data_tx,
+                "data_originale": tx.get("data_originale"),
+                "descrizione": descrizione,
+                "importo": importo,
+                "tipo": tx.get("tipo", "addebito"),
+                "categoria": tx.get("categoria", "Altro"),
+                "anno": anno,
+                "mese": int(data_tx.split('-')[1]) if data_tx and '-' in data_tx else None,
+                "fonte": "estratto_conto_nexi",
+                "filename_origine": data.get("filename"),
+                "numero_carta": metadata.get("numero_carta_mascherato"),
+                "riconciliato": False,
+                "fattura_id": None,
+                "import_id": import_id,
+                "created_at": import_timestamp
+            }
+            
+            await db["estratto_conto_nexi"].insert_one(record)
+            imported += 1
+            
+        except Exception as e:
+            errors.append(f"Errore riga: {str(e)[:50]}")
+    
+    return {
+        "success": True,
+        "imported": imported,
+        "skipped": skipped,
+        "total": len(transazioni),
+        "errors": errors[:10] if errors else [],
+        "import_id": import_id,
+        "metadata": metadata,
+        "totale_importo": data.get("totale_importo", 0)
+    }
+
+
+@router.get("/nexi/movimenti", summary="Lista movimenti Nexi importati")
+async def get_nexi_movimenti(
+    anno: Optional[int] = Query(None),
+    mese: Optional[int] = Query(None),
+    categoria: Optional[str] = Query(None),
+    riconciliato: Optional[bool] = Query(None),
+    limit: int = Query(100, le=500),
+    skip: int = Query(0)
+) -> Dict[str, Any]:
+    """Recupera i movimenti Nexi importati con filtri opzionali."""
+    from app.database import Database
+    
+    db = Database.get_db()
+    query = {}
+    
+    if anno:
+        query["anno"] = anno
+    if mese:
+        query["mese"] = mese
+    if categoria:
+        query["categoria"] = categoria
+    if riconciliato is not None:
+        query["riconciliato"] = riconciliato
+    
+    cursor = db["estratto_conto_nexi"].find(query, {"_id": 0}).sort("data", -1).skip(skip).limit(limit)
+    movimenti = await cursor.to_list(limit)
+    
+    total = await db["estratto_conto_nexi"].count_documents(query)
+    
+    # Statistiche per categoria
+    pipeline = [
+        {"$match": query},
+        {"$group": {
+            "_id": "$categoria",
+            "count": {"$sum": 1},
+            "totale": {"$sum": "$importo"}
+        }}
+    ]
+    stats_cursor = db["estratto_conto_nexi"].aggregate(pipeline)
+    stats = await stats_cursor.to_list(100)
+    
+    return {
+        "success": True,
+        "movimenti": movimenti,
+        "total": total,
+        "statistiche_categoria": {s["_id"]: {"count": s["count"], "totale": s["totale"]} for s in stats}
     }
