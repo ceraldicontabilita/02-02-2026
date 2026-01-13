@@ -125,12 +125,13 @@ async def parse_f24_with_gemini(pdf_path: str) -> Dict[str, Any]:
         raise FileNotFoundError(f"File non trovato: {pdf_path}")
     
     try:
-        # Inizializza chat con Gemini
+        # Inizializza chat con Claude (supportato dalla chiave Emergent)
+        # Claude Sonnet 4.5 supporta analisi di PDF
         chat = LlmChat(
             api_key=api_key,
             session_id=f"f24_parse_{os.path.basename(pdf_path)}",
             system_message="Sei un esperto di documenti fiscali italiani. Estrai dati da PDF F24 con precisione."
-        ).with_model("gemini", "gemini-2.5-flash")
+        ).with_model("anthropic", "claude-sonnet-4-20250514")
         
         # Prepara il file PDF
         pdf_file = FileContentWithMimeType(
