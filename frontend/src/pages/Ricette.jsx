@@ -127,6 +127,66 @@ export default function Ricette() {
     setShowProdottiModal(false);
   }
   
+  // NUOVO: Apri modal lotti fornitore
+  function openLottiModal(index, nomeIngrediente) {
+    setLottiModalIndex(index);
+    setLottiSearch(nomeIngrediente || '');
+    setLottiList([]);
+    setShowLottiModal(true);
+    if (nomeIngrediente) {
+      searchLottiFornitore(nomeIngrediente);
+    }
+  }
+  
+  // NUOVO: Cerca lotti fornitore
+  async function searchLottiFornitore(query) {
+    setLottiSearch(query);
+    if (!query || query.length < 2) {
+      setLottiList([]);
+      return;
+    }
+    setLoadingLotti(true);
+    try {
+      const res = await api.get(`/api/ricette/lotti-fornitore/cerca?prodotto=${encodeURIComponent(query)}`);
+      setLottiList(res.data.lotti || []);
+    } catch (e) {
+      console.error('Errore ricerca lotti:', e);
+      setLottiList([]);
+    }
+    setLoadingLotti(false);
+  }
+  
+  // NUOVO: Seleziona lotto fornitore
+  function selectLottoFromModal(lotto) {
+    if (editingRicetta) {
+      setEditingRicetta(prev => ({
+        ...prev,
+        ingredienti: prev.ingredienti.map((ing, i) => i === lottiModalIndex ? {
+          ...ing,
+          lotto_fornitore: lotto.lotto_fornitore,
+          scadenza_lotto: lotto.scadenza,
+          fornitore_lotto: lotto.fornitore
+        } : ing)
+      }));
+    }
+    setShowLottiModal(false);
+  }
+  
+  // NUOVO: Rimuovi lotto da ingrediente
+  function removeLottoFromIngrediente(idx) {
+    if (editingRicetta) {
+      setEditingRicetta(prev => ({
+        ...prev,
+        ingredienti: prev.ingredienti.map((ing, i) => i === idx ? {
+          ...ing,
+          lotto_fornitore: null,
+          scadenza_lotto: null,
+          fornitore_lotto: null
+        } : ing)
+      }));
+    }
+  }
+  
   async function calcolaFoodCostRicetta(ingredienti) {
     try {
       const payload = ingredienti.filter(i => i.nome && i.quantita).map(i => ({
