@@ -201,49 +201,63 @@ def parse_f24_commercialista(pdf_path: str) -> Dict[str, Any]:
             # ============================================
             # SEZIONE ERARIO - Codici 1xxx, 2xxx, 6xxx, 8xxx, 3xxx (IRAP)
             # Pattern: codice [rateazione] anno debito/credito
+            # IMPORTANTE: Non processare se la riga inizia con codice regione (es: "0 5")
             # ============================================
-            for i, item in enumerate(row):
-                word = item['word']
-                
-                # Include anche 3xxx per IRAP quando non ha codice regione
-                if re.match(r'^(1\d{3}|2\d{3}|3\d{3}|6\d{3}|8\d{3})$', word):
-                    codice = word
-                    rateazione = ""
-                    anno = ""
+            
+            # Check se la riga inizia con codice regione (0 X o 0X o XX dove XX è 01-21)
+            first_words = [r['word'] for r in row[:3]] if len(row) >= 3 else []
+            is_riga_regioni = False
+            if len(first_words) >= 2:
+                # Pattern "0 X" dove X è cifra
+                if first_words[0] == '0' and re.match(r'^\d$', first_words[1]):
+                    is_riga_regioni = True
+                # Pattern "0X" codice regione diretto
+                elif re.match(r'^0[1-9]$', first_words[0]):
+                    is_riga_regioni = True
+            
+            if not is_riga_regioni:
+                for i, item in enumerate(row):
+                    word = item['word']
                     
-                    # Cerca rateazione e anno
-                    for j in range(i+1, min(i+5, len(row))):
-                        nw = row[j]['word']
-                        if nw in [',', '+/–']:
-                            continue
-                        if re.match(r'^00\d{2}$', nw) and not rateazione:
-                            rateazione = nw
-                        elif re.match(r'^20\d{2}$', nw) and not anno:
-                            anno = nw
-                    
-                    debito, credito = extract_importo(row)
-                    
-                    if anno and (debito > 0 or credito > 0):
-                        mese = rateazione[2:4] if len(rateazione) == 4 else "00"
-                        key = f"E_{codice}_{anno}_{rateazione}_{debito}_{credito}"
+                    # Include anche 3xxx per IRAP quando non ha codice regione
+                    if re.match(r'^(1\d{3}|2\d{3}|3\d{3}|6\d{3}|8\d{3})$', word):
+                        codice = word
+                        rateazione = ""
+                        anno = ""
                         
-                        if key not in tributi_visti:
-                            tributi_visti.add(key)
-                            result["sezione_erario"].append({
-                                "codice_tributo": codice,
-                                "rateazione": rateazione,
-                                "periodo_riferimento": parse_periodo(mese, anno),
-                                "anno": anno,
-                                "mese": mese,
-                                "importo_debito": debito,
-                                "importo_credito": credito,
-                                "descrizione": get_descrizione_tributo(codice)
-                            })
+                        # Cerca rateazione e anno
+                        for j in range(i+1, min(i+5, len(row))):
+                            nw = row[j]['word']
+                            if nw in [',', '+/–']:
+                                continue
+                            if re.match(r'^00\d{2}$', nw) and not rateazione:
+                                rateazione = nw
+                            elif re.match(r'^20\d{2}$', nw) and not anno:
+                                anno = nw
+                        
+                        debito, credito = extract_importo(row)
+                        
+                        if anno and (debito > 0 or credito > 0):
+                            mese = rateazione[2:4] if len(rateazione) == 4 else "00"
+                            key = f"E_{codice}_{anno}_{rateazione}_{debito}_{credito}"
                             
-                            if codice in CODICI_RAVVEDIMENTO:
-                                result["has_ravvedimento"] = True
-                                result["codici_ravvedimento"].append(codice)
-                    break
+                            if key not in tributi_visti:
+                                tributi_visti.add(key)
+                                result["sezione_erario"].append({
+                                    "codice_tributo": codice,
+                                    "rateazione": rateazione,
+                                    "periodo_riferimento": parse_periodo(mese, anno),
+                                    "anno": anno,
+                                    "mese": mese,
+                                    "importo_debito": debito,
+                                    "importo_credito": credito,
+                                    "descrizione": get_descrizione_tributo(codice)
+                                })
+                                
+                                if codice in CODICI_RAVVEDIMENTO:
+                                    result["has_ravvedimento"] = True
+                                    result["codici_ravvedimento"].append(codice)
+                        break
             
             # ============================================
             # SEZIONE INPS - Pattern: 5100 causale matricola mese anno debito
