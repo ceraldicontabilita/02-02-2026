@@ -350,6 +350,26 @@ Tutte le pagine principali supportano layout mobile:
     - Visualizzazione lotto assegnato con codice e scadenza
     - Pulsante rimozione associazione
 
+- ✅ **Riconciliazione Smart Estratto Conto**: Nuova pagina `/riconciliazione-smart`
+  - Backend: Servizio `riconciliazione_smart.py` con analisi automatica movimenti
+  - Pattern riconosciuti automaticamente:
+    - **AMERICAN EXPRESS / AMEX** → Commissioni POS (auto-riconciliabile)
+    - **INT. E COMP. - COMPETENZE** → Commissioni bancarie (auto-riconciliabile)
+    - **VOSTRA DISPOSIZIONE + FAVORE [Nome]** → Stipendio dipendente (fuzzy matching nome)
+    - **I24 AGENZIA ENTRATE** → Pagamento F24
+    - **ADDEBITO DIRETTO SDD + fornitore** → Cerca fatture leasing (Leasys, ARVAL, Ald)
+    - **Numeri fattura nella causale** → Cerca e associa fatture
+  - Funzionalità multi-associazione: Calcola combinazioni fatture/stipendi che sommano all'importo
+  - API endpoints:
+    - `GET /api/operazioni-da-confermare/smart/analizza`
+    - `GET /api/operazioni-da-confermare/smart/movimento/{id}`
+    - `POST /api/operazioni-da-confermare/smart/riconcilia-auto`
+    - `POST /api/operazioni-da-confermare/smart/riconcilia-manuale`
+    - `GET /api/operazioni-da-confermare/smart/cerca-fatture`
+    - `GET /api/operazioni-da-confermare/smart/cerca-stipendi`
+    - `GET /api/operazioni-da-confermare/smart/cerca-f24`
+  - Frontend: Nuova pagina con filtri per tipo, espansione dettagli, modal ricerca manuale
+
 ---
 
 ## 📊 NOTE SULLA RICONCILIAZIONE AUTOMATICA
