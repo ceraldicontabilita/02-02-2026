@@ -518,15 +518,15 @@ async def get_veicoli(
             desc = linea.get("descrizione", "")
             prezzo = float(linea.get("prezzo_totale") or linea.get("prezzo_unitario") or 0)
             categoria, importo, metadata = categorizza_spesa(desc, prezzo, is_nota_credito)
-                    
-                    if categoria not in linee_per_cat:
-                        linee_per_cat[categoria] = {"voci": [], "imponibile": 0, "metadata": {}}
-                    linee_per_cat[categoria]["voci"].append({"descrizione": desc, "importo": round(importo, 2)})
-                    linee_per_cat[categoria]["imponibile"] += importo
-                    for k, v in metadata.items():
-                        if k not in linee_per_cat[categoria]["metadata"]:
-                            linee_per_cat[categoria]["metadata"][k] = v
-                
+            
+            if categoria not in linee_per_cat:
+                linee_per_cat[categoria] = {"voci": [], "imponibile": 0, "metadata": {}}
+            linee_per_cat[categoria]["voci"].append({"descrizione": desc, "importo": round(importo, 2)})
+            linee_per_cat[categoria]["imponibile"] += importo
+            for k, v in metadata.items():
+                if k not in linee_per_cat[categoria]["metadata"]:
+                    linee_per_cat[categoria]["metadata"][k] = v
+        
         for categoria, dati in linee_per_cat.items():
             imponibile = round(dati["imponibile"], 2)
             # Calcola IVA in base all'aliquota reale (bollo è esente)
