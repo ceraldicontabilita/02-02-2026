@@ -244,7 +244,13 @@ async def scan_fatture_noleggio(anno: Optional[int] = None) -> Dict[str, Any]:
         supplier = invoice.get("supplier_name", "")
         supplier_vat = invoice.get("supplier_vat", "")
         invoice_id = str(invoice.get("_id", ""))
-        is_nota_credito = "nota" in invoice.get("tipo_documento", "").lower() or invoice.get("total_amount", 0) < 0
+        tipo_doc = invoice.get("tipo_documento", "").lower()
+        # TD04 = Nota di Credito, TD05 = Nota di Debito
+        is_nota_credito = (
+            "nota" in tipo_doc or 
+            tipo_doc == "td04" or 
+            invoice.get("total_amount", 0) < 0
+        )
         
         # Estrai codice cliente per questo fornitore
         codice_cliente = estrai_codice_cliente(invoice, supplier)
