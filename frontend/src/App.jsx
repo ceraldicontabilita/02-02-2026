@@ -62,6 +62,7 @@ const NAV_ITEMS = [
       { to: "/dipendenti-libretti", label: "Libretti Sanitari", icon: "🏥" },
       { to: "/dipendenti-acconti", label: "Acconti", icon: "💳" },
       { to: "/tfr", label: "TFR e Accantonamenti", icon: "🏢" },
+      { to: "/noleggio-auto", label: "Noleggio Auto", icon: "🚗" },
     ]
   },
   
