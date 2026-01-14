@@ -599,6 +599,13 @@ async def get_veicoli(
                 "totale_generale": 0
             })
     
+    # Conta fatture davvero non associate (fornitori senza veicoli salvati)
+    fornitori_con_veicoli = set(v.get("fornitore_piva") for v in veicoli_salvati.values())
+    fatture_davvero_non_associate = [
+        f for f in fatture_senza_targa 
+        if f.get("supplier_vat") not in fornitori_con_veicoli
+    ]
+    
     # Statistiche
     statistiche = {
         "totale_canoni": sum(v.get("totale_canoni", 0) for v in risultato),
@@ -614,7 +621,7 @@ async def get_veicoli(
         "veicoli": sorted(risultato, key=lambda x: x.get("totale_generale", 0), reverse=True),
         "statistiche": statistiche,
         "count": len(risultato),
-        "fatture_non_associate": len(fatture_senza_targa),
+        "fatture_non_associate": len(fatture_davvero_non_associate),
         "anno": anno
     }
 
