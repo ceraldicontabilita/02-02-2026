@@ -311,6 +311,7 @@ export default function NoleggioAuto() {
                           <th style={{ padding: '8px 10px', textAlign: 'right', fontWeight: '600' }}>Imponibile</th>
                           <th style={{ padding: '8px 10px', textAlign: 'right', fontWeight: '600' }}>IVA</th>
                           <th style={{ padding: '8px 10px', textAlign: 'right', fontWeight: '600' }}>Totale</th>
+                          <th style={{ padding: '8px 10px', textAlign: 'center', fontWeight: '600' }}>Stato</th>
                           <th style={{ padding: '8px 10px', textAlign: 'center', fontWeight: '600' }}>Vedi</th>
                         </tr>
                       </thead>
