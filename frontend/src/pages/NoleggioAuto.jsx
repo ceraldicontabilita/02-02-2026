@@ -366,7 +366,8 @@ export default function NoleggioAuto() {
                       </tbody>
                       <tfoot>
                         <tr style={{ background: `${cat.color}10`, borderTop: '2px solid #e5e7eb' }}>
-                          <td colSpan={cat.key === 'verbali' ? 5 : 4} style={{ padding: '8px 10px', textAlign: 'right', fontWeight: '600' }}>Totale {cat.label}:</td>
+                          <td colSpan={cat.key === 'verbali' ? 4 : 3} style={{ padding: '8px 10px', textAlign: 'right', fontWeight: '600' }}>Totale {cat.label}:</td>
+                          <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 'bold', fontSize: 12 }}>{formatEuro(spese.reduce((a, s) => a + (s.imponibile || 0), 0))}</td>
                           <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 'bold', fontSize: 12 }}>{formatEuro(spese.reduce((a, s) => a + (s.iva || 0), 0))}</td>
                           <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 'bold', color: cat.color, fontSize: 12 }}>{formatEuro(totaleSezione)}</td>
                           <td></td>
