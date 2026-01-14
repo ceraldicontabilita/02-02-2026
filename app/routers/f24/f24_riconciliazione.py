@@ -835,28 +835,53 @@ async def upload_quietanze_multiplo(
         risultati["totale_caricati"] += 1
         
         # ============================================
-        # MATCHING AUTOMATICO CON F24 COMMERCIALISTA (v2)
+        # MATCHING AUTOMATICO CON F24 COMMERCIALISTA (v3)
+        # Confronto per singolo codice tributo + periodo + importo
         # ============================================
         
-        def estrai_chiavi_tributo_v2(doc: dict) -> set:
-            """Estrae set di chiavi (codice_periodo) da un documento."""
-            chiavi = set()
+        # Codici ravvedimento da escludere dal confronto
+        CODICI_RAVVEDIMENTO = {
+            '8901', '8902', '8903', '8904', '8906', '8907', '8911',
+            '1989', '1990', '1991', '1992', '1993', '1994',
+            '1507', '1508', '1509', '1510', '1511', '1512',
+        }
+        
+        def estrai_tributi_dettaglio_v3(doc: dict) -> list:
+            """Estrae lista tributi con codice, periodo, importo."""
+            tributi = []
             for sezione in ["sezione_erario", "sezione_regioni", "sezione_tributi_locali"]:
                 for item in doc.get(sezione, []):
                     codice = item.get("codice_tributo", "")
-                    periodo = item.get("periodo_riferimento", "").strip()
                     if codice:
-                        chiavi.add(f"{codice}_{periodo}")
+                        tributi.append({
+                            "codice": codice,
+                            "periodo": item.get("periodo_riferimento", "").strip(),
+                            "importo": float(item.get("importo_debito", 0) or item.get("importo", 0) or 0)
+                        })
             for item in doc.get("sezione_inps", []):
                 causale = item.get("causale", "")
-                periodo = item.get("periodo_riferimento", "").strip()
                 if causale:
-                    chiavi.add(f"{causale}_{periodo}")
-            return chiavi
+                    tributi.append({
+                        "codice": causale,
+                        "periodo": item.get("periodo_riferimento", "").strip(),
+                        "importo": float(item.get("importo_debito", 0) or item.get("importo", 0) or 0)
+                    })
+            return tributi
         
-        chiavi_quietanza_full = estrai_chiavi_tributo_v2(parsed)
+        tributi_quietanza = estrai_tributi_dettaglio_v3(parsed)
         
-        # Cerca F24 da pagare con codici tributo + periodo corrispondenti
+        # Crea lookup quietanza: (codice, periodo) -> importo
+        quietanza_lookup = {}
+        codici_ravv = []
+        importo_ravv = 0
+        for t in tributi_quietanza:
+            key = (t["codice"], t["periodo"])
+            quietanza_lookup[key] = t["importo"]
+            if t["codice"] in CODICI_RAVVEDIMENTO:
+                codici_ravv.append(t["codice"])
+                importo_ravv += t["importo"]
+        
+        # Cerca F24 da pagare
         f24_da_pagare = await db[COLL_F24_COMMERCIALISTA].find({
             "status": "da_pagare",
             "riconciliato": False
@@ -865,35 +890,27 @@ async def upload_quietanze_multiplo(
         f24_matchati = []
         
         for f24 in f24_da_pagare:
-            chiavi_f24 = estrai_chiavi_tributo_v2(f24)
+            tributi_f24 = estrai_tributi_dettaglio_v3(f24)
             
-            if not chiavi_f24:
+            # Filtra codici ravvedimento
+            tributi_f24_principali = [t for t in tributi_f24 if t["codice"] not in CODICI_RAVVEDIMENTO]
+            
+            if not tributi_f24_principali:
                 continue
             
-            # Calcola match per chiavi (codice + periodo)
-            chiavi_comuni = chiavi_f24.intersection(chiavi_quietanza_full)
-            match_percentage = (len(chiavi_comuni) / len(chiavi_f24)) * 100 if chiavi_f24 else 0
+            # Verifica che TUTTI i tributi F24 siano in quietanza
+            tributi_trovati = 0
+            for t in tributi_f24_principali:
+                key = (t["codice"], t["periodo"])
+                if key in quietanza_lookup:
+                    diff = abs(t["importo"] - quietanza_lookup[key])
+                    if diff <= 0.50:  # Tolleranza €0.50
+                        tributi_trovati += 1
             
-            saldo_f24 = f24.get("totali", {}).get("saldo_netto", 0)
-            differenza = abs(saldo_f24 - saldo_quietanza)
+            # Match = TUTTI i tributi F24 trovati
+            is_match = tributi_trovati == len(tributi_f24_principali)
             
-            # SCORING migliorato:
-            # - 100% match chiavi + diff < €1: MATCH PERFETTO
-            # - >= 90% match chiavi + diff < €5: MATCH OTTIMO
-            # - >= 80% match chiavi + diff < €10: MATCH BUONO
-            # - >= 70% match chiavi + diff < €20: MATCH ACCETTABILE
-            
-            score = 0
-            if match_percentage == 100 and differenza < 1:
-                score = 100
-            elif match_percentage >= 90 and differenza < 5:
-                score = 90
-            elif match_percentage >= 80 and differenza < 10:
-                score = 80
-            elif match_percentage >= 70 and differenza < 20:
-                score = 70
-            
-            if score >= 70:
+            if is_match:
                 # MATCH TROVATO! Aggiorna F24 come pagato
                 await db[COLL_F24_COMMERCIALISTA].update_one(
                     {"id": f24["id"]},
