@@ -902,9 +902,10 @@ async def upload_quietanze_multiplo(
                         "quietanza_id": file_id,
                         "protocollo_quietanza": protocollo,
                         "data_pagamento_quietanza": data_pagamento,
+                        "match_score": score,
                         "match_percentage": match_percentage,
                         "differenza_importo": round(saldo_f24 - saldo_quietanza, 2),
-                        "riconciliato_quietanza": True,  # Riconciliato con quietanza, ma non ancora con banca
+                        "riconciliato_quietanza": True,
                         "updated_at": datetime.now(timezone.utc).isoformat()
                     }}
                 )
@@ -921,11 +922,13 @@ async def upload_quietanze_multiplo(
                     "importo_f24": saldo_f24,
                     "importo_quietanza": saldo_quietanza,
                     "differenza": round(saldo_f24 - saldo_quietanza, 2),
+                    "match_score": score,
                     "match_percentage": round(match_percentage, 1),
-                    "codici_comuni": list(codici_comuni)[:5]
+                    "chiavi_comuni": list(chiavi_comuni)[:5]
                 })
                 
                 risultati["totale_matchati"] += 1
+                break  # Un F24 per quietanza (one-to-one)
         
         # Risultato per questa quietanza
         dettaglio_file = {
