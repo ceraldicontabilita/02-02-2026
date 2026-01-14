@@ -78,15 +78,39 @@ def estrai_codice_cliente(invoice: dict, fornitore: str) -> Optional[str]:
     return None
 
 
+def estrai_numero_verbale(descrizione: str) -> Optional[str]:
+    """
+    Estrae il numero del verbale dalla descrizione.
+    Pattern: "Verbale Nr: XXXXX" o "Verbale N. XXXXX"
+    """
+    # Pattern per ALD: "Verbale Nr: B23123049750" o "Verbale Nr: 023504/V/21"
+    match = re.search(r'Verbale\s+(?:Nr|N\.?|Num\.?)[\s:]*([A-Z0-9/\-]+)', descrizione, re.I)
+    if match:
+        return match.group(1).strip()
+    return None
+
+
+def estrai_data_verbale(descrizione: str) -> Optional[str]:
+    """
+    Estrae la data del verbale dalla descrizione.
+    Pattern: "Data Verbale: DD/MM/YY"
+    """
+    match = re.search(r'Data\s+Verbale[\s:]*(\d{2}/\d{2}/\d{2,4})', descrizione, re.I)
+    if match:
+        return match.group(1).strip()
+    return None
+
+
 def categorizza_spesa(descrizione: str, importo: float, is_nota_credito: bool = False) -> tuple:
     """
     Categorizza una spesa in base alla descrizione.
-    Returns: (categoria, importo_con_segno)
+    Returns: (categoria, importo_con_segno, metadata)
     
     IMPORTANTE: L'ordine dei controlli è cruciale per evitare falsi positivi.
     """
     desc_lower = descrizione.lower()
     importo_finale = abs(importo)
+    metadata = {}
     
     # Se è nota credito, il segno è negativo
     if is_nota_credito or "nota credito" in desc_lower or "nota di credito" in desc_lower:
@@ -94,27 +118,34 @@ def categorizza_spesa(descrizione: str, importo: float, is_nota_credito: bool = 
     
     # STEP 1: CANONI - Controlla PRIMA se è un canone (priorità alta)
     if any(kw in desc_lower for kw in ["canone", "locazione", "noleggio"]):
-        return ("canoni", importo_finale)
+        return ("canoni", importo_finale, metadata)
     
     # STEP 2: BOLLO - Tasse automobilistiche
     if any(kw in desc_lower for kw in ["bollo", "tassa automobilistic", "tasse auto", 
                                         "imposta provincial", "ipt", "superbollo"]):
-        return ("bollo", importo_finale)
+        return ("bollo", importo_finale, metadata)
     
     # STEP 3: PEDAGGIO - Gestione pedaggi e telepass
     if any(kw in desc_lower for kw in ["pedaggio", "telepass", "autostrad", 
                                         "gestione multe", "spese gestione"]):
-        return ("pedaggio", importo_finale)
+        return ("pedaggio", importo_finale, metadata)
     
     # STEP 4: VERBALI - Multe e sanzioni
     if any(kw in desc_lower for kw in ["verbale", "multa", "sanzione", "contravvenzione",
                                         "infrazione", "codice strada", "rinotifica"]):
-        return ("verbali", importo_finale)
+        # Estrai numero e data verbale
+        num_verbale = estrai_numero_verbale(descrizione)
+        data_verbale = estrai_data_verbale(descrizione)
+        if num_verbale:
+            metadata["numero_verbale"] = num_verbale
+        if data_verbale:
+            metadata["data_verbale"] = data_verbale
+        return ("verbali", importo_finale, metadata)
     
     # STEP 5: COSTI EXTRA - Penalità e addebiti
     if any(kw in desc_lower for kw in ["penalità", "penale", "addebito", "commissione",
                                         "mora", "ritardo"]):
-        return ("costi_extra", importo_finale)
+        return ("costi_extra", importo_finale, metadata)
     
     # STEP 6: RIPARAZIONI - Pattern specifici (parole chiare)
     riparazioni_keywords_sicure = [
@@ -124,16 +155,16 @@ def categorizza_spesa(descrizione: str, importo: float, is_nota_credito: bool = 
         "freno", "freni", "disco", "pastiglie", "sospensione", "cambio", "frizione"
     ]
     if any(kw in desc_lower for kw in riparazioni_keywords_sicure):
-        return ("riparazioni", importo_finale)
+        return ("riparazioni", importo_finale, metadata)
     
     # STEP 7: CANONI (altri pattern)
     if any(kw in desc_lower for kw in ["servizio", "servizi", "rifatturazione", 
                                         "conguaglio", "chilometr", "km", "finanziario",
                                         "assistenza operativa", "rateo"]):
-        return ("canoni", importo_finale)
+        return ("canoni", importo_finale, metadata)
     
     # Default: canoni
-    return ("canoni", importo_finale)
+    return ("canoni", importo_finale, metadata)
 
 
 def estrai_modello_marca(descrizione: str, targa: str) -> tuple:
