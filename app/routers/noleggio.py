@@ -438,52 +438,86 @@ async def get_veicoli(
     async for v in cursor:
         veicoli_salvati[v["targa"]] = v
     
-    # Associa fatture LeasePlan ai veicoli con associazione manuale
+    # Associa fatture senza targa ai veicoli salvati
+    # Logica: preferisci veicoli con contratto scaduto o senza fatture già associate
     for fattura in fatture_senza_targa:
         piva = fattura["supplier_vat"]
         tipo_doc = fattura.get("tipo_documento", "").lower()
         is_nota_credito = "nota" in tipo_doc or tipo_doc == "td04"
         fattura_id = fattura.get("invoice_id", "")
         
-        # Cerca veicoli salvati con questo fornitore
-        for targa, salvato in veicoli_salvati.items():
-            if salvato.get("fornitore_piva") == piva:
-                # Aggiungi le spese a questo veicolo
-                if targa not in veicoli_fatture:
-                    veicoli_fatture[targa] = {
-                        "targa": targa,
-                        "fornitore_noleggio": fattura["supplier"],
-                        "fornitore_piva": piva,
-                        "codice_cliente": fattura.get("codice_cliente"),
-                        "modello": salvato.get("modello", ""),
-                        "marca": salvato.get("marca", ""),
-                        "driver": salvato.get("driver"),
-                        "driver_id": salvato.get("driver_id"),
-                        "contratto": salvato.get("contratto"),
-                        "data_inizio": salvato.get("data_inizio"),
-                        "data_fine": salvato.get("data_fine"),
-                        "note": salvato.get("note"),
-                        "canoni": [],
-                        "pedaggio": [],
-                        "verbali": [],
-                        "bollo": [],
-                        "costi_extra": [],
-                        "riparazioni": [],
-                        "totale_canoni": 0,
-                        "totale_pedaggio": 0,
-                        "totale_verbali": 0,
-                        "totale_bollo": 0,
-                        "totale_costi_extra": 0,
-                        "totale_riparazioni": 0,
-                        "totale_generale": 0
-                    }
-                
-                # Raggruppa linee per categoria
-                linee_per_cat = {}
-                for linea in fattura.get("linee", []):
-                    desc = linea.get("descrizione", "")
-                    prezzo = float(linea.get("prezzo_totale") or linea.get("prezzo_unitario") or 0)
-                    categoria, importo, metadata = categorizza_spesa(desc, prezzo, is_nota_credito)
+        # Trova tutti i veicoli di questo fornitore
+        veicoli_fornitore = [
+            (targa, salvato) for targa, salvato in veicoli_salvati.items()
+            if salvato.get("fornitore_piva") == piva
+        ]
+        
+        if not veicoli_fornitore:
+            continue  # Nessun veicolo per questo fornitore
+        
+        # Scegli il veicolo giusto:
+        # 1. Preferisci veicoli NON presenti in veicoli_fatture (contratti senza targa nelle fatture)
+        # 2. Altrimenti preferisci veicoli con contratto scaduto (data_fine < oggi)
+        target_targa = None
+        from datetime import datetime
+        oggi = datetime.now().strftime('%Y-%m-%d')
+        
+        # Prima cerca veicoli non presenti in veicoli_fatture
+        for targa, salvato in veicoli_fornitore:
+            if targa not in veicoli_fatture:
+                target_targa = targa
+                break
+        
+        # Se tutti i veicoli sono presenti, cerca quello con contratto scaduto
+        if not target_targa:
+            for targa, salvato in veicoli_fornitore:
+                data_fine = salvato.get("data_fine", "")
+                if data_fine and data_fine < oggi:
+                    target_targa = targa
+                    break
+        
+        # Se ancora niente, usa il primo disponibile
+        if not target_targa:
+            target_targa = veicoli_fornitore[0][0]
+        
+        salvato = veicoli_salvati[target_targa]
+        
+        # Aggiungi le spese a questo veicolo
+        if target_targa not in veicoli_fatture:
+            veicoli_fatture[target_targa] = {
+                "targa": target_targa,
+                "fornitore_noleggio": fattura["supplier"],
+                "fornitore_piva": piva,
+                "codice_cliente": fattura.get("codice_cliente"),
+                "modello": salvato.get("modello", ""),
+                "marca": salvato.get("marca", ""),
+                "driver": salvato.get("driver"),
+                "driver_id": salvato.get("driver_id"),
+                "contratto": salvato.get("contratto"),
+                "data_inizio": salvato.get("data_inizio"),
+                "data_fine": salvato.get("data_fine"),
+                "note": salvato.get("note"),
+                "canoni": [],
+                "pedaggio": [],
+                "verbali": [],
+                "bollo": [],
+                "costi_extra": [],
+                "riparazioni": [],
+                "totale_canoni": 0,
+                "totale_pedaggio": 0,
+                "totale_verbali": 0,
+                "totale_bollo": 0,
+                "totale_costi_extra": 0,
+                "totale_riparazioni": 0,
+                "totale_generale": 0
+            }
+        
+        # Raggruppa linee per categoria
+        linee_per_cat = {}
+        for linea in fattura.get("linee", []):
+            desc = linea.get("descrizione", "")
+            prezzo = float(linea.get("prezzo_totale") or linea.get("prezzo_unitario") or 0)
+            categoria, importo, metadata = categorizza_spesa(desc, prezzo, is_nota_credito)
                     
                     if categoria not in linee_per_cat:
                         linee_per_cat[categoria] = {"voci": [], "imponibile": 0, "metadata": {}}
