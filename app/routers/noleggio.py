@@ -113,20 +113,22 @@ async def scan_fatture_noleggio() -> Dict[str, Any]:
                 # Categorizza tipo spesa
                 desc_lower = desc.lower()
                 
-                if "verbale" in desc_lower or "multa" in desc_lower or "sanzione" in desc_lower:
-                    veicoli[targa]["verbali"].append(spesa)
-                    veicoli[targa]["totale_verbali"] += abs(importo)
-                elif "sinistro" in desc_lower or "riparaz" in desc_lower or "carrozzeria" in desc_lower or "danni" in desc_lower:
+                # RIPARAZIONI: sinistri, riparazioni, carrozzeria, danni, rifatturazione
+                if "sinistro" in desc_lower or "riparaz" in desc_lower or "carrozzeria" in desc_lower or "danni" in desc_lower or "rifatturaz" in desc_lower:
                     veicoli[targa]["riparazioni"].append(spesa)
                     veicoli[targa]["totale_riparazioni"] += abs(importo)
+                # BOLLO
                 elif "bollo" in desc_lower:
                     veicoli[targa]["bollo"].append(spesa)
                     veicoli[targa]["totale_bollo"] += abs(importo)
-                elif "canone" in desc_lower or "locazione" in desc_lower or "noleggio" in desc_lower:
+                # CANONI: canone, locazione, noleggio, servizio
+                elif "canone" in desc_lower or "locazione" in desc_lower or "noleggio" in desc_lower or "servizio" in desc_lower:
                     veicoli[targa]["canoni"].append(spesa)
                     veicoli[targa]["totale_canoni"] += abs(importo)
+                # VERBALI: tutto il resto (verbali, multe, sanzioni, e non categorizzato)
                 else:
-                    veicoli[targa]["altro"].append(spesa)
+                    veicoli[targa]["verbali"].append(spesa)
+                    veicoli[targa]["totale_verbali"] += abs(importo)
                 
                 veicoli[targa]["totale_generale"] = (
                     veicoli[targa]["totale_canoni"] +
