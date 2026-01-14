@@ -214,7 +214,7 @@ def estrai_modello_marca(descrizione: str, targa: str) -> tuple:
 async def scan_fatture_noleggio(anno: Optional[int] = None) -> Dict[str, Any]:
     """
     Scansiona le fatture XML per estrarre dati veicoli noleggio.
-    Raggruppa per targa e per codice cliente/contratto.
+    Raggruppa per targa e per numero fattura (non per singola linea).
     """
     db = Database.get_db()
     
@@ -237,6 +237,7 @@ async def scan_fatture_noleggio(anno: Optional[int] = None) -> Dict[str, Any]:
         invoice_date = invoice.get("invoice_date", "")
         supplier = invoice.get("supplier_name", "")
         supplier_vat = invoice.get("supplier_vat", "")
+        invoice_id = str(invoice.get("_id", ""))
         is_nota_credito = "nota" in invoice.get("tipo_documento", "").lower() or invoice.get("total_amount", 0) < 0
         
         # Estrai codice cliente per questo fornitore
@@ -265,7 +266,10 @@ async def scan_fatture_noleggio(anno: Optional[int] = None) -> Dict[str, Any]:
             })
             continue
         
-        # Processa ogni linea
+        # Raggruppa le linee per targa E per categoria
+        # Struttura: {targa: {categoria: {linee: [], totale_imponibile: 0, totale_iva: 0, metadata: {}}}}
+        linee_per_targa = {}
+        
         for linea in linee:
             desc = linea.get("descrizione") or linea.get("Descrizione", "")
             
@@ -275,7 +279,7 @@ async def scan_fatture_noleggio(anno: Optional[int] = None) -> Dict[str, Any]:
                 
             targa = match.group(1)
             
-            # Inizializza veicolo
+            # Inizializza veicolo nel risultato finale
             if targa not in veicoli:
                 marca, modello = estrai_modello_marca(desc, targa)
                 veicoli[targa] = {
@@ -287,7 +291,7 @@ async def scan_fatture_noleggio(anno: Optional[int] = None) -> Dict[str, Any]:
                     "marca": marca,
                     "driver": None,
                     "driver_id": None,
-                    "contratto": codice_cliente,  # Usa codice cliente come contratto
+                    "contratto": codice_cliente,
                     "data_inizio": None,
                     "data_fine": None,
                     "note": None,
@@ -306,12 +310,10 @@ async def scan_fatture_noleggio(anno: Optional[int] = None) -> Dict[str, Any]:
                     "totale_generale": 0
                 }
             else:
-                # Aggiorna codice cliente se trovato
                 if codice_cliente and not veicoli[targa]["codice_cliente"]:
                     veicoli[targa]["codice_cliente"] = codice_cliente
                     veicoli[targa]["contratto"] = codice_cliente
                 
-                # Aggiorna marca/modello se mancanti
                 if not veicoli[targa]["modello"]:
                     marca, modello = estrai_modello_marca(desc, targa)
                     if modello:
@@ -319,31 +321,67 @@ async def scan_fatture_noleggio(anno: Optional[int] = None) -> Dict[str, Any]:
                     if marca:
                         veicoli[targa]["marca"] = marca
             
+            # Inizializza struttura per questa targa in questa fattura
+            if targa not in linee_per_targa:
+                linee_per_targa[targa] = {}
+            
             # Estrai importi
             prezzo_totale = float(linea.get("prezzo_totale") or linea.get("PrezzoTotale") or 
                                   linea.get("prezzo_unitario") or linea.get("PrezzoUnitario") or 0)
             aliquota_iva = float(linea.get("aliquota_iva") or linea.get("AliquotaIVA") or 22)
             
-            # Categorizza
-            categoria, importo = categorizza_spesa(desc, prezzo_totale, is_nota_credito)
+            # Categorizza con metadata
+            categoria, importo, metadata = categorizza_spesa(desc, prezzo_totale, is_nota_credito)
             iva = abs(importo) * aliquota_iva / 100
             if importo < 0:
                 iva = -iva
             
-            # Aggiungi alla categoria
-            veicoli[targa][categoria].append({
-                "data": invoice_date,
-                "numero_fattura": invoice_number,
-                "fattura_id": invoice.get("id"),  # ID per link "Vedi Fattura"
-                "fornitore": supplier,
-                "voci": [{"descrizione": desc, "importo": importo}],
-                "imponibile": round(importo, 2),
-                "iva": round(iva, 2),
-                "totale": round(importo + iva, 2)
-            })
+            # Raggruppa per categoria in questa fattura
+            if categoria not in linee_per_targa[targa]:
+                linee_per_targa[targa][categoria] = {
+                    "voci": [],
+                    "totale_imponibile": 0,
+                    "totale_iva": 0,
+                    "metadata": {}
+                }
             
-            # Aggiorna totale categoria
-            veicoli[targa][f"totale_{categoria}"] += importo
+            linee_per_targa[targa][categoria]["voci"].append({
+                "descrizione": desc,
+                "importo": round(importo, 2)
+            })
+            linee_per_targa[targa][categoria]["totale_imponibile"] += importo
+            linee_per_targa[targa][categoria]["totale_iva"] += iva
+            
+            # Merge metadata (es: numero verbale)
+            for k, v in metadata.items():
+                if k not in linee_per_targa[targa][categoria]["metadata"]:
+                    linee_per_targa[targa][categoria]["metadata"][k] = v
+        
+        # Ora aggiungi le fatture raggruppate al veicolo
+        for targa, categorie in linee_per_targa.items():
+            for categoria, dati in categorie.items():
+                imponibile = round(dati["totale_imponibile"], 2)
+                iva = round(dati["totale_iva"], 2)
+                totale = round(imponibile + iva, 2)
+                
+                record = {
+                    "data": invoice_date,
+                    "numero_fattura": invoice_number,
+                    "fattura_id": invoice_id,
+                    "fornitore": supplier,
+                    "voci": dati["voci"],
+                    "imponibile": imponibile,
+                    "iva": iva,
+                    "totale": totale
+                }
+                
+                # Aggiungi metadata per verbali
+                if categoria == "verbali" and dati["metadata"]:
+                    record["numero_verbale"] = dati["metadata"].get("numero_verbale")
+                    record["data_verbale"] = dati["metadata"].get("data_verbale")
+                
+                veicoli[targa][categoria].append(record)
+                veicoli[targa][f"totale_{categoria}"] += imponibile
     
     # Calcola totali generali
     for targa in veicoli:
