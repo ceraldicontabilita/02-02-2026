@@ -539,6 +539,7 @@ async def update_veicolo(
     
     # Campi aggiornabili
     for campo in ["driver", "driver_id", "marca", "modello", "contratto", 
+                  "codice_cliente", "centro_fatturazione",
                   "data_inizio", "data_fine", "note", "fornitore_noleggio", "fornitore_piva"]:
         if campo in data:
             update_data[campo] = data[campo]
