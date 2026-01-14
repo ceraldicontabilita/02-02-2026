@@ -427,9 +427,6 @@ async def get_veicoli(
     # Scansiona fatture
     veicoli_fatture, fatture_senza_targa = await scan_fatture_noleggio(anno)
     
-    # DEBUG: Log veicoli trovati
-    print(f"DEBUG: veicoli_fatture keys after scan: {list(veicoli_fatture.keys())}")
-    
     # Carica dati salvati
     veicoli_salvati = {}
     cursor = db[COLLECTION].find({}, {"_id": 0})
