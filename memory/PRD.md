@@ -412,7 +412,7 @@ Tutte le pagine principali supportano layout mobile:
 ### 2026-01-14 - Gestione Noleggio Auto (SESSIONE ATTUALE)
 - ✅ **Nuova sezione "Noleggio Auto"** nel menu Dipendenti
   - **Backend**: `/app/app/routers/noleggio.py` - Estrae automaticamente dati veicoli dalle fatture XML
-  - **Frontend**: `/app/frontend/src/pages/NoleggioAuto.jsx` - Card per ogni veicolo con dettagli spese
+  - **Frontend**: `/app/frontend/src/pages/NoleggioAuto.jsx` - Stile identico a DipendenteAcconti
   - **Collection MongoDB**: `veicoli_noleggio` - Salva driver, date noleggio, note
   - **Fornitori riconosciuti**: Leasys, ARVAL, ALD, LeasePlan, Alphabet, Hertz, Avis, Europcar
   - **Categorie spese**: Canoni, Verbali/Multe, Riparazioni, Bollo
@@ -421,8 +421,18 @@ Tutte le pagine principali supportano layout mobile:
     - Rilevamento modello auto dalla descrizione
     - Assegnazione driver (dipendente) a veicolo
     - Date inizio/fine noleggio
-    - Filtro per anno
-    - Card espandibili con dettaglio spese
+    - Ricerca in tutti gli anni (2022-2026)
+
+- ✅ **STILE UI UTILIZZATO** (da documentare per coerenza):
+  - **Layout**: Grid 2 colonne (`gridTemplateColumns: 'minmax(280px, 380px) 1fr'`)
+  - **Container**: `background: 'white', borderRadius: 12, padding: 16/20, boxShadow: '0 1px 3px rgba(0,0,0,0.1)'`
+  - **Selezione lista**: `background: selectedItem ? '#dbeafe' : '#f8fafc', border: selected ? '2px solid #3b82f6' : '1px solid #e2e8f0'`
+  - **SaldoCard Component**: `background: ${color}15, borderLeft: 4px solid ${color}, borderRadius: 8`
+  - **Colori**: Verde #4caf50 (canoni), Rosso #f44336 (verbali), Arancio #ff9800 (riparazioni), Viola #9c27b0 (bollo), Blu navy #1a365d (totali)
+  - **Font header**: `fontSize: 'clamp(20px, 5vw, 28px)', color: '#1a365d'`
+  - **Font subtitle**: `color: '#666', fontSize: 'clamp(12px, 3vw, 14px)'`
+  - **Tabelle**: `borderCollapse: 'collapse', fontSize: 12, background: 'white', border: '1px solid #e0e0e0'`
+  - **Riferimento**: Identico a `/app/frontend/src/pages/DipendenteAcconti.jsx`
 
 ### 2026-01-13 - Parser F24 (SESSIONE ATTUALE)
 - ✅ **REFACTORING COMPLETO PARSER F24**: Risolto problema duplicazione tributi tra sezioni ERARIO/REGIONI
