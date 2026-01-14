@@ -451,7 +451,7 @@ export default function NoleggioAuto() {
             borderRadius: 12, 
             padding: 24, 
             width: '100%', 
-            maxWidth: 500,
+            maxWidth: 550,
             maxHeight: '90vh',
             overflowY: 'auto'
           }}>
@@ -460,64 +460,155 @@ export default function NoleggioAuto() {
               <button onClick={() => setEditingVeicolo(null)} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer' }}>✕</button>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {/* Marca e Modello */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 12 }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: 13, fontWeight: '500', marginBottom: 4 }}>Marca</label>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: '500', marginBottom: 4 }}>Marca</label>
                   <input 
                     type="text"
                     value={editingVeicolo.marca || ''}
                     onChange={(e) => setEditingVeicolo({...editingVeicolo, marca: e.target.value})}
                     placeholder="Es: BMW"
-                    style={{ width: '100%', padding: '8px 12px', border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 14 }}
+                    style={{ width: '100%', padding: '8px 12px', border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 13 }}
                   />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: 13, fontWeight: '500', marginBottom: 4 }}>Modello</label>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: '500', marginBottom: 4 }}>Modello</label>
                   <input 
                     type="text"
                     value={editingVeicolo.modello || ''}
                     onChange={(e) => setEditingVeicolo({...editingVeicolo, modello: e.target.value})}
-                    placeholder="Es: X1 Sdrive 18d"
-                    style={{ width: '100%', padding: '8px 12px', border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 14 }}
+                    placeholder="Es: X3 xDrive 20d M Sport"
+                    style={{ width: '100%', padding: '8px 12px', border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 13 }}
                   />
                 </div>
               </div>
 
+              {/* Driver */}
               <div>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: '500', marginBottom: 4 }}>Driver (Dipendente)</label>
-                <select
-                  value={editingVeicolo.driver_id || ''}
-                  onChange={(e) => {
-                    const d = drivers.find(x => x.id === e.target.value);
-                    setEditingVeicolo({...editingVeicolo, driver_id: e.target.value, driver: d?.nome_completo || ''});
-                  }}
-                  style={{ width: '100%', padding: '8px 12px', border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 14 }}
-                >
-                  <option value="">-- Seleziona Driver --</option>
-                  {drivers.map(d => (
-                    <option key={d.id} value={d.id}>{d.nome_completo}</option>
-                  ))}
-                </select>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: '500', marginBottom: 4 }}>Driver (Assegnatario)</label>
+                {drivers.length > 0 ? (
+                  <select
+                    value={editingVeicolo.driver_id || ''}
+                    onChange={(e) => {
+                      const d = drivers.find(x => x.id === e.target.value);
+                      setEditingVeicolo({...editingVeicolo, driver_id: e.target.value, driver: d?.nome_completo || ''});
+                    }}
+                    style={{ width: '100%', padding: '8px 12px', border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 13 }}
+                  >
+                    <option value="">-- Seleziona Driver --</option>
+                    {drivers.map(d => (
+                      <option key={d.id} value={d.id}>{d.nome_completo}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input 
+                    type="text"
+                    value={editingVeicolo.driver || ''}
+                    onChange={(e) => setEditingVeicolo({...editingVeicolo, driver: e.target.value})}
+                    placeholder="Nome e Cognome"
+                    style={{ width: '100%', padding: '8px 12px', border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 13 }}
+                  />
+                )}
               </div>
 
+              {/* Contratto e Codice Cliente */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: '500', marginBottom: 4 }}>N° Contratto</label>
+                  <input 
+                    type="text"
+                    value={editingVeicolo.contratto || ''}
+                    onChange={(e) => setEditingVeicolo({...editingVeicolo, contratto: e.target.value})}
+                    placeholder="Numero contratto"
+                    style={{ width: '100%', padding: '8px 12px', border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 13 }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: '500', marginBottom: 4 }}>Codice Cliente</label>
+                  <input 
+                    type="text"
+                    value={editingVeicolo.codice_cliente || ''}
+                    onChange={(e) => setEditingVeicolo({...editingVeicolo, codice_cliente: e.target.value})}
+                    placeholder="Codice cliente fornitore"
+                    style={{ width: '100%', padding: '8px 12px', border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 13 }}
+                  />
+                </div>
+              </div>
+
+              {/* Centro Fatturazione */}
               <div>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: '500', marginBottom: 4 }}>Contratto</label>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: '500', marginBottom: 4 }}>Centro Fatturazione</label>
                 <input 
                   type="text"
-                  value={editingVeicolo.contratto || ''}
-                  onChange={(e) => setEditingVeicolo({...editingVeicolo, contratto: e.target.value})}
-                  placeholder="Numero contratto"
-                  style={{ width: '100%', padding: '8px 12px', border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 14 }}
+                  value={editingVeicolo.centro_fatturazione || ''}
+                  onChange={(e) => setEditingVeicolo({...editingVeicolo, centro_fatturazione: e.target.value})}
+                  placeholder="Centro di fatturazione (es: K26858)"
+                  style={{ width: '100%', padding: '8px 12px', border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 13 }}
                 />
               </div>
 
+              {/* Date Noleggio */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: 13, fontWeight: '500', marginBottom: 4 }}>Inizio Noleggio</label>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: '500', marginBottom: 4 }}>Inizio Noleggio</label>
                   <input 
                     type="date"
                     value={editingVeicolo.data_inizio || ''}
+                    onChange={(e) => setEditingVeicolo({...editingVeicolo, data_inizio: e.target.value})}
+                    style={{ width: '100%', padding: '8px 12px', border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 13 }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: '500', marginBottom: 4 }}>Fine Noleggio</label>
+                  <input 
+                    type="date"
+                    value={editingVeicolo.data_fine || ''}
+                    onChange={(e) => setEditingVeicolo({...editingVeicolo, data_fine: e.target.value})}
+                    style={{ width: '100%', padding: '8px 12px', border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 13 }}
+                  />
+                </div>
+              </div>
+
+              {/* Note */}
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: '500', marginBottom: 4 }}>Note</label>
+                <input 
+                  type="text"
+                  value={editingVeicolo.note || ''}
+                  onChange={(e) => setEditingVeicolo({...editingVeicolo, note: e.target.value})}
+                  placeholder="Note aggiuntive"
+                  style={{ width: '100%', padding: '8px 12px', border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 13 }}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 20 }}>
+              <button 
+                onClick={() => { handleDelete(editingVeicolo.targa); setEditingVeicolo(null); }}
+                style={{ padding: '10px 16px', background: '#fee2e2', color: '#dc2626', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: '600' }}
+              >
+                🗑️ Elimina
+              </button>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button 
+                  onClick={() => setEditingVeicolo(null)}
+                  style={{ padding: '10px 16px', background: '#f3f4f6', color: '#374151', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: '600' }}
+                >
+                  Annulla
+                </button>
+                <button 
+                  onClick={handleSaveVeicolo}
+                  style={{ padding: '10px 16px', background: '#2563eb', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: '600' }}
+                >
+                  💾 Salva
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
                     onChange={(e) => setEditingVeicolo({...editingVeicolo, data_inizio: e.target.value})}
                     style={{ width: '100%', padding: '8px 12px', border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 14 }}
                   />
