@@ -302,42 +302,65 @@ export default function NoleggioAuto() {
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                       <thead>
                         <tr style={{ background: '#f9fafb', borderBottom: '2px solid #e5e7eb' }}>
-                          <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: '600' }}>Data</th>
-                          <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: '600' }}>Fattura</th>
-                          <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: '600' }}>Descrizione</th>
-                          <th style={{ padding: '10px 12px', textAlign: 'right', fontWeight: '600' }}>Imponibile</th>
-                          <th style={{ padding: '10px 12px', textAlign: 'right', fontWeight: '600' }}>IVA</th>
-                          <th style={{ padding: '10px 12px', textAlign: 'right', fontWeight: '600' }}>Totale</th>
+                          <th style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '600' }}>Data</th>
+                          <th style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '600' }}>Fattura</th>
+                          <th style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '600' }}>Descrizione</th>
+                          <th style={{ padding: '8px 10px', textAlign: 'right', fontWeight: '600' }}>Imponibile</th>
+                          <th style={{ padding: '8px 10px', textAlign: 'right', fontWeight: '600' }}>IVA</th>
+                          <th style={{ padding: '8px 10px', textAlign: 'right', fontWeight: '600' }}>Totale</th>
+                          <th style={{ padding: '8px 10px', textAlign: 'center', fontWeight: '600' }}>Vedi</th>
                         </tr>
                       </thead>
                       <tbody>
                         {spese.map((s, idx) => (
                           <tr key={idx} style={{ borderBottom: '1px solid #f3f4f6', background: s.imponibile < 0 ? '#fff7ed' : 'white' }}>
-                            <td style={{ padding: '10px 12px' }}>{formatDate(s.data)}</td>
-                            <td style={{ padding: '10px 12px', color: '#6b7280', fontSize: 12 }}>{s.numero_fattura || "-"}</td>
-                            <td style={{ padding: '10px 12px' }}>
+                            <td style={{ padding: '8px 10px', fontSize: 12 }}>{formatDate(s.data)}</td>
+                            <td style={{ padding: '8px 10px', color: '#6b7280', fontSize: 11, fontFamily: 'monospace' }}>{s.numero_fattura || "-"}</td>
+                            <td style={{ padding: '8px 10px' }}>
                               {s.voci?.map((v, vi) => (
-                                <div key={vi} style={{ fontSize: 12, color: '#4b5563', paddingBottom: 2 }}>
-                                  {v.descrizione?.replace(selectedVeicolo.targa, '').trim().slice(0, 80) || '-'}
+                                <div key={vi} style={{ fontSize: 11, color: '#4b5563', paddingBottom: 2 }}>
+                                  {v.descrizione?.replace(selectedVeicolo.targa, '').trim().slice(0, 70) || '-'}
                                 </div>
                               ))}
                             </td>
-                            <td style={{ padding: '10px 12px', textAlign: 'right', color: s.imponibile < 0 ? '#ea580c' : 'inherit' }}>
+                            <td style={{ padding: '8px 10px', textAlign: 'right', color: s.imponibile < 0 ? '#ea580c' : 'inherit', fontSize: 12 }}>
                               {formatEuro(s.imponibile)}
                             </td>
-                            <td style={{ padding: '10px 12px', textAlign: 'right', color: '#6b7280' }}>{formatEuro(s.iva)}</td>
-                            <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 'bold', color: s.totale < 0 ? '#ea580c' : 'inherit' }}>
+                            <td style={{ padding: '8px 10px', textAlign: 'right', color: '#6b7280', fontSize: 12 }}>{formatEuro(s.iva)}</td>
+                            <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 'bold', color: s.totale < 0 ? '#ea580c' : 'inherit', fontSize: 12 }}>
                               {formatEuro(s.totale)}
+                            </td>
+                            <td style={{ padding: '8px 10px', textAlign: 'center' }}>
+                              {s.fattura_id ? (
+                                <a 
+                                  href={`/fatture-ricevute?id=${s.fattura_id}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  style={{ 
+                                    padding: '4px 8px', 
+                                    background: '#dbeafe', 
+                                    color: '#2563eb', 
+                                    borderRadius: 4, 
+                                    textDecoration: 'none',
+                                    fontSize: 11
+                                  }}
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  📄 Vedi
+                                </a>
+                              ) : (
+                                <span style={{ color: '#9ca3af', fontSize: 11 }}>-</span>
+                              )}
                             </td>
                           </tr>
                         ))}
                       </tbody>
                       <tfoot>
                         <tr style={{ background: `${cat.color}10`, borderTop: '2px solid #e5e7eb' }}>
-                          <td colSpan={3} style={{ padding: '10px 12px', textAlign: 'right', fontWeight: '600' }}>Totale {cat.label}:</td>
-                          <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 'bold' }}>{formatEuro(spese.reduce((a, s) => a + (s.imponibile || 0), 0))}</td>
-                          <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 'bold' }}>{formatEuro(spese.reduce((a, s) => a + (s.iva || 0), 0))}</td>
-                          <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 'bold', color: cat.color }}>{formatEuro(totaleSezione)}</td>
+                          <td colSpan={4} style={{ padding: '8px 10px', textAlign: 'right', fontWeight: '600' }}>Totale {cat.label}:</td>
+                          <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 'bold', fontSize: 12 }}>{formatEuro(spese.reduce((a, s) => a + (s.iva || 0), 0))}</td>
+                          <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 'bold', color: cat.color, fontSize: 12 }}>{formatEuro(totaleSezione)}</td>
+                          <td></td>
                         </tr>
                       </tfoot>
                     </table>
