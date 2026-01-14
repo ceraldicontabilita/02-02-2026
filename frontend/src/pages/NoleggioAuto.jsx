@@ -609,58 +609,6 @@ export default function NoleggioAuto() {
           </div>
         </div>
       )}
-                    onChange={(e) => setEditingVeicolo({...editingVeicolo, data_inizio: e.target.value})}
-                    style={{ width: '100%', padding: '8px 12px', border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 14 }}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: 13, fontWeight: '500', marginBottom: 4 }}>Fine Noleggio</label>
-                  <input 
-                    type="date"
-                    value={editingVeicolo.data_fine || ''}
-                    onChange={(e) => setEditingVeicolo({...editingVeicolo, data_fine: e.target.value})}
-                    style={{ width: '100%', padding: '8px 12px', border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 14 }}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: '500', marginBottom: 4 }}>Note</label>
-                <input 
-                  type="text"
-                  value={editingVeicolo.note || ''}
-                  onChange={(e) => setEditingVeicolo({...editingVeicolo, note: e.target.value})}
-                  placeholder="Note aggiuntive"
-                  style={{ width: '100%', padding: '8px 12px', border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 14 }}
-                />
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 24 }}>
-              <button 
-                onClick={() => { handleDelete(editingVeicolo.targa); setEditingVeicolo(null); }}
-                style={{ padding: '10px 16px', background: '#fee2e2', color: '#dc2626', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: '600' }}
-              >
-                🗑️ Elimina
-              </button>
-              <div style={{ display: 'flex', gap: 10 }}>
-                <button 
-                  onClick={() => setEditingVeicolo(null)}
-                  style={{ padding: '10px 16px', background: '#f3f4f6', color: '#374151', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: '600' }}
-                >
-                  Annulla
-                </button>
-                <button 
-                  onClick={handleSaveVeicolo}
-                  style={{ padding: '10px 16px', background: '#2563eb', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: '600' }}
-                >
-                  💾 Salva
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Modal Aggiungi Veicolo (per LeasePlan o altri senza targa in fattura) */}
       {showAddVeicolo && (
