@@ -631,15 +631,30 @@ async def get_fatture_non_associate(
     anno: Optional[int] = Query(None, description="Filtra per anno")
 ) -> Dict[str, Any]:
     """
-    Restituisce le fatture di fornitori noleggio che non hanno targa nella descrizione.
+    Restituisce le fatture di fornitori noleggio che non hanno targa E
+    non hanno veicoli salvati per quel fornitore.
     Utile per LeasePlan che richiede associazione manuale.
     """
+    db = Database.get_db()
     _, fatture_senza_targa = await scan_fatture_noleggio(anno)
     
+    # Carica veicoli salvati per filtrare
+    veicoli_salvati = {}
+    cursor = db[COLLECTION].find()
+    async for v in cursor:
+        veicoli_salvati[v["targa"]] = v
+    
+    # Filtra solo fatture di fornitori SENZA veicoli salvati
+    fornitori_con_veicoli = set(v.get("fornitore_piva") for v in veicoli_salvati.values())
+    fatture_davvero_non_associate = [
+        f for f in fatture_senza_targa 
+        if f.get("supplier_vat") not in fornitori_con_veicoli
+    ]
+    
     return {
-        "fatture": fatture_senza_targa,
-        "count": len(fatture_senza_targa),
-        "nota": "Queste fatture richiedono associazione manuale ad un veicolo"
+        "fatture": fatture_davvero_non_associate,
+        "count": len(fatture_davvero_non_associate),
+        "nota": "Queste fatture richiedono associazione manuale ad un veicolo (fornitore senza veicoli salvati)"
     }
 
 
