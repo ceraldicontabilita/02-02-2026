@@ -436,6 +436,10 @@ async def get_veicoli(
     # Associa fatture LeasePlan ai veicoli con associazione manuale
     for fattura in fatture_senza_targa:
         piva = fattura["supplier_vat"]
+        tipo_doc = fattura.get("tipo_documento", "").lower()
+        is_nota_credito = "nota" in tipo_doc or tipo_doc == "td04"
+        fattura_id = fattura.get("invoice_id", "")
+        
         # Cerca veicoli salvati con questo fornitore
         for targa, salvato in veicoli_salvati.items():
             if salvato.get("fornitore_piva") == piva:
@@ -474,7 +478,7 @@ async def get_veicoli(
                 for linea in fattura.get("linee", []):
                     desc = linea.get("descrizione", "")
                     prezzo = float(linea.get("prezzo_totale") or linea.get("prezzo_unitario") or 0)
-                    categoria, importo, metadata = categorizza_spesa(desc, prezzo, False)
+                    categoria, importo, metadata = categorizza_spesa(desc, prezzo, is_nota_credito)
                     
                     if categoria not in linee_per_cat:
                         linee_per_cat[categoria] = {"voci": [], "imponibile": 0, "metadata": {}}
@@ -490,6 +494,7 @@ async def get_veicoli(
                     record = {
                         "data": fattura["invoice_date"],
                         "numero_fattura": fattura["invoice_number"],
+                        "fattura_id": fattura_id,
                         "fornitore": fattura["supplier"],
                         "voci": dati["voci"],
                         "imponibile": imponibile,
