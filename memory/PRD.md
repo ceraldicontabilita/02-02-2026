@@ -1,5 +1,14 @@
 # PRD - Azienda in Cloud ERP
-## Schema Definitivo v2.0 - Gennaio 2026
+## Schema Definitivo v2.1 - Gennaio 2026
+
+---
+
+## 📅 CHANGELOG RECENTE
+
+### 14 Gennaio 2026
+- **FIX**: Importate 247 fatture XML dei fornitori noleggio (ALD, ARVAL, Leasys)
+- **FIX**: Aggiunto anno 2022 nel selettore anni globale
+- **VERIFICATO**: Pagina Noleggio Auto funzionante con dati Verbali, Bollo, Riparazioni estratti correttamente
 
 ---
 
