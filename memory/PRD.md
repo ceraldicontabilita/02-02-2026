@@ -429,9 +429,22 @@ Tutte le pagine3 supportano layout mobile:
 
 ---
 
-## 🎨 STANDARD UI - STILE DI RIFERIMENTO
+## 🎨 STANDARD UI DEFINITIVO - REGOLA OBBLIGATORIA
 
-**IMPORTANTE**: Per qualsiasi nuova pagina o modifica, utilizzare **ESCLUSIVAMENTE** lo stile della pagina `/app/frontend/src/pages/Corrispettivi.jsx`.
+### ⚠️ DIRETTIVA PERMANENTE
+
+**TUTTE le pagine dell'applicazione DEVONO utilizzare ESCLUSIVAMENTE:**
+- ✅ **Inline styles** (oggetti JavaScript `style={{...}}`)
+- ✅ **Emoji** per le icone (🚗, 💰, 📋, ⚠️, etc.)
+- ✅ **Modal/Dialog nativi** (div con position: fixed)
+
+**È VIETATO utilizzare:**
+- ❌ **Tailwind CSS** (classi come `className="flex p-4 bg-white"`)
+- ❌ **Componenti Shadcn/UI** (Card, Button, Dialog, Input da /components/ui/)
+- ❌ **Icone Lucide** (import da lucide-react)
+- ❌ **Qualsiasi altro framework CSS**
+
+### File di riferimento UNICO: `/app/frontend/src/pages/Corrispettivi.jsx`
 
 ### Elementi di stile obbligatori:
 
@@ -445,16 +458,51 @@ Tutte le pagine3 supportano layout mobile:
 | **Bottoni azione** | `padding: '6px 10px', borderRadius: 6, border: 'none', cursor: 'pointer'` |
 | **Bottone primario** | `background: '#dbeafe', color: '#2563eb'` |
 | **Bottone danger** | `background: '#fee2e2', color: '#dc2626'` |
-| **Icone** | Usare **emoji** (🚗, 💰, 📋, etc.) invece di componenti Lucide |
+| **Bottone success** | `background: '#4caf50', color: 'white'` |
+| **Bottone neutral** | `background: '#e5e7eb', color: '#374151'` |
+| **Icone** | Usare **emoji** (🚗, 💰, 📋, 🔄, ✏️, 🗑️, 👁️, etc.) |
 | **Font header** | `fontSize: 22, fontWeight: 'bold'` |
 | **Font subtitle** | `fontSize: 13, opacity: 0.9` |
-| **Colori principali** | Verde #4caf50, Rosso #f44336, Arancio #ff9800, Viola #9c27b0, Blu #2196f3, Marrone #795548, Blu navy #1e3a5f |
+| **Colori principali** | Verde #4caf50, Rosso #f44336/#dc2626, Arancio #ff9800/#ea580c, Viola #9c27b0, Blu #2196f3/#2563eb, Marrone #795548, Blu navy #1e3a5f |
+| **Grigio testo** | `#6b7280` (secondario), `#374151` (principale), `#9ca3af` (disabilitato) |
+| **Errori** | `background: '#fee2e2', border: '1px solid #fecaca', color: '#dc2626'` |
+| **Successo** | `background: '#dcfce7', border: '1px solid #bbf7d0', color: '#16a34a'` |
 
-### NON utilizzare:
-- ❌ Tailwind CSS classes (usa inline styles)
-- ❌ Componenti Shadcn/UI per layout (Card, Button, Dialog custom)
-- ❌ Icone Lucide (usa emoji)
-- ❌ Altri stili o layout diversi
+### Struttura Modal/Dialog nativa:
+```jsx
+{showModal && (
+  <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+    <div style={{ background: 'white', borderRadius: 12, padding: 24, width: '100%', maxWidth: 500 }}>
+      {/* contenuto */}
+    </div>
+  </div>
+)}
+```
+
+### Input nativi:
+```jsx
+<input 
+  type="text"
+  style={{ width: '100%', padding: '8px 12px', border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 14 }}
+/>
+<select style={{ width: '100%', padding: '8px 12px', border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 14 }}>
+  <option value="">-- Seleziona --</option>
+</select>
+```
+
+---
+
+### 📋 PAGINE DA CONVERTIRE (Backlog Refactoring UI)
+
+Le seguenti pagine utilizzano ancora Tailwind/Shadcn e devono essere convertite allo standard inline styles:
+
+| Pagina | Stato | Priorità |
+|--------|-------|----------|
+| `NoleggioAuto.jsx` | ✅ Convertita | - |
+| `Corrispettivi.jsx` | ✅ Già conforme | - |
+| Altre pagine | ⏳ Da verificare | P2 |
+
+**Nota**: La conversione delle pagine esistenti va fatta gradualmente durante le modifiche funzionali, non come task separato.
 
 ### 2026-01-13 - Parser F24 (SESSIONE ATTUALE)
 - ✅ **REFACTORING COMPLETO PARSER F24**: Risolto problema duplicazione tributi tra sezioni ERARIO/REGIONI
