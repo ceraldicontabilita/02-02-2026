@@ -1,27 +1,46 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Car, User, Calendar, FileText, AlertTriangle, Wrench, Receipt, RefreshCw, Edit2, ChevronDown, ChevronUp } from 'lucide-react';
 import api from '../api';
 
+/**
+ * Pagina Gestione Noleggio Auto
+ * Stile: Identico a DipendenteAcconti.jsx
+ * - Layout grid 2 colonne (lista veicoli + dettaglio)
+ * - SaldoCard per statistiche con colori
+ * - Tabelle per dettaglio spese
+ */
 export default function NoleggioAuto() {
   const [veicoli, setVeicoli] = useState([]);
   const [statistiche, setStatistiche] = useState({});
   const [loading, setLoading] = useState(true);
+  const [selectedVeicolo, setSelectedVeicolo] = useState(null);
   const [drivers, setDrivers] = useState([]);
-  const [editingVeicolo, setEditingVeicolo] = useState(null);
-  const [expandedCard, setExpandedCard] = useState(null);
-  const [anno, setAnno] = useState(2024);
+  const [showForm, setShowForm] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [editData, setEditData] = useState({
+    marca: '',
+    modello: '',
+    driver_id: '',
+    driver: '',
+    contratto: '',
+    data_inizio: '',
+    data_fine: '',
+    note: ''
+  });
+
+  const categorie = [
+    { key: 'canoni', label: 'Canoni', color: '#4caf50' },
+    { key: 'verbali', label: 'Verbali/Multe', color: '#f44336' },
+    { key: 'riparazioni', label: 'Riparazioni', color: '#ff9800' },
+    { key: 'bollo', label: 'Bollo', color: '#9c27b0' },
+    { key: 'altro', label: 'Altro', color: '#607d8b' }
+  ];
 
   const fetchVeicoli = useCallback(async () => {
     setLoading(true);
     try {
+      // Carica veicoli senza filtro anno (tutti gli anni 2022-2026)
       const [vRes, dRes] = await Promise.all([
-        api.get(`/api/noleggio/veicoli?anno=${anno}`),
+        api.get('/api/noleggio/veicoli'),
         api.get('/api/noleggio/drivers')
       ]);
       setVeicoli(vRes.data.veicoli || []);
@@ -32,362 +51,342 @@ export default function NoleggioAuto() {
     } finally {
       setLoading(false);
     }
-  }, [anno]);
+  }, []);
 
   useEffect(() => {
     fetchVeicoli();
   }, [fetchVeicoli]);
 
-  const handleSaveVeicolo = async () => {
-    if (!editingVeicolo) return;
-    try {
-      await api.put(`/api/noleggio/veicoli/${editingVeicolo.targa}`, {
-        driver: editingVeicolo.driver,
-        driver_id: editingVeicolo.driver_id,
-        modello: editingVeicolo.modello,
-        marca: editingVeicolo.marca,
-        contratto: editingVeicolo.contratto,
-        data_inizio: editingVeicolo.data_inizio,
-        data_fine: editingVeicolo.data_fine,
-        note: editingVeicolo.note
+  useEffect(() => {
+    if (selectedVeicolo) {
+      setEditData({
+        marca: selectedVeicolo.marca || '',
+        modello: selectedVeicolo.modello || '',
+        driver_id: selectedVeicolo.driver_id || '',
+        driver: selectedVeicolo.driver || '',
+        contratto: selectedVeicolo.contratto || '',
+        data_inizio: selectedVeicolo.data_inizio || '',
+        data_fine: selectedVeicolo.data_fine || '',
+        note: selectedVeicolo.note || ''
       });
-      setEditingVeicolo(null);
+    }
+  }, [selectedVeicolo]);
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    if (!selectedVeicolo) return;
+    try {
+      setSaving(true);
+      await api.put(`/api/noleggio/veicoli/${selectedVeicolo.targa}`, editData);
+      setShowForm(false);
       fetchVeicoli();
     } catch (err) {
-      console.error('Errore salvataggio:', err);
+      alert('Errore: ' + (err.response?.data?.detail || err.message));
+    } finally {
+      setSaving(false);
     }
   };
 
-  const formatCurrency = (val) => {
-    return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(val || 0);
-  };
-
-  const StatCard = ({ title, value, icon: Icon, color }) => (
-    <Card className={`border-l-4 ${color}`}>
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-gray-500">{title}</p>
-            <p className="text-2xl font-bold">{formatCurrency(value)}</p>
-          </div>
-          <Icon className="h-8 w-8 opacity-20" />
-        </div>
-      </CardContent>
-    </Card>
-  );
-
-  const VeicoloCard = ({ veicolo }) => {
-    const isExpanded = expandedCard === veicolo.targa;
-    
-    return (
-      <Card 
-        className="hover:shadow-lg transition-shadow cursor-pointer"
-        data-testid={`veicolo-card-${veicolo.targa}`}
-      >
-        <CardHeader 
-          className="pb-2"
-          onClick={() => setExpandedCard(isExpanded ? null : veicolo.targa)}
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Car className="h-6 w-6 text-blue-600" />
-              </div>
-              <div>
-                <CardTitle className="text-lg">
-                  {veicolo.marca ? `${veicolo.marca} ` : ''}{veicolo.modello || 'Modello non rilevato'}
-                </CardTitle>
-                <p className="text-sm font-mono text-gray-600">{veicolo.targa}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setEditingVeicolo({...veicolo});
-                }}
-              >
-                <Edit2 className="h-4 w-4" />
-              </Button>
-              {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
-            </div>
-          </div>
-        </CardHeader>
-        
-        <CardContent>
-          {/* Info principali */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-            <div className="flex items-center gap-2">
-              <User className="h-4 w-4 text-gray-400" />
-              <span className="text-sm">{veicolo.driver || 'Non assegnato'}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <FileText className="h-4 w-4 text-gray-400" />
-              <span className="text-sm">{veicolo.fornitore_noleggio?.split(' ')[0] || '-'}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-gray-400" />
-              <span className="text-sm">
-                {veicolo.data_inizio ? new Date(veicolo.data_inizio).toLocaleDateString('it-IT') : '-'}
-                {veicolo.data_fine ? ` → ${new Date(veicolo.data_fine).toLocaleDateString('it-IT')}` : ''}
-              </span>
-            </div>
-            <div className="text-right">
-              <span className="text-lg font-bold text-blue-600">
-                {formatCurrency(veicolo.totale_generale)}
-              </span>
-            </div>
-          </div>
-
-          {/* Totali per categoria */}
-          <div className="grid grid-cols-4 gap-2 text-center text-sm">
-            <div className="p-2 bg-green-50 rounded">
-              <Receipt className="h-4 w-4 mx-auto mb-1 text-green-600" />
-              <p className="font-semibold">{formatCurrency(veicolo.totale_canoni)}</p>
-              <p className="text-xs text-gray-500">Canoni</p>
-            </div>
-            <div className="p-2 bg-red-50 rounded">
-              <AlertTriangle className="h-4 w-4 mx-auto mb-1 text-red-600" />
-              <p className="font-semibold">{formatCurrency(veicolo.totale_verbali)}</p>
-              <p className="text-xs text-gray-500">Verbali</p>
-            </div>
-            <div className="p-2 bg-orange-50 rounded">
-              <Wrench className="h-4 w-4 mx-auto mb-1 text-orange-600" />
-              <p className="font-semibold">{formatCurrency(veicolo.totale_riparazioni)}</p>
-              <p className="text-xs text-gray-500">Riparazioni</p>
-            </div>
-            <div className="p-2 bg-purple-50 rounded">
-              <FileText className="h-4 w-4 mx-auto mb-1 text-purple-600" />
-              <p className="font-semibold">{formatCurrency(veicolo.totale_bollo)}</p>
-              <p className="text-xs text-gray-500">Bollo</p>
-            </div>
-          </div>
-
-          {/* Dettaglio spese espanso */}
-          {isExpanded && (
-            <div className="mt-4 pt-4 border-t space-y-4">
-              {/* Canoni */}
-              {veicolo.canoni?.length > 0 && (
-                <div>
-                  <h4 className="font-semibold text-green-700 mb-2 flex items-center gap-2">
-                    <Receipt className="h-4 w-4" /> Canoni Noleggio ({veicolo.canoni.length})
-                  </h4>
-                  <div className="max-h-40 overflow-y-auto space-y-1">
-                    {veicolo.canoni.slice(0, 10).map((c, i) => (
-                      <div key={i} className="flex justify-between text-sm bg-green-50 p-2 rounded">
-                        <span>{c.data ? new Date(c.data).toLocaleDateString('it-IT') : '-'}</span>
-                        <span className="text-gray-600 flex-1 mx-2 truncate">{c.descrizione?.slice(0, 50)}</span>
-                        <span className="font-semibold">{formatCurrency(c.importo)}</span>
-                      </div>
-                    ))}
-                    {veicolo.canoni.length > 10 && (
-                      <p className="text-xs text-gray-500 text-center">...e altri {veicolo.canoni.length - 10}</p>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Verbali */}
-              {veicolo.verbali?.length > 0 && (
-                <div>
-                  <h4 className="font-semibold text-red-700 mb-2 flex items-center gap-2">
-                    <AlertTriangle className="h-4 w-4" /> Verbali/Multe ({veicolo.verbali.length})
-                  </h4>
-                  <div className="space-y-1">
-                    {veicolo.verbali.map((v, i) => (
-                      <div key={i} className="flex justify-between text-sm bg-red-50 p-2 rounded">
-                        <span>{v.data ? new Date(v.data).toLocaleDateString('it-IT') : '-'}</span>
-                        <span className="text-gray-600 flex-1 mx-2 truncate">{v.descrizione?.slice(0, 60)}</span>
-                        <span className="font-semibold">{formatCurrency(v.importo)}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Riparazioni */}
-              {veicolo.riparazioni?.length > 0 && (
-                <div>
-                  <h4 className="font-semibold text-orange-700 mb-2 flex items-center gap-2">
-                    <Wrench className="h-4 w-4" /> Riparazioni/Sinistri ({veicolo.riparazioni.length})
-                  </h4>
-                  <div className="space-y-1">
-                    {veicolo.riparazioni.map((r, i) => (
-                      <div key={i} className="flex justify-between text-sm bg-orange-50 p-2 rounded">
-                        <span>{r.data ? new Date(r.data).toLocaleDateString('it-IT') : '-'}</span>
-                        <span className="text-gray-600 flex-1 mx-2 truncate">{r.descrizione?.slice(0, 60)}</span>
-                        <span className="font-semibold">{formatCurrency(r.importo)}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    );
-  };
+  const formatCurrency = (val) => new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(val || 0);
 
   return (
-    <div className="p-6 space-y-6" data-testid="noleggio-page">
+    <div style={{ padding: 'clamp(12px, 3vw, 20px)' }}>
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Car className="h-7 w-7 text-blue-600" />
-            Gestione Noleggio Auto
-          </h1>
-          <p className="text-gray-500">Flotta aziendale - Dati estratti automaticamente dalle fatture XML</p>
-        </div>
-        <div className="flex items-center gap-4">
-          <Select value={anno.toString()} onValueChange={(v) => setAnno(parseInt(v))}>
-            <SelectTrigger className="w-[120px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {[2025, 2024, 2023, 2022].map(y => (
-                <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button onClick={fetchVeicoli} variant="outline" disabled={loading}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            Aggiorna
-          </Button>
-        </div>
+      <div style={{ marginBottom: 20 }}>
+        <h1 style={{ margin: 0, fontSize: 'clamp(20px, 5vw, 28px)', color: '#1a365d' }}>
+          🚗 Gestione Noleggio Auto
+        </h1>
+        <p style={{ color: '#666', margin: '4px 0 0 0', fontSize: 'clamp(12px, 3vw, 14px)' }}>
+          Flotta aziendale - Dati estratti automaticamente dalle fatture XML (2022-2026)
+        </p>
       </div>
 
-      {/* Statistiche */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <StatCard title="Totale Canoni" value={statistiche.totale_canoni} icon={Receipt} color="border-green-500" />
-        <StatCard title="Verbali/Multe" value={statistiche.totale_verbali} icon={AlertTriangle} color="border-red-500" />
-        <StatCard title="Riparazioni" value={statistiche.totale_riparazioni} icon={Wrench} color="border-orange-500" />
-        <StatCard title="Bollo" value={statistiche.totale_bollo} icon={FileText} color="border-purple-500" />
-        <StatCard title="TOTALE" value={statistiche.totale_generale} icon={Car} color="border-blue-500" />
+      {/* Statistiche Globali */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, marginBottom: 20 }}>
+        <SaldoCard label="Totale Canoni" value={statistiche.totale_canoni} color="#4caf50" />
+        <SaldoCard label="Verbali/Multe" value={statistiche.totale_verbali} color="#f44336" />
+        <SaldoCard label="Riparazioni" value={statistiche.totale_riparazioni} color="#ff9800" />
+        <SaldoCard label="Bollo" value={statistiche.totale_bollo} color="#9c27b0" />
+        <SaldoCard label="TOTALE FLOTTA" value={statistiche.totale_generale} color="#1a365d" />
       </div>
 
-      {/* Lista veicoli */}
-      {loading ? (
-        <div className="text-center py-12">
-          <RefreshCw className="h-8 w-8 animate-spin mx-auto text-blue-500" />
-          <p className="mt-2 text-gray-500">Scansione fatture in corso...</p>
-        </div>
-      ) : veicoli.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <Car className="h-12 w-12 mx-auto text-gray-300 mb-4" />
-            <p className="text-gray-500">Nessun veicolo trovato nelle fatture per l'anno {anno}</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {veicoli.map(v => (
-            <VeicoloCard key={v.targa} veicolo={v} />
-          ))}
-        </div>
-      )}
-
-      {/* Dialog modifica veicolo */}
-      <Dialog open={!!editingVeicolo} onOpenChange={() => setEditingVeicolo(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Modifica Veicolo {editingVeicolo?.targa}</DialogTitle>
-          </DialogHeader>
-          {editingVeicolo && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Marca</Label>
-                  <Input 
-                    value={editingVeicolo.marca || ''} 
-                    onChange={(e) => setEditingVeicolo({...editingVeicolo, marca: e.target.value})}
-                    placeholder="Es: BMW, Fiat..."
-                  />
-                </div>
-                <div>
-                  <Label>Modello</Label>
-                  <Input 
-                    value={editingVeicolo.modello || ''} 
-                    onChange={(e) => setEditingVeicolo({...editingVeicolo, modello: e.target.value})}
-                    placeholder="Es: X3, 500..."
-                  />
-                </div>
-              </div>
-              
-              <div>
-                <Label>Driver (Conducente)</Label>
-                <Select 
-                  value={editingVeicolo.driver_id || ''} 
-                  onValueChange={(v) => {
-                    const driver = drivers.find(d => d.id === v);
-                    setEditingVeicolo({
-                      ...editingVeicolo, 
-                      driver_id: v,
-                      driver: driver?.nome_completo || ''
-                    });
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(280px, 380px) 1fr', gap: 20 }}>
+        {/* Lista Veicoli */}
+        <div style={{ background: 'white', borderRadius: 12, padding: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+          <h3 style={{ margin: '0 0 12px 0', fontSize: 14, color: '#64748b' }}>
+            Veicoli ({veicoli.length})
+          </h3>
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: 20, color: '#94a3b8' }}>Caricamento...</div>
+          ) : veicoli.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: 40, color: '#94a3b8' }}>
+              <div style={{ fontSize: 40, marginBottom: 8 }}>🚗</div>
+              <div>Nessun veicolo trovato nelle fatture</div>
+            </div>
+          ) : (
+            <div style={{ maxHeight: 500, overflowY: 'auto' }}>
+              {veicoli.map(v => (
+                <div
+                  key={v.targa}
+                  onClick={() => setSelectedVeicolo(v)}
+                  data-testid={`veicolo-${v.targa}`}
+                  style={{
+                    padding: '12px 14px',
+                    borderRadius: 8,
+                    cursor: 'pointer',
+                    marginBottom: 6,
+                    background: selectedVeicolo?.targa === v.targa ? '#dbeafe' : '#f8fafc',
+                    border: selectedVeicolo?.targa === v.targa ? '2px solid #3b82f6' : '1px solid #e2e8f0',
                   }}
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleziona conducente..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">Nessuno</SelectItem>
-                    {drivers.map(d => (
-                      <SelectItem key={d.id} value={d.id}>
-                        {d.nome_completo} {d.ruolo ? `(${d.ruolo})` : ''}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label>Numero Contratto</Label>
-                <Input 
-                  value={editingVeicolo.contratto || ''} 
-                  onChange={(e) => setEditingVeicolo({...editingVeicolo, contratto: e.target.value})}
-                  placeholder="Es: NC123456"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Inizio Noleggio</Label>
-                  <Input 
-                    type="date"
-                    value={editingVeicolo.data_inizio || ''} 
-                    onChange={(e) => setEditingVeicolo({...editingVeicolo, data_inizio: e.target.value})}
-                  />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: 14 }}>
+                        {v.marca ? `${v.marca} ` : ''}{v.modello || 'Modello non rilevato'}
+                      </div>
+                      <div style={{ fontSize: 13, fontFamily: 'monospace', color: '#3b82f6', fontWeight: 600 }}>
+                        {v.targa}
+                      </div>
+                      <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>
+                        {v.driver || 'Non assegnato'} • {v.fornitore_noleggio?.split(' ')[0] || '-'}
+                      </div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontWeight: 700, color: '#1a365d', fontSize: 14 }}>
+                        {formatCurrency(v.totale_generale)}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <Label>Fine Noleggio</Label>
-                  <Input 
-                    type="date"
-                    value={editingVeicolo.data_fine || ''} 
-                    onChange={(e) => setEditingVeicolo({...editingVeicolo, data_fine: e.target.value})}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label>Note</Label>
-                <Input 
-                  value={editingVeicolo.note || ''} 
-                  onChange={(e) => setEditingVeicolo({...editingVeicolo, note: e.target.value})}
-                  placeholder="Note aggiuntive..."
-                />
-              </div>
+              ))}
             </div>
           )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingVeicolo(null)}>Annulla</Button>
-            <Button onClick={handleSaveVeicolo}>Salva</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </div>
+
+        {/* Dettaglio Veicolo */}
+        <div style={{ background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+          {!selectedVeicolo ? (
+            <div style={{ textAlign: 'center', padding: 60, color: '#94a3b8' }}>
+              <div style={{ fontSize: 48, marginBottom: 12 }}>👈</div>
+              <div>Seleziona un veicolo dalla lista</div>
+            </div>
+          ) : (
+            <>
+              {/* Header Veicolo */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
+                <div>
+                  <h2 style={{ margin: 0, fontSize: 20 }}>
+                    {selectedVeicolo.marca ? `${selectedVeicolo.marca} ` : ''}{selectedVeicolo.modello || 'Modello non rilevato'}
+                  </h2>
+                  <div style={{ fontSize: 16, fontFamily: 'monospace', color: '#3b82f6', fontWeight: 600 }}>
+                    {selectedVeicolo.targa}
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowForm(!showForm)}
+                  style={{
+                    padding: '8px 16px',
+                    background: showForm ? '#757575' : '#3b82f6',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: 6,
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                    fontSize: 13
+                  }}
+                >
+                  {showForm ? '✕ Annulla' : '✏️ Modifica'}
+                </button>
+              </div>
+
+              {/* Info Veicolo */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, marginBottom: 16, padding: 12, background: '#f8fafc', borderRadius: 8 }}>
+                <div>
+                  <div style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>DRIVER</div>
+                  <div style={{ fontSize: 14 }}>{selectedVeicolo.driver || 'Non assegnato'}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>FORNITORE</div>
+                  <div style={{ fontSize: 14 }}>{selectedVeicolo.fornitore_noleggio || '-'}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>CONTRATTO</div>
+                  <div style={{ fontSize: 14 }}>{selectedVeicolo.contratto || '-'}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>PERIODO</div>
+                  <div style={{ fontSize: 14 }}>
+                    {selectedVeicolo.data_inizio ? new Date(selectedVeicolo.data_inizio).toLocaleDateString('it-IT') : '-'}
+                    {selectedVeicolo.data_fine ? ` → ${new Date(selectedVeicolo.data_fine).toLocaleDateString('it-IT')}` : ''}
+                  </div>
+                </div>
+              </div>
+
+              {/* Form Modifica */}
+              {showForm && (
+                <form onSubmit={handleSave} style={{ background: '#eff6ff', padding: 16, borderRadius: 8, marginBottom: 20 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12 }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>Marca</label>
+                      <input 
+                        type="text" 
+                        value={editData.marca} 
+                        onChange={(e) => setEditData({ ...editData, marca: e.target.value })} 
+                        style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ddd' }} 
+                        placeholder="Es: BMW, Fiat..."
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>Modello</label>
+                      <input 
+                        type="text" 
+                        value={editData.modello} 
+                        onChange={(e) => setEditData({ ...editData, modello: e.target.value })} 
+                        style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ddd' }} 
+                        placeholder="Es: X3, 500..."
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>Driver</label>
+                      <select 
+                        value={editData.driver_id} 
+                        onChange={(e) => {
+                          const driver = drivers.find(d => d.id === e.target.value);
+                          setEditData({ ...editData, driver_id: e.target.value, driver: driver?.nome_completo || '' });
+                        }} 
+                        style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ddd' }}
+                      >
+                        <option value="">-- Seleziona --</option>
+                        {drivers.map(d => (
+                          <option key={d.id} value={d.id}>{d.nome_completo}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>Contratto</label>
+                      <input 
+                        type="text" 
+                        value={editData.contratto} 
+                        onChange={(e) => setEditData({ ...editData, contratto: e.target.value })} 
+                        style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ddd' }} 
+                        placeholder="N. contratto"
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>Inizio Noleggio</label>
+                      <input 
+                        type="date" 
+                        value={editData.data_inizio} 
+                        onChange={(e) => setEditData({ ...editData, data_inizio: e.target.value })} 
+                        style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ddd' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>Fine Noleggio</label>
+                      <input 
+                        type="date" 
+                        value={editData.data_fine} 
+                        onChange={(e) => setEditData({ ...editData, data_fine: e.target.value })} 
+                        style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ddd' }}
+                      />
+                    </div>
+                  </div>
+                  <div style={{ marginTop: 12 }}>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>Note</label>
+                    <input 
+                      type="text" 
+                      value={editData.note} 
+                      onChange={(e) => setEditData({ ...editData, note: e.target.value })} 
+                      style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ddd' }} 
+                      placeholder="Note..."
+                    />
+                  </div>
+                  <div style={{ marginTop: 12 }}>
+                    <button 
+                      type="submit" 
+                      disabled={saving} 
+                      style={{ padding: '10px 24px', background: saving ? '#ccc' : '#3b82f6', color: 'white', border: 'none', borderRadius: 6, cursor: saving ? 'wait' : 'pointer', fontWeight: 600 }}
+                    >
+                      {saving ? '...' : '💾 Salva'}
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {/* Riepilogo Costi Veicolo */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 12, marginBottom: 20 }}>
+                <SaldoCard label="Canoni" value={selectedVeicolo.totale_canoni} color="#4caf50" />
+                <SaldoCard label="Verbali" value={selectedVeicolo.totale_verbali} color="#f44336" />
+                <SaldoCard label="Riparazioni" value={selectedVeicolo.totale_riparazioni} color="#ff9800" />
+                <SaldoCard label="Bollo" value={selectedVeicolo.totale_bollo} color="#9c27b0" />
+                <SaldoCard label="TOTALE" value={selectedVeicolo.totale_generale} color="#1a365d" />
+              </div>
+
+              {/* Tabelle Spese per Categoria */}
+              {categorie.map(cat => {
+                const spese = selectedVeicolo[cat.key] || [];
+                if (spese.length === 0) return null;
+                return (
+                  <div key={cat.key} style={{ marginBottom: 16 }}>
+                    <h4 style={{ margin: '0 0 8px 0', fontSize: 13, color: cat.color, borderBottom: `2px solid ${cat.color}`, paddingBottom: 4 }}>
+                      {cat.label} ({spese.length})
+                    </h4>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, background: 'white', border: '1px solid #e0e0e0', borderRadius: 6 }}>
+                      <thead>
+                        <tr style={{ background: '#f5f5f5' }}>
+                          <th style={{ padding: 8, textAlign: 'left' }}>Data</th>
+                          <th style={{ padding: 8, textAlign: 'left' }}>Fattura</th>
+                          <th style={{ padding: 8, textAlign: 'left' }}>Descrizione</th>
+                          <th style={{ padding: 8, textAlign: 'right' }}>Importo</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {spese.slice(0, 20).map((s, idx) => (
+                          <tr key={idx} style={{ borderBottom: '1px solid #f0f0f0' }}>
+                            <td style={{ padding: 8 }}>{s.data ? new Date(s.data).toLocaleDateString('it-IT') : '-'}</td>
+                            <td style={{ padding: 8, color: '#666' }}>{s.numero_fattura || '-'}</td>
+                            <td style={{ padding: 8, color: '#666', maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {s.descrizione?.slice(0, 60) || '-'}
+                            </td>
+                            <td style={{ padding: 8, textAlign: 'right', fontWeight: 600 }}>{formatCurrency(s.importo)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {spese.length > 20 && (
+                      <div style={{ fontSize: 11, color: '#666', textAlign: 'center', marginTop: 4 }}>
+                        ...e altri {spese.length - 20} movimenti
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+
+              {/* Messaggio se non ci sono spese */}
+              {categorie.every(cat => (selectedVeicolo[cat.key] || []).length === 0) && (
+                <div style={{ textAlign: 'center', padding: 40, color: '#9e9e9e', background: '#fafafa', borderRadius: 8 }}>
+                  <div style={{ fontSize: 40, marginBottom: 8 }}>📋</div>
+                  <div>Nessuna spesa registrata per questo veicolo</div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Component SaldoCard - Stile identico a DipendenteAcconti
+ */
+function SaldoCard({ label, value, color, subtitle }) {
+  const formatCurrency = (val) => new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(val || 0);
+  return (
+    <div style={{ background: `${color}15`, padding: 12, borderRadius: 8, borderLeft: `4px solid ${color}` }}>
+      <div style={{ fontSize: 11, color, fontWeight: 600 }}>{label}</div>
+      <div style={{ fontSize: 18, fontWeight: 700, color }}>{formatCurrency(value)}</div>
+      {subtitle && <div style={{ fontSize: 10, color, opacity: 0.8 }}>{subtitle}</div>}
     </div>
   );
 }
