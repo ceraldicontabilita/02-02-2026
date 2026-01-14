@@ -231,13 +231,21 @@ export default function NoleggioAuto() {
           </div>
           
           {/* Info generali veicolo */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 20, marginBottom: 20 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, marginBottom: 20 }}>
             <div>
               <h3 style={{ margin: '0 0 8px 0', fontSize: 14, color: '#6b7280' }}>Dati Veicolo</h3>
               <div style={{ fontSize: 13, lineHeight: 1.8 }}>
                 <div>Targa: <strong>{selectedVeicolo.targa}</strong></div>
                 <div>Fornitore: {selectedVeicolo.fornitore_noleggio || "-"}</div>
-                <div>Contratto: {selectedVeicolo.contratto || "-"}</div>
+                <div>P.IVA: <span style={{ fontFamily: 'monospace', color: '#6b7280' }}>{selectedVeicolo.fornitore_piva || "-"}</span></div>
+              </div>
+            </div>
+            <div>
+              <h3 style={{ margin: '0 0 8px 0', fontSize: 14, color: '#6b7280' }}>Contratto</h3>
+              <div style={{ fontSize: 13, lineHeight: 1.8 }}>
+                <div>N° Contratto: <strong>{selectedVeicolo.contratto || "-"}</strong></div>
+                <div>Cod. Cliente: {selectedVeicolo.codice_cliente || "-"}</div>
+                <div>Centro Fatt.: {selectedVeicolo.centro_fatturazione || "-"}</div>
               </div>
             </div>
             <div>
