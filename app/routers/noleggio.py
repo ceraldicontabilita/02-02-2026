@@ -457,22 +457,39 @@ async def get_veicoli(
                         "totale_generale": 0
                     }
                 
-                # Processa linee fattura
+                # Raggruppa linee per categoria
+                linee_per_cat = {}
                 for linea in fattura.get("linee", []):
                     desc = linea.get("descrizione", "")
                     prezzo = float(linea.get("prezzo_totale") or linea.get("prezzo_unitario") or 0)
-                    categoria, importo = categorizza_spesa(desc, prezzo, False)
+                    categoria, importo, metadata = categorizza_spesa(desc, prezzo, False)
                     
-                    veicoli_fatture[targa][categoria].append({
+                    if categoria not in linee_per_cat:
+                        linee_per_cat[categoria] = {"voci": [], "imponibile": 0, "metadata": {}}
+                    linee_per_cat[categoria]["voci"].append({"descrizione": desc, "importo": round(importo, 2)})
+                    linee_per_cat[categoria]["imponibile"] += importo
+                    for k, v in metadata.items():
+                        if k not in linee_per_cat[categoria]["metadata"]:
+                            linee_per_cat[categoria]["metadata"][k] = v
+                
+                for categoria, dati in linee_per_cat.items():
+                    imponibile = round(dati["imponibile"], 2)
+                    iva = round(imponibile * 0.22, 2)
+                    record = {
                         "data": fattura["invoice_date"],
                         "numero_fattura": fattura["invoice_number"],
                         "fornitore": fattura["supplier"],
-                        "voci": [{"descrizione": desc, "importo": importo}],
-                        "imponibile": round(importo, 2),
-                        "iva": round(importo * 0.22, 2),
-                        "totale": round(importo * 1.22, 2)
-                    })
-                    veicoli_fatture[targa][f"totale_{categoria}"] += importo
+                        "voci": dati["voci"],
+                        "imponibile": imponibile,
+                        "iva": iva,
+                        "totale": round(imponibile + iva, 2)
+                    }
+                    if categoria == "verbali" and dati["metadata"]:
+                        record["numero_verbale"] = dati["metadata"].get("numero_verbale")
+                        record["data_verbale"] = dati["metadata"].get("data_verbale")
+                    
+                    veicoli_fatture[targa][categoria].append(record)
+                    veicoli_fatture[targa][f"totale_{categoria}"] += imponibile
                 
                 # Ricalcola totale
                 veicoli_fatture[targa]["totale_generale"] = round(sum(
