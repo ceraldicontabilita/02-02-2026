@@ -513,6 +513,7 @@ L'algoritmo di riconciliazione NON trova molti match automatici perché:
 
 ### P0 - Priorità Critica
 - [x] ~~Fix duplicazione tributi parser F24~~ ✅ COMPLETATO 2026-01-13
+- [x] ~~Fix UI Noleggio Auto (stile Corrispettivi)~~ ✅ COMPLETATO 2026-01-14
 - [ ] UI per importare estratti conto Nexi da frontend
 - [ ] Automazione download email per estratti conto (ricerca keyword, scarica allegati PDF)
 
