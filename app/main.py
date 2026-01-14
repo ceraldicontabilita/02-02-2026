@@ -113,6 +113,9 @@ from app.routers.employees import (
     dipendenti, employees_payroll, employee_contracts, buste_paga, shifts, staff
 )
 
+# --- Noleggio Module ---
+from app.routers import noleggio
+
 # --- Reports Module ---
 from app.routers.reports import (
     report_pdf, exports, simple_exports, analytics, dashboard
