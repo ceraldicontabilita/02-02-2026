@@ -15,7 +15,7 @@ export default function NoleggioAuto() {
   const [drivers, setDrivers] = useState([]);
   const [editingVeicolo, setEditingVeicolo] = useState(null);
   const [expandedCard, setExpandedCard] = useState(null);
-  const [anno, setAnno] = useState(new Date().getFullYear());
+  const [anno, setAnno] = useState(2024);
 
   const fetchVeicoli = useCallback(async () => {
     setLoading(true);
