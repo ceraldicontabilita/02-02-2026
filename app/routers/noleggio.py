@@ -270,10 +270,14 @@ async def scan_fatture_noleggio(anno: Optional[int] = None) -> Dict[str, Any]:
             fatture_senza_targa.append({
                 "invoice_number": invoice_number,
                 "invoice_date": invoice_date,
+                "invoice_id": invoice_id,
                 "supplier": supplier,
                 "supplier_vat": supplier_vat,
+                "tipo_documento": invoice.get("tipo_documento", ""),
                 "codice_cliente": codice_cliente,
                 "total": invoice.get("total_amount", 0),
+                "pagato": invoice.get("pagato", False),
+                "prima_nota_banca_id": invoice.get("prima_nota_banca_id"),
                 "linee": linee
             })
             continue
