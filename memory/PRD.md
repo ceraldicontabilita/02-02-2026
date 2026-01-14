@@ -415,17 +415,50 @@ Tutte le pagine3 supportano layout mobile:
 ### 2026-01-14 - Gestione Noleggio Auto (SESSIONE ATTUALE)
 - ✅ **Nuova sezione "Noleggio Auto"** nel menu Dipendenti
   - **Backend**: `/app/app/routers/noleggio.py` - Estrae automaticamente dati veicoli dalle fatture XML
-  - **Frontend**: `/app/frontend/src/pages/NoleggioAuto.jsx` - **RISCRITTO** con stile Corrispettivi.jsx
-  - **Collection MongoDB**: `veicoli_noleggio` - Salva driver, date noleggio, note
-  - **Fornitori riconosciuti**: Leasys, ARVAL, ALD, LeasePlan, Alphabet, Hertz, Avis, Europcar
+  - **Frontend**: `/app/frontend/src/pages/NoleggioAuto.jsx` - Stile Corrispettivi.jsx
+  - **Collection MongoDB**: `veicoli_noleggio` - Salva driver, date noleggio, contratto, marca, modello
   - **Categorie spese**: Canoni, Pedaggio, Verbali, Bollo, Costi Extra, Riparazioni
-  - **Funzionalità**:
-    - Estrazione automatica targhe da descrizioni fatture (pattern AA000AA)
-    - Rilevamento modello auto dalla descrizione
-    - Assegnazione driver (dipendente) a veicolo
-    - Date inizio/fine noleggio
-    - Filtro per anno (usa useAnnoGlobale)
-    - Dettaglio veicolo con espansione sezioni spese
+
+---
+
+## 🚗 FORNITORI NOLEGGIO AUTO - PATTERN DI RICONOSCIMENTO
+
+I seguenti 4 fornitori sono supportati. Ogni fornitore ha un formato XML diverso:
+
+### ALD Automotive Italia S.r.l. (P.IVA: 01924961004)
+- **Targa in fattura**: ✅ SÌ (nella descrizione linea)
+- **Contratto in fattura**: ✅ SÌ (numero 7-8 cifre nella descrizione)
+- **Pattern descrizione**: `CANONE DI NOLEGGIO {TARGA} {MARCA} {MODELLO} {CONTRATTO} {DATA_INIZIO} {DATA_FINE}`
+- **Esempio**: `CANONE DI NOLEGGIO GX037HJ BMW X1 SDRIVE 18D X-LINE DCT FP 6074667 2026-02-01 2026-02-28`
+
+### ARVAL SERVICE LEASE ITALIA SPA (P.IVA: 04911190488)
+- **Targa in fattura**: ✅ SÌ (nella descrizione linea)
+- **Contratto in fattura**: ✅ SÌ (nel campo `causali` → `Codice Cliente_XXXX`)
+- **Pattern descrizione**: `{TARGA} Canone di Locazione` / `{TARGA} Canone Servizi`
+- **Esempio causali**: `Codice Cliente_K22018 / Centro Fatturazione_K26858`
+- **NOTA**: Il modello NON è presente in fattura, deve essere inserito manualmente
+
+### Leasys Italia S.p.A (P.IVA: 06714021000)
+- **Targa in fattura**: ✅ SÌ (nella descrizione linea)
+- **Contratto in fattura**: ❌ NO (da inserire manualmente)
+- **Pattern descrizione**: `CANONE LOCAZIONE {TARGA} {MODELLO}` / `CANONE SERVIZIO {TARGA} {MODELLO}`
+- **Esempio**: `CANONE LOCAZIONE HB411GV X3 xDrive 20d Msport`
+
+### LeasePlan Italia S.p.A. (P.IVA: 02615080963)
+- **Targa in fattura**: ❌ NO
+- **Contratto in fattura**: ❌ NO
+- **Pattern descrizione**: `CANONE FINANZIARIO` / `CANONE ASSISTENZA OPERATIVA`
+- **NOTA IMPORTANTE**: Richiede associazione manuale tramite pulsante "Aggiungi Veicolo"
+- **Causale fattura**: `FATTURA NOLEGGIO LUNGO TERMINE`
+
+### Endpoint API Noleggio
+- `GET /api/noleggio/veicoli?anno=XXXX` - Lista veicoli con spese
+- `GET /api/noleggio/fornitori` - Lista fornitori supportati
+- `GET /api/noleggio/drivers` - Lista dipendenti per assegnazione
+- `GET /api/noleggio/fatture-non-associate` - Fatture senza targa (es: LeasePlan)
+- `PUT /api/noleggio/veicoli/{targa}` - Aggiorna dati veicolo
+- `POST /api/noleggio/associa-fornitore` - Associa manualmente targa a fornitore
+- `DELETE /api/noleggio/veicoli/{targa}` - Rimuove veicolo dalla gestione
 
 ---
 
