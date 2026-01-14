@@ -117,12 +117,16 @@ def categorizza_spesa(descrizione: str, importo: float, is_nota_credito: bool = 
         importo_finale = -abs(importo)
     
     # STEP 1: CANONI - Controlla PRIMA se è un canone (priorità alta)
+    # Ma NON se contiene "nota credito" senza "canone"
     if any(kw in desc_lower for kw in ["canone", "locazione", "noleggio"]):
+        # Controlla se è una nota credito per canone (deve restare canoni ma negativo)
         return ("canoni", importo_finale, metadata)
     
-    # STEP 2: BOLLO - Tasse automobilistiche
+    # STEP 2: BOLLO - Tasse automobilistiche (PRIMA di costi extra!)
+    # Include "tassa di proprietà" che è il bollo auto
     if any(kw in desc_lower for kw in ["bollo", "tassa automobilistic", "tasse auto", 
-                                        "imposta provincial", "ipt", "superbollo"]):
+                                        "tassa di propriet", "imposta provincial", 
+                                        "ipt", "superbollo"]):
         return ("bollo", importo_finale, metadata)
     
     # STEP 3: PEDAGGIO - Gestione pedaggi e telepass
@@ -142,9 +146,11 @@ def categorizza_spesa(descrizione: str, importo: float, is_nota_credito: bool = 
             metadata["data_verbale"] = data_verbale
         return ("verbali", importo_finale, metadata)
     
-    # STEP 5: COSTI EXTRA - Penalità e addebiti
-    if any(kw in desc_lower for kw in ["penalità", "penale", "addebito", "commissione",
-                                        "mora", "ritardo"]):
+    # STEP 5: COSTI EXTRA - Penalità e addebiti (ma NON "addebito tassa" che è bollo)
+    if any(kw in desc_lower for kw in ["penalità", "penale", "commissione", "mora", "ritardo"]):
+        return ("costi_extra", importo_finale, metadata)
+    # "addebito" solo se NON è tassa
+    if "addebito" in desc_lower and "tassa" not in desc_lower:
         return ("costi_extra", importo_finale, metadata)
     
     # STEP 6: RIPARAZIONI - Pattern specifici (parole chiare)
