@@ -413,6 +413,30 @@ Tutte le pagine3 supportano layout mobile:
   - Fix: Rimosso import re duplicato che causava errori
 
 ### 2026-01-14 - Gestione Noleggio Auto (SESSIONE ATTUALE)
+
+### 2026-01-14 - Algoritmo Riconciliazione F24-Quietanza v2
+- ✅ **Miglioramento algoritmo matching F24-Quietanza**
+  - **File modificato**: `/app/app/routers/f24/f24_riconciliazione.py`
+  - **Problemi risolti**:
+    - Falsi positivi per F24 con stessi codici ma periodi diversi
+    - Match troppo permissivo basato solo su importo
+    - Nessuna verifica coerenza temporale
+  
+  - **Nuovo algoritmo SCORING**:
+    | Score | Match Chiavi | Diff. Importo | Descrizione |
+    |-------|--------------|---------------|-------------|
+    | 100 | 100% | < €1 | Match perfetto |
+    | 90 | >= 90% | < €5 | Match ottimo |
+    | 80 | >= 80% | < €10 | Match buono |
+    | 70 | >= 70% | < €20 | Match accettabile |
+    | 60 | >= 60% | < €50 | Possibile ravvedimento |
+  
+  - **Chiave di matching**: `{codice_tributo}_{periodo_riferimento}`
+    - Es: `1001_08/2025`, `1012_12/2024`, `DM10_01/2025`
+  
+  - **Verifica temporale**: Data pagamento quietanza deve essere tra -2 e +30 giorni dalla data versamento F24
+  
+  - **Match ONE-TO-ONE**: Ogni quietanza può matchare un solo F24, evita duplicazioni
 - ✅ **Nuova sezione "Noleggio Auto"** nel menu Dipendenti
   - **Backend**: `/app/app/routers/noleggio.py` - Estrae automaticamente dati veicoli dalle fatture XML
   - **Frontend**: `/app/frontend/src/pages/NoleggioAuto.jsx` - Stile Corrispettivi.jsx
