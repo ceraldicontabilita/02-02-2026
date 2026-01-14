@@ -12,6 +12,12 @@
 - **FIX**: Raggruppamento fatture per numero (non più righe duplicate per ogni linea fattura)
 - **FEATURE**: Estrazione numeri verbale - pattern "Verbale Nr: XXXXX" con data verbale
 - **FEATURE**: Nuova colonna "N° Verbale" nella tabella dettaglio Verbali
+- **FIX**: Categorizzazione "Tassa di proprietà" → Bollo (non più Costi Extra)
+- **FIX**: Riconoscimento Note Credito TD04 con importi negativi
+- **FEATURE**: Associazione automatica fatture senza targa a veicoli con contratto scaduto
+- **FEATURE**: Colonna "Stato" pagamento (✓ Pagato / Da pagare) nelle fatture
+- **FIX**: Link "Vedi Fattura" corretto → /api/fatture-ricevute/fattura/{id}/view-assoinvoice
+- **FIX**: Conteggio "Fatture non associate" ora esclude quelle associate automaticamente
 
 ---
 
