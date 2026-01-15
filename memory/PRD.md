@@ -1,11 +1,29 @@
 # PRD - Azienda in Cloud ERP
-## Schema Definitivo v2.1 - Gennaio 2026
+## Schema Definitivo v2.2 - Gennaio 2026
 
 ---
 
 ## 📅 CHANGELOG RECENTE
 
-### 15 Gennaio 2026
+### 15 Gennaio 2026 (Sessione 2)
+- **FEATURE**: Creato parser estratti conto BNL (`/app/app/parsers/estratto_conto_bnl_parser.py`)
+  - Supporta conto corrente BNL e carte di credito BNL Business
+  - Estrae transazioni, metadata, saldi
+- **FEATURE**: Sistema monitoraggio email automatico (`/app/app/services/email_monitor_service.py`)
+  - Sync automatico ogni 10 minuti
+  - Ricategorizzazione automatica documenti
+  - Processamento automatico nuovi documenti
+  - NON perde mai dati esistenti (skip duplicati)
+- **FEATURE**: Nuovi endpoint monitor:
+  - `POST /api/documenti/monitor/start` - Avvia monitor
+  - `POST /api/documenti/monitor/stop` - Ferma monitor
+  - `GET /api/documenti/monitor/status` - Stato monitor
+  - `POST /api/documenti/monitor/sync-now` - Sync immediato
+- **FEATURE**: Endpoint `POST /api/documenti/reimporta-da-filesystem` per reimportare documenti da disco
+- **VERIFICATO**: 8 estratti BNL processati con 37 transazioni
+- **VERIFICATO**: Database popolato correttamente: 463 documenti, 170 buste paga, 3107 movimenti EC
+
+### 15 Gennaio 2026 (Sessione 1)
 - **FIX**: Configurato variabili ambiente email (EMAIL_USER, EMAIL_APP_PASSWORD, GMAIL_IMAP_ENABLED)
 - **FIX**: Funzionalità "Scarica Email F24" ora funzionante
 - **FEATURE**: Sync automatico F24 salva ora sia in `f24_commercialista` che in `f24_models` (visualizzazione frontend)
