@@ -215,7 +215,7 @@ export default function MagazzinoDoppiaVerita() {
             fontSize: '13px'
           }}
         >
-          <RefreshCw size={14} /> Aggiorna
+          🔄 Aggiorna
         </button>
         <button
           onClick={anteprimaPulizia}
@@ -234,7 +234,7 @@ export default function MagazzinoDoppiaVerita() {
           }}
           data-testid="btn-pulizia-magazzino"
         >
-          <Trash2 size={14} /> Pulizia
+          🗑️ Pulizia
         </button>
       </div>
 
@@ -248,8 +248,7 @@ export default function MagazzinoDoppiaVerita() {
           border: '1px solid #fecaca' 
         }}>
           <h3 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: 600, color: '#dc2626', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Trash2 size={20} />
-            Pulizia Prodotti da Fornitori Esclusi
+            🗑️ Pulizia Prodotti da Fornitori Esclusi
           </h3>
           
           {fornitoriEsclusi.fornitori_esclusi === 0 ? (
