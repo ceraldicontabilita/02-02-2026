@@ -128,17 +128,19 @@ async def ricategorizza_documenti(db) -> Dict[str, Any]:
 async def processa_nuovi_documenti(db) -> Dict[str, Any]:
     """
     Processa automaticamente i documenti non ancora elaborati.
+    Salva anche nel riepilogo_cedolini per confronto con prima nota.
     """
     results = {
         "buste_paga": 0,
+        "riepilogo_cedolini": 0,
         "estratti_nexi": 0,
         "estratti_bnl": 0,
         "errori": []
     }
     
-    # 1. Processa buste paga
+    # 1. Processa buste paga con nuovo parser migliorato
     try:
-        from app.services.payslip_pdf_parser import PayslipPDFParser
+        from app.parsers.payslip_parser_v2 import parse_payslip_pdf
         import uuid
         
         docs = await db["documents_inbox"].find(
