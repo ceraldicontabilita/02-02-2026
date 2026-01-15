@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import api from '../api';
 import { formatEuro } from '../lib/utils';
-import { RefreshCw, Zap, Users, FileText, CreditCard, Building2, Check, X, ChevronDown, ChevronUp, AlertTriangle, Clock, Search, CheckCircle, Trash2 } from 'lucide-react';
 
 // Colori per tipo
 const TIPO_COLORS = {
