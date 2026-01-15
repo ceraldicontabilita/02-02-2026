@@ -387,6 +387,20 @@ async def run_full_sync(db) -> Dict[str, Any]:
         aruba_new = results.get("aruba_sync", {}).get("stats", {}).get("new_invoices", 0)
         logger.info(f"✅ Sync completo - Doc: {results['email_sync'].get('new_documents', 0)}, Aruba: {aruba_new}, Processati: {_sync_stats['documents_processed']}")
         
+        # 6. NOTIFICA TELEGRAM se ci sono novità
+        try:
+            from app.services.telegram_notifications import notifica_sync_completato
+            nuovi_doc = results["email_sync"].get("new_documents", 0)
+            if nuovi_doc > 0 or aruba_new > 0:
+                # Prepara stats per notifica
+                notifica_stats = {
+                    "email_sync": results["email_sync"],
+                    "aruba_sync": results.get("aruba_sync", {})
+                }
+                await notifica_sync_completato(notifica_stats)
+        except Exception as e:
+            logger.debug(f"Notifica Telegram non inviata: {e}")
+        
     except Exception as e:
         logger.error(f"❌ Errore sync: {e}")
         _sync_stats["last_error"] = str(e)
