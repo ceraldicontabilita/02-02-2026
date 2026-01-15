@@ -577,6 +577,10 @@ async def upload_fattura_xml(file: UploadFile = File(...)) -> Dict[str, Any]:
                 "created": tracciabilita_result.get("created", 0),
                 "skipped": tracciabilita_result.get("skipped", 0)
             },
+            "automazioni": {
+                "ricette_aggiornate": automazioni_result.get("ricette", {}).get("ricette_aggiornate", 0) if automazioni_result else 0,
+                "operazione_completata": automazioni_result.get("operazione", {}).get("operazione_completata", False) if automazioni_result else False
+            },
             "prima_nota": prima_nota_result
         }
         
