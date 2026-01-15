@@ -953,6 +953,29 @@ async def import_fattura_integrato(file: UploadFile = File(...)):
         logger.error(f"Errore aggiornamento ricettario: {e}")
         risultato["ricettario"] = {"error": str(e)}
     
+    # 9. MODULO NOLEGGIO AUTO - Processa se è fornitore noleggio
+    try:
+        # Costruisci l'oggetto fattura per il modulo noleggio
+        fattura_noleggio = {
+            "supplier_vat": partita_iva,
+            "invoice_number": numero_doc,
+            "invoice_date": parsed.get("invoice_date", ""),
+            "tipo_documento": parsed.get("tipo_documento", ""),
+            "linee": parsed.get("linee", []),
+            "total_amount": float(parsed.get("total_amount", 0))
+        }
+        noleggio_result = await processa_fattura_noleggio(fattura_noleggio)
+        risultato["noleggio_auto"] = noleggio_result
+        
+        if noleggio_result.get("processed"):
+            if noleggio_result.get("veicoli_nuovi"):
+                logger.info(f"🚗 Nuovi veicoli creati: {noleggio_result['veicoli_nuovi']}")
+            if noleggio_result.get("veicoli_aggiornati"):
+                logger.info(f"🚗 Veicoli aggiornati: {noleggio_result['veicoli_aggiornati']}")
+    except Exception as e:
+        logger.error(f"Errore processamento noleggio auto: {e}")
+        risultato["noleggio_auto"] = {"error": str(e)}
+    
     risultato["success"] = True
     return risultato
 
