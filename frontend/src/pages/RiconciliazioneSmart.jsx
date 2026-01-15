@@ -639,7 +639,7 @@ export default function RiconciliazioneSmart() {
                 <div style={{ fontWeight: 700, fontSize: '16px' }}>Cerca {modalData.tipo === 'fattura' ? 'Fattura' : modalData.tipo === 'stipendio' ? 'Stipendio' : 'F24'}</div>
                 <div style={{ fontSize: '12px', color: '#64748b' }}>Movimento: {formatEuro(modalData.movimento.importo)} del {formatDate(modalData.movimento.data)}</div>
               </div>
-              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px' }}><X size={20} /></button>
+              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px', fontSize: 20 }}>✕</button>
             </div>
             
             <div style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0' }}>
@@ -657,14 +657,14 @@ export default function RiconciliazioneSmart() {
                   disabled={searchLoading}
                   style={{ padding: '10px 16px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
                 >
-                  <Search size={16} />
+                  🔍
                 </button>
               </div>
             </div>
             
             <div style={{ flex: 1, overflow: 'auto', padding: '16px 20px' }}>
               {searchLoading ? (
-                <div style={{ textAlign: 'center', padding: '40px' }}><RefreshCw className="animate-spin" style={{ margin: '0 auto' }} /></div>
+                <div style={{ textAlign: 'center', padding: '40px' }}><div style={{ fontSize: 32 }}>⏳</div></div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {(modalData.tipo === 'fattura' ? searchResults.fatture : modalData.tipo === 'stipendio' ? searchResults.stipendi : searchResults.f24)?.map((item) => (
@@ -686,7 +686,7 @@ export default function RiconciliazioneSmart() {
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                           <span style={{ fontWeight: 700, color: '#0369a1' }}>{formatEuro(item.importo || item.netto || item.totale)}</span>
-                          {selectedItems[item.id] && <Check size={18} style={{ color: '#3b82f6' }} />}
+                          {selectedItems[item.id] && <span style={{ color: '#3b82f6', fontSize: 18 }}>✓</span>}
                         </div>
                       </div>
                     </div>
