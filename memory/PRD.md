@@ -5,6 +5,15 @@
 
 ## 📅 CHANGELOG RECENTE
 
+### 15 Gennaio 2026
+- **FIX**: Configurato variabili ambiente email (EMAIL_USER, EMAIL_APP_PASSWORD, GMAIL_IMAP_ENABLED)
+- **FIX**: Funzionalità "Scarica Email F24" ora funzionante
+- **FEATURE**: Sync automatico F24 salva ora sia in `f24_commercialista` che in `f24_models` (visualizzazione frontend)
+- **FEATURE**: PDF F24 salvato in base64 per visualizzazione diretta
+- **VERIFICATO**: Connessione IMAP Gmail funzionante
+- **VERIFICATO**: 46 F24 importati automaticamente dalle email
+- **VERIFICATO**: Pagina F24 mostra 48 modelli da pagare
+
 ### 14 Gennaio 2026
 - **FIX**: Importate 247 fatture XML dei fornitori noleggio (ALD, ARVAL, Leasys)
 - **FIX**: Aggiunto anno 2022 nel selettore anni globale
