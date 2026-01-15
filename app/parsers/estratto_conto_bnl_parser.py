@@ -299,45 +299,91 @@ class EstrattoContoBNLParser:
             })
     
     def _extract_transactions_carta(self, text: str) -> None:
-        """Estrae le transazioni dall'estratto conto carta di credito BNL."""
-        
-        # Per le carte BNL, il formato è diverso
-        # Cerca sezione movimenti
-        
-        # Pattern per transazioni carta
-        # Formato tipico: Data | Descrizione esercente | Importo
+        """Estrae le transazioni dall'estratto conto carta di credito BNL Business."""
         
         lines = text.split('\n')
-        in_movimenti = False
+        in_dettaglio = False
+        current_carta = None
         
-        for line in lines:
-            line = line.strip()
+        for i, line in enumerate(lines):
+            line_clean = line.strip()
             
-            # Inizio sezione movimenti
-            if "DETTAGLIO" in line or "MOVIMENTI" in line:
-                in_movimenti = True
+            # Rileva inizio sezione DETTAGLIO OPERAZIONI
+            if "DETTAGLIO OPERAZIONI" in line_clean:
+                in_dettaglio = True
+                continue
+            
+            # Rileva carta attiva
+            if "CARTA BNL BUSINESS n." in line_clean:
+                # Estrai numero carta e titolare
+                match = re.search(r'CARTA BNL BUSINESS n\.\s*([\d\*\s]+)\s+([A-Z\s]+)', line_clean)
+                if match:
+                    current_carta = {
+                        "numero": match.group(1).strip(),
+                        "titolare": match.group(2).strip()
+                    }
                 continue
             
             # Fine sezione
-            if in_movimenti and any(x in line for x in ["TOTALE", "Servizio Clienti", "SALDO"]):
+            if in_dettaglio and ("PAGAMENTO" in line_clean or "BANCA NAZIONALE" in line_clean):
+                if "TRAMITE" in line_clean:
+                    continue
+                in_dettaglio = False
                 continue
             
-            if in_movimenti:
-                # Pattern: DD/MM/YY o DD/MM/YYYY seguito da descrizione e importo
-                match = re.match(r'^(\d{2}/\d{2}/\d{2,4})\s+(.+?)\s+([\d.,]+)\s*€?$', line)
+            if in_dettaglio:
+                # Pattern: DD.MM.YYYY DD.MM.YYYY NUMERO DESCRIZIONE IMPORTO
+                # Es: "12.04.2022 13.04.2022 745168 PAYPAL SPOTIFY 35314369001 SE 15,99"
+                
+                # Pattern con due date e importo alla fine
+                match = re.match(
+                    r'^(\d{2}\.\d{2}\.\d{4})\s+(\d{2}\.\d{2}\.\d{4})\s+(\d+)\s+(.+?)\s+([\d.,]+)$',
+                    line_clean
+                )
                 
                 if match:
-                    data = match.group(1)
-                    descrizione = match.group(2).strip()
-                    importo = self._parse_amount(match.group(3))
+                    data_operazione = match.group(1)
+                    data_contabile = match.group(2)
+                    num_riferimento = match.group(3)
+                    descrizione = match.group(4).strip()
+                    importo = self._parse_amount(match.group(5))
                     
                     self.transactions.append({
-                        "data": self._parse_date(data),
+                        "data": self._parse_date(data_operazione.replace(".", "/")),
+                        "data_contabile": self._parse_date(data_contabile.replace(".", "/")),
+                        "numero_riferimento": num_riferimento,
                         "descrizione": descrizione,
-                        "importo": importo,
+                        "importo": -abs(importo),  # Sempre negativo per carta
                         "tipo": "addebito",
                         "banca": "BNL",
-                        "tipo_carta": "BNL Business"
+                        "tipo_carta": "BNL Business",
+                        "carta_numero": current_carta.get("numero") if current_carta else None,
+                        "carta_titolare": current_carta.get("titolare") if current_carta else None
+                    })
+                    continue
+                
+                # Pattern alternativo senza numero riferimento
+                match2 = re.match(
+                    r'^(\d{2}\.\d{2}\.\d{4})\s+(\d{2}\.\d{2}\.\d{4})\s+(.+?)\s+([\d.,]+)$',
+                    line_clean
+                )
+                
+                if match2:
+                    data_operazione = match2.group(1)
+                    data_contabile = match2.group(2)
+                    descrizione = match2.group(3).strip()
+                    importo = self._parse_amount(match2.group(4))
+                    
+                    self.transactions.append({
+                        "data": self._parse_date(data_operazione.replace(".", "/")),
+                        "data_contabile": self._parse_date(data_contabile.replace(".", "/")),
+                        "descrizione": descrizione,
+                        "importo": -abs(importo),
+                        "tipo": "addebito",
+                        "banca": "BNL",
+                        "tipo_carta": "BNL Business",
+                        "carta_numero": current_carta.get("numero") if current_carta else None,
+                        "carta_titolare": current_carta.get("titolare") if current_carta else None
                     })
     
     def _parse_date(self, date_str: str) -> str:
