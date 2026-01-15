@@ -931,3 +931,162 @@ async def get_ultimo_sync() -> Dict[str, Any]:
         "f24_da_processare": da_processare,
         "ultimo_f24_importato": ultimo_f24
     }
+
+
+
+@router.post("/sync-estratti-conto")
+async def sync_estratti_conto() -> Dict[str, Any]:
+    """
+    Processa tutti gli estratti conto dalla inbox.
+    Supporta:
+    - Estratti conto carte Nexi
+    - Estratti conto bancari BPM (se riconosciuti)
+    
+    I movimenti vengono salvati in estratto_conto_nexi per carte
+    o estratto_conto_movimenti per conto corrente.
+    """
+    db = Database.get_db()
+    
+    # Trova estratti conto non processati
+    docs = await db["documents_inbox"].find(
+        {"category": "estratto_conto", "processed": {"$ne": True}},
+        {"_id": 0}
+    ).to_list(100)
+    
+    if not docs:
+        return {
+            "success": True,
+            "message": "Nessun estratto conto da processare",
+            "processati": 0,
+            "errori": []
+        }
+    
+    from app.parsers.estratto_conto_nexi_parser import EstrattoContoNexiParser
+    
+    processati = []
+    errori = []
+    
+    for doc in docs:
+        filepath = doc.get("filepath")
+        filename = doc.get("filename", "")
+        
+        if not filepath or not os.path.exists(filepath):
+            errori.append({"file": filename, "errore": "File non trovato"})
+            continue
+        
+        try:
+            # Leggi contenuto PDF
+            with open(filepath, 'rb') as f:
+                pdf_content = f.read()
+            
+            # Prova parser Nexi
+            parser = EstrattoContoNexiParser()
+            result = parser.parse_pdf(pdf_content)
+            
+            if result.get("success"):
+                transazioni = result.get("transazioni", [])
+                metadata = result.get("metadata", {})
+                
+                if transazioni:
+                    # Salva in estratto_conto_nexi
+                    import uuid
+                    estratto_id = str(uuid.uuid4())
+                    
+                    estratto_record = {
+                        "id": estratto_id,
+                        "filename": filename,
+                        "filepath": filepath,
+                        "tipo": "nexi_carta",
+                        "metadata": metadata,
+                        "totale_transazioni": len(transazioni),
+                        "totale_importo": result.get("totale_importo", 0),
+                        "email_source": {
+                            "subject": doc.get("email_subject"),
+                            "from": doc.get("email_from"),
+                            "date": doc.get("email_date")
+                        },
+                        "import_date": datetime.now(timezone.utc).isoformat(),
+                        "source": "email_sync"
+                    }
+                    
+                    # Controlla duplicati
+                    existing = await db["estratto_conto_nexi"].find_one({
+                        "filename": filename
+                    })
+                    
+                    if not existing:
+                        await db["estratto_conto_nexi"].insert_one(dict(estratto_record))
+                        
+                        # Salva transazioni singole per riconciliazione
+                        for idx, trans in enumerate(transazioni):
+                            trans_record = {
+                                "id": f"{estratto_id}_{idx}",
+                                "estratto_id": estratto_id,
+                                "data": trans.get("data"),
+                                "data_valuta": trans.get("data_valuta"),
+                                "descrizione": trans.get("descrizione", ""),
+                                "esercente": trans.get("esercente", ""),
+                                "importo": trans.get("importo", 0),
+                                "tipo": "carta_credito",
+                                "categoria": trans.get("categoria"),
+                                "riconciliato": False,
+                                "fattura_id": None,
+                                "created_at": datetime.now(timezone.utc).isoformat()
+                            }
+                            # Usa dict() per evitare ObjectId issue
+                            await db["estratto_conto_movimenti"].insert_one(dict(trans_record))
+                    
+                    # Aggiorna stato documento
+                    await db["documents_inbox"].update_one(
+                        {"id": doc["id"]},
+                        {"$set": {
+                            "status": "processato",
+                            "processed": True,
+                            "processed_to": "estratto_conto_nexi",
+                            "processed_at": datetime.now(timezone.utc).isoformat()
+                        }}
+                    )
+                    
+                    processati.append({
+                        "file": filename,
+                        "tipo": "nexi_carta",
+                        "transazioni": len(transazioni),
+                        "importo_totale": result.get("totale_importo", 0),
+                        "periodo": metadata.get("mese_riferimento", "")
+                    })
+                else:
+                    # Nessuna transazione trovata, potrebbe essere solo riepilogo
+                    processati.append({
+                        "file": filename,
+                        "tipo": "nexi_carta",
+                        "transazioni": 0,
+                        "nota": "Solo riepilogo, nessun dettaglio movimenti"
+                    })
+                    
+                    await db["documents_inbox"].update_one(
+                        {"id": doc["id"]},
+                        {"$set": {
+                            "status": "processato",
+                            "processed": True,
+                            "processed_to": "estratto_conto_nexi",
+                            "nota": "Solo riepilogo",
+                            "processed_at": datetime.now(timezone.utc).isoformat()
+                        }}
+                    )
+            else:
+                errori.append({
+                    "file": filename,
+                    "errore": result.get("error", "Parsing fallito")
+                })
+                
+        except Exception as e:
+            errori.append({"file": filename, "errore": str(e)})
+    
+    return {
+        "success": True,
+        "processati": len(processati),
+        "errori_count": len(errori),
+        "dettagli": processati,
+        "errori": errori if errori else None,
+        "messaggio": f"Processati {len(processati)} estratti conto" if processati else "Nessun estratto conto processato"
+    }
