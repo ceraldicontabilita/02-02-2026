@@ -1004,25 +1004,28 @@ L'algoritmo di riconciliazione NON trova molti match automatici perché:
 ### P0 - Priorità Critica
 - [x] ~~Fix duplicazione tributi parser F24~~ ✅ COMPLETATO 2026-01-13
 - [x] ~~Fix UI Noleggio Auto (stile Corrispettivi)~~ ✅ COMPLETATO 2026-01-14
-- [ ] UI per importare estratti conto Nexi da frontend
-- [ ] Automazione download email per estratti conto (ricerca keyword, scarica allegati PDF)
+- [x] ~~UI per importare estratti conto Nexi~~ ✅ COMPLETATO 2026-01-15
+- [x] ~~Automazione download email per estratti conto~~ ✅ COMPLETATO 2026-01-15
 
 ### P1 - Priorità Alta
-- [ ] Integrazione Parser Buste Paga Zucchetti (parser già esistente, manca UI e endpoint)
-- [ ] Caricamento Prima Nota Salari da XML
-- [ ] Caricamento dati Fornitori da XML
+- [x] ~~Integrazione Parser Buste Paga~~ ✅ COMPLETATO 2026-01-15 (supporto CSC/Zucchetti)
+- [x] ~~Riconciliazione Transazioni Carta~~ ✅ COMPLETATO 2026-01-15
+- [ ] Gestione transazioni "PRELIEVO ASSEGNO" nella Riconciliazione Smart
 - [ ] Migliorare algoritmo riconciliazione F24-Quietanza (matching più intelligente)
-- [ ] Errore visualizzazione "PRELIEVO ASSEGNO" (segnalato dall'utente - investigare frontend)
 
 ### P2 - Priorità Media
-- [ ] Gestione transazioni "PRELIEVO ASSEGNO" nella Riconciliazione Smart
+- [ ] Standardizzazione UI rimanenti (Admin, Documenti, GestioneCespiti, PrevisioniAcquisti, VerificaCoerenza)
 - [ ] Calcolo Food Cost Ricette
 - [ ] Report PDF scadenze
 
 ### P3 - Priorità Bassa
-- [ ] Frontend per Upload Estratti Conto Nexi
 - [ ] Export Excel magazzino
 - [ ] Notifiche email scadenze
+
+### ❌ NON IMPLEMENTARE
+- **Sezione HACCP** - Non richiesta (la tracciabilità lotti è già implementata nelle Ricette)
+- **Caricamento Prima Nota Salari da XML** - Task rimosso su richiesta utente
+- **Caricamento dati Fornitori da XML** - Task rimosso su richiesta utente
 
 
 ---
