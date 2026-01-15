@@ -360,8 +360,7 @@ export default function RiconciliazioneSmart() {
             gap: '8px'
           }}
         >
-          <Clock size={18} />
-          Da Confermare ({pendingRiconciliazioni.length})
+          ⏱️ Da Confermare ({pendingRiconciliazioni.length})
         </button>
         <button
           onClick={() => setActiveTab('da_conciliare')}
@@ -380,8 +379,7 @@ export default function RiconciliazioneSmart() {
             gap: '8px'
           }}
         >
-          <FileText size={18} />
-          Da Conciliare ({analisi?.stats?.totale || 0})
+          📄 Da Conciliare ({analisi?.stats?.totale || 0})
         </button>
       </div>
 
@@ -403,15 +401,14 @@ export default function RiconciliazioneSmart() {
                 disabled={processing === 'all'}
                 style={{ padding: '10px 20px', background: '#10b981', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}
               >
-                <CheckCircle size={16} />
-                Conferma Tutte ({pendingRiconciliazioni.length})
+                ✅ Conferma Tutte ({pendingRiconciliazioni.length})
               </button>
             )}
           </div>
 
           {pendingRiconciliazioni.length === 0 ? (
             <div style={{ padding: '60px', textAlign: 'center', color: '#94a3b8' }}>
-              <Clock size={48} style={{ margin: '0 auto 16px', opacity: 0.5 }} />
+              <div style={{ fontSize: 48, margin: '0 auto 16px', opacity: 0.5 }}>⏱️</div>
               <div style={{ fontSize: '16px' }}>Nessuna riconciliazione in attesa</div>
               <div style={{ fontSize: '13px', marginTop: '8px' }}>
                 Vai nella sezione "Da Conciliare" per associare i movimenti
