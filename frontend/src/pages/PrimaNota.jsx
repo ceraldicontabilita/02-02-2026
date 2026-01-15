@@ -344,16 +344,6 @@ function PrimaNotaDesktop() {
     return best;
   }, null);
 
-  // eslint-disable-next-line no-unused-vars
-  const inputStyle = {
-    padding: '10px 12px',
-    borderRadius: 8,
-    border: '2px solid #e5e7eb',
-    fontSize: 14,
-    width: '100%',
-    boxSizing: 'border-box'
-  };
-
   const inputStyleCompact = {
     padding: '6px 8px',
     borderRadius: 6,
@@ -362,19 +352,6 @@ function PrimaNotaDesktop() {
     width: '100%',
     boxSizing: 'border-box'
   };
-
-  // eslint-disable-next-line no-unused-vars
-  const buttonStyle = (color, disabled) => ({
-    padding: '12px 20px',
-    background: disabled ? '#ccc' : color,
-    color: 'white',
-    border: 'none',
-    borderRadius: 8,
-    cursor: disabled ? 'not-allowed' : 'pointer',
-    fontWeight: 'bold',
-    fontSize: 14,
-    width: '100%'
-  });
 
   const buttonStyleCompact = (color, disabled) => ({
     padding: '6px 12px',
@@ -400,7 +377,9 @@ function PrimaNotaDesktop() {
         padding: '15px 20px',
         background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
         borderRadius: 12,
-        color: 'white'
+        color: 'white',
+        flexWrap: 'wrap',
+        gap: 10
       }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 22, fontWeight: 'bold' }}>📒 Prima Nota</h1>
@@ -409,7 +388,7 @@ function PrimaNotaDesktop() {
           </p>
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <span style={{ 
             padding: '10px 20px',
             fontSize: 16,
@@ -547,8 +526,7 @@ function PrimaNotaDesktop() {
             boxShadow: activeSection === 'cassa' ? '0 4px 15px rgba(79, 70, 229, 0.4)' : 'none'
           }}
         >
-          <span style={{ fontSize: 18 }}>💵</span>
-          CASSA {selectedYear}
+          💵 CASSA {selectedYear}
         </button>
         
         <button
@@ -573,8 +551,7 @@ function PrimaNotaDesktop() {
             boxShadow: activeSection === 'banca' ? '0 4px 15px rgba(37, 99, 235, 0.4)' : 'none'
           }}
         >
-          <span style={{ fontSize: 18 }}>🏦</span>
-          BANCA {selectedYear}
+          🏦 BANCA {selectedYear}
         </button>
       </div>
 
@@ -584,7 +561,7 @@ function PrimaNotaDesktop() {
           <div style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
             <div>
               <h1 style={{ margin: 0, fontSize: 24, fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span>💵</span> Prima Nota Cassa
+                💵 Prima Nota Cassa
               </h1>
               <p style={{ margin: '4px 0 0 0', color: '#6b7280', fontSize: 14 }}>
                 Registro movimenti di cassa • DARE: Corrispettivi, Finanziamenti • AVERE: POS, Versamenti, Fatture
@@ -610,7 +587,7 @@ function PrimaNotaDesktop() {
           {/* Chiusure Giornaliere Serali - Compatte */}
           <div style={{ background: '#f8fafc', borderRadius: 10, padding: 14, marginBottom: 16, border: '1px solid #e2e8f0' }}>
             <h3 style={{ margin: '0 0 12px 0', fontSize: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span>⚡</span> Chiusure Giornaliere
+              ⚡ Chiusure Giornaliere
             </h3>
             
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
@@ -726,7 +703,7 @@ function PrimaNotaDesktop() {
           <div style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
             <div>
               <h1 style={{ margin: 0, fontSize: 24, fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span>🏦</span> Prima Nota Banca - Estratto Conto
+                🏦 Prima Nota Banca - Estratto Conto
               </h1>
               <p style={{ margin: '4px 0 0 0', color: '#6b7280', fontSize: 14 }}>
                 Visualizzazione movimenti dall'estratto conto bancario importato
@@ -811,7 +788,8 @@ function MiniCard({ title, value, color, highlight }) {
       background: highlight ? `${color}15` : 'white',
       borderRadius: 8, 
       padding: 10, 
-      border: highlight ? `2px solid ${color}` : '1px solid #e5e7eb'
+      border: highlight ? `2px solid ${color}` : '1px solid #e5e7eb',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
     }}>
       <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 2 }}>{title}</div>
       <div style={{ fontSize: 18, fontWeight: 'bold', color }}>{value}</div>
@@ -850,7 +828,8 @@ function SummaryCard({ title, value, color, icon, highlight, subtitle }) {
       background: highlight ? `linear-gradient(135deg, ${color}15 0%, ${color}25 100%)` : 'white',
       borderRadius: 12, 
       padding: 16, 
-      border: highlight ? `2px solid ${color}` : '1px solid #e5e7eb'
+      border: highlight ? `2px solid ${color}` : '1px solid #e5e7eb',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
         <span style={{ fontSize: 13, color: '#6b7280' }}>{title}</span>
@@ -858,33 +837,6 @@ function SummaryCard({ title, value, color, icon, highlight, subtitle }) {
       </div>
       <div style={{ fontSize: 24, fontWeight: 'bold', color }}>{value}</div>
       {subtitle && <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 4 }}>{subtitle}</div>}
-    </div>
-  );
-}
-
-// eslint-disable-next-line no-unused-vars
-function MiniStatCard({ title, value, color }) {
-  return (
-    <div style={{ background: 'white', borderRadius: 8, padding: 12, border: '1px solid #e5e7eb', borderLeft: `4px solid ${color}` }}>
-      <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>{title}</div>
-      <div style={{ fontSize: 16, fontWeight: 'bold', color }}>{value}</div>
-    </div>
-  );
-}
-
-// eslint-disable-next-line no-unused-vars
-function QuickEntryCard({ title, color, children }) {
-  return (
-    <div style={{ 
-      background: `linear-gradient(135deg, ${color}20 0%, ${color}10 100%)`,
-      borderRadius: 12, 
-      padding: 16,
-      border: `2px solid ${color}30`
-    }}>
-      <h4 style={{ margin: '0 0 12px 0', fontSize: 14, fontWeight: 'bold' }}>{title}</h4>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {children}
-      </div>
     </div>
   );
 }
@@ -900,7 +852,6 @@ function MovementsTable({ movimenti, tipo, loading, formatEuro, formatDate, onDe
 
   const totalPages = Math.ceil(movimenti.length / itemsPerPage);
   const start = (currentPage - 1) * itemsPerPage;
-  const _currentMovimenti = movimenti.slice(start, start + itemsPerPage);
 
   // Calculate running balance using reduce
   const movimentiWithBalance = [...movimenti].reverse().reduce((acc, m) => {
@@ -913,7 +864,7 @@ function MovementsTable({ movimenti, tipo, loading, formatEuro, formatDate, onDe
   const currentWithBalance = movimentiWithBalance.slice(start, start + itemsPerPage);
 
   return (
-    <div style={{ background: 'white', borderRadius: 12, overflow: 'hidden', border: '1px solid #e5e7eb' }}>
+    <div style={{ background: 'white', borderRadius: 12, overflow: 'hidden', border: '1px solid #e5e7eb', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
       {/* Modal Modifica Movimento - solo se non readOnly */}
       {!readOnly && editingMovimento && (
         <EditMovimentoModal
@@ -1150,7 +1101,8 @@ function EditMovimentoModal({ movimento, tipo, onClose, onSave }) {
     border: '1px solid #d1d5db',
     borderRadius: 8,
     fontSize: 14,
-    outline: 'none'
+    outline: 'none',
+    boxSizing: 'border-box'
   };
 
   const labelStyle = {
@@ -1353,4 +1305,3 @@ function EditMovimentoModal({ movimento, tipo, onClose, onSave }) {
     </div>
   );
 }
-
