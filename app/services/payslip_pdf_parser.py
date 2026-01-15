@@ -204,11 +204,26 @@ class PayslipPDFParser:
         nome = self._extract_employee_name(text)
         periodo = self._extract_periodo(text)
         
-        # Estrai importi base
-        retrib_tfr = self._extract_amount(text, 'retribuzione_tfr')
-        netto = self._extract_amount(text, 'netto_mese')
-        competenze = self._extract_amount(text, 'totale_competenze')
-        trattenute = self._extract_amount(text, 'totale_trattenute')
+        # Per estrazione importi, usa testo pulito (senza underscore)
+        text_clean = text.replace('_', ' ')
+        text_clean = re.sub(r'\s+', ' ', text_clean)  # Normalizza spazi multipli
+        
+        # Estrai importi base dal testo pulito
+        retrib_tfr = self._extract_amount(text_clean, 'retribuzione_tfr')
+        netto = self._extract_amount(text_clean, 'netto_mese')
+        competenze = self._extract_amount(text_clean, 'totale_competenze')
+        trattenute = self._extract_amount(text_clean, 'totale_trattenute')
+        
+        # Fallback: cerca pattern specifici per formato CSC
+        if competenze == 0:
+            comp_match = re.search(r'TOTALE\s*COMPETENZE[^\d]*([0-9.,]+)', text_clean, re.IGNORECASE)
+            if comp_match:
+                competenze = self._parse_italian_number(comp_match.group(1))
+        
+        if trattenute == 0:
+            tratt_match = re.search(r'TOTALE\s*TRATTENUTE[^\d]*([0-9.,]+)', text_clean, re.IGNORECASE)
+            if tratt_match:
+                trattenute = self._parse_italian_number(tratt_match.group(1))
         
         # Se non c'è netto esplicito ma ci sono competenze e trattenute, calcolalo
         if netto == 0 and competenze > 0 and trattenute > 0:
