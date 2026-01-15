@@ -31,12 +31,29 @@ async def lifespan(app: FastAPI):
     # Connect to database
     await Database.connect_db()
     
+    # Avvia monitor email automatico (ogni 10 minuti)
+    try:
+        from app.services.email_monitor_service import start_monitor
+        db = Database.get_db()
+        start_monitor(db, interval_seconds=600)  # 10 minuti
+        logger.info("📬 Monitor email avviato (ogni 10 minuti)")
+    except Exception as e:
+        logger.warning(f"Monitor email non avviato: {e}")
+    
     logger.info("✅ Application startup complete")
     
     yield
     
     # Shutdown
     logger.info("🔄 Shutting down application...")
+    
+    # Ferma monitor email
+    try:
+        from app.services.email_monitor_service import stop_monitor
+        stop_monitor()
+        logger.info("📬 Monitor email fermato")
+    except Exception:
+        pass
     
     await Database.close_db()
     logger.info("✅ Application shutdown complete")
