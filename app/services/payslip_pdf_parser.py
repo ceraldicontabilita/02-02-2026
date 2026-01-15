@@ -72,19 +72,47 @@ class PayslipPDFParser:
         """Estrae il nome del dipendente dal testo."""
         # Cerca pattern comune: "COGNOME NOME" dopo "Dipendente:" o all'inizio
         lines = text.split('\n')
+        
+        # Pattern 1: Cerca nel formato CSC "DATA NOME COGNOME DATA CF"
+        # Es: "31/12/2019 VESPA VINCENZO 26/12/1967 VSPVCN67T26F839P"
+        cf_pattern = re.compile(r'(\d{2}/\d{2}/\d{4})\s+([A-Z][A-Z\s]+)\s+(\d{2}/\d{2}/\d{4})\s+([A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z])')
+        match = cf_pattern.search(text)
+        if match:
+            nome = match.group(2).strip()
+            # Rimuovi eventuali caratteri extra
+            nome = re.sub(r'\s+', ' ', nome)
+            if len(nome) > 3:
+                return nome.upper()
+        
+        # Pattern 2: Nome sulla stessa riga del CF
+        for line in lines:
+            cf_match = re.search(self.PATTERNS['codice_fiscale'], line)
+            if cf_match:
+                # Cerca nome prima del CF nella stessa riga
+                before_cf = line[:cf_match.start()]
+                # Trova parole che sembrano nomi (maiuscole)
+                words = re.findall(r'[A-Z][A-Za-z]+', before_cf)
+                if len(words) >= 2:
+                    # Prendi ultime 2-3 parole come nome
+                    nome = ' '.join(words[-3:] if len(words) >= 3 else words[-2:])
+                    if len(nome) > 3:
+                        return nome.upper()
+        
+        # Pattern 3: Cerca riga precedente al CF
         for i, line in enumerate(lines):
-            # Cerca il codice fiscale e prendi la riga precedente come nome
             if re.search(self.PATTERNS['codice_fiscale'], line):
                 if i > 0:
                     potential_name = lines[i-1].strip()
-                    # Verifica che sia un nome (lettere e spazi)
                     if re.match(r'^[A-Za-zÀ-ú\s]+$', potential_name) and len(potential_name) > 3:
                         return potential_name.upper()
-            # Pattern alternativo: cerca "Cognome Nome" con lettere maiuscole
+        
+        # Pattern 4: cerca "Dipendente:"
+        for line in lines:
             if 'Dipendente' in line or 'DIPENDENTE' in line:
                 parts = line.split(':')
                 if len(parts) > 1:
                     return parts[1].strip().upper()
+        
         return None
     
     def _extract_codice_fiscale(self, text: str) -> Optional[str]:
