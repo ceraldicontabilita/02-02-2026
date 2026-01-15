@@ -214,6 +214,119 @@ def estrai_modello_marca(descrizione: str, targa: str) -> tuple:
     return (marca, modello.title() if modello else "")
 
 
+async def processa_fattura_noleggio(fattura: dict) -> dict:
+    """
+    Processa una singola fattura per il modulo Noleggio Auto.
+    Viene chiamata automaticamente durante l'import XML.
+    
+    Se trova un nuovo veicolo, lo crea.
+    Se trova spese per un veicolo esistente, le associa.
+    
+    Returns: {"processed": bool, "veicolo_nuovo": bool, "targa": str, "categorie": [...]}
+    """
+    db = Database.get_db()
+    
+    supplier_vat = fattura.get("supplier_vat") or fattura.get("fornitore_partita_iva", "")
+    
+    # Verifica se è un fornitore di noleggio
+    if supplier_vat not in FORNITORI_NOLEGGIO.values():
+        return {"processed": False, "motivo": "Non è fornitore noleggio"}
+    
+    # Trova il nome del fornitore
+    fornitore_nome = next((k for k, v in FORNITORI_NOLEGGIO.items() if v == supplier_vat), "")
+    
+    linee = fattura.get("linee", [])
+    if not linee:
+        return {"processed": False, "motivo": "Nessuna linea nella fattura"}
+    
+    # Estrai tutte le targhe dalla fattura
+    targhe_trovate = set()
+    for linea in linee:
+        desc = linea.get("descrizione") or linea.get("Descrizione", "")
+        match = re.search(TARGA_PATTERN, desc)
+        if match:
+            targhe_trovate.add(match.group(1))
+    
+    risultato = {
+        "processed": True,
+        "fornitore": fornitore_nome,
+        "targhe": list(targhe_trovate),
+        "veicoli_nuovi": [],
+        "veicoli_aggiornati": [],
+        "categorie_trovate": []
+    }
+    
+    tipo_doc = fattura.get("tipo_documento", "").lower()
+    is_nota_credito = "nota" in tipo_doc or tipo_doc == "td04"
+    
+    # Processa ogni targa trovata
+    for targa in targhe_trovate:
+        # Verifica se il veicolo esiste già
+        veicolo_esistente = await db[COLLECTION].find_one({"targa": targa})
+        
+        if not veicolo_esistente:
+            # Estrai informazioni per il nuovo veicolo
+            marca = ""
+            modello = ""
+            for linea in linee:
+                desc = linea.get("descrizione", "")
+                if targa in desc:
+                    marca, modello = estrai_modello_marca(desc, targa)
+                    if marca or modello:
+                        break
+            
+            # Crea nuovo veicolo
+            codice_cliente = estrai_codice_cliente(fattura, fornitore_nome)
+            nuovo_veicolo = {
+                "id": str(uuid.uuid4()),
+                "targa": targa,
+                "marca": marca,
+                "modello": modello,
+                "fornitore_noleggio": fornitore_nome,
+                "fornitore_piva": supplier_vat,
+                "contratto": codice_cliente,
+                "codice_cliente": codice_cliente,
+                "driver": None,
+                "driver_id": None,
+                "data_inizio": fattura.get("invoice_date") or fattura.get("data_documento"),
+                "data_fine": None,
+                "note": f"Creato automaticamente da fattura {fattura.get('invoice_number') or fattura.get('numero_documento')}",
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+            await db[COLLECTION].insert_one(nuovo_veicolo)
+            risultato["veicoli_nuovi"].append(targa)
+        else:
+            risultato["veicoli_aggiornati"].append(targa)
+        
+        # Analizza le categorie di spesa per questa targa
+        for linea in linee:
+            desc = linea.get("descrizione", "")
+            if targa not in desc:
+                continue
+            
+            prezzo = float(linea.get("prezzo_totale") or linea.get("PrezzoTotale") or 
+                          linea.get("prezzo_unitario") or linea.get("PrezzoUnitario") or 0)
+            categoria, importo, metadata = categorizza_spesa(desc, prezzo, is_nota_credito)
+            
+            if categoria not in risultato["categorie_trovate"]:
+                risultato["categorie_trovate"].append(categoria)
+    
+    # Se nessuna targa trovata ma è fornitore noleggio, segnala per associazione manuale
+    if not targhe_trovate:
+        risultato["richiede_associazione_manuale"] = True
+        risultato["motivo"] = "Fattura senza targa - richiede associazione manuale"
+        
+        # Analizza comunque le categorie
+        for linea in linee:
+            desc = linea.get("descrizione", "")
+            prezzo = float(linea.get("prezzo_totale") or linea.get("prezzo_unitario") or 0)
+            categoria, _, _ = categorizza_spesa(desc, prezzo, is_nota_credito)
+            if categoria not in risultato["categorie_trovate"]:
+                risultato["categorie_trovate"].append(categoria)
+    
+    return risultato
+
+
 async def scan_fatture_noleggio(anno: Optional[int] = None) -> Dict[str, Any]:
     """
     Scansiona le fatture XML per estrarre dati veicoli noleggio.
