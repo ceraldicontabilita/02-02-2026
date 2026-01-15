@@ -30,6 +30,349 @@
 
 ---
 
+## 🗺️ MAPPA STRUTTURALE SISTEMA - FLUSSI DATI
+
+### LEGENDA SIMBOLI
+```
+📥 = Input/Download        📤 = Output/Salvataggio
+🔄 = Processing           📦 = Collezione MongoDB
+🔗 = Relazione            ➡️ = Flusso dati
+```
+
+---
+
+### 📧 FLUSSO 1: DOWNLOAD EMAIL E PROCESSAMENTO DOCUMENTI
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    📧 DOWNLOAD DOCUMENTI DA EMAIL                            │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  📥 INPUT: Casella Gmail (IMAP)                                             │
+│     - Server: imap.gmail.com:993                                            │
+│     - Credenziali: EMAIL_USER + EMAIL_APP_PASSWORD da .env                  │
+│                                                                             │
+│  🔄 PROCESSING: /app/app/services/email_document_downloader.py              │
+│     │                                                                       │
+│     ├──► Cerca email per PAROLE CHIAVE (F24, fattura, busta paga, etc.)    │
+│     ├──► Scarica allegati PDF/XML/XLSX                                      │
+│     ├──► CATEGORIZZA automaticamente:                                       │
+│     │    - "f24" → se contiene "f24", "tribut" nell'oggetto/filename        │
+│     │    - "fattura" → se contiene "fattura", "invoice"                     │
+│     │    - "busta_paga" → se contiene "cedolino", "busta paga", "lul"       │
+│     │    - "estratto_conto" → se contiene "estratto", "movimenti"           │
+│     │    - "quietanza" → se contiene "quietanza", "ricevuta f24"            │
+│     │    - "bonifico" → se contiene "bonifico", "sepa"                      │
+│     │    - "cartella_esattoriale" → se contiene "cartella", "equitalia"     │
+│     │    - "altro" → default                                                │
+│     │                                                                       │
+│     └──► Salva file in: /app/documents/{CATEGORIA}/                         │
+│                                                                             │
+│  📤 OUTPUT:                                                                  │
+│     📦 documents_inbox (229 doc) - Metadati documenti scaricati             │
+│        - id, filename, filepath, category, email_subject, email_from       │
+│        - status: "nuovo" | "processato" | "errore"                          │
+│        - processed: true/false                                              │
+│        - processed_to: nome collezione destinazione                         │
+│                                                                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  API ENDPOINTS:                                                             │
+│  - POST /api/documenti/scarica-da-email?giorni=30&parole_chiave=F24,fattura │
+│  - POST /api/documenti/sync-f24-automatico?giorni=30                        │
+│  - GET /api/documenti/lista?categoria=f24&status=nuovo                      │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### 📋 FLUSSO 2: PROCESSAMENTO F24
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         📋 PROCESSAMENTO F24                                 │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  📥 INPUT:                                                                   │
+│     - 📦 documents_inbox (category: "f24", processed: false)                │
+│     - Oppure upload manuale PDF                                             │
+│                                                                             │
+│  🔄 PROCESSING: /app/app/services/parser_f24.py                             │
+│     │                                                                       │
+│     ├──► Estrae coordinate PyMuPDF dal PDF                                  │
+│     ├──► Identifica sezioni: ERARIO, INPS, REGIONI, IMU, INAIL              │
+│     ├──► Estrae per ogni tributo:                                           │
+│     │    - codice_tributo, rateazione, periodo_riferimento                  │
+│     │    - importo_debito, importo_credito                                  │
+│     ├──► Calcola totali: totale_debito, totale_credito, saldo_netto         │
+│     └──► Rileva ravvedimento (codici 8901-8907, 1989-1994)                  │
+│                                                                             │
+│  📤 OUTPUT (DUAL SAVE):                                                      │
+│                                                                             │
+│     📦 f24_commercialista (46 doc) - Dati grezzi parser                     │
+│        - sezione_erario[], sezione_inps[], sezione_regioni[]                │
+│        - totali{}, dati_generali{codice_fiscale, ragione_sociale}           │
+│        - email_source{subject, from, date}                                  │
+│                                                                             │
+│     📦 f24_models (48 doc) - Formato frontend + PDF base64                  │
+│        - tributi_erario[], tributi_inps[], tributi_regioni[], tributi_imu[] │
+│        - saldo_finale, data_scadenza, pagato: true/false                    │
+│        - pdf_data: base64 del PDF per visualizzazione                       │
+│        - source: "email_sync" | "pdf_upload"                                │
+│                                                                             │
+│  🔗 RELAZIONI:                                                               │
+│     - f24_models.id ──► quietanze_f24.f24_id (quando pagato)                │
+│     - f24_models.id ──► prima_nota_banca.f24_id (se creato movimento)       │
+│                                                                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  API ENDPOINTS:                                                             │
+│  - GET /api/f24-public/models                 → Lista F24 per frontend      │
+│  - POST /api/f24-public/upload                → Upload manuale PDF          │
+│  - GET /api/f24-public/pdf/{id}               → Scarica PDF originale       │
+│  - PUT /api/f24-public/models/{id}/pagato     → Segna come pagato           │
+│  - POST /api/documenti/sync-f24-automatico    → Sync da email               │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### 🧾 FLUSSO 3: IMPORT FATTURE XML (SDI)
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    🧾 IMPORT FATTURE XML (CICLO PASSIVO)                     │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  📥 INPUT: File XML FatturaPA                                                │
+│                                                                             │
+│  🔄 PROCESSING: /app/app/routers/ciclo_passivo_integrato.py                 │
+│     │                                                                       │
+│     ├──► STEP 1: Parse XML → Estrai dati fattura                           │
+│     ├──► STEP 2: Trova/Crea fornitore in suppliers                         │
+│     ├──► STEP 3: Salva fattura in invoices                                 │
+│     ├──► STEP 4: Salva righe in dettaglio_righe_fatture                    │
+│     ├──► STEP 5: Crea movimento prima_nota_banca (se non esiste)           │
+│     ├──► STEP 6: Crea scadenza scadenziario_fornitori                      │
+│     ├──► STEP 7: Aggiorna magazzino (se fornitore non escluso)             │
+│     ├──► STEP 8: Riconcilia automaticamente con estratto_conto             │
+│     └──► STEP 9: Se fornitore NOLEGGIO → processa_fattura_noleggio()       │
+│                                                                             │
+│  📤 OUTPUT:                                                                  │
+│                                                                             │
+│     📦 invoices (3643 doc)                                                  │
+│        - id, invoice_number, supplier_vat, total_amount, pagato             │
+│                                                                             │
+│     📦 dettaglio_righe_fatture (7441 doc)                                   │
+│        - fattura_id, descrizione, quantita, prezzo, iva                     │
+│        - lotto_fornitore, data_scadenza (se presenti)                       │
+│                                                                             │
+│     📦 prima_nota_banca (470 doc)                                           │
+│        - fattura_id, data, importo, tipo: "uscita"                          │
+│                                                                             │
+│     📦 scadenziario_fornitori (247 doc)                                     │
+│        - fattura_id, data_scadenza, importo_totale, pagato                  │
+│                                                                             │
+│     📦 warehouse_movements (431 doc) - se magazzino attivo                  │
+│        - fattura_id, prodotto_id, quantita, tipo: "carico"                  │
+│                                                                             │
+│     📦 veicoli_noleggio (6 doc) - se fornitore noleggio                     │
+│        - targa, marca, modello, fornitore_piva, driver_id                   │
+│                                                                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  API ENDPOINTS:                                                             │
+│  - POST /api/ciclo-passivo/import-integrato-batch  → Import multiplo        │
+│  - POST /api/ciclo-passivo/import-integrato        → Import singolo         │
+│  - GET /api/fatture-ricevute/lista                 → Lista fatture          │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### 🏦 FLUSSO 4: ESTRATTO CONTO E RICONCILIAZIONE
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                   🏦 ESTRATTO CONTO E RICONCILIAZIONE                        │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  📥 INPUT: File XLSX/CSV estratto conto bancario                            │
+│                                                                             │
+│  🔄 PROCESSING:                                                              │
+│     /app/app/services/estratto_conto_bpm_parser.py (Banco BPM)              │
+│     /app/app/parsers/estratto_conto_nexi_parser.py (Carte Nexi)             │
+│                                                                             │
+│  📤 OUTPUT:                                                                  │
+│                                                                             │
+│     📦 estratto_conto (4244 doc) - Header estratti                          │
+│        - id, banca, data_inizio, data_fine, saldo_iniziale, saldo_finale   │
+│                                                                             │
+│     📦 estratto_conto_movimenti (2735 doc) - Movimenti bancari              │
+│        - id, data, importo, tipo, descrizione, causale                      │
+│        - fattura_id (se riconciliato), riconciliato: true/false            │
+│                                                                             │
+│     📦 estratto_conto_nexi (12 doc) - Movimenti carte Nexi                  │
+│        - data, importo, esercente, categoria                                │
+│                                                                             │
+│     📦 operazioni_da_confermare (157 doc) - Movimenti da classificare       │
+│        - movimento_id, tipo_suggerito, match_trovati[]                      │
+│                                                                             │
+│     📦 riconciliazioni (22 doc) - Match fattura ↔ movimento                 │
+│        - scadenza_id, transazione_id, data_riconciliazione                  │
+│                                                                             │
+│  🔄 RICONCILIAZIONE SMART: /app/app/services/riconciliazione_smart.py       │
+│     │                                                                       │
+│     ├──► Pattern POS: "INC.POS CARTE" → Incasso automatico                  │
+│     ├──► Pattern STIPENDIO: "VOSTRA DISPOSIZIONE" → Match dipendenti        │
+│     ├──► Pattern F24: "I24 AGENZIA ENTRATE" → Match F24                     │
+│     ├──► Pattern LEASING: "ADDEBITO SDD" → Match fatture ALD/ARVAL/Leasys   │
+│     └──► Pattern FATTURA: cerca numero fattura in causale                   │
+│                                                                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  API ENDPOINTS:                                                             │
+│  - POST /api/bank/estratto-conto/upload         → Upload XLSX               │
+│  - GET /api/operazioni-da-confermare/smart/analizza → Analisi smart         │
+│  - POST /api/operazioni-da-confermare/smart/riconcilia-auto → Auto match    │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### 💰 FLUSSO 5: BUSTE PAGA E STIPENDI
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                       💰 BUSTE PAGA E STIPENDI                               │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  📥 INPUT: PDF Busta Paga / Cedolini                                        │
+│                                                                             │
+│  🔄 PROCESSING: /app/app/services/payslip_pdf_parser.py                     │
+│                                                                             │
+│  📤 OUTPUT:                                                                  │
+│                                                                             │
+│     📦 payslips (9 doc) - Buste paga parsate                                │
+│        - dipendente_id, mese, anno, lordo, netto, trattenute               │
+│        - ore_ordinarie, ore_straordinarie, ferie, permessi                 │
+│                                                                             │
+│     📦 cedolini (1 doc) - Cedolini importati                                │
+│                                                                             │
+│     📦 prima_nota_salari (1262 doc) - Movimenti stipendi                    │
+│        - dipendente_id, data, importo, tipo                                 │
+│        - bonifico_id (se riconciliato con bonifico)                         │
+│                                                                             │
+│  🔗 RELAZIONI:                                                               │
+│     - prima_nota_salari.dipendente_id ──► employees.id                      │
+│     - prima_nota_salari.bonifico_id ──► estratto_conto_movimenti.id         │
+│                                                                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  API ENDPOINTS:                                                             │
+│  - POST /api/cedolini/upload-pdf      → Upload busta paga                   │
+│  - GET /api/cedolini/lista            → Lista cedolini                      │
+│  - GET /api/prima-nota-salari/lista   → Lista movimenti salari              │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### 👥 FLUSSO 6: ANAGRAFICA DIPENDENTI
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        👥 ANAGRAFICA DIPENDENTI                              │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  📦 employees (22 doc)                                                      │
+│     - id, nome, cognome, codice_fiscale, iban                               │
+│     - email, telefono, data_assunzione, ruolo                               │
+│     - libretto_sanitario_scadenza                                           │
+│                                                                             │
+│  📦 employee_contracts (10 doc)                                             │
+│     - employee_id, tipo_contratto, livello, ore_settimanali                │
+│     - data_inizio, data_fine, ral                                           │
+│                                                                             │
+│  🔗 RELAZIONI:                                                               │
+│     - employees.id ──► prima_nota_salari.dipendente_id                      │
+│     - employees.id ──► veicoli_noleggio.driver_id                           │
+│     - employees.id ──► estratto_conto_movimenti.dipendente_id (bonifici)    │
+│                                                                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  API ENDPOINTS:                                                             │
+│  - GET /api/employees/lista           → Lista dipendenti                    │
+│  - PUT /api/employees/{id}            → Modifica dipendente                 │
+│  - GET /api/employees/{id}/bonifici   → Bonifici associati                  │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### 🏪 FLUSSO 7: MAGAZZINO
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           🏪 MAGAZZINO                                       │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  📦 warehouse_inventory (5351 doc) - Anagrafica prodotti                    │
+│     - id, codice, nome, fornitore_piva, categoria                          │
+│     - giacenza_minima, prezzo_acquisto                                      │
+│                                                                             │
+│  📦 warehouse_movements (431 doc) - Movimenti carico/scarico                │
+│     - prodotto_id, fattura_id, quantita, tipo, data                        │
+│                                                                             │
+│  📦 warehouse_stocks (62 doc) - Giacenze attuali                            │
+│     - prodotto_id, giacenza_attuale, ultimo_aggiornamento                  │
+│                                                                             │
+│  🔗 RELAZIONI:                                                               │
+│     - warehouse_movements.fattura_id ──► invoices.id                        │
+│     - warehouse_inventory.fornitore_piva ──► suppliers.partita_iva          │
+│                                                                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  API ENDPOINTS:                                                             │
+│  - GET /api/warehouse/inventory       → Lista prodotti                      │
+│  - GET /api/warehouse/movements       → Movimenti                           │
+│  - POST /api/warehouse/scarico        → Registra scarico                    │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### 🗄️ RIEPILOGO COLLEZIONI MONGODB
+
+| Collezione | Documenti | Descrizione | Input | Output |
+|------------|-----------|-------------|-------|--------|
+| **documents_inbox** | 229 | Documenti scaricati da email | Email IMAP | Parser specifici |
+| **invoices** | 3643 | Fatture principali | XML FatturaPA | Frontend, Scadenze |
+| **dettaglio_righe_fatture** | 7441 | Righe fattura | XML FatturaPA | HACCP, Magazzino |
+| **f24_models** | 48 | F24 per frontend | PDF F24 | Pagina F24 |
+| **f24_commercialista** | 46 | F24 raw data | PDF F24 | Riconciliazione |
+| **quietanze_f24** | 47 | Quietanze pagamento | PDF Quietanza | Riconciliazione F24 |
+| **estratto_conto_movimenti** | 2735 | Movimenti bancari | XLSX Banca | Riconciliazione |
+| **estratto_conto_nexi** | 12 | Movimenti carte | XLSX Nexi | Riconciliazione |
+| **prima_nota_banca** | 470 | Movimenti contabili banca | Fatture | Report |
+| **prima_nota_cassa** | 1411 | Movimenti contabili cassa | Corrispettivi | Report |
+| **prima_nota_salari** | 1262 | Movimenti stipendi | Bonifici | Cedolini |
+| **scadenziario_fornitori** | 247 | Scadenze pagamento | Fatture | Alert |
+| **riconciliazioni** | 22 | Match fattura↔movimento | Auto/Manuale | Report |
+| **employees** | 22 | Anagrafica dipendenti | Manuale | Ovunque |
+| **veicoli_noleggio** | 6 | Auto aziendali | Fatture noleggio | Pagina Noleggio |
+| **corrispettivi** | 1050 | Scontrini giornalieri | Import | IVA |
+| **assegni** | 171 | Gestione assegni | Manuale | Fatture |
+
+---
+
+### 🔧 FILE CHIAVE PER OPERAZIONI
+
+| Operazione | Router | Service | Collection Target |
+|------------|--------|---------|-------------------|
+| Download Email | `/app/app/routers/documenti.py` | `email_document_downloader.py` | documents_inbox |
+| Sync F24 Email | `/app/app/routers/documenti.py` | `parser_f24.py` | f24_models, f24_commercialista |
+| Import Fatture XML | `/app/app/routers/ciclo_passivo_integrato.py` | - | invoices, prima_nota_banca, scadenziario |
+| Import Estratto Conto | `/app/app/routers/bank/estratto_conto.py` | `estratto_conto_bpm_parser.py` | estratto_conto_movimenti |
+| Riconciliazione Smart | `/app/app/routers/operazioni_da_confermare.py` | `riconciliazione_smart.py` | riconciliazioni |
+| Riconciliazione F24 | `/app/app/routers/f24/f24_riconciliazione.py` | - | f24_models, quietanze_f24 |
+| Upload Buste Paga | `/app/app/routers/cedolini.py` | `payslip_pdf_parser.py` | payslips, prima_nota_salari |
+
+---
+
 ## 📋 PANORAMICA
 
 Sistema ERP cloud-native per gestione contabilità, fatturazione e magazzino con:
