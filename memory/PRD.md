@@ -679,3 +679,42 @@ L'algoritmo di riconciliazione NON trova molti match automatici perché:
 
 Questo feedback è stato aggiunto il 14 Gennaio 2026 dopo che l'analisi completa delle descrizioni fatture ha rivelato pattern mancanti che una ricerca superficiale non aveva trovato.
 
+
+---
+
+## 🚗 LOGICA IMPORT AUTOMATICO NOLEGGIO AUTO
+
+### Implementato il 14 Gennaio 2026
+
+Quando vengono importate fatture XML, il sistema automaticamente:
+
+1. **RICONOSCE** se la fattura è di un fornitore noleggio (ALD, ARVAL, Leasys, LeasePlan)
+   - Controlla la P.IVA del fornitore
+
+2. **ESTRAE** i dati del veicolo:
+   - Targa (pattern: 2 lettere + 3 numeri + 2 lettere)
+   - Marca e Modello dalla descrizione
+   - Numero contratto/codice cliente
+
+3. **CREA NUOVO VEICOLO** se la targa non esiste:
+   - Genera UUID per il veicolo
+   - Imposta fornitore, contratto, marca/modello
+   - Imposta data_inizio dalla data fattura
+   - Aggiunge nota "Creato automaticamente da fattura XXX"
+
+4. **CATEGORIZZA LE SPESE** automaticamente:
+   - Canoni: locazione, servizi, conguagli
+   - Verbali: multe, sanzioni (con estrazione N° verbale)
+   - Bollo: tasse automobilistiche, tassa proprietà
+   - Riparazioni: sinistri, danni, carrozzeria
+   - Pedaggio: telepass, pedaggi
+   - Costi Extra: penali, doppie chiavi
+
+5. **GESTISCE FATTURE SENZA TARGA** (es: LeasePlan):
+   - Segnala come "richiede associazione manuale"
+   - Permette associazione a veicoli esistenti con stessa P.IVA fornitore
+
+### File modificati:
+- `/app/app/routers/noleggio.py`: Aggiunta funzione `processa_fattura_noleggio()`
+- `/app/app/routers/ciclo_passivo_integrato.py`: Integrato step 9 per noleggio auto
+
