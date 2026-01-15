@@ -569,7 +569,7 @@ export default function RiconciliazioneSmart() {
                                       disabled={processing === mov.movimento_id}
                                       style={{ padding: '4px 12px', background: '#10b981', color: 'white', border: 'none', borderRadius: '6px', fontSize: '11px', cursor: 'pointer' }}
                                     >
-                                      <Check size={12} /> Associa
+                                      ✓ Associa
                                     </button>
                                   </div>
                                 </div>
