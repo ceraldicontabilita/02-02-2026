@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import api from '../api';
 import { formatEuro } from '../lib/utils';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
-import { Package, Search, AlertTriangle, Check, ArrowUpDown, RefreshCw, Trash2 } from 'lucide-react';
 
 export default function MagazzinoDoppiaVerita() {
   const { anno } = useAnnoGlobale();
