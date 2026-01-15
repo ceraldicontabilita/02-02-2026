@@ -330,8 +330,10 @@ async def run_full_sync(db) -> Dict[str, Any]:
     """
     Esegue un ciclo completo di sincronizzazione:
     1. Scarica nuovi documenti dalla posta (ultimo 1 giorno)
-    2. Ricategorizza documenti
-    3. Processa nuovi documenti
+    2. Scarica notifiche fatture Aruba → operazioni da confermare
+    3. Ricategorizza documenti
+    4. Processa nuovi documenti
+    5. Aggiorna ricette con nuovi prezzi
     
     IMPORTANTE: I duplicati vengono SEMPRE saltati (controllo hash file)
     """
@@ -340,19 +342,38 @@ async def run_full_sync(db) -> Dict[str, Any]:
     results = {
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "email_sync": None,
+        "aruba_sync": None,
         "ricategorizzazione": None,
-        "processamento": None
+        "processamento": None,
+        "ricette_aggiornate": None
     }
     
     try:
-        # 1. Scarica email (ultimo 1 giorno - i duplicati vengono saltati)
+        # 1. Scarica email documenti (ultimo 1 giorno - i duplicati vengono saltati)
         results["email_sync"] = await sync_email_documents(db, giorni=1)
         
-        # 2. Ricategorizza
+        # 2. Scarica notifiche Aruba → operazioni da confermare
+        try:
+            from app.services.automazione_completa import fetch_aruba_emails_to_operazioni
+            results["aruba_sync"] = await fetch_aruba_emails_to_operazioni(db, giorni=7)
+        except Exception as e:
+            logger.error(f"Errore sync Aruba: {e}")
+            results["aruba_sync"] = {"success": False, "error": str(e)}
+        
+        # 3. Ricategorizza
         results["ricategorizzazione"] = await ricategorizza_documenti(db)
         
-        # 3. Processa
+        # 4. Processa documenti
         results["processamento"] = await processa_nuovi_documenti(db)
+        
+        # 5. Aggiorna ricette se ci sono stati aggiornamenti al magazzino
+        try:
+            proc = results.get("processamento", {})
+            if proc.get("buste_paga", 0) > 0 or proc.get("estratti_nexi", 0) > 0 or proc.get("estratti_bnl", 0) > 0:
+                from app.services.automazione_completa import aggiorna_prezzi_ricette
+                results["ricette_aggiornate"] = await aggiorna_prezzi_ricette(db)
+        except Exception as e:
+            logger.error(f"Errore aggiornamento ricette: {e}")
         
         _last_sync = results["timestamp"]
         _sync_stats["total_syncs"] += 1
@@ -363,7 +384,8 @@ async def run_full_sync(db) -> Dict[str, Any]:
             results["processamento"].get("estratti_bnl", 0)
         )
         
-        logger.info(f"✅ Sync completo - Nuovi: {results['email_sync'].get('new_documents', 0)}, Processati: {_sync_stats['documents_processed']}")
+        aruba_new = results.get("aruba_sync", {}).get("stats", {}).get("new_invoices", 0)
+        logger.info(f"✅ Sync completo - Doc: {results['email_sync'].get('new_documents', 0)}, Aruba: {aruba_new}, Processati: {_sync_stats['documents_processed']}")
         
     except Exception as e:
         logger.error(f"❌ Errore sync: {e}")
