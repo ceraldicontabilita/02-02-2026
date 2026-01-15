@@ -916,3 +916,298 @@ async def cerca_f24_per_associazione(
         } for f in f24_list],
         "totale": len(f24_list)
     }
+
+
+
+@router.get("/carta/lista")
+async def lista_transazioni_carta(
+    solo_non_riconciliate: bool = Query(True, description="Solo non riconciliate"),
+    categoria: Optional[str] = Query(None, description="Filtra per categoria"),
+    limit: int = Query(100, ge=1, le=500)
+) -> Dict[str, Any]:
+    """
+    Lista transazioni carta di credito dalla collezione estratto_conto_movimenti.
+    """
+    db = Database.get_db()
+    
+    query = {"tipo": "carta_credito"}
+    
+    if solo_non_riconciliate:
+        query["riconciliato"] = {"$ne": True}
+    
+    if categoria:
+        query["categoria"] = categoria
+    
+    transazioni = await db.estratto_conto_movimenti.find(
+        query,
+        {"_id": 0}
+    ).sort("data", -1).to_list(limit)
+    
+    # Statistiche
+    stats = {
+        "totale": len(transazioni),
+        "importo_totale": sum(t.get("importo", 0) for t in transazioni)
+    }
+    
+    # Raggruppa per categoria
+    by_categoria = {}
+    for t in transazioni:
+        cat = t.get("categoria") or "Altro"
+        if cat not in by_categoria:
+            by_categoria[cat] = {"count": 0, "importo": 0}
+        by_categoria[cat]["count"] += 1
+        by_categoria[cat]["importo"] += t.get("importo", 0)
+    
+    return {
+        "transazioni": transazioni,
+        "stats": stats,
+        "by_categoria": by_categoria
+    }
+
+
+@router.post("/carta/riconcilia-auto")
+async def riconcilia_carta_automatico() -> Dict[str, Any]:
+    """
+    Riconcilia automaticamente le transazioni carta con fatture.
+    
+    Logica:
+    1. Match per importo esatto con fatture non pagate
+    2. Match per nome esercente/fornitore simile
+    3. Categorizzazione automatica per Amazon, Spotify, etc.
+    """
+    db = Database.get_db()
+    
+    # Trova transazioni carta non riconciliate
+    transazioni = await db.estratto_conto_movimenti.find(
+        {"tipo": "carta_credito", "riconciliato": {"$ne": True}},
+        {"_id": 0}
+    ).to_list(500)
+    
+    if not transazioni:
+        return {
+            "success": True,
+            "message": "Nessuna transazione da riconciliare",
+            "riconciliati": 0
+        }
+    
+    # Cache fatture non pagate
+    fatture = await db.invoices.find(
+        {"pagato": {"$ne": True}},
+        {"_id": 0, "id": 1, "invoice_number": 1, "supplier_name": 1, "total_amount": 1, 
+         "invoice_date": 1, "fornitore_ragione_sociale": 1, "cedente_denominazione": 1}
+    ).to_list(5000)
+    
+    risultati = {
+        "elaborati": 0,
+        "riconciliati": 0,
+        "categorizzati": 0,
+        "dettagli": []
+    }
+    
+    # Pattern per categorizzazione automatica (non fatture)
+    PATTERN_ABBONAMENTI = {
+        "spotify": "Abbonamento Spotify",
+        "netflix": "Abbonamento Netflix",
+        "amazon prime": "Abbonamento Amazon Prime",
+        "google": "Servizi Google",
+        "microsoft": "Servizi Microsoft",
+        "apple": "Servizi Apple",
+        "dropbox": "Abbonamento Cloud",
+        "anthropic": "Servizi AI",
+        "openai": "Servizi AI",
+    }
+    
+    PATTERN_ACQUISTI = {
+        "amazon": "E-commerce Amazon",
+        "amzn": "E-commerce Amazon",
+        "ebay": "E-commerce eBay",
+        "aliexpress": "E-commerce",
+    }
+    
+    from rapidfuzz import fuzz
+    
+    for trans in transazioni:
+        risultati["elaborati"] += 1
+        
+        importo = trans.get("importo", 0)
+        descrizione = (trans.get("descrizione") or trans.get("esercente") or "").lower()
+        trans_id = trans.get("id")
+        
+        # 1. Prova match con fattura per importo esatto
+        fattura_match = None
+        for f in fatture:
+            f_importo = f.get("total_amount") or 0
+            if abs(f_importo - importo) < 0.01:
+                # Match importo! Verifica anche nome se possibile
+                nome_fornitore = (f.get("supplier_name") or f.get("fornitore_ragione_sociale") or 
+                                  f.get("cedente_denominazione") or "").lower()
+                
+                # Se descrizione contiene parte del nome fornitore, è un match forte
+                if any(word in descrizione for word in nome_fornitore.split()[:2] if len(word) > 3):
+                    fattura_match = f
+                    break
+                
+                # Altrimenti match debole per importo
+                if not fattura_match:
+                    fattura_match = f
+        
+        if fattura_match:
+            # Riconcilia con fattura
+            await db.estratto_conto_movimenti.update_one(
+                {"id": trans_id},
+                {"$set": {
+                    "riconciliato": True,
+                    "riconciliato_auto": True,
+                    "tipo_riconciliazione": "fattura",
+                    "fattura_id": fattura_match.get("id"),
+                    "fattura_numero": fattura_match.get("invoice_number"),
+                    "riconciliato_il": datetime.now(timezone.utc).isoformat()
+                }}
+            )
+            
+            # Marca fattura come pagata
+            await db.invoices.update_one(
+                {"id": fattura_match.get("id")},
+                {"$set": {
+                    "pagato": True,
+                    "metodo_pagamento": "carta_credito",
+                    "data_pagamento": trans.get("data"),
+                    "transazione_carta_id": trans_id
+                }}
+            )
+            
+            # Rimuovi dalla lista fatture disponibili
+            fatture = [f for f in fatture if f.get("id") != fattura_match.get("id")]
+            
+            risultati["riconciliati"] += 1
+            risultati["dettagli"].append({
+                "transazione_id": trans_id,
+                "tipo": "fattura",
+                "match": {
+                    "id": fattura_match.get("id"),
+                    "numero": fattura_match.get("invoice_number"),
+                    "fornitore": fattura_match.get("supplier_name")
+                }
+            })
+            continue
+        
+        # 2. Categorizzazione automatica per abbonamenti/acquisti
+        categoria_trovata = None
+        
+        for pattern, categoria in PATTERN_ABBONAMENTI.items():
+            if pattern in descrizione:
+                categoria_trovata = categoria
+                break
+        
+        if not categoria_trovata:
+            for pattern, categoria in PATTERN_ACQUISTI.items():
+                if pattern in descrizione:
+                    categoria_trovata = categoria
+                    break
+        
+        if categoria_trovata:
+            await db.estratto_conto_movimenti.update_one(
+                {"id": trans_id},
+                {"$set": {
+                    "categoria": categoria_trovata,
+                    "categorizzato_auto": True,
+                    "categorizzato_il": datetime.now(timezone.utc).isoformat()
+                }}
+            )
+            
+            risultati["categorizzati"] += 1
+            risultati["dettagli"].append({
+                "transazione_id": trans_id,
+                "tipo": "categorizzazione",
+                "categoria": categoria_trovata
+            })
+    
+    return {
+        "success": True,
+        "elaborati": risultati["elaborati"],
+        "riconciliati": risultati["riconciliati"],
+        "categorizzati": risultati["categorizzati"],
+        "dettagli": risultati["dettagli"],
+        "messaggio": f"Riconciliate {risultati['riconciliati']} transazioni, categorizzate {risultati['categorizzati']}"
+    }
+
+
+@router.post("/carta/riconcilia-manuale")
+async def riconcilia_carta_manuale(
+    data: Dict[str, Any] = Body(...)
+) -> Dict[str, Any]:
+    """
+    Riconcilia manualmente una transazione carta.
+    
+    Body:
+    {
+        "transazione_id": str,
+        "tipo": "fattura" | "categoria" | "spesa_aziendale",
+        "fattura_id": str (se tipo=fattura),
+        "categoria": str (se tipo=categoria),
+        "nota": str (opzionale)
+    }
+    """
+    db = Database.get_db()
+    
+    trans_id = data.get("transazione_id")
+    tipo = data.get("tipo")
+    
+    if not trans_id or not tipo:
+        raise HTTPException(status_code=400, detail="transazione_id e tipo sono obbligatori")
+    
+    transazione = await db.estratto_conto_movimenti.find_one(
+        {"id": trans_id},
+        {"_id": 0}
+    )
+    
+    if not transazione:
+        raise HTTPException(status_code=404, detail="Transazione non trovata")
+    
+    update_data = {
+        "riconciliato": True,
+        "riconciliato_manuale": True,
+        "tipo_riconciliazione": tipo,
+        "riconciliato_il": datetime.now(timezone.utc).isoformat()
+    }
+    
+    if data.get("nota"):
+        update_data["nota"] = data["nota"]
+    
+    if tipo == "fattura":
+        fattura_id = data.get("fattura_id")
+        if not fattura_id:
+            raise HTTPException(status_code=400, detail="fattura_id richiesto per tipo=fattura")
+        
+        update_data["fattura_id"] = fattura_id
+        
+        # Marca fattura come pagata
+        await db.invoices.update_one(
+            {"id": fattura_id},
+            {"$set": {
+                "pagato": True,
+                "metodo_pagamento": "carta_credito",
+                "data_pagamento": transazione.get("data"),
+                "transazione_carta_id": trans_id
+            }}
+        )
+        
+    elif tipo == "categoria":
+        categoria = data.get("categoria")
+        if not categoria:
+            raise HTTPException(status_code=400, detail="categoria richiesta per tipo=categoria")
+        update_data["categoria"] = categoria
+        
+    elif tipo == "spesa_aziendale":
+        update_data["categoria"] = data.get("categoria", "Spesa Aziendale")
+    
+    await db.estratto_conto_movimenti.update_one(
+        {"id": trans_id},
+        {"$set": update_data}
+    )
+    
+    return {
+        "success": True,
+        "transazione_id": trans_id,
+        "tipo": tipo
+    }
