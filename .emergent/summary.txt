@@ -1,114 +1,114 @@
-<analysis>
-Here is the summary of the current session.
+<analysis>Here is the summary of the current session.
 
 **original_problem_statement:**
-L'utente ha inizialmente richiesto di correggere la funzionalità di importazione degli F24 via email. Dopo il successo di questo task, ha chiesto di creare una mappa strutturale del flusso di dati dell'applicazione all'interno del file PRD. Successivamente, ha richiesto di implementare l'importazione e il processamento automatico per altri tipi di documenti scaricati dalla casella email, come estratti conto (Nexi, PayPal) e buste paga (Zucchetti). L'utente ha anche richiesto di procedere con la standardizzazione dell'interfaccia utente, eliminando Tailwind/Shadcn a favore di stili inline. Infine, ha richiesto di risolvere un problema di lunga data: la gestione e la riconciliazione automatica delle transazioni PRELIEVO ASSEGNO presenti negli estratti conto bancari. L'utente ha anche specificato che la sezione HACCP non deve essere implementata.
+L'utente ha inizialmente richiesto una serie di funzionalità per un'applicazione ERP, a partire dalla correzione dell'importazione di F24 via email. Successivamente, le richieste si sono evolute includendo: la creazione di una mappa dell'architettura dati; l'importazione e il processamento automatico di vari documenti (estratti conto Nexi, BNL, buste paga Zucchetti); la standardizzazione dell'UI eliminando Tailwind/Shadcn; e la risoluzione di un bug critico sulla riconciliazione dei PRELIEVO ASSEGNO. Durante la sessione, l'utente ha anche richiesto di migrare il database da un'istanza locale a MongoDB Atlas, di implementare un servizio di monitoraggio automatico della posta elettronica, e di creare un flusso di lavoro end-to-end completamente automatico per la gestione delle buste paga, dalla ricezione del PDF alla creazione dell'anagrafica dipendente e alla registrazione contabile.
 
 **User's preferred language**: Italiano
 
 **what currently exists?**
-L'applicazione ora dispone di un robusto sistema di importazione documenti via email. La funzionalità scarica email è stata completamente riparata e potenziata:
-- **Correzione F24**: Risolto il bug delle variabili d'ambiente e il problema critico delle collezioni multiple (, ), garantendo che gli F24 importati siano visibili nel frontend.
-- **Processamento Automatico Documenti**: Oltre agli F24, il sistema ora identifica, scarica e processa automaticamente:
-    - **Estratti Conto Nexi**: Un nuovo endpoint () usa un parser esistente per estrarre le transazioni e salvarle nel database.
-    - **Buste Paga**: Un altro endpoint () usa un parser PDF che è stato notevolmente migliorato per gestire molteplici formati (CSC, Zucchetti con spazi, Zucchetti con 's'), estraendo correttamente i dati dei dipendenti e gli importi netti.
-- **Riconciliazione Transazioni Carta**: È stato aggiunto un endpoint per riconciliare automaticamente le transazioni delle carte di credito Nexi con le fatture esistenti, basandosi su importo e nome dell'esercente.
-- **Mappa Strutturale**: Il file  è stato aggiornato con una dettagliata mappa dell'architettura dati, che descrive le collezioni MongoDB, i flussi di dati e la logica di business.
-- **Standardizzazione UI (In Corso)**: Diverse pagine (, , ) sono state convertite dallo stile Tailwind/Shadcn a stili inline, come richiesto.
-- **Logica PRELIEVO ASSEGNO**: È stata implementata nel backend la logica per riconoscere e associare i movimenti bancari PRELIEVO ASSEGNO agli assegni registrati nel sistema. La modifica è stata fatta ma non ancora verificata con un test finale.
+L'applicazione è ora un sistema più robusto e automatizzato, connesso a un database cloud persistente su MongoDB Atlas.
+- **Migrazione a MongoDB Atlas**: Il database è stato migrato con successo da un'istanza locale a MongoDB Atlas. Il backend è configurato per usare Atlas, garantendo la persistenza dei dati.
+- **Servizio di Monitoraggio Automatico**: È stato creato un servizio in background () che ogni 10 minuti scarica, categorizza e processa automaticamente i nuovi documenti dalla casella email, gestendo i duplicati per evitare perdite di dati.
+- **Flusso Automatico Buste Paga**: È stato implementato un sistema completo () che:
+    1.  Utilizza un parser PDF avanzato () per estrarre dati dettagliati da molteplici formati di busta paga.
+    2.  Crea automaticamente un record per i nuovi dipendenti nella collezione .
+    3.  Salva un riepilogo dettagliato di ogni cedolino in una nuova collezione .
+    4.  Genera le scritture contabili corrispondenti in .
+- **Correzione PRELIEVO ASSEGNO (P0)**: Il bug critico è stato **risolto e verificato**. Il sistema ora riconosce e associa correttamente i movimenti PRELIEVO ASSEGNO agli assegni registrati nel sistema.
+- **Parser Documenti Migliorati**:
+    - **BNL**: Creato un nuovo parser per estratti conto correnti e carte di credito BNL, risolvendo un problema complesso di parsing su più righe.
+    - **Buste Paga**: Il nuovo parser gestisce formati multipli (CSC, Zucchetti).
+- **Standardizzazione UI (Parziale)**: Le pagine  e  sono state convertite a stili inline, rimuovendo le librerie Shadcn/UI e Lucide.
 
 **Last working item**:
-- **Last item agent was working**: L'agente stava risolvendo il problema ricorrente della mancata gestione delle transazioni PRELIEVO ASSEGNO nella riconciliazione smart. Ha identificato che il problema non era nel pattern di riconoscimento, ma nell'ordine di esecuzione delle regole di analisi nel servizio . I controlli più generici venivano eseguiti prima, impedendo l'attivazione della regola specifica per gli assegni. La correzione è consistita nello spostare il blocco di codice per il PRELIEVO ASSEGNO all'inizio della funzione di analisi per dargli priorità.
+- **Last item agent was working**: L'agente stava lavorando su due task richiesti dall'utente:
+    1.  Migliorare il parser delle carte di credito BNL (completato con successo).
+    2.  Continuare la standardizzazione dell'interfaccia utente per le pagine rimanenti (in corso).
 - **Status**: IN PROGRESS
-- **Agent Testing Done**: N
-- **Which testing method agent to use?**: backend testing agent
+- **Agent Testing Done**: Y
+- **Which testing method agent to use?**: frontend testing agent
 - **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
-- **Issue 1**: (P0) Verificare la correzione per la gestione PRELIEVO ASSEGNO.
-- **Issue 2**: (P1) Completare la standardizzazione dell'interfaccia utente.
+- **Issue 1**: (P1) Completare la standardizzazione dell'interfaccia utente.
+- **Issue 2**: (P1) Il servizio di riconciliazione smart legge da una collezione diversa da quella in cui vengono memorizzati alcuni movimenti bancari, causando la potenziale ricorrenza del bug PRELIEVO ASSEGNO.
 
 **Issues Detail**:
-- **Issue 1: Verificare la correzione per la gestione PRELIEVO ASSEGNO**
-    - **Attempted fixes**: L'agente ha correttamente identificato che il problema risiedeva nell'ordine di esecuzione delle regole in  all'interno di . Ha modificato il file spostando la logica di controllo per PRELIEVO ASSEGNO all'inizio della funzione.
+- **Issue 1: Completare la standardizzazione dell'interfaccia utente**
+    - **Attempted fixes**: Le pagine  e  sono state convertite.
     - **Next debug checklist**:
-        1. Eseguire una chiamata all'endpoint di analisi batch () che processa i movimenti dell'estratto conto.
-        2. Verificare che le statistiche restituite dall'endpoint includano un conteggio per la categoria .
-        3. Controllare l'output per vedere se i movimenti PRELIEVO ASSEGNO sono stati correttamente identificati e associati a un assegno esistente.
-        4. Verificare nella UI () che questi movimenti appaiano con l'etichetta corretta Prelievo Assegno.
-    - **Why fix this issue and what will be achieved with the fix?**: Risolverà un problema ricorrente e di alta priorità, automatizzando una parte significativa della riconciliazione bancaria e riducendo il lavoro manuale dell'utente.
+        1.  Convertire le restanti 3 pagine: ,  e .
+        2.  Rimuovere le importazioni di componenti Shadcn (, ) e icone Lucide.
+        3.  Sostituire gli elementi con HTML standard e stili inline, usando  come modello.
+        4.  Verificare che le pagine si carichino correttamente dopo le modifiche.
+    - **Why fix this issue and what will be achieved with the fix?**: Soddisferà una richiesta forte e ripetuta dell'utente di avere un'interfaccia utente coerente in tutta l'applicazione.
     - **Status**: IN PROGRESS
     - **Is recurring issue?**: Y
-    - **Should Test frontend/backend/both after fix?**: Both
+    - **Should Test frontend/backend/both after fix?**: Frontend
     - **Blocked on other issue**: No.
 
-- **Issue 2: Completare la standardizzazione dell'interfaccia utente**
-    - **Attempted fixes**: L'agente ha convertito 4 pagine che usavano Tailwind/Shadcn o icone Lucide. Tuttavia, durante il processo ha scoperto che altre 5 pagine (, , , , ) utilizzano ancora componenti Shadcn.
+- **Issue 2: Il servizio di riconciliazione smart legge da una collezione diversa da quella in cui vengono memorizzati alcuni movimenti bancari.**
+    - **Attempted fixes**: È stato eseguito uno script una tantum per copiare i dati mancanti dalla collezione  a , consentendo la verifica della correzione del bug PRELIEVO ASSEGNO. Tuttavia, questo è un cerotto temporaneo, non una soluzione definitiva.
     - **Next debug checklist**:
-        1. Rimuovere le importazioni e l'uso di componenti Shadcn (, , etc.) e icone Lucide dai 5 file rimanenti.
-        2. Sostituire la funzionalità con elementi HTML standard e stili inline, seguendo l'esempio di .
-        3. Verificare che l'applicazione si compili senza errori e che le pagine modificate siano funzionali.
-    - **Why fix this issue and what will be achieved with the fix?**: Soddisferà una forte e ripetuta richiesta dell'utente di avere un'interfaccia utente coerente in tutta l'applicazione.
-    - **Status**: IN PROGRESS
-    - **Is recurring issue?**: N
-    - **Should Test frontend/backend/both after fix?**: Frontend
+        1.  Identificare tutti i processi che scrivono nelle collezioni  e .
+        2.  Standardizzare tutti i parser di estratti conto (BPM, Nexi, BNL) affinché scrivano i movimenti esclusivamente nella collezione .
+        3.  Assicurarsi che il servizio  continui a leggere dalla collezione .
+        4.  Valutare la possibilità di eliminare la vecchia collezione  per evitare confusione futura.
+    - **Why fix this issue and what will be achieved with the fix?**: Risolverà una vulnerabilità architetturale critica che causerà la ricomparsa del bug PRELIEVO ASSEGNO con i nuovi dati. Garantirà la coerenza dei dati e l'affidabilità della riconciliazione.
+    - **Status**: NOT STARTED
+    - **Is recurring issue?**: Y
+    - **Should Test frontend/backend/both after fix?**: Backend
     - **Blocked on other issue**: No.
 
 **In progress Task List**:
 - **Task 1: Standardizzazione UI**
-    - **Where to resume**: L'agente deve iniziare a modificare i 5 file rimanenti che ancora importano componenti Shadcn/UI: , , , , .
-    - **What will be achieved with this?**: L'intera applicazione seguirà lo stesso standard di stile, come richiesto dall'utente.
+    - **Where to resume**: Modificare i file ,  e .
+    - **What will be achieved with this?**: L'intera applicazione avrà uno stile uniforme, come richiesto dall'utente.
     - **Status**: IN PROGRESS
     - **Should Test frontend/backend/both after fix?**: Frontend
     - **Blocked on something**: No.
 
 **Upcoming and Future Tasks**
 - **Upcoming Tasks**:
-    - **(P2)** Integrare il parser per le buste paga Zucchetti (l'utente ha menzionato in passato, e sebbene il parser PDF sia stato migliorato, potrebbe esserci una richiesta specifica per i file XML Zucchetti).
+    - **(P1)** Processare le 55 buste paga rimanenti utilizzando il nuovo flusso automatico.
+    - **(P1)** Eseguire la riconciliazione per i 1.432 movimenti di prima nota salari e i 2.349 movimenti di estratto conto non ancora associati.
 - **Future Tasks**:
-    - Task rimossi su richiesta dell'utente:
-        - Caricamento  da XML.
-        - Caricamento dati Fornitori da XML.
-        - Implementazione sezione HACCP.
+    - Task rimossi su richiesta dell'utente: Sezione HACCP, Caricamento dati da XML (Prima Nota Salari, Fornitori, buste paga Zucchetti).
 
 **Completed work in this session**
-- **Correzione Importazione F24 da Email**: Risolto il problema delle variabili d'ambiente e unificato il salvataggio dei dati sulla collezione corretta () per la visualizzazione nel frontend.
-- **Mappa Strutturale dell'Applicazione**: Aggiunta una sezione completa al  che descrive l'architettura dei dati, le collezioni principali e i flussi di lavoro.
-- **Processamento Automatico Estratti Conto Nexi**: Creato un endpoint che processa automaticamente i PDF degli estratti conto Nexi trovati nella casella di posta, popolando il database con le transazioni.
-- **Processamento Automatico Buste Paga**: Migliorato drasticamente il parser PDF () per gestire molteplici formati (CSC, Zucchetti) e creato un endpoint per processare automaticamente le buste paga dalla posta.
-- **Riconciliazione Automatica Transazioni Carta**: Implementato un endpoint per abbinare le transazioni delle carte di credito alle fatture esistenti, contrassegnandole come pagate.
-- **Standardizzazione UI (Parziale)**: Rimosso l'uso di Tailwind/Shadcn/Lucide e convertito a stili inline le pagine ,  e .
-- **Implementazione Logica PRELIEVO ASSEGNO**: Modificato il servizio di riconciliazione smart () per identificare e gestire correttamente i movimenti di prelievo assegno.
+- **Database Migration to MongoDB Atlas**: Migrazione completa dei dati dal server locale al cloud e aggiornamento della configurazione del backend.
+- **New Feature: Automatic Email Monitoring Service**: Creato e attivato un servizio in background che scarica e processa automaticamente i documenti dalla posta ogni 10 minuti.
+- **New Feature: Enhanced Automatic Payslip Workflow**: Implementato un flusso end-to-end che, a partire da un PDF di una busta paga, crea/aggiorna l'anagrafica del dipendente, genera un riepilogo dettagliato e crea la scrittura contabile.
+- **Bug Fix (P0): PRELIEVO ASSEGNO Reconciliation**: Il problema critico è stato risolto e verificato. Il sistema ora riconosce e associa correttamente i prelievi di assegni.
+- **Parser Improvement**: Creato un parser per gli estratti conto BNL (corrente e carta di credito) e un parser avanzato per le buste paga.
+- **UI Standardization (Partial)**: Convertite le pagine  e  a stili inline.
+- **Project Management**: Aggiornato il  e fornito all'utente una lista chiara dei task rimanenti.
 
 **Earlier issues found/mentioned but not fixed**
-Nessuno.
+L'agente ha applicato una soluzione temporanea per il bug PRELIEVO ASSEGNO ma non ha risolto il problema architetturale sottostante (dati frammentati su due collezioni), che è stato elencato come nuovo problema pendente.
 
 **Known issue recurrence from previous fork**
 - **Issue recurrence in previous fork**: Mancata gestione delle transazioni PRELIEVO ASSEGNO.
 - **Recurrence count**: 5+
-- **Status**: IN PROGRESS (Fix implementato, in attesa di verifica finale).
+- **Status**: RESOLVED (Il fix è stato implementato e verificato, ma è stata identificata una causa potenziale di ricorrenza da risolvere).
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **PDF Parsing Multi-Formato**: Il parser delle buste paga è stato esteso per gestire layout di testo radicalmente diversi (formato tabellare, Zucchetti con 's' al posto degli spazi, Zucchetti con underscore), dimostrando la necessità di regex flessibili e pulizia del testo.
-- **Logica basata su Regole e Priorità**: La risoluzione del bug PRELIEVO ASSEGNO ha evidenziato che in un sistema di analisi basato su regole, l'ordine di esecuzione è critico. Le regole specifiche devono avere la priorità su quelle generiche per evitare falsi positivi.
-- **Frammentazione Dati DB**: Il sistema soffriva di dati duplicati o invisibili a causa della presenza di tre collezioni per gli F24 (, , ). Il problema è stato risolto consolidando il flusso di scrittura sulla collezione usata dalla UI.
-- **Serializzazione Dati BSON**: L'agente ha riscontrato e risolto un errore  dovuto al tentativo di serializzare un  di MongoDB in una risposta JSON, un problema comune nelle API FastAPI che interagiscono con MongoDB.
+- **Background Service (APScheduler)**: Implementato un task in background persistente per il monitoraggio automatico delle email, avviato all'avvio dell'applicazione FastAPI.
+- **Database Migration**: Eseguita una migrazione di dati live da MongoDB locale a MongoDB Atlas utilizzando script Python, garantendo la continuità dei dati.
+- **Service-Oriented Refactoring**: La logica di business complessa per le buste paga è stata estratta in un servizio dedicato (), creando un flusso di lavoro pulito, riutilizzabile e completamente automatico.
+- **Complex PDF Parsing**: Sviluppato un parser in grado di ricostruire record logici da dati sparsi su più righe consecutive in un PDF non strutturato (es. carta BNL).
 
 **key DB schema**
-- ****: Collezione centrale per tutti i documenti scaricati via email, con campi come , , .
-- ****: Collezione di staging per gli F24 importati via email.
-- ****: Collezione principale per gli F24, usata dal frontend. Contiene il PDF in base64.
-- ****: Contiene le transazioni estratte dai PDF degli estratti conto Nexi.
-- ****: Contiene i dati strutturati estratti dai PDF delle buste paga.
-- ****: Contiene i movimenti contabili generati dal processamento delle buste paga.
-- ****: Contiene i dettagli degli assegni emessi, usati per la riconciliazione con .
-- ****: Collezione contenente i movimenti bancari, fonte dei dati per le transazioni PRELIEVO ASSEGNO.
+- ** (NEW)**: Contiene i dati anagrafici dei dipendenti, creati automaticamente dal flusso delle buste paga.
+- ** (NEW)**: Collezione di riepilogo con i dati chiave estratti da ogni busta paga per una facile consultazione.
+- ****: Fonte di verità per i movimenti bancari utilizzati nella riconciliazione.
+- ****: Collezione più vecchia che contiene ancora dati. Causa debito tecnico e potenziale ricorrenza di bug.
 
 **changes in tech stack**
-Nessuno.
+- **Database**: Migrazione da MongoDB locale a **MongoDB Atlas (cloud)**.
 
 **All files of reference**
 - 
@@ -117,48 +117,54 @@ Nessuno.
 - 
 - 
 - 
+- 
 
 **Areas that need refactoring**:
-- Le 5 pagine frontend rimanenti (, , , , ) che usano ancora componenti Shadcn.
-- Le tre collezioni per gli F24 (, , ) rappresentano un debito tecnico. Sebbene il flusso di scrittura sia stato corretto, unificare i dati in una singola collezione sarebbe la soluzione ideale a lungo termine.
+- **UI Standardization**: Le 3 pagine frontend rimanenti (, , ) devono essere convertite.
+- **Database Collection Unification**: La presenza di due collezioni per i movimenti bancari ( e ) è un debito tecnico critico da risolvere per prevenire futuri bug.
 
 **key api endpoints**
-- : Endpoint corretto e funzionante per l'importazione F24.
-- : Endpoint per il download manuale di tutti i tipi di documenti.
-- : **(NUOVO)** Processa i PDF degli estratti conto Nexi presenti nella inbox.
-- : **(NUOVO)** Processa i PDF delle buste paga presenti nella inbox.
-- : **(NUOVO)** Esegue la riconciliazione automatica delle transazioni di carta di credito.
-- : Esegue l'analisi smart dei movimenti bancari (endpoint da usare per verificare la fix PRELIEVO ASSEGNO).
+- : **(NEW)** Controlla lo stato del servizio di monitoraggio email.
+- : **(NEW)** Avvia manualmente un ciclo di sincronizzazione completo.
+- : Endpoint utilizzato per verificare il fix PRELIEVO ASSEGNO.
 
 **Critical Info for New Agent**
-- **L'ordine delle regole è CRITICO**: Nel file , la funzione  si basa su una catena di . La logica per PRELIEVO ASSEGNO è stata spostata all'inizio per darle priorità. Qualsiasi nuova regola specifica deve essere posizionata con attenzione.
-- **I Parser PDF sono Complessi**: Il file  gestisce ora più formati di PDF. Le modifiche a questo file richiedono cautela e test approfonditi, poiché un piccolo cambiamento a un'espressione regolare potrebbe rompere il parsing per un altro formato.
-- **Verifica Finale PRELIEVO ASSEGNO**: Il task più importante è verificare che la modifica per i prelievi assegno funzioni. Chiama l'endpoint  e controlla se la categoria  viene popolata correttamente.
-- **Standard UI è Obbligatorio**: L'utente insiste sull'eliminazione di Tailwind/Shadcn. Qualsiasi nuova modifica UI deve rispettare lo stile inline presente in . Ci sono ancora 5 pagine da convertire.
-- **Dati F24 Frammentati**: Sii consapevole che esistono ancora tre collezioni per gli F24. Sebbene il flusso ora scriva in quella corretta, questo potrebbe causare confusione durante il debug.
+- **Il Database è su Atlas**: L'applicazione è connessa a un'istanza cloud persistente di MongoDB. La stringa di connessione è in .
+- **Il Monitor Email è Attivo**: Un servizio in background () gestisce l'importazione e l'elaborazione dei documenti ogni 10 minuti.
+- **Fix PRELIEVO ASSEGNO Verificato**: La logica è corretta, ma attenzione al problema architetturale dei dati su due collezioni che potrebbe farlo ripresentare (vedi Pending Issues).
+- **Flusso Buste Paga è Autoritativo**: Per qualsiasi operazione sulle buste paga, fare riferimento ai nuovi servizi  e .
+- **Standardizzazione UI è una Priorità**: L'utente insiste sulla rimozione di Shadcn/UI. Convertire le 3 pagine rimanenti seguendo lo stile inline.
 
 **documents and test reports created in this job**
--  (pesantemente aggiornato con mappa strutturale e stato dei task).
+-  (aggiornato)
+- 
+- 
+- 
+- 
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **Utente**: Chiede di non implementare la sezione HACCP e di risolvere il problema PRELIEVO ASSEGNO.
-2.  **Agente**: Aggiorna il PRD e inizia a investigare il problema PRELIEVO ASSEGNO.
-3.  **Utente**: Chiede di procedere con la conversione UI.
-4.  **Agente**: Chiede conferma se convertire tutte e 5 le pagine UI.
-5.  **Utente**: Chiede di procedere con i task P1.
-6.  **Agente**: Completa l'implementazione del processamento automatico delle buste paga.
-7.  **Utente**: Rimuove i task Prima Nota Salari da XML e Caricamento Fornitori da XML e conferma di procedere con i P1.
-8.  **Agente**: Chiede chiarimenti sul task Prima Nota Salari da XML.
-9.  **Utente**: Chiede cosa significa Prima Nota Salari da XML.
-10. **Agente**: Conclude il lavoro sul processamento automatico dei documenti e propone i prossimi passi.
+1.  **Utente**: Chiede conferma della migrazione ad Atlas e che tutti i dati futuri verranno salvati lì.
+2.  **Agente**: Conferma e riavvia il backend per attivare la connessione ad Atlas.
+3.  **Utente**: Richiede di migliorare i parser delle buste paga per estrarre più dettagli e di creare un flusso completamente automatico (dal PDF alla creazione del dipendente e alla registrazione contabile).
+4.  **Agente**: Implementa il flusso automatico completo.
+5.  **Utente**: Chiede di inserire il riepilogo nell'anagrafica dipendenti e ribadisce il flusso automatico desiderato.
+6.  **Agente**: Implementa l'anagrafica dipendenti e collega tutto.
+7.  **Utente**: Chiede un riepilogo di tutte le attività da fare.
+8.  **Agente**: Fornisce una lista dettagliata e prioritizzata dei task.
+9.  **Utente**: Rimuove un task futuro (parser XML) e chiede di procedere con il fix P0 (PRELIEVO ASSEGNO).
+10. **Utente**: Chiede di procedere con la standardizzazione delle pagine UI e il miglioramento del parser della carta BNL.
 
 **Project Health Check:**
-- **Broken**: La gestione di PRELIEVO ASSEGNO è considerata non funzionante finché la correzione non viene verificata.
+- **Broken**: Nessuna funzionalità è attualmente non funzionante.
 - **Mocked**: Nessuno.
-- **Technical Debt**: La necessità di refactoring delle 5 pagine UI rimanenti. La frammentazione dei dati F24 in tre collezioni.
+- **Technical Debt**:
+    - **High**: La duplicazione dei dati dei movimenti bancari su due collezioni ( e ) è un rischio per la stabilità della riconciliazione.
+    - **Medium**: 3 pagine frontend non sono conformi allo standard UI richiesto dall'utente.
 
 **3rd Party Integrations**
--  (fitz): Utilizzato estensivamente per il parsing di tutti i tipi di documenti PDF (F24, Buste Paga, Estratti Conto).
+-  (fitz): Utilizzato per il parsing dei PDF.
+- : Utilizzato per il servizio di monitoraggio in background.
+- : Utilizzato per l'interazione con il database e per la migrazione ad Atlas.
 
 **Testing status**
 - **Testing agent used after significant changes**: NO
@@ -167,8 +173,7 @@ Nessuno.
 - **Known regressions**: Nessuna
 
 **Credentials to test flow:**
-Le credenziali email sono configurate correttamente nel file .
+Le credenziali per MongoDB Atlas e per l'email sono configurate nel file .
 
 **What agent forgot to execute**
-L'agente non ha eseguito un test finale di verifica dopo aver implementato la correzione per il problema PRELIEVO ASSEGNO. Ha modificato il codice per riordinare le regole di analisi ma non ha poi chiamato l'endpoint per confermare che la modifica avesse risolto il problema. Salva iiglioramenti ed il da farsi nel prd e non dimenticare le operazioni relazionali e le operazioni cascate
-</analysis>
+L'agente ha risolto il bug PRELIEVO ASSEGNO con una soluzione tampone (sincronizzazione dati una tantum) invece di risolvere il problema architetturale alla radice (dati duplicati su due collezioni). Questo rischio è stato documentato come un nuovo problema pendente ad alta priorità per evitare la ricomparsa del bug.</analysis>
