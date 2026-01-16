@@ -21,7 +21,7 @@ class VATRepository(BaseRepository):
         liquidation_data['created_at'] = datetime.utcnow()
         liquidation_data['updated_at'] = datetime.utcnow()
         
-        result = await self.collection.insert_one(liquidation_data)
+        result = await self.collection.insert_one(liquidation_data.copy())
         liquidation_data['_id'] = result.inserted_id
         
         logger.info(f"Created VAT liquidation: Q{liquidation_data['quarter']}/{liquidation_data['year']}")
@@ -164,7 +164,7 @@ class F24Repository(BaseRepository):
         f24_data['created_at'] = datetime.utcnow()
         f24_data['updated_at'] = datetime.utcnow()
         
-        result = await self.collection.insert_one(f24_data)
+        result = await self.collection.insert_one(f24_data.copy())
         f24_data['_id'] = result.inserted_id
         
         logger.info(f"Created F24: {f24_data['reference_month']}/{f24_data['reference_year']}")

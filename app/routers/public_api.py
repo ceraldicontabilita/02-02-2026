@@ -210,7 +210,7 @@ async def create_temperature(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]
         "recorded_at": data.get("recorded_at", datetime.utcnow().isoformat()),
         "created_at": datetime.utcnow().isoformat()
     }
-    await db[Collections.HACCP_TEMPERATURES].insert_one(temp)
+    await db[Collections.HACCP_TEMPERATURES].insert_one(temp.copy())
     temp.pop("_id", None)
     return temp
 
@@ -249,7 +249,7 @@ async def create_invoice(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
         "status": data.get("status", "pending"),
         "created_at": datetime.utcnow().isoformat()
     }
-    await db[Collections.INVOICES].insert_one(invoice)
+    await db[Collections.INVOICES].insert_one(invoice.copy())
     invoice.pop("_id", None)
     return invoice
 
@@ -324,7 +324,7 @@ async def create_supplier(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
         "metodo_pagamento": data.get("metodo_pagamento", "bonifico"),
         "created_at": datetime.utcnow().isoformat()
     }
-    await db[Collections.SUPPLIERS].insert_one(supplier)
+    await db[Collections.SUPPLIERS].insert_one(supplier.copy())
     supplier.pop("_id", None)
     
     # === ASSOCIAZIONE AUTOMATICA FATTURE ===
@@ -371,7 +371,7 @@ async def create_warehouse_product(data: Dict[str, Any] = Body(...)) -> Dict[str
         "created_at": datetime.utcnow().isoformat(),
         "updated_at": datetime.utcnow().isoformat()
     }
-    await db[Collections.WAREHOUSE_PRODUCTS].insert_one(product)
+    await db[Collections.WAREHOUSE_PRODUCTS].insert_one(product.copy())
     product.pop("_id", None)
     return product
 
@@ -446,7 +446,7 @@ async def create_warehouse_movement(data: Dict[str, Any] = Body(...)) -> Dict[st
             {"$set": {"quantity": new_qty, "updated_at": datetime.utcnow().isoformat()}}
         )
     
-    await db[Collections.WAREHOUSE_MOVEMENTS].insert_one(movement)
+    await db[Collections.WAREHOUSE_MOVEMENTS].insert_one(movement.copy())
     movement.pop("_id", None)
     return movement
 
@@ -536,7 +536,7 @@ async def create_cash(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
         "category": data.get("category", ""),
         "created_at": datetime.utcnow().isoformat()
     }
-    await db[Collections.CASH_MOVEMENTS].insert_one(cash)
+    await db[Collections.CASH_MOVEMENTS].insert_one(cash.copy())
     cash.pop("_id", None)
     return cash
 
@@ -563,7 +563,7 @@ async def create_bank(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
         "category": data.get("category", ""),
         "created_at": datetime.utcnow().isoformat()
     }
-    await db["bank_statements"].insert_one(bank)
+    await db["bank_statements"].insert_one(bank.copy())
     bank.pop("_id", None)
     return bank
 
@@ -589,7 +589,7 @@ async def create_order(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
         "status": data.get("status", "pending"),
         "created_at": datetime.utcnow().isoformat()
     }
-    await db[Collections.ORDERS].insert_one(order)
+    await db[Collections.ORDERS].insert_one(order.copy())
     order.pop("_id", None)
     return order
 
@@ -618,7 +618,7 @@ async def create_assegno(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
         "stato": data.get("stato", "emesso"),
         "created_at": datetime.utcnow().isoformat()
     }
-    await db["assegni"].insert_one(assegno)
+    await db["assegni"].insert_one(assegno.copy())
     assegno.pop("_id", None)
     return assegno
 
@@ -645,7 +645,7 @@ async def create_event(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
         "description": data.get("description", ""),
         "created_at": datetime.utcnow().isoformat()
     }
-    await db["planning_events"].insert_one(event)
+    await db["planning_events"].insert_one(event.copy())
     event.pop("_id", None)
     return event
 
@@ -1042,7 +1042,7 @@ async def api_genera_key(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
         "request_count": 0
     }
     
-    await db["api_clients"].insert_one(dict(client_doc))
+    await db["api_clients"].insert_one(dict(client_doc).copy())
     
     return {
         "success": True,

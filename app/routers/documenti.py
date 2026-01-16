@@ -728,7 +728,7 @@ async def sync_f24_automatico(
                         continue
                     
                     # Salva nel database f24_commercialista
-                    await db["f24_commercialista"].insert_one(f24_data)
+                    await db["f24_commercialista"].insert_one(f24_data.copy())
                     
                     # Salva anche in f24_models per la visualizzazione frontend
                     # Leggi il PDF per salvarlo base64
@@ -835,7 +835,7 @@ async def sync_f24_automatico(
                     })
                     
                     if not existing_model:
-                        await db["f24_models"].insert_one(f24_model_record)
+                        await db["f24_models"].insert_one(f24_model_record.copy())
                     
                     # Aggiorna stato documento
                     await db["documents_inbox"].update_one(
@@ -966,7 +966,7 @@ async def processa_f24_scaricati() -> Dict[str, Any]:
                     )
                     continue
                 
-                await db["f24_commercialista"].insert_one(f24_data)
+                await db["f24_commercialista"].insert_one(f24_data.copy())
                 
                 await db["documents_inbox"].update_one(
                     {"id": doc["id"]},
@@ -1116,7 +1116,7 @@ async def sync_estratti_conto() -> Dict[str, Any]:
                     })
                     
                     if not existing:
-                        await db["estratto_conto_nexi"].insert_one(dict(estratto_record))
+                        await db["estratto_conto_nexi"].insert_one(dict(estratto_record).copy())
                         
                         # Salva transazioni singole per riconciliazione
                         for idx, trans in enumerate(transazioni):
@@ -1135,7 +1135,7 @@ async def sync_estratti_conto() -> Dict[str, Any]:
                                 "created_at": datetime.now(timezone.utc).isoformat()
                             }
                             # Usa dict() per evitare ObjectId issue
-                            await db["estratto_conto_movimenti"].insert_one(dict(trans_record))
+                            await db["estratto_conto_movimenti"].insert_one(dict(trans_record).copy())
                     
                     # Aggiorna stato documento
                     await db["documents_inbox"].update_one(
@@ -1304,7 +1304,7 @@ async def sync_buste_paga() -> Dict[str, Any]:
                 })
                 
                 if not existing:
-                    await db["payslips"].insert_one(dict(cedolino_record))
+                    await db["payslips"].insert_one(dict(cedolino_record).copy())
                     cedolini_salvati += 1
                     
                     # Crea anche movimento in prima_nota_salari se c'è un netto
@@ -1344,7 +1344,7 @@ async def sync_buste_paga() -> Dict[str, Any]:
                         })
                         
                         if not existing_mov:
-                            await db["prima_nota_salari"].insert_one(dict(movimento))
+                            await db["prima_nota_salari"].insert_one(dict(movimento).copy())
             
             if cedolini_salvati > 0:
                 # Aggiorna stato documento
@@ -1767,7 +1767,7 @@ async def sync_estratti_bnl() -> Dict[str, Any]:
                 })
                 
                 if not existing:
-                    await db[collection_name].insert_one(dict(estratto_record))
+                    await db[collection_name].insert_one(dict(estratto_record).copy())
                     
                     # Salva transazioni singole per riconciliazione
                     for idx, trans in enumerate(transazioni):
@@ -1785,7 +1785,7 @@ async def sync_estratti_bnl() -> Dict[str, Any]:
                             "fattura_id": None,
                             "created_at": datetime.now(timezone.utc).isoformat()
                         }
-                        await db["estratto_conto_movimenti"].insert_one(dict(trans_record))
+                        await db["estratto_conto_movimenti"].insert_one(dict(trans_record).copy())
                 
                 # Aggiorna stato documento e categoria se era "altro"
                 update_data = {
@@ -2063,7 +2063,7 @@ async def reimporta_documenti_da_filesystem(
                         {"$set": doc_record}
                     )
                 else:
-                    await db["documents_inbox"].insert_one(dict(doc_record))
+                    await db["documents_inbox"].insert_one(dict(doc_record).copy())
                 
                 importati.append({
                     "file": filename,
@@ -2222,7 +2222,7 @@ async def upload_documento_automatico(
             "source": "upload_automatico"
         }
         
-        await db["documents_inbox"].insert_one(dict(doc_record))
+        await db["documents_inbox"].insert_one(dict(doc_record).copy())
         
         return {
             "success": True,
@@ -2273,7 +2273,7 @@ async def upload_documento_automatico(
                     **parsed,
                     "created_at": datetime.now(timezone.utc).isoformat()
                 }
-                await db["f24_models"].insert_one(dict(f24_doc))
+                await db["f24_models"].insert_one(dict(f24_doc).copy())
                 result["message"] = f"F24 importato: {len(parsed.get('tributi', []))} tributi"
                 result["imported"] = 1
             else:
@@ -2293,7 +2293,7 @@ async def upload_documento_automatico(
                     **parsed,
                     "created_at": datetime.now(timezone.utc).isoformat()
                 }
-                await db["quietanze_f24"].insert_one(dict(quietanza_doc))
+                await db["quietanze_f24"].insert_one(dict(quietanza_doc).copy())
                 result["message"] = f"Quietanza F24 importata"
                 result["imported"] = 1
             else:
@@ -2313,7 +2313,7 @@ async def upload_documento_automatico(
                     **parsed,
                     "created_at": datetime.now(timezone.utc).isoformat()
                 }
-                await db["cedolini"].insert_one(dict(cedolino_doc))
+                await db["cedolini"].insert_one(dict(cedolino_doc).copy())
                 result["message"] = f"Cedolino importato: {parsed.get('dipendente', 'N/A')}"
                 result["imported"] = 1
             else:

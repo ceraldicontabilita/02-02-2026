@@ -57,7 +57,7 @@ async def create_movement(
     movement_data["user_id"] = current_user["user_id"]
     movement_data["created_at"] = datetime.utcnow()
     
-    await db[Collections.CASH_MOVEMENTS].insert_one(movement_data)
+    await db[Collections.CASH_MOVEMENTS].insert_one(movement_data.copy())
     
     return {"message": "Movement created", "id": movement_data["id"]}
 

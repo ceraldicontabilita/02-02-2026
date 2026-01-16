@@ -236,7 +236,7 @@ async def popola_tracciabilita_da_fattura(
             continue
         
         # Inserisci nuovo record
-        await db.tracciabilita.insert_one(tracciabilita_record)
+        await db.tracciabilita.insert_one(tracciabilita_record.copy())
         created += 1
     
     logger.info(f"Tracciabilità: {created} creati, {skipped} saltati da fattura {numero_fattura}")

@@ -38,5 +38,5 @@ async def create_schedule(
     db = Database.get_db()
     data["id"] = str(uuid4())
     data["created_at"] = datetime.utcnow()
-    await db["shifts"].insert_one(data)
+    await db["shifts"].insert_one(data.copy())
     return {"message": "Schedule created", "id": data["id"]}

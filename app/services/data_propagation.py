@@ -86,7 +86,7 @@ class DataPropagationService:
         }
         
         try:
-            await self.db[collection].insert_one(movement)
+            await self.db[collection].insert_one(movement.copy())
             results["movement_created"] = True
             results["movement_id"] = movement_id
             results["movement_collection"] = collection
@@ -184,7 +184,7 @@ class DataPropagationService:
         }
         
         try:
-            await self.db["prima_nota_cassa"].insert_one(movement)
+            await self.db["prima_nota_cassa"].insert_one(movement.copy())
             results["movement_created"] = True
             results["movement_id"] = movement_id
         except Exception as e:
@@ -326,7 +326,7 @@ class DataPropagationService:
             "created_at": datetime.now(timezone.utc).isoformat()
         }
         
-        await self.db["suppliers"].insert_one(supplier)
+        await self.db["suppliers"].insert_one(supplier.copy())
         logger.info(f"Created supplier {supplier_id} from invoice")
         
         return supplier_id

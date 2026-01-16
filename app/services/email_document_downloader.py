@@ -449,7 +449,7 @@ async def download_documents_from_email(
             
             # Crea copia per database (evita che insert_one modifichi l'originale con _id)
             doc_to_insert = dict(doc)
-            await db["documents_inbox"].insert_one(doc_to_insert)
+            await db["documents_inbox"].insert_one(doc_to_insert.copy())
             # Appendi documento senza _id per risposta JSON
             new_documents.append(doc)
         

@@ -301,7 +301,7 @@ async def create_ricetta(data: Dict[str, Any] = Body(...)) -> Dict[str, str]:
     if not ricetta["nome"]:
         raise HTTPException(status_code=400, detail="Nome ricetta obbligatorio")
     
-    await db["ricette"].insert_one(ricetta)
+    await db["ricette"].insert_one(ricetta.copy())
     
     return {"message": f"Ricetta '{ricetta['nome']}' creata", "id": ricetta["id"]}
 
@@ -510,7 +510,7 @@ async def registra_produzione(data: Dict[str, Any] = Body(...)) -> Dict[str, Any
                     "produzione_id": None,  # Sarà aggiornato dopo
                     "data": datetime.utcnow().isoformat()
                 }
-                await db["magazzino_movimenti"].insert_one(movimento)
+                await db["magazzino_movimenti"].insert_one(movimento.copy())
                 
                 scarichi.append({
                     "prodotto": prodotto.get("nome"),
@@ -568,7 +568,7 @@ async def registra_produzione(data: Dict[str, Any] = Body(...)) -> Dict[str, Any
         "stato": "completato"
     }
     
-    await db["produzioni"].insert_one(produzione)
+    await db["produzioni"].insert_one(produzione.copy())
     
     # Registra nel Registro Lotti
     registro_lotto = {
@@ -592,7 +592,7 @@ async def registra_produzione(data: Dict[str, Any] = Body(...)) -> Dict[str, Any
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     
-    await db["registro_lotti"].insert_one(registro_lotto)
+    await db["registro_lotti"].insert_one(registro_lotto.copy())
     
     # Aggiorna movimento con ID produzione
     await db["magazzino_movimenti"].update_many(
@@ -686,7 +686,7 @@ async def import_ricette(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
                     {"$set": {**ricetta, "id": existing["id"]}}
                 )
             else:
-                await db["ricette"].insert_one(ricetta)
+                await db["ricette"].insert_one(ricetta.copy())
             
             importate += 1
             

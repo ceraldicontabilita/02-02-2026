@@ -44,7 +44,7 @@ class BaseRepository(Generic[T]):
         if 'updated_at' not in document:
             document['updated_at'] = datetime.utcnow()
             
-        result = await self.collection.insert_one(document)
+        result = await self.collection.insert_one(document.copy())
         logger.info(f"Created document in {self.collection.name}: {result.inserted_id}")
         return str(result.inserted_id)
     

@@ -66,7 +66,7 @@ async def create_ordine(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
         "updated_at": datetime.utcnow().isoformat()
     }
     
-    await db["supplier_orders"].insert_one(order)
+    await db["supplier_orders"].insert_one(order.copy())
     order.pop("_id", None)
     return order
 

@@ -126,7 +126,7 @@ async def processa_cedolino_completo(
                 "updated_at": datetime.now(timezone.utc).isoformat()
             }
             
-            await db["anagrafica_dipendenti"].insert_one(dict(nuova_anagrafica))
+            await db["anagrafica_dipendenti"].insert_one(dict(nuova_anagrafica).copy())
             result["anagrafica_creata"] = True
             logger.info(f"📋 Nuova anagrafica dipendente creata: {nome} ({cf})")
         
@@ -199,7 +199,7 @@ async def processa_cedolino_completo(
                 "created_at": datetime.now(timezone.utc).isoformat()
             }
             
-            await db["prima_nota_salari"].insert_one(dict(movimento_pn))
+            await db["prima_nota_salari"].insert_one(dict(movimento_pn).copy())
             result["prima_nota_creata"] = True
             
             # ============================================

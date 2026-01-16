@@ -69,7 +69,7 @@ async def auto_populate_haccp_daily():
                     "created_at": datetime.utcnow().isoformat(),
                     "updated_at": datetime.utcnow().isoformat()
                 }
-                await db["temperature_positive"].insert_one(scheda)
+                await db["temperature_positive"].insert_one(scheda.copy())
             
             mese_str = str(mese)
             giorno_str = str(giorno)
@@ -122,7 +122,7 @@ async def auto_populate_haccp_daily():
                     "created_at": datetime.utcnow().isoformat(),
                     "updated_at": datetime.utcnow().isoformat()
                 }
-                await db["temperature_negative"].insert_one(scheda)
+                await db["temperature_negative"].insert_one(scheda.copy())
             
             mese_str = str(mese)
             giorno_str = str(giorno)
@@ -166,7 +166,7 @@ async def auto_populate_haccp_daily():
                     "registrazioni": {},
                     "created_at": datetime.utcnow().isoformat()
                 }
-                await db["sanificazione_attrezzature"].insert_one(scheda_san)
+                await db["sanificazione_attrezzature"].insert_one(scheda_san.copy())
             
             mese_str = str(mese)
             giorno_str = str(giorno)
@@ -218,7 +218,7 @@ async def auto_populate_haccp_daily():
                 "monitoraggio_apparecchi": {},
                 "created_at": datetime.utcnow().isoformat()
             }
-            await db["disinfestazione_annuale"].insert_one(scheda_dis)
+            await db["disinfestazione_annuale"].insert_one(scheda_dis.copy())
         
         mese_str = str(mese)
         
@@ -319,7 +319,7 @@ async def check_anomalie_and_notify():
                     })
                     
                     if not existing:
-                        await db["haccp_notifiche"].insert_one(notifica)
+                        await db["haccp_notifiche"].insert_one(notifica.copy())
         
         # Check congelatori
         async for scheda in db["temperature_negative"].find({"anno": anno}):
@@ -354,7 +354,7 @@ async def check_anomalie_and_notify():
                     })
                     
                     if not existing:
-                        await db["haccp_notifiche"].insert_one(notifica)
+                        await db["haccp_notifiche"].insert_one(notifica.copy())
         
         logger.info(f"🔔 [SCHEDULER] Controllo completato: {anomalie_trovate} anomalie trovate")
         

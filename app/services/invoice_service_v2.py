@@ -139,7 +139,7 @@ class InvoiceServiceV2:
         invoice_doc["supplier_id"] = supplier_id
         
         # 5. Salva fattura
-        result = await self.invoices.insert_one(invoice_doc)
+        result = await self.invoices.insert_one(invoice_doc.copy())
         invoice_id = invoice_doc["id"]
         
         logger.info(f"Invoice created: {invoice_id}")
@@ -320,7 +320,7 @@ class InvoiceServiceV2:
             "created_at": datetime.now(timezone.utc).isoformat()
         }
         
-        await self.db[movement_collection].insert_one(movement_doc)
+        await self.db[movement_collection].insert_one(movement_doc.copy())
         
         # 5. Aggiorna fattura
         total = invoice.get("total_amount", 0)
@@ -399,7 +399,7 @@ class InvoiceServiceV2:
             "created_at": datetime.now(timezone.utc).isoformat()
         }
         
-        await self.suppliers.insert_one(supplier_doc)
+        await self.suppliers.insert_one(supplier_doc.copy())
         return supplier_doc["id"]
     
     def _generate_id(self) -> str:

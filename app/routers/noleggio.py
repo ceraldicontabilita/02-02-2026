@@ -293,7 +293,7 @@ async def processa_fattura_noleggio(fattura: dict) -> dict:
                 "note": f"Creato automaticamente da fattura {fattura.get('invoice_number') or fattura.get('numero_documento')}",
                 "created_at": datetime.now(timezone.utc).isoformat()
             }
-            await db[COLLECTION].insert_one(nuovo_veicolo)
+            await db[COLLECTION].insert_one(nuovo_veicolo.copy())
             risultato["veicoli_nuovi"].append(targa)
         else:
             risultato["veicoli_aggiornati"].append(targa)

@@ -466,7 +466,7 @@ async def conferma_operazione_multipla(
                 collection = "prima_nota_banca"
                 movimento["metodo_pagamento"] = metodo
             
-            await db[collection].insert_one(movimento)
+            await db[collection].insert_one(movimento.copy())
             
             # Aggiorna operazione
             await db["operazioni_da_confermare"].update_one(

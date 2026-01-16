@@ -61,7 +61,7 @@ async def create_f24(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
         "notes": data.get("notes", ""),
         "created_at": datetime.utcnow().isoformat()
     }
-    await db[Collections.F24_MODELS].insert_one(f24)
+    await db[Collections.F24_MODELS].insert_one(f24.copy())
     f24.pop("_id", None)
     return f24
 

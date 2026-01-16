@@ -249,7 +249,7 @@ async def auto_populate_warehouse_from_invoice(db, invoice_data: Dict[str, Any],
                     "updated_at": datetime.utcnow().isoformat()
                 }
                 
-                await db["warehouse_inventory"].insert_one(new_product)
+                await db["warehouse_inventory"].insert_one(new_product.copy())
                 result["products_created"] += 1
             
             # Salva storico prezzi
@@ -270,7 +270,7 @@ async def auto_populate_warehouse_from_invoice(db, invoice_data: Dict[str, Any],
                     "created_at": datetime.utcnow().isoformat()
                 }
                 
-                await db["price_history"].insert_one(price_record)
+                await db["price_history"].insert_one(price_record.copy())
                 result["price_records"] += 1
                 
         except Exception as e:

@@ -188,7 +188,7 @@ async def create_conto(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
         "updated_at": now
     }
     
-    await db[COLLECTION_PIANO_CONTI].insert_one(conto)
+    await db[COLLECTION_PIANO_CONTI].insert_one(conto.copy())
     conto.pop("_id", None)
     
     return {"success": True, "conto": conto}
@@ -309,7 +309,7 @@ async def create_regola(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
         "created_at": now
     }
     
-    await db[COLLECTION_REGOLE_CATEGORIZZAZIONE].insert_one(regola)
+    await db[COLLECTION_REGOLE_CATEGORIZZAZIONE].insert_one(regola.copy())
     regola.pop("_id", None)
     
     return {"success": True, "regola": regola}
@@ -394,7 +394,7 @@ async def registra_fattura_contabilita(data: Dict[str, Any] = Body(...)) -> Dict
         "created_at": now
     }
     
-    await db[COLLECTION_MOVIMENTI_CONTABILI].insert_one(movimento)
+    await db[COLLECTION_MOVIMENTI_CONTABILI].insert_one(movimento.copy())
     
     # Aggiorna saldi conti
     await aggiorna_saldo_conto(db, conti["costo"]["codice"], imponibile, "dare")
@@ -634,7 +634,7 @@ async def registra_tutte_fatture_contabilita() -> Dict[str, Any]:
                 "created_at": datetime.utcnow().isoformat()
             }
             
-            await db[COLLECTION_MOVIMENTI_CONTABILI].insert_one(movimento)
+            await db[COLLECTION_MOVIMENTI_CONTABILI].insert_one(movimento.copy())
             
             # Aggiorna saldi
             await aggiorna_saldo_conto(db, conti["costo"]["codice"], imponibile, "dare")
@@ -753,7 +753,7 @@ async def registra_corrispettivi_contabilita() -> Dict[str, Any]:
                 "created_at": datetime.utcnow().isoformat()
             }
             
-            await db[COLLECTION_MOVIMENTI_CONTABILI].insert_one(movimento)
+            await db[COLLECTION_MOVIMENTI_CONTABILI].insert_one(movimento.copy())
             
             # Aggiorna saldi
             if cassa > 0:

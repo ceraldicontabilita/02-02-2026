@@ -180,7 +180,7 @@ async def create_centro_costo(data: Dict[str, Any] = Body(...)) -> Dict[str, str
         "created_at": datetime.utcnow().isoformat()
     }
     
-    await db["centri_costo"].insert_one(centro)
+    await db["centri_costo"].insert_one(centro.copy())
     return {"message": f"Centro di costo {codice} creato", "codice": codice}
 
 

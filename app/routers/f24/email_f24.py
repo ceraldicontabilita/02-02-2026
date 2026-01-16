@@ -59,7 +59,7 @@ async def scarica_email_allegati(
         "allegati_fiscali": result.get("allegati_fiscali", 0),
         "allegati_contributivi": result.get("allegati_contributivi", 0)
     }
-    await db[COLL_EMAIL_LOG].insert_one(log_entry)
+    await db[COLL_EMAIL_LOG].insert_one(log_entry.copy())
     
     # Salva info allegati nel database
     allegati_processati = []
@@ -80,7 +80,7 @@ async def scarica_email_allegati(
         allegato["status"] = "da_processare"
         allegato["processato"] = False
         allegato_copy = {k: v for k, v in allegato.items()}  # Copia per evitare modifica
-        await db[COLL_ALLEGATI].insert_one(allegato_copy)
+        await db[COLL_ALLEGATI].insert_one(allegato_copy.copy())
         allegati_processati.append(allegato)
     
     return {
@@ -166,7 +166,7 @@ async def processa_allegati_f24() -> Dict[str, Any]:
                     "created_at": datetime.now(timezone.utc).isoformat()
                 }
                 
-                await db[COLL_F24_COMMERCIALISTA].insert_one(f24_doc)
+                await db[COLL_F24_COMMERCIALISTA].insert_one(f24_doc.copy())
                 risultati["f24_commercialista"] += 1
                 risultati["dettagli"].append({
                     "file": allegato.get("original_filename"),
@@ -199,7 +199,7 @@ async def processa_allegati_f24() -> Dict[str, Any]:
                         "created_at": datetime.now(timezone.utc).isoformat()
                     }
                     
-                    await db[COLL_QUIETANZE].insert_one(quietanza_doc)
+                    await db[COLL_QUIETANZE].insert_one(quietanza_doc.copy())
                     risultati["quietanze"] += 1
                     risultati["dettagli"].append({
                         "file": allegato.get("original_filename"),

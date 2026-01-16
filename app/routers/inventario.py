@@ -72,7 +72,7 @@ async def create_inventario(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
         "updated_at": datetime.now(timezone.utc).isoformat()
     }
     
-    await db[COLLECTION].insert_one(inventario)
+    await db[COLLECTION].insert_one(inventario.copy())
     
     return {
         "success": True,

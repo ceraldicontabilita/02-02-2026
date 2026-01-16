@@ -38,7 +38,7 @@ async def create_product(
     db = Database.get_db()
     data["id"] = str(uuid4())
     data["created_at"] = datetime.utcnow()
-    await db[Collections.WAREHOUSE_PRODUCTS].insert_one(data)
+    await db[Collections.WAREHOUSE_PRODUCTS].insert_one(data.copy())
     return {"message": "Product created", "id": data["id"]}
 
 

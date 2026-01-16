@@ -693,7 +693,7 @@ async def import_bank_statement(
         "movements_count": len(movements),
         "created_at": now
     }
-    await db[COLLECTION_BANK_STATEMENTS].insert_one(statement_record)
+    await db[COLLECTION_BANK_STATEMENTS].insert_one(statement_record.copy())
     
     # Process each movement
     for movement in movements:

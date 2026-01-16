@@ -176,7 +176,7 @@ async def registra_nota_credito(input_data: NotaCreditoInput) -> Dict[str, Any]:
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     
-    await db["note_credito"].insert_one(nota)
+    await db["note_credito"].insert_one(nota.copy())
     
     # Se specificata fattura originale, aggiorna il suo stato
     if input_data.fattura_originale_id:
@@ -270,7 +270,7 @@ async def contabilizza_nota_credito(nota_id: str) -> Dict[str, Any]:
         "anno": nota["anno"],
         "created_at": datetime.now(timezone.utc).isoformat()
     }
-    await db["movimenti_contabili"].insert_one(movimento)
+    await db["movimenti_contabili"].insert_one(movimento.copy())
     
     # Aggiorna nota come contabilizzata
     await db["note_credito"].update_one(

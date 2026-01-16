@@ -226,7 +226,7 @@ async def upload_corrispettivo_xml(
             # INSERT - Nuovo record
             corrispettivo_data["id"] = str(uuid.uuid4())
             corrispettivo_data["created_at"] = datetime.utcnow().isoformat()
-            await db["corrispettivi"].insert_one(corrispettivo_data)
+            await db["corrispettivi"].insert_one(corrispettivo_data.copy())
             corrispettivo_id = corrispettivo_data["id"]
             action = "created"
         
@@ -351,7 +351,7 @@ async def upload_corrispettivi_xml_bulk(
                 "created_at": datetime.utcnow().isoformat()
             }
             
-            await db["corrispettivi"].insert_one(corr)
+            await db["corrispettivi"].insert_one(corr.copy())
             results["success"].append({"filename": file.filename, "data": parsed.get("data")})
             results["imported"] += 1
             
@@ -542,7 +542,7 @@ async def upload_corrispettivi_zip(file: UploadFile = File(...)) -> Dict[str, An
                         "created_at": datetime.utcnow().isoformat()
                     }
                     
-                    await db["corrispettivi"].insert_one(corr)
+                    await db["corrispettivi"].insert_one(corr.copy())
                     
                     results["success"].append({
                         "filename": xml_filename,
@@ -842,7 +842,7 @@ async def import_corrispettivi_csv(file: UploadFile = File(...)) -> Dict[str, An
                     aggiornati += 1
                 else:
                     # Inserisci nuovo
-                    await db["corrispettivi"].insert_one(corr_doc)
+                    await db["corrispettivi"].insert_one(corr_doc.copy())
                     importati += 1
                 
                 totale_importato += totale

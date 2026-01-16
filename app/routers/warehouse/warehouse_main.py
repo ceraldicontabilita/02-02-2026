@@ -485,7 +485,7 @@ async def add_rimanenza(
             "created_at": date.today().isoformat()
         }
         
-        result = await rimanenze_collection.insert_one(rimanenza_doc)
+        result = await rimanenze_collection.insert_one(rimanenza_doc.copy())
         rimanenza_id = str(result.inserted_id)
         
         # Update product stock

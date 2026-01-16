@@ -117,7 +117,7 @@ async def ensure_supplier_exists(db, parsed_invoice: Dict[str, Any]) -> Dict[str
         "note": "Creato automaticamente da fattura - CONFIGURARE METODO PAGAMENTO"
     }
     
-    await db[Collections.SUPPLIERS].insert_one(new_supplier)
+    await db[Collections.SUPPLIERS].insert_one(new_supplier.copy())
     result["supplier_created"] = True
     result["supplier_id"] = new_supplier["id"]
     
@@ -139,7 +139,7 @@ async def ensure_supplier_exists(db, parsed_invoice: Dict[str, Any]) -> Dict[str
         "link": f"/fornitori?piva={supplier_vat}"
     }
     
-    await db["alerts"].insert_one(alert)
+    await db["alerts"].insert_one(alert.copy())
     result["alert_created"] = True
     
     logger.info(f"Alert creato per fornitore {supplier_name}")
@@ -527,7 +527,7 @@ async def upload_fattura_xml(file: UploadFile = File(...)) -> Dict[str, Any]:
             "importo_totale": parsed.get("total_amount", 0)
         }
         
-        await db[Collections.INVOICES].insert_one(invoice)
+        await db[Collections.INVOICES].insert_one(invoice.copy())
         invoice.pop("_id", None)
         
         warehouse_result = await auto_populate_warehouse_from_invoice(db, parsed, invoice["id"])
@@ -736,7 +736,7 @@ async def upload_fatture_xml_bulk(files: List[UploadFile] = File(...)) -> Dict[s
                 "created_at": datetime.utcnow().isoformat()
             }
             
-            await db[Collections.INVOICES].insert_one(invoice)
+            await db[Collections.INVOICES].insert_one(invoice.copy())
             
             try:
                 warehouse_result = await auto_populate_warehouse_from_invoice(db, parsed, invoice["id"])
@@ -877,7 +877,7 @@ async def sync_suppliers_from_invoices() -> Dict[str, Any]:
             "note": f"Creato automaticamente - {group['count']} fatture trovate"
         }
         
-        await db[Collections.SUPPLIERS].insert_one(new_supplier)
+        await db[Collections.SUPPLIERS].insert_one(new_supplier.copy())
         created += 1
         
         # Aggiorna le fatture con il supplier_id

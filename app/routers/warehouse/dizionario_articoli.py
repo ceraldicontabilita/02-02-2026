@@ -894,7 +894,7 @@ async def genera_dizionario() -> Dict[str, Any]:
             doc["id"] = str(uuid4())
             doc["created_at"] = datetime.now(timezone.utc).isoformat()
             doc["mappatura_manuale"] = False
-            await db.dizionario_articoli.insert_one(doc)
+            await db.dizionario_articoli.insert_one(doc.copy())
             created += 1
     
     return {

@@ -304,7 +304,7 @@ async def import_cassa_from_excel(file: UploadFile = File(...)) -> Dict[str, Any
                     "created_at": now
                 }
                 
-                await db[COLLECTION_PRIMA_NOTA_CASSA].insert_one(movimento)
+                await db[COLLECTION_PRIMA_NOTA_CASSA].insert_one(movimento.copy())
                 results["created_in_cassa"] += 1
                 
                 # Aggiorna fattura se trovata
@@ -583,7 +583,7 @@ async def import_assegni_from_estratto_conto(file: UploadFile = File(...)) -> Di
                         )
                         results["fatture_matched"] += 1
                 
-                await db[COLLECTION_ASSEGNI].insert_one(assegno)
+                await db[COLLECTION_ASSEGNI].insert_one(assegno.copy())
                 results["assegni_created"] += 1
                 
                 results["assegni"].append({
@@ -974,7 +974,7 @@ async def import_versamenti(
                     "created_at": now
                 }
                 
-                await db[COLLECTION_PRIMA_NOTA_CASSA].insert_one(movimento_cassa)
+                await db[COLLECTION_PRIMA_NOTA_CASSA].insert_one(movimento_cassa.copy())
                 
                 results["imported"] += 1
                 results["versamenti"].append({
@@ -1097,7 +1097,7 @@ async def import_pos(
                     "created_at": now
                 }
                 
-                await db[COLLECTION_PRIMA_NOTA_CASSA].insert_one(movimento)
+                await db[COLLECTION_PRIMA_NOTA_CASSA].insert_one(movimento.copy())
                 
                 results["imported"] += 1
                 results["pos_entries"].append({
@@ -1289,7 +1289,7 @@ async def import_corrispettivi_xml(
                 "created_at": now
             }
             
-            await db[COLLECTION_PRIMA_NOTA_CASSA].insert_one(movimento)
+            await db[COLLECTION_PRIMA_NOTA_CASSA].insert_one(movimento.copy())
             
             results["creati"] += 1
             results["dettagli"].append({

@@ -37,7 +37,7 @@ class AccountingEntriesRepository(BaseRepository):
         entry_data['created_at'] = datetime.utcnow()
         entry_data['updated_at'] = datetime.utcnow()
         
-        result = await self.collection.insert_one(entry_data)
+        result = await self.collection.insert_one(entry_data.copy())
         entry_data['_id'] = result.inserted_id
         
         logger.info(f"Created accounting entry: {result.inserted_id}")

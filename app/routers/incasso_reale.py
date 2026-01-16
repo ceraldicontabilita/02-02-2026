@@ -39,7 +39,7 @@ async def create_incasso(
     data["id"] = str(uuid4())
     data["created_at"] = datetime.utcnow()
     data["user_id"] = current_user["user_id"]
-    await db["incasso_reale"].insert_one(data)
+    await db["incasso_reale"].insert_one(data.copy())
     return {"message": "Income entry created", "id": data["id"]}
 
 

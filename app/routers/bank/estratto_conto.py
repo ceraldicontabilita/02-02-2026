@@ -360,7 +360,7 @@ async def import_estratto_conto(file: UploadFile = File(...)) -> Dict[str, Any]:
             "created_at": datetime.utcnow().isoformat()
         }
         
-        await db["estratto_conto_movimenti"].insert_one(record)
+        await db["estratto_conto_movimenti"].insert_one(record.copy())
         inserted += 1
     
     # ===== RICONCILIAZIONE AUTOMATICA =====

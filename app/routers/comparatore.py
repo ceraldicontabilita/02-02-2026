@@ -286,7 +286,7 @@ async def add_to_cart(item: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
         "added_at": datetime.now(timezone.utc).isoformat()
     }
     
-    await db["comparatore_cart"].insert_one(cart_item)
+    await db["comparatore_cart"].insert_one(cart_item.copy())
     cart_item.pop("_id", None)
     
     return {"success": True, "item": cart_item}

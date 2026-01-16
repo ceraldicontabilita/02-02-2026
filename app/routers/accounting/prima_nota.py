@@ -187,7 +187,7 @@ async def create_prima_nota_cassa(
         "created_at": datetime.utcnow().isoformat()
     }
     
-    await db[COLLECTION_PRIMA_NOTA_CASSA].insert_one(movimento)
+    await db[COLLECTION_PRIMA_NOTA_CASSA].insert_one(movimento.copy())
     
     return {"message": "Movimento cassa creato", "id": movimento["id"]}
 
@@ -501,7 +501,7 @@ async def import_prima_nota_batch(data: Dict[str, Any] = Body(...)) -> Dict[str,
                 "source": mov.get("source", "excel_import"),
                 "created_at": datetime.utcnow().isoformat()
             }
-            await db[COLLECTION_PRIMA_NOTA_CASSA].insert_one(movimento)
+            await db[COLLECTION_PRIMA_NOTA_CASSA].insert_one(movimento.copy())
             created_cassa += 1
         except Exception as e:
             errors.append(f"Cassa: {str(e)}")
@@ -522,7 +522,7 @@ async def import_prima_nota_batch(data: Dict[str, Any] = Body(...)) -> Dict[str,
                 "source": mov.get("source", "excel_import"),
                 "created_at": datetime.utcnow().isoformat()
             }
-            await db[COLLECTION_PRIMA_NOTA_BANCA].insert_one(movimento)
+            await db[COLLECTION_PRIMA_NOTA_BANCA].insert_one(movimento.copy())
             created_banca += 1
         except Exception as e:
             errors.append(f"Banca: {str(e)}")
@@ -670,7 +670,7 @@ async def create_movimento_generico(
     }
     
     collection = COLLECTION_PRIMA_NOTA_BANCA if tipo_nota == "banca" else COLLECTION_PRIMA_NOTA_CASSA
-    await db[collection].insert_one(movimento)
+    await db[collection].insert_one(movimento.copy())
     
     return {"message": f"Movimento {tipo_nota} creato", "id": movimento["id"]}
 
@@ -708,7 +708,7 @@ async def create_prima_nota_banca(
         "created_at": datetime.utcnow().isoformat()
     }
     
-    await db[COLLECTION_PRIMA_NOTA_BANCA].insert_one(movimento)
+    await db[COLLECTION_PRIMA_NOTA_BANCA].insert_one(movimento.copy())
     
     return {"message": "Movimento banca creato", "id": movimento["id"]}
 
@@ -869,7 +869,7 @@ async def registra_pagamento_fattura(
             "source": "fattura_pagata",
             "created_at": now
         }
-        await db[COLLECTION_PRIMA_NOTA_CASSA].insert_one(movimento_cassa)
+        await db[COLLECTION_PRIMA_NOTA_CASSA].insert_one(movimento_cassa.copy())
         risultato["cassa"] = movimento_cassa["id"]
         
     elif metodo_pagamento.lower() in ["banca", "bonifico", "assegno", "riba", "carta", "sepa", "mav", "rav", "rid", "f24"]:
@@ -888,7 +888,7 @@ async def registra_pagamento_fattura(
             "source": "fattura_pagata",
             "created_at": now
         }
-        await db[COLLECTION_PRIMA_NOTA_BANCA].insert_one(movimento_banca)
+        await db[COLLECTION_PRIMA_NOTA_BANCA].insert_one(movimento_banca.copy())
         risultato["banca"] = movimento_banca["id"]
         
     elif metodo_pagamento.lower() == "misto":
@@ -908,7 +908,7 @@ async def registra_pagamento_fattura(
                 "source": "fattura_pagata",
                 "created_at": now
             }
-            await db[COLLECTION_PRIMA_NOTA_CASSA].insert_one(movimento_cassa)
+            await db[COLLECTION_PRIMA_NOTA_CASSA].insert_one(movimento_cassa.copy())
             risultato["cassa"] = movimento_cassa["id"]
         
         if importo_banca > 0:
@@ -926,7 +926,7 @@ async def registra_pagamento_fattura(
                 "source": "fattura_pagata",
                 "created_at": now
             }
-            await db[COLLECTION_PRIMA_NOTA_BANCA].insert_one(movimento_banca)
+            await db[COLLECTION_PRIMA_NOTA_BANCA].insert_one(movimento_banca.copy())
             risultato["banca"] = movimento_banca["id"]
     
     return risultato
@@ -1168,7 +1168,7 @@ async def create_prima_nota_salari(data: Dict[str, Any] = Body(...)) -> Dict[str
         "created_at": datetime.utcnow().isoformat()
     }
     
-    await db[COLLECTION_PRIMA_NOTA_SALARI].insert_one(movimento)
+    await db[COLLECTION_PRIMA_NOTA_SALARI].insert_one(movimento.copy())
     logger.info(f"Prima Nota Salari: creato movimento {movimento['id']}")
     
     return {"message": "Movimento salari creato", "id": movimento["id"]}
@@ -1297,7 +1297,7 @@ async def sync_corrispettivi_to_prima_nota() -> Dict[str, Any]:
                 "created_at": datetime.utcnow().isoformat()
             }
             
-            await db[COLLECTION_PRIMA_NOTA_CASSA].insert_one(movimento)
+            await db[COLLECTION_PRIMA_NOTA_CASSA].insert_one(movimento.copy())
             created += 1
             
         except Exception as e:
@@ -1411,7 +1411,7 @@ async def create_movimento_salario(data: Dict[str, Any] = Body(...)) -> Dict[str
         "created_at": datetime.utcnow().isoformat()
     }
     
-    await db[COLLECTION_PRIMA_NOTA_BANCA].insert_one(movimento)
+    await db[COLLECTION_PRIMA_NOTA_BANCA].insert_one(movimento.copy())
     movimento.pop("_id", None)
     
     # Se c'è un dipendente associato, crea/aggiorna la busta paga
@@ -1447,7 +1447,7 @@ async def create_movimento_salario(data: Dict[str, Any] = Body(...)) -> Dict[str
                 "data_pagamento": data["data"],
                 "created_at": datetime.utcnow().isoformat()
             }
-            await db["buste_paga"].insert_one(new_busta)
+            await db["buste_paga"].insert_one(new_busta.copy())
     
     return {
         "success": True,
@@ -1511,7 +1511,7 @@ async def sync_corrispettivi_to_prima_nota(anno: int = Query(...)) -> Dict[str, 
             "created_at": datetime.utcnow().isoformat()
         }
         
-        await db[COLLECTION_PRIMA_NOTA_CASSA].insert_one(movimento)
+        await db[COLLECTION_PRIMA_NOTA_CASSA].insert_one(movimento.copy())
         importati += 1
         totale_importato += totale
     
@@ -1588,11 +1588,11 @@ async def sync_fatture_pagate_to_prima_nota(anno: int = Query(...)) -> Dict[str,
         }
         
         if metodo in ["contanti", "cassa"]:
-            await db[COLLECTION_PRIMA_NOTA_CASSA].insert_one(movimento)
+            await db[COLLECTION_PRIMA_NOTA_CASSA].insert_one(movimento.copy())
             importati_cassa += 1
             totale_cassa += totale
         else:
-            await db[COLLECTION_PRIMA_NOTA_BANCA].insert_one(movimento)
+            await db[COLLECTION_PRIMA_NOTA_BANCA].insert_one(movimento.copy())
             importati_banca += 1
             totale_banca += totale
     
@@ -1704,7 +1704,7 @@ async def import_prima_nota_cassa_csv(file: UploadFile = File(...)) -> Dict[str,
                     "created_at": datetime.utcnow().isoformat()
                 }
                 
-                await db[COLLECTION_PRIMA_NOTA_CASSA].insert_one(movimento)
+                await db[COLLECTION_PRIMA_NOTA_CASSA].insert_one(movimento.copy())
                 importati += 1
                 
                 if tipo == 'entrata':
@@ -1817,7 +1817,7 @@ async def import_prima_nota_banca_csv(file: UploadFile = File(...)) -> Dict[str,
                     "created_at": datetime.utcnow().isoformat()
                 }
                 
-                await db[COLLECTION_PRIMA_NOTA_BANCA].insert_one(movimento)
+                await db[COLLECTION_PRIMA_NOTA_BANCA].insert_one(movimento.copy())
                 importati += 1
                 
                 if tipo == 'entrata':
@@ -2363,10 +2363,10 @@ async def regenerate_prima_nota_from_invoices(anno: int = Query(..., description
             
             # Inserisci in cassa o banca in base al metodo pagamento
             if metodo in ["cassa", "contanti"]:
-                await db[COLLECTION_PRIMA_NOTA_CASSA].insert_one(movimento)
+                await db[COLLECTION_PRIMA_NOTA_CASSA].insert_one(movimento.copy())
                 created_cassa += 1
             else:
-                await db[COLLECTION_PRIMA_NOTA_BANCA].insert_one(movimento)
+                await db[COLLECTION_PRIMA_NOTA_BANCA].insert_one(movimento.copy())
                 created_banca += 1
                 
         except Exception as e:

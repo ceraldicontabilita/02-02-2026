@@ -113,7 +113,7 @@ class CorrispettiviService:
         }
         
         # 4. Salva corrispettivo
-        await self.corrispettivi.insert_one(corr_doc)
+        await self.corrispettivi.insert_one(corr_doc.copy())
         corr_id = corr_doc["id"]
         
         # 5. Propaga a Prima Nota Cassa
@@ -173,7 +173,7 @@ class CorrispettiviService:
             "prima_nota_id": None
         }
         
-        await self.corrispettivi.insert_one(corr_doc)
+        await self.corrispettivi.insert_one(corr_doc.copy())
         
         # Propaga a Prima Nota
         prima_nota_id = await self._create_prima_nota_entry(corr_doc)
@@ -379,7 +379,7 @@ class CorrispettiviService:
                 "created_at": datetime.now(timezone.utc).isoformat()
             }
             
-            await self.cash_movements.insert_one(movement_doc)
+            await self.cash_movements.insert_one(movement_doc.copy())
             
             # Anche in prima_nota per compatibilità
             await self.prima_nota.insert_one({

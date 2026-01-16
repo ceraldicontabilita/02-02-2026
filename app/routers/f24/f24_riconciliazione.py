@@ -150,7 +150,7 @@ async def upload_f24_commercialista(
         "updated_at": datetime.now(timezone.utc).isoformat()
     }
     
-    await db[COLL_F24_COMMERCIALISTA].insert_one(documento)
+    await db[COLL_F24_COMMERCIALISTA].insert_one(documento.copy())
     
     # Se è un ravvedimento che sostituisce un F24 precedente, crea alert
     if is_ravvedimento_update and f24_precedente:
@@ -166,7 +166,7 @@ async def upload_f24_commercialista(
             "status": "pending",
             "created_at": datetime.now(timezone.utc).isoformat()
         }
-        await db[COLL_F24_ALERTS].insert_one(alert)
+        await db[COLL_F24_ALERTS].insert_one(alert.copy())
     
     return {
         "success": True,
@@ -268,7 +268,7 @@ async def riconcilia_con_quietanza(
                         "status": "pending",
                         "created_at": datetime.now(timezone.utc).isoformat()
                     }
-                    await db[COLL_F24_ALERTS].insert_one(alert)
+                    await db[COLL_F24_ALERTS].insert_one(alert.copy())
                     
                     risultati["f24_da_eliminare"].append({
                         "f24_id": f24_vecchio["id"],
@@ -293,7 +293,7 @@ async def riconcilia_con_quietanza(
                     "status": "pending",
                     "created_at": datetime.now(timezone.utc).isoformat()
                 }
-                await db[COLL_F24_ALERTS].insert_one(alert)
+                await db[COLL_F24_ALERTS].insert_one(alert.copy())
     
     return risultati
 
@@ -831,7 +831,7 @@ async def upload_quietanze_multiplo(
             "created_at": datetime.now(timezone.utc).isoformat()
         }
         
-        await db[COLL_QUIETANZE].insert_one(quietanza_doc)
+        await db[COLL_QUIETANZE].insert_one(quietanza_doc.copy())
         risultati["totale_caricati"] += 1
         
         # ============================================
@@ -983,7 +983,7 @@ async def upload_quietanze_multiplo(
                 "status": "pending",
                 "created_at": datetime.now(timezone.utc).isoformat()
             }
-            await db[COLL_F24_ALERTS].insert_one(alert)
+            await db[COLL_F24_ALERTS].insert_one(alert.copy())
         
         risultati["dettaglio"].append(dettaglio_file)
     

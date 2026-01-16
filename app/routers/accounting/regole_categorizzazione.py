@@ -496,7 +496,7 @@ async def aggiungi_regola_fornitore(data: Dict[str, Any]) -> Dict[str, Any]:
         "created_at": datetime.utcnow().isoformat(),
         "attivo": True
     }
-    await db["regole_categorizzazione_fornitori"].insert_one(regola)
+    await db["regole_categorizzazione_fornitori"].insert_one(regola.copy())
     
     return {"success": True, "message": "Regola aggiunta", "action": "created", "id": regola["id"]}
 
@@ -530,7 +530,7 @@ async def aggiungi_regola_descrizione(data: Dict[str, Any]) -> Dict[str, Any]:
         "created_at": datetime.utcnow().isoformat(),
         "attivo": True
     }
-    await db["regole_categorizzazione_descrizioni"].insert_one(regola)
+    await db["regole_categorizzazione_descrizioni"].insert_one(regola.copy())
     
     return {"success": True, "message": "Regola aggiunta", "action": "created", "id": regola["id"]}
 

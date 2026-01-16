@@ -53,7 +53,7 @@ async def create_invoice_emessa(
     data["id"] = str(uuid4())
     data["created_at"] = datetime.utcnow()
     data["user_id"] = current_user["user_id"]
-    await db["invoices_emesse"].insert_one(data)
+    await db["invoices_emesse"].insert_one(data.copy())
     return {"message": "Invoice created", "id": data["id"]}
 
 
@@ -93,7 +93,7 @@ async def upload_invoice_xml(
         "user_id": current_user["user_id"],
         "status": "uploaded"
     }
-    await db["invoices_emesse"].insert_one(doc)
+    await db["invoices_emesse"].insert_one(doc.copy())
     
     return {
         "message": "Invoice XML uploaded successfully",

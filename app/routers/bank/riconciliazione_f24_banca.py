@@ -62,7 +62,7 @@ async def upload_estratto_conto_bpm(file: UploadFile = File(...)):
             "categorie": result["stats"]["categorie"]
         }
         
-        await db["estratti_conto"].insert_one(documento)
+        await db["estratti_conto"].insert_one(documento.copy())
         
         # Salva movimenti F24 per riconciliazione futura
         if result["movimenti_f24"]:

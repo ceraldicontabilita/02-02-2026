@@ -21,7 +21,7 @@ class BalanceSheetRepository(BaseRepository):
         balance_data['generated_at'] = datetime.utcnow()
         balance_data['created_at'] = datetime.utcnow()
         
-        result = await self.collection.insert_one(balance_data)
+        result = await self.collection.insert_one(balance_data.copy())
         balance_data['_id'] = result.inserted_id
         
         logger.info(f"Saved balance sheet for year {balance_data['year']}")
@@ -51,7 +51,7 @@ class YearEndRepository(BaseRepository):
         closure_data['created_at'] = datetime.utcnow()
         closure_data['status'] = 'completed'
         
-        result = await self.collection.insert_one(closure_data)
+        result = await self.collection.insert_one(closure_data.copy())
         closure_data['_id'] = result.inserted_id
         
         logger.info(f"Created year-end closure for {closure_data['year']}")

@@ -38,7 +38,7 @@ async def add_to_registro(
     db = Database.get_db()
     data["id"] = str(uuid4())
     data["created_at"] = datetime.utcnow()
-    await db["ocr_assegni"].insert_one(data)
+    await db["ocr_assegni"].insert_one(data.copy())
     return {"message": "Entry added", "id": data["id"]}
 
 

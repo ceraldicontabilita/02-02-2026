@@ -108,7 +108,7 @@ async def get_or_create_fornitore(db, parsed_data: Dict) -> Dict[str, Any]:
         "note": "Creato automaticamente da importazione fattura XML"
     }
     
-    await db[COL_FORNITORI].insert_one(nuovo_fornitore)
+    await db[COL_FORNITORI].insert_one(nuovo_fornitore.copy())
     logger.info(f"✅ Nuovo fornitore creato: {nuovo_fornitore['ragione_sociale']} (P.IVA: {partita_iva})")
     
     return {
@@ -214,7 +214,7 @@ async def salva_allegato_pdf(db, fattura_id: str, allegato: Dict) -> Optional[st
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     
-    await db[COL_ALLEGATI].insert_one(allegato_doc)
+    await db[COL_ALLEGATI].insert_one(allegato_doc.copy())
     return allegato_doc["id"]
 
 
@@ -332,7 +332,7 @@ async def import_fattura_xml(file: UploadFile = File(...)):
         "updated_at": datetime.now(timezone.utc).isoformat()
     }
     
-    await db[COL_FATTURE_RICEVUTE].insert_one(fattura)
+    await db[COL_FATTURE_RICEVUTE].insert_one(fattura.copy())
     
     # Salva righe dettaglio
     num_righe = await salva_dettaglio_righe(db, fattura_id, parsed.get("linee", []))
@@ -536,7 +536,7 @@ async def import_fatture_xml_multipli(files: List[UploadFile] = File(...)):
                 "updated_at": datetime.now(timezone.utc).isoformat()
             }
             
-            await db[COL_FATTURE_RICEVUTE].insert_one(fattura)
+            await db[COL_FATTURE_RICEVUTE].insert_one(fattura.copy())
             await salva_dettaglio_righe(db, fattura_id, parsed.get("linee", []))
             
             for allegato in parsed.get("allegati", []):
@@ -672,7 +672,7 @@ async def import_fatture_zip(file: UploadFile = File(...)):
                 "updated_at": datetime.now(timezone.utc).isoformat()
             }
             
-            await db[COL_FATTURE_RICEVUTE].insert_one(fattura)
+            await db[COL_FATTURE_RICEVUTE].insert_one(fattura.copy())
             await salva_dettaglio_righe(db, fattura_id, parsed.get("linee", []))
             
             for allegato in parsed.get("allegati", []):
@@ -1477,7 +1477,7 @@ async def elabora_fatture_legacy(
                     "esclude_magazzino": False,
                     "created_at": datetime.now(timezone.utc).isoformat()
                 }
-                await db[COL_FORNITORI].insert_one(nuovo_fornitore)
+                await db[COL_FORNITORI].insert_one(nuovo_fornitore.copy())
                 fornitore = nuovo_fornitore
             
             fornitore_obj = {

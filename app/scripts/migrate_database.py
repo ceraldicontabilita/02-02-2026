@@ -76,7 +76,7 @@ async def migrate_estratto_conto():
             if key in doc:
                 normalized[key] = doc[key]
         
-        await new_coll.insert_one(normalized)
+        await new_coll.insert_one(normalized.copy())
         migrated += 1
     
     print(f"\n✅ Migrazione completata:")

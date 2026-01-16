@@ -69,7 +69,7 @@ async def create_traceable_product(
     db = Database.get_db()
     data["id"] = str(uuid4())
     data["created_at"] = datetime.utcnow()
-    await db["tracciabilita"].insert_one(data)
+    await db["tracciabilita"].insert_one(data.copy())
     return {"message": "Product created", "id": data["id"]}
 
 

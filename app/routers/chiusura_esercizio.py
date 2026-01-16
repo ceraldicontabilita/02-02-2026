@@ -271,7 +271,7 @@ async def esegui_chiusura_esercizio(input_data: ChiusuraEsercizioInput) -> Dict[
         "created_by": "sistema"
     }
     
-    await db["chiusure_esercizio"].insert_one(scrittura_chiusura)
+    await db["chiusure_esercizio"].insert_one(scrittura_chiusura.copy())
     
     # Registra movimento contabile per risultato d'esercizio
     movimento_risultato = {
@@ -285,7 +285,7 @@ async def esegui_chiusura_esercizio(input_data: ChiusuraEsercizioInput) -> Dict[
         "chiusura_id": chiusura_id,
         "created_at": datetime.now(timezone.utc).isoformat()
     }
-    await db["movimenti_contabili"].insert_one(movimento_risultato)
+    await db["movimenti_contabili"].insert_one(movimento_risultato.copy())
     
     return {
         "success": True,

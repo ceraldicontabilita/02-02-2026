@@ -96,7 +96,7 @@ async def get_email_accounts() -> List[Dict[str, Any]]:
                 "is_env_default": True,
                 "created_at": datetime.now(timezone.utc).isoformat()
             }
-            await db[COLLECTION_EMAIL_ACCOUNTS].insert_one(default_account)
+            await db[COLLECTION_EMAIL_ACCOUNTS].insert_one(default_account.copy())
             # Rimuovi _id per la risposta
             default_account.pop("_id", None)
             accounts = [default_account]
@@ -119,7 +119,7 @@ async def create_email_account(account: EmailAccountInput) -> Dict[str, Any]:
     account_data["created_at"] = datetime.now(timezone.utc).isoformat()
     account_data["is_env_default"] = False
     
-    await db[COLLECTION_EMAIL_ACCOUNTS].insert_one(account_data)
+    await db[COLLECTION_EMAIL_ACCOUNTS].insert_one(account_data.copy())
     
     # Rimuovi _id per la risposta
     account_data.pop("_id", None)
@@ -200,7 +200,7 @@ async def get_parole_chiave() -> Dict[str, Any]:
             "buste_paga": ["cedolino", "busta paga", "stipendio", "LUL", "libro unico"],
             "created_at": datetime.now(timezone.utc).isoformat()
         }
-        await db[COLLECTION_CONFIG].insert_one(default_keywords)
+        await db[COLLECTION_CONFIG].insert_one(default_keywords.copy())
         # Rimuovi _id per la risposta
         default_keywords.pop("_id", None)
         config = default_keywords

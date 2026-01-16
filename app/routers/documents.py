@@ -61,7 +61,7 @@ async def upload_document(
         "created_at": datetime.utcnow(),
         "user_id": current_user["user_id"]
     }
-    await db["documents"].insert_one(doc)
+    await db["documents"].insert_one(doc.copy())
     return {"message": "Document uploaded", "id": doc["id"]}
 
 

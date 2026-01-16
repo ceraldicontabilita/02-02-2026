@@ -336,7 +336,7 @@ async def crea_notifica_scadenza(data: Dict[str, Any] = Body(...)) -> Dict[str, 
         "created_at": datetime.utcnow().isoformat()
     }
     
-    await db["notifiche_scadenze"].insert_one(notifica)
+    await db["notifiche_scadenze"].insert_one(notifica.copy())
     notifica.pop("_id", None)
     
     return {"success": True, "notifica": notifica}

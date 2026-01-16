@@ -279,7 +279,7 @@ async def generate_contract(employee_id: str, data: Dict[str, Any] = Body(...)) 
             "additional_data": additional_data
         }
         
-        await db["employee_contracts"].insert_one(contract_record)
+        await db["employee_contracts"].insert_one(contract_record.copy())
         
         return {
             "success": True,

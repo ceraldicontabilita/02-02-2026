@@ -288,7 +288,7 @@ async def crea_budget(budget: BudgetInput) -> Dict[str, Any]:
     else:
         record["id"] = str(uuid4())
         record["created_at"] = datetime.now(timezone.utc).isoformat()
-        await db["budget"].insert_one(record)
+        await db["budget"].insert_one(record.copy())
         return {"success": True, "messaggio": f"Budget '{budget.voce}' creato", "id": record["id"]}
 
 

@@ -232,7 +232,7 @@ async def import_paghe(file: UploadFile = File(...)) -> Dict[str, Any]:
                 "created_at": datetime.utcnow().isoformat(),
                 "updated_at": datetime.utcnow().isoformat()
             }
-            await db["prima_nota_salari"].insert_one(new_record)
+            await db["prima_nota_salari"].insert_one(new_record.copy())
             created += 1
             
         except Exception as e:
@@ -365,7 +365,7 @@ async def import_bonifici(file: UploadFile = File(...)) -> Dict[str, Any]:
                 "created_at": datetime.utcnow().isoformat(),
                 "updated_at": datetime.utcnow().isoformat()
             }
-            await db["prima_nota_salari"].insert_one(new_record)
+            await db["prima_nota_salari"].insert_one(new_record.copy())
             created += 1
             
         except Exception as e:
@@ -535,7 +535,7 @@ async def aggiungi_aggiustamento(
         "updated_at": datetime.utcnow().isoformat()
     }
     
-    await db["prima_nota_salari"].insert_one(new_record)
+    await db["prima_nota_salari"].insert_one(new_record.copy())
     
     # Ricalcola i progressivi per questo dipendente
     await ricalcola_progressivi_tutti(db, None, dipendente)
@@ -635,7 +635,7 @@ async def consolida_record() -> Dict[str, Any]:
             "created_at": datetime.utcnow().isoformat(),
             "updated_at": datetime.utcnow().isoformat()
         }
-        await db["prima_nota_salari"].insert_one(new_record)
+        await db["prima_nota_salari"].insert_one(new_record.copy())
         created += 1
     
     # Ricalcola progressivi

@@ -147,7 +147,7 @@ async def popola_magazzino_da_fatture(
                             "attivo": True,
                             "created_at": datetime.utcnow().isoformat()
                         }
-                        await db[Collections.WAREHOUSE_PRODUCTS].insert_one(new_product)
+                        await db[Collections.WAREHOUSE_PRODUCTS].insert_one(new_product.copy())
                         prodotti_creati += 1
                         
             except Exception as e:

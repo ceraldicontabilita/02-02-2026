@@ -96,7 +96,7 @@ async def genera_assegni(
             "created_at": now,
             "updated_at": now
         }
-        await db[COLLECTION_ASSEGNI].insert_one(assegno)
+        await db[COLLECTION_ASSEGNI].insert_one(assegno.copy())
         assegni_creati.append(numero)
     
     return {

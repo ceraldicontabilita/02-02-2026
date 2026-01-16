@@ -39,7 +39,7 @@ async def create_lotto_in(
     data["id"] = str(uuid4())
     data["type"] = "in"
     data["created_at"] = datetime.utcnow()
-    await db["lotti"].insert_one(data)
+    await db["lotti"].insert_one(data.copy())
     return {"message": "Lot created", "id": data["id"]}
 
 
@@ -70,5 +70,5 @@ async def create_lotto_out(
     data["id"] = str(uuid4())
     data["type"] = "out"
     data["created_at"] = datetime.utcnow()
-    await db["lotti"].insert_one(data)
+    await db["lotti"].insert_one(data.copy())
     return {"message": "Lot created", "id": data["id"]}

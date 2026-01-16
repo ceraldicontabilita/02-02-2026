@@ -151,7 +151,7 @@ async def create_prodotto(data: Dict[str, Any] = Body(...)) -> Dict[str, str]:
     if not prodotto["nome"]:
         raise HTTPException(status_code=400, detail="Nome prodotto obbligatorio")
     
-    await db["magazzino_doppia_verita"].insert_one(prodotto)
+    await db["magazzino_doppia_verita"].insert_one(prodotto.copy())
     
     return {"message": f"Prodotto {prodotto['nome']} creato", "id": prodotto["id"]}
 
@@ -213,7 +213,7 @@ async def carico_magazzino(
         "data": datetime.utcnow().isoformat(),
         "utente": data.get("utente", "system")
     }
-    await db["magazzino_movimenti"].insert_one(movimento)
+    await db["magazzino_movimenti"].insert_one(movimento.copy())
     
     return {
         "message": f"Caricato {quantita} {prodotto.get('unita_misura', 'pz')} di {prodotto.get('nome')}",
@@ -266,7 +266,7 @@ async def scarico_magazzino(
         "data": datetime.utcnow().isoformat(),
         "utente": data.get("utente", "system")
     }
-    await db["magazzino_movimenti"].insert_one(movimento)
+    await db["magazzino_movimenti"].insert_one(movimento.copy())
     
     return {
         "message": f"Scaricato {quantita} {prodotto.get('unita_misura', 'pz')} di {prodotto.get('nome')}",
@@ -322,7 +322,7 @@ async def registra_inventario(data: Dict[str, Any] = Body(...)) -> Dict[str, Any
             "utente": data.get("utente", "system"),
             "risolto": False
         }
-        await db["magazzino_differenze"].insert_one(record_differenza)
+        await db["magazzino_differenze"].insert_one(record_differenza.copy())
     
     return {
         "message": f"Inventario registrato per {prodotto.get('nome')}",
@@ -569,7 +569,7 @@ async def migra_da_warehouse_inventory() -> Dict[str, Any]:
                 "updated_at": datetime.utcnow().isoformat()
             }
             
-            await db["magazzino_doppia_verita"].insert_one(nuovo_prodotto)
+            await db["magazzino_doppia_verita"].insert_one(nuovo_prodotto.copy())
             migrati += 1
             
         except Exception:

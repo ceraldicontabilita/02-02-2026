@@ -473,7 +473,7 @@ async def riconcilia_estratto_conto() -> Dict[str, Any]:
                             "created_at": now
                         }
                         
-                        await db[COLLECTION_OPERAZIONI_DA_CONFERMARE].insert_one(operazione)
+                        await db[COLLECTION_OPERAZIONI_DA_CONFERMARE].insert_one(operazione.copy())
                         results["dubbi"] += 1
                 
                 # Se solo importo esatto (score = 10) e UNA sola fattura → riconcilia
@@ -549,7 +549,7 @@ async def riconcilia_estratto_conto() -> Dict[str, Any]:
                             "created_at": now
                         }
                         
-                        await db[COLLECTION_OPERAZIONI_DA_CONFERMARE].insert_one(operazione)
+                        await db[COLLECTION_OPERAZIONI_DA_CONFERMARE].insert_one(operazione.copy())
                         results["dubbi"] += 1
             
             # === 2. CERCA F24 (per USCITE) ===

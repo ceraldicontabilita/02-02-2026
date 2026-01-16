@@ -233,7 +233,7 @@ async def create_dipendente(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
         if existing:
             raise HTTPException(status_code=409, detail="Dipendente con questo codice fiscale già esistente")
     
-    await db[Collections.EMPLOYEES].insert_one(dipendente)
+    await db[Collections.EMPLOYEES].insert_one(dipendente.copy())
     dipendente.pop("_id", None)
     
     return dipendente
@@ -301,7 +301,7 @@ async def create_busta_paga(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     else:
         busta["id"] = str(uuid.uuid4())
         busta["created_at"] = datetime.utcnow().isoformat()
-        await db["buste_paga"].insert_one(busta)
+        await db["buste_paga"].insert_one(busta.copy())
     
     busta.pop("_id", None)
     return busta
@@ -597,7 +597,7 @@ async def create_libretto_sanitario(data: Dict[str, Any] = Body(...)) -> Dict[st
         "updated_at": datetime.utcnow().isoformat()
     }
     
-    await db["libretti_sanitari"].insert_one(libretto)
+    await db["libretti_sanitari"].insert_one(libretto.copy())
     libretto.pop("_id", None)
     
     return libretto
@@ -742,7 +742,7 @@ async def upload_libro_unico(
                                         })
                                         
                                         if not existing:
-                                            await db["libro_unico_salaries"].insert_one(salary_doc)
+                                            await db["libro_unico_salaries"].insert_one(salary_doc.copy())
                                             salaries_count += 1
                                         
                                         current_employee = None
@@ -812,7 +812,7 @@ async def upload_libro_unico(
                         })
                         
                         if not existing:
-                            await db["libro_unico_salaries"].insert_one(salary_doc)
+                            await db["libro_unico_salaries"].insert_one(salary_doc.copy())
                             salaries_count += 1
                         
                 except Exception as e:
@@ -1089,7 +1089,7 @@ async def import_libretti_sanitari_excel(file: UploadFile = File(...)) -> Dict[s
                         "created_at": datetime.utcnow().isoformat(),
                         "updated_at": datetime.utcnow().isoformat()
                     }
-                    await db["libretti_sanitari"].insert_one(libretto)
+                    await db["libretti_sanitari"].insert_one(libretto.copy())
                     created += 1
                     
             except Exception as e:
@@ -1184,7 +1184,7 @@ async def genera_libretti_da_dipendenti() -> Dict[str, Any]:
             "created_at": datetime.utcnow().isoformat(),
             "updated_at": datetime.utcnow().isoformat()
         }
-        await db["libretti_sanitari"].insert_one(libretto)
+        await db["libretti_sanitari"].insert_one(libretto.copy())
         created += 1
     
     return {
@@ -1250,7 +1250,7 @@ async def create_contratto(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
         "updated_at": datetime.utcnow().isoformat()
     }
     
-    await db["contratti_dipendenti"].insert_one(contratto)
+    await db["contratti_dipendenti"].insert_one(contratto.copy())
     
     # Aggiorna anche il dipendente
     await db[Collections.EMPLOYEES].update_one(
@@ -1459,7 +1459,7 @@ async def import_contratti_excel(file: UploadFile = File(...)) -> Dict[str, Any]
                     "updated_at": datetime.utcnow().isoformat()
                 }
                 
-                await db["contratti_dipendenti"].insert_one(contratto)
+                await db["contratti_dipendenti"].insert_one(contratto.copy())
                 
                 # Aggiorna dipendente
                 await db[Collections.EMPLOYEES].update_one(

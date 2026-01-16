@@ -301,7 +301,7 @@ async def import_bank_statement(
                 "created_at": datetime.utcnow().isoformat()
             }
             
-            await db["prima_nota"].insert_one(prima_nota_record)
+            await db["prima_nota"].insert_one(prima_nota_record.copy())
             imported += 1
             
         except Exception as e:
@@ -440,7 +440,7 @@ async def import_nexi_statement(
                 "created_at": import_timestamp
             }
             
-            await db["estratto_conto_nexi"].insert_one(record)
+            await db["estratto_conto_nexi"].insert_one(record.copy())
             imported += 1
             
         except Exception as e:

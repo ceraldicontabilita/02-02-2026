@@ -43,7 +43,7 @@ async def create_prima_nota(
     db = Database.get_db()
     data["id"] = str(uuid4())
     data["created_at"] = datetime.utcnow()
-    await db["prima_nota"].insert_one(data)
+    await db["prima_nota"].insert_one(data.copy())
     return {"message": "Entry created", "id": data["id"]}
 
 
@@ -201,7 +201,7 @@ async def import_excel(
             "source": "excel_import"
         }
         
-        await db["prima_nota"].insert_one(doc)
+        await db["prima_nota"].insert_one(doc.copy())
         imported_count += 1
         
     return {

@@ -323,7 +323,7 @@ async def upload_suppliers_excel(file: UploadFile = File(...)) -> Dict[str, Any]
                     # Inserisci nuovo
                     supplier_doc["id"] = str(uuid.uuid4())
                     supplier_doc["created_at"] = datetime.utcnow().isoformat()
-                    await db[Collections.SUPPLIERS].insert_one(supplier_doc)
+                    await db[Collections.SUPPLIERS].insert_one(supplier_doc.copy())
                     results["imported"] += 1
                     
                     # === ASSOCIAZIONE AUTOMATICA FATTURE ===
@@ -963,7 +963,7 @@ async def import_suppliers_excel(file: UploadFile = File(...)) -> Dict[str, Any]
                     # Crea nuovo
                     supplier_data["id"] = str(uuid.uuid4())
                     supplier_data["created_at"] = datetime.utcnow().isoformat()
-                    await db[Collections.SUPPLIERS].insert_one(supplier_data)
+                    await db[Collections.SUPPLIERS].insert_one(supplier_data.copy())
                     imported += 1
                     
             except Exception as e:

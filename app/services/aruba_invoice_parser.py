@@ -557,7 +557,7 @@ async def fetch_aruba_invoices(
                     "fonte": "aruba_email"
                 }
                 
-                await db["operazioni_da_confermare"].insert_one(operazione)
+                await db["operazioni_da_confermare"].insert_one(operazione.copy())
                 stats["new_invoices"] += 1
                 
             except Exception as e:

@@ -93,7 +93,7 @@ async def create_movimento(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
         "entity_status": "active"
     }
     
-    await db[COLLECTION_NAME].insert_one(movimento)
+    await db[COLLECTION_NAME].insert_one(movimento.copy())
     movimento.pop("_id", None)
     
     return movimento

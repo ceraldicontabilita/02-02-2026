@@ -134,7 +134,7 @@ async def inizializza_piano_conti_esteso() -> Dict[str, Any]:
                 "created_at": now,
                 "updated_at": now
             }
-            await db["piano_conti"].insert_one(nuovo_conto)
+            await db["piano_conti"].insert_one(nuovo_conto.copy())
             conti_aggiunti += 1
     
     return {
@@ -257,7 +257,7 @@ async def ricategorizza_tutte_fatture() -> Dict[str, Any]:
                 "created_at": datetime.utcnow().isoformat()
             }
             
-            await db["movimenti_contabili"].insert_one(movimento)
+            await db["movimenti_contabili"].insert_one(movimento.copy())
             
             # Aggiorna saldi conti
             await aggiorna_saldo_conto(db, conto_costo, imponibile, "dare")
@@ -363,7 +363,7 @@ async def ricategorizza_tutte_fatture() -> Dict[str, Any]:
                 "created_at": datetime.utcnow().isoformat()
             }
             
-            await db["movimenti_contabili"].insert_one(movimento)
+            await db["movimenti_contabili"].insert_one(movimento.copy())
             
             # Aggiorna saldi
             if cassa > 0:
@@ -409,7 +409,7 @@ async def aggiorna_saldo_conto(db, codice_conto: str, importo: float, tipo: str)
             "saldo": 0,
             "created_at": datetime.utcnow().isoformat()
         }
-        await db["piano_conti"].insert_one(conto)
+        await db["piano_conti"].insert_one(conto.copy())
     
     categoria = conto.get("categoria", "")
     saldo_attuale = float(conto.get("saldo", 0) or 0)

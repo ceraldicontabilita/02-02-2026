@@ -39,7 +39,7 @@ async def create_warehouse_product(data: Dict[str, Any] = Body(...)) -> Dict[str
         "category": data.get("category", ""),
         "created_at": datetime.utcnow().isoformat()
     }
-    await db[Collections.WAREHOUSE_PRODUCTS].insert_one(product)
+    await db[Collections.WAREHOUSE_PRODUCTS].insert_one(product.copy())
     product.pop("_id", None)
     return product
 

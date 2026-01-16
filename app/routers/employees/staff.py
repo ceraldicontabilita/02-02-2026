@@ -70,7 +70,7 @@ async def create_staff(
     staff_data["id"] = str(uuid4())
     staff_data["created_at"] = datetime.utcnow()
     
-    await db["staff"].insert_one(staff_data)
+    await db["staff"].insert_one(staff_data.copy())
     
     return {"message": "Staff created", "id": staff_data["id"]}
 

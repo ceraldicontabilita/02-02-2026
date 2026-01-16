@@ -83,7 +83,7 @@ async def registra_acquisto_da_fattura(db, fattura: Dict[str, Any]):
             })
             
             if not existing:
-                await db["acquisti_prodotti"].insert_one(acquisto)
+                await db["acquisti_prodotti"].insert_one(acquisto.copy())
                 registrati += 1
         
         return registrati

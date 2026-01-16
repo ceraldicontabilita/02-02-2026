@@ -60,7 +60,7 @@ async def create_employee(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
         "hire_date": data.get("hire_date", datetime.utcnow().isoformat()),
         "created_at": datetime.utcnow().isoformat()
     }
-    await db[Collections.EMPLOYEES].insert_one(employee)
+    await db[Collections.EMPLOYEES].insert_one(employee.copy())
     employee.pop("_id", None)
     return employee
 
@@ -278,7 +278,7 @@ async def upload_payslip_pdf(file: UploadFile = File(...)) -> Dict[str, Any]:
                             "note": "Importato da busta paga PDF",
                             "created_at": datetime.utcnow().isoformat()
                         }
-                        await db["prima_nota_salari"].insert_one(movimento_salario)
+                        await db["prima_nota_salari"].insert_one(movimento_salario.copy())
                         logger.info(f"Prima Nota Salari: €{netto} per {nome} ({periodo})")
                 
                 results["success"].append({"nome": nome, "periodo": periodo, "netto": netto, "is_new": is_new, "prima_nota": netto > 0})

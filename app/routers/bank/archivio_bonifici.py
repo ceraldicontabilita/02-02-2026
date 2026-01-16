@@ -432,7 +432,7 @@ async def process_files_background(job_id: str, file_paths: List[Path]):
                     continue
                 
                 # Inserisci nuovo bonifico
-                await db.bonifici_transfers.insert_one(t)
+                await db.bonifici_transfers.insert_one(t.copy())
                 existing_keys.add(t['dedup_key'])
                 imported += 1
                 

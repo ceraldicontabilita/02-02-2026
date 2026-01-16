@@ -194,7 +194,7 @@ async def upload_f24_pdf(
         raise HTTPException(status_code=409, detail="F24 già presente nel sistema")
     
     # Insert into database
-    await db["f24_models"].insert_one(f24_record)
+    await db["f24_models"].insert_one(f24_record.copy())
     
     logger.info(f"F24 importato: {f24_id} - Scadenza {data_scadenza} - €{totali.get('saldo_finale', 0):.2f}")
     
@@ -466,7 +466,7 @@ async def upload_f24_pdf_overwrite(
         action = "aggiornato"
     else:
         f24_record["created_at"] = datetime.utcnow().isoformat()
-        await db["f24_models"].insert_one(f24_record)
+        await db["f24_models"].insert_one(f24_record.copy())
         action = "creato"
     
     logger.info(f"F24 {action}: {f24_id} - Scadenza {data_scadenza} - €{totali.get('saldo_finale', 0):.2f}")

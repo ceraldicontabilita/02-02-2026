@@ -160,7 +160,7 @@ async def crea_cespite(cespite: CespiteInput) -> Dict[str, Any]:
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     
-    await db["cespiti"].insert_one(nuovo_cespite)
+    await db["cespiti"].insert_one(nuovo_cespite.copy())
     
     return {
         "success": True,
@@ -388,7 +388,7 @@ async def registra_ammortamenti_anno(anno: int) -> Dict[str, Any]:
         ],
         "created_at": datetime.now(timezone.utc).isoformat()
     }
-    await db["movimenti_contabili"].insert_one(movimento)
+    await db["movimenti_contabili"].insert_one(movimento.copy())
     
     return {
         "success": True,
@@ -468,7 +468,7 @@ async def dismetti_cespite(input_data: DismissioneInput) -> Dict[str, Any]:
         "dettaglio": dismissione_record,
         "created_at": datetime.now(timezone.utc).isoformat()
     }
-    await db["movimenti_contabili"].insert_one(movimento)
+    await db["movimenti_contabili"].insert_one(movimento.copy())
     
     return {
         "success": True,

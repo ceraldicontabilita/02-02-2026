@@ -38,7 +38,7 @@ async def create_costo(
     db = Database.get_db()
     data["id"] = str(uuid4())
     data["created_at"] = datetime.utcnow()
-    await db["costi_previsionali"].insert_one(data)
+    await db["costi_previsionali"].insert_one(data.copy())
     return {"message": "Cost created", "id": data["id"]}
 
 

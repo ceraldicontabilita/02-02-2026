@@ -136,7 +136,7 @@ async def upload_f24_zip(
                 "created_at": datetime.now(timezone.utc).isoformat()
             }
             
-            await db["f24_documents"].insert_one(doc)
+            await db["f24_documents"].insert_one(doc.copy())
             existing_hashes.add(file_hash)  # Aggiungi all'elenco per evitare duplicati nello stesso upload
             
             results["imported"] += 1
@@ -240,7 +240,7 @@ async def upload_f24_multiple(
                 "created_at": datetime.now(timezone.utc).isoformat()
             }
             
-            await db["f24_documents"].insert_one(doc)
+            await db["f24_documents"].insert_one(doc.copy())
             existing_hashes.add(file_hash)
             
             results["imported"] += 1
@@ -351,7 +351,7 @@ async def create_f24(
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     
-    await db["f24"].insert_one(f24)
+    await db["f24"].insert_one(f24.copy())
     f24.pop("_id", None)
     
     return f24
@@ -377,7 +377,7 @@ async def upload_f24(
         "status": "pending",
         "created_at": datetime.now(timezone.utc).isoformat()
     }
-    await db["f24"].insert_one(doc)
+    await db["f24"].insert_one(doc.copy())
     
     return {
         "message": "F24 uploaded successfully",
@@ -795,7 +795,7 @@ async def upload_quietanza_f24(
         "updated_at": datetime.now(timezone.utc).isoformat()
     }
     
-    await db["quietanze_f24"].insert_one(documento)
+    await db["quietanze_f24"].insert_one(documento.copy())
     
     # Genera riepilogo
     summary = generate_f24_summary(parsed_data)

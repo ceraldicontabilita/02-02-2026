@@ -255,7 +255,7 @@ async def conferma_operazione(
             "source": "operazione_confermata",
             "created_at": datetime.now(timezone.utc).isoformat()
         }
-        await db["prima_nota_cassa"].insert_one(movimento)
+        await db["prima_nota_cassa"].insert_one(movimento.copy())
         prima_nota_id = movimento["id"]
         
     elif metodo == "banca":
@@ -276,7 +276,7 @@ async def conferma_operazione(
             "source": "operazione_confermata",
             "created_at": datetime.now(timezone.utc).isoformat()
         }
-        await db["prima_nota_banca"].insert_one(movimento)
+        await db["prima_nota_banca"].insert_one(movimento.copy())
         prima_nota_id = movimento["id"]
         
     elif metodo == "assegno":
@@ -298,7 +298,7 @@ async def conferma_operazione(
             "source": "operazione_confermata",
             "created_at": datetime.now(timezone.utc).isoformat()
         }
-        await db["prima_nota_banca"].insert_one(movimento)
+        await db["prima_nota_banca"].insert_one(movimento.copy())
         prima_nota_id = movimento["id"]
         
         # Gestione Assegni - con numero fattura e fornitore
@@ -324,7 +324,7 @@ async def conferma_operazione(
                     "operazione_id": operazione_id,
                     "created_at": datetime.now(timezone.utc).isoformat()
                 }
-                await db["assegni"].insert_one(assegno)
+                await db["assegni"].insert_one(assegno.copy())
                 assegno_ids.append(assegno["id"])
             assegno_id = ",".join(assegno_ids)
         else:
@@ -344,7 +344,7 @@ async def conferma_operazione(
                 "operazione_id": operazione_id,
                 "created_at": datetime.now(timezone.utc).isoformat()
             }
-            await db["assegni"].insert_one(assegno)
+            await db["assegni"].insert_one(assegno.copy())
             assegno_id = assegno["id"]
     
     # Aggiorna operazione
@@ -556,7 +556,7 @@ async def conferma_operazioni_batch(request: ConfermaBatchRequest) -> Dict[str, 
                 "created_at": datetime.now(timezone.utc).isoformat()
             }
             
-            await db[prima_nota_collection].insert_one(movimento)
+            await db[prima_nota_collection].insert_one(movimento.copy())
             
             # Aggiorna stato operazione
             await db["operazioni_da_confermare"].update_one(
@@ -696,13 +696,13 @@ async def conferma_operazione_aruba(request: ConfermaArubaRequest) -> Dict[str, 
         }
     
     if metodo_pagamento == "cassa":
-        await db["prima_nota_cassa"].insert_one(movimento_base)
+        await db["prima_nota_cassa"].insert_one(movimento_base.copy())
         prima_nota_collection = "prima_nota_cassa"
     else:
         movimento_base["metodo_pagamento"] = metodo_pagamento
         if metodo_pagamento == "assegno" and numero_assegno:
             movimento_base["numero_assegno"] = numero_assegno
-        await db["prima_nota_banca"].insert_one(movimento_base)
+        await db["prima_nota_banca"].insert_one(movimento_base.copy())
         prima_nota_collection = "prima_nota_banca"
     
     # 4. CASCATA: Aggiorna Scadenzario (cerca scadenza collegata)
@@ -825,7 +825,7 @@ async def conferma_operazione_aruba(request: ConfermaArubaRequest) -> Dict[str, 
                 "created_at": datetime.now(timezone.utc).isoformat(),
                 "updated_at": datetime.now(timezone.utc).isoformat()
             }
-            await db["fornitori"].insert_one(nuovo_fornitore)
+            await db["fornitori"].insert_one(nuovo_fornitore.copy())
             fornitore_creato = True
             logger.info(f"Fornitore '{fornitore}' creato automaticamente da operazione Aruba")
     
@@ -1291,10 +1291,10 @@ async def riconcilia_manuale(
     
     # Salva in Prima Nota Cassa o Banca
     if destinazione == "cassa" or tipo == "incasso_pos":
-        await db.prima_nota_cassa.insert_one(movimento_prima_nota)
+        await db.prima_nota_cassa.insert_one(movimento_prima_nota.copy())
         prima_nota_collection = "prima_nota_cassa"
     else:
-        await db.prima_nota_banca.insert_one(movimento_prima_nota)
+        await db.prima_nota_banca.insert_one(movimento_prima_nota.copy())
         prima_nota_collection = "prima_nota_banca"
     
     logger.info(f"Creato movimento {prima_nota_id} in {prima_nota_collection}")
@@ -1398,7 +1398,7 @@ async def riconcilia_manuale(
                     "prima_nota_id": prima_nota_id,
                     "created_at": datetime.now(timezone.utc).isoformat()
                 }
-                await db.bonifici.insert_one(bonifico_data)
+                await db.bonifici.insert_one(bonifico_data.copy())
     
     return {
         "success": True,

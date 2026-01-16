@@ -38,7 +38,7 @@ async def create_statement(
     db = Database.get_db()
     data["id"] = str(uuid4())
     data["created_at"] = datetime.utcnow()
-    await db[Collections.BANK_STATEMENTS].insert_one(data)
+    await db[Collections.BANK_STATEMENTS].insert_one(data.copy())
     return {"message": "Statement created", "id": data["id"]}
 
 

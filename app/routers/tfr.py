@@ -154,7 +154,7 @@ async def registra_accantonamento_tfr(input_data: AccantonamentoTFRInput) -> Dic
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     
-    await db["tfr_accantonamenti"].insert_one(accantonamento)
+    await db["tfr_accantonamenti"].insert_one(accantonamento.copy())
     
     # Aggiorna TFR dipendente
     await db["employees"].update_one(
@@ -177,7 +177,7 @@ async def registra_accantonamento_tfr(input_data: AccantonamentoTFRInput) -> Dic
         },
         "created_at": datetime.now(timezone.utc).isoformat()
     }
-    await db["movimenti_contabili"].insert_one(movimento)
+    await db["movimenti_contabili"].insert_one(movimento.copy())
     
     return {
         "success": True,
@@ -241,7 +241,7 @@ async def liquida_tfr(input_data: LiquidazioneTFRInput) -> Dict[str, Any]:
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     
-    await db["tfr_liquidazioni"].insert_one(liquidazione)
+    await db["tfr_liquidazioni"].insert_one(liquidazione.copy())
     
     # Aggiorna TFR dipendente
     nuovo_tfr = tfr_disponibile - importo_lordo
@@ -262,7 +262,7 @@ async def liquida_tfr(input_data: LiquidazioneTFRInput) -> Dict[str, Any]:
         "motivo": input_data.motivo,
         "created_at": datetime.now(timezone.utc).isoformat()
     }
-    await db["movimenti_contabili"].insert_one(movimento_fondo)
+    await db["movimenti_contabili"].insert_one(movimento_fondo.copy())
     
     # 2. Ritenute
     if ritenute > 0:
@@ -275,7 +275,7 @@ async def liquida_tfr(input_data: LiquidazioneTFRInput) -> Dict[str, Any]:
             "dipendente_id": input_data.dipendente_id,
             "created_at": datetime.now(timezone.utc).isoformat()
         }
-        await db["movimenti_contabili"].insert_one(movimento_ritenute)
+        await db["movimenti_contabili"].insert_one(movimento_ritenute.copy())
     
     return {
         "success": True,
@@ -576,7 +576,7 @@ async def registra_acconto(input_data: AccontoInput) -> Dict[str, Any]:
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     
-    await db["acconti_dipendenti"].insert_one(acconto)
+    await db["acconti_dipendenti"].insert_one(acconto.copy())
     
     # Se è un acconto TFR, aggiorna anche il TFR del dipendente
     if input_data.tipo == "tfr":
@@ -598,7 +598,7 @@ async def registra_acconto(input_data: AccontoInput) -> Dict[str, Any]:
             "note": input_data.note,
             "created_at": datetime.now(timezone.utc).isoformat()
         }
-        await db["movimenti_contabili"].insert_one(movimento)
+        await db["movimenti_contabili"].insert_one(movimento.copy())
     
     return {
         "success": True,

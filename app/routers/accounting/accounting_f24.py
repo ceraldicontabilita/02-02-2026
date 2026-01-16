@@ -274,7 +274,7 @@ async def upload_f24_pdf(
         }
     
     # Insert into database
-    await db["f24_models"].insert_one(f24_record)
+    await db["f24_models"].insert_one(f24_record.copy())
     
     logger.info(f"F24 importato: {f24_id} - Scadenza {data_scadenza} - €{parsed.get('saldo_finale', 0):.2f}")
     

@@ -331,7 +331,7 @@ async def scan_fatture_per_prodotti(
                     "updated_at": now
                 }
                 
-                await db[COLLECTION_DIZIONARIO].insert_one(prodotto)
+                await db[COLLECTION_DIZIONARIO].insert_one(prodotto.copy())
                 prodotti_aggiunti += 1
                 
                 if not peso_info["peso_grammi"]:

@@ -97,7 +97,7 @@ async def sync_fattura_to_prima_nota(fattura_id: str, db) -> Dict[str, Any]:
         # Crea nuovo
         movimento_data["id"] = str(uuid.uuid4())
         movimento_data["created_at"] = datetime.now(timezone.utc).isoformat()
-        await db[collection].insert_one(movimento_data)
+        await db[collection].insert_one(movimento_data.copy())
         return {"success": True, "action": "created", "collection": collection}
 
 
@@ -150,7 +150,7 @@ async def sync_corrispettivo_to_prima_nota(corrispettivo_id: str, db) -> Dict[st
     else:
         movimento_data["id"] = str(uuid.uuid4())
         movimento_data["created_at"] = datetime.now(timezone.utc).isoformat()
-        await db["prima_nota_cassa"].insert_one(movimento_data)
+        await db["prima_nota_cassa"].insert_one(movimento_data.copy())
         return {"success": True, "action": "created"}
 
 

@@ -354,7 +354,7 @@ async def conferma_cedolino(stima: CedolinoStima) -> Dict[str, Any]:
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     
-    await db["cedolini"].insert_one(cedolino)
+    await db["cedolini"].insert_one(cedolino.copy())
     
     # Registra in prima nota salari
     movimento_salario = {
@@ -377,7 +377,7 @@ async def conferma_cedolino(stima: CedolinoStima) -> Dict[str, Any]:
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     
-    await db["prima_nota_salari"].insert_one(movimento_salario)
+    await db["prima_nota_salari"].insert_one(movimento_salario.copy())
     
     # Aggiorna TFR dipendente
     await db["employees"].update_one(

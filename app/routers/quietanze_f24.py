@@ -84,7 +84,7 @@ async def upload_quietanza_f24(
         "updated_at": datetime.now(timezone.utc).isoformat()
     }
     
-    await db["quietanze_f24"].insert_one(documento)
+    await db["quietanze_f24"].insert_one(documento.copy())
     
     # Genera riepilogo
     summary = generate_f24_summary(parsed_data)
