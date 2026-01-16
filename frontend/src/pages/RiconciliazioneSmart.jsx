@@ -760,28 +760,14 @@ function MovimentoCard({ movimento, onConferma, onIgnora, processing }) {
   );
 }
 
-// Card per movimenti manuali - riconosce se è uno stipendio dal nome
+// Card per movimenti manuali - riconosce se è uno stipendio dal tipo o dal nome
 function MovimentoCardManuale({ movimento, onAssociaFattura, onAssociaStipendio, onAssociaF24, onIgnora, processing }) {
   const tipo = TIPO_COLORS[movimento.tipo] || TIPO_COLORS.non_riconosciuto;
   
-  // Lista di pattern per riconoscere stipendi nella descrizione
-  const stipendioPatterns = [
-    /stipend/i,
-    /salari/i,
-    /bonifico.*dipendent/i,
-    /emolument/i,
-    /retribuz/i,
-    // Nomi propri comuni (pattern cognome nome o nome cognome)
-    /\b[A-Z][a-z]+\s+[A-Z][a-z]+\b/,  // Es: "Mario Rossi"
-    /ACCR\.\s*STIPEND/i,
-    /ACCREDITO.*STIPEND/i,
-  ];
-  
-  // Controlla se la descrizione sembra uno stipendio
-  const desc = movimento.descrizione || '';
+  // Se il backend ha già identificato come stipendio, usa quello
   const sembraStipendio = movimento.tipo === 'stipendio' || 
-    stipendioPatterns.some(p => p.test(desc)) ||
-    (desc.includes('BONIFICO') && /[A-Z]{2,}\s+[A-Z][a-z]+/.test(desc));
+    movimento.nome_estratto || 
+    movimento.dipendente;
   
   return (
     <div style={{ padding: 16, borderBottom: '1px solid #f1f5f9', opacity: processing ? 0.5 : 1 }}>
@@ -801,20 +787,33 @@ function MovimentoCardManuale({ movimento, onAssociaFattura, onAssociaStipendio,
           <div style={{ fontSize: 12, color: '#64748b' }}>
             {movimento.descrizione?.substring(0, 80) || '-'}
           </div>
-          {sembraStipendio && (
-            <span style={{ 
-              display: 'inline-block', marginTop: 4,
-              padding: '2px 8px', background: '#dcfce7', color: '#166534',
-              borderRadius: 4, fontSize: 10, fontWeight: 'bold'
+          {sembraStipendio && movimento.dipendente && (
+            <div style={{ 
+              marginTop: 6, padding: '4px 10px', 
+              background: '#dcfce7', borderRadius: 6,
+              display: 'inline-block'
             }}>
-              👤 Probabile Stipendio
-            </span>
+              <span style={{ fontSize: 12, color: '#166534', fontWeight: 'bold' }}>
+                👤 {movimento.dipendente.nome || movimento.nome_estratto}
+              </span>
+            </div>
+          )}
+          {sembraStipendio && !movimento.dipendente && movimento.nome_estratto && (
+            <div style={{ 
+              marginTop: 6, padding: '4px 10px', 
+              background: '#fef3c7', borderRadius: 6,
+              display: 'inline-block'
+            }}>
+              <span style={{ fontSize: 12, color: '#92400e', fontWeight: 'bold' }}>
+                👤 {movimento.nome_estratto} (da verificare)
+              </span>
+            </div>
           )}
         </div>
       </div>
       
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        {/* Se sembra uno stipendio, mostra SOLO il bottone Stipendio */}
+        {/* Se è uno stipendio, mostra SOLO il bottone Stipendio */}
         {sembraStipendio ? (
           <button onClick={onAssociaStipendio} disabled={processing} style={{
             padding: '10px 24px', background: '#10b981', color: 'white',
