@@ -164,9 +164,20 @@ export default function RiconciliazioneSmart() {
     try {
       const importo = Math.abs(movimento.importo);
       const res = await api.get(`/api/operazioni-da-confermare/smart/cerca-fatture?importo=${importo}&tolleranza=50`);
-      setSearchResults(res.data?.results || res.data || []);
+      const data = res.data;
+      // Assicurati che sia sempre un array
+      if (Array.isArray(data)) {
+        setSearchResults(data);
+      } else if (Array.isArray(data?.results)) {
+        setSearchResults(data.results);
+      } else if (Array.isArray(data?.fatture)) {
+        setSearchResults(data.fatture);
+      } else {
+        setSearchResults([]);
+      }
     } catch (e) {
       console.error('Errore ricerca:', e);
+      setSearchResults([]);
     }
   };
 
