@@ -542,14 +542,14 @@ async def conferma_operazione_aruba(request: ConfermaArubaRequest) -> Dict[str, 
 
 
 @router.post("/aruba/rifiuta")
-async def rifiuta_operazione_aruba(
-    operazione_id: str = Body(..., embed=False, alias="operazione_id"),
-    motivo: Optional[str] = Body(None, embed=False, alias="motivo")
-) -> Dict[str, Any]:
+async def rifiuta_operazione_aruba(request: RifiutaArubaRequest) -> Dict[str, Any]:
     """
     Rifiuta un'operazione Aruba (es. duplicata o non valida).
     """
     db = Database.get_db()
+    
+    operazione_id = request.operazione_id
+    motivo = request.motivo
     
     operazione = await db["operazioni_da_confermare"].find_one(
         {"id": operazione_id},
