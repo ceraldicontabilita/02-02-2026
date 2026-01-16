@@ -266,6 +266,7 @@ const router = createBrowserRouter([
       
       // === STRUMENTI ===
       { path: "documenti", element: <LazyPage><Documenti /></LazyPage> },
+      { path: "import-unificato", element: <LazyPage><ImportUnificato /></LazyPage> },
       { path: "import-export", element: <LazyPage><ImportExport /></LazyPage> },
       { path: "regole-categorizzazione", element: <LazyPage><RegoleCategorizzazione /></LazyPage> },
       { path: "verifica-coerenza", element: <LazyPage><VerificaCoerenza /></LazyPage> },
