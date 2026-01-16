@@ -351,3 +351,103 @@ function FormField({ label, value, onChange, type = 'text', required }) {
     </div>
   );
 }
+
+// Componente IBAN multipli
+function IbanSection({ ibans = [], onChange, disabled }) {
+  const [localIbans, setLocalIbans] = useState(() => ibans.length > 0 ? ibans : ['']);
+  
+  const handleIbanChange = (index, value) => {
+    const newIbans = [...localIbans];
+    newIbans[index] = value.toUpperCase().replace(/\s/g, '');
+    setLocalIbans(newIbans);
+    onChange(newIbans.filter(i => i.trim()));
+  };
+  
+  const addIban = () => {
+    if (localIbans.length < 3) {
+      setLocalIbans([...localIbans, '']);
+    }
+  };
+  
+  const removeIban = (index) => {
+    const newIbans = localIbans.filter((_, i) => i !== index);
+    setLocalIbans(newIbans.length > 0 ? newIbans : ['']);
+    onChange(newIbans.filter(i => i.trim()));
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      {localIbans.map((iban, idx) => (
+        <div key={idx} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <div style={{ flex: 1, background: '#f8fafc', borderRadius: 8, padding: 12 }}>
+            <div style={{ fontSize: 11, color: '#64748b', marginBottom: 4 }}>
+              {idx === 0 ? '🏦 IBAN Principale' : `🏦 IBAN Secondario ${idx}`}
+            </div>
+            {disabled ? (
+              <div style={{ fontSize: 14, fontWeight: 600, color: iban ? '#1e293b' : '#94a3b8', fontFamily: 'monospace', letterSpacing: 1 }}>
+                {iban || '-'}
+              </div>
+            ) : (
+              <input
+                type="text"
+                value={iban}
+                onChange={(e) => handleIbanChange(idx, e.target.value)}
+                placeholder="IT60X0542811101000000123456"
+                style={{ 
+                  width: '100%', 
+                  padding: '8px 10px', 
+                  border: '1px solid #e2e8f0', 
+                  borderRadius: 6, 
+                  fontSize: 14,
+                  fontFamily: 'monospace',
+                  letterSpacing: 1
+                }}
+              />
+            )}
+          </div>
+          {!disabled && localIbans.length > 1 && (
+            <button
+              type="button"
+              onClick={() => removeIban(idx)}
+              style={{
+                background: '#fee2e2',
+                color: '#dc2626',
+                border: 'none',
+                borderRadius: 6,
+                padding: '10px 14px',
+                cursor: 'pointer',
+                fontSize: 14
+              }}
+              title="Rimuovi IBAN"
+            >
+              🗑️
+            </button>
+          )}
+        </div>
+      ))}
+      
+      {!disabled && localIbans.length < 3 && (
+        <button
+          type="button"
+          onClick={addIban}
+          style={{
+            background: '#f0fdf4',
+            color: '#166534',
+            border: '1px dashed #86efac',
+            borderRadius: 6,
+            padding: '10px 14px',
+            cursor: 'pointer',
+            fontSize: 12,
+            fontWeight: 'bold'
+          }}
+        >
+          ➕ Aggiungi altro IBAN
+        </button>
+      )}
+      
+      <div style={{ fontSize: 10, color: '#9ca3af', marginTop: 4 }}>
+        💡 Puoi aggiungere fino a 3 IBAN. Questo facilita l'associazione automatica dei bonifici alle buste paga.
+      </div>
+    </div>
+  );
+}
