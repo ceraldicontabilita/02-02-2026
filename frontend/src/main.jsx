@@ -102,13 +102,16 @@ const PrevisioniAcquisti = lazy(() => import("./pages/PrevisioniAcquisti.jsx"));
 
 // === BANCA & PAGAMENTI ===
 const PrimaNota = lazy(() => import("./pages/PrimaNota.jsx"));
+const PrimaNotaUnificata = lazy(() => import("./pages/PrimaNotaUnificata.jsx"));
 const RiconciliazioneSmart = lazy(() => import("./pages/RiconciliazioneSmart.jsx"));
+const RiconciliazioneUnificata = lazy(() => import("./pages/RiconciliazioneUnificata.jsx"));
 const GestioneAssegni = lazy(() => import("./pages/GestioneAssegni.jsx"));
 const ArchivioBonifici = lazy(() => import("./pages/ArchivioBonifici.jsx"));
 const EstrattoContoImport = lazy(() => import("./pages/EstrattoContoImport.jsx"));
 
 // === DIPENDENTI ===
 const GestioneDipendenti = lazy(() => import("./pages/GestioneDipendenti.jsx"));
+const GestioneDipendentiUnificata = lazy(() => import("./pages/GestioneDipendentiUnificata.jsx"));
 const DipendenteRetribuzione = lazy(() => import("./pages/DipendenteRetribuzione.jsx"));
 const DipendenteProgressivi = lazy(() => import("./pages/DipendenteProgressivi.jsx"));
 const DipendenteBonifici = lazy(() => import("./pages/DipendenteBonifici.jsx"));
