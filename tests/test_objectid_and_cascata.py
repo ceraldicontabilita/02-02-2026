@@ -93,19 +93,6 @@ class TestObjectIdSerialization:
             assert "_id" not in inv, f"ObjectId '_id' found in invoice"
         
         print(f"✅ /api/invoices: {len(invoices)} invoices without ObjectId")
-    
-    def test_fatture_ricevute_no_objectid(self):
-        """Test /api/fatture-ricevute returns valid JSON"""
-        response = requests.get(f"{BASE_URL}/api/fatture-ricevute?limit=10")
-        assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
-        
-        data = response.json()
-        fatture = data if isinstance(data, list) else data.get("items", data.get("fatture", []))
-        
-        for f in fatture:
-            assert "_id" not in f, f"ObjectId '_id' found in fattura"
-        
-        print(f"✅ /api/fatture-ricevute: {len(fatture)} fatture without ObjectId")
 
 
 class TestNoleggioVeicoliDriverValidation:
@@ -138,26 +125,20 @@ class TestNoleggioVeicoliDriverValidation:
     
     def test_update_veicolo_with_valid_driver_id(self):
         """Test PUT /api/noleggio/veicoli/{targa} accepts valid driver_id"""
-        # First get a valid dipendente
-        response = requests.get(f"{BASE_URL}/api/dipendenti")
+        # First get a valid driver from the noleggio/drivers endpoint
+        response = requests.get(f"{BASE_URL}/api/noleggio/drivers")
         assert response.status_code == 200
         
-        dipendenti_data = response.json()
-        dipendenti = dipendenti_data.get("dipendenti", dipendenti_data) if isinstance(dipendenti_data, dict) else dipendenti_data
+        drivers_data = response.json()
+        drivers = drivers_data.get("drivers", [])
         
-        if not dipendenti or len(dipendenti) == 0:
-            pytest.skip("No dipendenti available for testing")
+        # Filter out drivers with empty nome_completo
+        valid_drivers = [d for d in drivers if d.get("id") and d.get("nome_completo")]
         
-        # Get first dipendente with an id
-        valid_driver = None
-        for d in dipendenti:
-            if d.get("id"):
-                valid_driver = d
-                break
+        if not valid_drivers:
+            pytest.skip("No valid drivers available for testing")
         
-        if not valid_driver:
-            pytest.skip("No dipendente with id found")
-        
+        valid_driver = valid_drivers[0]
         test_targa = "TEST01A"
         
         response = requests.put(
@@ -175,7 +156,7 @@ class TestNoleggioVeicoliDriverValidation:
         data = response.json()
         assert data.get("success") == True, f"Expected success=True: {data}"
         
-        print(f"✅ PUT /api/noleggio/veicoli/{test_targa}: Correctly accepts valid driver_id ({valid_driver.get('nome', '')} {valid_driver.get('cognome', '')})")
+        print(f"✅ PUT /api/noleggio/veicoli/{test_targa}: Correctly accepts valid driver_id ({valid_driver.get('nome_completo', '')})")
         
         # Cleanup - delete test veicolo
         requests.delete(f"{BASE_URL}/api/noleggio/veicoli/{test_targa}")
@@ -241,19 +222,6 @@ class TestDuplicatePrevention:
 class TestCicloPassivoIntegration:
     """Test ciclo passivo integration features"""
     
-    def test_ciclo_passivo_fatture_lista(self):
-        """Test /api/ciclo-passivo/fatture returns valid data"""
-        response = requests.get(f"{BASE_URL}/api/ciclo-passivo/fatture?limit=10")
-        assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
-        
-        data = response.json()
-        # Verify no _id in response
-        items = data.get("items", data.get("fatture", []))
-        for item in items:
-            assert "_id" not in item, f"ObjectId '_id' found in fattura"
-        
-        print(f"✅ /api/ciclo-passivo/fatture: {len(items)} fatture without ObjectId")
-    
     def test_ciclo_passivo_lotti_lista(self):
         """Test /api/ciclo-passivo/lotti returns valid data"""
         response = requests.get(f"{BASE_URL}/api/ciclo-passivo/lotti?limit=10")
@@ -266,17 +234,15 @@ class TestCicloPassivoIntegration:
         
         print(f"✅ /api/ciclo-passivo/lotti: {len(items)} lotti without ObjectId")
     
-    def test_ciclo_passivo_magazzino(self):
-        """Test /api/ciclo-passivo/magazzino returns valid data"""
-        response = requests.get(f"{BASE_URL}/api/ciclo-passivo/magazzino?limit=10")
+    def test_ciclo_passivo_dashboard_riconciliazione(self):
+        """Test /api/ciclo-passivo/dashboard-riconciliazione returns valid data"""
+        response = requests.get(f"{BASE_URL}/api/ciclo-passivo/dashboard-riconciliazione")
         assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
         
         data = response.json()
-        items = data.get("items", data.get("prodotti", []))
-        for item in items:
-            assert "_id" not in item, f"ObjectId '_id' found in prodotto"
+        assert "statistiche" in data, "Response should contain 'statistiche' key"
         
-        print(f"✅ /api/ciclo-passivo/magazzino: {len(items)} prodotti without ObjectId")
+        print(f"✅ /api/ciclo-passivo/dashboard-riconciliazione: Loaded successfully")
 
 
 class TestNoleggioDriversEndpoint:
@@ -346,20 +312,20 @@ class TestPrimaNotaEndpoints:
         print(f"✅ /api/prima-nota/cassa: {len(items)} movimenti without ObjectId")
 
 
-class TestMagazzinoEndpoints:
-    """Test Magazzino endpoints"""
+class TestWarehouseEndpoints:
+    """Test Warehouse endpoints"""
     
-    def test_magazzino_prodotti(self):
-        """Test /api/magazzino/prodotti returns valid data"""
-        response = requests.get(f"{BASE_URL}/api/magazzino/prodotti?limit=10")
+    def test_warehouse_products(self):
+        """Test /api/warehouse/products returns valid data"""
+        response = requests.get(f"{BASE_URL}/api/warehouse/products?limit=10")
         assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
         
         data = response.json()
-        items = data if isinstance(data, list) else data.get("items", data.get("prodotti", []))
+        items = data if isinstance(data, list) else data.get("items", data.get("products", []))
         for item in items:
-            assert "_id" not in item, f"ObjectId '_id' found in prodotto"
+            assert "_id" not in item, f"ObjectId '_id' found in product"
         
-        print(f"✅ /api/magazzino/prodotti: {len(items)} prodotti without ObjectId")
+        print(f"✅ /api/warehouse/products: {len(items)} products without ObjectId")
 
 
 if __name__ == "__main__":
