@@ -49,7 +49,7 @@ export default function RiconciliazioneSmart() {
     setLoading(true);
     autoConfirmDone.current = false;
     try {
-      const res = await api.get('/api/operazioni-da-confermare/smart/analizza?limit=500');
+      const res = await api.get('/api/operazioni-da-confermare/smart/analizza?limit=200');
       setData(res.data);
     } catch (e) {
       console.error('Errore:', e);
