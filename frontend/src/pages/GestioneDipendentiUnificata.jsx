@@ -604,7 +604,21 @@ function TabAcconti({ acconti: accontiData, dipendente, onReload }) {
       {/* Form nuovo acconto */}
       {showForm && (
         <div style={{ padding: 16, background: '#f0f9ff', borderRadius: 8, marginBottom: 20, border: '1px solid #bae6fd' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+            <div>
+              <label style={{ display: 'block', fontSize: 11, color: '#64748b', marginBottom: 4 }}>Tipo</label>
+              <select 
+                value={newAcconto.tipo} 
+                onChange={e => setNewAcconto(p => ({ ...p, tipo: e.target.value }))}
+                style={{ width: '100%', padding: '10px 12px', border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 13 }}
+              >
+                <option value="tfr">TFR</option>
+                <option value="ferie">Ferie</option>
+                <option value="tredicesima">Tredicesima</option>
+                <option value="quattordicesima">Quattordicesima</option>
+                <option value="prestito">Prestito</option>
+              </select>
+            </div>
             <Field label="Importo €" value={newAcconto.importo} onChange={v => setNewAcconto(p => ({ ...p, importo: v }))} type="number" />
             <Field label="Data" value={newAcconto.data} onChange={v => setNewAcconto(p => ({ ...p, data: v }))} type="date" />
             <Field label="Note" value={newAcconto.note} onChange={v => setNewAcconto(p => ({ ...p, note: v }))} />
