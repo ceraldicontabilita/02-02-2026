@@ -269,7 +269,12 @@ export default function RiconciliazioneUnificata() {
   }
 
   return (
-    <div style={{ padding: 'clamp(12px, 3vw, 20px)' }}>
+    <div style={{ padding: 'clamp(12px, 3vw, 20px)', position: 'relative' }}>
+      {/* Page Info Card */}
+      <div style={{ position: 'absolute', top: 0, right: 20, zIndex: 100 }}>
+        <PageInfoCard pageKey="riconciliazione" />
+      </div>
+      
       {/* Header */}
       <div style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
