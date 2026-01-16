@@ -89,27 +89,40 @@ export function ExportButton({
     setExporting(true);
 
     try {
-      // Usa XLSX se disponibile, altrimenti fallback a CSV
-      if (typeof window !== 'undefined' && window.XLSX) {
-        const XLSX = window.XLSX;
-        
-        const headers = columns.length > 0 
-          ? columns.map(c => c.label || c.key)
-          : Object.keys(data[0]);
-        
-        const keys = columns.length > 0
-          ? columns.map(c => c.key)
-          : Object.keys(data[0]);
+      const headers = columns.length > 0 
+        ? columns.map(c => c.label || c.key)
+        : Object.keys(data[0]);
+      
+      const keys = columns.length > 0
+        ? columns.map(c => c.key)
+        : Object.keys(data[0]);
 
-        const wsData = [
-          headers,
-          ...data.map(row => keys.map(key => row[key] ?? ''))
-        ];
+      const wsData = [
+        headers,
+        ...data.map(row => keys.map(key => {
+          const val = row[key];
+          // Formatta numeri
+          if (typeof val === 'number') return val;
+          if (val === null || val === undefined) return '';
+          return String(val);
+        }))
+      ];
 
-        const ws = XLSX.utils.aoa_to_sheet(wsData);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Dati');
-        XLSX.writeFile(wb, `${filename}_${new Date().toISOString().split('T')[0]}.xlsx`);
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+      
+      // Auto-width colonne
+      const colWidths = headers.map((h, i) => {
+        const maxLen = Math.max(
+          h.length,
+          ...wsData.slice(1).map(row => String(row[i] || '').length)
+        );
+        return { wch: Math.min(maxLen + 2, 50) };
+      });
+      ws['!cols'] = colWidths;
+      
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Dati');
+      XLSX.writeFile(wb, `${filename}_${new Date().toISOString().split('T')[0]}.xlsx`);
       } else {
         // Fallback a CSV
         exportToCSV();
