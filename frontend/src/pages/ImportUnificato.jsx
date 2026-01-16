@@ -1,6 +1,8 @@
 import React, { useState, useCallback } from 'react';
 import api from '../api';
 import { formatEuro } from '../lib/utils';
+import { useUpload } from '../contexts/UploadContext';
+import { PageInfoCard } from '../components/PageInfoCard';
 
 /**
  * IMPORT UNIFICATO
@@ -14,6 +16,8 @@ import { formatEuro } from '../lib/utils';
  * - Fatture (XML)
  * 
  * Il sistema riconosce automaticamente il tipo di file
+ * 
+ * UPLOAD IN BACKGROUND: Gli upload continuano anche cambiando pagina
  */
 
 const TIPI_DOCUMENTO = [
