@@ -402,14 +402,13 @@ async def invia_carnet(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     # Log the send
     db = Database.get_db()
     log_doc = {
-    await db["commercialista_log"].insert_one(log_doc.copy())
-    # REMOVED: 
         "tipo": "carnet_assegni",
         "carnet_id": carnet_id,
         "email": email,
         "data_invio": datetime.now(timezone.utc).isoformat(),
         "success": success
-    })
+    }
+    await db["commercialista_log"].insert_one(log_doc.copy())
     
     return {
         "success": success,
