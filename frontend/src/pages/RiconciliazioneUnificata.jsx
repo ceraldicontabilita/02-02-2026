@@ -686,28 +686,18 @@ function ArubaTab({ fatture, onConferma, processing }) {
     </div>
   );
 }
-                style={metodoBtn('#dbeafe', '#1e40af')}
-              >
-                🏦 Bonifico
-              </button>
-              <button
-                onClick={() => onConferma(op, 'assegno')}
-                disabled={processing === op.id}
-                style={metodoBtn('#f3e8ff', '#7c3aed')}
-              >
-                📝 Assegno
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
 
-const metodoBtn = (bg, color) => ({
+const metodoBtn = (bg, color, isPreferred = false) => ({
   padding: '10px 16px',
   background: bg,
+  color: color,
+  border: isPreferred ? '2px solid #10b981' : 'none',
+  borderRadius: 6,
+  fontWeight: 600,
+  cursor: 'pointer',
+  fontSize: 13,
+  boxShadow: isPreferred ? '0 0 0 2px rgba(16, 185, 129, 0.2)' : 'none'
+});
   color: color,
   border: 'none',
   borderRadius: 6,
