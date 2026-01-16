@@ -245,19 +245,19 @@ export default function NoleggioAuto() {
               return (
                 <div key={cat.key} style={{ 
                   background: 'white', 
-                  borderRadius: 12, 
-                  padding: 16, 
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)', 
-                  borderLeft: `4px solid ${cat.color}` 
+                  borderRadius: 8, 
+                  padding: '10px 12px', 
+                  boxShadow: '0 1px 4px rgba(0,0,0,0.06)', 
+                  borderLeft: `3px solid ${cat.color}` 
                 }}>
-                  <div style={{ fontSize: 14, color: '#6b7280', marginBottom: 8 }}>{cat.icon} {cat.label}</div>
-                  <div style={{ fontSize: 22, fontWeight: 'bold', color: cat.color }}>{formatEuro(valore)}</div>
+                  <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>{cat.icon} {cat.label}</div>
+                  <div style={{ fontSize: 16, fontWeight: 'bold', color: cat.color }}>{formatEuro(valore)}</div>
                 </div>
               );
             })}
-            <div style={{ background: '#1e3a5f', borderRadius: 12, padding: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', color: 'white' }}>
-              <div style={{ fontSize: 14, opacity: 0.9, marginBottom: 8 }}>🚗 TOTALE</div>
-              <div style={{ fontSize: 22, fontWeight: 'bold' }}>
+            <div style={{ background: '#1e3a5f', borderRadius: 8, padding: '10px 12px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', color: 'white' }}>
+              <div style={{ fontSize: 11, opacity: 0.9, marginBottom: 4 }}>🚗 TOTALE</div>
+              <div style={{ fontSize: 16, fontWeight: 'bold' }}>
                 {formatEuro(selectedVeicolo ? selectedVeicolo.totale_generale : (statistiche.totale_generale || 0))}
               </div>
             </div>
