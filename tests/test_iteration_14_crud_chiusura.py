@@ -199,7 +199,9 @@ class TestChiusuraEsercizio:
         assert response.status_code == 400, f"Expected 400, got {response.status_code}: {response.text}"
         
         data = response.json()
-        assert "non è ancora stato chiuso" in data.get("detail", "").lower() or "chiuso" in data.get("detail", "").lower()
+        # Response can use "detail" or "message" depending on error handler
+        error_msg = (data.get("detail", "") or data.get("message", "")).lower()
+        assert "non è ancora stato chiuso" in error_msg or "chiuso" in error_msg, f"Unexpected response: {data}"
 
 
 class TestRiconciliazioneManuale:
