@@ -325,7 +325,12 @@ export default function NoleggioAuto() {
 
           {/* Sezioni spese per categoria */}
           {categorie.map(cat => {
-            const spese = selectedVeicolo[cat.key] || [];
+            // Ordina le spese per data (dalla più recente alla più vecchia)
+            const spese = [...(selectedVeicolo[cat.key] || [])].sort((a, b) => {
+              const dateA = new Date(a.data || '1900-01-01');
+              const dateB = new Date(b.data || '1900-01-01');
+              return dateB - dateA; // Ordine decrescente (più recenti prima)
+            });
             if (spese.length === 0) return null;
             const isOpen = expandedSection[cat.key];
             const totaleSezione = spese.reduce((a, s) => a + (s.totale || 0), 0);
