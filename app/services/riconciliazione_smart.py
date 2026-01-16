@@ -572,6 +572,7 @@ async def analizza_movimento(movimento: Dict[str, Any]) -> Dict[str, Any]:
 async def analizza_estratto_conto_batch(limit: int = 100, solo_non_riconciliati: bool = True) -> Dict[str, Any]:
     """
     Analizza in batch i movimenti dell'estratto conto.
+    OTTIMIZZATO: Pre-carica dati per evitare N+1 query.
     
     Returns:
         Statistiche e lista di movimenti analizzati con suggerimenti
@@ -586,6 +587,47 @@ async def analizza_estratto_conto_batch(limit: int = 100, solo_non_riconciliati:
         query,
         {"_id": 0}
     ).sort("data", -1).limit(limit).to_list(limit)
+    
+    # === PRE-CARICA DATI PER EVITARE N+1 ===
+    
+    # Pre-carica dipendenti (per stipendi)
+    dipendenti = await db.employees.find({}, {"_id": 0}).to_list(500)
+    dipendenti_map = {(d.get("nome_completo") or d.get("full_name") or "").lower(): d for d in dipendenti}
+    
+    # Pre-carica F24 non pagati
+    f24_list = await db.f24_models.find(
+        {"pagato": {"$ne": True}},
+        {"_id": 0}
+    ).sort("data_scadenza", 1).to_list(500)
+    
+    # Pre-carica assegni
+    assegni = await db.assegni.find({}, {"_id": 0}).to_list(1000)
+    assegni_map = {a.get("numero", ""): a for a in assegni}
+    
+    # Pre-carica fatture recenti (ultimi 6 mesi)
+    from datetime import datetime, timedelta
+    data_limite = (datetime.now() - timedelta(days=180)).strftime("%Y-%m-%d")
+    fatture = await db.invoices.find(
+        {"invoice_date": {"$gte": data_limite}},
+        {"_id": 0}
+    ).to_list(5000)
+    
+    # Pre-carica fornitori con metodo pagamento
+    fornitori = await db.suppliers.find(
+        {"metodo_pagamento": {"$exists": True}},
+        {"_id": 0}
+    ).to_list(1000)
+    fornitori_map = {f.get("partita_iva", ""): f for f in fornitori}
+    
+    # Prepara cache per analisi
+    cache = {
+        "dipendenti": dipendenti,
+        "dipendenti_map": dipendenti_map,
+        "f24_list": f24_list,
+        "assegni_map": assegni_map,
+        "fatture": fatture,
+        "fornitori_map": fornitori_map
+    }
     
     risultati = []
     stats = {
@@ -603,7 +645,7 @@ async def analizza_estratto_conto_batch(limit: int = 100, solo_non_riconciliati:
     }
     
     for mov in movimenti:
-        analisi = await analizza_movimento(mov)
+        analisi = await analizza_movimento_con_cache(mov, cache)
         risultati.append(analisi)
         
         stats[analisi["tipo"]] = stats.get(analisi["tipo"], 0) + 1
@@ -614,3 +656,155 @@ async def analizza_estratto_conto_batch(limit: int = 100, solo_non_riconciliati:
         "stats": stats,
         "movimenti": risultati
     }
+
+
+async def analizza_movimento_con_cache(movimento: Dict[str, Any], cache: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Versione ottimizzata di analizza_movimento che usa cache pre-caricata.
+    """
+    descrizione = movimento.get("descrizione") or movimento.get("causale") or ""
+    importo = float(movimento.get("importo") or movimento.get("amount") or 0)
+    data = movimento.get("data") or movimento.get("date")
+    
+    result = {
+        "movimento_id": movimento.get("id"),
+        "data": data,
+        "descrizione": descrizione,
+        "importo": importo,
+        "tipo": "non_riconosciuto",
+        "categoria_suggerita": None,
+        "suggerimenti": [],
+        "associazione_automatica": False,
+        "richiede_conferma": True,
+        "note": None
+    }
+    
+    # 0. Check PRELIEVO ASSEGNO
+    if is_prelievo_assegno(descrizione):
+        result["tipo"] = "prelievo_assegno"
+        result["categoria_suggerita"] = "Prelievo assegno"
+        numero_assegno = estrai_numero_assegno(descrizione)
+        result["numero_assegno"] = numero_assegno
+        
+        if numero_assegno:
+            # Cerca nella cache
+            assegno = None
+            for num, ass in cache["assegni_map"].items():
+                if num and numero_assegno[-8:] in num:
+                    assegno = ass
+                    break
+            
+            if assegno:
+                result["assegno"] = assegno
+                importo_assegno = assegno.get("importo") or 0
+                if abs(importo_assegno - abs(importo)) < 0.01:
+                    result["associazione_automatica"] = True
+                    result["richiede_conferma"] = False
+                    result["suggerimenti"] = [{
+                        "tipo": "assegno",
+                        "id": assegno.get("id"),
+                        "numero": assegno.get("numero"),
+                        "importo": importo_assegno,
+                        "beneficiario": assegno.get("beneficiario"),
+                        "descrizione": f"Assegno N. {assegno.get('numero')}"
+                    }]
+        return result
+    
+    # 1. Check INCASSI POS
+    if is_incasso_pos(descrizione) and importo > 0:
+        result["tipo"] = "incasso_pos"
+        result["categoria_suggerita"] = "Incasso POS"
+        result["associazione_automatica"] = True
+        result["richiede_conferma"] = False
+        return result
+    
+    # 2. Check commissioni POS
+    if is_commissione_pos(descrizione):
+        result["tipo"] = "commissione_pos"
+        result["categoria_suggerita"] = "Commissioni POS"
+        result["associazione_automatica"] = True
+        result["richiede_conferma"] = False
+        return result
+    
+    # 3. Check commissioni bancarie
+    if is_commissione_bancaria(descrizione):
+        result["tipo"] = "commissione_bancaria"
+        result["categoria_suggerita"] = "Commissioni bancarie"
+        result["associazione_automatica"] = True
+        result["richiede_conferma"] = False
+        return result
+    
+    # 4. Check F24
+    if is_pagamento_f24(descrizione):
+        result["tipo"] = "f24"
+        result["categoria_suggerita"] = "Pagamento F24"
+        
+        # Cerca F24 con importo simile dalla cache
+        f24_match = [f for f in cache["f24_list"] if abs((f.get("importo_totale") or 0) - abs(importo)) < 1]
+        
+        if f24_match:
+            result["suggerimenti"] = [{
+                "tipo": "f24",
+                "id": f.get("id"),
+                "periodo": f.get("periodo"),
+                "importo": f.get("importo_totale"),
+                "data_scadenza": f.get("data_scadenza")
+            } for f in f24_match[:5]]
+            
+            if len(f24_match) == 1 and abs(f24_match[0].get("importo_totale", 0) - abs(importo)) < 0.01:
+                result["associazione_automatica"] = True
+                result["richiede_conferma"] = False
+        return result
+    
+    # 5. Check stipendi
+    nome_beneficiario = estrai_nome_beneficiario(descrizione)
+    if nome_beneficiario:
+        result["tipo"] = "stipendio"
+        result["categoria_suggerita"] = "Stipendio dipendente"
+        result["nome_estratto"] = nome_beneficiario
+        
+        # Cerca dipendente con fuzzy matching nella cache
+        best_match = None
+        best_score = 0
+        for d in cache["dipendenti"]:
+            nome_db = d.get("nome_completo") or d.get("full_name") or ""
+            score = fuzz.token_sort_ratio(nome_beneficiario.lower(), nome_db.lower())
+            if score > best_score and score >= 80:
+                best_score = score
+                best_match = d
+        
+        if best_match:
+            result["dipendente"] = best_match
+            result["associazione_automatica"] = True
+            result["richiede_conferma"] = False
+            result["suggerimenti"] = [{
+                "tipo": "dipendente",
+                "id": best_match.get("id"),
+                "nome": best_match.get("nome_completo") or best_match.get("full_name"),
+                "importo": abs(importo),
+                "match_score": best_score
+            }]
+        return result
+    
+    # 6. Check SDD/fatture
+    if is_sdd_addebito(descrizione) or importo < 0:
+        fornitore_leasing = get_fornitore_leasing(descrizione)
+        if fornitore_leasing:
+            result["tipo"] = "fattura_sdd"
+            result["categoria_suggerita"] = "Fattura fornitore (SDD)"
+            
+            # Cerca fatture del fornitore dalla cache
+            nome_fornitore = fornitore_leasing[0]
+            fatture_match = [f for f in cache["fatture"] 
+                          if nome_fornitore.lower() in (f.get("supplier_name") or "").lower()]
+            
+            if fatture_match:
+                result["suggerimenti"] = [{
+                    "tipo": "fattura",
+                    "id": f.get("id"),
+                    "numero": f.get("invoice_number"),
+                    "importo": f.get("total_amount"),
+                    "fornitore": f.get("supplier_name")
+                } for f in fatture_match[:5]]
+    
+    return result

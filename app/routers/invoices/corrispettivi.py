@@ -22,13 +22,18 @@ async def list_corrispettivi(
     skip: int = 0, 
     limit: int = 10000,
     data_da: str = None,
-    data_a: str = None
+    data_a: str = None,
+    anno: int = None
 ) -> List[Dict[str, Any]]:
-    """List corrispettivi con filtro opzionale per data."""
+    """List corrispettivi con filtro opzionale per data o anno."""
     db = Database.get_db()
     
     query = {}
-    if data_da or data_a:
+    
+    # Filtro per anno (prioritario)
+    if anno:
+        query["data"] = {"$regex": f"^{anno}"}
+    elif data_da or data_a:
         query["data"] = {}
         if data_da:
             query["data"]["$gte"] = data_da
