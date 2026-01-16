@@ -82,7 +82,7 @@ export default function RiconciliazioneSmart() {
   const handleConfermaAruba = async (op, metodo) => {
     setProcessing(op.id);
     try {
-      await api.post('/api/operazioni-da-confermare/aruba/conferma', {
+      await api.post('/api/operazioni-da-confermare/conferma-aruba', {
         operazione_id: op.id,
         metodo_pagamento: metodo,
         numero_assegno: op.numero_assegno || null
