@@ -37,7 +37,6 @@ const NAV_ITEMS = [
     children: [
       { to: "/prima-nota", label: "Prima Nota Cassa/Banca", icon: "📒" },
       { to: "/riconciliazione-smart", label: "Riconciliazione Smart", icon: "⚡" },
-      { to: "/dashboard-riconciliazione", label: "Dashboard Riconc.", icon: "📈" },
       { to: "/gestione-assegni", label: "Gestione Assegni", icon: "📝" },
       { to: "/archivio-bonifici", label: "Archivio Bonifici", icon: "📂" },
     ]
