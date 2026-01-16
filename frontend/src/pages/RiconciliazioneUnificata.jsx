@@ -722,6 +722,17 @@ function MovimentoCard({ movimento, onConferma, onIgnora, processing, showFattur
           <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>
             {movimento.descrizione?.substring(0, 80) || '-'}
           </div>
+          {/* Nome fornitore/dipendente se presente */}
+          {(movimento.fornitore || movimento.dipendente?.nome_completo || movimento.nome_estratto) && (
+            <div style={{ 
+              marginTop: 4, 
+              fontSize: 12, 
+              fontWeight: 600,
+              color: '#3b82f6'
+            }}>
+              👤 {movimento.fornitore || movimento.dipendente?.nome_completo || movimento.nome_estratto}
+            </div>
+          )}
           {hasMatch && suggerimento && (
             <div style={{ 
               marginTop: 8, 
@@ -731,7 +742,7 @@ function MovimentoCard({ movimento, onConferma, onIgnora, processing, showFattur
               fontSize: 12,
               display: 'inline-block'
             }}>
-              🔗 {suggerimento.fornitore || suggerimento.dipendente || 'Match'}: {formatEuro(suggerimento.importo || 0)}
+              🔗 {suggerimento.fornitore || suggerimento.nome || suggerimento.dipendente || 'Match'}: {formatEuro(suggerimento.importo || 0)}
             </div>
           )}
         </div>
