@@ -195,13 +195,16 @@ const router = createBrowserRouter([
       
       // === BANCA & PAGAMENTI ===
       { path: "prima-nota", element: <LazyPage><PrimaNotaUnificata /></LazyPage> },
+      { path: "prima-nota/:tipo", element: <LazyPage><PrimaNotaUnificata /></LazyPage> },
       { path: "riconciliazione", element: <LazyPage><RiconciliazioneUnificata /></LazyPage> },
+      { path: "riconciliazione/:tab", element: <LazyPage><RiconciliazioneUnificata /></LazyPage> },
       { path: "gestione-assegni", element: <LazyPage><GestioneAssegni /></LazyPage> },
       { path: "archivio-bonifici", element: <LazyPage><ArchivioBonifici /></LazyPage> },
       { path: "estratto-conto", element: <LazyPage><EstrattoContoImport /></LazyPage> },
       
       // === DIPENDENTI ===
       { path: "dipendenti", element: <LazyPage><GestioneDipendentiUnificata /></LazyPage> },
+      { path: "dipendenti/:tab", element: <LazyPage><GestioneDipendentiUnificata /></LazyPage> },
       { path: "cedolini", element: <LazyPage><Cedolini /></LazyPage> },
       { path: "tfr", element: <LazyPage><TFR /></LazyPage> },
       { path: "noleggio-auto", element: <LazyPage><NoleggioAuto /></LazyPage> },
