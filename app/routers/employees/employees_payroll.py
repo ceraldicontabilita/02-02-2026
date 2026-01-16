@@ -141,13 +141,55 @@ async def upload_payslip_pdf(file: UploadFile = File(...)) -> Dict[str, Any]:
         for payslip in payslips:
             try:
                 cf = payslip.get("codice_fiscale", "")
-                if not cf:
-                    results["errors"].append({"nome": payslip.get("nome_completo", "?"), "error": "CF mancante"})
-                    results["failed"] += 1
-                    continue
-                
                 nome = payslip.get("nome_completo") or f"{payslip.get('cognome', '')} {payslip.get('nome', '')}".strip()
                 periodo = payslip.get("periodo", "")
+                
+                # Se manca il CF, prova a cercarlo nell'anagrafica tramite nome
+                existing = None
+                emp_id = None
+                is_new = False
+                
+                if cf:
+                    # Cerca per CF
+                    existing = await db[Collections.EMPLOYEES].find_one({"codice_fiscale": cf}, {"_id": 0, "id": 1, "nome_completo": 1, "codice_fiscale": 1})
+                
+                if not existing and nome:
+                    # Fallback: cerca per nome simile
+                    nome_upper = nome.upper().strip()
+                    # Cerca con fuzzy match sul nome
+                    all_employees = await db[Collections.EMPLOYEES].find({}, {"_id": 0, "id": 1, "nome_completo": 1, "codice_fiscale": 1, "cognome": 1, "nome": 1}).to_list(500)
+                    
+                    for emp in all_employees:
+                        emp_nome_completo = (emp.get("nome_completo") or "").upper().strip()
+                        emp_cognome = (emp.get("cognome") or "").upper().strip()
+                        emp_nome = (emp.get("nome") or "").upper().strip()
+                        
+                        # Match esatto sul nome completo
+                        if emp_nome_completo and emp_nome_completo == nome_upper:
+                            existing = emp
+                            cf = emp.get("codice_fiscale", cf)
+                            logger.info(f"Match dipendente per nome completo: {nome} -> CF: {cf}")
+                            break
+                        
+                        # Match su cognome + nome separati
+                        emp_full = f"{emp_cognome} {emp_nome}".strip()
+                        if emp_full and emp_full == nome_upper:
+                            existing = emp
+                            cf = emp.get("codice_fiscale", cf)
+                            logger.info(f"Match dipendente per cognome+nome: {nome} -> CF: {cf}")
+                            break
+                        
+                        # Match parziale (contiene)
+                        if emp_nome_completo and nome_upper in emp_nome_completo:
+                            existing = emp
+                            cf = emp.get("codice_fiscale", cf)
+                            logger.info(f"Match parziale dipendente: {nome} -> {emp_nome_completo} -> CF: {cf}")
+                            break
+                
+                if not cf and not existing:
+                    results["errors"].append({"nome": nome or "?", "error": "CF mancante e dipendente non trovato in anagrafica"})
+                    results["failed"] += 1
+                    continue
                 
                 # Check/create employee
                 existing = await db[Collections.EMPLOYEES].find_one({"codice_fiscale": cf}, {"_id": 0, "id": 1, "nome_completo": 1})
