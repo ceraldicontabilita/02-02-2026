@@ -309,9 +309,25 @@ export default function RiconciliazioneUnificata() {
             🔄 Aggiorna
           </button>
           
+          {/* Bottone Filtri */}
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            style={{
+              padding: '10px 16px',
+              background: showFilters ? '#3b82f6' : '#f1f5f9',
+              color: showFilters ? 'white' : '#374151',
+              border: 'none',
+              borderRadius: 8,
+              cursor: 'pointer',
+              fontWeight: 600
+            }}
+          >
+            🔍 Filtri {showFilters ? '▲' : '▼'}
+          </button>
+          
           {/* Export movimenti banca */}
           <ExportButton
-            data={movimentiBanca}
+            data={movimentiBancaFiltrati}
             columns={[
               { key: 'data', label: 'Data' },
               { key: 'descrizione', label: 'Descrizione' },
@@ -324,6 +340,86 @@ export default function RiconciliazioneUnificata() {
           />
         </div>
       </div>
+
+      {/* Pannello Filtri Avanzati */}
+      {showFilters && (
+        <div style={{
+          background: 'white',
+          borderRadius: 12,
+          padding: 16,
+          marginBottom: 16,
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+          gap: 12
+        }}>
+          <div>
+            <label style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 4 }}>📅 Data Da</label>
+            <input
+              type="date"
+              value={filters.dataFrom}
+              onChange={(e) => setFilters({...filters, dataFrom: e.target.value})}
+              style={{ width: '100%', padding: 8, border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 13 }}
+            />
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 4 }}>📅 Data A</label>
+            <input
+              type="date"
+              value={filters.dataTo}
+              onChange={(e) => setFilters({...filters, dataTo: e.target.value})}
+              style={{ width: '100%', padding: 8, border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 13 }}
+            />
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 4 }}>💰 Importo Min (€)</label>
+            <input
+              type="number"
+              placeholder="0"
+              value={filters.importoMin}
+              onChange={(e) => setFilters({...filters, importoMin: e.target.value})}
+              style={{ width: '100%', padding: 8, border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 13 }}
+            />
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 4 }}>💰 Importo Max (€)</label>
+            <input
+              type="number"
+              placeholder="999999"
+              value={filters.importoMax}
+              onChange={(e) => setFilters({...filters, importoMax: e.target.value})}
+              style={{ width: '100%', padding: 8, border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 13 }}
+            />
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 4 }}>🔎 Cerca</label>
+            <input
+              type="text"
+              placeholder="Descrizione, tipo..."
+              value={filters.search}
+              onChange={(e) => setFilters({...filters, search: e.target.value})}
+              style={{ width: '100%', padding: 8, border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 13 }}
+            />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+            <button
+              onClick={() => setFilters({ dataFrom: '', dataTo: '', importoMin: '', importoMax: '', search: '' })}
+              style={{
+                padding: '8px 16px',
+                background: '#fee2e2',
+                color: '#dc2626',
+                border: 'none',
+                borderRadius: 6,
+                cursor: 'pointer',
+                fontWeight: 600,
+                fontSize: 13
+              }}
+            >
+              ✕ Reset
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Tab Navigation */}
       <div style={{ 
