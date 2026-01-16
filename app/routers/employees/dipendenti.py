@@ -93,6 +93,46 @@ async def get_dipendenti_stats() -> Dict[str, Any]:
     }
 
 
+@router.post("/sync-iban")
+async def sync_iban_field() -> Dict[str, Any]:
+    """
+    Sincronizza il campo 'iban' (singolo) con 'ibans' (array).
+    Per ogni dipendente con 'iban' popolato ma 'ibans' vuoto,
+    copia il valore in un array.
+    """
+    db = Database.get_db()
+    
+    # Trova dipendenti con iban ma senza ibans
+    dipendenti = await db[Collections.EMPLOYEES].find(
+        {
+            "iban": {"$exists": True, "$nin": [None, ""]},
+            "$or": [
+                {"ibans": {"$exists": False}},
+                {"ibans": None},
+                {"ibans": []},
+                {"ibans": {"$size": 0}}
+            ]
+        },
+        {"id": 1, "iban": 1, "_id": 0}
+    ).to_list(1000)
+    
+    aggiornati = 0
+    for dip in dipendenti:
+        iban = dip.get("iban", "").upper().replace(" ", "")
+        if iban:
+            await db[Collections.EMPLOYEES].update_one(
+                {"id": dip["id"]},
+                {"$set": {"ibans": [iban]}}
+            )
+            aggiornati += 1
+    
+    return {
+        "success": True,
+        "dipendenti_analizzati": len(dipendenti),
+        "dipendenti_aggiornati": aggiornati
+    }
+
+
 @router.get("/tipi-turno")
 async def get_tipi_turno() -> Dict[str, Any]:
     """Ritorna i tipi di turno disponibili."""
