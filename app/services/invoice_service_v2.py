@@ -306,17 +306,17 @@ class InvoiceServiceV2:
         payment_date = payment_data.get("date", datetime.now(timezone.utc).isoformat())
         
         # 4. Crea movimento Prima Nota
-        movement_collection = "cash_movements" if method == "cassa" else "bank_movements"
+        movement_collection = "prima_nota_cassa" if method == "cassa" else "prima_nota_banca"
         
         movement_doc = {
             "id": self._generate_id(),
-            "date": payment_date,
-            "type": "uscita",
-            "amount": amount,
-            "description": f"Pagamento fattura {invoice['invoice_number']} - {invoice['supplier_name']}",
-            "category": f"Fattura {method.capitalize()}",
-            "invoice_id": invoice_id,
-            "supplier_id": invoice.get("supplier_id"),
+            "data": payment_date,
+            "tipo": "uscita",
+            "importo": amount,
+            "descrizione": f"Pagamento fattura {invoice['invoice_number']} - {invoice['supplier_name']}",
+            "categoria": f"Fattura {method.capitalize()}",
+            "fattura_id": invoice_id,
+            "fornitore_id": invoice.get("supplier_id"),
             "created_at": datetime.now(timezone.utc).isoformat()
         }
         
