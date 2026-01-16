@@ -49,10 +49,17 @@ export default function DipendenteBonifici() {
   const handleSaveIban = async () => {
     if (!selectedDip) return;
     try {
-      await api.put(`/api/dipendenti/${selectedDip.id}`, { iban });
-      alert('✅ IBAN salvato');
+      // Salva sia nel campo singolo 'iban' che nell'array 'ibans' per compatibilità
+      const currentIbans = selectedDip.ibans || [];
+      const newIbans = iban ? [...new Set([iban.toUpperCase().replace(/\s/g, ''), ...currentIbans.filter(i => i !== iban)])] : currentIbans;
+      
+      await api.put(`/api/dipendenti/${selectedDip.id}`, { 
+        iban: iban.toUpperCase().replace(/\s/g, ''),
+        ibans: newIbans.slice(0, 3) // Max 3 IBAN
+      });
+      alert('✅ IBAN salvato e sincronizzato');
       setEditMode(false);
-      setSelectedDip({ ...selectedDip, iban });
+      setSelectedDip({ ...selectedDip, iban, ibans: newIbans });
       loadDipendenti();
     } catch (e) {
       alert('Errore: ' + (e.response?.data?.detail || e.message));
