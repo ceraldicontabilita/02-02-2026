@@ -18,8 +18,16 @@
   - **Dashboard Riconciliazione RIMOSSA**: Eliminata pagina `/dashboard-riconciliazione` e link dal menu
   - **Auto-conferma Assegni**: Gli assegni con importo esatto uguale alla fattura associata vengono confermati automaticamente (solo i casi dubbi rimangono)
   - **Ricerca nel Modal Fatture**: Aggiunta barra di ricerca nel popup selezione fattura per cercare per **nome fornitore** o **importo**. Mostra anche la differenza di importo e evidenzia i "MATCH ESATTO"
+- **COMPLETATO**: IBAN Multipli per Dipendenti:
+  - Aggiunta sezione **"🏦 IBAN Bancari"** nella scheda Anagrafica Dipendenti
+  - Ogni dipendente può avere fino a **3 IBAN** (principale + secondari)
+  - Facilita l'associazione automatica dei bonifici alle buste paga
+  - Backend aggiornato per salvare il campo `ibans` (array)
 - **FILES MODIFICATI**:
   - `/app/frontend/src/pages/RiconciliazioneSmart.jsx` - Auto-conferma assegni + modal con ricerca
+  - `/app/frontend/src/pages/GestioneDipendenti.jsx` - Sezione IBAN multipli
+  - `/app/frontend/src/components/dipendenti/DipendenteDetailModal.jsx` - Tab Acconti + IBAN
+  - `/app/app/routers/employees/dipendenti.py` - Campo ibans nel backend
   - `/app/frontend/src/main.jsx` - Rimossa route DashboardRiconciliazione
   - `/app/frontend/src/App.jsx` - Rimosso link menu DashboardRiconciliazione
 - **FILES ELIMINATI**:
