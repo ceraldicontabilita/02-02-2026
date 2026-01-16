@@ -312,7 +312,7 @@ export default function GestioneDipendentiUnificata() {
                   {TABS.map(tab => (
                     <button
                       key={tab.id}
-                      onClick={() => setActiveTab(tab.id)}
+                      onClick={() => handleTabChange(tab.id)}
                       style={{
                         padding: '12px 16px',
                         background: 'none',
