@@ -182,6 +182,7 @@ const router = createBrowserRouter([
     children: [
       // === CORE ===
       { index: true, element: <LazyPage><Dashboard /></LazyPage> },
+      { path: "analytics", element: <LazyPage><DashboardAnalytics /></LazyPage> },
       
       // === FATTURE & ACQUISTI ===
       { path: "ciclo-passivo", element: <LazyPage><CicloPassivoIntegrato /></LazyPage> },
