@@ -193,26 +193,14 @@ const router = createBrowserRouter([
       
       // === BANCA & PAGAMENTI ===
       { path: "prima-nota", element: <LazyPage><PrimaNotaUnificata /></LazyPage> },
-      { path: "prima-nota-legacy", element: <LazyPage><PrimaNota /></LazyPage> },
       { path: "riconciliazione", element: <LazyPage><RiconciliazioneUnificata /></LazyPage> },
-      { path: "riconciliazione-smart", element: <LazyPage><RiconciliazioneSmart /></LazyPage> },
       { path: "gestione-assegni", element: <LazyPage><GestioneAssegni /></LazyPage> },
       { path: "archivio-bonifici", element: <LazyPage><ArchivioBonifici /></LazyPage> },
       { path: "estratto-conto", element: <LazyPage><EstrattoContoImport /></LazyPage> },
       
       // === DIPENDENTI ===
       { path: "dipendenti", element: <LazyPage><GestioneDipendentiUnificata /></LazyPage> },
-      { path: "dipendenti-legacy", element: <LazyPage><GestioneDipendenti /></LazyPage> },
-      { path: "dipendenti-retribuzione", element: <LazyPage><DipendenteRetribuzione /></LazyPage> },
-      { path: "dipendenti-progressivi", element: <LazyPage><DipendenteProgressivi /></LazyPage> },
-      { path: "dipendenti-bonifici", element: <LazyPage><DipendenteBonifici /></LazyPage> },
-      { path: "dipendenti-agevolazioni", element: <LazyPage><DipendenteAgevolazioni /></LazyPage> },
-      { path: "dipendenti-contratti", element: <LazyPage><DipendenteContratti /></LazyPage> },
       { path: "cedolini", element: <LazyPage><Cedolini /></LazyPage> },
-      { path: "prima-nota-salari", element: <LazyPage><PrimaNotaSalari /></LazyPage> },
-      { path: "dipendenti-libro-unico", element: <LazyPage><DipendenteLibroUnico /></LazyPage> },
-      { path: "dipendenti-libretti", element: <LazyPage><DipendenteLibretti /></LazyPage> },
-      { path: "dipendenti-acconti", element: <LazyPage><DipendenteAcconti /></LazyPage> },
       { path: "tfr", element: <LazyPage><TFR /></LazyPage> },
       { path: "noleggio-auto", element: <LazyPage><NoleggioAuto /></LazyPage> },
       
