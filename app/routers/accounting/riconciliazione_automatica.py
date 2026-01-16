@@ -602,7 +602,7 @@ async def riconcilia_estratto_conto() -> Dict[str, Any]:
                                 "data": {"$in": date_weekend},
                                 "categoria": "POS",
                                 "riconciliato": {"$ne": True}
-                            }).to_list(10)
+                            }, {"_id": 0}).to_list(10)
                             
                             somma_pos = sum(p.get("importo", 0) for p in pos_weekend)
                             
