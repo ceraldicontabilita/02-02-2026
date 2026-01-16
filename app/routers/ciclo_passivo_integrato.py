@@ -1377,7 +1377,7 @@ async def scarico_per_produzione(
         "note": f"Scarico per produzione - {motivo}",
         "created_at": datetime.now(timezone.utc).isoformat()
     }
-    await db[COL_MOVIMENTI_MAG].insert_one(movimento)
+    await db[COL_MOVIMENTI_MAG].insert_one(movimento.copy())
     
     # Aggiorna giacenza prodotto
     await db[COL_MAGAZZINO].update_one(
