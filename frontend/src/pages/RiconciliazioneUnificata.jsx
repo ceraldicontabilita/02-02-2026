@@ -366,6 +366,29 @@ export default function RiconciliazioneUnificata() {
           />
         )}
       </div>
+
+      {/* Bottone Carica Altri */}
+      {hasMore && ['banca', 'assegni', 'stipendi'].includes(activeTab) && (
+        <div style={{ textAlign: 'center', marginTop: 20 }}>
+          <button
+            onClick={loadMore}
+            disabled={loadingMore}
+            style={{
+              padding: '12px 28px',
+              background: loadingMore ? '#94a3b8' : '#3b82f6',
+              color: 'white',
+              border: 'none',
+              borderRadius: 8,
+              fontWeight: 600,
+              fontSize: 14,
+              cursor: loadingMore ? 'wait' : 'pointer',
+              transition: 'all 0.2s'
+            }}
+          >
+            {loadingMore ? '⏳ Caricamento...' : `📥 Carica altri (${currentLimit} caricati)`}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
