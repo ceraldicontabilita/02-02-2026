@@ -188,7 +188,7 @@ async def get_or_create_fornitore(db, parsed_data: Dict) -> Dict[str, Any]:
     if existing:
         return {**existing, "nuovo": False}
     
-    # Crea nuovo fornitore
+    # Crea nuovo fornitore - usa copy per evitare che insert_one modifichi il dict originale
     nuovo = {
         "id": str(uuid.uuid4()),
         "partita_iva": partita_iva,
@@ -206,7 +206,8 @@ async def get_or_create_fornitore(db, parsed_data: Dict) -> Dict[str, Any]:
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     
-    await db[COL_FORNITORI].insert_one(nuovo)
+    # Usa copy() per evitare che insert_one aggiunga _id al dict originale
+    await db[COL_FORNITORI].insert_one(nuovo.copy())
     logger.info(f"✅ Nuovo fornitore creato: {nuovo['ragione_sociale']}")
     return {**nuovo, "nuovo": True}
 
