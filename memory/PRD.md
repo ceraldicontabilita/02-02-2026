@@ -30,6 +30,25 @@
 - Navbar mobile bottom visibile
 - Touch-friendly interactions (min-height 44px per bottoni)
 
+#### UPLOAD IN BACKGROUND PERSISTENTE 🔄
+- **Context**: `/app/frontend/src/contexts/UploadContext.jsx` - Gestisce upload anche cambiando pagina
+- **Component**: `/app/frontend/src/components/UploadStatusBar.jsx` - Barra flottante con progresso
+- Upload continua in background navigando tra pagine
+- Notifiche al completamento/errore
+- Supportato su: Import Unificato, tutte le pagine con upload
+
+#### PAGE INFO CARD 📋
+- **Component**: `/app/frontend/src/components/PageInfoCard.jsx` - Card informativa compatta
+- Mostra per ogni pagina: collegamenti, dipendenze, azioni a cascata
+- Posizionata in alto a destra, espandibile
+- Implementata su: Prima Nota, Riconciliazione, Dipendenti, Import Unificato
+
+#### FIX BUG DIPENDENTI
+- Tab Contratti: corretto endpoint da `/{id}/contratti` a `/contratti?dipendente_id={id}`
+- Tab Bonifici: corretto endpoint per cercare per nome beneficiario
+- Tab Acconti: gestita risposta API strutturata (oggetto invece di array)
+- Aggiunte card TFR: Accantonato, Totale Acconti, Saldo
+
 #### FIX CRITICI
 - **Fornitori**: Endpoint `/api/suppliers` ora estrae 155 fornitori da collezione `invoices` (aggregazione MongoDB)
 - **Dashboard Analytics**: Endpoint corretto da `/api/fatture-ricevute/lista` a `/api/fatture-ricevute/archivio`
