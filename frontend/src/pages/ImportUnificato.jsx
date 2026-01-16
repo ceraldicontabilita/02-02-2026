@@ -260,7 +260,12 @@ export default function ImportUnificato() {
   const errorCount = results.filter(r => r.status === 'error').length;
 
   return (
-    <div style={{ padding: 'clamp(12px, 3vw, 20px)' }}>
+    <div style={{ padding: 'clamp(12px, 3vw, 20px)', position: 'relative' }}>
+      {/* Page Info Card */}
+      <div style={{ position: 'absolute', top: 0, right: 20, zIndex: 100 }}>
+        <PageInfoCard pageKey="import" />
+      </div>
+      
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ margin: 0, fontSize: 'clamp(20px, 4vw, 26px)', color: '#1e293b' }}>
@@ -269,6 +274,33 @@ export default function ImportUnificato() {
         <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: 14 }}>
           Carica tutti i tipi di documenti con un solo upload • Il sistema riconosce automaticamente il formato
         </p>
+        
+        {/* Toggle Background Mode */}
+        <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={backgroundMode}
+              onChange={(e) => setBackgroundMode(e.target.checked)}
+              style={{ width: 18, height: 18, cursor: 'pointer' }}
+            />
+            <span style={{ fontSize: 13, color: '#374151' }}>
+              🔄 Upload in background (puoi navigare mentre carica)
+            </span>
+          </label>
+          {hasActiveUploads && (
+            <span style={{ 
+              padding: '4px 10px', 
+              background: '#dbeafe', 
+              color: '#1d4ed8', 
+              borderRadius: 12, 
+              fontSize: 11,
+              fontWeight: 600
+            }}>
+              ⏳ Upload in corso...
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Selezione Tipo (opzionale) */}
