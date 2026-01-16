@@ -364,18 +364,33 @@ export default function RiconciliazioneSmart() {
       {/* Stats rapide */}
       <div style={{ 
         display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', 
+        gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', 
         gap: 12, 
         marginBottom: 20 
       }}>
+        <StatCard label="🧾 Aruba" value={arubaOps.length} color="#7c3aed" subtitle="Da confermare" />
         <StatCard label="📝 Assegni" value={assegni.length} color="#f59e0b" subtitle="Da verificare" />
         <StatCard label="✅ Altri Auto" value={altriAuto.length} color="#10b981" subtitle="Riconosciuti" />
         <StatCard label="🔍 Manuali" value={manuali.length} color="#6366f1" subtitle="Da associare" />
-        <StatCard label="📊 Totale" value={data?.stats?.totale || 0} color="#3b82f6" />
+        <StatCard label="📊 Totale" value={(arubaOps.length || 0) + (data?.stats?.totale || 0)} color="#3b82f6" />
       </div>
 
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+        <button
+          onClick={() => setActiveTab('aruba')}
+          style={{
+            padding: '12px 20px',
+            background: activeTab === 'aruba' ? '#7c3aed' : '#f1f5f9',
+            color: activeTab === 'aruba' ? 'white' : '#374151',
+            border: 'none',
+            borderRadius: 8,
+            fontWeight: 'bold',
+            cursor: 'pointer'
+          }}
+        >
+          🧾 Fatture Aruba ({arubaOps.length})
+        </button>
         <button
           onClick={() => setActiveTab('assegni')}
           style={{
