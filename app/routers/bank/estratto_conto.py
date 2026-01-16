@@ -740,14 +740,14 @@ async def riconcilia_stipendi_automatico(anno: Optional[int] = Query(None)) -> D
                 if len(p) > 3:  # Solo parole significative
                     dipendenti_map[p] = {"nome": nome}
     
-    # Se vuota, prova con collezione dipendenti
+    # Se vuota, prova con collezione employees (nome corretto)
     if not dipendenti_map:
-        dipendenti = await db["dipendenti"].find({}, {"_id": 0, "id": 1, "nome": 1, "cognome": 1}).to_list(1000)
+        dipendenti = await db["employees"].find({}, {"_id": 0, "id": 1, "nome": 1, "cognome": 1, "nome_completo": 1}).to_list(1000)
         for d in dipendenti:
-            nome_completo = f"{d.get('cognome', '')} {d.get('nome', '')}".strip().upper()
+            nome_completo = d.get("nome_completo") or f"{d.get('cognome', '')} {d.get('nome', '')}".strip().upper()
             nome_inv = f"{d.get('nome', '')} {d.get('cognome', '')}".strip().upper()
             if nome_completo:
-                dipendenti_map[nome_completo] = d
+                dipendenti_map[nome_completo.upper()] = d
             if nome_inv:
                 dipendenti_map[nome_inv] = d
     
