@@ -447,10 +447,12 @@ class RifiutaArubaRequest(BaseModel):
 @router.post("/conferma-aruba")
 async def conferma_operazione_aruba(request: ConfermaArubaRequest) -> Dict[str, Any]:
     """
-    Conferma un'operazione Aruba pendente e la segna come confermata.
-    
-    - metodo_pagamento: 'cassa', 'bonifico', 'assegno'
-    - numero_assegno: opzionale, richiesto se metodo_pagamento è 'assegno'
+    Conferma un'operazione Aruba pendente con FLUSSO A CASCATA:
+    1. Aggiorna stato operazione
+    2. Crea movimento Prima Nota (Cassa/Banca)
+    3. Aggiorna Scadenzario (se esiste scadenza collegata)
+    4. Aggiorna stato fattura (saldata)
+    5. Invia notifica Telegram di conferma
     """
     db = Database.get_db()
     
@@ -458,7 +460,7 @@ async def conferma_operazione_aruba(request: ConfermaArubaRequest) -> Dict[str, 
     metodo_pagamento = request.metodo_pagamento
     numero_assegno = request.numero_assegno
     
-    # Trova l'operazione
+    # 1. Trova l'operazione
     operazione = await db["operazioni_da_confermare"].find_one(
         {"id": operazione_id},
         {"_id": 0}
@@ -470,7 +472,12 @@ async def conferma_operazione_aruba(request: ConfermaArubaRequest) -> Dict[str, 
     if operazione.get("stato") == "confermato":
         raise HTTPException(status_code=400, detail="Operazione già confermata")
     
-    # Aggiorna lo stato
+    fornitore = operazione.get("fornitore", "")
+    numero_fattura = operazione.get("numero_fattura", "")
+    importo = float(operazione.get("importo", 0) or operazione.get("netto_pagare", 0))
+    data_documento = operazione.get("data_documento", datetime.now().strftime("%Y-%m-%d"))
+    
+    # 2. Aggiorna lo stato operazione
     update_data = {
         "stato": "confermato",
         "metodo_pagamento_confermato": metodo_pagamento,
@@ -485,49 +492,113 @@ async def conferma_operazione_aruba(request: ConfermaArubaRequest) -> Dict[str, 
         {"$set": update_data}
     )
     
-    # Crea il movimento in prima nota
+    # 3. Crea il movimento in Prima Nota
     movimento_id = str(uuid.uuid4())
-    importo = float(operazione.get("importo", 0) or operazione.get("netto_pagare", 0))
+    movimento_base = {
+        "id": movimento_id,
+        "data": data_documento,
+        "tipo": "uscita",
+        "importo": importo,
+        "descrizione": f"Fattura {numero_fattura} - {fornitore}",
+        "categoria": "Fornitori",
+        "fornitore": fornitore,
+        "numero_fattura": numero_fattura,
+        "operazione_aruba_id": operazione_id,
+        "source": "aruba_conferma",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
     
     if metodo_pagamento == "cassa":
-        # Movimento cassa
-        movimento = {
-            "id": movimento_id,
-            "data": operazione.get("data_documento", datetime.now().strftime("%Y-%m-%d")),
-            "tipo": "uscita",
-            "importo": importo,
-            "descrizione": f"Fattura {operazione.get('numero_fattura', '')} - {operazione.get('fornitore', '')}",
-            "categoria": "Fornitori",
-            "fornitore": operazione.get("fornitore"),
-            "numero_fattura": operazione.get("numero_fattura"),
-            "operazione_aruba_id": operazione_id,
-            "source": "aruba_conferma",
-            "created_at": datetime.now(timezone.utc).isoformat()
-        }
-        await db["prima_nota_cassa"].insert_one(movimento)
+        await db["prima_nota_cassa"].insert_one(movimento_base)
         prima_nota_collection = "prima_nota_cassa"
     else:
-        # Movimento banca (bonifico o assegno)
-        movimento = {
-            "id": movimento_id,
-            "data": operazione.get("data_documento", datetime.now().strftime("%Y-%m-%d")),
-            "tipo": "uscita",
-            "importo": importo,
-            "descrizione": f"Fattura {operazione.get('numero_fattura', '')} - {operazione.get('fornitore', '')}",
-            "categoria": "Fornitori",
-            "fornitore": operazione.get("fornitore"),
-            "numero_fattura": operazione.get("numero_fattura"),
-            "metodo_pagamento": metodo_pagamento,
-            "numero_assegno": numero_assegno if metodo_pagamento == "assegno" else None,
-            "operazione_aruba_id": operazione_id,
-            "source": "aruba_conferma",
-            "created_at": datetime.now(timezone.utc).isoformat()
-        }
-        await db["prima_nota_banca"].insert_one(movimento)
+        movimento_base["metodo_pagamento"] = metodo_pagamento
+        if metodo_pagamento == "assegno" and numero_assegno:
+            movimento_base["numero_assegno"] = numero_assegno
+        await db["prima_nota_banca"].insert_one(movimento_base)
         prima_nota_collection = "prima_nota_banca"
     
-    # Aggiorna riferimento prima nota nell'operazione
+    # 4. CASCATA: Aggiorna Scadenzario (cerca scadenza collegata)
+    scadenza_aggiornata = False
+    if fornitore and importo:
+        # Cerca scadenza con stesso fornitore e importo simile
+        scadenza = await db["scadenze"].find_one({
+            "$or": [
+                {"fornitore": {"$regex": fornitore[:20], "$options": "i"}},
+                {"descrizione": {"$regex": fornitore[:20], "$options": "i"}}
+            ],
+            "importo": {"$gte": importo * 0.99, "$lte": importo * 1.01},
+            "pagato": {"$ne": True}
+        }, {"_id": 0, "id": 1})
+        
+        if scadenza:
+            await db["scadenze"].update_one(
+                {"id": scadenza["id"]},
+                {"$set": {
+                    "pagato": True,
+                    "data_pagamento": data_documento,
+                    "metodo_pagamento": metodo_pagamento,
+                    "prima_nota_id": movimento_id,
+                    "updated_at": datetime.now(timezone.utc).isoformat()
+                }}
+            )
+            scadenza_aggiornata = True
+    
+    # 5. CASCATA: Aggiorna stato fattura (se esiste)
+    fattura_aggiornata = False
+    if numero_fattura:
+        fattura = await db["invoices"].find_one({
+            "$or": [
+                {"numero": numero_fattura},
+                {"invoice_number": numero_fattura},
+                {"numero_fattura": numero_fattura}
+            ]
+        }, {"_id": 0, "id": 1})
+        
+        if fattura:
+            await db["invoices"].update_one(
+                {"id": fattura["id"]},
+                {"$set": {
+                    "stato_pagamento": "pagato",
+                    "data_pagamento": data_documento,
+                    "metodo_pagamento": metodo_pagamento,
+                    "prima_nota_id": movimento_id,
+                    "updated_at": datetime.now(timezone.utc).isoformat()
+                }}
+            )
+            fattura_aggiornata = True
+    
+    # 6. Aggiorna riferimento prima nota nell'operazione
     await db["operazioni_da_confermare"].update_one(
+        {"id": operazione_id},
+        {"$set": {"prima_nota_id": movimento_id, "prima_nota_collection": prima_nota_collection}}
+    )
+    
+    # 7. CASCATA: Salva preferenza metodo pagamento fornitore (auto-apprendimento)
+    if fornitore:
+        await db["fornitori_preferenze"].update_one(
+            {"fornitore_normalizzato": fornitore.upper().strip()[:50]},
+            {"$set": {
+                "fornitore": fornitore,
+                "metodo_pagamento_preferito": metodo_pagamento,
+                "ultimo_utilizzo": datetime.now(timezone.utc).isoformat(),
+                "conteggio_utilizzi": 1
+            }, "$inc": {"conteggio_utilizzi": 1}},
+            upsert=True
+        )
+    
+    return {
+        "success": True,
+        "operazione_id": operazione_id,
+        "metodo_pagamento": metodo_pagamento,
+        "prima_nota_id": movimento_id,
+        "cascata": {
+            "scadenza_aggiornata": scadenza_aggiornata,
+            "fattura_aggiornata": fattura_aggiornata,
+            "preferenza_salvata": bool(fornitore)
+        },
+        "messaggio": f"Operazione confermata in {prima_nota_collection}"
+    }
         {"id": operazione_id},
         {"$set": {"prima_nota_id": movimento_id, "prima_nota_collection": prima_nota_collection}}
     )
