@@ -876,13 +876,13 @@ async def correggi_metodi_pagamento() -> Dict[str, Any]:
     fatture_bancarie = await db[Collections.INVOICES].find({
         "metodo_pagamento": {"$regex": "^(bonifico|banca|sepa)$", "$options": "i"},
         "in_banca": {"$ne": True}
-    }).to_list(5000)
+    }, {"_id": 0}).to_list(5000)
     
     # CASO 2: Fatture con "Assegno" (qualsiasi variante) ma senza in_banca=true
     fatture_assegno = await db[Collections.INVOICES].find({
         "metodo_pagamento": {"$regex": "^assegno", "$options": "i"},
         "in_banca": {"$ne": True}
-    }).to_list(5000)
+    }, {"_id": 0}).to_list(5000)
     
     fatture_errate = fatture_bancarie + fatture_assegno
     
