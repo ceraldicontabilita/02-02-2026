@@ -1,5 +1,5 @@
 # PRD - Azienda in Cloud ERP
-## Schema Definitivo v3.3 - Gennaio 2026 (PRODUCTION)
+## Schema Definitivo v3.4 - Gennaio 2026 (PRODUCTION)
 
 ---
 
@@ -13,6 +13,81 @@
 ---
 
 ## 📅 CHANGELOG RECENTE
+
+### 16 Gennaio 2026 - RELEASE v3.4 - CORREZIONI CRITICHE 🔧
+
+#### CORREZIONI BACKEND - COMPLETATE ✅
+
+1. **Endpoint `/smart/riconcilia-manuale` - CORRETTO**
+   - Ora crea correttamente i movimenti in Prima Nota (Cassa/Banca)
+   - Gestisce le cascate: fatture → scadenze → cedolini
+   - Aggiunto collegamento `estratto_conto_id` per evitare duplicati
+   - Aggiunto parametro `destinazione` per scegliere cassa/banca
+   - File: `/app/app/routers/operazioni_da_confermare.py`
+
+2. **Conferma Operazioni Aruba - CORRETTO**
+   - Corretto per usare `prima_nota_cassa` e `prima_nota_banca`
+   - Rimosso uso di `cash_movements` e `bank_movements` (collection legacy)
+   - Aggiunto collegamento `fattura_id`
+   - Cascata automatica per scadenze
+   - File: `/app/app/routers/operazioni_da_confermare.py`
+
+3. **Servizio Automazione - CORRETTO**
+   - Corretto `conferma_operazione_multipla` per le collection corrette
+   - Aggiunto gestione cascate complete (fatture, scadenze)
+   - File: `/app/app/services/automazione_completa.py`
+
+4. **Correzione Collection Names in tutti i file**
+   - `f24_alert_system.py`: ora usa `prima_nota_banca`
+   - `corrispettivi_service.py`: ora usa `prima_nota_cassa`
+   - `invoice_service_v2.py`: ora usa `prima_nota_cassa/banca`
+   - `corrispettivi.py`: ora usa `prima_nota_cassa`
+
+5. **Filtro Assegni Frontend - CORRETTO**
+   - Ora esclude correttamente gli assegni con `fattura_collegata`
+   - Non solo `fattura_id` ma anche `fattura_collegata`
+   - File: `/app/frontend/src/pages/RiconciliazioneUnificata.jsx`
+
+---
+
+## 🔴 LAVORI DA COMPLETARE (PRIORITÀ ALTA)
+
+### P0 - CRITICI
+1. **Test End-to-End completo** - Da eseguire con Testing Agent
+2. **Verifica cascate complete** - Fattura → Prima Nota → Scadenza → Fornitore
+
+### P1 - IMPORTANTI
+1. **Revisione file `EstrattoContoImport.jsx`** - File orfano da eliminare
+2. **Unificare pagine Import** - `/import-unificato` e `/import-export` sono confuse
+3. **Integrazione Google Calendar** - Per gestione scadenze
+
+### P2 - MIGLIORAMENTI
+1. **Grafici interattivi con drill-down** - Dashboard Analytics
+2. **Report PDF automatici via email** - Schedulazione
+3. **Parsing parallelo file Import** - Performance
+
+### P3 - BACKLOG
+1. **Refactoring `RiconciliazioneUnificata.jsx`** - Componente troppo grande
+2. **Ottimizzazione API `/aruba-pendenti`** - Performance con molti record
+
+---
+
+## 📋 COLLECTION CORRETTE (USARE SEMPRE QUESTE)
+
+| Funzione | Collection CORRETTA | NON usare (legacy) |
+|----------|--------------------|--------------------|
+| Prima Nota Cassa | `prima_nota_cassa` | `cash_movements` |
+| Prima Nota Banca | `prima_nota_banca` | `bank_movements` |
+| Prima Nota Salari | `prima_nota_salari` | - |
+| Estratto Conto | `estratto_conto_movimenti` | - |
+| Fatture | `invoices` | - |
+| Fornitori | `fornitori` o `suppliers` | - |
+| Assegni | `assegni` | `checks` |
+| Cedolini | `cedolini` | `payslips` |
+| F24 | `f24_models` | `f24` |
+| Scadenze | `scadenze` | - |
+
+---
 
 ### 16 Gennaio 2026 - RELEASE v3.3 🚀
 
