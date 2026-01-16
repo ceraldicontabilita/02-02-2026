@@ -395,6 +395,60 @@ async def lista_cedolini(anno: int, mese: int) -> List[Dict[str, Any]]:
     return cedolini
 
 
+@router.get("/dipendente/{dipendente_id}")
+async def cedolini_dipendente(dipendente_id: str, anno: Optional[int] = None) -> Dict[str, Any]:
+    """
+    Lista tutti i cedolini/buste paga di un dipendente.
+    Se anno è specificato, filtra per quell'anno.
+    """
+    db = Database.get_db()
+    
+    # Verifica dipendente
+    dipendente = await db["employees"].find_one({"id": dipendente_id}, {"_id": 0, "nome_completo": 1, "nome": 1})
+    if not dipendente:
+        raise HTTPException(status_code=404, detail="Dipendente non trovato")
+    
+    nome = dipendente.get("nome_completo") or dipendente.get("nome", "")
+    
+    # Query cedolini
+    query = {"dipendente_id": dipendente_id}
+    if anno:
+        query["anno"] = anno
+    
+    cedolini = await db["cedolini"].find(
+        query,
+        {"_id": 0}
+    ).sort([("anno", -1), ("mese", -1)]).to_list(500)
+    
+    # Calcola totali
+    totale_lordo = sum(c.get("lordo", 0) for c in cedolini)
+    totale_netto = sum(c.get("netto", 0) for c in cedolini)
+    
+    # Arricchisci con info bonifici
+    for c in cedolini:
+        prima_nota = await db["prima_nota_salari"].find_one(
+            {
+                "dipendente_id": dipendente_id,
+                "anno": c.get("anno"),
+                "mese": c.get("mese"),
+                "bonifico_id": {"$exists": True, "$nin": [None, ""]}
+            },
+            {"_id": 0, "bonifico_id": 1}
+        )
+        if prima_nota and prima_nota.get("bonifico_id"):
+            c["pagato"] = True
+            c["bonifico_id"] = prima_nota.get("bonifico_id")
+    
+    return {
+        "dipendente_id": dipendente_id,
+        "dipendente_nome": nome,
+        "totale_cedolini": len(cedolini),
+        "totale_lordo": round(totale_lordo, 2),
+        "totale_netto": round(totale_netto, 2),
+        "cedolini": cedolini
+    }
+
+
 @router.get("/riepilogo-mensile/{anno}/{mese}")
 async def riepilogo_mensile(anno: int, mese: int) -> Dict[str, Any]:
     """Riepilogo costi del personale per mese"""
