@@ -1,83 +1,76 @@
-<analysis>
-**original_problem_statement:**
-L'utente ha segnalato una serie di problemi critici e frustrazioni riguardanti la logica dell'applicazione, la coerenza dei dati e l'esperienza utente. Le richieste principali includono:
-1.  **Correzione Bug Critici**:
-    *   **Prima Nota**: Le voci non erano modificabili, il saldo non veniva riportato dall'anno precedente e la logica DARE/AVERE per i movimenti POS era invertita. Inoltre, mancava il pulsante Vedi Fattura per molti movimenti di pagamento.
-    *   **Riconciliazione**:
-        *   **Movimenti Bancari**: I movimenti mostravano un punto interrogativo (?) invece del nome del fornitore e del numero di fattura.
-        *   **Assegni**: La pagina mostrava Invalid Date e undefined per assegni con dati incompleti. Gli assegni già riconciliati e associati a fatture venivano riproposti inutilmente.
-        *   **Pagina Aruba**: Estremamente lenta a caricare. L'utente ha richiesto filtri, selezione multipla e un nuovo pulsante Carta di Credito/POS.
-2.  **Miglioramenti del Flusso di Lavoro**:
-    *   **Prevenzione Duplicati da Gmail**: Le fatture scaricate da Gmail venivano riproposte nella riconciliazione Aruba anche se già elaborate e registrate in Prima Nota. L'utente ha richiesto una logica per saltare questi duplicati.
-    *   **Creazione Automatica Fornitori**: Un fornitore importato tramite email (es. CIERVO FABIANA) non veniva creato automaticamente nell'anagrafica fornitori, causando problemi a cascata.
-3.  **Richieste di Refactoring e UX**:
-    *   L'utente ha espresso forte frustrazione per un precedente refactoring che ha rovinato tutto e per la riscrittura del file .
-    *   Ha chiesto di semplificare l'interfaccia di inserimento dati nella Prima Nota.
-    *   Ha evidenziato la confusione tra le pagine  e .
+<analysis>**original_problem_statement:**
+L'utente ha richiesto un'analisi e una correzione completa e sistematica dell'applicazione, andando oltre i controlli visivi. Le richieste principali erano:
+1.  **Test End-to-End**: Simulare flussi di lavoro reali pagina per pagina per identificare tutti gli errori e le inconsistenze a cascata (es. caricamento XML -> riconciliazione -> salvataggio in Prima Nota -> aggiornamento magazzino).
+2.  **Correzione Bug Critico Riconciliazione Smart**: L'utente ha segnalato che i movimenti riconciliati tramite la Riconciliazione Smart non venivano inseriti in Prima Nota e che movimenti già elaborati (dal 2022) venivano riproposti inutilmente. Ha richiesto un controllo atomico per pulire la lista di riconciliazione.
+3.  **Correzione Logica a Cascata**: Verificare e correggere la logica per tutte le funzionalità chiave, tra cui:
+    *   **Buste Paga**: Collegamento corretto tra cedolino, bonifico e Prima Nota Salari.
+    *   **Corrispettivi**: Gestione corretta delle operazioni a cascata.
+    *   **HACCP**: Verifica delle operazioni collegate.
+4.  **Approccio Sistematico**: L'utente ha insistito affinché l'agente studiasse il codice, l'architettura e il PRD per strutturare un piano di correzione robusto, simile a quello che farebbe un programmatore umano, per evitare di tornare sugli stessi problemi.
+
+PRODUCT REQUIREMENTS:
+- L'applicazione deve garantire la coerenza dei dati tra i vari moduli (Prima Nota, Riconciliazione, Fatture, Magazzino, Salari).
+- L'endpoint di riconciliazione manuale () deve creare un movimento contabile in Prima Nota (cassa o banca).
+- La Riconciliazione Smart non deve mostrare movimenti già registrati in Prima Nota o associati ad assegni confermati.
+- Tutti gli endpoint devono utilizzare un naming coerente per le collection del database (, ).
+- Il database utilizzato è MongoDB Atlas.
 
 **User's preferred language**: Italiano
 
 **what currently exists?**
-L'applicazione è stata ampiamente corretta e migliorata per risolvere le frustrazioni dell'utente.
--   **CRUD Acconti Dipendenti**: La funzionalità è completa e funzionante, con API (POST/PUT/DELETE) e interfaccia utente testate.
--   **Prima Nota**: La pagina è stata completamente riscritta. Ora include un saldo iniziale dall'anno precedente, la funzionalità di modifica delle voci, una logica DARE/AVERE corretta e un layout chiaro con statistiche. Un endpoint di backfill ha collegato retroattivamente i movimenti alle fatture, abilitando il pulsante Vedi Fattura su tutte le voci pertinenti.
--   **Riconciliazione**:
-    -   **Pagina Aruba**: Ora è più veloce e funzionale, con un filtro per fornitore, checkbox per la selezione multipla e un pulsante per la conferma in blocco. È stato aggiunto il metodo di pagamento Carta/POS.
-    -   **Assegni**: La UI ora gestisce correttamente i dati incompleti (mostrando Dati Incompleti) e filtra automaticamente gli assegni già associati a una fattura, evitando di riproporli.
-    -   **Movimenti Bancari**: Il backend è stato corretto per leggere il campo corretto (), mostrando ora la descrizione e il nome del fornitore.
--   **Logica Anti-Duplicati**: Il processo di sincronizzazione da Gmail ora controlla se una fattura esiste già nelle collezioni , , o  prima di crearne una nuova operazione pendente. Le operazioni elaborate vengono tracciate nella nuova collezione .
--   **Creazione Automatica Fornitori**: Il flusso è stato implementato. La conferma di un'operazione Aruba crea un fornitore con dati parziali se non esiste. L'import di una fattura XML completa successivamente i dati di quel fornitore.
--   **Scheduling**: Un task in background ora sincronizza le email da Gmail ogni 10 minuti.
--   **Pulizia**: La pagina duplicata  è stata rimossa.
+L'agente ha eseguito una profonda sessione di debugging e refactoring del backend, risolvendo un bug critico e numerose inconsistenze.
+-   **Bug Riconciliazione Smart Corretto**: L'endpoint  è stato riscritto per creare correttamente i movimenti in /, aggiornare lo stato di riconciliazione nell'estratto conto e salvare un ID di collegamento per prevenire duplicati.
+-   **Standardizzazione Collection DB**: Sono stati corretti numerosi file del backend (, , , , ) per utilizzare i nomi di collection corretti (, ) invece dei vecchi , , risolvendo una grave fonte di inconsistenza dei dati.
+-   **Correzione Filtro Frontend**: Il filtro per gli assegni in  è stato migliorato per escludere anche gli assegni associati tramite , risolvendo un bug visivo.
+-   **Test di Validazione**: È stato invocato il  che ha eseguito una suite di 22 test (creando il file ), i quali sono tutti passati, confermando la robustezza delle correzioni.
+-   **Documentazione**: Il file  è stato aggiornato con i dettagli dei lavori eseguiti e di quelli futuri.
 
 **Last working item**:
--   **Last item agent was working**: L'agente stava finalizzando la correzione della pagina di riconciliazione degli assegni, in particolare per nascondere gli assegni già associati a una fattura e registrati in Prima Nota.
+-   **Last item agent was working**: L'agente aveva appena ricevuto il report positivo dal  (22 test passati), che convalidava le importanti correzioni effettuate al backend. Ha poi aggiornato il PRD, riepilogato il lavoro svolto e fornito all'utente le istruzioni per il fork successivo.
 -   **Status**: USER VERIFICATION PENDING
--   **Agent Testing Done**: N (La modifica al codice è stata fatta, ma non è stata seguita da uno screenshot di verifica).
--   **Which testing method agent to use?**: frontend testing agent. Chiedere all'agente di test di navigare su  e verificare che vengano mostrati solo gli assegni non ancora associati a una fattura.
+-   **Agent Testing Done**: Y
+-   **Which testing method agent to use?**: NA
 -   **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
--   **Issue 1**: (P0) Verificare che gli assegni già riconciliati non compaiano più nella pagina .
--   **Issue 2**: (P1) La pagina di riconciliazione Aruba () è stata migliorata con filtri, ma la sua performance di caricamento iniziale potrebbe essere ancora un problema se il numero di fatture pendenti è molto alto.
--   **Issue 3**: (P2) L'utente si è lamentato che il file  è stato rovinato. Deve essere revisionato per garantire che rifletta accuratamente lo stato e gli obiettivi del progetto.
+-   **Issue 1**: (P0) La pagina di riconciliazione Aruba () è lenta a caricare quando ci sono molte fatture pendenti.
+-   **Issue 2**: (P1) Il pulsante Vedi Fattura nella Prima Nota naviga a una pagina di ricerca che mostra Nessuna fattura trovata invece di aprire la fattura specifica.
+-   **Issue 3**: (P2) La rotta  restituisce un errore 404 Not Found. I link dovrebbero puntare a pagine specifiche come .
 
 **Issues Detail**:
--   **Issue 1: Nascondere assegni già riconciliati**
-    -   **Attempted fixes**: È stata aggiunta una condizione  nel filtro frontend all'interno del file  per escludere gli assegni che hanno un .
+-   **Issue 1: Lentezza pagina Riconciliazione Aruba**
+    -   **Attempted fixes**: Nessuno in questa sessione. L'attenzione era sulla correttezza logica.
     -   **Next debug checklist**:
-        1.  Navigare alla pagina .
-        2.  Confrontare la lista visualizzata con i dati nella collezione  del database.
-        3.  Assicurarsi che gli assegni con un campo  non nullo non siano presenti nell'elenco della UI.
-    -   **Why fix this issue and what will be achieved with the fix?**: Risolve una richiesta diretta dell'utente, riduce la confusione e impedisce di elaborare due volte la stessa operazione.
-    -   **Status**: USER VERIFICATION PENDING
-    -   **Is recurring issue?**: N
-    -   **Should Test frontend/backend/both after fix?**: Frontend
-    -   **Blocked on other issue**: No.
-
--   **Issue 2: Lentezza pagina Riconciliazione Aruba**
-    -   **Attempted fixes**: Sono stati implementati filtri per fornitore e selezione/conferma in blocco per migliorare l'UX. Questo riduce il numero di interazioni, ma non risolve la lentezza del caricamento iniziale.
-    -   **Next debug checklist**:
-        1.  Analizzare le query eseguite dall'endpoint .
-        2.  Verificare la presenza di indici sulle collezioni  e  (sui campi usati per i filtri e i join).
-        3.  Se il numero di record è elevato, considerare l'implementazione della paginazione sia nel backend che nel frontend.
-    -   **Why fix this issue and what will be achieved with the fix?**: Migliora drasticamente l'esperienza utente su una pagina chiave dell'applicazione.
-    -   **Status**: IN PROGRESS
+        1.  Analizzare le query dell'endpoint .
+        2.  Verificare e aggiungere indici su campi chiave nelle collezioni  e .
+        3.  Considerare l'implementazione della paginazione nel backend e nel frontend.
+    -   **Why fix this issue and what will be achieved with the fix?**: Migliora l'esperienza utente su una pagina chiave.
+    -   **Status**: NOT STARTED
     -   **Is recurring issue?**: Y
     -   **Should Test frontend/backend/both after fix?**: Backend
     -   **Blocked on other issue**: No.
 
--   **Issue 3: Revisione del PRD.md**
+-   **Issue 2: Pulsante Vedi Fattura non funzionante**
     -   **Attempted fixes**: Nessuno.
     -   **Next debug checklist**:
-        1.  Leggere attentamente il file .
-        2.  Confrontare il suo contenuto con le richieste originali dell'utente e il lavoro completato.
-        3.  Identificare eventuali discrepanze o sezioni poco chiare.
-        4.  Proporre all'utente una struttura aggiornata e corretta.
-    -   **Why fix this issue and what will be achieved with the fix?**: Allinea la documentazione con lo stato reale del progetto, evitando future incomprensioni.
+        1.  Esaminare il componente della Prima Nota ().
+        2.  Modificare il gestore  del pulsante Vedi per navigare a una rotta che visualizzi direttamente la fattura, passando l'ID corretto, invece di una pagina di ricerca generica.
+    -   **Why fix this issue and what will be achieved with the fix?**: Ripristina una funzionalità chiave per la tracciabilità dei documenti.
     -   **Status**: NOT STARTED
     -   **Is recurring issue?**: N
-    -   **Should Test frontend/backend/both after fix?**: NA
+    -   **Should Test frontend/backend/both after fix?**: Frontend
+    -   **Blocked on other issue**: No.
+
+-   **Issue 3: Errore 404 su pagina HACCP**
+    -   **Attempted fixes**: Nessuno.
+    -   **Next debug checklist**:
+        1.  Verificare i link nel menu di navigazione laterale ( o simile).
+        2.  Correggere il link HACCP per puntare a una delle pagine figlie (es. ) o a una dashboard HACCP se esiste.
+        3.  In alternativa, rimuovere il link generico se non previsto.
+    -   **Why fix this issue and what will be achieved with the fix?**: Corregge un link rotto e migliora la navigazione.
+    -   **Status**: NOT STARTED
+    -   **Is recurring issue?**: N
+    -   **Should Test frontend/backend/both after fix?**: Frontend
     -   **Blocked on other issue**: No.
 
 **In progress Task List**:
@@ -85,104 +78,104 @@ L'applicazione è stata ampiamente corretta e migliorata per risolvere le frustr
 
 **Upcoming and Future Tasks**
 -   **Upcoming Tasks**:
-    -   **(P1)** Integrare Google Calendar per la gestione delle scadenze (richiesta originale dell'utente, posticipata).
+    -   **(P0)** **PULIZIA**: Eliminare il file orfano  e verificare la presenza di altri file non utilizzati.
+    -   **(P1)** **UNIFICAZIONE PAGINE IMPORT**: Unificare le pagine  e  in un'unica interfaccia chiara per semplificare il flusso di importazione per l'utente.
+    -   **(P1)** **INTEGRAZIONE GOOGLE CALENDAR**: Implementare la sincronizzazione delle scadenze delle fatture con Google Calendar.
 -   **Future Tasks**:
-    -   **(P2)** Implementare grafici interattivi con drill-down nella Dashboard Analytics.
-    -   **(P2)** Implementare il meccanismo di schedulazione per l'invio automatico di report PDF ed export via email.
-    -   **(P3)** Implementare il parsing parallelo dei file nel backend dell'Import Unificato per velocizzare l'elaborazione.
-    -   **(P3)** Unificare o chiarire il flusso tra le pagine  e .
+    -   **(P2)** **DASHBOARD ANALYTICS**: Implementare grafici interattivi con funzionalità di drill-down.
+    -   **(P2)** **REPORT AUTOMATICI**: Implementare la schedulazione per l'invio automatico di report PDF via email.
+    -   **(P3)** **OTTIMIZZAZIONE IMPORT**: Implementare il parsing parallelo dei file nel backend dell'Import Unificato.
 
 **Completed work in this session**
--   **CRUD Acconti Dipendenti**: Funzionalità completa di aggiunta, modifica ed eliminazione.
--   **Pagina Prima Nota**: Completamente revisionata con saldo anno precedente, funzionalità di modifica, logica DARE/AVERE corretta e UI migliorata.
--   **Correzioni Pagina Riconciliazione**:
-    -   **Aruba**: Aggiunti filtri, selezione in blocco e pulsante Carta/POS.
-    -   **Assegni**: Corretta la visualizzazione dei dati incompleti e nascosti gli assegni già associati.
-    -   **Movimenti Bancari**: Corretta la visualizzazione di descrizione e nome fornitore.
--   **Flusso Dati Backend**:
-    -   Implementata la logica per prevenire l'import di fatture duplicate da Gmail.
-    -   Implementata la creazione automatica dei fornitori da operazioni Aruba e l'aggiornamento successivo da fatture XML.
--   **Automazione**: Aggiunto uno scheduler per la sincronizzazione delle email ogni 10 minuti.
--   **Pulizia UI**: Rimossa la pagina duplicata .
--   **Import Fornitori**: Implementata l'importazione da file XLS.
--   **Backfill Dati**: Eseguito uno script per collegare retroattivamente i movimenti di prima nota alle relative fatture.
+-   **Correzione Bug Riconciliazione Smart**: L'endpoint  ora crea correttamente movimenti in Prima Nota, gestendo le cascate e prevenendo duplicati.
+-   **Standardizzazione Nomi Collection DB**: Sostituiti in modo estensivo i vecchi nomi (, ) con  e  in tutto il backend, garantendo la coerenza dei dati.
+-   **Correzione Filtro Assegni**: Aggiornato il filtro in  per escludere correttamente gli assegni già collegati a fatture.
+-   **Validazione tramite Testing Agent**: Eseguita una suite di 22 test automatici che hanno confermato il successo delle correzioni, senza regressioni.
+-   **Aggiornamento Documentazione**: Aggiornato  con lo stato attuale dei lavori.
 
 **Earlier issues found/mentioned but not fixed**
 -   **Issue 1**: La logica di matching dei nomi dei fornitori dalle descrizioni delle transazioni in  è ancora migliorabile.
+-   **Issue 2**: Il file orfano  non è stato eliminato (ora è P0 per il prossimo fork).
 
 **Known issue recurrence from previous fork**
 -   **Issue recurrence in previous fork**: Inefficienza e lentezza delle API di riconciliazione ( e ).
 -   **Recurrence count**: 2
--   **Status**: IN PROGRESS (mitigazioni applicate, ma la performance di fondo rimane un'area di attenzione).
+-   **Status**: IN PROGRESS (La correttezza è stata risolta, ma il problema di performance per  persiste).
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Backend**: FastAPI, PyMongo, APScheduler per task in background.
-- **Frontend**: React,  per la navigazione, state management con , , .
-- **Database**: MongoDB. Utilizzo di collezioni multiple (, , , ) per segmentare i dati.
-- **Architettura**: L'applicazione si basa su un'architettura di micro-servizi backend (routers) e un frontend monolitico React. È stata introdotta una logica di scheduling per l'automazione.
+- **Backend**: FastAPI, PyMongo.
+- **Frontend**: React, .
+- **Database**: MongoDB (Atlas).
+- **Architettura**: L'agente ha lavorato intensamente per rafforzare la coerenza dei dati a livello di backend, correggendo il flusso di dati tra la Riconciliazione Smart e la Prima Nota e standardizzando l'accesso al database.
 
 **key DB schema**
--   ** / **: Contiene le registrazioni contabili. Arricchita con  per il collegamento alle fatture.
--   ****: Anagrafica fornitori. Ora viene popolata/aggiornata automaticamente dal flusso di importazione (Aruba e XML).
--   ****: Contiene i dettagli degli assegni. Viene ora filtrata via UI per nascondere quelli con .
--   ****: (NUOVA) Collezione per tracciare gli hash delle email elaborate per prevenire duplicati.
--   ****: Operazioni pendenti dall'import email, in attesa di conferma manuale.
+-   ** / **: Ora sono le uniche collection utilizzate per i movimenti contabili, sostituendo le vecchie /. Contengono un campo  per il collegamento (anche se il formato degli ID non corrispondeva, il flag  è la chiave).
+-   ****: Contiene i campi  e  usati nel frontend per escludere gli assegni già processati.
+-   ****: Contiene il flag booleano  che viene ora impostato a  dopo una riconciliazione manuale andata a buon fine.
 
 **changes in tech stack**
--   Nessuna modifica fondamentale, ma è stato introdotto e configurato  per i task in background.
+-   Nessuna.
 
 **All files of reference**
--    (per tutti i problemi di riconciliazione)
--    (per i problemi di modifica e saldo)
--    (per logica anti-duplicati e Aruba)
--    (per API di modifica e saldo)
--    (logica anti-duplicati)
--    (correzione estrazione dati)
--    (configurazione task schedulati)
 -   
+-   
+-   
+-   
+-   
+-    (Nuovo report di test)
+-    (Nuovo file di test)
 
 **Areas that need refactoring**:
--   ****: Questo file è diventato un componente monstre che gestisce la logica e la UI per più tab (Aruba, Assegni, Movimenti Bancari, ecc.). Andrebbe scomposto in componenti figli più piccoli e gestibili per migliorare la manutenibilità.
--   **Flusso di Importazione**: L'utente è ancora confuso dalle pagine  e . Sarebbe opportuno unificare l'esperienza utente in un'unica pagina di importazione chiara e guidata.
+-   **Flusso di Importazione**: Le pagine  e  creano confusione e devono essere unificate in un'unica esperienza utente.
+-   **Componente **: Rimane un componente molto grande e complesso che gestisce troppe logiche diverse (Banca, Assegni, Aruba, F24).
+
+**key api endpoints**
+-    (CRITICAL, REWRITTEN)
+-    (REFACTORED)
+-   
+-    (REFACTORED)
 
 **Critical Info for New Agent**
--   **Frustrazione Utente**: L'utente è molto frustrato e ha la percezione di aver pagato per bug e refactoring non richiesti. La priorità assoluta è riconquistare la fiducia risolvendo in modo rapido e preciso i problemi segnalati. Comunica in modo chiaro, riconoscendo i problemi e mostrando un piano di azione concreto.
--   **Attenzione ai Dettagli**: L'utente è estremamente attento all'interfaccia e al flusso di lavoro. Segui attentamente gli screenshot e le istruzioni fornite. Non dare nulla per scontato.
--   **Problemi di Cache**: Il frontend ha mostrato diversi problemi di caching (Vite/browser) che hanno fatto credere all'agente che le modifiche non fossero state applicate. Sii pronto a forzare il riavvio dei servizi (frontend: ERROR (not running)
-frontend: started) o a usare un hard refresh nel browser per verificare le modifiche alla UI.
--   **Complessità del Flusso Dati**: La logica di sincronizzazione (Gmail -> Aruba -> Prima Nota -> Fatture) è il cuore dell'applicazione ed è complessa. Qualsiasi modifica a una parte di questo flusso richiede un'attenta verifica delle conseguenze sulle altre.
+-   **Fiducia dell'utente**: L'utente è molto tecnico e apprezza un approccio sistematico basato sul codice. La fiducia è stata parzialmente riconquistata; è cruciale continuare con questo metodo rigoroso, spiegando le modifiche al codice e seguendo il piano concordato.
+-   **Priorità del Piano**: L'utente ha approvato un piano specifico. Segui la prioritizzazione data (P0, P1, P2) senza deviare.
+-   **Coerenza Dati**: Il lavoro principale di questa sessione è stato ripristinare la coerenza dei dati. Presta la massima attenzione a non introdurre nuove inconsistenze. Ogni modifica a un flusso di dati deve essere verificata per le sue implicazioni a cascata.
+-   **Database Atlas**: L'utente ha specificato che il DB è su MongoDB Atlas. Tienilo a mente per eventuali considerazioni future su performance o feature specifiche.
 
 **documents and test reports created in this job**
--    (aggiornato più volte)
+-    (aggiornato)
+-    (nuovo)
+-    (nuovo)
 
 **Last 10 User Messages and any pending HUMAN messages**
--   **10.** Richiesta di far apparire il pulsante Vedi Fattura su tutti i pagamenti in Prima Nota, non solo su alcuni.
--   **9.**  Segnalazione che la pagina Aruba è troppo lenta, richiesta di filtri e selezione multipla. Richiesta di non riproporre fatture già elaborate da Gmail.
--   **8.**  L'agente ha applicato le modifiche per la selezione batch in Aruba.
--   **7.**  L'agente ha mostrato un riepilogo del lavoro fatto.
--   **6.**  L'utente ha segnalato diversi bug con screenshot: movimenti bancari senza dettagli, assegni con dati invalid, Prima Nota non modificabile e senza saldo precedente, e ha richiesto un nuovo pulsante Carta/POS in Aruba. Ha espresso forte frustrazione.
--   **5.**  L'agente ha presentato un riepilogo del lavoro completato sulla Prima Nota e lo scheduler.
--   **4.**  L'utente ha segnalato un bug critico nella Prima Nota (movimenti POS in AVERE registrati in DARE) e ha chiesto di implementare lo scheduler per Gmail e le notifiche Telegram.
--   **3.**  L'agente ha presentato un riepilogo dei lavori completati (CRUD acconti, rimozione pagina, import fornitori) e ha chiesto come procedere.
--   **2.**  L'utente ha chiarito che il fornitore CIERVO è stato importato da Gmail e che il sistema deve creare un fornitore se inesistente durante questo processo, per poi completarne i dati con l'import XML.
--   **1.**  L'agente ha presentato un riepilogo delle correzioni e delle funzionalità implementate, chiedendo conferma.
+-   **10.** L'utente chiede conferma che il flusso di dati (Gmail -> Riconciliazione -> Prima Nota -> Fatture XML) sia ora corretto e funzionante, e chiede cosa dovrà comunicare al prossimo agente per continuare il lavoro. (COMPLETED)
+-   **9.** L'utente approva il piano di pulizia, aggiornamento del PRD e testing, e chiede di procedere con il fork dopo aver completato queste operazioni. (COMPLETED)
+-   **8.** L'utente chiede all'agente di fermarsi, di non basarsi solo su controlli visivi (immagini merda), ma di analizzare il codice, le relazioni a cascata e di correggere prima gli errori sistemici. (COMPLETED)
+-   **7.** L'agente mostra uno screenshot della pagina IVA, continuando il test visivo. (SUPERSEDED)
+-   **6.** L'utente chiede all'agente di riproporre il piano completo, includendo la correzione del bug critico della Riconciliazione Smart e di rileggere PRD e architettura. (COMPLETED)
+-   **5.** L'utente chiede di aggiungere al piano un controllo atomico per eliminare dalla Riconciliazione Smart tutti i movimenti già presenti in contabilità dal 2022. (COMPLETED)
+-   **4.** L'utente fornisce ulteriori dettagli per il piano di test end-to-end, specificando le operazioni a cascata da verificare per salari, corrispettivi e HACCP. (COMPLETED)
+-   **3.** L'utente approva l'idea del test end-to-end e chiede di dettagliare il piano, pagina per pagina. (COMPLETED)
+-   **2.** L'agente propone di fare un test completo end-to-end simulando operazioni reali. (COMPLETED)
+-   **1.** L'utente chiede se l'agente è in grado di eseguire un test completo simulando operazioni reali per ogni pagina, per identificare tutti gli errori a cascata. (COMPLETED)
 
 **Project Health Check:**
--   **Broken**: Nessuna funzionalità critica è completamente bloccata.
+-   **Broken**:
+    -   La rotta  restituisce un errore 404.
+    -   Il link Vedi Fattura nella Prima Nota non funziona come previsto.
 -   **Mocked**: Nessuno.
 -   **Technical Debt**:
-    -   **High**: Il componente  è un monolite che necessita di refactoring.
-    -   **Medium**: La performance dell'endpoint di caricamento della pagina Aruba () è un potenziale collo di bottiglia.
-    -   **Medium**: L'esperienza utente per l'importazione di file è confusa a causa di pagine multiple.
+    -   **High**: Il componente  è un monolite.
+    -   **Medium**: La performance della pagina di Riconciliazione Aruba necessita di ottimizzazione.
+    -   **Medium**: L'esperienza utente per l'importazione di file è confusa a causa di pagine multiple (, ).
 
 **3rd Party Integrations**
 -    (fitz)
--    (per task in background)
 -   
--    (per leggere file Excel)
+-   
+-   
 -   
 -   
 -----
@@ -192,19 +185,20 @@ https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#installation
 https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#troubleshooting 
 
 -----
--   **Telegram Bot API**
+-   Telegram Bot API
 -   usage: websockets [--version | <uri>]
 
 **Testing status**
--   **Testing agent used after significant changes**: NO
+-   **Testing agent used after significant changes**: YES
 -   **Troubleshoot agent used after agent stuck in loop**: NO
 -   **Test files created**: []
--   **Known regressions**: Un  relativo a  è stato introdotto e risolto durante la sessione.
+-   **Known regressions**: Nessuna. I 22 test eseguiti dal testing agent sono passati.
 
 **Credentials to test flow:**
--   Non sono necessarie credenziali specifiche, l'applicazione utilizza dati di test interni e variabili d'ambiente.
+-   Non sono necessarie credenziali specifiche.
 
 **What agent forgot to execute**
--   L'agente ha rimosso la rotta e il link per , ma non ha eliminato fisicamente il file , che ora è orfano.
--   L'agente non ha consolidato le pagine di importazione  e  come richiesto implicitamente dalla lamentela dell'utente.
-</analysis>
+-   L'agente non ha risolto l'errore 404 per la pagina .
+-   L'agente non ha corretto il comportamento del pulsante Vedi Fattura nella Prima Nota.
+-   L'agente non ha affrontato il problema di performance della pagina di riconciliazione Aruba.
+-   L'agente non ha eliminato il file orfano  (ma è stato incluso come task P0 per il prossimo fork, su indicazione dell'utente).</analysis>
