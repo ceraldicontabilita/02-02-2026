@@ -298,7 +298,7 @@ async def riconcilia_estratto_conto() -> Dict[str, Any]:
                             {"total_amount": {"$gte": importo * 0.5, "$lte": importo * 2}}
                         ]}
                     ]
-                }).to_list(50)
+                }, {"_id": 0}).to_list(50)
                 
                 # Calcola score per ogni fattura
                 fatture_scored = []
