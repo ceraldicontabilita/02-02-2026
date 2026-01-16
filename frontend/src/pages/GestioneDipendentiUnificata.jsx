@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../api';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
 import { formatEuro } from '../lib/utils';
@@ -14,6 +15,8 @@ import { PageInfoCard } from '../components/PageInfoCard';
  * - Retribuzione & Cedolini
  * - Bonifici
  * - Acconti
+ * 
+ * URL con tab: /dipendenti/anagrafica, /dipendenti/contratti, etc.
  */
 
 const TABS = [
@@ -26,11 +29,42 @@ const TABS = [
 
 export default function GestioneDipendentiUnificata() {
   const { anno } = useAnnoGlobale();
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Ottieni tab dall'URL
+  const getTabFromPath = () => {
+    const path = location.pathname;
+    const match = path.match(/\/dipendenti\/(\w+)/);
+    if (match && TABS.find(t => t.id === match[1])) {
+      return match[1];
+    }
+    return 'anagrafica';
+  };
+  
   const [dipendenti, setDipendenti] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedDip, setSelectedDip] = useState(null);
-  const [activeTab, setActiveTab] = useState('anagrafica');
+  const [activeTab, setActiveTab] = useState(getTabFromPath());
   const [search, setSearch] = useState('');
+  
+  // Aggiorna URL quando cambia tab
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    if (tabId === 'anagrafica') {
+      navigate('/dipendenti');
+    } else {
+      navigate(`/dipendenti/${tabId}`);
+    }
+  };
+  
+  // Sincronizza tab con URL
+  useEffect(() => {
+    const tab = getTabFromPath();
+    if (tab !== activeTab) {
+      setActiveTab(tab);
+    }
+  }, [location.pathname]);
   
   // Stati per ogni tab
   const [editMode, setEditMode] = useState(false);
