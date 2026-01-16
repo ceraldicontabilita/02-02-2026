@@ -3,15 +3,16 @@ import api from '../api';
 import { formatEuro } from '../lib/utils';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
 import { ExportButton } from '../components/ExportButton';
+import { useWebSocketDashboard } from '../hooks/useWebSocket';
 
 /**
- * DASHBOARD ANALYTICS
+ * DASHBOARD ANALYTICS - Real-time
  * 
- * Grafici e statistiche avanzate per:
+ * Grafici e statistiche avanzate con aggiornamenti WebSocket:
  * - Andamento fatturato mensile
  * - Distribuzione spese per categoria
  * - Cash flow
- * - KPI principali
+ * - KPI principali (aggiornati in tempo reale)
  */
 
 const MESI = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
