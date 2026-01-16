@@ -1005,3 +1005,197 @@ async def export_excel_commercialista(anno: int, mese: int):
         headers={'Content-Disposition': f'attachment; filename={filename}'}
     )
 
+
+
+# ============================================
+# EXPORT SCHEDULATO AUTOMATICO
+# ============================================
+
+@router.post("/schedula-export")
+async def schedula_export_mensile(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
+    """
+    Schedula o esegue immediatamente l'invio del report mensile al commercialista.
+    
+    Body:
+    - anno: int
+    - mese: int (1-12)
+    - email: str (opzionale, usa default se non specificato)
+    - immediato: bool (se True, invia subito invece di schedulare)
+    """
+    db = Database.get_db()
+    
+    anno = data.get("anno", datetime.now().year)
+    mese = data.get("mese", datetime.now().month)
+    email = data.get("email")
+    immediato = data.get("immediato", True)
+    
+    # Recupera config
+    config = await db["commercialista_config"].find_one({}, {"_id": 0})
+    if not email:
+        email = config.get("email") if config else DEFAULT_COMMERCIALISTA_EMAIL
+    
+    MESI_NOMI = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 
+                 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre']
+    mese_nome = MESI_NOMI[mese - 1]
+    
+    if immediato:
+        try:
+            import io
+            from openpyxl import Workbook
+            from openpyxl.styles import Font, Border, Side, Alignment, PatternFill
+            from datetime import timezone
+            
+            # Genera il report Excel
+            _, ultimo_giorno = monthrange(anno, mese)
+            data_inizio = f"{anno}-{mese:02d}-01"
+            data_fine = f"{anno}-{mese:02d}-{ultimo_giorno:02d}"
+            
+            # Raccogli dati
+            fatture = await db["fatture_ricevute"].find({
+                "data_ricezione": {"$gte": data_inizio, "$lte": data_fine}
+            }, {"_id": 0}).to_list(1000)
+            
+            corrispettivi = await db["corrispettivi"].find({
+                "data": {"$gte": data_inizio, "$lte": data_fine}
+            }, {"_id": 0}).to_list(100)
+            
+            prima_nota = await db["prima_nota"].find({
+                "data": {"$gte": data_inizio, "$lte": data_fine}
+            }, {"_id": 0}).to_list(1000)
+            
+            # Crea Excel semplificato
+            wb = Workbook()
+            ws = wb.active
+            ws.title = "Riepilogo"
+            
+            # Titolo
+            ws['A1'] = f"REPORT MENSILE - {mese_nome} {anno}"
+            ws['A1'].font = Font(bold=True, size=14)
+            ws.merge_cells('A1:D1')
+            
+            # Statistiche
+            tot_fatture = sum(float(f.get("totale", 0) or 0) for f in fatture)
+            tot_corr = sum(float(c.get("totale", 0) or 0) for c in corrispettivi)
+            entrate = sum(float(m.get("importo", 0) or 0) for m in prima_nota if m.get("tipo") == "entrata")
+            uscite = sum(abs(float(m.get("importo", 0) or 0)) for m in prima_nota if m.get("tipo") == "uscita")
+            
+            stats = [
+                ("", ""),
+                ("FATTURE ACQUISTO", ""),
+                ("  Numero fatture", len(fatture)),
+                ("  Totale fatture", f"€ {tot_fatture:,.2f}"),
+                ("", ""),
+                ("CORRISPETTIVI", ""),
+                ("  Giorni registrati", len(corrispettivi)),
+                ("  Totale incassato", f"€ {tot_corr:,.2f}"),
+                ("", ""),
+                ("PRIMA NOTA", ""),
+                ("  Entrate", f"€ {entrate:,.2f}"),
+                ("  Uscite", f"€ {uscite:,.2f}"),
+                ("  Saldo", f"€ {entrate - uscite:,.2f}"),
+            ]
+            
+            for idx, (label, value) in enumerate(stats, 3):
+                ws.cell(row=idx, column=1, value=label)
+                ws.cell(row=idx, column=2, value=value)
+            
+            # Genera bytes
+            output = io.BytesIO()
+            wb.save(output)
+            excel_bytes = output.getvalue()
+            
+            # Invia email
+            subject = f"📊 Report Contabile {mese_nome} {anno} - Azienda in Cloud"
+            html_body = f"""
+            <html>
+            <body style="font-family: Arial, sans-serif; color: #333;">
+                <h2>📊 Report Mensile - {mese_nome} {anno}</h2>
+                <p>In allegato il report contabile mensile con:</p>
+                <ul>
+                    <li><strong>Fatture acquisto:</strong> {len(fatture)} documenti (€ {tot_fatture:,.2f})</li>
+                    <li><strong>Corrispettivi:</strong> {len(corrispettivi)} giorni (€ {tot_corr:,.2f})</li>
+                    <li><strong>Prima Nota:</strong> Entrate € {entrate:,.2f} / Uscite € {uscite:,.2f}</li>
+                </ul>
+                <p style="color: #666; font-size: 12px;">
+                    Report generato automaticamente da Azienda in Cloud ERP<br>
+                    Data invio: {datetime.now(timezone.utc).strftime('%d/%m/%Y %H:%M')}
+                </p>
+            </body>
+            </html>
+            """
+            
+            filename = f"report_{mese_nome.lower()}_{anno}.xlsx"
+            
+            send_email_with_attachment(
+                to_email=email,
+                subject=subject,
+                html_body=html_body,
+                attachment_data=excel_bytes,
+                attachment_name=filename
+            )
+            
+            # Salva log
+            await db["export_log"].insert_one({
+                "tipo": "report_mensile",
+                "anno": anno,
+                "mese": mese,
+                "email": email,
+                "inviato_at": datetime.now(timezone.utc).isoformat(),
+                "statistiche": {
+                    "fatture": len(fatture),
+                    "corrispettivi": len(corrispettivi),
+                    "prima_nota": len(prima_nota)
+                }
+            })
+            
+            return {
+                "success": True,
+                "message": f"Report {mese_nome} {anno} inviato a {email}",
+                "email": email,
+                "statistiche": {
+                    "fatture": len(fatture),
+                    "tot_fatture": tot_fatture,
+                    "corrispettivi": len(corrispettivi),
+                    "entrate": entrate,
+                    "uscite": uscite
+                }
+            }
+            
+        except Exception as e:
+            logger.error(f"Errore invio report: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+    else:
+        # Schedula per il futuro (salva in DB)
+        await db["scheduled_exports"].insert_one({
+            "tipo": "report_mensile",
+            "anno": anno,
+            "mese": mese,
+            "email": email,
+            "scheduled_at": datetime.now(timezone.utc).isoformat(),
+            "status": "pending"
+        })
+        
+        return {
+            "success": True,
+            "message": f"Export schedulato per {mese_nome} {anno}",
+            "scheduled": True
+        }
+
+
+@router.get("/export-log")
+async def get_export_log(limit: int = 20) -> Dict[str, Any]:
+    """Recupera lo storico degli export inviati."""
+    db = Database.get_db()
+    
+    logs = await db["export_log"].find(
+        {},
+        {"_id": 0}
+    ).sort("inviato_at", -1).limit(limit).to_list(limit)
+    
+    return {
+        "logs": logs,
+        "total": await db["export_log"].count_documents({})
+    }
