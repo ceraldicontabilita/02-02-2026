@@ -44,6 +44,7 @@ export function UploadProvider({ children }) {
     try {
       const response = await api.post(upload.endpoint, upload.formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 300000, // 5 minuti per file grandi
         onUploadProgress: (progressEvent) => {
           const progress = Math.round((progressEvent.loaded * 80) / progressEvent.total) + 10;
           updateUpload(upload.id, { progress: Math.min(progress, 90) });
@@ -72,6 +73,9 @@ export function UploadProvider({ children }) {
 
     } catch (error) {
       const errorMessage = error.response?.data?.detail || error.message || 'Errore sconosciuto';
+      
+      // Log dettagliato per debug
+      console.error('[Upload Error]', upload.fileName, error);
       
       updateUpload(upload.id, { 
         status: 'error', 
