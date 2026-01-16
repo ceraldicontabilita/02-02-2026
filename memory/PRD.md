@@ -1,5 +1,5 @@
 # PRD - Azienda in Cloud ERP
-## Schema Definitivo v3.0 - Gennaio 2026 (POST-REFACTORING)
+## Schema Definitivo v3.1 - Gennaio 2026 (POST-REFACTORING + REAL-TIME)
 
 ---
 
@@ -13,6 +13,26 @@
 ---
 
 ## 📅 CHANGELOG RECENTE
+
+### 16 Gennaio 2026 - DASHBOARD REAL-TIME & MOBILE 📡
+
+#### WEBSOCKET REAL-TIME
+- **Backend**: `/app/app/routers/websocket_realtime.py` - WebSocket endpoint per KPI live
+- **Backend**: `/app/app/services/websocket_manager.py` - Gestione connessioni WebSocket
+- **Frontend**: `/app/frontend/src/hooks/useWebSocket.js` - Hook React per connessione WS
+- **Endpoint**: `GET /api/realtime/status` - Stato connessioni WebSocket
+- **Endpoint**: `WS /api/ws/dashboard` - WebSocket per dashboard (KPI ogni 30 sec)
+- **Endpoint**: `WS /api/ws/notifications` - WebSocket per notifiche
+
+#### MOBILE RESPONSIVE
+- **CSS**: `/app/frontend/src/styles/common.css` - Breakpoint 768px e 480px
+- Layout verticale per KPI cards su mobile
+- Navbar mobile bottom visibile
+- Touch-friendly interactions (min-height 44px per bottoni)
+
+#### FIX CRITICI
+- **Fornitori**: Endpoint `/api/suppliers` ora estrae 155 fornitori da collezione `invoices` (aggregazione MongoDB)
+- **Dashboard Analytics**: Endpoint corretto da `/api/fatture-ricevute/lista` a `/api/fatture-ricevute/archivio`
 
 ### 16 Gennaio 2026 - REFACTORING ARCHITETTURALE v3.0 🏗️
 
