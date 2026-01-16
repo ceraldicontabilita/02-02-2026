@@ -302,8 +302,8 @@ export default function RiconciliazioneSmart() {
         </p>
       </div>
 
-      {/* Banner auto-conferma POS */}
-      {(autoConfirmStats.pos > 0 || autoConfirmStats.commissioni > 0) && (
+      {/* Banner auto-conferma POS e Assegni */}
+      {(autoConfirmStats.pos > 0 || autoConfirmStats.commissioni > 0 || autoConfirmStats.assegni > 0) && (
         <div style={{ 
           padding: 16, 
           background: '#d1fae5', 
@@ -316,8 +316,10 @@ export default function RiconciliazioneSmart() {
           </div>
           <div style={{ fontSize: 13, color: '#047857' }}>
             {autoConfirmStats.pos > 0 && `💳 ${autoConfirmStats.pos} incassi POS`}
-            {autoConfirmStats.pos > 0 && autoConfirmStats.commissioni > 0 && ' • '}
+            {autoConfirmStats.pos > 0 && (autoConfirmStats.commissioni > 0 || autoConfirmStats.assegni > 0) && ' • '}
             {autoConfirmStats.commissioni > 0 && `💸 ${autoConfirmStats.commissioni} commissioni`}
+            {autoConfirmStats.commissioni > 0 && autoConfirmStats.assegni > 0 && ' • '}
+            {autoConfirmStats.assegni > 0 && `📝 ${autoConfirmStats.assegni} assegni (importo esatto)`}
           </div>
         </div>
       )}
