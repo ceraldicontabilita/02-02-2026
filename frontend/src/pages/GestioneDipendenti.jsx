@@ -360,6 +360,12 @@ function FormField({ label, value, onChange, type = 'text', required }) {
 function IbanSection({ ibans = [], onChange, disabled }) {
   const [localIbans, setLocalIbans] = useState(() => ibans.length > 0 ? ibans : ['']);
   
+  // Aggiorna quando cambiano gli ibans (es. selezione nuovo dipendente)
+  useEffect(() => {
+    const newValue = ibans.length > 0 ? ibans : [''];
+    setLocalIbans(newValue);
+  }, [ibans.join(',')]); // eslint-disable-line react-hooks/exhaustive-deps
+  
   const handleIbanChange = (index, value) => {
     const newIbans = [...localIbans];
     newIbans[index] = value.toUpperCase().replace(/\s/g, '');
