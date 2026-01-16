@@ -1,156 +1,190 @@
 # PRD - Azienda in Cloud ERP
-## Schema Definitivo v2.5 - Aggiornato 16 Gennaio 2026
+## Schema Definitivo v2.6 - Aggiornato 16 Gennaio 2026
 
 ---
 
 ## 📋 ORIGINAL PROBLEM STATEMENT
 
-L'utente richiede un'applicazione ERP completa per la gestione aziendale di un bar/pasticceria che include:
+Applicazione ERP per gestione contabilità bar/pasticceria con:
 - Gestione contabilità (Prima Nota, Bilancio, F24)
 - Gestione fatture (import XML, riconciliazione)
 - Gestione magazzino e HACCP
 - Gestione dipendenti e cedolini
 - Dashboard analytics
-- Integrazione con estratti conto bancari
+- MongoDB Atlas come database
 
 ---
 
 ## ✅ LAVORI COMPLETATI (16 Gennaio 2026)
 
-### Correzioni Bug
-1. **Bug "Vedi Fattura" in Prima Nota** - CORRETTO
-   - Prima: Link navigava a `/fatture-ricevute?search=ID` (non trovava nulla)
-   - Dopo: Link naviga a `/fatture-ricevute/:id` (dettaglio diretto)
-   - File modificati: `PrimaNotaUnificata.jsx` lines 705-724
-   - Aggiunto ricerca per ID in `/api/fatture-ricevute/archivio`
+### FASE 1: Correzioni Backend Critiche
 
-2. **Endpoint NotificheScadenze** - CORRETTO
-   - Prima: Chiamava `/api/scadenzario/prossime` (404)
-   - Dopo: Chiama `/api/scadenze/prossime` (funzionante)
-   - File modificato: `NotificheScadenze.jsx` line 50
+#### 1. ObjectId Serialization Fix
+**Problema**: `insert_one()` aggiunge `_id` (ObjectId) al dizionario originale, causando errori di serializzazione JSON.
 
-3. **Rotta /dashboard mancante** - CORRETTO
-   - Aggiunta rotta esplicita `/dashboard` nel router
-   - File modificato: `main.jsx` line 183
+**Soluzione**: Usato `.copy()` prima di ogni `insert_one()` in tutti i file:
+- `/app/app/routers/ciclo_passivo_integrato.py` (12 insert corretti)
+- `/app/app/routers/accounting/centri_costo.py`
+- `/app/app/routers/accounting/riconciliazione_automatica.py`
 
-4. **Bug Centri di Costo ObjectId** - CORRETTO
-   - Errore serializzazione `ObjectId` dopo `insert_many`
-   - Usato `copy()` per evitare mutazione
-   - File modificato: `accounting/centri_costo.py` line 130
+**File modificati**:
+```python
+# PRIMA (BUG)
+await db["collection"].insert_one(documento)
 
-### Pulizia File
-- ❌ Eliminato: `EstrattoContoImport.jsx` (orfano)
-- ❌ Eliminato: `ImportExport.jsx` (sostituito)
+# DOPO (CORRETTO)
+await db["collection"].insert_one(documento.copy())
+```
 
-### Unificazione Pagine
-- **Import Unificato**: Unificata la pagina `/import-unificato` con tutte le funzionalità di Import/Export
-  - Drag & Drop con riconoscimento automatico tipo
-  - Supporto ZIP e ZIP annidati
-  - Upload in background
-  - 11 tipi di documento supportati
-  - Download template Excel
+#### 2. Controlli Atomici Duplicati
+**Problema**: Insert senza verifica esistenza causavano duplicati.
 
----
+**Soluzione**: Aggiunto controllo `find_one` prima di ogni `insert_one` critico:
+- `/app/app/routers/operazioni_da_confermare.py` (righe 210-240, 663-680)
 
-## 📊 PAGINE TESTATE E FUNZIONANTI (30+)
+```python
+# Esempio controllo duplicati
+existing = await db["prima_nota_cassa"].find_one({"fattura_id": fattura_id})
+if existing:
+    return {"success": True, "duplicato_evitato": True}
+await db["prima_nota_cassa"].insert_one(movimento.copy())
+```
 
-| Pagina | Rotta | Status | Note |
-|--------|-------|--------|------|
-| Dashboard | `/` e `/dashboard` | ✅ | Cards statistiche, dati real-time |
-| Analytics | `/analytics` | ✅ | Grafici fatturato, cash flow |
-| Prima Nota Banca | `/prima-nota/banca` | ✅ | Link "Vedi Fattura" corretto |
-| Prima Nota Cassa | `/prima-nota/cassa` | ✅ | |
-| Dettaglio Fattura | `/fatture-ricevute/:id` | ✅ | Navigazione da Prima Nota |
-| Magazzino | `/magazzino` | ✅ | 500 prodotti, filtri |
-| HACCP Temperature | `/haccp-temperature` | ✅ | Frigoriferi/Congelatori |
-| HACCP Sanificazioni | `/haccp-sanificazioni` | ✅ | |
-| HACCP Scadenze | `/haccp-scadenze` | ✅ | |
-| HACCP Lotti | `/haccp-lotti` | ✅ | Tracciabilità |
-| Riconciliazione | `/riconciliazione` | ✅ | 145 operazioni, tabs |
-| Scadenze | `/scadenze` | ✅ | 17 scadenze, IVA |
-| Fornitori | `/fornitori` | ✅ | 253 fornitori |
-| Dipendenti | `/dipendenti` | ✅ | 27 dipendenti |
-| Cedolini | `/cedolini` | ✅ | |
-| Corrispettivi | `/corrispettivi` | ✅ | 3 corrispettivi |
-| F24 | `/f24` | ✅ | 48 F24 |
-| Bilancio | `/bilancio` | ✅ | Stato patrimoniale |
-| Import Unificato | `/import-unificato` | ✅ | 11 tipi documento |
-| Centri di Costo | `/centri-costo` | ✅ | 8 CDC |
-| Cespiti & TFR | `/cespiti` | ✅ | 2 cespiti |
-| Ricette | `/ricette` | ✅ | 154 ricette |
-| Piano dei Conti | `/piano-dei-conti` | ✅ | 10 conti |
-| Controllo Mensile | `/controllo-mensile` | ✅ | |
-| Ordini Fornitori | `/ordini-fornitori` | ✅ | |
+#### 3. Validazione Entità Collegate
+**Problema**: Possibile associare entità inesistenti (es. driver_id a veicolo senza verificare che il dipendente esista).
 
----
+**Soluzione**: Aggiunto controllo esistenza prima di associazione:
+- `/app/app/routers/noleggio.py` (PUT veicoli/{targa})
 
-## 🔴 BUG ANCORA DA VERIFICARE/CORREGGERE
+```python
+if data.get("driver_id"):
+    dipendente = await db["employees"].find_one({"id": data["driver_id"]})
+    if not dipendente:
+        raise HTTPException(status_code=400, detail="Dipendente non trovato")
+```
 
-1. **Performance Riconciliazione Aruba** (P1)
-   - La pagina `/riconciliazione/aruba` può essere lenta con molte fatture
-   - Soluzione: Ottimizzare query, aggiungere paginazione
+#### 4. Correzione Nome Collection
+**BUG TROVATO DAL TESTING AGENT**: `noleggio.py` usava `db["dipendenti"]` (inesistente) invece di `db["employees"]`.
 
-2. **Tracciabilità pagina standalone** (P2)
-   - Rotta `/tracciabilita` restituisce 404
-   - Backend esiste (`warehouse/tracciabilita.py`)
-   - Necessita creazione pagina frontend o redirect a `/haccp-lotti`
+**Soluzione**: Corretto in `get_drivers()` e `update_veicolo()`.
+
+### FASE 2: Correzioni Frontend
+
+#### 1. Bug "Vedi Fattura" in Prima Nota
+- Prima: Link navigava a `/fatture-ricevute?search=ID` (non trovava nulla)
+- Dopo: Link naviga a `/fatture-ricevute/:id` (dettaglio diretto)
+
+#### 2. Rotta /dashboard mancante
+- Aggiunta rotta esplicita `/dashboard` nel router
+
+#### 3. Endpoint NotificheScadenze
+- Corretto da `/api/scadenzario/prossime` a `/api/scadenze/prossime`
+
+### FASE 3: Pulizia e Unificazione
+- Eliminato file orfano `EstrattoContoImport.jsx`
+- Eliminato file orfano `ImportExport.jsx`
+- Unificata pagina Import in `/import-unificato` con 11 tipi documento
 
 ---
 
-## 📁 ARCHITETTURA FILE
+## 📊 PAGINE TESTATE E FUNZIONANTI (40+)
+
+| Pagina | Rotta | Status |
+|--------|-------|--------|
+| Dashboard | `/`, `/dashboard` | ✅ |
+| Analytics | `/analytics` | ✅ |
+| Prima Nota Banca/Cassa | `/prima-nota/banca`, `/prima-nota/cassa` | ✅ |
+| Dettaglio Fattura | `/fatture-ricevute/:id` | ✅ |
+| Magazzino | `/magazzino` | ✅ |
+| HACCP (4 pagine) | `/haccp-*` | ✅ |
+| Riconciliazione | `/riconciliazione` | ✅ |
+| Scadenze | `/scadenze` | ✅ |
+| Fornitori | `/fornitori` | ✅ |
+| Dipendenti | `/dipendenti` | ✅ |
+| Cedolini | `/cedolini` | ✅ |
+| Corrispettivi | `/corrispettivi` | ✅ |
+| F24 | `/f24` | ✅ |
+| Bilancio | `/bilancio` | ✅ |
+| Import Unificato | `/import-unificato` | ✅ |
+| Centri di Costo | `/centri-costo` | ✅ |
+| Cespiti & TFR | `/cespiti` | ✅ |
+| Ricette | `/ricette` | ✅ |
+| Piano dei Conti | `/piano-dei-conti` | ✅ |
+| Controllo Mensile | `/controllo-mensile` | ✅ |
+| Ordini Fornitori | `/ordini-fornitori` | ✅ |
+| Archivio Bonifici | `/archivio-bonifici` | ✅ |
+| Gestione Assegni | `/gestione-assegni` | ✅ |
+| Calcolo IVA | `/iva` | ✅ |
+| Liquidazione IVA | `/liquidazione-iva` | ✅ |
+| Inventario | `/inventario` | ✅ |
+| Ciclo Passivo | `/ciclo-passivo` | ✅ |
+| Finanziaria | `/finanziaria` | ✅ |
+| Documenti Email | `/documenti` | ✅ |
+| Verifica Coerenza | `/verifica-coerenza` | ✅ |
+| Area Commercialista | `/commercialista` | ✅ |
+| Noleggio Auto | `/noleggio-auto` | ✅ |
+| HACCP Ricezione | `/haccp-ricezione` | ✅ |
+| Riconciliazione F24 | `/riconciliazione-f24` | ✅ |
+
+---
+
+## 🔧 ARCHITETTURA CORREZIONI
 
 ```
-/app
-├── app/
-│   ├── routers/
-│   │   ├── accounting/centri_costo.py  # FIX ObjectId
-│   │   ├── invoices/fatture_ricevute.py  # FIX ricerca ID
-│   │   └── operazioni_da_confermare.py
-│   └── services/
-│       └── riconciliazione_smart.py
-└── frontend/
-    └── src/
-        ├── main.jsx  # FIX rotta /dashboard
-        ├── components/
-        │   └── NotificheScadenze.jsx  # FIX endpoint
-        └── pages/
-            ├── PrimaNotaUnificata.jsx  # FIX link Vedi Fattura
-            └── ImportUnificato.jsx  # REWRITTEN
+/app/app/routers/
+├── ciclo_passivo_integrato.py  # 12 insert_one con .copy()
+├── operazioni_da_confermare.py  # Controlli duplicati
+├── noleggio.py                  # Validazione driver + fix collection
+├── accounting/
+│   ├── centri_costo.py         # .copy() per insert
+│   ├── prima_nota_automation.py # {"_id": 0} nelle query
+│   └── riconciliazione_automatica.py # {"_id": 0} nelle query
+└── invoices/
+    ├── invoices_main.py         # {"_id": 0} nelle query
+    └── fatture_ricevute.py      # Ricerca per ID
 ```
+
+---
+
+## 📊 DATABASE SCHEMA (Collections)
+
+| Collection | Descrizione | Note |
+|------------|-------------|------|
+| `invoices` | Fatture ricevute | NON `fatture` |
+| `employees` | Dipendenti | NON `dipendenti` |
+| `prima_nota_cassa` | Movimenti cassa | NON `cash_movements` |
+| `prima_nota_banca` | Movimenti banca | NON `bank_movements` |
+| `veicoli_noleggio` | Veicoli flotta | |
+| `centri_costo` | Centri di costo | |
+| `warehouse_stocks` | Magazzino prodotti | |
+
+---
+
+## 📋 TEST REPORTS
+
+| Iterazione | Data | Risultato | Note |
+|------------|------|-----------|------|
+| 9 | 16/01/2026 | 22/22 ✅ | Riconciliazione Smart |
+| 10 | 16/01/2026 | 8/8 ✅ | Import Unificato |
+| 11 | 16/01/2026 | 10/10 ✅ | Pagine principali |
+| 12 | 16/01/2026 | 16/16 ✅ | ObjectId + Cascata |
 
 ---
 
 ## 🔮 TASK FUTURI (Backlog)
 
 ### P1 - Alta Priorità
-- [ ] Integrazione Google Calendar per scadenze
-- [ ] Ottimizzazione performance Riconciliazione Aruba
+- [ ] Performance Riconciliazione Aruba (query lente)
+- [ ] Pagina TFR (attualmente placeholder)
 
 ### P2 - Media Priorità
 - [ ] Dashboard Analytics con drill-down
 - [ ] Report PDF automatici via email
-- [ ] Pagina Tracciabilità standalone
+- [ ] Integrazione Google Calendar
 
 ### P3 - Bassa Priorità
 - [ ] Parsing parallelo file import
-- [ ] Notifiche push browser
-
----
-
-## 📊 DATABASE SCHEMA (Collections Principali)
-
-| Collection | Descrizione |
-|------------|-------------|
-| `prima_nota_cassa` | Movimenti contabili cassa |
-| `prima_nota_banca` | Movimenti contabili banca |
-| `invoices` | Fatture ricevute |
-| `estratto_conto_movimenti` | Movimenti bancari importati |
-| `suppliers` | Anagrafica fornitori |
-| `employees` | Anagrafica dipendenti |
-| `warehouse_products` | Prodotti magazzino |
-| `centri_costo` | Centri di costo |
-| `scadenze` | Scadenze fiscali |
-| `f24_models` | Modelli F24 |
+- [ ] Pagina Tracciabilità standalone
 
 ---
 
@@ -159,13 +193,4 @@ L'utente richiede un'applicazione ERP completa per la gestione aziendale di un b
 - **Frontend**: React 18, Vite, TailwindCSS, Recharts, Shadcn/UI
 - **Backend**: FastAPI, Python 3.11
 - **Database**: MongoDB Atlas
-- **Librerie**: PyMuPDF, APScheduler, pandas, xlsxwriter, weasyprint
-
----
-
-## 📝 NOTE TECNICHE
-
-1. **ObjectId MongoDB**: Sempre escludere `_id` nelle proiezioni o convertire a stringa
-2. **Hot Reload**: Abilitato per frontend e backend
-3. **API Prefix**: Tutti gli endpoint backend devono iniziare con `/api/`
-4. **Collection Names**: Usare sempre `prima_nota_cassa`/`prima_nota_banca` (non `cash_movements`/`bank_movements`)
+- **Test**: pytest, Playwright
