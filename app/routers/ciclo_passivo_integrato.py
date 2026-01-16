@@ -886,7 +886,7 @@ async def import_fattura_integrato(file: UploadFile = File(...)):
         "filename": file.filename,
         "created_at": datetime.now(timezone.utc).isoformat()
     }
-    await db[COL_FATTURE].insert_one(fattura)
+    await db[COL_FATTURE].insert_one(fattura.copy())
     
     risultato = {
         "fattura_id": fattura_id,
