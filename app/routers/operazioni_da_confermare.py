@@ -581,8 +581,7 @@ async def conferma_operazione_aruba(request: ConfermaArubaRequest) -> Dict[str, 
             {"$set": {
                 "fornitore": fornitore,
                 "metodo_pagamento_preferito": metodo_pagamento,
-                "ultimo_utilizzo": datetime.now(timezone.utc).isoformat(),
-                "conteggio_utilizzi": 1
+                "ultimo_utilizzo": datetime.now(timezone.utc).isoformat()
             }, "$inc": {"conteggio_utilizzi": 1}},
             upsert=True
         )
