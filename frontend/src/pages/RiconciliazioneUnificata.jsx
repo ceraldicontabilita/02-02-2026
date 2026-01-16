@@ -175,15 +175,6 @@ export default function RiconciliazioneUnificata() {
         });
       // Se non ci sono assegni da riconciliare, mostra messaggio vuoto (non mostrare quelli già confermati)
       const assegniDaMostrare = assegniDaApi;
-            tipo: 'prelievo_assegno',
-            numero_assegno: a.numero || null,
-            assegno: a,
-            fornitore: a.beneficiario || null,
-            stato: a.stato || 'da completare',
-            dati_incompleti: !hasData,
-            suggerimenti: []
-          };
-        });
       setAssegni(assegniDaMostrare);
       
       setStipendiPendenti(movimenti.filter(m => m.tipo === 'stipendio'));
