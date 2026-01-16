@@ -41,8 +41,9 @@ export default function RiconciliazioneSmart() {
   useEffect(() => {
     if (data && !autoConfirmDone.current) {
       autoConfirmDone.current = true;
-      autoConfirmPOS();
+      autoConfirmAll();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
   const loadData = async () => {
