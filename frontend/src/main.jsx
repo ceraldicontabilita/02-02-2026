@@ -151,7 +151,6 @@ const Finanziaria = lazy(() => import("./pages/Finanziaria.jsx"));
 
 // === STRUMENTI ===
 const Documenti = lazy(() => import("./pages/Documenti.jsx"));
-const ImportExport = lazy(() => import("./pages/ImportExport.jsx"));
 const ImportUnificato = lazy(() => import("./pages/ImportUnificato.jsx"));
 const RegoleCategorizzazione = lazy(() => import("./pages/RegoleCategorizzazione.jsx"));
 const VerificaCoerenza = lazy(() => import("./pages/VerificaCoerenza.jsx"));
@@ -246,7 +245,7 @@ const router = createBrowserRouter([
       // === STRUMENTI ===
       { path: "documenti", element: <LazyPage><Documenti /></LazyPage> },
       { path: "import-unificato", element: <LazyPage><ImportUnificato /></LazyPage> },
-      { path: "import-export", element: <LazyPage><ImportExport /></LazyPage> },
+      { path: "import-export", element: <LazyPage><ImportUnificato /></LazyPage> }, /* Redirect legacy route */
       { path: "regole-categorizzazione", element: <LazyPage><RegoleCategorizzazione /></LazyPage> },
       { path: "verifica-coerenza", element: <LazyPage><VerificaCoerenza /></LazyPage> },
       { path: "commercialista", element: <LazyPage><Commercialista /></LazyPage> },

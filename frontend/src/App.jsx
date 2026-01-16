@@ -145,9 +145,8 @@ const NAV_ITEMS = [
     short: "Tools",
     isSubmenu: true,
     children: [
-      { to: "/import-unificato", label: "📥 Import Unificato", icon: "📥", isNew: true },
+      { to: "/import-unificato", label: "📥 Import Documenti", icon: "📥", isNew: true },
       { to: "/documenti", label: "Documenti Email", icon: "📨" },
-      { to: "/import-export", label: "Import/Export", icon: "📁" },
       { to: "/regole-categorizzazione", label: "Regole Categorie", icon: "⚙️" },
       { to: "/verifica-coerenza", label: "Verifica Coerenza", icon: "✅" },
       { to: "/commercialista", label: "Commercialista", icon: "👩‍💼" },
