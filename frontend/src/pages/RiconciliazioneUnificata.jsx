@@ -147,10 +147,9 @@ export default function RiconciliazioneUnificata() {
         .filter(a => {
           // Escludi assegni già incassati
           if (a.stato === 'incassato') return false;
-          // Escludi assegni con stato "completato" - già elaborati
-          if (a.stato === 'completato') return false;
-          // Escludi assegni già associati a fattura (indipendentemente da confermato)
+          // Escludi assegni già associati a fattura (controlla entrambi i campi)
           if (a.fattura_id) return false;
+          if (a.fattura_collegata) return false;
           // Escludi assegni già in prima nota
           if (a.prima_nota_id) return false;
           return true;
