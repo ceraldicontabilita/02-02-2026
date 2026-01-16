@@ -42,9 +42,9 @@ export default function ArchivioFatture() {
   
   // Filtri (anno viene dal contesto globale)
   const [mese, setMese] = useState(searchParams.get('mese') || '');
-  const [fornitore, setFornitore] = useState(searchParams.get('fornitore') || '');
+  const [fornitore, setFornitore] = useState(searchParams.get('fornitore') || searchParams.get('fornitore_piva') || '');
   const [stato, setStato] = useState(searchParams.get('stato') || '');
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(searchParams.get('search') || '');
   
   // Modal stampa etichette
   const [showEtichette, setShowEtichette] = useState(false);
