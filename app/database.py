@@ -122,8 +122,8 @@ class Collections:
     INVOICES = "invoices"
     INVOICE_METADATA_TEMPLATES = "invoice_metadata_templates"
     
-    # Suppliers
-    SUPPLIERS = "suppliers"
+    # Suppliers - usa "fornitori" che è la collezione con i dati
+    SUPPLIERS = "fornitori"
     
     # Warehouse
     WAREHOUSE_PRODUCTS = "warehouse_inventory"
