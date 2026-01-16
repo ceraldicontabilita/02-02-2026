@@ -85,7 +85,26 @@ export default function RiconciliazioneSmart() {
       await api.post('/api/operazioni-da-confermare/aruba/conferma', {
         operazione_id: op.id,
         metodo_pagamento: metodo,
-        numero_assegno: null
+        numero_assegno: op.numero_assegno || null
+      });
+      // Rimuovi dalla lista
+      setArubaOps(prev => prev.filter(o => o.id !== op.id));
+    } catch (e) {
+      alert('Errore: ' + (e.response?.data?.detail || e.message));
+    } finally {
+      setProcessing(null);
+    }
+  };
+
+  // Rifiuta operazione Aruba
+  const handleRifiutaAruba = async (op) => {
+    if (!window.confirm(`Rifiutare la fattura ${op.numero_fattura} di ${op.fornitore}?`)) return;
+    
+    setProcessing(op.id);
+    try {
+      await api.post('/api/operazioni-da-confermare/aruba/rifiuta', {
+        operazione_id: op.id,
+        motivo: 'Rifiutato manualmente'
       });
       // Rimuovi dalla lista
       setArubaOps(prev => prev.filter(o => o.id !== op.id));
