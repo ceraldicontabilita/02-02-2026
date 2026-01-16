@@ -929,7 +929,9 @@ export default function Fornitori() {
   };
 
   const handleViewInvoices = (supplier) => {
-    window.location.href = `/fatture?fornitore=${encodeURIComponent(supplier.ragione_sociale || supplier.partita_iva)}&anno=${selectedYear}`;
+    // Usa la partita IVA per filtrare (più affidabile del nome)
+    const pivaParam = supplier.partita_iva ? `fornitore_piva=${encodeURIComponent(supplier.partita_iva)}` : `fornitore=${encodeURIComponent(supplier.ragione_sociale || supplier.denominazione || '')}`;
+    window.location.href = `/fatture-ricevute?${pivaParam}&anno=${selectedYear}`;
   };
 
   // Ricerca dati azienda tramite Partita IVA
