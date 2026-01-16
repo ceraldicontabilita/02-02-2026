@@ -591,6 +591,8 @@ export default function RiconciliazioneUnificata() {
             fatture={fattureAruba}
             onConferma={handleConfermaAruba}
             processing={processing}
+            fornitori={[...new Set(fattureAruba.map(f => f.fornitore).filter(Boolean))]}
+            onRefresh={loadAllData}
           />
         )}
         {activeTab === 'stipendi' && (
