@@ -59,21 +59,32 @@ export default function RiconciliazioneSmart() {
     }
   };
 
-  // Auto-conferma incassi POS e commissioni
-  const autoConfirmPOS = async () => {
+  // Auto-conferma incassi POS, commissioni E ASSEGNI con match esatto
+  const autoConfirmAll = async () => {
     if (!data?.movimenti) return;
     
+    // 1. Auto-conferma POS e commissioni
     const posMovs = data.movimenti.filter(m => 
       m.associazione_automatica && 
       ['incasso_pos', 'commissione_pos', 'commissione_bancaria'].includes(m.tipo)
     );
     
-    if (posMovs.length === 0) return;
+    // 2. Auto-conferma ASSEGNI con match esatto (importo fattura = importo assegno)
+    const assegniExact = data.movimenti.filter(m => 
+      m.tipo === 'prelievo_assegno' && 
+      m.suggerimenti?.length > 0 &&
+      m.suggerimenti[0]?.importo !== undefined &&
+      Math.abs(Math.abs(m.importo) - Math.abs(m.suggerimenti[0].importo)) < 0.01
+    );
     
-    setProcessing('auto_pos');
-    let posOk = 0, commOk = 0;
+    const toAutoConfirm = [...posMovs, ...assegniExact];
     
-    for (const m of posMovs) {
+    if (toAutoConfirm.length === 0) return;
+    
+    setProcessing('auto_confirm');
+    let posOk = 0, commOk = 0, assegniOk = 0;
+    
+    for (const m of toAutoConfirm) {
       try {
         await api.post('/api/operazioni-da-confermare/smart/riconcilia-manuale', {
           movimento_id: m.movimento_id,
@@ -82,24 +93,23 @@ export default function RiconciliazioneSmart() {
           categoria: m.categoria
         });
         if (m.tipo === 'incasso_pos') posOk++;
+        else if (m.tipo === 'prelievo_assegno') assegniOk++;
         else commOk++;
       } catch (e) {
         console.error('Errore auto-conferma:', e);
       }
     }
     
-    setAutoConfirmStats({ pos: posOk, commissioni: commOk });
+    setAutoConfirmStats({ pos: posOk, commissioni: commOk, assegni: assegniOk });
     
-    // Rimuovi dalla lista
+    // Rimuovi dalla lista tutti gli auto-confermati
+    const confirmedIds = toAutoConfirm.map(m => m.movimento_id);
     setData(prev => ({
       ...prev,
-      movimenti: prev.movimenti.filter(m => 
-        !['incasso_pos', 'commissione_pos', 'commissione_bancaria'].includes(m.tipo) ||
-        !m.associazione_automatica
-      ),
+      movimenti: prev.movimenti.filter(m => !confirmedIds.includes(m.movimento_id)),
       stats: {
         ...prev.stats,
-        totale: prev.stats.totale - posOk - commOk
+        totale: prev.stats.totale - posOk - commOk - assegniOk
       }
     }));
     
