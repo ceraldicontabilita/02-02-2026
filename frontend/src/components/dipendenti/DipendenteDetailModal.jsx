@@ -82,6 +82,7 @@ export function DipendenteDetailModal({
     { id: 'retribuzione', label: '💰 Retribuzione', color: '#4caf50' },
     { id: 'progressivi', label: '📊 Progressivi', color: '#ff9800' },
     { id: 'bonifici', label: '🏦 Bonifici', color: '#3f51b5' },
+    { id: 'acconti', label: '💵 Acconti', color: '#ef4444' },
     { id: 'agevolazioni', label: '🎁 Agevolazioni', color: '#9c27b0' },
     { id: 'contratti', label: '📄 Contratti', color: '#607d8b' }
   ];
@@ -160,6 +161,14 @@ export function DipendenteDetailModal({
         )}
         {activeTab === 'bonifici' && (
           <DipendenteBonificiTab bonifici={bonifici} loading={loadingBonifici} onReload={loadBonifici} />
+        )}
+        {activeTab === 'acconti' && (
+          <DipendenteAccontiTab 
+            dipendente={dipendente} 
+            editData={editData} 
+            setEditData={setEditData} 
+            editMode={editMode} 
+          />
         )}
         {activeTab === 'agevolazioni' && (
           <DipendenteFormAgevolazioni dipendente={dipendente} editData={editData} setEditData={setEditData} editMode={editMode} />
