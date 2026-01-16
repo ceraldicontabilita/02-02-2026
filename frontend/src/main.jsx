@@ -180,6 +180,7 @@ const router = createBrowserRouter([
     children: [
       // === CORE ===
       { index: true, element: <LazyPage><Dashboard /></LazyPage> },
+      { path: "dashboard", element: <LazyPage><Dashboard /></LazyPage> },
       { path: "analytics", element: <LazyPage><DashboardAnalytics /></LazyPage> },
       
       // === FATTURE & ACQUISTI ===
