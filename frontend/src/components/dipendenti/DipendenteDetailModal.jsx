@@ -771,4 +771,278 @@ function DipendenteBonificiTab({ bonifici, loading, onReload }) {
   );
 }
 
+// Tab Acconti del dipendente
+function DipendenteAccontiTab({ dipendente, editData, setEditData, editMode }) {
+  const [nuovoAcconto, setNuovoAcconto] = useState({ 
+    data: new Date().toISOString().split('T')[0], 
+    importo: '', 
+    note: '' 
+  });
+  const [showForm, setShowForm] = useState(false);
+  
+  const acconti = editData?.acconti || dipendente?.acconti || [];
+  const totale = acconti.reduce((acc, a) => acc + (parseFloat(a.importo) || 0), 0);
+  
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '-';
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('it-IT');
+  };
+  
+  const formatEuro = (val) => {
+    return (val || 0).toLocaleString('it-IT', { style: 'currency', currency: 'EUR' });
+  };
+  
+  const handleAddAcconto = () => {
+    if (!nuovoAcconto.importo || parseFloat(nuovoAcconto.importo) <= 0) {
+      alert('Inserire un importo valido');
+      return;
+    }
+    
+    const newAcconto = {
+      id: Date.now().toString(),
+      data: nuovoAcconto.data,
+      importo: parseFloat(nuovoAcconto.importo),
+      note: nuovoAcconto.note || '',
+      created_at: new Date().toISOString()
+    };
+    
+    const updatedAcconti = [...acconti, newAcconto];
+    setEditData({ ...editData, acconti: updatedAcconti });
+    setNuovoAcconto({ data: new Date().toISOString().split('T')[0], importo: '', note: '' });
+    setShowForm(false);
+  };
+  
+  const handleRemoveAcconto = (accontoId) => {
+    if (!window.confirm('Eliminare questo acconto?')) return;
+    const updatedAcconti = acconti.filter(a => a.id !== accontoId);
+    setEditData({ ...editData, acconti: updatedAcconti });
+  };
+
+  return (
+    <div>
+      {/* Header con totale */}
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        background: '#fef2f2',
+        padding: 12,
+        borderRadius: 8,
+        marginBottom: 16
+      }}>
+        <div>
+          <div style={{ fontSize: 11, color: '#dc2626' }}>Totale Acconti Erogati</div>
+          <div style={{ fontSize: 20, fontWeight: 'bold', color: '#b91c1c' }}>
+            {formatEuro(totale)}
+          </div>
+        </div>
+        <div style={{ textAlign: 'right' }}>
+          <div style={{ fontSize: 11, color: '#dc2626' }}>Numero Acconti</div>
+          <div style={{ fontSize: 20, fontWeight: 'bold', color: '#b91c1c' }}>
+            {acconti.length}
+          </div>
+        </div>
+        {editMode && (
+          <button 
+            onClick={() => setShowForm(!showForm)}
+            style={{ 
+              padding: '8px 16px', 
+              background: showForm ? '#f1f5f9' : '#dc2626', 
+              color: showForm ? '#374151' : 'white', 
+              border: 'none', 
+              borderRadius: 4, 
+              cursor: 'pointer',
+              fontSize: 12,
+              fontWeight: 'bold'
+            }}
+          >
+            {showForm ? '✕ Annulla' : '➕ Nuovo Acconto'}
+          </button>
+        )}
+      </div>
+      
+      {/* Form nuovo acconto */}
+      {showForm && editMode && (
+        <div style={{ 
+          background: '#f8fafc', 
+          padding: 16, 
+          borderRadius: 8, 
+          marginBottom: 16,
+          border: '1px solid #e2e8f0'
+        }}>
+          <div style={{ fontSize: 13, fontWeight: 'bold', marginBottom: 12, color: '#374151' }}>
+            Nuovo Acconto
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div>
+              <label style={{ display: 'block', fontSize: 11, color: '#666', marginBottom: 4 }}>Data</label>
+              <input
+                type="date"
+                value={nuovoAcconto.data}
+                onChange={(e) => setNuovoAcconto({ ...nuovoAcconto, data: e.target.value })}
+                style={{ 
+                  width: '100%', 
+                  padding: '8px 12px', 
+                  border: '1px solid #ddd', 
+                  borderRadius: 4, 
+                  fontSize: 13 
+                }}
+              />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: 11, color: '#666', marginBottom: 4 }}>Importo (€)</label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={nuovoAcconto.importo}
+                onChange={(e) => setNuovoAcconto({ ...nuovoAcconto, importo: e.target.value })}
+                placeholder="0.00"
+                style={{ 
+                  width: '100%', 
+                  padding: '8px 12px', 
+                  border: '1px solid #ddd', 
+                  borderRadius: 4, 
+                  fontSize: 13 
+                }}
+              />
+            </div>
+          </div>
+          <div style={{ marginTop: 12 }}>
+            <label style={{ display: 'block', fontSize: 11, color: '#666', marginBottom: 4 }}>Note (opzionale)</label>
+            <input
+              type="text"
+              value={nuovoAcconto.note}
+              onChange={(e) => setNuovoAcconto({ ...nuovoAcconto, note: e.target.value })}
+              placeholder="Es: Anticipo su stipendio marzo"
+              style={{ 
+                width: '100%', 
+                padding: '8px 12px', 
+                border: '1px solid #ddd', 
+                borderRadius: 4, 
+                fontSize: 13 
+              }}
+            />
+          </div>
+          <div style={{ marginTop: 12, display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+            <button
+              onClick={() => setShowForm(false)}
+              style={{ 
+                padding: '8px 16px', 
+                background: '#f1f5f9', 
+                color: '#374151', 
+                border: 'none', 
+                borderRadius: 4, 
+                cursor: 'pointer',
+                fontSize: 12
+              }}
+            >
+              Annulla
+            </button>
+            <button
+              onClick={handleAddAcconto}
+              style={{ 
+                padding: '8px 16px', 
+                background: '#10b981', 
+                color: 'white', 
+                border: 'none', 
+                borderRadius: 4, 
+                cursor: 'pointer',
+                fontSize: 12,
+                fontWeight: 'bold'
+              }}
+            >
+              ✓ Aggiungi Acconto
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Lista acconti */}
+      {acconti.length === 0 ? (
+        <div style={{ 
+          textAlign: 'center', 
+          padding: 40, 
+          background: '#f5f5f5', 
+          borderRadius: 8, 
+          color: '#999' 
+        }}>
+          <div style={{ fontSize: 40, marginBottom: 8 }}>💵</div>
+          <div>Nessun acconto registrato</div>
+          <div style={{ fontSize: 11, marginTop: 8 }}>
+            {editMode 
+              ? 'Clicca "Nuovo Acconto" per aggiungerne uno'
+              : 'Attiva la modalità modifica per aggiungere acconti'
+            }
+          </div>
+        </div>
+      ) : (
+        <div style={{ maxHeight: 300, overflowY: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+            <thead>
+              <tr style={{ background: '#f5f5f5' }}>
+                <th style={{ padding: 8, textAlign: 'left', borderBottom: '2px solid #ddd' }}>Data</th>
+                <th style={{ padding: 8, textAlign: 'right', borderBottom: '2px solid #ddd' }}>Importo</th>
+                <th style={{ padding: 8, textAlign: 'left', borderBottom: '2px solid #ddd' }}>Note</th>
+                {editMode && (
+                  <th style={{ padding: 8, textAlign: 'center', borderBottom: '2px solid #ddd', width: 60 }}>Azioni</th>
+                )}
+              </tr>
+            </thead>
+            <tbody>
+              {acconti
+                .sort((a, b) => new Date(b.data) - new Date(a.data))
+                .map((acc, idx) => (
+                <tr key={acc.id || idx} style={{ borderBottom: '1px solid #eee' }}>
+                  <td style={{ padding: 8 }}>{formatDate(acc.data)}</td>
+                  <td style={{ padding: 8, textAlign: 'right', fontWeight: 'bold', color: '#dc2626' }}>
+                    {formatEuro(acc.importo)}
+                  </td>
+                  <td style={{ padding: 8, color: '#666', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {acc.note || '-'}
+                  </td>
+                  {editMode && (
+                    <td style={{ padding: 8, textAlign: 'center' }}>
+                      <button
+                        onClick={() => handleRemoveAcconto(acc.id)}
+                        style={{
+                          background: '#fef2f2',
+                          color: '#dc2626',
+                          border: 'none',
+                          padding: '4px 8px',
+                          borderRadius: 4,
+                          cursor: 'pointer',
+                          fontSize: 11
+                        }}
+                        title="Elimina acconto"
+                      >
+                        🗑️
+                      </button>
+                    </td>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      
+      {/* Info */}
+      <div style={{ 
+        marginTop: 16, 
+        padding: 12, 
+        background: '#fffbeb', 
+        borderRadius: 8, 
+        fontSize: 11, 
+        color: '#92400e',
+        border: '1px solid #fcd34d'
+      }}>
+        💡 <strong>Nota:</strong> Gli acconti vengono scalati dal netto della busta paga. 
+        Ricordati di salvare le modifiche dopo aver aggiunto o rimosso acconti.
+      </div>
+    </div>
+  );
+}
+
 export default DipendenteDetailModal;
