@@ -30,6 +30,7 @@ export default function ImportUnificato() {
   const [files, setFiles] = useState([]);
   const [tipoSelezionato, setTipoSelezionato] = useState('auto');
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 });
   const [results, setResults] = useState([]);
   const [dragOver, setDragOver] = useState(false);
 
