@@ -359,50 +359,98 @@ async def list_suppliers(
     metodo_pagamento: Optional[str] = Query(None),
     attivo: Optional[bool] = Query(None)
 ) -> List[Dict[str, Any]]:
-    """Lista fornitori con filtri opzionali."""
+    """
+    Lista fornitori estratti da invoices + collezione fornitori.
+    Combina fornitori embedded nelle fatture con quelli salvati separatamente.
+    """
     db = Database.get_db()
     
-    query = {}
-    if search and search.strip():
-        search_term = search.strip()
-        query["$or"] = [
-            {"denominazione": {"$regex": search_term, "$options": "i"}},
-            {"ragione_sociale": {"$regex": search_term, "$options": "i"}},
-            {"partita_iva": {"$regex": search_term, "$options": "i"}},
-            {"comune": {"$regex": search_term, "$options": "i"}}
-        ]
-    if metodo_pagamento:
-        query["metodo_pagamento"] = metodo_pagamento
-    if attivo is not None:
-        query["attivo"] = attivo
+    suppliers_map = {}  # Usa piva come chiave per deduplicare
     
-    suppliers = await db[Collections.SUPPLIERS].find(query, {"_id": 0}).sort("denominazione", 1).skip(skip).limit(limit).to_list(limit)
+    # 1. Estrai fornitori unici da invoices (fonte principale ~175 fornitori)
+    pipeline = [
+        {"$match": {"fornitore": {"$ne": None, "$type": "object"}}},
+        {"$group": {
+            "_id": "$fornitore.partita_iva",
+            "fornitore": {"$first": "$fornitore"},
+            "fatture_count": {"$sum": 1},
+            "fatture_totale": {"$sum": {"$toDouble": {"$ifNull": ["$totale", 0]}}},
+            "fatture_non_pagate": {"$sum": {"$cond": [{"$ne": ["$pagato", True]}, {"$toDouble": {"$ifNull": ["$totale", 0]}}, 0]}}
+        }},
+        {"$sort": {"fatture_count": -1}}
+    ]
     
-    # Arricchisci con statistiche fatture
-    for supplier in suppliers:
+    invoice_suppliers = await db["invoices"].aggregate(pipeline).to_list(500)
+    
+    for item in invoice_suppliers:
+        fornitore = item.get("fornitore", {})
+        if not fornitore or not isinstance(fornitore, dict):
+            continue
+            
+        piva = fornitore.get("partita_iva") or item.get("_id")
+        if not piva:
+            continue
+            
+        suppliers_map[piva] = {
+            "id": f"inv_{piva}",
+            "partita_iva": piva,
+            "codice_fiscale": fornitore.get("codice_fiscale", ""),
+            "ragione_sociale": fornitore.get("denominazione", "") or fornitore.get("ragione_sociale", ""),
+            "denominazione": fornitore.get("denominazione", ""),
+            "indirizzo": fornitore.get("indirizzo", ""),
+            "cap": fornitore.get("cap", ""),
+            "comune": fornitore.get("comune", ""),
+            "provincia": fornitore.get("provincia", ""),
+            "nazione": fornitore.get("nazione", "IT"),
+            "telefono": fornitore.get("telefono", ""),
+            "email": fornitore.get("email", ""),
+            "pec": fornitore.get("pec", ""),
+            "fatture_count": item.get("fatture_count", 0),
+            "fatture_totale": item.get("fatture_totale", 0),
+            "fatture_non_pagate": item.get("fatture_non_pagate", 0),
+            "source": "invoices"
+        }
+    
+    # 2. Aggiungi fornitori dalla collezione dedicata (sovrascrive se stesso piva)
+    saved_suppliers = await db[Collections.SUPPLIERS].find({}, {"_id": 0}).to_list(500)
+    for supplier in saved_suppliers:
         piva = supplier.get("partita_iva")
         if piva:
-            # Conta fatture e totale (check both cedente_piva and supplier_vat fields)
-            pipeline = [
-                {"$match": {"$or": [{"cedente_piva": piva}, {"supplier_vat": piva}]}},
-                {"$group": {
-                    "_id": None,
-                    "count": {"$sum": 1},
-                    "total": {"$sum": "$importo_totale"},
-                    "unpaid": {"$sum": {"$cond": [{"$eq": ["$pagato", False]}, "$importo_totale", 0]}}
-                }}
-            ]
-            stats = await db[Collections.INVOICES].aggregate(pipeline).to_list(1)
-            if stats:
-                supplier["fatture_count"] = stats[0].get("count", 0)
-                supplier["fatture_totale"] = stats[0].get("total", 0)
-                supplier["fatture_non_pagate"] = stats[0].get("unpaid", 0)
+            if piva in suppliers_map:
+                # Merge: mantieni stats da invoices ma aggiorna dati anagrafici
+                suppliers_map[piva].update({
+                    k: v for k, v in supplier.items() 
+                    if v and k not in ["fatture_count", "fatture_totale", "fatture_non_pagate"]
+                })
+                suppliers_map[piva]["source"] = "merged"
             else:
+                supplier["source"] = "database"
                 supplier["fatture_count"] = 0
                 supplier["fatture_totale"] = 0
                 supplier["fatture_non_pagate"] = 0
+                suppliers_map[piva] = supplier
     
-    return suppliers
+    # Converti in lista
+    suppliers = list(suppliers_map.values())
+    
+    # Applica filtri
+    if search and search.strip():
+        search_lower = search.strip().lower()
+        suppliers = [s for s in suppliers if 
+            search_lower in (s.get("denominazione") or "").lower() or
+            search_lower in (s.get("ragione_sociale") or "").lower() or
+            search_lower in (s.get("partita_iva") or "").lower() or
+            search_lower in (s.get("comune") or "").lower()
+        ]
+    
+    if metodo_pagamento:
+        suppliers = [s for s in suppliers if s.get("metodo_pagamento") == metodo_pagamento]
+    
+    # Ordina per numero fatture decrescente
+    suppliers.sort(key=lambda x: x.get("fatture_count", 0), reverse=True)
+    
+    # Applica paginazione
+    return suppliers[skip:skip+limit]
 
 
 @router.get("/stats")
