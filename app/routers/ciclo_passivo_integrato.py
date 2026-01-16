@@ -459,7 +459,7 @@ async def genera_scrittura_prima_nota(db, fattura_id: str, fattura: Dict, fornit
         "updated_at": datetime.now(timezone.utc).isoformat()
     }
     
-    await db[COL_PRIMA_NOTA_BANCA].insert_one(movimento)
+    await db[COL_PRIMA_NOTA_BANCA].insert_one(movimento.copy())
     logger.info(f"✅ Movimento Prima Nota Banca generato: {movimento_id[:8]}")
     
     return movimento_id
