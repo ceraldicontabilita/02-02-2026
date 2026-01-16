@@ -432,12 +432,20 @@ async def lista_aruba_pendenti(
     }
 
 
+from pydantic import BaseModel
+
+class ConfermaArubaRequest(BaseModel):
+    operazione_id: str
+    metodo_pagamento: str
+    numero_assegno: Optional[str] = None
+
+class RifiutaArubaRequest(BaseModel):
+    operazione_id: str
+    motivo: Optional[str] = None
+
+
 @router.post("/aruba/conferma")
-async def conferma_operazione_aruba(
-    operazione_id: str = Body(..., embed=False, alias="operazione_id"),
-    metodo_pagamento: str = Body(..., embed=False, alias="metodo_pagamento"),
-    numero_assegno: Optional[str] = Body(None, embed=False, alias="numero_assegno")
-) -> Dict[str, Any]:
+async def conferma_operazione_aruba(request: ConfermaArubaRequest) -> Dict[str, Any]:
     """
     Conferma un'operazione Aruba pendente e la segna come confermata.
     
@@ -445,6 +453,10 @@ async def conferma_operazione_aruba(
     - numero_assegno: opzionale, richiesto se metodo_pagamento è 'assegno'
     """
     db = Database.get_db()
+    
+    operazione_id = request.operazione_id
+    metodo_pagamento = request.metodo_pagamento
+    numero_assegno = request.numero_assegno
     
     # Trova l'operazione
     operazione = await db["operazioni_da_confermare"].find_one(
