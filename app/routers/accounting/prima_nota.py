@@ -372,6 +372,50 @@ async def update_movimento_banca(
     return {"success": True, "message": "Movimento banca aggiornato"}
 
 
+@router.post("/collega-fatture")
+async def collega_fatture_movimenti() -> Dict[str, Any]:
+    """
+    Collega automaticamente le fatture ai movimenti di prima nota
+    che hanno numero_fattura ma non fattura_id.
+    """
+    db = Database.get_db()
+    
+    collegati = 0
+    
+    # Aggiorna prima nota cassa
+    for coll in [COLLECTION_PRIMA_NOTA_CASSA, COLLECTION_PRIMA_NOTA_BANCA]:
+        cursor = db[coll].find({
+            "numero_fattura": {"$exists": True, "$ne": None, "$ne": ""},
+            "fattura_id": {"$in": [None, ""]}
+        })
+        
+        async for mov in cursor:
+            numero_fattura = mov.get("numero_fattura", "")
+            if not numero_fattura:
+                continue
+            
+            # Cerca fattura
+            fattura = await db["invoices"].find_one({
+                "$or": [
+                    {"numero": numero_fattura},
+                    {"invoice_number": numero_fattura},
+                    {"numero_fattura": numero_fattura}
+                ]
+            }, {"_id": 0, "id": 1})
+            
+            if fattura:
+                await db[coll].update_one(
+                    {"id": mov["id"]},
+                    {"$set": {"fattura_id": fattura["id"]}}
+                )
+                collegati += 1
+    
+    return {
+        "success": True,
+        "movimenti_collegati": collegati
+    }
+
+
 @router.delete("/banca/{movimento_id}")
 async def delete_movimento_banca(
     movimento_id: str,
