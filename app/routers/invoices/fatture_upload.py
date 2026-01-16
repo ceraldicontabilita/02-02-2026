@@ -45,16 +45,53 @@ async def ensure_supplier_exists(db, parsed_invoice: Dict[str, Any]) -> Dict[str
     if not supplier_vat:
         return result
     
-    # Cerca fornitore esistente
+    # Cerca fornitore esistente per P.IVA
     existing = await db[Collections.SUPPLIERS].find_one(
         {"partita_iva": supplier_vat},
         {"_id": 0}
     )
     
+    # Se non trovato per P.IVA, cerca per denominazione (potrebbe essere stato creato da Aruba)
+    if not existing and supplier_name:
+        existing = await db[Collections.SUPPLIERS].find_one(
+            {"$or": [
+                {"denominazione": {"$regex": f"^{supplier_name[:30]}", "$options": "i"}},
+                {"ragione_sociale": {"$regex": f"^{supplier_name[:30]}", "$options": "i"}}
+            ]},
+            {"_id": 0}
+        )
+    
     if existing:
         result["supplier_exists"] = True
         result["supplier_id"] = existing.get("id")
         result["metodo_pagamento"] = existing.get("metodo_pagamento")
+        
+        # Se il fornitore esiste ma ha dati incompleti (creato da Aruba), aggiorna con dati XML
+        if existing.get("dati_incompleti") or not existing.get("partita_iva"):
+            fornitore_data = parsed_invoice.get("fornitore") or {}
+            update_data = {
+                "partita_iva": supplier_vat,
+                "codice_fiscale": fornitore_data.get("codice_fiscale", supplier_vat),
+                "indirizzo": fornitore_data.get("indirizzo", "") or existing.get("indirizzo", ""),
+                "cap": fornitore_data.get("cap", "") or existing.get("cap", ""),
+                "comune": fornitore_data.get("comune", "") or existing.get("comune", ""),
+                "provincia": fornitore_data.get("provincia", "") or existing.get("provincia", ""),
+                "nazione": fornitore_data.get("nazione", "IT"),
+                "telefono": fornitore_data.get("telefono", "") or existing.get("telefono", ""),
+                "email": fornitore_data.get("email", "") or existing.get("email", ""),
+                "pec": fornitore_data.get("pec", "") or existing.get("pec", ""),
+                "dati_incompleti": False,  # Ora i dati sono completi
+                "source": "merged_aruba_xml",
+                "updated_at": datetime.utcnow().isoformat(),
+                "note": f"Dati completati da fattura XML il {datetime.utcnow().strftime('%d/%m/%Y')}"
+            }
+            await db[Collections.SUPPLIERS].update_one(
+                {"id": existing["id"]},
+                {"$set": update_data}
+            )
+            result["supplier_updated"] = True
+            logger.info(f"Fornitore {supplier_name} aggiornato con dati XML")
+        
         return result
     
     # Fornitore non esiste - CREALO
