@@ -1016,7 +1016,12 @@ export default function Fornitori() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f3f4f6', padding: '24px' }}>
+    <div style={{ minHeight: '100vh', backgroundColor: '#f3f4f6', padding: '24px', position: 'relative' }}>
+      {/* Page Info Card */}
+      <div style={{ position: 'absolute', top: 24, right: 24, zIndex: 100 }}>
+        <PageInfoCard pageKey="fornitori" />
+      </div>
+      
       <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
         
         {/* Header */}
