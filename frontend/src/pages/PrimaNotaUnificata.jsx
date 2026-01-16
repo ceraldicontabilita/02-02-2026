@@ -127,13 +127,14 @@ export default function PrimaNotaUnificata() {
     });
   }, [movimenti, filtroTipo, filtroMese, search]);
 
-  // Calcola saldo progressivo
+  // Calcola saldo progressivo CON saldo anno precedente
   const movimentiConSaldo = useMemo(() => {
     const sorted = [...movimentiFiltrati].sort((a, b) => 
       new Date(a.data || a.data_pagamento) - new Date(b.data || b.data_pagamento)
     );
     
-    let saldo = 0;
+    // Inizia dal saldo dell'anno precedente
+    let saldo = saldoAnnoPrecedente;
     const withSaldo = sorted.map(m => {
       const importo = Math.abs(m.importo || 0);
       // Usa il campo tipo salvato nel DB
@@ -145,7 +146,7 @@ export default function PrimaNotaUnificata() {
     return withSaldo.sort((a, b) => 
       new Date(b.data || b.data_pagamento) - new Date(a.data || a.data_pagamento)
     );
-  }, [movimentiFiltrati]);
+  }, [movimentiFiltrati, saldoAnnoPrecedente]);
 
   // Calcola totali
   const totali = useMemo(() => {
