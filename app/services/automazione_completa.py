@@ -402,6 +402,8 @@ async def conferma_operazione_multipla(
     Returns:
         Dict con statistiche conferma
     """
+    import uuid
+    
     result = {
         "confermate": 0,
         "errori": [],
@@ -410,9 +412,6 @@ async def conferma_operazione_multipla(
     
     for op_id in operazione_ids:
         try:
-            from app.routers.operazioni_da_confermare import conferma_operazione
-            
-            # Simula la conferma
             operazione = await db["operazioni_da_confermare"].find_one(
                 {"id": op_id},
                 {"_id": 0}
@@ -427,27 +426,47 @@ async def conferma_operazione_multipla(
                 continue
             
             # Crea movimento in Prima Nota
-            anno_fiscale = operazione.get("anno", datetime.now().year)
-            movimento_id = f"{metodo}_{op_id}"
+            movimento_id = str(uuid.uuid4())
+            importo = operazione.get("importo", 0)
+            fornitore = operazione.get("fornitore", "")
+            numero_fattura = operazione.get("numero_fattura", "")
+            data_documento = operazione.get("data_documento") or datetime.now(timezone.utc).strftime("%Y-%m-%d")
+            
+            # Cerca fattura collegata per ottenere fattura_id
+            fattura_id = None
+            fattura = await db["invoices"].find_one({
+                "$or": [
+                    {"numero_fattura": numero_fattura},
+                    {"invoice_number": numero_fattura}
+                ]
+            }, {"_id": 0, "id": 1})
+            if fattura:
+                fattura_id = fattura.get("id")
             
             movimento = {
                 "id": movimento_id,
-                "type": "uscita",
-                "amount": operazione["importo"],
-                "description": f"Fattura {operazione['numero_fattura']} - {operazione['fornitore']}",
-                "category": "fattura_fornitore",
-                "date": datetime.now(timezone.utc).isoformat(),
-                "anno": anno_fiscale,
-                "fornitore": operazione["fornitore"],
-                "numero_fattura": operazione["numero_fattura"],
-                "data_fattura": operazione.get("data_documento"),
-                "fonte": "operazione_confermata_batch",
-                "operazione_id": op_id,
-                "provvisorio": True,
-                "note": note
+                "data": data_documento,
+                "tipo": "uscita",
+                "importo": abs(importo),
+                "descrizione": f"Fattura {numero_fattura} - {fornitore}",
+                "categoria": "Pagamento fornitore",
+                "fornitore": fornitore,
+                "numero_fattura": numero_fattura,
+                "fattura_id": fattura_id,
+                "data_fattura": data_documento,
+                "operazione_aruba_id": op_id,
+                "source": "aruba_batch_conferma",
+                "note": note,
+                "created_at": datetime.now(timezone.utc).isoformat()
             }
             
-            collection = "cash_movements" if metodo == "cassa" else "bank_movements"
+            # Salva nella collection CORRETTA
+            if metodo == "cassa":
+                collection = "prima_nota_cassa"
+            else:
+                collection = "prima_nota_banca"
+                movimento["metodo_pagamento"] = metodo
+            
             await db[collection].insert_one(movimento)
             
             # Aggiorna operazione
@@ -455,9 +474,39 @@ async def conferma_operazione_multipla(
                 {"id": op_id},
                 {"$set": {
                     "stato": "confermato",
-                    "metodo_pagamento_confermato": metodo,
+                    "metodo_pagamento": metodo,
                     "prima_nota_id": movimento_id,
+                    "prima_nota_collection": collection,
                     "confirmed_at": datetime.now(timezone.utc).isoformat()
+                }}
+            )
+            
+            # CASCATA: Aggiorna fattura se trovata
+            if fattura_id:
+                await db["invoices"].update_one(
+                    {"id": fattura_id},
+                    {"$set": {
+                        "stato_pagamento": "pagato",
+                        "pagato": True,
+                        "data_pagamento": data_documento,
+                        "metodo_pagamento": metodo,
+                        "prima_nota_id": movimento_id
+                    }}
+                )
+            
+            # CASCATA: Aggiorna scadenza se esiste
+            await db["scadenze"].update_many(
+                {
+                    "$or": [
+                        {"fattura_id": fattura_id},
+                        {"numero_fattura": numero_fattura, "fornitore": {"$regex": fornitore[:20], "$options": "i"}}
+                    ],
+                    "pagato": {"$ne": True}
+                },
+                {"$set": {
+                    "pagato": True,
+                    "data_pagamento": data_documento,
+                    "prima_nota_id": movimento_id
                 }}
             )
             
@@ -465,6 +514,7 @@ async def conferma_operazione_multipla(
             result["prima_nota_ids"].append(movimento_id)
             
         except Exception as e:
+            logger.error(f"Errore conferma {op_id}: {e}")
             result["errori"].append(f"{op_id}: {e}")
     
     return result
