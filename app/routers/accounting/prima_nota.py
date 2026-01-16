@@ -278,6 +278,100 @@ async def delete_movimento_cassa(
     return {"success": True, "message": "Movimento eliminato (archiviato)"}
 
 
+@router.get("/saldo-finale")
+async def get_saldo_finale(
+    anno: int = Query(..., description="Anno per cui calcolare il saldo finale"),
+    tipo: str = Query("cassa", description="Tipo: cassa o banca")
+) -> Dict[str, Any]:
+    """
+    Calcola il saldo finale dell'anno specificato.
+    Utile per inizializzare il saldo dell'anno successivo.
+    """
+    db = Database.get_db()
+    
+    collection = COLLECTION_PRIMA_NOTA_CASSA if tipo == "cassa" else COLLECTION_PRIMA_NOTA_BANCA
+    
+    # Recupera tutti i movimenti dell'anno
+    anno_start = f"{anno}-01-01"
+    anno_end = f"{anno}-12-31"
+    
+    movimenti = await db[collection].find({
+        "data": {"$gte": anno_start, "$lte": anno_end},
+        "status": {"$ne": "deleted"}
+    }).to_list(length=None)
+    
+    # Calcola saldo
+    saldo = 0
+    for m in movimenti:
+        importo = abs(m.get("importo", 0))
+        if m.get("tipo") == "entrata":
+            saldo += importo
+        else:
+            saldo -= importo
+    
+    return {
+        "anno": anno,
+        "tipo": tipo,
+        "saldo": round(saldo, 2),
+        "movimenti_count": len(movimenti)
+    }
+
+
+@router.put("/cassa/{movimento_id}")
+async def update_movimento_cassa(
+    movimento_id: str,
+    data: Dict[str, Any] = Body(...)
+) -> Dict[str, Any]:
+    """Modifica un movimento cassa."""
+    db = Database.get_db()
+    
+    mov = await db[COLLECTION_PRIMA_NOTA_CASSA].find_one({"id": movimento_id})
+    if not mov:
+        raise HTTPException(status_code=404, detail="Movimento non trovato")
+    
+    # Aggiorna solo i campi forniti
+    update_fields = {}
+    for field in ["data", "tipo", "importo", "descrizione", "fornitore", "categoria"]:
+        if field in data:
+            update_fields[field] = data[field]
+    
+    update_fields["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    await db[COLLECTION_PRIMA_NOTA_CASSA].update_one(
+        {"id": movimento_id},
+        {"$set": update_fields}
+    )
+    
+    return {"success": True, "message": "Movimento cassa aggiornato"}
+
+
+@router.put("/banca/{movimento_id}")
+async def update_movimento_banca(
+    movimento_id: str,
+    data: Dict[str, Any] = Body(...)
+) -> Dict[str, Any]:
+    """Modifica un movimento banca."""
+    db = Database.get_db()
+    
+    mov = await db[COLLECTION_PRIMA_NOTA_BANCA].find_one({"id": movimento_id})
+    if not mov:
+        raise HTTPException(status_code=404, detail="Movimento non trovato")
+    
+    update_fields = {}
+    for field in ["data", "tipo", "importo", "descrizione", "fornitore", "categoria", "ragione_sociale"]:
+        if field in data:
+            update_fields[field] = data[field]
+    
+    update_fields["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    await db[COLLECTION_PRIMA_NOTA_BANCA].update_one(
+        {"id": movimento_id},
+        {"$set": update_fields}
+    )
+    
+    return {"success": True, "message": "Movimento banca aggiornato"}
+
+
 @router.delete("/banca/{movimento_id}")
 async def delete_movimento_banca(
     movimento_id: str,
