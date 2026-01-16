@@ -1086,9 +1086,24 @@ function ArubaTab({ fatture, onConferma, processing, fornitori = [], onRefresh }
             <div key={op.id || idx} style={{ 
               padding: 16, 
               borderBottom: '1px solid #f1f5f9',
-              opacity: processing === op.id ? 0.5 : 1
+              opacity: processing === op.id ? 0.5 : 1,
+              background: selezionate.has(op.id) ? '#f0fdf4' : 'white'
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+                {/* Checkbox selezione */}
+                <input
+                  type="checkbox"
+                  checked={selezionate.has(op.id)}
+                  onChange={() => toggleSelezione(op.id)}
+                  style={{ 
+                    width: 18, 
+                    height: 18, 
+                    marginTop: 2,
+                    cursor: 'pointer',
+                    accentColor: '#10b981'
+                  }}
+                />
+                
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 600, fontSize: 15 }}>{op.fornitore || 'Fornitore N/A'}</div>
                   <div style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>
