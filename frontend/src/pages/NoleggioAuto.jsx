@@ -213,18 +213,54 @@ export default function NoleggioAuto() {
         </div>
       )}
 
-      {/* Riepilogo Totali */}
+      {/* Riepilogo Totali - Se veicolo selezionato mostra i suoi dati, altrimenti totale generale */}
       {veicoli.length > 0 && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 16, marginBottom: 20 }}>
-          {categorie.map(cat => (
-            <div key={cat.key} style={{ background: 'white', borderRadius: 12, padding: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', borderLeft: `4px solid ${cat.color}` }}>
-              <div style={{ fontSize: 14, color: '#6b7280', marginBottom: 8 }}>{cat.icon} {cat.label}</div>
-              <div style={{ fontSize: 22, fontWeight: 'bold', color: cat.color }}>{formatEuro(statistiche[`totale_${cat.key}`] || 0)}</div>
+        <div style={{ marginBottom: 20 }}>
+          {selectedVeicolo && (
+            <div style={{ 
+              padding: '8px 16px', 
+              background: '#dbeafe', 
+              borderRadius: '8px 8px 0 0',
+              color: '#1e40af',
+              fontWeight: 'bold',
+              fontSize: 14
+            }}>
+              📊 Riepilogo: {selectedVeicolo.marca} {selectedVeicolo.modello || ''} - {selectedVeicolo.targa}
             </div>
-          ))}
-          <div style={{ background: '#1e3a5f', borderRadius: 12, padding: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', color: 'white' }}>
-            <div style={{ fontSize: 14, opacity: 0.9, marginBottom: 8 }}>🚗 TOTALE</div>
-            <div style={{ fontSize: 22, fontWeight: 'bold' }}>{formatEuro(statistiche.totale_generale || 0)}</div>
+          )}
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', 
+            gap: 16,
+            padding: selectedVeicolo ? '16px' : 0,
+            background: selectedVeicolo ? '#f8fafc' : 'transparent',
+            borderRadius: selectedVeicolo ? '0 0 8px 8px' : 0
+          }}>
+            {categorie.map(cat => {
+              // Se c'è un veicolo selezionato, mostra i suoi totali, altrimenti il totale generale
+              const valore = selectedVeicolo 
+                ? (selectedVeicolo[`totale_${cat.key}`] || (selectedVeicolo[cat.key] || []).reduce((a, s) => a + (s.totale || 0), 0))
+                : (statistiche[`totale_${cat.key}`] || 0);
+              
+              return (
+                <div key={cat.key} style={{ 
+                  background: 'white', 
+                  borderRadius: 12, 
+                  padding: 16, 
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)', 
+                  borderLeft: `4px solid ${cat.color}` 
+                }}>
+                  <div style={{ fontSize: 14, color: '#6b7280', marginBottom: 8 }}>{cat.icon} {cat.label}</div>
+                  <div style={{ fontSize: 22, fontWeight: 'bold', color: cat.color }}>{formatEuro(valore)}</div>
+                </div>
+              );
+            })}
+            <div style={{ background: '#1e3a5f', borderRadius: 12, padding: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', color: 'white' }}>
+              <div style={{ fontSize: 14, opacity: 0.9, marginBottom: 8 }}>🚗 TOTALE</div>
+              <div style={{ fontSize: 22, fontWeight: 'bold' }}>
+                {formatEuro(selectedVeicolo ? selectedVeicolo.totale_generale : (statistiche.totale_generale || 0))}
+              </div>
+            </div>
           </div>
         </div>
       )}
