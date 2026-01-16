@@ -84,9 +84,23 @@ Quando si conferma un pagamento (es. fattura Aruba):
    - ✅ Drag & drop con selezione multipla
    - ✅ Endpoint backend `/api/documenti/upload-auto` con auto-detect
    - ✅ Aggiunto al menu Strumenti
+   - ✅ Progress bar durante upload con percentuale
+
+2. **Paginazione Riconciliazione**
+   - ✅ Bottone "Carica altri" nei tab Banca/Assegni/Stipendi
+   - ✅ Caricamento incrementale (+25 alla volta)
+   - ✅ Indicatore di loading durante caricamento
+
+3. **Endpoint API Cedolini**
+   - ✅ `/api/cedolini` - Lista cedolini con filtri (anno, mese, dipendente_id)
+   - ✅ Paginazione con limit
 
 #### Ottimizzazioni Performance:
-- **API Riconciliazione**: Ridotto limit da 200 a 25 per velocizzare caricamento (da 20s a ~2.5s)
+- **API Riconciliazione**: Ridotto limit da 200 a 25 per velocizzare caricamento (da 20s a ~2s)
+
+#### Test Results:
+- Backend: 100% (16/16 test passed)
+- Frontend: 100% (tutte le feature verificate)
 
 #### Pulizia Codice Legacy:
 - ✅ Rimosse route legacy dal main.jsx (prima-nota-legacy, dipendenti-legacy, etc.)
