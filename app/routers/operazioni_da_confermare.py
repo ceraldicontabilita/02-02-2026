@@ -578,11 +578,15 @@ async def conferma_operazione_aruba(request: ConfermaArubaRequest) -> Dict[str, 
     if fornitore:
         await db["fornitori_preferenze"].update_one(
             {"fornitore_normalizzato": fornitore.upper().strip()[:50]},
-            {"$set": {
-                "fornitore": fornitore,
-                "metodo_pagamento_preferito": metodo_pagamento,
-                "ultimo_utilizzo": datetime.now(timezone.utc).isoformat()
-            }, "$inc": {"conteggio_utilizzi": 1}},
+            {
+                "$set": {
+                    "fornitore": fornitore,
+                    "metodo_pagamento_preferito": metodo_pagamento,
+                    "ultimo_utilizzo": datetime.now(timezone.utc).isoformat()
+                }, 
+                "$inc": {"conteggio_utilizzi": 1},
+                "$setOnInsert": {"created_at": datetime.now(timezone.utc).isoformat()}
+            },
             upsert=True
         )
     
