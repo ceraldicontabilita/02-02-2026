@@ -1091,19 +1091,24 @@ L'algoritmo di riconciliazione NON trova molti match automatici perché:
 - [x] ~~Fix UI Noleggio Auto (stile Corrispettivi)~~ ✅ COMPLETATO 2026-01-14
 - [x] ~~UI per importare estratti conto Nexi~~ ✅ COMPLETATO 2026-01-15
 - [x] ~~Automazione download email per estratti conto~~ ✅ COMPLETATO 2026-01-15
+- [x] ~~UI Fatture Aruba Pendenti~~ ✅ COMPLETATO 2026-01-16
 
 ### P1 - Priorità Alta
 - [x] ~~Integrazione Parser Buste Paga~~ ✅ COMPLETATO 2026-01-15 (supporto CSC/Zucchetti)
 - [x] ~~Riconciliazione Transazioni Carta~~ ✅ COMPLETATO 2026-01-15
+- [x] ~~Miglioramento parser cedolini con fallback nome~~ ✅ COMPLETATO 2026-01-16
+- [ ] Risolvere discrepanza API dipendenti (26 vs 31)
 - [ ] Gestione transazioni "PRELIEVO ASSEGNO" nella Riconciliazione Smart
 - [ ] Migliorare algoritmo riconciliazione F24-Quietanza (matching più intelligente)
 
 ### P2 - Priorità Media
+- [ ] Unificare collezioni movimenti bancari (`estratto_conto` vs `estratto_conto_movimenti`)
 - [ ] Standardizzazione UI rimanenti (Admin, Documenti, GestioneCespiti, PrevisioniAcquisti, VerificaCoerenza)
 - [ ] Calcolo Food Cost Ricette
 - [ ] Report PDF scadenze
 
 ### P3 - Priorità Bassa
+- [ ] Ottimizzare API riconciliazione (`/api/operazioni-da-confermare/smart/analizza`)
 - [ ] Export Excel magazzino
 - [ ] Notifiche email scadenze
 
