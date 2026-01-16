@@ -67,7 +67,9 @@ class TestSupplierDeleteWithInvoiceCheck:
         assert response.status_code == 400, f"Expected 400 (blocked), got {response.status_code}"
         
         data = response.json()
-        assert "fatture collegate" in data.get("detail", "").lower() or "impossibile" in data.get("detail", "").lower()
+        # Response can use "detail" or "message" depending on error handler
+        error_msg = (data.get("detail", "") or data.get("message", "")).lower()
+        assert "fatture collegate" in error_msg or "impossibile" in error_msg, f"Unexpected response: {data}"
 
 
 class TestOperazioniDaConfermarDelete:
