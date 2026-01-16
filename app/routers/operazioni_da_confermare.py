@@ -202,26 +202,41 @@ async def conferma_operazione(
     prima_nota_id = None
     assegno_id = None
     anno_fiscale = operazione.get("anno", datetime.now().year)
+    importo = abs(operazione.get("importo", 0))
+    fornitore = operazione.get("fornitore", "")
+    numero_fattura = operazione.get("numero_fattura", "")
+    data_documento = operazione.get("data_documento") or datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    
+    # Cerca fattura per collegamento
+    fattura_id = None
+    fattura = await db["invoices"].find_one({
+        "$or": [
+            {"numero_fattura": numero_fattura},
+            {"invoice_number": numero_fattura}
+        ]
+    }, {"_id": 0, "id": 1})
+    if fattura:
+        fattura_id = fattura.get("id")
     
     # Inserisci in Prima Nota
     if metodo == "cassa":
         # Prima Nota Cassa
         movimento = {
-            "id": f"cash_{operazione_id}",
-            "type": "uscita",
-            "amount": operazione["importo"],
-            "description": f"Fattura {operazione['numero_fattura']} - {operazione['fornitore']}",
-            "category": "fattura_fornitore",
-            "date": datetime.now(timezone.utc).isoformat(),
-            "anno": anno_fiscale,  # Anno fiscale per separazione contabilità
-            "fornitore": operazione["fornitore"],
-            "numero_fattura": operazione["numero_fattura"],
-            "data_fattura": operazione["data_documento"],
-            "fonte": "operazione_confermata",
-            "operazione_id": operazione_id,
-            "provvisorio": True  # Marcato come provvisorio fino all'arrivo XML
+            "id": str(uuid.uuid4()),
+            "data": data_documento,
+            "tipo": "uscita",
+            "importo": importo,
+            "descrizione": f"Fattura {numero_fattura} - {fornitore}",
+            "categoria": "Pagamento fornitore",
+            "fornitore": fornitore,
+            "numero_fattura": numero_fattura,
+            "fattura_id": fattura_id,
+            "data_fattura": data_documento,
+            "operazione_aruba_id": operazione_id,
+            "source": "operazione_confermata",
+            "created_at": datetime.now(timezone.utc).isoformat()
         }
-        await db["cash_movements"].insert_one(movimento)
+        await db["prima_nota_cassa"].insert_one(movimento)
         prima_nota_id = movimento["id"]
         
     elif metodo == "banca":
