@@ -1177,23 +1177,75 @@ async def cerca_f24_per_associazione(
 ) -> Dict[str, Any]:
     """
     Cerca F24 non pagati per associazione.
+    Legge dalla collezione f24_models.
     """
-    from app.services.riconciliazione_smart import cerca_f24_non_pagati
-    
     db = Database.get_db()
     
-    f24_list = await cerca_f24_non_pagati(db, abs(importo) if importo else None, data_scadenza)
+    # Costruisci query per F24 non pagati
+    query = {"$or": [{"pagato": False}, {"pagato": {"$exists": False}}]}
+    
+    if data_scadenza:
+        query["data_scadenza"] = {"$lte": data_scadenza}
+    
+    # Cerca in f24_models (la collezione principale degli F24)
+    f24_docs = await db["f24_models"].find(query, {"_id": 0}).sort("data_scadenza", 1).to_list(100)
+    
+    target_importo = abs(importo) if importo else None
+    results = []
+    
+    for f in f24_docs:
+        # Calcola importo totale dai tributi
+        tributi_erario = f.get("tributi_erario", [])
+        tributi_inps = f.get("tributi_inps", [])
+        tributi_regioni = f.get("tributi_regioni", [])
+        
+        importo_totale = (
+            sum(t.get("importo_debito", 0) or t.get("importo", 0) for t in tributi_erario) +
+            sum(t.get("importo_debito", 0) or t.get("importo", 0) for t in tributi_inps) +
+            sum(t.get("importo_debito", 0) or t.get("importo", 0) for t in tributi_regioni)
+        )
+        
+        # Genera descrizione dai tributi principali
+        codici = [t.get("codice_tributo") or t.get("codice", "") for t in tributi_erario[:3]]
+        descrizione = f.get("contribuente", "") or f.get("codice_fiscale", "")
+        if codici:
+            descrizione += f" - Tributi: {', '.join(filter(None, codici))}"
+        
+        # Periodo di riferimento (prendi il primo tributo)
+        periodo = None
+        if tributi_erario:
+            t = tributi_erario[0]
+            periodo = t.get("periodo_riferimento") or f"{t.get('mese', '')}/{t.get('anno', '')}"
+        
+        diff = abs(importo_totale - target_importo) if target_importo else 0
+        is_match = target_importo and diff < 1
+        
+        results.append({
+            "id": f.get("id"),
+            "periodo": periodo,
+            "descrizione": descrizione,
+            "importo_totale": importo_totale,
+            "importo": importo_totale,
+            "data_scadenza": f.get("data_scadenza") or f.get("scadenza_display"),
+            "pagato": f.get("pagato", False),
+            "contribuente": f.get("contribuente"),
+            "codici_tributo": codici,
+            "tipo_tributo": f"F24 - {', '.join(filter(None, codici))}",
+            "is_match": is_match,
+            "_diff": diff
+        })
+    
+    # Ordina per match esatto prima
+    if target_importo:
+        results.sort(key=lambda x: (not x.get("is_match", False), x.get("_diff", 9999999)))
+    
+    # Rimuovi campo _diff
+    for r in results:
+        r.pop("_diff", None)
     
     return {
-        "f24": [{
-            "id": f.get("id"),
-            "periodo": f.get("periodo"),
-            "descrizione": f.get("descrizione"),
-            "importo_totale": f.get("importo_totale"),
-            "data_scadenza": f.get("data_scadenza"),
-            "pagato": f.get("pagato", False)
-        } for f in f24_list],
-        "totale": len(f24_list)
+        "f24": results,
+        "totale": len(results)
     }
 
 
