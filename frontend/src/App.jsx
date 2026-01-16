@@ -211,9 +211,13 @@ export default function App() {
   }, []);
 
   return (
+    <UploadProvider>
     <div className="layout">
       {/* Notifiche Scadenze Browser */}
       <NotificheScadenze showBanner={true} />
+      
+      {/* Upload Status Bar - sempre visibile */}
+      <UploadStatusBar />
       
       {/* F24 Email Sync Popup - Mostrato all'avvio */}
       {showF24Sync && (
