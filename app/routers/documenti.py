@@ -2088,3 +2088,267 @@ async def reimporta_documenti_da_filesystem(
         "errori": errori if errori else None,
         "messaggio": f"Importati {len(importati)} documenti dal filesystem"
     }
+
+
+# ============================================================
+# UPLOAD AUTOMATICO CON RICONOSCIMENTO TIPO
+# ============================================================
+
+from fastapi import UploadFile, File
+import tempfile
+
+def detect_document_type(filename: str, file_content: bytes) -> str:
+    """
+    Rileva automaticamente il tipo di documento dal nome file e contenuto.
+    
+    Returns: 'estratto_conto', 'f24', 'quietanza_f24', 'cedolino', 'bonifici', 'fattura', 'auto'
+    """
+    lower = filename.lower()
+    
+    # Controlla estensione
+    if lower.endswith('.xml'):
+        # Verifica se è fattura elettronica
+        try:
+            content_str = file_content.decode('utf-8', errors='ignore')
+            if 'FatturaElettronica' in content_str or 'fatturaElettronicaHeader' in content_str.lower():
+                return 'fattura'
+        except:
+            pass
+        return 'fattura'  # XML di default è fattura
+    
+    # Nomi che indicano tipo
+    if any(kw in lower for kw in ['estratto', 'conto', 'movimenti', 'bpm', 'banco']):
+        return 'estratto_conto'
+    
+    if any(kw in lower for kw in ['quietanza', 'ricevuta', 'pagamento_f24', 'receipt']):
+        return 'quietanza_f24'
+    
+    if 'f24' in lower or 'delega' in lower:
+        return 'f24'
+    
+    if any(kw in lower for kw in ['cedolin', 'busta', 'paga', 'libro_unico', 'lul', 'payslip']):
+        return 'cedolino'
+    
+    if any(kw in lower for kw in ['bonifico', 'bonifici', 'sepa', 'transfer']):
+        return 'bonifici'
+    
+    if any(kw in lower for kw in ['fattura', 'invoice', 'ft_']):
+        return 'fattura'
+    
+    # Analizza contenuto PDF
+    if lower.endswith('.pdf'):
+        try:
+            content_str = file_content[:5000].decode('latin-1', errors='ignore').upper()
+            
+            if 'QUIETANZA' in content_str or 'RICEVUTA DI VERSAMENTO' in content_str:
+                return 'quietanza_f24'
+            
+            if 'DELEGA F24' in content_str or 'MODELLO DI PAGAMENTO' in content_str or 'AGENZIA DELLE ENTRATE' in content_str:
+                return 'f24'
+            
+            if 'CEDOLINO' in content_str or 'BUSTA PAGA' in content_str or 'LIBRO UNICO' in content_str:
+                return 'cedolino'
+            
+            if 'ESTRATTO CONTO' in content_str or 'SALDO INIZIALE' in content_str:
+                return 'estratto_conto'
+                
+        except:
+            pass
+    
+    # Analizza contenuto Excel
+    if lower.endswith('.xlsx') or lower.endswith('.xls') or lower.endswith('.csv'):
+        return 'estratto_conto'  # Excel di default è estratto conto
+    
+    return 'auto'  # Non riconosciuto
+
+
+@router.post("/upload-auto")
+async def upload_documento_automatico(
+    file: UploadFile = File(...)
+) -> Dict[str, Any]:
+    """
+    Upload documento con riconoscimento automatico del tipo.
+    
+    Analizza nome file e contenuto per determinare il tipo:
+    - PDF F24 → /api/f24/upload-pdf
+    - PDF Quietanza F24 → /api/quietanze-f24/upload
+    - PDF Cedolino → /api/employees/paghe/upload-pdf
+    - XML Fattura → /api/fatture/upload-xml
+    - Excel/CSV Estratto Conto → /api/estratto-conto-movimenti/import
+    - Excel Bonifici → Archivio bonifici
+    
+    Se non riconosciuto, salva in documents_inbox per processamento manuale.
+    """
+    from httpx import AsyncClient
+    import os
+    
+    filename = file.filename
+    content = await file.read()
+    
+    # Rileva tipo
+    tipo_rilevato = detect_document_type(filename, content)
+    
+    logger.info(f"Upload automatico: {filename} -> tipo rilevato: {tipo_rilevato}")
+    
+    # Se non riconosciuto, salva in inbox
+    if tipo_rilevato == 'auto':
+        db = Database.get_db()
+        
+        # Salva file in cartella temporanea
+        import hashlib
+        file_hash = hashlib.md5(content).hexdigest()
+        
+        doc_id = f"upload_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_{file_hash[:8]}"
+        
+        # Crea cartella se non esiste
+        upload_dir = Path("/tmp/documents_upload")
+        upload_dir.mkdir(parents=True, exist_ok=True)
+        
+        filepath = upload_dir / f"{doc_id}_{filename}"
+        with open(filepath, 'wb') as f:
+            f.write(content)
+        
+        doc_record = {
+            "id": doc_id,
+            "filename": filename,
+            "filepath": str(filepath),
+            "category": "altro",
+            "category_label": "Da classificare",
+            "status": "nuovo",
+            "processed": False,
+            "file_hash": file_hash,
+            "file_size": len(content),
+            "downloaded_at": datetime.now(timezone.utc).isoformat(),
+            "source": "upload_automatico"
+        }
+        
+        await db["documents_inbox"].insert_one(dict(doc_record))
+        
+        return {
+            "success": True,
+            "tipo_rilevato": "non_riconosciuto",
+            "message": f"Documento salvato in inbox per classificazione manuale",
+            "doc_id": doc_id,
+            "filename": filename,
+            "azione_richiesta": "Classifica manualmente il documento da Strumenti > Documenti Email"
+        }
+    
+    # Per i tipi riconosciuti, fai il redirect interno
+    result = {
+        "success": True,
+        "tipo_rilevato": tipo_rilevato,
+        "filename": filename,
+        "message": ""
+    }
+    
+    db = Database.get_db()
+    
+    try:
+        if tipo_rilevato == 'fattura':
+            # Import fattura XML
+            from app.routers.invoices.fatture_upload import parse_fattura_xml, process_fattura_to_db
+            
+            xml_content = content.decode('utf-8', errors='ignore')
+            parsed = parse_fattura_xml(xml_content)
+            
+            if parsed:
+                saved = await process_fattura_to_db(db, parsed, filename)
+                result["message"] = f"Fattura importata: {saved.get('invoice_number', 'N/A')}"
+                result["imported"] = 1
+            else:
+                result["success"] = False
+                result["message"] = "Errore parsing XML fattura"
+                
+        elif tipo_rilevato == 'f24':
+            # Import F24 PDF
+            from app.services.parser_f24 import parse_f24_pdf_bytes
+            
+            parsed = await parse_f24_pdf_bytes(content, filename)
+            
+            if parsed and parsed.get("tributi"):
+                # Salva in f24_models
+                f24_doc = {
+                    "id": f"f24_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}",
+                    "filename": filename,
+                    **parsed,
+                    "created_at": datetime.now(timezone.utc).isoformat()
+                }
+                await db["f24_models"].insert_one(dict(f24_doc))
+                result["message"] = f"F24 importato: {len(parsed.get('tributi', []))} tributi"
+                result["imported"] = 1
+            else:
+                result["success"] = False
+                result["message"] = "Errore parsing PDF F24"
+                
+        elif tipo_rilevato == 'quietanza_f24':
+            # Import Quietanza F24
+            from app.services.parser_f24 import parse_f24_pdf_bytes
+            
+            parsed = await parse_f24_pdf_bytes(content, filename, is_quietanza=True)
+            
+            if parsed:
+                quietanza_doc = {
+                    "id": f"quietanza_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}",
+                    "filename": filename,
+                    **parsed,
+                    "created_at": datetime.now(timezone.utc).isoformat()
+                }
+                await db["quietanze_f24"].insert_one(dict(quietanza_doc))
+                result["message"] = f"Quietanza F24 importata"
+                result["imported"] = 1
+            else:
+                result["success"] = False
+                result["message"] = "Errore parsing PDF Quietanza"
+                
+        elif tipo_rilevato == 'cedolino':
+            # Import cedolino
+            from app.services.payslip_pdf_parser import parse_cedolino_pdf_bytes
+            
+            parsed = await parse_cedolino_pdf_bytes(content, filename)
+            
+            if parsed:
+                cedolino_doc = {
+                    "id": f"cedolino_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}",
+                    "filename": filename,
+                    **parsed,
+                    "created_at": datetime.now(timezone.utc).isoformat()
+                }
+                await db["cedolini"].insert_one(dict(cedolino_doc))
+                result["message"] = f"Cedolino importato: {parsed.get('dipendente', 'N/A')}"
+                result["imported"] = 1
+            else:
+                result["success"] = False
+                result["message"] = "Errore parsing PDF Cedolino"
+                
+        elif tipo_rilevato == 'estratto_conto':
+            # Import estratto conto - salva file e indirizza
+            upload_dir = Path("/tmp/documents_upload")
+            upload_dir.mkdir(parents=True, exist_ok=True)
+            
+            temp_file = upload_dir / f"ec_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{filename}"
+            with open(temp_file, 'wb') as f:
+                f.write(content)
+            
+            result["message"] = "Estratto conto salvato. Usa la pagina Import Estratto Conto per processarlo."
+            result["filepath"] = str(temp_file)
+            result["azione_richiesta"] = "Vai a Banca > Import Estratto Conto"
+            
+        elif tipo_rilevato == 'bonifici':
+            # Salva per archivio bonifici
+            upload_dir = Path("/tmp/documents_upload")
+            upload_dir.mkdir(parents=True, exist_ok=True)
+            
+            temp_file = upload_dir / f"bonifici_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{filename}"
+            with open(temp_file, 'wb') as f:
+                f.write(content)
+            
+            result["message"] = "File bonifici salvato. Usa Archivio Bonifici per processarlo."
+            result["filepath"] = str(temp_file)
+            result["azione_richiesta"] = "Vai a Banca > Archivio Bonifici"
+            
+    except Exception as e:
+        logger.error(f"Errore processing {tipo_rilevato}: {e}")
+        result["success"] = False
+        result["message"] = f"Errore durante l'importazione: {str(e)}"
+    
+    return result
