@@ -7,13 +7,13 @@ import { ExportButton } from '../components/ExportButton';
 import { PageInfoCard } from '../components/PageInfoCard';
 
 /**
- * PRIMA NOTA UNIFICATA
+ * PRIMA NOTA UNIFICATA - Semplificata
  * 
- * Una sola pagina con filtri per:
- * - Cassa (corrispettivi, POS, versamenti, pagamenti fornitori)
- * - Banca
- * - Salari
- * - Tutti
+ * UI intuitiva per inserimento movimenti:
+ * - Corrispettivi → Entrata
+ * - POS → Uscita (soldi che escono dalla cassa verso banca)
+ * - Versamento → Uscita dalla cassa
+ * - Pagamento Fornitore → Uscita
  */
 
 const FILTRI_TIPO = [
@@ -23,15 +23,15 @@ const FILTRI_TIPO = [
   { id: 'salari', label: '👤 Salari', color: '#8b5cf6' },
 ];
 
-// Categorie per Prima Nota Cassa
-const CATEGORIE_CASSA = {
-  corrispettivi: { label: 'Corrispettivi', color: '#10b981', icon: '📈' },
-  pos: { label: 'POS', color: '#3b82f6', icon: '💳' },
-  versamento: { label: 'Versamento', color: '#8b5cf6', icon: '🏦' },
-  pagamento_fornitore: { label: 'Pagamento fornitore', color: '#f59e0b', icon: '📄' },
-  prelievo: { label: 'Prelievo', color: '#ef4444', icon: '💸' },
-  altro: { label: 'Altro', color: '#6b7280', icon: '📝' }
-};
+// Categorie semplificate con direzione automatica
+const CATEGORIE_RAPIDE = [
+  { id: 'corrispettivi', label: '📈 Corrispettivi', direzione: 'entrata', color: '#10b981', desc: 'Incassi giornalieri' },
+  { id: 'pos', label: '💳 Incasso POS', direzione: 'uscita', color: '#3b82f6', desc: 'POS → esce dalla cassa' },
+  { id: 'versamento', label: '🏦 Versamento Banca', direzione: 'uscita', color: '#8b5cf6', desc: 'Cassa → Banca' },
+  { id: 'pagamento_fornitore', label: '📄 Pagamento Fornitore', direzione: 'uscita', color: '#f59e0b', desc: 'Pagamento fattura' },
+  { id: 'prelievo', label: '💵 Prelievo', direzione: 'entrata', color: '#06b6d4', desc: 'Banca → Cassa' },
+  { id: 'spese', label: '🧾 Spese Varie', direzione: 'uscita', color: '#ef4444', desc: 'Altre uscite' },
+];
 
 export default function PrimaNotaUnificata() {
   const { anno } = useAnnoGlobale();
@@ -43,16 +43,15 @@ export default function PrimaNotaUnificata() {
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [editingId, setEditingId] = useState(null);
 
-  // Form nuovo movimento
+  // Form semplificato - la direzione è automatica in base alla categoria
   const [newMov, setNewMov] = useState({
     data: new Date().toISOString().split('T')[0],
-    tipo: 'uscita',
+    categoria: 'corrispettivi',
     importo: '',
     descrizione: '',
-    categoria: 'corrispettivi',
-    fornitore: ''
+    fornitore: '',
+    numero_fattura: ''
   });
 
   useEffect(() => {
@@ -66,14 +65,12 @@ export default function PrimaNotaUnificata() {
   const loadMovimenti = async () => {
     setLoading(true);
     try {
-      // Carica tutti i movimenti dalle varie collezioni
       const [cassaRes, bancaRes, salariRes] = await Promise.all([
         api.get(`/api/prima-nota/cassa?anno=${anno}`).catch(() => ({ data: [] })),
         api.get(`/api/prima-nota/banca?anno=${anno}`).catch(() => ({ data: [] })),
         api.get(`/api/prima-nota/salari?anno=${anno}`).catch(() => ({ data: [] }))
       ]);
 
-      // Normalizza e combina
       const cassa = (Array.isArray(cassaRes.data) ? cassaRes.data : cassaRes.data?.movimenti || []).map(m => ({ ...m, _source: 'cassa' }));
       const banca = (Array.isArray(bancaRes.data) ? bancaRes.data : bancaRes.data?.movimenti || []).map(m => ({ ...m, _source: 'banca' }));
       const salari = (Array.isArray(salariRes.data) ? salariRes.data : salariRes.data?.movimenti || []).map(m => ({ ...m, _source: 'salari' }));
@@ -93,16 +90,13 @@ export default function PrimaNotaUnificata() {
   // Filtra movimenti
   const movimentiFiltrati = useMemo(() => {
     return movimenti.filter(m => {
-      // Filtro tipo
       if (filtroTipo !== 'tutti' && m._source !== filtroTipo) return false;
       
-      // Filtro mese
       if (filtroMese) {
         const mese = new Date(m.data || m.data_pagamento).getMonth() + 1;
         if (mese !== parseInt(filtroMese)) return false;
       }
       
-      // Ricerca testo
       if (search.trim()) {
         const searchLower = search.toLowerCase();
         const desc = (m.descrizione || m.causale || '').toLowerCase();
@@ -116,7 +110,6 @@ export default function PrimaNotaUnificata() {
 
   // Calcola saldo progressivo
   const movimentiConSaldo = useMemo(() => {
-    // Ordina per data crescente per calcolare il saldo
     const sorted = [...movimentiFiltrati].sort((a, b) => 
       new Date(a.data || a.data_pagamento) - new Date(b.data || b.data_pagamento)
     );
@@ -124,12 +117,12 @@ export default function PrimaNotaUnificata() {
     let saldo = 0;
     const withSaldo = sorted.map(m => {
       const importo = Math.abs(m.importo || 0);
-      const isEntrata = m.tipo === 'entrata' || (m.importo || 0) > 0;
+      // Usa il campo tipo salvato nel DB
+      const isEntrata = m.tipo === 'entrata';
       saldo += isEntrata ? importo : -importo;
-      return { ...m, _saldo: saldo };
+      return { ...m, _saldo: saldo, _isEntrata: isEntrata };
     });
     
-    // Riordina per data decrescente per la visualizzazione
     return withSaldo.sort((a, b) => 
       new Date(b.data || b.data_pagamento) - new Date(a.data || a.data_pagamento)
     );
@@ -137,17 +130,17 @@ export default function PrimaNotaUnificata() {
 
   // Calcola totali
   const totali = useMemo(() => {
-    const entrate = movimentiFiltrati.filter(m => m.tipo === 'entrata' || (m.importo || 0) > 0);
-    const uscite = movimentiFiltrati.filter(m => m.tipo === 'uscita' || (m.importo || 0) < 0);
+    const entrate = movimentiConSaldo.filter(m => m._isEntrata);
+    const uscite = movimentiConSaldo.filter(m => !m._isEntrata);
     
     return {
       entrate: entrate.reduce((sum, m) => sum + Math.abs(m.importo || 0), 0),
       uscite: uscite.reduce((sum, m) => sum + Math.abs(m.importo || 0), 0),
       saldo: entrate.reduce((sum, m) => sum + Math.abs(m.importo || 0), 0) - uscite.reduce((sum, m) => sum + Math.abs(m.importo || 0), 0)
     };
-  }, [movimentiFiltrati]);
+  }, [movimentiConSaldo]);
 
-  // Statistiche per categoria (solo cassa)
+  // Statistiche per categoria
   const statsCassa = useMemo(() => {
     const cassaMov = movimenti.filter(m => m._source === 'cassa');
     
@@ -162,8 +155,7 @@ export default function PrimaNotaUnificata() {
     ).reduce((sum, m) => sum + Math.abs(m.importo || 0), 0);
     
     const versamenti = cassaMov.filter(m => 
-      (m.categoria || '').toLowerCase() === 'versamento' || 
-      (m.descrizione || '').toLowerCase().includes('versamento')
+      (m.categoria || '').toLowerCase().includes('versamento')
     ).reduce((sum, m) => sum + Math.abs(m.importo || 0), 0);
     
     const pagamentiFornitori = cassaMov.filter(m => 
@@ -174,10 +166,39 @@ export default function PrimaNotaUnificata() {
     return { corrispettivi, pos, versamenti, pagamentiFornitori };
   }, [movimenti]);
 
-  // Aggiungi nuovo movimento
+  // Aggiungi nuovo movimento - SEMPLIFICATO
   const handleAddMovimento = async () => {
-    if (!newMov.importo || !newMov.descrizione) {
-      return alert('Compila importo e descrizione');
+    if (!newMov.importo) {
+      return alert('Inserisci importo');
+    }
+    
+    // Trova la categoria selezionata
+    const categoriaInfo = CATEGORIE_RAPIDE.find(c => c.id === newMov.categoria);
+    if (!categoriaInfo) {
+      return alert('Seleziona una categoria');
+    }
+    
+    // La direzione è determinata automaticamente dalla categoria
+    const tipo = categoriaInfo.direzione;
+    
+    // Genera descrizione automatica se vuota
+    let descrizione = newMov.descrizione;
+    if (!descrizione) {
+      if (newMov.categoria === 'corrispettivi') {
+        descrizione = `Corrispettivo giornaliero del ${newMov.data}`;
+      } else if (newMov.categoria === 'pos') {
+        descrizione = `Incasso POS giornaliero del ${newMov.data}`;
+      } else if (newMov.categoria === 'versamento') {
+        descrizione = `Versamento in banca del ${newMov.data}`;
+      } else if (newMov.categoria === 'pagamento_fornitore') {
+        descrizione = newMov.numero_fattura 
+          ? `Pagamento fattura ${newMov.numero_fattura}${newMov.fornitore ? ' - ' + newMov.fornitore : ''}`
+          : `Pagamento fornitore${newMov.fornitore ? ' - ' + newMov.fornitore : ''}`;
+      } else if (newMov.categoria === 'prelievo') {
+        descrizione = `Prelievo contanti del ${newMov.data}`;
+      } else {
+        descrizione = `${categoriaInfo.label} del ${newMov.data}`;
+      }
     }
     
     setSaving(true);
@@ -191,21 +212,22 @@ export default function PrimaNotaUnificata() {
       
       await api.post(endpoint, {
         data: newMov.data,
-        tipo: newMov.tipo,
+        tipo: tipo,  // Automatico dalla categoria
         importo: parseFloat(newMov.importo),
-        descrizione: newMov.descrizione,
+        descrizione: descrizione,
         fornitore: newMov.fornitore,
-        categoria: newMov.categoria
+        categoria: categoriaInfo.label.replace(/📈|💳|🏦|📄|💵|🧾/g, '').trim(),
+        numero_fattura: newMov.numero_fattura
       });
       
       setShowForm(false);
       setNewMov({
         data: new Date().toISOString().split('T')[0],
-        tipo: 'uscita',
+        categoria: 'corrispettivi',
         importo: '',
         descrizione: '',
-        categoria: 'corrispettivi',
-        fornitore: ''
+        fornitore: '',
+        numero_fattura: ''
       });
       loadMovimenti();
     } catch (e) {
@@ -233,25 +255,30 @@ export default function PrimaNotaUnificata() {
     }
   };
 
-  // Formatta categoria per visualizzazione
+  // Info categoria per visualizzazione
   const getCategoriaInfo = (m) => {
-    const cat = (m.categoria || 'altro').toLowerCase();
+    const cat = (m.categoria || '').toLowerCase();
     const desc = (m.descrizione || '').toLowerCase();
     
-    if (cat === 'corrispettivi' || desc.includes('corrispettivo')) return CATEGORIE_CASSA.corrispettivi;
-    if (cat === 'pos' || desc.includes('pos')) return CATEGORIE_CASSA.pos;
-    if (cat === 'versamento' || desc.includes('versamento')) return CATEGORIE_CASSA.versamento;
-    if (cat.includes('fornitore') || desc.includes('pagamento fattura')) return CATEGORIE_CASSA.pagamento_fornitore;
-    if (cat === 'prelievo' || desc.includes('prelievo')) return CATEGORIE_CASSA.prelievo;
+    if (cat.includes('corrispettiv') || desc.includes('corrispettivo')) 
+      return { label: 'Corrispettivi', color: '#10b981' };
+    if (cat.includes('pos') || desc.includes('pos')) 
+      return { label: 'POS', color: '#3b82f6' };
+    if (cat.includes('versamento') || desc.includes('versamento')) 
+      return { label: 'Versamento', color: '#8b5cf6' };
+    if (cat.includes('fornitore') || desc.includes('pagamento fattura')) 
+      return { label: 'Pag. Fornitore', color: '#f59e0b' };
+    if (cat.includes('prelievo') || desc.includes('prelievo')) 
+      return { label: 'Prelievo', color: '#06b6d4' };
     
-    return CATEGORIE_CASSA.altro;
+    return { label: cat || 'Altro', color: '#6b7280' };
   };
 
   return (
     <div style={{ padding: 'clamp(12px, 3vw, 20px)' }}>
-      {/* Page Info Card - in alto a destra */}
+      {/* Page Info Card */}
       <div style={{ position: 'absolute', top: 70, right: 20, zIndex: 100 }}>
-        <PageInfoCard pageKey={filtroTipo === 'cassa' ? 'prima-nota-cassa' : filtroTipo === 'banca' ? 'prima-nota-banca' : filtroTipo === 'salari' ? 'prima-nota-salari' : 'prima-nota-banca'} />
+        <PageInfoCard pageKey={filtroTipo === 'cassa' ? 'prima-nota-cassa' : filtroTipo === 'banca' ? 'prima-nota-banca' : 'prima-nota-salari'} />
       </div>
       
       {/* Header */}
@@ -260,9 +287,7 @@ export default function PrimaNotaUnificata() {
           <h1 style={{ margin: 0, fontSize: 'clamp(20px, 4vw, 26px)', color: '#1e293b' }}>
             📒 Prima Nota {filtroTipo !== 'tutti' && `- ${FILTRI_TIPO.find(f => f.id === filtroTipo)?.label.replace(/📋|💰|🏦|👤/g, '').trim()}`}
           </h1>
-          <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: 13 }}>
-            Anno {anno}
-          </p>
+          <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: 13 }}>Anno {anno}</p>
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <button
@@ -279,8 +304,6 @@ export default function PrimaNotaUnificata() {
           >
             {showForm ? '✕ Chiudi' : '+ Nuovo Movimento'}
           </button>
-          
-          {/* Export Button */}
           <ExportButton
             data={movimentiFiltrati}
             columns={[
@@ -288,8 +311,7 @@ export default function PrimaNotaUnificata() {
               { key: 'tipo', label: 'Tipo' },
               { key: 'descrizione', label: 'Descrizione' },
               { key: 'importo', label: 'Importo' },
-              { key: 'categoria', label: 'Categoria' },
-              { key: 'fornitore', label: 'Fornitore' }
+              { key: 'categoria', label: 'Categoria' }
             ]}
             filename={`prima_nota_${filtroTipo}_${anno}`}
             format="csv"
@@ -298,57 +320,69 @@ export default function PrimaNotaUnificata() {
         </div>
       </div>
 
-      {/* Card Statistiche Cassa (visibili solo quando filtro = cassa) */}
+      {/* Card Statistiche Cassa */}
       {(filtroTipo === 'cassa' || filtroTipo === 'tutti') && (
         <div style={{ 
           display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', 
           gap: 12, 
           marginBottom: 20 
         }}>
-          <StatCard 
-            icon="📈" 
-            label="Corrispettivi" 
-            value={formatEuro(statsCassa.corrispettivi)} 
-            color="#10b981" 
-            bgColor="#d1fae5"
-          />
-          <StatCard 
-            icon="💳" 
-            label="POS" 
-            value={formatEuro(statsCassa.pos)} 
-            color="#3b82f6" 
-            bgColor="#dbeafe"
-          />
-          <StatCard 
-            icon="🏦" 
-            label="Versamenti" 
-            value={formatEuro(statsCassa.versamenti)} 
-            color="#8b5cf6" 
-            bgColor="#ede9fe"
-          />
-          <StatCard 
-            icon="📄" 
-            label="Pagam. Fornitori" 
-            value={formatEuro(statsCassa.pagamentiFornitori)} 
-            color="#f59e0b" 
-            bgColor="#fef3c7"
-          />
+          <StatCard icon="📈" label="Corrispettivi" value={formatEuro(statsCassa.corrispettivi)} color="#10b981" bgColor="#d1fae5" />
+          <StatCard icon="💳" label="POS" value={formatEuro(statsCassa.pos)} color="#3b82f6" bgColor="#dbeafe" />
+          <StatCard icon="🏦" label="Versamenti" value={formatEuro(statsCassa.versamenti)} color="#8b5cf6" bgColor="#ede9fe" />
+          <StatCard icon="📄" label="Pag. Fornitori" value={formatEuro(statsCassa.pagamentiFornitori)} color="#f59e0b" bgColor="#fef3c7" />
         </div>
       )}
 
-      {/* Form nuovo movimento */}
+      {/* Form nuovo movimento - SEMPLIFICATO */}
       {showForm && (
         <div style={{ 
           background: 'white', 
           borderRadius: 12, 
           padding: 20, 
           marginBottom: 20,
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
           border: '2px solid #3b82f6'
         }}>
-          <h3 style={{ margin: '0 0 16px', fontSize: 16 }}>➕ Nuovo Movimento</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12 }}>
+          <h3 style={{ margin: '0 0 16px', fontSize: 16 }}>➕ Registra Movimento</h3>
+          
+          {/* Categorie rapide come pulsanti */}
+          <div style={{ marginBottom: 16 }}>
+            <label style={labelStyle}>Tipo Movimento</label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {CATEGORIE_RAPIDE.map(cat => (
+                <button
+                  key={cat.id}
+                  onClick={() => setNewMov(p => ({ ...p, categoria: cat.id }))}
+                  style={{
+                    padding: '10px 16px',
+                    background: newMov.categoria === cat.id ? cat.color : '#f1f5f9',
+                    color: newMov.categoria === cat.id ? 'white' : '#374151',
+                    border: 'none',
+                    borderRadius: 8,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    fontSize: 13,
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  {cat.label}
+                  <div style={{ 
+                    fontSize: 10, 
+                    fontWeight: 400, 
+                    opacity: 0.8,
+                    marginTop: 2
+                  }}>
+                    {cat.direzione === 'entrata' ? '↑ DARE' : '↓ AVERE'}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Campi input */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 }}>
             <div>
               <label style={labelStyle}>Data</label>
               <input 
@@ -359,76 +393,89 @@ export default function PrimaNotaUnificata() {
               />
             </div>
             <div>
-              <label style={labelStyle}>Tipo</label>
-              <select 
-                value={newMov.tipo} 
-                onChange={e => setNewMov(p => ({ ...p, tipo: e.target.value }))}
-                style={inputStyle}
-              >
-                <option value="entrata">Entrata (DARE)</option>
-                <option value="uscita">Uscita (AVERE)</option>
-              </select>
-            </div>
-            <div>
-              <label style={labelStyle}>Categoria</label>
-              <select 
-                value={newMov.categoria} 
-                onChange={e => setNewMov(p => ({ ...p, categoria: e.target.value }))}
-                style={inputStyle}
-              >
-                {Object.entries(CATEGORIE_CASSA).map(([k, v]) => (
-                  <option key={k} value={k}>{v.icon} {v.label}</option>
-                ))}
-              </select>
-            </div>
-            <div>
               <label style={labelStyle}>Importo €</label>
               <input 
                 type="number" 
                 step="0.01"
                 value={newMov.importo} 
                 onChange={e => setNewMov(p => ({ ...p, importo: e.target.value }))}
-                style={inputStyle}
+                style={{ ...inputStyle, fontSize: 18, fontWeight: 700 }}
                 placeholder="0.00"
+                autoFocus
               />
             </div>
-            <div style={{ gridColumn: 'span 2' }}>
-              <label style={labelStyle}>Descrizione</label>
+            
+            {/* Campi aggiuntivi per pagamento fornitore */}
+            {newMov.categoria === 'pagamento_fornitore' && (
+              <>
+                <div>
+                  <label style={labelStyle}>N° Fattura</label>
+                  <input 
+                    type="text" 
+                    value={newMov.numero_fattura} 
+                    onChange={e => setNewMov(p => ({ ...p, numero_fattura: e.target.value }))}
+                    style={inputStyle}
+                    placeholder="es. 123/2025"
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle}>Fornitore</label>
+                  <input 
+                    type="text" 
+                    value={newMov.fornitore} 
+                    onChange={e => setNewMov(p => ({ ...p, fornitore: e.target.value }))}
+                    style={inputStyle}
+                    placeholder="Nome fornitore"
+                  />
+                </div>
+              </>
+            )}
+            
+            <div style={{ gridColumn: '1 / -1' }}>
+              <label style={labelStyle}>Note/Descrizione (opzionale)</label>
               <input 
                 type="text" 
                 value={newMov.descrizione} 
                 onChange={e => setNewMov(p => ({ ...p, descrizione: e.target.value }))}
                 style={inputStyle}
-                placeholder="Descrizione movimento..."
-              />
-            </div>
-            <div>
-              <label style={labelStyle}>Fornitore/Beneficiario</label>
-              <input 
-                type="text" 
-                value={newMov.fornitore} 
-                onChange={e => setNewMov(p => ({ ...p, fornitore: e.target.value }))}
-                style={inputStyle}
-                placeholder="Opzionale"
+                placeholder="Verrà generata automaticamente se vuota"
               />
             </div>
           </div>
-          <button 
-            onClick={handleAddMovimento}
-            disabled={saving}
-            style={{
-              marginTop: 16,
-              padding: '12px 24px',
-              background: '#10b981',
-              color: 'white',
-              border: 'none',
-              borderRadius: 8,
-              fontWeight: 600,
-              cursor: 'pointer'
-            }}
-          >
-            {saving ? '⏳' : '💾'} Salva Movimento
-          </button>
+          
+          <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
+            <button 
+              onClick={handleAddMovimento}
+              disabled={saving}
+              style={{
+                flex: 1,
+                padding: '14px 24px',
+                background: '#10b981',
+                color: 'white',
+                border: 'none',
+                borderRadius: 8,
+                fontWeight: 700,
+                cursor: 'pointer',
+                fontSize: 15
+              }}
+            >
+              {saving ? '⏳ Salvataggio...' : '✅ Registra Movimento'}
+            </button>
+            <button 
+              onClick={() => setShowForm(false)}
+              style={{
+                padding: '14px 24px',
+                background: '#f1f5f9',
+                color: '#64748b',
+                border: 'none',
+                borderRadius: 8,
+                fontWeight: 600,
+                cursor: 'pointer'
+              }}
+            >
+              Annulla
+            </button>
+          </div>
         </div>
       )}
 
@@ -444,7 +491,6 @@ export default function PrimaNotaUnificata() {
         gap: 12,
         alignItems: 'center'
       }}>
-        {/* Filtro tipo */}
         <div style={{ display: 'flex', gap: 6 }}>
           {FILTRI_TIPO.map(f => (
             <button
@@ -466,56 +512,38 @@ export default function PrimaNotaUnificata() {
           ))}
         </div>
         
-        {/* Filtro mese */}
         <select
           value={filtroMese}
           onChange={e => setFiltroMese(e.target.value)}
           style={{ ...inputStyle, width: 'auto', padding: '8px 12px' }}
         >
           <option value="">Tutti i mesi</option>
-          {Array.from({ length: 12 }, (_, i) => (
-            <option key={i + 1} value={i + 1}>
-              {['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'][i]}
-            </option>
+          {['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'].map((m, i) => (
+            <option key={i + 1} value={i + 1}>{m}</option>
           ))}
         </select>
         
-        {/* Ricerca */}
         <input
           type="text"
           placeholder="🔍 Cerca..."
           value={search}
           onChange={e => setSearch(e.target.value)}
-          style={{ ...inputStyle, flex: 1, minWidth: 200, padding: '8px 12px' }}
+          style={{ ...inputStyle, flex: 1, minWidth: 180, padding: '8px 12px' }}
         />
         
-        <button
-          onClick={loadMovimenti}
-          style={{
-            padding: '8px 16px',
-            background: '#f1f5f9',
-            border: 'none',
-            borderRadius: 6,
-            cursor: 'pointer'
-          }}
-        >
+        <button onClick={loadMovimenti} style={{ padding: '8px 16px', background: '#f1f5f9', border: 'none', borderRadius: 6, cursor: 'pointer' }}>
           🔄
         </button>
       </div>
 
       {/* Riepilogo totali */}
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(3, 1fr)', 
-        gap: 16, 
-        marginBottom: 20 
-      }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 20 }}>
         <div style={{ padding: 16, background: '#dcfce7', borderRadius: 10, textAlign: 'center' }}>
-          <div style={{ fontSize: 11, color: '#166534' }}>Entrate (DARE)</div>
+          <div style={{ fontSize: 11, color: '#166534' }}>DARE (Entrate)</div>
           <div style={{ fontSize: 24, fontWeight: 700, color: '#15803d' }}>{formatEuro(totali.entrate)}</div>
         </div>
         <div style={{ padding: 16, background: '#fee2e2', borderRadius: 10, textAlign: 'center' }}>
-          <div style={{ fontSize: 11, color: '#991b1b' }}>Uscite (AVERE)</div>
+          <div style={{ fontSize: 11, color: '#991b1b' }}>AVERE (Uscite)</div>
           <div style={{ fontSize: 24, fontWeight: 700, color: '#dc2626' }}>{formatEuro(totali.uscite)}</div>
         </div>
         <div style={{ padding: 16, background: totali.saldo >= 0 ? '#dbeafe' : '#fef3c7', borderRadius: 10, textAlign: 'center' }}>
@@ -536,9 +564,7 @@ export default function PrimaNotaUnificata() {
         </div>
         
         {loading ? (
-          <div style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>
-            ⏳ Caricamento...
-          </div>
+          <div style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>⏳ Caricamento...</div>
         ) : movimentiFiltrati.length === 0 ? (
           <div style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>
             <div style={{ fontSize: 40, marginBottom: 8, opacity: 0.5 }}>📋</div>
@@ -546,9 +572,9 @@ export default function PrimaNotaUnificata() {
           </div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 800 }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 700 }}>
               <thead>
-                <tr style={{ background: '#f8fafc', position: 'sticky', top: 0 }}>
+                <tr style={{ background: '#f8fafc' }}>
                   <th style={thStyle}>Data</th>
                   <th style={{ ...thStyle, width: 40, textAlign: 'center' }}>T</th>
                   <th style={thStyle}>Cat.</th>
@@ -562,16 +588,13 @@ export default function PrimaNotaUnificata() {
               </thead>
               <tbody>
                 {movimentiConSaldo.map((m, idx) => {
-                  const isEntrata = m.tipo === 'entrata' || (m.importo || 0) > 0;
+                  const isEntrata = m._isEntrata;
                   const importo = Math.abs(m.importo || 0);
                   const catInfo = getCategoriaInfo(m);
-                  const sourceColors = { cassa: '#f59e0b', banca: '#10b981', salari: '#8b5cf6' };
                   
                   return (
                     <tr key={m.id || idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                      <td style={tdStyle}>
-                        {new Date(m.data || m.data_pagamento).toLocaleDateString('it-IT')}
-                      </td>
+                      <td style={tdStyle}>{new Date(m.data || m.data_pagamento).toLocaleDateString('it-IT')}</td>
                       <td style={{ ...tdStyle, textAlign: 'center' }}>
                         <span style={{
                           display: 'inline-flex',
@@ -611,47 +634,20 @@ export default function PrimaNotaUnificata() {
                       <td style={{ ...tdStyle, textAlign: 'right', fontWeight: 600, color: '#dc2626' }}>
                         {!isEntrata ? formatEuro(importo) : '-'}
                       </td>
-                      <td style={{ 
-                        ...tdStyle, 
-                        textAlign: 'right', 
-                        fontWeight: 600,
-                        color: m._saldo >= 0 ? '#2563eb' : '#d97706'
-                      }}>
+                      <td style={{ ...tdStyle, textAlign: 'right', fontWeight: 600, color: m._saldo >= 0 ? '#2563eb' : '#d97706' }}>
                         {formatEuro(m._saldo)}
                       </td>
                       <td style={{ ...tdStyle, textAlign: 'center' }}>
                         {m.fattura_id ? (
-                          <a 
-                            href={`/fatture-ricevute/${m.fattura_id}`}
-                            style={{ color: '#3b82f6', textDecoration: 'none', fontSize: 12 }}
-                          >
+                          <a href={`/fatture-ricevute/${m.fattura_id}`} style={{ color: '#3b82f6', textDecoration: 'none', fontSize: 12 }}>
                             📄 Vedi
                           </a>
                         ) : '-'}
                       </td>
                       <td style={{ ...tdStyle, textAlign: 'center' }}>
                         <button
-                          onClick={() => alert('Modifica in sviluppo')}
-                          style={{
-                            padding: '4px 8px',
-                            background: 'transparent',
-                            border: 'none',
-                            cursor: 'pointer',
-                            fontSize: 14
-                          }}
-                          title="Modifica"
-                        >
-                          ✏️
-                        </button>
-                        <button
                           onClick={() => handleDelete(m)}
-                          style={{
-                            padding: '4px 8px',
-                            background: 'transparent',
-                            border: 'none',
-                            cursor: 'pointer',
-                            fontSize: 14
-                          }}
+                          style={{ padding: '4px 8px', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 14 }}
                           title="Elimina"
                         >
                           🗑️
@@ -673,7 +669,7 @@ export default function PrimaNotaUnificata() {
 function StatCard({ icon, label, value, color, bgColor }) {
   return (
     <div style={{
-      padding: '16px 20px',
+      padding: '14px 18px',
       background: bgColor,
       borderRadius: 10,
       display: 'flex',
@@ -681,26 +677,26 @@ function StatCard({ icon, label, value, color, bgColor }) {
       gap: 12
     }}>
       <div style={{
-        width: 44,
-        height: 44,
-        borderRadius: 10,
+        width: 40,
+        height: 40,
+        borderRadius: 8,
         background: 'white',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        fontSize: 22
+        fontSize: 20
       }}>
         {icon}
       </div>
       <div>
-        <div style={{ fontSize: 11, color: color, fontWeight: 500 }}>{label}</div>
-        <div style={{ fontSize: 18, fontWeight: 700, color }}>{value}</div>
+        <div style={{ fontSize: 11, color, fontWeight: 500 }}>{label}</div>
+        <div style={{ fontSize: 16, fontWeight: 700, color }}>{value}</div>
       </div>
     </div>
   );
 }
 
-const labelStyle = { display: 'block', fontSize: 11, color: '#64748b', marginBottom: 4 };
+const labelStyle = { display: 'block', fontSize: 11, color: '#64748b', marginBottom: 4, fontWeight: 500 };
 const inputStyle = { 
   width: '100%', 
   padding: '10px 12px', 
