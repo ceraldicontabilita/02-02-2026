@@ -291,7 +291,7 @@ async def get_dipendente(dipendente_id: str) -> Dict[str, Any]:
 
 @router.put("/{dipendente_id}")
 async def update_dipendente(dipendente_id: str, data: Dict[str, Any] = Body(...)) -> Dict[str, str]:
-    """Aggiorna dipendente."""
+    """Aggiorna dipendente e sincronizza IBAN nei bonifici associati."""
     db = Database.get_db()
     
     # Rimuovi campi non modificabili
@@ -300,6 +300,16 @@ async def update_dipendente(dipendente_id: str, data: Dict[str, Any] = Body(...)
     
     data["updated_at"] = datetime.utcnow().isoformat()
     
+    # Trova il dipendente prima dell'update
+    dipendente_old = await db[Collections.EMPLOYEES].find_one(
+        {"$or": [{"id": dipendente_id}, {"codice_fiscale": dipendente_id}]},
+        {"_id": 0}
+    )
+    
+    if not dipendente_old:
+        raise HTTPException(status_code=404, detail="Dipendente non trovato")
+    
+    # Aggiorna il dipendente
     result = await db[Collections.EMPLOYEES].update_one(
         {"$or": [{"id": dipendente_id}, {"codice_fiscale": dipendente_id}]},
         {"$set": data}
@@ -307,6 +317,46 @@ async def update_dipendente(dipendente_id: str, data: Dict[str, Any] = Body(...)
     
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Dipendente non trovato")
+    
+    # SINCRONIZZAZIONE A CASCATA: Aggiorna IBAN nei bonifici associati
+    new_ibans = data.get("ibans", [])
+    new_iban = data.get("iban", "")
+    dip_id = dipendente_old.get("id")
+    
+    if new_ibans or new_iban:
+        # Aggiorna i bonifici associati a questo dipendente
+        all_ibans = list(set([i for i in new_ibans if i] + ([new_iban] if new_iban else [])))
+        
+        # Aggiorna i bonifici dove il dipendente è già associato
+        await db.bonifici_transfers.update_many(
+            {"dipendente_id": dip_id},
+            {"$set": {
+                "dipendente_ibans": all_ibans,
+                "updated_at": datetime.utcnow().isoformat()
+            }}
+        )
+        
+        # Inoltre, trova bonifici con IBAN corrispondente e associali automaticamente se non già associati
+        if all_ibans:
+            nome_completo = data.get("nome_completo") or dipendente_old.get("nome_completo") or \
+                f"{data.get('nome', dipendente_old.get('nome', ''))} {data.get('cognome', dipendente_old.get('cognome', ''))}".strip()
+            
+            # Cerca bonifici con IBAN beneficiario corrispondente
+            for iban in all_ibans:
+                if iban and len(iban) >= 15:  # IBAN minimo valido
+                    await db.bonifici_transfers.update_many(
+                        {
+                            "beneficiario.iban": iban,
+                            "dipendente_id": {"$exists": False}  # Solo se non già associato
+                        },
+                        {"$set": {
+                            "dipendente_id": dip_id,
+                            "dipendente_nome": nome_completo,
+                            "dipendente_ibans": all_ibans,
+                            "auto_match_iban": True,
+                            "updated_at": datetime.utcnow().isoformat()
+                        }}
+                    )
     
     return {"message": "Dipendente aggiornato"}
 
