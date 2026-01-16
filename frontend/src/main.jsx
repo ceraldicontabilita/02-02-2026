@@ -106,7 +106,6 @@ const PrimaNotaUnificata = lazy(() => import("./pages/PrimaNotaUnificata.jsx"));
 const RiconciliazioneUnificata = lazy(() => import("./pages/RiconciliazioneUnificata.jsx"));
 const GestioneAssegni = lazy(() => import("./pages/GestioneAssegni.jsx"));
 const ArchivioBonifici = lazy(() => import("./pages/ArchivioBonifici.jsx"));
-const EstrattoContoImport = lazy(() => import("./pages/EstrattoContoImport.jsx"));
 
 // === DIPENDENTI ===
 const GestioneDipendentiUnificata = lazy(() => import("./pages/GestioneDipendentiUnificata.jsx"));
@@ -200,7 +199,6 @@ const router = createBrowserRouter([
       { path: "riconciliazione/:tab", element: <LazyPage><RiconciliazioneUnificata /></LazyPage> },
       { path: "gestione-assegni", element: <LazyPage><GestioneAssegni /></LazyPage> },
       { path: "archivio-bonifici", element: <LazyPage><ArchivioBonifici /></LazyPage> },
-      { path: "estratto-conto", element: <LazyPage><EstrattoContoImport /></LazyPage> },
       
       // === DIPENDENTI ===
       { path: "dipendenti", element: <LazyPage><GestioneDipendentiUnificata /></LazyPage> },
