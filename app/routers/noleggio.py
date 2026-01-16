@@ -791,7 +791,8 @@ async def get_drivers() -> Dict[str, Any]:
     db = Database.get_db()
     
     dipendenti = []
-    cursor = db["dipendenti"].find({}, {"_id": 0, "id": 1, "nome": 1, "cognome": 1})
+    # Use "employees" collection (same as /api/dipendenti endpoint)
+    cursor = db["employees"].find({}, {"_id": 0, "id": 1, "nome": 1, "cognome": 1})
     async for d in cursor:
         dipendenti.append({
             "id": d.get("id"),
