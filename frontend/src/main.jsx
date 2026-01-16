@@ -202,7 +202,6 @@ const router = createBrowserRouter([
       // === BANCA & PAGAMENTI ===
       { path: "prima-nota", element: <LazyPage><PrimaNota /></LazyPage> },
       { path: "riconciliazione-smart", element: <LazyPage><RiconciliazioneSmart /></LazyPage> },
-      { path: "dashboard-riconciliazione", element: <LazyPage><DashboardRiconciliazione /></LazyPage> },
       { path: "gestione-assegni", element: <LazyPage><GestioneAssegni /></LazyPage> },
       { path: "archivio-bonifici", element: <LazyPage><ArchivioBonifici /></LazyPage> },
       { path: "estratto-conto", element: <LazyPage><EstrattoContoImport /></LazyPage> },
