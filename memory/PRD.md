@@ -38,11 +38,13 @@
 - Rimosso link dal menu in `App.jsx`
 - File `EstrattoContoImport.jsx` ancora presente ma non raggiungibile
 
-#### PRIMA NOTA MIGLIORATA ✅
-- Aggiunte card statistiche: Corrispettivi, POS, Versamenti, Pagamenti Fornitori
-- Tabella con colonne: Data, T(ipo), Cat., Descrizione, DARE, AVERE, Saldo, Fattura, Azioni
-- Saldo progressivo calcolato
-- Pulsanti modifica/elimina per ogni movimento
+#### PRIMA NOTA SEMPLIFICATA ✅
+- UI semplificata con pulsanti rapidi per categoria
+- Direzione automatica: Corrispettivi → DARE, POS → AVERE
+- Descrizione auto-generata se vuota
+- Card statistiche: Corrispettivi, POS, Versamenti, Pagamenti Fornitori
+- Tabella con DARE/AVERE/Saldo correttamente calcolato
+- File: `/app/frontend/src/pages/PrimaNotaUnificata.jsx`
 
 #### CREAZIONE AUTOMATICA FORNITORI DA ARUBA/GMAIL ✅
 - Quando viene confermata un'operazione da Aruba, il sistema crea automaticamente il fornitore
