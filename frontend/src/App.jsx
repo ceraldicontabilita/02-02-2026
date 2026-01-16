@@ -9,6 +9,7 @@ import ChatAI from "./components/ChatAI";
 
 const NAV_ITEMS = [
   { to: "/", label: "Dashboard", icon: "📊", short: "Home" },
+  { to: "/analytics", label: "Analytics", icon: "📈", short: "Analytics", isNew: true },
   
   // === CICLO PASSIVO / ACQUISTI ===
   { 
