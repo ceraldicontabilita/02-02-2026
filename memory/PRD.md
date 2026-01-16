@@ -75,6 +75,32 @@ Quando si conferma un pagamento (es. fattura Aruba):
 
 ### 16 Gennaio 2026 - REFACTORING COMPLETO TESTATO ✅
 
+### 16 Gennaio 2026 - Sessione 8 (COMPLETATA) ✅
+
+#### Nuove Funzionalità:
+
+1. **Notifiche Browser per Scadenze**
+   - ✅ Hook `useScadenzeNotifiche` per gestione permessi
+   - ✅ Notifiche push per scadenze a 3 giorni
+   - ✅ Banner richiesta permesso notifiche
+   - ✅ Badge floating per scadenze urgenti
+
+2. **Report PDF Automatici**
+   - ✅ `/api/report-pdf/mensile` - Report mensile completo
+   - ✅ `/api/report-pdf/dipendenti` - Report dipendenti
+   - ✅ `/api/report-pdf/scadenze` - Report scadenze
+   - ✅ `/api/report-pdf/magazzino` - Report magazzino
+
+3. **Ottimizzazione MongoDB**
+   - ✅ Script `create_indexes.py` con 12 gruppi di indici
+   - ✅ Indici su: fatture, prima_nota, estratto_conto, employees, cedolini, f24, scadenzario, fornitori
+
+4. **API Pubblica v1**
+   - ✅ Generazione API Keys
+   - ✅ `/api/v1/fatture` - Lista fatture con auth
+   - ✅ `/api/v1/movimenti` - Lista movimenti
+   - ✅ `/api/v1/stats` - Statistiche aggregate
+
 ### 16 Gennaio 2026 - Sessione 7 (COMPLETATA) ✅
 
 #### Nuove Funzionalità:
