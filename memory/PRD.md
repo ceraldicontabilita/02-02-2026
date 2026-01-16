@@ -75,6 +75,19 @@ Quando si conferma un pagamento (es. fattura Aruba):
 
 ### 16 Gennaio 2026 - REFACTORING COMPLETO TESTATO ✅
 
+### 16 Gennaio 2026 - Sessione 6 (COMPLETATA) ✅
+
+#### Pulizia Codice Legacy (P1):
+- ✅ 12 file JSX legacy spostati in `/app/frontend/src/pages/_legacy/`
+- Files: DipendenteAcconti, DipendenteAgevolazioni, DipendenteBonifici, DipendenteContratti, DipendenteLibretti, DipendenteLibroUnico, DipendenteProgressivi, DipendenteRetribuzione, GestioneDipendenti, PrimaNota, PrimaNotaSalari, RiconciliazioneSmart
+
+#### Export CSV/Excel (P2):
+- ✅ Creato componente riutilizzabile `ExportButton.jsx`
+- ✅ Prima Nota: Export 120 movimenti
+- ✅ Gestione Dipendenti: Export 27 dipendenti
+- ✅ Riconciliazione: Export movimenti banca
+- ✅ Cedolini: Export cedolini
+
 ### 16 Gennaio 2026 - Sessione 5 (COMPLETATA) ✅
 
 #### Nuove Funzionalità:
