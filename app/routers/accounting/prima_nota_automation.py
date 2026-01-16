@@ -725,7 +725,7 @@ async def move_invoices_by_supplier_payment(
             {"data_fattura": {"$regex": f"^{year_filter}"}}
         ]
     
-    invoices = await db[Collections.INVOICES].find(query).to_list(10000)
+    invoices = await db[Collections.INVOICES].find(query, {"_id": 0}).to_list(10000)
     now = datetime.utcnow().isoformat()
     
     for invoice in invoices:
