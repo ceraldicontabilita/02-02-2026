@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import api from '../api';
 import { formatEuro } from '../lib/utils';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
+import { useParams } from 'react-router-dom';
 import { ExportButton } from '../components/ExportButton';
 import { PageInfoCard } from '../components/PageInfoCard';
 
@@ -9,7 +10,7 @@ import { PageInfoCard } from '../components/PageInfoCard';
  * PRIMA NOTA UNIFICATA
  * 
  * Una sola pagina con filtri per:
- * - Cassa
+ * - Cassa (corrispettivi, POS, versamenti, pagamenti fornitori)
  * - Banca
  * - Salari
  * - Tutti
@@ -22,15 +23,27 @@ const FILTRI_TIPO = [
   { id: 'salari', label: '👤 Salari', color: '#8b5cf6' },
 ];
 
+// Categorie per Prima Nota Cassa
+const CATEGORIE_CASSA = {
+  corrispettivi: { label: 'Corrispettivi', color: '#10b981', icon: '📈' },
+  pos: { label: 'POS', color: '#3b82f6', icon: '💳' },
+  versamento: { label: 'Versamento', color: '#8b5cf6', icon: '🏦' },
+  pagamento_fornitore: { label: 'Pagamento fornitore', color: '#f59e0b', icon: '📄' },
+  prelievo: { label: 'Prelievo', color: '#ef4444', icon: '💸' },
+  altro: { label: 'Altro', color: '#6b7280', icon: '📝' }
+};
+
 export default function PrimaNotaUnificata() {
   const { anno } = useAnnoGlobale();
+  const { tipo: tipoParam } = useParams();
   const [loading, setLoading] = useState(true);
   const [movimenti, setMovimenti] = useState([]);
-  const [filtroTipo, setFiltroTipo] = useState('tutti');
+  const [filtroTipo, setFiltroTipo] = useState(tipoParam || 'cassa');
   const [filtroMese, setFiltroMese] = useState('');
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [editingId, setEditingId] = useState(null);
 
   // Form nuovo movimento
   const [newMov, setNewMov] = useState({
@@ -38,9 +51,13 @@ export default function PrimaNotaUnificata() {
     tipo: 'uscita',
     importo: '',
     descrizione: '',
-    categoria: 'cassa',
+    categoria: 'corrispettivi',
     fornitore: ''
   });
+
+  useEffect(() => {
+    if (tipoParam) setFiltroTipo(tipoParam);
+  }, [tipoParam]);
 
   useEffect(() => {
     loadMovimenti();
@@ -97,6 +114,27 @@ export default function PrimaNotaUnificata() {
     });
   }, [movimenti, filtroTipo, filtroMese, search]);
 
+  // Calcola saldo progressivo
+  const movimentiConSaldo = useMemo(() => {
+    // Ordina per data crescente per calcolare il saldo
+    const sorted = [...movimentiFiltrati].sort((a, b) => 
+      new Date(a.data || a.data_pagamento) - new Date(b.data || b.data_pagamento)
+    );
+    
+    let saldo = 0;
+    const withSaldo = sorted.map(m => {
+      const importo = Math.abs(m.importo || 0);
+      const isEntrata = m.tipo === 'entrata' || (m.importo || 0) > 0;
+      saldo += isEntrata ? importo : -importo;
+      return { ...m, _saldo: saldo };
+    });
+    
+    // Riordina per data decrescente per la visualizzazione
+    return withSaldo.sort((a, b) => 
+      new Date(b.data || b.data_pagamento) - new Date(a.data || a.data_pagamento)
+    );
+  }, [movimentiFiltrati]);
+
   // Calcola totali
   const totali = useMemo(() => {
     const entrate = movimentiFiltrati.filter(m => m.tipo === 'entrata' || (m.importo || 0) > 0);
@@ -109,6 +147,33 @@ export default function PrimaNotaUnificata() {
     };
   }, [movimentiFiltrati]);
 
+  // Statistiche per categoria (solo cassa)
+  const statsCassa = useMemo(() => {
+    const cassaMov = movimenti.filter(m => m._source === 'cassa');
+    
+    const corrispettivi = cassaMov.filter(m => 
+      (m.categoria || '').toLowerCase() === 'corrispettivi' || 
+      (m.descrizione || '').toLowerCase().includes('corrispettivo')
+    ).reduce((sum, m) => sum + Math.abs(m.importo || 0), 0);
+    
+    const pos = cassaMov.filter(m => 
+      (m.categoria || '').toLowerCase() === 'pos' || 
+      (m.descrizione || '').toLowerCase().includes('pos')
+    ).reduce((sum, m) => sum + Math.abs(m.importo || 0), 0);
+    
+    const versamenti = cassaMov.filter(m => 
+      (m.categoria || '').toLowerCase() === 'versamento' || 
+      (m.descrizione || '').toLowerCase().includes('versamento')
+    ).reduce((sum, m) => sum + Math.abs(m.importo || 0), 0);
+    
+    const pagamentiFornitori = cassaMov.filter(m => 
+      (m.categoria || '').toLowerCase().includes('fornitore') || 
+      (m.descrizione || '').toLowerCase().includes('pagamento fattura')
+    ).reduce((sum, m) => sum + Math.abs(m.importo || 0), 0);
+    
+    return { corrispettivi, pos, versamenti, pagamentiFornitori };
+  }, [movimenti]);
+
   // Aggiungi nuovo movimento
   const handleAddMovimento = async () => {
     if (!newMov.importo || !newMov.descrizione) {
@@ -117,9 +182,10 @@ export default function PrimaNotaUnificata() {
     
     setSaving(true);
     try {
-      const endpoint = newMov.categoria === 'cassa' 
+      const sourceTipo = filtroTipo === 'tutti' ? 'cassa' : filtroTipo;
+      const endpoint = sourceTipo === 'cassa' 
         ? '/api/prima-nota/cassa' 
-        : newMov.categoria === 'salari'
+        : sourceTipo === 'salari'
           ? '/api/prima-nota/salari'
           : '/api/prima-nota/banca';
       
@@ -138,7 +204,7 @@ export default function PrimaNotaUnificata() {
         tipo: 'uscita',
         importo: '',
         descrizione: '',
-        categoria: 'cassa',
+        categoria: 'corrispettivi',
         fornitore: ''
       });
       loadMovimenti();
@@ -147,6 +213,38 @@ export default function PrimaNotaUnificata() {
     } finally {
       setSaving(false);
     }
+  };
+
+  // Elimina movimento
+  const handleDelete = async (mov) => {
+    if (!window.confirm('Eliminare questo movimento?')) return;
+    
+    try {
+      const endpoint = mov._source === 'cassa' 
+        ? `/api/prima-nota/cassa/${mov.id}` 
+        : mov._source === 'salari'
+          ? `/api/prima-nota/salari/${mov.id}`
+          : `/api/prima-nota/banca/${mov.id}`;
+      
+      await api.delete(endpoint);
+      loadMovimenti();
+    } catch (e) {
+      alert('Errore eliminazione: ' + (e.response?.data?.detail || e.message));
+    }
+  };
+
+  // Formatta categoria per visualizzazione
+  const getCategoriaInfo = (m) => {
+    const cat = (m.categoria || 'altro').toLowerCase();
+    const desc = (m.descrizione || '').toLowerCase();
+    
+    if (cat === 'corrispettivi' || desc.includes('corrispettivo')) return CATEGORIE_CASSA.corrispettivi;
+    if (cat === 'pos' || desc.includes('pos')) return CATEGORIE_CASSA.pos;
+    if (cat === 'versamento' || desc.includes('versamento')) return CATEGORIE_CASSA.versamento;
+    if (cat.includes('fornitore') || desc.includes('pagamento fattura')) return CATEGORIE_CASSA.pagamento_fornitore;
+    if (cat === 'prelievo' || desc.includes('prelievo')) return CATEGORIE_CASSA.prelievo;
+    
+    return CATEGORIE_CASSA.altro;
   };
 
   return (
@@ -160,43 +258,84 @@ export default function PrimaNotaUnificata() {
       <div style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 'clamp(20px, 4vw, 26px)', color: '#1e293b' }}>
-            📒 Prima Nota
+            📒 Prima Nota {filtroTipo !== 'tutti' && `- ${FILTRI_TIPO.find(f => f.id === filtroTipo)?.label.replace(/📋|💰|🏦|👤/g, '').trim()}`}
           </h1>
           <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: 13 }}>
-            Cassa, Banca e Salari - Anno {anno}
+            Anno {anno}
           </p>
         </div>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          style={{
-            padding: '10px 20px',
-            background: '#3b82f6',
-            color: 'white',
-            border: 'none',
-            borderRadius: 8,
-            fontWeight: 600,
-            cursor: 'pointer'
-          }}
-        >
-          {showForm ? '✕ Chiudi' : '+ Nuovo Movimento'}
-        </button>
-        
-        {/* Export Button */}
-        <ExportButton
-          data={movimentiFiltrati}
-          columns={[
-            { key: 'data', label: 'Data' },
-            { key: 'tipo', label: 'Tipo' },
-            { key: 'descrizione', label: 'Descrizione' },
-            { key: 'importo', label: 'Importo' },
-            { key: 'categoria', label: 'Categoria' },
-            { key: 'fornitore', label: 'Fornitore' }
-          ]}
-          filename={`prima_nota_${anno}`}
-          format="csv"
-          variant="default"
-        />
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button
+            onClick={() => setShowForm(!showForm)}
+            style={{
+              padding: '10px 20px',
+              background: '#3b82f6',
+              color: 'white',
+              border: 'none',
+              borderRadius: 8,
+              fontWeight: 600,
+              cursor: 'pointer'
+            }}
+          >
+            {showForm ? '✕ Chiudi' : '+ Nuovo Movimento'}
+          </button>
+          
+          {/* Export Button */}
+          <ExportButton
+            data={movimentiFiltrati}
+            columns={[
+              { key: 'data', label: 'Data' },
+              { key: 'tipo', label: 'Tipo' },
+              { key: 'descrizione', label: 'Descrizione' },
+              { key: 'importo', label: 'Importo' },
+              { key: 'categoria', label: 'Categoria' },
+              { key: 'fornitore', label: 'Fornitore' }
+            ]}
+            filename={`prima_nota_${filtroTipo}_${anno}`}
+            format="csv"
+            variant="default"
+          />
+        </div>
       </div>
+
+      {/* Card Statistiche Cassa (visibili solo quando filtro = cassa) */}
+      {(filtroTipo === 'cassa' || filtroTipo === 'tutti') && (
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', 
+          gap: 12, 
+          marginBottom: 20 
+        }}>
+          <StatCard 
+            icon="📈" 
+            label="Corrispettivi" 
+            value={formatEuro(statsCassa.corrispettivi)} 
+            color="#10b981" 
+            bgColor="#d1fae5"
+          />
+          <StatCard 
+            icon="💳" 
+            label="POS" 
+            value={formatEuro(statsCassa.pos)} 
+            color="#3b82f6" 
+            bgColor="#dbeafe"
+          />
+          <StatCard 
+            icon="🏦" 
+            label="Versamenti" 
+            value={formatEuro(statsCassa.versamenti)} 
+            color="#8b5cf6" 
+            bgColor="#ede9fe"
+          />
+          <StatCard 
+            icon="📄" 
+            label="Pagam. Fornitori" 
+            value={formatEuro(statsCassa.pagamentiFornitori)} 
+            color="#f59e0b" 
+            bgColor="#fef3c7"
+          />
+        </div>
+      )}
 
       {/* Form nuovo movimento */}
       {showForm && (
@@ -226,8 +365,8 @@ export default function PrimaNotaUnificata() {
                 onChange={e => setNewMov(p => ({ ...p, tipo: e.target.value }))}
                 style={inputStyle}
               >
-                <option value="uscita">Uscita</option>
-                <option value="entrata">Entrata</option>
+                <option value="entrata">Entrata (DARE)</option>
+                <option value="uscita">Uscita (AVERE)</option>
               </select>
             </div>
             <div>
@@ -237,9 +376,9 @@ export default function PrimaNotaUnificata() {
                 onChange={e => setNewMov(p => ({ ...p, categoria: e.target.value }))}
                 style={inputStyle}
               >
-                <option value="cassa">Cassa</option>
-                <option value="banca">Banca</option>
-                <option value="salari">Salari</option>
+                {Object.entries(CATEGORIE_CASSA).map(([k, v]) => (
+                  <option key={k} value={k}>{v.icon} {v.label}</option>
+                ))}
               </select>
             </div>
             <div>
@@ -372,11 +511,11 @@ export default function PrimaNotaUnificata() {
         marginBottom: 20 
       }}>
         <div style={{ padding: 16, background: '#dcfce7', borderRadius: 10, textAlign: 'center' }}>
-          <div style={{ fontSize: 11, color: '#166534' }}>Entrate</div>
+          <div style={{ fontSize: 11, color: '#166534' }}>Entrate (DARE)</div>
           <div style={{ fontSize: 24, fontWeight: 700, color: '#15803d' }}>{formatEuro(totali.entrate)}</div>
         </div>
         <div style={{ padding: 16, background: '#fee2e2', borderRadius: 10, textAlign: 'center' }}>
-          <div style={{ fontSize: 11, color: '#991b1b' }}>Uscite</div>
+          <div style={{ fontSize: 11, color: '#991b1b' }}>Uscite (AVERE)</div>
           <div style={{ fontSize: 24, fontWeight: 700, color: '#dc2626' }}>{formatEuro(totali.uscite)}</div>
         </div>
         <div style={{ padding: 16, background: totali.saldo >= 0 ? '#dbeafe' : '#fef3c7', borderRadius: 10, textAlign: 'center' }}>
@@ -406,20 +545,26 @@ export default function PrimaNotaUnificata() {
             <div>Nessun movimento trovato</div>
           </div>
         ) : (
-          <div style={{ maxHeight: 500, overflow: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 800 }}>
               <thead>
                 <tr style={{ background: '#f8fafc', position: 'sticky', top: 0 }}>
                   <th style={thStyle}>Data</th>
-                  <th style={thStyle}>Tipo</th>
+                  <th style={{ ...thStyle, width: 40, textAlign: 'center' }}>T</th>
+                  <th style={thStyle}>Cat.</th>
                   <th style={thStyle}>Descrizione</th>
-                  <th style={thStyle}>Fornitore</th>
-                  <th style={{ ...thStyle, textAlign: 'right' }}>Importo</th>
+                  <th style={{ ...thStyle, textAlign: 'right', color: '#15803d' }}>DARE</th>
+                  <th style={{ ...thStyle, textAlign: 'right', color: '#dc2626' }}>AVERE</th>
+                  <th style={{ ...thStyle, textAlign: 'right' }}>Saldo</th>
+                  <th style={{ ...thStyle, textAlign: 'center' }}>Fattura</th>
+                  <th style={{ ...thStyle, textAlign: 'center' }}>Azioni</th>
                 </tr>
               </thead>
               <tbody>
-                {movimentiFiltrati.map((m, idx) => {
-                  const isUscita = m.tipo === 'uscita' || (m.importo || 0) < 0;
+                {movimentiConSaldo.map((m, idx) => {
+                  const isEntrata = m.tipo === 'entrata' || (m.importo || 0) > 0;
+                  const importo = Math.abs(m.importo || 0);
+                  const catInfo = getCategoriaInfo(m);
                   const sourceColors = { cassa: '#f59e0b', banca: '#10b981', salari: '#8b5cf6' };
                   
                   return (
@@ -427,28 +572,90 @@ export default function PrimaNotaUnificata() {
                       <td style={tdStyle}>
                         {new Date(m.data || m.data_pagamento).toLocaleDateString('it-IT')}
                       </td>
+                      <td style={{ ...tdStyle, textAlign: 'center' }}>
+                        <span style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: 24,
+                          height: 24,
+                          borderRadius: '50%',
+                          background: isEntrata ? '#dcfce7' : '#fee2e2',
+                          color: isEntrata ? '#15803d' : '#dc2626',
+                          fontSize: 14
+                        }}>
+                          {isEntrata ? '↑' : '↓'}
+                        </span>
+                      </td>
                       <td style={tdStyle}>
                         <span style={{
                           padding: '3px 8px',
                           borderRadius: 4,
-                          fontSize: 10,
+                          fontSize: 11,
                           fontWeight: 600,
-                          background: sourceColors[m._source] || '#94a3b8',
-                          color: 'white',
-                          textTransform: 'uppercase'
+                          background: catInfo.color + '20',
+                          color: catInfo.color
                         }}>
-                          {m._source}
+                          {catInfo.label}
                         </span>
                       </td>
-                      <td style={tdStyle}>{m.descrizione || m.causale || '-'}</td>
-                      <td style={tdStyle}>{m.fornitore || m.beneficiario || '-'}</td>
+                      <td style={tdStyle}>
+                        <div>{m.descrizione || m.causale || '-'}</div>
+                        {(m.fornitore || m.beneficiario) && (
+                          <div style={{ fontSize: 11, color: '#6b7280' }}>{m.fornitore || m.beneficiario}</div>
+                        )}
+                      </td>
+                      <td style={{ ...tdStyle, textAlign: 'right', fontWeight: 600, color: '#15803d' }}>
+                        {isEntrata ? formatEuro(importo) : '-'}
+                      </td>
+                      <td style={{ ...tdStyle, textAlign: 'right', fontWeight: 600, color: '#dc2626' }}>
+                        {!isEntrata ? formatEuro(importo) : '-'}
+                      </td>
                       <td style={{ 
                         ...tdStyle, 
                         textAlign: 'right', 
                         fontWeight: 600,
-                        color: isUscita ? '#dc2626' : '#15803d'
+                        color: m._saldo >= 0 ? '#2563eb' : '#d97706'
                       }}>
-                        {isUscita ? '-' : '+'}{formatEuro(Math.abs(m.importo || 0))}
+                        {formatEuro(m._saldo)}
+                      </td>
+                      <td style={{ ...tdStyle, textAlign: 'center' }}>
+                        {m.fattura_id ? (
+                          <a 
+                            href={`/fatture-ricevute/${m.fattura_id}`}
+                            style={{ color: '#3b82f6', textDecoration: 'none', fontSize: 12 }}
+                          >
+                            📄 Vedi
+                          </a>
+                        ) : '-'}
+                      </td>
+                      <td style={{ ...tdStyle, textAlign: 'center' }}>
+                        <button
+                          onClick={() => alert('Modifica in sviluppo')}
+                          style={{
+                            padding: '4px 8px',
+                            background: 'transparent',
+                            border: 'none',
+                            cursor: 'pointer',
+                            fontSize: 14
+                          }}
+                          title="Modifica"
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          onClick={() => handleDelete(m)}
+                          style={{
+                            padding: '4px 8px',
+                            background: 'transparent',
+                            border: 'none',
+                            cursor: 'pointer',
+                            fontSize: 14
+                          }}
+                          title="Elimina"
+                        >
+                          🗑️
+                        </button>
                       </td>
                     </tr>
                   );
@@ -462,13 +669,45 @@ export default function PrimaNotaUnificata() {
   );
 }
 
+// Componente Card Statistiche
+function StatCard({ icon, label, value, color, bgColor }) {
+  return (
+    <div style={{
+      padding: '16px 20px',
+      background: bgColor,
+      borderRadius: 10,
+      display: 'flex',
+      alignItems: 'center',
+      gap: 12
+    }}>
+      <div style={{
+        width: 44,
+        height: 44,
+        borderRadius: 10,
+        background: 'white',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: 22
+      }}>
+        {icon}
+      </div>
+      <div>
+        <div style={{ fontSize: 11, color: color, fontWeight: 500 }}>{label}</div>
+        <div style={{ fontSize: 18, fontWeight: 700, color }}>{value}</div>
+      </div>
+    </div>
+  );
+}
+
 const labelStyle = { display: 'block', fontSize: 11, color: '#64748b', marginBottom: 4 };
 const inputStyle = { 
   width: '100%', 
   padding: '10px 12px', 
   border: '1px solid #e5e7eb', 
   borderRadius: 6, 
-  fontSize: 13 
+  fontSize: 13,
+  boxSizing: 'border-box'
 };
 const thStyle = { padding: '12px 10px', textAlign: 'left', fontWeight: 600, color: '#374151' };
 const tdStyle = { padding: '10px' };
