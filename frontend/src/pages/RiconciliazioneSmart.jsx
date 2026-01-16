@@ -1110,11 +1110,3 @@ function ModalCambiaFattura({ movimento, tipo, results, onSelect, onClose }) {
     </div>
   );
 }
-          }}>
-            Annulla
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
