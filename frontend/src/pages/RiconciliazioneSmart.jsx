@@ -528,14 +528,14 @@ function StatCard({ label, value, color, subtitle }) {
   return (
     <div style={{ 
       background: 'white', 
-      borderRadius: 10, 
-      padding: 16, 
+      borderRadius: 8, 
+      padding: '8px 12px', 
       border: '1px solid #e5e7eb',
-      borderLeft: `4px solid ${color}`
+      borderLeft: `3px solid ${color}`
     }}>
-      <div style={{ fontSize: 13, color: '#64748b' }}>{label}</div>
-      <div style={{ fontSize: 28, fontWeight: 'bold', color }}>{value}</div>
-      {subtitle && <div style={{ fontSize: 11, color: '#9ca3af' }}>{subtitle}</div>}
+      <div style={{ fontSize: 11, color: '#64748b' }}>{label}</div>
+      <div style={{ fontSize: 20, fontWeight: 'bold', color }}>{value}</div>
+      {subtitle && <div style={{ fontSize: 10, color: '#9ca3af' }}>{subtitle}</div>}
     </div>
   );
 }
