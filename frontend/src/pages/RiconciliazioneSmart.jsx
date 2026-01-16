@@ -1108,11 +1108,11 @@ function ModalCambiaFattura({ movimento, tipo, results, onSelect, onClose }) {
             const stipendiList = res.data?.stipendi || [];
             normalized = stipendiList.map(s => ({
               id: s.id,
-              dipendente: res.data?.dipendente?.nome || 'Dipendente',
+              dipendente: s.dipendente || res.data?.dipendente?.nome || 'Dipendente',
               dipendente_id: s.dipendente_id,
-              mese_riferimento: s.periodo,
-              netto_pagare: s.netto,
-              importo: s.netto
+              mese_riferimento: s.periodo || s.mese_riferimento,
+              netto_pagare: s.netto || s.netto_pagare,
+              importo: s.netto || s.importo
             }));
           }
           
