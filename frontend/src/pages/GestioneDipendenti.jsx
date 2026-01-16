@@ -60,6 +60,8 @@ export default function GestioneDipendenti() {
         email: selectedDip.email || '',
         mansione: selectedDip.mansione || '',
         data_assunzione: selectedDip.data_assunzione || '',
+        iban: selectedDip.iban || '',
+        ibans: selectedDip.ibans || (selectedDip.iban ? [selectedDip.iban] : []),
       });
     }
   }, [selectedDip]);
