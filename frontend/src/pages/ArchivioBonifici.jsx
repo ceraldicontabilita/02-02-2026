@@ -231,8 +231,6 @@ export default function ArchivioBonifici() {
       alert('Errore: ' + (error.response?.data?.detail || error.message));
     }
   };
-    }
-  };
 
   // Carica operazioni salari compatibili per associazione
   const loadOperazioniCompatibili = async (bonifico_id) => {
