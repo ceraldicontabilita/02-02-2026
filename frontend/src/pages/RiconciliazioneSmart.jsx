@@ -449,6 +449,66 @@ export default function RiconciliazioneSmart() {
         </button>
       </div>
 
+      {/* TAB ARUBA - Fatture da Email */}
+      {activeTab === 'aruba' && (
+        <div style={{ background: 'white', borderRadius: 12, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+          <div style={{ 
+            padding: 16, 
+            background: '#f5f3ff', 
+            borderBottom: '1px solid #e9d5ff',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}>
+            <div>
+              <div style={{ fontWeight: 'bold', color: '#7c3aed' }}>
+                🧾 Fatture Aruba da Confermare
+              </div>
+              <div style={{ fontSize: 13, color: '#8b5cf6' }}>
+                Fatture rilevate da email - conferma il metodo di pagamento
+              </div>
+            </div>
+            <button
+              onClick={loadArubaOps}
+              disabled={loadingAruba}
+              style={{
+                padding: '10px 16px',
+                background: '#f1f5f9',
+                border: 'none',
+                borderRadius: 8,
+                cursor: 'pointer'
+              }}
+            >
+              {loadingAruba ? '⏳' : '🔄'} Aggiorna
+            </button>
+          </div>
+
+          {loadingAruba ? (
+            <div style={{ padding: 40, textAlign: 'center', color: '#64748b' }}>
+              <div style={{ fontSize: 48 }}>⏳</div>
+              <div>Caricamento fatture Aruba...</div>
+            </div>
+          ) : arubaOps.length === 0 ? (
+            <div style={{ padding: 40, textAlign: 'center', color: '#64748b' }}>
+              <div style={{ fontSize: 48, opacity: 0.3 }}>🧾</div>
+              <div>Nessuna fattura Aruba da confermare</div>
+            </div>
+          ) : (
+            <div style={{ maxHeight: 600, overflow: 'auto' }}>
+              {arubaOps.map((op, idx) => (
+                <ArubaCard
+                  key={op.id || idx}
+                  operazione={op}
+                  onConferma={handleConfermaAruba}
+                  onRifiuta={handleRifiutaAruba}
+                  processing={processing === op.id}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* TAB ASSEGNI */}
       {activeTab === 'assegni' && (
         <div style={{ background: 'white', borderRadius: 12, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
