@@ -218,6 +218,25 @@ async def conferma_operazione(
     if fattura:
         fattura_id = fattura.get("id")
     
+    # CONTROLLO ATOMICO DUPLICATI: Verifica se esiste già un movimento per questa operazione
+    existing_cassa = await db["prima_nota_cassa"].find_one({"operazione_aruba_id": operazione_id}, {"_id": 0, "id": 1})
+    existing_banca = await db["prima_nota_banca"].find_one({"operazione_aruba_id": operazione_id}, {"_id": 0, "id": 1})
+    
+    if existing_cassa or existing_banca:
+        existing = existing_cassa or existing_banca
+        logger.warning(f"Movimento già esistente per operazione {operazione_id}: {existing.get('id')}")
+        # Aggiorna comunque lo stato dell'operazione
+        await db["operazioni_da_confermare"].update_one(
+            {"id": operazione_id},
+            {"$set": {"stato": "confermato", "updated_at": datetime.now(timezone.utc).isoformat()}}
+        )
+        return {
+            "success": True,
+            "movimento_id": existing.get("id"),
+            "message": "Movimento già presente (duplicato evitato)",
+            "duplicato_evitato": True
+        }
+    
     # Inserisci in Prima Nota
     if metodo == "cassa":
         # Prima Nota Cassa
