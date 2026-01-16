@@ -729,19 +729,112 @@ function TabAcconti({ acconti: accontiData, dipendente, onReload }) {
               <th style={thStyle}>Tipo</th>
               <th style={{ ...thStyle, textAlign: 'right' }}>Importo</th>
               <th style={thStyle}>Note</th>
+              <th style={{ ...thStyle, textAlign: 'center' }}>Azioni</th>
             </tr>
           </thead>
           <tbody>
             {allAcconti.map((a, idx) => (
-              <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
+              <tr key={a.id || idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
                 <td style={tdStyle}>{a.data ? new Date(a.data).toLocaleDateString('it-IT') : '-'}</td>
                 <td style={tdStyle}><span style={{ padding: '2px 8px', background: '#f1f5f9', borderRadius: 4, fontSize: 11 }}>{a.tipo || 'N/D'}</span></td>
                 <td style={{ ...tdStyle, textAlign: 'right', fontWeight: 600, color: '#f59e0b' }}>{formatEuro(a.importo || 0)}</td>
                 <td style={tdStyle}>{a.note || '-'}</td>
+                <td style={{ ...tdStyle, textAlign: 'center' }}>
+                  <button
+                    onClick={() => setEditingAcconto({ ...a })}
+                    style={{ ...btnStyle('#3b82f6', 'small'), marginRight: 4 }}
+                    title="Modifica"
+                  >
+                    ✏️
+                  </button>
+                  <button
+                    onClick={() => handleDeleteAcconto(a.id)}
+                    disabled={deleting === a.id}
+                    style={{ ...btnStyle('#ef4444', 'small'), opacity: deleting === a.id ? 0.5 : 1 }}
+                    title="Elimina"
+                  >
+                    {deleting === a.id ? '⏳' : '🗑️'}
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
+      )}
+
+      {/* Modal di modifica acconto */}
+      {editingAcconto && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: 12,
+            padding: 24,
+            width: '90%',
+            maxWidth: 500,
+            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)'
+          }}>
+            <h3 style={{ margin: '0 0 20px', fontSize: 18 }}>✏️ Modifica Acconto</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 11, color: '#64748b', marginBottom: 4 }}>Tipo</label>
+                <select 
+                  value={editingAcconto.tipo} 
+                  onChange={e => setEditingAcconto(p => ({ ...p, tipo: e.target.value }))}
+                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 13 }}
+                >
+                  <option value="tfr">TFR</option>
+                  <option value="ferie">Ferie</option>
+                  <option value="tredicesima">Tredicesima</option>
+                  <option value="quattordicesima">Quattordicesima</option>
+                  <option value="prestito">Prestito</option>
+                </select>
+              </div>
+              <Field 
+                label="Importo €" 
+                value={editingAcconto.importo} 
+                onChange={v => setEditingAcconto(p => ({ ...p, importo: v }))} 
+                type="number" 
+              />
+              <Field 
+                label="Data" 
+                value={editingAcconto.data} 
+                onChange={v => setEditingAcconto(p => ({ ...p, data: v }))} 
+                type="date" 
+              />
+              <Field 
+                label="Note" 
+                value={editingAcconto.note} 
+                onChange={v => setEditingAcconto(p => ({ ...p, note: v }))} 
+              />
+            </div>
+            <div style={{ display: 'flex', gap: 12, marginTop: 20 }}>
+              <button 
+                onClick={() => setEditingAcconto(null)} 
+                style={{ ...btnStyle('#64748b'), flex: 1 }}
+              >
+                Annulla
+              </button>
+              <button 
+                onClick={handleUpdateAcconto} 
+                disabled={saving}
+                style={{ ...btnStyle('#10b981'), flex: 1 }}
+              >
+                {saving ? '⏳' : '💾'} Salva Modifiche
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
