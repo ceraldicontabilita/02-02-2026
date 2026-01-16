@@ -26,15 +26,20 @@ export default function RiconciliazioneSmart() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(null);
-  const [activeTab, setActiveTab] = useState('assegni'); // 'assegni' | 'altri' | 'manual'
+  const [activeTab, setActiveTab] = useState('aruba'); // 'aruba' | 'assegni' | 'altri' | 'manual'
   const [selectedMovimento, setSelectedMovimento] = useState(null);
   const [searchResults, setSearchResults] = useState([]);
   const [searchType, setSearchType] = useState('fattura');
-  const [autoConfirmStats, setAutoConfirmStats] = useState({ pos: 0, commissioni: 0 });
+  const [autoConfirmStats, setAutoConfirmStats] = useState({ pos: 0, commissioni: 0, assegni: 0 });
   const autoConfirmDone = useRef(false);
+  
+  // Operazioni Aruba pendenti
+  const [arubaOps, setArubaOps] = useState([]);
+  const [loadingAruba, setLoadingAruba] = useState(false);
 
   useEffect(() => {
     loadData();
+    loadArubaOps();
   }, []);
 
   // Auto-conferma POS dopo il caricamento
@@ -56,6 +61,38 @@ export default function RiconciliazioneSmart() {
       console.error('Errore:', e);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Carica operazioni Aruba pendenti
+  const loadArubaOps = async () => {
+    setLoadingAruba(true);
+    try {
+      const res = await api.get('/api/operazioni-da-confermare/aruba-pendenti');
+      setArubaOps(res.data.operazioni || []);
+    } catch (e) {
+      console.error('Errore caricamento Aruba:', e);
+      setArubaOps([]);
+    } finally {
+      setLoadingAruba(false);
+    }
+  };
+
+  // Conferma operazione Aruba (metodo pagamento)
+  const handleConfermaAruba = async (op, metodo) => {
+    setProcessing(op.id);
+    try {
+      await api.post('/api/operazioni-da-confermare/aruba/conferma', {
+        operazione_id: op.id,
+        metodo_pagamento: metodo,
+        numero_assegno: null
+      });
+      // Rimuovi dalla lista
+      setArubaOps(prev => prev.filter(o => o.id !== op.id));
+    } catch (e) {
+      alert('Errore: ' + (e.response?.data?.detail || e.message));
+    } finally {
+      setProcessing(null);
     }
   };
 
