@@ -230,16 +230,15 @@ async def completa_operazione_con_xml(db, fattura_data: Dict[str, Any], fattura_
             # Se operazione era già confermata, aggiorna Prima Nota
             if operazione.get("stato") == "confermato":
                 prima_nota_id = operazione.get("prima_nota_id")
-                metodo = operazione.get("metodo_pagamento_confermato")
+                metodo = operazione.get("metodo_pagamento_confermato") or operazione.get("metodo_pagamento")
                 
                 if prima_nota_id and metodo:
-                    collection = "cash_movements" if metodo == "cassa" else "bank_movements"
+                    collection = "prima_nota_cassa" if metodo == "cassa" else "prima_nota_banca"
                     
                     await db[collection].update_one(
                         {"id": prima_nota_id},
                         {"$set": {
                             "fattura_xml_id": fattura_id,
-                            "provvisorio": False,  # Non più provvisorio
                             "completato_con_xml": True,
                             "updated_at": datetime.now(timezone.utc).isoformat()
                         }}
