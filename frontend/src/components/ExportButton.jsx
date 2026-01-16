@@ -123,14 +123,9 @@ export function ExportButton({
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Dati');
       XLSX.writeFile(wb, `${filename}_${new Date().toISOString().split('T')[0]}.xlsx`);
-      } else {
-        // Fallback a CSV
-        exportToCSV();
-      }
     } catch (error) {
       console.error('Errore export Excel:', error);
-      // Fallback a CSV
-      exportToCSV();
+      alert('Errore durante l\'esportazione Excel');
     } finally {
       setExporting(false);
     }
