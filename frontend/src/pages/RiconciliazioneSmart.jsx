@@ -1268,3 +1268,245 @@ function ModalCambiaFattura({ movimento, tipo, results, onSelect, onClose }) {
     </div>
   );
 }
+
+// Card per operazioni Aruba (fatture da email)
+function ArubaCard({ operazione, onConferma, onRifiuta, processing }) {
+  const [showMetodi, setShowMetodi] = useState(false);
+  
+  const op = operazione;
+  const hasMatch = op.riconciliato_auto && op.estratto_conto_match;
+  const isMultiplo = hasMatch && op.estratto_conto_match?.tipo === 'multiplo';
+  const needsVerify = op.stato === 'da_verificare';
+  
+  return (
+    <div style={{ 
+      padding: 16, 
+      borderBottom: '1px solid #f1f5f9',
+      opacity: processing ? 0.5 : 1,
+      background: needsVerify ? '#fefce8' : 'white'
+    }}>
+      {/* Riga principale */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, marginBottom: 12 }}>
+        <div style={{ 
+          width: 48, 
+          height: 48, 
+          borderRadius: 10, 
+          background: hasMatch ? '#dcfce7' : '#f1f5f9', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          fontSize: 22,
+          flexShrink: 0
+        }}>
+          {hasMatch ? '✅' : '🧾'}
+        </div>
+        
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontWeight: 'bold', fontSize: 15, color: '#374151', marginBottom: 4 }}>
+            {op.fornitore || 'Fornitore N/A'}
+          </div>
+          <div style={{ fontSize: 13, color: '#64748b', display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+            <span>📄 Fatt. {op.numero_fattura}</span>
+            <span>📅 {op.data_documento ? new Date(op.data_documento).toLocaleDateString('it-IT') : '-'}</span>
+          </div>
+          
+          {/* Badge stato */}
+          <div style={{ marginTop: 8, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {needsVerify && (
+              <span style={{ 
+                padding: '3px 8px', 
+                background: '#fef3c7', 
+                color: '#92400e',
+                borderRadius: 4,
+                fontSize: 11,
+                fontWeight: 'bold'
+              }}>
+                ⚠️ DA VERIFICARE
+              </span>
+            )}
+            {hasMatch && (
+              <span style={{ 
+                padding: '3px 8px', 
+                background: '#dcfce7', 
+                color: '#166534',
+                borderRadius: 4,
+                fontSize: 11,
+                fontWeight: 'bold'
+              }}>
+                🔗 {isMultiplo ? `${op.estratto_conto_match.num_assegni} ASSEGNI` : 'MATCH TROVATO'}
+              </span>
+            )}
+            {op.metodo_pagamento_proposto && (
+              <span style={{ 
+                padding: '3px 8px', 
+                background: op.metodo_pagamento_proposto === 'assegno' ? '#fef3c7' : '#dbeafe', 
+                color: op.metodo_pagamento_proposto === 'assegno' ? '#92400e' : '#1e40af',
+                borderRadius: 4,
+                fontSize: 11,
+                fontWeight: 'bold'
+              }}>
+                💡 Proposto: {op.metodo_pagamento_proposto.toUpperCase()}
+              </span>
+            )}
+          </div>
+        </div>
+        
+        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+          <div style={{ fontWeight: 'bold', fontSize: 18, color: '#059669' }}>
+            {formatEuro(op.importo || op.netto_pagare || 0)}
+          </div>
+          {isMultiplo && op.estratto_conto_match?.differenza !== 0 && (
+            <div style={{ fontSize: 11, color: '#f59e0b' }}>
+              Diff: {formatEuro(Math.abs(op.estratto_conto_match.differenza))}
+            </div>
+          )}
+        </div>
+      </div>
+      
+      {/* Dettaglio match (se presente) */}
+      {hasMatch && (
+        <div style={{ 
+          padding: 12, 
+          background: '#f0fdf4', 
+          borderRadius: 8,
+          border: '1px solid #bbf7d0',
+          marginBottom: 12,
+          fontSize: 12
+        }}>
+          <div style={{ fontWeight: 'bold', color: '#059669', marginBottom: 6 }}>
+            🏦 Match Estratto Conto:
+          </div>
+          {isMultiplo ? (
+            <div>
+              {op.assegni_multipli?.map((ass, i) => (
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: i < op.assegni_multipli.length - 1 ? '1px dashed #bbf7d0' : 'none' }}>
+                  <span style={{ color: '#374151' }}>
+                    📝 Assegno N. {ass.numero_assegno} ({new Date(ass.data).toLocaleDateString('it-IT')})
+                  </span>
+                  <span style={{ fontWeight: 'bold', color: '#059669' }}>{formatEuro(ass.importo)}</span>
+                </div>
+              ))}
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, paddingTop: 6, borderTop: '1px solid #bbf7d0' }}>
+                <span style={{ fontWeight: 'bold' }}>Totale assegni:</span>
+                <span style={{ fontWeight: 'bold', color: '#059669' }}>{formatEuro(op.estratto_conto_match.somma)}</span>
+              </div>
+            </div>
+          ) : (
+            <div style={{ color: '#374151' }}>
+              {op.estratto_conto_match.descrizione?.substring(0, 80)}
+              <span style={{ marginLeft: 8, fontWeight: 'bold', color: '#059669' }}>
+                {formatEuro(op.estratto_conto_match.importo)}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+      
+      {/* Azioni */}
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        {!showMetodi ? (
+          <>
+            <button
+              onClick={() => setShowMetodi(true)}
+              disabled={processing}
+              style={{
+                padding: '10px 20px',
+                background: '#7c3aed',
+                color: 'white',
+                border: 'none',
+                borderRadius: 6,
+                fontWeight: 'bold',
+                cursor: processing ? 'not-allowed' : 'pointer',
+                fontSize: 13
+              }}
+            >
+              {processing ? '⏳' : '✓'} Conferma Pagamento
+            </button>
+            <button
+              onClick={() => onRifiuta(op)}
+              disabled={processing}
+              style={{
+                padding: '10px 16px',
+                background: '#fee2e2',
+                color: '#dc2626',
+                border: 'none',
+                borderRadius: 6,
+                cursor: 'pointer',
+                fontSize: 13,
+                marginLeft: 'auto'
+              }}
+            >
+              ✕ Rifiuta
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              onClick={() => { onConferma(op, 'cassa'); setShowMetodi(false); }}
+              disabled={processing}
+              style={{
+                padding: '10px 16px',
+                background: '#fef3c7',
+                color: '#92400e',
+                border: 'none',
+                borderRadius: 6,
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                fontSize: 13
+              }}
+            >
+              💰 Cassa
+            </button>
+            <button
+              onClick={() => { onConferma(op, 'bonifico'); setShowMetodi(false); }}
+              disabled={processing}
+              style={{
+                padding: '10px 16px',
+                background: '#dbeafe',
+                color: '#1e40af',
+                border: 'none',
+                borderRadius: 6,
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                fontSize: 13
+              }}
+            >
+              🏦 Bonifico
+            </button>
+            <button
+              onClick={() => { onConferma(op, 'assegno'); setShowMetodi(false); }}
+              disabled={processing}
+              style={{
+                padding: '10px 16px',
+                background: '#f3e8ff',
+                color: '#7c3aed',
+                border: 'none',
+                borderRadius: 6,
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                fontSize: 13
+              }}
+            >
+              📝 Assegno
+            </button>
+            <button
+              onClick={() => setShowMetodi(false)}
+              style={{
+                padding: '10px 16px',
+                background: '#f1f5f9',
+                color: '#64748b',
+                border: 'none',
+                borderRadius: 6,
+                cursor: 'pointer',
+                fontSize: 13,
+                marginLeft: 'auto'
+              }}
+            >
+              Annulla
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
