@@ -221,6 +221,19 @@ export default function ArchivioBonifici() {
     }
   };
 
+  // Sincronizza IBAN dai bonifici all'anagrafica dipendenti
+  const handleSyncIbanToAnagrafica = async () => {
+    if (!window.confirm('Sincronizzare gli IBAN dai bonifici all\'anagrafica dipendenti?')) return;
+    try {
+      const res = await api.post('/api/archivio-bonifici/sync-iban-anagrafica');
+      alert(`✅ Sincronizzazione completata!\n\nDipendenti aggiornati: ${res.data.dipendenti_aggiornati}\nBonifici analizzati: ${res.data.totale_bonifici_analizzati}`);
+    } catch (error) {
+      alert('Errore: ' + (error.response?.data?.detail || error.message));
+    }
+  };
+    }
+  };
+
   // Carica operazioni salari compatibili per associazione
   const loadOperazioniCompatibili = async (bonifico_id) => {
     setLoadingOperazioni(true);
