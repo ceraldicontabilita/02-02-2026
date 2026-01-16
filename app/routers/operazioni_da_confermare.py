@@ -541,7 +541,7 @@ async def conferma_operazione_aruba(request: ConfermaArubaRequest) -> Dict[str, 
     }
 
 
-@router.post("/aruba/rifiuta")
+@router.post("/rifiuta-aruba")
 async def rifiuta_operazione_aruba(request: RifiutaArubaRequest) -> Dict[str, Any]:
     """
     Rifiuta un'operazione Aruba (es. duplicata o non valida).
