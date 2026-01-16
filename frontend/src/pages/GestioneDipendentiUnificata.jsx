@@ -596,8 +596,10 @@ function TabBonifici({ bonifici, dipendente, onReload }) {
 
 function TabAcconti({ acconti: accontiData, dipendente, onReload }) {
   const [showForm, setShowForm] = useState(false);
+  const [editingAcconto, setEditingAcconto] = useState(null);
   const [newAcconto, setNewAcconto] = useState({ importo: '', data: '', note: '', tipo: 'tfr' });
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(null);
 
   // Gestisce sia array che oggetto strutturato
   const accontiObj = accontiData && typeof accontiData === 'object' && !Array.isArray(accontiData) 
@@ -627,6 +629,38 @@ function TabAcconti({ acconti: accontiData, dipendente, onReload }) {
       alert('Errore: ' + (e.response?.data?.detail || e.message));
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleUpdateAcconto = async () => {
+    if (!editingAcconto || !editingAcconto.importo) return alert('Inserisci importo');
+    setSaving(true);
+    try {
+      await api.put(`/api/tfr/acconti/${editingAcconto.id}`, {
+        tipo: editingAcconto.tipo,
+        importo: parseFloat(editingAcconto.importo),
+        data: editingAcconto.data,
+        note: editingAcconto.note
+      });
+      setEditingAcconto(null);
+      onReload();
+    } catch (e) {
+      alert('Errore: ' + (e.response?.data?.detail || e.message));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteAcconto = async (accontoId) => {
+    if (!confirm('Sei sicuro di voler eliminare questo acconto?')) return;
+    setDeleting(accontoId);
+    try {
+      await api.delete(`/api/tfr/acconti/${accontoId}`);
+      onReload();
+    } catch (e) {
+      alert('Errore eliminazione: ' + (e.response?.data?.detail || e.message));
+    } finally {
+      setDeleting(null);
     }
   };
 
