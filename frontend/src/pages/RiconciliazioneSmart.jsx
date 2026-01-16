@@ -855,8 +855,18 @@ function MovimentoCardManuale({ movimento, onAssociaFattura, onAssociaStipendio,
   );
 }
 
-// Modal per cambiare fattura
-function ModalCambiaFattura({ movimento, results, onSelect, onClose }) {
+// Modal per cambiare fattura/stipendio/f24
+function ModalCambiaFattura({ movimento, tipo, results, onSelect, onClose }) {
+  const safeResults = Array.isArray(results) ? results : [];
+  
+  const tipoConfig = {
+    fattura: { title: '🧾 Seleziona Fattura', empty: 'Nessuna fattura trovata' },
+    stipendio: { title: '👤 Seleziona Stipendio', empty: 'Nessuno stipendio trovato' },
+    f24: { title: '📄 Seleziona F24', empty: 'Nessun F24 trovato' }
+  };
+  
+  const config = tipoConfig[tipo] || tipoConfig.fattura;
+  
   return (
     <div style={{
       position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
@@ -871,7 +881,7 @@ function ModalCambiaFattura({ movimento, results, onSelect, onClose }) {
         
         <div style={{ padding: 20, borderBottom: '1px solid #e5e7eb', background: '#f8fafc' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 style={{ margin: 0, fontSize: 18 }}>🔄 Seleziona Fattura</h3>
+            <h3 style={{ margin: 0, fontSize: 18 }}>{config.title}</h3>
             <button onClick={onClose} style={{ 
               background: 'none', border: 'none', fontSize: 24, cursor: 'pointer', color: '#64748b'
             }}>✕</button>
@@ -885,13 +895,13 @@ function ModalCambiaFattura({ movimento, results, onSelect, onClose }) {
         </div>
         
         <div style={{ maxHeight: 400, overflow: 'auto' }}>
-          {results.length === 0 ? (
+          {safeResults.length === 0 ? (
             <div style={{ padding: 40, textAlign: 'center', color: '#64748b' }}>
               <div style={{ fontSize: 32, marginBottom: 8 }}>🔍</div>
-              Nessuna fattura trovata con importo simile
+              {config.empty} con importo simile
             </div>
           ) : (
-            results.map((item, idx) => (
+            safeResults.map((item, idx) => (
               <div 
                 key={idx}
                 onClick={() => onSelect(item)}
@@ -905,10 +915,17 @@ function ModalCambiaFattura({ movimento, results, onSelect, onClose }) {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <div style={{ fontWeight: 'bold' }}>
-                      {item.fornitore || item.supplier_name || 'Fornitore'}
+                      {item.beneficiario || item.fornitore || item.supplier_name || item.dipendente || item.tipo_tributo || 'N/A'}
                     </div>
                     <div style={{ fontSize: 12, color: '#64748b' }}>
-                      Fatt. {item.numero_fattura || item.invoice_number || '-'}
+                      {item.numero_fattura || item.invoice_number 
+                        ? `Fatt. ${item.numero_fattura || item.invoice_number}`
+                        : item.codice_tributo
+                          ? `Tributo: ${item.codice_tributo}`
+                          : item.mese_riferimento
+                            ? `Mese: ${item.mese_riferimento}`
+                            : '-'
+                      }
                       {item.data_fattura && ` del ${new Date(item.data_fattura).toLocaleDateString('it-IT')}`}
                     </div>
                   </div>
