@@ -615,12 +615,23 @@ function TabAcconti({ acconti: accontiData, dipendente, onReload }) {
         </div>
       )}
 
-      {/* Totale */}
-      <div style={{ padding: 12, background: '#fef3c7', borderRadius: 8, marginBottom: 16, textAlign: 'center' }}>
-        <span style={{ color: '#92400e', fontWeight: 600 }}>Totale Acconti: {formatEuro(totaleAcconti)}</span>
+      {/* Totale e TFR Info */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12, marginBottom: 16 }}>
+        <div style={{ padding: 12, background: '#f0fdf4', borderRadius: 8, textAlign: 'center' }}>
+          <div style={{ fontSize: 11, color: '#64748b' }}>TFR Accantonato</div>
+          <div style={{ fontWeight: 700, color: '#059669' }}>{formatEuro(accontiObj.tfr_accantonato || 0)}</div>
+        </div>
+        <div style={{ padding: 12, background: '#fef3c7', borderRadius: 8, textAlign: 'center' }}>
+          <div style={{ fontSize: 11, color: '#64748b' }}>Totale Acconti</div>
+          <div style={{ fontWeight: 700, color: '#f59e0b' }}>{formatEuro(totaleAcconti)}</div>
+        </div>
+        <div style={{ padding: 12, background: '#dbeafe', borderRadius: 8, textAlign: 'center' }}>
+          <div style={{ fontSize: 11, color: '#64748b' }}>TFR Saldo</div>
+          <div style={{ fontWeight: 700, color: '#2563eb' }}>{formatEuro(accontiObj.tfr_saldo || 0)}</div>
+        </div>
       </div>
       
-      {acconti.length === 0 ? (
+      {allAcconti.length === 0 ? (
         <EmptyState icon="💵" text="Nessun acconto registrato" />
       ) : (
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
