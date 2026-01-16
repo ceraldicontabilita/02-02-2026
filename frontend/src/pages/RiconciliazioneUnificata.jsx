@@ -476,7 +476,7 @@ export default function RiconciliazioneUnificata() {
         )}
         {activeTab === 'banca' && (
           <MovimentiTab 
-            movimenti={movimentiBanca} 
+            movimenti={movimentiBancaFiltrati} 
             onConferma={handleConferma}
             onIgnora={handleIgnora}
             processing={processing}
@@ -486,7 +486,7 @@ export default function RiconciliazioneUnificata() {
         )}
         {activeTab === 'assegni' && (
           <MovimentiTab 
-            movimenti={assegni} 
+            movimenti={assegniFiltrati} 
             onConferma={handleConferma}
             onIgnora={handleIgnora}
             processing={processing}
@@ -507,7 +507,7 @@ export default function RiconciliazioneUnificata() {
         )}
         {activeTab === 'stipendi' && (
           <MovimentiTab 
-            movimenti={stipendiPendenti} 
+            movimenti={stipendiFiltrati} 
             onConferma={handleConferma}
             onIgnora={handleIgnora}
             processing={processing}
