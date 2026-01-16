@@ -210,6 +210,9 @@ export default function App() {
 
   return (
     <div className="layout">
+      {/* Notifiche Scadenze Browser */}
+      <NotificheScadenze showBanner={true} />
+      
       {/* F24 Email Sync Popup - Mostrato all'avvio */}
       {showF24Sync && (
         <F24EmailSync onClose={() => setShowF24Sync(false)} />
