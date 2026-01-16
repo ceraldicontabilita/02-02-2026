@@ -368,10 +368,68 @@ async def fetch_aruba_invoices(
                     invoice_data["totale"]
                 )
                 
-                # Controlla se già esiste
+                # Controlla se già esiste nelle operazioni
                 existing = await db["operazioni_da_confermare"].find_one({"email_hash": email_hash})
                 if existing:
                     stats["duplicates_skipped"] += 1
+                    continue
+                
+                # === NUOVO: Controlla se la fattura esiste già ===
+                # 1. Controlla nelle fatture XML importate
+                fattura_xml = await db["invoices"].find_one({
+                    "$or": [
+                        {"numero_fattura": invoice_data["numero_fattura"]},
+                        {"invoice_number": invoice_data["numero_fattura"]}
+                    ],
+                    "$or": [
+                        {"supplier_name": {"$regex": invoice_data["fornitore"][:20], "$options": "i"}},
+                        {"cedente_denominazione": {"$regex": invoice_data["fornitore"][:20], "$options": "i"}}
+                    ]
+                })
+                
+                # 2. Controlla in prima nota cassa
+                prima_nota_cassa = await db["prima_nota_cassa"].find_one({
+                    "numero_fattura": invoice_data["numero_fattura"],
+                    "fornitore": {"$regex": invoice_data["fornitore"][:20], "$options": "i"}
+                })
+                
+                # 3. Controlla in prima nota banca
+                prima_nota_banca = await db["prima_nota_banca"].find_one({
+                    "numero_fattura": invoice_data["numero_fattura"],
+                    "fornitore": {"$regex": invoice_data["fornitore"][:20], "$options": "i"}
+                })
+                
+                # 4. Controlla nel dizionario operazioni elaborate
+                gia_elaborata = await db["aruba_elaborazioni"].find_one({
+                    "numero_fattura": invoice_data["numero_fattura"],
+                    "fornitore": invoice_data["fornitore"],
+                    "stato": {"$in": ["inserita_cassa", "inserita_banca", "inserita_assegno", "scartata"]}
+                })
+                
+                if fattura_xml or prima_nota_cassa or prima_nota_banca or gia_elaborata:
+                    stats["duplicates_skipped"] += 1
+                    # Salva nel dizionario per tracciamento
+                    await db["aruba_elaborazioni"].update_one(
+                        {
+                            "email_hash": email_hash,
+                            "numero_fattura": invoice_data["numero_fattura"]
+                        },
+                        {
+                            "$set": {
+                                "fornitore": invoice_data["fornitore"],
+                                "numero_fattura": invoice_data["numero_fattura"],
+                                "importo": invoice_data["totale"],
+                                "data_documento": invoice_data["data_documento"],
+                                "stato": "gia_presente",
+                                "fonte_duplicato": "xml" if fattura_xml else "cassa" if prima_nota_cassa else "banca" if prima_nota_banca else "aruba",
+                                "updated_at": datetime.now(timezone.utc).isoformat()
+                            },
+                            "$setOnInsert": {
+                                "created_at": datetime.now(timezone.utc).isoformat()
+                            }
+                        },
+                        upsert=True
+                    )
                     continue
                 
                 # Data email
