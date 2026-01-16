@@ -5,6 +5,22 @@
 
 ## 📅 CHANGELOG RECENTE
 
+### 16 Gennaio 2026 (Sessione 4)
+- **COMPLETATO**: Miglioramenti UX/UI richiesti dall'utente:
+  - **Semplificazione Associazione Stipendi**: Nella Riconciliazione Smart, quando un movimento è riconosciuto come stipendio con dipendente già associato, ora mostra un bottone "✓ Conferma Stipendio" per conferma diretta senza aprire modal. Il bottone "🔄 Cambia Dipendente" permette comunque di modificare l'associazione.
+  - **Gestione Acconti Dipendenti**: La pagina `/dipendenti/acconti` (già esistente) permette di gestire TFR, Ferie, 13ima, 14ima, Prestiti per ogni dipendente. Aggiunto anche tab "Acconti" nel DipendenteDetailModal per uso futuro.
+  - **Card Riepilogative Ridotte**: Ridotte le dimensioni delle card in tutte le pagine:
+    - `RiconciliazioneSmart.jsx`: StatCard (padding 6px 10px, fontSize 16)
+    - `NoleggioAuto.jsx`: Card categorie (padding 10px 12px, fontSize 16)
+    - `Documenti.jsx`: Card statistiche (padding 10px 12px, fontSize 20)
+    - `Admin.jsx`: Card statistiche DB (padding 8px 10px, fontSize 16)
+- **FILES MODIFICATI**:
+  - `/app/frontend/src/pages/RiconciliazioneSmart.jsx`
+  - `/app/frontend/src/components/dipendenti/DipendenteDetailModal.jsx`
+  - `/app/frontend/src/pages/NoleggioAuto.jsx`
+  - `/app/frontend/src/pages/Documenti.jsx`
+  - `/app/frontend/src/pages/Admin.jsx`
+
 ### 15 Gennaio 2026 (Sessione 3)
 - **COMPLETATO**: Standardizzazione UI - Convertite le ultime 3 pagine a stili inline:
   - `Admin.jsx` - Rimossi componenti Shadcn (Card, Button, Input, Tabs) e icone Lucide
