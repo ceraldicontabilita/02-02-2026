@@ -1,19 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import api from '../api';
 import { formatEuro } from '../lib/utils';
 
 /**
  * Riconciliazione Smart - Versione Semplificata
  * 
- * Due sezioni:
- * 1. DA CONFERMARE: Movimenti riconosciuti automaticamente, basta un click per confermare
- * 2. DA ASSOCIARE: Movimenti non riconosciuti, scegli tu cosa associare
+ * - Incassi POS: conferma automatica al caricamento
+ * - Prelievo Assegno: mostra fattura associata e permette modifica
+ * - Altri: conferma manuale con un click
  */
 
 const TIPO_COLORS = {
-  incasso_pos: { bg: '#d1fae5', color: '#059669', icon: '💳', label: 'Incasso POS' },
-  commissione_pos: { bg: '#fef3c7', color: '#92400e', icon: '💸', label: 'Commissione POS' },
-  commissione_bancaria: { bg: '#e0e7ff', color: '#3730a3', icon: '🏦', label: 'Comm. Bancaria' },
+  incasso_pos: { bg: '#d1fae5', color: '#059669', icon: '💳', label: 'Incasso POS', autoConfirm: true },
+  commissione_pos: { bg: '#fef3c7', color: '#92400e', icon: '💸', label: 'Commissione POS', autoConfirm: true },
+  commissione_bancaria: { bg: '#e0e7ff', color: '#3730a3', icon: '🏦', label: 'Comm. Bancaria', autoConfirm: true },
   stipendio: { bg: '#dcfce7', color: '#166534', icon: '👤', label: 'Stipendio' },
   f24: { bg: '#fee2e2', color: '#991b1b', icon: '📄', label: 'F24' },
   prelievo_assegno: { bg: '#fef3c7', color: '#92400e', icon: '📝', label: 'Prelievo Assegno' },
@@ -26,19 +26,30 @@ export default function RiconciliazioneSmart() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(null);
-  const [activeTab, setActiveTab] = useState('auto'); // 'auto' | 'manual'
+  const [activeTab, setActiveTab] = useState('assegni'); // 'assegni' | 'altri' | 'manual'
   const [selectedMovimento, setSelectedMovimento] = useState(null);
   const [searchResults, setSearchResults] = useState([]);
   const [searchType, setSearchType] = useState('fattura');
+  const [autoConfirmStats, setAutoConfirmStats] = useState({ pos: 0, commissioni: 0 });
+  const autoConfirmDone = useRef(false);
 
   useEffect(() => {
     loadData();
   }, []);
 
+  // Auto-conferma POS dopo il caricamento
+  useEffect(() => {
+    if (data && !autoConfirmDone.current) {
+      autoConfirmDone.current = true;
+      autoConfirmPOS();
+    }
+  }, [data]);
+
   const loadData = async () => {
     setLoading(true);
+    autoConfirmDone.current = false;
     try {
-      const res = await api.get('/api/operazioni-da-confermare/smart/analizza?limit=300');
+      const res = await api.get('/api/operazioni-da-confermare/smart/analizza?limit=500');
       setData(res.data);
     } catch (e) {
       console.error('Errore:', e);
@@ -47,25 +58,68 @@ export default function RiconciliazioneSmart() {
     }
   };
 
-  // Conferma singolo movimento (automatico)
-  const handleConferma = async (movimento) => {
+  // Auto-conferma incassi POS e commissioni
+  const autoConfirmPOS = async () => {
+    if (!data?.movimenti) return;
+    
+    const posMovs = data.movimenti.filter(m => 
+      m.associazione_automatica && 
+      ['incasso_pos', 'commissione_pos', 'commissione_bancaria'].includes(m.tipo)
+    );
+    
+    if (posMovs.length === 0) return;
+    
+    setProcessing('auto_pos');
+    let posOk = 0, commOk = 0;
+    
+    for (const m of posMovs) {
+      try {
+        await api.post('/api/operazioni-da-confermare/smart/riconcilia-manuale', {
+          movimento_id: m.movimento_id,
+          tipo: m.tipo,
+          associazioni: m.suggerimenti?.slice(0, 1) || [],
+          categoria: m.categoria
+        });
+        if (m.tipo === 'incasso_pos') posOk++;
+        else commOk++;
+      } catch (e) {
+        console.error('Errore auto-conferma:', e);
+      }
+    }
+    
+    setAutoConfirmStats({ pos: posOk, commissioni: commOk });
+    
+    // Rimuovi dalla lista
+    setData(prev => ({
+      ...prev,
+      movimenti: prev.movimenti.filter(m => 
+        !['incasso_pos', 'commissione_pos', 'commissione_bancaria'].includes(m.tipo) ||
+        !m.associazione_automatica
+      ),
+      stats: {
+        ...prev.stats,
+        totale: prev.stats.totale - posOk - commOk
+      }
+    }));
+    
+    setProcessing(null);
+  };
+
+  // Conferma singolo movimento
+  const handleConferma = async (movimento, associazioni = null) => {
     setProcessing(movimento.movimento_id);
     try {
       await api.post('/api/operazioni-da-confermare/smart/riconcilia-manuale', {
         movimento_id: movimento.movimento_id,
         tipo: movimento.tipo,
-        associazioni: movimento.suggerimenti?.slice(0, 1) || [],
+        associazioni: associazioni || movimento.suggerimenti?.slice(0, 1) || [],
         categoria: movimento.categoria
       });
       
-      // Rimuovi dalla lista
       setData(prev => ({
         ...prev,
         movimenti: prev.movimenti.filter(m => m.movimento_id !== movimento.movimento_id),
-        stats: {
-          ...prev.stats,
-          totale: prev.stats.totale - 1
-        }
+        stats: { ...prev.stats, totale: prev.stats.totale - 1 }
       }));
     } catch (e) {
       alert('Errore: ' + (e.response?.data?.detail || e.message));
@@ -74,20 +128,17 @@ export default function RiconciliazioneSmart() {
     }
   };
 
-  // Conferma TUTTI i movimenti automatici
-  const handleConfermaTutti = async () => {
-    const autoMovs = data?.movimenti?.filter(m => m.associazione_automatica) || [];
-    if (autoMovs.length === 0) {
-      alert('Nessun movimento da confermare');
-      return;
-    }
+  // Conferma tutti i movimenti di un tipo
+  const handleConfermaTipo = async (tipo) => {
+    const movs = data?.movimenti?.filter(m => m.tipo === tipo && m.associazione_automatica) || [];
+    if (movs.length === 0) return;
     
-    if (!window.confirm(`Confermare ${autoMovs.length} movimenti?`)) return;
+    if (!window.confirm(`Confermare ${movs.length} ${TIPO_COLORS[tipo]?.label || tipo}?`)) return;
     
-    setProcessing('all');
-    let ok = 0, err = 0;
+    setProcessing(`all_${tipo}`);
+    let ok = 0;
     
-    for (const m of autoMovs) {
+    for (const m of movs) {
       try {
         await api.post('/api/operazioni-da-confermare/smart/riconcilia-manuale', {
           movimento_id: m.movimento_id,
@@ -96,44 +147,30 @@ export default function RiconciliazioneSmart() {
           categoria: m.categoria
         });
         ok++;
-      } catch (e) {
-        err++;
-      }
+      } catch (e) {}
     }
     
-    alert(`✅ Confermati: ${ok}\n❌ Errori: ${err}`);
+    alert(`✅ Confermati: ${ok}`);
     loadData();
     setProcessing(null);
   };
 
-  // Apri modal per associazione manuale
-  const handleAssociaManuale = async (movimento, tipo) => {
+  // Apri modal per cambiare fattura associata
+  const handleCambiaFattura = async (movimento) => {
     setSelectedMovimento(movimento);
-    setSearchType(tipo);
+    setSearchType('fattura');
     setSearchResults([]);
     
     try {
       const importo = Math.abs(movimento.importo);
-      let url = '';
-      
-      if (tipo === 'fattura') {
-        url = `/api/operazioni-da-confermare/smart/cerca-fatture?importo=${importo}`;
-      } else if (tipo === 'stipendio') {
-        url = `/api/operazioni-da-confermare/smart/cerca-stipendi?importo=${importo}`;
-      } else if (tipo === 'f24') {
-        url = `/api/operazioni-da-confermare/smart/cerca-f24?importo=${importo}`;
-      }
-      
-      if (url) {
-        const res = await api.get(url);
-        setSearchResults(res.data?.results || res.data || []);
-      }
+      const res = await api.get(`/api/operazioni-da-confermare/smart/cerca-fatture?importo=${importo}&tolleranza=50`);
+      setSearchResults(res.data?.results || res.data || []);
     } catch (e) {
       console.error('Errore ricerca:', e);
     }
   };
 
-  // Conferma associazione manuale
+  // Conferma nuova associazione
   const handleConfermaAssociazione = async (item) => {
     if (!selectedMovimento) return;
     
@@ -141,12 +178,11 @@ export default function RiconciliazioneSmart() {
     try {
       await api.post('/api/operazioni-da-confermare/smart/riconcilia-manuale', {
         movimento_id: selectedMovimento.movimento_id,
-        tipo: searchType,
+        tipo: selectedMovimento.tipo,
         associazioni: [item],
         categoria: selectedMovimento.categoria
       });
       
-      // Rimuovi dalla lista
       setData(prev => ({
         ...prev,
         movimenti: prev.movimenti.filter(m => m.movimento_id !== selectedMovimento.movimento_id),
@@ -162,36 +198,31 @@ export default function RiconciliazioneSmart() {
     }
   };
 
-  // Ignora movimento (salta senza associare)
+  // Ignora movimento
   const handleIgnora = async (movimento) => {
     if (!window.confirm('Ignorare questo movimento?')) return;
     
     setProcessing(movimento.movimento_id);
     try {
-      await api.post('/api/operazioni-da-confermare/smart/ignora', {
-        movimento_id: movimento.movimento_id
-      });
-      
-      setData(prev => ({
-        ...prev,
-        movimenti: prev.movimenti.filter(m => m.movimento_id !== movimento.movimento_id),
-        stats: { ...prev.stats, totale: prev.stats.totale - 1 }
-      }));
-    } catch (e) {
-      // Se l'endpoint non esiste, rimuovi comunque dalla UI
-      setData(prev => ({
-        ...prev,
-        movimenti: prev.movimenti.filter(m => m.movimento_id !== movimento.movimento_id),
-        stats: { ...prev.stats, totale: prev.stats.totale - 1 }
-      }));
-    } finally {
-      setProcessing(null);
-    }
+      await api.post('/api/operazioni-da-confermare/smart/ignora', { movimento_id: movimento.movimento_id });
+    } catch (e) {}
+    
+    setData(prev => ({
+      ...prev,
+      movimenti: prev.movimenti.filter(m => m.movimento_id !== movimento.movimento_id),
+      stats: { ...prev.stats, totale: prev.stats.totale - 1 }
+    }));
+    setProcessing(null);
   };
 
-  // Filtra movimenti
-  const movimentiAuto = data?.movimenti?.filter(m => m.associazione_automatica) || [];
-  const movimentiManuali = data?.movimenti?.filter(m => !m.associazione_automatica) || [];
+  // Filtra movimenti per tab
+  const assegni = data?.movimenti?.filter(m => m.tipo === 'prelievo_assegno') || [];
+  const altriAuto = data?.movimenti?.filter(m => 
+    m.associazione_automatica && 
+    m.tipo !== 'prelievo_assegno' &&
+    !['incasso_pos', 'commissione_pos', 'commissione_bancaria'].includes(m.tipo)
+  ) || [];
+  const manuali = data?.movimenti?.filter(m => !m.associazione_automatica) || [];
 
   const formatDate = (d) => d ? new Date(d).toLocaleDateString('it-IT') : '-';
 
@@ -216,6 +247,26 @@ export default function RiconciliazioneSmart() {
         </p>
       </div>
 
+      {/* Banner auto-conferma POS */}
+      {(autoConfirmStats.pos > 0 || autoConfirmStats.commissioni > 0) && (
+        <div style={{ 
+          padding: 16, 
+          background: '#d1fae5', 
+          borderRadius: 12, 
+          marginBottom: 20,
+          border: '1px solid #6ee7b7'
+        }}>
+          <div style={{ fontWeight: 'bold', color: '#059669', marginBottom: 4 }}>
+            ✅ Conferma Automatica Completata
+          </div>
+          <div style={{ fontSize: 13, color: '#047857' }}>
+            {autoConfirmStats.pos > 0 && `💳 ${autoConfirmStats.pos} incassi POS`}
+            {autoConfirmStats.pos > 0 && autoConfirmStats.commissioni > 0 && ' • '}
+            {autoConfirmStats.commissioni > 0 && `💸 ${autoConfirmStats.commissioni} commissioni`}
+          </div>
+        </div>
+      )}
+
       {/* Stats rapide */}
       <div style={{ 
         display: 'grid', 
@@ -223,66 +274,59 @@ export default function RiconciliazioneSmart() {
         gap: 12, 
         marginBottom: 20 
       }}>
-        <StatCard 
-          label="Da Confermare" 
-          value={movimentiAuto.length} 
-          color="#10b981" 
-          icon="✅"
-          subtitle="Riconosciuti auto"
-        />
-        <StatCard 
-          label="Da Associare" 
-          value={movimentiManuali.length} 
-          color="#f59e0b" 
-          icon="🔍"
-          subtitle="Manuale"
-        />
-        <StatCard 
-          label="Totale" 
-          value={data?.stats?.totale || 0} 
-          color="#3b82f6" 
-          icon="📊"
-        />
+        <StatCard label="📝 Assegni" value={assegni.length} color="#f59e0b" subtitle="Da verificare" />
+        <StatCard label="✅ Altri Auto" value={altriAuto.length} color="#10b981" subtitle="Riconosciuti" />
+        <StatCard label="🔍 Manuali" value={manuali.length} color="#6366f1" subtitle="Da associare" />
+        <StatCard label="📊 Totale" value={data?.stats?.totale || 0} color="#3b82f6" />
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
         <button
-          onClick={() => setActiveTab('auto')}
+          onClick={() => setActiveTab('assegni')}
           style={{
-            padding: '12px 24px',
-            background: activeTab === 'auto' ? '#10b981' : '#f1f5f9',
-            color: activeTab === 'auto' ? 'white' : '#374151',
+            padding: '12px 20px',
+            background: activeTab === 'assegni' ? '#f59e0b' : '#f1f5f9',
+            color: activeTab === 'assegni' ? 'white' : '#374151',
             border: 'none',
             borderRadius: 8,
             fontWeight: 'bold',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8
+            cursor: 'pointer'
           }}
         >
-          ✅ Da Confermare ({movimentiAuto.length})
+          📝 Assegni ({assegni.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('altri')}
+          style={{
+            padding: '12px 20px',
+            background: activeTab === 'altri' ? '#10b981' : '#f1f5f9',
+            color: activeTab === 'altri' ? 'white' : '#374151',
+            border: 'none',
+            borderRadius: 8,
+            fontWeight: 'bold',
+            cursor: 'pointer'
+          }}
+        >
+          ✅ Altri ({altriAuto.length})
         </button>
         <button
           onClick={() => setActiveTab('manual')}
           style={{
-            padding: '12px 24px',
-            background: activeTab === 'manual' ? '#f59e0b' : '#f1f5f9',
+            padding: '12px 20px',
+            background: activeTab === 'manual' ? '#6366f1' : '#f1f5f9',
             color: activeTab === 'manual' ? 'white' : '#374151',
             border: 'none',
             borderRadius: 8,
             fontWeight: 'bold',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8
+            cursor: 'pointer'
           }}
         >
-          🔍 Da Associare ({movimentiManuali.length})
+          🔍 Manuali ({manuali.length})
         </button>
         <button
           onClick={loadData}
+          disabled={processing}
           style={{
             marginLeft: 'auto',
             padding: '12px 16px',
@@ -296,15 +340,69 @@ export default function RiconciliazioneSmart() {
         </button>
       </div>
 
-      {/* TAB: Da Confermare (Automatici) */}
-      {activeTab === 'auto' && (
-        <div style={{ 
-          background: 'white', 
-          borderRadius: 12, 
-          border: '1px solid #e5e7eb',
-          overflow: 'hidden'
-        }}>
-          {/* Header con azione batch */}
+      {/* TAB ASSEGNI */}
+      {activeTab === 'assegni' && (
+        <div style={{ background: 'white', borderRadius: 12, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+          <div style={{ 
+            padding: 16, 
+            background: '#fffbeb', 
+            borderBottom: '1px solid #fef3c7',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}>
+            <div>
+              <div style={{ fontWeight: 'bold', color: '#92400e' }}>
+                📝 Prelievi Assegno
+              </div>
+              <div style={{ fontSize: 13, color: '#b45309' }}>
+                Verifica la fattura associata e conferma o cambia
+              </div>
+            </div>
+            {assegni.length > 0 && (
+              <button
+                onClick={() => handleConfermaTipo('prelievo_assegno')}
+                disabled={processing}
+                style={{
+                  padding: '10px 20px',
+                  background: '#f59e0b',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 8,
+                  fontWeight: 'bold',
+                  cursor: 'pointer'
+                }}
+              >
+                ✓ Conferma Tutti ({assegni.length})
+              </button>
+            )}
+          </div>
+
+          {assegni.length === 0 ? (
+            <div style={{ padding: 40, textAlign: 'center', color: '#64748b' }}>
+              <div style={{ fontSize: 48, opacity: 0.3 }}>📝</div>
+              <div>Nessun prelievo assegno da verificare</div>
+            </div>
+          ) : (
+            <div style={{ maxHeight: 500, overflow: 'auto' }}>
+              {assegni.map((m, idx) => (
+                <AssegnoCard
+                  key={m.movimento_id || idx}
+                  movimento={m}
+                  onConferma={() => handleConferma(m)}
+                  onCambiaFattura={() => handleCambiaFattura(m)}
+                  onIgnora={() => handleIgnora(m)}
+                  processing={processing === m.movimento_id}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TAB ALTRI AUTOMATICI */}
+      {activeTab === 'altri' && (
+        <div style={{ background: 'white', borderRadius: 12, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
           <div style={{ 
             padding: 16, 
             background: '#ecfdf5', 
@@ -315,47 +413,28 @@ export default function RiconciliazioneSmart() {
           }}>
             <div>
               <div style={{ fontWeight: 'bold', color: '#059669' }}>
-                ✅ Movimenti Riconosciuti Automaticamente
+                ✅ Altri Movimenti Riconosciuti
               </div>
               <div style={{ fontSize: 13, color: '#10b981' }}>
-                Questi movimenti sono stati associati automaticamente. Conferma o modifica.
+                Stipendi, F24, Bonifici - Conferma con un click
               </div>
             </div>
-            {movimentiAuto.length > 0 && (
-              <button
-                onClick={handleConfermaTutti}
-                disabled={processing === 'all'}
-                style={{
-                  padding: '10px 20px',
-                  background: processing === 'all' ? '#9ca3af' : '#059669',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: 8,
-                  fontWeight: 'bold',
-                  cursor: processing === 'all' ? 'not-allowed' : 'pointer'
-                }}
-              >
-                {processing === 'all' ? '⏳ Elaborazione...' : `✓ Conferma Tutti (${movimentiAuto.length})`}
-              </button>
-            )}
           </div>
 
-          {/* Lista movimenti auto */}
-          {movimentiAuto.length === 0 ? (
+          {altriAuto.length === 0 ? (
             <div style={{ padding: 40, textAlign: 'center', color: '#64748b' }}>
               <div style={{ fontSize: 48, opacity: 0.3 }}>✅</div>
               <div>Nessun movimento da confermare</div>
             </div>
           ) : (
             <div style={{ maxHeight: 500, overflow: 'auto' }}>
-              {movimentiAuto.map((m, idx) => (
+              {altriAuto.map((m, idx) => (
                 <MovimentoCard
                   key={m.movimento_id || idx}
                   movimento={m}
                   onConferma={() => handleConferma(m)}
                   onIgnora={() => handleIgnora(m)}
                   processing={processing === m.movimento_id}
-                  showAssociazione={true}
                 />
               ))}
             </div>
@@ -363,43 +442,32 @@ export default function RiconciliazioneSmart() {
         </div>
       )}
 
-      {/* TAB: Da Associare (Manuali) */}
+      {/* TAB MANUALI */}
       {activeTab === 'manual' && (
-        <div style={{ 
-          background: 'white', 
-          borderRadius: 12, 
-          border: '1px solid #e5e7eb',
-          overflow: 'hidden'
-        }}>
-          {/* Header */}
-          <div style={{ 
-            padding: 16, 
-            background: '#fffbeb', 
-            borderBottom: '1px solid #fef3c7'
-          }}>
-            <div style={{ fontWeight: 'bold', color: '#92400e' }}>
+        <div style={{ background: 'white', borderRadius: 12, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+          <div style={{ padding: 16, background: '#eef2ff', borderBottom: '1px solid #c7d2fe' }}>
+            <div style={{ fontWeight: 'bold', color: '#4338ca' }}>
               🔍 Movimenti da Associare Manualmente
             </div>
-            <div style={{ fontSize: 13, color: '#b45309' }}>
-              Clicca su un movimento per associarlo a una fattura, stipendio o F24
+            <div style={{ fontSize: 13, color: '#6366f1' }}>
+              Clicca per associare a fattura, stipendio o F24
             </div>
           </div>
 
-          {/* Lista movimenti manuali */}
-          {movimentiManuali.length === 0 ? (
+          {manuali.length === 0 ? (
             <div style={{ padding: 40, textAlign: 'center', color: '#64748b' }}>
               <div style={{ fontSize: 48, opacity: 0.3 }}>🎉</div>
               <div>Tutti i movimenti sono stati associati!</div>
             </div>
           ) : (
             <div style={{ maxHeight: 500, overflow: 'auto' }}>
-              {movimentiManuali.map((m, idx) => (
+              {manuali.map((m, idx) => (
                 <MovimentoCardManuale
                   key={m.movimento_id || idx}
                   movimento={m}
-                  onAssociaFattura={() => handleAssociaManuale(m, 'fattura')}
-                  onAssociaStipendio={() => handleAssociaManuale(m, 'stipendio')}
-                  onAssociaF24={() => handleAssociaManuale(m, 'f24')}
+                  onAssociaFattura={() => { setSelectedMovimento(m); setSearchType('fattura'); handleCambiaFattura(m); }}
+                  onAssociaStipendio={() => handleAssociaStipendio(m)}
+                  onAssociaF24={() => handleAssociaF24(m)}
                   onIgnora={() => handleIgnora(m)}
                   processing={processing === m.movimento_id}
                 />
@@ -409,11 +477,10 @@ export default function RiconciliazioneSmart() {
         </div>
       )}
 
-      {/* Modal Associazione */}
+      {/* Modal Cambio Fattura */}
       {selectedMovimento && (
-        <ModalAssociazione
+        <ModalCambiaFattura
           movimento={selectedMovimento}
-          tipo={searchType}
           results={searchResults}
           onSelect={handleConfermaAssociazione}
           onClose={() => { setSelectedMovimento(null); setSearchResults([]); }}
@@ -421,11 +488,31 @@ export default function RiconciliazioneSmart() {
       )}
     </div>
   );
+
+  // Helper per associazione stipendio
+  async function handleAssociaStipendio(movimento) {
+    setSelectedMovimento(movimento);
+    setSearchType('stipendio');
+    try {
+      const res = await api.get(`/api/operazioni-da-confermare/smart/cerca-stipendi?importo=${Math.abs(movimento.importo)}`);
+      setSearchResults(res.data?.results || res.data || []);
+    } catch (e) {}
+  }
+
+  // Helper per associazione F24
+  async function handleAssociaF24(movimento) {
+    setSelectedMovimento(movimento);
+    setSearchType('f24');
+    try {
+      const res = await api.get(`/api/operazioni-da-confermare/smart/cerca-f24?importo=${Math.abs(movimento.importo)}`);
+      setSearchResults(res.data?.results || res.data || []);
+    } catch (e) {}
+  }
 }
 
-// Componenti helper
+// Componenti
 
-function StatCard({ label, value, color, icon, subtitle }) {
+function StatCard({ label, value, color, subtitle }) {
   return (
     <div style={{ 
       background: 'white', 
@@ -434,19 +521,140 @@ function StatCard({ label, value, color, icon, subtitle }) {
       border: '1px solid #e5e7eb',
       borderLeft: `4px solid ${color}`
     }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <div style={{ fontSize: 13, color: '#64748b' }}>{label}</div>
-          <div style={{ fontSize: 28, fontWeight: 'bold', color }}>{value}</div>
-          {subtitle && <div style={{ fontSize: 11, color: '#9ca3af' }}>{subtitle}</div>}
+      <div style={{ fontSize: 13, color: '#64748b' }}>{label}</div>
+      <div style={{ fontSize: 28, fontWeight: 'bold', color }}>{value}</div>
+      {subtitle && <div style={{ fontSize: 11, color: '#9ca3af' }}>{subtitle}</div>}
+    </div>
+  );
+}
+
+// Card specifica per ASSEGNI - mostra fattura associata
+function AssegnoCard({ movimento, onConferma, onCambiaFattura, onIgnora, processing }) {
+  const suggerimento = movimento.suggerimenti?.[0];
+  
+  return (
+    <div style={{ 
+      padding: 16, 
+      borderBottom: '1px solid #f1f5f9',
+      opacity: processing ? 0.5 : 1
+    }}>
+      {/* Riga principale */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 12 }}>
+        <div style={{ 
+          width: 44, 
+          height: 44, 
+          borderRadius: 10, 
+          background: '#fef3c7', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          fontSize: 20
+        }}>
+          📝
         </div>
-        <div style={{ fontSize: 32, opacity: 0.5 }}>{icon}</div>
+        
+        <div style={{ flex: 1 }}>
+          <div style={{ fontWeight: 'bold', fontSize: 15, color: '#92400e' }}>
+            {new Date(movimento.data).toLocaleDateString('it-IT')} • {formatEuro(movimento.importo)}
+          </div>
+          <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>
+            {movimento.descrizione?.substring(0, 80) || '-'}
+          </div>
+        </div>
+      </div>
+      
+      {/* Box fattura associata */}
+      <div style={{ 
+        padding: 12, 
+        background: suggerimento ? '#f0fdf4' : '#fef2f2', 
+        borderRadius: 8,
+        border: `1px solid ${suggerimento ? '#bbf7d0' : '#fecaca'}`,
+        marginBottom: 12
+      }}>
+        {suggerimento ? (
+          <>
+            <div style={{ fontSize: 11, fontWeight: 'bold', color: '#059669', marginBottom: 6 }}>
+              🔗 FATTURA ASSOCIATA:
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontWeight: 'bold', fontSize: 14 }}>
+                  {suggerimento.fornitore || suggerimento.supplier_name || 'Fornitore'}
+                </div>
+                <div style={{ fontSize: 12, color: '#64748b' }}>
+                  Fatt. {suggerimento.numero_fattura || suggerimento.invoice_number || '-'} 
+                  {suggerimento.data_fattura && ` del ${new Date(suggerimento.data_fattura).toLocaleDateString('it-IT')}`}
+                </div>
+              </div>
+              <div style={{ fontWeight: 'bold', fontSize: 16, color: '#059669' }}>
+                {formatEuro(suggerimento.importo || suggerimento.total_amount || suggerimento.netto_pagare || 0)}
+              </div>
+            </div>
+          </>
+        ) : (
+          <div style={{ color: '#dc2626', fontSize: 13 }}>
+            ⚠️ Nessuna fattura associata - clicca "Cambia Fattura" per associare
+          </div>
+        )}
+      </div>
+      
+      {/* Azioni */}
+      <div style={{ display: 'flex', gap: 8 }}>
+        <button
+          onClick={onConferma}
+          disabled={processing || !suggerimento}
+          style={{
+            padding: '10px 20px',
+            background: suggerimento ? '#059669' : '#9ca3af',
+            color: 'white',
+            border: 'none',
+            borderRadius: 6,
+            fontWeight: 'bold',
+            cursor: processing || !suggerimento ? 'not-allowed' : 'pointer',
+            fontSize: 13
+          }}
+        >
+          {processing ? '⏳' : '✓ Conferma'}
+        </button>
+        <button
+          onClick={onCambiaFattura}
+          disabled={processing}
+          style={{
+            padding: '10px 20px',
+            background: '#3b82f6',
+            color: 'white',
+            border: 'none',
+            borderRadius: 6,
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            fontSize: 13
+          }}
+        >
+          🔄 Cambia Fattura
+        </button>
+        <button
+          onClick={onIgnora}
+          disabled={processing}
+          style={{
+            padding: '10px 16px',
+            background: '#f1f5f9',
+            color: '#64748b',
+            border: 'none',
+            borderRadius: 6,
+            cursor: 'pointer',
+            fontSize: 13,
+            marginLeft: 'auto'
+          }}
+        >
+          Ignora
+        </button>
       </div>
     </div>
   );
 }
 
-function MovimentoCard({ movimento, onConferma, onIgnora, processing, showAssociazione }) {
+// Card per altri movimenti automatici
+function MovimentoCard({ movimento, onConferma, onIgnora, processing }) {
   const tipo = TIPO_COLORS[movimento.tipo] || TIPO_COLORS.non_riconosciuto;
   const suggerimento = movimento.suggerimenti?.[0];
   
@@ -459,7 +667,6 @@ function MovimentoCard({ movimento, onConferma, onIgnora, processing, showAssoci
       gap: 16,
       opacity: processing ? 0.5 : 1
     }}>
-      {/* Icona tipo */}
       <div style={{ 
         width: 44, 
         height: 44, 
@@ -473,16 +680,14 @@ function MovimentoCard({ movimento, onConferma, onIgnora, processing, showAssoci
         {tipo.icon}
       </div>
       
-      {/* Info movimento */}
       <div style={{ flex: 1 }}>
         <div style={{ fontWeight: 'bold', fontSize: 14, marginBottom: 4 }}>
           {new Date(movimento.data).toLocaleDateString('it-IT')} - {formatEuro(movimento.importo)}
         </div>
         <div style={{ fontSize: 12, color: '#64748b', marginBottom: 4 }}>
-          {movimento.descrizione?.substring(0, 80) || '-'}
+          {movimento.descrizione?.substring(0, 60) || '-'}
         </div>
-        <div style={{ 
-          display: 'inline-block',
+        <span style={{ 
           padding: '2px 8px', 
           background: tipo.bg, 
           color: tipo.color,
@@ -491,64 +696,46 @@ function MovimentoCard({ movimento, onConferma, onIgnora, processing, showAssoci
           fontWeight: 'bold'
         }}>
           {tipo.label}
-        </div>
+        </span>
       </div>
       
-      {/* Suggerimento associazione */}
-      {showAssociazione && suggerimento && (
+      {suggerimento && (
         <div style={{ 
-          padding: 10, 
+          padding: 8, 
           background: '#f0fdf4', 
-          borderRadius: 8,
+          borderRadius: 6,
           border: '1px solid #bbf7d0',
-          maxWidth: 250
+          maxWidth: 200,
+          fontSize: 12
         }}>
-          <div style={{ fontSize: 10, color: '#059669', fontWeight: 'bold', marginBottom: 4 }}>
-            🔗 ASSOCIATO A:
-          </div>
-          <div style={{ fontSize: 12, fontWeight: 'bold' }}>
+          <div style={{ fontWeight: 'bold' }}>
             {suggerimento.fornitore || suggerimento.dipendente || suggerimento.tipo_tributo || '-'}
           </div>
-          {suggerimento.numero_fattura && (
-            <div style={{ fontSize: 11, color: '#64748b' }}>Fatt. {suggerimento.numero_fattura}</div>
-          )}
-          {suggerimento.importo && (
-            <div style={{ fontSize: 11, color: '#059669' }}>{formatEuro(suggerimento.importo)}</div>
-          )}
+          <div style={{ color: '#059669' }}>{formatEuro(suggerimento.importo || 0)}</div>
         </div>
       )}
       
-      {/* Azioni */}
       <div style={{ display: 'flex', gap: 8 }}>
-        <button
-          onClick={onConferma}
-          disabled={processing}
-          style={{
-            padding: '8px 16px',
-            background: '#059669',
-            color: 'white',
-            border: 'none',
-            borderRadius: 6,
-            fontWeight: 'bold',
-            cursor: processing ? 'not-allowed' : 'pointer',
-            fontSize: 13
-          }}
-        >
-          {processing ? '⏳' : '✓ Conferma'}
+        <button onClick={onConferma} disabled={processing} style={{
+          padding: '8px 16px',
+          background: '#059669',
+          color: 'white',
+          border: 'none',
+          borderRadius: 6,
+          fontWeight: 'bold',
+          cursor: 'pointer',
+          fontSize: 13
+        }}>
+          {processing ? '⏳' : '✓'}
         </button>
-        <button
-          onClick={onIgnora}
-          disabled={processing}
-          style={{
-            padding: '8px 12px',
-            background: '#f1f5f9',
-            color: '#64748b',
-            border: 'none',
-            borderRadius: 6,
-            cursor: processing ? 'not-allowed' : 'pointer',
-            fontSize: 13
-          }}
-        >
+        <button onClick={onIgnora} disabled={processing} style={{
+          padding: '8px 12px',
+          background: '#f1f5f9',
+          color: '#64748b',
+          border: 'none',
+          borderRadius: 6,
+          cursor: 'pointer'
+        }}>
           ✕
         </button>
       </div>
@@ -556,105 +743,54 @@ function MovimentoCard({ movimento, onConferma, onIgnora, processing, showAssoci
   );
 }
 
+// Card per movimenti manuali
 function MovimentoCardManuale({ movimento, onAssociaFattura, onAssociaStipendio, onAssociaF24, onIgnora, processing }) {
   const tipo = TIPO_COLORS[movimento.tipo] || TIPO_COLORS.non_riconosciuto;
   
   return (
-    <div style={{ 
-      padding: 16, 
-      borderBottom: '1px solid #f1f5f9',
-      opacity: processing ? 0.5 : 1
-    }}>
+    <div style={{ padding: 16, borderBottom: '1px solid #f1f5f9', opacity: processing ? 0.5 : 1 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 12 }}>
-        {/* Icona */}
         <div style={{ 
-          width: 44, 
-          height: 44, 
-          borderRadius: 10, 
+          width: 44, height: 44, borderRadius: 10, 
           background: tipo.bg, 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: 20
         }}>
           {tipo.icon}
         </div>
-        
-        {/* Info */}
         <div style={{ flex: 1 }}>
           <div style={{ fontWeight: 'bold', fontSize: 14 }}>
             {new Date(movimento.data).toLocaleDateString('it-IT')} - {formatEuro(movimento.importo)}
           </div>
           <div style={{ fontSize: 12, color: '#64748b' }}>
-            {movimento.descrizione?.substring(0, 100) || '-'}
+            {movimento.descrizione?.substring(0, 80) || '-'}
           </div>
         </div>
       </div>
       
-      {/* Bottoni associazione */}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        <button
-          onClick={onAssociaFattura}
-          disabled={processing}
-          style={{
-            padding: '8px 16px',
-            background: '#3b82f6',
-            color: 'white',
-            border: 'none',
-            borderRadius: 6,
-            cursor: 'pointer',
-            fontWeight: 'bold',
-            fontSize: 12
-          }}
-        >
-          🧾 Associa Fattura
+        <button onClick={onAssociaFattura} disabled={processing} style={{
+          padding: '8px 16px', background: '#3b82f6', color: 'white',
+          border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: 'bold', fontSize: 12
+        }}>
+          🧾 Fattura
         </button>
-        <button
-          onClick={onAssociaStipendio}
-          disabled={processing}
-          style={{
-            padding: '8px 16px',
-            background: '#10b981',
-            color: 'white',
-            border: 'none',
-            borderRadius: 6,
-            cursor: 'pointer',
-            fontWeight: 'bold',
-            fontSize: 12
-          }}
-        >
-          👤 Associa Stipendio
+        <button onClick={onAssociaStipendio} disabled={processing} style={{
+          padding: '8px 16px', background: '#10b981', color: 'white',
+          border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: 'bold', fontSize: 12
+        }}>
+          👤 Stipendio
         </button>
-        <button
-          onClick={onAssociaF24}
-          disabled={processing}
-          style={{
-            padding: '8px 16px',
-            background: '#f59e0b',
-            color: 'white',
-            border: 'none',
-            borderRadius: 6,
-            cursor: 'pointer',
-            fontWeight: 'bold',
-            fontSize: 12
-          }}
-        >
-          📄 Associa F24
+        <button onClick={onAssociaF24} disabled={processing} style={{
+          padding: '8px 16px', background: '#f59e0b', color: 'white',
+          border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: 'bold', fontSize: 12
+        }}>
+          📄 F24
         </button>
-        <button
-          onClick={onIgnora}
-          disabled={processing}
-          style={{
-            padding: '8px 16px',
-            background: '#f1f5f9',
-            color: '#64748b',
-            border: 'none',
-            borderRadius: 6,
-            cursor: 'pointer',
-            fontSize: 12,
-            marginLeft: 'auto'
-          }}
-        >
+        <button onClick={onIgnora} disabled={processing} style={{
+          padding: '8px 16px', background: '#f1f5f9', color: '#64748b',
+          border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12, marginLeft: 'auto'
+        }}>
           Ignora
         </button>
       </div>
@@ -662,49 +798,25 @@ function MovimentoCardManuale({ movimento, onAssociaFattura, onAssociaStipendio,
   );
 }
 
-function ModalAssociazione({ movimento, tipo, results, onSelect, onClose }) {
-  const tipoLabel = {
-    fattura: '🧾 Seleziona Fattura',
-    stipendio: '👤 Seleziona Stipendio',
-    f24: '📄 Seleziona F24'
-  }[tipo] || 'Seleziona';
-
+// Modal per cambiare fattura
+function ModalCambiaFattura({ movimento, results, onSelect, onClose }) {
   return (
     <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
+      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
       background: 'rgba(0,0,0,0.5)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000,
-      padding: 20
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      zIndex: 1000, padding: 20
     }} onClick={onClose}>
       <div style={{
-        background: 'white',
-        borderRadius: 16,
-        width: '100%',
-        maxWidth: 600,
-        maxHeight: '80vh',
-        overflow: 'hidden'
+        background: 'white', borderRadius: 16,
+        width: '100%', maxWidth: 600, maxHeight: '80vh', overflow: 'hidden'
       }} onClick={e => e.stopPropagation()}>
-        {/* Header */}
-        <div style={{ 
-          padding: 20, 
-          borderBottom: '1px solid #e5e7eb',
-          background: '#f8fafc'
-        }}>
+        
+        <div style={{ padding: 20, borderBottom: '1px solid #e5e7eb', background: '#f8fafc' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 style={{ margin: 0, fontSize: 18 }}>{tipoLabel}</h3>
+            <h3 style={{ margin: 0, fontSize: 18 }}>🔄 Seleziona Fattura</h3>
             <button onClick={onClose} style={{ 
-              background: 'none', 
-              border: 'none', 
-              fontSize: 24, 
-              cursor: 'pointer',
-              color: '#64748b'
+              background: 'none', border: 'none', fontSize: 24, cursor: 'pointer', color: '#64748b'
             }}>✕</button>
           </div>
           <div style={{ marginTop: 8, fontSize: 13, color: '#64748b' }}>
@@ -715,12 +827,11 @@ function ModalAssociazione({ movimento, tipo, results, onSelect, onClose }) {
           </div>
         </div>
         
-        {/* Results */}
         <div style={{ maxHeight: 400, overflow: 'auto' }}>
           {results.length === 0 ? (
             <div style={{ padding: 40, textAlign: 'center', color: '#64748b' }}>
               <div style={{ fontSize: 32, marginBottom: 8 }}>🔍</div>
-              Nessun risultato trovato con importo simile
+              Nessuna fattura trovata con importo simile
             </div>
           ) : (
             results.map((item, idx) => (
@@ -728,10 +839,8 @@ function ModalAssociazione({ movimento, tipo, results, onSelect, onClose }) {
                 key={idx}
                 onClick={() => onSelect(item)}
                 style={{
-                  padding: 16,
-                  borderBottom: '1px solid #f1f5f9',
-                  cursor: 'pointer',
-                  transition: 'background 0.2s'
+                  padding: 16, borderBottom: '1px solid #f1f5f9',
+                  cursor: 'pointer', transition: 'background 0.2s'
                 }}
                 onMouseEnter={e => e.currentTarget.style.background = '#f0fdf4'}
                 onMouseLeave={e => e.currentTarget.style.background = 'white'}
@@ -739,24 +848,14 @@ function ModalAssociazione({ movimento, tipo, results, onSelect, onClose }) {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <div style={{ fontWeight: 'bold' }}>
-                      {item.fornitore || item.supplier_name || item.dipendente || item.tipo_tributo || 'N/A'}
+                      {item.fornitore || item.supplier_name || 'Fornitore'}
                     </div>
-                    {item.numero_fattura && (
-                      <div style={{ fontSize: 12, color: '#64748b' }}>
-                        Fattura: {item.numero_fattura} del {item.data_fattura || '-'}
-                      </div>
-                    )}
-                    {item.codice_tributo && (
-                      <div style={{ fontSize: 12, color: '#64748b' }}>
-                        Tributo: {item.codice_tributo}
-                      </div>
-                    )}
+                    <div style={{ fontSize: 12, color: '#64748b' }}>
+                      Fatt. {item.numero_fattura || item.invoice_number || '-'}
+                      {item.data_fattura && ` del ${new Date(item.data_fattura).toLocaleDateString('it-IT')}`}
+                    </div>
                   </div>
-                  <div style={{ 
-                    fontWeight: 'bold', 
-                    fontSize: 16,
-                    color: '#059669'
-                  }}>
+                  <div style={{ fontWeight: 'bold', fontSize: 16, color: '#059669' }}>
                     {formatEuro(item.importo || item.total_amount || item.netto_pagare || 0)}
                   </div>
                 </div>
@@ -765,14 +864,10 @@ function ModalAssociazione({ movimento, tipo, results, onSelect, onClose }) {
           )}
         </div>
         
-        {/* Footer */}
         <div style={{ padding: 16, borderTop: '1px solid #e5e7eb', textAlign: 'right' }}>
           <button onClick={onClose} style={{
-            padding: '10px 20px',
-            background: '#f1f5f9',
-            border: 'none',
-            borderRadius: 6,
-            cursor: 'pointer'
+            padding: '10px 20px', background: '#f1f5f9',
+            border: 'none', borderRadius: 6, cursor: 'pointer'
           }}>
             Annulla
           </button>
