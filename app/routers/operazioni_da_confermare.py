@@ -660,6 +660,22 @@ async def conferma_operazione_aruba(request: ConfermaArubaRequest) -> Dict[str, 
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     
+    # CONTROLLO ATOMICO DUPLICATI: Verifica se esiste già un movimento per questa fattura/operazione
+    existing_movimento = None
+    if fattura_id_collegato:
+        existing_movimento = await db["prima_nota_cassa"].find_one({"fattura_id": fattura_id_collegato}, {"_id": 0, "id": 1})
+        if not existing_movimento:
+            existing_movimento = await db["prima_nota_banca"].find_one({"fattura_id": fattura_id_collegato}, {"_id": 0, "id": 1})
+    
+    if existing_movimento:
+        logger.warning(f"Movimento già esistente per fattura {fattura_id_collegato}: {existing_movimento.get('id')}")
+        return {
+            "success": True,
+            "movimento_id": existing_movimento.get("id"),
+            "message": "Movimento già presente (duplicato evitato)",
+            "duplicato_evitato": True
+        }
+    
     if metodo_pagamento == "cassa":
         await db["prima_nota_cassa"].insert_one(movimento_base)
         prima_nota_collection = "prima_nota_cassa"
