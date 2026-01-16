@@ -23,11 +23,9 @@ export function DipendenteDetailModal({
   const [bonifici, setBonifici] = useState([]);
   const [loadingBonifici, setLoadingBonifici] = useState(false);
   
-  if (!dipendente) return null;
-
   // Carica bonifici quando si apre il tab
   const loadBonifici = async () => {
-    if (!dipendente.id) return;
+    if (!dipendente?.id) return;
     setLoadingBonifici(true);
     try {
       const res = await api.get(`/api/archivio-bonifici/dipendente/${dipendente.id}`);
@@ -45,7 +43,10 @@ export function DipendenteDetailModal({
     if (activeTab === 'bonifici' && dipendente?.id) {
       loadBonifici();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, dipendente?.id]);
+
+  if (!dipendente) return null;
 
   // Funzione per importare i progressivi dalla busta paga
   const handleImportBustaPaga = async () => {
