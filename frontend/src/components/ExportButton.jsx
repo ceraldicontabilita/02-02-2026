@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import * as XLSX from 'xlsx';
 
 /**
  * Componente per esportare dati in CSV o Excel
