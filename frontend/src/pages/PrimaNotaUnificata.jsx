@@ -151,6 +151,11 @@ export default function PrimaNotaUnificata() {
 
   return (
     <div style={{ padding: 'clamp(12px, 3vw, 20px)' }}>
+      {/* Page Info Card - in alto a destra */}
+      <div style={{ position: 'absolute', top: 70, right: 20, zIndex: 100 }}>
+        <PageInfoCard pageKey={filtroTipo === 'cassa' ? 'prima-nota-cassa' : filtroTipo === 'banca' ? 'prima-nota-banca' : filtroTipo === 'salari' ? 'prima-nota-salari' : 'prima-nota-banca'} />
+      </div>
+      
       {/* Header */}
       <div style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
         <div>
