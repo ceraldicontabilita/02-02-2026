@@ -1062,4 +1062,138 @@ function DipendenteAccontiTab({ dipendente, editData, setEditData, editMode }) {
   );
 }
 
+// Componente per gestire IBAN multipli
+function IbanMultipleInput({ ibans = [], onChange, disabled }) {
+  const [localIbans, setLocalIbans] = useState(ibans.length > 0 ? ibans : ['']);
+  
+  // Sync con prop esterna
+  useEffect(() => {
+    if (ibans.length > 0) {
+      setLocalIbans(ibans);
+    }
+  }, [ibans]);
+  
+  const handleIbanChange = (index, value) => {
+    const newIbans = [...localIbans];
+    newIbans[index] = value.toUpperCase().replace(/\s/g, '');
+    setLocalIbans(newIbans);
+    onChange(newIbans.filter(i => i.trim()));
+  };
+  
+  const addIban = () => {
+    if (localIbans.length < 3) {
+      setLocalIbans([...localIbans, '']);
+    }
+  };
+  
+  const removeIban = (index) => {
+    const newIbans = localIbans.filter((_, i) => i !== index);
+    setLocalIbans(newIbans.length > 0 ? newIbans : ['']);
+    onChange(newIbans.filter(i => i.trim()));
+  };
+  
+  const formatIban = (iban) => {
+    // Formatta IBAN in gruppi di 4 per leggibilità
+    return iban.replace(/(.{4})/g, '$1 ').trim();
+  };
+  
+  const isValidIban = (iban) => {
+    // Validazione base IBAN italiano (27 caratteri, inizia con IT)
+    if (!iban) return true;
+    const cleaned = iban.replace(/\s/g, '');
+    if (cleaned.length === 0) return true;
+    if (cleaned.length < 15) return false;
+    if (cleaned.startsWith('IT') && cleaned.length !== 27) return false;
+    return /^[A-Z]{2}[0-9]{2}[A-Z0-9]+$/.test(cleaned);
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {localIbans.map((iban, idx) => (
+        <div key={idx} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <div style={{ flex: 1, position: 'relative' }}>
+            <input
+              type="text"
+              value={iban}
+              onChange={(e) => handleIbanChange(idx, e.target.value)}
+              disabled={disabled}
+              placeholder={idx === 0 ? "IT60X0542811101000000123456" : "IBAN secondario (opzionale)"}
+              style={{ 
+                width: '100%',
+                padding: '8px 12px',
+                border: `1px solid ${!isValidIban(iban) ? '#f87171' : '#ddd'}`,
+                borderRadius: 4,
+                fontFamily: 'monospace',
+                fontSize: 13,
+                letterSpacing: 1,
+                background: disabled ? '#f5f5f5' : 'white'
+              }}
+            />
+            {iban && (
+              <span style={{ 
+                position: 'absolute', 
+                right: 40, 
+                top: '50%', 
+                transform: 'translateY(-50%)',
+                fontSize: 10,
+                color: idx === 0 ? '#3b82f6' : '#9ca3af',
+                background: idx === 0 ? '#dbeafe' : '#f1f5f9',
+                padding: '2px 6px',
+                borderRadius: 4
+              }}>
+                {idx === 0 ? 'Principale' : 'Secondario'}
+              </span>
+            )}
+          </div>
+          {!disabled && localIbans.length > 1 && (
+            <button
+              type="button"
+              onClick={() => removeIban(idx)}
+              style={{
+                background: '#fee2e2',
+                color: '#dc2626',
+                border: 'none',
+                borderRadius: 4,
+                padding: '8px 12px',
+                cursor: 'pointer',
+                fontSize: 14
+              }}
+              title="Rimuovi IBAN"
+            >
+              🗑️
+            </button>
+          )}
+        </div>
+      ))}
+      
+      {!disabled && localIbans.length < 3 && (
+        <button
+          type="button"
+          onClick={addIban}
+          style={{
+            background: '#f0fdf4',
+            color: '#166534',
+            border: '1px dashed #86efac',
+            borderRadius: 4,
+            padding: '8px 12px',
+            cursor: 'pointer',
+            fontSize: 12,
+            fontWeight: 'bold',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 6
+          }}
+        >
+          ➕ Aggiungi altro IBAN
+        </button>
+      )}
+      
+      <div style={{ fontSize: 10, color: '#9ca3af' }}>
+        💡 Puoi aggiungere fino a 3 IBAN. L'IBAN principale sarà usato per i bonifici stipendio.
+      </div>
+    </div>
+  );
+}
+
 export default DipendenteDetailModal;
