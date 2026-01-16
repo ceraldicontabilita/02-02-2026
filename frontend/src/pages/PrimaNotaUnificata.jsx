@@ -710,6 +710,13 @@ export default function PrimaNotaUnificata() {
                       </td>
                       <td style={{ ...tdStyle, textAlign: 'center' }}>
                         <button
+                          onClick={() => handleEdit(m)}
+                          style={{ padding: '4px 8px', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 14 }}
+                          title="Modifica"
+                        >
+                          ✏️
+                        </button>
+                        <button
                           onClick={() => handleDelete(m)}
                           style={{ padding: '4px 8px', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 14 }}
                           title="Elimina"
@@ -725,6 +732,124 @@ export default function PrimaNotaUnificata() {
           </div>
         )}
       </div>
+
+      {/* Modal modifica movimento */}
+      {editingMov && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: 12,
+            padding: 24,
+            width: '90%',
+            maxWidth: 500,
+            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)'
+          }}>
+            <h3 style={{ margin: '0 0 20px', fontSize: 18 }}>✏️ Modifica Movimento</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div>
+                <label style={labelStyle}>Data</label>
+                <input 
+                  type="date"
+                  value={editingMov.data?.split('T')[0] || ''}
+                  onChange={e => setEditingMov(p => ({ ...p, data: e.target.value }))}
+                  style={inputStyle}
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>Tipo</label>
+                <select 
+                  value={editingMov.tipo || 'uscita'}
+                  onChange={e => setEditingMov(p => ({ ...p, tipo: e.target.value }))}
+                  style={inputStyle}
+                >
+                  <option value="entrata">Entrata (DARE)</option>
+                  <option value="uscita">Uscita (AVERE)</option>
+                </select>
+              </div>
+              <div>
+                <label style={labelStyle}>Importo €</label>
+                <input 
+                  type="number"
+                  step="0.01"
+                  value={editingMov.importo || ''}
+                  onChange={e => setEditingMov(p => ({ ...p, importo: e.target.value }))}
+                  style={inputStyle}
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>Categoria</label>
+                <input 
+                  type="text"
+                  value={editingMov.categoria || ''}
+                  onChange={e => setEditingMov(p => ({ ...p, categoria: e.target.value }))}
+                  style={inputStyle}
+                />
+              </div>
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label style={labelStyle}>Descrizione</label>
+                <input 
+                  type="text"
+                  value={editingMov.descrizione || ''}
+                  onChange={e => setEditingMov(p => ({ ...p, descrizione: e.target.value }))}
+                  style={inputStyle}
+                />
+              </div>
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label style={labelStyle}>Fornitore</label>
+                <input 
+                  type="text"
+                  value={editingMov.fornitore || ''}
+                  onChange={e => setEditingMov(p => ({ ...p, fornitore: e.target.value }))}
+                  style={inputStyle}
+                />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 12, marginTop: 20 }}>
+              <button 
+                onClick={() => setEditingMov(null)} 
+                style={{ 
+                  flex: 1, 
+                  padding: '12px', 
+                  background: '#f1f5f9', 
+                  border: 'none', 
+                  borderRadius: 8, 
+                  cursor: 'pointer',
+                  fontWeight: 600
+                }}
+              >
+                Annulla
+              </button>
+              <button 
+                onClick={handleSaveEdit} 
+                disabled={saving}
+                style={{ 
+                  flex: 1, 
+                  padding: '12px', 
+                  background: '#10b981', 
+                  color: 'white', 
+                  border: 'none', 
+                  borderRadius: 8, 
+                  cursor: 'pointer',
+                  fontWeight: 600
+                }}
+              >
+                {saving ? '⏳' : '💾'} Salva
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
