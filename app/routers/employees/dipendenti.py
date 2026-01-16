@@ -148,6 +148,7 @@ async def create_dipendente(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
         "data_fine_contratto": data.get("data_fine_contratto"),
         "ore_settimanali": data.get("ore_settimanali", 40),
         "iban": data.get("iban", ""),
+        "ibans": data.get("ibans", []),  # IBAN multipli (principale + secondari)
         # Retribuzione dettagliata
         "paga_base": data.get("paga_base", 0),  # Paga base mensile
         "contingenza": data.get("contingenza", 0),  # Indennità contingenza
