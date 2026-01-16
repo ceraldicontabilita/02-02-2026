@@ -878,6 +878,20 @@ Tutte le pagine3 supportano layout mobile:
 
 ### 2026-01-14 - Gestione Noleggio Auto (SESSIONE ATTUALE)
 
+### 2026-01-16 - UI Fatture Aruba e Miglioramenti Parser
+- ✅ **UI Fatture Aruba Pendenti**: Implementata visualizzazione completa nella pagina `RiconciliazioneSmart.jsx`
+  - Tab "Fatture Aruba" con conteggio operazioni pendenti
+  - Card operazioni con: fornitore, numero fattura, data, importo
+  - Badge stato: "DA VERIFICARE", "MATCH TROVATO", "N ASSEGNI"
+  - Dettaglio match dall'estratto conto (singolo o multipli assegni)
+  - Pulsanti: "Conferma Pagamento" (Cassa/Bonifico/Assegno), "Rifiuta"
+  - **Endpoint backend**: `POST /api/operazioni-da-confermare/conferma-aruba`, `POST /api/operazioni-da-confermare/rifiuta-aruba`
+
+- ✅ **Miglioramento Parser Cedolini**: Aggiunta logica di fallback per nome
+  - Se il codice fiscale non viene estratto dal PDF, cerca il dipendente nell'anagrafica per nome
+  - Match su: nome completo esatto, cognome+nome, match parziale
+  - Riduce significativamente gli errori "CF mancante"
+
 ### 2026-01-14 - Algoritmo Riconciliazione F24-Quietanza v3
 - ✅ **Algoritmo corretto per gestire ravvedimenti operosi**
   - **File modificato**: `/app/app/routers/f24/f24_riconciliazione.py`
