@@ -689,7 +689,7 @@ function DashboardTab({ stats, autoMatchStats }) {
       <div style={{ marginTop: 24, padding: 16, background: '#fef3c7', borderRadius: 8, border: '1px solid #fcd34d' }}>
         <div style={{ fontWeight: 600, color: '#92400e', marginBottom: 8 }}>💡 Suggerimenti</div>
         <ul style={{ margin: 0, paddingLeft: 20, color: '#78350f', fontSize: 13 }}>
-          <li>Usa "Auto-Riconcilia" per confermare automaticamente POS, commissioni e assegni con match esatto</li>
+          <li>Usa &quot;Auto-Riconcilia&quot; per confermare automaticamente POS, commissioni e assegni con match esatto</li>
           <li>Le fatture Aruba richiedono conferma del metodo di pagamento (Cassa/Bonifico/Assegno)</li>
           <li>Gli F24 vengono matchati con le quietanze quando disponibili</li>
         </ul>
