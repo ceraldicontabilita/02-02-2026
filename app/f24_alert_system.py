@@ -91,7 +91,7 @@ async def riconcilia_f24_con_banca(db, username: str, f24_id: str, movimento_ban
             return {"success": False, "error": "F24 non trovato"}
         
         # Trova movimento bancario
-        movimento = await db.bank_movements.find_one({"id": movimento_bancario_id, "user_id": username})
+        movimento = await db.prima_nota_banca.find_one({"id": movimento_bancario_id})
         if not movimento:
             return {"success": False, "error": "Movimento bancario non trovato"}
         

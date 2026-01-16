@@ -46,7 +46,7 @@ class InvoiceServiceV2:
         self.suppliers = self.db["suppliers"]
         self.warehouse_movements = self.db["warehouse_movements"]
         self.accounting_entries = self.db["accounting_entries"]
-        self.cash_movements = self.db["cash_movements"]
+        self.cash_movements = self.db["prima_nota_cassa"]  # Usa collection corretta
     
     # ==================== CREATE ====================
     

@@ -39,7 +39,7 @@ class CorrispettiviService:
     def __init__(self, db=None):
         self.db = db or Database.get_db()
         self.corrispettivi = self.db["corrispettivi"]
-        self.cash_movements = self.db["cash_movements"]
+        self.cash_movements = self.db["prima_nota_cassa"]  # Usa collection corretta
         self.prima_nota = self.db["prima_nota"]
     
     # ==================== CREATE ====================
