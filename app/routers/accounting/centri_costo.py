@@ -129,10 +129,11 @@ async def list_centri_costo() -> List[Dict[str, Any]]:
                 "attivo": True,
                 "created_at": datetime.utcnow().isoformat()
             }
-            centri.append(centro)
+            centri.append(centro.copy())  # Usa copy() per evitare che insert_many modifichi
         
-        # Salva nel DB
-        await db["centri_costo"].insert_many(centri)
+        # Salva nel DB (crea copie per evitare mutazione con _id)
+        centri_to_insert = [c.copy() for c in centri]
+        await db["centri_costo"].insert_many(centri_to_insert)
     
     # Aggiungi statistiche per ogni centro
     for centro in centri:
