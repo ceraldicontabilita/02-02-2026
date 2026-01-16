@@ -1074,47 +1074,100 @@ async def cerca_stipendi_per_associazione(
 ) -> Dict[str, Any]:
     """
     Cerca stipendi per associazione manuale.
+    Se non viene passato il nome dipendente, restituisce tutti i dipendenti attivi.
     """
     from app.services.riconciliazione_smart import cerca_dipendente_per_nome, cerca_stipendi_non_pagati, trova_combinazioni_somma
     
     db = Database.get_db()
     
-    dipendente_found = None
+    # Se viene passato un nome, cerca quel dipendente specifico
     if dipendente:
         dipendente_found = await cerca_dipendente_per_nome(db, dipendente)
+        if dipendente_found:
+            dipendente_id = dipendente_found.get("id")
+            stipendi = await cerca_stipendi_non_pagati(db, dipendente_id, abs(importo) if importo else None)
+            
+            result = {
+                "dipendente": {
+                    "id": dipendente_found.get("id"),
+                    "nome": dipendente_found.get("nome_completo") or dipendente_found.get("full_name")
+                },
+                "stipendi": [{
+                    "id": s.get("id"),
+                    "dipendente_id": s.get("dipendente_id"),
+                    "periodo": s.get("periodo"),
+                    "netto": s.get("netto"),
+                    "lordo": s.get("lordo"),
+                    "pagato": s.get("pagato", False)
+                } for s in stipendi],
+                "totale": len(stipendi)
+            }
+            
+            # Cerca combinazioni se importo specificato
+            if importo and stipendi:
+                combos = trova_combinazioni_somma(
+                    [{"total_amount": s.get("netto"), **s} for s in stipendi],
+                    abs(importo)
+                )
+                result["combinazioni_suggerite"] = [[{
+                    "id": s.get("id"),
+                    "periodo": s.get("periodo"),
+                    "netto": s.get("netto")
+                } for s in combo] for combo in combos]
+            
+            return result
     
-    dipendente_id = dipendente_found.get("id") if dipendente_found else None
-    stipendi = await cerca_stipendi_non_pagati(db, dipendente_id, abs(importo) if importo else None)
+    # Altrimenti, restituisci tutti i dipendenti attivi con i loro cedolini non pagati
+    all_dipendenti = await db["employees"].find(
+        {"$or": [{"status": "attivo"}, {"status": "active"}, {"status": {"$exists": False}}]},
+        {"_id": 0, "id": 1, "nome_completo": 1, "nome": 1, "cognome": 1}
+    ).to_list(200)
     
-    result = {
-        "dipendente": {
-            "id": dipendente_found.get("id"),
-            "nome": dipendente_found.get("nome_completo") or dipendente_found.get("full_name")
-        } if dipendente_found else None,
-        "stipendi": [{
-            "id": s.get("id"),
-            "dipendente_id": s.get("dipendente_id"),
-            "periodo": s.get("periodo"),
-            "netto": s.get("netto"),
-            "lordo": s.get("lordo"),
-            "pagato": s.get("pagato", False)
-        } for s in stipendi],
-        "totale": len(stipendi)
+    results = []
+    target_importo = abs(importo) if importo else None
+    
+    for dip in all_dipendenti:
+        dip_id = dip.get("id")
+        dip_nome = dip.get("nome_completo") or f"{dip.get('cognome', '')} {dip.get('nome', '')}".strip()
+        
+        # Cerca cedolini non pagati per questo dipendente
+        cedolini = await db["cedolini"].find(
+            {"dipendente_id": dip_id, "$or": [{"pagato": False}, {"pagato": {"$exists": False}}]},
+            {"_id": 0}
+        ).to_list(12)
+        
+        for ced in cedolini:
+            netto = ced.get("netto") or ced.get("netto_in_busta") or 0
+            
+            # Se c'è un importo target, prioritizza quelli con importo simile
+            diff = abs(netto - target_importo) if target_importo else 0
+            is_match = target_importo and diff < 1
+            
+            results.append({
+                "id": ced.get("id"),
+                "dipendente_id": dip_id,
+                "dipendente": dip_nome,
+                "periodo": ced.get("periodo") or f"{ced.get('anno', '')}-{str(ced.get('mese', '')).zfill(2)}",
+                "netto": netto,
+                "lordo": ced.get("lordo") or ced.get("lordo_totale") or 0,
+                "importo": netto,
+                "mese_riferimento": ced.get("periodo"),
+                "is_match": is_match,
+                "_diff": diff
+            })
+    
+    # Ordina per match esatto prima, poi per differenza importo
+    if target_importo:
+        results.sort(key=lambda x: (not x.get("is_match", False), x.get("_diff", 9999999)))
+    
+    # Rimuovi campo _diff dal risultato
+    for r in results:
+        r.pop("_diff", None)
+    
+    return {
+        "stipendi": results,
+        "totale": len(results)
     }
-    
-    # Cerca combinazioni se importo specificato
-    if importo and stipendi:
-        combos = trova_combinazioni_somma(
-            [{"total_amount": s.get("netto"), **s} for s in stipendi],
-            abs(importo)
-        )
-        result["combinazioni_suggerite"] = [[{
-            "id": s.get("id"),
-            "periodo": s.get("periodo"),
-            "netto": s.get("netto")
-        } for s in combo] for combo in combos]
-    
-    return result
 
 
 @router.get("/smart/cerca-f24")
