@@ -906,8 +906,12 @@ function F24Tab({ f24 }) {
   );
 }
 
-function ArubaTab({ fatture, onConferma, processing }) {
+function ArubaTab({ fatture, onConferma, processing, fornitori = [], onRefresh }) {
   const [preferenze, setPreferenze] = useState({});
+  const [filtroFornitore, setFiltroFornitore] = useState('');
+  const [selezionate, setSelezionate] = useState(new Set());
+  const [metodoBatch, setMetodoBatch] = useState('bonifico');
+  const [salvandoBatch, setSalvandoBatch] = useState(false);
 
   // Carica preferenze per ogni fornitore
   useEffect(() => {
