@@ -232,17 +232,16 @@ export default function ImportUnificato() {
         setFiles(prev => prev.map((f, idx) => idx === i ? { ...f, status: 'success' } : f));
 
       } catch (e) {
-        result = {
+        const errorResult = {
           file: fileInfo.name,
           tipo,
           status: 'error',
           message: e.response?.data?.detail || e.response?.data?.message || e.message
         };
 
-        setFiles(prev => prev.map((f, idx) => idx === i ? { ...f, status: 'error', error: result.message } : f));
+        uploadResults.push(errorResult);
+        setFiles(prev => prev.map((f, idx) => idx === i ? { ...f, status: 'error', error: errorResult.message } : f));
       }
-
-      uploadResults.push(result);
     }
 
     setResults(uploadResults);
