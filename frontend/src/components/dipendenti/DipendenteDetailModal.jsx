@@ -1064,14 +1064,10 @@ function DipendenteAccontiTab({ dipendente, editData, setEditData, editMode }) {
 
 // Componente per gestire IBAN multipli
 function IbanMultipleInput({ ibans = [], onChange, disabled }) {
-  const [localIbans, setLocalIbans] = useState(ibans.length > 0 ? ibans : ['']);
-  
-  // Sync con prop esterna
-  useEffect(() => {
-    if (ibans.length > 0) {
-      setLocalIbans(ibans);
-    }
-  }, [ibans]);
+  // Inizializza direttamente dalla prop senza useEffect
+  const [localIbans, setLocalIbans] = useState(() => {
+    return ibans.length > 0 ? ibans : [''];
+  });
   
   const handleIbanChange = (index, value) => {
     const newIbans = [...localIbans];
