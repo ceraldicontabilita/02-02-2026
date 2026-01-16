@@ -286,14 +286,15 @@ async def save_supplier_payment_method(db, supplier_vat: str, supplier_name: str
         )
         
         # Backup nello storico
-        await db["supplier_payment_history"].insert_one({
+        history_doc = {
             "supplier_vat": supplier_vat,
             "supplier_name": supplier_name,
             "payment_method": payment_method,
             "changed_at": now,
             "changed_by": username,
             "action": "upsert"
-        })
+        }
+        await db["supplier_payment_history"].insert_one(history_doc.copy())
         
         logger.info(f"✅ DIZIONARIO: Salvato {supplier_name} ({supplier_vat}) → {payment_method}")
         return True
