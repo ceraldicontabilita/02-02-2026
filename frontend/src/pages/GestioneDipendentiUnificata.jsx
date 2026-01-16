@@ -638,14 +638,16 @@ function TabAcconti({ acconti: accontiData, dipendente, onReload }) {
           <thead>
             <tr style={{ background: '#f8fafc' }}>
               <th style={thStyle}>Data</th>
+              <th style={thStyle}>Tipo</th>
               <th style={{ ...thStyle, textAlign: 'right' }}>Importo</th>
               <th style={thStyle}>Note</th>
             </tr>
           </thead>
           <tbody>
-            {acconti.map((a, idx) => (
+            {allAcconti.map((a, idx) => (
               <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
                 <td style={tdStyle}>{a.data ? new Date(a.data).toLocaleDateString('it-IT') : '-'}</td>
+                <td style={tdStyle}><span style={{ padding: '2px 8px', background: '#f1f5f9', borderRadius: 4, fontSize: 11 }}>{a.tipo || 'N/D'}</span></td>
                 <td style={{ ...tdStyle, textAlign: 'right', fontWeight: 600, color: '#f59e0b' }}>{formatEuro(a.importo || 0)}</td>
                 <td style={tdStyle}>{a.note || '-'}</td>
               </tr>
