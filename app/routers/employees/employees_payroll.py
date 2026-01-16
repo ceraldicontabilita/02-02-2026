@@ -212,11 +212,12 @@ async def upload_payslip_pdf(file: UploadFile = File(...)) -> Dict[str, Any]:
                 else:
                     # Crea nuovo dipendente
                     emp_id = str(uuid.uuid4())
-                    await db[Collections.EMPLOYEES].insert_one({
+                    new_employee_doc = {
                         "id": emp_id, "nome_completo": nome, "matricola": payslip.get("matricola", ""),
                         "codice_fiscale": cf, "qualifica": payslip.get("qualifica", ""),
                         "status": "active", "source": "pdf_upload", "created_at": datetime.utcnow().isoformat()
-                    })
+                    }
+                    await db[Collections.EMPLOYEES].insert_one(new_employee_doc.copy())
                     is_new = True
                 
                 # Check duplicate payslip
@@ -232,7 +233,7 @@ async def upload_payslip_pdf(file: UploadFile = File(...)) -> Dict[str, Any]:
                 netto = float(payslip.get("retribuzione_netta", 0) or 0)
                 
                 # Save payslip
-                await db["payslips"].insert_one({
+                payslip_doc = {
                     "id": payslip_id, "payslip_key": payslip_key, "employee_id": emp_id,
                     "codice_fiscale": cf, "nome_completo": nome, "periodo": periodo,
                     "mese": mese, "anno": anno,
@@ -242,7 +243,8 @@ async def upload_payslip_pdf(file: UploadFile = File(...)) -> Dict[str, Any]:
                     "contributi_inps": float(payslip.get("contributi_inps", 0) or 0),
                     "qualifica": payslip.get("qualifica", ""),
                     "source": "pdf_upload", "filename": file.filename, "created_at": datetime.utcnow().isoformat()
-                })
+                }
+                await db["payslips"].insert_one(payslip_doc.copy())
                 
                 # Inserisci automaticamente in Prima Nota Salari
                 if netto > 0 and anno and mese:
