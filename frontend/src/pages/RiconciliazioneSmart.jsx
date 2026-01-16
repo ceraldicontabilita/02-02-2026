@@ -1060,23 +1060,77 @@ function ModalCambiaFattura({ movimento, tipo, results, onSelect, onClose }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [localResults, setLocalResults] = useState([]);
   const [searching, setSearching] = useState(false);
+  const [loadingInitial, setLoadingInitial] = useState(true);
   
   // Usa i risultati passati o quelli della ricerca locale
   const displayResults = searchQuery.trim() ? localResults : (Array.isArray(results) ? results : []);
   
   const tipoConfig = {
     fattura: { title: '🧾 Seleziona Fattura', empty: 'Nessuna fattura trovata', searchPlaceholder: 'Cerca per fornitore o importo...' },
-    stipendio: { title: '👤 Seleziona Stipendio', empty: 'Nessuno stipendio trovato', searchPlaceholder: 'Cerca per nome dipendente...' },
-    f24: { title: '📄 Seleziona F24', empty: 'Nessun F24 trovato', searchPlaceholder: 'Cerca per codice tributo...' }
+    stipendio: { title: '👤 Seleziona Dipendente/Stipendio', empty: 'Nessuno stipendio trovato', searchPlaceholder: 'Cerca per nome dipendente...' },
+    f24: { title: '📄 Seleziona F24', empty: 'Nessun F24 trovato', searchPlaceholder: 'Cerca per descrizione o importo...' }
   };
   
   const config = tipoConfig[tipo] || tipoConfig.fattura;
+  
+  // Carica dati iniziali (tutti gli F24 o stipendi disponibili)
+  useEffect(() => {
+    const loadInitialData = async () => {
+      setLoadingInitial(true);
+      try {
+        let url = '';
+        if (tipo === 'f24') {
+          // Carica tutti gli F24 non pagati
+          url = `/api/operazioni-da-confermare/smart/cerca-f24`;
+        } else if (tipo === 'stipendio') {
+          // Carica tutti i dipendenti con stipendi
+          url = `/api/operazioni-da-confermare/smart/cerca-stipendi?importo=${Math.abs(movimento.importo)}`;
+        }
+        
+        if (url) {
+          const res = await api.get(url);
+          let normalized = [];
+          
+          if (tipo === 'f24') {
+            const f24List = res.data?.f24 || [];
+            normalized = f24List.map(f => ({
+              id: f.id,
+              tipo_tributo: f.descrizione || 'F24',
+              descrizione: f.descrizione,
+              periodo: f.periodo,
+              data_scadenza: f.data_scadenza,
+              importo: f.importo_totale,
+              codice_tributo: f.codice_tributo || ''
+            }));
+          } else if (tipo === 'stipendio') {
+            const stipendiList = res.data?.stipendi || [];
+            normalized = stipendiList.map(s => ({
+              id: s.id,
+              dipendente: res.data?.dipendente?.nome || 'Dipendente',
+              dipendente_id: s.dipendente_id,
+              mese_riferimento: s.periodo,
+              netto_pagare: s.netto,
+              importo: s.netto
+            }));
+          }
+          
+          setLocalResults(normalized);
+        }
+      } catch (e) {
+        console.error('Errore caricamento iniziale:', e);
+      } finally {
+        setLoadingInitial(false);
+      }
+    };
+    
+    loadInitialData();
+  }, [tipo, movimento.importo]);
   
   // Ricerca fatture
   const handleSearch = async (query) => {
     setSearchQuery(query);
     if (!query.trim()) {
-      setLocalResults([]);
+      // Usa i risultati iniziali
       return;
     }
     
@@ -1095,7 +1149,19 @@ function ModalCambiaFattura({ movimento, tipo, results, onSelect, onClose }) {
       } else if (tipo === 'stipendio') {
         url = `/api/operazioni-da-confermare/smart/cerca-stipendi?dipendente=${encodeURIComponent(query)}`;
       } else if (tipo === 'f24') {
-        url = `/api/operazioni-da-confermare/smart/cerca-f24?codice=${encodeURIComponent(query)}`;
+        // Cerca F24 per importo se numerico
+        if (isNumeric) {
+          url = `/api/operazioni-da-confermare/smart/cerca-f24?importo=${query}`;
+        } else {
+          // Filtra localmente per descrizione
+          const filtered = localResults.filter(f => 
+            (f.descrizione || '').toLowerCase().includes(query.toLowerCase()) ||
+            (f.tipo_tributo || '').toLowerCase().includes(query.toLowerCase())
+          );
+          setLocalResults(filtered);
+          setSearching(false);
+          return;
+        }
       }
       
       const res = await api.get(url);
@@ -1123,8 +1189,17 @@ function ModalCambiaFattura({ movimento, tipo, results, onSelect, onClose }) {
           netto_pagare: s.netto,
           importo: s.netto
         }));
-      } else {
-        normalizedResults = res.data?.results || res.data || [];
+      } else if (tipo === 'f24') {
+        const f24List = res.data?.f24 || [];
+        normalizedResults = f24List.map(f => ({
+          id: f.id,
+          tipo_tributo: f.descrizione || 'F24',
+          descrizione: f.descrizione,
+          periodo: f.periodo,
+          data_scadenza: f.data_scadenza,
+          importo: f.importo_totale,
+          codice_tributo: f.codice_tributo || ''
+        }));
       }
       setLocalResults(normalizedResults);
     } catch (e) {
@@ -1135,6 +1210,9 @@ function ModalCambiaFattura({ movimento, tipo, results, onSelect, onClose }) {
     }
   };
   
+  // Risultati da visualizzare
+  const finalResults = searchQuery.trim() ? localResults : (localResults.length > 0 ? localResults : (Array.isArray(results) ? results : []));
+  
   return (
     <div style={{
       position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
@@ -1144,7 +1222,7 @@ function ModalCambiaFattura({ movimento, tipo, results, onSelect, onClose }) {
     }} onClick={onClose}>
       <div style={{
         background: 'white', borderRadius: 16,
-        width: '100%', maxWidth: 650, maxHeight: '85vh', overflow: 'hidden'
+        width: '100%', maxWidth: 700, maxHeight: '85vh', overflow: 'hidden'
       }} onClick={e => e.stopPropagation()}>
         
         <div style={{ padding: 20, borderBottom: '1px solid #e5e7eb', background: '#f8fafc' }}>
@@ -1157,12 +1235,24 @@ function ModalCambiaFattura({ movimento, tipo, results, onSelect, onClose }) {
           <div style={{ marginTop: 8, fontSize: 13, color: '#64748b' }}>
             Movimento: {new Date(movimento.data).toLocaleDateString('it-IT')} - {formatEuro(movimento.importo)}
           </div>
-          <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 12 }}>
-            {movimento.descrizione?.substring(0, 60)}...
+          {/* DESCRIZIONE COMPLETA */}
+          <div style={{ 
+            fontSize: 12, 
+            color: '#374151', 
+            marginTop: 8, 
+            padding: 10, 
+            background: '#fff', 
+            borderRadius: 6, 
+            border: '1px solid #e5e7eb',
+            maxHeight: 80,
+            overflow: 'auto',
+            wordBreak: 'break-word'
+          }}>
+            <strong>Descrizione:</strong> {movimento.descrizione || '-'}
           </div>
           
           {/* BARRA DI RICERCA */}
-          <div style={{ position: 'relative' }}>
+          <div style={{ position: 'relative', marginTop: 12 }}>
             <input
               type="text"
               value={searchQuery}
@@ -1183,23 +1273,28 @@ function ModalCambiaFattura({ movimento, tipo, results, onSelect, onClose }) {
               autoFocus
             />
             <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 18 }}>
-              {searching ? '⏳' : '🔍'}
+              {searching || loadingInitial ? '⏳' : '🔍'}
             </span>
           </div>
         </div>
         
         <div style={{ maxHeight: 400, overflow: 'auto' }}>
-          {displayResults.length === 0 ? (
+          {loadingInitial ? (
+            <div style={{ padding: 40, textAlign: 'center', color: '#64748b' }}>
+              <div style={{ fontSize: 32, marginBottom: 8 }}>⏳</div>
+              Caricamento...
+            </div>
+          ) : finalResults.length === 0 ? (
             <div style={{ padding: 40, textAlign: 'center', color: '#64748b' }}>
               <div style={{ fontSize: 32, marginBottom: 8 }}>
                 {searchQuery.trim() ? '🔍' : '💡'}
               </div>
               {searchQuery.trim() 
                 ? `${config.empty} per "${searchQuery}"` 
-                : 'Usa la barra di ricerca sopra per trovare fatture per fornitore o importo'}
+                : config.empty}
             </div>
           ) : (
-            displayResults.map((item, idx) => {
+            finalResults.map((item, idx) => {
               // Calcola la differenza di importo per evidenziare i match esatti
               const itemImporto = item.importo || item.total_amount || item.netto_pagare || 0;
               const diffImporto = Math.abs(Math.abs(movimento.importo) - Math.abs(itemImporto));
@@ -1231,10 +1326,18 @@ function ModalCambiaFattura({ movimento, tipo, results, onSelect, onClose }) {
                             ? `Tributo: ${item.codice_tributo}`
                             : item.mese_riferimento
                               ? `Mese: ${item.mese_riferimento}`
-                              : '-'
+                              : item.periodo 
+                                ? `Periodo: ${item.periodo}`
+                                : '-'
                         }
                         {item.data_fattura && ` del ${new Date(item.data_fattura).toLocaleDateString('it-IT')}`}
+                        {item.data_scadenza && ` - Scad. ${new Date(item.data_scadenza).toLocaleDateString('it-IT')}`}
                       </div>
+                      {item.descrizione && (
+                        <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 4 }}>
+                          {item.descrizione.substring(0, 100)}
+                        </div>
+                      )}
                     </div>
                     <div style={{ textAlign: 'right' }}>
                       <div style={{ fontWeight: 'bold', fontSize: 16, color: isExactMatch ? '#059669' : '#374151' }}>
@@ -1255,7 +1358,7 @@ function ModalCambiaFattura({ movimento, tipo, results, onSelect, onClose }) {
         
         <div style={{ padding: 16, borderTop: '1px solid #e5e7eb', background: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ fontSize: 12, color: '#64748b' }}>
-            {displayResults.length} risultati
+            {finalResults.length} risultati
           </div>
           <button onClick={onClose} style={{
             padding: '10px 20px', background: '#f1f5f9',
