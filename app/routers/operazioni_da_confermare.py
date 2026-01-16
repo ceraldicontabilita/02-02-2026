@@ -671,6 +671,35 @@ async def check_fattura_esistente(
     }
 
 
+@router.get("/fornitore-preferenza/{fornitore}")
+async def get_fornitore_preferenza(fornitore: str) -> Dict[str, Any]:
+    """
+    Ottiene la preferenza di pagamento per un fornitore (auto-apprendimento).
+    Usato per suggerire il metodo di pagamento più usato.
+    """
+    db = Database.get_db()
+    
+    fornitore_norm = fornitore.upper().strip()[:50]
+    preferenza = await db["fornitori_preferenze"].find_one(
+        {"fornitore_normalizzato": fornitore_norm},
+        {"_id": 0}
+    )
+    
+    if preferenza:
+        return {
+            "found": True,
+            "fornitore": preferenza.get("fornitore"),
+            "metodo_preferito": preferenza.get("metodo_pagamento_preferito"),
+            "utilizzi": preferenza.get("conteggio_utilizzi", 1),
+            "ultimo_utilizzo": preferenza.get("ultimo_utilizzo")
+        }
+    
+    return {
+        "found": False,
+        "fornitore": fornitore,
+        "metodo_preferito": None
+    }
+
 
 @router.post("/riconciliazione-batch")
 async def riconciliazione_batch(
