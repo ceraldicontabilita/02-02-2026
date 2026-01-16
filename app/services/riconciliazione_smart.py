@@ -117,11 +117,28 @@ def estrai_numero_assegno(descrizione: str) -> Optional[str]:
 
 def is_prelievo_assegno(descrizione: str) -> bool:
     """Verifica se è un prelievo assegno."""
-    return "PRELIEVO ASSEGNO" in descrizione.upper() or "PREL. ASS." in descrizione.upper()
+    desc_upper = descrizione.upper()
+    # Pattern multipli
+    patterns = ["PRELIEVO ASSEGNO", "PREL.ASS.", "PREL. ASS.", "PREL ASS", "PRELIEVOASS"]
+    for p in patterns:
+        if p in desc_upper:
+            return True
+    # Regex più flessibile
+    for pattern in PATTERN_PRELIEVO_ASSEGNO:
+        if re.search(pattern, descrizione, re.IGNORECASE):
+            return True
+    return False
 
 
 def is_incasso_pos(descrizione: str) -> bool:
     """Verifica se è un incasso POS (entrata)."""
+    desc_upper = descrizione.upper()
+    # Pattern rapidi
+    pos_keywords = ["POS WORLDLINE", "POS NEXI", "INCASSO POS", "ACCREDITO POS", "VERSAMENTO POS", "AMERICAN EXPRESS"]
+    for kw in pos_keywords:
+        if kw in desc_upper:
+            return True
+    # Regex
     for pattern in PATTERN_INCASSI_POS:
         if re.search(pattern, descrizione, re.IGNORECASE):
             return True
