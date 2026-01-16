@@ -1551,6 +1551,8 @@ async def get_bonifici_dipendente(dipendente_id: str):
 async def associa_manuale_bonifico(bonifico_id: str, dipendente_id: str):
     """
     Associa manualmente un bonifico a un dipendente.
+    Se il bonifico ha un IBAN beneficiario, lo aggiunge automaticamente 
+    all'anagrafica del dipendente.
     """
     db = Database.get_db()
     
@@ -1576,11 +1578,37 @@ async def associa_manuale_bonifico(bonifico_id: str, dipendente_id: str):
         }}
     )
     
+    # SINCRONIZZAZIONE IBAN: Se il bonifico ha un IBAN beneficiario, aggiungilo all'anagrafica
+    iban_sync_info = None
+    iban_beneficiario = bonifico.get("beneficiario", {}).get("iban")
+    if iban_beneficiario and len(iban_beneficiario) >= 15:
+        iban_clean = iban_beneficiario.upper().replace(" ", "")
+        
+        # Leggi IBAN esistenti
+        existing_ibans = set(dipendente.get("ibans", []))
+        if dipendente.get("iban"):
+            existing_ibans.add(dipendente["iban"].upper().replace(" ", ""))
+        
+        # Aggiungi nuovo IBAN se non già presente
+        if iban_clean not in existing_ibans and len(existing_ibans) < 3:
+            existing_ibans.add(iban_clean)
+            
+            await db.employees.update_one(
+                {"id": dipendente_id},
+                {"$set": {
+                    "ibans": list(existing_ibans)[:3],
+                    "iban": list(existing_ibans)[0] if existing_ibans else "",
+                    "updated_at": datetime.now(timezone.utc).isoformat()
+                }}
+            )
+            iban_sync_info = f"IBAN {iban_clean} aggiunto all'anagrafica"
+    
     return {
         "success": True,
         "bonifico_id": bonifico_id,
         "dipendente_id": dipendente_id,
-        "dipendente_nome": nome
+        "dipendente_nome": nome,
+        "iban_sync": iban_sync_info
     }
 
 
