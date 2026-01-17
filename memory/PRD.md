@@ -1,178 +1,128 @@
-# PRD - Azienda in Cloud ERP
-## Schema Definitivo v2.7 - Aggiornato 16 Gennaio 2026
+# Product Requirements Document - TechRecon Accounting System
+
+## Original Problem Statement
+Applicazione contabile avanzata per la gestione completa del ciclo passivo, attivo, dipendenti, prima nota, scadenziario e riconciliazione bancaria. L'utente richiede performance elevate, interfacce unificate e funzionalità robuste per la gestione quotidiana dell'attività commerciale.
+
+## User Personas
+- **Commercialista**: Necessita di report fiscali, F24, dichiarazioni IVA
+- **Amministratore**: Gestisce fatture, fornitori, dipendenti, scadenze
+- **Operatore**: Inserisce dati, importa XML, gestisce magazzino
+
+## Core Requirements
+1. Import fatture XML (singole, multiple, ZIP)
+2. Gestione fornitori con metodi di pagamento configurabili
+3. Scadenziario pagamenti con riconciliazione bancaria
+4. Prima nota unificata (cassa + banca)
+5. Gestione dipendenti e cedolini
+6. Dashboard con statistiche aggregate
+7. Export PDF e Excel
 
 ---
 
-## 📋 ORIGINAL PROBLEM STATEMENT
+## What's Been Implemented
 
-Applicazione ERP per gestione contabilità bar/pasticceria con controllo sistematico completo.
+### Session 2026-01-17
 
----
+#### ✅ P0 - Unificazione Pagine Ciclo Passivo (COMPLETATO)
+- **File modificati**: 
+  - `/app/frontend/src/pages/ArchivioFattureRicevute.jsx` (completamente riscritto)
+  - `/app/frontend/src/main.jsx` (routes aggiornate)
+  - `/app/frontend/src/App.jsx` (sidebar semplificata)
+- **Funzionalità**: 
+  - Pagina unificata con 5 tabs: Archivio, Import XML, Scadenze, Riconcilia, Storico
+  - Route `/ciclo-passivo` e `/fatture-ricevute` puntano entrambe alla stessa pagina
+  - Sidebar mostra solo "Ciclo Passivo" (rimosso duplicato "Archivio Fatture")
+  - Import XML integrato con pipeline: Magazzino → Prima Nota → Scadenziario → Riconciliazione
 
-## ✅ LAVORI COMPLETATI (17 Gennaio 2026)
+#### ✅ P1 - Bug Filtro Anno Globale (CORRETTO)
+- **File modificato**: `/app/app/routers/ciclo_passivo_integrato.py`
+- **Fix**: Endpoint `/dashboard-riconciliazione` ora filtra correttamente le scadenze per anno
+- **Prima**: Mostrava scadenze del 2022 anche con anno 2026 selezionato
+- **Dopo**: Mostra solo scadenze dell'anno selezionato
 
-### Pagina Chiusura Esercizio (NUOVA)
-Pagina `/chiusura-esercizio` con wizard guidato:
-- Stato esercizio (aperto/chiuso) con icona Lock/Unlock
-- Wizard 4 step: Verifica → Bilancino → Chiusura → Nuovo Esercizio
-- Verifica preliminare con punteggio completezza e problemi bloccanti
-- Bilancino di verifica con Ricavi, Costi, Risultato d'esercizio
-- Azioni: Chiudi Esercizio (con conferma), Apri Nuovo Esercizio
-- Storico chiusure precedenti
-- Selettore anno e pulsante Aggiorna
-- Menu laterale aggiornato in Contabilità
+#### ✅ P2 - Pulsante "Vedi Fattura" Assegni (IMPLEMENTATO)
+- **File modificato**: `/app/frontend/src/pages/GestioneAssegni.jsx`
+- **Funzionalità**:
+  - Pulsante verde "📄 Vedi" accanto a ogni assegno con `fattura_collegata`
+  - Supporto fallback per `fatture_collegate[0]?.fattura_id`
+  - 134 assegni hanno il pulsante attivo
 
-### Riconoscimento Intelligente Documenti Email (NUOVO - 17 Gen)
-Migliorato il sistema di download email per gestire:
-- **File con stesso nome ma periodi diversi** (es. "estratto_conto.pdf", "iva.pdf" ogni mese)
-- **Estrazione automatica del periodo** da TUTTI i PDF (cedolini, F24, estratti conto, IVA, bonifici)
-- **Identificatore univoco periodo** (YYYY_MM) per evitare falsi duplicati
-- Pattern supportati:
-  - "GENNAIO 2026" (mese italiano)
-  - "02/2026" (formato MM/AAAA)
-  - "Dal 01/01/2026 al 31/01/2026" (range date estratti)
-  - "Scadenza 16/02/2026" (F24)
-  - "15 gen 2026" (data abbreviata)
-  - "Liquidazione IVA gennaio 2026" (IVA mensile)
-  - "1° trimestre 2026" (IVA trimestrale)
-  - "Data esecuzione: 15/02/2026" (bonifici)
-  - Date generiche DD/MM/YYYY (qualsiasi documento)
+#### ✅ P2 - Filtraggio Assegni Sporchi (IMPLEMENTATO)
+- **File modificato**: `/app/frontend/src/pages/GestioneAssegni.jsx`
+- **Fix**: Filtro lato client esclude assegni senza numero o con importo null
+- **Prima**: Carnet 22 mostrava righe vuote
+- **Dopo**: Solo assegni validi visualizzati (154 totali)
 
-### Unificazione Collection Cedolini/Payslips (NUOVO - 17 Gen)
-- Migrati 474 record da `payslips` a `cedolini`
-- Collection `cedolini` è ora la fonte unica per buste paga
-- Endpoint `/api/dipendenti/payslips` ora legge da `cedolini`
-- Endpoint `/api/dipendenti` mostra `ultimo_periodo`, `netto`, `lordo` dai cedolini
-- Script migrazione: `/app/app/scripts/migrate_payslips_to_cedolini.py`
-
-### Ottimizzazione Performance (NUOVO - 17 Gen)
-Miglioramento drastico delle performance API:
-- **Creati 31 indici MongoDB** su tutte le collection principali
-- **Sistema di caching in-memory** per query frequenti (suppliers 2 min TTL)
-- **Pagination di default** ridotta (100 invece di 1000+)
-- **Filtro anno automatico** per evitare query massive
-
-| Endpoint | Prima | Dopo | Miglioramento |
-|----------|-------|------|---------------|
-| `/api/invoices` | 1.6s | 0.05s | **32x** |
-| `/api/suppliers` | 0.6s | 0.03s | **20x** |
-| `/api/corrispettivi` | 0.3s | 0.03s | **10x** |
-
-File creato: `/app/app/middleware/performance.py`
-
-### CORREZIONE MASSIVA Backend (16 Gennaio)
-
-**229+ insert_one corretti** in 84 file Python:
-- Tutti gli `insert_one(documento)` convertiti in `insert_one(documento.copy())`
-- Previene errori ObjectId serialization JSON
-- Script automatico `/app/fix_insert_one.py`
-
-**Collezioni standardizzate**:
-- `Collections.CASH_MOVEMENTS` = `prima_nota_cassa`
-- `db["employees"]` invece di `db["dipendenti"]`
-
-**Controlli atomici duplicati**:
-- `operazioni_da_confermare.py`: Check esistenza prima insert
-- `noleggio.py`: Validazione driver_id in employees
-
-### Pagina TFR Completata
-
-Nuova pagina `/tfr` con:
-- Selezione dipendente
-- Cards: TFR Maturato, Anni Anzianità, Ultimo Accantonamento, Anticipi
-- Tabs: Riepilogo, Accantonamenti, Liquidazioni
-- Pulsanti: Accantona TFR, Liquida TFR
-- Integrazione con backend `/api/tfr/*`
-
-### Test Reports
-
-| Iterazione | Tests | Risultato |
-|------------|-------|-----------|
-| 9 | 22 | ✅ 100% |
-| 10 | 8 | ✅ 100% |
-| 11 | 10 | ✅ 100% |
-| 12 | 16 | ✅ 100% |
-| 13 | 16 | ✅ 100% |
-
-**Totale: 72 test passati**
+#### ✅ P2 - Supporto Multipli IBAN Fornitori (IMPLEMENTATO)
+- **File modificati**:
+  - `/app/frontend/src/pages/Fornitori.jsx` (form con campo IBAN + lista)
+  - `/app/app/routers/suppliers.py` (endpoint `/sync-iban` e `/iban-from-invoices`)
+- **Funzionalità**:
+  - Campo "IBAN Principale" nel form fornitore
+  - Visualizzazione lista IBAN aggiuntivi (estratti da fatture)
+  - Endpoint per sincronizzare IBAN dalle fatture ai fornitori
 
 ---
 
-## 📊 PAGINE VERIFICATE (50+)
+## Prioritized Backlog
 
-Tutte le pagine principali testate e funzionanti:
-- Dashboard, Analytics
-- Prima Nota (Cassa/Banca)
-- Fatture, Fornitori, Dipendenti
-- Magazzino, HACCP (5 pagine)
-- Riconciliazione, Scadenze
-- F24, IVA, Bilancio
-- Cedolini, TFR ✨ NEW
-- Noleggio Auto, Centri di Costo
-- Ciclo Passivo Integrato
-- E molte altre...
+### P0 - Critical
+- ✅ Unificazione pagine ciclo passivo - COMPLETATO
+- ✅ Bug filtro anno globale - COMPLETATO
+
+### P1 - High Priority
+- [ ] Bug UI Prima Nota: Movimento POS in colonna AVERE invece che DARE
+- [ ] Bug UI Prima Nota: Modal modifica con dropdown categorie
+- [ ] Sincronizzazione IBAN da bonifici a fornitori (archivio bonifici)
+
+### P2 - Medium Priority  
+- [ ] Uniformare visualizzazione fatture (view-assoinvoice)
+- [ ] Verifica logica import corrispettivi XML (non sovrascriva dati manuali)
+- [ ] Migrazione collection fornitori/suppliers in unica collection
+
+### P3 - Future/Backlog (Sospeso su richiesta utente)
+- [ ] Integrazione Google Calendar per scadenze
+- [ ] Dashboard Analytics con grafici interattivi
+- [ ] Schedulazione report PDF automatici via email
 
 ---
 
-## 🔧 FILE MODIFICATI (PRINCIPALI)
+## Tech Stack
+- **Frontend**: React 18 + Vite + Shadcn/UI
+- **Backend**: FastAPI + Python 3.11
+- **Database**: MongoDB
+- **PDF**: WeasyPrint, jsPDF
+- **Email**: Gmail API
+
+## Key API Endpoints
+- `GET /api/ciclo-passivo/dashboard-riconciliazione?anno=2026` - Dashboard scadenze con filtro anno
+- `GET /api/fatture-ricevute/archivio` - Lista fatture con filtri
+- `POST /api/ciclo-passivo/import-integrato` - Import XML con pipeline completa
+- `POST /api/suppliers/sync-iban` - Sincronizza IBAN da fatture a fornitori
+- `GET /api/assegni` - Lista assegni con fattura_collegata
+
+## Test Reports
+- `/app/test_reports/iteration_17.json` - Test unificazione pagine (100% passed)
+
+---
+
+## Code Architecture
 
 ```
-/app/app/
-├── database.py                    # Collections.CASH_MOVEMENTS → prima_nota_cassa
-├── routers/
-│   ├── ciclo_passivo_integrato.py # 12 insert con .copy()
-│   ├── operazioni_da_confermare.py # Controlli duplicati
-│   ├── noleggio.py                # Validazione driver_id
-│   ├── commercialista.py          # Insert corretti
-│   └── bank/
-│       ├── estratto_conto.py      # db["employees"]
-│       └── bank_statement_import.py
-├── services/
-│   ├── corrispettivi_service.py
-│   └── email_monitor_service.py
-└── employees/
-    └── employees_payroll.py
+/app/frontend/src/
+├── pages/
+│   ├── ArchivioFattureRicevute.jsx  # Pagina unificata ciclo passivo (5 tabs)
+│   ├── GestioneAssegni.jsx          # Lista assegni con filtro e pulsante vedi fattura
+│   └── Fornitori.jsx                # Form con IBAN e lista IBAN aggiuntivi
+├── App.jsx                          # Sidebar con menu unificato
+└── main.jsx                         # Routes aggiornate
 
-/app/frontend/src/pages/
-└── TFR.jsx                        # ✨ Completamente riscritto
+/app/app/routers/
+├── ciclo_passivo_integrato.py       # Dashboard riconciliazione con filtro anno
+└── suppliers.py                     # Endpoint sync-iban
 ```
 
----
-
-## 📋 BACKLOG
-
-### P1 - Alta Priorità
-- [x] ~~Pagina Chiusura Esercizio~~ ✅ COMPLETATO 17 Gen
-- [x] ~~Unificare collection cedolini/payslips~~ ✅ COMPLETATO 17 Gen (474 record unificati)
-- [ ] Pagina Tracciabilità standalone
-
-### P2 - Media Priorità
-- [ ] Dashboard Analytics con drill-down
-- [ ] Report PDF automatici via email
-- [ ] Integrazione Google Calendar
-
-### P3 - Bassa Priorità
-- [ ] Parsing parallelo file import
-
----
-
-## ✅ AUDIT SISTEMATICO 17 GENNAIO 2026
-
-| Scenario | Stato |
-|----------|-------|
-| Integrità referenziale fornitori | ✅ PASSED |
-| Chiusura/Apertura esercizio | ✅ PASSED |
-| Riconciliazione smart | ✅ PASSED |
-| TFR dipendenti | ✅ PASSED |
-| Noleggio veicoli | ✅ PASSED |
-| Magazzino | ✅ PASSED |
-| F24 | ✅ PASSED |
-| Scadenziario | ✅ PASSED |
-| Prima Nota | ✅ PASSED |
-| Piano dei Conti | ✅ PASSED |
-| Centri di Costo | ✅ PASSED |
-| Bilancio | ✅ PASSED |
-| HACCP | ✅ PASSED |
-| ObjectId serialization | ✅ PASSED |
-
-**Database**: 253 fornitori, 3643 fatture, 27 dipendenti, 1050 corrispettivi
+## Notes for Next Agent
+- Tutti i test passati al 100%
+- L'utente ha chiesto di sospendere i task futuri finché non li richiede esplicitamente
+- Focus sulla stabilità e correzione bug piuttosto che nuove feature
