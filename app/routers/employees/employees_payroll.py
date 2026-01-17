@@ -307,12 +307,9 @@ async def upload_payslip_pdf(file: UploadFile = File(...)) -> Dict[str, Any]:
                 payslip_id = str(uuid.uuid4())
                 mese = payslip.get("mese", "") or (str(mese_num) if mese_num else "")
                 anno = payslip.get("anno", "") or (str(anno_num) if anno_num else "")
-                # Importo busta paga: deve includere acconto + netto finale (parser già calcola il totale)
-                importo_busta = float(
-                    payslip.get("retribuzione_netta")
-                    if payslip.get("retribuzione_netta") is not None
-                    else (payslip.get("netto") or 0)
-                )
+
+                # Importo netto (minimale): prendiamo SOLO il netto finale
+                importo_busta = float(payslip.get("retribuzione_netta") or 0)
                 
                 # Allegato PDF: salviamo i byte originali del file caricato (non il singolo PDF estratto)
                 # NB: per upload ZIP/RAR salviamo il nome originale, ma non memorizziamo il PDF per singolo dipendente.
