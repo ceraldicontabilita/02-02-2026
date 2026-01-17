@@ -219,7 +219,25 @@ async def upload_corrispettivo_xml(
         }
         
         if existing:
-            # UPSERT - Aggiorna esistente
+            # UPSERT - Aggiorna esistente MA preserva i dati manuali
+            # I campi manuali che NON devono essere sovrascritti dall'XML
+            campi_manuali_da_preservare = [
+                'pagato_elettronico_manuale',  # POS inserito manualmente
+                'note_manuali',
+                'prima_nota_id',
+                'riconciliato',
+                'fornitore_manuale'
+            ]
+            
+            # Se c'era un pagato_elettronico manuale e l'XML non ha elettronico, preserva
+            if existing.get('pagato_elettronico_manuale') and corrispettivo_data.get('pagato_elettronico', 0) == 0:
+                corrispettivo_data['pagato_elettronico'] = existing.get('pagato_elettronico', 0)
+            
+            # Preserva i campi manuali esistenti
+            for campo in campi_manuali_da_preservare:
+                if campo in existing and existing[campo]:
+                    corrispettivo_data[campo] = existing[campo]
+            
             await db["corrispettivi"].update_one(
                 {"corrispettivo_key": corrispettivo_key},
                 {"$set": corrispettivo_data}
