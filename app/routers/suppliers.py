@@ -1440,19 +1440,21 @@ async def sincronizza_fornitori_da_fatture() -> Dict[str, Any]:
     }
     
     # Estrai tutti i fornitori unici dalle fatture
+    # Usa supplier_vat (campo principale) con fallback a fornitore.partita_iva
     pipeline = [
-        {"$match": {"cedente_piva": {"$exists": True, "$ne": None, "$ne": ""}}},
+        {"$match": {"$or": [
+            {"supplier_vat": {"$exists": True, "$ne": None, "$ne": ""}},
+            {"fornitore.partita_iva": {"$exists": True, "$ne": None, "$ne": ""}}
+        ]}},
+        {"$project": {
+            "piva": {"$ifNull": ["$supplier_vat", "$fornitore.partita_iva"]},
+            "nome": {"$ifNull": ["$supplier_name", {"$ifNull": ["$fornitore.denominazione", ""]}]},
+            "fornitore": 1
+        }},
         {"$group": {
-            "_id": "$cedente_piva",
-            "denominazione": {"$first": "$cedente_denominazione"},
-            "supplier_name": {"$first": "$supplier_name"},
-            "indirizzo": {"$first": "$cedente_indirizzo"},
-            "cap": {"$first": "$cedente_cap"},
-            "comune": {"$first": "$cedente_comune"},
-            "provincia": {"$first": "$cedente_provincia"},
-            "nazione": {"$first": "$cedente_nazione"},
-            "pec": {"$first": "$cedente_pec"},
-            "codice_fiscale": {"$first": "$cedente_cf"},
+            "_id": "$piva",
+            "denominazione": {"$first": "$nome"},
+            "fornitore_data": {"$first": "$fornitore"},
             "count": {"$sum": 1}
         }}
     ]
