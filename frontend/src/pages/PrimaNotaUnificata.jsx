@@ -240,7 +240,6 @@ export default function PrimaNotaUnificata() {
     
     setSaving(true);
     try {
-      const sourceTipo = filtroTipo === 'tutti' ? 'cassa' : filtroTipo;
       const endpoint = sourceTipo === 'cassa' 
         ? '/api/prima-nota/cassa' 
         : sourceTipo === 'salari'
