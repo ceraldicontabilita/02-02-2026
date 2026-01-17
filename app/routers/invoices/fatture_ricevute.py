@@ -284,6 +284,21 @@ async def import_fattura_xml(file: UploadFile = File(...)):
             }
         )
     
+    # === VALIDATORE P0: Metodo bancario richiede IBAN (PRD sezione validatori P0) ===
+    # Se metodo ≠ contanti e IBAN non valorizzato, BLOCCARE l'operazione
+    metodi_bancari = ["bonifico", "banca", "sepa", "rid", "sdd", "assegno", "misto"]
+    iban_fornitore = fornitore_result.get("iban")
+    if metodo_pag.lower() in metodi_bancari and not iban_fornitore:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "error": "FORNITORE_SENZA_IBAN",
+                "message": f"Fornitore con metodo '{metodo_pag}' ma senza IBAN: {fornitore_result.get('ragione_sociale', '')} (P.IVA: {partita_iva})",
+                "fornitore_id": fornitore_result.get("fornitore_id"),
+                "azione_richiesta": "Configurare l'IBAN in anagrafica fornitori"
+            }
+        )
+    
     # Verifica coerenza totali
     totali_coerenti = parsed.get("totali_coerenti", True)
     stato = "importata" if totali_coerenti else "anomala"
