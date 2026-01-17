@@ -21,6 +21,19 @@ Applicazione contabile avanzata per la gestione completa del ciclo passivo, atti
 
 ## What's Been Implemented
 
+### Session 2026-01-17 (Fork 4)
+
+#### ✅ P0 - BUG FIX: Conferma Multipla Fatture Aruba (COMPLETATO)
+- **Problema**: Errore 400 durante la conferma multipla delle fatture con metodo "Cassa"
+- **Causa**: Due endpoint `/conferma-batch` duplicati con formati diversi. Il primo endpoint (vecchio) usava `operazione_ids`, il secondo (corretto) usava `operazioni`. FastAPI eseguiva il primo che non corrispondeva al formato del frontend.
+- **Causa 2**: L'endpoint cercava nella collection `operazioni_da_confermare` mentre la lista veniva generata direttamente da `invoices`
+- **Soluzione**: 
+  1. Rimosso l'endpoint duplicato
+  2. Modificato l'endpoint corretto per cercare prima in `operazioni_da_confermare`, poi fallback in `invoices`
+  3. Aggiunto aggiornamento della fattura originale dopo la conferma
+- **File modificati**: `/app/app/routers/operazioni_da_confermare.py`
+- **Test eseguiti**: Conferma batch 2 fatture → successo
+
 ### Session 2026-01-17 (Fork 3)
 
 #### ✅ P0 - BUG FIX: Routing Pagamenti Prima Nota (COMPLETATO)
