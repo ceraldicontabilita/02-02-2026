@@ -541,20 +541,30 @@ async def conferma_operazioni_batch(request: ConfermaBatchRequest) -> Dict[str, 
             if fattura:
                 fattura_id = fattura.get("id")
             
-            movimento_id = f"aruba_{operazione_id}"
+            # Genera ID movimento e descrizione in base al tipo
+            if tipo_operazione == "f24" or operazione.get("tipo") == "f24":
+                movimento_id = f"f24_{operazione_id}"
+                descrizione = f"Pagamento F24 {numero_fattura} - {fornitore}"
+                categoria = "F24 - Tributi"
+            else:
+                movimento_id = f"aruba_{operazione_id}"
+                descrizione = f"Pagamento fattura {numero_fattura} - {fornitore}"
+                categoria = "Pagamento fornitore"
+            
             movimento = {
                 "id": movimento_id,
                 "data": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
                 "tipo": "uscita",
                 "importo": abs(importo),
-                "descrizione": f"Pagamento fattura {numero_fattura} - {fornitore}",
+                "descrizione": descrizione,
                 "fornitore": fornitore,
                 "numero_fattura": numero_fattura,
                 "fattura_id": fattura_id,  # Collegamento diretto alla fattura
                 "data_fattura": data_documento,
-                "categoria": "Pagamento fornitore",
+                "categoria": categoria,
                 "metodo_pagamento": metodo,
-                "fonte": "aruba_batch",
+                "fonte": "batch_conferma",
+                "tipo_operazione": tipo_operazione,
                 "created_at": datetime.now(timezone.utc).isoformat()
             }
             
