@@ -143,10 +143,10 @@ async def list_invoices(
     month_year: Optional[str] = Query(None, description="Filter by month (MM-YYYY)"),
     status: Optional[str] = Query(None, description="Filter by status"),
     anno: Optional[int] = Query(None, description="Filter by year (YYYY)"),
-    limit: int = Query(3000, description="Limit results"),
+    limit: int = Query(100, description="Limit results", le=1000),
     skip: int = Query(0, description="Skip results")
 ) -> List[Dict[str, Any]]:
-    """List invoices with optional filters."""
+    """List invoices with optional filters. Default limit is 100 for performance."""
     db = Database.get_db()
     query = {}
     
@@ -161,7 +161,7 @@ async def list_invoices(
     if status:
         query["status"] = status
     
-    logger.info(f"list_invoices: anno={anno}, query={query}")
+    logger.info(f"list_invoices: anno={anno}, query={query}, limit={limit}")
     
     invoices = await db[Collections.INVOICES].find(query, {"_id": 0}).sort("invoice_date", -1).skip(skip).limit(limit).to_list(limit)
     return invoices
