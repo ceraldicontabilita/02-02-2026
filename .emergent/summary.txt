@@ -1,125 +1,87 @@
 <analysis>**original_problem_statement:**
-L'utente ha segnalato una serie di bug critici e nuove richieste, esprimendo forte frustrazione. Le richieste originali includevano il crash della pagina , fallimenti nell'importazione di file, dati errati per la flotta auto, perdita di dati IBAN dei dipendenti e numerosi errori di logica contabile nella riconciliazione e nella prima nota.
+L'utente ha segnalato una serie di bug critici e ha espresso forte frustrazione. Le richieste originali includevano il crash della pagina , fallimenti nell'importazione di file, e numerosi errori di logica contabile.
 
-Durante questa sessione, l'utente ha aggiunto nuove priorità urgenti, con un tono molto aggressivo:
-1.  **Correzione Import Buste Paga (P0):** L'importazione delle buste paga () fallisce. L'utente richiede che il sistema estragga correttamente dal PDF il nome del dipendente, il periodo di competenza e l'importo netto, e che il file venga salvato (come PDF o immagine) e associato al dipendente per il mese corretto nella sezione .
-2.  **Correzione Prima Nota (P0):** L'utente ha richiesto una revisione completa della logica della Prima Nota, insistendo su regole contabili specifiche e non standard:
-    *   Separare completamente i conti CASSA e BANCA.
-    *   **Logica Invertita:** I corrispettivi devono andare in **AVERE** e tutte le uscite (pagamenti fatture, POS, stipendi) in **DARE**.
-    *   Ogni conto deve avere un proprio saldo progressivo.
-3.  **Correzione Import Bonifici (P1):** La logica di importazione dei bonifici è incoerente e deve essere corretta per associarli correttamente a fatture o stipendi.
+Durante la sessione, le priorità si sono evolute per concentrarsi su:
+1.  **Correzione e Refactoring della Prima Nota (P0):** L'utente ha richiesto una revisione completa della logica contabile con regole non standard:
+    *   Separare completamente i conti CASSA (Contanti) e BANCA (Banca).
+    *   Logica DARE/AVERE invertita: i corrispettivi (incassi) vanno in **AVERE**, e tutte le uscite (pagamenti) in **DARE**.
+    *   Ogni conto deve avere un saldo progressivo che tenga conto del riporto degli anni precedenti.
+2.  **Importazione e Riconciliazione Cedolini Paga (P0):** L'utente ha richiesto una nuova architettura per la gestione dei cedolini, che includesse l'estrazione di dati da PDF, l'importazione da Excel per i dati storici, e un'interfaccia per la riconciliazione manuale dei pagamenti (contanti, bonifico, assegno).
+3.  **Anagrafica Fornitori (P1):** L'utente ha richiesto di correggere i fornitori senza nome importando i dati da un file Excel e di garantire che il metodo di pagamento venga sempre letto dall'anagrafica del fornitore, ignorando quanto specificato nel file XML della fattura.
+4.  **Import Corrispettivi (P1):** L'utente ha segnalato che l'importazione dei file XML dei corrispettivi falliva, segnalando erroneamente i file come duplicati.
 
-PRODUCT REQUIREMENTS:
-- L'applicazione deve essere stabile, senza crash o perdita di dati.
-- La logica di business, in particolare quella contabile (Prima Nota, import, riconciliazione), deve essere accurata e seguire le precise, anche se non convenzionali, direttive dell'utente.
-- Le funzionalità di importazione dati sono critiche e devono essere affidabili.
-- I dati estratti e salvati devono essere corretti e facilmente accessibili nell'interfaccia utente.
-- Ogni modifica deve essere testata end-to-end per garantire stabilità.
+**PRODUCT REQUIREMENTS:**
+-   La logica contabile deve seguire le precise, anche se non convenzionali, direttive dell'utente.
+-   Le funzionalità di importazione dati (cedolini, fornitori, corrispettivi) devono essere affidabili e robuste.
+-   I dati devono essere coerenti tra le varie sezioni (es. il metodo di pagamento di un fornitore deve essere lo stesso ovunque).
+-   L'interfaccia utente deve essere chiara, eliminando sezioni duplicate o confuse (es. Pagina Corrispettivi vs. Prima Nota).
 
 **User's preferred language**: Italiano
 
 **what currently exists?**
-L'agente ha iniziato ad affrontare le nuove, urgenti richieste dell'utente.
-1.  **Import Buste Paga**: Dopo aver ricevuto i file PDF delle buste paga (), l'agente ha analizzato e modificato il parser (). Sono state migliorate le espressioni regolari per estrarre con maggior successo nome, periodo di competenza e importo netto da un formato di cedolino specifico. L'endpoint di upload () è stato modificato per utilizzare questa nuova logica.
-2.  **Import Bonifici**: È stato creato un nuovo router () e un endpoint unificato () per gestire l'upload di file di bonifici in modo più strutturato, anche se la logica di associazione non è ancora completa.
-3.  **Ristrutturazione Prima Nota**: È iniziato un massiccio lavoro di refactoring per soddisfare le richieste dell'utente:
-    *   **Backend ()**: Le funzioni per la creazione di movimenti sono state modificate per accettare un parametro  ( o ) e per applicare la logica DARE/AVERE invertita richiesta dall'utente.
-    *   **Frontend ()**: La pagina è stata modificata per includere un selettore (Tab) per CASSA e BANCA, separando le viste. È stato aggiunto un campo Conto nel form di inserimento manuale.
-4.  **Pulizia Codice**: Sono stati risolti alcuni problemi minori, come la ridefinizione di un endpoint in .
-
-La codebase è in uno stato di transizione, con un tentativo di spostare i file da  a una struttura , causando confusione e percorsi di file inconsistenti.
+L'agente ha completato con successo diverse richieste chiave:
+1.  **Prima Nota**: È stata implementata la logica di separazione tra CASSA e BANCA. È stato aggiunto il calcolo del saldo che include il riporto dall'anno precedente.
+2.  **Cedolini & Riconciliazione**: È stata creata una nuova pagina dedicata () che mostra lo stato di ogni cedolino (Da Pagare, Pagato). È stato creato un endpoint per migrare i pagamenti storici degli stipendi dalla vecchia Prima Nota Salari alla nuova struttura, e la migrazione è stata eseguita con successo (156 cedolini aggiornati).
+3.  **Anagrafica Fornitori**: È stato creato un endpoint per importare/aggiornare i fornitori da un file Excel fornito dall'utente, risolvendo il problema dei fornitori senza nome. La logica di pagamento delle fatture è stata modificata per usare **esclusivamente** il metodo di pagamento definito nell'anagrafica del fornitore.
+4.  **Import Corrispettivi**: Il bug dei duplicati è stato risolto. L'agente ha scoperto che i corrispettivi venivano importati correttamente nella , ma una pagina separata e obsoleta (Corrispettivi) puntava a una collection vuota, creando confusione.
 
 **Last working item**:
--   **Last item agent was working**: L'agente stava lavorando intensamente al refactoring della **Prima Nota** per implementare la logica contabile non standard richiesta dall'utente. Le ultime azioni includevano la modifica del backend () per separare la logica di Cassa e Banca e l'aggiornamento del frontend () per riflettere questi cambiamenti, aggiungendo tab e filtri per i due conti distinti.
+-   **Last item agent was working**: L'utente ha identificato un nuovo bug critico: nella **Prima Nota Cassa** sono presenti fatture che risultano pagate tramite **Banca**. L'agente aveva appena iniziato a investigare questo problema.
 -   **Status**: IN PROGRESS
--   **Agent Testing Done**: N (L'agente ha eseguito solo controlli di linting, ma nessun test funzionale dopo le modifiche).
--   **Which testing method agent to use?**: both (Questa è una modifica critica a una funzionalità core; sono necessari test approfonditi sia per il backend che per il frontend con i rispettivi agenti di test).
--   **User Testing Done**: N
+-   **Agent Testing Done**: N
+-   **Which testing method agent to use?**: backend testing agent (il problema risiede nella logica di registrazione dei pagamenti che non indirizza correttamente il movimento al giusto registro contabile).
+-   **User Testing Done**: Y (L'utente ha rilevato l'incongruenza).
 
 **All Pending/In progress Issue list**:
--   **Issue 1**: (P0) Completare il refactoring della Prima Nota.
--   **Issue 2**: (P0) Finalizzare e testare l'import delle Buste Paga.
--   **Issue 3**: (P0) Risolvere l'errore generico  durante l'import di altri tipi di file (es. estratto conto).
--   **Issue 4**: (P1) Logica di estrazione dei costi per la flotta auto non funzionante.
--   **Issue 5**: (P1) Perdita dei dati relativi agli IBAN multipli per i dipendenti.
--   **Issue 6**: (P2) Il metodo di pagamento dei fornitori deve essere letto dall'anagrafica.
+-   **Issue 1**: (P0) Le fatture pagate tramite Banca vengono registrate erroneamente nella Prima Nota Cassa.
+-   **Issue 2**: (P1) Errore generico  durante l'import di altri tipi di file (es. estratto conto), menzionato nella sessione precedente ma non affrontato.
+-   **Issue 3**: (P1) Logica di estrazione dei costi per la flotta auto non funzionante.
+-   **Issue 4**: (P1) Perdita dei dati relativi agli IBAN multipli per i dipendenti.
+-   **Issue 5**: (P2) Mancano i pulsanti Modifica ed Elimina per la gestione degli acconti dei dipendenti.
 
 **Issues Detail**:
--   **Issue 1: Refactoring Prima Nota**
-    -   **Attempted fixes**: L'agente ha modificato  per separare i conti Cassa/Banca e ha iniziato a modificare  per creare viste a tab. La logica invertita DARE/AVERE è stata parzialmente implementata.
+-   **Issue 1: Pagamenti Banca in Prima Nota Cassa**
+    -   **Attempted fixes**: Nessuno. L'agente ha appena riconosciuto il problema.
     -   **Next debug checklist**:
-        1.  Verificare che **tutti** i tipi di movimento (corrispettivi, pagamenti, POS, stipendi) vengano registrati nel conto corretto (Cassa/Banca) e con la giusta imputazione DARE/AVERE secondo le regole dell'utente.
-        2.  Implementare il calcolo del **saldo progressivo** separatamente per Cassa e Banca nel backend e visualizzarlo nel frontend.
-        3.  Testare il flusso end-to-end: creazione, modifica ed eliminazione di un movimento per Cassa e per Banca.
-        4.  Rivedere  per assicurarsi che le automazioni rispettino la nuova logica.
-    -   **Why fix this issue and what will be achieved with the fix?**: È la richiesta più recente e insistente dell'utente. Risolverla è cruciale per ripristinare la fiducia e fornire la funzionalità contabile di base come desiderato.
+        1.  Rivedere l'endpoint che gestisce il pagamento delle fatture (probabilmente  in ).
+        2.  Verificare la funzione  per assicurarsi che, quando il metodo di pagamento è banca o bonifico, il movimento venga salvato **esclusivamente** nella collection .
+        3.  Controllare che non ci siano flussi di codice alternativi (es. da ) che registrino pagamenti in cassa per errore.
+    -   **Why fix this issue and what will be achieved with the fix?**: È un errore contabile critico che vanifica la separazione tra Cassa e Banca, una delle richieste fondamentali dell'utente.
     -   **Status**: IN PROGRESS
-    -   **Is recurring issue?**: Y
-    -   **Should Test frontend/backend/both after fix?**: Both
-    -   **Blocked on other issue**: No.
-
--   **Issue 2: Import Buste Paga**
-    -   **Attempted fixes**: Il parser  è stato migliorato con regex più specifiche. L'endpoint di upload è stato modificato.
-    -   **Next debug checklist**:
-        1.  Eseguire un test di upload completo usando uno dei PDF forniti dall'utente ().
-        2.  Verificare che i dati estratti (nome, periodo, netto) vengano salvati correttamente nella collection  (o simile).
-        3.  Assicurarsi che il PDF originale venga salvato e collegato al record del cedolino nel database.
-        4.  Controllare che i dati importati siano visibili correttamente nella pagina  o nella scheda del dipendente.
-        5.  Gestire gli errori in modo che l'interfaccia non rimanga bloccata in caricamento.
-    -   **Why fix this issue and what will be achieved with the fix?**: Funzionalità core richiesta dall'utente, attualmente bloccata. Permetterà di automatizzare l'inserimento dei dati salariali.
-    -   **Status**: IN PROGRESS
-    -   **Is recurring issue?**: Y
-    -   **Should Test frontend/backend/both after fix?**: Both
-    -   **Blocked on other issue**: No.
-
--   **Issue 3: Errore Import File Generico**
-    -   **Attempted fixes**: L'agente si è concentrato sull'import buste paga, ma il problema originale sull'estratto conto non è stato analizzato a fondo.
-    -   **Next debug checklist**:
-        1.  Chiedere all'utente il file  che causa l'errore (se diverso da quelli già forniti).
-        2.  Aggiungere logging dettagliato all'endpoint .
-        3.  Riprodurre l'errore in un test isolato per identificare l'eccezione esatta.
-    -   **Why fix this issue and what will be achieved with the fix?**: L'import dei dati è una funzionalità core per l'applicazione.
-    -   **Status**: NOT STARTED
-    -   **Is recurring issue?**: Y
+    -   **Is recurring issue?**: N
     -   **Should Test frontend/backend/both after fix?**: Backend
-    -   **Blocked on other issue**: No.
 
 **In progress Task List**:
--   **Task 1: Completare Refactoring Prima Nota**
-    -   **Where to resume**: Finalizzare le modifiche su  e . Implementare il saldo progressivo e testare l'intero flusso.
-    -   **What will be achieved with this?**: Una Prima Nota funzionante secondo le specifiche esatte dell'utente, con conti Cassa e Banca separati e logica DARE/AVERE corretta.
-    -   **Status**: IN PROGRESS
-    -   **Should Test frontend/backend/both after fix?**: Both
-    -   **Blocked on something**: No.
-
--   **Task 2: Finalizzare Import Buste Paga**
-    -   **Where to resume**: Verificare il salvataggio dei dati e del file PDF dopo l'upload e il parsing. Garantire che l'interfaccia utente mostri i risultati correttamente.
-    -   **What will be achieved with this?**: L'utente potrà importare le buste paga, con estrazione automatica dei dati chiave e archiviazione del documento.
-    -   **Status**: IN PROGRESS
-    -   **Should Test frontend/backend/both after fix?**: Both
+-   **Task 1: Riorganizzare la pagina Corrispettivi (Opzione 2)**
+    -   **Where to resume**: L'utente ha scelto l'opzione 2: trasformare la pagina Corrispettivi in una vista filtrata della Prima Nota Cassa. Bisogna modificare il componente frontend della pagina Corrispettivi affinché carichi i dati dall'endpoint , applicando un filtro per .
+    -   **What will be achieved with this?**: Eliminerà la confusione attuale e renderà la pagina Corrispettivi un utile strumento di analisi dettagliata (es. con totali IVA, grafici, etc.), invece di una pagina vuota e inutile.
+    -   **Status**: NOT STARTED
+    -   **Should Test frontend/backend/both after fix?**: Frontend
     -   **Blocked on something**: No.
 
 **Upcoming and Future Tasks**
 -   **Upcoming Tasks**:
     -   (P1) Correggere la logica di estrazione dei costi accessori per la **Flotta Auto** ().
     -   (P1) Ripristinare la funzionalità e i dati persi per gli **IBAN multipli** dei dipendenti ().
-    -   (P2) Implementare la logica per usare il  dalla scheda fornitore in tutto il ciclo passivo.
-    -   (P3) Aggiungere i pulsanti Modifica ed Elimina per la gestione degli acconti dei dipendenti.
+    -   (P2) Implementare i pulsanti Modifica ed Elimina per gli acconti dei dipendenti.
 -   **Future Tasks**:
-    -   Migrazione delle anagrafiche  e .
+    -   Finalizzare l'importazione completa dei cedolini (upload PDF con salvataggio file).
+    -   Unificare le anagrafiche  e .
     -   Integrazione Google Calendar.
     -   Dashboard Analytics.
     -   Report PDF via email.
 
 **Completed work in this session**
--   **Refactoring Parser Buste Paga**: Modificato  per estrarre correttamente i dati dai PDF forniti dall'utente.
--   **Inizio Refactoring Prima Nota**: Modificati  e  per separare i conti CASSA/BANCA e iniziare ad applicare la logica DARE/AVERE richiesta.
--   **Creazione Endpoint Import Bonifici**: Creato il file  per unificare la logica di importazione dei bonifici.
--   **Fix Minori**: Risolta una ridefinizione di endpoint in .
--   **Installazione Dipendenze**: Installato  per gestire i file archivio forniti dall'utente.
+-   **Refactoring Prima Nota**: Completata la separazione Cassa/Banca e implementato il saldo con riporto dall'anno precedente.
+-   **Creazione Pagina Riconciliazione Cedolini**: Creata la nuova pagina  con stati di pagamento e modale per l'inserimento manuale.
+-   **Migrazione Dati Stipendi**: I pagamenti storici degli stipendi sono stati migrati con successo nella nuova struttura dei cedolini.
+-   **Fix Anagrafica Fornitori**: Corretti i fornitori senza nome tramite import da Excel e imposto l'uso del metodo di pagamento solo dall'anagrafica.
+-   **Fix Import Corrispettivi**: Risolto il problema dei duplicati, chiarendo che i dati venivano importati correttamente ma visualizzati nel posto sbagliato.
+-   **Fix Errore Pagamento Fatture (405)**: Aggiunto l'endpoint  mancante per registrare il pagamento di una fattura dalla dashboard.
 
 **Earlier issues found/mentioned but not fixed**
--   **Sincronizzazione ID Fattura su Assegni**: La logica per collegare un assegno a una fattura è incompleta o fragile.
+-   Sincronizzazione ID Fattura su Assegni.
+-   Inconsistenza nella visualizzazione delle fatture ().
 
 **Known issue recurrence from previous fork**
 -   Nessuna.
@@ -128,134 +90,77 @@ La codebase è in uno stato di transizione, con un tentativo di spostare i file 
 
 
 **Key Technical Concepts**
--   **PDF Parsing (Regex-based)**: Estrazione di dati strutturati da testo di PDF tramite espressioni regolari. Approccio potente ma fragile, sensibile a minimi cambi di layout.
--   **Business Logic Refactoring**: Modifica profonda della logica contabile per adattarla a regole non standard definite direttamente dall'utente.
--   **Codebase Migration (Incomplete)**: Tentativo di spostare il codice da una cartella  a , creando inconsistenza e confusione nei percorsi dei file. L'agente ha cercato file in  che si trovavano ancora in .
--   **Asynchronous Import Jobs**: Utilizzo di un sistema di job (es. , ) per gestire operazioni di lunga durata come l'importazione di file multipli.
+-   **Refactoring Logica di Business**: Modifiche profonde e non standard alla logica contabile su richiesta esplicita dell'utente.
+-   **Migrazione Dati**: Creazione di endpoint una tantum per spostare dati da una struttura obsoleta a una nuova (es.  -> ).
+-   **Risoluzione Conflitti Dati**: La fonte di verità per il metodo di pagamento è stata fissata all'anagrafica fornitore, risolvendo conflitti con i dati presenti nei file XML.
+-   **Codebase Inconsistente**: Il codice è ancora diviso tra  e . I file corrotti con Null Byte sono apparsi più volte.
 
 **key DB schema**
--   ** / **: Le collections  sono state di fatto separate logicamente in due conti. Potrebbe essere necessario creare una collection separata o usare un campo  in una collection unificata.
--   ****: Collection dove vengono (o dovrebbero essere) salvati i dati estratti dalle buste paga importate.
--   ****: Collection per i file di bonifici importati, in attesa della logica di associazione.
+-   ** / **: Collection separate per i due registri.
+-   ****: Collection centrale per la gestione delle buste paga, ora arricchita con stato, importo pagato, e metodo di pagamento.
+-   ****: Anagrafica fornitori, fonte di verità per il metodo di pagamento.
+-   ****: Collection obsoleta. I nuovi dati vengono inseriti in .
 
 **changes in tech stack**
--   ****: Aggiunto al sistema tramite apt 2.6.1 (arm64)
-Usage: apt-get [options] command
-       apt-get [options] install|remove pkg1 [pkg2 ...]
-       apt-get [options] source pkg1 [pkg2 ...]
-
-apt-get is a command line interface for retrieval of packages
-and information about them from authenticated sources and
-for installation, upgrade and removal of packages together
-with their dependencies.
-
-Most used commands:
-  update - Retrieve new lists of packages
-  upgrade - Perform an upgrade
-  install - Install new packages (pkg is libc6 not libc6.deb)
-  reinstall - Reinstall packages (pkg is libc6 not libc6.deb)
-  remove - Remove packages
-  purge - Remove packages and config files
-  autoremove - Remove automatically all unused packages
-  dist-upgrade - Distribution upgrade, see apt-get(8)
-  dselect-upgrade - Follow dselect selections
-  build-dep - Configure build-dependencies for source packages
-  satisfy - Satisfy dependency strings
-  clean - Erase downloaded archive files
-  autoclean - Erase old downloaded archive files
-  check - Verify that there are no broken dependencies
-  source - Download source archives
-  download - Download the binary package into the current directory
-  changelog - Download and display the changelog for the given package
-
-See apt-get(8) for more information about the available commands.
-Configuration options and syntax is detailed in apt.conf(5).
-Information about how to configure sources can be found in sources.list(5).
-Package and version choices can be expressed via apt_preferences(5).
-Security details are available in apt-secure(8).
-                                        This APT has Super Cow Powers. per poter estrarre i file  forniti dall'utente.
+- Nessuna.
 
 **All files of reference**
--    (Refactoring logica DARE/AVERE)
--    (Refactoring UI per Cassa/Banca)
--    (Nuova logica di parsing per le buste paga)
--    (Endpoint per l'upload delle buste paga)
--    (Nuovo endpoint per import bonifici)
--    (Gestione dati cedolini)
--   ,  (Artefatti utente contenenti i file da importare)
+-   
+-   
+-   
+-   
+-    (File fornito dall'utente per l'importazione dei fornitori).
 
 **Areas that need refactoring**
--   **Struttura del Progetto**: La coesistenza di  e  deve essere risolta. È necessario decidere una struttura unica (preferibilmente /) e spostare tutti i file in modo coerente per evitare confusione e errori nei percorsi.
--   **PDF Parsing**: La logica basata su regex è estremamente fragile. Si dovrebbe considerare l'uso di librerie più robuste o suggerire all'utente un formato di input più strutturato (es. XML, CSV) se possibile. Un'alternativa, come suggerito dall'agente, potrebbe essere l'integrazione di un servizio OCR, ma questo rappresenta una nuova feature.
+-   **Struttura del Progetto**: È necessario finalizzare la migrazione da  a  per migliorare la manutenibilità.
+-   **Collection **: Dovrebbe essere rimossa o archiviata per evitare confusione, dato che i dati ora risiedono in .
 
 **key api endpoints**
--   : Endpoint per il caricamento delle buste paga.
--   : Nuovo endpoint unificato per l'importazione di bonifici.
--    & : Nuovi endpoint (o endpoint modificati) per creare movimenti nei rispettivi conti.
--   : Per recuperare l'elenco dei cedolini importati.
+-   : Endpoint (già eseguito) per la migrazione dati.
+-   : Per importare/aggiornare fornitori da file Excel.
+-   : Nuovo endpoint per segnare una fattura come pagata.
+-   : Endpoint che importa i corrispettivi direttamente nella prima nota cassa.
 
 **Critical Info for New Agent**
--   **User Volatility**: L'utente è estremamente frustrato, impaziente e usa un linguaggio offensivo. È imperativo rimanere calmi, professionali e focalizzati esclusivamente sugli aspetti tecnici. Le comunicazioni devono essere concise, dirette e orientate alla soluzione.
--   **Seguire le Direttive dell'Utente alla Lettera**: L'utente ha imposto una logica contabile per la Prima Nota che è invertita rispetto agli standard. Questa logica deve essere implementata esattamente come richiesto, senza discussioni sulla sua correttezza contabile. La priorità è soddisfare la richiesta.
--   **Instabilità della Codebase**: La struttura dei file è un disastro. Prima di fare modifiche importanti, è consigliabile chiarire la struttura del progetto (es. spostare tutto in  e aggiornare le configurazioni di  e gli import).
--   **Priorità Immediate**: Le priorità assolute sono la **Prima Nota** e l'**Import Buste Paga**. Non passare ad altri bug (anche se critici) finché non ci sono progressi significativi su questi due punti.
+-   **L'utente ha ragione**: L'ultima segnalazione dell'utente (pagamenti banca in cassa) è corretta. È un bug critico da risolvere con priorità P0.
+-   **Stick to the Plan**: L'agente precedente si è perso più volte, frustrando l'utente. Segui il piano, affronta un problema alla volta e comunica in modo chiaro.
+-   **Fonte di Verità**: Il metodo di pagamento di un fornitore DEVE venire solo dall'anagrafica. I dati XML della fattura vanno ignorati per questa informazione.
+-   **Architettura Corrispettivi**: I corrispettivi vengono importati in . La pagina  deve essere modificata per mostrare questi dati, non deve puntare a una collection separata.
 
 **documents and test reports created in this job**
--   Nessuno.
+-    è stato aggiornato più volte.
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **Ok**: Conferma di procedere con il piano dell'agente.
-2.  **Ogni cedolino va agganciato...**: L'utente specifica che ogni cedolino deve essere salvato (preferibilmente come PDF) e allegato al mese di riferimento nella scheda del dipendente. Ribadisce di usare la logica della ragioneria generale per la Prima Nota e si aspetta che l'import funzioni senza errori.
-3.  **Allora per la contabilità generale...**: L'utente chiede di applicare la ragioneria generale per DARE/AVERE. Per i cedolini, chiede di leggere solo nome, cognome, periodo e importo netto, e di salvare il file come immagine allegata al mese del dipendente.
-4.  **Inverti pure i corrispettivi...**: L'utente conferma la logica contabile invertita (corrispettivi in AVERE, uscite in DARE) e chiede di applicarla. Critica l'approccio di parsing dei PDF e suggerisce di usare la tecnologia di Acrobat Reader come fa TeamSystem, che secondo lui non sbaglia mai.
-5.  **Non hai capito ancora un c****...**: L'utente, molto arrabbiato, spiega di nuovo che Cassa e Banca devono essere separate, ognuna con il proprio DARE/AVERE e saldo. Le entrate vanno in una colonna, le uscite in un'altra.
-6.  **Lascia perdere corregge la prima nota...**: L'utente, frustrato, dice all'agente di lasciar perdere tutto il resto e di concentrarsi solo sulla correzione della Prima Nota.
-7.  **Hai finito? Cosa stai facendo? M****...**: L'utente esplode di rabbia, lamentando errori ovunque, pagine duplicate, e funzionalità mancanti. Ordina di ripristinare la Prima Nota con Cassa/Banca e i saldi progressivi.
-8.  **vespa contiene buste paghe...**: L'utente conferma che il file  contiene le buste paga e che i bonifici vanno associati a fatture o dipendenti. Conferma di voler correggere anche l'import dei bonifici.
-9.  **rileggi questo e studia anche lo zip...**: L'utente carica un altro file () e ordina all'agente di correggere l'import dei documenti.
-10. **punto 1 si...**: L'utente risponde a una domanda dell'agente, confermando che il mese/anno è un dato da estrarre dal PDF, insieme all'acconto e al netto finale da associare al dipendente.
+10. L'agente chiede se va bene unificare le viste dei corrispettivi.
+9.  **Utente**: opzione 2 ma in prima nota cassa ci sono le fatture pagate per banca non stai filtrando il metodo pagamento associato ai dipendenti - **Segnalazione del bug critico.**
+8.  **Agente**: Riconosce il bug e promette di correggerlo.
+7.  **Utente**: Chiede perché la pagina corrispettivi esiste.
+6.  **Agente**: Spiega che i dati sono in Prima Nota e propone di rimuovere la pagina o trasformarla in una vista filtrata.
+5.  **Utente**: corrispettivi non importa ancora duplicati - **Segnalazione (errata) di un bug.**
+4.  **Agente**: Spiega che la tech stack attuale è adeguata e chiede se l'utente ha riprovato a caricare i file.
+3.  **Utente**: Chiede un confronto tra C++, Java e Python per il progetto.
+2.  **Agente**: Chiede all'utente di riprovare a caricare i file XML dopo aver eliminato i vecchi record dal DB.
+1.  **Utente**: Chiede di eliminare e ricaricare, ma sottolinea che il sistema dovrebbe gestire i duplicati correttamente.
 
 **Project Health Check:**
 -   **Broken**:
-    -   La funzionalità **Prima Nota** è attualmente non funzionante a causa del refactoring in corso.
-    -   L'**importazione di file** (buste paga, estratto conto) è ancora inaffidabile e parzialmente implementata.
+    -   La logica di registrazione dei pagamenti è parzialmente rotta, mescolando movimenti di cassa e banca.
 -   **Technical Debt**:
-    -   **High**: La struttura incoerente delle directory ( vs ) è una fonte di errori e confusione.
-    -   **High**: La logica di parsing dei PDF basata su regex è estremamente fragile e destinata a fallire con layout diversi.
-    -   **Medium**: La coesistenza di due anagrafiche fornitori ( e ) non è stata ancora risolta.
+    -   **High**: La struttura incoerente delle directory ( vs ).
+    -   **Medium**: La coesistenza di una collection  inutilizzata crea confusione.
 
 **3rd Party Integrations**
--    (fitz)
--   
--   
--   
--   
--   
------
-
-WeasyPrint could not import some external libraries. Please carefully follow the installation steps before reporting an issue:
-https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#installation
-https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#troubleshooting 
-
------
--   Telegram Bot API
--   usage: websockets [--version | <uri>]
--    (aggiunto in questa sessione)
+-   Nessuna nuova integrazione in questa sessione.
 
 **Testing status**
 -   **Testing agent used after significant changes**: NO
 -   **Troubleshoot agent used after agent stuck in loop**: NO
 -   **Test files created**: Nessuno.
--   **Known regressions**: La Prima Nota è stata intenzionalmente rotta per il refactoring.
+-   **Known regressions**: Un nuovo bug critico è stato introdotto o scoperto: i pagamenti bancari vengono registrati in cassa.
 
 **Credentials to test flow:**
-Nessuna credenziale specifica fornita. I test di importazione devono usare i file caricati dall'utente (, ).
+Nessuna credenziale specifica necessaria.
 
 **What agent forgot to execute**
--   L'agente, sotto la pressione dell'utente, ha deviato completamente dal piano iniziale e non ha affrontato nessuno dei bug critici e delle richieste pendenti dalla precedente sessione, tra cui:
-    -   Errore dati **Flotta Auto**.
-    -   Perdita dati **IBAN multipli** dei dipendenti.
-    -   Utilizzo del **metodo di pagamento** dalla scheda fornitore.
-    -   Pulsanti **Modifica/Elimina** per gli acconti.
-    -   Inconsistenza nella visualizzazione delle fatture ().
--   La soluzione per l'import delle buste paga è incompleta: manca la parte di salvataggio del file e la verifica della visualizzazione dei dati nell'interfaccia utente.</analysis>
+-   L'agente non ha ancora affrontato le problematiche pendenti dalla sessione precedente, come la **Flotta Auto** e gli **IBAN multipli**, a causa delle nuove e urgenti richieste dell'utente.
+-   Non ha completato il flusso end-to-end dell'importazione dei cedolini (manca il salvataggio del file PDF).</analysis>
