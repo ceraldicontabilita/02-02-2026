@@ -22,6 +22,18 @@ Pagina `/chiusura-esercizio` con wizard guidato:
 - Selettore anno e pulsante Aggiorna
 - Menu laterale aggiornato in Contabilità
 
+### Riconoscimento Intelligente Documenti Email (NUOVO - 17 Gen)
+Migliorato il sistema di download email per gestire:
+- **File con stesso nome ma periodi diversi** (es. "estratto_conto.pdf" ogni mese)
+- **Estrazione automatica del periodo** da PDF (cedolini, F24, estratti conto)
+- **Identificatore univoco periodo** (YYYY_MM) per evitare falsi duplicati
+- Pattern supportati:
+  - "GENNAIO 2026" (mese italiano)
+  - "02/2026" (formato MM/AAAA)
+  - "Dal 01/01/2026 al 31/01/2026" (range date)
+  - "Scadenza 16/02/2026" (F24)
+  - "15 gen 2026" (data abbreviata)
+
 ### CORREZIONE MASSIVA Backend (16 Gennaio)
 
 **229+ insert_one corretti** in 84 file Python:
