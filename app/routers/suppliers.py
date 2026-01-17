@@ -383,12 +383,14 @@ async def list_suppliers(
     suppliers_map = {}  # Usa piva come chiave per deduplicare
     
     # 1. Estrai fornitori unici da invoices (fonte principale)
-    # USA supplier_vat come fonte primaria (campo standard delle fatture XML)
-    # IGNORA fornitore.partita_iva se diverso da supplier_vat (potrebbe essere errato)
+    # Usa supplier_vat come fonte primaria, con fallback a fornitore.partita_iva
     pipeline = [
-        {"$match": {"supplier_vat": {"$exists": True, "$ne": None, "$ne": ""}}},
+        {"$match": {"$or": [
+            {"supplier_vat": {"$exists": True, "$ne": None, "$ne": ""}},
+            {"fornitore.partita_iva": {"$exists": True, "$ne": None, "$ne": ""}}
+        ]}},
         {"$group": {
-            "_id": "$supplier_vat",
+            "_id": {"$ifNull": ["$supplier_vat", "$fornitore.partita_iva"]},
             "supplier_name": {"$first": "$supplier_name"},
             "fornitore": {"$first": "$fornitore"},
             "fatture_count": {"$sum": 1},
@@ -416,10 +418,6 @@ async def list_suppliers(
             fornitore.get("ragione_sociale") or 
             ""
         )
-        
-        # SKIP se non ha nome - fornitore incompleto
-        if not nome.strip():
-            continue
             
         suppliers_map[piva] = {
             "id": f"inv_{piva}",
