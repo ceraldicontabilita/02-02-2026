@@ -34,7 +34,16 @@ async def list_employees(skip: int = 0, limit: int = 10000) -> List[Dict[str, An
                 emp["netto"] = latest.get("netto_mese", latest.get("retribuzione_netta", 0))
                 emp["lordo"] = latest.get("lordo", latest.get("retribuzione_lorda", 0))
                 emp["ore_ordinarie"] = latest.get("ore_lavorate", latest.get("ore_ordinarie", 0))
-                emp["ultimo_periodo"] = latest.get("periodo", f"{latest.get('mese', 0):02d}/{latest.get('anno', 0)}")
+                # Handle mese/anno as strings or integers
+                mese_val = latest.get('mese', 0)
+                anno_val = latest.get('anno', 0)
+                try:
+                    mese_int = int(mese_val) if mese_val else 0
+                    anno_int = int(anno_val) if anno_val else 0
+                    fallback_periodo = f"{mese_int:02d}/{anno_int}"
+                except (ValueError, TypeError):
+                    fallback_periodo = f"{mese_val}/{anno_val}"
+                emp["ultimo_periodo"] = latest.get("periodo", fallback_periodo)
                 if not emp.get("role") or emp.get("role") == "-":
                     emp["role"] = latest.get("qualifica", emp.get("role", ""))
         
