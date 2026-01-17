@@ -216,16 +216,22 @@ def parse_payslip_simple(pdf_bytes: bytes) -> List[Dict[str, Any]]:
             logger.info(f"Periodo estratto: {periodo_str}")
             
             # Analizza ogni pagina per trovare dipendenti
+            # Usa nome UPPERCASE per evitare duplicati da case diverso
             processed_names = set()
             
             for page_num, page_text in enumerate(page_texts):
                 nome = extract_nome(page_text)
                 
-                if not nome or nome in processed_names:
+                if not nome:
+                    continue
+                
+                # Normalizza nome per confronto (uppercase)
+                nome_key = nome.upper().strip()
+                if nome_key in processed_names:
                     continue
                 
                 # Evita di processare lo stesso nome due volte
-                processed_names.add(nome)
+                processed_names.add(nome_key)
                 
                 # Estrai CF e netto dalla pagina
                 cf = extract_codice_fiscale(page_text)
@@ -239,11 +245,13 @@ def parse_payslip_simple(pdf_bytes: bytes) -> List[Dict[str, Any]]:
                             break
                 
                 if netto > 0:
-                    logger.info(f"Trovato: {nome} - {periodo_str} - €{netto:.2f}")
+                    # Normalizza nome in Title Case
+                    nome_normalized = nome.title()
+                    logger.info(f"Trovato: {nome_normalized} - {periodo_str} - €{netto:.2f}")
                     results.append({
-                        "nome_completo": nome,
-                        "cognome": nome.split()[0] if nome else "",
-                        "nome": " ".join(nome.split()[1:]) if nome and len(nome.split()) > 1 else "",
+                        "nome_completo": nome_normalized,
+                        "cognome": nome_normalized.split()[0] if nome_normalized else "",
+                        "nome": " ".join(nome_normalized.split()[1:]) if nome_normalized and len(nome_normalized.split()) > 1 else "",
                         "codice_fiscale": cf or "",
                         "periodo": periodo_str,
                         "mese": str(mese) if mese else "",
