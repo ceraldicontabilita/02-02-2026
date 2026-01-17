@@ -77,34 +77,41 @@
 - [ ] Export ricette in PDF
 - [ ] Filtro per allergeni
 
-### Riconciliazione Avanzata
-- [ ] Dashboard statistiche riconciliazione
-- [ ] Alert per fatture non riconciliate > 30 giorni
-- [ ] Report mensile automatico
-
-### Operazioni da Confermare
-- [ ] Notifiche push/email per nuove operazioni
-- [ ] Bulk confirm per operazioni simili
-- [ ] Storico conferme con audit trail
-
 ---
 
 ## 🟢 P2 - Media Priorità
 
-### Performance
-- [ ] Paginazione lazy load per liste lunghe
-- [ ] Cache lato client per dati statici
-- [ ] Ottimizzazione query MongoDB (indici)
+### Svuotamento PDF Residui
+- [ ] Rimuovere file PDF da `/app/uploads`
+- [ ] Rimuovere file PDF da `/app/tmp`
+- [ ] Liberare spazio disco
 
-### UX/UI
-- [ ] Dark mode toggle
-- [ ] Shortcuts tastiera
-- [ ] Tour guidato per nuovi utenti
+### Import Cedolini da PDF
+- [ ] Estrazione OCR dati da cedolini PDF
+- [ ] Parsing strutturato informazioni
+- [ ] Integrazione con sistema esistente
 
-### Reportistica
-- [ ] Export Excel per tutte le sezioni
-- [ ] Dashboard KPI personalizzabile
-- [ ] Grafici interattivi
+### Unificazione Collection
+- [ ] Merge `fornitori` con `suppliers`
+- [ ] Aggiornare tutti gli endpoint
+- [ ] Migrare dati esistenti
+
+### Refactoring Responsive (IN PAUSA)
+Rendere l'applicazione adattiva per PC, tablet (12") e smartphone (6").
+
+**Pagine da convertire** (in ordine di priorità):
+1. [ ] Dashboard principale (`/`)
+2. [ ] ArchivioBonifici.jsx
+3. [ ] RicettarioDinamico.jsx *(parzialmente fatto)*
+4. [ ] HACCPTemperature.jsx
+5. [ ] HACCPSanificazione.jsx
+6. [ ] HACCPNonConformita.jsx
+7. [ ] Tutte le altre pagine ERP
+
+**Pattern da seguire**:
+- Usare hook `useResponsive.js`
+- Riferimento: `LibroAllergeni.jsx` (completato)
+- Stili inline condizionali basati su viewport
 
 ---
 
