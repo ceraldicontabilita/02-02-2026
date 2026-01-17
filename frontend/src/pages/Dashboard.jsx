@@ -1243,7 +1243,7 @@ function ScadenzeWidget({ scadenze }) {
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: 12,
+                gap: 10,
                 padding: '10px 12px',
                 background: colors.bg,
                 borderRadius: 8,
@@ -1252,21 +1252,39 @@ function ScadenzeWidget({ scadenze }) {
             >
               <span style={{ fontSize: 18 }}>{getTipoIcon(s.tipo)}</span>
               <div style={{ flex: 1, minWidth: 0 }}>
+                {/* Tipo e numero documento */}
                 <div style={{ 
-                  fontWeight: '500', 
+                  fontWeight: '600', 
                   fontSize: 13,
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis'
+                  color: '#1e293b',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6
                 }}>
-                  {s.descrizione}
+                  <span>{s.tipo}</span>
+                  {s.numero_fattura && <span style={{ color: '#3b82f6' }}>#{s.numero_fattura}</span>}
                 </div>
+                {/* Nome fornitore */}
+                {s.fornitore && (
+                  <div style={{ 
+                    fontSize: 12,
+                    color: '#64748b',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    maxWidth: 180
+                  }}>
+                    {s.fornitore}
+                  </div>
+                )}
+                {/* Importo */}
                 {s.importo > 0 && (
-                  <div style={{ fontSize: 12, color: colors.text, fontWeight: 'bold' }}>
+                  <div style={{ fontSize: 13, color: colors.text, fontWeight: 'bold' }}>
                     {formatEuro(s.importo)}
                   </div>
                 )}
               </div>
+              {/* Data e giorni */}
               <div style={{ textAlign: 'right', flexShrink: 0 }}>
                 <div style={{ fontSize: 12, fontWeight: 'bold', color: colors.text }}>
                   {formatDate(s.data)}
@@ -1277,6 +1295,52 @@ function ScadenzeWidget({ scadenze }) {
                    s.giorni_mancanti < 0 ? 'Scaduta' :
                    `${s.giorni_mancanti}g`}
                 </div>
+              </div>
+              {/* Pulsanti azioni */}
+              <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+                {/* Pulsante Vedi (solo per fatture) */}
+                {(s.fattura_id || s.source === 'fattura') && (
+                  <a
+                    href={`/api/fatture-ricevute/fattura/${s.fattura_id || s.id}/view-assoinvoice`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      padding: '4px 8px',
+                      background: '#3b82f6',
+                      color: 'white',
+                      borderRadius: 4,
+                      fontSize: 11,
+                      fontWeight: 600,
+                      textDecoration: 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 3
+                    }}
+                    title="Visualizza documento"
+                  >
+                    📄
+                  </a>
+                )}
+                {/* Pulsante Paga */}
+                <button
+                  onClick={() => setPagaModal(s)}
+                  style={{
+                    padding: '4px 8px',
+                    background: '#10b981',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: 4,
+                    fontSize: 11,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 3
+                  }}
+                  title="Registra pagamento"
+                >
+                  💰
+                </button>
               </div>
             </div>
           );
