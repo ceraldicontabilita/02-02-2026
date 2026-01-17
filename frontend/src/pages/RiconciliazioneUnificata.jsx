@@ -7,6 +7,35 @@ import { ExportButton } from '../components/ExportButton';
 import { PageInfoCard } from '../components/PageInfoCard';
 
 /**
+ * Formatta una data in formato italiano DD/MM/YY
+ */
+const formatDateIT = (dateStr) => {
+  if (!dateStr) return '-';
+  try {
+    // Gestisce formati: YYYY-MM-DD, DD/MM/YYYY, etc.
+    let d = new Date(dateStr);
+    if (isNaN(d.getTime())) {
+      // Prova formato DD/MM/YYYY
+      const parts = dateStr.split(/[/-]/);
+      if (parts.length === 3) {
+        if (parts[0].length === 4) {
+          d = new Date(parts[0], parseInt(parts[1]) - 1, parts[2]);
+        } else {
+          d = new Date(parts[2], parseInt(parts[1]) - 1, parts[0]);
+        }
+      }
+    }
+    if (isNaN(d.getTime())) return dateStr;
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = String(d.getFullYear()).slice(-2);
+    return `${day}/${month}/${year}`;
+  } catch {
+    return dateStr;
+  }
+};
+
+/**
  * RICONCILIAZIONE UNIFICATA
  * 
  * Una sola pagina smart con:
