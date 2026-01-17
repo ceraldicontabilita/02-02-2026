@@ -40,12 +40,20 @@ export default function ArchivioFatture() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { anno } = useAnnoGlobale(); // Usa anno globale dalla sidebar
   
+  // Tab attivo
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'archivio');
+  
   const [fatture, setFatture] = useState([]);
   const [fornitori, setFornitori] = useState([]);
   const [statistiche, setStatistiche] = useState(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [uploadResult, setUploadResult] = useState(null);
+  
+  // Dati per Pipeline e Scadenze
+  const [pipelineStats, setPipelineStats] = useState(null);
+  const [scadenze, setScadenze] = useState([]);
+  const [scadenzeStats, setScadenzeStats] = useState(null);
   
   // Filtri (anno viene dal contesto globale)
   const [mese, setMese] = useState(searchParams.get('mese') || '');
