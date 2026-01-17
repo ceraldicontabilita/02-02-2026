@@ -399,7 +399,7 @@ async def conferma_cedolino(stima: CedolinoStima) -> Dict[str, Any]:
 
 
 @router.get("/lista/{anno}/{mese}")
-async def lista_cedolini(anno: int, mese: int) -> List[Dict[str, Any]]:
+async def lista_cedolini_mese(anno: int, mese: int) -> List[Dict[str, Any]]:
     """Lista cedolini per mese con informazioni sui bonifici associati"""
     db = Database.get_db()
     
