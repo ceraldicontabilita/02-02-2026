@@ -739,13 +739,14 @@ async def analizza_estratto_conto_batch(limit: int = 100, solo_non_riconciliati:
     assegni = await db.assegni.find({}, {"_id": 0}).to_list(1000)
     assegni_map = {a.get("numero", ""): a for a in assegni}
     
-    # Pre-carica fatture recenti (ultimi 6 mesi)
+    # Pre-carica fatture recenti (ultimi 3 mesi - OTTIMIZZATO per velocità)
     from datetime import datetime, timedelta
-    data_limite = (datetime.now() - timedelta(days=180)).strftime("%Y-%m-%d")
+    data_limite = (datetime.now() - timedelta(days=90)).strftime("%Y-%m-%d")
     fatture = await db.invoices.find(
         {"invoice_date": {"$gte": data_limite}},
-        {"_id": 0}
-    ).to_list(5000)
+        {"_id": 0, "id": 1, "invoice_number": 1, "supplier_name": 1, "supplier_vat": 1, 
+         "total_amount": 1, "invoice_date": 1, "pagata": 1}
+    ).limit(1000).to_list(1000)
     
     # Pre-carica fornitori con metodo pagamento
     fornitori = await db.suppliers.find(
