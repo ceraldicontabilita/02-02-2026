@@ -223,31 +223,56 @@ async def upload_payslip_pdf(file: UploadFile = File(...)) -> Dict[str, Any]:
                     await db[Collections.EMPLOYEES].insert_one(new_employee_doc.copy())
                     is_new = True
                 
-                # Check duplicate payslip
-                payslip_key = f"{cf}_{periodo}"
-                if await db["payslips"].find_one({"payslip_key": payslip_key}, {"_id": 1}):
-                    results["duplicates"].append({"nome": nome, "periodo": periodo})
-                    results["skipped_duplicates"] += 1
-                    continue
+                # Check duplicate payslip - ora usa cedolini
+                # Estrai mese e anno dal periodo
+                mese_num = None
+                anno_num = None
+                periodo = payslip.get("periodo", "")
+                if periodo and "/" in periodo:
+                    parts = periodo.split("/")
+                    if len(parts) == 2:
+                        try:
+                            mese_num = int(parts[0])
+                            anno_num = int(parts[1])
+                        except:
+                            pass
+                
+                # Controlla duplicato in cedolini (collection unificata)
+                if cf and mese_num and anno_num:
+                    existing_cedolino = await db["cedolini"].find_one({
+                        "codice_fiscale": cf,
+                        "mese": mese_num,
+                        "anno": anno_num
+                    }, {"_id": 1})
+                    if existing_cedolino:
+                        results["duplicates"].append({"nome": nome, "periodo": periodo})
+                        results["skipped_duplicates"] += 1
+                        continue
                 
                 payslip_id = str(uuid.uuid4())
-                mese = payslip.get("mese", "")
-                anno = payslip.get("anno", "")
+                mese = payslip.get("mese", "") or (str(mese_num) if mese_num else "")
+                anno = payslip.get("anno", "") or (str(anno_num) if anno_num else "")
                 netto = float(payslip.get("retribuzione_netta", 0) or 0)
                 
-                # Save payslip
-                payslip_doc = {
-                    "id": payslip_id, "payslip_key": payslip_key, "employee_id": emp_id,
-                    "codice_fiscale": cf, "nome_completo": nome, "periodo": periodo,
-                    "mese": mese, "anno": anno,
-                    "ore_ordinarie": float(payslip.get("ore_ordinarie", 0) or 0),
-                    "retribuzione_lorda": float(payslip.get("retribuzione_lorda", 0) or 0),
-                    "retribuzione_netta": netto,
+                # Save in cedolini (collection unificata)
+                cedolino_doc = {
+                    "id": payslip_id,
+                    "dipendente_id": emp_id,
+                    "codice_fiscale": cf,
+                    "nome_dipendente": nome,
+                    "mese": int(mese) if mese else None,
+                    "anno": int(anno) if anno else None,
+                    "periodo": periodo,
+                    "ore_lavorate": float(payslip.get("ore_ordinarie", 0) or 0),
+                    "lordo": float(payslip.get("retribuzione_lorda", 0) or 0),
+                    "netto_mese": netto,
                     "contributi_inps": float(payslip.get("contributi_inps", 0) or 0),
                     "qualifica": payslip.get("qualifica", ""),
-                    "source": "pdf_upload", "filename": file.filename, "created_at": datetime.utcnow().isoformat()
+                    "source": "pdf_upload",
+                    "filename": file.filename,
+                    "created_at": datetime.utcnow().isoformat()
                 }
-                await db["payslips"].insert_one(payslip_doc.copy())
+                await db["cedolini"].insert_one(cedolino_doc.copy())
                 
                 # Inserisci automaticamente in Prima Nota Salari
                 if netto > 0 and anno and mese:
