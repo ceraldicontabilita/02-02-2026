@@ -9,9 +9,20 @@ Applicazione ERP per gestione contabilità bar/pasticceria con controllo sistema
 
 ---
 
-## ✅ LAVORI COMPLETATI (16 Gennaio 2026)
+## ✅ LAVORI COMPLETATI (17 Gennaio 2026)
 
-### CORREZIONE MASSIVA Backend
+### Pagina Chiusura Esercizio (NUOVA)
+Pagina `/chiusura-esercizio` con wizard guidato:
+- Stato esercizio (aperto/chiuso) con icona Lock/Unlock
+- Wizard 4 step: Verifica → Bilancino → Chiusura → Nuovo Esercizio
+- Verifica preliminare con punteggio completezza e problemi bloccanti
+- Bilancino di verifica con Ricavi, Costi, Risultato d'esercizio
+- Azioni: Chiudi Esercizio (con conferma), Apri Nuovo Esercizio
+- Storico chiusure precedenti
+- Selettore anno e pulsante Aggiorna
+- Menu laterale aggiornato in Contabilità
+
+### CORREZIONE MASSIVA Backend (16 Gennaio)
 
 **229+ insert_one corretti** in 84 file Python:
 - Tutti gli `insert_one(documento)` convertiti in `insert_one(documento.copy())`
