@@ -629,7 +629,7 @@ async def list_prima_nota_banca(
     tipo: Optional[str] = Query(None),
     categoria: Optional[str] = Query(None)
 ) -> Dict[str, Any]:
-    """Lista movimenti prima nota banca."""
+    """Lista movimenti prima nota banca con saldo separato per anno."""
     db = Database.get_db()
     
     # Escludi movimenti eliminati/archiviati
@@ -664,15 +664,25 @@ async def list_prima_nota_banca(
     ]
     totals = await db[COLLECTION_PRIMA_NOTA_BANCA].aggregate(pipeline).to_list(1)
     
-    saldo = 0
-    if totals:
-        saldo = totals[0].get("entrate", 0) - totals[0].get("uscite", 0)
+    entrate_anno = totals[0].get("entrate", 0) if totals else 0
+    uscite_anno = totals[0].get("uscite", 0) if totals else 0
+    saldo_anno = entrate_anno - uscite_anno
+    
+    # Calcola saldo riportato dagli anni precedenti
+    saldo_precedente = 0.0
+    if anno:
+        saldo_precedente = await calcola_saldo_anni_precedenti(db, COLLECTION_PRIMA_NOTA_BANCA, anno)
+    
+    # Saldo finale = riporto + saldo anno corrente
+    saldo_finale = saldo_precedente + saldo_anno
     
     return {
         "movimenti": movimenti,
-        "saldo": saldo,
-        "totale_entrate": totals[0].get("entrate", 0) if totals else 0,
-        "totale_uscite": totals[0].get("uscite", 0) if totals else 0,
+        "saldo": round(saldo_finale, 2),
+        "saldo_anno": round(saldo_anno, 2),
+        "saldo_precedente": round(saldo_precedente, 2),
+        "totale_entrate": round(entrate_anno, 2),
+        "totale_uscite": round(uscite_anno, 2),
         "count": len(movimenti),
         "anno": anno
     }
