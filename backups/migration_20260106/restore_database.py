@@ -9,9 +9,12 @@ import json
 from pathlib import Path
 
 async def restore_database():
-    mongo_url = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
+    mongo_url = os.environ.get('MONGO_URL')
+    if not mongo_url:
+        raise ValueError("MONGO_URL environment variable is required - use MongoDB Atlas connection string")
     client = AsyncIOMotorClient(mongo_url)
-    db = client.azienda_erp_db
+    db_name = os.environ.get('DB_NAME', 'azienda_erp_db')
+    db = client[db_name]
     
     backup_dir = Path(__file__).parent
     
