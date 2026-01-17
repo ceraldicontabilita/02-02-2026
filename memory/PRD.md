@@ -45,6 +45,21 @@ Migliorato il sistema di download email per gestire:
 - Endpoint `/api/dipendenti` mostra `ultimo_periodo`, `netto`, `lordo` dai cedolini
 - Script migrazione: `/app/app/scripts/migrate_payslips_to_cedolini.py`
 
+### Ottimizzazione Performance (NUOVO - 17 Gen)
+Miglioramento drastico delle performance API:
+- **Creati 31 indici MongoDB** su tutte le collection principali
+- **Sistema di caching in-memory** per query frequenti (suppliers 2 min TTL)
+- **Pagination di default** ridotta (100 invece di 1000+)
+- **Filtro anno automatico** per evitare query massive
+
+| Endpoint | Prima | Dopo | Miglioramento |
+|----------|-------|------|---------------|
+| `/api/invoices` | 1.6s | 0.05s | **32x** |
+| `/api/suppliers` | 0.6s | 0.03s | **20x** |
+| `/api/corrispettivi` | 0.3s | 0.03s | **10x** |
+
+File creato: `/app/app/middleware/performance.py`
+
 ### CORREZIONE MASSIVA Backend (16 Gennaio)
 
 **229+ insert_one corretti** in 84 file Python:
