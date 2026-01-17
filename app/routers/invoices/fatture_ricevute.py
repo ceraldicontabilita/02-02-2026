@@ -535,7 +535,20 @@ async def import_fatture_xml_multipli(files: List[UploadFile] = File(...)):
                     "filename": file.filename,
                     "status": "error",
                     "numero": numero_doc,
-                    "message": f"Fornitore privo di metodo di pagamento: {fornitore_result.get('ragione_sociale', '')} (P.IVA: {partita_iva})"
+                    "message": f"P0: Fornitore privo di metodo di pagamento: {fornitore_result.get('ragione_sociale', '')} (P.IVA: {partita_iva})"
+                })
+                continue
+            
+            # === VALIDATORE P0: Metodo bancario richiede IBAN (PRD sezione validatori P0) ===
+            metodi_bancari = ["bonifico", "banca", "sepa", "rid", "sdd", "assegno", "misto"]
+            iban_fornitore = fornitore_result.get("iban")
+            if metodo_pag.lower() in metodi_bancari and not iban_fornitore:
+                risultati["errors"] += 1
+                risultati["dettagli"].append({
+                    "filename": file.filename,
+                    "status": "error",
+                    "numero": numero_doc,
+                    "message": f"P0: Fornitore con metodo '{metodo_pag}' senza IBAN: {fornitore_result.get('ragione_sociale', '')} (P.IVA: {partita_iva})"
                 })
                 continue
             
