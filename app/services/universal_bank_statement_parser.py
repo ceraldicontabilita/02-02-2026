@@ -248,9 +248,15 @@ class UniversalBankStatementParser:
                             descrizione = last_cell
                     
                     if importo and importo > 0:
-                        # Salta saldi
+                        # Salta saldi e dati dal riassunto scalare
                         if any(x in descrizione.upper() for x in ['SALDO INIZIALE', 'SALDO FINALE', 'COMPETENZE']):
                             continue
+                        
+                        # Salta righe senza descrizione significativa (probabilmente dal riassunto scalare)
+                        if not descrizione or descrizione == "Movimento":
+                            # Verifica se è un importo troppo grande (saldi, non transazioni)
+                            if importo > 50000:
+                                continue
                         
                         transaction = {
                             "data": self._parse_date(data_contabile),
