@@ -21,6 +21,22 @@ Applicazione contabile avanzata per la gestione completa del ciclo passivo, atti
 
 ## What's Been Implemented
 
+### Session 2026-01-17 (Fork 2 - Parte 3)
+
+#### ✅ P0 - Migrazione Pagamenti da Prima Nota Salari (COMPLETATO)
+- **Endpoint**: `POST /api/cedolini/migra-da-prima-nota-salari`
+- **Risultato**: 156 cedolini migrati con stato "pagato" e metodo "bonifico"
+- I pagamenti esistenti dalla Prima Nota Salari ora sono visibili nella nuova sezione Cedolini
+
+#### ✅ P1 - Metodo Pagamento da Anagrafica Fornitore (COMPLETATO)
+- **File modificati**:
+  - `/app/app/routers/ciclo_passivo_integrato.py` - Lettura metodo da fornitore quando crea scadenza
+  - `/app/app/routers/accounting/prima_nota.py` - Lettura metodo da fornitore per registra pagamento
+- **Logica**:
+  - Se fattura non specifica metodo → legge dall'anagrafica fornitore
+  - Es: Fastweb = bonifico (BANCA), non cassa
+  - Mapping: contanti→cassa, bonifico→banca, assegno→banca
+
 ### Session 2026-01-17 (Fork 2 - Parte 2)
 
 #### ✅ P0 - Pagina Cedolini & Riconciliazione (COMPLETATO)
