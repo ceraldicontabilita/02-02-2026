@@ -289,7 +289,7 @@ async def upload_payslip_pdf(file: UploadFile = File(...)) -> Dict[str, Any]:
                         try:
                             mese_num = int(parts[0])
                             anno_num = int(parts[1])
-                        except:
+                        except Exception:
                             pass
                 
                 # Controlla duplicato in cedolini (collection unificata)
