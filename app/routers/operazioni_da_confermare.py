@@ -1637,44 +1637,62 @@ async def cerca_stipendi_per_associazione(
             
             return result
     
-    # Altrimenti, restituisci tutti i dipendenti attivi con i loro cedolini non pagati
-    all_dipendenti = await db["employees"].find(
-        {"$or": [{"status": "attivo"}, {"status": "active"}, {"status": {"$exists": False}}]},
-        {"_id": 0, "id": 1, "nome_completo": 1, "nome": 1, "cognome": 1}
-    ).to_list(200)
+    # Cerca TUTTI i cedolini non pagati direttamente (non passando per employees)
+    # Questo cattura anche i cedolini importati senza dipendente_id valido
+    all_cedolini = await db["cedolini"].find(
+        {"$or": [{"pagato": False}, {"pagato": {"$exists": False}}]},
+        {"_id": 0}
+    ).to_list(500)
     
     results = []
     target_importo = abs(importo) if importo else None
     
-    for dip in all_dipendenti:
-        dip_id = dip.get("id")
-        dip_nome = dip.get("nome_completo") or f"{dip.get('cognome', '')} {dip.get('nome', '')}".strip()
+    for ced in all_cedolini:
+        netto = ced.get("netto") or ced.get("netto_in_busta") or 0
+        lordo = ced.get("lordo") or ced.get("lordo_totale") or 0
         
-        # Cerca cedolini non pagati per questo dipendente
-        cedolini = await db["cedolini"].find(
-            {"dipendente_id": dip_id, "$or": [{"pagato": False}, {"pagato": {"$exists": False}}]},
-            {"_id": 0}
-        ).to_list(12)
+        # Nome dipendente - cerca in vari campi
+        dip_nome = (
+            ced.get("dipendente_nome") or 
+            ced.get("dipendente") or 
+            ced.get("nome_completo") or
+            "Dipendente sconosciuto"
+        )
         
-        for ced in cedolini:
-            netto = ced.get("netto") or ced.get("netto_in_busta") or 0
-            
-            # Se c'è un importo target, prioritizza quelli con importo simile
-            diff = abs(netto - target_importo) if target_importo else 0
-            is_match = target_importo and diff < 1
-            
-            results.append({
-                "id": ced.get("id"),
-                "dipendente_id": dip_id,
-                "dipendente": dip_nome,
-                "periodo": ced.get("periodo") or f"{ced.get('anno', '')}-{str(ced.get('mese', '')).zfill(2)}",
-                "netto": netto,
-                "lordo": ced.get("lordo") or ced.get("lordo_totale") or 0,
-                "importo": netto,
-                "mese_riferimento": ced.get("periodo"),
-                "is_match": is_match,
-                "_diff": diff
-            })
+        # Periodo
+        periodo = ced.get("periodo")
+        if not periodo and (ced.get("anno") or ced.get("mese")):
+            anno = ced.get("anno", "")
+            mese = str(ced.get("mese", "")).zfill(2)
+            periodo = f"{anno}-{mese}" if anno else f"?-{mese}"
+        
+        # Data dal periodo
+        data = None
+        if periodo:
+            try:
+                parts = periodo.split("-")
+                if len(parts) == 2:
+                    anno_p, mese_p = parts
+                    data = f"{anno_p}-{mese_p.zfill(2)}-28"  # Ultimo giorno del mese circa
+            except:
+                pass
+        
+        diff = abs(netto - target_importo) if target_importo and netto else float('inf')
+        is_match = target_importo and netto > 0 and diff < 1
+        
+        results.append({
+            "id": ced.get("id"),
+            "dipendente_id": ced.get("dipendente_id"),
+            "dipendente": dip_nome,
+            "periodo": periodo or "N/D",
+            "data": data,
+            "netto": netto,
+            "lordo": lordo,
+            "importo": netto,
+            "mese_riferimento": periodo,
+            "is_match": is_match,
+            "_diff": diff
+        })
     
     # Ordina per match esatto prima, poi per differenza importo
     if target_importo:
