@@ -532,6 +532,44 @@ def parse_libro_unico_pdf(pdf_bytes: bytes) -> Dict[str, Any]:
                                             break
                                 if emp_data["netto"] is not None:
                                     break
+
+                    # Pattern 4: Smart Forms - net at the bottom (common in some layouts)
+                    # Examples:
+                    # - "LIRE : 1.936+" (sometimes actually EUR net)
+                    # - "0,57 0,62 1.084,00+" (two small numbers + net)
+                    if emp_data["netto"] is None:
+                        # 4A) Try small value after "LIRE" (ignore huge LIRE conversions)
+                        for line in reversed(lines):
+                            if 'LIRE' in line.upper() and '+' in line:
+                                m = re.search(r'\b(\d{1,3}(?:[\.,]\d{3})*)(?:[\.,](\d{2}))?\+\b', line)
+                                if not m:
+                                    continue
+                                num = m.group(1).replace('.', '').replace(',', '')
+                                dec = m.group(2) or '00'
+                                try:
+                                    val = float(f"{num}.{dec}")
+                                except Exception:
+                                    continue
+                                if 100 <= val <= 10000:
+                                    emp_data["netto"] = val
+                                    logger.info(f"  Netto (LIRE line): €{val}")
+                                    break
+
+                    if emp_data["netto"] is None:
+                        # 4B) Pattern: two small values + net amount
+                        for line in reversed(lines):
+                            m = re.search(
+                                r'\b\d[\.,]\d{2}\s+\d[\.,]\d{2}\s+(\d{1,3}(?:[\.,]\d{3})*[\.,]\d{2})\+\b',
+                                line
+                            )
+                            if not m:
+                                continue
+                            amt_clean = m.group(1).replace('.', '').replace(',', '.')
+                            val = safe_float(amt_clean, 0.0)
+                            if 100 <= val <= 10000:
+                                emp_data["netto"] = val
+                                logger.info(f"  Netto (bottom triple): €{val}")
+                                break
             
             # Finalize employee data
             for emp_name, emp_data in employees_found.items():
