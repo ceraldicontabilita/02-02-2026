@@ -1084,11 +1084,12 @@ async def import_pos(
                     results["errors"].append({"row": idx + 2, "error": f"Duplicato: POS del {data}"})
                     continue
                 
-                # POS = USCITA dalla cassa (soldi vanno sul conto bancario)
+                # Logica ragioneria generale:
+                # POS rappresenta un incasso che finisce in banca  e8 quindi ENTRATA in prima nota BANCA.
                 movimento = {
                     "id": str(uuid.uuid4()),
                     "data": data,
-                    "tipo": "uscita",
+                    "tipo": "entrata",
                     "importo": totale,
                     "descrizione": f"Incasso POS giornaliero del {data}",
                     "categoria": "POS",
@@ -1097,7 +1098,7 @@ async def import_pos(
                     "created_at": now
                 }
                 
-                await db[COLLECTION_PRIMA_NOTA_CASSA].insert_one(movimento.copy())
+                await db[COLLECTION_PRIMA_NOTA_BANCA].insert_one(movimento.copy())
                 
                 results["imported"] += 1
                 results["pos_entries"].append({
