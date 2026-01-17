@@ -103,7 +103,7 @@ from app.routers.accounting import (
 # --- Bank Module ---
 from app.routers.bank import (
     bank_main, bank_reconciliation, bank_statement_import,
-    bank_statement_parser, estratto_conto, archivio_bonifici, bonifici_import_unificato, assegni, pos_accredito
+    bank_statement_parser, estratto_conto, archivio_bonifici, assegni, pos_accredito
 )
 from app.routers.bank import riconciliazione_f24_banca
 
@@ -197,7 +197,6 @@ app.include_router(bank_statement_import.router, prefix="/api/bank-statement", t
 app.include_router(bank_statement_parser.router, prefix="/api/estratto-conto", tags=["Estratto Conto Parser"])
 app.include_router(estratto_conto.router, prefix="/api/estratto-conto-movimenti", tags=["Estratto Conto Movimenti"])
 app.include_router(archivio_bonifici.router, prefix="/api", tags=["Archivio Bonifici"])
-app.include_router(bonifici_import_unificato.router, prefix="/api", tags=["Archivio Bonifici"])
 app.include_router(assegni.router, prefix="/api/assegni", tags=["Assegni"])
 app.include_router(pos_accredito.router, prefix="/api/pos-accredito", tags=["POS Accredito"])
 app.include_router(riconciliazione_f24_banca.router, prefix="/api/f24-riconciliazione", tags=["Riconciliazione F24 Banca"])
