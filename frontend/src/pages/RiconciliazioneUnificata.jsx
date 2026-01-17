@@ -172,11 +172,6 @@ export default function RiconciliazioneUnificata() {
         matched: bancaRes.data?.stats?.riconciliati || 0,
         pending: bancaRes.data?.stats?.non_riconciliati || 0
       });
-        assegni: assegniDaApi.length > 0 ? assegniDaApi.length : assegniDaMovimenti.length,
-        f24: (f24Res.data?.f24 || []).length,
-        aruba: (arubaRes.data?.operazioni || []).length,
-        stipendi: movimenti.filter(m => m.tipo === 'stipendio').length,
-      });
 
     } catch (e) {
       console.error('Errore caricamento:', e);
