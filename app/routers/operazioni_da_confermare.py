@@ -1143,14 +1143,11 @@ async def banca_veloce(
         {"_id": 0}
     ).sort("data_emissione", -1).limit(50).to_list(50)
     
-    # Fatture da pagare (non pagate, metodo bancario)
+    # Fatture da pagare (non pagate, metodo NON contanti)
     fatture_da_pagare = await db.invoices.find(
         {
             "pagata": {"$ne": True},
-            "$or": [
-                {"metodo_pagamento": {"$in": ["bonifico", "banca", "sepa", "rid", "sdd"]}},
-                {"fornitore_metodo": {"$in": ["bonifico", "banca", "sepa", "rid", "sdd"]}}
-            ]
+            "metodo_pagamento": {"$nin": [None, "", "contanti"]}
         },
         {"_id": 0, "id": 1, "invoice_number": 1, "invoice_date": 1, "supplier_name": 1, "total_amount": 1, "metodo_pagamento": 1}
     ).sort("invoice_date", -1).limit(100).to_list(100)
