@@ -557,9 +557,10 @@ def parse_libro_unico_pdf(pdf_bytes: bytes) -> Dict[str, Any]:
 
                     if emp_data["netto"] is None:
                         # 4B) Pattern: two small values + net amount
+                        # Example: "0,57 0,62 1.084,00+"
                         for line in reversed(lines):
                             m = re.search(
-                                r'\b\d[\.,]\d{2}\s+\d[\.,]\d{2}\s+(\d{1,3}(?:[\.,]\d{3})*[\.,]\d{2})\+\b',
+                                r'\b\d[\.,]\d{2}\s+\d[\.,]\d{2}\s+(\d{1,3}(?:[\.,]\d{3})*[\.,]\d{2})\+\s*$',
                                 line
                             )
                             if not m:
