@@ -252,17 +252,25 @@ async def import_fattura_xml(file: UploadFile = File(...)):
     partita_iva = parsed.get("supplier_vat", "")
     numero_doc = parsed.get("invoice_number", "")
     
-    # Controllo duplicato
+    # Controllo duplicato - Se esiste, aggiorna invece di bloccare
     duplicato = await check_duplicato(db, partita_iva, numero_doc)
     if duplicato:
-        raise HTTPException(
-            status_code=409,
-            detail={
-                "error": "FATTURA_DUPLICATA",
-                "message": f"Fattura già presente: {numero_doc} del fornitore {partita_iva}",
-                "fattura_esistente": duplicato
-            }
+        # Aggiorna la fattura esistente con i nuovi dati
+        update_data = {
+            "raw_xml": parsed.get("raw_xml"),
+            "updated_at": datetime.utcnow().isoformat(),
+            "reimported": True
+        }
+        await db["invoices"].update_one(
+            {"id": duplicato["id"]},
+            {"$set": update_data}
         )
+        return {
+            "success": True,
+            "message": f"Fattura {numero_doc} già presente - dati aggiornati",
+            "azione": "aggiornato",
+            "fattura_id": duplicato["id"]
+        }
     
     # Verifica/Crea fornitore
     fornitore_result = await get_or_create_fornitore(db, parsed)
