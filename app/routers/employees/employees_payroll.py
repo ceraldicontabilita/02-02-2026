@@ -123,7 +123,10 @@ async def delete_all_payslips() -> Dict[str, Any]:
 
 @router.post("/paghe/upload-pdf")
 async def upload_payslip_pdf(file: UploadFile = File(...)) -> Dict[str, Any]:
-    """Upload buste paga.
+    """Upload buste paga con parser semplificato.
+
+    Estrae SOLO: nome dipendente, periodo (mese/anno), importo netto.
+    Salva il PDF allegato al cedolino per visualizzazione futura.
 
     Supporta:
     - PDF singolo
@@ -138,15 +141,13 @@ async def upload_payslip_pdf(file: UploadFile = File(...)) -> Dict[str, Any]:
         if not content:
             raise HTTPException(status_code=400, detail="File vuoto")
 
-        pdf_paths = []
+        # Lista di tuple: (pdf_bytes, original_filename)
+        pdf_files = []
         tmp_dir = None
 
-        # Salva su disco e prepara lista PDF da parsificare
+        # Prepara lista PDF da parsificare
         if filename.endswith('.pdf'):
-            with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp:
-                tmp.write(content)
-                tmp_path = tmp.name
-            pdf_paths = [tmp_path]
+            pdf_files = [(content, file.filename or "cedolino.pdf")]
         else:
             import zipfile
             import glob
@@ -165,14 +166,21 @@ async def upload_payslip_pdf(file: UploadFile = File(...)) -> Dict[str, Any]:
                 subprocess.run(['bsdtar', '-xf', archive_path, '-C', tmp_dir.name], check=True)
 
             pdf_paths = glob.glob(os.path.join(tmp_dir.name, '**', '*.pdf'), recursive=True)
+            for p in pdf_paths:
+                with open(p, 'rb') as pf:
+                    pdf_files.append((pf.read(), os.path.basename(p)))
 
-        # Estrai payslips da tutti i PDF raccolti
+        # Estrai payslips da tutti i PDF raccolti usando il parser semplificato
         payslips = []
-        for p in pdf_paths:
-            extracted = extract_payslips_from_pdf(p)
+        for pdf_bytes, pdf_filename in pdf_files:
+            extracted = parse_payslip_simple(pdf_bytes)
             if extracted and len(extracted) == 1 and extracted[0].get('error'):
-                # salta singolo errore ma continua su altri file
+                logger.warning(f"Errore parsing {pdf_filename}: {extracted[0].get('error')}")
                 continue
+            # Aggiungi info PDF a ogni cedolino estratto
+            for payslip in (extracted or []):
+                payslip['_pdf_bytes'] = pdf_bytes
+                payslip['_pdf_filename'] = pdf_filename
             payslips.extend(extracted or [])
 
         # cleanup temp file/directory
