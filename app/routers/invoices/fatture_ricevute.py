@@ -350,13 +350,18 @@ async def import_fattura_xml(file: UploadFile = File(...)):
         "id": fornitore_result.get("fornitore_id"),
         "partita_iva": partita_iva,
         "ragione_sociale": fornitore_result.get("ragione_sociale"),
-        "esclude_magazzino": False  # Default
+        "esclude_magazzino": False,  # Default
+        "metodo_pagamento": None  # Default - sarà usato per routing Prima Nota
     }
     
-    # Recupera flag esclude_magazzino dal DB
-    fornitore_db = await db[COL_FORNITORI].find_one({"partita_iva": partita_iva}, {"_id": 0, "esclude_magazzino": 1})
+    # Recupera flag esclude_magazzino e metodo_pagamento dal DB
+    fornitore_db = await db[COL_FORNITORI].find_one(
+        {"partita_iva": partita_iva}, 
+        {"_id": 0, "esclude_magazzino": 1, "metodo_pagamento": 1}
+    )
     if fornitore_db:
         fornitore_obj["esclude_magazzino"] = fornitore_db.get("esclude_magazzino", False)
+        fornitore_obj["metodo_pagamento"] = fornitore_db.get("metodo_pagamento")
     
     risultato_integrazione = {}
     
