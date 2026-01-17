@@ -974,3 +974,25 @@ async def elimina_duplicati_corrispettivi(anno: int = Query(...)) -> Dict[str, A
         "date_con_duplicati": date_con_duplicati,
         "nuovo_totale": round(nuovo_totale, 2)
     }
+
+
+@router.delete("/hard-delete/{corrispettivo_id}")
+async def hard_delete_corrispettivo(corrispettivo_id: str) -> Dict[str, Any]:
+    """Elimina FISICAMENTE un corrispettivo dal database."""
+    db = Database.get_db()
+    result = await db["corrispettivi"].delete_one({"id": corrispettivo_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Corrispettivo non trovato")
+    return {"deleted": True, "hard_delete": True}
+
+
+@router.post("/hard-delete-bulk")
+async def hard_delete_corrispettivi_bulk(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Elimina FISICAMENTE più corrispettivi dal database."""
+    db = Database.get_db()
+    ids = data.get("ids", [])
+    if not ids:
+        raise HTTPException(status_code=400, detail="Nessun ID fornito")
+    
+    result = await db["corrispettivi"].delete_many({"id": {"$in": ids}})
+    return {"deleted": result.deleted_count}
