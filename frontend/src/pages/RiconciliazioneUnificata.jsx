@@ -850,6 +850,20 @@ function MovimentoCard({ movimento, onConferma, onIgnora, processing, showFattur
               color: '#f59e0b'
             }}>
               📝 Assegno N. {movimento.numero_assegno} • Stato: {movimento.stato || 'N/D'}
+              {movimento.beneficiario && (
+                <span style={{ marginLeft: 8 }}>• Beneficiario: {movimento.beneficiario}</span>
+              )}
+            </div>
+          )}
+          
+          {/* Info beneficiario per assegni senza numero */}
+          {!movimento.numero_assegno && movimento.beneficiario && (
+            <div style={{ 
+              marginTop: 2, 
+              fontSize: 11, 
+              color: '#f59e0b'
+            }}>
+              👤 Beneficiario: {movimento.beneficiario}
             </div>
           )}
           
