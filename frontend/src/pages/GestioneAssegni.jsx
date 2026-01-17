@@ -204,10 +204,13 @@ export default function GestioneAssegni() {
     const totaleImporto = selectedFatture.reduce((sum, f) => sum + (f.importo || 0), 0);
     const numeriFacture = selectedFatture.map(f => f.numero).join(', ');
     const beneficiario = selectedFatture[0]?.fornitore || '';
+    // Prendi il primo fattura_id come fattura_collegata
+    const fatturaCollegata = selectedFatture[0]?.id || null;
     
     try {
       await api.put(`/api/assegni/${editingAssegnoForFatture.id}`, {
         fatture_collegate: selectedFatture,
+        fattura_collegata: fatturaCollegata,  // Aggiunto per il pulsante "Vedi Fattura"
         importo: totaleImporto,
         numero_fattura: numeriFacture,
         beneficiario: beneficiario,
