@@ -438,7 +438,7 @@ export default function CedoliniRiconciliazione() {
             <h3 style={{ margin: '0 0 16px', fontSize: 18 }}>💰 Registra Pagamento</h3>
             
             <div style={{ background: '#f8fafc', padding: 12, borderRadius: 8, marginBottom: 16 }}>
-              <div style={{ fontWeight: 600 }}>{showManual.nome_dipendente || showManual.nome_completo}</div>
+              <div style={{ fontWeight: 600 }}>{showManual.dipendente_nome || showManual.nome_dipendente || showManual.nome_completo}</div>
               <div style={{ fontSize: 13, color: '#64748b' }}>
                 {MESI[(showManual.mese || 1) - 1]} {showManual.anno} • Netto: {fmt(showManual.netto || showManual.netto_mese)}
               </div>
