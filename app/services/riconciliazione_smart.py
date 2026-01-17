@@ -764,6 +764,12 @@ async def analizza_movimento_con_cache(movimento: Dict[str, Any], cache: Dict[st
     numero_fattura = movimento.get("numero_fattura") or ""
     fornitore = movimento.get("fornitore") or ""
     
+    # IMPORTANTE: Escludi l'azienda stessa come fornitore
+    if is_azienda_esclusa(fornitore):
+        fornitore = ""
+    if is_azienda_esclusa(ragione_sociale):
+        ragione_sociale = ""
+    
     result = {
         "movimento_id": movimento.get("id"),
         "data": data,
