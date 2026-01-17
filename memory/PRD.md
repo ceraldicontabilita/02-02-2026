@@ -1,143 +1,179 @@
-Prd – Tech Recon Accounting System (super Articolato)
-Product Requirements Document (PRD)
-TechRecon Accounting System – Versione Super Articolata
-1. Obiettivo del sistema
+# PRD – TechRecon Accounting System
+## Product Requirements Document (PRD)
+## TechRecon Accounting System – Versione Super Articolata
+### Ultimo aggiornamento: 17 Gennaio 2026
+
+---
+
+## 1. Obiettivo del sistema
 
 Costruire un sistema contabile che:
+- sia conforme alla normativa italiana,
+- riduca l'errore umano,
+- renda ogni numero difendibile,
+- cresca senza introdurre incoerenze.
 
-sia conforme alla normativa italiana,
+---
 
-riduca l’errore umano,
+## 2. Modello di controllo a cascata
 
-renda ogni numero difendibile,
+1. Anagrafiche
+2. Documenti
+3. Regole decisionali
+4. Prima Nota
+5. Riconciliazione
+6. Controlli trasversali
 
-cresca senza introdurre incoerenze.
+**Un errore a monte invalida i livelli successivi.**
 
-2. Modello di controllo a cascata
+---
 
-Anagrafiche
+## 3. Validatori automatici
 
-Documenti
+### P0 – Bloccanti ✅ IMPLEMENTATO
 
-Regole decisionali
+| Validatore | Endpoint | Status |
+|------------|----------|--------|
+| Fornitore senza metodo pagamento | `/api/invoices/import-xml` | ✅ Attivo |
+| Metodo ≠ contanti senza IBAN | `/api/invoices/import-xml` | ✅ Attivo |
+| Documento senza anagrafica valida | `/api/invoices/import-xml` | ✅ Attivo |
+| Movimento contabile senza documento | In progress | ⚠️ Parziale |
+| Salari post giugno 2018 pagati in contanti | `/api/cedolini-riconciliazione/.../registra-pagamento` | ✅ Attivo |
 
-Prima Nota
+**Files implementazione:**
+- `/app/app/routers/invoices/fatture_ricevute.py` (validatori fatture)
+- `/app/app/routers/cedolini_riconciliazione.py` (validatore salari)
 
-Riconciliazione
+### P1 – Critici
 
-Controlli trasversali
+- Differenza tra cedolino e bonifico
+- Metodo pagamento misto
+- Pagamenti parziali
 
-Un errore a monte invalida i livelli successivi.
+### P2 – Informativi
 
-3. Validatori automatici
-P0 – Bloccanti
+- Dati anagrafici incompleti non critici
+- IBAN multipli non consolidati
 
-Fornitore senza metodo pagamento
+---
 
-Metodo ≠ contanti senza IBAN
+## 4. Ciclo Passivo ✅ IMPLEMENTATO
 
-Documento senza anagrafica valida
+- ✅ Import XML
+- ✅ Aggiornamento anagrafica fornitore
+- ✅ Metodo pagamento da anagrafica
+- ✅ Scrittura deterministica in prima nota
+- ✅ Validatori P0 bloccanti durante import
 
-Movimento contabile senza documento
+---
 
-Salari pre luglio 2018 pagati in contanti 
+## 5. Gestione Dipendenti e Salari ✅ IMPLEMENTATO
 
-P1 – Critici
+- ✅ Import cedolini (da Excel `paghe.xlsx`, `bonifici dip.xlsx`)
+- ✅ Import bonifici
+- ✅ Calcolo differenze
+- ✅ Evidenziazione differenze
+- ✅ Saldo differenze aggregato
+- ✅ Validatore P0: blocco contanti post 06/2018
 
-Differenza tra cedolino e bonifico
+---
 
-Metodo pagamento misto
+## 6. Prima Nota ✅ REFACTORED
 
-Pagamenti parziali
+- ✅ Cassa e Banca separate (logica personalizzata DARE/AVERE)
+- ✅ Saldi per anno
+- ✅ Riporto automatico
+- ✅ Immutabilità delle scritture
+- ✅ UI completamente ridisegnata (React + Zustand)
 
-P2 – Informativi
+**Files:**
+- `/app/frontend/src/pages/PrimaNota.jsx`
+- `/app/frontend/src/pages/PrimaNotaSalari.jsx`
+- `/app/frontend/src/stores/primaNotaStore.js`
 
-Dati anagrafici incompleti non critici
+---
 
-IBAN multipli non consolidati
+## 7. Riconciliazione ✅ IMPLEMENTATO
 
-4. Ciclo Passivo
-
-Import XML
-
-Aggiornamento anagrafica fornitore
-
-Metodo pagamento da anagrafica
-
-Scrittura deterministica in prima nota
-
-5. Gestione Dipendenti e Salari
-
-Import cedolini
-
-Import bonifici
-
-Calcolo differenze
-
-Evidenziazione differenze
-
-Saldo differenze aggregato
-
-6. Prima Nota
-
-Cassa e Banca separate
-
-Saldi per anno
-
-Riporto automatico
-
-Immutabilità delle scritture
-
-7. Riconciliazione
-
-Bancaria
-
-Salari
-
-F24
+- ✅ Bancaria (con auto-refresh ogni 30 minuti)
+- ✅ Salari
+- ✅ F24
 
 Ogni riconciliazione chiude il ciclo documentale.
 
-8. Matrice di rischio fiscale
-Livello	Rischio
-Anagrafiche	Altissimo
-Documenti	Alto
-Regole	Altissimo
-Prima Nota	Critico
-Riconciliazione	Medio
-9. Test funzionali (concettuali, non esecutivi)
-Test P0
+---
 
-Import fattura senza metodo pagamento → BLOCCO
+## 8. Matrice di rischio fiscale
 
-Pagamento salari non conforme → BLOCCO
+| Livello | Rischio |
+|---------|---------|
+| Anagrafiche | Altissimo |
+| Documenti | Alto |
+| Regole | Altissimo |
+| Prima Nota | Critico |
+| Riconciliazione | Medio |
 
-Test P1
+---
 
-Cedolino ≠ bonifico → ALERT + saldo differenze
+## 9. Test funzionali
 
-Test P2
+### Test P0 ✅ IMPLEMENTATI
 
-IBAN multipli → LOG
+- ✅ Import fattura senza metodo pagamento → BLOCCO
+- ✅ Import fattura bancaria senza IBAN → BLOCCO  
+- ✅ Pagamento salari post 06/2018 in contanti → BLOCCO
 
-10. Scalabilità
+### Test P1
+
+- Cedolino ≠ bonifico → ALERT + saldo differenze
+
+### Test P2
+
+- IBAN multipli → LOG
+
+---
+
+## 10. Scalabilità
 
 Si scala:
+- aggiungendo fonti di input,
+- non modificando la contabilità,
+- rafforzando i controlli.
 
-aggiungendo fonti di input,
+---
 
-non modificando la contabilità,
+## 11. Stato Implementazione - Gennaio 2026
 
-rafforzando i controlli.
+### ✅ Completato
+- UI Prima Nota e Prima Nota Salari ridisegnate
+- Validatori P0 bloccanti (fatture e salari)
+- Fix bug conferma multipla fatture
+- Fix visualizzazione F24 pendenti
+- Fix import corrispettivi XML
+- Fix import cedolini Excel
+- Riconciliazione automatica con auto-refresh
+- Endpoint bulk update fornitori (`/api/suppliers/update-all-incomplete`)
+- Sync IBAN da fatture esistenti (`/api/suppliers/sync-iban`)
+- Endpoint validazione P0 (`/api/suppliers/validazione-p0`)
 
-11. Clausola finale
+### 🔄 In Progress
+- UI pulsante aggiornamento bulk fornitori in `Fornitori.jsx`
+- Risoluzione 231 fornitori bancari senza IBAN
+
+### 📋 Backlog
+- Finalizzare importazione cedolini da PDF (OCR)
+- Unificare collection `fornitori` e `suppliers`
+- Dashboard Analytics
+- Integrazione Google Calendar
+- Report PDF via email
+
+---
+
+## 12. Clausola finale
 
 Questo PRD è vincolante.
 
 Ogni sviluppo futuro deve:
-
-rispettare i validatori,
-
-non introdurre eccezioni silenziose,
-
-mantenere la tracciabilità completa.
+- rispettare i validatori,
+- non introdurre eccezioni silenziose,
+- mantenere la tracciabilità completa.
