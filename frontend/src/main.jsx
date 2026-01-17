@@ -207,7 +207,8 @@ const router = createBrowserRouter([
       // === DIPENDENTI ===
       { path: "dipendenti", element: <LazyPage><GestioneDipendentiUnificata /></LazyPage> },
       { path: "dipendenti/:tab", element: <LazyPage><GestioneDipendentiUnificata /></LazyPage> },
-      { path: "cedolini", element: <LazyPage><Cedolini /></LazyPage> },
+      { path: "cedolini", element: <LazyPage><CedoliniRiconciliazione /></LazyPage> },
+      { path: "cedolini-calcolo", element: <LazyPage><Cedolini /></LazyPage> },
       { path: "tfr", element: <LazyPage><TFR /></LazyPage> },
       { path: "noleggio-auto", element: <LazyPage><NoleggioAuto /></LazyPage> },
       
