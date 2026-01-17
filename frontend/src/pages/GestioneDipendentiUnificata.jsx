@@ -549,6 +549,18 @@ function TabRetribuzione({ cedolini, dipendente, anno }) {
                 <td style={{ ...tdStyle, textAlign: 'right' }}>{formatEuro(c.lordo || c.lordo_totale || 0)}</td>
                 <td style={{ ...tdStyle, textAlign: 'right', fontWeight: 600, color: '#10b981' }}>{formatEuro(c.netto || c.netto_in_busta || 0)}</td>
                 <td style={{ ...tdStyle, textAlign: 'center' }}>
+                  {c.pdf_data ? (
+                    <a
+                      href={`${process.env.REACT_APP_BACKEND_URL}/api/cedolini/${c.id}/download`}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ color: '#3b82f6', textDecoration: 'none', fontWeight: 600 }}
+                    >
+                      📎 PDF
+                    </a>
+                  ) : '-'}
+                </td>
+                <td style={{ ...tdStyle, textAlign: 'center' }}>
                   {c.pagato ? <span style={{ color: '#10b981' }}>✓ Pagato</span> : <span style={{ color: '#f59e0b' }}>⏳</span>}
                 </td>
               </tr>
