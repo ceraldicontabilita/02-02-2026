@@ -104,11 +104,11 @@ Tutte le pagine principali testate e funzionanti:
 ## 📋 BACKLOG
 
 ### P1 - Alta Priorità
-- [ ] Unificare collection `cedolini`/`payslips` (debito tecnico)
+- [x] ~~Pagina Chiusura Esercizio~~ ✅ COMPLETATO 17 Gen
+- [ ] Unificare collection `cedolini`/`payslips` (debito tecnico - 3+2 records)
 - [ ] Pagina Tracciabilità standalone
 
 ### P2 - Media Priorità
-- [ ] **Pagina Chiusura Esercizio** (backend pronto, manca frontend)
 - [ ] Dashboard Analytics con drill-down
 - [ ] Report PDF automatici via email
 - [ ] Integrazione Google Calendar
