@@ -1112,6 +1112,9 @@ function POSCalendarWidget({ data }) {
 
 // Widget Scadenze Component
 function ScadenzeWidget({ scadenze }) {
+  const [pagaModal, setPagaModal] = useState(null);
+  const [processing, setProcessing] = useState(false);
+  
   if (!scadenze || !scadenze.scadenze || scadenze.scadenze.length === 0) return null;
   
   const getPriorityColor = (priorita, urgente) => {
@@ -1138,6 +1141,49 @@ function ScadenzeWidget({ scadenze }) {
     if (!dateStr) return '-';
     const d = new Date(dateStr);
     return d.toLocaleDateString('it-IT', { day: '2-digit', month: 'short' });
+  };
+
+  const handlePaga = async (scadenza, metodo) => {
+    setProcessing(true);
+    try {
+      // Registra pagamento in prima nota
+      await api.post('/api/prima-nota', {
+        data: new Date().toISOString().split('T')[0],
+        tipo: metodo === 'cassa' ? 'uscita_cassa' : 'uscita_banca',
+        categoria: 'pagamento_fornitore',
+        descrizione: `Pag. ${scadenza.tipo} ${scadenza.numero_fattura || ''} - ${scadenza.fornitore || ''}`,
+        importo: scadenza.importo,
+        fornitore: scadenza.fornitore,
+        fattura_id: scadenza.fattura_id || scadenza.id,
+        direzione: 'uscita'
+      });
+      
+      // Se cassa, segna subito come pagato
+      if (metodo === 'cassa' && scadenza.fattura_id) {
+        await api.put(`/api/fatture-ricevute/fattura/${scadenza.fattura_id}`, {
+          pagato: true,
+          data_pagamento: new Date().toISOString().split('T')[0],
+          metodo_pagamento: 'contanti'
+        });
+      }
+      
+      // Se banca, aspetta riconciliazione
+      if (metodo === 'banca' && scadenza.fattura_id) {
+        await api.put(`/api/fatture-ricevute/fattura/${scadenza.fattura_id}`, {
+          pagato: true,
+          data_pagamento: new Date().toISOString().split('T')[0],
+          metodo_pagamento: 'bonifico',
+          riconciliato: false  // Aspetta match con estratto conto
+        });
+      }
+      
+      setPagaModal(null);
+      window.location.reload();
+    } catch (e) {
+      alert('Errore: ' + (e.response?.data?.detail || e.message));
+    } finally {
+      setProcessing(false);
+    }
   };
   
   const urgenti = scadenze.scadenze.filter(s => s.urgente);
