@@ -390,7 +390,7 @@ async def upload_payslip_pdf(file: UploadFile = File(...)) -> Dict[str, Any]:
                         await db["prima_nota_salari"].insert_one(movimento_salario.copy())
                         logger.info(f"Prima Nota Salari: €{importo_busta} per {nome} ({periodo})")
                 
-                results["success"].append({"nome": nome, "periodo": periodo, "netto": importo_busta, "is_new": is_new, "prima_nota": importo_busta > 0})
+                results["success"].append({"nome": nome, "periodo": periodo, "netto": importo_busta, "is_new": is_new, "prima_nota": False})
                 results["imported"] += 1
                 
             except Exception as e:
