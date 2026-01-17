@@ -212,7 +212,36 @@ Prima Nota  Da Riconciliare
 
 ---
 
-## 14. Clausola finale
+## 15. Importazione Estratti Conto PDF (NUOVO - 17 Gen 2026)
+
+### Funzionalità Implementate ✅
+
+**Parser Universale per Estratti Conto Bancari**
+- Supporta: BANCO BPM, BNL, Nexi
+- Estrazione automatica: data, descrizione, entrate, uscite
+- Filtro automatico dati errati (riassunto scalare, saldi)
+
+**Endpoint API:**
+- `POST /api/bank-statement-bulk/parse-bulk` - Parse multipli PDF con anteprima
+- `POST /api/bank-statement-bulk/parse-single` - Parse singolo PDF
+- `GET /api/bank-statement-bulk/preview/{id}` - Recupera anteprima
+- `POST /api/bank-statement-bulk/commit/{id}` - Salva transazioni nel DB
+- `POST /api/bank-statement-bulk/import-direct` - Parse e import in un passo
+
+**Frontend (ImportUnificato.jsx):**
+- Tipo documento "Estratto Conto PDF" con badge PREVIEW
+- Drag & drop per upload massivo
+- Modale anteprima con tabella transazioni
+- Pulsanti conferma/annulla importazione
+
+**File Implementazione:**
+- `/app/app/services/universal_bank_statement_parser.py` - Parser universale
+- `/app/app/routers/bank/bank_statement_bulk_import.py` - Router API
+- `/app/frontend/src/pages/ImportUnificato.jsx` - Interfaccia utente
+
+---
+
+## 16. Clausola finale
 
 Questo PRD è vincolante.
 
