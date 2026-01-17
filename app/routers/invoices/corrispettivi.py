@@ -409,6 +409,83 @@ async def upload_corrispettivi_xml_bulk(
     return results
 
 
+@router.post("/sincronizza-prima-nota")
+async def sincronizza_corrispettivi_prima_nota() -> Dict[str, Any]:
+    """
+    Sincronizza i corrispettivi dalla collection 'corrispettivi' alla 'prima_nota_cassa'.
+    Aggiorna i dettagli (contanti, elettronico, iva) mancanti.
+    """
+    db = Database.get_db()
+    
+    # Carica tutti i corrispettivi dalla collection dedicata
+    corrispettivi = await db["corrispettivi"].find({}, {"_id": 0}).to_list(5000)
+    
+    risultato = {
+        "aggiornati": 0,
+        "creati": 0,
+        "skipped": 0,
+        "errors": []
+    }
+    
+    for corr in corrispettivi:
+        try:
+            data_corr = corr.get("data", "")
+            if not data_corr:
+                risultato["skipped"] += 1
+                continue
+            
+            # Cerca il movimento in prima_nota_cassa
+            movimento = await db["prima_nota_cassa"].find_one({
+                "data": data_corr,
+                "categoria": "Corrispettivi"
+            })
+            
+            dettaglio = {
+                "matricola_rt": corr.get("matricola_rt", ""),
+                "contanti": float(corr.get("pagato_contanti", 0) or 0),
+                "elettronico": float(corr.get("pagato_elettronico", 0) or 0),
+                "totale_iva": float(corr.get("totale_iva", 0) or 0),
+                "numero_documenti": int(corr.get("numero_documenti", 0) or 0)
+            }
+            
+            if movimento:
+                # Aggiorna dettaglio
+                await db["prima_nota_cassa"].update_one(
+                    {"_id": movimento["_id"]},
+                    {"$set": {
+                        "dettaglio": dettaglio,
+                        "importo": float(corr.get("totale", 0) or 0),
+                        "updated_at": datetime.utcnow().isoformat()
+                    }}
+                )
+                risultato["aggiornati"] += 1
+            else:
+                # Crea nuovo movimento
+                nuovo_movimento = {
+                    "id": f"corr_{corr.get('id', str(uuid.uuid4()))}",
+                    "data": data_corr,
+                    "tipo": "entrata",
+                    "importo": float(corr.get("totale", 0) or 0),
+                    "descrizione": f"Corrispettivo {data_corr} - RT {corr.get('matricola_rt', '')}",
+                    "categoria": "Corrispettivi",
+                    "dettaglio": dettaglio,
+                    "corrispettivo_id": corr.get("id"),
+                    "fonte": "sincronizzazione",
+                    "created_at": datetime.utcnow().isoformat()
+                }
+                await db["prima_nota_cassa"].insert_one(nuovo_movimento.copy())
+                risultato["creati"] += 1
+                
+        except Exception as e:
+            risultato["errors"].append(str(e))
+    
+    return {
+        "success": True,
+        "message": f"Sincronizzazione completata: {risultato['aggiornati']} aggiornati, {risultato['creati']} creati",
+        **risultato
+    }
+
+
 @router.delete("/all")
 async def delete_all_corrispettivi(
     force: bool = Query(False, description="Forza eliminazione")
