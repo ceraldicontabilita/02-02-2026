@@ -664,6 +664,12 @@ async def import_fatture_zip(file: UploadFile = File(...)):
             if fornitore_result.get("nuovo"):
                 risultati["fornitori_nuovi"] += 1
             
+            # === VALIDATORE P0: Metodo di pagamento obbligatorio (PRD sezione validatori P0) ===
+            metodo_pag = fornitore_result.get("metodo_pagamento")
+            if not metodo_pag or metodo_pag in ["", "da_configurare", None]:
+                risultati["errori"] += 1
+                continue
+            
             totali_coerenti = parsed.get("totali_coerenti", True)
             if not totali_coerenti:
                 risultati["anomale"] += 1
