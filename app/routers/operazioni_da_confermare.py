@@ -1116,7 +1116,7 @@ async def banca_veloce(
     solo_non_riconciliati: bool = Query(True)
 ) -> Dict[str, Any]:
     """
-    Endpoint VELOCE e UNIFICATO per la tab Banca - include movimenti + assegni.
+    Endpoint VELOCE e UNIFICATO per la tab Banca - include movimenti + assegni + fatture da pagare.
     """
     db = Database.get_db()
     
@@ -1143,19 +1143,34 @@ async def banca_veloce(
         {"_id": 0}
     ).sort("data_emissione", -1).limit(50).to_list(50)
     
+    # Fatture da pagare (non pagate, metodo bancario)
+    fatture_da_pagare = await db.invoices.find(
+        {
+            "pagata": {"$ne": True},
+            "$or": [
+                {"metodo_pagamento": {"$in": ["bonifico", "banca", "sepa", "rid", "sdd"]}},
+                {"fornitore_metodo": {"$in": ["bonifico", "banca", "sepa", "rid", "sdd"]}}
+            ]
+        },
+        {"_id": 0, "id": 1, "invoice_number": 1, "invoice_date": 1, "supplier_name": 1, "total_amount": 1, "metodo_pagamento": 1}
+    ).sort("invoice_date", -1).limit(100).to_list(100)
+    
     # Stats veloci
     tot_non_ric = await db.estratto_conto_movimenti.count_documents({"riconciliato": {"$ne": True}})
     tot_ric = await db.estratto_conto_movimenti.count_documents({"riconciliato": True})
     tot_assegni = len(assegni)
+    tot_fatture = len(fatture_da_pagare)
     
     return {
         "movimenti": movimenti,
         "assegni": assegni,
+        "fatture_da_pagare": fatture_da_pagare,
         "stats": {
             "totale": len(movimenti),
             "non_riconciliati": tot_non_ric,
             "riconciliati": tot_ric,
-            "assegni_pendenti": tot_assegni
+            "assegni_pendenti": tot_assegni,
+            "fatture_da_pagare": tot_fatture
         }
     }
 
