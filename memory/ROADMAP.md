@@ -11,6 +11,16 @@
 ## ✅ Completato
 
 ### Gennaio 2026
+- [x] 🔴 Validatori P0 bloccanti (fatture e salari)
+- [x] 🔴 Refactoring UI Prima Nota e Prima Nota Salari
+- [x] 🔴 Fix bug conferma multipla fatture
+- [x] 🔴 Fix visualizzazione F24 pendenti
+- [x] 🔴 Fix import corrispettivi XML
+- [x] 🔴 Fix import cedolini Excel
+- [x] 🔴 Riconciliazione automatica con auto-refresh
+- [x] 🔴 Endpoint bulk update fornitori (backend)
+- [x] 🔴 Sync IBAN da fatture esistenti
+- [x] 🔴 Endpoint validazione P0 fornitori
 - [x] 🔴 Ricerca web ricette con AI (Claude Sonnet 4.5)
 - [x] 🔴 Normalizzazione automatica ricette a 1kg
 - [x] 🔴 Importazione massiva ricette (158 totali)
@@ -28,22 +38,34 @@
 
 ## 🔴 P0 - In Corso / Prossimi
 
-### Refactoring Responsive (IN PAUSA)
-Rendere l'applicazione adattiva per PC, tablet (12") e smartphone (6").
+### UI Aggiornamento Bulk Fornitori
+**Stato**: IN CORSO
+- [ ] Aggiungere pulsante "Aggiorna Tutti i Dati" in `Fornitori.jsx`
+- [ ] Collegare al endpoint `/api/suppliers/update-all-incomplete`
+- [ ] Implementare indicatore di caricamento
+- [ ] Notifica toast con risultato (X aggiornati, Y falliti)
 
-**Pagine da convertire** (in ordine di priorità):
-1. [ ] Dashboard principale (`/`)
-2. [ ] ArchivioBonifici.jsx
-3. [ ] RicettarioDinamico.jsx *(parzialmente fatto)*
-4. [ ] HACCPTemperature.jsx
-5. [ ] HACCPSanificazione.jsx
-6. [ ] HACCPNonConformita.jsx
-7. [ ] Tutte le altre pagine ERP
+### Risoluzione 231 Fornitori senza IBAN
+**Stato**: BLOCCATO su UI bulk update
+- [ ] Completare UI bulk update
+- [ ] Eseguire aggiornamento massivo
+- [ ] Verificare risultati con `/api/suppliers/validazione-p0`
+- [ ] Lista fornitori per inserimento manuale IBAN
 
-**Pattern da seguire**:
-- Usare hook `useResponsive.js`
-- Riferimento: `LibroAllergeni.jsx` (completato)
-- Stili inline condizionali basati su viewport
+---
+
+## 🟡 P1 - Alta Priorità
+
+### Verifica Funzionamento Validatori P0
+- [ ] Test import fattura fornitore senza metodo pagamento
+- [ ] Test import fattura bancaria senza IBAN
+- [ ] Test pagamento stipendio in contanti post 06/2018
+- [ ] Documentare messaggi di errore
+
+### Investigare Errori 404 Generici
+- [ ] Identificare pagine/azioni che causano 404
+- [ ] Aggiungere logging dettagliato
+- [ ] Correggere endpoint mancanti
 
 ---
 
