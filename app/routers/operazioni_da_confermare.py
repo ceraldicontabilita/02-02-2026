@@ -386,45 +386,6 @@ async def elimina_operazione(operazione_id: str) -> Dict[str, Any]:
     return {"success": True, "deleted": operazione_id}
 
 
-@router.post("/conferma-batch")
-async def conferma_operazioni_batch(
-    data: Dict[str, Any] = Body(...)
-) -> Dict[str, Any]:
-    """
-    Conferma multiple operazioni in batch con lo stesso metodo.
-    
-    Body:
-    {
-        "operazione_ids": ["id1", "id2", ...],
-        "metodo": "cassa" | "banca",
-        "note": "Nota opzionale"
-    }
-    """
-    from app.services.automazione_completa import conferma_operazione_multipla
-    
-    db = Database.get_db()
-    
-    operazione_ids = data.get("operazione_ids", [])
-    metodo = data.get("metodo", "")
-    note = data.get("note")
-    
-    if not operazione_ids:
-        raise HTTPException(status_code=400, detail="operazione_ids richiesto")
-    
-    if metodo not in ["cassa", "banca"]:
-        raise HTTPException(status_code=400, detail="metodo deve essere 'cassa' o 'banca'")
-    
-    result = await conferma_operazione_multipla(db, operazione_ids, metodo, note)
-    
-    return {
-        "success": True,
-        "confermate": result["confermate"],
-        "errori": result["errori"],
-        "prima_nota_ids": result["prima_nota_ids"],
-        "messaggio": f"Confermate {result['confermate']} operazioni in {metodo.upper()}"
-    }
-
-
 @router.get("/aruba-pendenti")
 async def lista_aruba_pendenti(
     anno: Optional[int] = Query(None, description="Filtra per anno"),
