@@ -1110,6 +1110,41 @@ async def riconciliazione_batch(
 #                     RICONCILIAZIONE SMART
 # ============================================================================
 
+@router.get("/smart/banca-veloce")
+async def banca_veloce(
+    limit: int = Query(50, description="Numero movimenti"),
+    solo_non_riconciliati: bool = Query(True)
+) -> Dict[str, Any]:
+    """
+    Endpoint VELOCE per la tab Banca - solo dati base senza analisi complessa.
+    Usare /smart/analizza per analisi dettagliata.
+    """
+    db = Database.get_db()
+    
+    query = {}
+    if solo_non_riconciliati:
+        query["riconciliato"] = {"$ne": True}
+    
+    # Movimenti non riconciliati
+    movimenti = await db.estratto_conto_movimenti.find(
+        query,
+        {"_id": 0, "id": 1, "data": 1, "importo": 1, "descrizione": 1, "descrizione_originale": 1, "riconciliato": 1}
+    ).sort("data", -1).limit(limit).to_list(limit)
+    
+    # Stats veloci
+    tot_non_ric = await db.estratto_conto_movimenti.count_documents({"riconciliato": {"$ne": True}})
+    tot_ric = await db.estratto_conto_movimenti.count_documents({"riconciliato": True})
+    
+    return {
+        "movimenti": movimenti,
+        "stats": {
+            "totale": len(movimenti),
+            "non_riconciliati": tot_non_ric,
+            "riconciliati": tot_ric
+        }
+    }
+
+
 @router.get("/smart/analizza")
 async def analizza_movimenti_smart(
     limit: int = Query(100, description="Numero massimo di movimenti da analizzare"),
