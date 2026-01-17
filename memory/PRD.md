@@ -34,6 +34,22 @@ Applicazione contabile avanzata per la gestione completa del ciclo passivo, atti
 - **File modificati**: `/app/app/routers/operazioni_da_confermare.py`
 - **Test eseguiti**: Conferma batch 2 fatture → successo
 
+#### ✅ FEATURE: Assegnazione Automatica Metodi Pagamento (COMPLETATO)
+- **Nuova logica implementata**:
+  - Se la fattura è NELL'estratto conto → assegna "bonifico" o "assegno"
+  - Se la fattura NON è nell'estratto E l'estratto è recente (< 7 giorni) → assegna "cassa"
+  - Se l'estratto è vecchio rispetto alla fattura → lascia "sospesa" (da ricontrollare)
+- **Rispetta sempre** il metodo pagamento del fornitore se configurato
+- **Endpoint**: `POST /api/riconciliazione-automatica/assegna-metodi-aruba`
+- **Endpoint stato**: `GET /api/riconciliazione-automatica/stato-riconciliazione-aruba`
+- **File modificati**: `/app/app/routers/accounting/riconciliazione_automatica.py`
+
+#### ✅ FEATURE: Auto-Refresh Riconciliazione (COMPLETATO)
+- La pagina `/riconciliazione` si aggiorna automaticamente ogni 30 minuti
+- Toggle ON/OFF per l'auto-refresh
+- Pulsante "🔄 Assegna Metodi Auto" nella sezione Fatture Aruba
+- **File modificati**: `/app/frontend/src/pages/RiconciliazioneUnificata.jsx`
+
 ### Session 2026-01-17 (Fork 3)
 
 #### ✅ P0 - BUG FIX: Routing Pagamenti Prima Nota (COMPLETATO)
