@@ -1714,16 +1714,24 @@ async def cerca_f24_per_associazione(
     results = []
     
     for f in f24_docs:
-        # Calcola importo totale dai tributi
-        tributi_erario = f.get("tributi_erario", [])
-        tributi_inps = f.get("tributi_inps", [])
-        tributi_regioni = f.get("tributi_regioni", [])
+        # Calcola importo totale - prima prova i campi diretti, poi i tributi
+        importo_totale = f.get("totale_debito") or f.get("saldo_finale") or f.get("importo_totale")
         
-        importo_totale = (
-            sum(t.get("importo_debito", 0) or t.get("importo", 0) for t in tributi_erario) +
-            sum(t.get("importo_debito", 0) or t.get("importo", 0) for t in tributi_inps) +
-            sum(t.get("importo_debito", 0) or t.get("importo", 0) for t in tributi_regioni)
-        )
+        if not importo_totale or importo_totale == 0:
+            # Fallback: calcola dai tributi
+            tributi_erario = f.get("tributi_erario", [])
+            tributi_inps = f.get("tributi_inps", [])
+            tributi_regioni = f.get("tributi_regioni", [])
+            tributi_imu = f.get("tributi_imu", [])
+            
+            importo_totale = (
+                sum(t.get("importo_debito", 0) or t.get("importo", 0) for t in tributi_erario) +
+                sum(t.get("importo_debito", 0) or t.get("importo", 0) for t in tributi_inps) +
+                sum(t.get("importo_debito", 0) or t.get("importo", 0) for t in tributi_regioni) +
+                sum(t.get("importo_debito", 0) or t.get("importo", 0) for t in tributi_imu)
+            )
+        else:
+            tributi_erario = f.get("tributi_erario", [])
         
         # Genera descrizione dai tributi principali
         codici = [t.get("codice_tributo") or t.get("codice", "") for t in tributi_erario[:3]]
