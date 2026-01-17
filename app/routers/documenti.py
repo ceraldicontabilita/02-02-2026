@@ -1296,15 +1296,15 @@ async def sync_buste_paga() -> Dict[str, Any]:
                     "import_date": datetime.now(timezone.utc).isoformat()
                 }
                 
-                # Controlla duplicati (stesso dipendente, stesso mese/anno)
-                existing = await db["payslips"].find_one({
+                # Controlla duplicati in cedolini (collection unificata)
+                existing = await db["cedolini"].find_one({
                     "codice_fiscale": cf,
                     "mese": page_data.get("mese"),
                     "anno": page_data.get("anno")
                 })
                 
                 if not existing:
-                    await db["payslips"].insert_one(dict(cedolino_record).copy())
+                    await db["cedolini"].insert_one(dict(cedolino_record).copy())
                     cedolini_salvati += 1
                     
                     # Crea anche movimento in prima_nota_salari se c'è un netto
@@ -1353,7 +1353,7 @@ async def sync_buste_paga() -> Dict[str, Any]:
                     {"$set": {
                         "status": "processato",
                         "processed": True,
-                        "processed_to": "payslips",
+                        "processed_to": "cedolini",
                         "cedolini_estratti": cedolini_salvati,
                         "processed_at": datetime.now(timezone.utc).isoformat()
                     }}
