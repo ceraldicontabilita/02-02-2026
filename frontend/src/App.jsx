@@ -21,8 +21,7 @@ const NAV_ITEMS = [
     short: "Acquisti",
     isSubmenu: true,
     children: [
-      { to: "/ciclo-passivo", label: "Ciclo Passivo", icon: "📋" },
-      { to: "/fatture-ricevute", label: "Archivio Fatture", icon: "📄" },
+      { to: "/fatture-ricevute", label: "Ciclo Passivo", icon: "📋", isNew: true },
       { to: "/fornitori", label: "Fornitori", icon: "📦" },
       { to: "/ordini-fornitori", label: "Ordini Fornitori", icon: "📝" },
       { to: "/previsioni-acquisti", label: "Previsioni", icon: "📊" },
