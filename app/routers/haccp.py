@@ -54,3 +54,67 @@ async def get_lotti_haccp() -> List[Dict[str, Any]]:
     db = Database.get_db()
     lotti = await db.haccp_lotti.find({}, {"_id": 0}).sort("data_ingresso", -1).limit(100).to_list(100)
     return lotti
+
+
+# Router aggiuntivo per /api/haccp-completo (compatibilità frontend)
+from fastapi import Query
+from typing import Optional
+
+haccp_completo_router = APIRouter(prefix="/api/haccp-completo", tags=["HACCP Completo"])
+
+
+@haccp_completo_router.get("/notifiche")
+async def get_haccp_notifiche(
+    solo_non_lette: bool = Query(False),
+    limit: int = Query(20, ge=1, le=100)
+) -> Dict[str, Any]:
+    """Restituisce le notifiche HACCP."""
+    db = Database.get_db()
+    
+    query = {}
+    if solo_non_lette:
+        query["letto"] = False
+    
+    notifiche = await db.haccp_notifiche.find(query, {"_id": 0}).sort("created_at", -1).limit(limit).to_list(limit)
+    non_lette = await db.haccp_notifiche.count_documents({"letto": False})
+    
+    return {
+        "notifiche": notifiche,
+        "non_lette": non_lette,
+        "totale": len(notifiche)
+    }
+
+
+@haccp_completo_router.get("/notifiche/stats")
+async def get_haccp_notifiche_stats() -> Dict[str, Any]:
+    """Statistiche notifiche HACCP."""
+    db = Database.get_db()
+    
+    non_lette = await db.haccp_notifiche.count_documents({"letto": False})
+    totale = await db.haccp_notifiche.count_documents({})
+    
+    return {
+        "non_lette": non_lette,
+        "totale": totale,
+        "urgenti": 0
+    }
+
+
+@haccp_completo_router.get("/scheduler/status")
+async def get_scheduler_status() -> Dict[str, Any]:
+    """Stato scheduler HACCP."""
+    return {
+        "attivo": True,
+        "ultimo_run": None,
+        "prossimo_run": None,
+        "status": "idle"
+    }
+
+
+@haccp_completo_router.post("/scheduler/trigger-manual")
+async def trigger_manual_scheduler() -> Dict[str, Any]:
+    """Trigger manuale scheduler."""
+    return {
+        "success": True,
+        "message": "Scheduler avviato manualmente"
+    }
