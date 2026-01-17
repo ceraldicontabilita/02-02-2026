@@ -306,6 +306,72 @@ function SupplierModal({ isOpen, onClose, supplier, onSave, saving }) {
                 />
               </div>
             </div>
+
+            {/* IBAN e lista IBAN aggiuntivi */}
+            <div>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '6px' }}>
+                IBAN Principale
+              </label>
+              <input
+                type="text"
+                value={form.iban || ''}
+                onChange={(e) => handleChange('iban', e.target.value.toUpperCase().replace(/\s/g, ''))}
+                style={{
+                  width: '100%',
+                  padding: '10px 14px',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontFamily: 'monospace',
+                  boxSizing: 'border-box'
+                }}
+                placeholder="IT60X0542811101000000123456"
+              />
+              {/* Lista IBAN aggiuntivi */}
+              {form.iban_lista && form.iban_lista.length > 0 && (
+                <div style={{ marginTop: '8px', padding: '10px', background: '#f8fafc', borderRadius: '6px' }}>
+                  <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '6px' }}>IBAN aggiuntivi (da fatture):</div>
+                  {form.iban_lista.map((iban, idx) => (
+                    <div key={idx} style={{ 
+                      display: 'flex', 
+                      justifyContent: 'space-between', 
+                      alignItems: 'center',
+                      padding: '4px 8px',
+                      background: 'white',
+                      borderRadius: '4px',
+                      marginBottom: '4px',
+                      fontSize: '12px',
+                      fontFamily: 'monospace'
+                    }}>
+                      <span>{iban}</span>
+                      <button 
+                        type="button"
+                        onClick={() => handleChange('iban', iban)}
+                        style={{ 
+                          background: '#e0f2fe', 
+                          border: 'none', 
+                          borderRadius: '4px', 
+                          padding: '2px 8px', 
+                          cursor: 'pointer',
+                          fontSize: '11px',
+                          color: '#0369a1'
+                        }}
+                      >
+                        Usa come principale
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+                  type="number"
+                  value={form.giorni_pagamento || 30}
+                  onChange={(e) => handleChange('giorni_pagamento', parseInt(e.target.value) || 30)}
+                  style={{ width: '100%', padding: '10px 14px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }}
+                  min={0}
+                />
+              </div>
+            </div>
             
             {/* Esclude Magazzino */}
             <div style={{ 
