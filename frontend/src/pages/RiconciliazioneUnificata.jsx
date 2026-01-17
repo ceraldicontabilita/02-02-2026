@@ -190,23 +190,16 @@ export default function RiconciliazioneUnificata() {
     const newLimit = currentLimit + 25;
     setLoadingMore(true);
     try {
-      const smartRes = await api.get(`/api/operazioni-da-confermare/smart/analizza?limit=${newLimit}`);
-      const movimenti = smartRes.data?.movimenti || [];
+      const bancaRes = await api.get(`/api/operazioni-da-confermare/smart/banca-veloce?limit=${newLimit}`);
+      const movimenti = bancaRes.data?.movimenti || [];
+      const assegniDaApi = bancaRes.data?.assegni || [];
       
       setHasMore(movimenti.length >= newLimit);
       setCurrentLimit(newLimit);
       
-      setMovimentiBanca(movimenti.filter(m => !['prelievo_assegno', 'stipendio'].includes(m.tipo)));
-      setAssegni(movimenti.filter(m => m.tipo === 'prelievo_assegno'));
-      setStipendiPendenti(movimenti.filter(m => m.tipo === 'stipendio'));
-      
-      setStats(prev => ({
-        ...prev,
-        totale: movimenti.length,
-        banca: movimenti.filter(m => !['prelievo_assegno', 'stipendio'].includes(m.tipo)).length,
-        assegni: movimenti.filter(m => m.tipo === 'prelievo_assegno').length,
-        stipendi: movimenti.filter(m => m.tipo === 'stipendio').length,
-      }));
+      setMovimentiBanca(movimenti.filter(m => !m.descrizione?.toUpperCase()?.includes('PRELIEVO ASSEGNO')));
+      setAssegni(assegniDaApi);
+      setStats(bancaRes.data?.stats || {});
     } catch (e) {
       console.error('Errore caricamento:', e);
     } finally {
