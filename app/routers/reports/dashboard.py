@@ -280,10 +280,10 @@ async def get_trend_mensile(
             "mesi_con_dati": len(mesi_con_dati)
         },
         "chart_data": {
-            "labels": [t["mese_nome"] for t in trend_data],
-            "entrate": [t["entrate"] for t in trend_data],
-            "uscite": [t["uscite"] for t in trend_data],
-            "saldo": [t["saldo"] for t in trend_data]
+            "labels": [t["mese_nome"] for t in result_data],
+            "entrate": [t["entrate"] for t in result_data],
+            "uscite": [t["uscite"] for t in result_data],
+            "saldo": [t["saldo"] for t in result_data]
         }
     }
 
