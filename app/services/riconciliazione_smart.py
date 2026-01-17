@@ -68,6 +68,14 @@ FORNITORI_LEASING = [
     ("Ald Automotive Italia", r"Ald\s*Automotive\s*Italia"),
 ]
 
+# ESCLUSIONE AZIENDA: Non suggerire mai l'azienda stessa come fornitore
+AZIENDA_ESCLUSIONE = [
+    "CERALDI",
+    "CERALDI GROUP",
+    "CERALDI GROUP S.R.L.",
+    "CERALDI GROUP SRL",
+]
+
 # Pattern per estrazione numeri fattura dalla causale
 PATTERN_NUMERI_FATTURA = [
     r"(?:FT|FAT|FATT|FATTURA|N\.?\s*)[:\s]?\s*(\d+[\/-]?\d*)",
