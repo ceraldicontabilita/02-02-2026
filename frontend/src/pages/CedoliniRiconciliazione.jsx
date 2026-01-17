@@ -360,7 +360,7 @@ export default function CedoliniRiconciliazione() {
                 {cedoliniFiltrati.map((c, idx) => (
                   <tr key={c.id || idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
                     <td style={tdStyle}>
-                      <div style={{ fontWeight: 600 }}>{c.nome_dipendente || c.nome_completo || '-'}</div>
+                      <div style={{ fontWeight: 600 }}>{c.dipendente_nome || c.nome_dipendente || c.nome_completo || '-'}</div>
                       <div style={{ fontSize: 11, color: '#64748b' }}>{c.codice_fiscale || ''}</div>
                     </td>
                     <td style={tdStyle}>
