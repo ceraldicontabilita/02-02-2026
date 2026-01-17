@@ -40,7 +40,7 @@ Documento senza anagrafica valida
 
 Movimento contabile senza documento
 
-Salari post luglio 2018 pagati in contanti
+Salari pre luglio 2018 pagati in contanti
 
 P1 – Critici
 
