@@ -21,6 +21,13 @@ const MESI = [
   { value: '12', label: 'Dicembre' }
 ];
 
+// Tabs della pagina unificata
+const TABS = [
+  { id: 'archivio', label: '📋 Archivio Fatture', desc: 'Lista e ricerca fatture' },
+  { id: 'pipeline', label: '🔄 Pipeline', desc: 'Import → Magazzino → Prima Nota' },
+  { id: 'scadenze', label: '📅 Scadenze', desc: 'Scadenziario e pagamenti' },
+];
+
 // Stili inline (come da DESIGN_SYSTEM.md)
 const cardStyle = { background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', border: '1px solid #e5e7eb' };
 const btnPrimary = { padding: '10px 20px', background: '#4caf50', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 'bold', fontSize: 14 };
