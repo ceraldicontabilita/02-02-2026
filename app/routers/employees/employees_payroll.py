@@ -183,12 +183,7 @@ async def upload_payslip_pdf(file: UploadFile = File(...)) -> Dict[str, Any]:
                 payslip['_pdf_filename'] = pdf_filename
             payslips.extend(extracted or [])
 
-        # cleanup temp file/directory
-        if filename.endswith('.pdf') and pdf_paths:
-            try:
-                os.unlink(pdf_paths[0])
-            except Exception:
-                pass
+        # cleanup temp directory
         if tmp_dir is not None:
             try:
                 tmp_dir.cleanup()
