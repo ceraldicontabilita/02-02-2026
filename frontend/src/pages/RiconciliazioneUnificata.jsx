@@ -675,7 +675,7 @@ export default function RiconciliazioneUnificata() {
         {activeTab === 'assegni' && (
           <MovimentiTab 
             movimenti={assegniFiltrati} 
-            onConferma={handleConferma}
+            onConferma={handleIncassaAssegno}
             onIgnora={handleIgnora}
             processing={processing}
             title="Prelievi Assegno"
