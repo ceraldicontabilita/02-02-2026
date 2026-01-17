@@ -774,10 +774,49 @@ export default function PrimaNotaUnificata() {
             borderRadius: 12,
             padding: 24,
             width: '90%',
-            maxWidth: 500,
+            maxWidth: 600,
             boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)'
           }}>
             <h3 style={{ margin: '0 0 20px', fontSize: 18 }}>✏️ Modifica Movimento</h3>
+            
+            {/* Categorie come pulsanti - stessa logica di inserimento */}
+            <div style={{ marginBottom: 16 }}>
+              <label style={labelStyle}>Tipo Movimento</label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {CATEGORIE_RAPIDE.map(cat => (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => {
+                      // Aggiorna categoria, tipo e descrizione automatica
+                      setEditingMov(p => ({ 
+                        ...p, 
+                        categoria: cat.id,
+                        tipo: cat.direzione,
+                        descrizione: p.descrizione || cat.label.replace(/^[^\s]+\s/, '') // Rimuovi emoji
+                      }));
+                    }}
+                    style={{
+                      padding: '8px 14px',
+                      background: editingMov.categoria === cat.id ? cat.color : '#f1f5f9',
+                      color: editingMov.categoria === cat.id ? 'white' : '#374151',
+                      border: 'none',
+                      borderRadius: 8,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      fontSize: 12,
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    {cat.label}
+                    <div style={{ fontSize: 9, fontWeight: 400, opacity: 0.8, marginTop: 2 }}>
+                      {cat.colonna === 'dare' ? '↑ DARE' : '↓ AVERE'}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+            
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div>
                 <label style={labelStyle}>Data</label>
@@ -789,17 +828,6 @@ export default function PrimaNotaUnificata() {
                 />
               </div>
               <div>
-                <label style={labelStyle}>Tipo</label>
-                <select 
-                  value={editingMov.tipo || 'uscita'}
-                  onChange={e => setEditingMov(p => ({ ...p, tipo: e.target.value }))}
-                  style={inputStyle}
-                >
-                  <option value="entrata">Entrata (DARE)</option>
-                  <option value="uscita">Uscita (AVERE)</option>
-                </select>
-              </div>
-              <div>
                 <label style={labelStyle}>Importo €</label>
                 <input 
                   type="number"
@@ -809,31 +837,24 @@ export default function PrimaNotaUnificata() {
                   style={inputStyle}
                 />
               </div>
-              <div>
-                <label style={labelStyle}>Categoria</label>
-                <input 
-                  type="text"
-                  value={editingMov.categoria || ''}
-                  onChange={e => setEditingMov(p => ({ ...p, categoria: e.target.value }))}
-                  style={inputStyle}
-                />
-              </div>
               <div style={{ gridColumn: '1 / -1' }}>
-                <label style={labelStyle}>Descrizione</label>
+                <label style={labelStyle}>Descrizione (opzionale)</label>
                 <input 
                   type="text"
                   value={editingMov.descrizione || ''}
                   onChange={e => setEditingMov(p => ({ ...p, descrizione: e.target.value }))}
                   style={inputStyle}
+                  placeholder={CATEGORIE_RAPIDE.find(c => c.id === editingMov.categoria)?.desc || 'Descrizione movimento'}
                 />
               </div>
               <div style={{ gridColumn: '1 / -1' }}>
-                <label style={labelStyle}>Fornitore</label>
+                <label style={labelStyle}>Fornitore (opzionale)</label>
                 <input 
                   type="text"
                   value={editingMov.fornitore || ''}
                   onChange={e => setEditingMov(p => ({ ...p, fornitore: e.target.value }))}
                   style={inputStyle}
+                  placeholder="Nome fornitore"
                 />
               </div>
             </div>
