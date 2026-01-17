@@ -261,7 +261,12 @@ async def upload_payslip_pdf(file: UploadFile = File(...)) -> Dict[str, Any]:
                 payslip_id = str(uuid.uuid4())
                 mese = payslip.get("mese", "") or (str(mese_num) if mese_num else "")
                 anno = payslip.get("anno", "") or (str(anno_num) if anno_num else "")
-                netto = float(payslip.get("retribuzione_netta", 0) or 0)
+                # Importo busta paga: deve includere acconto + netto finale (parser gi e0 calcola il totale)
+                importo_busta = float(
+                    payslip.get("retribuzione_netta")
+                    if payslip.get("retribuzione_netta") is not None
+                    else (payslip.get("netto") or 0)
+                )
                 
                 # Save in cedolini (collection unificata)
                 cedolino_doc = {
@@ -274,7 +279,11 @@ async def upload_payslip_pdf(file: UploadFile = File(...)) -> Dict[str, Any]:
                     "periodo": periodo,
                     "ore_lavorate": float(payslip.get("ore_ordinarie", 0) or 0),
                     "lordo": float(payslip.get("retribuzione_lorda", 0) or 0),
-                    "netto_mese": netto,
+                    # Compatibilit e0: molti punti UI/API usano "netto"
+                    "netto": importo_busta,
+                    "netto_mese": importo_busta,
+                    "acconto": float(payslip.get("acconto", 0) or 0),
+                    "differenza": float(payslip.get("differenza", 0) or 0),
                     "contributi_inps": float(payslip.get("contributi_inps", 0) or 0),
                     "qualifica": payslip.get("qualifica", ""),
                     "source": "pdf_upload",
@@ -284,7 +293,7 @@ async def upload_payslip_pdf(file: UploadFile = File(...)) -> Dict[str, Any]:
                 await db["cedolini"].insert_one(cedolino_doc.copy())
                 
                 # Inserisci automaticamente in Prima Nota Salari
-                if netto > 0 and anno and mese:
+                if importo_busta > 0 and anno and mese:
                     # Calcola data fine mese (ultimo giorno del mese)
                     try:
                         import calendar
@@ -311,7 +320,7 @@ async def upload_payslip_pdf(file: UploadFile = File(...)) -> Dict[str, Any]:
                             "id": str(uuid.uuid4()),
                             "data": data_pagamento,
                             "tipo": "uscita",
-                            "importo": netto,
+                            "importo": importo_busta,
                             "descrizione": f"Stipendio {nome} - {periodo}",
                             "categoria": "Stipendi",
                             "riferimento": riferimento_cedolino,
@@ -329,7 +338,7 @@ async def upload_payslip_pdf(file: UploadFile = File(...)) -> Dict[str, Any]:
                         await db["prima_nota_salari"].insert_one(movimento_salario.copy())
                         logger.info(f"Prima Nota Salari: €{netto} per {nome} ({periodo})")
                 
-                results["success"].append({"nome": nome, "periodo": periodo, "netto": netto, "is_new": is_new, "prima_nota": netto > 0})
+                results["success"].append({"nome": nome, "periodo": periodo, "netto": importo_busta, "is_new": is_new, "prima_nota": importo_busta > 0})
                 results["imported"] += 1
                 
             except Exception as e:
