@@ -365,14 +365,6 @@ function SupplierModal({ isOpen, onClose, supplier, onSave, saving }) {
                 </div>
               )}
             </div>
-                  type="number"
-                  value={form.giorni_pagamento || 30}
-                  onChange={(e) => handleChange('giorni_pagamento', parseInt(e.target.value) || 30)}
-                  style={{ width: '100%', padding: '10px 14px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }}
-                  min={0}
-                />
-              </div>
-            </div>
             
             {/* Esclude Magazzino */}
             <div style={{ 
