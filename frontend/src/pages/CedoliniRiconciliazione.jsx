@@ -149,7 +149,7 @@ export default function CedoliniRiconciliazione() {
       // Search
       if (search) {
         const s = search.toLowerCase();
-        const nome = (c.nome_dipendente || c.nome_completo || '').toLowerCase();
+        const nome = (c.dipendente_nome || c.nome_dipendente || c.nome_completo || '').toLowerCase();
         if (!nome.includes(s)) return false;
       }
       
