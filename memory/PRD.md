@@ -158,7 +158,7 @@ Si scala:
 
 ### 🔄 In Progress
 - UI pulsante aggiornamento bulk fornitori in `Fornitori.jsx`
-- Risoluzione 231 fornitori bancari senza IBAN
+- Risoluzione 182 fornitori bancari senza IBAN (ridotti da 223)
 
 ### 📋 Backlog
 - Finalizzare importazione cedolini da PDF (OCR)
@@ -169,7 +169,50 @@ Si scala:
 
 ---
 
-## 12. Clausola finale
+## 13. Logica Prima Nota (NUOVA - Gennaio 2026)
+
+### Regole Fondamentali
+
+**IBAN NON VINCOLANTI**: Gli IBAN non bloccano la contabilità.
+
+**BANCA**:
+1. Guardare i movimenti in **Estratto Conto**
+2. Se trova corrispondenza con fattura → **Prima Nota Banca**
+3. Se non trova corrispondenza → **"Da Riconciliare"**
+
+**CASSA**:
+1. Guardare il **metodo di pagamento** del fornitore
+2. Sempre stato **"Da Riconciliare"** con scelta preassegnata
+
+**Accrediti POS**: Vanno in Prima Nota Banca (sono movimenti bancari)
+
+### Flusso Operativo
+```
+Fattura Ricevuta
+       │
+       ▼
+┌──────────────────┐
+│ Check Estratto   │
+│ Conto Bancario   │
+└────────┬─────────┘
+         │
+    ┌────┴────┐
+    │ Match?  │
+    └────┬────┘
+         │
+    ┌────┴────┐
+    │         │
+    ▼         ▼
+  SI        NO
+    │         │
+    ▼         ▼
+Prima Nota  Da Riconciliare
+  Banca     (preassegnato)
+```
+
+---
+
+## 14. Clausola finale
 
 Questo PRD è vincolante.
 
