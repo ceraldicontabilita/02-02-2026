@@ -547,10 +547,11 @@ async def import_paghe_bonifici(
                 importo_pagato = importo_bonifico
                 risultato["bonifici_matched"] += 1
             else:
-                # === VALIDATORE P0: Salari post luglio 2018 NON pagabili in contanti (PRD) ===
+                # === VALIDATORE P0: Salari dal luglio 2018 NON pagabili in contanti (L.205/2017) ===
+                # Pre luglio 2018 (fino a giugno incluso) = contanti OK
                 if anno > 2018 or (anno == 2018 and mese >= 7):
-                    # Post 07/2018: se non c'è bonifico, errore (non assegnare contanti)
-                    risultato["errors"].append(f"P0: {nome} {mese}/{anno} - nessun bonifico trovato, contanti vietati")
+                    # Dal 07/2018: se non c'è bonifico, errore (non assegnare contanti)
+                    risultato["errors"].append(f"P0: {nome} {mese}/{anno} - nessun bonifico, contanti vietati dal 07/2018")
                     risultato["failed"] += 1
                     continue
                 else:
