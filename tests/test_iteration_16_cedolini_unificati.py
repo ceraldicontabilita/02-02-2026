@@ -174,9 +174,17 @@ class TestChiusuraEsercizio:
         assert response.status_code == 200
         data = response.json()
         
-        assert "ricavi" in data or "totale_ricavi" in data
-        assert "costi" in data or "totale_costi" in data
-        print(f"✅ Bilancino verifica: ricavi={data.get('totale_ricavi', data.get('ricavi'))}, costi={data.get('totale_costi', data.get('costi'))}")
+        # La risposta ha struttura: {anno, bilancino: {ricavi, costi, risultato}}
+        assert "bilancino" in data or "ricavi" in data
+        
+        bilancino = data.get("bilancino", data)
+        ricavi = bilancino.get("ricavi", {})
+        costi = bilancino.get("costi", {})
+        
+        totale_ricavi = ricavi.get("totale", 0) if isinstance(ricavi, dict) else ricavi
+        totale_costi = costi.get("totale", 0) if isinstance(costi, dict) else costi
+        
+        print(f"✅ Bilancino verifica: ricavi={totale_ricavi}, costi={totale_costi}")
 
 
 class TestDocumentPeriodExtraction:
