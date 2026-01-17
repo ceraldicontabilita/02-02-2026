@@ -70,6 +70,24 @@ async def registra_pagamento_cedolino(
     if importo <= 0:
         raise HTTPException(status_code=400, detail="Importo deve essere > 0")
     
+    # === VALIDATORE P0: Salari post luglio 2018 NON possono essere pagati in contanti (PRD sezione validatori P0) ===
+    # Legge 205/2017 art. 1 comma 910: dal 1 luglio 2018 vietato pagare stipendi in contanti
+    anno_cedolino = int(cedolino.get("anno", 0))
+    mese_cedolino = int(cedolino.get("mese", 0))
+    
+    if metodo.lower() in ["contanti", "cassa", "cash", "contante"]:
+        # Post luglio 2018 = anno > 2018 OR (anno == 2018 AND mese >= 7)
+        if anno_cedolino > 2018 or (anno_cedolino == 2018 and mese_cedolino >= 7):
+            raise HTTPException(
+                status_code=422,
+                detail={
+                    "error": "SALARIO_CONTANTI_VIETATO",
+                    "message": f"Pagamento in contanti vietato per salari post luglio 2018 (L.205/2017). Cedolino: {cedolino.get('nome_dipendente', '')} - {mese_cedolino}/{anno_cedolino}",
+                    "cedolino_id": cedolino_id,
+                    "azione_richiesta": "Utilizzare bonifico bancario o altro metodo tracciabile"
+                }
+            )
+    
     # Aggiorna cedolino
     update = {
         "pagato": True,
