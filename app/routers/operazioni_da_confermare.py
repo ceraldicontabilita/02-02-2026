@@ -1694,8 +1694,8 @@ async def cerca_stipendi_per_associazione(
             "_diff": diff
         })
     
-    # Ordina per match esatto prima, poi per differenza importo
-    if target_importo:
+    # Filtra cedolini senza importo
+    results = [r for r in results if r.get('netto', 0) > 0]
         results.sort(key=lambda x: (not x.get("is_match", False), x.get("_diff", 9999999)))
     
     # Rimuovi campo _diff dal risultato
