@@ -77,7 +77,7 @@ export default function ImportUnificato() {
         const lowerName = filename.toLowerCase();
         
         // Se è uno ZIP annidato, estrai ricorsivamente
-        if (lowerName.endsWith('.zip')) {
+        if (lowerName.endsWith('.zip') || lowerName.endsWith('.rar')) {
           const nestedContent = await zipEntry.async('blob');
           const nestedFile = new File([nestedContent], filename, { type: 'application/zip' });
           const nestedFiles = await extractFromZip(nestedFile, extensions);
