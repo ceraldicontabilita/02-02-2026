@@ -287,17 +287,53 @@ export default function CedoliniRiconciliazione() {
 
             {/* Upload Excel Storico */}
             <div style={{ padding: 16, background: '#fef3c7', borderRadius: 8, border: '1px dashed #f59e0b' }}>
-              <h4 style={{ margin: '0 0 8px', fontSize: 14 }}>📊 Import Excel (storico pre-2026)</h4>
+              <h4 style={{ margin: '0 0 8px', fontSize: 14 }}>📊 Import Excel (storico)</h4>
               <p style={{ fontSize: 12, color: '#64748b', margin: '0 0 12px' }}>
-                Colonne: Nome, Mese, Anno, Netto, Importo Pagato, Metodo (contanti/bonifico/assegno)
+                <strong>File 1 (Paghe):</strong> NOME DIPENDENTE, MESE, ANNO, IMPORTO netto<br/>
+                <strong>File 2 (Bonifici - opzionale):</strong> NOME DIPENDENTE, MESE, ANNO, IMPORTO erogato
               </p>
-              <input
-                type="file"
-                accept=".xlsx,.xls,.csv"
-                onChange={handleUploadExcel}
-                disabled={uploading}
-                style={{ fontSize: 13 }}
-              />
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <label style={{ fontSize: 12 }}>
+                  📋 File Paghe (obbligatorio):
+                  <input
+                    type="file"
+                    accept=".xlsx,.xls,.csv"
+                    onChange={(e) => setFilePaghe(e.target.files?.[0] || null)}
+                    disabled={uploading}
+                    style={{ fontSize: 13, marginLeft: 8 }}
+                  />
+                </label>
+                
+                <label style={{ fontSize: 12 }}>
+                  🏦 File Bonifici (opzionale):
+                  <input
+                    type="file"
+                    accept=".xlsx,.xls,.csv"
+                    onChange={(e) => setFileBonifici(e.target.files?.[0] || null)}
+                    disabled={uploading}
+                    style={{ fontSize: 13, marginLeft: 8 }}
+                  />
+                </label>
+                
+                <button
+                  onClick={handleUploadPagheBonifici}
+                  disabled={uploading || !filePaghe}
+                  style={{
+                    padding: '8px 16px',
+                    background: filePaghe ? '#f59e0b' : '#d1d5db',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: 6,
+                    cursor: filePaghe ? 'pointer' : 'not-allowed',
+                    fontWeight: 600,
+                    fontSize: 13,
+                    marginTop: 8
+                  }}
+                >
+                  📤 Importa {filePaghe ? (fileBonifici ? 'Paghe + Bonifici' : 'Solo Paghe') : ''}
+                </button>
+              </div>
             </div>
           </div>
 
@@ -309,7 +345,10 @@ export default function CedoliniRiconciliazione() {
                 <span style={{ color: '#991b1b' }}>❌ {uploadResult.error}</span>
               ) : (
                 <span style={{ color: '#166534' }}>
-                  ✅ Importati: {uploadResult.imported || 0} | Duplicati: {uploadResult.skipped_duplicates || 0} | Errori: {uploadResult.failed || 0}
+                  ✅ Importati: {uploadResult.imported || 0} | 
+                  Bonifici: {uploadResult.bonifici_matched || 0} | 
+                  Contanti: {uploadResult.contanti_assigned || 0} | 
+                  Duplicati: {uploadResult.skipped_duplicates || 0}
                 </span>
               )}
             </div>
