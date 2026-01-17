@@ -994,7 +994,8 @@ async def registra_fattura_prima_nota(
     """
     Registra manualmente il pagamento di una fattura nella prima nota.
     
-    Se metodo_pagamento non viene specificato, usa il metodo dall'anagrafica fornitore.
+    IMPORTANTE: Se metodo_pagamento non viene specificato dall'utente,
+    usa SEMPRE il metodo dall'anagrafica fornitore (MAI dalla fattura XML).
     Per metodo 'misto', specificare importo_cassa e importo_banca.
     """
     db = Database.get_db()
@@ -1007,7 +1008,7 @@ async def registra_fattura_prima_nota(
     if not fattura:
         raise HTTPException(status_code=404, detail="Fattura non trovata")
     
-    # Se metodo non specificato, cerca nell'anagrafica fornitore
+    # Se metodo non specificato dall'utente, usa SEMPRE anagrafica fornitore (mai XML)
     if not metodo_pagamento:
         fornitore_piva = fattura.get("supplier_vat") or fattura.get("cedente_piva")
         if fornitore_piva:
@@ -1016,10 +1017,8 @@ async def registra_fattura_prima_nota(
                 metodo_fornitore = (fornitore.get("metodo_pagamento") or "").lower()
                 if metodo_fornitore in ["contanti", "cassa", "cash"]:
                     metodo_pagamento = "cassa"
-                elif metodo_fornitore in ["bonifico", "banca", "bank"]:
-                    metodo_pagamento = "banca"
                 else:
-                    metodo_pagamento = "banca"  # Default
+                    metodo_pagamento = "banca"  # Default per bonifico, assegno, rid, riba, ecc.
             else:
                 metodo_pagamento = "banca"  # Default se fornitore non trovato
         else:
