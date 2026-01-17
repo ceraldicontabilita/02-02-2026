@@ -1,251 +1,143 @@
-# Product Requirements Document - TechRecon Accounting System
+Prd – Tech Recon Accounting System (super Articolato)
+Product Requirements Document (PRD)
+TechRecon Accounting System – Versione Super Articolata
+1. Obiettivo del sistema
 
-## Original Problem Statement
-Applicazione contabile avanzata per la gestione completa del ciclo passivo, attivo, dipendenti, prima nota, scadenziario e riconciliazione bancaria. L'utente richiede performance elevate, interfacce unificate e funzionalità robuste per la gestione quotidiana dell'attività commerciale.
+Costruire un sistema contabile che:
 
-## User Personas
-- **Commercialista**: Necessita di report fiscali, F24, dichiarazioni IVA
-- **Amministratore**: Gestisce fatture, fornitori, dipendenti, scadenze
-- **Operatore**: Inserisce dati, importa XML, gestisce magazzino
+sia conforme alla normativa italiana,
 
-## Core Requirements
-1. Import fatture XML (singole, multiple, ZIP)
-2. Gestione fornitori con metodi di pagamento configurabili
-3. Scadenziario pagamenti con riconciliazione bancaria
-4. Prima nota unificata (cassa + banca) con saldi separati per anno
-5. Gestione dipendenti e cedolini con riconciliazione pagamenti
-6. Dashboard con statistiche aggregate
-7. Export PDF e Excel
+riduca l’errore umano,
 
----
+renda ogni numero difendibile,
 
-## What's Been Implemented
+cresca senza introdurre incoerenze.
 
-### Session 2026-01-17 (Fork 4)
+2. Modello di controllo a cascata
 
-#### ✅ REFACTORING: Prima Nota Cassa/Banca (dal 14 gennaio) (COMPLETATO)
-- Copiato il codice dal commit `25bb43ba` (14 gennaio 2026)
-- **Nuovo design**: Header 3 box colorati, 4 sottocategorie, form Chiusure Giornaliere, filtri mesi
-- Componenti modulari: `PrimaNotaSummaryCards`, `QuickEntryPanel`, `PrimaNotaMovementsTable`
-- File: `/app/frontend/src/pages/PrimaNota.jsx`
+Anagrafiche
 
-#### ✅ FEATURE: Prima Nota Salari (dal 14 gennaio) (COMPLETATO)
-- Pagina standalone con design professionale
-- **Filtri**: Periodo, Dipendente, Anni da escludere
-- **Pulsanti**: Importa PAGHE, Importa BONIFICI, Esporta Excel, Reset, Aggiorna
-- **Box riepilogo arancione**: Records, Totale Buste, Totale Bonifici, Differenza
-- **Tabella**: Dipendente, Mese, Anno, Busta, Bonifico, Progressivo, Azioni
-- Usa Zustand store per performance ottimizzate
-- Route: `/prima-nota-salari`
-- Menu: Dipendenti → 💰 Prima Nota Salari
+Documenti
 
-#### ✅ P0 - BUG FIX: Errore 404 Assegna Metodi Auto (COMPLETATO)
-- **Problema**: URL endpoint errato `/api/riconciliazione-automatica/` invece di `/api/riconciliazione-auto/`
-- **File modificato**: `/app/frontend/src/pages/RiconciliazioneUnificata.jsx`
+Regole decisionali
 
-#### ✅ FIX: Pagina F24 Pendenti (COMPLETATO)
-- F24 ora mostrano importo totale (non singoli tributi €0.00)
-- Aggiunti pulsanti: 🏦 Banca | 📝 Assegno | 💰 Cassa
-- Selezione multipla + conferma batch
-- Backend supporta conferma F24 con aggiornamento `f24_models`
+Prima Nota
 
-#### ✅ FEATURE: Import Excel Cedolini - Paghe + Bonifici (COMPLETATO)
-- Nuovo endpoint `POST /api/cedolini/import-paghe-bonifici` che accetta:
-  - File 1 (Paghe): NOME DIPENDENTE, MESE, ANNO, IMPORTO netto
-  - File 2 (Bonifici - opzionale): NOME DIPENDENTE, MESE, ANNO, IMPORTO erogato
-- Se bonifico presente → metodo=bonifico
-- Se bonifico assente → metodo=contanti
-- Gestione mesi come testo (Gennaio, Febbraio, Tredicesima, etc.)
-- Test: 150 cedolini importati, 104 con bonifico, 46 contanti
+Riconciliazione
 
-#### ✅ FIX: Corrispettivi - Pagamento Elettronico (COMPLETATO)
-- Aggiunto endpoint `POST /api/corrispettivi/sincronizza-prima-nota`
-- Sincronizzati 356 record aggiornati + 691 creati
-- I corrispettivi ora mostrano colonna ELETTRONICO con dati reali
+Controlli trasversali
 
-### Session 2026-01-17 (Fork 3)
+Un errore a monte invalida i livelli successivi.
 
-#### ✅ P0 - BUG FIX: Routing Pagamenti Prima Nota (COMPLETATO)
-- **Problema**: Le fatture pagate tramite Banca venivano erroneamente registrate in Prima Nota Cassa
-- **Causa**: La funzione `genera_scrittura_prima_nota` scriveva SEMPRE in `prima_nota_banca`, ignorando il metodo di pagamento del fornitore
-- **Soluzione**: Modificata la logica per leggere il `metodo_pagamento` dall'anagrafica fornitore e indirizzare il movimento alla collection corretta
-- **File modificati**:
-  - `/app/app/routers/ciclo_passivo_integrato.py` - Funzione `genera_scrittura_prima_nota` ora verifica metodo fornitore
-  - `/app/app/routers/invoices/fatture_ricevute.py` - Passaggio `metodo_pagamento` a funzione integrata
-- **Logica routing**:
-  - `metodo_pagamento` in ["contanti", "cassa", "cash", "contante"] → `prima_nota_cassa`
-  - Altrimenti (bonifico, assegno, rid, riba, sepa, default) → `prima_nota_banca`
-- **Test eseguiti**: 3/3 test passati (contanti→cassa, bonifico→banca, default→banca)
+3. Validatori automatici
+P0 – Bloccanti
 
-### Session 2026-01-17 (Fork 2 - Parte 4)
+Fornitore senza metodo pagamento
 
-#### ✅ REGOLA CRITICA - Metodo Pagamento SOLO da Anagrafica Fornitore
-**IMPORTANTE**: Il metodo di pagamento viene SEMPRE e SOLO dall'anagrafica fornitore, MAI dalla fattura XML.
-- **Motivo**: Una fattura può avere metodo "banca" nell'XML ma essere pagata in contanti secondo l'accordo col fornitore
-- **File modificati**:
-  - `/app/app/routers/ciclo_passivo_integrato.py` - Ignora XML, usa solo anagrafica
-  - `/app/app/routers/accounting/prima_nota.py` - Ignora XML, usa solo anagrafica
-- **Endpoint aggiornamento metodi**:
-  - `PUT /api/suppliers/{id}/metodo-pagamento` - Aggiorna singolo fornitore
-  - `POST /api/suppliers/aggiorna-metodi-bulk` - Aggiornamento massivo
+Metodo ≠ contanti senza IBAN
 
-#### Distribuzione Metodi Pagamento Fornitori
-- Bonifico: 227 (92%)
-- Contanti: 11 (4.5%)
-- Cassa: 4
-- Misto: 4
-- Assegno: 1
+Documento senza anagrafica valida
 
-### Session 2026-01-17 (Fork 2 - Parte 3)
+Movimento contabile senza documento
 
-#### ✅ P0 - Migrazione Pagamenti da Prima Nota Salari (COMPLETATO)
-- **Endpoint**: `POST /api/cedolini/migra-da-prima-nota-salari`
-- **Risultato**: 156 cedolini migrati con stato "pagato" e metodo "bonifico"
-- I pagamenti esistenti dalla Prima Nota Salari ora sono visibili nella nuova sezione Cedolini
+Salari post luglio 2018 pagati in contanti
 
-### Session 2026-01-17 (Fork 2 - Parte 2)
+P1 – Critici
 
-#### ✅ P0 - Pagina Cedolini & Riconciliazione (COMPLETATO)
-- **File creati**: 
-  - `/app/frontend/src/pages/CedoliniRiconciliazione.jsx` - Nuova pagina unificata
-  - `/app/app/routers/cedolini_riconciliazione.py` - Endpoint riconciliazione
-- **Funzionalità**:
-  - Vista cedolini con stato pagamento (pagato/da pagare)
-  - Pagamento manuale con modal (importo, metodo, data, note)
-  - Logica pre/post luglio 2018 (contanti vs bonifico obbligatorio)
-  - Import Excel storico cedolini già pagati
-  - Riconciliazione automatica con bonifici/assegni
-  - Registrazione pagamenti crea movimento in Prima Nota (Cassa o Banca)
-- **Route**: `/cedolini` (nuova) e `/cedolini-calcolo` (vecchia)
+Differenza tra cedolino e bonifico
 
-### Session 2026-01-17 (Fork 2 - Parte 1)
+Metodo pagamento misto
 
-#### ✅ P0 - Prima Nota Cassa/Banca con Saldi Separati per Anno (COMPLETATO)
-- **File modificati**: 
-  - `/app/app/routers/accounting/prima_nota.py` - Aggiunto calcolo saldo anni precedenti
-  - `/app/frontend/src/pages/PrimaNotaUnificata.jsx` - Aggiornato per mostrare riporto
-- **Funzionalità**:
-  - Collection separate `prima_nota_cassa` e `prima_nota_banca`
-  - Saldo finale = Riporto anni precedenti + Saldo anno corrente
-  - API restituisce: `saldo`, `saldo_anno`, `saldo_precedente`
-  - Colonne DARE (entrate) e AVERE (uscite) separate
-  - Saldo progressivo per ogni movimento
+Pagamenti parziali
 
-#### ✅ P0 - Parser Cedolini Semplificato (COMPLETATO)
-- **File creato**: `/app/app/parsers/payslip_parser_simple.py`
-- **File modificato**: `/app/app/routers/employees/employees_payroll.py`
-- **Funzionalità**:
-  - Estrae SOLO: Nome dipendente, Periodo (mese/anno), Importo netto
-  - Evita duplicati (normalizzazione case-insensitive)
-  - Salva PDF allegato al cedolino
-  - Supporta PDF singoli e archivi ZIP/RAR
-- **Test**: 17 cedolini estratti correttamente da un PDF Libro Unico
+P2 – Informativi
 
-#### 🔧 Fix - File Corrotto prima_nota_automation.py
-- Rimossi null bytes dal file che impedivano l'avvio del backend
+Dati anagrafici incompleti non critici
 
-### Session 2026-01-17 (Fork 1)
+IBAN multipli non consolidati
 
-#### ✅ P0 - Unificazione Pagine Ciclo Passivo (COMPLETATO)
-- **File modificati**: 
-  - `/app/frontend/src/pages/ArchivioFattureRicevute.jsx` (completamente riscritto)
-  - `/app/frontend/src/main.jsx` (routes aggiornate)
-  - `/app/frontend/src/App.jsx` (sidebar semplificata)
-- **Funzionalità**: 
-  - Pagina unificata con 5 tabs: Archivio, Import XML, Scadenze, Riconcilia, Storico
-  - Route `/ciclo-passivo` e `/fatture-ricevute` puntano entrambe alla stessa pagina
-  - Sidebar mostra solo "Ciclo Passivo" (rimosso duplicato "Archivio Fatture")
-  - Import XML integrato con pipeline: Magazzino → Prima Nota → Scadenziario → Riconciliazione
+4. Ciclo Passivo
 
-#### ✅ P1 - Bug Filtro Anno Globale (CORRETTO)
-- **File modificato**: `/app/app/routers/ciclo_passivo_integrato.py`
-- **Fix**: Endpoint `/dashboard-riconciliazione` ora filtra correttamente le scadenze per anno
-- **Prima**: Mostrava scadenze del 2022 anche con anno 2026 selezionato
-- **Dopo**: Mostra solo scadenze dell'anno selezionato
+Import XML
 
-#### ✅ P2 - Pulsante "Vedi Fattura" Assegni (IMPLEMENTATO)
-- **File modificato**: `/app/frontend/src/pages/GestioneAssegni.jsx`
-- **Funzionalità**:
-  - Pulsante verde "📄 Vedi" accanto a ogni assegno con `fattura_collegata`
-  - Supporto fallback per `fatture_collegate[0]?.fattura_id`
-  - 134 assegni hanno il pulsante attivo
+Aggiornamento anagrafica fornitore
 
-#### ✅ P2 - Filtraggio Assegni Sporchi (IMPLEMENTATO)
-- **File modificato**: `/app/frontend/src/pages/GestioneAssegni.jsx`
-- **Fix**: Filtro lato client esclude assegni senza numero o con importo null
-- **Prima**: Carnet 22 mostrava righe vuote
-- **Dopo**: Solo assegni validi visualizzati (154 totali)
+Metodo pagamento da anagrafica
 
-#### ✅ P2 - Supporto Multipli IBAN Fornitori (IMPLEMENTATO)
-- **File modificati**:
-  - `/app/frontend/src/pages/Fornitori.jsx` (form con campo IBAN + lista)
-  - `/app/app/routers/suppliers.py` (endpoint `/sync-iban` e `/iban-from-invoices`)
-- **Funzionalità**:
-  - Campo "IBAN Principale" nel form fornitore
-  - Visualizzazione lista IBAN aggiuntivi (estratti da fatture)
-  - Endpoint per sincronizzare IBAN dalle fatture ai fornitori
+Scrittura deterministica in prima nota
 
----
+5. Gestione Dipendenti e Salari
 
-## Prioritized Backlog
+Import cedolini
 
-### P0 - Critical
-- ✅ Unificazione pagine ciclo passivo - COMPLETATO
-- ✅ Bug filtro anno globale - COMPLETATO
+Import bonifici
 
-### P1 - High Priority
-- [ ] Bug UI Prima Nota: Movimento POS in colonna AVERE invece che DARE
-- [ ] Bug UI Prima Nota: Modal modifica con dropdown categorie
-- [ ] Sincronizzazione IBAN da bonifici a fornitori (archivio bonifici)
+Calcolo differenze
 
-### P2 - Medium Priority  
-- [ ] Uniformare visualizzazione fatture (view-assoinvoice)
-- [ ] Verifica logica import corrispettivi XML (non sovrascriva dati manuali)
-- [ ] Migrazione collection fornitori/suppliers in unica collection
+Evidenziazione differenze
 
-### P3 - Future/Backlog (Sospeso su richiesta utente)
-- [ ] Integrazione Google Calendar per scadenze
-- [ ] Dashboard Analytics con grafici interattivi
-- [ ] Schedulazione report PDF automatici via email
+Saldo differenze aggregato
 
----
+6. Prima Nota
 
-## Tech Stack
-- **Frontend**: React 18 + Vite + Shadcn/UI
-- **Backend**: FastAPI + Python 3.11
-- **Database**: MongoDB
-- **PDF**: WeasyPrint, jsPDF
-- **Email**: Gmail API
+Cassa e Banca separate
 
-## Key API Endpoints
-- `GET /api/ciclo-passivo/dashboard-riconciliazione?anno=2026` - Dashboard scadenze con filtro anno
-- `GET /api/fatture-ricevute/archivio` - Lista fatture con filtri
-- `POST /api/ciclo-passivo/import-integrato` - Import XML con pipeline completa
-- `POST /api/suppliers/sync-iban` - Sincronizza IBAN da fatture a fornitori
-- `GET /api/assegni` - Lista assegni con fattura_collegata
+Saldi per anno
 
-## Test Reports
-- `/app/test_reports/iteration_17.json` - Test unificazione pagine (100% passed)
+Riporto automatico
 
----
+Immutabilità delle scritture
 
-## Code Architecture
+7. Riconciliazione
 
-```
-/app/frontend/src/
-├── pages/
-│   ├── ArchivioFattureRicevute.jsx  # Pagina unificata ciclo passivo (5 tabs)
-│   ├── GestioneAssegni.jsx          # Lista assegni con filtro e pulsante vedi fattura
-│   └── Fornitori.jsx                # Form con IBAN e lista IBAN aggiuntivi
-├── App.jsx                          # Sidebar con menu unificato
-└── main.jsx                         # Routes aggiornate
+Bancaria
 
-/app/app/routers/
-├── ciclo_passivo_integrato.py       # Dashboard riconciliazione con filtro anno
-└── suppliers.py                     # Endpoint sync-iban
-```
+Salari
 
-## Notes for Next Agent
-- Tutti i test passati al 100%
-- L'utente ha chiesto di sospendere i task futuri finché non li richiede esplicitamente
-- Focus sulla stabilità e correzione bug piuttosto che nuove feature
+F24
+
+Ogni riconciliazione chiude il ciclo documentale.
+
+8. Matrice di rischio fiscale
+Livello	Rischio
+Anagrafiche	Altissimo
+Documenti	Alto
+Regole	Altissimo
+Prima Nota	Critico
+Riconciliazione	Medio
+9. Test funzionali (concettuali, non esecutivi)
+Test P0
+
+Import fattura senza metodo pagamento → BLOCCO
+
+Pagamento salari non conforme → BLOCCO
+
+Test P1
+
+Cedolino ≠ bonifico → ALERT + saldo differenze
+
+Test P2
+
+IBAN multipli → LOG
+
+10. Scalabilità
+
+Si scala:
+
+aggiungendo fonti di input,
+
+non modificando la contabilità,
+
+rafforzando i controlli.
+
+11. Clausola finale
+
+Questo PRD è vincolante.
+
+Ogni sviluppo futuro deve:
+
+rispettare i validatori,
+
+non introdurre eccezioni silenziose,
+
+mantenere la tracciabilità completa.
