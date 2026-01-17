@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../api';
 import EtichettaLotto from '../components/EtichettaLotto';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
 import { PageInfoCard } from '../components/PageInfoCard';
+import { formatEuro } from '../lib/utils';
 
 const MESI = [
   { value: '', label: 'Tutti i mesi' },
@@ -23,9 +24,11 @@ const MESI = [
 
 // Tabs della pagina unificata
 const TABS = [
-  { id: 'archivio', label: '📋 Archivio Fatture', desc: 'Lista e ricerca fatture' },
-  { id: 'pipeline', label: '🔄 Pipeline', desc: 'Import → Magazzino → Prima Nota' },
-  { id: 'scadenze', label: '📅 Scadenze', desc: 'Scadenziario e pagamenti' },
+  { id: 'archivio', label: '📋 Archivio', desc: 'Lista e ricerca fatture' },
+  { id: 'import', label: '📤 Import XML', desc: 'Import integrato' },
+  { id: 'scadenze', label: '📅 Scadenze', desc: 'Scadenziario pagamenti' },
+  { id: 'riconciliazione', label: '🔄 Riconcilia', desc: 'Match con banca' },
+  { id: 'storico', label: '✅ Storico', desc: 'Pagamenti effettuati' },
 ];
 
 // Stili inline (come da DESIGN_SYSTEM.md)
@@ -35,14 +38,65 @@ const btnSecondary = { padding: '10px 20px', background: '#e5e7eb', color: '#374
 const inputStyle = { padding: '10px 12px', borderRadius: 8, border: '2px solid #e5e7eb', fontSize: 14, boxSizing: 'border-box' };
 const selectStyle = { padding: '10px 12px', borderRadius: 8, border: '2px solid #e5e7eb', fontSize: 14, background: 'white' };
 
+// Stili aggiuntivi per riconciliazione
+const styles = {
+  badge: (color) => ({
+    display: 'inline-flex',
+    alignItems: 'center',
+    padding: '4px 10px',
+    borderRadius: 20,
+    fontSize: 12,
+    fontWeight: 600,
+    background: `${color}15`,
+    color: color
+  }),
+  button: (variant = 'primary') => ({
+    padding: '8px 14px',
+    borderRadius: 8,
+    border: 'none',
+    cursor: 'pointer',
+    fontWeight: 500,
+    fontSize: 13,
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 6,
+    transition: 'all 0.2s',
+    ...(variant === 'primary' ? { background: '#3b82f6', color: 'white' } 
+      : variant === 'success' ? { background: '#10b981', color: 'white' }
+      : variant === 'danger' ? { background: '#ef4444', color: 'white' }
+      : { background: '#f1f5f9', color: '#475569', border: '1px solid #e2e8f0' })
+  }),
+  uploadZone: {
+    border: '2px dashed #cbd5e1',
+    borderRadius: 12,
+    padding: '40px 20px',
+    textAlign: 'center',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+    background: '#f8fafc'
+  },
+  uploadZoneActive: {
+    borderColor: '#3b82f6',
+    background: '#eff6ff'
+  },
+  table: { width: '100%', borderCollapse: 'collapse', fontSize: 14 },
+  th: { padding: '12px 16px', textAlign: 'left', fontWeight: 600, color: '#475569', borderBottom: '2px solid #e2e8f0', background: '#f8fafc' },
+  td: { padding: '12px 16px', borderBottom: '1px solid #f1f5f9', color: '#334155' },
+  emptyState: { textAlign: 'center', padding: '60px 20px', color: '#64748b' },
+  splitView: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: 24 },
+  rowHighlight: { background: '#fef3c7', cursor: 'pointer' },
+  rowSelected: { background: '#dbeafe' }
+};
+
 export default function ArchivioFatture() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { anno } = useAnnoGlobale(); // Usa anno globale dalla sidebar
+  const { anno } = useAnnoGlobale();
   
   // Tab attivo
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'archivio');
   
+  // Dati archivio
   const [fatture, setFatture] = useState([]);
   const [fornitori, setFornitori] = useState([]);
   const [statistiche, setStatistiche] = useState(null);
@@ -50,10 +104,16 @@ export default function ArchivioFatture() {
   const [uploading, setUploading] = useState(false);
   const [uploadResult, setUploadResult] = useState(null);
   
-  // Dati per Pipeline e Scadenze
-  const [pipelineStats, setPipelineStats] = useState(null);
-  const [scadenze, setScadenze] = useState([]);
-  const [scadenzeStats, setScadenzeStats] = useState(null);
+  // Dati per Pipeline/Import
+  const [dragActive, setDragActive] = useState(false);
+  const fileInputRef = useRef(null);
+  
+  // Dati per Scadenze e Riconciliazione
+  const [dashboard, setDashboard] = useState(null);
+  const [selectedScadenza, setSelectedScadenza] = useState(null);
+  const [suggerimenti, setSuggerimenti] = useState([]);
+  const [loadingSuggerimenti, setLoadingSuggerimenti] = useState(false);
+  const [processing, setProcessing] = useState(false);
   
   // Filtri (anno viene dal contesto globale)
   const [mese, setMese] = useState(searchParams.get('mese') || '');
@@ -65,6 +125,8 @@ export default function ArchivioFatture() {
   const [showEtichette, setShowEtichette] = useState(false);
   const [selectedFatturaId, setSelectedFatturaId] = useState(null);
 
+  // ==================== FETCH FUNCTIONS ====================
+  
   const fetchFatture = useCallback(async () => {
     setLoading(true);
     try {
@@ -103,40 +165,106 @@ export default function ArchivioFatture() {
     }
   };
 
-  // Carica dati Pipeline
-  const fetchPipelineStats = async () => {
+  const fetchDashboard = useCallback(async () => {
     try {
-      const res = await api.get(`/api/ciclo-passivo/dashboard-riconciliazione?anno=${anno}`);
-      setPipelineStats(res.data);
+      const params = new URLSearchParams();
+      if (anno) params.append('anno', anno);
+      const res = await api.get(`/api/ciclo-passivo/dashboard-riconciliazione?${params}`);
+      setDashboard(res.data);
     } catch (err) {
-      console.error('Errore caricamento pipeline:', err);
+      console.error('Errore caricamento dashboard:', err);
     }
-  };
+  }, [anno]);
 
-  // Carica Scadenze
-  const fetchScadenze = async () => {
-    try {
-      const res = await api.get(`/api/ciclo-passivo/scadenze?anno=${anno}&stato=aperta`);
-      setScadenze(res.data.scadenze || res.data || []);
-      setScadenzeStats(res.data.stats || null);
-    } catch (err) {
-      console.error('Errore caricamento scadenze:', err);
-    }
-  };
+  // ==================== EFFECTS ====================
 
   useEffect(() => {
     fetchFatture();
     fetchStatistiche();
-    // Carica anche dati pipeline e scadenze se tab attivo
-    if (activeTab === 'pipeline') fetchPipelineStats();
-    if (activeTab === 'scadenze') fetchScadenze();
-  }, [fetchFatture, anno, activeTab]);
+  }, [fetchFatture, anno]);
 
   useEffect(() => {
     fetchFornitori();
   }, []);
 
-  // Upload XML
+  useEffect(() => {
+    // Carica dashboard quando si accede ai tab pipeline, scadenze, riconciliazione o storico
+    if (['import', 'scadenze', 'riconciliazione', 'storico'].includes(activeTab)) {
+      fetchDashboard();
+    }
+  }, [activeTab, fetchDashboard]);
+
+  // ==================== UPLOAD HANDLERS ====================
+
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true);
+    } else if (e.type === 'dragleave') {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    const files = e.dataTransfer?.files;
+    if (files?.length > 0) {
+      await uploadFiles(files);
+    }
+  };
+
+  const handleFileSelect = async (e) => {
+    const files = e.target.files;
+    if (files?.length > 0) {
+      await uploadFiles(files);
+    }
+  };
+
+  const uploadFiles = async (files) => {
+    setUploading(true);
+    setUploadResult(null);
+    
+    try {
+      const formData = new FormData();
+      
+      if (files.length === 1) {
+        formData.append('file', files[0]);
+        const res = await api.post('/api/ciclo-passivo/import-integrato', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        setUploadResult({ success: true, single: true, data: res.data });
+      } else {
+        for (let i = 0; i < files.length; i++) {
+          formData.append('files', files[i]);
+        }
+        const res = await api.post('/api/ciclo-passivo/import-integrato-batch', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        setUploadResult({ success: true, single: false, data: res.data });
+      }
+      
+      // Ricarica dati
+      fetchFatture();
+      fetchStatistiche();
+      fetchDashboard();
+    } catch (e) {
+      const errorDetail = e.response?.data?.detail;
+      setUploadResult({ 
+        success: false, 
+        error: typeof errorDetail === 'object' ? errorDetail.message : (errorDetail || e.message)
+      });
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  // Upload XML classico (archivio tab)
   const handleUploadXML = async (e, tipo) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -175,11 +303,9 @@ export default function ArchivioFatture() {
         });
       }
       
-      // Ricarica dati
       fetchFatture();
       fetchStatistiche();
       fetchFornitori();
-      
     } catch (err) {
       const errData = err.response?.data;
       setUploadResult({
@@ -193,29 +319,77 @@ export default function ArchivioFatture() {
     e.target.value = '';
   };
 
+  // ==================== RICONCILIAZIONE HANDLERS ====================
+
+  const loadSuggerimentiMatch = async (scadenzaId) => {
+    setLoadingSuggerimenti(true);
+    try {
+      const res = await api.get(`/api/ciclo-passivo/suggerimenti-match/${scadenzaId}`);
+      setSuggerimenti(res.data.suggerimenti || []);
+    } catch (e) {
+      console.error('Errore caricamento suggerimenti:', e);
+      setSuggerimenti([]);
+    } finally {
+      setLoadingSuggerimenti(false);
+    }
+  };
+
+  const handleSelectScadenza = (scadenza) => {
+    setSelectedScadenza(scadenza);
+    loadSuggerimentiMatch(scadenza.id);
+  };
+
+  const handleMatchManuale = async (transazioneId) => {
+    if (!selectedScadenza) return;
+    
+    setProcessing(true);
+    try {
+      await api.post(`/api/ciclo-passivo/match-manuale?scadenza_id=${selectedScadenza.id}&transazione_id=${transazioneId}`);
+      alert('✅ Riconciliazione completata con successo!');
+      setSelectedScadenza(null);
+      setSuggerimenti([]);
+      fetchDashboard();
+    } catch (e) {
+      alert(`Errore: ${e.response?.data?.detail || e.message}`);
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  // ==================== HELPERS ====================
+
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(amount || 0);
   };
 
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '-';
+    try {
+      return new Date(dateStr).toLocaleDateString('it-IT');
+    } catch { return dateStr; }
+  };
+
+  const isScadenzaPassata = (dataScadenza) => {
+    if (!dataScadenza) return false;
+    try {
+      return new Date(dataScadenza) < new Date();
+    } catch { return false; }
+  };
+
   const getStatoBadge = (fattura) => {
     if (fattura.pagato) {
-      // Determina il metodo di pagamento
       let metodo = fattura.metodo_pagamento || '';
       let icon = '✅';
       let label = 'Pagata';
       
       if (fattura.prima_nota_cassa_id || metodo.toLowerCase().includes('cassa') || metodo.toLowerCase().includes('contanti')) {
-        icon = '💵';
-        label = 'Cassa';
+        icon = '💵'; label = 'Cassa';
       } else if (fattura.prima_nota_banca_id || metodo.toLowerCase().includes('banca') || metodo.toLowerCase().includes('bonifico')) {
-        icon = '🏦';
-        label = 'Banca';
+        icon = '🏦'; label = 'Banca';
       } else if (metodo.toLowerCase().includes('assegno')) {
-        icon = '📝';
-        label = 'Assegno';
+        icon = '📝'; label = 'Assegno';
       } else if (metodo.toLowerCase().includes('rid') || metodo.toLowerCase().includes('sdd')) {
-        icon = '🔄';
-        label = 'RID/SDD';
+        icon = '🔄'; label = 'RID/SDD';
       }
       
       return (
@@ -230,8 +404,12 @@ export default function ArchivioFatture() {
     return <span style={{ padding: '4px 10px', background: '#fef3c7', color: '#d97706', borderRadius: 6, fontSize: 12, fontWeight: '600' }}>Da pagare</span>;
   };
 
+  const stats = dashboard?.statistiche || {};
+
+  // ==================== RENDER ====================
+
   return (
-    <div style={{ padding: 20, maxWidth: 1400, margin: '0 auto', position: 'relative' }} data-testid="fatture-ricevute-page">
+    <div style={{ padding: 20, maxWidth: 1600, margin: '0 auto', position: 'relative' }} data-testid="ciclo-passivo-unificato">
       {/* Page Info Card */}
       <div style={{ position: 'absolute', top: 0, right: 0, zIndex: 100 }}>
         <PageInfoCard pageKey="fatture-ricevute" />
@@ -239,12 +417,15 @@ export default function ArchivioFatture() {
       
       {/* Header con Tabs */}
       <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 700, color: '#1e293b', margin: '0 0 16px' }}>
+        <h1 style={{ fontSize: 24, fontWeight: 700, color: '#1e293b', margin: '0 0 8px' }}>
           📄 Ciclo Passivo - Fatture Ricevute ({anno})
         </h1>
+        <p style={{ margin: '0 0 16px', color: '#64748b', fontSize: 14 }}>
+          Import → Magazzino → Prima Nota → Scadenziario → Riconciliazione
+        </p>
         
         {/* Tabs */}
-        <div style={{ display: 'flex', gap: 8, borderBottom: '2px solid #e5e7eb', marginBottom: 20 }}>
+        <div style={{ display: 'flex', gap: 4, borderBottom: '2px solid #e5e7eb', overflowX: 'auto', paddingBottom: 2 }}>
           {TABS.map(tab => (
             <button
               key={tab.id}
@@ -253,17 +434,15 @@ export default function ArchivioFatture() {
                 setSearchParams(prev => { prev.set('tab', tab.id); return prev; });
               }}
               style={{
-                padding: '12px 20px',
+                padding: '12px 16px',
                 background: activeTab === tab.id ? '#3b82f6' : 'transparent',
                 color: activeTab === tab.id ? 'white' : '#64748b',
                 border: 'none',
                 borderRadius: '8px 8px 0 0',
                 cursor: 'pointer',
                 fontWeight: 600,
-                fontSize: 14,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
+                fontSize: 13,
+                whiteSpace: 'nowrap',
                 transition: 'all 0.2s'
               }}
               data-testid={`tab-${tab.id}`}
@@ -274,331 +453,642 @@ export default function ArchivioFatture() {
         </div>
       </div>
 
-      {/* TAB: ARCHIVIO (contenuto originale) */}
+      {/* Stats Cards (visibili in tutti i tab) */}
+      {dashboard && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12, marginBottom: 20 }}>
+          <div style={{ background: 'linear-gradient(135deg, #ef444415, #ef444408)', borderRadius: 12, padding: 16, border: '1px solid #ef444430' }}>
+            <div style={{ fontSize: 24, fontWeight: 'bold', color: '#ef4444' }}>{stats.num_scadenze_aperte || 0}</div>
+            <div style={{ fontSize: 12, color: '#64748b' }}>Scadenze Aperte</div>
+          </div>
+          <div style={{ background: 'linear-gradient(135deg, #f59e0b15, #f59e0b08)', borderRadius: 12, padding: 16, border: '1px solid #f59e0b30' }}>
+            <div style={{ fontSize: 18, fontWeight: 'bold', color: '#f59e0b' }}>{formatEuro(stats.totale_debito_aperto || 0)}</div>
+            <div style={{ fontSize: 12, color: '#64748b' }}>Debito Aperto</div>
+          </div>
+          <div style={{ background: 'linear-gradient(135deg, #10b98115, #10b98108)', borderRadius: 12, padding: 16, border: '1px solid #10b98130' }}>
+            <div style={{ fontSize: 24, fontWeight: 'bold', color: '#10b981' }}>{stats.num_scadenze_saldate || 0}</div>
+            <div style={{ fontSize: 12, color: '#64748b' }}>Scadenze Saldate</div>
+          </div>
+          <div style={{ background: 'linear-gradient(135deg, #3b82f615, #3b82f608)', borderRadius: 12, padding: 16, border: '1px solid #3b82f630' }}>
+            <div style={{ fontSize: 18, fontWeight: 'bold', color: '#3b82f6' }}>{formatEuro(stats.totale_pagato || 0)}</div>
+            <div style={{ fontSize: 12, color: '#64748b' }}>Totale Pagato</div>
+          </div>
+        </div>
+      )}
+
+      {/* ==================== TAB: ARCHIVIO ==================== */}
       {activeTab === 'archivio' && (
         <>
-      {/* Header originale */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        marginBottom: 20,
-        padding: '15px 20px',
-        background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
-        borderRadius: 12,
-        color: 'white',
-        flexWrap: 'wrap',
-        gap: 10
-      }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 'bold' }}>📄 Archivio Fatture Ricevute</h1>
-          <p style={{ margin: '4px 0 0 0', fontSize: 13, opacity: 0.9 }}>Gestione fatture passive con controllo duplicati e verifica totali</p>
-        </div>
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-          <label style={{ ...btnPrimary, display: 'flex', alignItems: 'center', gap: 5 }}>
-            📥 Carica XML
-            <input type="file" accept=".xml" onChange={(e) => handleUploadXML(e, 'singolo')} style={{ display: 'none' }} />
-          </label>
-          <label style={{ ...btnSecondary, display: 'flex', alignItems: 'center', gap: 5 }}>
-            📥 XML Multipli
-            <input type="file" accept=".xml" multiple onChange={(e) => handleUploadXML(e, 'multipli')} style={{ display: 'none' }} />
-          </label>
-          <label style={{ ...btnSecondary, display: 'flex', alignItems: 'center', gap: 5 }}>
-            📦 ZIP Massivo
-            <input type="file" accept=".zip" onChange={(e) => handleUploadXML(e, 'zip')} style={{ display: 'none' }} />
-          </label>
-        </div>
-      </div>
-
-      {/* Upload Result */}
-      {uploadResult && (
-        <div style={{
-          ...cardStyle,
-          marginBottom: 20,
-          background: uploadResult.success ? '#dcfce7' : '#fee2e2',
-          borderColor: uploadResult.success ? '#16a34a' : '#dc2626'
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          {/* Header Archivio */}
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center', 
+            marginBottom: 20,
+            padding: '15px 20px',
+            background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
+            borderRadius: 12,
+            color: 'white',
+            flexWrap: 'wrap',
+            gap: 10
+          }}>
             <div>
-              <p style={{ margin: 0, fontWeight: 'bold', color: uploadResult.success ? '#16a34a' : '#dc2626' }}>
-                {uploadResult.success ? '✅' : '❌'} {uploadResult.message}
-              </p>
-              {uploadResult.data?.fornitori_nuovi > 0 && (
-                <p style={{ margin: '4px 0 0 0', fontSize: 13 }}>📌 {uploadResult.data.fornitori_nuovi} nuovi fornitori aggiunti</p>
-              )}
-              {uploadResult.data?.anomale > 0 && (
-                <p style={{ margin: '4px 0 0 0', fontSize: 13, color: '#d97706' }}>⚠️ {uploadResult.data.anomale} fatture con totali non coerenti</p>
-              )}
-              {uploadResult.data?.duplicate > 0 && (
-                <p style={{ margin: '4px 0 0 0', fontSize: 13, color: '#6b7280' }}>🔁 {uploadResult.data.duplicate} fatture già presenti (ignorate)</p>
-              )}
+              <h2 style={{ margin: 0, fontSize: 18, fontWeight: 'bold' }}>📋 Archivio Fatture Ricevute</h2>
+              <p style={{ margin: '4px 0 0 0', fontSize: 12, opacity: 0.9 }}>Gestione fatture passive con controllo duplicati</p>
             </div>
-            <button onClick={() => setUploadResult(null)} style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer' }}>✕</button>
-          </div>
-        </div>
-      )}
-
-      {uploading && (
-        <div style={{ ...cardStyle, marginBottom: 20, textAlign: 'center', background: '#f0f9ff' }}>
-          <p style={{ margin: 0 }}>⏳ Importazione in corso...</p>
-        </div>
-      )}
-
-      {/* Statistiche */}
-      {statistiche && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 16, marginBottom: 20 }}>
-          <div style={{ ...cardStyle, textAlign: 'center', padding: 16 }}>
-            <div style={{ fontSize: 24, fontWeight: 'bold', color: '#1e3a5f' }}>{statistiche.totale_fatture}</div>
-            <div style={{ fontSize: 13, color: '#6b7280' }}>Fatture Totali</div>
-          </div>
-          <div style={{ ...cardStyle, textAlign: 'center', padding: 16 }}>
-            <div style={{ fontSize: 24, fontWeight: 'bold', color: '#16a34a' }}>{formatCurrency(statistiche.totale_importo)}</div>
-            <div style={{ fontSize: 13, color: '#6b7280' }}>Importo Totale</div>
-          </div>
-          <div style={{ ...cardStyle, textAlign: 'center', padding: 16 }}>
-            <div style={{ fontSize: 24, fontWeight: 'bold', color: '#2196f3' }}>{statistiche.fornitori_unici}</div>
-            <div style={{ fontSize: 13, color: '#6b7280' }}>Fornitori</div>
-          </div>
-          <div style={{ ...cardStyle, textAlign: 'center', padding: 16 }}>
-            <div style={{ fontSize: 24, fontWeight: 'bold', color: statistiche.fatture_anomale > 0 ? '#dc2626' : '#16a34a' }}>{statistiche.fatture_anomale}</div>
-            <div style={{ fontSize: 13, color: '#6b7280' }}>Anomale</div>
-          </div>
-          <div style={{ ...cardStyle, textAlign: 'center', padding: 16 }}>
-            <div style={{ fontSize: 24, fontWeight: 'bold', color: '#9c27b0' }}>{statistiche.fatture_con_pdf}</div>
-            <div style={{ fontSize: 13, color: '#6b7280' }}>Con PDF</div>
-          </div>
-        </div>
-      )}
-
-      {/* Filtri */}
-      <div style={{ ...cardStyle, marginBottom: 20 }}>
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-          <div>
-            <label style={{ fontSize: 12, color: '#6b7280', display: 'block', marginBottom: 4 }}>Anno</label>
-            <div style={{ ...selectStyle, minWidth: 100, background: '#f1f5f9', color: '#64748b', fontWeight: 600 }} data-testid="anno-display">
-              {anno} <span style={{ fontSize: 10, opacity: 0.7 }}>(globale)</span>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              <label style={{ ...btnPrimary, display: 'flex', alignItems: 'center', gap: 5, fontSize: 12 }}>
+                📥 Carica XML
+                <input type="file" accept=".xml" onChange={(e) => handleUploadXML(e, 'singolo')} style={{ display: 'none' }} />
+              </label>
+              <label style={{ ...btnSecondary, display: 'flex', alignItems: 'center', gap: 5, fontSize: 12 }}>
+                📥 XML Multipli
+                <input type="file" accept=".xml" multiple onChange={(e) => handleUploadXML(e, 'multipli')} style={{ display: 'none' }} />
+              </label>
+              <label style={{ ...btnSecondary, display: 'flex', alignItems: 'center', gap: 5, fontSize: 12 }}>
+                📦 ZIP Massivo
+                <input type="file" accept=".zip" onChange={(e) => handleUploadXML(e, 'zip')} style={{ display: 'none' }} />
+              </label>
             </div>
           </div>
-          <div>
-            <label style={{ fontSize: 12, color: '#6b7280', display: 'block', marginBottom: 4 }}>Mese</label>
-            <select value={mese} onChange={(e) => setMese(e.target.value)} style={{ ...selectStyle, minWidth: 130 }}>
-              {MESI.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
-            </select>
-          </div>
-          <div>
-            <label style={{ fontSize: 12, color: '#6b7280', display: 'block', marginBottom: 4 }}>Fornitore</label>
-            <select value={fornitore} onChange={(e) => setFornitore(e.target.value)} style={{ ...selectStyle, minWidth: 200 }}>
-              <option value="">Tutti i fornitori</option>
-              {fornitori.map(f => (
-                <option key={f.partita_iva} value={f.partita_iva}>
-                  {f.ragione_sociale} ({f.partita_iva})
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label style={{ fontSize: 12, color: '#6b7280', display: 'block', marginBottom: 4 }}>Stato</label>
-            <select value={stato} onChange={(e) => setStato(e.target.value)} style={{ ...selectStyle, minWidth: 120 }}>
-              <option value="">Tutti</option>
-              <option value="importata">Importate</option>
-              <option value="anomala">Anomale</option>
-              <option value="pagata">Pagate</option>
-            </select>
-          </div>
-          <div style={{ flex: 1, minWidth: 200 }}>
-            <label style={{ fontSize: 12, color: '#6b7280', display: 'block', marginBottom: 4 }}>Ricerca</label>
-            <input
-              type="text"
-              placeholder="Numero fattura, fornitore..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && fetchFatture()}
-              style={{ ...inputStyle, width: '100%' }}
-            />
-          </div>
-          <div style={{ alignSelf: 'flex-end' }}>
-            <button onClick={fetchFatture} style={btnPrimary}>🔍 Cerca</button>
-          </div>
-        </div>
-      </div>
 
-      {/* Tabella Fatture */}
-      <div style={cardStyle}>
-        {loading ? (
-          <div style={{ padding: 40, textAlign: 'center', color: '#6b7280' }}>⏳ Caricamento...</div>
-        ) : fatture.length === 0 ? (
-          <div style={{ padding: 40, textAlign: 'center', color: '#6b7280' }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>📭</div>
-            <p style={{ margin: 0 }}>Nessuna fattura trovata</p>
-            <p style={{ margin: '8px 0 0 0', fontSize: 14 }}>Usa i pulsanti "Carica XML" per importare fatture</p>
-          </div>
-        ) : (
-          <>
-          {/* Layout Card per Mobile */}
-          <div className="mobile-cards-archivio" style={{ display: 'none' }}>
-            <style>{`
-              @media (max-width: 768px) {
-                .mobile-cards-archivio { display: block !important; }
-                .desktop-table-archivio { display: none !important; }
-              }
-            `}</style>
-            {fatture.map((f, idx) => (
-              <div 
-                key={f.id}
-                style={{
-                  background: idx % 2 === 0 ? 'white' : '#f9fafb',
-                  border: '1px solid #e5e7eb',
-                  borderRadius: 12,
-                  padding: 16,
-                  marginBottom: 12
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                  <div>
-                    <div style={{ fontWeight: 'bold', fontSize: 15 }}>{f.invoice_number || f.numero_documento}</div>
-                    <div style={{ fontSize: 12, color: '#6b7280' }}>{f.invoice_date || f.data_documento}</div>
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontWeight: 'bold', fontSize: 16, color: '#1e40af' }}>{formatCurrency(f.total_amount || f.importo_totale)}</div>
-                    {getStatoBadge(f)}
-                  </div>
+          {/* Upload Result */}
+          {uploadResult && (
+            <div style={{
+              ...cardStyle,
+              marginBottom: 20,
+              background: uploadResult.success ? '#dcfce7' : '#fee2e2',
+              borderColor: uploadResult.success ? '#16a34a' : '#dc2626'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <p style={{ margin: 0, fontWeight: 'bold', color: uploadResult.success ? '#16a34a' : '#dc2626' }}>
+                    {uploadResult.success ? '✅' : '❌'} {uploadResult.message}
+                  </p>
+                  {uploadResult.data?.fornitori_nuovi > 0 && (
+                    <p style={{ margin: '4px 0 0 0', fontSize: 13 }}>📌 {uploadResult.data.fornitori_nuovi} nuovi fornitori aggiunti</p>
+                  )}
                 </div>
-                <div style={{ fontSize: 14, color: '#374151', marginBottom: 4 }}>
-                  {f.supplier_name || f.fornitore_ragione_sociale}
-                </div>
-                <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 12 }}>
-                  P.IVA: {f.supplier_vat || f.fornitore_partita_iva}
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#6b7280', marginBottom: 12 }}>
-                  <span>Imponibile: {formatCurrency(f.imponibile)}</span>
-                  <span>IVA: {formatCurrency(f.iva)}</span>
-                </div>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <a
-                    href={`/api/fatture-ricevute/fattura/${f.id}/view-assoinvoice`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ flex: 1, padding: '8px 12px', background: '#2196f3', color: 'white', borderRadius: 8, textDecoration: 'none', textAlign: 'center', fontSize: 13, fontWeight: 'bold' }}
-                  >
-                    📄 Vedi PDF
-                  </a>
-                  <button
-                    onClick={() => navigate(`/fatture-ricevute/${f.id}`)}
-                    style={{ padding: '8px 12px', background: '#f3f4f6', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 13 }}
-                  >
-                    🔍
-                  </button>
-                  <button
-                    onClick={() => {
-                      setSelectedFatturaId(f.id);
-                      setShowEtichette(true);
-                    }}
-                    style={{ padding: '8px 12px', background: '#fef3c7', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 13 }}
-                  >
-                    🏷️
-                  </button>
+                <button onClick={() => setUploadResult(null)} style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer' }}>✕</button>
+              </div>
+            </div>
+          )}
+
+          {uploading && (
+            <div style={{ ...cardStyle, marginBottom: 20, textAlign: 'center', background: '#f0f9ff' }}>
+              <p style={{ margin: 0 }}>⏳ Importazione in corso...</p>
+            </div>
+          )}
+
+          {/* Statistiche */}
+          {statistiche && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 12, marginBottom: 20 }}>
+              <div style={{ ...cardStyle, textAlign: 'center', padding: 14 }}>
+                <div style={{ fontSize: 22, fontWeight: 'bold', color: '#1e3a5f' }}>{statistiche.totale_fatture}</div>
+                <div style={{ fontSize: 12, color: '#6b7280' }}>Fatture Totali</div>
+              </div>
+              <div style={{ ...cardStyle, textAlign: 'center', padding: 14 }}>
+                <div style={{ fontSize: 18, fontWeight: 'bold', color: '#16a34a' }}>{formatCurrency(statistiche.totale_importo)}</div>
+                <div style={{ fontSize: 12, color: '#6b7280' }}>Importo Totale</div>
+              </div>
+              <div style={{ ...cardStyle, textAlign: 'center', padding: 14 }}>
+                <div style={{ fontSize: 22, fontWeight: 'bold', color: '#2196f3' }}>{statistiche.fornitori_unici}</div>
+                <div style={{ fontSize: 12, color: '#6b7280' }}>Fornitori</div>
+              </div>
+              <div style={{ ...cardStyle, textAlign: 'center', padding: 14 }}>
+                <div style={{ fontSize: 22, fontWeight: 'bold', color: statistiche.fatture_anomale > 0 ? '#dc2626' : '#16a34a' }}>{statistiche.fatture_anomale}</div>
+                <div style={{ fontSize: 12, color: '#6b7280' }}>Anomale</div>
+              </div>
+            </div>
+          )}
+
+          {/* Filtri */}
+          <div style={{ ...cardStyle, marginBottom: 20 }}>
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+              <div>
+                <label style={{ fontSize: 11, color: '#6b7280', display: 'block', marginBottom: 4 }}>Anno</label>
+                <div style={{ ...selectStyle, minWidth: 80, background: '#f1f5f9', color: '#64748b', fontWeight: 600, fontSize: 13 }}>
+                  {anno} <span style={{ fontSize: 9, opacity: 0.7 }}>(globale)</span>
                 </div>
               </div>
-            ))}
+              <div>
+                <label style={{ fontSize: 11, color: '#6b7280', display: 'block', marginBottom: 4 }}>Mese</label>
+                <select value={mese} onChange={(e) => setMese(e.target.value)} style={{ ...selectStyle, minWidth: 110, fontSize: 13 }}>
+                  {MESI.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={{ fontSize: 11, color: '#6b7280', display: 'block', marginBottom: 4 }}>Fornitore</label>
+                <select value={fornitore} onChange={(e) => setFornitore(e.target.value)} style={{ ...selectStyle, minWidth: 180, fontSize: 13 }}>
+                  <option value="">Tutti i fornitori</option>
+                  {fornitori.map(f => (
+                    <option key={f.partita_iva} value={f.partita_iva}>
+                      {f.ragione_sociale} ({f.partita_iva})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label style={{ fontSize: 11, color: '#6b7280', display: 'block', marginBottom: 4 }}>Stato</label>
+                <select value={stato} onChange={(e) => setStato(e.target.value)} style={{ ...selectStyle, minWidth: 100, fontSize: 13 }}>
+                  <option value="">Tutti</option>
+                  <option value="importata">Importate</option>
+                  <option value="anomala">Anomale</option>
+                  <option value="pagata">Pagate</option>
+                </select>
+              </div>
+              <div style={{ flex: 1, minWidth: 180 }}>
+                <label style={{ fontSize: 11, color: '#6b7280', display: 'block', marginBottom: 4 }}>Ricerca</label>
+                <input
+                  type="text"
+                  placeholder="Numero fattura, fornitore..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && fetchFatture()}
+                  style={{ ...inputStyle, width: '100%', fontSize: 13 }}
+                />
+              </div>
+              <div style={{ alignSelf: 'flex-end' }}>
+                <button onClick={fetchFatture} style={{ ...btnPrimary, fontSize: 13 }}>🔍 Cerca</button>
+              </div>
+            </div>
           </div>
-          
-          {/* Tabella Desktop */}
-          <div className="desktop-table-archivio" style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
-              <thead>
-                <tr style={{ borderBottom: '2px solid #e5e7eb', background: '#f9fafb' }}>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600' }}>Data</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600' }}>Numero</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600' }}>Fornitore</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'right', fontWeight: '600' }}>Imponibile</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'right', fontWeight: '600' }}>IVA</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'right', fontWeight: '600' }}>Totale</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'center', fontWeight: '600' }}>Stato</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'center', fontWeight: '600' }}>PDF</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'center', fontWeight: '600' }}>Azioni</th>
-                </tr>
-              </thead>
-              <tbody>
-                {fatture.map((f, idx) => (
-                  <tr key={f.id} style={{ borderBottom: '1px solid #f3f4f6', background: idx % 2 === 0 ? 'white' : '#f9fafb' }}>
-                    <td style={{ padding: '12px 16px' }}>{f.invoice_date || f.data_documento}</td>
-                    <td style={{ padding: '12px 16px', fontWeight: '500' }}>{f.invoice_number || f.numero_documento}</td>
-                    <td style={{ padding: '12px 16px' }}>
-                      <div style={{ fontWeight: '500' }}>{f.supplier_name || f.fornitore_ragione_sociale}</div>
-                      <div style={{ fontSize: 12, color: '#6b7280' }}>{f.supplier_vat || f.fornitore_partita_iva}</div>
-                    </td>
-                    <td style={{ padding: '12px 16px', textAlign: 'right' }}>{formatCurrency(f.imponibile)}</td>
-                    <td style={{ padding: '12px 16px', textAlign: 'right' }}>{formatCurrency(f.iva)}</td>
-                    <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 'bold' }}>{formatCurrency(f.total_amount || f.importo_totale)}</td>
-                    <td style={{ padding: '12px 16px', textAlign: 'center' }}>{getStatoBadge(f)}</td>
-                    <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                      <a
-                        href={`/api/fatture-ricevute/fattura/${f.id}/view-assoinvoice`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{
-                          display: 'inline-flex',
-                          padding: '6px 12px',
-                          background: '#2196f3',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: 6,
-                          cursor: 'pointer',
-                          fontSize: 11,
-                          fontWeight: 'bold',
-                          alignItems: 'center',
-                          gap: 4,
-                          textDecoration: 'none'
-                        }}
-                        title="Visualizza fattura in formato AssoInvoice"
-                        data-testid={`btn-pdf-${f.id}`}
-                      >
-                        📄 Vedi PDF
-                      </a>
-                    </td>
-                    <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                      <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
-                        <button
-                          onClick={() => navigate(`/fatture-ricevute/${f.id}`)}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16 }}
-                          title="Visualizza dettaglio"
-                          data-testid={`btn-view-${f.id}`}
-                        >
-                          👁️
-                        </button>
-                        <button
-                          onClick={() => {
-                            setSelectedFatturaId(f.id);
-                            setShowEtichette(true);
-                          }}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16 }}
-                          title="Stampa etichette lotto"
-                          data-testid={`btn-etichette-${f.id}`}
-                        >
-                          🏷️
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          </>
-        )}
-      </div>
 
-      {/* Info sistema */}
-      <div style={{ marginTop: 20, padding: 16, background: '#f0f9ff', borderRadius: 8, fontSize: 13, color: '#1e3a5f' }}>
-        <strong>ℹ️ Sistema di controllo:</strong>
-        <ul style={{ margin: '8px 0 0 16px', padding: 0 }}>
-          <li>Controllo duplicati: P.IVA Fornitore + Numero Documento</li>
-          <li>Verifica totali: Somma righe + IVA vs Totale Documento</li>
-          <li>Fornitori: Creati automaticamente se non esistenti (chiave: P.IVA)</li>
-          <li>PDF: Disponibili per il download se presenti nell'XML</li>
-          <li>🏷️ Etichette: Clicca sull'icona etichetta per stampare i lotti HACCP</li>
-        </ul>
-      </div>
+          {/* Tabella Fatture */}
+          <div style={cardStyle}>
+            {loading ? (
+              <div style={{ padding: 40, textAlign: 'center', color: '#6b7280' }}>⏳ Caricamento...</div>
+            ) : fatture.length === 0 ? (
+              <div style={{ padding: 40, textAlign: 'center', color: '#6b7280' }}>
+                <div style={{ fontSize: 48, marginBottom: 16 }}>📭</div>
+                <p style={{ margin: 0 }}>Nessuna fattura trovata</p>
+                <p style={{ margin: '8px 0 0 0', fontSize: 14 }}>Usa i pulsanti "Carica XML" per importare fatture</p>
+              </div>
+            ) : (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                  <thead>
+                    <tr style={{ borderBottom: '2px solid #e5e7eb', background: '#f9fafb' }}>
+                      <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: '600' }}>Data</th>
+                      <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: '600' }}>Numero</th>
+                      <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: '600' }}>Fornitore</th>
+                      <th style={{ padding: '10px 12px', textAlign: 'right', fontWeight: '600' }}>Imponibile</th>
+                      <th style={{ padding: '10px 12px', textAlign: 'right', fontWeight: '600' }}>IVA</th>
+                      <th style={{ padding: '10px 12px', textAlign: 'right', fontWeight: '600' }}>Totale</th>
+                      <th style={{ padding: '10px 12px', textAlign: 'center', fontWeight: '600' }}>Stato</th>
+                      <th style={{ padding: '10px 12px', textAlign: 'center', fontWeight: '600' }}>Azioni</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {fatture.map((f, idx) => (
+                      <tr key={f.id} style={{ borderBottom: '1px solid #f3f4f6', background: idx % 2 === 0 ? 'white' : '#f9fafb' }}>
+                        <td style={{ padding: '10px 12px' }}>{f.invoice_date || f.data_documento}</td>
+                        <td style={{ padding: '10px 12px', fontWeight: '500' }}>{f.invoice_number || f.numero_documento}</td>
+                        <td style={{ padding: '10px 12px' }}>
+                          <div style={{ fontWeight: '500', fontSize: 13 }}>{f.supplier_name || f.fornitore_ragione_sociale}</div>
+                          <div style={{ fontSize: 11, color: '#6b7280' }}>{f.supplier_vat || f.fornitore_partita_iva}</div>
+                        </td>
+                        <td style={{ padding: '10px 12px', textAlign: 'right' }}>{formatCurrency(f.imponibile)}</td>
+                        <td style={{ padding: '10px 12px', textAlign: 'right' }}>{formatCurrency(f.iva)}</td>
+                        <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 'bold' }}>{formatCurrency(f.total_amount || f.importo_totale)}</td>
+                        <td style={{ padding: '10px 12px', textAlign: 'center' }}>{getStatoBadge(f)}</td>
+                        <td style={{ padding: '10px 12px', textAlign: 'center' }}>
+                          <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
+                            <a
+                              href={`/api/fatture-ricevute/fattura/${f.id}/view-assoinvoice`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{ padding: '5px 10px', background: '#2196f3', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 11, fontWeight: 'bold', textDecoration: 'none' }}
+                              title="Visualizza fattura"
+                              data-testid={`btn-pdf-${f.id}`}
+                            >
+                              📄 Vedi
+                            </a>
+                            <button
+                              onClick={() => navigate(`/fatture-ricevute/${f.id}`)}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14 }}
+                              title="Dettaglio"
+                              data-testid={`btn-view-${f.id}`}
+                            >
+                              👁️
+                            </button>
+                            <button
+                              onClick={() => { setSelectedFatturaId(f.id); setShowEtichette(true); }}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14 }}
+                              title="Stampa etichette lotto"
+                              data-testid={`btn-etichette-${f.id}`}
+                            >
+                              🏷️
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* ==================== TAB: IMPORT XML INTEGRATO ==================== */}
+      {activeTab === 'import' && (
+        <div style={cardStyle}>
+          <div style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0', background: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#1e293b', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span>📤</span> Import Fatture XML Integrate
+            </h3>
+          </div>
+          <div style={{ padding: 20 }}>
+            <p style={{ marginBottom: 20, color: '#64748b' }}>
+              Carica file XML di fatture passive. Il sistema eseguirà automaticamente:
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: 24 }}>
+              <div style={{ padding: 16, background: '#f0fdf4', borderRadius: 8, border: '1px solid #bbf7d0' }}>
+                <strong style={{ color: '#166534' }}>1. Magazzino</strong>
+                <p style={{ margin: '8px 0 0 0', fontSize: 12, color: '#15803d' }}>Carico merce e lotti HACCP</p>
+              </div>
+              <div style={{ padding: 16, background: '#eff6ff', borderRadius: 8, border: '1px solid #bfdbfe' }}>
+                <strong style={{ color: '#1e40af' }}>2. Prima Nota</strong>
+                <p style={{ margin: '8px 0 0 0', fontSize: 12, color: '#1d4ed8' }}>Scritture contabili Dare/Avere</p>
+              </div>
+              <div style={{ padding: 16, background: '#fef3c7', borderRadius: 8, border: '1px solid #fde68a' }}>
+                <strong style={{ color: '#92400e' }}>3. Scadenziario</strong>
+                <p style={{ margin: '8px 0 0 0', fontSize: 12, color: '#b45309' }}>Scadenze di pagamento</p>
+              </div>
+              <div style={{ padding: 16, background: '#fce7f3', borderRadius: 8, border: '1px solid #fbcfe8' }}>
+                <strong style={{ color: '#9d174d' }}>4. Riconciliazione</strong>
+                <p style={{ margin: '8px 0 0 0', fontSize: 12, color: '#be185d' }}>Match automatico con banca</p>
+              </div>
+            </div>
+
+            <div 
+              style={{ ...styles.uploadZone, ...(dragActive ? styles.uploadZoneActive : {}) }}
+              onDragEnter={handleDrag}
+              onDragLeave={handleDrag}
+              onDragOver={handleDrag}
+              onDrop={handleDrop}
+              onClick={() => fileInputRef.current?.click()}
+              data-testid="upload-zone"
+            >
+              <input 
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileSelect}
+                accept=".xml"
+                multiple
+                style={{ display: 'none' }}
+                data-testid="file-input"
+              />
+              {uploading ? (
+                <div>
+                  <div style={{ fontSize: 48, marginBottom: 16 }}>⏳</div>
+                  <p style={{ fontSize: 18, color: '#3b82f6', fontWeight: 500 }}>Elaborazione in corso...</p>
+                </div>
+              ) : (
+                <div>
+                  <div style={{ fontSize: 48, marginBottom: 16 }}>📁</div>
+                  <p style={{ fontSize: 18, color: '#1e293b', fontWeight: 500 }}>Trascina qui i file XML o clicca per selezionare</p>
+                  <p style={{ color: '#64748b', marginTop: 8 }}>Supporta file singoli o multipli</p>
+                </div>
+              )}
+            </div>
+
+            {/* Upload Result */}
+            {uploadResult && (
+              <div style={{ 
+                marginTop: 24, 
+                padding: 20, 
+                borderRadius: 12,
+                background: uploadResult.success ? '#f0fdf4' : '#fef2f2',
+                border: `1px solid ${uploadResult.success ? '#bbf7d0' : '#fecaca'}`
+              }}>
+                {uploadResult.success ? (
+                  uploadResult.single ? (
+                    <div>
+                      <h4 style={{ margin: '0 0 16px 0', color: '#166534' }}>✅ Fattura importata con successo!</h4>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, fontSize: 14 }}>
+                        <div><strong>Numero:</strong> {uploadResult.data.numero_documento}</div>
+                        <div><strong>Fornitore:</strong> {uploadResult.data.fornitore}</div>
+                        <div><strong>Importo:</strong> {formatEuro(uploadResult.data.importo_totale)}</div>
+                        <div><strong>Fornitore nuovo:</strong> {uploadResult.data.fornitore_nuovo ? 'Sì' : 'No'}</div>
+                      </div>
+                      {uploadResult.data.magazzino && (
+                        <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #bbf7d0' }}>
+                          <strong>Magazzino:</strong> {uploadResult.data.magazzino.movimenti_creati} movimenti, {uploadResult.data.magazzino.lotti_creati} lotti
+                        </div>
+                      )}
+                      {uploadResult.data.prima_nota && (
+                        <div style={{ marginTop: 8 }}>
+                          <strong>Prima Nota:</strong> {uploadResult.data.prima_nota.status === 'ok' ? '✅ Scrittura generata' : '⚠️ ' + uploadResult.data.prima_nota.error}
+                        </div>
+                      )}
+                      {uploadResult.data.scadenziario && (
+                        <div style={{ marginTop: 8 }}>
+                          <strong>Scadenziario:</strong> {uploadResult.data.scadenziario.status === 'ok' ? '✅ Scadenza creata' : '⚠️ ' + uploadResult.data.scadenziario.error}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div>
+                      <h4 style={{ margin: '0 0 16px 0', color: '#166534' }}>
+                        ✅ Import completato: {uploadResult.data.importate}/{uploadResult.data.totale} fatture
+                      </h4>
+                      {uploadResult.data.errori > 0 && (
+                        <p style={{ color: '#ef4444' }}>⚠️ {uploadResult.data.errori} errori</p>
+                      )}
+                    </div>
+                  )
+                ) : (
+                  <div>
+                    <h4 style={{ margin: '0 0 8px 0', color: '#dc2626' }}>❌ Errore durante import</h4>
+                    <p style={{ color: '#b91c1c' }}>{uploadResult.error}</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ==================== TAB: SCADENZE ==================== */}
+      {activeTab === 'scadenze' && (
+        <div style={cardStyle}>
+          <div style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0', background: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#1e293b', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span>📅</span> Scadenze di Pagamento Aperte
+            </h3>
+            <span style={styles.badge('#ef4444')}>{dashboard?.scadenze_aperte?.length || 0} scadenze</span>
+          </div>
+          <div style={{ overflowX: 'auto' }}>
+            {loading ? (
+              <div style={styles.emptyState}>Caricamento...</div>
+            ) : dashboard?.scadenze_aperte?.length > 0 ? (
+              <table style={styles.table}>
+                <thead>
+                  <tr>
+                    <th style={styles.th}>Scadenza</th>
+                    <th style={styles.th}>Fornitore</th>
+                    <th style={styles.th}>N. Fattura</th>
+                    <th style={styles.th}>Importo</th>
+                    <th style={styles.th}>Metodo</th>
+                    <th style={styles.th}>Stato</th>
+                    <th style={styles.th}>Azioni</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {dashboard.scadenze_aperte.map((s) => (
+                    <tr key={s.id} style={isScadenzaPassata(s.data_scadenza) ? styles.rowHighlight : {}}>
+                      <td style={styles.td}>
+                        <strong>{formatDate(s.data_scadenza)}</strong>
+                        {isScadenzaPassata(s.data_scadenza) && (
+                          <span style={{ ...styles.badge('#ef4444'), marginLeft: 8 }}>Scaduta</span>
+                        )}
+                      </td>
+                      <td style={styles.td}>{s.fornitore_nome}</td>
+                      <td style={styles.td}>{s.numero_fattura}</td>
+                      <td style={styles.td}>
+                        <strong style={{ color: '#dc2626' }}>{formatEuro(s.importo_totale)}</strong>
+                      </td>
+                      <td style={styles.td}>
+                        <span style={styles.badge('#3b82f6')}>{s.metodo_descrizione || s.metodo_pagamento}</span>
+                      </td>
+                      <td style={styles.td}>
+                        <span style={styles.badge('#f59e0b')}>Da pagare</span>
+                      </td>
+                      <td style={styles.td}>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          {s.fattura_id && (
+                            <a 
+                              style={{ ...styles.button('secondary'), padding: '6px 10px', textDecoration: 'none' }}
+                              href={`/api/fatture-ricevute/fattura/${s.fattura_id}/view-assoinvoice`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              data-testid={`btn-pdf-scadenza-${s.id}`}
+                              title="Visualizza fattura"
+                            >
+                              📄
+                            </a>
+                          )}
+                          <button 
+                            style={styles.button('primary')}
+                            onClick={() => {
+                              setActiveTab('riconciliazione');
+                              setSearchParams(prev => { prev.set('tab', 'riconciliazione'); return prev; });
+                              handleSelectScadenza(s);
+                            }}
+                            data-testid={`btn-riconcilia-${s.id}`}
+                          >
+                            🔗 Riconcilia
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <div style={styles.emptyState}>
+                <div style={{ fontSize: 48, marginBottom: 16 }}>🎉</div>
+                <p>Nessuna scadenza aperta</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ==================== TAB: RICONCILIAZIONE ==================== */}
+      {activeTab === 'riconciliazione' && (
+        <div style={styles.splitView}>
+          {/* Colonna Sinistra: Scadenze */}
+          <div style={cardStyle}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }}>
+              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#1e293b', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span>📋</span> Scadenze da Riconciliare
+              </h3>
+            </div>
+            <div style={{ overflowX: 'auto', maxHeight: 600 }}>
+              {loading ? (
+                <div style={styles.emptyState}>Caricamento...</div>
+              ) : dashboard?.scadenze_aperte?.length > 0 ? (
+                <table style={styles.table}>
+                  <thead>
+                    <tr>
+                      <th style={styles.th}>Scadenza</th>
+                      <th style={styles.th}>Fornitore</th>
+                      <th style={styles.th}>Importo</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dashboard.scadenze_aperte.map((s) => (
+                      <tr 
+                        key={s.id}
+                        style={{
+                          cursor: 'pointer',
+                          ...(selectedScadenza?.id === s.id ? styles.rowSelected : {}),
+                          ...(isScadenzaPassata(s.data_scadenza) && selectedScadenza?.id !== s.id ? { background: '#fef3c7' } : {})
+                        }}
+                        onClick={() => handleSelectScadenza(s)}
+                        data-testid={`scadenza-row-${s.id}`}
+                      >
+                        <td style={styles.td}>
+                          <strong>{formatDate(s.data_scadenza)}</strong>
+                          <br />
+                          <span style={{ fontSize: 12, color: '#64748b' }}>{s.numero_fattura}</span>
+                        </td>
+                        <td style={styles.td}>{s.fornitore_nome}</td>
+                        <td style={styles.td}>
+                          <strong style={{ color: '#dc2626' }}>{formatEuro(s.importo_totale)}</strong>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <div style={styles.emptyState}>
+                  <p>Nessuna scadenza da riconciliare</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Colonna Destra: Movimenti Bancari Suggeriti */}
+          <div style={cardStyle}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }}>
+              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#1e293b', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span>🏦</span> Movimenti Bancari Suggeriti
+              </h3>
+            </div>
+            <div style={{ overflowX: 'auto', maxHeight: 600 }}>
+              {selectedScadenza ? (
+                <>
+                  <div style={{ padding: 16, background: '#eff6ff', borderBottom: '1px solid #e2e8f0' }}>
+                    <strong>Scadenza selezionata:</strong> {selectedScadenza.fornitore_nome} - {formatEuro(selectedScadenza.importo_totale)}
+                    <br />
+                    <span style={{ fontSize: 13, color: '#64748b' }}>Fatt. {selectedScadenza.numero_fattura} - Scade {formatDate(selectedScadenza.data_scadenza)}</span>
+                  </div>
+                  {loadingSuggerimenti ? (
+                    <div style={styles.emptyState}>Ricerca movimenti...</div>
+                  ) : suggerimenti.length > 0 ? (
+                    <table style={styles.table}>
+                      <thead>
+                        <tr>
+                          <th style={styles.th}>Data</th>
+                          <th style={styles.th}>Descrizione</th>
+                          <th style={styles.th}>Importo</th>
+                          <th style={styles.th}>Match</th>
+                          <th style={styles.th}></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {suggerimenti.map((m) => (
+                          <tr key={m.id}>
+                            <td style={styles.td}>{formatDate(m.data)}</td>
+                            <td style={styles.td}>
+                              <span style={{ fontSize: 13 }}>{m.descrizione || m.causale || '-'}</span>
+                            </td>
+                            <td style={styles.td}>
+                              <strong>{formatEuro(m.importo)}</strong>
+                              {m.diff_importo > 0 && (
+                                <span style={{ fontSize: 11, color: '#f59e0b', display: 'block' }}>
+                                  Diff: {formatEuro(m.diff_importo)}
+                                </span>
+                              )}
+                            </td>
+                            <td style={styles.td}>
+                              <span style={styles.badge(m.match_score < 50 ? '#10b981' : m.match_score < 200 ? '#f59e0b' : '#ef4444')}>
+                                {m.match_score < 50 ? '⭐ Ottimo' : m.match_score < 200 ? '🔸 Buono' : '⚠️ Incerto'}
+                              </span>
+                            </td>
+                            <td style={styles.td}>
+                              <button 
+                                style={styles.button('success')}
+                                onClick={() => handleMatchManuale(m.id)}
+                                disabled={processing}
+                                data-testid={`btn-match-${m.id}`}
+                              >
+                                ✓ Match
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  ) : (
+                    <div style={styles.emptyState}>
+                      <div style={{ fontSize: 48, marginBottom: 16 }}>🔍</div>
+                      <p>Nessun movimento bancario compatibile trovato</p>
+                      <p style={{ fontSize: 13, marginTop: 8 }}>Verifica che i movimenti bancari siano stati importati</p>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div style={styles.emptyState}>
+                  <div style={{ fontSize: 48, marginBottom: 16 }}>👈</div>
+                  <p>Seleziona una scadenza dalla lista a sinistra</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ==================== TAB: STORICO ==================== */}
+      {activeTab === 'storico' && (
+        <div style={cardStyle}>
+          <div style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0', background: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#1e293b', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span>✅</span> Storico Pagamenti Effettuati
+            </h3>
+            <span style={styles.badge('#10b981')}>{dashboard?.scadenze_saldate?.length || 0} pagamenti</span>
+          </div>
+          <div style={{ overflowX: 'auto' }}>
+            {loading ? (
+              <div style={styles.emptyState}>Caricamento...</div>
+            ) : dashboard?.scadenze_saldate?.length > 0 ? (
+              <table style={styles.table}>
+                <thead>
+                  <tr>
+                    <th style={styles.th}>Data Pagamento</th>
+                    <th style={styles.th}>Fornitore</th>
+                    <th style={styles.th}>N. Fattura</th>
+                    <th style={styles.th}>Importo</th>
+                    <th style={styles.th}>Metodo</th>
+                    <th style={styles.th}>Riconciliato</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {dashboard.scadenze_saldate.map((s) => (
+                    <tr key={s.id}>
+                      <td style={styles.td}>{formatDate(s.data_pagamento)}</td>
+                      <td style={styles.td}>{s.fornitore_nome}</td>
+                      <td style={styles.td}>{s.numero_fattura}</td>
+                      <td style={styles.td}>
+                        <strong style={{ color: '#10b981' }}>{formatEuro(s.importo_totale)}</strong>
+                      </td>
+                      <td style={styles.td}>
+                        <span style={styles.badge('#3b82f6')}>{s.metodo_descrizione || s.metodo_pagamento}</span>
+                      </td>
+                      <td style={styles.td}>
+                        {s.riconciliato ? (
+                          <span style={styles.badge('#10b981')}>✓ Sì</span>
+                        ) : (
+                          <span style={styles.badge('#f59e0b')}>Manuale</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <div style={styles.emptyState}>
+                <div style={{ fontSize: 48, marginBottom: 16 }}>📭</div>
+                <p>Nessun pagamento registrato</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Modal Stampa Etichette */}
       {showEtichette && selectedFatturaId && (
