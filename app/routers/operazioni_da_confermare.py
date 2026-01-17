@@ -1116,8 +1116,7 @@ async def banca_veloce(
     solo_non_riconciliati: bool = Query(True)
 ) -> Dict[str, Any]:
     """
-    Endpoint VELOCE per la tab Banca - solo dati base senza analisi complessa.
-    Usare /smart/analizza per analisi dettagliata.
+    Endpoint VELOCE e UNIFICATO per la tab Banca - include movimenti + assegni.
     """
     db = Database.get_db()
     
@@ -1131,16 +1130,32 @@ async def banca_veloce(
         {"_id": 0, "id": 1, "data": 1, "importo": 1, "descrizione": 1, "descrizione_originale": 1, "riconciliato": 1}
     ).sort("data", -1).limit(limit).to_list(limit)
     
+    # Assegni da riconciliare (non incassati e senza fattura)
+    assegni = await db.assegni.find(
+        {
+            "stato": {"$nin": ["incassato", "annullato"]},
+            "$or": [
+                {"fattura_id": None},
+                {"fattura_id": {"$exists": False}},
+                {"confermato": {"$ne": True}}
+            ]
+        },
+        {"_id": 0}
+    ).sort("data_emissione", -1).limit(50).to_list(50)
+    
     # Stats veloci
     tot_non_ric = await db.estratto_conto_movimenti.count_documents({"riconciliato": {"$ne": True}})
     tot_ric = await db.estratto_conto_movimenti.count_documents({"riconciliato": True})
+    tot_assegni = len(assegni)
     
     return {
         "movimenti": movimenti,
+        "assegni": assegni,
         "stats": {
             "totale": len(movimenti),
             "non_riconciliati": tot_non_ric,
-            "riconciliati": tot_ric
+            "riconciliati": tot_ric,
+            "assegni_pendenti": tot_assegni
         }
     }
 
