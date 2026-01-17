@@ -293,12 +293,23 @@ export default function ImportUnificato() {
 
         // Bonifici: usa la pipeline a job (create job -> upload) dietro le quinte
         if (tipo === 'bonifici' && tipoConfig.useBonificiJob) {
-          endpoint = '/api/archivio-bonifici/jobs/import';
+          // 1) crea job
+          const jobRes = await api.post('/api/archivio-bonifici/jobs/import', null);
+          const jobId = jobRes.data?.job_id;
+          if (!jobId) throw new Error('Impossibile creare job bonifici');
+
+          // 2) carica il file nel job
+          endpoint = `/api/archivio-bonifici/jobs/${jobId}/upload`;
         }
         
         const formData = new FormData();
-        formData.append('file', fileInfo.file);
-        formData.append('tipo', tipo);
+        // Bonifici endpoint si aspetta "files" (lista)
+        if (tipo === 'bonifici' && tipoConfig.useBonificiJob) {
+          formData.append('files', fileInfo.file);
+        } else {
+          formData.append('file', fileInfo.file);
+          formData.append('tipo', tipo);
+        }
 
         const res = await api.post(endpoint, formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
