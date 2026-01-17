@@ -115,10 +115,12 @@ export function useFatture(filters = {}) {
       setLoading(true);
       
       const params = new URLSearchParams();
-      if (filters.year) params.append('anno', filters.year);
+      // Forza anno corrente se non specificato per performance
+      const currentYear = new Date().getFullYear();
+      params.append('anno', filters.year || currentYear);
       if (filters.status) params.append('status', filters.status);
       if (filters.supplier) params.append('supplier_vat', filters.supplier);
-      params.append('limit', filters.limit || '200');
+      params.append('limit', filters.limit || '100');
       
       const res = await api.get(`/api/invoices?${params}`);
       const items = res.data.items || res.data || [];
