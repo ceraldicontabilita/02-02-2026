@@ -203,80 +203,149 @@ class UniversalBankStatementParser:
     def _parse_banco_bpm(self, text: str, tables: List[Dict]) -> None:
         """Parse specifico per estratti conto BANCO BPM."""
         
-        lines = text.split('\n')
-        lines = [l.strip() for l in lines if l.strip()]
-        
-        i = 0
-        while i < len(lines) - 2:
-            line = lines[i]
+        # Prima prova con le tabelle estratte da pdfplumber
+        for table_info in tables:
+            table = table_info["data"]
+            if not table or len(table) < 2:
+                continue
             
-            # Pattern: data DD/MM/YY all'inizio
-            date_match = re.match(r'^(\d{2}/\d{2}/\d{2,4})$', line)
-            
-            if date_match:
-                data_contabile = line
+            for row in table:
+                if not row or len(row) < 4:
+                    continue
                 
-                # Verifica se la prossima è anche una data (data valuta)
-                if i + 1 < len(lines) and re.match(r'^\d{2}/\d{2}/\d{2,4}$', lines[i + 1]):
-                    data_valuta = lines[i + 1]
+                # Cerca righe con pattern data DD/MM/YY nella prima colonna
+                first_cell = str(row[0]) if row[0] else ""
+                if not re.match(r'^\d{2}/\d{2}/\d{2,4}$', first_cell.strip()):
+                    continue
+                
+                try:
+                    data_contabile = first_cell.strip()
+                    data_valuta = str(row[1]).strip() if row[1] else data_contabile
                     
-                    # Raccogli descrizione e importo
-                    descrizione_parts = []
+                    # Cerca importo nelle colonne (può essere col 3 o 4)
                     importo = None
-                    j = i + 2
+                    is_uscita = False
+                    descrizione = ""
                     
-                    while j < len(lines) and j < i + 12:
-                        current = lines[j]
+                    for idx, cell in enumerate(row):
+                        cell_str = str(cell).strip() if cell else ""
                         
-                        # Cerca importo
-                        amount_match = re.match(r'^-?\s*([\d.]+,\d{2})$', current)
+                        # Pattern importo: "1.234,56-" o "1.234,56"
+                        amount_match = re.match(r'^([\d.]+,\d{2})(-)?$', cell_str)
                         if amount_match:
-                            importo_str = amount_match.group(1)
-                            is_negative = current.strip().startswith('-')
-                            importo = self._parse_amount(importo_str)
-                            if is_negative:
-                                importo = -importo
-                            j += 1
-                            break
+                            importo = self._parse_amount(amount_match.group(1))
+                            is_uscita = amount_match.group(2) == '-'
+                            continue
                         
-                        # Se è una nuova data, esci
-                        if re.match(r'^\d{2}/\d{2}/\d{2,4}$', current):
-                            break
-                        
-                        # Ignora header e valori non rilevanti
-                        skip_words = ['DATA', 'CONTABILE', 'VALUTA', 'DISPONIBILE', 'USCITE', 
-                                      'ENTRATE', '*1', '*2', '*3', 'ATM', 'WEB', 'APP',
-                                      'DESCRIZIONE DELLE OPERAZIONI', 'A VOSTRO DEBITO', 
-                                      'A VOSTRO CREDITO', 'SALDO']
-                        if current not in skip_words and len(current) > 1:
-                            descrizione_parts.append(current)
-                        
-                        j += 1
+                        # Se è l'ultima colonna e non è un numero, è la descrizione
+                        if idx >= 4 and cell_str and not re.match(r'^[\d.,\-]+$', cell_str):
+                            descrizione = cell_str
                     
-                    if importo is not None:
-                        descrizione = ' '.join(descrizione_parts)
-                        
-                        # Salta saldi e competenze
-                        if any(x in descrizione.upper() for x in ['SALDO INIZIALE', 'SALDO FINALE', 
-                                'COMPETENZE', 'RIASSUNTO SCALARE']):
-                            i = j
+                    # Ultima colonna è spesso la descrizione
+                    if not descrizione and len(row) > 5:
+                        last_cell = str(row[-1]).strip() if row[-1] else ""
+                        if last_cell and not re.match(r'^[\d.,\-]+$', last_cell):
+                            descrizione = last_cell
+                    
+                    if importo and importo > 0:
+                        # Salta saldi
+                        if any(x in descrizione.upper() for x in ['SALDO INIZIALE', 'SALDO FINALE', 'COMPETENZE']):
                             continue
                         
                         transaction = {
                             "data": self._parse_date(data_contabile),
                             "data_valuta": self._parse_date(data_valuta),
                             "descrizione": descrizione[:500] if descrizione else "Movimento",
-                            "entrata": importo if importo > 0 else None,
-                            "uscita": abs(importo) if importo < 0 else None,
-                            "importo": importo,
+                            "entrata": None if is_uscita else importo,
+                            "uscita": importo if is_uscita else None,
+                            "importo": -importo if is_uscita else importo,
                             "banca": "BANCO_BPM"
                         }
                         
                         if transaction["data"]:
                             self.transactions.append(transaction)
-                        
-                        i = j
+                except Exception as e:
+                    logger.debug(f"Errore parsing riga BPM: {e}")
+                    continue
+        
+        # Se non ha trovato con le tabelle, prova con regex sul testo
+        if not self.transactions:
+            self._parse_banco_bpm_regex(text)
+    
+    def _parse_banco_bpm_regex(self, text: str) -> None:
+        """Parse BANCO BPM usando regex sul testo."""
+        
+        # Pattern: DD/MM/YY DD/MM/YY DD/MM/YY importo- descrizione
+        # o: DD/MM/YY DD/MM/YY DD/MM/YY descrizione importo
+        lines = text.split('\n')
+        
+        i = 0
+        while i < len(lines):
+            line = lines[i].strip()
+            
+            # Pattern completo su una riga
+            # Es: "03/10/20 03/10/20 03/10/20 8,20- IMP.BOLLO CC..."
+            match = re.match(
+                r'^(\d{2}/\d{2}/\d{2})\s+(\d{2}/\d{2}/\d{2})\s+\d{2}/\d{2}/\d{2}\s+([\d.,]+)(-?)\s+(.+)$',
+                line
+            )
+            
+            if match:
+                data_contabile = match.group(1)
+                data_valuta = match.group(2)
+                importo = self._parse_amount(match.group(3))
+                is_uscita = match.group(4) == '-'
+                descrizione = match.group(5).strip()
+                
+                if importo > 0:
+                    if any(x in descrizione.upper() for x in ['SALDO INIZIALE', 'SALDO FINALE', 'COMPETENZE']):
+                        i += 1
                         continue
+                    
+                    transaction = {
+                        "data": self._parse_date(data_contabile),
+                        "data_valuta": self._parse_date(data_valuta),
+                        "descrizione": descrizione[:500],
+                        "entrata": None if is_uscita else importo,
+                        "uscita": importo if is_uscita else None,
+                        "importo": -importo if is_uscita else importo,
+                        "banca": "BANCO_BPM"
+                    }
+                    
+                    if transaction["data"]:
+                        self.transactions.append(transaction)
+            
+            # Pattern alternativo: descrizione prima dell'importo
+            # Es: "14/12/20 14/12/20 14/12/20 2.145,00 BON.DA AG..."
+            match2 = re.match(
+                r'^(\d{2}/\d{2}/\d{2})\s+(\d{2}/\d{2}/\d{2})\s+\d{2}/\d{2}/\d{2}\s+([\d.,]+)\s+(.+)$',
+                line
+            )
+            
+            if match2 and not match:
+                data_contabile = match2.group(1)
+                data_valuta = match2.group(2)
+                importo = self._parse_amount(match2.group(3))
+                descrizione = match2.group(4).strip()
+                
+                # Senza "-" è un'entrata
+                if importo > 0:
+                    if any(x in descrizione.upper() for x in ['SALDO INIZIALE', 'SALDO FINALE', 'COMPETENZE']):
+                        i += 1
+                        continue
+                    
+                    transaction = {
+                        "data": self._parse_date(data_contabile),
+                        "data_valuta": self._parse_date(data_valuta),
+                        "descrizione": descrizione[:500],
+                        "entrata": importo,
+                        "uscita": None,
+                        "importo": importo,
+                        "banca": "BANCO_BPM"
+                    }
+                    
+                    if transaction["data"]:
+                        self.transactions.append(transaction)
             
             i += 1
     
