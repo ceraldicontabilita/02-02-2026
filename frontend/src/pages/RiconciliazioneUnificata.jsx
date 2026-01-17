@@ -1098,10 +1098,7 @@ function F24Tab({ f24, onConfermaF24, processing }) {
       <div style={{ maxHeight: 500, overflow: 'auto' }}>
         {f24Validi.map((f, idx) => {
           const importo = f.importo_totale || f.importo || 0;
-          const scadenza = f.data_scadenza ? new Date(f.data_scadenza) : null;
-          const scadenzaStr = scadenza && !isNaN(scadenza.getTime()) 
-            ? scadenza.toLocaleDateString('it-IT') 
-            : '-';
+          const scadenzaStr = formatDateIT(f.data_scadenza);
           
           return (
             <div key={f.id || idx} style={{ 
