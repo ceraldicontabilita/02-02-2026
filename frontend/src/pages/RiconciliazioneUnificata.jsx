@@ -151,7 +151,12 @@ export default function RiconciliazioneUnificata() {
       ]);
 
       const movimenti = bancaRes.data?.movimenti || [];
-      const assegniDaApi = bancaRes.data?.assegni || [];
+      const assegniDaApi = (bancaRes.data?.assegni || []).map(a => ({
+        ...a,
+        numero_assegno: a.numero_assegno || a.numero,
+        data: a.data || a.data_emissione,
+        descrizione: a.descrizione || a.causale || a.beneficiario || `Assegno ${a.numero || a.numero_assegno || ''}`
+      }));
       
       setHasMore(movimenti.length >= limit);
       setCurrentLimit(limit);
@@ -202,7 +207,12 @@ export default function RiconciliazioneUnificata() {
     try {
       const bancaRes = await api.get(`/api/operazioni-da-confermare/smart/banca-veloce?limit=${newLimit}`);
       const movimenti = bancaRes.data?.movimenti || [];
-      const assegniDaApi = bancaRes.data?.assegni || [];
+      const assegniDaApi = (bancaRes.data?.assegni || []).map(a => ({
+        ...a,
+        numero_assegno: a.numero_assegno || a.numero,
+        data: a.data || a.data_emissione,
+        descrizione: a.descrizione || a.causale || a.beneficiario || `Assegno ${a.numero || a.numero_assegno || ''}`
+      }));
       
       setHasMore(movimenti.length >= newLimit);
       setCurrentLimit(newLimit);
