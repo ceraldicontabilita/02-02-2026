@@ -534,7 +534,7 @@ async def conferma_operazioni_batch(request: ConfermaBatchRequest) -> Dict[str, 
             
             await db[prima_nota_collection].insert_one(movimento.copy())
             
-            # Aggiorna stato operazione
+            # Aggiorna stato operazione (se esiste nella collection dedicata)
             await db["operazioni_da_confermare"].update_one(
                 {"id": operazione_id},
                 {"$set": {
@@ -542,6 +542,20 @@ async def conferma_operazioni_batch(request: ConfermaBatchRequest) -> Dict[str, 
                     "metodo_pagamento": metodo,
                     "prima_nota_id": movimento_id,
                     "confirmed_at": datetime.now(timezone.utc).isoformat()
+                }}
+            )
+            
+            # Aggiorna anche la fattura originale nella collection invoices
+            await db["invoices"].update_one(
+                {"id": operazione_id},
+                {"$set": {
+                    "pagato": True,
+                    "stato_pagamento": "pagata",
+                    "metodo_pagamento": metodo,
+                    "data_pagamento": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+                    "prima_nota_id": movimento_id,
+                    "prima_nota_collection": prima_nota_collection,
+                    "updated_at": datetime.now(timezone.utc).isoformat()
                 }}
             )
             
