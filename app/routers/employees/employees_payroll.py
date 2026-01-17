@@ -261,7 +261,7 @@ async def upload_payslip_pdf(file: UploadFile = File(...)) -> Dict[str, Any]:
                 payslip_id = str(uuid.uuid4())
                 mese = payslip.get("mese", "") or (str(mese_num) if mese_num else "")
                 anno = payslip.get("anno", "") or (str(anno_num) if anno_num else "")
-                # Importo busta paga: deve includere acconto + netto finale (parser gi e0 calcola il totale)
+                # Importo busta paga: deve includere acconto + netto finale (parser gie0 calcola il totale)
                 importo_busta = float(
                     payslip.get("retribuzione_netta")
                     if payslip.get("retribuzione_netta") is not None
@@ -279,7 +279,7 @@ async def upload_payslip_pdf(file: UploadFile = File(...)) -> Dict[str, Any]:
                     "periodo": periodo,
                     "ore_lavorate": float(payslip.get("ore_ordinarie", 0) or 0),
                     "lordo": float(payslip.get("retribuzione_lorda", 0) or 0),
-                    # Compatibilit e0: molti punti UI/API usano "netto"
+                    # Compatibilite0: molti punti UI/API usano "netto"
                     "netto": importo_busta,
                     "netto_mese": importo_busta,
                     "acconto": float(payslip.get("acconto", 0) or 0),
