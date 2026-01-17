@@ -243,6 +243,7 @@ const router = createBrowserRouter([
       { path: "piano-dei-conti", element: <LazyPage><PianoDeiConti /></LazyPage> },
       { path: "cespiti", element: <LazyPage><GestioneCespiti /></LazyPage> },
       { path: "finanziaria", element: <LazyPage><Finanziaria /></LazyPage> },
+      { path: "chiusura-esercizio", element: <LazyPage><ChiusuraEsercizio /></LazyPage> },
       
       // === STRUMENTI ===
       { path: "documenti", element: <LazyPage><Documenti /></LazyPage> },
