@@ -29,11 +29,12 @@ const FILTRI_TIPO = [
 ];
 
 // Categorie semplificate con direzione automatica
-// DARE = entrata (soldi che ENTRANO in cassa)
-// AVERE = uscita (soldi che ESCONO dalla cassa)
+// Logica ragioneria generale:
+// - DARE = entrata (soldi che entrano su quel conto)
+// - AVERE = uscita (soldi che escono da quel conto)
 const CATEGORIE_RAPIDE = [
-  { id: 'corrispettivi', label: '📈 Corrispettivi', direzione: 'entrata', colonna: 'dare', color: '#10b981', desc: 'Incassi giornalieri' },
-  { id: 'pos', label: '💳 Incasso POS', direzione: 'entrata', colonna: 'dare', color: '#3b82f6', desc: 'Incasso da carte/POS' },
+  { id: 'corrispettivi', label: '📈 Corrispettivi', direzione: 'entrata', colonna: 'dare', color: '#10b981', desc: 'Incassi giornalieri (Cassa)' },
+  { id: 'pos', label: '💳 Incasso POS', direzione: 'entrata', colonna: 'dare', color: '#3b82f6', desc: 'Incasso su Banca (POS)' },
   { id: 'versamento', label: '🏦 Versamento Banca', direzione: 'uscita', colonna: 'avere', color: '#8b5cf6', desc: 'Cassa → Banca' },
   { id: 'pagamento_fornitore', label: '📄 Pagamento Fornitore', direzione: 'uscita', colonna: 'avere', color: '#f59e0b', desc: 'Pagamento fattura' },
   { id: 'prelievo', label: '💵 Prelievo', direzione: 'entrata', colonna: 'dare', color: '#06b6d4', desc: 'Banca → Cassa' },
