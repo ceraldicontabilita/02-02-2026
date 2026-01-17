@@ -1391,7 +1391,7 @@ function ArubaTab({ fatture, onConferma, processing, fornitori = [], onRefresh, 
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 600, fontSize: 15 }}>{op.fornitore || 'Fornitore N/A'}</div>
                   <div style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>
-                    Fatt. {op.numero_fattura} • {op.data_documento ? new Date(op.data_documento).toLocaleDateString('it-IT') : '-'}
+                    Fatt. {op.numero_fattura} • {op.data_documento ? formatDateIT(op.data_documento) : '-'}
                   </div>
                   {metodoPreferito && (
                     <span style={{
