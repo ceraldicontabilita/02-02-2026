@@ -358,6 +358,30 @@ export default function RiconciliazioneUnificata() {
     }
   };
 
+  // Incassa assegno (segna come incassato e crea movimento in Prima Nota Banca)
+  const handleIncassaAssegno = async (assegno) => {
+    setProcessing(assegno.id);
+    try {
+      // 1. Segna assegno come incassato
+      await api.post(`/api/assegni/${assegno.id}/incassa`);
+      
+      // 2. Se vuoi anche creare movimento in Prima Nota Banca, decommentare:
+      // await api.post('/api/prima-nota-banca/crea', {
+      //   data: assegno.data || new Date().toISOString().split('T')[0],
+      //   tipo: 'uscita',
+      //   importo: Math.abs(assegno.importo),
+      //   descrizione: `Assegno ${assegno.numero || ''} - ${assegno.beneficiario || ''}`,
+      //   categoria: 'assegno'
+      // });
+      
+      loadAllData();
+    } catch (e) {
+      alert('Errore: ' + (e.response?.data?.detail || e.message));
+    } finally {
+      setProcessing(null);
+    }
+  };
+
   // Assegna automaticamente metodi pagamento basandosi su estratto conto
   const handleAssegnaMetodiAuto = async () => {
     if (!window.confirm('Assegnare automaticamente i metodi di pagamento?\n\n' +
