@@ -511,6 +511,18 @@ async def import_fatture_xml_multipli(files: List[UploadFile] = File(...)):
             if fornitore_result.get("nuovo"):
                 risultati["fornitori_nuovi"] += 1
             
+            # === VALIDATORE P0: Metodo di pagamento obbligatorio (PRD sezione validatori P0) ===
+            metodo_pag = fornitore_result.get("metodo_pagamento")
+            if not metodo_pag or metodo_pag in ["", "da_configurare", None]:
+                risultati["errors"] += 1
+                risultati["dettagli"].append({
+                    "filename": file.filename,
+                    "status": "error",
+                    "numero": numero_doc,
+                    "message": f"Fornitore privo di metodo di pagamento: {fornitore_result.get('ragione_sociale', '')} (P.IVA: {partita_iva})"
+                })
+                continue
+            
             # Verifica totali
             totali_coerenti = parsed.get("totali_coerenti", True)
             stato = "importata" if totali_coerenti else "anomala"
