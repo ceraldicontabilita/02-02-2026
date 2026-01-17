@@ -479,6 +479,11 @@ async def analizza_movimento(movimento: Dict[str, Any]) -> Dict[str, Any]:
     # 4. Check stipendi (VOSTRA DISPOSIZIONE + nome)
     nome_beneficiario = estrai_nome_beneficiario(descrizione)
     if nome_beneficiario:
+        # IMPORTANTE: Escludi l'azienda stessa come beneficiario
+        if is_azienda_esclusa(nome_beneficiario):
+            nome_beneficiario = None
+    
+    if nome_beneficiario:
         result["tipo"] = "stipendio"
         result["categoria_suggerita"] = "Stipendio dipendente"
         result["nome_estratto"] = nome_beneficiario
