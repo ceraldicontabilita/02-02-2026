@@ -987,13 +987,14 @@ async def registra_pagamento_fattura(
 @router.post("/registra-fattura")
 async def registra_fattura_prima_nota(
     fattura_id: str = Body(...),
-    metodo_pagamento: str = Body(...),
+    metodo_pagamento: str = Body(None),
     importo_cassa: float = Body(0),
     importo_banca: float = Body(0)
 ) -> Dict[str, Any]:
     """
     Registra manualmente il pagamento di una fattura nella prima nota.
     
+    Se metodo_pagamento non viene specificato, usa il metodo dall'anagrafica fornitore.
     Per metodo 'misto', specificare importo_cassa e importo_banca.
     """
     db = Database.get_db()
@@ -1005,6 +1006,24 @@ async def registra_fattura_prima_nota(
     
     if not fattura:
         raise HTTPException(status_code=404, detail="Fattura non trovata")
+    
+    # Se metodo non specificato, cerca nell'anagrafica fornitore
+    if not metodo_pagamento:
+        fornitore_piva = fattura.get("supplier_vat") or fattura.get("cedente_piva")
+        if fornitore_piva:
+            fornitore = await db["suppliers"].find_one({"partita_iva": fornitore_piva}, {"_id": 0})
+            if fornitore:
+                metodo_fornitore = (fornitore.get("metodo_pagamento") or "").lower()
+                if metodo_fornitore in ["contanti", "cassa", "cash"]:
+                    metodo_pagamento = "cassa"
+                elif metodo_fornitore in ["bonifico", "banca", "bank"]:
+                    metodo_pagamento = "banca"
+                else:
+                    metodo_pagamento = "banca"  # Default
+            else:
+                metodo_pagamento = "banca"  # Default se fornitore non trovato
+        else:
+            metodo_pagamento = "banca"  # Default
     
     # Registra
     risultato = await registra_pagamento_fattura(
