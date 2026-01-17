@@ -537,6 +537,7 @@ function TabRetribuzione({ cedolini, dipendente, anno }) {
               <th style={thStyle}>Ore</th>
               <th style={{ ...thStyle, textAlign: 'right' }}>Lordo</th>
               <th style={{ ...thStyle, textAlign: 'right' }}>Netto</th>
+              <th style={{ ...thStyle, textAlign: 'center' }}>Allegato</th>
               <th style={{ ...thStyle, textAlign: 'center' }}>Stato</th>
             </tr>
           </thead>
