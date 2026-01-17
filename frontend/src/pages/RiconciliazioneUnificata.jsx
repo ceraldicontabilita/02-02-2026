@@ -431,6 +431,37 @@ export default function RiconciliazioneUnificata() {
             🔄 Aggiorna
           </button>
           
+          {/* Indicatore Auto-Refresh */}
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 6,
+            padding: '6px 12px',
+            background: autoRefreshEnabled ? '#d1fae5' : '#fef3c7',
+            borderRadius: 8,
+            fontSize: 12
+          }}>
+            <span style={{ color: autoRefreshEnabled ? '#059669' : '#d97706' }}>
+              {autoRefreshEnabled ? '🟢' : '🟡'} Auto: {autoRefreshEnabled ? 'ON' : 'OFF'}
+            </span>
+            <button
+              onClick={() => setAutoRefreshEnabled(!autoRefreshEnabled)}
+              style={{
+                padding: '2px 8px',
+                background: 'rgba(0,0,0,0.1)',
+                border: 'none',
+                borderRadius: 4,
+                cursor: 'pointer',
+                fontSize: 10
+              }}
+            >
+              {autoRefreshEnabled ? 'Disattiva' : 'Attiva'}
+            </button>
+            <span style={{ color: '#6b7280', fontSize: 10 }}>
+              (30 min)
+            </span>
+          </div>
+          
           {/* Bottone Filtri */}
           <button
             onClick={() => setShowFilters(!showFilters)}
