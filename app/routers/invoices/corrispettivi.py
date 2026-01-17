@@ -529,10 +529,13 @@ async def upload_corrispettivi_zip(file: UploadFile = File(...)) -> Dict[str, An
                         results["failed"] += 1
                         continue
                     
-                    # Controlla duplicati
+                    # Controlla duplicati (esclude archiviati/eliminati)
                     key = parsed.get("corrispettivo_key", "")
                     if key:
-                        existing = await db["corrispettivi"].find_one({"corrispettivo_key": key})
+                        existing = await db["corrispettivi"].find_one({
+                            "corrispettivo_key": key,
+                            "status": {"$nin": ["deleted", "archived"]}
+                        })
                         if existing:
                             results["duplicates"].append({
                                 "filename": xml_filename,
