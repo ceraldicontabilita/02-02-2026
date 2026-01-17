@@ -464,9 +464,24 @@ async def conferma_operazioni_batch(request: ConfermaBatchRequest) -> Dict[str, 
             metodo = op.get("metodo_pagamento", "bonifico")
             numero_assegno = op.get("numero_assegno")
             
-            # Chiama la logica di conferma esistente
-            # Recupera operazione
+            # Prima cerca nella collection operazioni_da_confermare
             operazione = await db["operazioni_da_confermare"].find_one({"id": operazione_id})
+            
+            # Se non trovata, cerca direttamente nelle fatture (la lista viene generata da invoices)
+            if not operazione:
+                fattura = await db["invoices"].find_one({"id": operazione_id})
+                if fattura:
+                    # Converti fattura nel formato operazione
+                    operazione = {
+                        "id": fattura.get("id"),
+                        "fornitore": fattura.get("supplier_name") or fattura.get("cedente_denominazione", ""),
+                        "fornitore_piva": fattura.get("supplier_vat") or fattura.get("cedente_piva", ""),
+                        "importo": float(fattura.get("total_amount", 0) or fattura.get("importo_totale", 0) or 0),
+                        "numero_fattura": fattura.get("invoice_number") or fattura.get("numero_fattura", ""),
+                        "data_documento": fattura.get("invoice_date") or fattura.get("data_fattura", ""),
+                        "stato": "da_confermare"
+                    }
+            
             if not operazione:
                 risultati["errori"] += 1
                 risultati["dettagli"].append({"id": operazione_id, "errore": "Non trovata"})
