@@ -456,6 +456,11 @@ class EmailDocumentDownloader:
                             "category_label": CATEGORIES.get(category, category.replace("_", " ").title()),
                             "size_bytes": len(content),
                             "file_hash": file_hash,
+                            # NUOVO: Informazioni sul periodo per identificazione intelligente
+                            "periodo_mese": period_info.get("mese") if period_info else None,
+                            "periodo_anno": period_info.get("anno") if period_info else None,
+                            "periodo_raw": period_info.get("periodo_raw") if period_info else None,
+                            "identificatore_periodo": period_info.get("identificatore_periodo") if period_info else None,
                             "email_subject": subject[:200],
                             "email_from": sender[:200],
                             "email_date": email_date.isoformat(),
