@@ -48,10 +48,11 @@ async def get_portal_me(
 async def get_payslips(
     current_user: Dict[str, Any] = Depends(get_current_user)
 ) -> List[Dict[str, Any]]:
-    """Get payslips for user."""
+    """Get payslips for user (da collection cedolini unificata)."""
     db = Database.get_db()
-    payslips = await db["payslips"].find(
+    # Usa cedolini - collection unificata
+    payslips = await db["cedolini"].find(
         {"user_id": current_user["user_id"]},
         {"_id": 0}
-    ).sort("date", -1).to_list(100)
+    ).sort([("anno", -1), ("mese", -1)]).to_list(100)
     return payslips
