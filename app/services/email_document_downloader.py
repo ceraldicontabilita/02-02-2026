@@ -413,6 +413,16 @@ class EmailDocumentDownloader:
                         if category is None:
                             category = "altro"
                         
+                        # NUOVO: Estrai periodo dal documento per identificazione intelligente
+                        period_info = None
+                        if ext == '.pdf' and category in ['f24', 'busta_paga', 'estratto_conto']:
+                            try:
+                                period_info = extract_document_period(content, category, filename)
+                                if period_info:
+                                    logger.info(f"📅 Periodo estratto da {filename}: {period_info.get('periodo_raw', 'N/D')}")
+                            except Exception as e:
+                                logger.debug(f"Errore estrazione periodo: {e}")
+                        
                         # Assicurati che la cartella esista
                         ensure_category_folder(category)
                         
