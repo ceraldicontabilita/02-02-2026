@@ -197,8 +197,8 @@ const router = createBrowserRouter([
       { path: "previsioni-acquisti", element: <LazyPage><PrevisioniAcquisti /></LazyPage> },
       
       // === BANCA & PAGAMENTI ===
-      { path: "prima-nota", element: <LazyPage><PrimaNotaUnificata /></LazyPage> },
-      { path: "prima-nota/:tipo", element: <LazyPage><PrimaNotaUnificata /></LazyPage> },
+      { path: "prima-nota", element: <LazyPage><PrimaNota /></LazyPage> },
+      { path: "prima-nota/:tipo", element: <LazyPage><PrimaNota /></LazyPage> },
       { path: "riconciliazione", element: <LazyPage><RiconciliazioneUnificata /></LazyPage> },
       { path: "riconciliazione/:tab", element: <LazyPage><RiconciliazioneUnificata /></LazyPage> },
       { path: "gestione-assegni", element: <LazyPage><GestioneAssegni /></LazyPage> },
