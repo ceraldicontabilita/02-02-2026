@@ -153,6 +153,7 @@ from app.routers import (
     gestione_iva_speciale, configurazioni, alerts, import_templates,
     dizionario_prodotti, inventario, chat_ai
 )
+from app.routers import cedolini_riconciliazione
 
 
 # =============================================================================
