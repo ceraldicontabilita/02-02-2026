@@ -76,13 +76,15 @@ async def registra_pagamento_cedolino(
     mese_cedolino = int(cedolino.get("mese", 0))
     
     if metodo.lower() in ["contanti", "cassa", "cash", "contante"]:
-        # Post luglio 2018 = anno > 2018 OR (anno == 2018 AND mese >= 7)
+        # Dal 1 luglio 2018 vietato pagare stipendi in contanti (L.205/2017 art.1 c.910)
+        # Pre luglio 2018 (fino a giugno incluso) = contanti OK
+        # Dal luglio 2018 in poi = contanti VIETATI
         if anno_cedolino > 2018 or (anno_cedolino == 2018 and mese_cedolino >= 7):
             raise HTTPException(
                 status_code=422,
                 detail={
                     "error": "SALARIO_CONTANTI_VIETATO",
-                    "message": f"Pagamento in contanti vietato per salari post luglio 2018 (L.205/2017). Cedolino: {cedolino.get('nome_dipendente', '')} - {mese_cedolino}/{anno_cedolino}",
+                    "message": f"Pagamento in contanti vietato dal 1 luglio 2018 (L.205/2017). Cedolino: {cedolino.get('nome_dipendente', '')} - {mese_cedolino}/{anno_cedolino}",
                     "cedolino_id": cedolino_id,
                     "azione_richiesta": "Utilizzare bonifico bancario o altro metodo tracciabile"
                 }
