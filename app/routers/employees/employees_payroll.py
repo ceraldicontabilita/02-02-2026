@@ -344,8 +344,8 @@ async def upload_payslip_pdf(file: UploadFile = File(...)) -> Dict[str, Any]:
                 }
                 await db["cedolini"].insert_one(cedolino_doc.copy())
                 
-                # Inserisci automaticamente in Prima Nota Salari
-                if importo_busta > 0 and anno and mese:
+                # Non inseriamo automaticamente in prima nota: verrà pagato in cassa/banca a seconda del caso
+                if False and importo_busta > 0 and anno and mese:
                     # Calcola data fine mese (ultimo giorno del mese)
                     try:
                         import calendar
