@@ -527,19 +527,23 @@ class UniversalBankStatementParser:
         unique = []
         
         for t in self.transactions:
-            # Salta transazioni senza descrizione significativa e con importi troppo alti
             desc = t.get("descrizione", "")
             importo = abs(t.get("importo", 0))
+            data_valuta = t.get("data_valuta")
             
-            # Filtra dati dal riassunto scalare (hanno descrizione generica e importi alti)
-            if (not desc or desc == "Movimento" or len(desc) < 5) and importo > 10000:
-                continue
+            # Filtra dati dal riassunto scalare:
+            # - Hanno descrizione generica "Movimento" 
+            # - Non hanno data_valuta
+            # - Sono generalmente importi alti (saldi)
+            if (not desc or desc == "Movimento" or len(desc) < 5):
+                # Se non ha data valuta, è quasi certamente un dato dal riassunto scalare
+                if not data_valuta:
+                    continue
+                # Se ha importo molto alto senza descrizione, è un saldo
+                if importo > 10000:
+                    continue
             
-            # Salta se non ha data valuta e descrizione è generica
-            if not t.get("data_valuta") and (not desc or desc == "Movimento"):
-                continue
-            
-            key = (t.get("data"), t.get("descrizione", "")[:50], t.get("importo"))
+            key = (t.get("data"), desc[:50], t.get("importo"))
             if key not in seen:
                 seen.add(key)
                 unique.append(t)
