@@ -23,33 +23,29 @@ Applicazione contabile avanzata per la gestione completa del ciclo passivo, atti
 
 ### Session 2026-01-17 (Fork 4)
 
-#### ✅ P0 - BUG FIX: Conferma Multipla Fatture Aruba (COMPLETATO)
-- **Problema**: Errore 400 durante la conferma multipla delle fatture con metodo "Cassa"
-- **Soluzione**: Rimosso endpoint duplicato, aggiunto fallback per cercare in `invoices`
+#### ✅ P0 - BUG FIX: Errore 404 Assegna Metodi Auto (COMPLETATO)
+- **Problema**: URL endpoint errato `/api/riconciliazione-automatica/` invece di `/api/riconciliazione-auto/`
+- **File modificato**: `/app/frontend/src/pages/RiconciliazioneUnificata.jsx`
 
-#### ✅ FEATURE: Assegnazione Automatica Metodi Pagamento (COMPLETATO)
-- Se fattura in estratto conto → Bonifico/Assegno
-- Se NON in estratto (recente) → Cassa
-- Se estratto vecchio → Sospesa
-- Pulsante "🔄 Assegna Metodi Auto" nella pagina Aruba
+#### ✅ FIX: Pagina F24 Pendenti (COMPLETATO)
+- F24 ora mostrano importo totale (non singoli tributi €0.00)
+- Aggiunti pulsanti: 🏦 Banca | 📝 Assegno | 💰 Cassa
+- Selezione multipla + conferma batch
+- Backend supporta conferma F24 con aggiornamento `f24_models`
 
-#### ✅ FEATURE: Auto-Refresh Riconciliazione ogni 30 minuti (COMPLETATO)
+#### ✅ FEATURE: Import Excel Cedolini - Paghe + Bonifici (COMPLETATO)
+- Nuovo endpoint `POST /api/cedolini/import-paghe-bonifici` che accetta:
+  - File 1 (Paghe): NOME DIPENDENTE, MESE, ANNO, IMPORTO netto
+  - File 2 (Bonifici - opzionale): NOME DIPENDENTE, MESE, ANNO, IMPORTO erogato
+- Se bonifico presente → metodo=bonifico
+- Se bonifico assente → metodo=contanti
+- Gestione mesi come testo (Gennaio, Febbraio, Tredicesima, etc.)
+- Test: 150 cedolini importati, 104 con bonifico, 46 contanti
 
-#### ✅ P0 - FIX: Pagina F24 Pendenti (COMPLETATO)
-- **Problema**: F24 mostravano singoli codici tributo con €0.00, nessuna azione possibile
-- **Soluzione**: 
-  - Riscritto componente `F24Tab` per mostrare importo totale F24
-  - Filtrati F24 con importo €0.00
-  - Aggiunti pulsanti azione: 🏦 Banca | 📝 Assegno | 💰 Cassa
-  - Selezione multipla e conferma batch
-  - Backend supporta ora conferma F24 con aggiornamento `f24_models`
-
-#### ✅ FIX: Import Corrispettivi XML (COMPLETATO)
-- **Problema**: I corrispettivi XML venivano salvati solo in `corrispettivi`, non in `prima_nota_cassa`
-- **Soluzione**: Aggiunto inserimento automatico in `prima_nota_cassa` durante l'import XML
-
-#### 🧹 Pulizia: Rimossi PDF di test (COMPLETATO)
-- Rimossi PDF nelle cartelle `/app/docs/estratti_*`, `/app/tmp/import_debug/`
+#### ✅ FIX: Corrispettivi - Pagamento Elettronico (COMPLETATO)
+- Aggiunto endpoint `POST /api/corrispettivi/sincronizza-prima-nota`
+- Sincronizzati 356 record aggiornati + 691 creati
+- I corrispettivi ora mostrano colonna ELETTRONICO con dati reali
 
 ### Session 2026-01-17 (Fork 3)
 
