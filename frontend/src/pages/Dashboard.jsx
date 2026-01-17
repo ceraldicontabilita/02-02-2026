@@ -1361,6 +1361,130 @@ function ScadenzeWidget({ scadenze }) {
           </Link>
         </div>
       )}
+
+      {/* Modal Pagamento */}
+      {pagaModal && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: 16,
+            padding: 24,
+            maxWidth: 400,
+            width: '90%',
+            boxShadow: '0 25px 50px rgba(0,0,0,0.25)'
+          }}>
+            <h3 style={{ margin: '0 0 16px', fontSize: 18, fontWeight: 700, color: '#1e293b' }}>
+              💰 Registra Pagamento
+            </h3>
+            
+            <div style={{ 
+              background: '#f8fafc', 
+              borderRadius: 8, 
+              padding: 16, 
+              marginBottom: 20 
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                <span style={{ color: '#64748b', fontSize: 13 }}>Tipo:</span>
+                <span style={{ fontWeight: 600 }}>{pagaModal.tipo} {pagaModal.numero_fattura || ''}</span>
+              </div>
+              {pagaModal.fornitore && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <span style={{ color: '#64748b', fontSize: 13 }}>Fornitore:</span>
+                  <span style={{ fontWeight: 500, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{pagaModal.fornitore}</span>
+                </div>
+              )}
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                <span style={{ color: '#64748b', fontSize: 13 }}>Scadenza:</span>
+                <span style={{ fontWeight: 500 }}>{formatDate(pagaModal.data)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: '#64748b', fontSize: 13 }}>Importo:</span>
+                <span style={{ fontWeight: 700, color: '#dc2626', fontSize: 16 }}>{formatEuro(pagaModal.importo)}</span>
+              </div>
+            </div>
+
+            <p style={{ fontSize: 14, color: '#64748b', marginBottom: 16 }}>
+              Scegli il metodo di pagamento. Il movimento verrà registrato in Prima Nota.
+            </p>
+
+            <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+              <button
+                onClick={() => handlePaga(pagaModal, 'cassa')}
+                disabled={processing}
+                style={{
+                  flex: 1,
+                  padding: '14px 16px',
+                  background: processing ? '#94a3b8' : '#f59e0b',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 10,
+                  fontSize: 14,
+                  fontWeight: 700,
+                  cursor: processing ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8
+                }}
+              >
+                💵 CASSA
+                <span style={{ fontSize: 11, opacity: 0.9, display: 'block' }}>(pagato subito)</span>
+              </button>
+              <button
+                onClick={() => handlePaga(pagaModal, 'banca')}
+                disabled={processing}
+                style={{
+                  flex: 1,
+                  padding: '14px 16px',
+                  background: processing ? '#94a3b8' : '#3b82f6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 10,
+                  fontSize: 14,
+                  fontWeight: 700,
+                  cursor: processing ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8
+                }}
+              >
+                🏦 BANCA
+                <span style={{ fontSize: 11, opacity: 0.9, display: 'block' }}>(da riconciliare)</span>
+              </button>
+            </div>
+
+            <p style={{ fontSize: 12, color: '#94a3b8', marginBottom: 12, textAlign: 'center' }}>
+              💡 Se paghi in <strong>CASSA</strong> la scadenza viene saldata immediatamente.<br/>
+              Se paghi in <strong>BANCA</strong> verrà riconciliata quando troveremo il movimento nell'estratto conto.
+            </p>
+
+            <button
+              onClick={() => setPagaModal(null)}
+              style={{
+                width: '100%',
+                padding: '10px',
+                background: '#f1f5f9',
+                color: '#64748b',
+                border: 'none',
+                borderRadius: 8,
+                fontSize: 13,
+                cursor: 'pointer'
+              }}
+            >
+              Annulla
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
