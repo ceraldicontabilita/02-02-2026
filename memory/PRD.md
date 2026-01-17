@@ -23,6 +23,22 @@ Applicazione contabile avanzata per la gestione completa del ciclo passivo, atti
 
 ### Session 2026-01-17 (Fork 4)
 
+#### ✅ REFACTORING: Prima Nota Cassa/Banca (dal 14 gennaio) (COMPLETATO)
+- Copiato il codice dal commit `25bb43ba` (14 gennaio 2026)
+- **Nuovo design**: Header 3 box colorati, 4 sottocategorie, form Chiusure Giornaliere, filtri mesi
+- Componenti modulari: `PrimaNotaSummaryCards`, `QuickEntryPanel`, `PrimaNotaMovementsTable`
+- File: `/app/frontend/src/pages/PrimaNota.jsx`
+
+#### ✅ FEATURE: Prima Nota Salari (dal 14 gennaio) (COMPLETATO)
+- Pagina standalone con design professionale
+- **Filtri**: Periodo, Dipendente, Anni da escludere
+- **Pulsanti**: Importa PAGHE, Importa BONIFICI, Esporta Excel, Reset, Aggiorna
+- **Box riepilogo arancione**: Records, Totale Buste, Totale Bonifici, Differenza
+- **Tabella**: Dipendente, Mese, Anno, Busta, Bonifico, Progressivo, Azioni
+- Usa Zustand store per performance ottimizzate
+- Route: `/prima-nota-salari`
+- Menu: Dipendenti → 💰 Prima Nota Salari
+
 #### ✅ P0 - BUG FIX: Errore 404 Assegna Metodi Auto (COMPLETATO)
 - **Problema**: URL endpoint errato `/api/riconciliazione-automatica/` invece di `/api/riconciliazione-auto/`
 - **File modificato**: `/app/frontend/src/pages/RiconciliazioneUnificata.jsx`
