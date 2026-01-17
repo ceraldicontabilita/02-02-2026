@@ -522,11 +522,23 @@ class UniversalBankStatementParser:
                 self.transactions.append(transaction)
     
     def _deduplicate_transactions(self) -> None:
-        """Rimuove transazioni duplicate."""
+        """Rimuove transazioni duplicate e dati invalidi."""
         seen = set()
         unique = []
         
         for t in self.transactions:
+            # Salta transazioni senza descrizione significativa e con importi troppo alti
+            desc = t.get("descrizione", "")
+            importo = abs(t.get("importo", 0))
+            
+            # Filtra dati dal riassunto scalare (hanno descrizione generica e importi alti)
+            if (not desc or desc == "Movimento" or len(desc) < 5) and importo > 10000:
+                continue
+            
+            # Salta se non ha data valuta e descrizione è generica
+            if not t.get("data_valuta") and (not desc or desc == "Movimento"):
+                continue
+            
             key = (t.get("data"), t.get("descrizione", "")[:50], t.get("importo"))
             if key not in seen:
                 seen.add(key)
