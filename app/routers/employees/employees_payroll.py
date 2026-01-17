@@ -84,26 +84,28 @@ async def delete_all_employees() -> Dict[str, Any]:
 
 
 # ============== PAYSLIPS (BUSTE PAGA) ==============
+# NOTA: Unificato con collection "cedolini" per evitare duplicazione dati
 
 @router.get("/payslips")
 async def list_payslips(skip: int = 0, limit: int = 10000) -> List[Dict[str, Any]]:
-    """Lista buste paga."""
+    """Lista buste paga (unificato con cedolini)."""
     db = Database.get_db()
-    return await db["payslips"].find({}, {"_id": 0}).sort([("anno", -1), ("mese", -1)]).skip(skip).limit(limit).to_list(limit)
+    # Legge da cedolini (collection unificata)
+    return await db["cedolini"].find({}, {"_id": 0}).sort([("anno", -1), ("mese", -1)]).skip(skip).limit(limit).to_list(limit)
 
 
 @router.get("/payslips/{codice_fiscale}")
 async def get_payslips_by_employee(codice_fiscale: str) -> List[Dict[str, Any]]:
-    """Buste paga per dipendente."""
+    """Buste paga per dipendente (unificato con cedolini)."""
     db = Database.get_db()
-    return await db["payslips"].find({"codice_fiscale": codice_fiscale}, {"_id": 0}).sort([("anno", -1), ("mese", -1)]).to_list(1000)
+    return await db["cedolini"].find({"codice_fiscale": codice_fiscale}, {"_id": 0}).sort([("anno", -1), ("mese", -1)]).to_list(1000)
 
 
 @router.delete("/payslips/all/confirm")
 async def delete_all_payslips() -> Dict[str, Any]:
-    """Elimina tutte le buste paga."""
+    """Elimina tutte le buste paga (dalla collection cedolini)."""
     db = Database.get_db()
-    result = await db["payslips"].delete_many({})
+    result = await db["cedolini"].delete_many({})
     return {"success": True, "deleted_count": result.deleted_count}
 
 
