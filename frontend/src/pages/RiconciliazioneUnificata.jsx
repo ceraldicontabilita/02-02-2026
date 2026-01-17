@@ -1055,7 +1055,26 @@ function ArubaTab({ fatture, onConferma, processing, fornitori = [], onRefresh }
       <div style={{ padding: 16, background: '#f5f3ff', borderBottom: '1px solid #e9d5ff' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
           <h3 style={{ margin: 0, fontSize: 16, color: '#7c3aed' }}>🧾 Fatture Aruba ({fattureFiltrate.length})</h3>
-          <div style={{ fontWeight: 700, color: '#7c3aed' }}>Totale: {formatEuro(totale)}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button
+              onClick={handleAssegnaMetodiAuto}
+              disabled={processing === 'assegna-metodi'}
+              style={{
+                padding: '6px 12px',
+                background: '#7c3aed',
+                color: 'white',
+                border: 'none',
+                borderRadius: 6,
+                cursor: 'pointer',
+                fontSize: 12,
+                fontWeight: 500
+              }}
+              title="Assegna automaticamente metodi in base all'estratto conto"
+            >
+              {processing === 'assegna-metodi' ? '⏳ Elaborazione...' : '🔄 Assegna Metodi Auto'}
+            </button>
+            <div style={{ fontWeight: 700, color: '#7c3aed' }}>Totale: {formatEuro(totale)}</div>
+          </div>
         </div>
         
         {/* Filtro fornitore */}
