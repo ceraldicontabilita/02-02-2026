@@ -1146,38 +1146,37 @@ function ScadenzeWidget({ scadenze }) {
   const handlePaga = async (scadenza, metodo) => {
     setProcessing(true);
     try {
-      // Registra pagamento in prima nota
-      await api.post('/api/prima-nota', {
+      // Registra pagamento in prima nota (usa l'endpoint corretto)
+      const endpoint = metodo === 'cassa' ? '/api/prima-nota/cassa' : '/api/prima-nota/banca';
+      await api.post(endpoint, {
         data: new Date().toISOString().split('T')[0],
-        tipo: metodo === 'cassa' ? 'uscita_cassa' : 'uscita_banca',
+        tipo: 'uscita',
         categoria: 'pagamento_fornitore',
         descrizione: `Pag. ${scadenza.tipo} ${scadenza.numero_fattura || ''} - ${scadenza.fornitore || ''}`,
-        importo: scadenza.importo,
+        importo: Math.abs(scadenza.importo),
         fornitore: scadenza.fornitore,
         fattura_id: scadenza.fattura_id || scadenza.id,
         direzione: 'uscita'
       });
       
-      // Se cassa, segna subito come pagato
-      if (metodo === 'cassa' && scadenza.fattura_id) {
+      // Segna la fattura come pagata
+      if (scadenza.fattura_id) {
         await api.put(`/api/fatture-ricevute/fattura/${scadenza.fattura_id}`, {
           pagato: true,
           data_pagamento: new Date().toISOString().split('T')[0],
-          metodo_pagamento: 'contanti'
-        });
-      }
-      
-      // Se banca, aspetta riconciliazione
-      if (metodo === 'banca' && scadenza.fattura_id) {
-        await api.put(`/api/fatture-ricevute/fattura/${scadenza.fattura_id}`, {
-          pagato: true,
-          data_pagamento: new Date().toISOString().split('T')[0],
-          metodo_pagamento: 'bonifico',
-          riconciliato: false  // Aspetta match con estratto conto
+          metodo_pagamento: metodo === 'cassa' ? 'contanti' : 'bonifico',
+          riconciliato: metodo === 'cassa'  // Cassa = subito riconciliato, Banca = aspetta match
         });
       }
       
       setPagaModal(null);
+      window.location.reload();
+    } catch (e) {
+      alert('Errore: ' + (e.response?.data?.detail || e.message));
+    } finally {
+      setProcessing(false);
+    }
+  };
       window.location.reload();
     } catch (e) {
       alert('Errore: ' + (e.response?.data?.detail || e.message));
