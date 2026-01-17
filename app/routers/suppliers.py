@@ -432,6 +432,7 @@ async def ricerca_iban_fornitori_web() -> Dict[str, Any]:
     import re
     import asyncio
     from datetime import timezone
+    from emergentintegrations.llm.chat import LlmChat, UserMessage
     
     db = Database.get_db()
     
@@ -465,121 +466,91 @@ async def ricerca_iban_fornitori_web() -> Dict[str, Any]:
             **risultato
         }
     
-    # Inizializza client Claude con Emergent LLM Key
-    try:
-        from anthropic import Anthropic
-        
-        emergent_key = "sk-emergent-dEc590f56Ab0b88Ed6"
-        client = Anthropic(
-            api_key=emergent_key,
-            base_url="https://api.emergentmethods.ai/v1"
-        )
-    except Exception as e:
-        logger.error(f"Errore inizializzazione Claude: {e}")
-        raise HTTPException(status_code=500, detail=f"Errore inizializzazione AI: {str(e)}")
+    # Inizializza client LLM con Emergent Key
+    emergent_key = "sk-emergent-dEc590f56Ab0b88Ed6"
     
     # Regex per IBAN italiano
     iban_pattern = re.compile(r'IT\d{2}[A-Z]?\d{5}\d{5}[A-Z0-9]{12}', re.IGNORECASE)
     
-    # Processa fornitori in batch
-    batch_size = 10
-    for i in range(0, min(len(fornitori_senza_iban), 50), batch_size):  # Max 50 fornitori per chiamata
-        batch = fornitori_senza_iban[i:i+batch_size]
+    # Processa fornitori (max 30 per risparmiare crediti)
+    for fornitore in fornitori_senza_iban[:30]:
+        piva = fornitore.get("partita_iva", "")
+        nome = fornitore.get("ragione_sociale") or fornitore.get("denominazione") or ""
         
-        for fornitore in batch:
-            piva = fornitore.get("partita_iva", "")
-            nome = fornitore.get("ragione_sociale") or fornitore.get("denominazione") or ""
+        # Salta P.IVA non italiane (non 11 cifre)
+        piva_clean = re.sub(r'[^0-9]', '', str(piva))
+        if len(piva_clean) != 11:
+            risultato["non_trovati"] += 1
+            continue
+        
+        try:
+            # Crea chat per questa ricerca
+            chat = LlmChat(
+                api_key=emergent_key,
+                session_id=f"iban_search_{piva}",
+                system_message="Sei un assistente che cerca informazioni aziendali italiane. Rispondi in modo conciso."
+            ).with_model("anthropic", "claude-sonnet-4-20250514")
             
-            # Salta P.IVA non italiane (non 11 cifre)
-            piva_clean = re.sub(r'[^0-9]', '', str(piva))
-            if len(piva_clean) != 11:
-                risultato["non_trovati"] += 1
-                continue
-            
-            try:
-                # Cerca IBAN con Claude web search
-                response = client.messages.create(
-                    model="claude-sonnet-4-20250514",
-                    max_tokens=1024,
-                    messages=[{
-                        "role": "user",
-                        "content": f"""Cerca l'IBAN bancario dell'azienda italiana:
+            prompt = f"""Cerca l'IBAN bancario dell'azienda italiana:
 - Partita IVA: {piva}
 - Nome azienda: {nome}
 
-Cerca nei registri pubblici italiani, portali di fatturazione elettronica, 
-Camera di Commercio, e database aziendali.
-
 IMPORTANTE: 
-- Restituisci SOLO l'IBAN se lo trovi (formato IT + 25 caratteri)
-- Se non trovi l'IBAN, rispondi esattamente: NON_TROVATO
-- Non inventare IBAN, restituisci solo dati reali verificati"""
-                    }]
-                )
+- Restituisci SOLO l'IBAN se lo conosci (formato IT + 25 caratteri)
+- Se non conosci l'IBAN, rispondi: NON_TROVATO
+- Non inventare IBAN"""
+            
+            response_text = await chat.send_message(UserMessage(text=prompt))
+            
+            # Cerca IBAN nella risposta
+            ibans_trovati = iban_pattern.findall(response_text.upper())
+            
+            if ibans_trovati:
+                iban = ibans_trovati[0].upper()
                 
-                # Estrai risposta
-                response_text = ""
-                for block in response.content:
-                    if hasattr(block, 'text'):
-                        response_text += block.text
-                
-                # Cerca IBAN nella risposta
-                ibans_trovati = iban_pattern.findall(response_text.upper())
-                
-                if ibans_trovati:
-                    iban = ibans_trovati[0].upper()
+                # Valida IBAN (controllo base)
+                if len(iban) == 27 and iban.startswith('IT'):
+                    # Aggiorna fornitore con IBAN trovato
+                    await db[Collections.SUPPLIERS].update_one(
+                        {"id": fornitore["id"]},
+                        {"$set": {
+                            "iban": iban,
+                            "iban_fonte": "ricerca_ai",
+                            "iban_data_ricerca": datetime.now(timezone.utc).isoformat(),
+                            "updated_at": datetime.now(timezone.utc).isoformat()
+                        }}
+                    )
                     
-                    # Valida IBAN (controllo base)
-                    if len(iban) == 27 and iban.startswith('IT'):
-                        # Aggiorna fornitore con IBAN trovato
-                        await db[Collections.SUPPLIERS].update_one(
-                            {"id": fornitore["id"]},
-                            {"$set": {
-                                "iban": iban,
-                                "iban_fonte": "ricerca_web_ai",
-                                "iban_data_ricerca": datetime.now(timezone.utc).isoformat(),
-                                "updated_at": datetime.now(timezone.utc).isoformat()
-                            }}
-                        )
-                        
-                        risultato["iban_trovati"] += 1
-                        risultato["dettaglio_trovati"].append({
-                            "partita_iva": piva,
-                            "nome": nome,
-                            "iban": iban
-                        })
-                        logger.info(f"IBAN trovato per {nome}: {iban[:10]}...")
-                    else:
-                        risultato["non_trovati"] += 1
-                        risultato["dettaglio_non_trovati"].append({
-                            "partita_iva": piva,
-                            "nome": nome,
-                            "motivo": "IBAN formato non valido"
-                        })
-                else:
-                    risultato["non_trovati"] += 1
-                    risultato["dettaglio_non_trovati"].append({
+                    risultato["iban_trovati"] += 1
+                    risultato["dettaglio_trovati"].append({
                         "partita_iva": piva,
                         "nome": nome,
-                        "motivo": "Non trovato nei registri pubblici"
+                        "iban": iban
                     })
-                
-                # Pausa tra le richieste per non sovraccaricare
-                await asyncio.sleep(0.5)
-                
-            except Exception as e:
-                risultato["errori"] += 1
-                logger.warning(f"Errore ricerca IBAN {piva}: {e}")
-        
-        # Pausa tra i batch
-        await asyncio.sleep(1)
+                    logger.info(f"IBAN trovato per {nome}: {iban[:10]}...")
+                else:
+                    risultato["non_trovati"] += 1
+            else:
+                risultato["non_trovati"] += 1
+                risultato["dettaglio_non_trovati"].append({
+                    "partita_iva": piva,
+                    "nome": nome,
+                    "motivo": "Non trovato"
+                })
+            
+            # Pausa tra le richieste
+            await asyncio.sleep(0.3)
+            
+        except Exception as e:
+            risultato["errori"] += 1
+            logger.warning(f"Errore ricerca IBAN {piva}: {e}")
     
     # Invalida cache
     await cache.clear_pattern(SUPPLIERS_CACHE_KEY)
     
     return {
         "success": True,
-        "message": f"Ricerca completata: {risultato['iban_trovati']} IBAN trovati su {risultato['totale_fornitori']} fornitori",
+        "message": f"Ricerca completata: {risultato['iban_trovati']} IBAN trovati su {min(30, risultato['totale_fornitori'])} fornitori processati",
         **risultato
     }
 
@@ -587,10 +558,11 @@ IMPORTANTE:
 @router.post("/ricerca-iban-singolo/{supplier_id}")
 async def ricerca_iban_singolo_web(supplier_id: str) -> Dict[str, Any]:
     """
-    Cerca l'IBAN di un singolo fornitore utilizzando ricerca web con Claude AI.
+    Cerca l'IBAN di un singolo fornitore utilizzando AI.
     """
     import re
     from datetime import timezone
+    from emergentintegrations.llm.chat import LlmChat, UserMessage
     
     db = Database.get_db()
     
@@ -609,42 +581,25 @@ async def ricerca_iban_singolo_web(supplier_id: str) -> Dict[str, Any]:
     if not piva:
         raise HTTPException(status_code=400, detail="Fornitore senza Partita IVA")
     
-    # Inizializza client Claude
-    try:
-        from anthropic import Anthropic
-        
-        emergent_key = "sk-emergent-dEc590f56Ab0b88Ed6"
-        client = Anthropic(
-            api_key=emergent_key,
-            base_url="https://api.emergentmethods.ai/v1"
-        )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Errore inizializzazione AI: {str(e)}")
+    emergent_key = "sk-emergent-dEc590f56Ab0b88Ed6"
     
     try:
-        response = client.messages.create(
-            model="claude-sonnet-4-20250514",
-            max_tokens=1024,
-            messages=[{
-                "role": "user",
-                "content": f"""Cerca l'IBAN bancario dell'azienda italiana:
+        chat = LlmChat(
+            api_key=emergent_key,
+            session_id=f"iban_search_{piva}",
+            system_message="Sei un assistente che cerca informazioni aziendali italiane. Rispondi in modo conciso."
+        ).with_model("anthropic", "claude-sonnet-4-20250514")
+        
+        prompt = f"""Cerca l'IBAN bancario dell'azienda italiana:
 - Partita IVA: {piva}
 - Nome azienda: {nome}
 
-Cerca nei registri pubblici italiani, portali di fatturazione elettronica, 
-Camera di Commercio, e database aziendali.
-
 IMPORTANTE: 
-- Restituisci SOLO l'IBAN se lo trovi (formato IT + 25 caratteri)
-- Se non trovi l'IBAN, rispondi esattamente: NON_TROVATO
-- Non inventare IBAN, restituisci solo dati reali verificati"""
-            }]
-        )
+- Restituisci SOLO l'IBAN se lo conosci (formato IT + 25 caratteri)
+- Se non conosci l'IBAN, rispondi: NON_TROVATO
+- Non inventare IBAN"""
         
-        response_text = ""
-        for block in response.content:
-            if hasattr(block, 'text'):
-                response_text += block.text
+        response_text = await chat.send_message(UserMessage(text=prompt))
         
         # Cerca IBAN
         iban_pattern = re.compile(r'IT\d{2}[A-Z]?\d{5}\d{5}[A-Z0-9]{12}', re.IGNORECASE)
@@ -659,7 +614,7 @@ IMPORTANTE:
                     {"$or": [{"id": supplier_id}, {"partita_iva": supplier_id}]},
                     {"$set": {
                         "iban": iban,
-                        "iban_fonte": "ricerca_web_ai",
+                        "iban_fonte": "ricerca_ai",
                         "iban_data_ricerca": datetime.now(timezone.utc).isoformat(),
                         "updated_at": datetime.now(timezone.utc).isoformat()
                     }}
@@ -680,7 +635,7 @@ IMPORTANTE:
             "iban": None,
             "fornitore": nome,
             "partita_iva": piva,
-            "message": "IBAN non trovato nei registri pubblici. Potrebbe essere necessario inserirlo manualmente."
+            "message": "IBAN non trovato. L'AI non ha trovato l'IBAN nei suoi dati. Potrebbe essere necessario inserirlo manualmente."
         }
         
     except Exception as e:
