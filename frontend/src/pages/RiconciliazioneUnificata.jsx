@@ -974,7 +974,7 @@ function F24Tab({ f24 }) {
   );
 }
 
-function ArubaTab({ fatture, onConferma, processing, fornitori = [], onRefresh }) {
+function ArubaTab({ fatture, onConferma, processing, fornitori = [], onRefresh, onAssegnaMetodiAuto }) {
   const [preferenze, setPreferenze] = useState({});
   const [filtroFornitore, setFiltroFornitore] = useState('');
   const [selezionate, setSelezionate] = useState(new Set());
