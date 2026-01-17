@@ -80,6 +80,7 @@ async def get_or_create_fornitore(db, parsed_data: Dict) -> Dict[str, Any]:
             "partita_iva": partita_iva,
             "ragione_sociale": existing.get("ragione_sociale"),
             "metodo_pagamento": existing.get("metodo_pagamento"),  # PRD: validatore P0
+            "iban": existing.get("iban"),  # PRD: validatore P0 - IBAN obbligatorio per metodi bancari
             "nuovo": False
         }
     
