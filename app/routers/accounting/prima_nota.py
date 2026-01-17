@@ -1012,7 +1012,7 @@ async def registra_fattura_prima_nota(
     if not metodo_pagamento:
         fornitore_piva = fattura.get("supplier_vat") or fattura.get("cedente_piva")
         if fornitore_piva:
-            fornitore = await db["suppliers"].find_one({"partita_iva": fornitore_piva}, {"_id": 0})
+            fornitore = await db[Collections.SUPPLIERS].find_one({"partita_iva": fornitore_piva}, {"_id": 0})
             if fornitore:
                 metodo_fornitore = (fornitore.get("metodo_pagamento") or "").lower()
                 if metodo_fornitore in ["contanti", "cassa", "cash"]:

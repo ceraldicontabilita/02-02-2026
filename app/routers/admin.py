@@ -21,7 +21,7 @@ async def get_stats() -> Dict[str, Any]:
     
     stats = {
         "invoices": await db["invoices"].count_documents({}),
-        "suppliers": await db["suppliers"].count_documents({}),
+        "suppliers": await db["fornitori"].count_documents({}),
         "products": await db["warehouse_inventory"].count_documents({}),
         "employees": await db["employees"].count_documents({}),
         "haccp": await db["haccp_temperature_frigoriferi"].count_documents({}) + 

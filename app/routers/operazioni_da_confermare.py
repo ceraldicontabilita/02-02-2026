@@ -37,7 +37,7 @@ async def lista_operazioni(
     db = Database.get_db()
     
     # Recupera tutti i fornitori con metodo_pagamento configurato
-    fornitori_cursor = await db["suppliers"].find(
+    fornitori_cursor = await db["fornitori"].find(
         {"metodo_pagamento": {"$exists": True, "$nin": [None, "", "da_confermare", "cassa_da_confermare"]}},
         {"_id": 0, "partita_iva": 1, "vat_number": 1, "metodo_pagamento": 1}
     ).to_list(10000)

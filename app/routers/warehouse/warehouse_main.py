@@ -802,7 +802,7 @@ async def pulizia_fornitori_esclusi(
         fornitori_esclusi = []
         
         # Cerca in suppliers
-        suppliers_cursor = db["suppliers"].find(
+        suppliers_cursor = db[Collections.SUPPLIERS].find(
             {"esclude_magazzino": True},
             {"_id": 0, "ragione_sociale": 1, "partita_iva": 1, "id": 1}
         )
@@ -930,7 +930,7 @@ async def get_fornitori_esclusi_magazzino(
         fornitori_esclusi = []
         
         # Cerca in suppliers
-        async for s in db["suppliers"].find({"esclude_magazzino": True}, {"_id": 0}):
+        async for s in db[Collections.SUPPLIERS].find({"esclude_magazzino": True}, {"_id": 0}):
             nome = s.get("ragione_sociale", "")
             # Conta prodotti nel magazzino
             count = await db["warehouse_inventory"].count_documents({
