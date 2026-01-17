@@ -362,9 +362,10 @@ async def import_excel_storico(file: UploadFile = File(...)) -> Dict[str, Any]:
             elif metodo in ["check", "cheque"]:
                 metodo = "assegno"
             
-            # === VALIDATORE P0: Salari post luglio 2018 NON pagabili in contanti (PRD) ===
+            # === VALIDATORE P0: Salari dal luglio 2018 NON pagabili in contanti (L.205/2017) ===
+            # Pre luglio 2018 (fino a giugno incluso) = contanti OK
             if metodo == "contanti" and (anno > 2018 or (anno == 2018 and mese >= 7)):
-                risultato["errors"].append(f"P0: {nome} {mese}/{anno} - contanti vietati post 07/2018")
+                risultato["errors"].append(f"P0: {nome} {mese}/{anno} - contanti vietati dal 07/2018")
                 risultato["failed"] += 1
                 continue
             
