@@ -1526,7 +1526,8 @@ async def elabora_fatture_legacy(
                 "id": fornitore.get("id"),
                 "partita_iva": fornitore.get("partita_iva"),
                 "ragione_sociale": fornitore.get("ragione_sociale"),
-                "esclude_magazzino": fornitore.get("esclude_magazzino", False)
+                "esclude_magazzino": fornitore.get("esclude_magazzino", False),
+                "metodo_pagamento": fornitore.get("metodo_pagamento")  # Per routing Prima Nota
             }
             
             # Adatta struttura fattura per le funzioni integrate
