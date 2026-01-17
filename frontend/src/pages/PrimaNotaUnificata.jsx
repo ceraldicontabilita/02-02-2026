@@ -135,6 +135,7 @@ export default function PrimaNotaUnificata() {
   }, [movimenti, filtroTipo, filtroMese, search]);
 
   // Calcola saldo progressivo CON saldo anno precedente
+  // Logica ragioneria generale: entrata aumenta (DARE), uscita diminuisce (AVERE)
   const movimentiConSaldo = useMemo(() => {
     const sorted = [...movimentiFiltrati].sort((a, b) => 
       new Date(a.data || a.data_pagamento) - new Date(b.data || b.data_pagamento)
@@ -144,7 +145,6 @@ export default function PrimaNotaUnificata() {
     let saldo = saldoAnnoPrecedente;
     const withSaldo = sorted.map(m => {
       const importo = Math.abs(m.importo || 0);
-      // Usa il campo tipo salvato nel DB
       const isEntrata = m.tipo === 'entrata';
       saldo += isEntrata ? importo : -importo;
       return { ...m, _saldo: saldo, _isEntrata: isEntrata };
