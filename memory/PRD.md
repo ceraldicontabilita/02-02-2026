@@ -13,7 +13,7 @@ Applicazione contabile avanzata per la gestione completa del ciclo passivo, atti
 2. Gestione fornitori con metodi di pagamento configurabili
 3. Scadenziario pagamenti con riconciliazione bancaria
 4. Prima nota unificata (cassa + banca) con saldi separati per anno
-5. Gestione dipendenti e cedolini
+5. Gestione dipendenti e cedolini con riconciliazione pagamenti
 6. Dashboard con statistiche aggregate
 7. Export PDF e Excel
 
@@ -21,7 +21,22 @@ Applicazione contabile avanzata per la gestione completa del ciclo passivo, atti
 
 ## What's Been Implemented
 
-### Session 2026-01-17 (Fork 2)
+### Session 2026-01-17 (Fork 2 - Parte 2)
+
+#### ✅ P0 - Pagina Cedolini & Riconciliazione (COMPLETATO)
+- **File creati**: 
+  - `/app/frontend/src/pages/CedoliniRiconciliazione.jsx` - Nuova pagina unificata
+  - `/app/app/routers/cedolini_riconciliazione.py` - Endpoint riconciliazione
+- **Funzionalità**:
+  - Vista cedolini con stato pagamento (pagato/da pagare)
+  - Pagamento manuale con modal (importo, metodo, data, note)
+  - Logica pre/post luglio 2018 (contanti vs bonifico obbligatorio)
+  - Import Excel storico cedolini già pagati
+  - Riconciliazione automatica con bonifici/assegni
+  - Registrazione pagamenti crea movimento in Prima Nota (Cassa o Banca)
+- **Route**: `/cedolini` (nuova) e `/cedolini-calcolo` (vecchia)
+
+### Session 2026-01-17 (Fork 2 - Parte 1)
 
 #### ✅ P0 - Prima Nota Cassa/Banca con Saldi Separati per Anno (COMPLETATO)
 - **File modificati**: 
