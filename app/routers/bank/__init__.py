@@ -16,6 +16,7 @@ __all__ = [
     'bank_statement_parser',
     'estratto_conto',
     'archivio_bonifici',
+    'bonifici_import_unificato',
     'assegni',
     'pos_accredito'
 ]
