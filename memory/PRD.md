@@ -241,7 +241,36 @@ Prima Nota  Da Riconciliare
 
 ---
 
-## 16. Clausola finale
+## 16. Correzioni Riconciliazione (17 Gen 2026)
+
+### Bug Fix Applicati ✅
+
+**Formato Date Italiano (DD/MM/YY)**
+- Aggiunta funzione `formatDateIT()` nel frontend
+- Applicata a tutte le visualizzazioni date nella pagina di riconciliazione
+
+**F24 - Importo Totale**
+- Corretto endpoint `/api/operazioni-da-confermare/smart/cerca-f24`
+- Ora usa `totale_debito` o `saldo_finale` invece di sommare i tributi
+
+**Stipendi - Cedolini Validi**
+- Corretto endpoint per cercare TUTTI i cedolini non pagati
+- Filtrato solo cedolini con `netto > 0`
+- Mapping campi: `dipendente_nome`, `netto_in_busta`, `periodo`
+
+**Assegni - Beneficiario**
+- Aggiunto mapping campo `beneficiario` nel frontend
+- Visibile nella card dell'assegno nella pagina di riconciliazione
+- Aggiunto handler `handleIncassaAssegno` per chiamare `/api/assegni/{id}/incassa`
+
+**NOTE IMPORTANTI:**
+- Parser "Estratto Conto PDF" è SOLO per estratti conto bancari
+- Per le buste paga usare il tipo "💰 Buste Paga"
+- POS da estratto conto va in Prima Nota Banca, MAI in Cassa
+
+---
+
+## 17. Clausola finale
 
 Questo PRD è vincolante.
 
