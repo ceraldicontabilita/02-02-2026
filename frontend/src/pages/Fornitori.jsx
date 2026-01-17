@@ -699,8 +699,8 @@ function SupplierCard({ supplier, onEdit, onDelete, onViewInvoices, onChangeMeto
             <TrendingUp size={15} /> {loadingFatturato ? '...' : `${selectedYear}`}
           </button>
         )}
-        {/* Pulsante Cerca P.IVA - solo se ha P.IVA ma mancano dati */}
-        {hasPiva && hasIncomplete && (
+        {/* Pulsante Cerca P.IVA - sempre visibile se ha P.IVA */}
+        {hasPiva && (
           <button onClick={handleSearchPiva} disabled={searching} style={{
             flex: 1,
             padding: '12px',
