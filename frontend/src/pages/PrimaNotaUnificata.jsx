@@ -10,10 +10,15 @@ import { PageInfoCard } from '../components/PageInfoCard';
  * PRIMA NOTA UNIFICATA - Semplificata
  * 
  * UI intuitiva per inserimento movimenti:
- * - Corrispettivi → Entrata
- * - POS → Uscita (soldi che escono dalla cassa verso banca)
- * - Versamento → Uscita dalla cassa
- * - Pagamento Fornitore → Uscita
+ * DARE (↑ Entrata in cassa):
+ * - Corrispettivi → soldi incassati
+ * - Incasso POS → incasso da carte
+ * - Prelievo → soldi prelevati dalla banca
+ * 
+ * AVERE (↓ Uscita dalla cassa):
+ * - Versamento Banca → cassa verso banca
+ * - Pagamento Fornitore → pagamento fatture
+ * - Spese Varie → altre uscite
  */
 
 const FILTRI_TIPO = [
@@ -24,13 +29,15 @@ const FILTRI_TIPO = [
 ];
 
 // Categorie semplificate con direzione automatica
+// DARE = entrata (soldi che ENTRANO in cassa)
+// AVERE = uscita (soldi che ESCONO dalla cassa)
 const CATEGORIE_RAPIDE = [
-  { id: 'corrispettivi', label: '📈 Corrispettivi', direzione: 'entrata', color: '#10b981', desc: 'Incassi giornalieri' },
-  { id: 'pos', label: '💳 Incasso POS', direzione: 'uscita', color: '#3b82f6', desc: 'POS → esce dalla cassa' },
-  { id: 'versamento', label: '🏦 Versamento Banca', direzione: 'uscita', color: '#8b5cf6', desc: 'Cassa → Banca' },
-  { id: 'pagamento_fornitore', label: '📄 Pagamento Fornitore', direzione: 'uscita', color: '#f59e0b', desc: 'Pagamento fattura' },
-  { id: 'prelievo', label: '💵 Prelievo', direzione: 'entrata', color: '#06b6d4', desc: 'Banca → Cassa' },
-  { id: 'spese', label: '🧾 Spese Varie', direzione: 'uscita', color: '#ef4444', desc: 'Altre uscite' },
+  { id: 'corrispettivi', label: '📈 Corrispettivi', direzione: 'entrata', colonna: 'dare', color: '#10b981', desc: 'Incassi giornalieri' },
+  { id: 'pos', label: '💳 Incasso POS', direzione: 'entrata', colonna: 'dare', color: '#3b82f6', desc: 'Incasso da carte/POS' },
+  { id: 'versamento', label: '🏦 Versamento Banca', direzione: 'uscita', colonna: 'avere', color: '#8b5cf6', desc: 'Cassa → Banca' },
+  { id: 'pagamento_fornitore', label: '📄 Pagamento Fornitore', direzione: 'uscita', colonna: 'avere', color: '#f59e0b', desc: 'Pagamento fattura' },
+  { id: 'prelievo', label: '💵 Prelievo', direzione: 'entrata', colonna: 'dare', color: '#06b6d4', desc: 'Banca → Cassa' },
+  { id: 'spese', label: '🧾 Spese Varie', direzione: 'uscita', colonna: 'avere', color: '#ef4444', desc: 'Altre uscite' },
 ];
 
 export default function PrimaNotaUnificata() {
