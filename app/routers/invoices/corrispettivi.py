@@ -20,15 +20,19 @@ router = APIRouter()
 @router.get("")
 async def list_corrispettivi(
     skip: int = 0, 
-    limit: int = 10000,
+    limit: int = 200,
     data_da: str = None,
     data_a: str = None,
     anno: int = None
 ) -> List[Dict[str, Any]]:
-    """List corrispettivi con filtro opzionale per data o anno."""
+    """List corrispettivi con filtro opzionale per data o anno. Default limit ridotto a 200 per performance."""
     db = Database.get_db()
     
     query = {}
+    
+    # Se nessun filtro, usa anno corrente per performance
+    if not anno and not data_da and not data_a:
+        anno = datetime.now().year
     
     # Filtro per anno (prioritario)
     if anno:
