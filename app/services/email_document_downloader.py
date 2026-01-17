@@ -223,7 +223,7 @@ def extract_document_period(content: bytes, category: str, filename: str) -> Opt
                 period_info["periodo_raw"] = f"{match.group(3)}/{match.group(4)}"
         
         # Pattern 5: Per Nexi cerca date nel formato "DD MMM YYYY"
-        if category == "estratto_conto" and not period_info["mese"]:
+        if not period_info["mese"]:
             mesi_short = {'gen': 1, 'feb': 2, 'mar': 3, 'apr': 4, 'mag': 5, 'giu': 6,
                          'lug': 7, 'ago': 8, 'set': 9, 'ott': 10, 'nov': 11, 'dic': 12}
             for mese_short, mese_num in mesi_short.items():
@@ -235,7 +235,73 @@ def extract_document_period(content: bytes, category: str, filename: str) -> Opt
                     period_info["periodo_raw"] = f"{mese_short}_{match.group(1)}"
                     break
         
-        # Pattern 6: Cerca anno nel filename se non trovato
+        # Pattern 6: Per IVA cerca "LIQUIDAZIONE IVA MESE/TRIMESTRE"
+        if not period_info["mese"]:
+            # IVA mensile: "liquidazione iva gennaio", "iva mese di febbraio"
+            iva_patterns = [
+                r'(?:liquidazione\s+)?iva\s+(?:mese\s+(?:di\s+)?)?(\w+)\s+(\d{4})',
+                r'versamento\s+iva\s+(\w+)\s+(\d{4})',
+                r'iva\s+(\w+)\s+(\d{4})',
+            ]
+            for pattern in iva_patterns:
+                match = re.search(pattern, text_lower)
+                if match:
+                    mese_str = match.group(1)
+                    anno_str = match.group(2)
+                    if mese_str in mesi_it:
+                        period_info["mese"] = mesi_it[mese_str]
+                        period_info["anno"] = int(anno_str)
+                        period_info["periodo_raw"] = f"iva_{mese_str}_{anno_str}"
+                        break
+            
+            # IVA trimestrale: "1° trimestre", "I trimestre", "primo trimestre"
+            if not period_info["mese"]:
+                trimestre_map = {
+                    '1': 3, 'i': 3, 'primo': 3, '1°': 3,
+                    '2': 6, 'ii': 6, 'secondo': 6, '2°': 6,
+                    '3': 9, 'iii': 9, 'terzo': 9, '3°': 9,
+                    '4': 12, 'iv': 12, 'quarto': 12, '4°': 12,
+                }
+                match = re.search(r'(\d|i{1,3}v?|primo|secondo|terzo|quarto|\d°)\s*trimestre\s*(\d{4})?', text_lower)
+                if match:
+                    trim_key = match.group(1).strip()
+                    if trim_key in trimestre_map:
+                        period_info["mese"] = trimestre_map[trim_key]
+                        if match.group(2):
+                            period_info["anno"] = int(match.group(2))
+                        period_info["periodo_raw"] = f"trim_{trim_key}"
+        
+        # Pattern 7: Per bonifici cerca "DATA ESECUZIONE/VALUTA DD/MM/YYYY"
+        if not period_info["mese"]:
+            bonifico_patterns = [
+                r'data\s+(?:esecuzione|valuta|operazione)\s*:?\s*(\d{2})/(\d{2})/(\d{4})',
+                r'(?:eseguito|disposto)\s+(?:il|in data)\s+(\d{2})/(\d{2})/(\d{4})',
+                r'bonifico\s+.*?(\d{2})/(\d{2})/(\d{4})',
+            ]
+            for pattern in bonifico_patterns:
+                match = re.search(pattern, text_lower)
+                if match:
+                    period_info["mese"] = int(match.group(2))
+                    period_info["anno"] = int(match.group(3))
+                    period_info["periodo_raw"] = f"bonifico_{match.group(1)}/{match.group(2)}/{match.group(3)}"
+                    break
+        
+        # Pattern 8: Data generica DD/MM/YYYY (ultima risorsa per qualsiasi documento)
+        if not period_info["mese"]:
+            # Cerca tutte le date nel documento e usa la più recente
+            date_matches = re.findall(r'(\d{2})/(\d{2})/(\d{4})', text)
+            if date_matches:
+                # Prendi la prima data trovata (solitamente è la più rilevante)
+                for day, month, year in date_matches:
+                    m = int(month)
+                    y = int(year)
+                    if 1 <= m <= 12 and 2020 <= y <= 2030:
+                        period_info["mese"] = m
+                        period_info["anno"] = y
+                        period_info["periodo_raw"] = f"data_{day}/{month}/{year}"
+                        break
+        
+        # Pattern 9: Cerca anno nel filename se non trovato
         if not period_info["anno"]:
             match = re.search(r'20(\d{2})', filename)
             if match:
