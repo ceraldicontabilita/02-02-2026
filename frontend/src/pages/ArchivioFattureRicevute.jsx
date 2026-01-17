@@ -231,13 +231,53 @@ export default function ArchivioFatture() {
   };
 
   return (
-    <div style={{ padding: 20, maxWidth: 1400, margin: '0 auto', position: 'relative' }}>
+    <div style={{ padding: 20, maxWidth: 1400, margin: '0 auto', position: 'relative' }} data-testid="fatture-ricevute-page">
       {/* Page Info Card */}
       <div style={{ position: 'absolute', top: 0, right: 0, zIndex: 100 }}>
         <PageInfoCard pageKey="fatture-ricevute" />
       </div>
       
-      {/* Header */}
+      {/* Header con Tabs */}
+      <div style={{ marginBottom: 24 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 700, color: '#1e293b', margin: '0 0 16px' }}>
+          📄 Ciclo Passivo - Fatture Ricevute ({anno})
+        </h1>
+        
+        {/* Tabs */}
+        <div style={{ display: 'flex', gap: 8, borderBottom: '2px solid #e5e7eb', marginBottom: 20 }}>
+          {TABS.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => {
+                setActiveTab(tab.id);
+                setSearchParams(prev => { prev.set('tab', tab.id); return prev; });
+              }}
+              style={{
+                padding: '12px 20px',
+                background: activeTab === tab.id ? '#3b82f6' : 'transparent',
+                color: activeTab === tab.id ? 'white' : '#64748b',
+                border: 'none',
+                borderRadius: '8px 8px 0 0',
+                cursor: 'pointer',
+                fontWeight: 600,
+                fontSize: 14,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                transition: 'all 0.2s'
+              }}
+              data-testid={`tab-${tab.id}`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* TAB: ARCHIVIO (contenuto originale) */}
+      {activeTab === 'archivio' && (
+        <>
+      {/* Header originale */}
       <div style={{ 
         display: 'flex', 
         justifyContent: 'space-between', 
