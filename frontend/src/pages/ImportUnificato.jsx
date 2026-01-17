@@ -11,9 +11,10 @@ import { PageInfoCard } from '../components/PageInfoCard';
  * - Supporto file singoli, multipli, ZIP e ZIP annidati
  * - Upload in background (navigazione consentita)
  * - Progress bar dettagliata
+ * - Upload massivo estratti conto PDF con anteprima
  * 
  * TIPI SUPPORTATI:
- * - Estratti Conto (PDF/Excel/CSV)
+ * - Estratti Conto (PDF/Excel/CSV) - CON ANTEPRIMA
  * - F24 (PDF)
  * - Quietanze F24 (PDF)
  * - Buste Paga / Cedolini (PDF)
@@ -28,7 +29,8 @@ import { PageInfoCard } from '../components/PageInfoCard';
 const TIPI_DOCUMENTO = [
   { id: 'auto', label: '🤖 Auto-Detect', color: '#3b82f6', desc: 'Il sistema riconosce automaticamente il tipo', extension: '*', endpoint: '/api/documenti/upload-auto' },
   { id: 'fattura', label: '🧾 Fatture XML', color: '#ec4899', desc: 'Fatture elettroniche SDI', extension: '.xml', endpoint: '/api/fatture/upload-xml' },
-  { id: 'estratto_conto', label: '🏦 Estratto Conto', color: '#10b981', desc: 'PDF/Excel/CSV da banca', extension: '.pdf,.xlsx,.xls,.csv', endpoint: '/api/estratto-conto-movimenti/import' },
+  { id: 'estratto_conto_pdf', label: '🏦 Estratto Conto PDF', color: '#10b981', desc: 'PDF da banca con ANTEPRIMA', extension: '.pdf', endpoint: '/api/bank-statement-bulk/parse-bulk', hasPreview: true },
+  { id: 'estratto_conto', label: '📊 Estratto Conto Excel/CSV', color: '#059669', desc: 'Excel/CSV da banca', extension: '.xlsx,.xls,.csv', endpoint: '/api/estratto-conto-movimenti/import' },
   { id: 'f24', label: '📄 F24', color: '#ef4444', desc: 'Modelli F24 da pagare', extension: '.pdf', endpoint: '/api/f24/upload-pdf' },
   { id: 'quietanza_f24', label: '✅ Quietanza F24', color: '#f59e0b', desc: 'Ricevute pagamento F24', extension: '.pdf', endpoint: '/api/quietanze-f24/upload' },
   { id: 'cedolino', label: '💰 Buste Paga', color: '#8b5cf6', desc: 'Cedolini e Libro Unico', extension: '.pdf,.zip,.rar', endpoint: '/api/employees/paghe/upload-pdf' },
@@ -49,13 +51,20 @@ const TEMPLATES = {
 
 export default function ImportUnificato() {
   const [files, setFiles] = useState([]);
-  const [tipoSelezionato, setTipoSelezionato] = useState('auto');
+  const [tipoSelezionato, setTipoSelezionato] = useState('estratto_conto_pdf');
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0, filename: '' });
   const [results, setResults] = useState([]);
   const [dragOver, setDragOver] = useState(false);
-  const [backgroundMode, setBackgroundMode] = useState(true);
+  const [backgroundMode, setBackgroundMode] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  
+  // Preview state per estratti conto PDF
+  const [previewData, setPreviewData] = useState(null);
+  const [previewId, setPreviewId] = useState(null);
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewPage, setPreviewPage] = useState(0);
+  const [confirmingImport, setConfirmingImport] = useState(false);
   
   const fileInputRef = useRef(null);
   const zipInputRef = useRef(null);
@@ -65,7 +74,6 @@ export default function ImportUnificato() {
   // ========== UTILITY: Estrazione da ZIP ==========
   const extractFromZip = async (file, extensions) => {
     try {
-      // Supporta ZIP (jszip). Per RAR non e8 gestito client-side: in quel caso rimandiamo al backend
       const JSZip = (await import('jszip')).default;
       const zip = await JSZip.loadAsync(file);
       const extractedFiles = [];
@@ -77,7 +85,6 @@ export default function ImportUnificato() {
         
         const lowerName = filename.toLowerCase();
         
-        // Se è uno ZIP annidato, estrai ricorsivamente
         if (lowerName.endsWith('.zip') || lowerName.endsWith('.rar')) {
           const nestedContent = await zipEntry.async('blob');
           const nestedType = lowerName.endsWith('.rar') ? 'application/vnd.rar' : 'application/zip';
@@ -87,7 +94,6 @@ export default function ImportUnificato() {
           continue;
         }
         
-        // Verifica se l'estensione corrisponde
         const matchExt = extList.some(ext => lowerName.endsWith(ext));
         if (matchExt || extensions === '*') {
           const content = await zipEntry.async('blob');
@@ -96,7 +102,6 @@ export default function ImportUnificato() {
                           lowerName.endsWith('.csv') ? 'text/csv' :
                           'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
           
-          // Usa solo il nome del file, non il path completo
           const cleanName = filename.split('/').pop();
           extractedFiles.push(new File([content], cleanName, { type: mimeType }));
         }
@@ -105,8 +110,6 @@ export default function ImportUnificato() {
       return extractedFiles;
     } catch (e) {
       console.error('Errore estrazione ZIP:', e);
-      // Se e8 un RAR o un archivio non supportato dal browser, non estraiamo:
-      // lasciamo che il backend gestisca il file singolo.
       return [file];
     }
   };
@@ -141,7 +144,6 @@ export default function ImportUnificato() {
     e.target.value = '';
   };
 
-  // Processa i file in arrivo (estrae ZIP se necessario)
   const processIncomingFiles = async (incomingFiles, forceZipExtract = false) => {
     const tipoConfig = TIPI_DOCUMENTO.find(t => t.id === tipoSelezionato) || TIPI_DOCUMENTO[0];
     const extensions = tipoConfig.extension;
@@ -152,7 +154,6 @@ export default function ImportUnificato() {
       const lowerName = file.name.toLowerCase();
       
       if (lowerName.endsWith('.zip') || forceZipExtract) {
-        // Estrai da ZIP
         const extracted = await extractFromZip(file, extensions);
         allFiles.push(...extracted);
       } else {
@@ -160,7 +161,6 @@ export default function ImportUnificato() {
       }
     }
     
-    // Aggiungi info ai file
     const filesWithInfo = allFiles.map(file => ({
       file,
       name: file.name,
@@ -172,11 +172,12 @@ export default function ImportUnificato() {
     setFiles(prev => [...prev, ...filesWithInfo]);
   };
 
-  // Rileva tipo automaticamente
   const detectFileType = (filename) => {
     const lower = filename.toLowerCase();
     
-    if (lower.includes('estratto') || lower.includes('conto') || lower.includes('movimenti')) return 'estratto_conto';
+    if (lower.includes('estratto') || lower.includes('conto') || lower.includes('movimenti')) {
+      return lower.endsWith('.pdf') ? 'estratto_conto_pdf' : 'estratto_conto';
+    }
     if (lower.includes('quietanza') || lower.includes('ricevuta') || lower.includes('pagamento_f24')) return 'quietanza_f24';
     if (lower.includes('f24') || lower.includes('delega')) return 'f24';
     if (lower.includes('cedolin') || lower.includes('busta') || lower.includes('paga') || lower.includes('libro_unico') || lower.includes('lul')) return 'cedolino';
@@ -187,11 +188,10 @@ export default function ImportUnificato() {
     if (lower.includes('fornitor') || lower.includes('supplier') || lower.includes('reportfornitori')) return 'fornitori';
     if (lower.endsWith('.xml') || lower.includes('fattura') || lower.includes('fattpa')) return 'fattura';
     
-    // Fallback per estensione
     if (lower.endsWith('.xml')) return 'fattura';
     if (lower.endsWith('.xlsx') || lower.endsWith('.xls')) return 'estratto_conto';
     if (lower.endsWith('.csv')) return 'versamenti';
-    if (lower.endsWith('.pdf')) return 'auto';
+    if (lower.endsWith('.pdf')) return 'estratto_conto_pdf';
     
     return 'auto';
   };
@@ -204,24 +204,107 @@ export default function ImportUnificato() {
     setFiles(prev => prev.map((f, i) => i === index ? { ...f, type: newType } : f));
   };
 
-  // ========== UPLOAD ==========
+  // ========== UPLOAD ESTRATTO CONTO PDF CON ANTEPRIMA ==========
+  const handleUploadEstrattoContoPDF = async () => {
+    const pdfFiles = files.filter(f => f.name.toLowerCase().endsWith('.pdf'));
+    if (pdfFiles.length === 0) {
+      alert('Seleziona almeno un file PDF');
+      return;
+    }
+    
+    setUploading(true);
+    setUploadProgress({ current: 0, total: pdfFiles.length, filename: 'Analisi PDF in corso...' });
+    
+    try {
+      const formData = new FormData();
+      pdfFiles.forEach(f => formData.append('files', f.file));
+      
+      const res = await api.post('/api/bank-statement-bulk/parse-bulk', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      
+      if (res.data.success) {
+        setPreviewData(res.data);
+        setPreviewId(res.data.preview_id);
+        setShowPreview(true);
+        setFiles([]);
+      } else {
+        alert('Errore nel parsing dei PDF');
+      }
+    } catch (e) {
+      console.error('Errore upload:', e);
+      alert(e.response?.data?.detail || 'Errore durante l\'analisi dei PDF');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // ========== CONFERMA IMPORTAZIONE ==========
+  const handleConfirmImport = async () => {
+    if (!previewId) return;
+    
+    setConfirmingImport(true);
+    
+    try {
+      const res = await api.post(`/api/bank-statement-bulk/commit/${previewId}`);
+      
+      if (res.data.success) {
+        setResults([{
+          file: `${res.data.total} transazioni`,
+          tipo: 'estratto_conto_pdf',
+          status: 'success',
+          message: `Importate ${res.data.imported} transazioni (${res.data.skipped} saltate)`
+        }]);
+        setShowPreview(false);
+        setPreviewData(null);
+        setPreviewId(null);
+      } else {
+        alert('Errore durante il salvataggio');
+      }
+    } catch (e) {
+      console.error('Errore commit:', e);
+      alert(e.response?.data?.detail || 'Errore durante il salvataggio');
+    } finally {
+      setConfirmingImport(false);
+    }
+  };
+
+  // ========== ANNULLA ANTEPRIMA ==========
+  const handleCancelPreview = async () => {
+    if (previewId) {
+      try {
+        await api.delete(`/api/bank-statement-bulk/preview/${previewId}`);
+      } catch (e) {
+        console.log('Preview già scaduta');
+      }
+    }
+    setShowPreview(false);
+    setPreviewData(null);
+    setPreviewId(null);
+  };
+
+  // ========== UPLOAD TRADIZIONALE ==========
   const handleUpload = async () => {
     if (files.length === 0) return;
     
+    // Se è estratto conto PDF, usa il flusso con anteprima
+    const tipoConfig = TIPI_DOCUMENTO.find(t => t.id === tipoSelezionato);
+    if (tipoConfig?.hasPreview && tipoSelezionato === 'estratto_conto_pdf') {
+      await handleUploadEstrattoContoPDF();
+      return;
+    }
+    
     if (backgroundMode) {
-      // Upload in background via context
       const uploadInBackground = async () => {
         for (const fileInfo of files) {
           const tipo = tipoSelezionato !== 'auto' ? tipoSelezionato : fileInfo.type;
           const tipoConfig = TIPI_DOCUMENTO.find(t => t.id === tipo) || TIPI_DOCUMENTO[0];
 
-          // Determina endpoint (corrispettivi XML ha endpoint dedicato)
           let endpoint = tipoConfig.endpoint;
           if (tipo === 'corrispettivi' && fileInfo.name.toLowerCase().endsWith('.xml')) {
             endpoint = tipoConfig.endpointXml || endpoint;
           }
 
-          // Bonifici: usa la pipeline a job (create job -> upload)
           if (tipo === 'bonifici' && tipoConfig.useBonificiJob) {
             const jobRes = await api.post('/api/archivio-bonifici/jobs', {});
             const jobId = jobRes.data?.id;
@@ -230,7 +313,6 @@ export default function ImportUnificato() {
           }
 
           const formData = new FormData();
-          // Bonifici endpoint si aspetta "files" (lista)
           if (tipo === 'bonifici' && tipoConfig.useBonificiJob) {
             formData.append('files', fileInfo.file);
           } else {
@@ -253,7 +335,6 @@ export default function ImportUnificato() {
               }]);
             },
             onError: (error) => {
-              // Gestisci duplicati come successo
               const errMsg = error.response?.data?.detail || error.message || '';
               const isDuplicate = errMsg.toLowerCase().includes('duplicat') ||
                                 errMsg.toLowerCase().includes('esiste già') ||
@@ -283,7 +364,6 @@ export default function ImportUnificato() {
       return;
     }
     
-    // Upload tradizionale (blocking)
     setUploading(true);
     setUploadProgress({ current: 0, total: files.length, filename: '' });
     const uploadResults = [];
@@ -297,25 +377,19 @@ export default function ImportUnificato() {
       setFiles(prev => prev.map((f, idx) => idx === i ? { ...f, status: 'uploading' } : f));
 
       try {
-        // Determina endpoint
         let endpoint = tipoConfig.endpoint;
         if (tipo === 'corrispettivi' && fileInfo.name.toLowerCase().endsWith('.xml')) {
           endpoint = tipoConfig.endpointXml || endpoint;
         }
 
-        // Bonifici: usa la pipeline a job (create job -> upload) dietro le quinte
         if (tipo === 'bonifici' && tipoConfig.useBonificiJob) {
-          // 1) crea job
           const jobRes = await api.post('/api/archivio-bonifici/jobs', {});
           const jobId = jobRes.data?.id;
           if (!jobId) throw new Error('Impossibile creare job bonifici');
-
-          // 2) carica il file nel job
           endpoint = `/api/archivio-bonifici/jobs/${jobId}/upload`;
         }
         
         const formData = new FormData();
-        // Bonifici endpoint si aspetta "files" (lista)
         if (tipo === 'bonifici' && tipoConfig.useBonificiJob) {
           formData.append('files', fileInfo.file);
         } else {
@@ -357,7 +431,6 @@ export default function ImportUnificato() {
         } : f));
       }
       
-      // Piccola pausa tra i file
       if (i < files.length - 1) {
         await new Promise(r => setTimeout(r, 50));
       }
@@ -372,7 +445,6 @@ export default function ImportUnificato() {
     setResults([]);
   };
 
-  // Download template
   const downloadTemplate = async (tipo) => {
     const url = TEMPLATES[tipo];
     if (!url) return;
@@ -391,10 +463,12 @@ export default function ImportUnificato() {
     }
   };
 
-  // Stats risultati
   const successCount = results.filter(r => r.status === 'success').length;
   const duplicateCount = results.filter(r => r.status === 'duplicate').length;
   const errorCount = results.filter(r => r.status === 'error').length;
+
+  const tipoCorrente = TIPI_DOCUMENTO.find(t => t.id === tipoSelezionato);
+  const isEstrattoContoPDF = tipoSelezionato === 'estratto_conto_pdf';
 
   return (
     <div style={{ padding: 'clamp(12px, 3vw, 20px)', maxWidth: 1200, margin: '0 auto', position: 'relative' }}>
@@ -412,20 +486,21 @@ export default function ImportUnificato() {
           Carica documenti singoli, multipli o archivi ZIP • Riconoscimento automatico del tipo
         </p>
         
-        {/* Toggle Background Mode */}
         <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-            <input
-              type="checkbox"
-              checked={backgroundMode}
-              onChange={(e) => setBackgroundMode(e.target.checked)}
-              style={{ width: 18, height: 18, cursor: 'pointer' }}
-              data-testid="background-mode-toggle"
-            />
-            <span style={{ fontSize: 13, color: '#374151' }}>
-              🔄 Upload in background
-            </span>
-          </label>
+          {!isEstrattoContoPDF && (
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={backgroundMode}
+                onChange={(e) => setBackgroundMode(e.target.checked)}
+                style={{ width: 18, height: 18, cursor: 'pointer' }}
+                data-testid="background-mode-toggle"
+              />
+              <span style={{ fontSize: 13, color: '#374151' }}>
+                🔄 Upload in background
+              </span>
+            </label>
+          )}
           
           {hasActiveUploads && (
             <span style={{ 
@@ -486,15 +561,45 @@ export default function ImportUnificato() {
                 fontWeight: 600,
                 cursor: 'pointer',
                 fontSize: 12,
-                transition: 'all 0.15s'
+                transition: 'all 0.15s',
+                position: 'relative'
               }}
             >
               {tipo.label}
+              {tipo.hasPreview && (
+                <span style={{ 
+                  position: 'absolute', 
+                  top: -4, 
+                  right: -4, 
+                  background: '#f59e0b', 
+                  color: 'white', 
+                  fontSize: 8, 
+                  padding: '2px 4px', 
+                  borderRadius: 4,
+                  fontWeight: 700
+                }}>
+                  PREVIEW
+                </span>
+              )}
             </button>
           ))}
         </div>
         
-        {/* Templates download */}
+        {isEstrattoContoPDF && (
+          <div style={{ 
+            marginTop: 12, 
+            padding: 10, 
+            background: '#ecfdf5', 
+            borderRadius: 8, 
+            border: '1px solid #a7f3d0',
+            fontSize: 12,
+            color: '#065f46'
+          }}>
+            <strong>🔍 Modalità con Anteprima:</strong> I PDF verranno analizzati e mostrati in anteprima prima di essere salvati nel database. 
+            Puoi rivedere le transazioni estratte e confermare l'importazione.
+          </div>
+        )}
+        
         {TEMPLATES[tipoSelezionato] && (
           <div style={{ marginTop: 12 }}>
             <button
@@ -587,19 +692,19 @@ export default function ImportUnificato() {
           ref={fileInputRef}
           type="file"
           multiple
-          accept=".pdf,.xlsx,.xls,.xml,.csv,.zip"
+          accept={tipoCorrente?.extension || ".pdf,.xlsx,.xls,.xml,.csv,.zip"}
           onChange={handleFileSelect}
           style={{ display: 'none' }}
           data-testid="file-input"
         />
         <div style={{ fontSize: 56, marginBottom: 12, opacity: 0.6 }}>
-          {dragOver ? '📂' : '📄'}
+          {dragOver ? '📂' : isEstrattoContoPDF ? '🏦' : '📄'}
         </div>
         <div style={{ fontSize: 16, fontWeight: 600, color: '#374151', marginBottom: 6 }}>
-          {dragOver ? 'Rilascia qui i file' : 'Trascina i file o clicca per selezionare'}
+          {dragOver ? 'Rilascia qui i file' : isEstrattoContoPDF ? 'Trascina i PDF degli Estratti Conto' : 'Trascina i file o clicca per selezionare'}
         </div>
         <div style={{ fontSize: 13, color: '#64748b' }}>
-          PDF, Excel, XML, CSV, ZIP • Singoli o multipli
+          {isEstrattoContoPDF ? 'PDF da BANCO BPM, BNL, Nexi • Upload massivo supportato' : 'PDF, Excel, XML, CSV, ZIP • Singoli o multipli'}
         </div>
       </div>
 
@@ -648,7 +753,7 @@ export default function ImportUnificato() {
                 data-testid="upload-btn"
                 style={{
                   padding: '8px 18px',
-                  background: uploading ? '#9ca3af' : '#10b981',
+                  background: uploading ? '#9ca3af' : isEstrattoContoPDF ? '#10b981' : '#3b82f6',
                   color: 'white',
                   border: 'none',
                   borderRadius: 6,
@@ -657,7 +762,7 @@ export default function ImportUnificato() {
                   fontSize: 12
                 }}
               >
-                {uploading ? '⏳ Caricamento...' : '🚀 Carica Tutti'}
+                {uploading ? '⏳ Analisi...' : isEstrattoContoPDF ? '🔍 Analizza e Anteprima' : '🚀 Carica Tutti'}
               </button>
             </div>
           </div>
@@ -670,7 +775,7 @@ export default function ImportUnificato() {
                   📤 {uploadProgress.filename}
                 </span>
                 <span style={{ fontSize: 11, color: '#64748b' }}>
-                  {uploadProgress.current}/{uploadProgress.total} ({Math.round((uploadProgress.current / uploadProgress.total) * 100)}%)
+                  {uploadProgress.current}/{uploadProgress.total}
                 </span>
               </div>
               <div style={{ height: 6, background: '#e0f2fe', borderRadius: 3, overflow: 'hidden' }}>
@@ -704,7 +809,6 @@ export default function ImportUnificato() {
                                f.status === 'error' ? '#fef2f2' : 'white'
                   }}
                 >
-                  {/* Icona stato */}
                   <div style={{
                     width: 32,
                     height: 32,
@@ -724,7 +828,6 @@ export default function ImportUnificato() {
                      f.status === 'error' ? '❌' : '📄'}
                   </div>
                   
-                  {/* Info file */}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ 
                       fontWeight: 600, 
@@ -742,28 +845,28 @@ export default function ImportUnificato() {
                     </div>
                   </div>
                   
-                  {/* Tipo */}
-                  <select
-                    value={f.type}
-                    onChange={(e) => changeFileType(idx, e.target.value)}
-                    disabled={f.status !== 'pending'}
-                    style={{
-                      padding: '5px 8px',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: 6,
-                      background: 'white',
-                      fontSize: 11,
-                      color: tipoInfo.color,
-                      fontWeight: 600,
-                      maxWidth: 120
-                    }}
-                  >
-                    {TIPI_DOCUMENTO.filter(t => t.id !== 'auto').map(t => (
-                      <option key={t.id} value={t.id}>{t.label}</option>
-                    ))}
-                  </select>
+                  {!isEstrattoContoPDF && (
+                    <select
+                      value={f.type}
+                      onChange={(e) => changeFileType(idx, e.target.value)}
+                      disabled={f.status !== 'pending'}
+                      style={{
+                        padding: '5px 8px',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: 6,
+                        background: 'white',
+                        fontSize: 11,
+                        color: tipoInfo.color,
+                        fontWeight: 600,
+                        maxWidth: 120
+                      }}
+                    >
+                      {TIPI_DOCUMENTO.filter(t => t.id !== 'auto').map(t => (
+                        <option key={t.id} value={t.id}>{t.label}</option>
+                      ))}
+                    </select>
+                  )}
                   
-                  {/* Rimuovi */}
                   {f.status === 'pending' && (
                     <button
                       onClick={() => removeFile(idx)}
@@ -785,6 +888,242 @@ export default function ImportUnificato() {
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* MODALE ANTEPRIMA */}
+      {showPreview && previewData && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: 20
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: 16,
+            width: '100%',
+            maxWidth: 1000,
+            maxHeight: '90vh',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
+            {/* Header Anteprima */}
+            <div style={{ 
+              padding: 20, 
+              background: '#10b981', 
+              color: 'white',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <div>
+                <h2 style={{ margin: 0, fontSize: 18 }}>🔍 Anteprima Transazioni Estratte</h2>
+                <p style={{ margin: '4px 0 0', opacity: 0.9, fontSize: 13 }}>
+                  Verifica i dati prima di confermare l'importazione
+                </p>
+              </div>
+              <button
+                onClick={handleCancelPreview}
+                style={{
+                  background: 'rgba(255,255,255,0.2)',
+                  border: 'none',
+                  borderRadius: 8,
+                  padding: '8px 16px',
+                  color: 'white',
+                  cursor: 'pointer',
+                  fontWeight: 600
+                }}
+              >
+                ✕ Chiudi
+              </button>
+            </div>
+
+            {/* Riepilogo */}
+            <div style={{ 
+              padding: 16, 
+              background: '#f0fdf4', 
+              borderBottom: '1px solid #a7f3d0',
+              display: 'flex',
+              gap: 20,
+              flexWrap: 'wrap'
+            }}>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: 24, fontWeight: 700, color: '#065f46' }}>
+                  {previewData.totale_transazioni}
+                </div>
+                <div style={{ fontSize: 11, color: '#047857' }}>Transazioni</div>
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: 24, fontWeight: 700, color: '#16a34a' }}>
+                  €{previewData.totale_entrate?.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+                </div>
+                <div style={{ fontSize: 11, color: '#047857' }}>Entrate</div>
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: 24, fontWeight: 700, color: '#dc2626' }}>
+                  €{previewData.totale_uscite?.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+                </div>
+                <div style={{ fontSize: 11, color: '#047857' }}>Uscite</div>
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: 24, fontWeight: 700, color: '#6366f1' }}>
+                  {previewData.files_parsed?.length || 0}
+                </div>
+                <div style={{ fontSize: 11, color: '#047857' }}>File Analizzati</div>
+              </div>
+            </div>
+
+            {/* File Analizzati */}
+            {previewData.files_parsed && previewData.files_parsed.length > 0 && (
+              <div style={{ padding: '10px 16px', background: '#f8fafc', borderBottom: '1px solid #e5e7eb' }}>
+                <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 6 }}>📁 File Analizzati:</div>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {previewData.files_parsed.map((f, idx) => (
+                    <span key={idx} style={{
+                      padding: '4px 8px',
+                      background: f.success ? '#dcfce7' : '#fee2e2',
+                      color: f.success ? '#166534' : '#dc2626',
+                      borderRadius: 4,
+                      fontSize: 11,
+                      fontWeight: 500
+                    }}>
+                      {f.filename} ({f.banca}) - {f.transazioni_count} mov.
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Tabella Transazioni */}
+            <div style={{ flex: 1, overflow: 'auto', padding: 16 }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                <thead>
+                  <tr style={{ background: '#f1f5f9' }}>
+                    <th style={{ padding: 10, textAlign: 'left', borderBottom: '2px solid #e5e7eb' }}>Data</th>
+                    <th style={{ padding: 10, textAlign: 'left', borderBottom: '2px solid #e5e7eb' }}>Descrizione</th>
+                    <th style={{ padding: 10, textAlign: 'right', borderBottom: '2px solid #e5e7eb' }}>Entrata</th>
+                    <th style={{ padding: 10, textAlign: 'right', borderBottom: '2px solid #e5e7eb' }}>Uscita</th>
+                    <th style={{ padding: 10, textAlign: 'left', borderBottom: '2px solid #e5e7eb' }}>Banca</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(previewData.transazioni_preview || []).slice(previewPage * 50, (previewPage + 1) * 50).map((tx, idx) => (
+                    <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                      <td style={{ padding: 8 }}>{tx.data}</td>
+                      <td style={{ padding: 8, maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {tx.descrizione}
+                      </td>
+                      <td style={{ padding: 8, textAlign: 'right', color: '#16a34a', fontWeight: tx.entrata ? 600 : 400 }}>
+                        {tx.entrata ? `€${tx.entrata.toLocaleString('it-IT', { minimumFractionDigits: 2 })}` : '-'}
+                      </td>
+                      <td style={{ padding: 8, textAlign: 'right', color: '#dc2626', fontWeight: tx.uscita ? 600 : 400 }}>
+                        {tx.uscita ? `€${tx.uscita.toLocaleString('it-IT', { minimumFractionDigits: 2 })}` : '-'}
+                      </td>
+                      <td style={{ padding: 8 }}>
+                        <span style={{ 
+                          padding: '2px 6px', 
+                          background: '#e0e7ff', 
+                          color: '#4338ca', 
+                          borderRadius: 4, 
+                          fontSize: 10 
+                        }}>
+                          {tx.banca}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {previewData.totale_transazioni > 50 && (
+                <div style={{ marginTop: 12, display: 'flex', justifyContent: 'center', gap: 8 }}>
+                  <button
+                    onClick={() => setPreviewPage(p => Math.max(0, p - 1))}
+                    disabled={previewPage === 0}
+                    style={{
+                      padding: '6px 12px',
+                      background: previewPage === 0 ? '#f1f5f9' : '#e0e7ff',
+                      border: 'none',
+                      borderRadius: 4,
+                      cursor: previewPage === 0 ? 'default' : 'pointer'
+                    }}
+                  >
+                    ← Prec
+                  </button>
+                  <span style={{ padding: '6px 12px', fontSize: 12 }}>
+                    Pagina {previewPage + 1} di {Math.ceil(previewData.totale_transazioni / 50)}
+                  </span>
+                  <button
+                    onClick={() => setPreviewPage(p => p + 1)}
+                    disabled={(previewPage + 1) * 50 >= previewData.totale_transazioni}
+                    style={{
+                      padding: '6px 12px',
+                      background: (previewPage + 1) * 50 >= previewData.totale_transazioni ? '#f1f5f9' : '#e0e7ff',
+                      border: 'none',
+                      borderRadius: 4,
+                      cursor: (previewPage + 1) * 50 >= previewData.totale_transazioni ? 'default' : 'pointer'
+                    }}
+                  >
+                    Succ →
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Footer con azioni */}
+            <div style={{ 
+              padding: 16, 
+              background: '#f8fafc', 
+              borderTop: '1px solid #e5e7eb',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <div style={{ fontSize: 12, color: '#64748b' }}>
+                Le transazioni verranno salvate nella collezione <strong>estratto_conto_movimenti</strong>
+              </div>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <button
+                  onClick={handleCancelPreview}
+                  style={{
+                    padding: '10px 20px',
+                    background: '#fee2e2',
+                    color: '#dc2626',
+                    border: 'none',
+                    borderRadius: 8,
+                    cursor: 'pointer',
+                    fontWeight: 600
+                  }}
+                >
+                  ❌ Annulla
+                </button>
+                <button
+                  onClick={handleConfirmImport}
+                  disabled={confirmingImport}
+                  style={{
+                    padding: '10px 24px',
+                    background: confirmingImport ? '#9ca3af' : '#10b981',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: 8,
+                    cursor: confirmingImport ? 'wait' : 'pointer',
+                    fontWeight: 600
+                  }}
+                >
+                  {confirmingImport ? '⏳ Salvataggio...' : '✅ Conferma Importazione'}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -883,9 +1222,9 @@ export default function ImportUnificato() {
       }}>
         <div style={{ fontWeight: 600, color: '#0369a1', marginBottom: 8, fontSize: 13 }}>💡 Suggerimenti</div>
         <ul style={{ margin: 0, paddingLeft: 18, color: '#0c4a6e', fontSize: 12, lineHeight: 1.6 }}>
+          <li><strong>Estratti Conto PDF</strong>: Supporta BANCO BPM, BNL, Nexi con anteprima dati prima del salvataggio</li>
+          <li><strong>Upload Massivo</strong>: Puoi caricare più PDF contemporaneamente (dal 2018 in poi)</li>
           <li><strong>Fatture XML</strong>: FatturaPA standard, anche in archivi ZIP</li>
-          <li><strong>Estratti Conto</strong>: PDF/Excel da BNL, Nexi, BPM</li>
-          <li><strong>F24</strong>: PDF singoli o archivi ZIP annuali</li>
           <li><strong>Buste Paga</strong>: PDF formato Zucchetti, CSC</li>
           <li><strong>ZIP Annidati</strong>: Il sistema estrae automaticamente tutti i livelli</li>
         </ul>
