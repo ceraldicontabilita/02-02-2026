@@ -21,6 +21,20 @@ Applicazione contabile avanzata per la gestione completa del ciclo passivo, atti
 
 ## What's Been Implemented
 
+### Session 2026-01-17 (Fork 3)
+
+#### ✅ P0 - BUG FIX: Routing Pagamenti Prima Nota (COMPLETATO)
+- **Problema**: Le fatture pagate tramite Banca venivano erroneamente registrate in Prima Nota Cassa
+- **Causa**: La funzione `genera_scrittura_prima_nota` scriveva SEMPRE in `prima_nota_banca`, ignorando il metodo di pagamento del fornitore
+- **Soluzione**: Modificata la logica per leggere il `metodo_pagamento` dall'anagrafica fornitore e indirizzare il movimento alla collection corretta
+- **File modificati**:
+  - `/app/app/routers/ciclo_passivo_integrato.py` - Funzione `genera_scrittura_prima_nota` ora verifica metodo fornitore
+  - `/app/app/routers/invoices/fatture_ricevute.py` - Passaggio `metodo_pagamento` a funzione integrata
+- **Logica routing**:
+  - `metodo_pagamento` in ["contanti", "cassa", "cash", "contante"] → `prima_nota_cassa`
+  - Altrimenti (bonifico, assegno, rid, riba, sepa, default) → `prima_nota_banca`
+- **Test eseguiti**: 3/3 test passati (contanti→cassa, bonifico→banca, default→banca)
+
 ### Session 2026-01-17 (Fork 2 - Parte 4)
 
 #### ✅ REGOLA CRITICA - Metodo Pagamento SOLO da Anagrafica Fornitore
