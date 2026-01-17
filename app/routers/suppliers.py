@@ -359,16 +359,16 @@ async def upload_suppliers_excel(file: UploadFile = File(...)) -> Dict[str, Any]
 @router.get("")
 async def list_suppliers(
     skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=500),
+    limit: int = Query(500, ge=1, le=1000),
     search: Optional[str] = Query(None, description="Search term for filtering suppliers"),
     metodo_pagamento: Optional[str] = Query(None),
     attivo: Optional[bool] = Query(None),
     use_cache: bool = Query(True, description="Use cached data for faster response")
 ) -> List[Dict[str, Any]]:
     """
-    Lista fornitori estratti da invoices + collezione fornitori.
-    Combina fornitori embedded nelle fatture con quelli salvati separatamente.
-    Default limit ridotto a 100 per performance.
+    Lista fornitori estratti da invoices + collezione fornitori + collezione suppliers.
+    Combina tutte le fonti e deduplica per P.IVA.
+    Default limit aumentato a 500 per mostrare tutti i fornitori.
     """
     db = Database.get_db()
     
