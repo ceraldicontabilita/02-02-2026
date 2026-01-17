@@ -468,18 +468,29 @@ async def _get_fatture_in_scadenza(db, anno: int, include_passate: bool, giorni_
         if data_scadenza > data_limite:
             continue
         
-        fornitore = f.get("cedente_prestatore", {}).get("denominazione", "")
-        importo = f.get("total_amount", 0)
+        # Estrai nome fornitore da tutti i campi possibili
+        fornitore = (
+            f.get("supplier_name") or 
+            f.get("cedente_denominazione") or
+            (f.get("cedente_prestatore", {}) or {}).get("denominazione", "") or
+            (f.get("fornitore", {}) or {}).get("denominazione", "") or
+            (f.get("fornitore", {}) or {}).get("ragione_sociale", "") or
+            ""
+        )
+        importo = f.get("total_amount") or f.get("importo_totale") or 0
+        numero_fatt = f.get("invoice_number") or f.get("numero_documento") or f.get("numero_fattura", "")
+        fattura_id = f.get("id")
         
         scadenze.append({
             "id": f.get("id"),
             "data": data_scadenza,
             "tipo": "FATTURA",
-            "descrizione": f"Pagamento fattura {f.get('invoice_number', '')} - {fornitore[:30]}",
+            "descrizione": f"Pagamento fattura {numero_fatt}",
             "importo": importo,
             "priorita": _calcola_priorita(data_scadenza),
             "fornitore": fornitore,
-            "numero_fattura": f.get("invoice_number"),
+            "numero_fattura": numero_fatt,
+            "fattura_id": fattura_id,  # Per il link "Vedi"
             "source": "fattura"
         })
     
