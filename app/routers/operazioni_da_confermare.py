@@ -585,6 +585,21 @@ async def conferma_operazioni_batch(request: ConfermaBatchRequest) -> Dict[str, 
                 }}
             )
             
+            # Se è un F24, aggiorna anche la collection f24_models
+            if tipo_operazione == "f24" or operazione.get("tipo") == "f24":
+                await db["f24_models"].update_one(
+                    {"id": operazione_id},
+                    {"$set": {
+                        "pagato": True,
+                        "stato": "pagato",
+                        "metodo_pagamento": metodo,
+                        "data_pagamento": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+                        "prima_nota_id": movimento_id,
+                        "prima_nota_collection": prima_nota_collection,
+                        "updated_at": datetime.now(timezone.utc).isoformat()
+                    }}
+                )
+            
             # Salva nel dizionario
             await db["aruba_elaborazioni"].update_one(
                 {"numero_fattura": numero_fattura, "fornitore": fornitore},
