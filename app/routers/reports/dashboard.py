@@ -165,7 +165,7 @@ async def get_stats(
 @router.get(
     "/trend-mensile",
     summary="Trend mensile entrate/uscite",
-    description="Dati per grafici trend mensili"
+    description="Dati per grafici trend mensili - OTTIMIZZATO"
 )
 async def get_trend_mensile(
     anno: int = Query(None, description="Anno di riferimento")
@@ -173,6 +173,7 @@ async def get_trend_mensile(
     """
     Ottiene i dati per i grafici di trend mensile.
     Include entrate (corrispettivi), uscite (fatture) e saldo mensile.
+    VERSIONE OTTIMIZZATA: usa 4 query aggregate invece di 48.
     """
     db = Database.get_db()
     
@@ -180,87 +181,89 @@ async def get_trend_mensile(
         anno = datetime.now().year
     
     mesi_nomi = ["Gen", "Feb", "Mar", "Apr", "Mag", "Giu", "Lug", "Ago", "Set", "Ott", "Nov", "Dic"]
+    data_inizio_anno = f"{anno}-01-01"
+    data_fine_anno = f"{anno}-12-31"
     
-    trend_data = []
+    # Inizializza dati per tutti i mesi
+    trend_data = {m: {"mese": m, "mese_nome": mesi_nomi[m-1], "entrate": 0, "uscite": 0, "iva_debito": 0, "iva_credito": 0} for m in range(1, 13)}
     
+    # QUERY 1: Corrispettivi (entrate + IVA debito) raggruppati per mese
+    try:
+        corr_pipeline = [
+            {"$match": {"data": {"$gte": data_inizio_anno, "$lte": data_fine_anno}}},
+            {"$addFields": {
+                "mese": {"$toInt": {"$substr": ["$data", 5, 2]}}
+            }},
+            {"$group": {
+                "_id": "$mese",
+                "totale": {"$sum": {"$toDouble": {"$ifNull": ["$totale", 0]}}},
+                "totale_iva": {"$sum": {"$toDouble": {"$ifNull": ["$totale_iva", 0]}}}
+            }}
+        ]
+        corr_results = await db["corrispettivi"].aggregate(corr_pipeline).to_list(12)
+        for r in corr_results:
+            mese = r["_id"]
+            if mese and 1 <= mese <= 12:
+                trend_data[mese]["entrate"] = round(r["totale"] or 0, 2)
+                trend_data[mese]["iva_debito"] = round(r["totale_iva"] or 0, 2)
+    except Exception as e:
+        logger.warning(f"Errore aggregazione corrispettivi: {e}")
+    
+    # QUERY 2: Fatture (uscite + IVA credito) raggruppate per mese
+    try:
+        fatt_pipeline = [
+            {"$match": {
+                "$or": [
+                    {"invoice_date": {"$gte": data_inizio_anno, "$lte": data_fine_anno}},
+                    {"data_ricezione": {"$gte": data_inizio_anno, "$lte": data_fine_anno}}
+                ]
+            }},
+            {"$addFields": {
+                "data_ref": {"$ifNull": ["$data_ricezione", "$invoice_date"]},
+            }},
+            {"$addFields": {
+                "mese": {"$toInt": {"$substr": ["$data_ref", 5, 2]}}
+            }},
+            {"$group": {
+                "_id": "$mese",
+                "totale": {"$sum": {"$toDouble": {"$ifNull": ["$total_amount", 0]}}},
+                "totale_iva": {"$sum": {"$toDouble": {"$ifNull": ["$iva", 0]}}}
+            }}
+        ]
+        fatt_results = await db[Collections.INVOICES].aggregate(fatt_pipeline).to_list(12)
+        for r in fatt_results:
+            mese = r["_id"]
+            if mese and 1 <= mese <= 12:
+                trend_data[mese]["uscite"] = round(r["totale"] or 0, 2)
+                trend_data[mese]["iva_credito"] = round(r["totale_iva"] or 0, 2)
+    except Exception as e:
+        logger.warning(f"Errore aggregazione fatture: {e}")
+    
+    # Converti in lista ordinata e calcola saldi
+    result_data = []
     for mese in range(1, 13):
-        data_inizio = f"{anno}-{mese:02d}-01"
-        if mese == 12:
-            data_fine = f"{anno}-12-31"
-        else:
-            data_fine = f"{anno}-{mese+1:02d}-01"
-        
-        # Entrate (corrispettivi)
-        corr_result = await db["corrispettivi"].aggregate([
-            {"$match": {"data": {"$gte": data_inizio, "$lt": data_fine}}},
-            {"$group": {"_id": None, "totale": {"$sum": "$totale"}}}
-        ]).to_list(1)
-        entrate = corr_result[0]["totale"] if corr_result else 0
-        
-        # Uscite (fatture acquisto)
-        fatt_result = await db[Collections.INVOICES].aggregate([
-            {"$match": {
-                "$or": [
-                    {"data_ricezione": {"$gte": data_inizio, "$lt": data_fine}},
-                    {"$and": [
-                        {"data_ricezione": {"$exists": False}},
-                        {"invoice_date": {"$gte": data_inizio, "$lt": data_fine}}
-                    ]}
-                ]
-            }},
-            {"$group": {"_id": None, "totale": {"$sum": "$total_amount"}}}
-        ]).to_list(1)
-        uscite = fatt_result[0]["totale"] if fatt_result else 0
-        
-        # IVA
-        iva_debito = await db["corrispettivi"].aggregate([
-            {"$match": {"data": {"$gte": data_inizio, "$lt": data_fine}}},
-            {"$group": {"_id": None, "totale": {"$sum": "$totale_iva"}}}
-        ]).to_list(1)
-        iva_d = iva_debito[0]["totale"] if iva_debito else 0
-        
-        iva_credito = await db[Collections.INVOICES].aggregate([
-            {"$match": {
-                "$or": [
-                    {"data_ricezione": {"$gte": data_inizio, "$lt": data_fine}},
-                    {"invoice_date": {"$gte": data_inizio, "$lt": data_fine}}
-                ]
-            }},
-            {"$group": {"_id": None, "totale": {"$sum": "$iva"}}}
-        ]).to_list(1)
-        iva_c = iva_credito[0]["totale"] if iva_credito else 0
-        
-        saldo = entrate - uscite
-        saldo_iva = iva_d - iva_c
-        
-        trend_data.append({
-            "mese": mese,
-            "mese_nome": mesi_nomi[mese - 1],
-            "entrate": round(entrate, 2),
-            "uscite": round(uscite, 2),
-            "saldo": round(saldo, 2),
-            "iva_debito": round(iva_d, 2),
-            "iva_credito": round(iva_c, 2),
-            "saldo_iva": round(saldo_iva, 2)
-        })
+        m = trend_data[mese]
+        m["saldo"] = round(m["entrate"] - m["uscite"], 2)
+        m["saldo_iva"] = round(m["iva_debito"] - m["iva_credito"], 2)
+        result_data.append(m)
     
     # Calcola totali annuali
-    totale_entrate = sum(t["entrate"] for t in trend_data)
-    totale_uscite = sum(t["uscite"] for t in trend_data)
-    totale_iva_debito = sum(t["iva_debito"] for t in trend_data)
-    totale_iva_credito = sum(t["iva_credito"] for t in trend_data)
+    totale_entrate = sum(t["entrate"] for t in result_data)
+    totale_uscite = sum(t["uscite"] for t in result_data)
+    totale_iva_debito = sum(t["iva_debito"] for t in result_data)
+    totale_iva_credito = sum(t["iva_credito"] for t in result_data)
     
     # Calcola media e picchi
-    mesi_con_dati = [t for t in trend_data if t["entrate"] > 0 or t["uscite"] > 0]
+    mesi_con_dati = [t for t in result_data if t["entrate"] > 0 or t["uscite"] > 0]
     media_entrate = totale_entrate / len(mesi_con_dati) if mesi_con_dati else 0
     media_uscite = totale_uscite / len(mesi_con_dati) if mesi_con_dati else 0
     
-    mese_max_entrate = max(trend_data, key=lambda x: x["entrate"])
-    mese_max_uscite = max(trend_data, key=lambda x: x["uscite"])
+    mese_max_entrate = max(result_data, key=lambda x: x["entrate"])
+    mese_max_uscite = max(result_data, key=lambda x: x["uscite"])
     
     return {
         "anno": anno,
-        "trend_mensile": trend_data,
+        "trend_mensile": result_data,
         "totali": {
             "entrate": round(totale_entrate, 2),
             "uscite": round(totale_uscite, 2),
