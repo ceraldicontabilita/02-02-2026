@@ -216,7 +216,9 @@ const PrimaNotaSalariTab = memo(function PrimaNotaSalariTab() {
         onExport={handleExport}
         onReset={handleReset}
         onRefresh={fetchSalari}
+        onPulisciVuote={handlePulisciVuote}
         hasData={salariMovimenti.length > 0}
+        righeVuote={righeVuote}
       />
 
       {/* Alert risultato import */}
