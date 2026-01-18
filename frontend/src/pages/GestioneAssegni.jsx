@@ -44,9 +44,38 @@ export default function GestioneAssegni() {
   const [editingAssegnoForFatture, setEditingAssegnoForFatture] = useState(null);
 
   useEffect(() => {
+    // Al primo caricamento, esegui ricostruzione automatica dati mancanti
+    ricostruisciDatiMancanti();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterStato, search]);
+
+  /**
+   * LOGICA INTELLIGENTE: Ricostruisce automaticamente i dati mancanti.
+   * 
+   * Questa funzione implementa la logica di un commercialista esperto:
+   * 1. Estrae beneficiario dalla descrizione bancaria
+   * 2. Cerca fatture con lo stesso importo per associazione
+   * 3. Gestisce pagamenti parziali/splittati
+   * 
+   * Viene eseguita automaticamente al caricamento della pagina.
+   */
+  const ricostruisciDatiMancanti = async () => {
+    try {
+      const res = await api.post('/api/assegni/ricostruisci-dati');
+      if (res.data.beneficiari_trovati > 0 || res.data.fatture_associate > 0) {
+        console.log('Dati ricostruiti:', res.data);
+        // Ricarica dopo ricostruzione
+        loadData();
+      }
+    } catch (error) {
+      console.warn('Ricostruzione dati non riuscita:', error);
+    }
+  };
 
   const loadData = async () => {
     try {
