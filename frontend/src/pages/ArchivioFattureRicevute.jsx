@@ -100,12 +100,6 @@ export default function ArchivioFatture() {
   const [fornitori, setFornitori] = useState([]);
   const [statistiche, setStatistiche] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
-  const [uploadResult, setUploadResult] = useState(null);
-  
-  // Dati per Pipeline/Import
-  const [dragActive, setDragActive] = useState(false);
-  const fileInputRef = useRef(null);
   
   // Dati per Scadenze e Riconciliazione
   const [dashboard, setDashboard] = useState(null);
