@@ -117,6 +117,36 @@ export default function ArchivioFatture() {
   // Modal stampa etichette
   const [showEtichette, setShowEtichette] = useState(false);
   const [selectedFatturaId, setSelectedFatturaId] = useState(null);
+  
+  // Stato per auto-riparazione
+  const [autoRepairStatus, setAutoRepairStatus] = useState(null);
+  const [autoRepairRunning, setAutoRepairRunning] = useState(false);
+
+  /**
+   * LOGICA INTELLIGENTE: Esegue auto-riparazione dei dati al caricamento.
+   */
+  const eseguiAutoRiparazione = async () => {
+    setAutoRepairRunning(true);
+    try {
+      const res = await api.post('/api/fatture-ricevute/auto-ricostruisci-dati');
+      if (res.data.campi_corretti > 0 || res.data.duplicati_rimossi > 0 || res.data.fornitori_associati > 0) {
+        console.log('🔧 Auto-riparazione fatture completata:', res.data);
+        setAutoRepairStatus(res.data);
+        // Ricarica dati dopo riparazione
+        fetchFatture();
+      }
+    } catch (error) {
+      console.warn('Auto-riparazione fatture non riuscita:', error);
+    } finally {
+      setAutoRepairRunning(false);
+    }
+  };
+
+  useEffect(() => {
+    // Al primo caricamento, esegui auto-riparazione
+    eseguiAutoRiparazione();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ==================== FETCH FUNCTIONS ====================
   
