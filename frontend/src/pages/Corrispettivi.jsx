@@ -25,55 +25,15 @@ export default function Corrispettivi() {
     try {
       setLoading(true);
       setErr("");
-      // Carica dalla Prima Nota Cassa con filtro categoria "Corrispettivi"
-      const r = await api.get(`/api/prima-nota/cassa?anno=${selectedYear}&categoria=Corrispettivi&limit=2500`);
-      const movimenti = r.data?.movimenti || [];
+      // Carica direttamente dalla collection corrispettivi
+      const r = await api.get(`/api/corrispettivi?anno=${selectedYear}&limit=2500`);
+      const data = r.data || [];
       
-      // Raggruppa per data (un corrispettivo per giorno)
-      const gruppiPerData = {};
-      movimenti.forEach(m => {
-        const data = m.data || '';
-        if (!gruppiPerData[data]) {
-          gruppiPerData[data] = {
-            id: m.id,
-            data: data,
-            totale: 0,
-            pagato_contanti: 0,
-            pagato_elettronico: 0,
-            totale_iva: 0,
-            totale_imponibile: 0,
-            matricola_rt: m.dettaglio?.matricola_rt || '',
-            movimenti: []
-          };
-        }
-        
-        const importo = Math.abs(m.importo || 0);
-        gruppiPerData[data].totale += importo;
-        gruppiPerData[data].movimenti.push(m);
-        
-        // Estrai dettagli se disponibili
-        if (m.dettaglio) {
-          gruppiPerData[data].pagato_contanti += m.dettaglio.contanti || 0;
-          gruppiPerData[data].pagato_elettronico += m.dettaglio.elettronico || 0;
-          gruppiPerData[data].totale_iva += m.dettaglio.totale_iva || 0;
-        } else {
-          // Se non ci sono dettagli, stima IVA al 10%
-          const ivaStimata = importo - (importo / 1.10);
-          gruppiPerData[data].totale_iva += ivaStimata;
-        }
-      });
+      // Se è un array, usalo direttamente
+      const corrispettiviArray = Array.isArray(data) ? data : [];
       
-      // Calcola imponibile
-      Object.values(gruppiPerData).forEach(g => {
-        g.totale_imponibile = g.totale - g.totale_iva;
-        // Se non ci sono dettagli contanti/elettronico, usa totale
-        if (g.pagato_contanti === 0 && g.pagato_elettronico === 0) {
-          g.pagato_contanti = g.totale; // Default: tutto contanti
-        }
-      });
-      
-      // Converti in array e ordina per data decrescente
-      const corrispettiviArray = Object.values(gruppiPerData).sort((a, b) => 
+      // Ordina per data decrescente
+      corrispettiviArray.sort((a, b) => 
         (b.data || '').localeCompare(a.data || '')
       );
       
