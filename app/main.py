@@ -304,9 +304,6 @@ app.include_router(sync_relazionale.router, prefix="/api", tags=["Sincronizzazio
 # --- Configurazioni Sistema ---
 app.include_router(configurazioni.router, prefix="/api/config", tags=["Configurazioni"])
 
-# --- Chat AI ---
-app.include_router(chat_ai.router, prefix="/api/chat-ai", tags=["Chat AI"])
-
 # --- WebSocket Real-time ---
 from app.routers import websocket_realtime
 app.include_router(websocket_realtime.router, prefix="/api", tags=["WebSocket Real-time"])
