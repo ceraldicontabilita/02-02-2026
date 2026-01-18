@@ -1611,13 +1611,20 @@ async def cerca_fatture_per_associazione(
     Cerca fatture per associazione manuale.
     Se importo specificato, cerca anche combinazioni che sommano all'importo.
     Restituisce sempre le ultime fatture non pagate se nessun filtro è specificato.
+    
+    NOTA: Esclude automaticamente le fatture TD24 (differite riepilogative)
+    che non devono essere associate a pagamenti specifici.
     """
     from app.services.riconciliazione_smart import trova_combinazioni_somma
     
     db = Database.get_db()
     
-    # Query base: fatture non pagate
-    query = {"pagato": {"$ne": True}}
+    # Query base: fatture non pagate, escludendo TD24
+    query = {
+        "pagato": {"$ne": True},
+        "tipo_documento": {"$ne": "TD24"},  # Escludi TD24 dalla riconciliazione
+        "escludi_da_riconciliazione": {"$ne": True}
+    }
     
     if fornitore and len(fornitore) >= 2:
         query["$or"] = [
