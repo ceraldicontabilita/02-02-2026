@@ -166,6 +166,37 @@ export default function RiconciliazioneUnificata() {
   const movimentiBancaFiltrati = applyFilters(movimentiBanca);
   const assegniFiltrati = applyFilters(assegni);
   const stipendiFiltrati = applyFilters(stipendiPendenti);
+  
+  // Stato per auto-riparazione
+  const [autoRepairStatus, setAutoRepairStatus] = useState(null);
+  const [autoRepairRunning, setAutoRepairRunning] = useState(false);
+
+  /**
+   * LOGICA INTELLIGENTE: Esegue auto-riparazione dei dati al caricamento.
+   * Questa funzione implementa la logica di un commercialista esperto.
+   */
+  const eseguiAutoRiparazione = async () => {
+    setAutoRepairRunning(true);
+    try {
+      const res = await api.post('/api/operazioni-da-confermare/auto-ricostruisci-dati');
+      if (res.data.riconciliazioni_auto > 0 || res.data.f24_corretti > 0) {
+        console.log('🔧 Auto-riparazione completata:', res.data);
+        setAutoRepairStatus(res.data);
+        // Ricarica dati dopo riparazione
+        loadAllData();
+      }
+    } catch (error) {
+      console.warn('Auto-riparazione non riuscita:', error);
+    } finally {
+      setAutoRepairRunning(false);
+    }
+  };
+
+  useEffect(() => {
+    // Al primo caricamento, esegui auto-riparazione
+    eseguiAutoRiparazione();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     loadAllData();
