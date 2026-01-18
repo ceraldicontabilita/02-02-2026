@@ -266,6 +266,10 @@ const router = createBrowserRouter([
       
       // === ADMIN ===
       { path: "admin", element: <LazyPage><Admin /></LazyPage> },
+      
+      // === INTEGRAZIONI ===
+      { path: "pagopa", element: <LazyPage><GestionePagoPA /></LazyPage> },
+      { path: "invoicetronic", element: <LazyPage><GestioneInvoiceTronic /></LazyPage> },
     ]
   }
 ]);
