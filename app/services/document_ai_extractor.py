@@ -419,7 +419,7 @@ async def process_document_from_base64(
     base64_data: str,
     filename: str,
     document_type: str = None,
-    model: str = "gpt-4o"
+    model: str = "claude-sonnet-4-5-20250929"
 ) -> Dict[str, Any]:
     """
     Processa un documento da base64.
