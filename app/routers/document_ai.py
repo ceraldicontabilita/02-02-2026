@@ -25,7 +25,7 @@ router = APIRouter()
 async def extract_from_file(
     file: UploadFile = File(...),
     document_type: Optional[str] = Form(None),
-    model: str = Form("gpt-4o"),
+    model: str = Form("claude-sonnet-4-5-20250929"),
     save_to_db: bool = Form(False)
 ):
     """
