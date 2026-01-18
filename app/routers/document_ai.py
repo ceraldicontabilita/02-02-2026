@@ -58,7 +58,7 @@ async def extract_from_file(
         if save_to_db and result.get("structured_data", {}).get("success"):
             db = await get_database()
             
-            # Salva in extracted_documents (archivio)
+            # Salva in extracted_documents (archivio) - include file_base64 per visualizzazione
             doc = {
                 "filename": file.filename,
                 "document_type": result.get("structured_data", {}).get("document_type"),
@@ -66,6 +66,7 @@ async def extract_from_file(
                 "text_preview": result.get("text", "")[:1000],
                 "ocr_used": result.get("ocr_used"),
                 "model_used": model,
+                "file_base64": base64.b64encode(content).decode('utf-8'),
                 "created_at": datetime.now(timezone.utc).isoformat()
             }
             await db["extracted_documents"].insert_one(doc)
