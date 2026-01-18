@@ -158,15 +158,19 @@ EMAIL_RULES: List[EmailRule] = [
     ),
     
     # --- ESTRATTI CONTO ---
+    # NOTA: sender_patterns vuoto = accetta qualsiasi mittente
+    # Il match avviene su oggetto, corpo email o nome allegato
     EmailRule(
         name="estratti_conto",
-        keywords=["estratto conto", "movimenti bancari", "rendiconto", "situazione conto"],
-        subject_patterns=[r"estratto\s*conto", r"movimenti\s*bancar", r"rendiconto"],
-        sender_patterns=["bpm", "bnl", "intesa", "unicredit"],
+        keywords=["estratto conto", "movimenti bancari", "rendiconto", "situazione conto", 
+                  "lista movimenti", "saldo conto", "conto corrente", "riepilogo movimenti"],
+        subject_patterns=[r"estratto\s*conto", r"movimenti\s*bancar", r"rendiconto", 
+                         r"lista\s*movimenti", r"saldo.*conto", r"riepilogo.*conto"],
+        sender_patterns=[],  # Accetta QUALSIASI mittente
         category="estratti_conto",
         gestionale_section="Banca",
         collection="estratti_conto_pdf",
-        action="save_pdf",
+        action="parse_and_save",  # Nuova azione: parsa e salva in estratto_conto_movimenti
         priority=6
     ),
     
