@@ -12,6 +12,36 @@ export default function F24() {
   const [expandedRows, setExpandedRows] = useState({});
   const [editingF24, setEditingF24] = useState(null);
   const [viewingPdf, setViewingPdf] = useState(null);
+  
+  // Stato per auto-riparazione
+  const [autoRepairStatus, setAutoRepairStatus] = useState(null);
+  const [autoRepairRunning, setAutoRepairRunning] = useState(false);
+
+  /**
+   * LOGICA INTELLIGENTE: Esegue auto-riparazione dei dati al caricamento.
+   */
+  const eseguiAutoRiparazione = async () => {
+    setAutoRepairRunning(true);
+    try {
+      const res = await api.post('/api/operazioni-da-confermare/auto-ricostruisci-dati');
+      if (res.data.f24_corretti > 0 || res.data.riconciliazioni_auto > 0) {
+        console.log('🔧 Auto-riparazione F24 completata:', res.data);
+        setAutoRepairStatus(res.data);
+        loadF24();
+        loadAlerts();
+        loadDashboard();
+      }
+    } catch (error) {
+      console.warn('Auto-riparazione F24 non riuscita:', error);
+    } finally {
+      setAutoRepairRunning(false);
+    }
+  };
+
+  useEffect(() => {
+    eseguiAutoRiparazione();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     loadF24();
