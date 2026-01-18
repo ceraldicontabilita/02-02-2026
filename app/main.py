@@ -331,6 +331,9 @@ app.include_router(dimissioni.router, prefix="/api/dimissioni", tags=["Dimission
 # --- Documenti Intelligenti (Classificazione Email) ---
 app.include_router(documenti_intelligenti.router, prefix="/api/documenti-smart", tags=["Documenti Intelligenti"])
 
+# --- Document AI (OCR + LLM Extraction) ---
+app.include_router(document_ai.router, prefix="/api/document-ai", tags=["Document AI"])
+
 # --- Sincronizzazione Relazionale ---
 app.include_router(sync_relazionale.router, prefix="/api", tags=["Sincronizzazione Relazionale"])
 
