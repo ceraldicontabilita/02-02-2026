@@ -171,6 +171,10 @@ Si scala:
   - 13 F24 con date errate corretti
   - 82 TD24 marcate non riconciliabili
 - **Logica TD24** - fatture differite escluse dalla riconciliazione (18 Gen 2026)
+- **Pagine Auto-Sufficienti** (18 Gen 2026) ⭐ NUOVO:
+  - Gestione Assegni: auto-ricostruzione beneficiario e fatture associate
+  - Riconciliazione Smart: auto-riconciliazione F24, correzione date, sync assegni
+  - Fatture Ricevute: associazione fornitori, correzione importi, rimozione duplicati, TD24
 
 ### 🔄 In Progress
 - Risoluzione 182 fornitori bancari senza IBAN (ridotti da 223)
@@ -181,12 +185,17 @@ Si scala:
 - **Unificazione pagine Import**: Rimosso tab "Import XML" da Fatture Ricevute, centralizzato tutto in `/import-unificato`
 - **Import Unificato potenziato**: Tutti i tipi supportano ZIP massivo (.zip aggiunto a tutte le estensioni)
 - **Feedback integrazione**: Import fatture XML ora mostra dettagli di Magazzino, Prima Nota, Scadenziario e Riconciliazione
+- **PAGINE AUTO-SUFFICIENTI**: Implementato pattern "self-healing pages" con:
+  - Card informativa "Logica Intelligente Attiva" visibile in ogni pagina
+  - Endpoint di auto-riparazione chiamati al caricamento pagina
+  - Feedback visivo dei risultati dell'ultima verifica automatica
 
 ### 📋 Backlog
 - Finalizzare importazione cedolini da PDF (OCR)
 - Dashboard Analytics
 - Integrazione Google Calendar
 - Report PDF via email
+- Risolvere timeout chat Parlant.io (P0 BLOCCATO)
 
 ---
 
