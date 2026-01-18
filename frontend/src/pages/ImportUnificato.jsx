@@ -602,7 +602,7 @@ export default function ImportUnificato() {
             color: '#065f46'
           }}>
             <strong>🔍 Modalità con Anteprima:</strong> I PDF verranno analizzati e mostrati in anteprima prima di essere salvati nel database. 
-            Puoi rivedere le transazioni estratte e confermare l'importazione.
+            Puoi rivedere le transazioni estratte e confermare importazione.
           </div>
         )}
         
