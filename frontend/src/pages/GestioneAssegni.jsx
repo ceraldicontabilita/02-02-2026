@@ -595,6 +595,26 @@ export default function GestioneAssegni() {
           {autoAssociating ? 'Associando...' : 'Auto-Associa'}
         </button>
         
+        {/* Pulsante Associazione Combinata (somma assegni = fattura) */}
+        <button
+          onClick={handleAssociaCombinazioni}
+          disabled={combinazioneLoading}
+          data-testid="associa-combinazioni-btn"
+          style={{
+            padding: '10px 16px',
+            background: combinazioneLoading ? '#ccc' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            color: 'white',
+            border: 'none',
+            borderRadius: 8,
+            cursor: combinazioneLoading ? 'not-allowed' : 'pointer',
+            fontWeight: 'bold',
+            fontSize: 13,
+            boxShadow: '0 2px 4px rgba(102,126,234,0.3)'
+          }}
+        >
+          {combinazioneLoading ? '⏳ Cercando...' : '🔗 Combinazioni'}
+        </button>
+        
         {/* Pulsante Sync da EC */}
         <button
           onClick={async () => {
