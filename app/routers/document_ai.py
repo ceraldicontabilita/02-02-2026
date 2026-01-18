@@ -247,3 +247,103 @@ async def process_classified_email(
         result["document_updated"] = True
     
     return result
+
+
+@router.post("/process-all-classified")
+async def process_all_classified_documents(
+    process_all: bool = False,
+    document_types: Optional[str] = None,
+    save_to_gestionale: bool = True,
+    model: str = "claude-sonnet-4-5-20250929"
+):
+    """
+    Processa TUTTI i documenti classificati usando Document AI.
+    Estrae dati strutturati e li salva nelle collection del gestionale.
+    
+    - **process_all**: Se True, riprocessa anche documenti già processati
+    - **document_types**: Tipi da processare separati da virgola (es: "f24,buste_paga")
+    - **save_to_gestionale**: Se True, salva i dati estratti nelle collection appropriate
+    - **model**: Modello LLM da usare
+    """
+    from app.services.email_classifier_service import process_documents_with_ai
+    
+    db = await get_database()
+    
+    # Parse document_types se fornito
+    types_list = None
+    if document_types:
+        types_list = [t.strip() for t in document_types.split(",")]
+    
+    result = await process_documents_with_ai(
+        db=db,
+        process_all=process_all,
+        document_types=types_list,
+        save_to_gestionale=save_to_gestionale,
+        model=model
+    )
+    
+    return result
+
+
+@router.get("/classified-documents-stats")
+async def get_classified_documents_stats():
+    """
+    Statistiche sui documenti classificati e il loro stato di processamento AI.
+    """
+    db = await get_database()
+    
+    # Pipeline aggregazione
+    pipeline = [
+        {
+            "$group": {
+                "_id": "$tipo",
+                "totale": {"$sum": 1},
+                "con_pdf": {"$sum": {"$cond": [{"$ne": ["$pdf_base64", None]}, 1, 0]}},
+                "ai_processati": {"$sum": {"$cond": [{"$eq": ["$ai_processed", True]}, 1, 0]}},
+                "ai_non_processati": {"$sum": {"$cond": [{"$ne": ["$ai_processed", True]}, 1, 0]}},
+                "salvati_gestionale": {"$sum": {"$cond": [{"$ne": ["$ai_extracted_data", None]}, 1, 0]}}
+            }
+        },
+        {"$sort": {"totale": -1}}
+    ]
+    
+    stats = await db["documents_classified"].aggregate(pipeline).to_list(length=100)
+    
+    # Totali
+    totale_docs = sum(s["totale"] for s in stats)
+    totale_con_pdf = sum(s["con_pdf"] for s in stats)
+    totale_processati = sum(s["ai_processati"] for s in stats)
+    totale_da_processare = sum(s["ai_non_processati"] for s in stats)
+    
+    return {
+        "totali": {
+            "documenti": totale_docs,
+            "con_pdf": totale_con_pdf,
+            "ai_processati": totale_processati,
+            "da_processare": totale_da_processare
+        },
+        "per_tipo": stats
+    }
+
+
+@router.post("/reprocess-and-save")
+async def reprocess_and_save_all(
+    model: str = "claude-sonnet-4-5-20250929"
+):
+    """
+    Riprocessa TUTTI i documenti in memoria e salva i dati nelle collection del gestionale.
+    Utile dopo aggiornamenti ai prompt o per riassociare i dati.
+    """
+    from app.services.email_classifier_service import process_documents_with_ai
+    
+    db = await get_database()
+    
+    result = await process_documents_with_ai(
+        db=db,
+        process_all=True,  # Riprocessa tutto
+        document_types=None,  # Tutti i tipi
+        save_to_gestionale=True,
+        model=model
+    )
+    
+    return result
