@@ -766,6 +766,9 @@ export default function App() {
       
       {/* Chat AI Flottante - Disponibile in tutta l'app */}
       <ChatAI />
+      
+      {/* Parlant AI Widget - Assistente avanzato con guidelines */}
+      <ParlantWidget />
     </div>
     </UploadProvider>
   );
