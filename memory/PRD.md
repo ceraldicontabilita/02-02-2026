@@ -676,3 +676,79 @@ Ogni sviluppo futuro deve:
 ---
 
 ## Ultimo aggiornamento: 18 Gennaio 2026
+---
+
+## 28. Document AI - Sistema Estrazione Documenti ✅ IMPLEMENTATO (18 Gennaio 2026)
+
+### Funzionalità implementata:
+Sistema completo di estrazione dati da documenti usando OCR + LLM (Claude Sonnet 4.5).
+
+### Tipi documento supportati:
+| Tipo | Collection Gestionale | Esempio |
+|------|----------------------|---------|
+| F24 | `f24_models` | Versamenti fiscali |
+| BUSTA_PAGA | `cedolini` | Cedolini dipendenti |
+| BONIFICO | `archivio_bonifici` | Ricevute bonifico |
+| ESTRATTO_CONTO | `estratto_conto_movimenti` | Movimenti bancari |
+| VERBALE | `verbali_noleggio` | Multe stradali |
+| CARTELLA_ESATTORIALE | `adr_definizione_agevolata` | Cartelle AdER |
+| DELIBERA_INPS | `delibere_fonsi` | Comunicazioni INPS |
+| FATTURA | `invoices` | Fatture commerciali |
+
+### API Endpoints:
+- `POST /api/document-ai/extract` - Estrae dati da file caricato
+- `POST /api/document-ai/extract-base64` - Estrae da base64
+- `GET /api/document-ai/document-types` - Tipi supportati
+- `GET /api/document-ai/extracted-documents` - Lista documenti estratti
+- `POST /api/document-ai/process-all-classified` - Processa email classificate
+- `POST /api/document-ai/reprocess-and-save` - Riprocessa tutto
+
+### Files:
+- `/app/app/services/document_ai_extractor.py` - OCR + LLM extraction
+- `/app/app/services/document_data_saver.py` - Salvataggio in gestionale
+- `/app/app/routers/document_ai.py` - API endpoints
+
+### Costi:
+- OCR (PyMuPDF + pytesseract): €0
+- LLM (Claude Sonnet 4.5): ~€0.01-0.03/documento
+
+---
+
+## 29. Modifiche UI (18 Gennaio 2026)
+
+### Completate:
+1. ✅ **Rimosso bottone "Stampa Etichetta Lotto"** da fatture-ricevute
+2. ✅ **Rimosso Riepilogo Riconciliazione** dalla pagina /riconciliazione
+3. ✅ **Aggiunto Categorie CBILL** in PagoPA (INPS, AdER, TARI, COSAP)
+4. ✅ **Aggiunto bottone Visualizza PDF** nella pagina Documenti
+5. ✅ **Aggiunto Tab "AI Estratti"** nella pagina Documenti con upload
+
+---
+
+## 30. Task Pendenti e Backlog
+
+### 🔴 P0 - Alta Priorità:
+1. **Chat Parlant.io** - Non funziona (timeout), da risolvere o sostituire
+2. **Performance query F24** - Endpoint `/api/operazioni-da-confermare/smart/cerca-f24` impiega ~35s
+
+### 🟡 P1 - Media Priorità:
+3. **Processamento automatico email con AI** - Collegare classificatore email a Document AI
+4. **UI InvoiceTronic** - Completare integrazione SDI
+5. **3 assegni non associati** - UI per associazione manuale
+
+### 🟠 P2 - Bassa Priorità:
+6. **Integrazione InfoCert** - Legalmail, GoSign
+7. **Refactoring backend** - Modularizzare file grandi
+
+---
+
+## 31. Clausola finale
+
+Questo PRD è vincolante.
+
+Ogni sviluppo futuro deve:
+- rispettare i validatori,
+- non introdurre eccezioni silenziose,
+- mantenere la tracciabilità completa.
+
+---
