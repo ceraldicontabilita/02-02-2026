@@ -1,200 +1,207 @@
 <analysis>**original_problem_statement:**
-L'utente ha richiesto una serie di correzioni di bug e nuove funzionalità per la sua applicazione di contabilità. Le richieste principali includono:
-1.  **Integrazione Agente AI (P0)**: Integrare Parlant.io per creare un assistente conversazionale. Inizialmente richiesto con Gemini, è stato poi cambiato a OpenAI e infine a **Emcie** a causa di problemi con le chiavi API e le quote. L'agente deve avere accesso ai dati contabili e il suo nome deve essere Assistente Ceraldi.
-2.  **Correzioni Riconciliazione**:
-    *   **Assegni**: Auto-confermare gli assegni se l'importo corrisponde esattamente alla fattura. Migliorare l'interfaccia mostrando il nome del fornitore, l'importo della fattura originale accanto a quello dell'assegno e la differenza. Gestire e visualizzare correttamente i pagamenti rateali.
-    *   **F24**: Rimuovere le opzioni di pagamento Cassa e Assegno (si paga solo tramite banca). Aggiungere un pulsante Vedi PDF e implementare l'auto-riconciliazione se la transazione è presente nell'estratto conto.
-    *   **Logica Generale**: Rimuovere il limite di ricerca basato sull'anno durante la riconciliazione, poiché una fattura può essere pagata anche dopo anni.
-3.  **Gestione Dati e Import**:
-    *   **Corrispettivi**: Correggere il parser XML per estrarre correttamente i dati dei pagamenti elettronici (POS). Assicurarsi che i dati importati (per il 2026 e futuri 2020-2024) siano visibili e corretti.
-    *   **Controllo Mensile**: Risolvere il problema dei dati POS mancanti per alcuni mesi.
-    *   **Import Duplicati**: Permettere di ricaricare gli estratti conto senza generare errori di duplicati.
-4.  **Logica di Supervisione Intelligente**:
-    *   Se un'operazione pagata tramite banca (confermata da estratto conto) è stata erroneamente registrata in Prima Nota Cassa, il sistema deve spostarla automaticamente in Prima Nota Banca ed evidenziare la correzione all'utente.
-    *   Le fatture di tipo **TD24** (differite riepilogative, spesso a importo zero) non devono essere associate a pagamenti.
-5.  **Bug UI**: La pagina  non carica i dati.
+L'utente ha richiesto una serie di correzioni di bug e nuove funzionalità per la sua applicazione di contabilità. Le richieste principali, evolute durante la sessione, includono:
+
+1.  **Integrazione Agente AI (P0)**: Integrare un assistente conversazionale (Parlant.io con Emcie) che non risponde a causa di timeout.
+2.  **Correzioni Riconciliazione e Logica di Business**:
+    *   **Assegni**: La logica di gestione assegni era stata persa a causa di una pulizia del database. L'utente ha richiesto di ricostruire tutti gli assegni basandosi sugli estratti conto, associare intelligentemente gli assegni alle fatture (gestendo pagamenti parziali/multipli), e mostrare tutti i dati rilevanti (beneficiario, numero fattura) nell'interfaccia.
+    *   **F24**: Rimuovere opzioni di pagamento non pertinenti (Cassa, Assegno), implementare l'auto-riconciliazione basata su estratto conto e correggere le date di scadenza errate (es. 30/11/61).
+    *   **Logica TD24**: Le fatture di tipo TD24 (differite) con importo zero non devono essere considerate per il pagamento.
+    *   **Limite Anno**: Rimuovere il limite di ricerca basato sull'anno durante la riconciliazione delle fatture.
+3.  **Integrità e Pulizia Dati**:
+    *   **Unificazione Import**: Consolidare le diverse pagine di import (, ) in un'unica interfaccia robusta, eliminando la ridondanza.
+    *   **Upload Massivo**: Abilitare l'upload di file XML, PDF, Excel e ZIP massivi in tutta l'applicazione.
+    *   **Correzione Dati**: Risolvere problemi di dati duplicati o vuoti nelle fatture (), F24 e assegni. Risolvere l'errore di dati mancanti nella pagina  e .
+    *   **Errori di Parsing**: Risolvere errori di encoding () durante l'upload di file XML.
+    *   **Validazione Flessibile**: Rendere meno restrittiva la validazione durante l'import di fatture per fornitori senza metodo di pagamento o IBAN, permettendo l'import con un warning.
+4.  **Architettura e UI**:
+    *   **Pagine Auto-Sufficienti**: L'utente ha richiesto che ogni pagina diventi intelligente e robusta, incorporando la propria logica per auto-correggere e gestire i dati in caso di problemi, senza richiedere intervento manuale.
+    *   **Unificazione Collection**: Migrare la vecchia collection  nella nuova  e unificarne l'uso nel codice.
+    *   **Bug UI**: Le pagine , ,  e  presentavano dati errati o non venivano caricate.
+5.  **Integrazioni Esterne**:
+    *   Esplorare l'integrazione con Banco BPM per automatizzare operazioni, verificando la disponibilità di API REST.
 
 **User's preferred language**: Italiano
 
 **what currently exists?**
-L'agente ha stabilizzato con successo il server **Parlant.io** utilizzando il provider **Emcie**, risolvendo i problemi di avvio del servizio. È stato creato un widget di chat custom che comunica con il server tramite un proxy backend, risolvendo il problema di connettività dal frontend. Sono state implementate numerose correzioni e miglioramenti, tra cui: la risoluzione dei bug di visualizzazione nelle pagine  e , la correzione dell'importazione dei corrispettivi XML per includere i pagamenti elettronici, il cambio del nome dell'agente in Assistente Ceraldi, e una significativa revisione della pagina di riconciliazione assegni, che ora supporta l'auto-conferma per corrispondenze esatte, mostra i dettagli della fattura e gestisce la visualizzazione dei pagamenti rateali. Il file  è stato aggiornato con le nuove logiche richieste.
+L'agente ha eseguito un lavoro massiccio di correzione e robustezza dell'applicazione. È stata risolta una grave perdita di dati relativa agli assegni, ricostruendo l'intera cronologia (214 assegni) dagli estratti conto e implementando una logica di associazione intelligente con le fatture. Per prevenire futuri problemi, è stato creato un servizio di protezione del database () che esegue backup automatici prima di operazioni distruttive.
+
+La pagina  è stata trasformata in una pagina auto-sufficiente: ora invoca un endpoint di auto-riparazione al caricamento per garantire che i dati siano sempre aggiornati e correttamente associati. L'agente ha anche unificato le pagine di import, eliminando la ridondanza e migliorando l'interfaccia  per gestire upload massivi e fornire un feedback migliore all'utente. Sono stati risolti numerosi bug di visualizzazione dati su pagine critiche come , ,  e , e sono stati corretti errori di parsing XML e di validazione business. Infine, è stato eseguito uno script per unificare le collection  e .
 
 **Last working item**:
--   **Last item agent was working**: L'agente stava affrontando le ultime richieste dell'utente:
-    1.  **Pagina F24**: Ha iniziato a modificare il frontend () per rimuovere i pulsanti di pagamento Assegno e Cassa.
-    2.  **Pagina Previsioni Acquisti**: Ha diagnosticato che l'API backend funziona correttamente, identificando il problema nel componente frontend.
-    3.  **Limite Anno Riconciliazione**: Ha ricevuto la richiesta di rimuovere il limite di anno nella ricerca fatture ma non ha ancora iniziato l'implementazione.
+-   **Last item agent was working**: L'agente stava implementando la richiesta dell'utente di rendere le pagine auto-sufficienti e robuste. Ha iniziato con la pagina , aggiungendo una chiamata a un nuovo endpoint di auto-ricostruzione () all'avvio della pagina e inserendo una card informativa che spiega la logica della pagina all'utente.
 -   **Status**: IN PROGRESS
--   **Agent Testing Done**: Y (parzialmente, per la modifica UI F24 e il test API di Previsioni Acquisti)
--   **Which testing method agent to use?**: Frontend testing agent per verificare le pagine  (tab F24) e . Backend testing agent per la rimozione del limite di anno nella ricerca fatture.
+-   **Agent Testing Done**: Y
+-   **Which testing method agent to use?**: Frontend testing agent per verificare che la logica di auto-sufficienza sia stata implementata correttamente e non introduca regressioni sulle pagine modificate.
 -   **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
 -   **Issue 1: (P0) La chat Parlant non risponde.**
--   **Issue 2: (P1) La pagina  non carica i dati.**
--   **Issue 3: (P2) Logica di supervisione (spostamento Cassa -> Banca) non implementata.**
+-   **Issue 2: (P1) Implementare la logica delle Pagine Auto-Sufficienti in tutta l'applicazione.**
+-   **Issue 3: (P2) Logica di supervisione (spostamento Cassa -> Banca) non finalizzata.**
+-   **Issue 4: (P2) Validatori P0 per l'import fatture sono disabilitati.**
 
 **Issues Detail**:
 -   **Issue 1: La chat Parlant non risponde**
-    -   **Attempted fixes**: Il server Parlant è stato configurato con successo per usare Emcie e si avvia. È stato creato un proxy backend e un widget custom. Sono stati aumentati i timeout sia nel proxy backend che nel polling frontend. Si è tentato di avviare un server minimale senza guidelines/tools per isolare il problema. Il problema persiste: l'invio di un messaggio risulta in un timeout, probabilmente a causa di un'elevata latenza di inferenza da parte del servizio Emcie.
+    -   **Attempted fixes**: (Dalla sessione precedente) Il server Parlant è stato stabilizzato, ma la latenza del provider Emcie causa timeout durante l'inferenza. Nessun progresso su questo punto nella sessione corrente.
     -   **Next debug checklist**:
-        1.  Verificare la configurazione del modello Emcie in . Assicurarsi che stia usando Jackal come raccomandato.
-        2.  Contattare il supporto Emcie o cercare nella loro documentazione se la latenza iniziale è un comportamento atteso (es. cold start).
-        3.  Implementare un meccanismo di streaming o websocket nel proxy () e nel frontend () invece del polling HTTP, che potrebbe gestire meglio le risposte lunghe.
-        4.  Come ultima risorsa, proporre all'utente un'alternativa più stabile, come l'uso di  con OpenAI tramite un wrapper customizzato se Parlant/Emcie continua a essere inaffidabile.
+        1.  Implementare un meccanismo di streaming (WebSocket) al posto del polling HTTP per gestire risposte lunghe.
+        2.  Verificare la configurazione del modello Emcie (Jackal).
+        3.  Proporre all'utente un'alternativa più stabile se il problema persiste (es. OpenAI tramite ).
     -   **Status**: BLOCKED
     -   **Is recurring issue?**: Y
     -   **Should Test frontend/backend/both after fix?**: both
-    -   **Blocked on other issue**: No
 
--   **Issue 2: La pagina  non carica i dati**
-    -   **Attempted fixes**: L'agente ha verificato che l'endpoint backend  restituisce un JSON con i dati. Il problema è quindi localizzato nel frontend.
+-   **Issue 2: Implementare la logica delle Pagine Auto-Sufficienti in tutta l'applicazione.**
+    -   **Attempted fixes**: La logica è stata implementata con successo solo per .
     -   **Next debug checklist**:
-        1.  Controllare .
-        2.  Verificare la chiamata  o  per assicurarsi che l'URL sia corretto.
-        3.  Aggiungere  per ispezionare i dati ricevuti dall'API e lo stato del componente React.
-        4.  Verificare la presenza di errori nella console del browser durante il caricamento della pagina.
+        1.  Identificare le pagine più critiche per i dati (es. , , ).
+        2.  Per ogni pagina, creare un endpoint backend dedicato all'auto-correzione/validazione dei dati che visualizza.
+        3.  Modificare il componente frontend per chiamare questo endpoint al caricamento.
+        4.  Aggiungere una  informativa in ogni pagina che spiega la sua logica e le sue automazioni.
+    -   **Why fix this issue and what will be achieved with the fix?**: Rende l'applicazione più robusta e affidabile, riducendo la necessità di interventi manuali e aumentando la fiducia dell'utente nel sistema.
     -   **Status**: IN PROGRESS
     -   **Is recurring issue?**: N
-    -   **Should Test frontend/backend/both after fix?**: Frontend
+    -   **Should Test frontend/backend/both after fix?**: both
     -   **Blocked on other issue**: No
 
--   **Issue 3: Logica di supervisione (spostamento Cassa -> Banca) non implementata**
-    -   **Attempted fixes**: L'agente ha aggiornato il file  per documentare questa regola, ma non ha scritto alcun codice per implementarla.
+-   **Issue 3: Logica di supervisione (spostamento Cassa -> Banca) non finalizzata.**
+    -   **Attempted fixes**: L'agente ha creato il servizio  e un endpoint di test che restituisce un array vuoto.
     -   **Next debug checklist**:
-        1.  Identificare il punto del codice in cui vengono importati e processati gli estratti conto (probabilmente in ).
-        2.  Per ogni transazione bancaria in entrata, cercare una fattura corrispondente.
-        3.  Se la fattura esiste ed è registrata in , creare una nuova logica per:
-            a. Spostare/copiare la voce in .
-            b. Annullare o contrassegnare la voce originale in .
-            c. Creare un sistema di notifiche/alert per informare l'utente della correzione automatica.
-    -   **Why fix this issue and what will be achieved with the fix?**: Implementa una regola di business critica richiesta dall'utente, aumentando l'automazione e l'affidabilità del sistema contabile.
+        1.  Creare dati di test che attivino questa logica (una fattura pagata in banca ma registrata in cassa).
+        2.  Testare l'endpoint  per verificare che identifichi e corregga il problema.
+        3.  Implementare una notifica UI per informare l'utente della correzione automatica.
     -   **Status**: NOT STARTED
     -   **Is recurring issue?**: N
     -   **Should Test frontend/backend/both after fix?**: Backend
-    -   **Blocked on other issue**: No
+
+-   **Issue 4: Validatori P0 per l'import fatture sono disabilitati.**
+    -   **Attempted fixes**: L'agente ha commentato i controlli bloccanti in  per permettere l'importazione di fatture anche per fornitori non completamente configurati.
+    -   **Next debug checklist**:
+        1.  Creare una pagina o un componente UI in Anagrafica Fornitori che segnali i fornitori con dati mancanti (metodo di pagamento, IBAN).
+        2.  Guidare l'utente alla correzione di questi dati.
+        3.  Una volta che i dati sono stati corretti, riattivare i validatori nel codice backend.
+    -   **Why fix this issue and what will be achieved with the fix?**: Ripristina controlli di qualità dei dati critici, garantendo che le nuove fatture vengano importate solo per fornitori validi.
+    -   **Status**: NOT STARTED
+    -   **Is recurring issue?**: N
+    -   **Should Test frontend/backend/both after fix?**: both
 
 **In progress Task List**:
--   **Task 1: (P0) Completare le modifiche alla pagina di riconciliazione F24.**
-    -   **Where to resume**: .
-    -   **What will be achieved with this?**: L'interfaccia F24 sarà più sicura e intuitiva, prevenendo errori di pagamento e fornendo accesso diretto ai documenti.
+-   **Task 1: (P0) Completare l'implementazione delle Pagine Auto-Sufficienti.**
+    -   **Where to resume**: Analizzare le pagine ,  e  per applicare lo stesso pattern usato in .
+    -   **What will be achieved with this?**: L'applicazione diventerà significativamente più robusta, come richiesto esplicitamente dall'utente.
     -   **Status**: IN PROGRESS
     -   **Should Test frontend/backend/both after fix?**: both
-    -   **Blocked on something**: No. Task rimanenti: aggiungere pulsante Vedi PDF e implementare la logica di auto-riconciliazione.
-
--   **Task 2: (P1) Rimuovere il limite di anno nella ricerca fatture per la riconciliazione.**
-    -   **Where to resume**: Controllare gli endpoint che cercano fatture, come  e altri endpoint di ricerca usati nella pagina di riconciliazione.
-    -   **What will be achieved with this?**: Permetterà di riconciliare pagamenti con fatture molto vecchie, come richiesto dall'utente.
-    -   **Status**: NOT STARTED
-    -   **Should Test frontend/backend/both after fix?**: Backend
     -   **Blocked on something**: No.
 
 **Upcoming and Future Tasks**
 -   **Upcoming Tasks**:
-    -   (P1) Implementare la regola di business per ignorare le fatture TD24 con importo zero durante la riconciliazione.
-    -   (P1) Fornire all'utente un modo per importare i corrispettivi per gli anni 2020-2024.
-    -   (P2) Pulire dal DB gli assegni vuoti o di test con  e importo zero.
+    -   (P1) Finalizzare la logica per ignorare le fatture TD24 con importo zero durante la riconciliazione.
+    -   (P1) Completare il refactoring per rimuovere tutte le tracce della vecchia collection  dal codice.
+    -   (P2) Rimuovere completamente il limite di anno nella ricerca fatture per la riconciliazione (verificare tutti gli endpoint coinvolti).
 -   **Future Tasks**:
-    -   (P2) Unificare le collection  e .
-    -   (P2) Sviluppare una Dashboard Analytics.
+    -   (P2) Proporre e implementare una soluzione di Open Banking (es. TrueLayer) come alternativa all'integrazione con Banco BPM.
+    -   (P2) Sviluppare una Dashboard Analytics più avanzata.
     -   (P2) Implementare l'integrazione con Google Calendar.
     -   (P2) Generare e inviare report in PDF via email.
 
 **Completed work in this session**
--   **Integrazione Parlant.io**: Stabilizzato il server con Emcie e creato un widget di chat funzionante che si connette tramite un proxy backend.
--   **Correzione Pagina Corrispettivi**: La pagina  ora carica e visualizza correttamente i dati, inclusi i pagamenti elettronici per tutti gli anni disponibili.
--   **Correzione Pagina Controllo Mensile**: Risolto il bug dei dati POS mancanti aumentando il limite dell'API.
--   **Correzione Import Corrispettivi**: Il parser ora estrae e salva correttamente i dati dei pagamenti elettronici. I dati del 2026 sono stati re-importati e corretti.
--   **Automazione Riconciliazione Assegni**: Implementata l'auto-conferma per assegni con importo esatto e migliorata drasticamente l'UI per mostrare dettagli fattura, differenze e informazioni sulle rate.
--   **Ridenominazione Agente AI**: Il nome dell'assistente è stato cambiato in Assistente Ceraldi.
--   **Aggiornamento PRD**: Il documento dei requisiti è stato aggiornato con le nuove logiche di business.
+-   **Recupero Dati Critici**: Ricostruita da zero la collection  (214 record) basandosi sugli estratti conto, risolvendo una grave perdita di dati.
+-   **Protezione Database**: Creato un servizio () per eseguire backup automatici prima di operazioni di pulizia o eliminazione.
+-   **Pagina Auto-Sufficiente**: Trasformata la pagina  in un componente intelligente che si auto-corregge al caricamento.
+-   **Logica Contabile Avanzata**: Implementato un algoritmo per associare intelligentemente gli assegni alle fatture, gestendo casistiche complesse.
+-   **Unificazione UI Import**: Eliminata la pagina di import ridondante e potenziata la pagina , che ora supporta anche upload massivi di file ZIP.
+-   **Correzione Bug Critici**: Risolti numerosi bug che impedivano il caricamento o mostravano dati errati su , , ,  e .
+-   **Fix Dati e Parsing**: Eseguita pulizia massiva del DB (duplicati, record vuoti, date errate) e corretto un bug di encoding () nel parser XML.
+-   **Migrazione Dati**: Eseguito con successo lo script per unificare le collection  e .
 
 **Earlier issues found/mentioned but not fixed**
--   La chat Parlant non risponde ai messaggi a causa di timeout di inferenza con Emcie. Questa è la problematica più critica e ricorrente della sessione.
+-   **La chat Parlant.io continua a non rispondere a causa di timeout.** Questo rimane il problema P0 più vecchio e irrisolto.
 
 **Known issue recurrence from previous fork**
--   **Issue recurrence in previous fork**: Il server Parlant non si avviava.
--   **Recurrence count**: 1
--   **Status**: RESOLVED (il server ora si avvia stabilmente, ma è emerso un nuovo problema di latenza).
+-   **Issue recurrence in previous fork**: Problemi con l'integrazione dell'agente AI (Parlant.io).
+-   **Recurrence count**: 2 (prima non partiva, ora parte ma va in timeout).
+-   **Status**: BLOCKED.
 
 **Code Architecture**
-pagato_pospagato_elettronico
+
 
 **Key Technical Concepts**
--   **Parlant.io & Emcie**: L'applicazione usa Parlant.io con il provider LLM Emcie. Il server Python () è gestito da . Il problema principale è l'alta latenza nelle risposte.
--   **Backend Proxy for Frontend**: È stato implementato un proxy in FastAPI () per permettere al frontend React di comunicare in modo sicuro con il server Parlant, che gira su  all'interno del container.
--   **MongoDB Atlas**: Il database è un'istanza cloud. Le query e gli aggiornamenti devono essere eseguiti tenendo conto della sua natura remota.
--   **Logica di Business Complessa**: Il codice contiene logiche contabili specifiche (es. auto-riconciliazione, gestione rate, tipi di fatture) che sono cruciali per il funzionamento dell'app.
+-   **Pagine Auto-Sufficienti (Self-Healing Pages)**: Un pattern architetturale emergente in cui i componenti frontend invocano endpoint backend al caricamento per validare, correggere e sincronizzare i dati che visualizzano, rendendo l'UI più robusta.
+-   **Livello di Protezione Dati**: Implementazione di un servizio () che agisce come un middleware prima di operazioni distruttive (es. ), creando automaticamente un backup della collection in una collection .
+-   **Logica di Associazione Complessa**: Algoritmi avanzati per la riconciliazione che non si basano solo su match esatti, ma gestiscono pagamenti cumulativi, parziali e cercano corrispondenze semantiche (es. ).
+-   **Gestione Resiliente dell'Encoding**: Approccio multi-tentativo alla decodifica di file () per gestire correttamente file con encoding misti, comuni in ambienti non standardizzati.
 
 **key DB schema**
--   **corrispettivi**: Collection per i totali giornalieri, ora include campi  e .
--   **assegni**: Collection per la riconciliazione degli assegni. Il campo  è usato per l'auto-riconciliazione. Contiene dati sulle rate ().
--   **prima_nota_cassa** / **prima_nota_banca**: Collections centrali per i movimenti contabili. È richiesta una nuova logica per spostare transazioni da cassa a banca.
--   **fatture_ricevute**: Contiene le fatture dei fornitori, usate per la riconciliazione con assegni e pagamenti.
+-   **assegni**: Collection completamente ricostruita. Contiene dati dettagliati estratti dagli estratti conto, inclusi , , , e  ('emesso', 'confermato', 'pagato').
+-   **suppliers**: È ora la collection di riferimento per i fornitori, dopo la migrazione dalla vecchia .
+-   **invoices**: Depurata da duplicati e record corrotti. Contiene il flag  per le fatture TD24.
+-   **prima_nota_salari**: Depurata da centinaia di righe vuote o incomplete.
+-   **[collection_name]_backup_[timestamp]**: Schema per le collection di backup create automaticamente dal servizio di protezione.
 
 **All files of reference**
--   
--   
--   
--   
--   
--   
--   
+-    (Nuova logica di sicurezza critica)
+-    (Contiene la nuova logica di ricostruzione e associazione)
+-    (Esempio di pagina auto-sufficiente)
+-    (Script usato per le correzioni massive)
+-    (Nuovo hub centrale per tutti gli import)
+-    (Contiene fix a encoding e validazione)
 
 **Areas that need refactoring**:
--   Il componente  è diventato molto grande e complesso. Potrebbe essere suddiviso in componenti più piccoli per ogni tab (Banca, Assegni, F24, etc.) per migliorare la manutenibilità.
--   La gestione dello stato in  potrebbe beneficiare di un hook custom () per incapsulare la logica di fetching, filtering e aggiornamento.
+-   **Rimozione completa della collection **: Sebbene i dati siano stati migrati, il codice deve essere epurato da ogni riferimento alla vecchia collection per finalizzare l'unificazione.
+-   **Router **: Il file è molto grande e gestisce troppe logiche diverse (riconciliazione banca, assegni, F24). Potrebbe essere suddiviso per migliorare la manutenibilità.
 
 **key api endpoints**
--   : Proxy per inviare un messaggio all'agente Parlant.
--   : Proxy per ottenere gli eventi (risposte) da Parlant.
--   : Recupera i corrispettivi, ora con un limite più alto.
--   : Endpoint principale per la pagina di riconciliazione, ora con logica di auto-conferma assegni.
--   : Funziona, ma la pagina frontend che lo consuma è rotta.
+-   : Endpoint di auto-riparazione per la pagina degli assegni.
+-   : Ricostruisce la collection  partendo da .
+-   : Esegue l'algoritmo avanzato di associazione assegni-fatture.
+-   : Esegue lo script di pulizia dati ().
+-   : Esegue la migrazione da  a .
+-   : Esegue la logica di supervisione contabile (Cassa -> Banca).
 
 **Critical Info for New Agent**
--   **La priorità assoluta è risolvere il problema della chat Parlant che non risponde.** L'utente lo ha segnalato più volte. La latenza del provider Emcie è il principale sospettato. Indagare su alternative o ottimizzazioni (es. streaming) è fondamentale.
--   **La pagina  è rotta.** Poiché l'API funziona, il problema è puramente frontend e dovrebbe essere relativamente semplice da risolvere.
--   L'utente ha definito regole di business molto specifiche (logica di supervisione cassa->banca, gestione TD24, ricerca fatture senza limite di anno). È cruciale implementarle correttamente e fare riferimento al .
--   Per la riconciliazione F24, bisogna ancora aggiungere il pulsante Vedi PDF e la logica di auto-riconciliazione.
+-   **La priorità dell'utente è l'affidabilità e l'intelligenza del sistema.** L'agente deve agire proattivamente come un consulente, non solo come un esecutore. Le pagine auto-sufficienti sono un concetto chiave da estendere.
+-   **La perdita di dati è un trauma recente.** Una precedente operazione di pulizia ha cancellato tutti gli assegni. Sebbene siano stati recuperati, qualsiasi operazione che modifica o elimina dati deve OBBLIGATORIAMENTE usare il nuovo servizio . La fiducia dell'utente su questo punto è fragile.
+-   **Il problema della chat AI (Parlant.io) è un P0 che è stato ignorato in questa sessione.** È il task bloccante più vecchio e deve essere affrontato.
+-   **I validatori P0 per l'import di fatture sono stati temporaneamente disabilitati.** Questa è una soluzione temporanea che deve essere risolta riattivando i controlli dopo aver migliorato la gestione dei dati dei fornitori.
 
 **documents and test reports created in this job**
 -    (aggiornato)
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User**: Richiede la correzione del parser dei corrispettivi XML per includere i pagamenti elettronici e segnala che la chat non risponde. (Parzialmente risolto)
-2.  **User**: Chiede all'agente di eseguire uno script di fix e leggere la documentazione Emcie. (Eseguito)
-3.  **User**: Fornisce un file  con i corrispettivi corretti che includono dati POS. (Risolto)
-4.  **User**: Chiede di implementare l'auto-conferma per gli assegni quando l'importo corrisponde perfettamente alla fattura. (Risolto)
-5.  **User**: Definisce la logica di supervisione (spostamento Cassa -> Banca), chiede di aggiornare il PRD e migliorare l'UI degli assegni. (Parzialmente risolto)
-6.  **Agent**: Chiede conferma del lavoro svolto. (In attesa)
-7.  **User**: Introduce la logica per le fatture TD24 (da ignorare), la gestione delle fatture pagate a rate, e chiede perché ci sono assegni con Data N/D. (Parzialmente risolto)
-8.  **Agent**: Chiede conferma del lavoro svolto. (In attesa)
-9.  **User**: Richiede modifiche alla pagina F24 (rimuovere opzioni cassa/assegno, aggiungere vedi PDF, auto-riconciliare), rimuovere il limite di anno per la ricerca fatture e segnala che  non carica. (In corso)
-10. **Agent**: Non ci sono messaggi successivi, l'agente stava lavorando sull'ultima richiesta.
+1.  **User**: Richiesta di unificare le pagine di import, eliminando la ridondanza, e di abilitare upload massivi (XML, PDF, Excel, ZIP) per tutte. (COMPLETED)
+2.  **User**: Segnala un errore di encoding  durante l'upload di un file XML. (COMPLETED)
+3.  **User**: Segnala un errore  durante l'import, causato da validazioni troppo restrittive sui fornitori. (WORKAROUND APPLIED)
+4.  **User**: Chiede di disabilitare temporaneamente le validazioni bloccanti. (COMPLETED)
+5.  **User**: Segnala un errore grave: i dati non vengono salvati in , non ci sono dati in  e la pagina  ha righe vuote. (COMPLETED)
+6.  **User**: Precisa che gli assegni non vengono importati manualmente ma devono essere generati automaticamente dagli estratti conto. Critica la perdita di dati. (COMPLETED)
+7.  **User**: Esprime frustrazione per la perdita di dati e chiede che il sistema venga reso più robusto e che gli assegni vengano ricostruiti. (COMPLETED)
+8.  **User**: Chiede all'agente di associare automaticamente gli assegni alle fatture con la logica di un commercialista professionista. (COMPLETED)
+9.  **User**: Critica il risultato dell'associazione (mancanza di beneficiario, numeri fattura) e richiede che la logica venga incorporata in ogni pagina per renderla auto-sufficiente e robusta, mostrando una card esplicativa. (IN PROGRESS)
+10. **Agent**: L'agente ha accettato la critica, ha implementato la logica richiesta per la pagina degli assegni e si preparava a estenderla. (PENDING)
 
 **Project Health Check:**
 -   **Broken**:
-    -   La funzionalità principale della chat AI () non è utilizzabile a causa dei timeout.
-    -   La pagina  è inutilizzabile.
+    -   La funzionalità di chat AI () è completamente inutilizzabile a causa di timeout.
 -   **Mocked**: Nessuno.
+-   **At Risk**:
+    -   **Integrità Dati**: Sebbene siano state implementate protezioni, la storia recente di perdita di dati rende quest'area ad alto rischio. Ogni operazione distruttiva va gestita con estrema cautela.
+    -   **Validazione Dati**: Le validazioni P0 sull'import sono disattivate, il che potrebbe portare a dati di bassa qualità nel sistema.
 
 **3rd Party Integrations**
--   **Parlant.io**: Framework per l'agente AI.
--   **Emcie (Jackal model)**: Provider LLM per Parlant. Utilizza una chiave API fornita dall'utente (). Attualmente presenta problemi di latenza.
+-   **Parlant.io / Emcie (Jackal model)**: Framework per l'agente AI. Utilizza una chiave API. Attualmente non funzionante a causa di problemi di latenza/timeout.
+-   **Banco BPM**: Indagine eseguita. Non sono state trovate API REST pubbliche. L'integrazione non è possibile al momento.
 
 **Testing status**
 -   **Testing agent used after significant changes**: NO
 -   **Troubleshoot agent used after agent stuck in loop**: NO
 -   **Test files created**: Nessuno
--   **Known regressions**: Nessuna nota.
+-   **Known regressions**: La cancellazione della collection  è stata una regressione grave, poi corretta.
 
 **Credentials to test flow:**
--   **Emcie API Key**:  (disponibile in ). L'utente ha confermato di avere .94 di credito.
+-   **Emcie API Key**: Disponibile in .
 
 **What agent forgot to execute**
--   Risolvere definitivamente il problema del timeout della chat Parlant.
--   Completare le modifiche alla pagina F24 (pulsante Vedi PDF e logica di auto-riconciliazione).
--   Implementare la logica di supervisione per spostare i pagamenti da cassa a banca.
--   Rimuovere il limite di anno dalla ricerca delle fatture durante la riconciliazione.
--   Risolvere il bug della pagina .</analysis>
+-   Affrontare il problema P0 del timeout della chat Parlant.io.
+-   Completare il refactoring per rimuovere tutti i riferimenti alla vecchia collection .
+-   Implementare una soluzione definitiva per l'importazione di estratti conto duplicati.
+-   Verificare e rimuovere il filtro per anno nella ricerca fatture in tutti gli endpoint pertinenti, non solo in uno.</analysis>
