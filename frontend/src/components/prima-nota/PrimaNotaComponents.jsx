@@ -226,7 +226,9 @@ export const ActionButtons = memo(function ActionButtons({
   onExport,
   onReset,
   onRefresh,
-  hasData
+  onPulisciVuote,
+  hasData,
+  righeVuote = 0
 }) {
   const handleImportPaghe = useCallback((e) => {
     const file = e.target.files[0];
@@ -293,6 +295,23 @@ export const ActionButtons = memo(function ActionButtons({
       >
         📥 Esporta Excel
       </button>
+
+      {onPulisciVuote && righeVuote > 0 && (
+        <button
+          onClick={onPulisciVuote}
+          style={{
+            padding: '10px 20px',
+            background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+            color: 'white',
+            border: 'none',
+            borderRadius: 8,
+            cursor: 'pointer',
+            fontWeight: 'bold'
+          }}
+        >
+          🧹 Pulisci {righeVuote} Righe Vuote
+        </button>
+      )}
 
       <button
         onClick={onReset}
