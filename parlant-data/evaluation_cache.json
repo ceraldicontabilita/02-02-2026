@@ -1,83 +1,8 @@
 {
   "guideline_evaluations_3.1.2": [
     {
-      "id": "4c2978b1da759ec9a096499c6348f52f",
-      "creation_utc": "2026-01-18T08:35:34.688263+00:00",
-      "version": "3.1.2",
-      "properties": {
-        "continuous": false,
-        "customer_dependent_action_data": {
-          "is_customer_dependent": false,
-          "customer_action": "",
-          "agent_action": ""
-        },
-        "agent_intention_condition": null,
-        "internal_action": null
-      }
-    },
-    {
-      "id": "33ef966af885c8fb3e8466ad8312929c",
-      "creation_utc": "2026-01-18T08:35:34.688430+00:00",
-      "version": "3.1.2",
-      "properties": {
-        "continuous": false,
-        "customer_dependent_action_data": {
-          "is_customer_dependent": false,
-          "customer_action": "",
-          "agent_action": ""
-        },
-        "agent_intention_condition": null,
-        "internal_action": null
-      }
-    },
-    {
-      "id": "7d5616144ceeb3f764aac69fe8a741c4",
-      "creation_utc": "2026-01-18T08:35:34.688595+00:00",
-      "version": "3.1.2",
-      "properties": {
-        "continuous": true,
-        "customer_dependent_action_data": {
-          "is_customer_dependent": false,
-          "customer_action": "",
-          "agent_action": ""
-        },
-        "agent_intention_condition": null,
-        "internal_action": null
-      }
-    },
-    {
-      "id": "7f2c4481d95ace9789f2678f1b5069f1",
-      "creation_utc": "2026-01-18T08:35:35.189514+00:00",
-      "version": "3.1.2",
-      "properties": {
-        "continuous": false,
-        "customer_dependent_action_data": {
-          "is_customer_dependent": false,
-          "customer_action": "",
-          "agent_action": ""
-        },
-        "agent_intention_condition": null,
-        "internal_action": null
-      }
-    },
-    {
-      "id": "c06d493c643a4c69a3f0ecd36666e0ac",
-      "creation_utc": "2026-01-18T08:35:35.189726+00:00",
-      "version": "3.1.2",
-      "properties": {
-        "continuous": false,
-        "customer_dependent_action_data": {
-          "is_customer_dependent": false,
-          "customer_action": "",
-          "agent_action": ""
-        },
-        "agent_intention_condition": null,
-        "internal_action": null
-      }
-    },
-    {
       "id": "116ed07dcf5e348d1d5b1dab8a6d9064",
-      "creation_utc": "2026-01-18T08:35:35.189812+00:00",
+      "creation_utc": "2026-01-18T08:35:51.806552+00:00",
       "version": "3.1.2",
       "properties": {
         "continuous": false,
@@ -92,7 +17,7 @@
     },
     {
       "id": "5aabb1ac304f22727c53ba9560e05045",
-      "creation_utc": "2026-01-18T08:35:35.690307+00:00",
+      "creation_utc": "2026-01-18T08:35:52.307564+00:00",
       "version": "3.1.2",
       "properties": {
         "continuous": false,
@@ -107,7 +32,22 @@
     },
     {
       "id": "e9553682bf531ea7bd3ee9a407e24afe",
-      "creation_utc": "2026-01-18T08:35:35.690488+00:00",
+      "creation_utc": "2026-01-18T08:35:52.307755+00:00",
+      "version": "3.1.2",
+      "properties": {
+        "continuous": false,
+        "customer_dependent_action_data": {
+          "is_customer_dependent": false,
+          "customer_action": "",
+          "agent_action": ""
+        },
+        "agent_intention_condition": null,
+        "internal_action": null
+      }
+    },
+    {
+      "id": "7f2c4481d95ace9789f2678f1b5069f1",
+      "creation_utc": "2026-01-18T08:35:52.307840+00:00",
       "version": "3.1.2",
       "properties": {
         "continuous": false,
@@ -122,7 +62,7 @@
     },
     {
       "id": "c9df38f6b463e7df72083279215f7c66",
-      "creation_utc": "2026-01-18T08:35:35.690570+00:00",
+      "creation_utc": "2026-01-18T08:35:52.307915+00:00",
       "version": "3.1.2",
       "properties": {
         "continuous": false,
@@ -136,15 +76,60 @@
       }
     },
     {
-      "id": "cca3f507148d32a86e09865d4fdaeb26",
-      "creation_utc": "2026-01-18T08:35:35.690707+00:00",
+      "id": "4c2978b1da759ec9a096499c6348f52f",
+      "creation_utc": "2026-01-18T08:35:52.307986+00:00",
       "version": "3.1.2",
       "properties": {
         "continuous": false,
         "customer_dependent_action_data": {
-          "is_customer_dependent": true,
-          "customer_action": "Il cliente fornisce dettagli specifici sull'errore",
-          "agent_action": "L'agente chiede dettagli specifici sull'errore e prova a suggerire soluzioni basate sul contesto."
+          "is_customer_dependent": false,
+          "customer_action": "",
+          "agent_action": ""
+        },
+        "agent_intention_condition": null,
+        "internal_action": null
+      }
+    },
+    {
+      "id": "33ef966af885c8fb3e8466ad8312929c",
+      "creation_utc": "2026-01-18T08:35:52.308054+00:00",
+      "version": "3.1.2",
+      "properties": {
+        "continuous": false,
+        "customer_dependent_action_data": {
+          "is_customer_dependent": false,
+          "customer_action": "",
+          "agent_action": ""
+        },
+        "agent_intention_condition": null,
+        "internal_action": null
+      }
+    },
+    {
+      "id": "c06d493c643a4c69a3f0ecd36666e0ac",
+      "creation_utc": "2026-01-18T08:35:52.308121+00:00",
+      "version": "3.1.2",
+      "properties": {
+        "continuous": false,
+        "customer_dependent_action_data": {
+          "is_customer_dependent": false,
+          "customer_action": "",
+          "agent_action": ""
+        },
+        "agent_intention_condition": null,
+        "internal_action": null
+      }
+    },
+    {
+      "id": "7d5616144ceeb3f764aac69fe8a741c4",
+      "creation_utc": "2026-01-18T08:35:52.308203+00:00",
+      "version": "3.1.2",
+      "properties": {
+        "continuous": true,
+        "customer_dependent_action_data": {
+          "is_customer_dependent": false,
+          "customer_action": "",
+          "agent_action": ""
         },
         "agent_intention_condition": null,
         "internal_action": null
@@ -152,14 +137,29 @@
     },
     {
       "id": "d30955c217b8c00d20068eb2ca3f03e2",
-      "creation_utc": "2026-01-18T08:35:36.190922+00:00",
+      "creation_utc": "2026-01-18T08:35:52.808439+00:00",
       "version": "3.1.2",
       "properties": {
         "continuous": false,
         "customer_dependent_action_data": {
           "is_customer_dependent": true,
-          "customer_action": "Il cliente spiega come può essere aiutato con la contabilità",
-          "agent_action": "L'agente risponde con un saluto cordiale e chiede al cliente come può aiutare con la contabilità"
+          "customer_action": "The customer provides information on how the agent can assist them with accounting.",
+          "agent_action": "The agent responds with a cordial greeting and asks how they can assist with accounting."
+        },
+        "agent_intention_condition": null,
+        "internal_action": null
+      }
+    },
+    {
+      "id": "cca3f507148d32a86e09865d4fdaeb26",
+      "creation_utc": "2026-01-18T08:35:52.808623+00:00",
+      "version": "3.1.2",
+      "properties": {
+        "continuous": false,
+        "customer_dependent_action_data": {
+          "is_customer_dependent": true,
+          "customer_action": "Il cliente fornisce dettagli specifici sull'errore",
+          "agent_action": "L'agente chiede dettagli specifici sull'errore e prova a suggerire soluzioni basate sul contesto"
         },
         "agent_intention_condition": null,
         "internal_action": null
