@@ -240,8 +240,24 @@ async def cerca_email_dimissioni(
                         except:
                             pass
                 
-                # Estrai dati dimissioni
-                dati = estrai_dati_dimissioni(email_text)
+                # PRIMA estrai i nomi degli allegati PDF
+                allegati_nomi = []
+                allegati_data = []
+                for part in msg.walk():
+                    filename = part.get_filename()
+                    if filename and filename.lower().endswith('.pdf'):
+                        filename = decode_email_subject(filename)
+                        allegati_nomi.append(filename)
+                        payload = part.get_payload(decode=True)
+                        if payload:
+                            allegati_data.append({
+                                "filename": filename,
+                                "size": len(payload),
+                                "pdf_base64": base64.b64encode(payload).decode('utf-8')
+                            })
+                
+                # POI estrai dati dimissioni passando anche i nomi degli allegati
+                dati = estrai_dati_dimissioni(email_text, allegati_nomi)
                 
                 dimissione = {
                     "subject": subject,
@@ -249,24 +265,8 @@ async def cerca_email_dimissioni(
                     "codice_fiscale": dati.get("codice_fiscale"),
                     "data_dimissioni": dati.get("data_dimissioni"),
                     "data_decorrenza": dati.get("data_decorrenza"),
-                    "allegati": []
+                    "allegati": allegati_data
                 }
-                
-                # Cerca allegati PDF
-                for part in msg.walk():
-                    filename = part.get_filename()
-                    if filename and filename.lower().endswith('.pdf'):
-                        filename = decode_email_subject(filename)
-                        payload = part.get_payload(decode=True)
-                        
-                        if payload:
-                            pdf_base64 = base64.b64encode(payload).decode('utf-8')
-                            
-                            dimissione["allegati"].append({
-                                "filename": filename,
-                                "size": len(payload),
-                                "pdf_base64": pdf_base64
-                            })
                 
                 risultati["dimissioni_estratte"].append(dimissione)
                 
