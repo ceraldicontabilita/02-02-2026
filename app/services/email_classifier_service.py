@@ -137,9 +137,9 @@ EMAIL_RULES: List[EmailRule] = [
     # --- F24 ---
     EmailRule(
         name="f24",
-        keywords=["F24", "modello F24", "delega F24", "tributi"],
-        subject_patterns=[r"f24", r"modello\s*f\s*24", r"tribut"],
-        sender_patterns=["agenziaentrate", "fisconline"],
+        keywords=["F24", "modello F24", "delega F24", "tributi", "versamento unificato"],
+        subject_patterns=[r"f24", r"modello\s*f\s*24", r"tribut", r"delega.*f24"],
+        sender_patterns=[],  # Accetta QUALSIASI mittente
         category="f24",
         gestionale_section="F24",
         collection="f24",
