@@ -199,6 +199,115 @@ export default function GestionePagoPA() {
         </AlertDescription>
       </Alert>
 
+      {/* Categorie Pagamenti CBILL */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">📋 Tipologie Pagamenti CBILL</CardTitle>
+          <CardDescription>
+            Pagamenti identificabili tramite codice CBILL per rateizzazioni e tributi
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* INPS */}
+            <div className="p-4 rounded-lg border-2 border-blue-200 bg-blue-50">
+              <div className="flex items-center gap-3 mb-2">
+                <span className="text-2xl">🏛️</span>
+                <div>
+                  <h4 className="font-semibold text-blue-900">Rateizzi INPS</h4>
+                  <p className="text-xs text-blue-700">Dilazioni contributive</p>
+                </div>
+              </div>
+              <ul className="text-sm text-blue-800 space-y-1">
+                <li>• Rateizzazione contributi</li>
+                <li>• Avvisi di addebito</li>
+                <li>• Sanzioni INPS</li>
+              </ul>
+            </div>
+
+            {/* Agenzia Entrate */}
+            <div className="p-4 rounded-lg border-2 border-green-200 bg-green-50">
+              <div className="flex items-center gap-3 mb-2">
+                <span className="text-2xl">📊</span>
+                <div>
+                  <h4 className="font-semibold text-green-900">Agenzia delle Entrate</h4>
+                  <p className="text-xs text-green-700">Imposte e tributi</p>
+                </div>
+              </div>
+              <ul className="text-sm text-green-800 space-y-1">
+                <li>• Rateizzazione imposte</li>
+                <li>• Avvisi bonari</li>
+                <li>• Comunicazioni di irregolarità</li>
+              </ul>
+            </div>
+
+            {/* AdER */}
+            <div className="p-4 rounded-lg border-2 border-red-200 bg-red-50">
+              <div className="flex items-center gap-3 mb-2">
+                <span className="text-2xl">⚖️</span>
+                <div>
+                  <h4 className="font-semibold text-red-900">Agenzia Riscossione</h4>
+                  <p className="text-xs text-red-700">AdER - Cartelle esattoriali</p>
+                </div>
+              </div>
+              <ul className="text-sm text-red-800 space-y-1">
+                <li>• Rottamazione quater</li>
+                <li>• Rateizzazione cartelle</li>
+                <li>• Definizione agevolata</li>
+              </ul>
+            </div>
+
+            {/* TARI */}
+            <div className="p-4 rounded-lg border-2 border-amber-200 bg-amber-50">
+              <div className="flex items-center gap-3 mb-2">
+                <span className="text-2xl">🗑️</span>
+                <div>
+                  <h4 className="font-semibold text-amber-900">TARI</h4>
+                  <p className="text-xs text-amber-700">Tassa rifiuti</p>
+                </div>
+              </div>
+              <ul className="text-sm text-amber-800 space-y-1">
+                <li>• Rate TARI annuali</li>
+                <li>• Conguagli</li>
+                <li>• Accertamenti</li>
+              </ul>
+            </div>
+
+            {/* COSAP / Tosap */}
+            <div className="p-4 rounded-lg border-2 border-purple-200 bg-purple-50">
+              <div className="flex items-center gap-3 mb-2">
+                <span className="text-2xl">🏪</span>
+                <div>
+                  <h4 className="font-semibold text-purple-900">COSAP / TOSAP</h4>
+                  <p className="text-xs text-purple-700">Occupazione suolo pubblico</p>
+                </div>
+              </div>
+              <ul className="text-sm text-purple-800 space-y-1">
+                <li>• Canone occupazione</li>
+                <li>• Rinnovi annuali</li>
+                <li>• Plateatici</li>
+              </ul>
+            </div>
+
+            {/* Altri tributi */}
+            <div className="p-4 rounded-lg border-2 border-gray-200 bg-gray-50">
+              <div className="flex items-center gap-3 mb-2">
+                <span className="text-2xl">📄</span>
+                <div>
+                  <h4 className="font-semibold text-gray-900">Altri Tributi</h4>
+                  <p className="text-xs text-gray-700">Pagamenti vari</p>
+                </div>
+              </div>
+              <ul className="text-sm text-gray-800 space-y-1">
+                <li>• IMU / TASI</li>
+                <li>• Bollo auto</li>
+                <li>• Multe e sanzioni</li>
+              </ul>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Filtri */}
       <Card>
         <CardContent className="pt-6">
