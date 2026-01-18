@@ -43,9 +43,8 @@ def get_invoicetronic_client():
         config = Configuration()
         config.api_key['ApiKeyAuth'] = INVOICETRONIC_API_KEY
         
-        # Usa sandbox o produzione
-        if INVOICETRONIC_SANDBOX:
-            config.host = "https://api.invoicetronic.com/v1"  # Sandbox usa stessa URL con chiave test
+        # Host API InvoiceTronic
+        config.host = "https://api.invoicetronic.com/v1"
         
         return ApiClient(config)
     except ImportError:
