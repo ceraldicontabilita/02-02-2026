@@ -155,6 +155,9 @@ Si scala:
 - Endpoint bulk update fornitori (`/api/suppliers/update-all-incomplete`)
 - Sync IBAN da fatture esistenti (`/api/suppliers/sync-iban`)
 - Endpoint validazione P0 (`/api/suppliers/validazione-p0`)
+- **Auto-conferma assegni con match esatto** (18 Gen 2026)
+- **Import estratto conto con gestione duplicati** (18 Gen 2026)
+- **Integrazione Parlant.io con Emcie** (18 Gen 2026)
 
 ### 🔄 In Progress
 - UI pulsante aggiornamento bulk fornitori in `Fornitori.jsx`
@@ -166,6 +169,64 @@ Si scala:
 - Dashboard Analytics
 - Integrazione Google Calendar
 - Report PDF via email
+
+---
+
+## 12. LOGICA DI SUPERVISIONE INTELLIGENTE ⭐ CRITICO
+
+### Principi Fondamentali (Aggiunto 18 Gennaio 2026)
+
+Il sistema deve agire come un **consulente contabile professionale**, con supervisione attiva sui dati dell'utente.
+
+### Regola 1: Spostamento Automatico Cassa → Banca
+
+**SCENARIO**: L'utente inserisce per errore una fattura in Prima Nota Cassa, ma l'estratto conto bancario mostra che l'operazione è stata pagata tramite banca.
+
+**AZIONE RICHIESTA**:
+1. Durante l'import dell'estratto conto O durante i controlli periodici
+2. Verificare se esistono fatture in Prima Nota Cassa che corrispondono a movimenti bancari
+3. Se trovato match:
+   - **Spostare automaticamente** la fattura da Prima Nota Cassa a Prima Nota Banca
+   - **Eliminare** la voce dalla Prima Nota Cassa
+   - **Mostrare ALERT** all'utente con dettagli dello spostamento:
+     - Fattura: [numero]
+     - Fornitore: [nome]
+     - Importo: [€]
+     - Motivo: "Trovato pagamento in estratto conto bancario"
+
+**IMPLEMENTAZIONE**: `/app/app/services/supervisione_contabile.py` (da creare)
+
+### Regola 2: Auto-conferma Assegni
+
+**SCENARIO**: Assegno con importo **esattamente uguale** alla fattura associata.
+
+**AZIONE**: Auto-conferma automatica, non mostrare in lista operazioni da confermare.
+
+**ECCEZIONE**: Se c'è differenza anche di pochi centesimi → Mostra in lista per conferma manuale, visualizzando:
+- Importo assegno
+- Importo fattura originale
+- Differenza
+- Nome fornitore
+
+### Regola 3: Import Estratto Conto senza Errori Duplicati
+
+**SCENARIO**: L'utente ricarica lo stesso file estratto conto.
+
+**AZIONE**: 
+- NON mostrare errore "file duplicato"
+- Aggiornare silenziosamente i record esistenti
+- Aggiungere solo i nuovi movimenti
+- Permettere sempre il caricamento
+
+### Regola 4: Visibilità Fornitori nella Riconciliazione
+
+**SCENARIO**: Pagina riconciliazione assegni mostra "?" invece del fornitore.
+
+**AZIONE**: Mostrare sempre:
+- Nome fornitore/beneficiario
+- Importo assegno
+- Importo fattura originale (se disponibile)
+- Differenza (se presente)
 
 ---
 
