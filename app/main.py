@@ -299,6 +299,9 @@ app.include_router(dizionario_prodotti.router, prefix="/api/dizionario-prodotti"
 # --- Inventario ---
 app.include_router(inventario.router, prefix="/api", tags=["Inventario"])
 
+# --- PagoPA - Associazione Ricevute ---
+app.include_router(pagopa.router, tags=["PagoPA"])
+
 # --- Sincronizzazione Relazionale ---
 app.include_router(sync_relazionale.router, prefix="/api", tags=["Sincronizzazione Relazionale"])
 
