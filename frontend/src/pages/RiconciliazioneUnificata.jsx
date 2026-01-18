@@ -563,6 +563,48 @@ export default function RiconciliazioneUnificata() {
         </div>
       </div>
 
+      {/* INFO CARD - Logica Intelligente */}
+      <div style={{ 
+        background: 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)', 
+        borderRadius: 12, 
+        padding: 16, 
+        marginBottom: 16,
+        border: '1px solid #90caf9'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+          <span style={{ fontSize: 24 }}>🧠</span>
+          <div style={{ flex: 1 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h4 style={{ margin: '0 0 8px 0', color: '#1565c0' }}>Logica Intelligente Attiva</h4>
+              {autoRepairRunning && (
+                <span style={{ fontSize: 12, color: '#1976d2' }}>⏳ Verifica in corso...</span>
+              )}
+            </div>
+            <p style={{ margin: 0, fontSize: 13, color: '#1976d2', lineHeight: 1.5 }}>
+              Questa pagina <strong>verifica e corregge automaticamente</strong> i dati al caricamento:
+            </p>
+            <ul style={{ margin: '8px 0 0 0', paddingLeft: 20, fontSize: 12, color: '#1976d2', lineHeight: 1.8, columns: 2 }}>
+              <li><strong>F24</strong>: corregge date errate e auto-riconcilia con estratto conto</li>
+              <li><strong>Assegni</strong>: sincronizza automaticamente dall'estratto conto</li>
+              <li><strong>Movimenti</strong>: verifica completezza dati bancari</li>
+              <li><strong>Auto-match</strong>: abbina fatture, stipendi, F24</li>
+            </ul>
+            {autoRepairStatus && (autoRepairStatus.riconciliazioni_auto > 0 || autoRepairStatus.f24_corretti > 0) && (
+              <div style={{ 
+                marginTop: 10, 
+                padding: '8px 12px', 
+                background: '#c8e6c9', 
+                borderRadius: 8, 
+                fontSize: 12,
+                color: '#2e7d32'
+              }}>
+                ✅ Ultima verifica: {autoRepairStatus.riconciliazioni_auto || 0} riconciliazioni auto, {autoRepairStatus.f24_corretti || 0} F24 corretti
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Pannello Filtri Avanzati */}
       {showFilters && (
         <div style={{
