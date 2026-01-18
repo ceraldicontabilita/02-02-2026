@@ -47,9 +47,9 @@ export default function Corrispettivi() {
   }
 
   async function handleDelete(id) {
-    if (!window.confirm("Eliminare questo corrispettivo dalla Prima Nota?")) return;
+    if (!window.confirm("Eliminare questo corrispettivo?")) return;
     try {
-      await api.delete(`/api/prima-nota/cassa/${id}`);
+      await api.delete(`/api/corrispettivi/${id}`);
       loadCorrispettivi();
     } catch (e) {
       setErr("Errore eliminazione: " + (e.response?.data?.detail || e.message));
@@ -59,12 +59,8 @@ export default function Corrispettivi() {
   const totaleGiornaliero = corrispettivi.reduce((sum, c) => sum + (c.totale || 0), 0);
   const totaleCassa = corrispettivi.reduce((sum, c) => sum + (c.pagato_contanti || 0), 0);
   const totaleElettronico = corrispettivi.reduce((sum, c) => sum + (c.pagato_elettronico || 0), 0);
-  const totaleIVA = corrispettivi.reduce((sum, c) => {
-    if (c.totale_iva && c.totale_iva > 0) return sum + c.totale_iva;
-    const totale = c.totale || 0;
-    return sum + (totale - (totale / 1.10));
-  }, 0);
-  const totaleImponibile = totaleGiornaliero / 1.10;
+  const totaleIVA = corrispettivi.reduce((sum, c) => sum + (c.totale_iva || 0), 0);
+  const totaleImponibile = corrispettivi.reduce((sum, c) => sum + (c.totale_imponibile || 0), 0);
 
   return (
     <div style={{ padding: 20, maxWidth: 1400, margin: '0 auto', position: 'relative' }}>
