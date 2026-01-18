@@ -844,6 +844,24 @@ export default function Documenti() {
                         </td>
                         <td style={{ padding: 12, textAlign: 'center' }}>
                           <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
+                            {/* Bottone Visualizza PDF */}
+                            <button
+                              onClick={() => handleViewPdf(doc)}
+                              disabled={pdfLoading}
+                              style={{
+                                background: '#dbeafe',
+                                border: 'none',
+                                borderRadius: 4,
+                                padding: 6,
+                                cursor: 'pointer',
+                                color: '#1e40af'
+                              }}
+                              title="Visualizza PDF"
+                              data-testid={`view-pdf-${doc.id}`}
+                            >
+                              👁️
+                            </button>
+                            
                             <button
                               onClick={() => handleDownloadFile(doc)}
                               style={{
