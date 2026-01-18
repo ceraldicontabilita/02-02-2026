@@ -41,7 +41,10 @@ def get_invoicetronic_client():
             raise ValueError("INVOICETRONIC_API_KEY non configurata")
         
         config = Configuration()
-        config.api_key['ApiKeyAuth'] = INVOICETRONIC_API_KEY
+        
+        # InvoiceTronic usa Basic Auth con API key come username e password vuota
+        config.username = INVOICETRONIC_API_KEY
+        config.password = ""
         
         # Host API InvoiceTronic
         config.host = "https://api.invoicetronic.com/v1"
