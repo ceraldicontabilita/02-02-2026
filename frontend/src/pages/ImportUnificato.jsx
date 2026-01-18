@@ -935,7 +935,7 @@ export default function ImportUnificato() {
               <div>
                 <h2 style={{ margin: 0, fontSize: 18 }}>🔍 Anteprima Transazioni Estratte</h2>
                 <p style={{ margin: '4px 0 0', opacity: 0.9, fontSize: 13 }}>
-                  Verifica i dati prima di confermare l'importazione
+                  Verifica i dati prima di confermare importazione
                 </p>
               </div>
               <button
