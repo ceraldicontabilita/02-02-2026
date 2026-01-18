@@ -1064,6 +1064,45 @@ export default function Documenti() {
             </div>
           )}
 
+          {/* Pulsante Processa Email con AI */}
+          <div style={{ ...cardStyle, padding: 20, marginBottom: 20, background: 'linear-gradient(135deg, #7c3aed, #a855f7)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
+              <div style={{ color: 'white' }}>
+                <div style={{ fontSize: 18, fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  🤖 Processa Allegati Email con AI
+                </div>
+                <div style={{ fontSize: 13, opacity: 0.9, marginTop: 4 }}>
+                  Estrae automaticamente i dati dai PDF classificati e li salva nel gestionale
+                </div>
+              </div>
+              <button
+                onClick={async () => {
+                  if (!window.confirm('Vuoi processare tutti gli allegati email con Document AI?\n\nQuesto estrarrà i dati e li salverà automaticamente nelle collection del gestionale (F24, cedolini, bonifici, ecc.)')) return;
+                  
+                  setAiLoading(true);
+                  try {
+                    const res = await api.post('/api/document-ai/process-all-classified?save_to_gestionale=true');
+                    const r = res.data;
+                    alert(`✅ Processamento completato!\n\nDocumenti analizzati: ${r.documenti_analizzati}\nDati estratti: ${r.documenti_estratti}\nSalvati nel gestionale: ${r.documenti_salvati}\nDuplicati saltati: ${r.documenti_duplicati}\nErrori: ${r.errori_estrazione + r.errori_salvataggio}`);
+                    loadAiDocuments();
+                  } catch (error) {
+                    alert(`❌ Errore: ${error.response?.data?.detail || error.message}`);
+                  } finally {
+                    setAiLoading(false);
+                  }
+                }}
+                disabled={aiLoading}
+                style={{
+                  ...buttonStyle('white', '#7c3aed'),
+                  padding: '12px 24px'
+                }}
+                data-testid="btn-process-email-ai"
+              >
+                {aiLoading ? '⏳ Elaborazione...' : '🚀 Processa Allegati Email'}
+              </button>
+            </div>
+          </div>
+
           {/* Upload nuovo documento */}
           <div style={{ ...cardStyle, padding: 20, marginBottom: 20 }}>
             <h3 style={{ margin: '0 0 16px', fontSize: 16, fontWeight: 600, color: '#1e293b' }}>
