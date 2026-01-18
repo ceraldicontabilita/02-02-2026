@@ -175,6 +175,15 @@ Si scala:
   - Gestione Assegni: auto-ricostruzione beneficiario e fatture associate
   - Riconciliazione Smart: auto-riconciliazione F24, correzione date, sync assegni
   - Fatture Ricevute: associazione fornitori, correzione importi, rimozione duplicati, TD24
+  - **Dashboard Analytics**: verifica coerenza Prima Nota, correzione tipo movimenti
+  - **F24**: correzione date errate, auto-riconciliazione con estratto conto
+  - **Corrispettivi**: ricalcolo IVA scorporo 10%, rimozione duplicati
+  - **Dashboard principale**: riparazione silente in background
+
+- **Correzione Numeri Assegni** (18 Gen 2026):
+  - 205 numeri assegno corretti: da CRA (42740212301901) a NUM reale (0208767699)
+  - Endpoint `/api/assegni/correggi-numeri` per correzione massiva
+  - Pattern regex aggiornato per estrarre NUM invece di CRA
 
 ### 🔄 In Progress
 - Risoluzione 182 fornitori bancari senza IBAN (ridotti da 223)
