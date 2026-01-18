@@ -405,10 +405,12 @@ async def scan_and_classify_emails(
                     "subject": subject[:100],
                     "sender": sender[:50],
                     "date": date_str,
+                    "attachments": attachment_names[:5] if attachment_names else [],  # Max 5 allegati mostrati
                     "classified": rule is not None,
                     "category": rule.category if rule else None,
                     "confidence": round(confidence, 2),
-                    "gestionale_section": rule.gestionale_section if rule else None
+                    "gestionale_section": rule.gestionale_section if rule else None,
+                    "action": rule.action if rule else None
                 }
                 
                 if rule:
