@@ -380,8 +380,9 @@ async def scan_and_classify_emails(
                 sender = msg.get("From", "")
                 date_str = msg.get("Date", "")
                 
-                # Estrai body text
+                # Estrai body text e nomi allegati
                 body_text = ""
+                attachment_names = []
                 for part in msg.walk():
                     if part.get_content_type() == "text/plain":
                         try:
@@ -390,9 +391,14 @@ async def scan_and_classify_emails(
                                 body_text += payload.decode('utf-8', errors='replace')
                         except:
                             pass
+                    # Raccogli nomi allegati per il matching
+                    filename = part.get_filename()
+                    if filename:
+                        decoded_filename = decode_email_subject(filename)
+                        attachment_names.append(decoded_filename)
                 
-                # Classifica email
-                rule, confidence = classify_email(subject, sender, body_text)
+                # Classifica email (ora include anche i nomi allegati)
+                rule, confidence = classify_email(subject, sender, body_text, attachment_names)
                 
                 email_info = {
                     "msg_id": msg_id.decode() if isinstance(msg_id, bytes) else str(msg_id),
