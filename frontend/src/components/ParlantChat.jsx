@@ -247,8 +247,8 @@ export default function ParlantChat() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ fontSize: 24 }}>🤖</span>
           <div>
-            <div style={{ color: 'white', fontWeight: 700, fontSize: 15 }}>
-              Assistente Contabit
+            <div style={{ fontWeight: 700, fontSize: 15 }}>
+              Assistente Ceraldi
             </div>
             <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: 11, display: 'flex', alignItems: 'center', gap: 5 }}>
               <span style={{
