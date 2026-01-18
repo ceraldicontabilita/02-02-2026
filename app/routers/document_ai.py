@@ -56,7 +56,7 @@ async def extract_from_file(
         
         # Salva nel DB se richiesto
         if save_to_db and result.get("structured_data", {}).get("success"):
-            db = get_database()
+            db = await get_database()
             doc = {
                 "filename": file.filename,
                 "document_type": result.get("structured_data", {}).get("document_type"),
