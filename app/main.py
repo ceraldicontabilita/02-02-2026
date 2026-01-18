@@ -160,6 +160,8 @@ from app.routers import pagopa  # PagoPA - Associazione ricevute
 from app.routers import invoicetronic  # InvoiceTronic - Fatturazione Elettronica SDI
 from app.routers import verbali_noleggio  # Verbali Noleggio da Email
 from app.routers import bonifici_stipendi  # Bonifici Stipendi da Email
+from app.routers import inps_documenti  # INPS - Delibere FONSI, Dilazioni
+from app.routers import adr  # ADR - Definizione Agevolata
 
 
 # =============================================================================
