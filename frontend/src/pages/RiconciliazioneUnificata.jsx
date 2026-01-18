@@ -138,9 +138,12 @@ export default function RiconciliazioneUnificata() {
   // Applica filtri ai movimenti
   const applyFilters = (movimenti) => {
     return movimenti.filter(m => {
+      // Usa data o data_emissione
+      const dataMovimento = m.data || m.data_emissione;
+      
       // Filtro data
-      if (filters.dataFrom && m.data < filters.dataFrom) return false;
-      if (filters.dataTo && m.data > filters.dataTo) return false;
+      if (filters.dataFrom && dataMovimento < filters.dataFrom) return false;
+      if (filters.dataTo && dataMovimento > filters.dataTo) return false;
       
       // Filtro importo
       const importo = Math.abs(parseFloat(m.importo) || 0);
