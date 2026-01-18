@@ -291,7 +291,7 @@ export default function ParlantChat() {
         {messages.length === 0 && (
           <div style={{ textAlign: 'center', color: '#64748b', padding: '40px 20px' }}>
             <div style={{ fontSize: 36, marginBottom: 12 }}>👋</div>
-            <div style={{ fontWeight: 600, marginBottom: 8 }}>Ciao! Sono l'assistente Contabit</div>
+            <div style={{ fontWeight: 600, marginBottom: 8 }}>Ciao! Sono l'assistente Ceraldi</div>
             <div style={{ fontSize: 13, lineHeight: 1.5 }}>
               Posso aiutarti con domande sulla contabilità, riconciliazione bancaria, F24, fatture e molto altro.
             </div>
