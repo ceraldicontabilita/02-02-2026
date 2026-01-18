@@ -204,6 +204,26 @@ async def get_extracted_documents(
     }
 
 
+@router.delete("/extracted-documents/{doc_id}")
+async def delete_extracted_document(doc_id: str):
+    """
+    Elimina un documento estratto dal database.
+    """
+    from bson import ObjectId
+    
+    db = await get_database()
+    
+    try:
+        result = await db["extracted_documents"].delete_one({"_id": ObjectId(doc_id)})
+        
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Documento non trovato")
+        
+        return {"success": True, "message": "Documento eliminato"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.post("/process-classified-email")
 async def process_classified_email(
     email_id: str,
