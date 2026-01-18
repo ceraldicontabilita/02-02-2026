@@ -1235,24 +1235,19 @@ function F24Tab({ f24, onConfermaF24, processing }) {
                     <button
                       onClick={() => confermaF24Singolo(f, 'banca')}
                       style={{ padding: '4px 8px', background: '#10b981', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: 11 }}
-                      title="Conferma come Bonifico Bancario"
+                      title="Conferma pagamento F24 tramite Banca"
                     >
-                      🏦 Banca
+                      🏦 Paga con Banca
                     </button>
-                    <button
-                      onClick={() => confermaF24Singolo(f, 'assegno')}
-                      style={{ padding: '4px 8px', background: '#f59e0b', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: 11 }}
-                      title="Conferma come Assegno"
-                    >
-                      📝 Assegno
-                    </button>
-                    <button
-                      onClick={() => confermaF24Singolo(f, 'cassa')}
-                      style={{ padding: '4px 8px', background: '#6366f1', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: 11 }}
-                      title="Conferma come Cassa"
-                    >
-                      💰 Cassa
-                    </button>
+                    {f.pdf_url && (
+                      <button
+                        onClick={() => window.open(f.pdf_url, '_blank')}
+                        style={{ padding: '4px 8px', background: '#6366f1', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: 11 }}
+                        title="Visualizza PDF F24"
+                      >
+                        👁️ Vedi PDF
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
