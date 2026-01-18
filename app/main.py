@@ -162,6 +162,7 @@ from app.routers import verbali_noleggio  # Verbali Noleggio da Email
 from app.routers import bonifici_stipendi  # Bonifici Stipendi da Email
 from app.routers import inps_documenti  # INPS - Delibere FONSI, Dilazioni
 from app.routers import adr  # ADR - Definizione Agevolata
+from app.routers import dimissioni  # Dimissioni dipendenti
 
 
 # =============================================================================
