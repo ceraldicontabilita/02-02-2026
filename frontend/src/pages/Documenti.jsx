@@ -49,6 +49,35 @@ export default function Documenti() {
   const [taskStatus, setTaskStatus] = useState(null);
   const pollingRef = useRef(null);
   
+  // Tab attivo
+  const [activeTab, setActiveTab] = useState('email');
+  
+  // AI Documents
+  const [aiDocuments, setAiDocuments] = useState([]);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiStats, setAiStats] = useState(null);
+  
+  // Load AI Documents
+  const loadAiDocuments = async () => {
+    setAiLoading(true);
+    try {
+      const res = await api.get('/api/document-ai/extracted-documents?limit=100');
+      setAiDocuments(res.data.documents || []);
+      
+      // Get stats
+      try {
+        const statsRes = await api.get('/api/document-ai/classified-documents-stats');
+        setAiStats(statsRes.data);
+      } catch (e) {
+        console.log('Stats non disponibili');
+      }
+    } catch (error) {
+      console.error('Errore caricamento documenti AI:', error);
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
   // Lock status per operazioni email
   const [emailLocked, setEmailLocked] = useState(false);
   const [currentOperation, setCurrentOperation] = useState(null);
