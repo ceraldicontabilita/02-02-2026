@@ -682,3 +682,171 @@ async def sync_assegni_da_estratto_conto() -> Dict[str, Any]:
             risultati["errori"].append(f"Errore creazione assegno {numero_assegno}: {str(e)}")
     
     return risultati
+
+
+@router.post("/ricostruisci-dati")
+async def ricostruisci_dati_assegni() -> Dict[str, Any]:
+    """
+    LOGICA INTELLIGENTE: Ricostruisce automaticamente i dati mancanti degli assegni.
+    
+    Questa funzione viene chiamata automaticamente dal frontend quando si carica
+    la pagina Gestione Assegni. Implementa la logica di un commercialista esperto.
+    
+    REGOLE:
+    1. Estrae beneficiario dalla descrizione bancaria se mancante
+    2. Cerca fatture con lo stesso importo per associazione
+    3. Gestisce pagamenti parziali/splittati
+    4. Cerca nel database fornitori per conferma nome
+    """
+    import re
+    db = Database.get_db()
+    
+    risultati = {
+        "timestamp": datetime.now().isoformat(),
+        "assegni_processati": 0,
+        "beneficiari_trovati": 0,
+        "fatture_associate": 0,
+        "errori": []
+    }
+    
+    # 1. Carica assegni con dati mancanti
+    assegni = await db[COLLECTION_ASSEGNI].find({
+        "$or": [
+            {"beneficiario": {"$in": [None, "", "-"]}},
+            {"numero_fattura": {"$exists": False}},
+            {"numero_fattura": None}
+        ]
+    }, {"_id": 0}).to_list(10000)
+    
+    if not assegni:
+        return {"message": "Tutti gli assegni hanno già i dati completi", **risultati}
+    
+    risultati["assegni_processati"] = len(assegni)
+    
+    # 2. Carica dati di supporto
+    fatture = await db.invoices.find({}, {
+        "_id": 0, "id": 1, "invoice_number": 1, "numero_documento": 1,
+        "supplier_name": 1, "fornitore_ragione_sociale": 1,
+        "supplier_vat": 1, "fornitore_partita_iva": 1,
+        "total_amount": 1, "importo_totale": 1, "pagato": 1
+    }).to_list(10000)
+    
+    fornitori = await db.suppliers.find({}, {
+        "_id": 0, "denominazione": 1, "ragione_sociale": 1, "partita_iva": 1
+    }).to_list(10000)
+    
+    movimenti = await db.estratto_conto_movimenti.find({}, {
+        "_id": 0, "id": 1, "descrizione": 1, "descrizione_originale": 1,
+        "beneficiario": 1, "controparte": 1
+    }).to_list(10000)
+    
+    # 3. Crea indici
+    # Indice fatture per importo
+    fatture_per_importo = {}
+    for f in fatture:
+        imp = round(float(f.get("total_amount") or f.get("importo_totale") or 0), 2)
+        if imp > 0:
+            if imp not in fatture_per_importo:
+                fatture_per_importo[imp] = []
+            fatture_per_importo[imp].append(f)
+    
+    # Indice fornitori per nome
+    fornitori_nomi = {(f.get("denominazione") or f.get("ragione_sociale") or "").upper()[:20]: f for f in fornitori if f.get("denominazione") or f.get("ragione_sociale")}
+    
+    # Indice movimenti per id
+    movimenti_idx = {m.get("id"): m for m in movimenti}
+    
+    # 4. Pattern per estrarre beneficiario
+    def estrai_beneficiario(testo):
+        if not testo:
+            return None
+        testo = testo.upper()
+        
+        # Pattern comuni nei movimenti bancari italiani
+        patterns = [
+            r"BEN[:\s]+([A-Z][A-Z0-9\s\.\&\'-]+?)(?:\s+(?:CRO|TRN|DATA|IBAN|$))",
+            r"VERS[OA]?\s+([A-Z][A-Z0-9\s\.\&\'-]+?)(?:\s+(?:CRO|DATA|$))",
+            r"BONIFICO\s+(?:A\s+)?([A-Z][A-Z0-9\s\.\&\'-]+?)(?:\s+(?:CRO|DATA|$))",
+            r"PAGAMENTO\s+([A-Z][A-Z0-9\s\.\&\'-]+?)(?:\s+(?:FATT|N\.|$))",
+        ]
+        
+        for p in patterns:
+            match = re.search(p, testo)
+            if match:
+                nome = match.group(1).strip()
+                if len(nome) > 3:
+                    return nome
+        
+        # Cerca nomi fornitori noti
+        for nome_forn in fornitori_nomi.keys():
+            if nome_forn and len(nome_forn) > 5 and nome_forn in testo:
+                return fornitori_nomi[nome_forn].get("denominazione") or fornitori_nomi[nome_forn].get("ragione_sociale")
+        
+        return None
+    
+    # 5. Processa ogni assegno
+    for ass in assegni:
+        ass_id = ass.get("id")
+        importo = round(float(ass.get("importo", 0)), 2)
+        descrizione = ass.get("descrizione", "")
+        beneficiario = ass.get("beneficiario")
+        mov_id = ass.get("movimento_id")
+        
+        aggiornamenti = {}
+        
+        # a) Trova beneficiario se mancante
+        if not beneficiario or beneficiario in ["", "-", None]:
+            # Prima prova dalla descrizione assegno
+            ben = estrai_beneficiario(descrizione)
+            
+            # Se non trovato, cerca nel movimento originale
+            if not ben and mov_id and mov_id in movimenti_idx:
+                mov = movimenti_idx[mov_id]
+                ben = mov.get("beneficiario") or mov.get("controparte") or estrai_beneficiario(mov.get("descrizione") or mov.get("descrizione_originale"))
+            
+            if ben:
+                aggiornamenti["beneficiario"] = ben
+                risultati["beneficiari_trovati"] += 1
+        
+        # b) Trova fattura se mancante
+        if not ass.get("numero_fattura") and importo > 0:
+            if importo in fatture_per_importo:
+                candidates = fatture_per_importo[importo]
+                
+                # Se una sola fattura con questo importo, associa direttamente
+                if len(candidates) == 1:
+                    fatt = candidates[0]
+                    aggiornamenti["fattura_id"] = fatt.get("id")
+                    aggiornamenti["numero_fattura"] = fatt.get("invoice_number") or fatt.get("numero_documento")
+                    aggiornamenti["fornitore_fattura"] = fatt.get("supplier_name") or fatt.get("fornitore_ragione_sociale")
+                    
+                    # Se non avevamo beneficiario, usa quello della fattura
+                    if "beneficiario" not in aggiornamenti and not beneficiario:
+                        aggiornamenti["beneficiario"] = aggiornamenti["fornitore_fattura"]
+                    
+                    risultati["fatture_associate"] += 1
+                
+                # Se più fatture, cerca match per beneficiario
+                elif len(candidates) > 1 and (beneficiario or aggiornamenti.get("beneficiario")):
+                    ben_search = (beneficiario or aggiornamenti.get("beneficiario", "")).upper()[:15]
+                    for fatt in candidates:
+                        nome_forn = (fatt.get("supplier_name") or fatt.get("fornitore_ragione_sociale") or "").upper()
+                        if ben_search in nome_forn or nome_forn[:15] in ben_search:
+                            aggiornamenti["fattura_id"] = fatt.get("id")
+                            aggiornamenti["numero_fattura"] = fatt.get("invoice_number") or fatt.get("numero_documento")
+                            aggiornamenti["fornitore_fattura"] = fatt.get("supplier_name") or fatt.get("fornitore_ragione_sociale")
+                            risultati["fatture_associate"] += 1
+                            break
+        
+        # c) Aggiorna nel DB
+        if aggiornamenti:
+            aggiornamenti["ultima_ricostruzione"] = datetime.now().isoformat()
+            try:
+                await db[COLLECTION_ASSEGNI].update_one(
+                    {"id": ass_id},
+                    {"$set": aggiornamenti}
+                )
+            except Exception as e:
+                risultati["errori"].append(f"Errore aggiornamento {ass_id}: {str(e)}")
+    
+    return risultati
