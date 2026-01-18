@@ -8,8 +8,9 @@ import {
   Download, ExternalLink, Calendar, Building2, Euro
 } from 'lucide-react';
 import { toast } from '../components/ui/sonner';
+import api from '../api';
 
-const API_URL = process.env.REACT_APP_BACKEND_URL || '';
+const API_URL = import.meta.env.VITE_BACKEND_URL || '';
 
 export default function GestioneInvoiceTronic() {
   const [status, setStatus] = useState(null);
