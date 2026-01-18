@@ -55,6 +55,14 @@ const PrimaNotaSalariTab = memo(function PrimaNotaSalariTab() {
     return salariMovimenti.filter(m => !anniEsclusi.includes(m.anno));
   }, [salariMovimenti, anniEsclusi]);
 
+  // Computed: righe vuote (busta e bonifico entrambi 0 o null)
+  const righeVuote = React.useMemo(() => {
+    return salariMovimenti.filter(m => 
+      (!m.importo_busta || m.importo_busta === 0) && 
+      (!m.importo_bonifico || m.importo_bonifico === 0)
+    ).length;
+  }, [salariMovimenti]);
+
   // Computed: totals
   const totals = React.useMemo(() => {
     return {
@@ -62,9 +70,10 @@ const PrimaNotaSalariTab = memo(function PrimaNotaSalariTab() {
       totalRecords: salariMovimenti.length,
       totaleBuste: filteredData.reduce((sum, m) => sum + (m.importo_busta || 0), 0),
       totaleBonifici: filteredData.reduce((sum, m) => sum + (m.importo_bonifico || 0), 0),
-      differenza: filteredData.reduce((sum, m) => sum + (m.importo_bonifico || 0) - (m.importo_busta || 0), 0)
+      differenza: filteredData.reduce((sum, m) => sum + (m.importo_bonifico || 0) - (m.importo_busta || 0), 0),
+      righeVuote
     };
-  }, [filteredData, salariMovimenti.length]);
+  }, [filteredData, salariMovimenti.length, righeVuote]);
 
   // Handlers with useCallback for stable references
   const handleToggleAnno = useCallback(async (anno) => {
