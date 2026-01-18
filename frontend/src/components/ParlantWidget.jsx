@@ -210,6 +210,19 @@ export default function ParlantWidget() {
             <div style={{ 
               marginTop: 20, 
               padding: 12, 
+              background: '#fef3c7', 
+              borderRadius: 8,
+              fontSize: 11,
+              color: '#92400e',
+              textAlign: 'left'
+            }}>
+              <strong>⚠️ Nota:</strong> Parlant richiede una API key Gemini nativa. 
+              Per usare l'assistente AI con Emergent LLM Key, utilizza il widget 🤖 ChatAI già attivo.
+            </div>
+            
+            <div style={{ 
+              marginTop: 12, 
+              padding: 12, 
               background: '#f0fdf4', 
               borderRadius: 8,
               fontSize: 11,
