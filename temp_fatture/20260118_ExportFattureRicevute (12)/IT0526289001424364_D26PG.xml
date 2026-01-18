@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<FatturaElettronica xmlns:ds="http://www.w3.org/2000/09/xmldsig#" versione="FPR12" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://ivaservizi.agenziaentrate.gov.it/docs/xsd/fatture/v1.2 file:///F:/Progetti/Altova/2018/pa/invoice_extcsv2xmlpa2020/Schema/Schema_VFPR12%20mod.xsd" xmlns="http://ivaservizi.agenziaentrate.gov.it/docs/xsd/fatture/v1.2">
+	<FatturaElettronicaHeader xmlns="">
+		<DatiTrasmissione>
+			<IdTrasmittente>
+				<IdPaese>IT</IdPaese>
+				<IdCodice>05262890014</IdCodice>
+			</IdTrasmittente>
+			<ProgressivoInvio>1</ProgressivoInvio>
+			<FormatoTrasmissione>FPR12</FormatoTrasmissione>
+			<CodiceDestinatario>KRRH6B9</CodiceDestinatario>
+		</DatiTrasmissione>
+		<CedentePrestatore>
+			<DatiAnagrafici>
+				<IdFiscaleIVA>
+					<IdPaese>IT</IdPaese>
+					<IdCodice>06714021000</IdCodice>
+				</IdFiscaleIVA>
+				<Anagrafica>
+					<Denominazione>Leasys Italia S.p.A</Denominazione>
+				</Anagrafica>
+				<RegimeFiscale>RF01</RegimeFiscale>
+			</DatiAnagrafici>
+			<Sede>
+				<Indirizzo>C.so Orbassano n. 367</Indirizzo>
+				<CAP>10137</CAP>
+				<Comune>Torino</Comune>
+				<Provincia>TO</Provincia>
+				<Nazione>IT</Nazione>
+			</Sede>
+			<IscrizioneREA>
+				<Ufficio>TO</Ufficio>
+				<NumeroREA>960205</NumeroREA>
+				<CapitaleSociale>77979400.00</CapitaleSociale>
+				<StatoLiquidazione>LN</StatoLiquidazione>
+			</IscrizioneREA>
+		</CedentePrestatore>
+		<CessionarioCommittente>
+			<DatiAnagrafici>
+				<IdFiscaleIVA>
+					<IdPaese>IT</IdPaese>
+					<IdCodice>04523831214</IdCodice>
+				</IdFiscaleIVA>
+				<CodiceFiscale>04523831214</CodiceFiscale>
+				<Anagrafica>
+					<Denominazione>CERALDI GROUP SRL</Denominazione>
+				</Anagrafica>
+			</DatiAnagrafici>
+			<Sede>
+				<Indirizzo>Piazza Nazionale 46</Indirizzo>
+				<CAP>80143</CAP>
+				<Comune>NAPOLI</Comune>
+				<Provincia>NA</Provincia>
+				<Nazione>IT</Nazione>
+			</Sede>
+		</CessionarioCommittente>
+	</FatturaElettronicaHeader>
+	<FatturaElettronicaBody xmlns="">
+		<DatiGenerali>
+			<DatiGeneraliDocumento>
+				<TipoDocumento>TD01</TipoDocumento>
+				<Divisa>EUR</Divisa>
+				<Data>2024-12-27</Data>
+				<Numero>0000202411625583</Numero>
+				<ImportoTotaleDocumento>12.20</ImportoTotaleDocumento>
+			</DatiGeneraliDocumento>
+			<DatiContratto>
+				<IdDocumento>1202101854</IdDocumento>
+				<Data>2022-09-24</Data>
+			</DatiContratto>
+		</DatiGenerali>
+		<DatiBeniServizi>
+			<DettaglioLinee>
+				<NumeroLinea>1</NumeroLinea>
+				<Descrizione>GG782PN STELVIO 2.2 Turbo Diesel 190CV Sprint AT</Descrizione>
+				<Quantita>1.00</Quantita>
+				<UnitaMisura>EURO</UnitaMisura>
+				<PrezzoUnitario>10.00</PrezzoUnitario>
+				<PrezzoTotale>10.00</PrezzoTotale>
+				<AliquotaIVA>22.00</AliquotaIVA>
+				<AltriDatiGestionali>
+					<TipoDato>NOTE</TipoDato>
+					<RiferimentoTesto>UTILIZZATORE CERALDI GROUP SRL codice 1184586404</RiferimentoTesto>
+				</AltriDatiGestionali>
+				<AltriDatiGestionali>
+					<TipoDato>NOTE</TipoDato>
+					<RiferimentoTesto>EXT REFERENCE 1184586404-5010501583</RiferimentoTesto>
+				</AltriDatiGestionali>
+				<AltriDatiGestionali>
+					<TipoDato>NOTE</TipoDato>
+					<RiferimentoTesto>CAUSALE: Addebito spese amministrative per infrazioni</RiferimentoTesto>
+				</AltriDatiGestionali>
+				<AltriDatiGestionali>
+					<TipoDato>NOTE</TipoDato>
+					<RiferimentoTesto>al codice della strada n. verbale CSA2436396991</RiferimentoTesto>
+				</AltriDatiGestionali>
+				<AltriDatiGestionali>
+					<TipoDato>NOTE</TipoDato>
+					<RiferimentoTesto>data del verbale 16.08.2024</RiferimentoTesto>
+				</AltriDatiGestionali>
+				<AltriDatiGestionali>
+					<TipoDato>NOTE</TipoDato>
+					<RiferimentoTesto>articolo violazione 303/1.a</RiferimentoTesto>
+				</AltriDatiGestionali>
+				<AltriDatiGestionali>
+					<TipoDato>NOTE</TipoDato>
+					<RiferimentoTesto>emittente</RiferimentoTesto>
+				</AltriDatiGestionali>
+				<AltriDatiGestionali>
+					<TipoDato>NOTE</TipoDato>
+					<RiferimentoTesto>data notifica del verbale 23.10.2024</RiferimentoTesto>
+				</AltriDatiGestionali>
+				<AltriDatiGestionali>
+					<TipoDato>NOTE</TipoDato>
+					<RiferimentoTesto>data gestione multa 08.11.2024</RiferimentoTesto>
+				</AltriDatiGestionali>
+				<AltriDatiGestionali>
+					<TipoDato>NOTE</TipoDato>
+					<RiferimentoTesto>1184586404</RiferimentoTesto>
+				</AltriDatiGestionali>
+			</DettaglioLinee>
+			<DatiRiepilogo>
+				<AliquotaIVA>22.00</AliquotaIVA>
+				<ImponibileImporto>10.00</ImponibileImporto>
+				<Imposta>2.20</Imposta>
+				<EsigibilitaIVA>I</EsigibilitaIVA>
+				<RiferimentoNormativo>Vend. IVA 22%</RiferimentoNormativo>
+			</DatiRiepilogo>
+		</DatiBeniServizi>
+		<DatiPagamento>
+			<CondizioniPagamento>TP02</CondizioniPagamento>
+			<DettaglioPagamento>
+				<ModalitaPagamento>MP09</ModalitaPagamento>
+				<DataRiferimentoTerminiPagamento>2024-12-27</DataRiferimentoTerminiPagamento>
+				<GiorniTerminiPagamento>30</GiorniTerminiPagamento>
+				<DataScadenzaPagamento>2025-01-31</DataScadenzaPagamento>
+				<ImportoPagamento>12.20</ImportoPagamento>
+				<IstitutoFinanziario>Unicredit 000500014931</IstitutoFinanziario>
+				<IBAN>IT96P0200809440000500014931</IBAN>
+				<ABI>02008</ABI>
+				<CAB>09440</CAB>
+			</DettaglioPagamento>
+		</DatiPagamento>
+	</FatturaElettronicaBody>
+</FatturaElettronica>

@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?><P:FatturaElettronica xmlns:P="http://ivaservizi.agenziaentrate.gov.it/docs/xsd/fatture/v1.2" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" versione="FPR12">
+  <FatturaElettronicaHeader>
+    <DatiTrasmissione>
+      <IdTrasmittente>
+        <IdPaese>IT</IdPaese>
+        <IdCodice>02448510046</IdCodice>
+      </IdTrasmittente>
+      <ProgressivoInvio>C02MC</ProgressivoInvio>
+      <FormatoTrasmissione>FPR12</FormatoTrasmissione>
+      <CodiceDestinatario>0000000</CodiceDestinatario>
+      <PECDestinatario>ceraldigroupsrl@legalmail.it</PECDestinatario>
+    </DatiTrasmissione>
+    <CedentePrestatore>
+      <DatiAnagrafici>
+        <IdFiscaleIVA>
+          <IdPaese>IT</IdPaese>
+          <IdCodice>04911190488</IdCodice>
+        </IdFiscaleIVA>
+        <CodiceFiscale>00879960524</CodiceFiscale>
+        <Anagrafica>
+          <Denominazione>ARVAL SERVICE LEASE ITALIA SPA</Denominazione>
+        </Anagrafica>
+        <RegimeFiscale>RF01</RegimeFiscale>
+      </DatiAnagrafici>
+      <Sede>
+        <Indirizzo>Via Sette Regole, 21</Indirizzo>
+        <CAP>50018</CAP>
+        <Comune>SCANDICCI</Comune>
+        <Provincia>FI</Provincia>
+        <Nazione>IT</Nazione>
+      </Sede>
+      <IscrizioneREA>
+        <Ufficio>FI</Ufficio>
+        <NumeroREA>469866</NumeroREA>
+        <CapitaleSociale>158000000.00</CapitaleSociale>
+        <SocioUnico>SU</SocioUnico>
+        <StatoLiquidazione>LN</StatoLiquidazione>
+      </IscrizioneREA>
+    </CedentePrestatore>
+    <CessionarioCommittente>
+      <DatiAnagrafici>
+        <IdFiscaleIVA>
+          <IdPaese>IT</IdPaese>
+          <IdCodice>04523831214</IdCodice>
+        </IdFiscaleIVA>
+        <CodiceFiscale>04523831214</CodiceFiscale>
+        <Anagrafica>
+          <Denominazione>CERALDI GROUP S.R.L.</Denominazione>
+        </Anagrafica>
+      </DatiAnagrafici>
+      <Sede>
+        <Indirizzo>Piazza Nazionale, 46</Indirizzo>
+        <CAP>80143</CAP>
+        <Comune>Napoli</Comune>
+        <Nazione>IT</Nazione>
+      </Sede>
+    </CessionarioCommittente>
+  </FatturaElettronicaHeader>
+  <FatturaElettronicaBody>
+    <DatiGenerali>
+      <DatiGeneraliDocumento>
+        <TipoDocumento>TD01</TipoDocumento>
+        <Divisa>EUR</Divisa>
+        <Data>2024-12-13</Data>
+        <Numero>FN0011137867</Numero>
+        <DatiBollo>
+          <BolloVirtuale>SI</BolloVirtuale>
+          <ImportoBollo>2.00</ImportoBollo>
+        </DatiBollo>
+        <ImportoTotaleDocumento>162.00</ImportoTotaleDocumento>
+        <Causale>Codice Cliente_F78224 / Centro Fatturazione_F88724</Causale>
+      </DatiGeneraliDocumento>
+      <DatiContratto>
+        <RiferimentoNumeroLinea>1</RiferimentoNumeroLinea>
+        <IdDocumento>1568555</IdDocumento>
+        <Data>2021-07-13</Data>
+      </DatiContratto>
+      <DatiContratto>
+        <RiferimentoNumeroLinea>2</RiferimentoNumeroLinea>
+        <IdDocumento>9999999992</IdDocumento>
+        <Data>2024-12-13</Data>
+      </DatiContratto>
+    </DatiGenerali>
+    <DatiBeniServizi>
+      <DettaglioLinee>
+        <NumeroLinea>1</NumeroLinea>
+        <Descrizione>GG262JA Rifatturazione 008 Doppie chiavi </Descrizione>
+        <PrezzoUnitario>160.00</PrezzoUnitario>
+        <PrezzoTotale>160.00</PrezzoTotale>
+        <AliquotaIVA>00.00</AliquotaIVA>
+        <Natura>N1</Natura>
+        <AltriDatiGestionali>
+          <TipoDato>TARGA</TipoDato>
+          <RiferimentoTesto>GG262JA MAZDA CX-5 / 2017 / 5P / SUV</RiferimentoTesto>
+        </AltriDatiGestionali>
+      </DettaglioLinee>
+      <DettaglioLinee>
+        <NumeroLinea>2</NumeroLinea>
+        <Descrizione>Imposta di bollo</Descrizione>
+        <PrezzoUnitario>2.00</PrezzoUnitario>
+        <PrezzoTotale>2.00</PrezzoTotale>
+        <AliquotaIVA>00.00</AliquotaIVA>
+        <Natura>N1</Natura>
+      </DettaglioLinee>
+      <DatiRiepilogo>
+        <AliquotaIVA>00.00</AliquotaIVA>
+        <Natura>N1</Natura>
+        <ImponibileImporto>162.00</ImponibileImporto>
+        <Imposta>0.00</Imposta>
+        <RiferimentoNormativo>Op.Escl Iva exArt.15 .</RiferimentoNormativo>
+      </DatiRiepilogo>
+    </DatiBeniServizi>
+    <DatiPagamento>
+      <CondizioniPagamento>TP02</CondizioniPagamento>
+      <DettaglioPagamento>
+        <ModalitaPagamento>MP20</ModalitaPagamento>
+        <DataScadenzaPagamento>2025-01-01</DataScadenzaPagamento>
+        <ImportoPagamento>162.00</ImportoPagamento>
+        <IstitutoFinanziario>D</IstitutoFinanziario>
+        <IBAN>IT13X0503403406000000005462</IBAN>
+      </DettaglioPagamento>
+    </DatiPagamento>
+  </FatturaElettronicaBody>
+<ds:Signature Id="S-ee6b7fda-4aa9-4132-aa75-abb98a9d1658">
+<ds:SignedInfo>
+<ds:CanonicalizationMethod Algorithm="http://www.w3.org/2006/12/xml-c14n11"/>
+<ds:SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/>
+<ds:Reference Id="R-7adf7c9e-45d9-4f4f-a607-a87e4be21c4f" URI="">
+<ds:Transforms>
+<ds:Transform Algorithm="http://www.w3.org/2002/06/xmldsig-filter2">
+<dsig-xpath:XPath xmlns:dsig-xpath="http://www.w3.org/2002/06/xmldsig-filter2" Filter="subtract">/descendant::ds:Signature</dsig-xpath:XPath>
+</ds:Transform>
+<ds:Transform Algorithm="http://www.w3.org/2006/12/xml-c14n11"/>
+</ds:Transforms>
+<ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
+<ds:DigestValue>mN8eh5OhjDhfsSfRVldkrfy847odnD8LJobhR/36NkA=</ds:DigestValue>
+</ds:Reference>
+<ds:Reference Type="http://uri.etsi.org/01903#SignedProperties" URI="#SP-ae71d46b-9b1b-4b7b-8fa2-60a84c4625a8">
+<ds:Transforms>
+<ds:Transform Algorithm="http://www.w3.org/2006/12/xml-c14n11"/>
+</ds:Transforms>
+<ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
+<ds:DigestValue>pA2vYvnxygmN52CX9kt3iX3VOrMkV3JBQBO92xaRiMM=</ds:DigestValue>
+</ds:Reference>
+</ds:SignedInfo>
+<ds:SignatureValue>
+pc+le/VDTYGGZQjoRvs/L9H8NHI29KCS7d85y/5fEy/eXdr6BlExKve21slZYymlSulZwzv+nFkq
+UxFfNHCc+lJ+1X80CnbjZLHWBoqM7sYVWOIJwf2XzXAl2wxywksbd6wcGocOc0AxeiErYacLkMRZ
+dOsw/UrGIpKjKh4SgwpUIueoHtxXd7e0CtQoQkvVszdJcvp7INMMwEe60l3WNFS6CGjjGUqZW2+s
+lmI6+SjOC3x5PcLbSRY/ahMHM7BS20dHTfEAnWpjcLH3B7QlM170TKxvPZq/XTtBBieM+Z/F5DM+
+g9/+zWDIaSSfFISV7pBpMbFtid+WHC//UvLI8Q==
+</ds:SignatureValue>
+<ds:KeyInfo>
+<ds:X509Data>
+<ds:X509Certificate>
+MIIHWjCCBkKgAwIBAgIIV8dz/8j6wnswDQYJKoZIhvcNAQELBQAwfTELMAkGA1UEBhMCSVQxJDAi
+BgNVBAoMG05hbWlyaWFsIFMucC5BLi8wMjA0NjU3MDQyNjEgMB4GA1UECwwXQ2VydGlmaWNhdGlv
+biBBdXRob3JpdHkxJjAkBgNVBAMMHU5hbWlyaWFsIENBIEZpcm1hIFF1YWxpZmljYXRhMB4XDTIz
+MDExMjE1MDcwMFoXDTI2MDExMDIzMDAwMFowgZExCzAJBgNVBAYTAklUMREwDwYDVQQEDAhDSUND
+VUxMSTESMBAGA1UEKgwJRlJBTkNFU0NPMR8wHQYDVQQFExZUSU5JVC1DQ0NGTkM3OUgyOEU3ODNK
+MRswGQYDVQQDDBJDSUNDVUxMSSBGUkFOQ0VTQ08xHTAbBgNVBC4TFEFVQ0YyMDIzMDExMjE3MDU2
+Nzc4MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1LDP7BI/gq7brMtgkt5J5ZkOuUw4
+5ICTW1H4hkAQ57pFWuYCSg+etxvFRdXCVyIoeSeN+fDAiPYkwnO6u6QtLcm9jwA50DuiPtgi0tWp
+EuaFDSvimvL59fctxvq84MRNwciO+0t+qceGBxMBHBeXjQrfbiOhzqnOikG1JAt5qXIiGi3Otr3Q
+zLFuXa5NuFEOYSkl+mAKPqWRbK7c/6pX9rP2C69w7ddTLq8/eTmXLz2cyHKA8GGoMuHu1aS5UQtQ
+QWD1Y4eE691OuMu63l31F9mST877nNlqeaO8yuAc13vN/n5fKdNQXQQhZzCFsFdywLKBJs3Un2Mw
+zihmgMmAjwIDAQABo4IDxzCCA8MwgZwGCCsGAQUFBwEBBIGPMIGMMFEGCCsGAQUFBzAChkVodHRw
+czovL2RvY3MubmFtaXJpYWx0c3AuY29tL2RvY3VtZW50cy9OYW1pcmlhbENBRmlybWFRdWFsaWZp
+Y2F0YS5jcnQwNwYIKwYBBQUHMAGGK2h0dHA6Ly9vY3NwLm5hbWlyaWFsdHNwLmNvbS9vY3NwL2Nl
+cnRzdGF0dXMwHQYDVR0OBBYEFKppENBf74HnSbdGpqFMI9zOPGj4MB8GA1UdIwQYMBaAFGP97eaM
+YkdIz+oJQXN2EeJkYnsQMIHNBggrBgEFBQcBAwSBwDCBvTAIBgYEAI5GAQEwCwYGBACORgEDAgEU
+MAgGBgQAjkYBBDATBgYEAI5GAQYwCQYHBACORgEGATCBhAYGBACORgEFMHowOxY1aHR0cHM6Ly9k
+b2NzLm5hbWlyaWFsdHNwLmNvbS9kb2N1bWVudHMvUERTL1BEU19lbi5wZGYTAmVuMDsWNWh0dHBz
+Oi8vZG9jcy5uYW1pcmlhbHRzcC5jb20vZG9jdW1lbnRzL1BEUy9QRFNfaXQucGRmEwJpdDCCAbgG
+A1UdIASCAa8wggGrMAkGBwQAi+xAAQIwCAYGBACPegECMIIBkgYLKwYBBAGCmmsBAQMwggGBMCkG
+CCsGAQUFBwIBFh1odHRwczovL2RvY3MubmFtaXJpYWx0c3AuY29tLzCCAVIGCCsGAQUFBwICMIIB
+RB6CAUAASQBsACAAcAByAGUAcwBlAG4AdABlACAAYwBlAHIAdABpAGYAaQBjAGEAdABvACAA6AAg
+AHYAYQBsAGkAZABvACAAcwBvAGwAbwAgAHAAZQByACAAZgBpAHIAbQBlACAAYQBwAHAAbwBzAHQA
+ZQAgAGMAbwBuACAAcAByAG8AYwBlAGQAdQByAGEAIABhAHUAdABvAG0AYQB0AGkAYwBhAC4ALwBU
+AGgAaQBzACAAYwBlAHIAdABpAGYAaQBjAGEAdABlACAAbQBhAHkAIABvAG4AbAB5ACAAYgBlACAA
+dQBzAGUAZAAgAGYAbwByACAAdQBuAGEAdAB0AGUAbgBkAGUAZAAvAGEAdQB0AG8AbQBhAHQAZQBk
+ACAAZABpAGcAaQB0AGEAbAAgAHMAaQBnAG4AYQB0AHUAcgBlAHMALjBGBgNVHR8EPzA9MDugOaA3
+hjVodHRwOi8vY3JsLm5hbWlyaWFsdHNwLmNvbS9GaXJtYUNlcnRhUXVhbGlmaWNhdGExLmNybDAO
+BgNVHQ8BAf8EBAMCBkAwDQYJKoZIhvcNAQELBQADggEBAJb3Ry+ueOu9Dn5HAYg8dhROgAL/jB6M
+xmdp02cB+XJpUe8HFQTDTGrVeqvNF9582GDbbuqG84RoUcGXzXiwL7AMLR0QVz/68smF7OZtkG5B
+m9UVBsuxHexOg/Dqa33gDGdYn0+9dElHqN3njiS2PSEbm9qeS3UtftuwitQgl8Rc2RMcA6BRn3Rt
+kQDItuwge+xV4RqWeGIbFGjbO6IWmz8hPAeUAbli38WG+i29XhQoKh9RZNGtz/4fdL2CWpTzUWoB
+VXnv+8k680PHcnHYX3xpVR8u2iFoqiaRpxefA1TGXlcsrLAdN49+bfvMFZSfLHIXhyKpTv2AqlMb
+6f99gbI=
+</ds:X509Certificate>
+</ds:X509Data>
+</ds:KeyInfo>
+<ds:Object>
+<xades:QualifyingProperties xmlns:xades="http://uri.etsi.org/01903/v1.3.2#" Target="#S-ee6b7fda-4aa9-4132-aa75-abb98a9d1658">
+<xades:SignedProperties Id="SP-ae71d46b-9b1b-4b7b-8fa2-60a84c4625a8">
+<xades:SignedSignatureProperties>
+<xades:SigningTime>2024-12-20T00:38:59Z</xades:SigningTime>
+<xades:SigningCertificate>
+<xades:Cert>
+<xades:CertDigest>
+<ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
+<ds:DigestValue>I0QYVqk++WCHkpD4Y8DiOK7fKTsgAtxjF+L76Cs2qXY=</ds:DigestValue>
+</xades:CertDigest>
+<xades:IssuerSerial>
+<ds:X509IssuerName>CN=Namirial CA Firma Qualificata,OU=Certification Authority,O=Namirial S.p.A./02046570426,C=IT</ds:X509IssuerName>
+<ds:X509SerialNumber>6325151744090882683</ds:X509SerialNumber>
+</xades:IssuerSerial>
+</xades:Cert>
+</xades:SigningCertificate>
+</xades:SignedSignatureProperties>
+<xades:SignedDataObjectProperties>
+<xades:DataObjectFormat ObjectReference="#R-7adf7c9e-45d9-4f4f-a607-a87e4be21c4f">
+<xades:MimeType>application/xml</xades:MimeType>
+</xades:DataObjectFormat>
+</xades:SignedDataObjectProperties>
+</xades:SignedProperties>
+</xades:QualifyingProperties>
+</ds:Object>
+</ds:Signature></P:FatturaElettronica>
