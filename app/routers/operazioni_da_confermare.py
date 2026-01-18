@@ -2177,3 +2177,51 @@ async def riconcilia_carta_manuale(
         "transazione_id": trans_id,
         "tipo": tipo
     }
+
+
+
+# ============================================================================
+#                     SUPERVISIONE CONTABILE
+# ============================================================================
+
+@router.post("/supervisione/esegui")
+async def esegui_supervisione() -> Dict[str, Any]:
+    """
+    Esegue tutti i controlli di supervisione contabile:
+    1. Spostamento automatico Cassa → Banca
+    2. Auto-riconciliazione F24 con estratto conto
+    
+    Chiamare dopo ogni import di estratti conto.
+    """
+    from app.services.supervisione_contabile import esegui_supervisione_completa
+    
+    risultati = await esegui_supervisione_completa()
+    return risultati
+
+
+@router.get("/supervisione/alert")
+async def get_alert() -> Dict[str, Any]:
+    """
+    Recupera gli alert di supervisione recenti (ultime 24 ore).
+    Mostrare all'utente per informarlo delle correzioni automatiche.
+    """
+    from app.services.supervisione_contabile import get_alert_supervisione
+    
+    alert = await get_alert_supervisione()
+    return {
+        "alert": alert,
+        "totale": len(alert)
+    }
+
+
+@router.post("/supervisione/auto-riconcilia-f24")
+async def auto_riconcilia_f24() -> Dict[str, Any]:
+    """
+    Auto-riconcilia F24 con movimenti bancari.
+    Cerca F24 non pagati che hanno corrispondenza nell'estratto conto.
+    """
+    from app.services.supervisione_contabile import auto_riconcilia_f24_con_estratto_conto
+    
+    risultati = await auto_riconcilia_f24_con_estratto_conto()
+    return risultati
+
