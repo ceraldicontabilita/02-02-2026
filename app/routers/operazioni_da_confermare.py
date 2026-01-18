@@ -1812,6 +1812,7 @@ async def cerca_f24_per_associazione(
     """
     Cerca F24 non pagati per associazione.
     Legge dalla collezione f24_models.
+    OTTIMIZZATO: usa proiezione limitata e evita loop pesanti.
     """
     db = Database.get_db()
     
@@ -1821,58 +1822,58 @@ async def cerca_f24_per_associazione(
     if data_scadenza:
         query["data_scadenza"] = {"$lte": data_scadenza}
     
-    # Cerca in f24_models (la collezione principale degli F24)
-    f24_docs = await db["f24_models"].find(query, {"_id": 0}).sort("data_scadenza", 1).to_list(100)
+    # Proiezione limitata per performance
+    projection = {
+        "_id": 0,
+        "id": 1,
+        "totale_debito": 1,
+        "saldo_finale": 1,
+        "importo_totale": 1,
+        "data_scadenza": 1,
+        "scadenza_display": 1,
+        "pagato": 1,
+        "contribuente": 1,
+        "codice_fiscale": 1,
+        "tributi_erario": {"$slice": 3}  # Solo primi 3 tributi per descrizione
+    }
+    
+    # Cerca in f24_models
+    f24_docs = await db["f24_models"].find(query, projection).sort("data_scadenza", 1).limit(100).to_list(100)
     
     target_importo = abs(importo) if importo else None
     results = []
     
     for f in f24_docs:
-        # Calcola importo totale - prima prova i campi diretti, poi i tributi
-        importo_totale = f.get("totale_debito") or f.get("saldo_finale") or f.get("importo_totale")
+        # Calcola importo totale - usa campi diretti per velocità
+        importo_totale = f.get("totale_debito") or f.get("saldo_finale") or f.get("importo_totale") or 0
         
-        if not importo_totale or importo_totale == 0:
-            # Fallback: calcola dai tributi
-            tributi_erario = f.get("tributi_erario", [])
-            tributi_inps = f.get("tributi_inps", [])
-            tributi_regioni = f.get("tributi_regioni", [])
-            tributi_imu = f.get("tributi_imu", [])
-            
-            importo_totale = (
-                sum(t.get("importo_debito", 0) or t.get("importo", 0) for t in tributi_erario) +
-                sum(t.get("importo_debito", 0) or t.get("importo", 0) for t in tributi_inps) +
-                sum(t.get("importo_debito", 0) or t.get("importo", 0) for t in tributi_regioni) +
-                sum(t.get("importo_debito", 0) or t.get("importo", 0) for t in tributi_imu)
-            )
-        else:
-            tributi_erario = f.get("tributi_erario", [])
-        
-        # Genera descrizione dai tributi principali
-        codici = [t.get("codice_tributo") or t.get("codice", "") for t in tributi_erario[:3]]
+        # Genera descrizione breve
+        tributi_erario = f.get("tributi_erario", [])
+        codici = [t.get("codice_tributo", "") for t in tributi_erario if t.get("codice_tributo")]
         descrizione = f.get("contribuente", "") or f.get("codice_fiscale", "")
         if codici:
-            descrizione += f" - Tributi: {', '.join(filter(None, codici))}"
+            descrizione += f" - {', '.join(codici[:2])}"
         
-        # Periodo di riferimento (prendi il primo tributo)
+        # Periodo dal primo tributo
         periodo = None
         if tributi_erario:
             t = tributi_erario[0]
             periodo = t.get("periodo_riferimento") or f"{t.get('mese', '')}/{t.get('anno', '')}"
         
-        diff = abs(importo_totale - target_importo) if target_importo else 0
+        diff = abs(importo_totale - target_importo) if target_importo and importo_totale else 9999999
         is_match = target_importo and diff < 1
         
         results.append({
             "id": f.get("id"),
             "periodo": periodo,
-            "descrizione": descrizione,
+            "descrizione": descrizione[:60],
             "importo_totale": importo_totale,
             "importo": importo_totale,
             "data_scadenza": f.get("data_scadenza") or f.get("scadenza_display"),
             "pagato": f.get("pagato", False),
             "contribuente": f.get("contribuente"),
-            "codici_tributo": codici,
-            "tipo_tributo": f"F24 - {', '.join(filter(None, codici))}",
+            "codici_tributo": codici[:3],
+            "tipo_tributo": f"F24",
             "is_match": is_match,
             "_diff": diff
         })
