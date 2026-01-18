@@ -199,7 +199,7 @@ async def process_classified_email(
     Processa un documento classificato dal sistema email.
     Legge il PDF da documents_classified e estrae i dati.
     """
-    db = get_database()
+    db = await get_database()
     
     # Trova il documento classificato
     from bson import ObjectId
