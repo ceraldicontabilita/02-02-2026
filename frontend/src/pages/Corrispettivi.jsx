@@ -15,6 +15,34 @@ export default function Corrispettivi() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
   const [selectedItem, setSelectedItem] = useState(null);
+  
+  // Stato per auto-riparazione
+  const [autoRepairStatus, setAutoRepairStatus] = useState(null);
+  const [autoRepairRunning, setAutoRepairRunning] = useState(false);
+
+  /**
+   * LOGICA INTELLIGENTE: Esegue auto-riparazione dei dati al caricamento.
+   */
+  const eseguiAutoRiparazione = async () => {
+    setAutoRepairRunning(true);
+    try {
+      const res = await api.post('/api/corrispettivi/auto-ricostruisci-dati');
+      if (res.data.iva_ricalcolata > 0 || res.data.duplicati_rimossi > 0) {
+        console.log('🔧 Auto-riparazione corrispettivi completata:', res.data);
+        setAutoRepairStatus(res.data);
+        loadCorrispettivi();
+      }
+    } catch (error) {
+      console.warn('Auto-riparazione corrispettivi non riuscita:', error);
+    } finally {
+      setAutoRepairRunning(false);
+    }
+  };
+
+  useEffect(() => {
+    eseguiAutoRiparazione();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     loadCorrispettivi();
