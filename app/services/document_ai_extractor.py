@@ -284,7 +284,7 @@ def extract_text_from_image(image_data: bytes) -> str:
 async def extract_structured_data(
     text: str,
     document_type: str = None,
-    model: str = "gpt-4o"
+    model: str = "claude-sonnet-4-5-20250929"
 ) -> Dict[str, Any]:
     """
     Usa LLM per estrarre dati strutturati dal testo.
