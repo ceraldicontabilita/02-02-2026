@@ -861,7 +861,7 @@ function MovimentoCard({ movimento, onConferma, onIgnora, processing, showFattur
         
         <div style={{ flex: 1 }}>
           <div style={{ fontWeight: 600, fontSize: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span>{movimento.data ? formatDateIT(movimento.data) : 'Data N/D'}</span>
+            <span>{(movimento.data || movimento.data_emissione) ? formatDateIT(movimento.data || movimento.data_emissione) : 'Data N/D'}</span>
             <span>•</span>
             <span style={{ color: movimento.importo < 0 ? '#dc2626' : '#15803d' }}>
               {movimento.importo ? formatEuro(Math.abs(movimento.importo)) : '€ 0,00'}
