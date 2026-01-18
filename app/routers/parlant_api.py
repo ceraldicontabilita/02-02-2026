@@ -1,14 +1,19 @@
 """
 Parlant API Router
 Endpoint per gestire il server Parlant AI.
+Include proxy per permettere al frontend di comunicare con Parlant.
 """
-from fastapi import APIRouter, HTTPException
-from typing import Dict, Any
+from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import StreamingResponse
+from typing import Dict, Any, Optional
 import os
 import logging
+import httpx
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+PARLANT_SERVER = "http://localhost:8800"
 
 
 @router.get("/agent-id")
