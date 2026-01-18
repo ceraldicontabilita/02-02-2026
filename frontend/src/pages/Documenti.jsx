@@ -61,7 +61,7 @@ export default function Documenti() {
   const loadAiDocuments = async () => {
     setAiLoading(true);
     try {
-      const res = await api.get('/api/document-ai/extracted-documents?limit=100');
+      const res = await api.get('/api/document-ai/extracted-documents?limit=100&include_file=true');
       setAiDocuments(res.data.documents || []);
       
       // Get stats
