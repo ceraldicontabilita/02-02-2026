@@ -1130,18 +1130,58 @@ async def banca_veloce(
         {"_id": 0, "id": 1, "data": 1, "importo": 1, "descrizione": 1, "descrizione_originale": 1, "riconciliato": 1}
     ).sort("data", -1).limit(limit).to_list(limit)
     
-    # Assegni da riconciliare (non incassati e senza fattura)
-    assegni = await db.assegni.find(
+    # Assegni da riconciliare (non incassati)
+    # Prima ottieni tutti gli assegni pendenti
+    all_assegni = await db.assegni.find(
         {
             "stato": {"$nin": ["incassato", "annullato"]},
-            "$or": [
-                {"fattura_id": None},
-                {"fattura_id": {"$exists": False}},
-                {"confermato": {"$ne": True}}
-            ]
+            "confermato": {"$ne": True}
         },
         {"_id": 0}
-    ).sort("data_emissione", -1).limit(50).to_list(50)
+    ).sort("data_emissione", -1).limit(100).to_list(100)
+    
+    # Auto-conferma assegni con match esatto fattura
+    assegni = []
+    auto_confermati = 0
+    for ass in all_assegni:
+        importo_assegno = abs(float(ass.get("importo") or ass.get("amount") or 0))
+        fattura_id = ass.get("fattura_id") or ass.get("invoice_id")
+        numero_fattura = ass.get("numero_fattura")
+        fornitore = ass.get("fornitore") or ass.get("beneficiary") or ass.get("beneficiario") or ""
+        
+        # Cerca fattura corrispondente
+        fattura = None
+        if fattura_id:
+            fattura = await db.invoices.find_one({"id": fattura_id}, {"_id": 0, "total_amount": 1})
+        elif numero_fattura:
+            # Cerca per numero fattura e fornitore
+            fattura = await db.invoices.find_one({
+                "invoice_number": numero_fattura,
+                "$or": [
+                    {"supplier_name": {"$regex": fornitore[:20] if fornitore else "", "$options": "i"}},
+                    {"cedente_denominazione": {"$regex": fornitore[:20] if fornitore else "", "$options": "i"}}
+                ]
+            }, {"_id": 0, "total_amount": 1, "importo_totale": 1})
+        
+        if fattura:
+            importo_fattura = abs(float(fattura.get("total_amount") or fattura.get("importo_totale") or 0))
+            
+            # Se l'importo corrisponde esattamente (tolleranza 0.01€), auto-conferma
+            if abs(importo_assegno - importo_fattura) < 0.01:
+                # Auto-conferma l'assegno
+                await db.assegni.update_one(
+                    {"id": ass.get("id")},
+                    {"$set": {"confermato": True, "auto_confermato": True, "confermato_at": datetime.now(timezone.utc).isoformat()}}
+                )
+                auto_confermati += 1
+                continue  # Non mostrare in lista
+        
+        # Assegno non auto-confermato, aggiungi alla lista
+        assegni.append(ass)
+    
+    # Log auto-conferme
+    if auto_confermati > 0:
+        logger.info(f"Auto-confermati {auto_confermati} assegni con match esatto")
     
     # Fatture da pagare (non pagate, metodo NON contanti)
     fatture_da_pagare = await db.invoices.find(
