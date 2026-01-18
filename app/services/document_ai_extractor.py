@@ -195,6 +195,141 @@ Rispondi SOLO con un JSON valido con questa struttura:
 }}
 
 Se un campo non è presente, usa null o array vuoto.
+NON aggiungere spiegazioni, SOLO il JSON.""",
+
+    "bonifico": """Sei un esperto di documenti bancari italiani. Estrai i dati dalla seguente ricevuta di bonifico.
+
+TESTO DEL DOCUMENTO:
+{text}
+
+Rispondi SOLO con un JSON valido con questa struttura:
+{{
+    "tipo_documento": "BONIFICO",
+    "data_operazione": "YYYY-MM-DD",
+    "data_valuta": "YYYY-MM-DD",
+    "importo": 0.00,
+    "valuta": "EUR",
+    "ordinante": {{
+        "denominazione": "...",
+        "iban": "...",
+        "banca": "..."
+    }},
+    "beneficiario": {{
+        "denominazione": "...",
+        "iban": "...",
+        "banca": "..."
+    }},
+    "causale": "...",
+    "cro_trn": "...",
+    "tipo_bonifico": "SEPA|estero|istantaneo",
+    "commissioni": 0.00
+}}
+
+Se un campo non è presente, usa null.
+NON aggiungere spiegazioni, SOLO il JSON.""",
+
+    "verbale": """Sei un esperto di verbali e multe stradali italiane. Estrai i dati dal seguente verbale/multa.
+
+TESTO DEL DOCUMENTO:
+{text}
+
+Rispondi SOLO con un JSON valido con questa struttura:
+{{
+    "tipo_documento": "VERBALE",
+    "numero_verbale": "...",
+    "data_verbale": "YYYY-MM-DD",
+    "data_violazione": "YYYY-MM-DD",
+    "ora_violazione": "HH:MM",
+    "luogo_violazione": "...",
+    "targa_veicolo": "...",
+    "tipo_veicolo": "...",
+    "proprietario": {{
+        "nome_cognome": "...",
+        "codice_fiscale": "...",
+        "indirizzo": "..."
+    }},
+    "violazione": {{
+        "articolo": "...",
+        "descrizione": "...",
+        "punti_patente": 0
+    }},
+    "importo_ridotto": 0.00,
+    "importo_pieno": 0.00,
+    "scadenza_pagamento": "YYYY-MM-DD",
+    "ente_accertatore": "...",
+    "societa_noleggio": "..."
+}}
+
+Se un campo non è presente, usa null.
+NON aggiungere spiegazioni, SOLO il JSON.""",
+
+    "cartella_esattoriale": """Sei un esperto di cartelle esattoriali e atti dell'Agenzia delle Entrate-Riscossione. Estrai i dati dal seguente documento.
+
+TESTO DEL DOCUMENTO:
+{text}
+
+Rispondi SOLO con un JSON valido con questa struttura:
+{{
+    "tipo_documento": "CARTELLA_ESATTORIALE",
+    "numero_cartella": "...",
+    "data_notifica": "YYYY-MM-DD",
+    "contribuente": {{
+        "denominazione": "...",
+        "codice_fiscale": "...",
+        "indirizzo": "..."
+    }},
+    "ente_creditore": "...",
+    "debiti": [
+        {{
+            "descrizione": "...",
+            "anno_riferimento": "YYYY",
+            "importo_originario": 0.00,
+            "interessi": 0.00,
+            "sanzioni": 0.00,
+            "aggio": 0.00,
+            "totale_debito": 0.00
+        }}
+    ],
+    "totale_cartella": 0.00,
+    "scadenza_pagamento": "YYYY-MM-DD",
+    "rate_disponibili": true,
+    "numero_rate_max": 0,
+    "riferimento_rottamazione": "..."
+}}
+
+Se un campo non è presente, usa null. Se una sezione è vuota, usa array vuoto [].
+NON aggiungere spiegazioni, SOLO il JSON.""",
+
+    "delibera_inps": """Sei un esperto di documenti INPS italiani. Estrai i dati dalla seguente delibera o comunicazione INPS.
+
+TESTO DEL DOCUMENTO:
+{text}
+
+Rispondi SOLO con un JSON valido con questa struttura:
+{{
+    "tipo_documento": "DELIBERA_INPS",
+    "numero_protocollo": "...",
+    "data_documento": "YYYY-MM-DD",
+    "tipo_comunicazione": "delibera|autorizzazione|diniego|richiesta",
+    "oggetto": "...",
+    "azienda": {{
+        "denominazione": "...",
+        "codice_fiscale": "...",
+        "matricola_inps": "..."
+    }},
+    "sede_inps": "...",
+    "importo_totale": 0.00,
+    "periodo_riferimento": {{
+        "da": "YYYY-MM-DD",
+        "a": "YYYY-MM-DD"
+    }},
+    "numero_lavoratori": 0,
+    "ore_autorizzate": 0,
+    "causale": "...",
+    "esito": "approvato|respinto|sospeso"
+}}
+
+Se un campo non è presente, usa null.
 NON aggiungere spiegazioni, SOLO il JSON."""
 }
 
