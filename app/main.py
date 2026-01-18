@@ -323,6 +323,9 @@ app.include_router(inps_documenti.router, prefix="/api/inps", tags=["INPS Docume
 # --- ADR Definizione Agevolata ---
 app.include_router(adr.router, prefix="/api/adr", tags=["ADR Definizione Agevolata"])
 
+# --- Dimissioni Dipendenti ---
+app.include_router(dimissioni.router, prefix="/api/dimissioni", tags=["Dimissioni"])
+
 # --- Sincronizzazione Relazionale ---
 app.include_router(sync_relazionale.router, prefix="/api", tags=["Sincronizzazione Relazionale"])
 
