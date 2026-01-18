@@ -179,11 +179,22 @@ Si scala:
   - **F24**: correzione date errate, auto-riconciliazione con estratto conto
   - **Corrispettivi**: ricalcolo IVA scorporo 10%, rimozione duplicati
   - **Dashboard principale**: riparazione silente in background
+  - **Prima Nota Salari**: rimozione righe vuote, correzione importi negativi
 
 - **Correzione Numeri Assegni** (18 Gen 2026):
   - 205 numeri assegno corretti: da CRA (42740212301901) a NUM reale (0208767699)
   - Endpoint `/api/assegni/correggi-numeri` per correzione massiva
   - Pattern regex aggiornato per estrarre NUM invece di CRA
+
+- **Associazione Beneficiari Assegni** (18 Gen 2026):
+  - 47 beneficiari associati automaticamente su 55 assegni senza beneficiario
+  - Endpoint `/api/assegni/associa-beneficiari-robusto` per ricerca intelligente fatture
+  - Algoritmo cerca fatture con importo simile (±15€) nella collection `invoices`
+
+- **Logica Analytics Corretta** (18 Gen 2026):
+  - **Fatturato = SOLO corrispettivi** (fatture emesse Ceraldi Group sono figurative)
+  - Entrate = movimenti Prima Nota tipo "entrata"
+  - Card esplicativa aggiornata con spiegazione logica
 
 ### 🔄 In Progress
 - Risoluzione 182 fornitori bancari senza IBAN (ridotti da 223)
