@@ -1091,7 +1091,7 @@ async def associa_pagamenti_multipli() -> Dict[str, Any]:
         assegni_gruppo = gruppo["assegni"]
         
         # Cerca fattura con importo uguale al totale degli assegni (±5€)
-        fattura_match = await db.fatture_ricevute.find_one({
+        fattura_match = await db.invoices.find_one({
             "supplier_name": {"$regex": beneficiario, "$options": "i"},
             "total_amount": {"$gte": totale_assegni - 5, "$lte": totale_assegni + 5}
         }, {"_id": 0})
