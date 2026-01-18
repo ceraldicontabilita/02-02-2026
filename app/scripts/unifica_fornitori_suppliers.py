@@ -62,8 +62,6 @@ async def unifica_fornitori_suppliers() -> Dict[str, Any]:
         
         # 4. Per ogni documento in 'fornitori', cerca match in 'suppliers'
         for forn in fornitori_docs:
-            # Rimuovi _id per evitare conflitti
-            forn_copy = {k: v for k, v in forn.items() if k != "_id"}
             
             # Identifica il fornitore per P.IVA o denominazione
             piva = forn.get("partita_iva") or forn.get("piva") or ""

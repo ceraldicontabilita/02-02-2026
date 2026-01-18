@@ -270,7 +270,7 @@ async def get_alert_supervisione() -> List[Dict[str, Any]]:
     for f in f24_auto:
         alert.append({
             "tipo": "auto_riconciliazione_f24",
-            "messaggio": f"F24 riconciliato automaticamente",
+            "messaggio": "F24 riconciliato automaticamente",
             "importo": f.get("totale_debito"),
             "timestamp": f.get("riconciliato_at")
         })
