@@ -73,7 +73,8 @@ async def get_status() -> Dict[str, Any]:
                 "connected": False,
                 "error": "Client non configurato",
                 "api_key_configured": bool(INVOICETRONIC_API_KEY),
-                "sandbox_mode": INVOICETRONIC_SANDBOX
+                "sandbox_mode": INVOICETRONIC_SANDBOX,
+                "codice_destinatario": INVOICETRONIC_CODICE_DESTINATARIO
             }
         
         api = StatusApi(client)
@@ -82,11 +83,16 @@ async def get_status() -> Dict[str, Any]:
         return {
             "connected": True,
             "sandbox_mode": INVOICETRONIC_SANDBOX,
+            "codice_destinatario": INVOICETRONIC_CODICE_DESTINATARIO,
             "account": {
-                "transactions_limit": getattr(status, 'transactions_limit', None),
-                "transactions_count": getattr(status, 'transactions_count', None),
-                "signatures_limit": getattr(status, 'signatures_limit', None),
-                "signatures_count": getattr(status, 'signatures_count', None)
+                "operations_left": getattr(status, 'operation_left', None),
+                "signatures_left": getattr(status, 'signature_left', None),
+            },
+            "istruzioni": {
+                "passo_1": "Vai su https://ivaservizi.agenziaentrate.gov.it/",
+                "passo_2": "Fatture e Corrispettivi → Registrazione indirizzo telematico",
+                "passo_3": f"Inserisci Codice Destinatario: {INVOICETRONIC_CODICE_DESTINATARIO}",
+                "passo_4": "Salva. Da quel momento le fatture arrivano qui automaticamente"
             },
             "timestamp": datetime.now(timezone.utc).isoformat()
         }
@@ -95,7 +101,8 @@ async def get_status() -> Dict[str, Any]:
         return {
             "connected": False,
             "error": str(e),
-            "sandbox_mode": INVOICETRONIC_SANDBOX
+            "sandbox_mode": INVOICETRONIC_SANDBOX,
+            "codice_destinatario": INVOICETRONIC_CODICE_DESTINATARIO
         }
 
 
