@@ -391,6 +391,8 @@ async def scan_fatture_noleggio(anno: Optional[int] = None) -> Dict[str, Any]:
                 for l in linee
             )
             
+            logger.info(f"Fattura {invoice_number} senza targa - is_bollo={is_bollo}, supplier_vat={supplier_vat}")
+            
             # Per fatture bollo, cerca il veicolo attivo più recente di questo fornitore
             if is_bollo and supplier_vat:
                 # Cerca veicolo con questo fornitore che ha data_fine nel futuro o nulla
@@ -407,9 +409,12 @@ async def scan_fatture_noleggio(anno: Optional[int] = None) -> Dict[str, Any]:
                     ]
                 }).to_list(length=100)
                 
+                logger.info(f"Veicoli attivi trovati per {supplier_vat}: {len(veicoli_attivi)}")
+                
                 if veicoli_attivi:
                     # Usa il primo veicolo attivo trovato
                     targa_attiva = veicoli_attivi[0].get("targa")
+                    logger.info(f"Associo fattura bollo {invoice_number} a targa {targa_attiva}")
                     if targa_attiva:
                         targhe_trovate.add(targa_attiva)
             
