@@ -1168,27 +1168,51 @@ export default function ImportUnificato() {
                   background: r.status === 'success' ? '#f0fdf4' : 
                              r.status === 'duplicate' ? '#fefce8' : '#fef2f2',
                   borderRadius: 8,
-                  marginBottom: 6,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 10
+                  marginBottom: 6
                 }}
               >
-                <span style={{ fontSize: 18 }}>
-                  {r.status === 'success' ? '✅' : r.status === 'duplicate' ? '⚠️' : '❌'}
-                </span>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 600, fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {r.file}
-                  </div>
-                  <div style={{ 
-                    fontSize: 11, 
-                    color: r.status === 'success' ? '#166534' : 
-                           r.status === 'duplicate' ? '#92400e' : '#dc2626' 
-                  }}>
-                    {r.message}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ fontSize: 18 }}>
+                    {r.status === 'success' ? '✅' : r.status === 'duplicate' ? '⚠️' : '❌'}
+                  </span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 600, fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {r.file}
+                    </div>
+                    <div style={{ 
+                      fontSize: 11, 
+                      color: r.status === 'success' ? '#166534' : 
+                             r.status === 'duplicate' ? '#92400e' : '#dc2626' 
+                    }}>
+                      {r.message}
+                    </div>
                   </div>
                 </div>
+                {/* Mostra info integrazione per fatture */}
+                {r.integration && r.status === 'success' && (
+                  <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px dashed #bbf7d0', display: 'flex', gap: 12, flexWrap: 'wrap', fontSize: 10 }}>
+                    {r.integration.magazzino && (
+                      <span style={{ background: '#dcfce7', padding: '2px 6px', borderRadius: 4, color: '#166534' }}>
+                        📦 {r.integration.magazzino.movimenti_creati || 0} mov. magazzino
+                      </span>
+                    )}
+                    {r.integration.prima_nota && (
+                      <span style={{ background: '#dbeafe', padding: '2px 6px', borderRadius: 4, color: '#1e40af' }}>
+                        📝 Prima Nota {r.integration.prima_nota.status === 'ok' ? '✓' : '✗'}
+                      </span>
+                    )}
+                    {r.integration.scadenziario && (
+                      <span style={{ background: '#fef3c7', padding: '2px 6px', borderRadius: 4, color: '#92400e' }}>
+                        📅 Scadenza {r.integration.scadenziario.status === 'ok' ? '✓' : '✗'}
+                      </span>
+                    )}
+                    {r.integration.riconciliazione && (
+                      <span style={{ background: '#fce7f3', padding: '2px 6px', borderRadius: 4, color: '#9d174d' }}>
+                        🔄 Riconc. {r.integration.riconciliazione.status === 'ok' ? '✓' : '-'}
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
           </div>
