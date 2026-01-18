@@ -292,31 +292,47 @@ async def associa_bonifici_a_dipendenti() -> Dict[str, Any]:
     
     # Carica bonifici non ancora associati a dipendenti
     bonifici = await db[COLLECTION_BONIFICI].find({
-        "dipendente_id": None
+        "dipendente_id": None,
+        # Solo quelli che sembrano dipendenti (non fornitori)
+        "beneficiario": {"$not": {"$regex": "S\\.?R\\.?L|S\\.?P\\.?A|S\\.?N\\.?C|SAS|COMUNE|AGENZIA", "$options": "i"}}
     }, {"_id": 0}).to_list(10000)
     
     risultati["bonifici_analizzati"] = len(bonifici)
     
-    # Carica dipendenti (collection employees)
+    # Carica dipendenti da employees
     dipendenti = await db.employees.find({}, {"_id": 0}).to_list(1000)
     
-    # Se vuota, prova anagrafica_dipendenti
+    # Se vuota, carica da anagrafica_dipendenti
     if not dipendenti:
         dipendenti = await db.anagrafica_dipendenti.find({}, {"_id": 0}).to_list(1000)
     
     # Crea indice dipendenti per nome normalizzato
     dip_idx = {}
     for d in dipendenti:
-        nome_completo = f"{d.get('cognome', '')} {d.get('nome', '')}".strip()
+        # Prova diversi campi nome
+        cognome = d.get('cognome', d.get('surname', ''))
+        nome = d.get('nome', d.get('name', d.get('first_name', '')))
+        
+        nome_completo = f"{cognome} {nome}".strip()
         nome_norm = normalizza_nome_dipendente(nome_completo)
         if nome_norm:
             dip_idx[nome_norm] = d
         
         # Aggiungi anche inversione nome/cognome
-        nome_inv = f"{d.get('nome', '')} {d.get('cognome', '')}".strip()
+        nome_inv = f"{nome} {cognome}".strip()
         nome_inv_norm = normalizza_nome_dipendente(nome_inv)
         if nome_inv_norm:
             dip_idx[nome_inv_norm] = d
+    
+    # Aggiungi anche nomi da prima_nota_salari
+    salari_nomi = await db.prima_nota_salari.distinct("dipendente_nome")
+    for nome in salari_nomi:
+        if nome:
+            nome_norm = normalizza_nome_dipendente(nome)
+            if nome_norm and nome_norm not in dip_idx:
+                dip_idx[nome_norm] = {"dipendente_nome": nome, "id": nome}
+    
+    logger.info(f"Indice dipendenti: {len(dip_idx)} nomi")
     
     for bonifico in bonifici:
         ben_norm = bonifico.get("beneficiario_normalizzato", "")
@@ -327,19 +343,27 @@ async def associa_bonifici_a_dipendenti() -> Dict[str, Any]:
         # Se non trovato, cerca match parziale
         if not dipendente:
             for nome_dip, d in dip_idx.items():
-                if ben_norm in nome_dip or nome_dip in ben_norm:
-                    dipendente = d
-                    break
+                # Match se contiene cognome
+                parti_ben = ben_norm.split()
+                parti_dip = nome_dip.split()
+                if len(parti_ben) >= 1 and len(parti_dip) >= 1:
+                    # Confronta cognome (primo elemento)
+                    if parti_ben[0] == parti_dip[0] or parti_ben[-1] == parti_dip[0]:
+                        dipendente = d
+                        break
         
         if dipendente:
             try:
+                dip_id = dipendente.get("id") or dipendente.get("_id") or str(uuid.uuid4())
+                dip_nome = dipendente.get("dipendente_nome") or f"{dipendente.get('nome', '')} {dipendente.get('cognome', '')}".strip()
+                
                 # Aggiorna bonifico con dipendente
                 await db[COLLECTION_BONIFICI].update_one(
                     {"id": bonifico["id"]},
                     {"$set": {
-                        "dipendente_id": dipendente.get("id"),
-                        "dipendente_nome": f"{dipendente.get('nome', '')} {dipendente.get('cognome', '')}",
-                        "dipendente_cf": dipendente.get("codice_fiscale"),
+                        "dipendente_id": str(dip_id),
+                        "dipendente_nome": dip_nome,
+                        "dipendente_cf": dipendente.get("codice_fiscale", dipendente.get("fiscal_code")),
                         "updated_at": datetime.now(timezone.utc).isoformat()
                     }}
                 )
@@ -347,17 +371,19 @@ async def associa_bonifici_a_dipendenti() -> Dict[str, Any]:
                 risultati["dipendenti_associati"] += 1
                 
                 # Aggiorna prima_nota_salari con importo provvisorio
-                # Cerca riga salario per questo dipendente e mese
                 data_op = bonifico.get("data_operazione", "")
                 if data_op:
-                    anno = data_op[:4]
-                    mese = data_op[5:7]
+                    anno = int(data_op[:4])
+                    mese = int(data_op[5:7])
                     
-                    # Cerca riga salario esistente
+                    # Cerca riga salario esistente per nome normalizzato
                     salario = await db.prima_nota_salari.find_one({
-                        "dipendente_id": dipendente.get("id"),
-                        "anno": int(anno),
-                        "mese": int(mese)
+                        "$or": [
+                            {"dipendente_id": str(dip_id)},
+                            {"dipendente_nome": {"$regex": ben_norm.split()[0], "$options": "i"}}
+                        ],
+                        "anno": anno,
+                        "mese": mese
                     })
                     
                     if salario:
@@ -367,35 +393,21 @@ async def associa_bonifici_a_dipendenti() -> Dict[str, Any]:
                             {"$set": {
                                 "importo_bonifico_email": bonifico["importo"],
                                 "bonifico_email_id": bonifico["id"],
-                                "bonifico_stato": "email_ricevuta",  # NON definitivo
+                                "bonifico_stato": "email_ricevuta",
                                 "bonifico_da_validare": True,
                                 "updated_at": datetime.now(timezone.utc).isoformat()
                             }}
                         )
                         risultati["salari_aggiornati"] += 1
-                    else:
-                        # Crea nuova riga salario provvisoria
-                        nuovo_salario = {
-                            "id": str(uuid.uuid4()),
-                            "dipendente_id": dipendente.get("id"),
-                            "dipendente_nome": f"{dipendente.get('nome', '')} {dipendente.get('cognome', '')}",
-                            "anno": int(anno),
-                            "mese": int(mese),
-                            "importo_busta": 0,  # Da completare
-                            "importo_bonifico": 0,  # NON definitivo
-                            "importo_bonifico_email": bonifico["importo"],  # Provvisorio
-                            "bonifico_email_id": bonifico["id"],
-                            "bonifico_stato": "email_ricevuta",
-                            "bonifico_da_validare": True,
-                            "created_at": datetime.now(timezone.utc).isoformat()
-                        }
-                        await db.prima_nota_salari.insert_one(nuovo_salario)
-                        risultati["salari_aggiornati"] += 1
                 
             except Exception as e:
                 risultati["errori"].append(f"{bonifico['beneficiario']}: {str(e)[:50]}")
         else:
-            risultati["non_trovati"].append(bonifico.get("beneficiario"))
+            # Aggiungi solo se sembra un nome persona
+            ben = bonifico.get("beneficiario", "")
+            if not any(k in ben.upper() for k in ["SRL", "SPA", "SNC", "SAS", "COMUNE", "AGENZIA", "REPOWER", "KIMBO", "EDENRED"]):
+                if ben not in risultati["non_trovati"]:
+                    risultati["non_trovati"].append(ben)
     
     return risultati
 
