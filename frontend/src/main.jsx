@@ -165,6 +165,10 @@ const Pianificazione = lazy(() => import("./pages/Pianificazione.jsx"));
 const Admin = lazy(() => import("./pages/Admin.jsx"));
 const GestioneRiservata = lazy(() => import("./pages/GestioneRiservata.jsx"));
 
+// === INTEGRAZIONI ===
+const GestionePagoPA = lazy(() => import("./pages/GestionePagoPA.jsx"));
+const GestioneInvoiceTronic = lazy(() => import("./pages/GestioneInvoiceTronic.jsx"));
+
 // Wrapper component with Suspense
 const LazyPage = ({ children }) => (
   <Suspense fallback={<PageLoader />}>
