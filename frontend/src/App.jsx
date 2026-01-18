@@ -763,11 +763,8 @@ export default function App() {
         }
       `}</style>
       
-      {/* Chat AI Flottante - Disponibile in tutta l'app */}
-      <ChatAI />
-      
-      {/* Parlant AI Widget - Assistente avanzato con guidelines */}
-      <ParlantWidget />
+      {/* Parlant AI Chat - Assistente contabile */}
+      <ParlantChat />
     </div>
     </UploadProvider>
   );
