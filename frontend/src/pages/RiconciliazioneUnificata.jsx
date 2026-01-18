@@ -467,7 +467,7 @@ export default function RiconciliazioneUnificata() {
       </div>
       
       {/* Header */}
-      <div style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 'clamp(20px, 4vw, 26px)', color: '#1e293b' }}>
             🔗 Riconciliazione Smart
@@ -476,7 +476,69 @@ export default function RiconciliazioneUnificata() {
             Associa movimenti bancari a fatture, F24, stipendi e assegni
           </p>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {/* Pulsante Auto-Riparazione */}
+          <button
+            onClick={eseguiAutoRiparazione}
+            disabled={autoRepairRunning}
+            data-testid="btn-auto-repair"
+            style={{
+              padding: '10px 16px',
+              background: autoRepairRunning ? '#9ca3af' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              color: 'white',
+              border: 'none',
+              borderRadius: 8,
+              fontWeight: 600,
+              cursor: autoRepairRunning ? 'wait' : 'pointer',
+              boxShadow: '0 2px 4px rgba(102,126,234,0.3)'
+            }}
+          >
+            {autoRepairRunning ? '⏳ Riparazione...' : '🔧 Auto-Ripara'}
+          </button>
+          {autoRepairStatus && autoRepairStatus.riconciliazioni_auto > 0 && (
+            <span style={{ 
+              padding: '6px 10px', 
+              background: '#dcfce7', 
+              color: '#16a34a', 
+              borderRadius: 6, 
+              fontSize: 11,
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center'
+            }}>
+              ✓ {autoRepairStatus.riconciliazioni_auto} riparazioni
+            </span>
+          )}
+          
+          {/* Pulsante Carica F24 */}
+          <button
+            onClick={async () => {
+              setProcessing('f24');
+              try {
+                const res = await api.get('/api/operazioni-da-confermare/smart/cerca-f24');
+                setF24Pendenti(res.data?.f24 || []);
+                setStats(prev => ({ ...prev, f24: res.data?.f24?.length || 0 }));
+              } catch (e) {
+                console.error('Errore caricamento F24:', e);
+              } finally {
+                setProcessing(null);
+              }
+            }}
+            disabled={processing === 'f24'}
+            data-testid="btn-load-f24"
+            style={{
+              padding: '10px 16px',
+              background: processing === 'f24' ? '#9ca3af' : '#f59e0b',
+              color: 'white',
+              border: 'none',
+              borderRadius: 8,
+              fontWeight: 600,
+              cursor: processing === 'f24' ? 'wait' : 'pointer'
+            }}
+          >
+            {processing === 'f24' ? '⏳ Caricamento...' : '📋 Carica F24'}
+          </button>
+          
           <button
             onClick={handleAutoRiconcilia}
             disabled={processing}
