@@ -908,13 +908,51 @@ function MovimentoCard({ movimento, onConferma, onIgnora, processing, showFattur
           {/* Info assegno se presente */}
           {movimento.numero_assegno && (
             <div style={{ 
-              marginTop: 2, 
+              marginTop: 4, 
               fontSize: 11, 
-              color: '#f59e0b'
+              color: '#f59e0b',
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: 8,
+              alignItems: 'center'
             }}>
-              📝 Assegno N. {movimento.numero_assegno} • Stato: {movimento.stato || 'N/D'}
+              <span>📝 Assegno N. {movimento.numero_assegno}</span>
+              <span>• Stato: {movimento.stato || 'N/D'}</span>
               {movimento.beneficiario && (
-                <span style={{ marginLeft: 8 }}>• Beneficiario: {movimento.beneficiario}</span>
+                <span style={{ color: '#3b82f6', fontWeight: 600 }}>• 👤 {movimento.beneficiario}</span>
+              )}
+              {movimento.fornitore && !movimento.beneficiario && (
+                <span style={{ color: '#3b82f6', fontWeight: 600 }}>• 👤 {movimento.fornitore}</span>
+              )}
+            </div>
+          )}
+          
+          {/* Confronto importi per assegni con fattura */}
+          {movimento.numero_assegno && movimento.numero_fattura && (
+            <div style={{ 
+              marginTop: 6,
+              padding: '6px 10px',
+              background: '#fef3c7',
+              borderRadius: 6,
+              fontSize: 11,
+              display: 'inline-flex',
+              gap: 12,
+              alignItems: 'center'
+            }}>
+              <span>💰 <b>Assegno:</b> {formatEuro(Math.abs(movimento.importo || 0))}</span>
+              {movimento.importo_fattura !== undefined && (
+                <>
+                  <span>•</span>
+                  <span>📄 <b>Fattura:</b> {formatEuro(Math.abs(movimento.importo_fattura || 0))}</span>
+                  {Math.abs((movimento.importo || 0) - (movimento.importo_fattura || 0)) > 0.01 && (
+                    <>
+                      <span>•</span>
+                      <span style={{ color: '#dc2626', fontWeight: 600 }}>
+                        ⚠️ Diff: {formatEuro(Math.abs((movimento.importo || 0) - (movimento.importo_fattura || 0)))}
+                      </span>
+                    </>
+                  )}
+                </>
               )}
             </div>
           )}
