@@ -7,6 +7,8 @@ import "./styles.css";
 import { AnnoProvider } from "./contexts/AnnoContext.jsx";
 import { queryClient } from "./lib/queryClient.js";
 
+// Build timestamp: 2026-01-18T19:10:00 - Force cache invalidation
+
 // Error Boundary per gestire errori React
 class ErrorBoundary extends Component {
   constructor(props) {
