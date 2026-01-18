@@ -826,6 +826,69 @@ async def get_fornitori() -> Dict[str, Any]:
     }
 
 
+@router.get("/debug-fatture-bollo")
+async def debug_fatture_bollo() -> Dict[str, Any]:
+    """
+    Debug: mostra fatture bollo e il processo di associazione.
+    """
+    db = Database.get_db()
+    
+    risultati = {
+        "fatture_bollo_trovate": [],
+        "veicoli_attivi_per_fornitore": {},
+        "associazioni_tentate": []
+    }
+    
+    # Trova fatture ALD con bollo
+    query = {
+        "supplier_vat": "01924961004"
+    }
+    
+    cursor = db["invoices"].find(query)
+    async for invoice in cursor:
+        linee = invoice.get("linee", [])
+        is_bollo = any(
+            any(kw in (l.get("descrizione") or "").lower() 
+                for kw in ["tassa di propriet", "bollo", "addebito bollo"])
+            for l in linee
+        )
+        
+        if is_bollo:
+            # Controlla se ha targa
+            import re
+            TARGA_PATTERN = r'\b([A-Z]{2}\d{3}[A-Z]{2})\b'
+            has_targa = any(re.search(TARGA_PATTERN, l.get("descrizione", "")) for l in linee)
+            
+            risultati["fatture_bollo_trovate"].append({
+                "numero": invoice.get("invoice_number"),
+                "data": invoice.get("invoice_date"),
+                "importo": invoice.get("total_amount"),
+                "has_targa": has_targa,
+                "descrizione": linee[0].get("descrizione", "")[:80] if linee else ""
+            })
+    
+    # Trova veicoli attivi per fornitore
+    oggi = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+    
+    for piva in ["01924961004", "04911190488", "06714021000"]:
+        veicoli = await db[COLLECTION].find({
+            "fornitore_piva": piva,
+            "$or": [
+                {"data_fine": {"$exists": False}},
+                {"data_fine": None},
+                {"data_fine": ""},
+                {"data_fine": {"$gte": oggi}}
+            ]
+        }).to_list(length=100)
+        
+        risultati["veicoli_attivi_per_fornitore"][piva] = [
+            {"targa": v.get("targa"), "data_fine": v.get("data_fine")}
+            for v in veicoli
+        ]
+    
+    return risultati
+
+
 @router.get("/drivers")
 async def get_drivers() -> Dict[str, Any]:
     """
