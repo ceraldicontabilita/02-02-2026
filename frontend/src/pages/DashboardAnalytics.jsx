@@ -146,6 +146,10 @@ export default function DashboardAnalytics() {
   const [stats, setStats] = useState(null);
   const [activeView, setActiveView] = useState('overview');
   
+  // Stato per auto-riparazione
+  const [autoRepairStatus, setAutoRepairStatus] = useState(null);
+  const [autoRepairRunning, setAutoRepairRunning] = useState(false);
+  
   // WebSocket per aggiornamenti real-time
   const { 
     kpiData: liveKpi, 
@@ -153,6 +157,32 @@ export default function DashboardAnalytics() {
     lastUpdate: wsLastUpdate,
     requestRefresh 
   } = useWebSocketDashboard(anno, true);
+
+  /**
+   * LOGICA INTELLIGENTE: Esegue auto-riparazione dei dati al caricamento.
+   */
+  const eseguiAutoRiparazione = async () => {
+    setAutoRepairRunning(true);
+    try {
+      const res = await api.post('/api/analytics/auto-ricostruisci-dati');
+      if (res.data.correzioni_applicate > 0 || res.data.discrepanze_trovate?.length > 0) {
+        console.log('🔧 Auto-riparazione analytics completata:', res.data);
+        setAutoRepairStatus(res.data);
+        // Ricarica dati dopo riparazione
+        loadStats();
+      }
+    } catch (error) {
+      console.warn('Auto-riparazione analytics non riuscita:', error);
+    } finally {
+      setAutoRepairRunning(false);
+    }
+  };
+
+  useEffect(() => {
+    // Al primo caricamento, esegui auto-riparazione
+    eseguiAutoRiparazione();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     loadStats();
