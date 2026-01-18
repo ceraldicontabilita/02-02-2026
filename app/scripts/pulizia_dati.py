@@ -69,8 +69,8 @@ async def elimina_duplicati_fatture() -> Dict[str, Any]:
                 risultati["errori"].append(f"Errore eliminazione {doc['id']}: {str(e)}")
         
         risultati["dettagli"].append({
-            "fattura": gruppo["_id"]["numero"],
-            "fornitore": (gruppo["_id"]["fornitore"] or "")[:30],
+            "fattura": gruppo["_id"].get("numero", "N/A"),
+            "fornitore": (gruppo["_id"].get("fornitore") or "")[:30],
             "copie": gruppo["count"],
             "eliminati": len(docs_da_eliminare),
             "mantenuto": doc_da_mantenere["id"]
