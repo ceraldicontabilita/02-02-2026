@@ -560,3 +560,118 @@ async def get_assegni_senza_associazione() -> Dict[str, Any]:
         "per_importo": {f"€{k:.2f}": {"count": len(v), "numeri": v[:10]} for k, v in sorted(per_importo.items(), key=lambda x: -len(x[1]))}
     }
 
+
+
+@router.post("/sync-da-estratto-conto")
+async def sync_assegni_da_estratto_conto() -> Dict[str, Any]:
+    """
+    Sincronizza gli assegni dall'estratto conto.
+    
+    Cerca movimenti con pattern "ASSEGNO" nella descrizione e li importa
+    come assegni nella collection dedicata.
+    
+    Pattern riconosciuti:
+    - VOSTRO ASSEGNO N. XXXXXXXXXX
+    - PRELIEVO ASSEGNO N. XXXXXXXXXX
+    - PAGAMENTO ASSEGNO
+    - VS. ASSEGNO
+    """
+    import re
+    db = Database.get_db()
+    
+    risultati = {
+        "movimenti_analizzati": 0,
+        "assegni_trovati": 0,
+        "assegni_creati": 0,
+        "assegni_esistenti": 0,
+        "errori": [],
+        "dettagli": []
+    }
+    
+    # Pattern per estrarre numero assegno
+    patterns_assegno = [
+        r"ASSEGNO\s*N\.?\s*(\d+)",
+        r"ASSEGNO\s+(\d+)",
+        r"VS\.?\s*ASSEGNO\s*N?\.?\s*(\d+)",
+        r"VOSTRO\s+ASSEGNO\s*N\.?\s*(\d+)",
+        r"PRELIEVO\s+ASSEGNO\s*N?\.?\s*(\d+)",
+    ]
+    
+    # Cerca movimenti con "assegno" nella descrizione
+    movimenti = await db.estratto_conto_movimenti.find({
+        "$or": [
+            {"descrizione": {"$regex": "assegno", "$options": "i"}},
+            {"descrizione_originale": {"$regex": "assegno", "$options": "i"}}
+        ],
+        "importo": {"$lt": 0}  # Solo uscite (pagamenti)
+    }, {"_id": 0}).to_list(1000)
+    
+    risultati["movimenti_analizzati"] = len(movimenti)
+    
+    for mov in movimenti:
+        descrizione = mov.get("descrizione") or mov.get("descrizione_originale") or ""
+        
+        # Salta se è solo "RILASCIO CARNET ASSEGNI"
+        if "RILASCIO CARNET" in descrizione.upper():
+            continue
+        
+        # Estrai numero assegno
+        numero_assegno = None
+        for pattern in patterns_assegno:
+            match = re.search(pattern, descrizione, re.IGNORECASE)
+            if match:
+                numero_assegno = match.group(1)
+                break
+        
+        if not numero_assegno:
+            # Se non trova numero, usa un ID univoco basato sul movimento
+            numero_assegno = f"AUTO-{mov.get('id', '')[:8]}"
+        
+        risultati["assegni_trovati"] += 1
+        
+        # Verifica se esiste già
+        esistente = await db[COLLECTION_ASSEGNI].find_one({
+            "$or": [
+                {"numero": numero_assegno},
+                {"movimento_id": mov.get("id")}
+            ]
+        })
+        
+        if esistente:
+            risultati["assegni_esistenti"] += 1
+            continue
+        
+        # Crea assegno
+        importo = abs(float(mov.get("importo", 0)))
+        data = mov.get("data") or mov.get("data_pagamento")
+        
+        assegno = {
+            "id": str(uuid.uuid4()),
+            "numero": numero_assegno,
+            "importo": importo,
+            "data": data,
+            "data_emissione": data,
+            "stato": "emesso",
+            "beneficiario": mov.get("fornitore") or mov.get("ragione_sociale") or "",
+            "descrizione": descrizione,
+            "movimento_id": mov.get("id"),
+            "fonte": "estratto_conto",
+            "banca": mov.get("banca"),
+            "confermato": False,
+            "created_at": datetime.now().isoformat(),
+            "updated_at": datetime.now().isoformat()
+        }
+        
+        try:
+            await db[COLLECTION_ASSEGNI].insert_one(assegno)
+            risultati["assegni_creati"] += 1
+            risultati["dettagli"].append({
+                "numero": numero_assegno,
+                "importo": importo,
+                "data": data,
+                "descrizione": descrizione[:50]
+            })
+        except Exception as e:
+            risultati["errori"].append(f"Errore creazione assegno {numero_assegno}: {str(e)}")
+    
+    return risultati
