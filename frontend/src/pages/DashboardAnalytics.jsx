@@ -305,7 +305,7 @@ export default function DashboardAnalytics() {
           entrate: entrateTotali,
           uscite: usciteTotali,
           cashFlow,
-          numFatture: fatture.length + corrispettivi.length,
+          numFatture: corrispettivi.length, // Solo corrispettivi (fatture emesse sono figurative)
           numDipendenti: dipendenti.length,
           numF24: f24.length,
           numCorrispettivi: corrispettivi.length
