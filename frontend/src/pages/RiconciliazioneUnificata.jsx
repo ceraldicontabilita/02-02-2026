@@ -192,11 +192,10 @@ export default function RiconciliazioneUnificata() {
     }
   };
 
-  useEffect(() => {
-    // Al primo caricamento, esegui auto-riparazione
-    eseguiAutoRiparazione();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Auto-riparazione DISABILITATA per performance - eseguire manualmente
+  // useEffect(() => {
+  //   eseguiAutoRiparazione();
+  // }, []);
 
   useEffect(() => {
     loadAllData();
