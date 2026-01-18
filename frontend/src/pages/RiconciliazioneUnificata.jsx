@@ -817,7 +817,7 @@ function MovimentiTab({ movimenti, onConferma, onIgnora, processing, title, empt
       <div style={{ padding: 16, background: '#f8fafc', borderBottom: '1px solid #e5e7eb' }}>
         <h3 style={{ margin: 0, fontSize: 16 }}>{title} ({movimenti.length})</h3>
       </div>
-      <div style={{ maxHeight: 500, overflow: 'auto' }}>
+      <div style={{ maxHeight: 800, overflow: 'auto' }}>
         {movimenti.map((m, idx) => (
           <MovimentoCard 
             key={m.movimento_id || idx}
@@ -1191,7 +1191,7 @@ function F24Tab({ f24, onConfermaF24, processing }) {
         </div>
       </div>
       
-      <div style={{ maxHeight: 500, overflow: 'auto' }}>
+      <div style={{ maxHeight: 800, overflow: 'auto' }}>
         {f24Validi.map((f, idx) => {
           const importo = f.importo_totale || f.importo || 0;
           const scadenzaStr = formatDateIT(f.data_scadenza);
@@ -1455,7 +1455,7 @@ function ArubaTab({ fatture, onConferma, processing, fornitori = [], onRefresh, 
       </div>
       
       {/* Lista fatture */}
-      <div style={{ maxHeight: 500, overflow: 'auto' }}>
+      <div style={{ maxHeight: 800, overflow: 'auto' }}>
         {fattureFiltrate.map((op, idx) => {
           const metodoPreferito = preferenze[op.fornitore] || op.metodo_pagamento_proposto;
           
