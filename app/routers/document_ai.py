@@ -168,7 +168,7 @@ async def get_extracted_documents(
     """
     Recupera i documenti estratti salvati nel database.
     """
-    db = get_database()
+    db = await get_database()
     
     query = {}
     if document_type:
