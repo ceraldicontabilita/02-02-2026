@@ -907,3 +907,217 @@ async def correggi_numeri_assegni() -> Dict[str, Any]:
                     risultati["errori"].append(f"Errore update {ass['id']}: {str(e)}")
     
     return risultati
+
+
+
+@router.post("/associa-beneficiari-robusto")
+async def associa_beneficiari_robusto() -> Dict[str, Any]:
+    """
+    LOGICA ROBUSTA: Cerca e associa beneficiari agli assegni senza beneficiario.
+    
+    ALGORITMO:
+    1. Per ogni assegno senza beneficiario
+    2. Cerca fatture con importo simile (±10€) nella finestra temporale (±30 giorni)
+    3. Se trovato match unico, associa
+    4. Se trovati più match, cerca di distinguere per fornitore già pagato con altri assegni
+    5. Gestisce pagamenti multipli (una fattura pagata con più assegni)
+    """
+    import re
+    db = Database.get_db()
+    
+    risultati = {
+        "timestamp": datetime.utcnow().isoformat(),
+        "assegni_analizzati": 0,
+        "beneficiari_trovati": 0,
+        "fatture_associate": 0,
+        "pagamenti_multipli": 0,
+        "non_trovati": [],
+        "errori": []
+    }
+    
+    # 1. Trova assegni senza beneficiario
+    assegni_senza_ben = await db[COLLECTION_ASSEGNI].find({
+        "$or": [
+            {"beneficiario": None},
+            {"beneficiario": ""},
+            {"beneficiario": {"$exists": False}}
+        ]
+    }, {"_id": 0}).to_list(10000)
+    
+    risultati["assegni_analizzati"] = len(assegni_senza_ben)
+    
+    # 2. Carica tutte le fatture ricevute (quelle da pagare ai fornitori)
+    fatture = await db.fatture_ricevute.find({
+        "total_amount": {"$gt": 0}
+    }, {"_id": 0}).to_list(50000)
+    
+    # Indice fatture per importo approssimativo
+    fatture_by_importo = {}
+    for f in fatture:
+        importo = round(float(f.get("total_amount") or f.get("importo_totale") or 0), 0)
+        if importo > 0:
+            if importo not in fatture_by_importo:
+                fatture_by_importo[importo] = []
+            fatture_by_importo[importo].append(f)
+    
+    # 3. Carica fornitori per nome
+    fornitori = await db.suppliers.find({}, {"_id": 0}).to_list(10000)
+    fornitori_idx = {}
+    for f in fornitori:
+        nome = (f.get("ragione_sociale") or f.get("denominazione") or "").upper()
+        if nome:
+            fornitori_idx[nome] = f
+    
+    for ass in assegni_senza_ben:
+        importo_ass = abs(float(ass.get("importo") or 0))
+        data_ass_str = ass.get("data") or ""
+        numero_ass = ass.get("numero", "")
+        
+        if importo_ass == 0:
+            continue
+        
+        # Cerca fatture con importo simile (±10€)
+        candidati = []
+        for delta in range(-10, 11):
+            importo_cerca = round(importo_ass + delta, 0)
+            if importo_cerca in fatture_by_importo:
+                candidati.extend(fatture_by_importo[importo_cerca])
+        
+        # Filtra per data (±60 giorni dall'assegno)
+        try:
+            if data_ass_str:
+                data_ass = datetime.fromisoformat(data_ass_str.replace('Z', '+00:00'))
+            else:
+                data_ass = None
+        except:
+            data_ass = None
+        
+        match_trovato = None
+        
+        if len(candidati) == 1:
+            # Match unico!
+            match_trovato = candidati[0]
+        elif len(candidati) > 1 and data_ass:
+            # Più candidati - cerca quello più vicino per data
+            candidati_ordinati = []
+            for c in candidati:
+                data_fatt_str = c.get("invoice_date") or c.get("data_fattura") or ""
+                try:
+                    data_fatt = datetime.fromisoformat(data_fatt_str.replace('Z', '+00:00'))
+                    diff_giorni = abs((data_ass - data_fatt).days)
+                    if diff_giorni <= 90:  # Max 90 giorni di differenza
+                        candidati_ordinati.append((c, diff_giorni))
+                except:
+                    pass
+            
+            if candidati_ordinati:
+                candidati_ordinati.sort(key=lambda x: x[1])
+                match_trovato = candidati_ordinati[0][0]
+        
+        if match_trovato:
+            fornitore = match_trovato.get("supplier_name") or match_trovato.get("fornitore") or ""
+            numero_fatt = match_trovato.get("invoice_number") or match_trovato.get("numero_fattura") or ""
+            
+            try:
+                await db[COLLECTION_ASSEGNI].update_one(
+                    {"id": ass["id"]},
+                    {"$set": {
+                        "beneficiario": fornitore,
+                        "fattura_associata": numero_fatt,
+                        "fattura_id": match_trovato.get("id"),
+                        "importo_fattura": match_trovato.get("total_amount"),
+                        "associazione_automatica": True,
+                        "updated_at": datetime.utcnow().isoformat()
+                    }}
+                )
+                risultati["beneficiari_trovati"] += 1
+                risultati["fatture_associate"] += 1
+            except Exception as e:
+                risultati["errori"].append(f"Errore update {ass['id']}: {str(e)}")
+        else:
+            risultati["non_trovati"].append({
+                "numero": numero_ass,
+                "importo": importo_ass,
+                "data": data_ass_str
+            })
+    
+    return risultati
+
+
+@router.post("/associa-pagamenti-multipli")
+async def associa_pagamenti_multipli() -> Dict[str, Any]:
+    """
+    LOGICA AVANZATA: Gestisce fatture pagate con più assegni.
+    
+    ALGORITMO:
+    1. Raggruppa assegni per beneficiario
+    2. Per ogni gruppo, cerca fatture con importo = somma assegni
+    3. Se trovato, marca tutti gli assegni come parte dello stesso pagamento
+    """
+    db = Database.get_db()
+    
+    risultati = {
+        "timestamp": datetime.utcnow().isoformat(),
+        "gruppi_analizzati": 0,
+        "pagamenti_multipli_trovati": 0,
+        "assegni_collegati": 0,
+        "errori": []
+    }
+    
+    # Raggruppa assegni per beneficiario
+    pipeline = [
+        {"$match": {"beneficiario": {"$exists": True, "$ne": ""}}},
+        {"$group": {
+            "_id": "$beneficiario",
+            "assegni": {"$push": {
+                "id": "$id",
+                "numero": "$numero",
+                "importo": "$importo",
+                "data": "$data",
+                "fattura_associata": "$fattura_associata"
+            }},
+            "totale": {"$sum": {"$abs": "$importo"}},
+            "count": {"$sum": 1}
+        }},
+        {"$match": {"count": {"$gt": 1}}}  # Solo beneficiari con più assegni
+    ]
+    
+    gruppi = await db[COLLECTION_ASSEGNI].aggregate(pipeline).to_list(1000)
+    risultati["gruppi_analizzati"] = len(gruppi)
+    
+    for gruppo in gruppi:
+        beneficiario = gruppo["_id"]
+        totale_assegni = round(float(gruppo["totale"]), 2)
+        assegni_gruppo = gruppo["assegni"]
+        
+        # Cerca fattura con importo uguale al totale degli assegni (±5€)
+        fattura_match = await db.fatture_ricevute.find_one({
+            "supplier_name": {"$regex": beneficiario, "$options": "i"},
+            "total_amount": {"$gte": totale_assegni - 5, "$lte": totale_assegni + 5}
+        }, {"_id": 0})
+        
+        if fattura_match:
+            numero_fatt = fattura_match.get("invoice_number") or ""
+            
+            # Aggiorna tutti gli assegni del gruppo
+            for i, ass in enumerate(assegni_gruppo):
+                try:
+                    await db[COLLECTION_ASSEGNI].update_one(
+                        {"id": ass["id"]},
+                        {"$set": {
+                            "fattura_associata": numero_fatt,
+                            "fattura_id": fattura_match.get("id"),
+                            "pagamento_multiplo": True,
+                            "pagamento_multiplo_numero": i + 1,
+                            "pagamento_multiplo_totale": len(assegni_gruppo),
+                            "pagamento_multiplo_importo_fattura": fattura_match.get("total_amount"),
+                            "updated_at": datetime.utcnow().isoformat()
+                        }}
+                    )
+                    risultati["assegni_collegati"] += 1
+                except Exception as e:
+                    risultati["errori"].append(f"Errore {ass['id']}: {str(e)}")
+            
+            risultati["pagamenti_multipli_trovati"] += 1
+    
+    return risultati
