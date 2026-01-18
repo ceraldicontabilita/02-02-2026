@@ -28,17 +28,17 @@ import { PageInfoCard } from '../components/PageInfoCard';
 
 const TIPI_DOCUMENTO = [
   { id: 'auto', label: '🤖 Auto-Detect', color: '#3b82f6', desc: 'Il sistema riconosce automaticamente il tipo', extension: '*', endpoint: '/api/documenti/upload-auto' },
-  { id: 'fattura', label: '🧾 Fatture XML', color: '#ec4899', desc: 'Fatture elettroniche SDI', extension: '.xml', endpoint: '/api/fatture/upload-xml' },
-  { id: 'estratto_conto_pdf', label: '🏦 Estratto Conto PDF', color: '#10b981', desc: 'PDF da banca con ANTEPRIMA', extension: '.pdf', endpoint: '/api/bank-statement-bulk/parse-bulk', hasPreview: true },
-  { id: 'estratto_conto', label: '📊 Estratto Conto Excel/CSV', color: '#059669', desc: 'Excel/CSV da banca', extension: '.xlsx,.xls,.csv', endpoint: '/api/estratto-conto-movimenti/import' },
-  { id: 'f24', label: '📄 F24', color: '#ef4444', desc: 'Modelli F24 da pagare', extension: '.pdf', endpoint: '/api/f24/upload-pdf' },
-  { id: 'quietanza_f24', label: '✅ Quietanza F24', color: '#f59e0b', desc: 'Ricevute pagamento F24', extension: '.pdf', endpoint: '/api/quietanze-f24/upload' },
-  { id: 'cedolino', label: '💰 Buste Paga', color: '#8b5cf6', desc: 'Cedolini e Libro Unico', extension: '.pdf,.zip,.rar', endpoint: '/api/employees/paghe/upload-pdf' },
+  { id: 'fattura', label: '🧾 Fatture XML', color: '#ec4899', desc: 'Fatture SDI con integrazione Magazzino+Prima Nota+Scadenziario', extension: '.xml,.zip', endpoint: '/api/fatture-ricevute/import-xml', endpointMulti: '/api/fatture-ricevute/import-xml-multipli', endpointZip: '/api/fatture-ricevute/import-zip', hasIntegration: true },
+  { id: 'estratto_conto_pdf', label: '🏦 Estratto Conto PDF', color: '#10b981', desc: 'PDF da banca con ANTEPRIMA', extension: '.pdf,.zip', endpoint: '/api/bank-statement-bulk/parse-bulk', hasPreview: true },
+  { id: 'estratto_conto', label: '📊 Estratto Conto Excel/CSV', color: '#059669', desc: 'Excel/CSV da banca', extension: '.xlsx,.xls,.csv,.zip', endpoint: '/api/estratto-conto-movimenti/import' },
+  { id: 'f24', label: '📄 F24', color: '#ef4444', desc: 'Modelli F24 da pagare', extension: '.pdf,.zip', endpoint: '/api/f24/upload-pdf' },
+  { id: 'quietanza_f24', label: '✅ Quietanza F24', color: '#f59e0b', desc: 'Ricevute pagamento F24', extension: '.pdf,.zip', endpoint: '/api/quietanze-f24/upload' },
+  { id: 'cedolino', label: '💰 Buste Paga', color: '#8b5cf6', desc: 'Cedolini e Libro Unico', extension: '.pdf,.zip', endpoint: '/api/employees/paghe/upload-pdf' },
   { id: 'bonifici', label: '📑 Bonifici', color: '#06b6d4', desc: 'Archivio bonifici PDF/ZIP', extension: '.pdf,.zip', endpoint: '/api/archivio-bonifici/jobs', useBonificiJob: true },
-  { id: 'corrispettivi', label: '🧾 Corrispettivi', color: '#84cc16', desc: 'Scontrini giornalieri Excel/XML', extension: '.xlsx,.xls,.xml', endpoint: '/api/prima-nota-auto/import-corrispettivi', endpointXml: '/api/prima-nota-auto/import-corrispettivi-xml' },
-  { id: 'pos', label: '💳 Incassi POS', color: '#a855f7', desc: 'Rendiconti POS Excel', extension: '.xlsx,.xls', endpoint: '/api/prima-nota-auto/import-pos' },
-  { id: 'versamenti', label: '🏧 Versamenti', color: '#14b8a6', desc: 'Versamenti in banca CSV', extension: '.csv', endpoint: '/api/prima-nota-auto/import-versamenti' },
-  { id: 'fornitori', label: '👥 Fornitori', color: '#f97316', desc: 'Anagrafica fornitori Excel', extension: '.xlsx,.xls', endpoint: '/api/suppliers/upload-excel' },
+  { id: 'corrispettivi', label: '🧾 Corrispettivi', color: '#84cc16', desc: 'Scontrini giornalieri Excel/XML', extension: '.xlsx,.xls,.xml,.zip', endpoint: '/api/prima-nota-auto/import-corrispettivi', endpointXml: '/api/prima-nota-auto/import-corrispettivi-xml' },
+  { id: 'pos', label: '💳 Incassi POS', color: '#a855f7', desc: 'Rendiconti POS Excel', extension: '.xlsx,.xls,.zip', endpoint: '/api/prima-nota-auto/import-pos' },
+  { id: 'versamenti', label: '🏧 Versamenti', color: '#14b8a6', desc: 'Versamenti in banca CSV', extension: '.csv,.zip', endpoint: '/api/prima-nota-auto/import-versamenti' },
+  { id: 'fornitori', label: '👥 Fornitori', color: '#f97316', desc: 'Anagrafica fornitori Excel', extension: '.xlsx,.xls,.zip', endpoint: '/api/suppliers/upload-excel' },
 ];
 
 // Templates scaricabili
