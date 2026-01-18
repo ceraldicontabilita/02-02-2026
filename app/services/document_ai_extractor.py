@@ -312,11 +312,19 @@ async def extract_structured_data(
     
     try:
         # Inizializza chat LLM
+        # Determina provider dal nome del modello
+        if model.startswith("claude"):
+            provider = "anthropic"
+        elif model.startswith("gemini"):
+            provider = "gemini"
+        else:
+            provider = "openai"
+        
         chat = LlmChat(
             api_key=EMERGENT_LLM_KEY,
             session_id=f"doc_extract_{datetime.now().strftime('%Y%m%d%H%M%S')}",
             system_message="Sei un assistente specializzato nell'estrazione di dati da documenti italiani. Rispondi SEMPRE e SOLO con JSON valido."
-        ).with_model("openai", model)
+        ).with_model(provider, model)
         
         # Invia messaggio
         user_message = UserMessage(text=prompt)
