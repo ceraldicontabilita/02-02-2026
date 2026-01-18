@@ -1121,3 +1121,255 @@ async def associa_pagamenti_multipli() -> Dict[str, Any]:
             risultati["pagamenti_multipli_trovati"] += 1
     
     return risultati
+
+
+@router.post("/cerca-combinazioni-assegni")
+async def cerca_combinazioni_assegni(
+    max_assegni: int = Query(4, ge=2, le=6, description="Numero massimo di assegni per combinazione"),
+    tolleranza: float = Query(1.0, ge=0.01, le=10, description="Tolleranza in euro per il match")
+) -> Dict[str, Any]:
+    """
+    🔍 LOGICA AVANZATA: Cerca combinazioni di assegni senza beneficiario che sommati
+    corrispondono all'importo di una fattura non pagata.
+    
+    CASO D'USO:
+    - 3 assegni da €1.663,26 → cerca fattura da €4.989,78 (3 × 1.663,26)
+    - Assegni €855,98 + €1.028,82 → cerca fattura da €1.884,80
+    
+    ALGORITMO:
+    1. Prende tutti gli assegni senza beneficiario
+    2. Genera tutte le combinazioni possibili (da 2 a max_assegni elementi)
+    3. Per ogni combinazione, calcola la somma
+    4. Cerca fatture non pagate con importo corrispondente (± tolleranza)
+    5. Se trova match, associa tutti gli assegni della combinazione
+    
+    PARAMETRI:
+    - max_assegni: numero massimo di assegni per combinazione (default: 4)
+    - tolleranza: tolleranza in euro per il match (default: 1.0€)
+    """
+    from itertools import combinations
+    db = Database.get_db()
+    
+    risultati = {
+        "timestamp": datetime.utcnow().isoformat(),
+        "assegni_analizzati": 0,
+        "combinazioni_testate": 0,
+        "match_trovati": 0,
+        "assegni_associati": 0,
+        "dettagli_match": [],
+        "assegni_non_associabili": [],
+        "errori": []
+    }
+    
+    # 1. Carica assegni senza beneficiario valido
+    assegni_senza_ben = await db[COLLECTION_ASSEGNI].find({
+        "$or": [
+            {"beneficiario": None},
+            {"beneficiario": ""},
+            {"beneficiario": "N/A"},
+            {"beneficiario": "-"}
+        ],
+        "importo": {"$gt": 0},
+        "entity_status": {"$ne": "deleted"}
+    }, {"_id": 0}).to_list(1000)
+    
+    risultati["assegni_analizzati"] = len(assegni_senza_ben)
+    
+    if len(assegni_senza_ben) < 2:
+        return {
+            **risultati,
+            "message": "Meno di 2 assegni senza beneficiario - nessuna combinazione possibile"
+        }
+    
+    # 2. Carica fatture non pagate
+    fatture_non_pagate = await db.invoices.find({
+        "$or": [
+            {"status": {"$nin": ["paid", "pagata"]}},
+            {"pagato": {"$ne": True}}
+        ],
+        "total_amount": {"$gt": 0}
+    }, {"_id": 0, "id": 1, "invoice_number": 1, "supplier_name": 1, "total_amount": 1}).to_list(10000)
+    
+    # Crea indice per importo arrotondato
+    fatture_per_importo = {}
+    for f in fatture_non_pagate:
+        imp = round(float(f.get("total_amount", 0)), 2)
+        if imp not in fatture_per_importo:
+            fatture_per_importo[imp] = []
+        fatture_per_importo[imp].append(f)
+    
+    logger.info(f"Cerca combinazioni: {len(assegni_senza_ben)} assegni, {len(fatture_non_pagate)} fatture non pagate")
+    
+    # 3. Prepara lista di importi con riferimento agli assegni
+    assegni_con_importo = [
+        {"assegno": a, "importo": round(float(a.get("importo", 0)), 2)}
+        for a in assegni_senza_ben
+        if float(a.get("importo", 0)) > 0
+    ]
+    
+    # 4. Genera e testa combinazioni (da 2 a max_assegni)
+    assegni_gia_associati = set()
+    
+    for num_assegni in range(2, min(max_assegni + 1, len(assegni_con_importo) + 1)):
+        for combo in combinations(enumerate(assegni_con_importo), num_assegni):
+            # Salta se qualche assegno è già stato associato
+            indices = [c[0] for c in combo]
+            if any(idx in assegni_gia_associati for idx in indices):
+                continue
+            
+            risultati["combinazioni_testate"] += 1
+            
+            assegni_combo = [c[1]["assegno"] for c in combo]
+            somma = sum(c[1]["importo"] for c in combo)
+            somma_round = round(somma, 2)
+            
+            # Cerca fattura con questo importo (con tolleranza)
+            fattura_match = None
+            for delta in [0, -0.01, 0.01, -0.02, 0.02, -0.5, 0.5, -1, 1]:
+                importo_cerca = round(somma_round + delta, 2)
+                if importo_cerca in fatture_per_importo:
+                    fattura_match = fatture_per_importo[importo_cerca][0]
+                    break
+            
+            # Se non trovato con lookup diretto, cerca con range
+            if not fattura_match:
+                for f in fatture_non_pagate:
+                    imp_fatt = round(float(f.get("total_amount", 0)), 2)
+                    if abs(imp_fatt - somma_round) <= tolleranza:
+                        fattura_match = f
+                        break
+            
+            if fattura_match:
+                # MATCH TROVATO!
+                risultati["match_trovati"] += 1
+                
+                fornitore = fattura_match.get("supplier_name", "")
+                numero_fatt = fattura_match.get("invoice_number", "")
+                importo_fatt = fattura_match.get("total_amount", 0)
+                
+                dettaglio = {
+                    "tipo": "combinazione",
+                    "num_assegni": num_assegni,
+                    "assegni": [a.get("numero") for a in assegni_combo],
+                    "importi_assegni": [round(float(a.get("importo", 0)), 2) for a in assegni_combo],
+                    "somma_assegni": somma_round,
+                    "fattura_numero": numero_fatt,
+                    "fattura_importo": importo_fatt,
+                    "fornitore": fornitore,
+                    "differenza": round(importo_fatt - somma_round, 2)
+                }
+                risultati["dettagli_match"].append(dettaglio)
+                
+                # Associa tutti gli assegni della combinazione
+                for i, ass in enumerate(assegni_combo):
+                    try:
+                        await db[COLLECTION_ASSEGNI].update_one(
+                            {"id": ass["id"]},
+                            {"$set": {
+                                "beneficiario": fornitore,
+                                "fattura_associata": numero_fatt,
+                                "fattura_id": fattura_match.get("id"),
+                                "pagamento_combinato": True,
+                                "combinazione_assegni": [a.get("numero") for a in assegni_combo],
+                                "combinazione_numero": i + 1,
+                                "combinazione_totale": num_assegni,
+                                "importo_fattura_combinata": importo_fatt,
+                                "updated_at": datetime.utcnow().isoformat()
+                            }}
+                        )
+                        risultati["assegni_associati"] += 1
+                        assegni_gia_associati.add(indices[i])
+                    except Exception as e:
+                        risultati["errori"].append(f"Errore update {ass['id']}: {str(e)}")
+                
+                # Rimuovi fattura dall'indice per evitare doppi match
+                if somma_round in fatture_per_importo:
+                    fatture_per_importo[somma_round] = [
+                        f for f in fatture_per_importo[somma_round] 
+                        if f.get("id") != fattura_match.get("id")
+                    ]
+    
+    # 5. Elenco assegni rimasti non associabili
+    for idx, item in enumerate(assegni_con_importo):
+        if idx not in assegni_gia_associati:
+            risultati["assegni_non_associabili"].append({
+                "numero": item["assegno"].get("numero"),
+                "importo": item["importo"]
+            })
+    
+    return risultati
+
+
+@router.get("/preview-combinazioni")
+async def preview_combinazioni_assegni(
+    max_assegni: int = Query(4, ge=2, le=6)
+) -> Dict[str, Any]:
+    """
+    🔎 PREVIEW: Mostra le possibili combinazioni di assegni che potrebbero matchare fatture.
+    Non esegue modifiche, solo analisi.
+    
+    Utile per verificare prima di eseguire l'associazione.
+    """
+    from itertools import combinations
+    db = Database.get_db()
+    
+    # Carica assegni senza beneficiario
+    assegni_senza_ben = await db[COLLECTION_ASSEGNI].find({
+        "$or": [
+            {"beneficiario": None},
+            {"beneficiario": ""},
+            {"beneficiario": "N/A"},
+            {"beneficiario": "-"}
+        ],
+        "importo": {"$gt": 0},
+        "entity_status": {"$ne": "deleted"}
+    }, {"_id": 0, "numero": 1, "importo": 1}).to_list(100)
+    
+    if len(assegni_senza_ben) < 2:
+        return {
+            "assegni_senza_beneficiario": len(assegni_senza_ben),
+            "combinazioni_possibili": [],
+            "message": "Servono almeno 2 assegni per cercare combinazioni"
+        }
+    
+    # Carica fatture non pagate
+    fatture = await db.invoices.find({
+        "$or": [
+            {"status": {"$nin": ["paid", "pagata"]}},
+            {"pagato": {"$ne": True}}
+        ],
+        "total_amount": {"$gt": 0}
+    }, {"_id": 0, "invoice_number": 1, "supplier_name": 1, "total_amount": 1}).to_list(10000)
+    
+    importi_fatture = {round(float(f.get("total_amount", 0)), 2): f for f in fatture}
+    
+    # Cerca combinazioni
+    possibili_match = []
+    importi = [(a.get("numero"), round(float(a.get("importo", 0)), 2)) for a in assegni_senza_ben]
+    
+    for r in range(2, min(max_assegni + 1, len(importi) + 1)):
+        for combo in combinations(importi, r):
+            somma = round(sum(imp for _, imp in combo), 2)
+            
+            # Cerca fattura con questo importo (±1€)
+            for delta in [0, -0.01, 0.01, -0.02, 0.02, -0.5, 0.5, -1, 1]:
+                imp_cerca = round(somma + delta, 2)
+                if imp_cerca in importi_fatture:
+                    f = importi_fatture[imp_cerca]
+                    possibili_match.append({
+                        "assegni": [num for num, _ in combo],
+                        "importi": [imp for _, imp in combo],
+                        "somma": somma,
+                        "fattura": f.get("invoice_number"),
+                        "fornitore": f.get("supplier_name", "")[:40],
+                        "importo_fattura": f.get("total_amount"),
+                        "differenza": round(f.get("total_amount", 0) - somma, 2)
+                    })
+                    break
+    
+    return {
+        "assegni_senza_beneficiario": len(assegni_senza_ben),
+        "fatture_non_pagate": len(fatture),
+        "combinazioni_con_match": len(possibili_match),
+        "dettagli": possibili_match[:20]  # Primi 20 per non sovraccaricare
+    }
