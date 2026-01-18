@@ -1,11 +1,6 @@
 """
 Parlant AI Agent Service
 Integrazione di Parlant SDK nel sistema Contabit.
-
-Crea un agente conversazionale con:
-- Guidelines per comportamento contestuale
-- Tools per accesso ai dati
-- Journeys per guidare l'utente
 """
 import os
 import asyncio
@@ -18,14 +13,17 @@ load_dotenv("/app/backend/.env")
 
 logger = logging.getLogger(__name__)
 
-# Configurazione - usa GEMINI_API_KEY per Parlant
 PARLANT_PORT = 8800
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
-# Imposta la chiave nell'ambiente per Parlant
-if GEMINI_API_KEY:
-    os.environ["GEMINI_API_KEY"] = GEMINI_API_KEY
-    os.environ["GOOGLE_API_KEY"] = GEMINI_API_KEY
+# Usa OpenAI con Emergent LLM Key (fallback se Gemini ha quota esaurita)
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY") or os.getenv("EMERGENT_LLM_KEY")
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
+
+# Imposta le chiavi nell'ambiente
+if OPENAI_API_KEY:
+    os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
+if GOOGLE_API_KEY:
+    os.environ["GOOGLE_API_KEY"] = GOOGLE_API_KEY
 
 
 class ParlantAgentService:
