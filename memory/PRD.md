@@ -173,10 +173,14 @@ Si scala:
 - **Logica TD24** - fatture differite escluse dalla riconciliazione (18 Gen 2026)
 
 ### 🔄 In Progress
-- UI pulsante aggiornamento bulk fornitori in `Fornitori.jsx`
 - Risoluzione 182 fornitori bancari senza IBAN (ridotti da 223)
 - Logica supervisione Cassa → Banca (backend pronto, da testare)
 - Auto-riconciliazione F24 con estratto conto (backend pronto, da testare)
+
+### ✅ Recentemente Completato (18 Gen 2026)
+- **Unificazione pagine Import**: Rimosso tab "Import XML" da Fatture Ricevute, centralizzato tutto in `/import-unificato`
+- **Import Unificato potenziato**: Tutti i tipi supportano ZIP massivo (.zip aggiunto a tutte le estensioni)
+- **Feedback integrazione**: Import fatture XML ora mostra dettagli di Magazzino, Prima Nota, Scadenziario e Riconciliazione
 
 ### 📋 Backlog
 - Finalizzare importazione cedolini da PDF (OCR)
