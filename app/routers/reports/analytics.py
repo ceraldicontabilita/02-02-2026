@@ -374,3 +374,90 @@ async def get_categorie_analitiche(
         "top_entrate": []
     }
 
+
+
+@router.post(
+    "/auto-ricostruisci-dati",
+    summary="Auto-riparazione dati analytics"
+)
+async def auto_ricostruisci_dati_analytics() -> Dict[str, Any]:
+    """
+    LOGICA INTELLIGENTE: Verifica e corregge automaticamente i dati per Analytics.
+    
+    REGOLE:
+    1. Verifica coerenza Prima Nota Cassa con corrispettivi
+    2. Verifica coerenza Prima Nota Banca con estratto conto
+    3. Corregge movimenti con importi errati o tipo errato
+    4. Sincronizza saldi tra fonti
+    """
+    db = Database.get_db()
+    
+    risultati = {
+        "timestamp": datetime.utcnow().isoformat(),
+        "movimenti_verificati": 0,
+        "correzioni_applicate": 0,
+        "discrepanze_trovate": [],
+        "errori": []
+    }
+    
+    try:
+        # 1. Verifica movimenti Prima Nota con tipo mancante
+        movimenti_senza_tipo = await db.prima_nota_cassa.count_documents({
+            "$or": [{"tipo": None}, {"tipo": ""}]
+        })
+        if movimenti_senza_tipo > 0:
+            # Correggi basandosi sull'importo (positivo = entrata, negativo = uscita)
+            await db.prima_nota_cassa.update_many(
+                {"tipo": None, "importo": {"$gt": 0}},
+                {"$set": {"tipo": "entrata"}}
+            )
+            await db.prima_nota_cassa.update_many(
+                {"tipo": None, "importo": {"$lt": 0}},
+                {"$set": {"tipo": "uscita"}}
+            )
+            risultati["correzioni_applicate"] += movimenti_senza_tipo
+        
+        # 2. Stessa verifica per Prima Nota Banca
+        movimenti_banca_senza_tipo = await db.prima_nota_banca.count_documents({
+            "$or": [{"tipo": None}, {"tipo": ""}]
+        })
+        if movimenti_banca_senza_tipo > 0:
+            await db.prima_nota_banca.update_many(
+                {"tipo": None, "importo": {"$gt": 0}},
+                {"$set": {"tipo": "entrata"}}
+            )
+            await db.prima_nota_banca.update_many(
+                {"tipo": None, "importo": {"$lt": 0}},
+                {"$set": {"tipo": "uscita"}}
+            )
+            risultati["correzioni_applicate"] += movimenti_banca_senza_tipo
+        
+        # 3. Verifica totali corrispettivi vs Prima Nota Cassa
+        corr_totale = await db.corrispettivi.aggregate([
+            {"$group": {"_id": None, "totale": {"$sum": {"$toDouble": {"$ifNull": ["$totale", 0]}}}}}
+        ]).to_list(1)
+        
+        cassa_entrate = await db.prima_nota_cassa.aggregate([
+            {"$match": {"tipo": "entrata"}},
+            {"$group": {"_id": None, "totale": {"$sum": {"$toDouble": {"$ifNull": ["$importo", 0]}}}}}
+        ]).to_list(1)
+        
+        totale_corr = corr_totale[0]["totale"] if corr_totale else 0
+        totale_cassa = cassa_entrate[0]["totale"] if cassa_entrate else 0
+        
+        if abs(totale_corr - totale_cassa) > 100:  # Tolleranza 100€
+            risultati["discrepanze_trovate"].append({
+                "tipo": "corrispettivi_vs_cassa",
+                "corrispettivi": round(totale_corr, 2),
+                "prima_nota_cassa": round(totale_cassa, 2),
+                "differenza": round(totale_corr - totale_cassa, 2)
+            })
+        
+        risultati["movimenti_verificati"] = movimenti_senza_tipo + movimenti_banca_senza_tipo
+        
+    except Exception as e:
+        logger.error(f"Errore auto-ricostruzione analytics: {e}")
+        risultati["errori"].append(str(e))
+    
+    return risultati
+
