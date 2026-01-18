@@ -168,6 +168,7 @@ const GestioneRiservata = lazy(() => import("./pages/GestioneRiservata.jsx"));
 // === INTEGRAZIONI ===
 const GestionePagoPA = lazy(() => import("./pages/GestionePagoPA.jsx"));
 const GestioneInvoiceTronic = lazy(() => import("./pages/GestioneInvoiceTronic.jsx"));
+const ClassificazioneDocumenti = lazy(() => import("./pages/ClassificazioneDocumenti.jsx"));
 
 // Wrapper component with Suspense
 const LazyPage = ({ children }) => (
