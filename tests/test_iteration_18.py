@@ -5,7 +5,7 @@ import pytest
 import requests
 import os
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://robustbooks.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://erp-wizard-1.preview.emergentagent.com')
 
 class TestCeraldiExclusion:
     """Test that CERALDI GROUP SRL is NOT shown as fornitore"""

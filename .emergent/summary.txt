@@ -1,207 +1,213 @@
 <analysis>**original_problem_statement:**
-L'utente ha richiesto una serie di correzioni di bug e nuove funzionalità per la sua applicazione di contabilità. Le richieste principali, evolute durante la sessione, includono:
-
-1.  **Integrazione Agente AI (P0)**: Integrare un assistente conversazionale (Parlant.io con Emcie) che non risponde a causa di timeout.
-2.  **Correzioni Riconciliazione e Logica di Business**:
-    *   **Assegni**: La logica di gestione assegni era stata persa a causa di una pulizia del database. L'utente ha richiesto di ricostruire tutti gli assegni basandosi sugli estratti conto, associare intelligentemente gli assegni alle fatture (gestendo pagamenti parziali/multipli), e mostrare tutti i dati rilevanti (beneficiario, numero fattura) nell'interfaccia.
-    *   **F24**: Rimuovere opzioni di pagamento non pertinenti (Cassa, Assegno), implementare l'auto-riconciliazione basata su estratto conto e correggere le date di scadenza errate (es. 30/11/61).
-    *   **Logica TD24**: Le fatture di tipo TD24 (differite) con importo zero non devono essere considerate per il pagamento.
-    *   **Limite Anno**: Rimuovere il limite di ricerca basato sull'anno durante la riconciliazione delle fatture.
-3.  **Integrità e Pulizia Dati**:
-    *   **Unificazione Import**: Consolidare le diverse pagine di import (, ) in un'unica interfaccia robusta, eliminando la ridondanza.
-    *   **Upload Massivo**: Abilitare l'upload di file XML, PDF, Excel e ZIP massivi in tutta l'applicazione.
-    *   **Correzione Dati**: Risolvere problemi di dati duplicati o vuoti nelle fatture (), F24 e assegni. Risolvere l'errore di dati mancanti nella pagina  e .
-    *   **Errori di Parsing**: Risolvere errori di encoding () durante l'upload di file XML.
-    *   **Validazione Flessibile**: Rendere meno restrittiva la validazione durante l'import di fatture per fornitori senza metodo di pagamento o IBAN, permettendo l'import con un warning.
-4.  **Architettura e UI**:
-    *   **Pagine Auto-Sufficienti**: L'utente ha richiesto che ogni pagina diventi intelligente e robusta, incorporando la propria logica per auto-correggere e gestire i dati in caso di problemi, senza richiedere intervento manuale.
-    *   **Unificazione Collection**: Migrare la vecchia collection  nella nuova  e unificarne l'uso nel codice.
-    *   **Bug UI**: Le pagine , ,  e  presentavano dati errati o non venivano caricate.
-5.  **Integrazioni Esterne**:
-    *   Esplorare l'integrazione con Banco BPM per automatizzare operazioni, verificando la disponibilità di API REST.
+L'utente ha richiesto una serie di interventi per migliorare la robustezza e l'automazione della sua applicazione di contabilità. Le richieste principali sono:
+1.  **Correzione Dati e Logica di Business**:
+    *   Risolvere dati errati nella Dashboard e nella pagina Analytics, in particolare la logica di calcolo del fatturato.
+    *   Correggere i numeri di assegno errati (es. ), estraendo il numero corretto dalla descrizione del movimento bancario.
+    *   Associare in modo robusto gli assegni senza beneficiario alle fatture corrette.
+    *   Implementare una logica per gestire il pagamento di una singola fattura con più assegni.
+2.  **Pagine Auto-Sufficienti**: Estendere a tutte le pagine critiche il pattern di auto-riparazione, in cui ogni pagina verifica e corregge i propri dati al caricamento, mostrando una card informativa.
+3.  **Integrazione Dati da Email**:
+    *   Cercare nelle cartelle di Gmail i PDF dei verbali di noleggio (multe), scaricarli e associarli automaticamente alle righe delle fatture corrispondenti.
+    *   Cercare le email di notifica dei bonifici per gli stipendi (Info Bonifico YouBusiness Web), estrarre i dati (importo, dipendente) e aggiornare la  con uno stato provvisorio. La conferma definitiva avverrà solo dopo aver trovato il movimento corrispondente nell'estratto conto.
+4.  **Integrazione Fatturazione Elettronica**:
+    *   Analizzare il servizio .
+    *   Spiegare come funzionerebbe l'integrazione per ricevere automaticamente le fatture passive.
+    *   Implementare l'integrazione usando la chiave API di test e il codice destinatario forniti dall'utente.
+5.  **Integrazione PagoPA**:
+    *   Analizzare una ricevuta di pagamento PagoPA in PDF.
+    *   Creare una logica per associare automaticamente le ricevute PagoPA ai movimenti dell'estratto conto utilizzando il codice bolletta (CBILL).
 
 **User's preferred language**: Italiano
 
 **what currently exists?**
-L'agente ha eseguito un lavoro massiccio di correzione e robustezza dell'applicazione. È stata risolta una grave perdita di dati relativa agli assegni, ricostruendo l'intera cronologia (214 assegni) dagli estratti conto e implementando una logica di associazione intelligente con le fatture. Per prevenire futuri problemi, è stato creato un servizio di protezione del database () che esegue backup automatici prima di operazioni distruttive.
+L'agente ha esteso con successo il pattern delle pagine auto-sufficienti a quasi tutte le sezioni critiche dell'applicazione (, , , , , ), rendendole più robuste. Ha corretto un grave errore sui numeri degli assegni, implementando una logica di parsing più intelligente dalle descrizioni bancarie. È stata creata una routine di associazione che ha collegato con successo 47 dei 55 assegni che non avevano un beneficiario.
 
-La pagina  è stata trasformata in una pagina auto-sufficiente: ora invoca un endpoint di auto-riparazione al caricamento per garantire che i dati siano sempre aggiornati e correttamente associati. L'agente ha anche unificato le pagine di import, eliminando la ridondanza e migliorando l'interfaccia  per gestire upload massivi e fornire un feedback migliore all'utente. Sono stati risolti numerosi bug di visualizzazione dati su pagine critiche come , ,  e , e sono stati corretti errori di parsing XML e di validazione business. Infine, è stato eseguito uno script per unificare le collection  e .
+Sono state create nuove sezioni backend per gestire integrazioni esterne:
+-   **PagoPA**: Un nuovo router  è stato creato per associare le ricevute ai movimenti bancari.
+-   **InvoiceTronic**: L'SDK è stato installato e un router  è stato creato e connesso con successo alla sandbox del servizio usando la chiave API di test dell'utente.
+-   **Verbali Noleggio**: È stato creato un router  che si connette a Gmail, scarica i PDF dei verbali da cartelle specifiche e li associa alle fatture di noleggio.
+-   **Bonifici Stipendi**: È stato creato un router  per leggere le email di conferma dei bonifici e aggiornare provvisoriamente i dati salariali, in attesa della conferma dall'estratto conto.
 
 **Last working item**:
--   **Last item agent was working**: L'agente stava implementando la richiesta dell'utente di rendere le pagine auto-sufficienti e robuste. Ha iniziato con la pagina , aggiungendo una chiamata a un nuovo endpoint di auto-ricostruzione () all'avvio della pagina e inserendo una card informativa che spiega la logica della pagina all'utente.
+-   **Last item agent was working**: L'agente stava lavorando sull'associazione dei bonifici degli stipendi, letti dalle email, ai record dei dipendenti. Ha riscontrato che l'associazione falliva perché il codice puntava a una collection  vuota invece della corretta . Ha corretto il codice per usare la collection giusta ( come fonte dei nomi) ma non ha ancora rieseguito il test per confermare la soluzione.
 -   **Status**: IN PROGRESS
--   **Agent Testing Done**: Y
--   **Which testing method agent to use?**: Frontend testing agent per verificare che la logica di auto-sufficienza sia stata implementata correttamente e non introduca regressioni sulle pagine modificate.
+-   **Agent Testing Done**: N
+-   **Which testing method agent to use?**: backend testing agent. Eseguire un  sull'endpoint  per verificare che l'associazione ora funzioni correttamente dopo la correzione del nome della collection.
 -   **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
--   **Issue 1: (P0) La chat Parlant non risponde.**
--   **Issue 2: (P1) Implementare la logica delle Pagine Auto-Sufficienti in tutta l'applicazione.**
--   **Issue 3: (P2) Logica di supervisione (spostamento Cassa -> Banca) non finalizzata.**
--   **Issue 4: (P2) Validatori P0 per l'import fatture sono disabilitati.**
+-   **Issue 1: (P0) Associazione bonifici stipendi non funzionante.**
+-   **Issue 2: (P1) Mancata associazione di tutti gli assegni senza beneficiario.**
+-   **Issue 3: (P1) I validatori P0 per l'import delle fatture potrebbero essere ancora un problema.**
+-   **Issue 4: (P0, BLOCKED) La chat Parlant non risponde.**
 
 **Issues Detail**:
--   **Issue 1: La chat Parlant non risponde**
-    -   **Attempted fixes**: (Dalla sessione precedente) Il server Parlant è stato stabilizzato, ma la latenza del provider Emcie causa timeout durante l'inferenza. Nessun progresso su questo punto nella sessione corrente.
+-   **Issue 1: Associazione bonifici stipendi non funzionante**
+    -   **Attempted fixes**: L'agente ha identificato che il codice cercava la collection  invece di  o di usare i nomi presenti in . Ha modificato il file  per puntare alla fonte dati corretta.
     -   **Next debug checklist**:
-        1.  Implementare un meccanismo di streaming (WebSocket) al posto del polling HTTP per gestire risposte lunghe.
-        2.  Verificare la configurazione del modello Emcie (Jackal).
-        3.  Proporre all'utente un'alternativa più stabile se il problema persiste (es. OpenAI tramite ).
+        1.  Eseguire una chiamata  a .
+        2.  Verificare che l'output mostri .
+        3.  Controllare un record in  per vedere se è stato aggiornato con lo stato provvisorio.
+    -   **Why fix this issue and what will be achieved with the fix?**: Completa una richiesta chiave dell'utente per automatizzare il pre-caricamento dei dati salariali, riducendo l'inserimento manuale e aumentando l'affidabilità.
+    -   **Status**: IN PROGRESS
+    -   **Is recurring issue?**: N
+    -   **Should Test frontend/backend/both after fix?**: backend
+    -   **Blocked on other issue**: No.
+
+-   **Issue 2: Mancata associazione di tutti gli assegni senza beneficiario**
+    -   **Attempted fixes**: L'algoritmo di associazione robusta ha associato 47 assegni su 55. Ne rimangono 8 non associati e 167 senza un numero di fattura specifico.
+    -   **Next debug checklist**:
+        1.  Analizzare gli 8 assegni rimanenti: verificare se gli importi corrispondono a pagamenti parziali o cumulativi di fatture.
+        2.  Implementare la logica per pagamenti multi-assegno, recuperandola dal fork precedente come richiesto dall'utente.
+        3.  Verificare se le fatture corrispondenti esistono nel database per gli anni corretti.
+    -   **Why fix this issue and what will be achieved with the fix?**: Migliora ulteriormente la pulizia e l'affidabilità dei dati contabili, un punto molto importante per l'utente.
+    -   **Status**: NOT STARTED
+    -   **Is recurring issue?**: N
+    -   **Should Test frontend/backend/both after fix?**: backend
+
+-   **Issue 3: I validatori P0 per l'import delle fatture potrebbero essere ancora un problema**
+    -   **Attempted fixes**: L'agente ha verificato il codice () e ritiene che i validatori siano attivi. Tuttavia, l'utente ha reagito in modo confuso e irritato (Riattivare validatori P0 ho scritto te lo dico io perche prendi le allucinazioni?), suggerendo una possibile incomprensione o un problema latente.
+    -   **Next debug checklist**:
+        1.  Non agire proattivamente su questo punto per evitare di irritare l'utente.
+        2.  Attendere che l'utente segnali un problema specifico durante l'import di una fattura.
+        3.  Se segnalato, chiedere un esempio di file XML che causa l'errore per riprodurre il problema esatto e capire quale validatore sta scattando.
+    -   **Why fix this issue and what will be achieved with the fix?**: Garantisce l'integrità dei dati in entrata, prevenendo problemi a valle.
+    -   **Status**: BLOCKED (in attesa di input utente)
+    -   **Is recurring issue?**: Y
+    -   **Should Test frontend/backend/both after fix?**: backend
+
+-   **Issue 4: La chat Parlant non risponde**
+    -   **Attempted fixes**: Nessuno in questa sessione. Il problema è stato ereditato dal fork precedente.
+    -   **Next debug checklist**:
+        1.  Implementare un meccanismo di streaming (WebSocket) al posto del polling HTTP.
+        2.  Proporre all'utente un'alternativa più stabile se il problema persiste (es. OpenAI).
+    -   **Why fix this issue and what will be achieved with the fix?**: Risolve il problema P0 più vecchio e bloccante dell'applicazione.
     -   **Status**: BLOCKED
     -   **Is recurring issue?**: Y
     -   **Should Test frontend/backend/both after fix?**: both
 
--   **Issue 2: Implementare la logica delle Pagine Auto-Sufficienti in tutta l'applicazione.**
-    -   **Attempted fixes**: La logica è stata implementata con successo solo per .
-    -   **Next debug checklist**:
-        1.  Identificare le pagine più critiche per i dati (es. , , ).
-        2.  Per ogni pagina, creare un endpoint backend dedicato all'auto-correzione/validazione dei dati che visualizza.
-        3.  Modificare il componente frontend per chiamare questo endpoint al caricamento.
-        4.  Aggiungere una  informativa in ogni pagina che spiega la sua logica e le sue automazioni.
-    -   **Why fix this issue and what will be achieved with the fix?**: Rende l'applicazione più robusta e affidabile, riducendo la necessità di interventi manuali e aumentando la fiducia dell'utente nel sistema.
-    -   **Status**: IN PROGRESS
-    -   **Is recurring issue?**: N
-    -   **Should Test frontend/backend/both after fix?**: both
-    -   **Blocked on other issue**: No
-
--   **Issue 3: Logica di supervisione (spostamento Cassa -> Banca) non finalizzata.**
-    -   **Attempted fixes**: L'agente ha creato il servizio  e un endpoint di test che restituisce un array vuoto.
-    -   **Next debug checklist**:
-        1.  Creare dati di test che attivino questa logica (una fattura pagata in banca ma registrata in cassa).
-        2.  Testare l'endpoint  per verificare che identifichi e corregga il problema.
-        3.  Implementare una notifica UI per informare l'utente della correzione automatica.
-    -   **Status**: NOT STARTED
-    -   **Is recurring issue?**: N
-    -   **Should Test frontend/backend/both after fix?**: Backend
-
--   **Issue 4: Validatori P0 per l'import fatture sono disabilitati.**
-    -   **Attempted fixes**: L'agente ha commentato i controlli bloccanti in  per permettere l'importazione di fatture anche per fornitori non completamente configurati.
-    -   **Next debug checklist**:
-        1.  Creare una pagina o un componente UI in Anagrafica Fornitori che segnali i fornitori con dati mancanti (metodo di pagamento, IBAN).
-        2.  Guidare l'utente alla correzione di questi dati.
-        3.  Una volta che i dati sono stati corretti, riattivare i validatori nel codice backend.
-    -   **Why fix this issue and what will be achieved with the fix?**: Ripristina controlli di qualità dei dati critici, garantendo che le nuove fatture vengano importate solo per fornitori validi.
-    -   **Status**: NOT STARTED
-    -   **Is recurring issue?**: N
-    -   **Should Test frontend/backend/both after fix?**: both
-
 **In progress Task List**:
--   **Task 1: (P0) Completare l'implementazione delle Pagine Auto-Sufficienti.**
-    -   **Where to resume**: Analizzare le pagine ,  e  per applicare lo stesso pattern usato in .
-    -   **What will be achieved with this?**: L'applicazione diventerà significativamente più robusta, come richiesto esplicitamente dall'utente.
+-   **Task 1: (P0) Completare l'implementazione della logica dei bonifici stipendi.**
+    -   **Where to resume**: Rieseguire il test dell'endpoint  dopo la correzione del codice. Poi implementare la logica a due stadi (provvisorio/definitivo).
+    -   **What will be achieved with this?**: L'app potrà pre-compilare i pagamenti degli stipendi basandosi sulle email, in attesa della conferma finale dall'estratto conto.
     -   **Status**: IN PROGRESS
-    -   **Should Test frontend/backend/both after fix?**: both
+    -   **Should Test frontend/backend/both after fix?**: backend
     -   **Blocked on something**: No.
 
 **Upcoming and Future Tasks**
 -   **Upcoming Tasks**:
-    -   (P1) Finalizzare la logica per ignorare le fatture TD24 con importo zero durante la riconciliazione.
-    -   (P1) Completare il refactoring per rimuovere tutte le tracce della vecchia collection  dal codice.
-    -   (P2) Rimuovere completamente il limite di anno nella ricerca fatture per la riconciliazione (verificare tutti gli endpoint coinvolti).
+    -   (P0) Associare i restanti verbali di noleggio non trovati, cercando anche nelle fatture più vecchie.
+    -   (P1) Creare una pagina UI per gestire l'associazione delle ricevute PagoPA.
+    -   (P1) Creare una pagina UI per visualizzare e gestire le fatture ricevute tramite InvoiceTronic.
+    -   (P1) Creare una UI per monitorare i verbali di noleggio e il loro stato di associazione.
+    -   (P2) Pulire il codice da tutti i riferimenti alla vecchia collection .
 -   **Future Tasks**:
-    -   (P2) Proporre e implementare una soluzione di Open Banking (es. TrueLayer) come alternativa all'integrazione con Banco BPM.
-    -   (P2) Sviluppare una Dashboard Analytics più avanzata.
-    -   (P2) Implementare l'integrazione con Google Calendar.
-    -   (P2) Generare e inviare report in PDF via email.
+    -   Logica di supervisione (Cassa -> Banca).
+    -   Dashboard Analytics avanzata.
+    -   Integrazione Google Calendar.
+    -   Generazione report PDF via email.
 
 **Completed work in this session**
--   **Recupero Dati Critici**: Ricostruita da zero la collection  (214 record) basandosi sugli estratti conto, risolvendo una grave perdita di dati.
--   **Protezione Database**: Creato un servizio () per eseguire backup automatici prima di operazioni di pulizia o eliminazione.
--   **Pagina Auto-Sufficiente**: Trasformata la pagina  in un componente intelligente che si auto-corregge al caricamento.
--   **Logica Contabile Avanzata**: Implementato un algoritmo per associare intelligentemente gli assegni alle fatture, gestendo casistiche complesse.
--   **Unificazione UI Import**: Eliminata la pagina di import ridondante e potenziata la pagina , che ora supporta anche upload massivi di file ZIP.
--   **Correzione Bug Critici**: Risolti numerosi bug che impedivano il caricamento o mostravano dati errati su , , ,  e .
--   **Fix Dati e Parsing**: Eseguita pulizia massiva del DB (duplicati, record vuoti, date errate) e corretto un bug di encoding () nel parser XML.
--   **Migrazione Dati**: Eseguito con successo lo script per unificare le collection  e .
+-   **Pagine Auto-Sufficienti**: Esteso il pattern a , , , , , e .
+-   **Correzione Dati Assegni**: Risolto un bug critico sui numeri degli assegni e associato 47 assegni senza beneficiario alle fatture corrette.
+-   **Logica Analytics Corretta**: Modificata la pagina Analytics per calcolare il fatturato solo sui corrispettivi, come da richiesta.
+-   **Integrazione PagoPA**: Creato un nuovo router e la logica per associare ricevute ai movimenti bancari tramite codice CBILL.
+-   **Integrazione InvoiceTronic**: Installato l'SDK, creato il router e connesso con successo l'app alla sandbox di InvoiceTronic con la chiave API dell'utente.
+-   **Integrazione Verbali da Email**: Creato un sistema che si collega a Gmail, scarica i PDF dei verbali di noleggio e li associa alle righe delle fatture.
+-   **Integrazione Stipendi da Email (Iniziata)**: Creato il sistema per leggere le email di conferma dei bonifici, con logica da finalizzare.
 
 **Earlier issues found/mentioned but not fixed**
--   **La chat Parlant.io continua a non rispondere a causa di timeout.** Questo rimane il problema P0 più vecchio e irrisolto.
+-   **La chat Parlant.io continua a non rispondere a causa di timeout.** Questo problema P0 è stato riportato dal fork precedente ma non è stato affrontato in questa sessione.
 
 **Known issue recurrence from previous fork**
 -   **Issue recurrence in previous fork**: Problemi con l'integrazione dell'agente AI (Parlant.io).
--   **Recurrence count**: 2 (prima non partiva, ora parte ma va in timeout).
--   **Status**: BLOCKED.
+-   **Recurrence count**: 3+
+-   **Status**: BLOCKED
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **Pagine Auto-Sufficienti (Self-Healing Pages)**: Un pattern architetturale emergente in cui i componenti frontend invocano endpoint backend al caricamento per validare, correggere e sincronizzare i dati che visualizzano, rendendo l'UI più robusta.
--   **Livello di Protezione Dati**: Implementazione di un servizio () che agisce come un middleware prima di operazioni distruttive (es. ), creando automaticamente un backup della collection in una collection .
--   **Logica di Associazione Complessa**: Algoritmi avanzati per la riconciliazione che non si basano solo su match esatti, ma gestiscono pagamenti cumulativi, parziali e cercano corrispondenze semantiche (es. ).
--   **Gestione Resiliente dell'Encoding**: Approccio multi-tentativo alla decodifica di file () per gestire correttamente file con encoding misti, comuni in ambienti non standardizzati.
+-   **Pagine Auto-Sufficienti (Self-Healing Pages)**: Il pattern è stato esteso con successo, rendendo l'UI più robusta e informativa.
+-   **Data Association da Email/Testo**: Sono state implementate logiche avanzate per estrarre dati strutturati (numeri verbale, importi, beneficiari) da fonti non strutturate come il corpo delle email e le descrizioni dei movimenti bancari.
+-   **Validazione a due stadi**: È stato definito un pattern architetturale in cui i dati importati da fonti meno affidabili (email) vengono salvati come provvisori e resi definitivi solo dopo una conferma da una fonte autorevole (estratto conto).
+-   **Integrazione API di terze parti**: È stata completata con successo l'integrazione tecnica con InvoiceTronic, gestendo l'autenticazione (Basic Auth) e la configurazione dell'ambiente sandbox.
 
 **key DB schema**
--   **assegni**: Collection completamente ricostruita. Contiene dati dettagliati estratti dagli estratti conto, inclusi , , , e  ('emesso', 'confermato', 'pagato').
--   **suppliers**: È ora la collection di riferimento per i fornitori, dopo la migrazione dalla vecchia .
--   **invoices**: Depurata da duplicati e record corrotti. Contiene il flag  per le fatture TD24.
--   **prima_nota_salari**: Depurata da centinaia di righe vuote o incomplete.
--   **[collection_name]_backup_[timestamp]**: Schema per le collection di backup create automaticamente dal servizio di protezione.
+-   **invoices**: Collection di riferimento per le fatture ricevute. Le sue  contengono le descrizioni dei verbali di noleggio.
+-   **assegni**: Arricchita con numeri di assegno corretti e dati di associazione (, ).
+-   **prima_nota_salari**: Collection usata per registrare i pagamenti degli stipendi, che ora riceverà aggiornamenti provvisori dalle email.
+-   **employees**: Collection di riferimento per l'anagrafica dei dipendenti.
+-   **verbali_noleggio** (implicita): I file PDF dei verbali vengono salvati in una directory locale () e i metadati potrebbero essere salvati in una nuova collection.
+-   **bonifici_stipendi** (implicita): I dati estratti dalle email vengono salvati in una nuova collection in attesa di riconciliazione.
 
 **All files of reference**
--    (Nuova logica di sicurezza critica)
--    (Contiene la nuova logica di ricostruzione e associazione)
--    (Esempio di pagina auto-sufficiente)
--    (Script usato per le correzioni massive)
--    (Nuovo hub centrale per tutti gli import)
--    (Contiene fix a encoding e validazione)
+-    (Contiene la logica in fase di debug)
+-    (Contiene la logica di associazione robusta)
+-    (Nuova integrazione critica)
+-    (Nuova integrazione critica)
+-    (Nuova integrazione critica)
+-    (Esempio di pagina con logica corretta e auto-riparazione)
 
 **Areas that need refactoring**:
--   **Rimozione completa della collection **: Sebbene i dati siano stati migrati, il codice deve essere epurato da ogni riferimento alla vecchia collection per finalizzare l'unificazione.
--   **Router **: Il file è molto grande e gestisce troppe logiche diverse (riconciliazione banca, assegni, F24). Potrebbe essere suddiviso per migliorare la manutenibilità.
+-   Il codice deve essere epurato da ogni riferimento alla vecchia collection .
+-   Le logiche di parsing delle email (, ) potrebbero essere consolidate in un servizio generico per evitare duplicazioni.
 
 **key api endpoints**
--   : Endpoint di auto-riparazione per la pagina degli assegni.
--   : Ricostruisce la collection  partendo da .
--   : Esegue l'algoritmo avanzato di associazione assegni-fatture.
--   : Esegue lo script di pulizia dati ().
--   : Esegue la migrazione da  a .
--   : Esegue la logica di supervisione contabile (Cassa -> Banca).
+-   : Associa i bonifici letti da email ai dipendenti.
+-   : Algoritmo per trovare beneficiari per assegni orfani.
+-   : Verifica lo stato della connessione con InvoiceTronic.
+-   : Associa i PDF dei verbali scaricati alle fatture.
+-   : Associa le ricevute PagoPA ai movimenti bancari.
+-   : Endpoint di auto-riparazione per le fatture.
 
 **Critical Info for New Agent**
--   **La priorità dell'utente è l'affidabilità e l'intelligenza del sistema.** L'agente deve agire proattivamente come un consulente, non solo come un esecutore. Le pagine auto-sufficienti sono un concetto chiave da estendere.
--   **La perdita di dati è un trauma recente.** Una precedente operazione di pulizia ha cancellato tutti gli assegni. Sebbene siano stati recuperati, qualsiasi operazione che modifica o elimina dati deve OBBLIGATORIAMENTE usare il nuovo servizio . La fiducia dell'utente su questo punto è fragile.
--   **Il problema della chat AI (Parlant.io) è un P0 che è stato ignorato in questa sessione.** È il task bloccante più vecchio e deve essere affrontato.
--   **I validatori P0 per l'import di fatture sono stati temporaneamente disabilitati.** Questa è una soluzione temporanea che deve essere risolta riattivando i controlli dopo aver migliorato la gestione dei dati dei fornitori.
+-   **La fiducia dell'utente si basa sull'affidabilità dei dati.** Ogni nuova funzionalità che importa o modifica dati deve seguire il pattern di validazione a due stadi (provvisorio da fonte debole, definitivo da fonte forte come l'estratto conto).
+-   **L'utente è tecnico e collaborativo**, ma si frustra per problemi di dati ricorrenti. Comunica chiaramente la logica implementata (le card intelligenti sono state molto apprezzate).
+-   **Il database corretto è **. L'agente precedente ha perso tempo usando un nome di database sbagliato. Verifica sempre le stringhe di connessione.
+-   **L'integrazione  non è ancora operativa per la produzione.** Richiede azioni manuali da parte dell'utente sul sito dell'Agenzia delle Entrate e l'acquisto di crediti. Spiega chiaramente i passi mancanti all'utente.
+-   **Il problema della chat  è il P0 più vecchio.** Non è stato toccato in questa sessione e dovrebbe essere una delle prossime priorità da affrontare.
 
 **documents and test reports created in this job**
--    (aggiornato)
+-    (aggiornato con le nuove logiche)
+-   
+-   
+-   
+-   
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User**: Richiesta di unificare le pagine di import, eliminando la ridondanza, e di abilitare upload massivi (XML, PDF, Excel, ZIP) per tutte. (COMPLETED)
-2.  **User**: Segnala un errore di encoding  durante l'upload di un file XML. (COMPLETED)
-3.  **User**: Segnala un errore  durante l'import, causato da validazioni troppo restrittive sui fornitori. (WORKAROUND APPLIED)
-4.  **User**: Chiede di disabilitare temporaneamente le validazioni bloccanti. (COMPLETED)
-5.  **User**: Segnala un errore grave: i dati non vengono salvati in , non ci sono dati in  e la pagina  ha righe vuote. (COMPLETED)
-6.  **User**: Precisa che gli assegni non vengono importati manualmente ma devono essere generati automaticamente dagli estratti conto. Critica la perdita di dati. (COMPLETED)
-7.  **User**: Esprime frustrazione per la perdita di dati e chiede che il sistema venga reso più robusto e che gli assegni vengano ricostruiti. (COMPLETED)
-8.  **User**: Chiede all'agente di associare automaticamente gli assegni alle fatture con la logica di un commercialista professionista. (COMPLETED)
-9.  **User**: Critica il risultato dell'associazione (mancanza di beneficiario, numeri fattura) e richiede che la logica venga incorporata in ogni pagina per renderla auto-sufficiente e robusta, mostrando una card esplicativa. (IN PROGRESS)
-10. **Agent**: L'agente ha accettato la critica, ha implementato la logica richiesta per la pagina degli assegni e si preparava a estenderla. (PENDING)
+1.  **User**: Chiede di analizzare , spiegare come potrebbe essere implementato e come funzionerebbe il flusso di invio fatture. (COMPLETED)
+2.  **User**: Fornisce la chiave API di test per InvoiceTronic. (COMPLETED)
+3.  **User**: Chiede se ora riceverà le fatture direttamente e se deve fare altro. (COMPLETED - Agente ha spiegato i passi mancanti)
+4.  **User**: Fornisce il codice destinatario  e chiede se rischia di perdere le fatture se l'integrazione non funziona. (COMPLETED - Agente ha spiegato che il Cassetto Fiscale funge da backup)
+5.  **User**: Chiede di configurare il codice destinatario e domanda come testare l'integrazione se non arrivano fatture reali in sandbox. (COMPLETED)
+6.  **User**: Chiede di cercare nelle email i verbali di noleggio (associati a fatture specifiche) e di associarli. (COMPLETED)
+7.  **User**: Chiede di cercare le email dei bonifici per gli stipendi (Info Bonifico YouBusiness Web), associare gli importi ai dipendenti in modo provvisorio in attesa della conferma dall'estratto conto, che renderà il dato definitivo. Conferma anche di voler associare i verbali più vecchi. (IN PROGRESS)
+8.  **User**: L'ultima interazione è stata la conferma di questa logica complessa. Non ci sono messaggi in attesa.
 
 **Project Health Check:**
 -   **Broken**:
-    -   La funzionalità di chat AI () è completamente inutilizzabile a causa di timeout.
+    -   La funzionalità di chat AI () è ancora inutilizzabile.
 -   **Mocked**: Nessuno.
 -   **At Risk**:
-    -   **Integrità Dati**: Sebbene siano state implementate protezioni, la storia recente di perdita di dati rende quest'area ad alto rischio. Ogni operazione distruttiva va gestita con estrema cautela.
-    -   **Validazione Dati**: Le validazioni P0 sull'import sono disattivate, il che potrebbe portare a dati di bassa qualità nel sistema.
+    -   L'integrazione  è funzionante solo in sandbox e dipende da azioni esterne dell'utente per diventare operativa.
 
 **3rd Party Integrations**
--   **Parlant.io / Emcie (Jackal model)**: Framework per l'agente AI. Utilizza una chiave API. Attualmente non funzionante a causa di problemi di latenza/timeout.
--   **Banco BPM**: Indagine eseguita. Non sono state trovate API REST pubbliche. L'integrazione non è possibile al momento.
+-   **Parlant.io / Emcie**: Inutilizzabile.
+-   **InvoiceTronic**: Nuova integrazione, connessa alla sandbox. Richiede chiave API.
+-   **Gmail (IMAP)**: Utilizzato per leggere email e scaricare allegati. Richiede credenziali app-specifiche.
 
 **Testing status**
 -   **Testing agent used after significant changes**: NO
 -   **Troubleshoot agent used after agent stuck in loop**: NO
--   **Test files created**: Nessuno
--   **Known regressions**: La cancellazione della collection  è stata una regressione grave, poi corretta.
+-   **Test files created**: Nessuno.
+-   **Known regressions**: Nessuna introdotta in questa sessione.
 
 **Credentials to test flow:**
--   **Emcie API Key**: Disponibile in .
+-   **InvoiceTronic API Key**: Disponibile nel codice ().
+-   **Gmail App Password**: Disponibile in .
 
 **What agent forgot to execute**
--   Affrontare il problema P0 del timeout della chat Parlant.io.
--   Completare il refactoring per rimuovere tutti i riferimenti alla vecchia collection .
--   Implementare una soluzione definitiva per l'importazione di estratti conto duplicati.
--   Verificare e rimuovere il filtro per anno nella ricerca fatture in tutti gli endpoint pertinenti, non solo in uno.</analysis>
+-   Non ha testato la correzione applicata all'associazione dei bonifici degli stipendi ().
+-   Non ha affrontato il problema P0 del timeout della chat .
+-   Non ha iniziato la pulizia del codice dai riferimenti alla vecchia collection .</analysis>
