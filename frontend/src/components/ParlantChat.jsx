@@ -13,7 +13,21 @@ export default function ParlantChat() {
   const [agentId, setAgentId] = useState(null);
   const [serverStatus, setServerStatus] = useState('checking');
   const messagesEndRef = useRef(null);
-  const API_BASE = process.env.REACT_APP_BACKEND_URL || '';
+  
+  // Get API base from window location or env
+  const getApiBase = () => {
+    // In production, use the same origin
+    if (typeof window !== 'undefined') {
+      // Check if REACT_APP_BACKEND_URL is available
+      const envUrl = window._env_?.REACT_APP_BACKEND_URL || '';
+      if (envUrl) return envUrl;
+      // Fallback to empty string (same origin)
+      return '';
+    }
+    return '';
+  };
+  
+  const API_BASE = getApiBase();
 
   // Scroll to bottom when new messages arrive
   useEffect(() => {
