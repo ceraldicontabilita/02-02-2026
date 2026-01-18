@@ -265,7 +265,7 @@ async def associa_verbali_a_fatture() -> Dict[str, Any]:
     
     Logica:
     1. Per ogni verbale scaricato
-    2. Cerca nelle fatture noleggio una riga con quel numero verbale
+    2. Cerca nelle fatture noleggio (campo 'linee') una riga con quel numero verbale
     3. Se trovata, associa
     """
     db = Database.get_db()
@@ -286,56 +286,62 @@ async def associa_verbali_a_fatture() -> Dict[str, Any]:
     
     risultati["verbali_analizzati"] = len(verbali)
     
-    # Carica fatture noleggio (collezione invoices, cerca quelle con verbali)
-    # Le fatture noleggio hanno righe con riferimento al verbale
+    # Carica TUTTE le fatture noleggio (ALD, Leasys, Arval, etc.)
     fatture = await db.invoices.find({
-        "$or": [
-            {"note": {"$regex": "verbale", "$options": "i"}},
-            {"descrizione": {"$regex": "verbale", "$options": "i"}},
-            {"supplier_name": {"$regex": "leasys|ald|ayvens|arval|locauto|noleggio", "$options": "i"}}
-        ]
-    }, {"_id": 0}).to_list(10000)
+        "supplier_name": {"$regex": "ald|leasys|arval|ayvens|locauto|leaseplan|noleggio", "$options": "i"}
+    }, {"_id": 0}).to_list(50000)
     
-    # Cerca anche nelle righe dettaglio
-    righe_fatture = await db.dettaglio_righe_fatture.find(
-        {"descrizione": {"$regex": "verbale", "$options": "i"}},
-        {"_id": 0}
-    ).to_list(50000)
+    # Crea indice: numero_verbale -> fattura
+    verbale_fattura_idx = {}
+    for fattura in fatture:
+        linee = fattura.get("linee", [])
+        for linea in linee:
+            desc = linea.get("descrizione", "")
+            # Cerca pattern verbale Bxxxxxxxxxx
+            matches = re.findall(r'B\d{10,11}', desc, re.IGNORECASE)
+            for num_verb in matches:
+                verbale_fattura_idx[num_verb.upper()] = {
+                    "fattura_id": fattura.get("id"),
+                    "invoice_number": fattura.get("invoice_number"),
+                    "supplier_name": fattura.get("supplier_name"),
+                    "invoice_date": fattura.get("invoice_date"),
+                    "total_amount": fattura.get("total_amount"),
+                    "linea_descrizione": desc,
+                    "linea_importo": linea.get("prezzo_totale") or linea.get("importo")
+                }
     
-    # Indice righe per numero verbale
-    righe_idx = {}
-    for riga in righe_fatture:
-        desc = riga.get("descrizione", "")
-        # Estrai numero verbale dalla descrizione
-        match = re.search(r'B\d{10,11}', desc)
-        if match:
-            num_verb = match.group(0)
-            righe_idx[num_verb] = riga
+    logger.info(f"Trovate {len(verbale_fattura_idx)} fatture con verbali")
     
     for verbale in verbali:
-        numero = verbale.get("numero_verbale")
+        numero = verbale.get("numero_verbale", "").upper()
         
-        if numero in righe_idx:
-            riga = righe_idx[numero]
+        if numero in verbale_fattura_idx:
+            fattura_info = verbale_fattura_idx[numero]
             
             try:
                 await db[COLLECTION_VERBALI].update_one(
-                    {"numero_verbale": numero},
+                    {"numero_verbale": verbale["numero_verbale"]},
                     {"$set": {
-                        "fattura_associata": riga.get("fattura_id"),
-                        "riga_fattura_id": riga.get("id"),
-                        "riga_descrizione": riga.get("descrizione"),
-                        "riga_importo": riga.get("importo"),
+                        "fattura_associata": fattura_info["fattura_id"],
+                        "invoice_number": fattura_info["invoice_number"],
+                        "supplier_name": fattura_info["supplier_name"],
+                        "invoice_date": fattura_info["invoice_date"],
+                        "importo_fattura": fattura_info["total_amount"],
+                        "linea_descrizione": fattura_info["linea_descrizione"],
+                        "linea_importo": fattura_info["linea_importo"],
                         "associato_at": datetime.now(timezone.utc).isoformat()
                     }}
                 )
                 
-                # Aggiorna anche la riga con riferimento al verbale PDF
-                await db.dettaglio_righe_fatture.update_one(
-                    {"id": riga.get("id")},
+                # Aggiorna anche la fattura con riferimento al verbale PDF
+                await db.invoices.update_one(
+                    {"id": fattura_info["fattura_id"]},
                     {"$set": {
-                        "verbale_pdf_id": verbale.get("id"),
-                        "verbale_scaricato": True
+                        f"verbale_pdf.{numero}": {
+                            "verbale_id": verbale.get("id"),
+                            "pdf_scaricato": True,
+                            "scaricato_at": datetime.now(timezone.utc).isoformat()
+                        }
                     }}
                 )
                 
