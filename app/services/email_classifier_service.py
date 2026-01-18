@@ -218,15 +218,28 @@ def extract_data_from_text(text: str, pattern: str) -> Optional[str]:
     return match.group(1) if match else None
 
 
-def classify_email(subject: str, sender: str, body: str = "") -> Tuple[Optional[EmailRule], float]:
+def classify_email(subject: str, sender: str, body: str = "", attachment_names: List[str] = None) -> Tuple[Optional[EmailRule], float]:
     """
     Classifica un'email in base alle regole definite.
-    Ritorna (regola_matchata, confidence_score).
+    Controlla: oggetto, corpo email, nomi allegati.
+    NON filtra più per mittente (sender_patterns vuoti = accetta tutti).
+    
+    Args:
+        subject: Oggetto dell'email
+        sender: Mittente dell'email
+        body: Corpo dell'email
+        attachment_names: Lista dei nomi degli allegati
+    
+    Returns:
+        (regola_matchata, confidence_score)
     """
     subject_lower = subject.lower()
     sender_lower = sender.lower()
     body_lower = body.lower() if body else ""
-    full_text = f"{subject_lower} {body_lower}"
+    
+    # Combina tutto il testo searchable: oggetto + corpo + nomi allegati
+    attachments_text = " ".join([name.lower() for name in (attachment_names or [])])
+    full_text = f"{subject_lower} {body_lower} {attachments_text}"
     
     best_match: Optional[EmailRule] = None
     best_score = 0.0
@@ -234,22 +247,29 @@ def classify_email(subject: str, sender: str, body: str = "") -> Tuple[Optional[
     for rule in sorted(EMAIL_RULES, key=lambda r: -r.priority):
         score = 0.0
         
-        # Check keywords
+        # Check keywords nel testo completo (oggetto + corpo + allegati)
         keyword_matches = sum(1 for kw in rule.keywords if kw.lower() in full_text)
         if keyword_matches > 0:
-            score += 0.3 * (keyword_matches / len(rule.keywords))
+            score += 0.4 * (keyword_matches / len(rule.keywords))  # Aumentato da 0.3 a 0.4
         
         # Check subject patterns
         for pattern in rule.subject_patterns:
             if re.search(pattern, subject_lower, re.I):
-                score += 0.4
+                score += 0.35
                 break
         
-        # Check sender patterns
-        for pattern in rule.sender_patterns:
-            if pattern.lower() in sender_lower:
-                score += 0.3
+        # Check patterns anche nel corpo e allegati
+        for pattern in rule.subject_patterns:
+            if re.search(pattern, body_lower, re.I) or re.search(pattern, attachments_text, re.I):
+                score += 0.15  # Bonus se pattern trovato nel corpo/allegati
                 break
+        
+        # Check sender patterns SOLO se specificati (non vuoti)
+        if rule.sender_patterns:
+            for pattern in rule.sender_patterns:
+                if pattern.lower() in sender_lower:
+                    score += 0.1  # Ridotto da 0.3 a 0.1 - non più determinante
+                    break
         
         # Apply priority bonus
         score += rule.priority * 0.01
@@ -258,8 +278,8 @@ def classify_email(subject: str, sender: str, body: str = "") -> Tuple[Optional[
             best_score = score
             best_match = rule
     
-    # Soglia minima per considerare il match valido
-    if best_score < 0.25:
+    # Soglia minima per considerare il match valido (abbassata da 0.25 a 0.20)
+    if best_score < 0.20:
         return None, 0.0
     
     return best_match, min(best_score, 1.0)
