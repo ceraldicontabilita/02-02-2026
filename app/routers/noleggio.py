@@ -393,23 +393,38 @@ async def scan_fatture_noleggio(anno: Optional[int] = None) -> Dict[str, Any]:
             
             logger.info(f"Fattura {invoice_number} senza targa - is_bollo={is_bollo}, supplier_vat={supplier_vat}")
             
-            # Per fatture bollo, cerca il veicolo attivo più recente di questo fornitore
+            # Per fatture bollo, cerca il veicolo attivo AL MOMENTO DELLA FATTURA
             if is_bollo and supplier_vat:
-                # Cerca veicolo con questo fornitore che ha data_fine nel futuro o nulla
                 from datetime import datetime
-                oggi = datetime.now().strftime('%Y-%m-%d')
                 
+                # Usa la data della fattura per trovare il veicolo corretto
+                data_fattura = invoice_date[:10] if invoice_date else datetime.now().strftime('%Y-%m-%d')
+                
+                # Prima cerca un veicolo attivo alla data della fattura
                 veicoli_attivi = await db[COLLECTION].find({
                     "fornitore_piva": supplier_vat,
                     "$or": [
+                        # Veicolo senza data_fine o data_fine nulla
                         {"data_fine": {"$exists": False}},
                         {"data_fine": None},
                         {"data_fine": ""},
-                        {"data_fine": {"$gte": oggi}}
+                        # Veicolo con data_fine >= data fattura (era ancora attivo)
+                        {"data_fine": {"$gte": data_fattura}}
                     ]
                 }).to_list(length=100)
                 
-                logger.info(f"Veicoli attivi trovati per {supplier_vat}: {len(veicoli_attivi)}")
+                # Se ci sono più veicoli, scegli quello con data_inizio più vicina alla data fattura
+                if len(veicoli_attivi) > 1:
+                    # Ordina per data_inizio decrescente per prendere il più recente che era attivo
+                    veicoli_attivi.sort(key=lambda x: x.get("data_inizio", ""), reverse=True)
+                    # Ma se la fattura è prima dell'inizio del più recente, usa il precedente
+                    for v in veicoli_attivi:
+                        data_inizio = v.get("data_inizio", "")
+                        if data_inizio <= data_fattura:
+                            veicoli_attivi = [v]
+                            break
+                
+                logger.info(f"Veicoli attivi trovati per {supplier_vat} alla data {data_fattura}: {len(veicoli_attivi)}")
                 
                 if veicoli_attivi:
                     # Usa il primo veicolo attivo trovato
