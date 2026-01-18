@@ -1,0 +1,537 @@
+"""
+Servizio di Classificazione Intelligente Email
+Sistema unificato per classificare, processare e associare email ai moduli del gestionale.
+
+Mapping Email -> Sezioni Gestionale:
+- Verbali/Multe -> Fatture Noleggio
+- Dimissioni -> Anagrafica Dipendenti  
+- Cartelle Esattoriali -> Commercialista
+- F24 -> Gestione F24
+- Buste Paga -> Cedolini
+- Bonifici Stipendi -> Prima Nota Salari
+- Delibere FONSI/INPS -> Documenti INPS
+- ADR/Rottamazione -> ADR
+- Fatture -> Ciclo Passivo
+"""
+
+import imaplib
+import email
+from email.header import decode_header
+import os
+import re
+import base64
+import asyncio
+from datetime import datetime, timezone, timedelta
+from typing import Dict, Any, List, Optional, Tuple
+import logging
+from dataclasses import dataclass
+
+logger = logging.getLogger(__name__)
+
+# Configurazione email
+EMAIL = os.environ.get("EMAIL_ADDRESS", "")
+EMAIL_PASSWORD = os.environ.get("EMAIL_APP_PASSWORD", "")
+IMAP_SERVER = os.environ.get("IMAP_SERVER", "imap.gmail.com")
+
+
+@dataclass
+class EmailRule:
+    """Regola di classificazione email."""
+    name: str
+    keywords: List[str]  # Parole chiave da cercare (OR)
+    subject_patterns: List[str]  # Pattern regex per subject
+    sender_patterns: List[str]  # Pattern per mittente
+    category: str  # Categoria nel sistema
+    gestionale_section: str  # Sezione del gestionale
+    collection: str  # Collection MongoDB
+    action: str  # Tipo di azione: 'save_pdf', 'extract_data', 'associate'
+    priority: int = 0  # Priorità (più alto = più prioritario)
+
+
+# ============================================================
+# REGOLE DI CLASSIFICAZIONE EMAIL
+# ============================================================
+
+EMAIL_RULES: List[EmailRule] = [
+    # --- VERBALI NOLEGGIO ---
+    EmailRule(
+        name="verbali_noleggio",
+        keywords=["verbale", "multa", "infrazione", "contravvenzione", "violazione codice strada"],
+        subject_patterns=[r"verbale\s*n", r"B\d{10,}", r"multa", r"infrazione"],
+        sender_patterns=["leasys", "ald", "arval", "europcar", "hertz", "avis"],
+        category="verbali",
+        gestionale_section="Noleggio Auto",
+        collection="verbali_noleggio",
+        action="associate_fattura",
+        priority=10
+    ),
+    
+    # --- DIMISSIONI DIPENDENTI ---
+    EmailRule(
+        name="dimissioni",
+        keywords=["Notifica richiesta recesso", "dimissioni", "cessazione rapporto", "recesso"],
+        subject_patterns=[r"notifica.*recesso", r"dimission", r"cessazione.*rapporto"],
+        sender_patterns=["inps", "lavoro.gov", "cliclavoro"],
+        category="dimissioni",
+        gestionale_section="Anagrafica Dipendenti",
+        collection="dimissioni",
+        action="update_employee",
+        priority=15
+    ),
+    
+    # --- CARTELLE ESATTORIALI / ADR ---
+    EmailRule(
+        name="cartelle_esattoriali",
+        keywords=["cartella esattoriale", "Agenzia delle entrate-Riscossione", "AdER", "rottamazione", "definizione agevolata", "intimazione"],
+        subject_patterns=[r"cartella\s*(di\s*)?pagamento", r"agenzia.*riscossione", r"rottamazione", r"definizione\s*agevolata"],
+        sender_patterns=["agenziaentrate", "ader", "riscossione"],
+        category="cartelle_esattoriali",
+        gestionale_section="Commercialista",
+        collection="adr_definizione_agevolata",
+        action="save_commercialista",
+        priority=20
+    ),
+    
+    # --- DELIBERE FONSI / CASSA INTEGRAZIONE ---
+    EmailRule(
+        name="delibere_fonsi",
+        keywords=["Delibere - Fonsi", "FONSI", "cassa integrazione", "ammortizzatori sociali"],
+        subject_patterns=[r"delibere.*fonsi", r"cassa\s*integrazione", r"cig[os]?"],
+        sender_patterns=["inps", "pec.inps"],
+        category="inps_fonsi",
+        gestionale_section="INPS Documenti",
+        collection="delibere_fonsi",
+        action="extract_cassa_integrazione",
+        priority=12
+    ),
+    
+    # --- DILAZIONI INPS ---
+    EmailRule(
+        name="dilazioni_inps",
+        keywords=["dilazione amministrativa", "Sede INPS", "rateizzazione INPS", "5100"],
+        subject_patterns=[r"dilazion.*inps", r"sede.*inps.*\d{4}", r"rateizzazione"],
+        sender_patterns=["inps", "pec.inps"],
+        category="inps_dilazioni",
+        gestionale_section="INPS Documenti",
+        collection="dilazioni_inps",
+        action="save_pdf",
+        priority=11
+    ),
+    
+    # --- BONIFICI STIPENDI ---
+    EmailRule(
+        name="bonifici_stipendi",
+        keywords=["Info Bonifico", "YouBusiness", "disposizione bonifico", "pagamento stipendio"],
+        subject_patterns=[r"info\s*bonifico", r"bonifico.*stipend", r"pagamento.*dipendent"],
+        sender_patterns=["bpm", "bnl", "intesa", "unicredit", "banco"],
+        category="bonifici_stipendi",
+        gestionale_section="Prima Nota Salari",
+        collection="bonifici_stipendi",
+        action="associate_employee",
+        priority=8
+    ),
+    
+    # --- F24 ---
+    EmailRule(
+        name="f24",
+        keywords=["F24", "modello F24", "delega F24", "tributi"],
+        subject_patterns=[r"f24", r"modello\s*f\s*24", r"tribut"],
+        sender_patterns=["agenziaentrate", "fisconline"],
+        category="f24",
+        gestionale_section="F24",
+        collection="f24",
+        action="save_pdf",
+        priority=7
+    ),
+    
+    # --- BUSTE PAGA / CEDOLINI ---
+    EmailRule(
+        name="buste_paga",
+        keywords=["busta paga", "cedolino", "LUL", "libro unico lavoro"],
+        subject_patterns=[r"busta\s*paga", r"cedolino", r"lul"],
+        sender_patterns=["consulente", "paghe", "zucchetti", "team system"],
+        category="buste_paga",
+        gestionale_section="Cedolini",
+        collection="cedolini_pdf",
+        action="save_pdf",
+        priority=9
+    ),
+    
+    # --- ESTRATTI CONTO ---
+    EmailRule(
+        name="estratti_conto",
+        keywords=["estratto conto", "movimenti bancari", "rendiconto", "situazione conto"],
+        subject_patterns=[r"estratto\s*conto", r"movimenti\s*bancar", r"rendiconto"],
+        sender_patterns=["bpm", "bnl", "intesa", "unicredit"],
+        category="estratti_conto",
+        gestionale_section="Banca",
+        collection="estratti_conto_pdf",
+        action="save_pdf",
+        priority=6
+    ),
+    
+    # --- FATTURE ELETTRONICHE ---
+    EmailRule(
+        name="fatture_sdi",
+        keywords=["fattura elettronica", "fattura PA", "XML fattura", "SDI"],
+        subject_patterns=[r"fattura.*elettronic", r"sdi", r"fe\s*\d+"],
+        sender_patterns=["aruba", "infocert", "sdi", "fatturapa"],
+        category="fatture",
+        gestionale_section="Fatture Ricevute",
+        collection="invoices",
+        action="import_fattura",
+        priority=5
+    ),
+]
+
+
+def decode_email_subject(subject: str) -> str:
+    """Decodifica il subject dell'email."""
+    if not subject:
+        return ""
+    decoded_parts = decode_header(subject)
+    result = []
+    for part, encoding in decoded_parts:
+        if isinstance(part, bytes):
+            result.append(part.decode(encoding or 'utf-8', errors='replace'))
+        else:
+            result.append(part)
+    return ''.join(result)
+
+
+def extract_codice_fiscale(text: str) -> Optional[str]:
+    """Estrae codice fiscale da testo."""
+    match = re.search(r'\b([A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z])\b', text.upper())
+    return match.group(1) if match else None
+
+
+def extract_data_from_text(text: str, pattern: str) -> Optional[str]:
+    """Estrae data da testo usando pattern DD/MM/YYYY o YYYY-MM-DD."""
+    match = re.search(pattern, text, re.I)
+    return match.group(1) if match else None
+
+
+def classify_email(subject: str, sender: str, body: str = "") -> Tuple[Optional[EmailRule], float]:
+    """
+    Classifica un'email in base alle regole definite.
+    Ritorna (regola_matchata, confidence_score).
+    """
+    subject_lower = subject.lower()
+    sender_lower = sender.lower()
+    body_lower = body.lower() if body else ""
+    full_text = f"{subject_lower} {body_lower}"
+    
+    best_match: Optional[EmailRule] = None
+    best_score = 0.0
+    
+    for rule in sorted(EMAIL_RULES, key=lambda r: -r.priority):
+        score = 0.0
+        
+        # Check keywords
+        keyword_matches = sum(1 for kw in rule.keywords if kw.lower() in full_text)
+        if keyword_matches > 0:
+            score += 0.3 * (keyword_matches / len(rule.keywords))
+        
+        # Check subject patterns
+        for pattern in rule.subject_patterns:
+            if re.search(pattern, subject_lower, re.I):
+                score += 0.4
+                break
+        
+        # Check sender patterns
+        for pattern in rule.sender_patterns:
+            if pattern.lower() in sender_lower:
+                score += 0.3
+                break
+        
+        # Apply priority bonus
+        score += rule.priority * 0.01
+        
+        if score > best_score:
+            best_score = score
+            best_match = rule
+    
+    # Soglia minima per considerare il match valido
+    if best_score < 0.25:
+        return None, 0.0
+    
+    return best_match, min(best_score, 1.0)
+
+
+def get_all_keywords() -> List[str]:
+    """Ritorna tutte le parole chiave da tutte le regole."""
+    keywords = set()
+    for rule in EMAIL_RULES:
+        keywords.update(rule.keywords)
+    return list(keywords)
+
+
+def get_categories_mapping() -> Dict[str, Dict[str, Any]]:
+    """Ritorna il mapping categorie -> sezioni gestionale."""
+    return {
+        rule.category: {
+            "name": rule.name,
+            "gestionale_section": rule.gestionale_section,
+            "collection": rule.collection,
+            "action": rule.action,
+            "keywords": rule.keywords
+        }
+        for rule in EMAIL_RULES
+    }
+
+
+async def scan_and_classify_emails(
+    db,
+    cartella: str = "INBOX",
+    giorni: int = 30,
+    delete_unmatched: bool = False,
+    dry_run: bool = True
+) -> Dict[str, Any]:
+    """
+    Scansiona le email, le classifica e le processa.
+    
+    Args:
+        db: Database MongoDB
+        cartella: Cartella IMAP da scansionare
+        giorni: Numero di giorni da controllare
+        delete_unmatched: Se True, elimina email che non matchano nessuna regola
+        dry_run: Se True, non esegue modifiche reali
+    
+    Returns:
+        Statistiche e risultati della scansione
+    """
+    if not EMAIL or not EMAIL_PASSWORD:
+        return {"error": "Credenziali email non configurate"}
+    
+    risultati = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "cartella": cartella,
+        "giorni_scansionati": giorni,
+        "dry_run": dry_run,
+        "email_totali": 0,
+        "email_classificate": 0,
+        "email_non_classificate": 0,
+        "email_da_eliminare": 0,
+        "per_categoria": {},
+        "documenti_salvati": 0,
+        "associazioni_effettuate": 0,
+        "errori": [],
+        "dettagli": []
+    }
+    
+    try:
+        mail = imaplib.IMAP4_SSL(IMAP_SERVER)
+        mail.login(EMAIL, EMAIL_PASSWORD)
+        mail.select(cartella)
+        
+        # Calcola data limite
+        data_limite = datetime.now() - timedelta(days=giorni)
+        date_str = data_limite.strftime("%d-%b-%Y")
+        
+        # Cerca tutte le email nel periodo
+        status, messages = mail.search(None, f'(SINCE {date_str})')
+        
+        if status != "OK":
+            mail.logout()
+            return risultati
+        
+        message_ids = messages[0].split()
+        risultati["email_totali"] = len(message_ids)
+        
+        emails_to_delete = []
+        
+        for msg_id in message_ids:
+            try:
+                status, msg_data = mail.fetch(msg_id, "(RFC822)")
+                if status != "OK":
+                    continue
+                
+                email_body = msg_data[0][1]
+                msg = email.message_from_bytes(email_body)
+                
+                subject = decode_email_subject(msg.get("Subject", ""))
+                sender = msg.get("From", "")
+                date_str = msg.get("Date", "")
+                
+                # Estrai body text
+                body_text = ""
+                for part in msg.walk():
+                    if part.get_content_type() == "text/plain":
+                        try:
+                            payload = part.get_payload(decode=True)
+                            if payload:
+                                body_text += payload.decode('utf-8', errors='replace')
+                        except:
+                            pass
+                
+                # Classifica email
+                rule, confidence = classify_email(subject, sender, body_text)
+                
+                email_info = {
+                    "msg_id": msg_id.decode() if isinstance(msg_id, bytes) else str(msg_id),
+                    "subject": subject[:100],
+                    "sender": sender[:50],
+                    "date": date_str,
+                    "classified": rule is not None,
+                    "category": rule.category if rule else None,
+                    "confidence": round(confidence, 2),
+                    "gestionale_section": rule.gestionale_section if rule else None
+                }
+                
+                if rule:
+                    risultati["email_classificate"] += 1
+                    
+                    # Incrementa contatore categoria
+                    if rule.category not in risultati["per_categoria"]:
+                        risultati["per_categoria"][rule.category] = {
+                            "count": 0,
+                            "gestionale_section": rule.gestionale_section,
+                            "emails": []
+                        }
+                    risultati["per_categoria"][rule.category]["count"] += 1
+                    risultati["per_categoria"][rule.category]["emails"].append({
+                        "subject": subject[:60],
+                        "confidence": round(confidence, 2)
+                    })
+                    
+                    # Estrai allegati PDF se non dry_run
+                    if not dry_run:
+                        for part in msg.walk():
+                            filename = part.get_filename()
+                            if filename and filename.lower().endswith('.pdf'):
+                                filename = decode_email_subject(filename)
+                                payload = part.get_payload(decode=True)
+                                
+                                if payload:
+                                    # Salva nel database
+                                    doc = {
+                                        "tipo": rule.category,
+                                        "filename": filename,
+                                        "subject": subject,
+                                        "sender": sender,
+                                        "data_email": date_str,
+                                        "pdf_base64": base64.b64encode(payload).decode('utf-8'),
+                                        "confidence": confidence,
+                                        "gestionale_section": rule.gestionale_section,
+                                        "processed": False,
+                                        "data_inserimento": datetime.now(timezone.utc).isoformat()
+                                    }
+                                    
+                                    # Evita duplicati
+                                    existing = await db["documents_classified"].find_one({
+                                        "subject": subject,
+                                        "filename": filename
+                                    })
+                                    
+                                    if not existing:
+                                        await db["documents_classified"].insert_one(doc)
+                                        risultati["documenti_salvati"] += 1
+                
+                else:
+                    risultati["email_non_classificate"] += 1
+                    if delete_unmatched:
+                        emails_to_delete.append(msg_id)
+                        email_info["marked_for_deletion"] = True
+                
+                risultati["dettagli"].append(email_info)
+                
+            except Exception as e:
+                risultati["errori"].append(f"Errore email {msg_id}: {str(e)}")
+        
+        # Elimina email non classificate se richiesto
+        if delete_unmatched and not dry_run and emails_to_delete:
+            for msg_id in emails_to_delete:
+                try:
+                    mail.store(msg_id, '+FLAGS', '\\Deleted')
+                except Exception as e:
+                    risultati["errori"].append(f"Errore eliminazione {msg_id}: {str(e)}")
+            
+            mail.expunge()
+            risultati["email_da_eliminare"] = len(emails_to_delete)
+        elif delete_unmatched and dry_run:
+            risultati["email_da_eliminare"] = len(emails_to_delete)
+        
+        mail.logout()
+        
+    except Exception as e:
+        risultati["errori"].append(f"Errore connessione: {str(e)}")
+    
+    return risultati
+
+
+async def process_classified_documents(db) -> Dict[str, Any]:
+    """
+    Processa i documenti classificati e li associa alle sezioni del gestionale.
+    """
+    risultati = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "documenti_processati": 0,
+        "associazioni": [],
+        "errori": []
+    }
+    
+    # Trova documenti non processati
+    cursor = db["documents_classified"].find({"processed": False})
+    
+    async for doc in cursor:
+        try:
+            category = doc.get("tipo")
+            
+            if category == "dimissioni":
+                # Estrai codice fiscale e associa a dipendente
+                cf = extract_codice_fiscale(doc.get("subject", "") + doc.get("filename", ""))
+                if cf:
+                    # Trova dipendente
+                    dipendente = await db["employees"].find_one({"codice_fiscale": cf.upper()})
+                    if dipendente:
+                        # Estrai data dimissione se possibile
+                        await db["employees"].update_one(
+                            {"_id": dipendente["_id"]},
+                            {"$set": {
+                                "stato": "dimesso",
+                                "documento_dimissioni": doc.get("filename"),
+                                "data_modifica": datetime.now(timezone.utc).isoformat()
+                            }}
+                        )
+                        risultati["associazioni"].append({
+                            "tipo": "dimissioni",
+                            "codice_fiscale": cf,
+                            "dipendente": f"{dipendente.get('nome', '')} {dipendente.get('cognome', '')}"
+                        })
+            
+            elif category == "cartelle_esattoriali":
+                # Salva in ADR per il commercialista
+                cf = extract_codice_fiscale(doc.get("subject", "") + doc.get("filename", ""))
+                if cf:
+                    await db["adr_definizione_agevolata"].update_one(
+                        {"codice_fiscale": cf},
+                        {
+                            "$setOnInsert": {
+                                "codice_fiscale": cf,
+                                "denominazione": "",
+                                "data_inserimento": datetime.now(timezone.utc).isoformat()
+                            },
+                            "$push": {"pdf_allegati": {
+                                "filename": doc.get("filename"),
+                                "subject": doc.get("subject"),
+                                "data_email": doc.get("data_email")
+                            }}
+                        },
+                        upsert=True
+                    )
+                    risultati["associazioni"].append({
+                        "tipo": "cartella_esattoriale",
+                        "codice_fiscale": cf
+                    })
+            
+            # Marca come processato
+            await db["documents_classified"].update_one(
+                {"_id": doc["_id"]},
+                {"$set": {"processed": True, "data_processamento": datetime.now(timezone.utc).isoformat()}}
+            )
+            risultati["documenti_processati"] += 1
+            
+        except Exception as e:
+            risultati["errori"].append(f"Errore doc {doc.get('_id')}: {str(e)}")
+    
+    return risultati
