@@ -228,6 +228,34 @@ Il sistema deve agire come un **consulente contabile professionale**, con superv
 - Importo fattura originale (se disponibile)
 - Differenza (se presente)
 
+### Regola 5: Fatture TD24 Riepilogative
+
+**COS'È TD24**: Fattura elettronica differita (art. 21, comma 4, DPR 633/72) che riepiloga più operazioni (es. DDT). Può avere imponibile zero perché è solo documentale.
+
+**AZIONE**:
+- NON associare fatture TD24 con imponibile zero ai pagamenti
+- Mostrare nota informativa: "Fattura TD24 riepilogativa - solo documentale"
+- Verificare sempre il campo `<TipoDocumento>` nell'XML
+
+### Regola 6: Pagamenti Rateali
+
+**SCENARIO**: Una fattura viene pagata in più rate (es. 3 assegni per la stessa fattura).
+
+**AZIONE**:
+- Rilevare automaticamente quando più assegni sono collegati alla stessa fattura
+- Mostrare: "📊 Pagamento in X rate: Totale rate €Y su fattura di €Z"
+- Permettere conferma manuale di ogni rata
+- Non auto-confermare se c'è differenza tra totale rate e importo fattura
+
+### Regola 7: Pulizia Dati Incompleti
+
+**SCENARIO**: Assegni con €0,00, "Data N/D", o stato "vuoto".
+
+**AZIONE**:
+- Escludere automaticamente dalla lista di riconciliazione
+- Non mostrare assegni senza importo o data valida
+- Log per amministratore dei record esclusi
+
 ---
 
 ## 13. Logica Prima Nota (NUOVA - Gennaio 2026)
