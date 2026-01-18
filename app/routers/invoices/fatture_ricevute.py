@@ -675,6 +675,15 @@ async def import_fatture_zip(file: UploadFile = File(...)):
         "dettagli": []
     }
     
+    def decode_with_fallback(data: bytes) -> str:
+        """Decodifica bytes provando diverse codifiche."""
+        for encoding in ['utf-8', 'latin-1', 'iso-8859-1', 'cp1252']:
+            try:
+                return data.decode(encoding)
+            except UnicodeDecodeError:
+                continue
+        return data.decode('utf-8', errors='replace')
+    
     def process_zip(zip_data: bytes, parent_name: str = ""):
         """Processa un file ZIP (ricorsivamente per ZIP annidati)."""
         xml_files = []
@@ -683,7 +692,7 @@ async def import_fatture_zip(file: UploadFile = File(...)):
                 for name in zf.namelist():
                     if name.endswith('.xml') or name.endswith('.XML'):
                         try:
-                            xml_content = zf.read(name).decode('utf-8', errors='replace')
+                            xml_content = decode_with_fallback(zf.read(name))
                             xml_files.append((f"{parent_name}/{name}" if parent_name else name, xml_content))
                         except:
                             pass
