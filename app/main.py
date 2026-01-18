@@ -316,6 +316,12 @@ app.include_router(verbali_noleggio.router, tags=["Verbali Noleggio"])
 # --- Bonifici Stipendi da Email ---
 app.include_router(bonifici_stipendi.router, tags=["Bonifici Stipendi"])
 
+# --- INPS Documenti (Delibere FONSI, Dilazioni) ---
+app.include_router(inps_documenti.router, prefix="/api/inps", tags=["INPS Documenti"])
+
+# --- ADR Definizione Agevolata ---
+app.include_router(adr.router, prefix="/api/adr", tags=["ADR Definizione Agevolata"])
+
 # --- Sincronizzazione Relazionale ---
 app.include_router(sync_relazionale.router, prefix="/api", tags=["Sincronizzazione Relazionale"])
 
