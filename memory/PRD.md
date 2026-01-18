@@ -163,6 +163,14 @@ Si scala:
 - **Unificazione collection `fornitori` e `suppliers`** (18 Gen 2026) - 263 fornitori consolidati
 - **Implementato servizio Supervisione Contabile** (18 Gen 2026)
 - **Fix pagina Previsioni Acquisti** - funzionante (18 Gen 2026)
+- **Pulizia dati massiva** (18 Gen 2026):
+  - 83 fatture duplicate eliminate
+  - 2 fatture vuote eliminate
+  - 20 F24 vuoti eliminati
+  - 171 assegni vuoti eliminati (Data N/D, €0)
+  - 13 F24 con date errate corretti
+  - 82 TD24 marcate non riconciliabili
+- **Logica TD24** - fatture differite escluse dalla riconciliazione (18 Gen 2026)
 
 ### 🔄 In Progress
 - UI pulsante aggiornamento bulk fornitori in `Fornitori.jsx`
