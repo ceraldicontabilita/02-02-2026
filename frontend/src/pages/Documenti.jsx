@@ -1185,13 +1185,41 @@ export default function Documenti() {
                     <tr style={{ background: '#f8fafc' }}>
                       <th style={{ padding: 12, textAlign: 'left', fontWeight: 600, color: '#475569' }}>File</th>
                       <th style={{ padding: 12, textAlign: 'left', fontWeight: 600, color: '#475569' }}>Tipo</th>
+                      <th style={{ padding: 12, textAlign: 'left', fontWeight: 600, color: '#475569' }}>Periodo</th>
                       <th style={{ padding: 12, textAlign: 'left', fontWeight: 600, color: '#475569' }}>Dati Estratti</th>
                       <th style={{ padding: 12, textAlign: 'center', fontWeight: 600, color: '#475569' }}>OCR</th>
                       <th style={{ padding: 12, textAlign: 'left', fontWeight: 600, color: '#475569' }}>Data</th>
+                      <th style={{ padding: 12, textAlign: 'center', fontWeight: 600, color: '#475569' }}>Azioni</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {aiDocuments.map((doc, idx) => (
+                    {aiDocuments.map((doc, idx) => {
+                      // Estrai periodo dai dati
+                      const getPeriodo = () => {
+                        const data = doc.extracted_data;
+                        if (!data) return '-';
+                        // Busta paga
+                        if (data.periodo?.mese && data.periodo?.anno) {
+                          return `${data.periodo.mese}/${data.periodo.anno}`;
+                        }
+                        // F24
+                        if (data.data_versamento) return data.data_versamento;
+                        // Bonifico
+                        if (data.data_operazione) return data.data_operazione;
+                        // Verbale
+                        if (data.data_verbale) return data.data_verbale;
+                        // Cartella esattoriale
+                        if (data.data_notifica) return data.data_notifica;
+                        // Estratto conto
+                        if (data.periodo?.da) return `${data.periodo.da} - ${data.periodo.a || ''}`;
+                        // Fattura
+                        if (data.data_fattura) return data.data_fattura;
+                        // Delibera INPS
+                        if (data.data_documento) return data.data_documento;
+                        return '-';
+                      };
+                      
+                      return (
                       <tr key={idx} style={{ borderTop: '1px solid #e2e8f0' }}>
                         <td style={{ padding: 12 }}>
                           <div style={{ fontWeight: 500, color: '#1e293b' }}>{doc.filename}</div>
@@ -1209,12 +1237,15 @@ export default function Documenti() {
                             {CATEGORY_COLORS[doc.document_type]?.icon || '📄'} {doc.document_type?.toUpperCase()}
                           </span>
                         </td>
-                        <td style={{ padding: 12, maxWidth: 300 }}>
+                        <td style={{ padding: 12, fontSize: 12, color: '#1e293b', fontWeight: 500 }}>
+                          {getPeriodo()}
+                        </td>
+                        <td style={{ padding: 12, maxWidth: 250 }}>
                           <div style={{ fontSize: 11, color: '#64748b', lineHeight: 1.4 }}>
                             {doc.extracted_data ? (
-                              Object.entries(doc.extracted_data).slice(0, 3).map(([key, value]) => (
+                              Object.entries(doc.extracted_data).slice(0, 2).map(([key, value]) => (
                                 <div key={key}>
-                                  <strong>{key}:</strong> {typeof value === 'object' ? JSON.stringify(value).slice(0, 50) : String(value).slice(0, 50)}
+                                  <strong>{key}:</strong> {typeof value === 'object' ? JSON.stringify(value).slice(0, 40) : String(value).slice(0, 40)}
                                 </div>
                               ))
                             ) : '-'}
@@ -1230,8 +1261,68 @@ export default function Documenti() {
                         <td style={{ padding: 12, fontSize: 12, color: '#64748b' }}>
                           {doc.created_at ? new Date(doc.created_at).toLocaleDateString('it-IT') : '-'}
                         </td>
+                        <td style={{ padding: 12, textAlign: 'center' }}>
+                          <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
+                            {doc.file_base64 && (
+                              <button
+                                onClick={() => {
+                                  try {
+                                    const pdfData = atob(doc.file_base64);
+                                    const bytes = new Uint8Array(pdfData.length);
+                                    for (let i = 0; i < pdfData.length; i++) {
+                                      bytes[i] = pdfData.charCodeAt(i);
+                                    }
+                                    const blob = new Blob([bytes], { type: 'application/pdf' });
+                                    const url = URL.createObjectURL(blob);
+                                    setSelectedPdfDoc({ ...doc, pdfUrl: url });
+                                  } catch (e) {
+                                    alert('PDF non disponibile');
+                                  }
+                                }}
+                                style={{
+                                  padding: '5px 10px',
+                                  background: '#dbeafe',
+                                  border: 'none',
+                                  borderRadius: 4,
+                                  cursor: 'pointer',
+                                  fontSize: 11,
+                                  fontWeight: 500,
+                                  color: '#1e40af'
+                                }}
+                                title="Visualizza PDF"
+                              >
+                                Vedi
+                              </button>
+                            )}
+                            <button
+                              onClick={async () => {
+                                if (!window.confirm(`Eliminare il documento "${doc.filename}"?`)) return;
+                                try {
+                                  await api.delete(`/api/document-ai/extracted-documents/${doc._id || doc.id}`);
+                                  loadAiDocuments();
+                                } catch (e) {
+                                  alert(`Errore: ${e.response?.data?.detail || e.message}`);
+                                }
+                              }}
+                              style={{
+                                padding: '5px 10px',
+                                background: '#fee2e2',
+                                border: 'none',
+                                borderRadius: 4,
+                                cursor: 'pointer',
+                                fontSize: 11,
+                                fontWeight: 500,
+                                color: '#dc2626'
+                              }}
+                              title="Elimina documento"
+                            >
+                              Elimina
+                            </button>
+                          </div>
+                        </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
