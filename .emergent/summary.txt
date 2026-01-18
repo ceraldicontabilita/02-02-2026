@@ -1,107 +1,199 @@
 <analysis>**original_problem_statement:**
-L'utente ha segnalato una serie di bug critici e richiesto numerose funzionalità per migliorare l'applicazione di contabilità. Le richieste principali includono:
--   **Logica Contabile (P0):** Refactoring completo della Prima Nota per separare CASSA e BANCA, con una logica DARE/AVERE non convenzionale.
--   **Gestione Buste Paga (P0):** Implementazione di un sistema per importare dati storici da file Excel (, ) e futuri da PDF, con una pagina di riconciliazione.
--   **Validatori Bloccanti (P0):** Introdurre validatori durante l'import delle fatture per bloccare le operazioni se un fornitore non ha un metodo di pagamento o un IBAN (se necessario). Inoltre, bloccare i pagamenti di stipendi in contanti a partire da luglio 2018.
--   **Gestione Fornitori:** Risolvere errori 404, problemi di modifica e ricerca. Implementare una funzione di aggiornamento di massa per arricchire i dati dei fornitori (IBAN, anagrafiche) da fonti esterne.
--   **Correzione Bug:** Risolvere un errore 400 sulla conferma multipla di fatture, problemi nella visualizzazione degli F24 pendenti e l'importazione di file XML dei corrispettivi (mancata estrazione del pagamento elettronico).
--   **Refactoring UI/UX:** Replicare il design delle pagine Prima Nota Cassa/Banca e creare una nuova pagina Prima Nota Salari basandosi su un progetto di riferimento fornito dall'utente.
--   **Automatizzazione:** Creare un processo automatico che, ogni 30 minuti, tenti di riconciliare le fatture non pagate con gli estratti conto bancari.
+L'utente ha richiesto una serie di correzioni di bug e una nuova importante funzionalità per la sua applicazione di contabilità.
+
+**Requisiti di Prodotto:**
+1.  **Integrazione Agente AI (P0):** L'utente ha richiesto esplicitamente di integrare **Parlant.io** per creare un assistente conversazionale. Le specifiche sono:
+    *   Utilizzare **Gemini** come LLM.
+    *   L'agente deve avere accesso ai dati contabili tramite  (es. ottenere dati dalla prima nota, anagrafiche fornitori).
+    *   L'interfaccia deve essere un **widget flottante** presente in tutte le pagine.
+    *   L'utente ha fornito una chiave API di Google () da utilizzare dopo che la sua chiave iniziale ha riscontrato problemi di quota.
+    *   Tutto il codice relativo al precedente assistente AI (basato su Claude) deve essere rimosso.
+
+2.  **Correzione Bug di Riconciliazione (P1):** L'utente ha segnalato una serie di problemi nelle pagine di riconciliazione ():
+    *   **Logica POS:** Gli incassi POS provenienti da estratto conto devono essere registrati *sempre* in Prima Nota Banca, mai in Cassa.
+    *   **Pagina Banca:** Verificare e risolvere eventuali errori  durante la conferma delle operazioni.
+    *   **Pagina Assegni:** Il nome del fornitore/beneficiario non viene visualizzato.
+    *   **Pagina F24:** Viene mostrato l'importo dei singoli codici tributo invece dell'importo totale del modello F24.
+    *   **Pagina Stipendi:** La tabella mostra 252 transazioni con importo €0,00 e data non disponibile.
+    *   **Formato Data:** Utilizzare il formato data italiano  in tutta l'applicazione.
+    *   **Errore Import PDF:** Il caricamento di una busta paga tramite la funzione Estratto Conto PDF fallisce, non mostrando alcuna transazione.
 
 **User's preferred language**: Italiano
 
 **what currently exists?**
-L'applicazione ora dispone di una logica contabile personalizzata con registri di Cassa e Banca separati. Le pagine Prima Nota e Prima Nota Salari sono state completamente ridisegnate per corrispondere alle specifiche dell'utente, utilizzando componenti React modulari e uno store Zustand. Sono stati implementati validatori P0 bloccanti durante l'import delle fatture e il pagamento dei salari per garantire l'integrità dei dati secondo le regole aziendali.
-
-Sono state corrette numerose problematiche, tra cui il bug sulla conferma multipla delle fatture, la visualizzazione degli F24, e l'importazione di corrispettivi e cedolini da file Excel. È stata implementata una funzione di riconciliazione automatica con auto-refresh e un endpoint per l'aggiornamento di massa dei dati dei fornitori. La gestione dei fornitori è stata migliorata correggendo bug nella UI e aggiungendo una funzione per sincronizzare gli IBAN dalle fatture esistenti.
+L'agente ha completato con successo due attività principali. In primo luogo, ha implementato un **importatore massivo di estratti conto PDF**, che include il parsing di diversi formati bancari (BNL, BPM), un'interfaccia di upload con anteprima dei dati estratti e il salvataggio nel database. In secondo luogo, ha **risolto quasi tutti i bug segnalati dall'utente** nelle pagine di riconciliazione, correggendo la visualizzazione degli importi per F24 e stipendi, aggiungendo il nome del beneficiario agli assegni e standardizzando il formato delle date in . Infine, ha iniziato l'implementazione della richiesta più recente: l'integrazione di Parlant.io, rimuovendo il precedente chatbot basato su Claude e creando la struttura base per il nuovo servizio.
 
 **Last working item**:
--   **Last item agent was working**: L'agente stava implementando la richiesta dell'utente di un pulsante per l'aggiornamento in blocco di tutti i fornitori. L'agente ha creato con successo l'endpoint backend , ma è stato interrotto prima di poter aggiungere il pulsante e la relativa logica nel frontend ().
--   **Status**: IN PROGRESS
+-   **Last item agent was working**: L'agente stava tentando di avviare in modo stabile il server **Parlant.io** come un servizio in background gestito da . Sebbene il server si avvii, sembra bloccarsi o andare in crash prima di creare l'agente AI e i relativi , restituendo un errore  nei log, probabilmente a causa di conflitti di porta interni () o problemi di inizializzazione asincrona nell'ambiente di .
+-   **Status**: BLOCKED
 -   **Agent Testing Done**: N
--   **Which testing method agent to use?**: both
+-   **Which testing method agent to use?**: backend testing agent (per verificare l'avvio e la raggiungibilità del server Parlant) e test manuali con .
 -   **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
--   **Issue 1: (P0) Completare l'implementazione dell'aggiornamento in blocco dei fornitori.**
--   **Issue 2: (P0) 231 fornitori con metodo di pagamento bancario sono privi di IBAN.**
--   **Issue 3: (P1) L'utente segnala ancora errori 404 generici durante l'uso dell'applicazione.**
--   **Issue 4: (P2) Svuotare file PDF residui dal repository per liberare spazio.**
+-   **Issue 1: (P0) L'integrazione di Parlant.io non è funzionante.**
+-   **Issue 2: (P1) Errore di logica nell'importazione dei POS.**
+-   **Issue 3: (P2) L'utente utilizza un importatore errato per le buste paga.**
 
 **Issues Detail**:
--   **Issue 1: Completare l'aggiornamento in blocco dei fornitori**
-    -   **Attempted fixes**: È stato creato l'endpoint backend .
+-   **Issue 1: L'integrazione di Parlant.io non è funzionante**
+    -   **Attempted fixes**:
+        1.  Tentativo di installare  che ha causato un conflitto di dipendenze con usage: openai [-h] [-v] [-b API_BASE] [-k API_KEY] [-p PROXY [PROXY ...]]
+              [-o ORGANIZATION] [-t {openai,azure}]
+              [--api-version API_VERSION] [--azure-endpoint AZURE_ENDPOINT]
+              [--azure-ad-token AZURE_AD_TOKEN] [-V]
+              {api,tools,migrate,grit} ...
+
+positional arguments:
+  {api,tools,migrate,grit}
+    api                 Direct API calls
+    tools               Client side tools for convenience
+
+options:
+  -h, --help            show this help message and exit
+  -v, --verbose         Set verbosity.
+  -b API_BASE, --api-base API_BASE
+                        What API base url to use.
+  -k API_KEY, --api-key API_KEY
+                        What API key to use.
+  -p PROXY [PROXY ...], --proxy PROXY [PROXY ...]
+                        What proxy to use.
+  -o ORGANIZATION, --organization ORGANIZATION
+                        Which organization to run as (will use your default
+                        organization if not specified)
+  -t {openai,azure}, --api-type {openai,azure}
+                        The backend API to call, must be `openai` or `azure`
+  --api-version API_VERSION
+                        The Azure API version, e.g.
+                        'https://learn.microsoft.com/en-us/azure/ai-
+                        services/openai/reference#rest-api-versioning'
+  --azure-endpoint AZURE_ENDPOINT
+                        The Azure endpoint, e.g.
+                        'https://endpoint.openai.azure.com'
+  --azure-ad-token AZURE_AD_TOKEN
+                        A token from Azure Active Directory,
+                        https://www.microsoft.com/en-
+                        us/security/business/identity-access/microsoft-entra-
+                        id
+  -V, --version         show program's version number and exit.
+        2.  Configurazione della  fornita dall'utente nel file  dopo aver scoperto che  non è compatibile.
+        3.  Creazione di uno script server standalone () e di un servizio  () per eseguirlo in background.
+        4.  Numerosi tentativi di riavvio del servizio, sblocco delle porte (, ) e analisi dei log, che indicano un errore durante lo startup ().
     -   **Next debug checklist**:
-        1.  Modificare .
-        2.  Aggiungere un pulsante Aggiorna Tutti i Dati.
-        3.  Collegare il pulsante all'endpoint .
-        4.  Implementare un indicatore di caricamento durante l'operazione e una notifica (toast) per comunicare il risultato (es. X fornitori aggiornati, Y falliti).
-    -   **Why fix this issue and what will be achieved with the fix?**: Fornirà una soluzione rapida per arricchire i dati anagrafici dei fornitori, risolvendo i problemi di IBAN mancanti e riducendo gli errori manuali.
-    -   **Status**: IN PROGRESS
-    -   **Is recurring issue?**: N
+        1.  **Semplificare**: Ridurre lo script  al minimo indispensabile (creazione del server e dell'agente, senza  o ) per isolare il problema di avvio con .
+        2.  **Verificare la configurazione LLM**: Assicurarsi che Parlant sia configurato per usare **Gemini** con la chiave API fornita dall'utente. L'ultimo tentativo dell'agente era un fallback a OpenAI, che va annullato.
+        3.  **Risolvere la comunicazione inter-container**: L'API del backend () tenta di raggiungere il server Parlant su , il che è errato in un ambiente containerizzato. Bisogna usare il nome del servizio di rete corretto o l'IP interno.
+        4.  **Reintrodurre i tools**: Una volta che il server base funziona, reintrodurre i  uno alla volta, implementando quelli richiesti per l'accesso ai dati contabili (es. , ).
+    -   **Status**: BLOCKED
+    -   **Is recurring issue?**: Y
     -   **Should Test frontend/backend/both after fix?**: both
     -   **Blocked on other issue**: No
 
--   **Issue 2: 231 fornitori con metodo di pagamento bancario sono privi di IBAN**
-    -   **Attempted fixes**: È stato eseguito un endpoint () che ha corretto 17 fornitori trovando l'IBAN nelle fatture XML importate.
+-   **Issue 2: Errore di logica nell'importazione dei POS**
+    -   **Attempted fixes**: Nessuno. L'agente ha ricevuto l'istruzione ma si è concentrato sugli altri bug e poi su Parlant.
     -   **Next debug checklist**:
-        1.  Completare l'Issue 1 (strumento di aggiornamento bulk).
-        2.  Eseguire l'aggiornamento bulk e verificare quanti IBAN vengono trovati da fonti esterne.
-        3.  Eseguire nuovamente il check P0 ().
-        4.  Presentare all'utente una lista dei fornitori rimanenti che necessitano di un inserimento manuale dell'IBAN.
-    -   **Why fix this issue and what will be achieved with the fix?**: Risolve un blocco P0 che impedisce l'importazione di fatture per un gran numero di fornitori, garantendo la conformità dei dati.
+        1.  Controllare il file .
+        2.  Verificare se esiste una logica per identificare le transazioni POS.
+        3.  Assicurarsi che, quando una transazione POS viene identificata, venga poi inserita esclusivamente nella .
+    -   **Why fix this issue and what will be achieved with the fix?**: Garantisce la corretta classificazione contabile degli incassi POS, come da requisito esplicito dell'utente.
     -   **Status**: NOT STARTED
-    -   **Is recurring issue?**: Y
+    -   **Is recurring issue?**: N
     -   **Should Test frontend/backend/both after fix?**: Backend
-    -   **Blocked on other issue**: Issue 1: Completare l'aggiornamento in blocco dei fornitori
+    -   **Blocked on other issue**: No
+
+-   **Issue 3: L'utente utilizza un importatore errato per le buste paga**
+    -   **Attempted fixes**: L'agente ha diagnosticato correttamente che l'utente sta caricando file di buste paga tramite la funzione di importazione per estratti conto, causando il fallimento.
+    -   **Next debug checklist**:
+        1.  Modificare  per guidare meglio l'utente.
+        2.  Aggiungere un messaggio di avviso se un file che sembra una busta paga (es. dal nome) viene caricato nel tipo sbagliato.
+        3.  Considerare come futuro miglioramento un rilevatore automatico del tipo di documento.
+    -   **Why fix this issue and what will be achieved with the fix?**: Previene l'errore dell'utente e migliora l'usabilità della funzione di importazione.
+    -   **Status**: NOT STARTED
+    -   **Is recurring issue?**: N
+    -   **Should Test frontend/backend/both after fix?**: Frontend
+    -   **Blocked on other issue**: No
 
 **In progress Task List**:
--   **Task 1: Implementare UI per l'aggiornamento in blocco dei fornitori (P0)**
-    -   **Where to resume**: . Aggiungere un pulsante e la logica di chiamata API come descritto nell'Issue 1.
-    -   **What will be achieved with this?**: Completerà la funzionalità richiesta dall'utente per la gestione massiva dei fornitori.
+-   **Task 1: Stabilizzare e completare l'integrazione di Parlant.io (P0)**
+    -   **Where to resume**: Dal file , semplificandolo per ottenere un avvio stabile tramite .
+    -   **What will be achieved with this?**: Un assistente AI funzionale, integrato nell'applicazione e in grado di interagire con i dati contabili.
     -   **Status**: IN PROGRESS
     -   **Should Test frontend/backend/both after fix?**: both
-    -   **Blocked on something**: No.
+    -   **Blocked on something**: Problemi di avvio del server e comunicazione di rete.
 
 **Upcoming and Future Tasks**
 -   **Upcoming Tasks**:
-    -   (P1) **Verifica Funzionamento Validatori P0**: Chiedere all'utente di testare l'importazione di una fattura per un fornitore con dati volutamente errati (es. senza IBAN) per confermare che il blocco funzioni.
-    -   (P2) **Svuotamento PDF**: Eseguire un comando più approfondito per rimuovere tutti i file PDF non necessari dalle varie cartelle (, , ecc.).
+    -   (P1) Finalizzare l'importazione dei cedolini da PDF (richiede un parser dedicato, non quello degli estratti conto).
+    -   (P1) Implementare i  contabili per l'agente Parlant (es. , ).
 -   **Future Tasks**:
-    -   (P1) Finalizzare l'importazione dei cedolini da PDF (estrazione OCR dei dati).
-    -   (P2) Unificare le anagrafiche  e .
+    -   (P2) Unificare le collection  e .
     -   (P2) Sviluppare una Dashboard Analytics.
     -   (P2) Implementare l'integrazione con Google Calendar.
     -   (P2) Generare e inviare report in PDF via email.
 
 **Completed work in this session**
--   **UI Refactoring (Prima Nota e Salari)**: Le pagine  e  sono state create/sostituite copiando il codice da un progetto di riferimento, implementando il design richiesto.
--   **Implementazione Validatori P0**: Aggiunti validatori bloccanti per fatture (mancanza metodo di pagamento/IBAN) e salari (pagamento in contanti post 06/2018).
--   **Fix Gestione Fornitori**: Risolto un bug che nascondeva il pulsante Cerca P.IVA e implementato un endpoint per sincronizzare gli IBAN dalle fatture.
--   **Fix Bug Conferma Multipla**: Risolto errore 400 durante la conferma in batch di fatture.
--   **Fix e Refactoring Sezione F24**: La UI è stata corretta per mostrare gli importi totali e permettere la conferma.
--   **Fix Import Dati**: Corrette le procedure di importazione per Corrispettivi XML e Cedolini da Excel.
--   **Automatizzazione Riconciliazione**: Implementata una logica di auto-assegnazione dei metodi di pagamento con refresh automatico.
--   **Endpoint Bulk Update**: Creato un endpoint backend per l'aggiornamento massivo dei fornitori.
+-   **Importatore PDF Massivo**: Creato un sistema completo per importare estratti conto bancari da file PDF multipli, con parsing intelligente e anteprima dei dati.
+-   **Risoluzione Bug Riconciliazione**:
+    -   **F24**: Corretta la visualizzazione dell'importo totale.
+    -   **Stipendi**: Filtrate le voci a zero e corretto il recupero dei dati dal DB.
+    -   **Assegni**: Aggiunto il nome del beneficiario e corretto il flusso di conferma per usare l'endpoint corretto, risolvendo l'errore 400.
+    -   **Formato Date**: Uniformato il formato data a  in tutte le viste di riconciliazione.
+-   **Rimozione Chat AI Esistente**: Cancellati tutti i file del backend e frontend relativi al precedente chatbot basato su Claude.
+
+**Earlier issues found/mentioned but not fixed**
+-   La logica per garantire che gli incassi POS finiscano *solo* in  non è stata verificata o implementata.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **Backend**: FastAPI, Pydantic, MongoDB.
--   **Frontend**: React, Zustand (per state management).
--   **Logica di Business**: Implementazione di regole contabili complesse e non standard, validatori P0 bloccanti.
--   **Debito Tecnico**: La coesistenza di  e  crea confusione e problemi di hot-reloading.
+-   **Parlant.io**: Framework per agenti AI con cui l'agente sta lottando. L'integrazione richiede un server Python separato, la gestione di  e , e l'uso di un widget React.
+-   **Supervisor**: Utilizzato per gestire il server Parlant come processo in background. La configurazione e la gestione delle variabili d'ambiente sono cruciali.
+-   **Comunicazione Inter-Container**: È emersa la necessità per il backend FastAPI di comunicare con il server Parlant, che richiede la configurazione di rete corretta (non ).
 
 **key DB schema**
--   ****: Anagrafica fornitori. Fonte di verità per  e .
--   ****: Fatture ricevute.
--   ** / **: Registri contabili separati.
--   ****: Dati delle buste paga.
--   ****: Dati per i pagamenti F24.
+-   Nessuna modifica. Le collection utilizzate sono: , , , .
 
 **changes in tech stack**
--   È stata introdotta la libreria  nel frontend per la gestione dello stato della nuova UI della Prima Nota.
+-   **Aggiunto**: , .
+-   **Conflitto di dipendenze**: Si è verificato un conflitto tra la versione di usage: openai [-h] [-v] [-b API_BASE] [-k API_KEY] [-p PROXY [PROXY ...]]
+              [-o ORGANIZATION] [-t {openai,azure}]
+              [--api-version API_VERSION] [--azure-endpoint AZURE_ENDPOINT]
+              [--azure-ad-token AZURE_AD_TOKEN] [-V]
+              {api,tools,migrate,grit} ...
+
+positional arguments:
+  {api,tools,migrate,grit}
+    api                 Direct API calls
+    tools               Client side tools for convenience
+
+options:
+  -h, --help            show this help message and exit
+  -v, --verbose         Set verbosity.
+  -b API_BASE, --api-base API_BASE
+                        What API base url to use.
+  -k API_KEY, --api-key API_KEY
+                        What API key to use.
+  -p PROXY [PROXY ...], --proxy PROXY [PROXY ...]
+                        What proxy to use.
+  -o ORGANIZATION, --organization ORGANIZATION
+                        Which organization to run as (will use your default
+                        organization if not specified)
+  -t {openai,azure}, --api-type {openai,azure}
+                        The backend API to call, must be `openai` or `azure`
+  --api-version API_VERSION
+                        The Azure API version, e.g.
+                        'https://learn.microsoft.com/en-us/azure/ai-
+                        services/openai/reference#rest-api-versioning'
+  --azure-endpoint AZURE_ENDPOINT
+                        The Azure endpoint, e.g.
+                        'https://endpoint.openai.azure.com'
+  --azure-ad-token AZURE_AD_TOKEN
+                        A token from Azure Active Directory,
+                        https://www.microsoft.com/en-
+                        us/security/business/identity-access/microsoft-entra-
+                        id
+  -V, --version         show program's version number and exit richiesta da  e quella richiesta da . Questo problema potrebbe ripresentarsi.
 
 **All files of reference**
 -   
@@ -111,60 +203,118 @@ Sono state corrette numerose problematiche, tra cui il bug sulla conferma multip
 -   
 -   
 -   
--   
-
-**Areas that need refactoring**:
--   **Struttura del Progetto**: È cruciale completare la migrazione da  a  per risolvere i problemi di hot-reloading e migliorare la manutenibilità.
--   **Unificazione Collection**: Le collection  e  dovrebbero essere unificate.
-
-**key api endpoints**
--    (POST): Nuovo endpoint per aggiornare in massa i fornitori con dati incompleti.
--    (GET): Endpoint per verificare lo stato dei fornitori rispetto ai validatori P0.
--    (POST): Endpoint di importazione fatture dove sono stati aggiunti i validatori P0.
--    (POST): Endpoint di pagamento salari dove è stato aggiunto il validatore P0.
 
 **Critical Info for New Agent**
--   **Hot Reload Inaffidabile**: A causa della doppia struttura  e , le modifiche ai file in  non vengono rilevate dall'hot reload. È necessario riavviare manualmente il backend (backend: stopped
-backend: started) dopo ogni modifica in quella directory.
--   **Priorità Utente**: L'utente è molto sensibile ai problemi bloccanti (P0) e alla reattività della UI. L'aggiornamento in blocco dei fornitori e la risoluzione degli IBAN mancanti sono le massime priorità.
--   **Fonte di Verità**: Qualsiasi logica riguardante i fornitori deve usare la collection  come unica fonte di verità.
-
-**documents and test reports created in this job**
--    (aggiornato più volte)
--   
--   
+-   **La priorità assoluta è l'integrazione di Parlant.io.** L'utente è molto insistente.
+-   **Il server Parlant è bloccato.** Non si avvia correttamente come servizio . Il debug deve partire da qui.
+-   **La chiave API per Gemini è fornita dall'utente:** . Non usare il fallback a OpenAI. Attenzione a possibili problemi di quota.
+-   **La comunicazione tra servizi ( e ) non può usare .** Sarà necessario trovare e usare l'indirizzo IP interno del container o il nome del servizio.
+-   I bug sulla pagina di riconciliazione sono stati per lo più risolti, ma richiedono una verifica finale e l'attenzione alla logica dei POS.
+-   Il problema dell'importazione delle buste paga è un errore dell'utente. L'interfaccia dovrebbe essere migliorata per prevenire questo errore.
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **Utente**: Richiesta di correggere la logica dei salari (contanti permessi solo prima di luglio 2018), risolvere i 240 fornitori senza IBAN e investigare errori 404 e problemi di modifica dei fornitori. (Stato: In corso)
-2.  **Agente**: Inizia l'investigazione.
-3.  **Agente**: Conferma che la ricerca P.IVA e la modifica funzionano, suggerendo che il 404 sia altrove.
-4.  **Agente**: Implementa la logica di sync IBAN dalle fatture, riducendo i problemi da 240 a 231.
-5.  **Agente**: Scopre e corregge il bug nella UI che nascondeva il pulsante Cerca P.IVA.
-6.  **Agente**: Corregge i messaggi e i commenti nel validatore dei salari per riflettere correttamente la legge.
-7.  **Utente**: Richiede un pulsante per aggiornare tutti i fornitori contemporaneamente e di usare una fonte dati alternativa a VIES, lamentando ancora errori 404. (Stato: In corso)
-8.  **Agente**: Crea l'endpoint backend per l'aggiornamento in blocco.
-9.  **Utente**: Invia un'immagine con file .md e chiede di aggiornarli. (Stato: Completato)
-10. **Agente**: Esegue l'aggiornamento dei file .md.
+1.  **User**: Segnala una serie di bug sulla pagina di riconciliazione (POS, F24, stipendi, assegni, date, errori 400) e un errore di importazione PDF per una busta paga.
+2.  **Agent**: Inizia a investigare e correggere i bug uno per uno.
+3.  **User**: Chiede se è possibile integrare , fornendo un link alla documentazione.
+4.  **Agent**: Propone un piano per integrare Parlant con Gemini tramite un widget flottante.
+5.  **User**: Conferma il piano e fornisce un link GitHub a Parlant.
+6.  **Agent**: Incontra un conflitto di dipendenze usage: openai [-h] [-v] [-b API_BASE] [-k API_KEY] [-p PROXY [PROXY ...]]
+              [-o ORGANIZATION] [-t {openai,azure}]
+              [--api-version API_VERSION] [--azure-endpoint AZURE_ENDPOINT]
+              [--azure-ad-token AZURE_AD_TOKEN] [-V]
+              {api,tools,migrate,grit} ...
+
+positional arguments:
+  {api,tools,migrate,grit}
+    api                 Direct API calls
+    tools               Client side tools for convenience
+
+options:
+  -h, --help            show this help message and exit
+  -v, --verbose         Set verbosity.
+  -b API_BASE, --api-base API_BASE
+                        What API base url to use.
+  -k API_KEY, --api-key API_KEY
+                        What API key to use.
+  -p PROXY [PROXY ...], --proxy PROXY [PROXY ...]
+                        What proxy to use.
+  -o ORGANIZATION, --organization ORGANIZATION
+                        Which organization to run as (will use your default
+                        organization if not specified)
+  -t {openai,azure}, --api-type {openai,azure}
+                        The backend API to call, must be `openai` or `azure`
+  --api-version API_VERSION
+                        The Azure API version, e.g.
+                        'https://learn.microsoft.com/en-us/azure/ai-
+                        services/openai/reference#rest-api-versioning'
+  --azure-endpoint AZURE_ENDPOINT
+                        The Azure endpoint, e.g.
+                        'https://endpoint.openai.azure.com'
+  --azure-ad-token AZURE_AD_TOKEN
+                        A token from Azure Active Directory,
+                        https://www.microsoft.com/en-
+                        us/security/business/identity-access/microsoft-entra-
+                        id
+  -V, --version         show program's version number and exit e un problema con la . Chiede all'utente se ha una chiave API di Google.
+7.  **User**: Fornisce la sua chiave API di Google ().
+8.  **Agent**: Incontra numerosi problemi nel far partire il server Parlant come servizio.
+9.  **User**: Fornisce un  di esempio e altri link alla documentazione di Parlant. Dichiara che la sua chiave API ha superato la quota.
+10. **User**: Chiede di cancellare tutto il codice del vecchio chatbot basato su Claude e di implementare Parlant con i  e le , come da documentazione.
 
 **Project Health Check:**
--   **Broken**:
-    -   La funzionalità di aggiornamento in blocco dei fornitori è incompleta (manca la parte frontend).
-    -   L'importazione delle fatture è bloccata per 231 fornitori a causa della mancanza di IBAN.
--   **Mocked**: Nessuno.
--   **Technical Debt**:
-    -   **High**: Struttura del backend duplicata ( e ) che causa problemi di sviluppo e manutenzione.
+-   **Broken**: L'intera funzionalità dell'assistente AI Parlant è non funzionante e bloccata.
+-   **Technical Debt**: L'attuale configurazione per l'avvio di Parlant è instabile. Il conflitto di dipendenze usage: openai [-h] [-v] [-b API_BASE] [-k API_KEY] [-p PROXY [PROXY ...]]
+              [-o ORGANIZATION] [-t {openai,azure}]
+              [--api-version API_VERSION] [--azure-endpoint AZURE_ENDPOINT]
+              [--azure-ad-token AZURE_AD_TOKEN] [-V]
+              {api,tools,migrate,grit} ...
+
+positional arguments:
+  {api,tools,migrate,grit}
+    api                 Direct API calls
+    tools               Client side tools for convenience
+
+options:
+  -h, --help            show this help message and exit
+  -v, --verbose         Set verbosity.
+  -b API_BASE, --api-base API_BASE
+                        What API base url to use.
+  -k API_KEY, --api-key API_KEY
+                        What API key to use.
+  -p PROXY [PROXY ...], --proxy PROXY [PROXY ...]
+                        What proxy to use.
+  -o ORGANIZATION, --organization ORGANIZATION
+                        Which organization to run as (will use your default
+                        organization if not specified)
+  -t {openai,azure}, --api-type {openai,azure}
+                        The backend API to call, must be `openai` or `azure`
+  --api-version API_VERSION
+                        The Azure API version, e.g.
+                        'https://learn.microsoft.com/en-us/azure/ai-
+                        services/openai/reference#rest-api-versioning'
+  --azure-endpoint AZURE_ENDPOINT
+                        The Azure endpoint, e.g.
+                        'https://endpoint.openai.azure.com'
+  --azure-ad-token AZURE_AD_TOKEN
+                        A token from Azure Active Directory,
+                        https://www.microsoft.com/en-
+                        us/security/business/identity-access/microsoft-entra-
+                        id
+  -V, --version         show program's version number and exit è un rischio latente.
 
 **3rd Party Integrations**
--   **VIES (tramite )**: Utilizzato per la validazione delle partite IVA. L'agente ha aggiunto altre fonti nel codice ma non sono state specificate.
+-   **Parlant.io**: Nuova integrazione, richiesta dall'utente, attualmente in stato non funzionante.
+-   **Google Gemini**: LLM scelto dall'utente per l'integrazione con Parlant. Utilizza una chiave API fornita dall'utente.
 
 **Testing status**
 -   **Testing agent used after significant changes**: NO
 -   **Troubleshoot agent used after agent stuck in loop**: NO
--   **Test files created**: Nessuno.
--   **Known regressions**: Nessuna.
+-   **Test files created**: Nessuno
+-   **Known regressions**: Nessuna nota, ma i recenti cambiamenti agli endpoint di riconciliazione non sono stati verificati dall'utente.
 
 **Credentials to test flow:**
-Nessuna credenziale specifica necessaria.
+-   **Google API Key (per Gemini)**:  (potrebbe avere problemi di quota).
 
 **What agent forgot to execute**
--   L'agente non ha completato l'implementazione della funzionalità di aggiornamento in blocco dei fornitori. L'endpoint backend è stato creato, ma il pulsante e la logica frontend in  non sono stati aggiunti prima che l'utente richiedesse la generazione del sommario.</analysis>
+-   L'agente non ha verificato o implementato la regola di business richiesta per cui gli incassi POS devono essere registrati esclusivamente nella Prima Nota Banca.
+-   L'agente non è riuscito a far funzionare stabilmente il server Parlant, che è il task principale richiesto dall'utente.</analysis>
