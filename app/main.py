@@ -157,6 +157,7 @@ from app.routers import (
 from app.routers import cedolini_riconciliazione
 from app.routers import parlant_api
 from app.routers import pagopa  # PagoPA - Associazione ricevute
+from app.routers import invoicetronic  # InvoiceTronic - Fatturazione Elettronica SDI
 
 
 # =============================================================================
