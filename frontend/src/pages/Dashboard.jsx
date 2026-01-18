@@ -35,11 +35,13 @@ export default function Dashboard() {
   const [autoRepairStatus, setAutoRepairStatus] = useState(null);
 
   /**
-   * LOGICA INTELLIGENTE: Esegue auto-riparazione dei dati al caricamento.
+   * LOGICA INTELLIGENTE: Esegue auto-riparazione dei dati.
+   * Ora avviabile manualmente con pulsante.
    */
   const eseguiAutoRiparazione = async () => {
+    setAutoRepairStatus('running');
     try {
-      // Esegue riparazioni in background senza bloccare il caricamento
+      // Esegue riparazioni
       const [fatRes, ricRes] = await Promise.all([
         api.post('/api/fatture-ricevute/auto-ricostruisci-dati').catch(() => ({ data: {} })),
         api.post('/api/operazioni-da-confermare/auto-ricostruisci-dati').catch(() => ({ data: {} }))
@@ -50,12 +52,16 @@ export default function Dashboard() {
         (fatRes.data.fornitori_associati || 0) + 
         (ricRes.data.riconciliazioni_auto || 0);
       
+      console.log('🔧 Auto-riparazione completata:', { fatture: fatRes.data, riconciliazione: ricRes.data });
+      setAutoRepairStatus({ fatture: fatRes.data, riconciliazione: ricRes.data, totale: totaleCorrezioni });
+      
+      // Ricarica dati dopo riparazione
       if (totaleCorrezioni > 0) {
-        console.log('🔧 Auto-riparazione dashboard completata:', { fatture: fatRes.data, riconciliazione: ricRes.data });
-        setAutoRepairStatus({ fatture: fatRes.data, riconciliazione: ricRes.data, totale: totaleCorrezioni });
+        window.location.reload();
       }
     } catch (error) {
       console.warn('Auto-riparazione non riuscita:', error);
+      setAutoRepairStatus({ error: true, totale: 0 });
     }
   };
 
