@@ -262,6 +262,34 @@ Il sistema deve agire come un **consulente contabile professionale**, con superv
 - Non mostrare assegni senza importo o data valida
 - Log per amministratore dei record esclusi
 
+### Regola 8: F24 Solo Pagamento Banca (18 Gen 2026)
+
+**SCENARIO**: Gli F24 si pagano SOLO tramite banca (telematico o F24 web).
+
+**AZIONE IMPLEMENTATA**:
+- Rimosse opzioni "Assegno" e "Cassa" dalla pagina F24
+- Visibile solo "🏦 Pagamento Banca"
+- Pulsante "Vedi PDF" sempre visibile (grigio se PDF non disponibile)
+- Auto-riconciliazione F24 quando trovato in estratto conto
+
+**ENDPOINT API**:
+- `POST /api/operazioni-da-confermare/supervisione/auto-riconcilia-f24`
+- `GET /api/operazioni-da-confermare/supervisione/alert`
+
+---
+
+## 12b. Endpoint Supervisione Contabile (18 Gen 2026)
+
+| Endpoint | Metodo | Descrizione |
+|----------|--------|-------------|
+| `/api/operazioni-da-confermare/supervisione/esegui` | POST | Esegue tutti i controlli di supervisione |
+| `/api/operazioni-da-confermare/supervisione/alert` | GET | Recupera alert ultimi 24h |
+| `/api/operazioni-da-confermare/supervisione/auto-riconcilia-f24` | POST | Auto-riconcilia F24 con estratto conto |
+| `/api/suppliers/unifica-collection` | POST | Unifica fornitori e suppliers |
+| `/api/suppliers/verifica-unificazione` | GET | Verifica stato unificazione |
+
+**File implementazione**: `/app/app/services/supervisione_contabile.py`
+
 ---
 
 ## 13. Logica Prima Nota (NUOVA - Gennaio 2026)
