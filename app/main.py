@@ -303,6 +303,9 @@ app.include_router(inventario.router, prefix="/api", tags=["Inventario"])
 # --- PagoPA - Associazione Ricevute ---
 app.include_router(pagopa.router, tags=["PagoPA"])
 
+# --- InvoiceTronic - Fatturazione Elettronica SDI ---
+app.include_router(invoicetronic.router, tags=["InvoiceTronic SDI"])
+
 # --- Sincronizzazione Relazionale ---
 app.include_router(sync_relazionale.router, prefix="/api", tags=["Sincronizzazione Relazionale"])
 
