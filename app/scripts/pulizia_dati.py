@@ -83,27 +83,39 @@ async def elimina_record_vuoti() -> Dict[str, Any]:
     """
     Elimina fatture senza numero, fornitore o data.
     Questi sono record corrotti o importati male.
+    
+    ⚠️ USA PROTEZIONI DATABASE: backup automatico prima di eliminare.
     """
+    from app.services.protezioni_database import safe_delete_many, backup_prima_di_delete
+    
     db = Database.get_db()
     
     risultati = {
         "fatture_vuote_eliminate": 0,
         "f24_vuoti_eliminati": 0,
-        "assegni_vuoti_eliminati": 0
+        "assegni_vuoti_eliminati": 0,
+        "backups_creati": []
     }
     
-    # Fatture vuote (senza numero E senza fornitore E senza data)
-    result = await db.invoices.delete_many({
+    # Fatture vuote (senza numero E senza fornitore E importo 0)
+    query_fatture = {
         "$or": [
             {"invoice_number": {"$in": [None, "", "N/A"]}},
             {"supplier_name": {"$in": [None, ""]}},
         ],
         "total_amount": {"$in": [None, 0, "0"]}
-    })
+    }
+    
+    # Backup prima di eliminare
+    backup = await backup_prima_di_delete(db, "invoices", query_fatture)
+    if backup:
+        risultati["backups_creati"].append(backup)
+    
+    result = await db.invoices.delete_many(query_fatture)
     risultati["fatture_vuote_eliminate"] = result.deleted_count
     
     # F24 senza importo
-    result = await db.f24_models.delete_many({
+    query_f24 = {
         "$or": [
             {"totale_debito": {"$in": [None, 0, "0"]}},
             {"importo_totale": {"$in": [None, 0, "0"]}}
@@ -114,6 +126,13 @@ async def elimina_record_vuoti() -> Dict[str, Any]:
             {"tributi_regioni": {"$in": [None, []]}},
             {"tributi_imu": {"$in": [None, []]}}
         ]
+    }
+    
+    backup = await backup_prima_di_delete(db, "f24_models", query_f24)
+    if backup:
+        risultati["backups_creati"].append(backup)
+    
+    result = await db.f24_models.delete_many(query_f24)
     })
     risultati["f24_vuoti_eliminati"] = result.deleted_count
     
