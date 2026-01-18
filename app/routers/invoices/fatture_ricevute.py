@@ -472,7 +472,9 @@ async def import_fattura_xml(file: UploadFile = File(...)):
         "allegati_salvati": len(allegati_salvati),
         "has_pdf": parsed.get("has_pdf", False),
         # Risultati integrazione ciclo passivo
-        "integrazione": risultato_integrazione
+        "integrazione": risultato_integrazione,
+        # Warnings (validatori P0 disabilitati temporaneamente)
+        "warnings": warnings if warnings else None
     }
 
 
