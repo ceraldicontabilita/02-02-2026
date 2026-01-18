@@ -849,11 +849,11 @@ function MovimentoCard({ movimento, onConferma, onIgnora, processing, showFattur
       <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
         <div style={{ 
           width: 44, height: 44, borderRadius: 10, 
-          background: hasMatch ? '#dcfce7' : datiIncompleti ? '#fef3c7' : '#f1f5f9',
+          background: hasMatch ? '#dcfce7' : datiIncompleti ? '#fef3c7' : ragioneSociale ? '#e0f2fe' : '#f1f5f9',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: 20
         }}>
-          {hasMatch ? '✅' : datiIncompleti ? '⚠️' : '❓'}
+          {hasMatch ? '✅' : datiIncompleti ? '⚠️' : ragioneSociale ? '👤' : '📝'}
         </div>
         
         <div style={{ flex: 1 }}>
