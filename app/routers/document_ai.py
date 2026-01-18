@@ -57,6 +57,8 @@ async def extract_from_file(
         # Salva nel DB se richiesto
         if save_to_db and result.get("structured_data", {}).get("success"):
             db = await get_database()
+            
+            # Salva in extracted_documents (archivio)
             doc = {
                 "filename": file.filename,
                 "document_type": result.get("structured_data", {}).get("document_type"),
@@ -68,6 +70,14 @@ async def extract_from_file(
             }
             await db["extracted_documents"].insert_one(doc)
             result["saved_to_db"] = True
+            
+            # Salva ANCHE nelle collection del gestionale
+            from app.services.document_data_saver import save_extracted_data_to_gestionale
+            source_info = {"filename": file.filename, "upload_type": "manual"}
+            gestionale_result = await save_extracted_data_to_gestionale(
+                db, result.get("structured_data", {}), source_info
+            )
+            result["gestionale_save"] = gestionale_result
         
         return result
         
