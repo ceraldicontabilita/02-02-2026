@@ -434,7 +434,73 @@ Prima Nota  Da Riconciliare
 
 ---
 
-## 17. Clausola finale
+## 17. Integrazione Dati da Email (18 Gen 2026) ⭐ NUOVO
+
+### Bonifici Stipendi
+**Endpoint**: `/api/bonifici-stipendi/`
+- `POST /scarica-da-email` - Scarica bonifici da email "Info Bonifico YouBusiness Web"
+- `POST /associa-dipendenti` - Associa bonifici ai dipendenti nel DB
+- `POST /riconcilia-con-estratto-conto` - Valida bonifici con estratto conto (DEFINITIVO)
+- `GET /bonifici` - Lista bonifici
+- `GET /stats` - Statistiche
+
+**Logica a Due Stadi**:
+1. **PROVVISORIO**: Bonifico letto da email → stato "email_ricevuta"
+2. **DEFINITIVO**: Match con estratto conto → stato "riconciliato"
+
+**Statistiche attuali (18 Gen 2026)**:
+- 736 bonifici totali estratti
+- 522 (71%) associati a dipendenti
+- 167 (23%) riconciliati con estratto conto
+
+### Verbali Noleggio
+**Endpoint**: `/api/verbali-noleggio/`
+- `GET /cartelle-verbali` - Lista cartelle email con verbali
+- `POST /scarica-da-email` - Scarica PDF verbali dalle email
+- `POST /associa-fatture` - Associa verbali a fatture noleggio
+- `GET /verbali` - Lista verbali
+- `GET /pdf/{numero_verbale}` - Ottiene PDF in base64
+
+**Pattern verbale**: `Bxxxxxxxxxx` (es. B23123049750)
+
+**Statistiche attuali (18 Gen 2026)**:
+- 22 verbali scaricati (tutti con PDF)
+- 1 associato a fatture (gli altri sono 2024-2025, fatture non ancora importate)
+
+---
+
+## 18. Integrazioni Terze Parti (18 Gen 2026) ⭐ NUOVO
+
+### InvoiceTronic - Fatturazione Elettronica SDI
+**Endpoint**: `/api/invoicetronic/`
+- `GET /status` - Verifica connessione
+- `GET /fatture-ricevute` - Lista fatture passive da SDI
+
+**Configurazione**:
+- API Key: in backend/.env (`INVOICETRONIC_API_KEY`)
+- Codice Destinatario: `7hd37x0`
+- Ambiente: Sandbox (produzione richiede azioni manuali su AdE)
+
+### PagoPA
+**Endpoint**: `/api/pagopa/`
+- `POST /auto-associa` - Associa ricevute PagoPA a movimenti bancari via CBILL
+
+---
+
+## 19. Assegni - Situazione Attuale (18 Gen 2026)
+
+**Statistiche**:
+- 214 assegni totali
+- 195 pagati, 19 confermati
+- 8 senza beneficiario (importi senza fatture corrispondenti nel DB)
+
+**Assegni non associabili** (importi non presenti nelle fatture):
+- €1.663,26 x 3 (possibile leasing/affitto)
+- €855,98, €1.028,82, €1.272,58, €1.421,77, €1.504,16
+
+---
+
+## 20. Clausola finale
 
 Questo PRD è vincolante.
 
@@ -442,3 +508,7 @@ Ogni sviluppo futuro deve:
 - rispettare i validatori,
 - non introdurre eccezioni silenziose,
 - mantenere la tracciabilità completa.
+
+---
+
+## Ultimo aggiornamento: 18 Gennaio 2026
