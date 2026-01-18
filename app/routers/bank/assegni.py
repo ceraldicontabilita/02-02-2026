@@ -1169,9 +1169,11 @@ async def cerca_combinazioni_assegni(
             {"beneficiario": "N/A"},
             {"beneficiario": "-"}
         ],
-        "importo": {"$gt": 0},
-        "entity_status": {"$ne": "deleted"}
+        "importo": {"$gt": 0}
     }, {"_id": 0}).to_list(1000)
+    
+    # Filtra quelli non cancellati (entity_status potrebbe non esistere)
+    assegni_senza_ben = [a for a in assegni_senza_ben if a.get("entity_status") != "deleted"]
     
     risultati["assegni_analizzati"] = len(assegni_senza_ben)
     
