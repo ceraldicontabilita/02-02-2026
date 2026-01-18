@@ -1177,7 +1177,8 @@ async def banca_veloce(
                 continue  # Non mostrare in lista
         
         # Salta assegni con dati incompleti (importo 0 o data mancante)
-        if importo_assegno == 0 or not ass.get("data") and not ass.get("data_emissione"):
+        data_assegno = ass.get("data") or ass.get("data_emissione")
+        if importo_assegno == 0 or not data_assegno:
             continue
         
         # Assegno non auto-confermato, aggiungi alla lista con info fattura
