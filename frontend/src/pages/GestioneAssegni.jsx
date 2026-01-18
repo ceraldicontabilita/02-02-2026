@@ -294,6 +294,25 @@ export default function GestioneAssegni() {
     }
   };
 
+  // Nuova funzione: Associazione combinata (somma di più assegni = importo fattura)
+  const handleAssociaCombinazioni = async () => {
+    if (!window.confirm('Vuoi cercare combinazioni di assegni?\n\nIl sistema cercherà:\n• Assegni senza beneficiario\n• Fatture non pagate\n• Combinazioni la cui SOMMA corrisponde all\'importo di una fattura')) return;
+    
+    setCombinazioneLoading(true);
+    setCombinazioneResult(null);
+    try {
+      const res = await api.post('/api/assegni/associa-combinazioni');
+      setCombinazioneResult(res.data);
+      if (res.data.associazioni_effettuate > 0) {
+        loadData();
+      }
+    } catch (error) {
+      alert('Errore: ' + (error.response?.data?.detail || error.message));
+    } finally {
+      setCombinazioneLoading(false);
+    }
+  };
+
   // FILTRO ASSEGNI LATO CLIENT
   const filteredAssegni = assegni.filter(a => {
     // Escludi assegni sporchi (senza numero o importo null)
