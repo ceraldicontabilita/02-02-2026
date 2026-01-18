@@ -166,6 +166,115 @@ async def get_assegni_stats() -> Dict[str, Any]:
     }
 
 
+@router.get("/senza-associazione")
+async def get_assegni_senza_associazione_v2() -> Dict[str, Any]:
+    """
+    Restituisce assegni che hanno importo ma nessun beneficiario/fattura associata.
+    Utile per debug e verifica manuale.
+    """
+    db = Database.get_db()
+    
+    assegni = await db[COLLECTION_ASSEGNI].find({
+        "$or": [
+            {"beneficiario": None},
+            {"beneficiario": ""},
+            {"beneficiario": "N/A"}
+        ],
+        "importo": {"$gt": 0}
+    }, {"_id": 0}).to_list(500)
+    
+    # Raggruppa per importo
+    from collections import defaultdict
+    per_importo = defaultdict(list)
+    for a in assegni:
+        imp = round(a.get("importo", 0), 2)
+        per_importo[imp].append(a.get("numero"))
+    
+    return {
+        "totale": len(assegni),
+        "per_importo": {f"€{k:.2f}": {"count": len(v), "numeri": v[:10]} for k, v in sorted(per_importo.items(), key=lambda x: -len(x[1]))}
+    }
+
+
+@router.get("/preview-combinazioni")
+async def preview_combinazioni_assegni_v2(
+    max_assegni: int = Query(4, ge=2, le=6)
+) -> Dict[str, Any]:
+    """
+    🔎 PREVIEW: Mostra le possibili combinazioni di assegni che potrebbero matchare fatture.
+    Non esegue modifiche, solo analisi.
+    
+    Utile per verificare prima di eseguire l'associazione.
+    """
+    from itertools import combinations
+    db = Database.get_db()
+    
+    # Carica assegni senza beneficiario
+    assegni_senza_ben = await db[COLLECTION_ASSEGNI].find({
+        "$or": [
+            {"beneficiario": None},
+            {"beneficiario": ""},
+            {"beneficiario": "N/A"},
+            {"beneficiario": "-"}
+        ],
+        "importo": {"$gt": 0}
+    }, {"_id": 0, "numero": 1, "importo": 1}).to_list(100)
+    
+    # Filtra quelli non cancellati
+    assegni_senza_ben = [a for a in assegni_senza_ben if a.get("entity_status") != "deleted"]
+    
+    if len(assegni_senza_ben) < 2:
+        return {
+            "assegni_senza_beneficiario": len(assegni_senza_ben),
+            "combinazioni_possibili": [],
+            "message": "Servono almeno 2 assegni per cercare combinazioni"
+        }
+    
+    # Carica fatture non pagate
+    fatture = await db.invoices.find({
+        "$or": [
+            {"status": {"$nin": ["paid", "pagata"]}},
+            {"pagato": {"$ne": True}}
+        ],
+        "total_amount": {"$gt": 0}
+    }, {"_id": 0, "invoice_number": 1, "supplier_name": 1, "total_amount": 1}).to_list(10000)
+    
+    importi_fatture = {round(float(f.get("total_amount", 0)), 2): f for f in fatture}
+    
+    # Cerca combinazioni
+    possibili_match = []
+    importi = [(a.get("numero"), round(float(a.get("importo", 0)), 2)) for a in assegni_senza_ben]
+    
+    for r in range(2, min(max_assegni + 1, len(importi) + 1)):
+        for combo in combinations(importi, r):
+            somma = round(sum(imp for _, imp in combo), 2)
+            
+            # Cerca fattura con questo importo (±1€)
+            for delta in [0, -0.01, 0.01, -0.02, 0.02, -0.5, 0.5, -1, 1]:
+                imp_cerca = round(somma + delta, 2)
+                if imp_cerca in importi_fatture:
+                    f = importi_fatture[imp_cerca]
+                    possibili_match.append({
+                        "assegni": [num for num, _ in combo],
+                        "importi": [imp for _, imp in combo],
+                        "somma": somma,
+                        "fattura": f.get("invoice_number"),
+                        "fornitore": f.get("supplier_name", "")[:40],
+                        "importo_fattura": f.get("total_amount"),
+                        "differenza": round(f.get("total_amount", 0) - somma, 2)
+                    })
+                    break
+    
+    return {
+        "assegni_senza_beneficiario": len(assegni_senza_ben),
+        "fatture_non_pagate": len(fatture),
+        "combinazioni_con_match": len(possibili_match),
+        "dettagli": possibili_match[:20]  # Primi 20 per non sovraccaricare
+    }
+
+
+# === ROUTE DINAMICHE (con parametri) - DEVONO STARE DOPO LE STATICHE ===
+
 @router.get("/{assegno_id}")
 async def get_assegno(assegno_id: str) -> Dict[str, Any]:
     """Dettaglio singolo assegno."""
