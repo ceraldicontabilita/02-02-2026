@@ -177,10 +177,13 @@ async def get_document_types():
 async def get_extracted_documents(
     document_type: Optional[str] = None,
     limit: int = 50,
-    skip: int = 0
+    skip: int = 0,
+    include_file: bool = False
 ):
     """
     Recupera i documenti estratti salvati nel database.
+    
+    - **include_file**: Se True, include il file_base64 (più pesante)
     """
     db = await get_database()
     
@@ -188,12 +191,31 @@ async def get_extracted_documents(
     if document_type:
         query["document_type"] = document_type
     
-    cursor = db["extracted_documents"].find(
-        query,
-        {"_id": 0}
-    ).sort("created_at", -1).skip(skip).limit(limit)
+    # Definisci la proiezione - include sempre _id per poter eliminare
+    projection = {
+        "_id": 1,
+        "filename": 1,
+        "document_type": 1,
+        "extracted_data": 1,
+        "text_preview": 1,
+        "ocr_used": 1,
+        "model_used": 1,
+        "created_at": 1
+    }
+    
+    if include_file:
+        projection["file_base64"] = 1
+    
+    cursor = db["extracted_documents"].find(query, projection).sort("created_at", -1).skip(skip).limit(limit)
     
     documents = await cursor.to_list(length=limit)
+    
+    # Converti ObjectId in stringa
+    for doc in documents:
+        if "_id" in doc:
+            doc["id"] = str(doc["_id"])
+            del doc["_id"]
+    
     total = await db["extracted_documents"].count_documents(query)
     
     return {
@@ -202,6 +224,7 @@ async def get_extracted_documents(
         "limit": limit,
         "skip": skip
     }
+
 
 
 @router.delete("/extracted-documents/{doc_id}")
