@@ -634,7 +634,37 @@ Prima Nota  Da Riconciliare
 
 ---
 
-## 27. Clausola finale
+## 27. Pulsanti Attivazione Manuale ✅ IMPLEMENTATO (18 Gennaio 2026)
+
+**Problema risolto**: Le pagine Dashboard, Riconciliazione e Gestione Assegni eseguivano procedure pesanti automaticamente al caricamento, causando lentezza.
+
+**Fix applicati**:
+
+### Dashboard.jsx ✅
+- Pulsante "🔧 Auto-Ripara Dati" (gradiente viola)
+- Feedback visivo durante l'esecuzione
+- Auto-riparazione disabilitata al caricamento
+
+### RiconciliazioneUnificata.jsx ✅
+- Pulsante "🔧 Auto-Ripara" (gradiente viola)
+- Pulsante "📋 Carica F24" (arancione) - carica F24 in background (~35s)
+- F24 non caricati automaticamente per performance
+
+### GestioneAssegni.jsx ✅
+- Pulsante "🔗 Combinazioni" (gradiente viola) - **NUOVO**
+  - Chiama endpoint `POST /api/assegni/cerca-combinazioni-assegni`
+  - Cerca combinazioni di assegni la cui somma = importo fattura
+  - Mostra risultati dettagliati con assegni e fatture matchate
+- Pulsante "Auto-Associa" (blu) - associazione singola 1:1
+- Pulsante "🔄 Sync da E/C" (arancione) - sincronizza da estratto conto
+
+**Endpoint Backend**:
+- `POST /api/assegni/cerca-combinazioni-assegni` - Logica avanzata combinazioni
+- `GET /api/assegni/preview-combinazioni` - Anteprima senza modifiche
+
+---
+
+## 28. Clausola finale
 
 Questo PRD è vincolante.
 
