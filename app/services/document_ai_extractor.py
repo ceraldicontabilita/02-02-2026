@@ -340,12 +340,33 @@ def detect_document_type(text: str) -> str:
     """
     text_lower = text.lower()
     
-    # F24
+    # F24 (alta priorità)
     if any(kw in text_lower for kw in ["modello f24", "delega irrevocabile", "codice tributo", "sezione erario"]):
         return "f24"
     
+    # Verbale/Multa (alta priorità)
+    if any(kw in text_lower for kw in ["verbale n", "verbale di contestazione", "violazione", "codice della strada", 
+                                        "multa", "contravvenzione", "infrazione", "sanzione amministrativa"]):
+        return "verbale"
+    
+    # Cartella esattoriale (alta priorità)
+    if any(kw in text_lower for kw in ["cartella di pagamento", "agenzia delle entrate-riscossione", "ader", 
+                                        "cartella esattoriale", "intimazione di pagamento", "rottamazione"]):
+        return "cartella_esattoriale"
+    
+    # Delibera INPS
+    if any(kw in text_lower for kw in ["delibera inps", "sede inps", "cassa integrazione", "fonsi", 
+                                        "autorizzazione inps", "ammortizzatori sociali"]):
+        return "delibera_inps"
+    
+    # Bonifico (controlla PRIMA di estratto conto)
+    if any(kw in text_lower for kw in ["ricevuta bonifico", "bonifico sepa", "disposizione di bonifico",
+                                        "ricevuta per ordinante", "cro:", "trn:", "bonifico effettuato"]):
+        return "bonifico"
+    
     # Busta paga
-    if any(kw in text_lower for kw in ["busta paga", "cedolino", "retribuzione lorda", "retribuzione netta", "trattenute"]):
+    if any(kw in text_lower for kw in ["busta paga", "cedolino", "retribuzione lorda", "retribuzione netta", 
+                                        "trattenute", "prospetto paga"]):
         return "busta_paga"
     
     # Estratto conto
@@ -353,6 +374,10 @@ def detect_document_type(text: str) -> str:
         return "estratto_conto"
     
     # Fattura
+    if any(kw in text_lower for kw in ["fattura n", "fattura numero", "imponibile", "totale fattura", "iva"]):
+        return "fattura"
+    
+    return "generico"
     if any(kw in text_lower for kw in ["fattura n", "fattura numero", "imponibile", "totale fattura", "iva"]):
         return "fattura"
     
