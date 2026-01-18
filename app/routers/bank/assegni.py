@@ -588,13 +588,16 @@ async def sync_assegni_da_estratto_conto() -> Dict[str, Any]:
         "dettagli": []
     }
     
-    # Pattern per estrarre numero assegno
+    # Pattern per estrarre numero assegno - AGGIORNATO per formato banca
+    # Formato tipico: "PRELIEVO ASSEGNO - DM 06230 CRA: 42601623084409 NUM: 0208767182"
+    # Il numero vero è quello dopo "NUM:", non dopo "CRA:"
     patterns_assegno = [
-        r"ASSEGNO\s*N\.?\s*(\d+)",
-        r"ASSEGNO\s+(\d+)",
-        r"VS\.?\s*ASSEGNO\s*N?\.?\s*(\d+)",
-        r"VOSTRO\s+ASSEGNO\s*N\.?\s*(\d+)",
-        r"PRELIEVO\s+ASSEGNO\s*N?\.?\s*(\d+)",
+        r"NUM[:\s]+(\d{10,})",  # Prima cerca NUM: che è il numero reale
+        r"ASSEGNO\s*N\.?\s*(\d{10,})",
+        r"ASSEGNO\s+(\d{10,})",
+        r"VS\.?\s*ASSEGNO\s*N?\.?\s*(\d{10,})",
+        r"VOSTRO\s+ASSEGNO\s*N\.?\s*(\d{10,})",
+        r"PRELIEVO\s+ASSEGNO\s*N?\.?\s*(\d{10,})",
     ]
     
     # Cerca movimenti con pattern specifici di pagamento assegno
