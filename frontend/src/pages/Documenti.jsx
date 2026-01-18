@@ -420,18 +420,69 @@ export default function Documenti() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 28, fontWeight: 'bold', color: '#1e293b' }}>
-            📨 Gestione Documenti Email
+            📨 Gestione Documenti
           </h1>
           <p style={{ margin: '8px 0 0', color: '#64748b' }}>
-            Scarica automaticamente documenti dalle email e caricali nelle sezioni appropriate
+            Gestisci documenti email e documenti estratti con AI
           </p>
         </div>
-        <button onClick={loadData} disabled={loading} style={buttonStyle('#e5e7eb', '#374151')}>
-          {loading ? '⏳' : '🔄'} Aggiorna
+        <button onClick={activeTab === 'email' ? loadData : loadAiDocuments} disabled={loading || aiLoading} style={buttonStyle('#e5e7eb', '#374151')}>
+          {loading || aiLoading ? '⏳' : '🔄'} Aggiorna
         </button>
       </div>
 
-      {/* Statistiche */}
+      {/* Tab Navigation */}
+      <div style={{ 
+        display: 'flex', 
+        gap: 4, 
+        marginBottom: 20,
+        background: '#f1f5f9',
+        padding: 4,
+        borderRadius: 10,
+        width: 'fit-content'
+      }}>
+        <button
+          onClick={() => setActiveTab('email')}
+          style={{
+            padding: '10px 20px',
+            background: activeTab === 'email' ? 'white' : 'transparent',
+            border: 'none',
+            borderRadius: 8,
+            cursor: 'pointer',
+            fontWeight: activeTab === 'email' ? 600 : 400,
+            color: activeTab === 'email' ? '#1e40af' : '#64748b',
+            boxShadow: activeTab === 'email' ? '0 2px 4px rgba(0,0,0,0.1)' : 'none',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8
+          }}
+        >
+          📧 Documenti Email
+        </button>
+        <button
+          onClick={() => { setActiveTab('ai'); loadAiDocuments(); }}
+          style={{
+            padding: '10px 20px',
+            background: activeTab === 'ai' ? 'white' : 'transparent',
+            border: 'none',
+            borderRadius: 8,
+            cursor: 'pointer',
+            fontWeight: activeTab === 'ai' ? 600 : 400,
+            color: activeTab === 'ai' ? '#7c3aed' : '#64748b',
+            boxShadow: activeTab === 'ai' ? '0 2px 4px rgba(0,0,0,0.1)' : 'none',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8
+          }}
+        >
+          🤖 AI Estratti
+        </button>
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === 'email' ? (
+        <>
+          {/* CONTENUTO TAB EMAIL - Statistiche */}
       {stats && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 12, marginBottom: 20 }}>
           <div style={{ ...cardStyle, padding: '10px 12px' }}>
