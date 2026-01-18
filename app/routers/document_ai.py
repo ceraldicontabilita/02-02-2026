@@ -193,7 +193,7 @@ async def get_extracted_documents(
 @router.post("/process-classified-email")
 async def process_classified_email(
     email_id: str,
-    model: str = "gpt-4o"
+    model: str = "claude-sonnet-4-5-20250929"
 ):
     """
     Processa un documento classificato dal sistema email.
