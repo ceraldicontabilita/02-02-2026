@@ -44,6 +44,16 @@ def estrai_dati_dimissioni(testo: str, allegati: List[str] = None) -> Dict[str, 
     """
     Estrae i dati dalla notifica dimissioni.
     Cerca: nome dipendente, codice fiscale, data dimissioni, data decorrenza
+    
+    Pattern codice fiscale italiano:
+    - 6 lettere (cognome + nome)
+    - 2 cifre (anno nascita)
+    - 1 lettera (mese nascita)
+    - 2 cifre (giorno nascita + sesso)
+    - 1 lettera (comune)
+    - 3 cifre (codice comune)
+    - 1 lettera (controllo)
+    Esempio: CRLVLR88H14F839O
     """
     dati = {
         "dipendente_nome": None,
@@ -53,38 +63,115 @@ def estrai_dati_dimissioni(testo: str, allegati: List[str] = None) -> Dict[str, 
         "motivo": None
     }
     
-    # Cerca codice fiscale nel testo
-    match = re.search(r'\b([A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z])\b', testo.upper())
+    # Pattern CF più robusto - cerca ovunque nel testo, anche senza word boundary
+    cf_pattern = r'([A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z])'
+    
+    # Cerca codice fiscale nel testo (tutto maiuscolo)
+    testo_upper = testo.upper()
+    match = re.search(cf_pattern, testo_upper)
     if match:
         dati["codice_fiscale"] = match.group(1)
     
     # Se non trovato nel testo, cerca nei nomi degli allegati
+    # I file spesso hanno nomi tipo: B00000xxx_CRLVLR88H14F839O_20241115.pdf
     if not dati["codice_fiscale"] and allegati:
         for allegato in allegati:
-            match = re.search(r'([A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z])', allegato.upper())
+            allegato_upper = allegato.upper()
+            # Cerca il CF anche tra underscore o altri separatori
+            # Pattern: qualsiasi cosa + CF + qualsiasi cosa
+            match = re.search(cf_pattern, allegato_upper)
             if match:
-                dati["codice_fiscale"] = match.group(1)
-                break
+                # Verifica che sia un CF valido (non solo una sequenza casuale)
+                cf_candidato = match.group(1)
+                # Il CF deve avere la struttura corretta
+                if is_valid_codice_fiscale_structure(cf_candidato):
+                    dati["codice_fiscale"] = cf_candidato
+                    break
     
     # Cerca data dimissioni
-    # Pattern: "data dimissioni: 01/12/2024" o "dal 01/12/2024"
-    match = re.search(r'(?:data\s+dimission[ei]|dal|decorrenza)[:\s]+(\d{2}/\d{2}/\d{4})', testo, re.I)
+    # Pattern: "data dimissioni: 01/12/2024" o "dal 01/12/2024" o "decorrenza 01/12/2024"
+    match = re.search(r'(?:data\s+dimission[ei]|dal|decorrenza|effetto\s+dal)[:\s]+(\d{2}/\d{2}/\d{4})', testo, re.I)
     if match:
         dati["data_dimissioni"] = match.group(1)
     
-    # Cerca data nel formato YYYYMMDD nel subject o testo
-    match = re.search(r'_(\d{8})\d+', testo)
+    # Cerca data nel formato YYYYMMDD nel filename allegato
+    # Pattern: _20241115 o simile (anno + mese + giorno)
+    if not dati["data_dimissioni"] and allegati:
+        for allegato in allegati:
+            # Cerca pattern YYYYMMDD (8 cifre che iniziano con 20)
+            match = re.search(r'[_\-]?(20\d{6})', allegato)
+            if match:
+                data_str = match.group(1)
+                try:
+                    # Valida che sia una data reale
+                    year = int(data_str[0:4])
+                    month = int(data_str[4:6])
+                    day = int(data_str[6:8])
+                    if 2020 <= year <= 2030 and 1 <= month <= 12 and 1 <= day <= 31:
+                        dati["data_dimissioni"] = f"{day:02d}/{month:02d}/{year}"
+                        break
+                except:
+                    pass
+    
+    # Cerca data nel formato YYYYMMDD nel testo
+    match = re.search(r'_(\d{8})\d*', testo)
     if match and not dati["data_dimissioni"]:
         data_str = match.group(1)
-        dati["data_dimissioni"] = f"{data_str[6:8]}/{data_str[4:6]}/{data_str[0:4]}"
+        try:
+            year = int(data_str[0:4])
+            month = int(data_str[4:6])
+            day = int(data_str[6:8])
+            if 2000 <= year <= 2030 and 1 <= month <= 12 and 1 <= day <= 31:
+                dati["data_dimissioni"] = f"{day:02d}/{month:02d}/{year}"
+        except:
+            pass
     
-    # Cerca data nel formato ISO
+    # Cerca data nel formato ISO (YYYY-MM-DD)
     match = re.search(r'(\d{4}-\d{2}-\d{2})', testo)
     if match and not dati["data_dimissioni"]:
         data_iso = match.group(1)
         dati["data_dimissioni"] = f"{data_iso[8:10]}/{data_iso[5:7]}/{data_iso[0:4]}"
     
     return dati
+
+
+def is_valid_codice_fiscale_structure(cf: str) -> bool:
+    """
+    Verifica che la struttura del codice fiscale sia valida.
+    Non verifica il carattere di controllo, solo la struttura base.
+    """
+    if len(cf) != 16:
+        return False
+    
+    # Primi 6 caratteri: lettere (cognome + nome)
+    if not cf[0:6].isalpha():
+        return False
+    
+    # Caratteri 7-8: cifre (anno)
+    if not cf[6:8].isdigit():
+        return False
+    
+    # Carattere 9: lettera (mese)
+    if not cf[8].isalpha():
+        return False
+    
+    # Caratteri 10-11: cifre (giorno)
+    if not cf[9:11].isdigit():
+        return False
+    
+    # Carattere 12: lettera (comune)
+    if not cf[11].isalpha():
+        return False
+    
+    # Caratteri 13-15: cifre (codice comune)
+    if not cf[12:15].isdigit():
+        return False
+    
+    # Carattere 16: lettera (controllo)
+    if not cf[15].isalpha():
+        return False
+    
+    return True
 
 
 def normalizza_nome(nome: str) -> str:
