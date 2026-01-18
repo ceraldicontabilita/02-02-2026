@@ -81,9 +81,6 @@ Quando possibile, guidi l'utente verso le pagine corrette del sistema."""
             # Aggiungi guidelines comportamentali
             await self._create_guidelines()
             
-            # Aggiungi tools per accesso ai dati
-            await self._create_tools()
-            
             self.is_running = True
             logger.info(f"Parlant server avviato su porta {PARLANT_PORT}, Agent ID: {self.agent_id}")
             
