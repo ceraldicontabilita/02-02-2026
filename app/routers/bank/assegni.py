@@ -853,3 +853,57 @@ async def ricostruisci_dati_assegni() -> Dict[str, Any]:
                 risultati["errori"].append(f"Errore aggiornamento {ass_id}: {str(e)}")
     
     return risultati
+
+
+
+@router.post("/correggi-numeri")
+async def correggi_numeri_assegni() -> Dict[str, Any]:
+    """
+    Corregge i numeri degli assegni estratti erroneamente (CRA invece di NUM).
+    
+    Il formato bancario è: "PRELIEVO ASSEGNO - DM 06230 CRA: 42601623084409 NUM: 0208767182"
+    Il numero corretto è quello dopo "NUM:", non quello dopo "CRA:".
+    """
+    import re
+    db = Database.get_db()
+    
+    risultati = {
+        "timestamp": datetime.utcnow().isoformat(),
+        "assegni_analizzati": 0,
+        "numeri_corretti": 0,
+        "errori": []
+    }
+    
+    # Trova assegni con numeri lunghi (probabilmente CRA)
+    assegni = await db[COLLECTION_ASSEGNI].find({
+        "numero": {"$regex": r"^\d{14,}$"}  # Numeri con 14+ cifre sono probabilmente CRA
+    }, {"_id": 0}).to_list(10000)
+    
+    risultati["assegni_analizzati"] = len(assegni)
+    
+    for ass in assegni:
+        descrizione = ass.get("descrizione", "")
+        numero_attuale = ass.get("numero", "")
+        
+        # Cerca il numero reale dopo "NUM:"
+        match = re.search(r"NUM[:\s]+(\d{10,})", descrizione, re.IGNORECASE)
+        if match:
+            numero_corretto = match.group(1)
+            
+            if numero_corretto != numero_attuale:
+                try:
+                    # Salva il vecchio numero come riferimento
+                    await db[COLLECTION_ASSEGNI].update_one(
+                        {"id": ass["id"]},
+                        {"$set": {
+                            "numero": numero_corretto,
+                            "numero_cra": numero_attuale,  # Salva CRA per riferimento
+                            "numero_corretto_automaticamente": True,
+                            "updated_at": datetime.utcnow().isoformat()
+                        }}
+                    )
+                    risultati["numeri_corretti"] += 1
+                except Exception as e:
+                    risultati["errori"].append(f"Errore update {ass['id']}: {str(e)}")
+    
+    return risultati
