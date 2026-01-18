@@ -14,13 +14,13 @@ from dotenv import load_dotenv
 # Carica variabili ambiente dal .env (override=True per sovrascrivere variabili esistenti)
 load_dotenv("/app/backend/.env", override=True)
 
-# Verifica che OPENAI_API_KEY sia impostata
-api_key = os.getenv("OPENAI_API_KEY")
+# Verifica che EMCIE_API_KEY sia impostata (provider ottimizzato per Parlant)
+api_key = os.getenv("EMCIE_API_KEY")
 if not api_key:
-    print("❌ ERRORE: OPENAI_API_KEY non trovata in /app/backend/.env")
+    print("❌ ERRORE: EMCIE_API_KEY non trovata in /app/backend/.env")
     sys.exit(1)
-
-print(f"🔑 Usando OpenAI API Key: {api_key[:20]}...")
+    
+print(f"🔑 Usando Emcie API Key: {api_key[:25]}...")
 
 import parlant.sdk as p
 
