@@ -71,3 +71,76 @@ async def get_riepilogo_salari(
         "mesi": mesi,
         "totale_anno": totale_anno
     }
+
+
+
+@router.delete("/pulisci-righe-vuote")
+async def pulisci_righe_vuote() -> Dict[str, Any]:
+    """
+    Elimina righe vuote dalla prima nota salari.
+    Una riga è considerata vuota se importo_busta E importo_bonifico sono entrambi 0 o null.
+    """
+    db = Database.get_db()
+    
+    # Conta prima
+    prima = await db.prima_nota_salari.count_documents({})
+    
+    # Elimina righe vuote
+    result = await db.prima_nota_salari.delete_many({
+        "$and": [
+            {"$or": [{"importo_busta": 0}, {"importo_busta": None}, {"importo_busta": {"$exists": False}}]},
+            {"$or": [{"importo_bonifico": 0}, {"importo_bonifico": None}, {"importo_bonifico": {"$exists": False}}]}
+        ]
+    })
+    
+    dopo = await db.prima_nota_salari.count_documents({})
+    
+    return {
+        "success": True,
+        "righe_prima": prima,
+        "righe_eliminate": result.deleted_count,
+        "righe_dopo": dopo
+    }
+
+
+@router.get("/statistiche")
+async def get_statistiche() -> Dict[str, Any]:
+    """Statistiche sui record della prima nota salari."""
+    db = Database.get_db()
+    
+    totale = await db.prima_nota_salari.count_documents({})
+    
+    # Conta righe vuote
+    vuote = await db.prima_nota_salari.count_documents({
+        "$and": [
+            {"$or": [{"importo_busta": 0}, {"importo_busta": None}]},
+            {"$or": [{"importo_bonifico": 0}, {"importo_bonifico": None}]}
+        ]
+    })
+    
+    # Conta righe con solo busta (bonifico mancante)
+    solo_busta = await db.prima_nota_salari.count_documents({
+        "importo_busta": {"$gt": 0},
+        "$or": [{"importo_bonifico": 0}, {"importo_bonifico": None}]
+    })
+    
+    # Conta righe con differenze
+    pipeline = [
+        {"$match": {"importo_busta": {"$gt": 0}}},
+        {"$project": {
+            "diff": {"$subtract": ["$importo_bonifico", "$importo_busta"]}
+        }},
+        {"$match": {"diff": {"$ne": 0}}},
+        {"$count": "total"}
+    ]
+    diff_result = await db.prima_nota_salari.aggregate(pipeline).to_list(1)
+    con_differenze = diff_result[0]["total"] if diff_result else 0
+    
+    return {
+        "totale_record": totale,
+        "righe_vuote": vuote,
+        "solo_busta_senza_bonifico": solo_busta,
+        "con_differenze": con_differenze,
+        "righe_valide": totale - vuote
+    }
+
