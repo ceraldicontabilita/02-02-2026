@@ -221,8 +221,8 @@ async def naviga_pagina(context: p.ToolContext, pagina: str) -> p.ToolResult:
 async def main():
     print("🚀 Avvio Parlant Server per Contabit...")
     
-    # Usa la configurazione di default - Parlant usa porta 8800 di default
-    async with p.Server(nlp_service=p.NLPServices.openai) as server:
+    # Usa Emcie - provider NLP ottimizzato per Parlant (default)
+    async with p.Server() as server:
         # Crea l'agente contabile
         agent = await server.create_agent(
             name="Assistente Contabit",
