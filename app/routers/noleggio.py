@@ -566,9 +566,12 @@ async def scan_fatture_noleggio(anno: Optional[int] = None) -> Dict[str, Any]:
                 if k not in linee_per_targa[targa][categoria]["metadata"]:
                     linee_per_targa[targa][categoria]["metadata"][k] = v
         
-        # Ora aggiungi le fatture raggruppate al veicolo
+        # Ora aggiungi le fatture raggruppate al veicolo (esclusi verbali che sono già stati aggiunti)
         for targa, categorie in linee_per_targa.items():
             for categoria, dati in categorie.items():
+                if categoria == "verbali":
+                    continue  # I verbali sono già stati aggiunti singolarmente
+                    
                 imponibile = round(dati["totale_imponibile"], 2)
                 iva = round(dati["totale_iva"], 2)
                 totale = round(imponibile + iva, 2)
@@ -584,11 +587,6 @@ async def scan_fatture_noleggio(anno: Optional[int] = None) -> Dict[str, Any]:
                     "totale": totale,
                     "pagato": invoice.get("pagato", False)
                 }
-                
-                # Aggiungi metadata per verbali
-                if categoria == "verbali" and dati["metadata"]:
-                    record["numero_verbale"] = dati["metadata"].get("numero_verbale")
-                    record["data_verbale"] = dati["metadata"].get("data_verbale")
                 
                 veicoli[targa][categoria].append(record)
                 veicoli[targa][f"totale_{categoria}"] += imponibile
