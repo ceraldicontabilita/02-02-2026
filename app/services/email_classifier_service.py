@@ -180,9 +180,9 @@ EMAIL_RULES: List[EmailRule] = [
     # --- FATTURE ELETTRONICHE ---
     EmailRule(
         name="fatture_sdi",
-        keywords=["fattura elettronica", "fattura PA", "XML fattura", "SDI"],
-        subject_patterns=[r"fattura.*elettronic", r"sdi", r"fe\s*\d+"],
-        sender_patterns=["aruba", "infocert", "sdi", "fatturapa"],
+        keywords=["fattura elettronica", "fattura PA", "XML fattura", "SDI", "sistema di interscambio"],
+        subject_patterns=[r"fattura.*elettronic", r"sdi", r"fe\s*\d+", r"sistema.*interscambio"],
+        sender_patterns=[],  # Accetta QUALSIASI mittente
         category="fatture",
         gestionale_section="Fatture Ricevute",
         collection="invoices",
