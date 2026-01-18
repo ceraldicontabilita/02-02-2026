@@ -8,7 +8,7 @@ import {
   FileText, RefreshCw, Search, CheckCircle2, AlertCircle, 
   Upload, Link2, Download, Eye, Calendar
 } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '../components/ui/sonner';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || '';
 
