@@ -113,10 +113,6 @@ export default function ArchivioFatture() {
   const [stato, setStato] = useState(searchParams.get('stato') || '');
   const [search, setSearch] = useState(searchParams.get('search') || '');
   
-  // Modal stampa etichette
-  const [showEtichette, setShowEtichette] = useState(false);
-  const [selectedFatturaId, setSelectedFatturaId] = useState(null);
-  
   // Stato per auto-riparazione
   const [autoRepairStatus, setAutoRepairStatus] = useState(null);
   const [autoRepairRunning, setAutoRepairRunning] = useState(false);
