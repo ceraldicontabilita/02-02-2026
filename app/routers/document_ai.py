@@ -80,7 +80,7 @@ async def extract_from_base64(
     base64_data: str,
     filename: str,
     document_type: Optional[str] = None,
-    model: str = "gpt-4o",
+    model: str = "claude-sonnet-4-5-20250929",
     save_to_db: bool = False
 ):
     """
