@@ -962,6 +962,102 @@ export default function Documenti() {
         💡 <strong>Configurazione Email:</strong> Le credenziali email sono configurate nel file .env del backend 
         (EMAIL_USER e EMAIL_APP_PASSWORD). Il sistema supporta Gmail con App Password.
       </div>
+
+      {/* PDF Viewer Modal */}
+      {selectedPdfDoc && (
+        <div 
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.7)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: 20
+          }}
+          onClick={closePdfViewer}
+        >
+          <div 
+            style={{
+              background: 'white',
+              borderRadius: 12,
+              width: '90%',
+              maxWidth: 1000,
+              height: '90vh',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden'
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div style={{
+              padding: '12px 20px',
+              borderBottom: '1px solid #e2e8f0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              background: '#f8fafc'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontSize: 20 }}>📄</span>
+                <div>
+                  <div style={{ fontWeight: 600, color: '#1e293b' }}>{selectedPdfDoc.filename}</div>
+                  <div style={{ fontSize: 12, color: '#64748b' }}>
+                    {CATEGORY_COLORS[selectedPdfDoc.category]?.label || selectedPdfDoc.category}
+                    {selectedPdfDoc.file_size && ` • ${formatBytes(selectedPdfDoc.file_size)}`}
+                  </div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  onClick={() => handleDownloadFile(selectedPdfDoc)}
+                  style={{
+                    background: '#3b82f6',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: 6,
+                    padding: '8px 16px',
+                    cursor: 'pointer',
+                    fontSize: 13,
+                    fontWeight: 500
+                  }}
+                >
+                  📥 Scarica
+                </button>
+                <button
+                  onClick={closePdfViewer}
+                  style={{
+                    background: '#f1f5f9',
+                    color: '#64748b',
+                    border: 'none',
+                    borderRadius: 6,
+                    padding: '8px 16px',
+                    cursor: 'pointer',
+                    fontSize: 18
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+            
+            {/* PDF Content */}
+            <div style={{ flex: 1, background: '#525659' }}>
+              <iframe
+                src={selectedPdfDoc.pdfUrl}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  border: 'none'
+                }}
+                title={selectedPdfDoc.filename}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
