@@ -578,14 +578,6 @@ export default function ArchivioFatture() {
                             >
                               👁️
                             </button>
-                            <button
-                              onClick={() => { setSelectedFatturaId(f.id); setShowEtichette(true); }}
-                              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14 }}
-                              title="Stampa etichette lotto"
-                              data-testid={`btn-etichette-${f.id}`}
-                            >
-                              🏷️
-                            </button>
                           </div>
                         </td>
                       </tr>
