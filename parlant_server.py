@@ -12,13 +12,16 @@ import sys
 from datetime import datetime, timezone
 from dotenv import load_dotenv
 
-# Carica variabili ambiente
-load_dotenv("/app/backend/.env")
+# Carica variabili ambiente dal .env (override=True per sovrascrivere variabili esistenti)
+load_dotenv("/app/backend/.env", override=True)
 
-# Configura API key per OpenAI (Emergent LLM Key)
-api_key = os.getenv("OPENAI_API_KEY") or os.getenv("EMERGENT_LLM_KEY")
-if api_key:
-    os.environ["OPENAI_API_KEY"] = api_key
+# Verifica che OPENAI_API_KEY sia impostata
+api_key = os.getenv("OPENAI_API_KEY")
+if not api_key:
+    print("❌ ERRORE: OPENAI_API_KEY non trovata in /app/backend/.env")
+    sys.exit(1)
+    
+print(f"🔑 Usando OpenAI API Key: {api_key[:20]}...")
 
 import parlant.sdk as p
 
