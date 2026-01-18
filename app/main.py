@@ -307,6 +307,9 @@ app.include_router(pagopa.router, tags=["PagoPA"])
 # --- InvoiceTronic - Fatturazione Elettronica SDI ---
 app.include_router(invoicetronic.router, tags=["InvoiceTronic SDI"])
 
+# --- Verbali Noleggio da Email ---
+app.include_router(verbali_noleggio.router, tags=["Verbali Noleggio"])
+
 # --- Sincronizzazione Relazionale ---
 app.include_router(sync_relazionale.router, prefix="/api", tags=["Sincronizzazione Relazionale"])
 
