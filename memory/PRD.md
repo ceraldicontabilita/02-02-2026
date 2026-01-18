@@ -554,7 +554,31 @@ Prima Nota  Da Riconciliare
 
 ---
 
-## 22. Clausola finale
+## 22. Logica Assegni Multipli ✅ IMPLEMENTATO (18 Gen 2026)
+
+**Backend Router**: `/api/assegni/`
+
+**Funzionalità**:
+- ✅ Cerca combinazioni di assegni senza beneficiario che sommati matchano fatture
+- ✅ Preview delle possibili combinazioni prima dell'associazione
+- ✅ Associazione automatica con tracciabilità (campo `pagamento_combinato`)
+
+**Endpoint**:
+- `GET /preview-combinazioni` - Preview combinazioni senza modifiche
+- `POST /cerca-combinazioni-assegni` - Esegue l'associazione
+
+**Risultati test**:
+- 8 assegni senza beneficiario analizzati
+- 2 match trovati:
+  - 3 assegni da €1.663,26 → Fattura €4.989,80 (EG TAPPEZZERIA)
+  - 2 assegni (€1.028,82 + €1.421,77) → Fattura €2.450,00 (Mor.Feo Casoria)
+- 5 assegni associati, 3 rimasti non associabili
+
+**File**: `/app/app/routers/bank/assegni.py`
+
+---
+
+## 23. Clausola finale
 
 Questo PRD è vincolante.
 
