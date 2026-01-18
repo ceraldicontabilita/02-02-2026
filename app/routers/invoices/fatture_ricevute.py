@@ -238,7 +238,16 @@ async def import_fattura_xml(file: UploadFile = File(...)):
     
     try:
         content = await file.read()
-        xml_content = content.decode('utf-8', errors='replace')
+        # Prova diverse codifiche per gestire caratteri speciali (es. ° gradi)
+        xml_content = None
+        for encoding in ['utf-8', 'latin-1', 'iso-8859-1', 'cp1252']:
+            try:
+                xml_content = content.decode(encoding)
+                break
+            except UnicodeDecodeError:
+                continue
+        if xml_content is None:
+            xml_content = content.decode('utf-8', errors='replace')
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Errore lettura file: {str(e)}")
     
