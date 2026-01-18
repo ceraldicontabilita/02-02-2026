@@ -1027,6 +1027,33 @@ async def get_payment_deadlines(
     }
 
 
+@router.post("/unifica-collection")
+async def unifica_fornitori_collection() -> Dict[str, Any]:
+    """
+    Unifica le collection 'fornitori' e 'suppliers'.
+    
+    - suppliers diventa la collection principale
+    - I dati da fornitori vengono mergiati
+    - Crea backup automatico di fornitori
+    
+    ATTENZIONE: Eseguire una sola volta dopo backup del database.
+    """
+    from app.scripts.unifica_fornitori_suppliers import unifica_fornitori_suppliers
+    
+    risultati = await unifica_fornitori_suppliers()
+    return risultati
+
+
+@router.get("/verifica-unificazione")
+async def verifica_unificazione_stato() -> Dict[str, Any]:
+    """
+    Verifica lo stato dell'unificazione delle collection fornitori/suppliers.
+    """
+    from app.scripts.unifica_fornitori_suppliers import verifica_unificazione
+    
+    return await verifica_unificazione()
+
+
 @router.get("/{supplier_id}/fatturato")
 async def get_supplier_fatturato(
     supplier_id: str,
