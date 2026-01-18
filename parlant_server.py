@@ -4,7 +4,6 @@ Parlant AI Server per Contabit
 Server Parlant con agente contabile italiano configurato con:
 - Tools per accesso ai dati contabili
 - Guidelines comportamentali
-- Context variables
 """
 import asyncio
 import os
@@ -20,7 +19,7 @@ api_key = os.getenv("OPENAI_API_KEY")
 if not api_key:
     print("❌ ERRORE: OPENAI_API_KEY non trovata in /app/backend/.env")
     sys.exit(1)
-    
+
 print(f"🔑 Usando OpenAI API Key: {api_key[:20]}...")
 
 import parlant.sdk as p
@@ -40,7 +39,6 @@ async def get_datetime(context: p.ToolContext) -> p.ToolResult:
 async def get_statistiche_sistema(context: p.ToolContext) -> p.ToolResult:
     """Ottiene statistiche generali del sistema contabile."""
     try:
-        # Import database connection
         sys.path.insert(0, '/app/app')
         from database import Database
         
@@ -223,7 +221,8 @@ async def naviga_pagina(context: p.ToolContext, pagina: str) -> p.ToolResult:
 async def main():
     print("🚀 Avvio Parlant Server per Contabit...")
     
-    async with p.Server(nlp_service=p.NLPServices.openai, port=8800) as server:
+    # Usa la configurazione di default - Parlant usa porta 8800 di default
+    async with p.Server(nlp_service=p.NLPServices.openai) as server:
         # Crea l'agente contabile
         agent = await server.create_agent(
             name="Assistente Contabit",
@@ -337,11 +336,6 @@ Rispondi sempre in italiano."""
         print(f"\n🌐 Server Parlant attivo su http://localhost:8800")
         print(f"📋 Agent ID: {agent.id}")
         print(f"🎮 Test playground: http://localhost:8800")
-        print("\n💡 Premi Ctrl+C per fermare il server")
-        
-        # Mantieni il server attivo
-        while True:
-            await asyncio.sleep(1)
 
 
 if __name__ == "__main__":
