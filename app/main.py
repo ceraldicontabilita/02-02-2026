@@ -155,6 +155,7 @@ from app.routers import (
     dizionario_prodotti, inventario, chat_ai
 )
 from app.routers import cedolini_riconciliazione
+from app.routers import parlant_router
 
 
 # =============================================================================
