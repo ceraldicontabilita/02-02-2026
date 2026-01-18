@@ -1,64 +1,150 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import api from '../api';
-import { FileText, Mail, CheckCircle, AlertCircle, Trash2, RefreshCw, Settings, Search, ArrowRight, Zap, Brain, FolderOpen } from 'lucide-react';
 
-// Mapping categorie -> colori e icone
-const CATEGORY_CONFIG = {
-  verbali: { bg: '#fef3c7', text: '#92400e', icon: FileText, label: 'Verbali/Multe', section: 'Noleggio Auto' },
-  dimissioni: { bg: '#dbeafe', text: '#1e40af', icon: FileText, label: 'Dimissioni', section: 'Anagrafica Dipendenti' },
-  cartelle_esattoriali: { bg: '#fee2e2', text: '#dc2626', icon: AlertCircle, label: 'Cartelle Esattoriali', section: 'Commercialista' },
-  inps_fonsi: { bg: '#f3e8ff', text: '#7c3aed', icon: FileText, label: 'Delibere FONSI', section: 'INPS Documenti' },
-  inps_dilazioni: { bg: '#e0e7ff', text: '#4338ca', icon: FileText, label: 'Dilazioni INPS', section: 'INPS Documenti' },
-  bonifici_stipendi: { bg: '#fce7f3', text: '#be185d', icon: FileText, label: 'Bonifici Stipendi', section: 'Prima Nota Salari' },
-  f24: { bg: '#dcfce7', text: '#166534', icon: FileText, label: 'F24', section: 'Gestione F24' },
-  buste_paga: { bg: '#cffafe', text: '#0891b2', icon: FileText, label: 'Buste Paga', section: 'Cedolini' },
-  estratti_conto: { bg: '#f1f5f9', text: '#475569', icon: FileText, label: 'Estratti Conto', section: 'Banca' },
-  fatture: { bg: '#ecfdf5', text: '#059669', icon: FileText, label: 'Fatture', section: 'Ciclo Passivo' },
+const CATEGORY_COLORS = {
+  f24: { bg: '#dbeafe', text: '#1e40af', icon: '📋', label: 'F24' },
+  fattura: { bg: '#dcfce7', text: '#166534', icon: '🧾', label: 'Fatture' },
+  busta_paga: { bg: '#fef3c7', text: '#92400e', icon: '💰', label: 'Buste Paga' },
+  estratto_conto: { bg: '#f3e8ff', text: '#7c3aed', icon: '🏦', label: 'Estratti Conto' },
+  quietanza: { bg: '#cffafe', text: '#0891b2', icon: '✅', label: 'Quietanze' },
+  bonifico: { bg: '#fce7f3', text: '#be185d', icon: '💸', label: 'Bonifici' },
+  cartella_esattoriale: { bg: '#fee2e2', text: '#dc2626', icon: '⚠️', label: 'Cartelle Esattoriali' },
+  altro: { bg: '#f1f5f9', text: '#475569', icon: '📄', label: 'Altri' }
 };
 
-// Mapping sezioni gestionale
-const GESTIONALE_SECTIONS = {
-  'Noleggio Auto': { path: '/noleggio-auto', color: '#f59e0b' },
-  'Anagrafica Dipendenti': { path: '/dipendenti', color: '#3b82f6' },
-  'Commercialista': { path: '/commercialista', color: '#ef4444' },
-  'INPS Documenti': { path: '/documenti', color: '#8b5cf6' },
-  'Prima Nota Salari': { path: '/prima-nota-salari', color: '#ec4899' },
-  'Gestione F24': { path: '/f24', color: '#10b981' },
-  'Cedolini': { path: '/cedolini', color: '#06b6d4' },
-  'Banca': { path: '/riconciliazione', color: '#6366f1' },
-  'Ciclo Passivo': { path: '/fatture-ricevute', color: '#22c55e' },
+const STATUS_LABELS = {
+  nuovo: { label: 'Nuovo', color: '#3b82f6', bg: '#dbeafe' },
+  processato: { label: 'Processato', color: '#16a34a', bg: '#dcfce7' },
+  errore: { label: 'Errore', color: '#dc2626', bg: '#fef2f2' }
 };
+
+// Parole chiave predefinite per la ricerca email
+const DEFAULT_KEYWORDS = [
+  { id: 'f24', label: 'F24', keywords: 'f24,modello f24,tributi' },
+  { id: 'fattura', label: 'Fattura', keywords: 'fattura,invoice,ft.' },
+  { id: 'busta_paga', label: 'Busta Paga', keywords: 'busta paga,cedolino,lul' },
+  { id: 'estratto_conto', label: 'Estratto Conto', keywords: 'estratto conto,movimenti bancari' },
+  { id: 'cartella_esattoriale', label: 'Cartella Esattoriale', keywords: 'cartella esattoriale,agenzia entrate riscossione,equitalia,intimazione,ader' },
+  { id: 'bonifico', label: 'Bonifico', keywords: 'bonifico,sepa,disposizione pagamento' }
+];
 
 export default function Documenti() {
-  const [activeTab, setActiveTab] = useState('classificazione');
-  const [stats, setStats] = useState(null);
-  const [rules, setRules] = useState([]);
-  const [scanResults, setScanResults] = useState(null);
   const [documents, setDocuments] = useState([]);
+  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [scanning, setScanning] = useState(false);
-  const [processing, setProcessing] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [filtroCategoria, setFiltroCategoria] = useState('');
+  const [filtroStatus, setFiltroStatus] = useState('');
+  const [categories, setCategories] = useState({});
   
-  // Impostazioni scansione
-  const [scanSettings, setScanSettings] = useState({
-    cartella: 'INBOX',
-    giorni: 30,
-    delete_unmatched: false,
-    dry_run: true
-  });
+  // Impostazioni download
+  const [giorniDownload, setGiorniDownload] = useState(10); // ultimi 10 giorni
+  const [paroleChiaveSelezionate, setParoleChiaveSelezionate] = useState([]);
+  const [nuovaParolaChiave, setNuovaParolaChiave] = useState('');
+  const [customKeywords, setCustomKeywords] = useState([]);
+  const [showImportSettings, setShowImportSettings] = useState(false);
   
-  // Auto-ripara al mount
+  // Background download state
+  const [backgroundTask, setBackgroundTask] = useState(null);
+  const [taskStatus, setTaskStatus] = useState(null);
+  const pollingRef = useRef(null);
+  
+  // Lock status per operazioni email
+  const [emailLocked, setEmailLocked] = useState(false);
+  const [currentOperation, setCurrentOperation] = useState(null);
+
+  // Controlla lo stato del lock email
+  const checkEmailLock = async () => {
+    try {
+      const res = await api.get('/api/system/lock-status');
+      setEmailLocked(res.data.email_locked);
+      setCurrentOperation(res.data.operation);
+    } catch (e) {
+      console.error('Errore check lock:', e);
+    }
+  };
+
   useEffect(() => {
     loadData();
-    loadStats();
-    loadRules();
+    checkEmailLock(); // Controlla stato lock all'avvio
+    // Carica parole chiave personalizzate dal localStorage
+    const saved = localStorage.getItem('documentKeywords');
+    if (saved) {
+      setCustomKeywords(JSON.parse(saved));
+    }
+    
+    // Polling per stato lock ogni 5 secondi se sta scaricando
+    const lockInterval = setInterval(() => {
+      if (downloading || backgroundTask) {
+        checkEmailLock();
+      }
+    }, 5000);
+    
+    // Cleanup polling on unmount
+    return () => {
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+      }
+      clearInterval(lockInterval);
+    };
+  }, [filtroCategoria, filtroStatus, downloading, backgroundTask]);
+
+  // Polling per task in background
+  const pollTaskStatus = useCallback(async (taskId) => {
+    try {
+      const res = await api.get(`/api/documenti/task/${taskId}`);
+      setTaskStatus(res.data);
+      
+      if (res.data.status === 'completed') {
+        // Stop polling
+        if (pollingRef.current) {
+          clearInterval(pollingRef.current);
+          pollingRef.current = null;
+        }
+        setDownloading(false);
+        loadData(); // Ricarica documenti
+        
+        // Mostra risultato
+        const stats = res.data.result?.stats;
+        if (stats) {
+          setTimeout(() => {
+            alert(`✅ Download completato!\n\nEmail controllate: ${stats.emails_checked || 0}\nDocumenti trovati: ${stats.documents_found || 0}\nNuovi documenti: ${stats.new_documents || 0}\nDuplicati saltati: ${stats.duplicates_skipped || 0}`);
+            setBackgroundTask(null);
+            setTaskStatus(null);
+          }, 500);
+        }
+      } else if (res.data.status === 'error') {
+        // Stop polling on error
+        if (pollingRef.current) {
+          clearInterval(pollingRef.current);
+          pollingRef.current = null;
+        }
+        setDownloading(false);
+        alert(`❌ Errore: ${res.data.error || 'Errore sconosciuto'}`);
+        setBackgroundTask(null);
+        setTaskStatus(null);
+      }
+    } catch (error) {
+      console.error('Errore polling task:', error);
+    }
   }, []);
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const res = await api.get('/api/documenti-smart/documents?limit=100');
-      setDocuments(res.data.documents || []);
+      const params = new URLSearchParams();
+      if (filtroCategoria) params.append('categoria', filtroCategoria);
+      if (filtroStatus) params.append('status', filtroStatus);
+      params.append('limit', '200');
+
+      const [docsRes, statsRes] = await Promise.all([
+        api.get(`/api/documenti/lista?${params}`),
+        api.get('/api/documenti/statistiche')
+      ]);
+
+      setDocuments(docsRes.data.documents || []);
+      setCategories(docsRes.data.categories || {});
+      setStats(statsRes.data);
     } catch (error) {
       console.error('Errore caricamento documenti:', error);
     } finally {
@@ -66,515 +152,764 @@ export default function Documenti() {
     }
   };
 
-  const loadStats = async () => {
-    try {
-      const res = await api.get('/api/documenti-smart/stats');
-      setStats(res.data);
-    } catch (error) {
-      console.error('Errore caricamento statistiche:', error);
-    }
-  };
-
-  const loadRules = async () => {
-    try {
-      const res = await api.get('/api/documenti-smart/rules');
-      setRules(res.data || []);
-    } catch (error) {
-      console.error('Errore caricamento regole:', error);
-    }
-  };
-
-  const handleScan = async () => {
-    setScanning(true);
-    setScanResults(null);
-    try {
-      const res = await api.post('/api/documenti-smart/scan', scanSettings);
-      setScanResults(res.data);
-      if (!scanSettings.dry_run) {
-        loadData();
-        loadStats();
+  const handleDownloadFromEmail = async () => {
+    // Costruisci la stringa delle parole chiave
+    let keywordsToSearch = [];
+    paroleChiaveSelezionate.forEach(id => {
+      const preset = DEFAULT_KEYWORDS.find(k => k.id === id);
+      if (preset) {
+        keywordsToSearch.push(...preset.keywords.split(',').map(k => k.trim()));
       }
-    } catch (error) {
-      console.error('Errore scansione:', error);
-      alert('Errore durante la scansione: ' + (error.response?.data?.detail || error.message));
-    } finally {
-      setScanning(false);
-    }
-  };
+    });
+    // Aggiungi parole chiave personalizzate
+    customKeywords.forEach(kw => {
+      if (paroleChiaveSelezionate.includes(kw.id)) {
+        keywordsToSearch.push(...kw.keywords.split(',').map(k => k.trim()));
+      }
+    });
 
-  const handleProcess = async () => {
-    setProcessing(true);
-    try {
-      const res = await api.post('/api/documenti-smart/process');
-      alert(`Processati ${res.data.documenti_processati} documenti\nAssociazioni: ${res.data.associazioni?.length || 0}`);
-      loadData();
-      loadStats();
-    } catch (error) {
-      console.error('Errore processamento:', error);
-      alert('Errore durante il processamento');
-    } finally {
-      setProcessing(false);
-    }
-  };
-
-  const handleAssociaTutti = async () => {
-    setProcessing(true);
-    try {
-      const res = await api.post('/api/documenti-smart/associa-tutti');
-      alert(`Associazioni completate!\n\nDimissioni: ${res.data.associazioni?.dimissioni || 0}\nCartelle: ${res.data.associazioni?.cartelle_esattoriali || 0}\nVerbali: ${res.data.associazioni?.verbali || 0}\nBonifici: ${res.data.associazioni?.bonifici || 0}`);
-      loadData();
-      loadStats();
-    } catch (error) {
-      console.error('Errore associazione:', error);
-    } finally {
-      setProcessing(false);
-    }
-  };
-
-  const handleCleanup = async (confirm = false) => {
-    if (confirm && !window.confirm('ATTENZIONE: Le email non classificate verranno ELIMINATE definitivamente. Continuare?')) {
+    const keywordsParam = keywordsToSearch.length > 0 ? keywordsToSearch.join(',') : '';
+    
+    // Verifica lock email
+    if (emailLocked) {
+      alert(`⚠️ Operazione non disponibile\n\nC'è già un'operazione email in corso: ${currentOperation}\n\nAttendere il completamento.`);
       return;
     }
     
-    setLoading(true);
+    const message = keywordsParam 
+      ? `Vuoi scaricare i documenti dalle email degli ultimi ${giorniDownload} giorni?\n\nParole chiave: ${keywordsToSearch.slice(0, 5).join(', ')}${keywordsToSearch.length > 5 ? '...' : ''}\n\nIl download avverrà in background.`
+      : `Vuoi scaricare TUTTI i documenti dalle email degli ultimi ${giorniDownload} giorni?\n\n⚠️ Nessuna parola chiave selezionata - verranno scaricati tutti gli allegati.\n\nIl download avverrà in background.`;
+    
+    if (!window.confirm(message)) return;
+    
+    setDownloading(true);
+    setTaskStatus({ status: 'pending', message: 'Avvio download...' });
+    
     try {
-      const res = await api.delete(`/api/documenti-smart/cleanup-unmatched?cartella=${scanSettings.cartella}&giorni=${scanSettings.giorni}&confirm=${confirm}`);
-      alert(confirm 
-        ? `Eliminate ${res.data.eliminati} email non rilevanti` 
-        : `Preview: ${res.data.email_da_eliminare} email verrebbero eliminate`
-      );
+      // Avvia download in background
+      let url = `/api/documenti/scarica-da-email?giorni=${giorniDownload}&background=true`;
+      if (keywordsParam) {
+        url += `&parole_chiave=${encodeURIComponent(keywordsParam)}`;
+      }
+      
+      const res = await api.post(url);
+      
+      if (res.data.background && res.data.task_id) {
+        // Salva task e avvia polling
+        setBackgroundTask(res.data.task_id);
+        
+        // Polling ogni 2 secondi
+        pollingRef.current = setInterval(() => {
+          pollTaskStatus(res.data.task_id);
+        }, 2000);
+        
+        // Prima chiamata immediata
+        pollTaskStatus(res.data.task_id);
+      } else if (res.data.success) {
+        // Fallback sincrono (non dovrebbe accadere)
+        const stats = res.data.stats;
+        alert(`✅ Download completato!\n\nEmail controllate: ${stats.emails_checked}\nDocumenti trovati: ${stats.documents_found}\nNuovi documenti: ${stats.new_documents}\nDuplicati saltati: ${stats.duplicates_skipped}`);
+        loadData();
+        setDownloading(false);
+      }
     } catch (error) {
-      console.error('Errore cleanup:', error);
-    } finally {
-      setLoading(false);
+      const detail = error.response?.data?.detail || error.message;
+      if (error.response?.status === 423) {
+        alert(`⚠️ Operazione bloccata\n\n${detail}`);
+      } else {
+        alert(`❌ Errore download: ${detail}`);
+      }
+      setDownloading(false);
+      setBackgroundTask(null);
+      setTaskStatus(null);
+      checkEmailLock(); // Aggiorna stato lock
     }
   };
 
-  const getCategoryConfig = (category) => {
-    return CATEGORY_CONFIG[category] || { 
-      bg: '#f1f5f9', text: '#475569', icon: FileText, label: category, section: 'Altro' 
+  const addCustomKeyword = () => {
+    if (!nuovaParolaChiave.trim()) return;
+    const newKw = {
+      id: `custom_${Date.now()}`,
+      label: nuovaParolaChiave.trim(),
+      keywords: nuovaParolaChiave.trim().toLowerCase(),
+      custom: true
     };
+    const updated = [...customKeywords, newKw];
+    setCustomKeywords(updated);
+    localStorage.setItem('documentKeywords', JSON.stringify(updated));
+    setNuovaParolaChiave('');
   };
 
+  const removeCustomKeyword = (id) => {
+    const updated = customKeywords.filter(k => k.id !== id);
+    setCustomKeywords(updated);
+    localStorage.setItem('documentKeywords', JSON.stringify(updated));
+    setParoleChiaveSelezionate(prev => prev.filter(p => p !== id));
+  };
+
+  const toggleKeyword = (id) => {
+    setParoleChiaveSelezionate(prev => 
+      prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
+    );
+  };
+
+  const handleProcessDocument = async (doc, destinazione) => {
+    try {
+      await api.post(`/api/documenti/documento/${doc.id}/processa?destinazione=${destinazione}`);
+      alert(`✅ Documento processato e spostato in ${destinazione}`);
+      loadData();
+    } catch (error) {
+      alert(`❌ Errore: ${error.response?.data?.detail || error.message}`);
+    }
+  };
+
+  const handleDeleteDocument = async (docId) => {
+    if (!window.confirm('Vuoi eliminare questo documento?')) return;
+    
+    try {
+      await api.delete(`/api/documenti/documento/${docId}`);
+      loadData();
+    } catch (error) {
+      alert(`❌ Errore: ${error.response?.data?.detail || error.message}`);
+    }
+  };
+
+  const handleChangeCategory = async (docId, newCategory) => {
+    try {
+      await api.post(`/api/documenti/documento/${docId}/cambia-categoria?nuova_categoria=${newCategory}`);
+      loadData();
+    } catch (error) {
+      alert(`❌ Errore: ${error.response?.data?.detail || error.message}`);
+    }
+  };
+
+  const handleDownloadFile = async (doc) => {
+    try {
+      const response = await api.get(`/api/documenti/documento/${doc.id}/download`, {
+        responseType: 'blob'
+      });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', doc.filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      alert(`❌ Errore download: ${error.message}`);
+    }
+  };
+
+  const formatBytes = (bytes) => {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  };
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '-';
+    return new Date(dateStr).toLocaleDateString('it-IT', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  // Styles
+  const cardStyle = {
+    background: 'white',
+    borderRadius: 12,
+    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+    overflow: 'hidden'
+  };
+
+  const buttonStyle = (bg, color = 'white') => ({
+    padding: '8px 16px',
+    background: bg,
+    color: color,
+    border: 'none',
+    borderRadius: 6,
+    cursor: 'pointer',
+    fontWeight: '600',
+    fontSize: 13,
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 6
+  });
+
+  const smallButtonStyle = (bg, color = 'white') => ({
+    padding: '6px 12px',
+    background: bg,
+    color: color,
+    border: 'none',
+    borderRadius: 6,
+    cursor: 'pointer',
+    fontWeight: '500',
+    fontSize: 12
+  });
+
   return (
-    <div className="space-y-6" data-testid="documenti-page">
+    <div style={{ padding: 20, maxWidth: 1600, margin: '0 auto' }}>
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <Brain className="w-7 h-7 text-indigo-600" />
-            Gestione Documenti Intelligente
+          <h1 style={{ margin: 0, fontSize: 28, fontWeight: 'bold', color: '#1e293b' }}>
+            📨 Gestione Documenti Email
           </h1>
-          <p className="text-gray-500 mt-1">
-            Classificazione automatica email e associazione al gestionale
+          <p style={{ margin: '8px 0 0', color: '#64748b' }}>
+            Scarica automaticamente documenti dalle email e caricali nelle sezioni appropriate
           </p>
         </div>
-        
-        <div className="flex gap-2">
-          <button
-            onClick={() => { loadData(); loadStats(); }}
-            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center gap-2"
-            disabled={loading}
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            Aggiorna
-          </button>
-        </div>
+        <button onClick={loadData} disabled={loading} style={buttonStyle('#e5e7eb', '#374151')}>
+          {loading ? '⏳' : '🔄'} Aggiorna
+        </button>
       </div>
 
-      {/* Card info logica intelligente */}
-      <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-xl p-4">
-        <div className="flex items-start gap-3">
-          <Zap className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" />
-          <div>
-            <h3 className="font-semibold text-indigo-900">Sistema di Classificazione Intelligente</h3>
-            <p className="text-sm text-indigo-700 mt-1">
-              Questo sistema scansiona automaticamente le email e le classifica in base a {rules.length} regole predefinite.
-              Ogni categoria viene associata alla sezione corretta del gestionale.
-            </p>
-            <div className="flex flex-wrap gap-2 mt-3">
-              {Object.entries(GESTIONALE_SECTIONS).slice(0, 5).map(([name, config]) => (
-                <span 
-                  key={name}
-                  className="text-xs px-2 py-1 rounded-full"
-                  style={{ backgroundColor: config.color + '20', color: config.color }}
-                >
-                  {name}
-                </span>
-              ))}
-              <span className="text-xs text-indigo-600">+{Object.keys(GESTIONALE_SECTIONS).length - 5} altre</span>
-            </div>
+      {/* Statistiche */}
+      {stats && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 12, marginBottom: 20 }}>
+          <div style={{ ...cardStyle, padding: '10px 12px' }}>
+            <div style={{ fontSize: 20, fontWeight: 'bold', color: '#1e293b' }}>{stats.totale}</div>
+            <div style={{ fontSize: 11, color: '#64748b' }}>Documenti Totali</div>
+          </div>
+          <div style={{ ...cardStyle, background: '#dbeafe', padding: '10px 12px' }}>
+            <div style={{ fontSize: 20, fontWeight: 'bold', color: '#1e40af' }}>{stats.nuovi}</div>
+            <div style={{ fontSize: 11, color: '#1e40af' }}>Da Processare</div>
+          </div>
+          <div style={{ ...cardStyle, background: '#dcfce7', padding: '10px 12px' }}>
+            <div style={{ fontSize: 20, fontWeight: 'bold', color: '#166534' }}>{stats.processati}</div>
+            <div style={{ fontSize: 11, color: '#166534' }}>Processati</div>
+          </div>
+          <div style={{ ...cardStyle, padding: '10px 12px' }}>
+            <div style={{ fontSize: 20, fontWeight: 'bold', color: '#7c3aed' }}>{stats.spazio_disco_mb} MB</div>
+            <div style={{ fontSize: 11, color: '#64748b' }}>Spazio Usato</div>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Tabs */}
-      <div className="border-b border-gray-200">
-        <nav className="flex gap-4">
-          {[
-            { id: 'classificazione', label: 'Classificazione', icon: Brain },
-            { id: 'documenti', label: 'Documenti', icon: FileText },
-            { id: 'regole', label: 'Regole', icon: Settings },
-          ].map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
-                activeTab === tab.id
-                  ? 'border-indigo-600 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              <tab.icon className="w-4 h-4" />
-              {tab.label}
-            </button>
-          ))}
-        </nav>
-      </div>
-
-      {/* Tab: Classificazione */}
-      {activeTab === 'classificazione' && (
-        <div className="space-y-6">
-          {/* Statistiche */}
-          {stats && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-white border rounded-xl p-4">
-                <div className="text-3xl font-bold text-indigo-600">{stats.totale_classificati || 0}</div>
-                <div className="text-sm text-gray-500">Documenti Classificati</div>
+      {/* Azione Download Email */}
+      <div style={{ ...cardStyle, marginBottom: 24, background: 'linear-gradient(135deg, #1e40af, #7c3aed)' }}>
+        <div style={{ padding: 24 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'white', flexWrap: 'wrap', gap: 16 }}>
+            <div>
+              <div style={{ fontSize: 20, fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 8 }}>
+                📧 Scarica Documenti da Email
               </div>
-              <div className="bg-white border rounded-xl p-4">
-                <div className="text-3xl font-bold text-green-600">{stats.processati || 0}</div>
-                <div className="text-sm text-gray-500">Processati</div>
-              </div>
-              <div className="bg-white border rounded-xl p-4">
-                <div className="text-3xl font-bold text-amber-600">{stats.da_processare || 0}</div>
-                <div className="text-sm text-gray-500">Da Processare</div>
-              </div>
-              <div className="bg-white border rounded-xl p-4">
-                <div className="text-3xl font-bold text-purple-600">{stats.regole_attive || rules.length}</div>
-                <div className="text-sm text-gray-500">Regole Attive</div>
+              <div style={{ fontSize: 14, opacity: 0.9, marginTop: 4 }}>
+                Controlla la casella email e scarica automaticamente i documenti
               </div>
             </div>
-          )}
-
-          {/* Impostazioni scansione */}
-          <div className="bg-white border rounded-xl p-6">
-            <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
-              <Mail className="w-5 h-5 text-indigo-600" />
-              Scansione Email
-            </h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-              <div>
-                <label className="block text-sm text-gray-600 mb-1">Cartella</label>
-                <select
-                  value={scanSettings.cartella}
-                  onChange={(e) => setScanSettings({...scanSettings, cartella: e.target.value})}
-                  className="w-full border rounded-lg px-3 py-2"
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <button
+                onClick={() => setShowImportSettings(!showImportSettings)}
+                style={{
+                  ...buttonStyle('rgba(255,255,255,0.2)', 'white'),
+                  border: '1px solid rgba(255,255,255,0.3)'
+                }}
+              >
+                ⚙️ Impostazioni
+              </button>
+              <button
+                onClick={handleDownloadFromEmail}
+                disabled={downloading}
+                style={{
+                  ...buttonStyle('white', '#1e40af'),
+                  padding: '12px 24px'
+                }}
+                data-testid="btn-download-email"
+              >
+                {downloading ? '⏳ Download in corso...' : '📥 Scarica da Email'}
+              </button>
+            </div>
+          </div>
+          
+          {/* Pannello Impostazioni Import */}
+          {showImportSettings && (
+            <div style={{ 
+              marginTop: 20, 
+              padding: 20, 
+              background: 'rgba(255,255,255,0.95)', 
+              borderRadius: 12,
+              color: '#1e293b'
+            }}>
+              <h3 style={{ margin: '0 0 16px', fontSize: 16, fontWeight: 'bold' }}>
+                ⚙️ Impostazioni Importazione
+              </h3>
+              
+              {/* Periodo */}
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', marginBottom: 6, fontWeight: 'bold', fontSize: 13 }}>
+                  📅 Periodo di ricerca
+                </label>
+                <select 
+                  value={giorniDownload}
+                  onChange={(e) => setGiorniDownload(Number(e.target.value))}
+                  style={{
+                    padding: '8px 12px',
+                    borderRadius: 6,
+                    border: '1px solid #e2e8f0',
+                    width: '100%',
+                    maxWidth: 300
+                  }}
                 >
-                  <option value="INBOX">INBOX</option>
-                  <option value="[Gmail]/Tutti i messaggi">Tutti i messaggi</option>
-                  <option value="[Gmail]/Posta in arrivo">Posta in arrivo</option>
+                  <option value={10}>Ultimi 10 giorni</option>
+                  <option value={30}>Ultimi 30 giorni</option>
+                  <option value={60}>Ultimi 60 giorni</option>
+                  <option value={90}>Ultimi 90 giorni</option>
+                  <option value={180}>Ultimi 6 mesi</option>
+                  <option value={365}>Ultimo anno</option>
+                  <option value={730}>Ultimi 2 anni</option>
+                  <option value={1460}>Dal 2021 (~4 anni)</option>
                 </select>
               </div>
               
-              <div>
-                <label className="block text-sm text-gray-600 mb-1">Ultimi giorni</label>
-                <input
-                  type="number"
-                  value={scanSettings.giorni}
-                  onChange={(e) => setScanSettings({...scanSettings, giorni: parseInt(e.target.value) || 30})}
-                  className="w-full border rounded-lg px-3 py-2"
-                  min="1"
-                  max="365"
-                />
-              </div>
-              
-              <div className="flex items-end gap-2">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={scanSettings.dry_run}
-                    onChange={(e) => setScanSettings({...scanSettings, dry_run: e.target.checked})}
-                    className="w-4 h-4 text-indigo-600"
-                  />
-                  <span className="text-sm">Solo anteprima</span>
+              {/* Parole Chiave */}
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', marginBottom: 6, fontWeight: 'bold', fontSize: 13 }}>
+                  🔍 Parole chiave da cercare nelle email
                 </label>
-              </div>
-              
-              <div className="flex items-end">
-                <button
-                  onClick={handleScan}
-                  disabled={scanning}
-                  className="w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg flex items-center justify-center gap-2 disabled:opacity-50"
-                >
-                  {scanning ? (
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Search className="w-4 h-4" />
-                  )}
-                  {scanning ? 'Scansione...' : 'Scansiona Email'}
-                </button>
-              </div>
-            </div>
-
-            {/* Risultati scansione */}
-            {scanResults && (
-              <div className="mt-6 border-t pt-4">
-                <h4 className="font-medium mb-3">Risultati Scansione</h4>
-                
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                  <div className="bg-gray-50 rounded-lg p-3 text-center">
-                    <div className="text-xl font-bold">{scanResults.email_totali}</div>
-                    <div className="text-xs text-gray-500">Email Totali</div>
-                  </div>
-                  <div className="bg-green-50 rounded-lg p-3 text-center">
-                    <div className="text-xl font-bold text-green-600">{scanResults.email_classificate}</div>
-                    <div className="text-xs text-gray-500">Classificate</div>
-                  </div>
-                  <div className="bg-amber-50 rounded-lg p-3 text-center">
-                    <div className="text-xl font-bold text-amber-600">{scanResults.email_non_classificate}</div>
-                    <div className="text-xs text-gray-500">Non Classificate</div>
-                  </div>
-                  <div className="bg-blue-50 rounded-lg p-3 text-center">
-                    <div className="text-xl font-bold text-blue-600">{scanResults.documenti_salvati}</div>
-                    <div className="text-xs text-gray-500">PDF Salvati</div>
-                  </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+                  {DEFAULT_KEYWORDS.map(kw => (
+                    <button
+                      key={kw.id}
+                      onClick={() => toggleKeyword(kw.id)}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: 20,
+                        border: paroleChiaveSelezionate.includes(kw.id) ? '2px solid #3b82f6' : '1px solid #e2e8f0',
+                        background: paroleChiaveSelezionate.includes(kw.id) ? '#dbeafe' : 'white',
+                        color: paroleChiaveSelezionate.includes(kw.id) ? '#1e40af' : '#64748b',
+                        cursor: 'pointer',
+                        fontSize: 13,
+                        fontWeight: paroleChiaveSelezionate.includes(kw.id) ? 'bold' : 'normal'
+                      }}
+                    >
+                      {paroleChiaveSelezionate.includes(kw.id) ? '✓ ' : ''}{kw.label}
+                    </button>
+                  ))}
                 </div>
-
-                {/* Per categoria */}
-                {scanResults.per_categoria && Object.keys(scanResults.per_categoria).length > 0 && (
-                  <div className="mb-4">
-                    <h5 className="text-sm font-medium mb-2">Per Categoria:</h5>
-                    <div className="flex flex-wrap gap-2">
-                      {Object.entries(scanResults.per_categoria).map(([cat, data]) => {
-                        const config = getCategoryConfig(cat);
-                        return (
-                          <div 
-                            key={cat}
-                            className="px-3 py-2 rounded-lg flex items-center gap-2"
-                            style={{ backgroundColor: config.bg, color: config.text }}
+                
+                {/* Aggiungi nuova parola chiave con varianti */}
+                <div style={{ marginBottom: 12, padding: 12, background: '#f8fafc', borderRadius: 8 }}>
+                  <label style={{ display: 'block', marginBottom: 8, fontWeight: 'bold', fontSize: 12, color: '#475569' }}>
+                    ➕ Aggiungi nuova parola chiave personalizzata
+                  </label>
+                  <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                    <input
+                      type="text"
+                      value={nuovaParolaChiave}
+                      onChange={(e) => setNuovaParolaChiave(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && addCustomKeyword()}
+                      placeholder="Nome keyword (es: Cartella Esattoriale)"
+                      style={{
+                        flex: 1,
+                        padding: '8px 12px',
+                        borderRadius: 6,
+                        border: '1px solid #e2e8f0',
+                        fontSize: 13
+                      }}
+                    />
+                    <button onClick={addCustomKeyword} disabled={!nuovaParolaChiave.trim()} style={smallButtonStyle('#4f46e5')}>
+                      ➕ Aggiungi
+                    </button>
+                  </div>
+                  <p style={{ fontSize: 11, color: '#94a3b8', margin: 0 }}>
+                    💡 Ogni keyword può contenere più varianti separate da virgola. Es: &quot;cartella,ader,equitalia&quot;
+                  </p>
+                </div>
+                
+                {/* Lista keyword personalizzate esistenti con editor varianti */}
+                {customKeywords.length > 0 && (
+                  <div style={{ marginTop: 12 }}>
+                    <label style={{ display: 'block', marginBottom: 8, fontWeight: 'bold', fontSize: 12, color: '#475569' }}>
+                      🏷️ Le tue parole chiave personalizzate
+                    </label>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {customKeywords.map(kw => (
+                        <div 
+                          key={kw.id} 
+                          style={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: 8,
+                            padding: 8,
+                            background: paroleChiaveSelezionate.includes(kw.id) ? '#dcfce7' : '#f0fdf4',
+                            borderRadius: 8,
+                            border: paroleChiaveSelezionate.includes(kw.id) ? '2px solid #10b981' : '1px solid #e2e8f0'
+                          }}
+                        >
+                          <button
+                            onClick={() => toggleKeyword(kw.id)}
+                            style={{
+                              width: 24,
+                              height: 24,
+                              borderRadius: 4,
+                              border: '1px solid #10b981',
+                              background: paroleChiaveSelezionate.includes(kw.id) ? '#10b981' : 'white',
+                              color: paroleChiaveSelezionate.includes(kw.id) ? 'white' : '#10b981',
+                              cursor: 'pointer',
+                              fontSize: 12,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
                           >
-                            <span className="font-medium">{config.label}</span>
-                            <span className="bg-white/50 px-2 py-0.5 rounded text-sm">{data.count}</span>
-                            <ArrowRight className="w-3 h-3" />
-                            <span className="text-xs">{data.gestionale_section}</span>
+                            {paroleChiaveSelezionate.includes(kw.id) ? '✓' : ''}
+                          </button>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontWeight: 'bold', fontSize: 13, color: '#166534' }}>{kw.label}</div>
+                            <div style={{ fontSize: 11, color: '#64748b' }}>
+                              Varianti: {kw.keywords}
+                            </div>
                           </div>
-                        );
-                      })}
+                          <button
+                            onClick={() => removeCustomKeyword(kw.id)}
+                            style={{
+                              padding: '4px 8px',
+                              borderRadius: 4,
+                              border: 'none',
+                              background: '#fee2e2',
+                              color: '#dc2626',
+                              cursor: 'pointer',
+                              fontSize: 11
+                            }}
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
-
-                {/* Azioni post-scansione */}
-                {!scanSettings.dry_run && scanResults.documenti_salvati > 0 && (
-                  <div className="flex gap-2">
-                    <button
-                      onClick={handleProcess}
-                      disabled={processing}
-                      className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center gap-2"
-                    >
-                      <CheckCircle className="w-4 h-4" />
-                      Processa Documenti
-                    </button>
-                    <button
-                      onClick={handleAssociaTutti}
-                      disabled={processing}
-                      className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg flex items-center gap-2"
-                    >
-                      <ArrowRight className="w-4 h-4" />
-                      Associa al Gestionale
-                    </button>
-                  </div>
-                )}
-
-                {/* Cleanup */}
-                {scanResults.email_non_classificate > 0 && (
-                  <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="text-red-700 font-medium">
-                          {scanResults.email_non_classificate} email non classificate
-                        </span>
-                        <p className="text-sm text-red-600 mt-1">
-                          Queste email non corrispondono a nessuna regola e possono essere eliminate.
-                        </p>
-                      </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleCleanup(false)}
-                          className="px-3 py-1.5 text-sm border border-red-300 text-red-700 rounded-lg hover:bg-red-100"
-                        >
-                          Preview
-                        </button>
-                        <button
-                          onClick={() => handleCleanup(true)}
-                          className="px-3 py-1.5 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center gap-1"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                          Elimina
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
+                <p style={{ fontSize: 12, color: '#64748b', marginTop: 8 }}>
+                  💡 Crea parole chiave personalizzate per categorizzare automaticamente i documenti.
+                  Es: &quot;cartella esattoriale&quot; creerà una cartella &quot;Cartelle Esattoriali&quot;.
+                </p>
               </div>
-            )}
-          </div>
-
-          {/* Mapping Gestionale */}
-          {stats?.mapping_gestionale && (
-            <div className="bg-white border rounded-xl p-6">
-              <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
-                <FolderOpen className="w-5 h-5 text-indigo-600" />
-                Mapping Sezioni Gestionale
-              </h3>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {Object.entries(stats.mapping_gestionale).map(([section, data]) => {
-                  const sectionConfig = GESTIONALE_SECTIONS[section];
-                  return (
-                    <a
-                      key={section}
-                      href={sectionConfig?.path || '#'}
-                      className="border rounded-lg p-4 hover:border-indigo-300 hover:shadow-md transition-all flex items-center justify-between"
-                    >
-                      <div>
-                        <div className="font-medium">{section}</div>
-                        <div className="text-sm text-gray-500">{data.categoria}</div>
-                      </div>
-                      <div 
-                        className="text-2xl font-bold"
-                        style={{ color: sectionConfig?.color || '#6366f1' }}
-                      >
-                        {data.documenti}
-                      </div>
-                    </a>
-                  );
-                })}
-              </div>
+              {paroleChiaveSelezionate.length === 0 && (
+                <div style={{ 
+                  padding: 12, 
+                  background: '#fef3c7', 
+                  borderRadius: 8, 
+                  fontSize: 13,
+                  color: '#92400e'
+                }}>
+                  ⚠️ Nessuna parola chiave selezionata. Verranno scaricati TUTTI gli allegati dalle email.
+                </div>
+              )}
             </div>
           )}
         </div>
+      </div>
+
+      {/* Popup stato download in background */}
+      {downloading && taskStatus && (
+        <div style={{ 
+          ...cardStyle,
+          marginBottom: 24, 
+          border: '2px solid #3b82f6',
+          background: 'linear-gradient(135deg, #eff6ff, #dbeafe)'
+        }}>
+          <div style={{ padding: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div style={{ 
+                width: 48, 
+                height: 48, 
+                borderRadius: '50%', 
+                background: '#3b82f6',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 24
+              }}>
+                ⏳
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 'bold', fontSize: 16, color: '#1e40af', marginBottom: 4 }}>
+                  📧 Download Email in corso...
+                </div>
+                <div style={{ fontSize: 13, color: '#3b82f6' }}>
+                  {taskStatus.message || 'Elaborazione...'}
+                </div>
+                {taskStatus.status === 'in_progress' && (
+                  <div style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>
+                    Puoi continuare a navigare, ti avviseremo al completamento.
+                  </div>
+                )}
+              </div>
+              <div style={{ 
+                padding: '8px 16px', 
+                background: '#dbeafe', 
+                borderRadius: 20,
+                fontSize: 12,
+                fontWeight: 'bold',
+                color: '#1e40af'
+              }}>
+                {taskStatus.status === 'pending' ? '⏳ In attesa' : 
+                 taskStatus.status === 'in_progress' ? '🔄 In esecuzione' : 
+                 taskStatus.status === 'completed' ? '✅ Completato' : 
+                 taskStatus.status === 'error' ? '❌ Errore' : '...'}
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
-      {/* Tab: Documenti */}
-      {activeTab === 'documenti' && (
-        <div className="bg-white border rounded-xl">
-          <div className="p-4 border-b flex items-center justify-between">
-            <h3 className="font-semibold">Documenti Classificati</h3>
-            <span className="text-sm text-gray-500">{documents.length} documenti</span>
+      {/* Filtri */}
+      <div style={{ display: 'flex', gap: 16, marginBottom: 20, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 14, color: '#64748b' }}>🔍</span>
+          <select
+            value={filtroCategoria}
+            onChange={(e) => setFiltroCategoria(e.target.value)}
+            style={{
+              padding: '8px 12px',
+              borderRadius: 6,
+              border: '1px solid #e2e8f0',
+              fontSize: 14
+            }}
+          >
+            <option value="">Tutte le categorie</option>
+            {Object.entries(categories).map(([key, label]) => (
+              <option key={key} value={key}>{CATEGORY_COLORS[key]?.icon} {label}</option>
+            ))}
+          </select>
+        </div>
+        <select
+          value={filtroStatus}
+          onChange={(e) => setFiltroStatus(e.target.value)}
+          style={{
+            padding: '8px 12px',
+            borderRadius: 6,
+            border: '1px solid #e2e8f0',
+            fontSize: 14
+          }}
+        >
+          <option value="">Tutti gli stati</option>
+          <option value="nuovo">🔵 Nuovo</option>
+          <option value="processato">🟢 Processato</option>
+          <option value="errore">🔴 Errore</option>
+        </select>
+
+        {/* Contatori per categoria */}
+        {stats?.by_category?.map(cat => (
+          <div 
+            key={cat.category}
+            style={{
+              padding: '6px 12px',
+              borderRadius: 20,
+              background: CATEGORY_COLORS[cat.category]?.bg || '#f1f5f9',
+              color: CATEGORY_COLORS[cat.category]?.text || '#475569',
+              fontSize: 13,
+              fontWeight: 'bold',
+              cursor: 'pointer'
+            }}
+            onClick={() => setFiltroCategoria(cat.category === filtroCategoria ? '' : cat.category)}
+          >
+            {CATEGORY_COLORS[cat.category]?.icon} {cat.category_label}: {cat.count}
+            {cat.nuovi > 0 && <span style={{ marginLeft: 4, color: '#3b82f6' }}>({cat.nuovi} nuovi)</span>}
           </div>
-          
+        ))}
+      </div>
+
+      {/* Lista Documenti */}
+      <div style={cardStyle}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 18 }}>📄</span>
+          <h2 style={{ margin: 0, fontSize: 16 }}>Documenti ({documents.length})</h2>
+        </div>
+        <div style={{ padding: 16 }}>
           {loading ? (
-            <div className="p-8 text-center text-gray-500">Caricamento...</div>
+            <div style={{ textAlign: 'center', padding: 40, color: '#64748b' }}>
+              ⏳ Caricamento...
+            </div>
           ) : documents.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">
-              Nessun documento classificato. Esegui una scansione per iniziare.
+            <div style={{ textAlign: 'center', padding: 40, color: '#64748b' }}>
+              <div style={{ fontSize: 48, marginBottom: 16, opacity: 0.3 }}>📧</div>
+              <p>Nessun documento trovato</p>
+              <p style={{ fontSize: 14 }}>Clicca &quot;Scarica da Email&quot; per iniziare</p>
             </div>
           ) : (
-            <div className="divide-y max-h-[600px] overflow-y-auto">
-              {documents.map((doc, idx) => {
-                const config = getCategoryConfig(doc.tipo);
-                const IconComponent = config.icon;
-                return (
-                  <div key={doc._id || idx} className="p-4 hover:bg-gray-50 flex items-center gap-4">
-                    <div 
-                      className="w-10 h-10 rounded-lg flex items-center justify-center"
-                      style={{ backgroundColor: config.bg }}
-                    >
-                      <IconComponent className="w-5 h-5" style={{ color: config.text }} />
-                    </div>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                <thead>
+                  <tr style={{ background: '#f8fafc' }}>
+                    <th style={{ padding: 12, textAlign: 'left', width: 40 }}>Cat.</th>
+                    <th style={{ padding: 12, textAlign: 'left' }}>Nome File</th>
+                    <th style={{ padding: 12, textAlign: 'left' }}>Da Email</th>
+                    <th style={{ padding: 12, textAlign: 'left' }}>Mittente</th>
+                    <th style={{ padding: 12, textAlign: 'center' }}>Data</th>
+                    <th style={{ padding: 12, textAlign: 'right' }}>Dim.</th>
+                    <th style={{ padding: 12, textAlign: 'center' }}>Stato</th>
+                    <th style={{ padding: 12, textAlign: 'center' }}>Azioni</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {documents.map((doc, idx) => {
+                    const catStyle = CATEGORY_COLORS[doc.category] || CATEGORY_COLORS.altro;
+                    const statusStyle = STATUS_LABELS[doc.status] || STATUS_LABELS.nuovo;
                     
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium truncate">{doc.filename}</div>
-                      <div className="text-sm text-gray-500 truncate">{doc.subject}</div>
-                    </div>
-                    
-                    <div className="text-right">
-                      <div 
-                        className="text-xs px-2 py-1 rounded-full inline-block"
-                        style={{ backgroundColor: config.bg, color: config.text }}
-                      >
-                        {config.label}
-                      </div>
-                      <div className="text-xs text-gray-400 mt-1">
-                        {doc.processed ? '✓ Processato' : '○ Da processare'}
-                      </div>
-                    </div>
-                    
-                    <div className="text-xs text-gray-400 flex items-center gap-1">
-                      <ArrowRight className="w-3 h-3" />
-                      {config.section}
-                    </div>
-                  </div>
-                );
-              })}
+                    return (
+                      <tr key={doc.id || idx} style={{ 
+                        borderBottom: '1px solid #f1f5f9',
+                        background: doc.processed ? '#f8fafc' : 'white'
+                      }}>
+                        <td style={{ padding: 12 }}>
+                          <span 
+                            style={{
+                              display: 'inline-block',
+                              padding: '4px 8px',
+                              borderRadius: 6,
+                              background: catStyle.bg,
+                              fontSize: 16
+                            }}
+                            title={doc.category_label}
+                          >
+                            {catStyle.icon}
+                          </span>
+                        </td>
+                        <td style={{ padding: 12 }}>
+                          <div style={{ fontWeight: 'bold', color: '#1e293b' }}>{doc.filename}</div>
+                          <div style={{ fontSize: 11, color: '#94a3b8' }}>{doc.category_label}</div>
+                        </td>
+                        <td style={{ padding: 12, maxWidth: 200 }}>
+                          <div style={{ 
+                            whiteSpace: 'nowrap', 
+                            overflow: 'hidden', 
+                            textOverflow: 'ellipsis',
+                            fontSize: 12,
+                            color: '#64748b'
+                          }} title={doc.email_subject}>
+                            {doc.email_subject || '-'}
+                          </div>
+                        </td>
+                        <td style={{ padding: 12, fontSize: 12, color: '#64748b' }}>
+                          {doc.email_from?.split('<')[0]?.trim() || '-'}
+                        </td>
+                        <td style={{ padding: 12, textAlign: 'center', fontSize: 12 }}>
+                          {formatDate(doc.email_date)}
+                        </td>
+                        <td style={{ padding: 12, textAlign: 'right', fontSize: 12 }}>
+                          {formatBytes(doc.size_bytes)}
+                        </td>
+                        <td style={{ padding: 12, textAlign: 'center' }}>
+                          <span style={{
+                            padding: '4px 8px',
+                            borderRadius: 4,
+                            fontSize: 11,
+                            fontWeight: 'bold',
+                            background: statusStyle.bg,
+                            color: statusStyle.color
+                          }}>
+                            {statusStyle.label}
+                          </span>
+                        </td>
+                        <td style={{ padding: 12, textAlign: 'center' }}>
+                          <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
+                            <button
+                              onClick={() => handleDownloadFile(doc)}
+                              style={{
+                                background: '#f1f5f9',
+                                border: 'none',
+                                borderRadius: 4,
+                                padding: 6,
+                                cursor: 'pointer'
+                              }}
+                              title="Scarica file"
+                            >
+                              📥
+                            </button>
+                            
+                            {!doc.processed && (
+                              <select
+                                onChange={(e) => {
+                                  if (e.target.value) {
+                                    handleProcessDocument(doc, e.target.value);
+                                    e.target.value = '';
+                                  }
+                                }}
+                                style={{
+                                  padding: '4px 8px',
+                                  borderRadius: 4,
+                                  border: '1px solid #e2e8f0',
+                                  fontSize: 11,
+                                  background: '#dbeafe',
+                                  cursor: 'pointer'
+                                }}
+                                defaultValue=""
+                              >
+                                <option value="">Carica in...</option>
+                                <option value="f24">F24</option>
+                                <option value="fatture">Fatture</option>
+                                <option value="buste_paga">Buste Paga</option>
+                                <option value="estratto_conto">Estratto Conto</option>
+                                <option value="quietanze">Quietanze</option>
+                              </select>
+                            )}
+                            
+                            <select
+                              onChange={(e) => {
+                                if (e.target.value && e.target.value !== doc.category) {
+                                  handleChangeCategory(doc.id, e.target.value);
+                                }
+                              }}
+                              value={doc.category}
+                              style={{
+                                padding: '4px 8px',
+                                borderRadius: 4,
+                                border: '1px solid #e2e8f0',
+                                fontSize: 11,
+                                cursor: 'pointer'
+                              }}
+                              title="Cambia categoria"
+                            >
+                              {Object.entries(categories).map(([key, label]) => (
+                                <option key={key} value={key}>{label}</option>
+                              ))}
+                            </select>
+                            
+                            <button
+                              onClick={() => handleDeleteDocument(doc.id)}
+                              style={{
+                                background: '#fef2f2',
+                                border: 'none',
+                                borderRadius: 4,
+                                padding: 6,
+                                cursor: 'pointer',
+                                color: '#dc2626'
+                              }}
+                              title="Elimina"
+                            >
+                              🗑️
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           )}
         </div>
-      )}
+      </div>
 
-      {/* Tab: Regole */}
-      {activeTab === 'regole' && (
-        <div className="bg-white border rounded-xl">
-          <div className="p-4 border-b">
-            <h3 className="font-semibold">Regole di Classificazione</h3>
-            <p className="text-sm text-gray-500 mt-1">
-              Queste regole determinano come le email vengono classificate e associate al gestionale.
-            </p>
-          </div>
-          
-          <div className="divide-y">
-            {rules.map((rule, idx) => {
-              const config = getCategoryConfig(rule.category);
-              return (
-                <div key={idx} className="p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <span 
-                        className="px-2 py-1 rounded text-sm font-medium"
-                        style={{ backgroundColor: config.bg, color: config.text }}
-                      >
-                        {rule.name}
-                      </span>
-                      <span className="text-xs text-gray-400">Priorità: {rule.priority}</span>
-                    </div>
-                    <div className="text-sm text-gray-600 flex items-center gap-1">
-                      <ArrowRight className="w-3 h-3" />
-                      {rule.gestionale_section}
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
-                    <div>
-                      <span className="text-gray-500">Keywords:</span>
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {rule.keywords.slice(0, 3).map((kw, i) => (
-                          <span key={i} className="bg-gray-100 px-2 py-0.5 rounded text-xs">{kw}</span>
-                        ))}
-                        {rule.keywords.length > 3 && (
-                          <span className="text-xs text-gray-400">+{rule.keywords.length - 3}</span>
-                        )}
-                      </div>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Collection:</span>
-                      <span className="ml-2 font-mono text-xs bg-gray-100 px-2 py-0.5 rounded">
-                        {rule.collection}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Azione:</span>
-                      <span className="ml-2 text-xs">{rule.action}</span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
+      {/* Info credenziali */}
+      <div style={{ 
+        marginTop: 20, 
+        padding: 16, 
+        background: '#f8fafc', 
+        borderRadius: 8,
+        fontSize: 13,
+        color: '#64748b'
+      }}>
+        💡 <strong>Configurazione Email:</strong> Le credenziali email sono configurate nel file .env del backend 
+        (EMAIL_USER e EMAIL_APP_PASSWORD). Il sistema supporta Gmail con App Password.
+      </div>
     </div>
   );
 }
