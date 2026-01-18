@@ -883,55 +883,37 @@ export default function RiconciliazioneUnificata() {
 // ============================================
 
 function DashboardTab({ stats, autoMatchStats }) {
-  const cards = [
-    { label: 'Movimenti Banca', value: stats.banca || 0, color: '#10b981', icon: '🏦' },
-    { label: 'Assegni', value: stats.assegni || 0, color: '#f59e0b', icon: '📝' },
-    { label: 'F24 Pendenti', value: stats.f24 || 0, color: '#ef4444', icon: '📄' },
-    { label: 'Fatture Aruba', value: stats.aruba || 0, color: '#8b5cf6', icon: '🧾' },
-    { label: 'Stipendi', value: stats.stipendi || 0, color: '#06b6d4', icon: '👤' },
-  ];
-
-  const totale = Object.values(stats).reduce((a, b) => (typeof b === 'number' ? a + b : a), 0) - (stats.totale || 0);
-
   return (
-    <div style={{ padding: 24 }}>
-      <h3 style={{ margin: '0 0 20px', fontSize: 18, color: '#1e293b' }}>📊 Riepilogo Riconciliazione</h3>
-      
-      {/* Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: 24 }}>
-        {cards.map(card => (
-          <div key={card.label} style={{
-            padding: 16,
-            background: '#f8fafc',
-            borderRadius: 10,
-            borderLeft: `4px solid ${card.color}`
-          }}>
-            <div style={{ fontSize: 24, marginBottom: 8 }}>{card.icon}</div>
-            <div style={{ fontSize: 28, fontWeight: 700, color: card.color }}>{card.value}</div>
-            <div style={{ fontSize: 12, color: '#64748b' }}>{card.label}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Totale */}
+    <div style={{ padding: 24, textAlign: 'center' }}>
       <div style={{ 
-        padding: 20, 
+        padding: 40, 
         background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', 
-        borderRadius: 12, 
+        borderRadius: 16, 
         color: 'white',
-        textAlign: 'center'
+        maxWidth: 500,
+        margin: '0 auto'
       }}>
-        <div style={{ fontSize: 14, opacity: 0.9 }}>Totale da Riconciliare</div>
-        <div style={{ fontSize: 48, fontWeight: 700 }}>{totale}</div>
+        <div style={{ fontSize: 48, marginBottom: 16 }}>📊</div>
+        <div style={{ fontSize: 20, fontWeight: 600, marginBottom: 8 }}>Riconciliazione</div>
+        <div style={{ fontSize: 14, opacity: 0.9, marginBottom: 16 }}>
+          Seleziona una sezione dal menu per iniziare la riconciliazione
+        </div>
         {autoMatchStats.matched > 0 && (
-          <div style={{ fontSize: 13, marginTop: 8, opacity: 0.9 }}>
-            ✅ {autoMatchStats.matched} auto-riconciliati
+          <div style={{ 
+            fontSize: 13, 
+            marginTop: 16, 
+            padding: '8px 16px',
+            background: 'rgba(255,255,255,0.2)',
+            borderRadius: 8,
+            display: 'inline-block'
+          }}>
+            ✅ {autoMatchStats.matched} elementi auto-riconciliati
           </div>
         )}
       </div>
-
+      
       {/* Tips */}
-      <div style={{ marginTop: 24, padding: 16, background: '#fef3c7', borderRadius: 8, border: '1px solid #fcd34d' }}>
+      <div style={{ marginTop: 24, padding: 16, background: '#fef3c7', borderRadius: 8, border: '1px solid #fcd34d', maxWidth: 500, margin: '24px auto 0', textAlign: 'left' }}>
         <div style={{ fontWeight: 600, color: '#92400e', marginBottom: 8 }}>💡 Suggerimenti</div>
         <ul style={{ margin: 0, paddingLeft: 20, color: '#78350f', fontSize: 13 }}>
           <li>Usa &quot;Auto-Riconcilia&quot; per confermare automaticamente POS, commissioni e assegni con match esatto</li>
