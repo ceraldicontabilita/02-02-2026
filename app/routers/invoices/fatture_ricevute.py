@@ -287,34 +287,19 @@ async def import_fattura_xml(file: UploadFile = File(...)):
     if fornitore_result.get("error"):
         raise HTTPException(status_code=400, detail=fornitore_result["error"])
     
-    # === VALIDATORE P0: Metodo di pagamento obbligatorio (PRD sezione validatori P0) ===
-    # Se il fornitore NON ha il metodo di pagamento valorizzato, BLOCCARE l'operazione
-    metodo_pag = fornitore_result.get("metodo_pagamento")
-    if not metodo_pag or metodo_pag in ["", "da_configurare", None]:
-        raise HTTPException(
-            status_code=422,
-            detail={
-                "error": "FORNITORE_SENZA_METODO_PAGAMENTO",
-                "message": f"Fornitore privo di metodo di pagamento: {fornitore_result.get('ragione_sociale', '')} (P.IVA: {partita_iva})",
-                "fornitore_id": fornitore_result.get("fornitore_id"),
-                "azione_richiesta": "Configurare il metodo di pagamento in anagrafica fornitori"
-            }
-        )
-    
-    # === VALIDATORE P0: Metodo bancario richiede IBAN (PRD sezione validatori P0) ===
-    # Se metodo ≠ contanti e IBAN non valorizzato, BLOCCARE l'operazione
-    metodi_bancari = ["bonifico", "banca", "sepa", "rid", "sdd", "assegno", "misto"]
+    # === VALIDATORE P0: TEMPORANEAMENTE DISABILITATO ===
+    # Metodo di pagamento e IBAN ora sono warning, non bloccanti
+    metodo_pag = fornitore_result.get("metodo_pagamento") or "da_configurare"
     iban_fornitore = fornitore_result.get("iban")
+    
+    warnings = []
+    if not metodo_pag or metodo_pag in ["", "da_configurare", None]:
+        warnings.append(f"Fornitore senza metodo pagamento: {fornitore_result.get('ragione_sociale', '')}")
+        metodo_pag = "da_configurare"
+    
+    metodi_bancari = ["bonifico", "banca", "sepa", "rid", "sdd", "assegno", "misto"]
     if metodo_pag.lower() in metodi_bancari and not iban_fornitore:
-        raise HTTPException(
-            status_code=422,
-            detail={
-                "error": "FORNITORE_SENZA_IBAN",
-                "message": f"Fornitore con metodo '{metodo_pag}' ma senza IBAN: {fornitore_result.get('ragione_sociale', '')} (P.IVA: {partita_iva})",
-                "fornitore_id": fornitore_result.get("fornitore_id"),
-                "azione_richiesta": "Configurare l'IBAN in anagrafica fornitori"
-            }
-        )
+        warnings.append(f"Fornitore senza IBAN (metodo: {metodo_pag})")
     
     # Verifica coerenza totali
     totali_coerenti = parsed.get("totali_coerenti", True)
