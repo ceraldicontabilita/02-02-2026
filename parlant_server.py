@@ -225,7 +225,7 @@ async def main():
     async with p.Server() as server:
         # Crea l'agente contabile
         agent = await server.create_agent(
-            name="Assistente Contabit",
+            name="Assistente Ceraldi",
             description="""Sei un assistente AI esperto di contabilità italiana.
 Lavori nel sistema gestionale Contabit e aiuti gli utenti con:
 - Registrazioni in Prima Nota (Cassa e Banca separati)
