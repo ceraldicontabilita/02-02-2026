@@ -946,12 +946,12 @@ async def associa_beneficiari_robusto() -> Dict[str, Any]:
     
     risultati["assegni_analizzati"] = len(assegni_senza_ben)
     
-    # 2. Carica tutte le fatture ricevute (quelle da pagare ai fornitori)
-    fatture = await db.fatture_ricevute.find({
+    # 2. Carica tutte le fatture (collection 'invoices' - fatture ricevute da fornitori)
+    fatture = await db.invoices.find({
         "total_amount": {"$gt": 0}
     }, {"_id": 0}).to_list(50000)
     
-    # Indice fatture per importo approssimativo
+    # Indice fatture per importo approssimativo (arrotondato)
     fatture_by_importo = {}
     for f in fatture:
         importo = round(float(f.get("total_amount") or f.get("importo_totale") or 0), 0)
