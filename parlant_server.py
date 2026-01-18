@@ -19,7 +19,9 @@ api_key = os.getenv("EMCIE_API_KEY")
 if not api_key:
     print("❌ ERRORE: EMCIE_API_KEY non trovata in /app/backend/.env")
     sys.exit(1)
-    
+
+# IMPORTANTE: Esporta la chiave nell'ambiente per Parlant
+os.environ["EMCIE_API_KEY"] = api_key
 print(f"🔑 Usando Emcie API Key: {api_key[:25]}...")
 
 import parlant.sdk as p
