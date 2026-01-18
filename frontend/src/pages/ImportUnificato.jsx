@@ -330,8 +330,14 @@ export default function ImportUnificato() {
                 file: fileInfo.name,
                 tipo,
                 status: 'success',
-                message: data?.message || 'Importato con successo',
-                details: data
+                message: data?.message || data?.numero_documento ? `Fattura ${data.numero_documento} importata` : 'Importato con successo',
+                details: data,
+                integration: data?.integrazione || {
+                  magazzino: data?.magazzino,
+                  prima_nota: data?.prima_nota,
+                  scadenziario: data?.scadenziario,
+                  riconciliazione: data?.riconciliazione
+                }
               }]);
             },
             onError: (error) => {
