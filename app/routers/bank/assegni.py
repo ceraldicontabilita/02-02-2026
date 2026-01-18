@@ -597,13 +597,20 @@ async def sync_assegni_da_estratto_conto() -> Dict[str, Any]:
         r"PRELIEVO\s+ASSEGNO\s*N?\.?\s*(\d+)",
     ]
     
-    # Cerca movimenti con "assegno" nella descrizione
+    # Cerca movimenti con pattern specifici di pagamento assegno
     movimenti = await db.estratto_conto_movimenti.find({
-        "$or": [
-            {"descrizione": {"$regex": "assegno", "$options": "i"}},
-            {"descrizione_originale": {"$regex": "assegno", "$options": "i"}}
-        ],
-        "importo": {"$lt": 0}  # Solo uscite (pagamenti)
+        "$and": [
+            {"$or": [
+                {"descrizione": {"$regex": "PRELIEVO\\s+ASSEGNO", "$options": "i"}},
+                {"descrizione": {"$regex": "VOSTRO\\s+ASSEGNO", "$options": "i"}},
+                {"descrizione": {"$regex": "VS\\.?\\s*ASSEGNO", "$options": "i"}},
+                {"descrizione": {"$regex": "PAGAMENTO\\s+ASSEGNO", "$options": "i"}},
+                {"descrizione_originale": {"$regex": "PRELIEVO\\s+ASSEGNO", "$options": "i"}},
+                {"descrizione_originale": {"$regex": "VOSTRO\\s+ASSEGNO", "$options": "i"}}
+            ]},
+            {"importo": {"$lt": 0}},  # Solo uscite
+            {"descrizione": {"$not": {"$regex": "RILASCIO\\s+CARNET", "$options": "i"}}}  # Escludi rilascio carnet
+        ]
     }, {"_id": 0}).to_list(1000)
     
     risultati["movimenti_analizzati"] = len(movimenti)
