@@ -6,6 +6,7 @@ import { AnnoSelector } from "./contexts/AnnoContext";
 import F24EmailSync from "./components/F24EmailSync";
 import NotificationBell from "./components/NotificationBell";
 import ChatAI from "./components/ChatAI";
+import ParlantWidget from "./components/ParlantWidget";
 import { NotificheScadenze } from "./components/NotificheScadenze";
 import { UploadProvider } from "./contexts/UploadContext";
 import { UploadStatusBar } from "./components/UploadStatusBar";
