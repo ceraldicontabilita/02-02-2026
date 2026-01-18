@@ -864,37 +864,6 @@ export default function ArchivioFatture() {
           </div>
         </div>
       )}
-
-      {/* Modal Stampa Etichette */}
-      {showEtichette && selectedFatturaId && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
-          background: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
-            background: 'white',
-            borderRadius: 16,
-            maxWidth: 700,
-            width: '95%',
-            maxHeight: '90vh',
-            overflow: 'auto',
-            boxShadow: '0 25px 50px rgba(0,0,0,0.25)'
-          }}>
-            <EtichettaLotto 
-              fatturaId={selectedFatturaId}
-              onClose={() => {
-                setShowEtichette(false);
-                setSelectedFatturaId(null);
-              }}
-            />
-          </div>
-        </div>
-      )}
     </div>
   );
 }
