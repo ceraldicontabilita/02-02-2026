@@ -570,3 +570,166 @@ async def process_classified_documents(db) -> Dict[str, Any]:
             risultati["errori"].append(f"Errore doc {doc.get('_id')}: {str(e)}")
     
     return risultati
+
+
+async def process_documents_with_ai(
+    db,
+    process_all: bool = False,
+    document_types: List[str] = None,
+    save_to_gestionale: bool = True,
+    model: str = "claude-sonnet-4-5-20250929"
+) -> Dict[str, Any]:
+    """
+    Processa i documenti classificati usando Document AI per estrarre dati strutturati.
+    
+    Args:
+        db: Database MongoDB
+        process_all: Se True, riprocessa anche documenti già processati
+        document_types: Lista di tipi da processare (None = tutti)
+        save_to_gestionale: Se True, salva i dati estratti nelle collection del gestionale
+        model: Modello LLM da usare
+    
+    Returns:
+        Statistiche del processamento
+    """
+    from app.services.document_ai_extractor import process_document_from_base64
+    from app.services.document_data_saver import save_extracted_data_to_gestionale
+    
+    risultati = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "documenti_analizzati": 0,
+        "documenti_estratti": 0,
+        "documenti_salvati": 0,
+        "documenti_duplicati": 0,
+        "errori_estrazione": 0,
+        "errori_salvataggio": 0,
+        "per_tipo": {},
+        "dettagli": [],
+        "errori": []
+    }
+    
+    # Query per documenti da processare
+    query = {}
+    if not process_all:
+        query["$or"] = [
+            {"ai_processed": {"$ne": True}},
+            {"ai_processed": {"$exists": False}}
+        ]
+    
+    if document_types:
+        query["tipo"] = {"$in": document_types}
+    
+    # Processa solo documenti con PDF
+    query["pdf_base64"] = {"$exists": True, "$ne": None}
+    
+    cursor = db["documents_classified"].find(query)
+    documents = await cursor.to_list(length=500)  # Max 500 documenti per batch
+    
+    for doc in documents:
+        doc_id = str(doc.get("_id"))
+        filename = doc.get("filename", "documento.pdf")
+        tipo_email = doc.get("tipo", "generico")
+        
+        risultati["documenti_analizzati"] += 1
+        
+        # Inizializza contatore per tipo
+        if tipo_email not in risultati["per_tipo"]:
+            risultati["per_tipo"][tipo_email] = {"analizzati": 0, "estratti": 0, "salvati": 0, "errori": 0}
+        risultati["per_tipo"][tipo_email]["analizzati"] += 1
+        
+        dettaglio = {
+            "doc_id": doc_id,
+            "filename": filename,
+            "tipo_email": tipo_email,
+            "status": "pending"
+        }
+        
+        try:
+            # Estrai dati con Document AI
+            extraction_result = await process_document_from_base64(
+                base64_data=doc["pdf_base64"],
+                filename=filename,
+                document_type=None,  # Auto-detect
+                model=model
+            )
+            
+            if extraction_result.get("structured_data", {}).get("success"):
+                risultati["documenti_estratti"] += 1
+                risultati["per_tipo"][tipo_email]["estratti"] += 1
+                
+                extracted_data = extraction_result["structured_data"]
+                tipo_documento = extracted_data.get("document_type", "generico")
+                dettaglio["tipo_documento_rilevato"] = tipo_documento
+                dettaglio["status"] = "extracted"
+                
+                # Aggiorna documento con dati estratti
+                await db["documents_classified"].update_one(
+                    {"_id": doc["_id"]},
+                    {
+                        "$set": {
+                            "ai_processed": True,
+                            "ai_processed_at": datetime.now(timezone.utc).isoformat(),
+                            "ai_model": model,
+                            "ai_document_type": tipo_documento,
+                            "ai_extracted_data": extracted_data.get("data", {}),
+                            "ai_ocr_used": extraction_result.get("ocr_used", False)
+                        }
+                    }
+                )
+                
+                # Salva nel gestionale se richiesto
+                if save_to_gestionale:
+                    source_info = {
+                        "email_subject": doc.get("subject"),
+                        "email_sender": doc.get("sender"),
+                        "email_date": doc.get("data_email"),
+                        "filename": filename,
+                        "documents_classified_id": doc_id
+                    }
+                    
+                    save_result = await save_extracted_data_to_gestionale(
+                        db, extracted_data, source_info
+                    )
+                    
+                    dettaglio["save_result"] = save_result
+                    
+                    if save_result.get("status") == "saved":
+                        risultati["documenti_salvati"] += 1
+                        risultati["per_tipo"][tipo_email]["salvati"] += 1
+                        dettaglio["status"] = "saved"
+                        dettaglio["collection"] = save_result.get("collection")
+                    elif save_result.get("status") == "duplicate":
+                        risultati["documenti_duplicati"] += 1
+                        dettaglio["status"] = "duplicate"
+                    elif save_result.get("status") == "error":
+                        risultati["errori_salvataggio"] += 1
+                        dettaglio["status"] = "save_error"
+                        dettaglio["error"] = save_result.get("message")
+            else:
+                risultati["errori_estrazione"] += 1
+                risultati["per_tipo"][tipo_email]["errori"] += 1
+                dettaglio["status"] = "extraction_error"
+                dettaglio["error"] = extraction_result.get("structured_data", {}).get("error", "Unknown error")[:200]
+                
+                # Marca come tentato ma fallito
+                await db["documents_classified"].update_one(
+                    {"_id": doc["_id"]},
+                    {
+                        "$set": {
+                            "ai_processed": False,
+                            "ai_last_attempt": datetime.now(timezone.utc).isoformat(),
+                            "ai_error": dettaglio["error"]
+                        }
+                    }
+                )
+        
+        except Exception as e:
+            risultati["errori_estrazione"] += 1
+            risultati["per_tipo"][tipo_email]["errori"] += 1
+            dettaglio["status"] = "exception"
+            dettaglio["error"] = str(e)[:200]
+            risultati["errori"].append(f"Doc {doc_id}: {str(e)[:100]}")
+        
+        risultati["dettagli"].append(dettaglio)
+    
+    return risultati
