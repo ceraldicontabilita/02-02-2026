@@ -96,7 +96,7 @@ async def extract_from_base64(
         )
         
         if save_to_db and result.get("structured_data", {}).get("success"):
-            db = get_database()
+            db = await get_database()
             doc = {
                 "filename": filename,
                 "document_type": result.get("structured_data", {}).get("document_type"),
