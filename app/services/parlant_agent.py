@@ -40,18 +40,17 @@ class ParlantAgentService:
         try:
             import parlant.sdk as p
             
-            # Verifica chiave API
-            if not GEMINI_API_KEY:
-                return {
-                    "success": False,
-                    "error": "GEMINI_API_KEY non configurata"
-                }
+            # Determina quale NLP service usare
+            nlp_service = p.NLPServices.openai  # Default a OpenAI con Emergent Key
             
-            logger.info(f"Avvio server Parlant con Gemini...")
+            if GOOGLE_API_KEY and not OPENAI_API_KEY:
+                nlp_service = p.NLPServices.gemini
             
-            # Crea server con Gemini come NLP service
+            logger.info(f"Avvio server Parlant con {nlp_service}...")
+            
+            # Crea server
             self.server = p.Server(
-                nlp_service=p.NLPServices.gemini,
+                nlp_service=nlp_service,
                 port=PARLANT_PORT
             )
             
