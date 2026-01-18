@@ -204,11 +204,10 @@ export default function RiconciliazioneUnificata() {
   const loadAllData = async (limit = 50) => {
     setLoading(true);
     try {
-      // Carica TUTTO in una sola chiamata aggregata per velocità
-      const [bancaRes, arubaRes, f24Res, stipendiRes] = await Promise.all([
+      // Carica dati primari velocemente (F24 caricato separatamente per non bloccare)
+      const [bancaRes, arubaRes, stipendiRes] = await Promise.all([
         api.get(`/api/operazioni-da-confermare/smart/banca-veloce?limit=${limit}`).catch(() => ({ data: { movimenti: [], stats: {}, assegni: [] } })),
         api.get('/api/operazioni-da-confermare/aruba-pendenti').catch(() => ({ data: { operazioni: [] } })),
-        api.get('/api/operazioni-da-confermare/smart/cerca-f24').catch(() => ({ data: { f24: [] } })),
         api.get('/api/operazioni-da-confermare/smart/cerca-stipendi').catch(() => ({ data: { stipendi: [] } }))
       ]);
 
@@ -232,18 +231,16 @@ export default function RiconciliazioneUnificata() {
       
       const stipendi = stipendiRes.data?.stipendi || [];
       const aruba = arubaRes.data?.operazioni || [];
-      const f24 = f24Res.data?.f24 || [];
       
       setStipendiPendenti(stipendi);
       setFattureAruba(aruba);
-      setF24Pendenti(f24);
       
-      // Aggiorna stats con tutti i conteggi
+      // Aggiorna stats iniziali (F24 caricato dopo)
       setStats({
         totale: movimenti.length,
         banca: movimenti.length,
         assegni: assegniDaApi.length,
-        f24: f24.length,
+        f24: 0,  // Caricato dopo
         aruba: aruba.length,
         stipendi: stipendi.length,
         fatture_da_pagare: bancaRes.data?.stats?.fatture_da_pagare || 0
@@ -254,10 +251,20 @@ export default function RiconciliazioneUnificata() {
         matched: bancaRes.data?.stats?.riconciliati || 0,
         pending: bancaRes.data?.stats?.non_riconciliati || 0
       });
+      
+      setLoading(false);
+      
+      // Carica F24 in background (lento, ~35s) - non blocca UI
+      api.get('/api/operazioni-da-confermare/smart/cerca-f24').then(f24Res => {
+        const f24 = f24Res.data?.f24 || [];
+        setF24Pendenti(f24);
+        setStats(prev => ({ ...prev, f24: f24.length }));
+      }).catch(() => {
+        console.warn('F24 non caricati');
+      });
 
     } catch (e) {
       console.error('Errore caricamento:', e);
-    } finally {
       setLoading(false);
     }
   };
