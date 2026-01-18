@@ -133,18 +133,26 @@ async def elimina_record_vuoti() -> Dict[str, Any]:
         risultati["backups_creati"].append(backup)
     
     result = await db.f24_models.delete_many(query_f24)
-    })
     risultati["f24_vuoti_eliminati"] = result.deleted_count
     
-    # Assegni vuoti (importo 0 o data N/D)
-    result = await db.assegni.delete_many({
+    # ⚠️ ASSEGNI: NON ELIMINARE MAI - sono dati critici!
+    # Gli assegni "vuoti" potrebbero essere legittimi (importo non ancora confermato)
+    # Invece di eliminarli, li marchiamo come "da_verificare"
+    query_assegni_sospetti = {
         "$or": [
             {"importo": {"$in": [None, 0, "0", 0.0]}},
             {"data": {"$in": [None, "N/D", "", "N/A"]}},
             {"data_emissione": {"$in": [None, "N/D", "", "N/A"]}}
         ]
-    })
-    risultati["assegni_vuoti_eliminati"] = result.deleted_count
+    }
+    
+    # Invece di delete, facciamo soft-mark
+    result = await db.assegni.update_many(
+        query_assegni_sospetti,
+        {"$set": {"da_verificare": True, "motivo_verifica": "dati_incompleti"}}
+    )
+    risultati["assegni_marcati_da_verificare"] = result.modified_count
+    risultati["assegni_vuoti_eliminati"] = 0  # Non eliminiamo più!
     
     return risultati
 
