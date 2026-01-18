@@ -439,15 +439,22 @@ async def scan_fatture_noleggio(anno: Optional[int] = None) -> Dict[str, Any]:
         # Struttura: {targa: {categoria: {linee: [], totale_imponibile: 0, totale_iva: 0, metadata: {}}}}
         linee_per_targa = {}
         
+        # Se abbiamo trovato targhe dal DB (es. fatture bollo senza targa in descrizione),
+        # usiamo quelle per processare le linee
+        targhe_da_db = targhe_trovate.copy()
+        
         for linea in linee:
             desc = linea.get("descrizione") or linea.get("Descrizione", "")
             
             match = re.search(TARGA_PATTERN, desc)
-            if not match:
+            if match:
+                targa = match.group(1)
+            elif targhe_da_db:
+                # Usa la targa trovata dal DB se non c'è nella descrizione
+                targa = list(targhe_da_db)[0]
+            else:
                 continue
                 
-            targa = match.group(1)
-            
             # Inizializza veicolo nel risultato finale
             if targa not in veicoli:
                 marca, modello = estrai_modello_marca(desc, targa)
