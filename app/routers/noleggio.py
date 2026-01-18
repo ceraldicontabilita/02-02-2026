@@ -521,7 +521,31 @@ async def scan_fatture_noleggio(anno: Optional[int] = None) -> Dict[str, Any]:
             if importo < 0:
                 iva = -iva
             
-            # Raggruppa per categoria in questa fattura
+            # Per i verbali, crea un record separato per ogni riga
+            if categoria == "verbali":
+                imponibile = round(importo, 2)
+                iva_calc = round(iva, 2)
+                totale = round(imponibile + iva_calc, 2)
+                
+                record = {
+                    "data": invoice_date,
+                    "numero_fattura": invoice_number,
+                    "fattura_id": invoice_id,
+                    "fornitore": supplier,
+                    "descrizione": desc,
+                    "imponibile": imponibile,
+                    "iva": iva_calc,
+                    "totale": totale,
+                    "pagato": invoice.get("pagato", False),
+                    "numero_verbale": metadata.get("numero_verbale"),
+                    "data_verbale": metadata.get("data_verbale")
+                }
+                
+                veicoli[targa]["verbali"].append(record)
+                veicoli[targa]["totale_verbali"] += imponibile
+                continue  # Skip il raggruppamento normale
+            
+            # Raggruppa per categoria in questa fattura (per le altre categorie)
             if categoria not in linee_per_targa[targa]:
                 linee_per_targa[targa][categoria] = {
                     "voci": [],
@@ -537,7 +561,7 @@ async def scan_fatture_noleggio(anno: Optional[int] = None) -> Dict[str, Any]:
             linee_per_targa[targa][categoria]["totale_imponibile"] += importo
             linee_per_targa[targa][categoria]["totale_iva"] += iva
             
-            # Merge metadata (es: numero verbale)
+            # Merge metadata (es: numero verbale) - non più usato per verbali
             for k, v in metadata.items():
                 if k not in linee_per_targa[targa][categoria]["metadata"]:
                     linee_per_targa[targa][categoria]["metadata"][k] = v
