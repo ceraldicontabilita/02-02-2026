@@ -885,6 +885,60 @@ export default function GestioneAssegni() {
         </div>
       )}
 
+      {/* Risultato Associazione Combinata */}
+      {combinazioneResult && (
+        <div style={{ 
+          marginBottom: 20, 
+          padding: 15, 
+          background: combinazioneResult.associazioni_effettuate > 0 ? '#e3f2fd' : '#fff3e0',
+          borderRadius: 8,
+          border: `1px solid ${combinazioneResult.associazioni_effettuate > 0 ? '#90caf9' : '#ffe0b2'}`
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div style={{ flex: 1 }}>
+              <strong style={{ color: combinazioneResult.associazioni_effettuate > 0 ? '#1565c0' : '#e65100' }}>
+                🔗 {combinazioneResult.message || 
+                  (combinazioneResult.associazioni_effettuate > 0 
+                    ? `Trovate ${combinazioneResult.associazioni_effettuate} combinazioni!`
+                    : 'Nessuna combinazione trovata')}
+              </strong>
+              {combinazioneResult.dettagli && combinazioneResult.dettagli.length > 0 && (
+                <div style={{ marginTop: 10, fontSize: 13 }}>
+                  <strong>Combinazioni trovate:</strong>
+                  <ul style={{ margin: '5px 0', paddingLeft: 20 }}>
+                    {combinazioneResult.dettagli.map((d, i) => (
+                      <li key={i} style={{ marginBottom: 8 }}>
+                        <div>
+                          <span style={{ color: '#1565c0', fontWeight: 600 }}>
+                            {d.assegni_numeri?.length || d.numero_assegni || '?'} Assegni
+                          </span>
+                          {' → '}
+                          <span style={{ color: '#2e7d32', fontWeight: 600 }}>
+                            Fattura {d.fattura_numero}
+                          </span>
+                          {d.fornitore && (
+                            <span style={{ color: '#666' }}> ({d.fornitore.substring(0, 25)})</span>
+                          )}
+                        </div>
+                        <div style={{ fontSize: 11, color: '#666', marginTop: 2 }}>
+                          Somma assegni: {formatEuro(d.somma_assegni || d.importo_totale)} = Importo fattura: {formatEuro(d.importo_fattura)}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {combinazioneResult.assegni_non_associati > 0 && (
+                <div style={{ marginTop: 8, fontSize: 12, color: '#f59e0b' }}>
+                  ⚠️ {combinazioneResult.assegni_non_associati} assegni rimasti senza corrispondenza
+                </div>
+              )}
+            </div>
+            <button onClick={() => setCombinazioneResult(null)} style={{ padding: '5px 10px', marginLeft: 10 }}>✕</button>
+          </div>
+        </div>
+      )}
+
       {/* Assegni Table/Cards */}
       {loading ? (
         <div style={{ textAlign: 'center', padding: 40 }}>Caricamento...</div>
