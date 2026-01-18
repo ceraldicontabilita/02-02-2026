@@ -82,11 +82,18 @@ def estrai_numero_verbale(descrizione: str) -> Optional[str]:
     """
     Estrae il numero del verbale dalla descrizione.
     Pattern: "Verbale Nr: XXXXX" o "Verbale N. XXXXX"
+    Supporta sia pattern A... che B... (es. A25111540620, B23123049750)
     """
-    # Pattern per ALD: "Verbale Nr: B23123049750" o "Verbale Nr: 023504/V/21"
+    # Pattern per ALD/Leasys: "Verbale Nr: B23123049750" o "Verbale Nr: A25111540620"
     match = re.search(r'Verbale\s+(?:Nr|N\.?|Num\.?)[\s:]*([A-Z0-9/\-]+)', descrizione, re.I)
     if match:
         return match.group(1).strip()
+    
+    # Pattern alternativo: cerca direttamente codice A/B seguito da 10-11 cifre
+    match = re.search(r'\b([AB]\d{10,11})\b', descrizione)
+    if match:
+        return match.group(1)
+    
     return None
 
 
