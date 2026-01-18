@@ -150,9 +150,9 @@ EMAIL_RULES: List[EmailRule] = [
     # --- BUSTE PAGA / CEDOLINI ---
     EmailRule(
         name="buste_paga",
-        keywords=["busta paga", "cedolino", "LUL", "libro unico lavoro"],
-        subject_patterns=[r"busta\s*paga", r"cedolino", r"lul"],
-        sender_patterns=["consulente", "paghe", "zucchetti", "team system"],
+        keywords=["busta paga", "cedolino", "LUL", "libro unico lavoro", "prospetto paga"],
+        subject_patterns=[r"busta\s*paga", r"cedolino", r"lul", r"prospetto.*paga"],
+        sender_patterns=[],  # Accetta QUALSIASI mittente
         category="buste_paga",
         gestionale_section="Cedolini",
         collection="cedolini_pdf",
