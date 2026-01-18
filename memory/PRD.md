@@ -723,6 +723,8 @@ Sistema completo di estrazione dati da documenti usando OCR + LLM (Claude Sonnet
 4. ✅ **Aggiunto bottone Visualizza PDF** nella pagina Documenti
 5. ✅ **Aggiunto Tab "AI Estratti"** nella pagina Documenti con upload
 
+6. ✅ **Aggiunto pulsante "Processa Allegati Email"** nella tab AI per processare automaticamente i PDF classificati (18 Gen 2026)
+
 ---
 
 ## 30. Task Pendenti e Backlog
@@ -732,12 +734,12 @@ Sistema completo di estrazione dati da documenti usando OCR + LLM (Claude Sonnet
 2. **Performance query F24** - Endpoint `/api/operazioni-da-confermare/smart/cerca-f24` impiega ~35s
 
 ### 🟡 P1 - Media Priorità:
-3. **Processamento automatico email con AI** - Collegare classificatore email a Document AI
+3. ~~**Processamento automatico email con AI**~~ ✅ COMPLETATO - Pulsante "Processa Allegati Email" aggiunto
 4. **UI InvoiceTronic** - Completare integrazione SDI
 5. **3 assegni non associati** - UI per associazione manuale
+6. **Refactoring vecchi parser** - Deprecare parser regex obsoleti (payslip, f24) in favore di Document AI
 
 ### 🟠 P2 - Bassa Priorità:
-6. **Integrazione InfoCert** - Legalmail, GoSign
 7. **Refactoring backend** - Modularizzare file grandi
 
 ---
