@@ -152,7 +152,7 @@ from app.routers import (
     cedolini, tfr, cespiti, scadenzario_fornitori,
     controllo_gestione, indici_bilancio, chiusura_esercizio,
     gestione_iva_speciale, configurazioni, alerts, import_templates,
-    dizionario_prodotti, inventario, chat_ai
+    dizionario_prodotti, inventario
 )
 from app.routers import cedolini_riconciliazione
 from app.routers import parlant_api
