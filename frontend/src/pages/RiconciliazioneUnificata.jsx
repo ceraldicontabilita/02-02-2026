@@ -1241,15 +1241,29 @@ function F24Tab({ f24, onConfermaF24, processing }) {
                     >
                       🏦 Paga con Banca
                     </button>
-                    {f.pdf_url && (
-                      <button
-                        onClick={() => window.open(f.pdf_url, '_blank')}
-                        style={{ padding: '4px 8px', background: '#6366f1', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: 11 }}
-                        title="Visualizza PDF F24"
-                      >
-                        👁️ Vedi PDF
-                      </button>
-                    )}
+                    <button
+                      onClick={() => {
+                        if (f.pdf_url) {
+                          window.open(f.pdf_url, '_blank');
+                        } else if (f.file_path) {
+                          window.open(`/api/files/download?path=${encodeURIComponent(f.file_path)}`, '_blank');
+                        } else {
+                          alert('PDF non disponibile. Carica il PDF F24 dalla sezione Import.');
+                        }
+                      }}
+                      style={{ 
+                        padding: '4px 8px', 
+                        background: f.pdf_url || f.file_path ? '#6366f1' : '#94a3b8', 
+                        color: 'white', 
+                        border: 'none', 
+                        borderRadius: 4, 
+                        cursor: 'pointer', 
+                        fontSize: 11 
+                      }}
+                      title={f.pdf_url || f.file_path ? "Visualizza PDF F24" : "PDF non disponibile"}
+                    >
+                      👁️ Vedi PDF
+                    </button>
                   </div>
                 </div>
               </div>
