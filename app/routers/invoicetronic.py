@@ -26,6 +26,7 @@ router = APIRouter(prefix="/api/invoicetronic", tags=["InvoiceTronic SDI"])
 # Configurazione
 INVOICETRONIC_API_KEY = os.environ.get("INVOICETRONIC_API_KEY")
 INVOICETRONIC_SANDBOX = os.environ.get("INVOICETRONIC_SANDBOX", "true").lower() == "true"
+INVOICETRONIC_CODICE_DESTINATARIO = os.environ.get("INVOICETRONIC_CODICE_DESTINATARIO", "7hd37x0")
 
 # Collection per fatture SDI
 COLLECTION_FATTURE_SDI = "fatture_sdi"
