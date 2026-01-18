@@ -2225,3 +2225,20 @@ async def auto_riconcilia_f24() -> Dict[str, Any]:
     risultati = await auto_riconcilia_f24_con_estratto_conto()
     return risultati
 
+
+
+@router.post("/pulizia-dati")
+async def esegui_pulizia() -> Dict[str, Any]:
+    """
+    Esegue pulizia completa dei dati:
+    - Elimina duplicati fatture
+    - Elimina record vuoti/incompleti
+    - Corregge date F24 problematiche
+    - Marca TD24 come non riconciliabili
+    
+    ATTENZIONE: Operazione irreversibile. Eseguire dopo backup.
+    """
+    from app.scripts.pulizia_dati import esegui_pulizia_completa
+    
+    return await esegui_pulizia_completa()
+
