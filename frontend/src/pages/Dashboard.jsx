@@ -161,13 +161,53 @@ export default function Dashboard() {
       <div style={{ background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', border: '1px solid #e5e7eb', marginBottom: 12 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h1 style={{ margin: 0, fontSize: 22, fontWeight: 'bold', color: '#1e3a5f' }}>Dashboard {anno}</h1>
-          {err ? (
-            <span style={{ color: "#dc2626", fontSize: 14 }}>{err}</span>
-          ) : (
-            <span style={{ padding: '4px 10px', background: '#dcfce7', color: '#16a34a', borderRadius: 6, fontSize: 12, fontWeight: '600' }}>
-              ✓ Backend connesso
-            </span>
-          )}
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            {/* Pulsante Auto-Riparazione */}
+            <button
+              onClick={eseguiAutoRiparazione}
+              disabled={autoRepairStatus === 'running'}
+              data-testid="btn-auto-repair"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '6px 12px',
+                background: autoRepairStatus === 'running' ? '#9ca3af' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: 6,
+                cursor: autoRepairStatus === 'running' ? 'wait' : 'pointer',
+                fontWeight: 500,
+                fontSize: 12,
+                boxShadow: '0 2px 4px rgba(102,126,234,0.3)'
+              }}
+            >
+              {autoRepairStatus === 'running' ? (
+                <>⏳ Riparazione...</>
+              ) : (
+                <>🔧 Auto-Ripara Dati</>
+              )}
+            </button>
+            {autoRepairStatus && autoRepairStatus !== 'running' && autoRepairStatus.totale > 0 && (
+              <span style={{ 
+                padding: '4px 8px', 
+                background: '#dcfce7', 
+                color: '#16a34a', 
+                borderRadius: 4, 
+                fontSize: 11,
+                fontWeight: 600
+              }}>
+                ✓ {autoRepairStatus.totale} correzioni
+              </span>
+            )}
+            {err ? (
+              <span style={{ color: "#dc2626", fontSize: 14 }}>{err}</span>
+            ) : (
+              <span style={{ padding: '4px 10px', background: '#dcfce7', color: '#16a34a', borderRadius: 6, fontSize: 12, fontWeight: '600' }}>
+                ✓ Backend connesso
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
