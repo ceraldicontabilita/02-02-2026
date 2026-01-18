@@ -494,49 +494,14 @@ export default function ArchivioFatture() {
               <h2 style={{ margin: 0, fontSize: 18, fontWeight: 'bold' }}>📋 Archivio Fatture Ricevute</h2>
               <p style={{ margin: '4px 0 0 0', fontSize: 12, opacity: 0.9 }}>Gestione fatture passive con controllo duplicati</p>
             </div>
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-              <label style={{ ...btnPrimary, display: 'flex', alignItems: 'center', gap: 5, fontSize: 12 }}>
-                📥 Carica XML
-                <input type="file" accept=".xml" onChange={(e) => handleUploadXML(e, 'singolo')} style={{ display: 'none' }} />
-              </label>
-              <label style={{ ...btnSecondary, display: 'flex', alignItems: 'center', gap: 5, fontSize: 12 }}>
-                📥 XML Multipli
-                <input type="file" accept=".xml" multiple onChange={(e) => handleUploadXML(e, 'multipli')} style={{ display: 'none' }} />
-              </label>
-              <label style={{ ...btnSecondary, display: 'flex', alignItems: 'center', gap: 5, fontSize: 12 }}>
-                📦 ZIP Massivo
-                <input type="file" accept=".zip" onChange={(e) => handleUploadXML(e, 'zip')} style={{ display: 'none' }} />
-              </label>
-            </div>
+            <button
+              onClick={() => navigate('/import-unificato')}
+              style={{ ...btnPrimary, display: 'flex', alignItems: 'center', gap: 8 }}
+              data-testid="btn-import-unificato"
+            >
+              📤 Vai a Import Unificato
+            </button>
           </div>
-
-          {/* Upload Result */}
-          {uploadResult && (
-            <div style={{
-              ...cardStyle,
-              marginBottom: 20,
-              background: uploadResult.success ? '#dcfce7' : '#fee2e2',
-              borderColor: uploadResult.success ? '#16a34a' : '#dc2626'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <p style={{ margin: 0, fontWeight: 'bold', color: uploadResult.success ? '#16a34a' : '#dc2626' }}>
-                    {uploadResult.success ? '✅' : '❌'} {uploadResult.message}
-                  </p>
-                  {uploadResult.data?.fornitori_nuovi > 0 && (
-                    <p style={{ margin: '4px 0 0 0', fontSize: 13 }}>📌 {uploadResult.data.fornitori_nuovi} nuovi fornitori aggiunti</p>
-                  )}
-                </div>
-                <button onClick={() => setUploadResult(null)} style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer' }}>✕</button>
-              </div>
-            </div>
-          )}
-
-          {uploading && (
-            <div style={{ ...cardStyle, marginBottom: 20, textAlign: 'center', background: '#f0f9ff' }}>
-              <p style={{ margin: 0 }}>⏳ Importazione in corso...</p>
-            </div>
-          )}
 
           {/* Statistiche */}
           {statistiche && (
