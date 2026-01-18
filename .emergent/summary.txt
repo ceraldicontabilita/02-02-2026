@@ -1,148 +1,119 @@
 <analysis>**original_problem_statement:**
-L'utente ha richiesto una serie di interventi per migliorare la robustezza e l'automazione della sua applicazione di contabilità. Le richieste principali sono:
+L'utente ha richiesto una serie di interventi per migliorare la robustezza e l'automazione della sua applicazione di contabilità. Le richieste principali, sia dall'handoff precedente che da questa sessione, includono:
 1.  **Correzione Dati e Logica di Business**:
-    *   Risolvere dati errati, in particolare la logica di calcolo del fatturato, l'associazione di assegni e la gestione di pagamenti multi-assegno per una singola fattura.
-2.  **Pagine Auto-Sufficienti**: Estendere a tutte le pagine critiche il pattern di auto-riparazione.
-3.  **Integrazione Dati da Email**:
-    *   Scaricare PDF di verbali di noleggio (multe) da Gmail e associarli alle fatture.
-    *   Estrarre dati dai bonifici per stipendi e aggiornare la .
-    *   Cercare email di PEC Delibere - Fonsi per un dato periodo, estrarre importi di cassa integrazione e aggiornare le buste paga.
-    *   Cercare email Sede INPS 5100 per dilazioni amministrative e salvare i PDF.
-    *   Cercare email Notifica richiesta recesso rapporto di lavoro per trovare la data di dimissione di un dipendente e aggiornarne l'anagrafica.
-4.  **Integrazione Fatturazione Elettronica**:
-    *   Implementare l'integrazione con  e creare una UI di gestione.
-5.  **Integrazione PagoPA**:
-    *   Implementare la logica di associazione delle ricevute PagoPA e creare una UI di gestione.
-6.  **Miglioramento Dati Noleggio Auto**:
-    *   Correggere l'associazione di verbali, bolli, riparazioni e costi extra alle auto a noleggio, utilizzando i numeri di contratto/cliente quando la targa non è presente.
-    *   Processare un file  contenente 114 fatture XML per estrarre e importare tutti i dati relativi al noleggio.
-    *   Aggiornare le anagrafiche delle auto associate ai dipendenti.
-7.  **Integrazione Documentale**:
-    *   Creare una cartella ADR con sottocartelle DEFINIZIONE AGEVOLATA per codice fiscale.
-    *   Analizzare la documentazione delle API InfoCert (LegalInvoice, Legalmail, GoSign).
+    *   Risolvere la logica di associazione di assegni, in particolare la gestione di pagamenti multi-assegno (con importi diversi) per una singola fattura.
+    *   Correggere i dati errati nella gestione assegni, come record fake generati dall'estratto conto e l'assenza di date fattura.
+2.  **Pagine Auto-Sufficienti e Performanti**:
+    *   Risolvere i problemi di lentezza del Dashboard e della pagina di Riconciliazione, che risultavano inutilizzabili a causa di lunghi tempi di caricamento.
+    *   L'utente ha richiesto di aggiungere pulsanti per avviare manualmente le operazioni pesanti (auto-riparazione, riconciliazione) invece di eseguirle automaticamente al caricamento della pagina.
+3.  **Integrazione Dati da Email (Sistema Intelligente)**:
+    *   Creare un sistema centralizzato che legga le email, le classifichi in base a parole chiave (verbali, dimissioni, cartella esattoriale, F24, bonifici stipendi, Delibere - Fonsi, Dilazioni INPS, ecc.), estragga i dati rilevanti e gli allegati, e li associ automaticamente alle sezioni corrette del gestionale (fatture, anagrafica dipendente, ecc.).
+    *   Creare una UI per gestire questo processo.
+    *   Eliminare le email che non sono pertinenti.
+4.  **Integrazione Fatturazione e Documenti**:
+    *   Implementare l'integrazione con  e  (UI placeholder esistenti).
+    *   Processare un file  contenente 114 fatture XML di noleggio per estrarre e importare tutti i dati relativi.
 
 **User's preferred language**: Italiano
 
 **what currently exists?**
-L'applicazione ha una base solida per la gestione contabile. L'agente ha completato con successo diversi task importanti:
-- **Correzione Logica Bonifici**: La logica per associare i bonifici degli stipendi, letti da email, ai dipendenti è stata corretta e testata con successo. Il sistema ora associa correttamente i nomi e aggiorna lo stato in attesa di riconciliazione con l'estratto conto.
-- **Miglioramento Parser Noleggio**: Il parser per le fatture di noleggio () è stato significativamente migliorato. Ora è in grado di:
-    - Associare correttamente i bolli auto anche quando la targa è assente nella descrizione, basandosi sulla data della fattura e sul veicolo attivo per quel fornitore.
-    - Gestire fatture contenenti più verbali, creando un record separato per ciascuno, risolvendo un problema di dati mancanti (es. i verbali del veicolo GE911SC sono passati da 10 a 18).
-- **Creazione Nuove Sezioni**: Sono state create le fondamenta per nuove funzionalità:
-    - **UI**: Pagine placeholder (, ) e le relative rotte nel frontend.
-    - **Backend**: Router vuoti (, ) per la gestione dei documenti INPS e ADR, e un router  per gestire le dimissioni dei dipendenti.
-- **Gestione Dati Utente**: L'agente ha processato un file  fornito dall'utente contenente 114 fatture XML, estraendone i dati principali. Ha inoltre aggiornato i dati dei veicoli a noleggio con i numeri di contratto corretti forniti dall'utente.
+L'applicazione di contabilità è stata significativamente migliorata in questa sessione. L'agente ha completato con successo diversi task critici:
+- **Logica Assegni Multipli**: È stata implementata una nuova e complessa logica () che trova combinazioni di assegni senza beneficiario la cui somma corrisponde all'importo di una fattura non pagata. Questa logica ha risolto un problema chiave, associando con successo 5 degli 8 assegni problematici a 2 fatture.
+- **Fix Parser Dimissioni**: Il bug P0 che impediva l'estrazione del codice fiscale dalle email di dimissione è stato corretto. La logica in  ora estrae correttamente il CF sia dall'oggetto che dagli allegati.
+- **Importazione Fatture XML**: L'agente ha creato e è eseguito uno script () che ha processato con successo 111 fatture XML da uno ZIP, importando dati cruciali su bolli, verbali e riparazioni per i veicoli a noleggio.
+- **Sistema di Classificazione Email (Backend)**: È stato creato un nuovo servizio () e un router () per un sistema intelligente di scansione e classificazione delle email in base a regole predefinite. Il test ha classificato correttamente 53 email su 92.
+- **Ottimizzazione Performance**: È stato identificato e aggirato un grave problema di performance sul Dashboard e sulla pagina di Riconciliazione. Le chiamate API pesanti () che bloccavano il caricamento sono state rese non-bloccanti.
+- **Pulizia Dati Assegni**: L'agente ha corretto dati errati, eliminando 5 record fake che erano movimenti di estratto conto e non assegni, e ha popolato la data della fattura mancante per 52 assegni.
 
 **Last working item**:
--   **Last item agent was working**: L'agente stava lavorando sulla logica per le dimissioni dei dipendenti. Ha creato un nuovo router () per cercare email contenenti la Notifica richiesta recesso rapporto di lavoro. Ha eseguito un test che ha trovato 3 email, ma ha identificato un bug: il codice fiscale del dipendente non veniva estratto correttamente dal nome del file allegato (es. ). L'agente stava per correggere il parser.
+-   **Last item agent was working**: L'agente stava implementando la richiesta dell'utente di aggiungere pulsanti manuali per attivare le procedure pesanti (auto-riparazione, riconciliazione) sulle pagine che caricavano lentamente. Aveva già modificato il  e stava lavorando su . L'intenzione era di aggiungere pulsanti simili anche alla pagina .
 -   **Status**: IN PROGRESS
 -   **Agent Testing Done**: N
--   **Which testing method agent to use?**: backend testing agent. L'agente dovrà rieseguire la chiamata  all'endpoint  per verificare che il campo  venga popolato correttamente nell'output JSON dopo aver corretto la logica di parsing del nome del file.
+-   **Which testing method agent to use?**: frontend testing agent. L'agente dovrà aggiungere i pulsanti mancanti e poi usare lo  per verificare che siano presenti e funzionali nelle pagine ,  e .
 -   **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
--   **Issue 1: (P0) Parsing email dimissioni non funzionante.**
--   **Issue 2: (P1) Logica assegni multipli per fattura non implementata.**
--   **Issue 3: (P1) Dati da ZIP fatture non completamente integrati.**
--   **Issue 4: (P2) Otto assegni ancora non associati.**
--   **Issue 5: (P0, BLOCKED) La chat Parlant non risponde.**
+-   **Issue 1: (P0) Pagine lente (Dashboard, Riconciliazione).**
+-   **Issue 2: (P0, BLOCKED) La chat Parlant non risponde.**
+-   **Issue 3: (P1) Mancanza di una UI per il nuovo sistema di classificazione email.**
+-   **Issue 4: (P2) Tre assegni rimangono non associati.**
 
 **Issues Detail**:
--   **Issue 1: Parsing email dimissioni non funzionante**
-    -   **Attempted fixes**: L'agente ha creato il router e la logica di ricerca email. Ha identificato che il parser non estrae il codice fiscale dal nome del file allegato.
+-   **Issue 1: Pagine lente (Dashboard, Riconciliazione)**
+    -   **Attempted fixes**: L'agente ha identificato le chiamate API lente (in particolare  che impiega ~35 secondi) e ha rimosso la loro esecuzione automatica e bloccante dal caricamento delle pagine  e . Ha iniziato ad aggiungere pulsanti per l'attivazione manuale.
     -   **Next debug checklist**:
-        1.  Modificare il file .
-        2.  Implementare una regex o una logica di splitting per estrarre il codice fiscale (es. ) dal nome del file PDF allegato all'email.
-        3.  Eseguire nuovamente il test sull'endpoint per confermare l'estrazione.
-        4.  Implementare la logica per aggiornare il record del dipendente corrispondente con la data di dimissione.
-    -   **Why fix this issue and what will be achieved with the fix?**: Automatizza l'aggiornamento dell'anagrafica dei dipendenti, riducendo il lavoro manuale e il rischio di errori.
+        1.  Modificare  per completare l'aggiunta del pulsante Auto-Ripara.
+        2.  Modificare  per completare l'aggiunta dei pulsanti Auto-Ripara e Carica F24.
+        3.  Modificare  per aggiungere un pulsante che esegua la nuova logica di associazione combinata.
+        4.  Verificare tramite screenshot che i pulsanti siano presenti e funzionanti.
+    -   **Why fix this issue and what will be achieved with the fix?**: Rende l'applicazione utilizzabile, risolvendo la frustrazione dell'utente per le pagine che non si caricano.
     -   **Status**: IN PROGRESS
-    -   **Is recurring issue?**: N
-    -   **Should Test frontend/backend/both after fix?**: backend
+    -   **Is recurring issue?**: Y
+    -   **Should Test frontend/backend/both after fix?**: frontend
     -   **Blocked on other issue**: No.
 
--   **Issue 2: Logica assegni multipli per fattura non implementata**
-    -   **Attempted fixes**: Nessuno in questa sessione. L'agente ha in precedenza identificato una logica per pagamenti multipli, ma non era adatta al caso d'uso dell'utente (sommare assegni senza beneficiario per raggiungere l'importo di una fattura).
-    -   **Next debug checklist**:
-        1.  Modificare .
-        2.  Creare un nuovo endpoint o modificare  per implementare un algoritmo che:
-            a. Prenda tutti gli assegni senza beneficiario.
-            b. Crei combinazioni di assegni.
-            c. Verifichi se la somma degli importi di una combinazione corrisponde all'importo esatto di una fattura non pagata.
-            d. In caso di match, associ tutti gli assegni della combinazione a quella fattura.
-    -   **Why fix this issue and what will be achieved with the fix?**: Risolve un problema di contabilità chiave per l'utente, permettendo di riconciliare pagamenti complessi e pulire i dati.
-    -   **Status**: NOT STARTED
-    -   **Is recurring issue?**: Y
-    -   **Should Test frontend/backend/both after fix?**: backend
-
--   **Issue 3: Dati da ZIP fatture non completamente integrati**
-    -   **Attempted fixes**: L'agente ha decompresso lo zip, contato i file e analizzato un file XML di esempio. Ha eseguito uno script per estrarre un riepilogo dei dati, identificando 30 verbali.
-    -   **Next debug checklist**:
-        1.  Creare uno script di importazione robusto che cicli su tutti i 111 file XML nella cartella decompressa.
-        2.  Per ogni file, estrarre tutti i dati rilevanti (targa, numero verbale, tipo spesa, importo, data, numero contratto).
-        3.  Verificare se la fattura esiste già nel DB. Se non esiste, importarla.
-        4.  Innescare una nuova scansione della logica di noleggio () per assicurarsi che i nuovi dati vengano associati correttamente ai veicoli.
-    -   **Why fix this issue and what will be achieved with the fix?**: Completa l'importazione di un'ampia base di dati fornita dall'utente, migliorando drasticamente la completezza e l'accuratezza dei dati di noleggio.
-    -   **Status**: IN PROGRESS
-    -   **Is recurring issue?**: N
-    -   **Should Test frontend/backend/both after fix?**: backend
-
--   **Issue 4: Otto assegni ancora non associati**
-    -   **Attempted fixes**: L'agente ha verificato che non esistono fatture con importi corrispondenti.
-    -   **Next debug checklist**: Questo problema potrebbe risolversi dopo l'implementazione dell'Issue 2 (logica assegni multipli). Mettere in attesa fino al completamento di tale issue.
-    -   **Why fix this issue and what will be achieved with the fix?**: Raggiungere una riconciliazione del 100% per gli assegni.
-    -   **Status**: BLOCKED
-    -   **Is recurring issue?**: N
-    -   **Should Test frontend/backend/both after fix?**: backend
-    -   **Blocked on other issue**: Issue 2: Logica assegni multipli per fattura non implementata.
-
--   **Issue 5: La chat Parlant non risponde**
-    -   **Attempted fixes**: Nessuno in questa sessione.
-    -   **Next debug checklist**: Come da handoff precedente, implementare WebSocket o proporre un'alternativa.
-    -   **Why fix this issue and what will be achieved with the fix?**: Risolve un problema P0 bloccante e ricorrente.
+-   **Issue 2: La chat Parlant non risponde**
+    -   **Attempted fixes**: L'agente ha modificato il componente  per renderlo asincrono e non bloccare il caricamento del Dashboard. La funzionalità di base rimane non funzionante.
+    -   **Next debug checklist**: Come da handoff precedenti, è un problema P0. Indagare sul timeout della connessione al servizio Parlant.io. Verificare la configurazione del WebSocket o problemi di rete. Se non risolvibile, proporre un'alternativa.
+    -   **Why fix this issue and what will be achieved with the fix?**: Risolve un problema bloccante e ricorrente, ripristinando una funzionalità chiave.
     -   **Status**: BLOCKED
     -   **Is recurring issue?**: Y
     -   **Should Test frontend/backend/both after fix?**: both
+    -   **Blocked on other issue**: Potrebbe dipendere da configurazioni esterne.
+
+-   **Issue 3: Mancanza di una UI per il nuovo sistema di classificazione email**
+    -   **Attempted fixes**: L'agente ha tentato di creare una nuova pagina () ma ha incontrato gravi problemi di caching del proxy/CDN dell'ambiente di preview che impedivano il caricamento della nuova rotta. L'agente ha annullato le modifiche per evitare di rompere il frontend.
+    -   **Next debug checklist**:
+        1.  Evitare di creare nuove route.
+        2.  Modificare la pagina esistente .
+        3.  Aggiungere un nuovo Tab chiamato Classificazione Intelligente.
+        4.  In questo tab, implementare la logica per chiamare l'endpoint  e visualizzare i risultati (email classificate/non, azioni da intraprendere).
+    -   **Why fix this issue and what will be achieved with the fix?**: Rende accessibile all'utente la potente funzionalità di classificazione automatica delle email già implementata nel backend.
+    -   **Status**: NOT STARTED
+    -   **Is recurring issue?**: N
+    -   **Should Test frontend/backend/both after fix?**: frontend
+    -   **Blocked on other issue**: No.
+
+-   **Issue 4: Tre assegni rimangono non associati**
+    -   **Attempted fixes**: La logica di associazione automatica per combinazioni è stata eseguita con successo, ma 3 assegni non hanno trovato corrispondenze.
+    -   **Next debug checklist**:
+        1.  Nella pagina , visualizzare questi 3 assegni in una sezione dedicata.
+        2.  Implementare una UI che permetta all'utente di selezionare manualmente uno o più di questi assegni e associarli a una fattura non pagata.
+    -   **Why fix this issue and what will be achieved with the fix?**: Permette una riconciliazione completa, dando all'utente il controllo sui casi limite che l'automazione non può risolvere.
+    -   **Status**: NOT STARTED
+    -   **Is recurring issue?**: N
+    -   **Should Test frontend/backend/both after fix?**: frontend
+    -   **Blocked on other issue**: No.
 
 **In progress Task List**:
--   **Task 1: (P0) Completare implementazione logica dimissioni.**
-    -   **Where to resume**: Correggere il parser in , testarlo e poi implementare l'aggiornamento del DB.
-    -   **What will be achieved with this?**: L'anagrafica dei dipendenti verrà aggiornata automaticamente con le date di dimissione.
+-   **Task 1: (P0) Aggiungere pulsanti di attivazione manuale alle pagine lente.**
+    -   **Where to resume**: Completare l'aggiunta dei pulsanti e della relativa logica nei file ,  e .
+    -   **What will be achieved with this?**: L'app diventerà reattiva e utilizzabile, risolvendo una delle maggiori frustrazioni dell'utente.
     -   **Status**: IN PROGRESS
-    -   **Should Test frontend/backend/both after fix?**: backend
--   **Task 2: (P1) Completare l'importazione e l'associazione delle fatture dallo ZIP.**
-    -   **Where to resume**: Creare lo script per processare in massa i 111 file XML e integrarli nel sistema.
-    -   **What will be achieved with this?**: I dati di noleggio saranno molto più completi e accurati.
-    -   **Status**: IN PROGRESS
-    -   **Should Test frontend/backend/both after fix?**: backend
+    -   **Should Test frontend/backend/both after fix?**: frontend
 
 **Upcoming and Future Tasks**
 -   **Upcoming Tasks**:
-    -   (P0) **Logica Assegni Multipli**: Implementare l'algoritmo per associare più assegni a una singola fattura.
+    -   (P0) **UI per Classificatore Email**: Aggiungere un tab alla pagina  per interagire con il nuovo sistema di classificazione email (Issue 3).
     -   (P1) **Implementare UI PagoPA**: Sviluppare la pagina  per visualizzare e gestire le associazioni delle ricevute.
-    -   (P1) **Implementare UI InvoiceTronic**: Sviluppare la pagina  per visualizzare lo stato e le fatture ricevute.
-    -   (P1) **Router Delibere FONSI (INPS)**: Implementare la logica in  per cercare nelle email PEC, scaricare i PDF delle delibere, estrarre gli importi della cassa integrazione e aggiornare le buste paga.
-    -   (P1) **Router Dilazioni INPS**: Estendere  per cercare e scaricare i PDF delle dilazioni amministrative da email specifiche.
-    -   (P1) **Router ADR (Definizione Agevolata)**: Implementare la logica in  per scaricare documenti e organizzarli in cartelle per codice fiscale.
+    -   (P1) **Implementare UI InvoiceTronic**: Sviluppare la pagina .
+    -   (P2) **UI per Associazione Manuale Assegni**: Creare l'interfaccia per gestire i 3 assegni non associati (Issue 4).
 -   **Future Tasks**:
-    -   (P2) **Integrazione InfoCert**: Esplorare l'uso delle API InfoCert (Legalmail, GoSign) per future automazioni.
-    -   (P2) **Pulizia codice **: Rimuovere tutti i riferimenti alla vecchia collection .
-    -   (P0, Bloccante) **Risolvere problema Chat Parlant.io**.
+    -   (P2) **Integrazione InfoCert**: Esplorare l'uso delle API InfoCert (Legalmail, GoSign).
+    -   (P2) **Refactoring **: Estrarre la logica in moduli di servizio più piccoli.
+    -   (P0, Bloccante) **Risolvere problema Chat Parlant.io** (Issue 2).
 
 **Completed work in this session**
--   **Logica Bonifici Stipendi**: Testata e confermata la corretta associazione dei bonifici ai dipendenti.
--   **Riconciliazione Bonifici**: Eseguita con successo la riconciliazione di 167 bonifici con l'estratto conto.
--   **Fix Parser Bolli Noleggio**: Corretta la logica in  per associare i bolli anche in assenza di targa, usando la data della fattura e il veicolo attivo. Correttamente associati 9 bolli a 2 veicoli.
--   **Fix Parser Verbali Noleggio**: Modificata la logica per gestire correttamente fatture con verbali multipli, portando il conteggio da 10 a 18 per un veicolo.
--   **Creazione Pagine UI Placeholder**: Create le pagine  e  e aggiunte le relative rotte.
--   **Creazione Router Backend Placeholder**: Creati i file ,  e  e registrati in .
--   **Risoluzione Problemi Build Frontend**: Installata la dipendenza  e corretto il codice per risolvere problemi di build.
--   **Aggiornamento Dati Veicoli**: Aggiornati i record dei veicoli a noleggio con i numeri di contratto forniti dall'utente.
--   **Analisi Preliminare Dati Utente**: Decompresso e analizzato un file  con 111 fatture XML e creato un router per le email di dimissioni.
+-   **Logica Assegni Multipli**: Implementato un algoritmo avanzato per associare combinazioni di assegni a una singola fattura, risolvendo un problema contabile complesso.
+-   **Fix Parser Dimissioni**: Corretto il bug P0 che impediva l'estrazione del codice fiscale dalle email di dimissione.
+-   **Importazione Massiva Fatture**: Processate 111 fatture XML di noleggio auto da un file ZIP, arricchendo significativamente i dati del gestionale.
+-   **Sistema di Classificazione Email**: Creato il backend per un sistema intelligente che scansiona e classifica le email in base a parole chiave.
+-   **Risoluzione Bug Performance**: Identificato e aggirato un collo di bottiglia che rendeva il Dashboard e altre pagine inutilizzabili, rendendo l'app di nuovo reattiva.
+-   **Correzione e Pulizia Dati**: Eliminati record di assegni errati e aggiornate le date mancanti su decine di record, migliorando l'integrità dei dati.
+-   **Fix Vari Frontend**: Corretto l'uso delle variabili d'ambiente in diversi componenti a seguito della migrazione a Vite.
 
 **Earlier issues found/mentioned but not fixed**
--   **La chat Parlant.io continua a non rispondere a causa di timeout.** Questo problema P0 è stato riportato ma non è stato affrontato.
+-   **La chat Parlant.io continua a non rispondere a causa di timeout.** Questo problema P0 è stato riportato ma non è stato risolto alla radice, sebbene sia stato reso non bloccante per il resto dell'UI.
 
 **Known issue recurrence from previous fork**
 -   **Issue recurrence in previous fork**: Problemi con l'integrazione dell'agente AI (Parlant.io).
@@ -153,61 +124,51 @@ L'applicazione ha una base solida per la gestione contabile. L'agente ha complet
 
 
 **Key Technical Concepts**
--   **Parsing Logico Avanzato**: La logica di parsing in  è stata evoluta per dedurre associazioni basate su dati contestuali (fornitore, data fattura, stato del contratto veicolo) invece di dipendere solo da un match esatto della targa.
--   **Gestione Dati Eterogenei**: L'agente ha gestito input da fonti diverse: email con allegati PDF, file XML da uno ZIP e istruzioni dirette dall'utente.
--   **Sviluppo Incrementale**: Sono state create strutture placeholder (router e pagine UI) per future implementazioni, permettendo di costruire la base dell'applicazione in modo modulare.
--   **Debugging di Processi Asincroni**: Un problema di associazione dati è stato risolto solo dopo un riavvio completo del backend, indicando un possibile problema di caching o di stato nel processo di hot-reloading.
+-   **FastAPI Route Order**: È stato risolto un bug critico causato dall'ordine delle definizioni delle route. Le route statiche (es. ) devono essere definite *prima* delle route dinamiche (es. ) per evitare che la route dinamica catturi erroneamente la richiesta.
+-   **Frontend Caching in Preview**: L'agente ha incontrato un problema insormontabile di caching a livello di proxy/CDN nell'ambiente di preview, che serviva versioni obsolete dei file JS () nonostante i riavvii e la pulizia della cache locale. La soluzione è evitare di creare nuove pagine/route e modificare quelle esistenti.
+-   **Vite Environment Variables**: Il progetto frontend usa Vite, quindi le variabili d'ambiente devono essere accessibili tramite  invece del  di Create React App.
+-   **Algoritmo Combinatorio**: Per risolvere il problema degli assegni multipli, è stato implementato un algoritmo che genera combinazioni di assegni per trovarne la cui somma corrisponda all'importo di una fattura.
 
 **key DB schema**
--   **veicoli_noleggio**: Questa collection è stata al centro delle modifiche. La sua struttura dati ora supporta correttamente elenchi di  e  e contiene i  corretti.
--   **anagrafica_dipendenti**: Dovrà essere modificata per includere un campo  che verrà popolato dal router .
--   **invoices**: Utilizzata come fonte per il parsing dei dati di noleggio.
+-   **assegni**: La collection è stata modificata per includere un campo  (un array di ) per tracciare i pagamenti combinati. I record errati sono stati eliminati e i dati mancanti () sono stati popolati.
+-   **f24_models**: Identificata come una collection con documenti molto grandi (fino a 127KB), causa di query lente.
+-   **anagrafica_dipendenti**: Il fix su  prepara questa collection a essere aggiornata con la data di dimissione.
 
 **All files of reference**
--    (Contiene il bug in fase di risoluzione)
--    (Contiene la logica di associazione complessa per bolli e verbali)
--    (File da modificare per la logica degli assegni multipli)
--    (Creato, vuoto)
--    (Creato, vuoto)
--    (Creato, placeholder)
--    (Creato, placeholder)
--    (Contiene le nuove rotte UI)
--    (Cartella contenente i 111 file XML estratti dallo ZIP)
-
-**Areas that need refactoring**:
--   Il file  è diventato molto grande e gestisce troppe responsabilità. La logica di parsing e categorizzazione delle spese potrebbe essere estratta in un modulo di servizio separato per migliorare la leggibilità e la manutenibilità.
+-    (File chiave per la logica degli assegni)
+-    (Da completare per il fix della UI)
+-    (Da completare per il fix della UI)
+-    (Da modificare per aggiungere la nuova UI del classificatore)
+-    (Backend per la nuova UI)
+-    (Contiene il fix per il parser)
+-    (Script di importazione)
 
 **key api endpoints**
--   : Cerca email di dimissioni e (prossimamente) aggiorna i dati dei dipendenti.
--   : Endpoint principale per visualizzare lo stato consolidato dei veicoli a noleggio.
--   : Da estendere o affiancare con la nuova logica per assegni multipli.
--   , : Nuovi prefissi per i router da implementare.
+-   : Esegue la nuova logica per associare combinazioni di assegni a fatture.
+-   : Fornisce un'anteprima dei possibili match senza modificare il DB.
+-   : Endpoint principale del nuovo sistema di classificazione email.
+-   : Cerca email di dimissioni ed estrae i dati.
+-   : Endpoint identificato come estremamente lento (~35s).
 
 **Critical Info for New Agent**
--   **L'utente è tecnico e preciso**: Segui attentamente le sue indicazioni. Fornisce dati specifici (es. numeri di contratto, nomi di file) che sono fondamentali per la risoluzione dei problemi. Rispondi a tutti i punti delle sue richieste per non generare frustrazione.
--   **La logica in  è delicata**: È stata modificata più volte per gestire casi limite (bolli senza targa, verbali multipli). Prima di modificarla, assicurati di aver compreso appieno il flusso attuale.
--   **Un riavvio del backend può essere risolutivo**: Se una modifica al codice backend non sembra avere effetto, prova a riavviare il servizio backend: stopped
-backend: started.
--   **Priorità Immediate**: Le massime priorità sono:
-    1.  Correggere il bug nel parser delle email di dimissione ().
-    2.  Implementare la logica per la somma di assegni multipli.
-    3.  Completare l'importazione e l'integrazione dei dati dalle 111 fatture XML fornite.
-    4.  Implementare i router vuoti (, ) e le UI vuote (, ).
+-   **PROBLEMA DI CACHING FRONTEND**: Non creare nuove pagine/route nel frontend. L'ambiente di preview ha un problema di caching aggressivo che ignora le modifiche al file , causando errori 404. Modifica invece le pagine esistenti, ad esempio aggiungendo nuovi tab. L'agente ha perso molto tempo su questo.
+-   **ORDINE DELLE ROUTE IN FASTAPI**: Presta attenzione all'ordine delle route nei file del router. Le route statiche (es. ) devono sempre essere definite PRIMA delle route con parametri dinamici (es. ) per funzionare correttamente.
+-   **PERFORMANCE DELLE QUERY**: L'endpoint che carica i dati F24 è estremamente lento (~35s) a causa di documenti molto grandi e/o un cold start della connessione a MongoDB Atlas. Le ottimizzazioni sul frontend lo hanno reso non bloccante, ma il problema di fondo nel backend persiste.
+-   **VARIABILI D'AMBIENTE VITE**: Ricorda che nel frontend (basato su Vite) si usa , non .
 
 **documents and test reports created in this job**
 -   
 -   
 -   
--   
--   
--    (aggiornato)
+-    (aggiornato con le ultime feature)
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User**: I dati per Verbali, Bollo, Riparazioni non sono corretti; chiede se la ricerca è limitata per anno. (COMPLETED - Agente ha rimosso il filtro anno e corretto la logica).
-2.  **User**: Richiede di cercare email di dimissioni (Notifica richiesta recesso rapporto di lavoro) per aggiornare l'anagrafica dipendente. (IN PROGRESS - Agente ha creato il router ma il parsing è buggato).
-3.  **User**: Chiede di analizzare la documentazione delle API InfoCert. (COMPLETED - Agente ha visionato la documentazione).
-4.  **User**: Fornisce un file ZIP con tutte le fatture per estrarre dati di noleggio (bollo, verbali, riparazioni, extra) e aggiornare le anagrafiche delle auto. (IN PROGRESS - Agente ha iniziato l'analisi).
-5.  **User**: Nessun messaggio in attesa.
+1.  **User**: Chiede di continuare e riepilogare: cercare email per parole chiave (verbali, dimissioni, ecc.), associarle, creare sistema intelligente in , cancellare email non pertinenti. (IN PROGRESS - Backend creato, UI bloccata)
+2.  **User**: Reindirizza l'agente a guardare la gestione assegni e la logica per assegni multipli. (COMPLETED)
+3.  **User**: Invia uno screenshot della pagina assegni e lamenta numerosi errori: codici EC-EC-*, fornitori che non esistono, date fattura mancanti nella stampa, importi senza dati. Esprime forte frustrazione. (COMPLETED - L'agente ha analizzato, trovato la causa e corretto tutti i punti sollevati).
+4.  **User**: Chiede di fare in modo che si possano premere dei bottoni per far partire le procedure di auto-riparazione e riconciliazione anche per le altre pagine lente. (IN PROGRESS)
+5.  **User**: Fornisce una lista di task: completare l'importazione delle 111 fatture XML, sistemare il Dashboard lento, e implementare i router  e . (COMPLETED - Importazione e fix dashboard fatti, i router esistevano già).
+6.  Nessun messaggio in attesa.
 
 **Project Health Check:**
 -   **Broken**:
@@ -216,15 +177,13 @@ backend: started.
     -    (pagina UI placeholder)
     -    (pagina UI placeholder)
 -   **At Risk**:
-    -    (router vuoto)
-    -    (router vuoto)
-    -    (logica incompleta e buggata)
+    -   La performance del backend per la query degli F24 () è un rischio per la scalabilità.
 
 **3rd Party Integrations**
--   **Parlant.io / Emcie**: Inutilizzabile.
--   **InvoiceTronic**: Connessa alla sandbox, UI placeholder creata.
--   **Gmail (IMAP)**: Utilizzato attivamente per leggere email (stipendi, verbali, e ora dimissioni).
--   **InfoCert**: Documentazione API visionata, nessuna implementazione ancora.
+-   **Gmail (IMAP)**: Utilizzato attivamente e con successo per leggere email per stipendi, verbali, dimissioni e per il nuovo sistema di classificazione.
+-   **Parlant.io / Emcie**: Inutilizzabile, causa timeout.
+-   **InvoiceTronic**: Nessuna modifica in questa sessione.
+-   **InfoCert**: Nessuna modifica in questa sessione.
 
 **Testing status**
 -   **Testing agent used after significant changes**: NO
@@ -236,6 +195,6 @@ backend: started.
 -   **Gmail App Password**: Disponibile in .
 
 **What agent forgot to execute**
--   Non ha ancora implementato la logica richiesta dall'utente per cui la somma di più assegni deve corrispondere all'importo di una fattura.
--   Non ha ancora iniziato l'implementazione delle logiche per le email Delibere - Fonsi, ADR e Dilazioni INPS, nonostante abbia creato i router placeholder.
--   Non ha affrontato il problema P0 della chat .</analysis>
+-   L'agente non ha creato la UI per il sistema di classificazione email, bloccato da problemi di caching del frontend.
+-   L'agente non ha risolto il problema di fondo della query F24 da 35 secondi, ma ha solo mitigato l'impatto sul frontend.
+-   L'agente non ha affrontato il problema P0 della chat , se non per renderlo non bloccante.</analysis>
