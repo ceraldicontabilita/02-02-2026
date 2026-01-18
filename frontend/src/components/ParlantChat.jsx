@@ -43,16 +43,28 @@ export default function ParlantChat() {
 
   const checkServerStatus = async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/parlant/status`);
+      // Timeout rapido per non bloccare
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
+      
+      const response = await fetch(`${API_BASE}/api/parlant/status`, {
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+      
       const data = await response.json();
       
       if (data.online) {
         setServerStatus('online');
-        // Get agent ID
-        const agentRes = await fetch(`${API_BASE}/api/parlant/agent-id`);
-        const agentData = await agentRes.json();
-        if (agentData.agent_id) {
-          setAgentId(agentData.agent_id);
+        // Get agent ID solo se online
+        try {
+          const agentRes = await fetch(`${API_BASE}/api/parlant/agent-id`);
+          const agentData = await agentRes.json();
+          if (agentData.agent_id) {
+            setAgentId(agentData.agent_id);
+          }
+        } catch (e) {
+          console.warn('Agent ID non disponibile');
         }
       } else {
         setServerStatus('offline');
