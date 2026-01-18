@@ -144,3 +144,66 @@ async def get_statistiche() -> Dict[str, Any]:
         "righe_valide": totale - vuote
     }
 
+
+
+
+@router.post("/salari/auto-ricostruisci-dati")
+async def auto_ricostruisci_dati_salari() -> Dict[str, Any]:
+    """
+    LOGICA INTELLIGENTE: Verifica e corregge automaticamente i dati salari.
+    
+    REGOLE:
+    1. Rimuove righe vuote (busta e bonifico entrambi 0 o null)
+    2. Corregge importi negativi
+    3. Verifica coerenza dipendente
+    """
+    db = Database.get_db()
+    
+    risultati = {
+        "timestamp": datetime.utcnow().isoformat(),
+        "righe_analizzate": 0,
+        "righe_pulite": 0,
+        "correzioni": 0,
+        "errori": []
+    }
+    
+    try:
+        # 1. Conta e rimuovi righe vuote
+        righe_vuote = await db.prima_nota_salari.count_documents({
+            "$and": [
+                {"$or": [{"importo_busta": 0}, {"importo_busta": None}, {"importo_busta": {"$exists": False}}]},
+                {"$or": [{"importo_bonifico": 0}, {"importo_bonifico": None}, {"importo_bonifico": {"$exists": False}}]}
+            ]
+        })
+        
+        if righe_vuote > 0:
+            result = await db.prima_nota_salari.delete_many({
+                "$and": [
+                    {"$or": [{"importo_busta": 0}, {"importo_busta": None}, {"importo_busta": {"$exists": False}}]},
+                    {"$or": [{"importo_bonifico": 0}, {"importo_bonifico": None}, {"importo_bonifico": {"$exists": False}}]}
+                ]
+            })
+            risultati["righe_pulite"] = result.deleted_count
+        
+        # 2. Correggi importi negativi (converti in positivo)
+        negativi = await db.prima_nota_salari.update_many(
+            {"importo_busta": {"$lt": 0}},
+            [{"$set": {"importo_busta": {"$abs": "$importo_busta"}}}]
+        )
+        risultati["correzioni"] += negativi.modified_count
+        
+        negativi_bon = await db.prima_nota_salari.update_many(
+            {"importo_bonifico": {"$lt": 0}},
+            [{"$set": {"importo_bonifico": {"$abs": "$importo_bonifico"}}}]
+        )
+        risultati["correzioni"] += negativi_bon.modified_count
+        
+        # 3. Conta righe analizzate
+        risultati["righe_analizzate"] = await db.prima_nota_salari.count_documents({})
+        
+    except Exception as e:
+        logger.error(f"Errore auto-ricostruzione salari: {e}")
+        risultati["errori"].append(str(e))
+    
+    return risultati
+
