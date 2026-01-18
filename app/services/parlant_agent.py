@@ -14,13 +14,18 @@ from typing import Dict, Any, Optional
 from datetime import datetime, timezone
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv("/app/backend/.env")
 
 logger = logging.getLogger(__name__)
 
-# Configurazione
+# Configurazione - usa GEMINI_API_KEY per Parlant
 PARLANT_PORT = 8800
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY") or os.getenv("EMERGENT_LLM_KEY")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
+# Imposta la chiave nell'ambiente per Parlant
+if GEMINI_API_KEY:
+    os.environ["GEMINI_API_KEY"] = GEMINI_API_KEY
+    os.environ["GOOGLE_API_KEY"] = GEMINI_API_KEY
 
 
 class ParlantAgentService:
