@@ -305,6 +305,36 @@ export default function Documenti() {
     }
   };
 
+  // Visualizza PDF
+  const handleViewPdf = async (doc) => {
+    setPdfLoading(true);
+    try {
+      const response = await api.get(`/api/documenti/documento/${doc.id}/download`, {
+        responseType: 'blob'
+      });
+      
+      const pdfBlob = new Blob([response.data], { type: 'application/pdf' });
+      const pdfUrl = window.URL.createObjectURL(pdfBlob);
+      
+      setSelectedPdfDoc({
+        ...doc,
+        pdfUrl
+      });
+    } catch (error) {
+      alert(`❌ Errore visualizzazione: ${error.message}`);
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
+  // Chiudi PDF Viewer
+  const closePdfViewer = () => {
+    if (selectedPdfDoc?.pdfUrl) {
+      window.URL.revokeObjectURL(selectedPdfDoc.pdfUrl);
+    }
+    setSelectedPdfDoc(null);
+  };
+
   const formatBytes = (bytes) => {
     if (bytes < 1024) return bytes + ' B';
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
