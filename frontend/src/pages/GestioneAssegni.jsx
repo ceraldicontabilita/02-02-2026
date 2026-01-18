@@ -301,9 +301,9 @@ export default function GestioneAssegni() {
     setCombinazioneLoading(true);
     setCombinazioneResult(null);
     try {
-      const res = await api.post('/api/assegni/associa-combinazioni');
+      const res = await api.post('/api/assegni/cerca-combinazioni-assegni');
       setCombinazioneResult(res.data);
-      if (res.data.associazioni_effettuate > 0) {
+      if (res.data.assegni_associati > 0) {
         loadData();
       }
     } catch (error) {
