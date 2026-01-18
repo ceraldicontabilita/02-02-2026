@@ -856,7 +856,8 @@ export default function Documenti() {
                     <th style={{ padding: 12, textAlign: 'left' }}>Nome File</th>
                     <th style={{ padding: 12, textAlign: 'left' }}>Da Email</th>
                     <th style={{ padding: 12, textAlign: 'left' }}>Mittente</th>
-                    <th style={{ padding: 12, textAlign: 'center' }}>Data</th>
+                    <th style={{ padding: 12, textAlign: 'center' }}>Data Email</th>
+                    <th style={{ padding: 12, textAlign: 'center' }}>Data Doc.</th>
                     <th style={{ padding: 12, textAlign: 'right' }}>Dim.</th>
                     <th style={{ padding: 12, textAlign: 'center' }}>Stato</th>
                     <th style={{ padding: 12, textAlign: 'center' }}>Azioni</th>
@@ -907,6 +908,9 @@ export default function Documenti() {
                         <td style={{ padding: 12, textAlign: 'center', fontSize: 12 }}>
                           {formatDate(doc.email_date)}
                         </td>
+                        <td style={{ padding: 12, textAlign: 'center', fontSize: 12, color: '#1e293b', fontWeight: 500 }}>
+                          {doc.document_date ? formatDate(doc.document_date) : '-'}
+                        </td>
                         <td style={{ padding: 12, textAlign: 'right', fontSize: 12 }}>
                           {formatBytes(doc.size_bytes)}
                         </td>
@@ -932,14 +936,16 @@ export default function Documenti() {
                                 background: '#dbeafe',
                                 border: 'none',
                                 borderRadius: 4,
-                                padding: 6,
+                                padding: '5px 10px',
                                 cursor: 'pointer',
-                                color: '#1e40af'
+                                color: '#1e40af',
+                                fontSize: 11,
+                                fontWeight: 500
                               }}
                               title="Visualizza PDF"
                               data-testid={`view-pdf-${doc.id}`}
                             >
-                              👁️
+                              Vedi
                             </button>
                             
                             <button
