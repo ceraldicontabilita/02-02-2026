@@ -59,13 +59,16 @@ export default function Dashboard() {
     }
   };
 
-  useEffect(() => {
-    // Esegui auto-riparazione al primo caricamento
-    eseguiAutoRiparazione();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Auto-riparazione DISABILITATA per performance (eseguire manualmente se necessario)
+  // useEffect(() => {
+  //   eseguiAutoRiparazione();
+  // }, []);
 
   useEffect(() => {
+    // Timeout per evitare blocchi
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+    
     (async () => {
       try {
         setLoading(true);
@@ -76,7 +79,7 @@ export default function Dashboard() {
         setH(healthData);
         setSum(summaryData);
         
-        // Load trend mensile, calendario POS e scadenze
+        // Load trend mensile, calendario POS e scadenze - con timeout individuale
         const [trendRes, posRes, notifRes, scadenzeRes, bilancioRes] = await Promise.all([
           api.get(`/api/dashboard/trend-mensile?anno=${anno}`).catch(() => ({ data: null })),
           api.get(`/api/pos-accredito/calendario-mensile/${anno}/${new Date().getMonth() + 1}`).catch(() => ({ data: null })),
@@ -85,30 +88,40 @@ export default function Dashboard() {
           api.get(`/api/dashboard/bilancio-istantaneo?anno=${anno}`).catch(() => ({ data: null }))
         ]);
         
-        // Carica dati per grafici avanzati
-        const [speseRes, confrontoRes, riconcRes, imposteRes] = await Promise.all([
+        // Imposta dati primari immediatamente
+        setTrendData(trendRes.data);
+        setPosCalendario(posRes.data);
+        setNotificheHaccp(notifRes.data?.non_lette || 0);
+        setScadenzeData(scadenzeRes.data);
+        setBilancioIstantaneo(bilancioRes.data);
+        
+        // Carica dati secondari DOPO i primari (non bloccanti)
+        setLoading(false);
+        
+        // Grafici avanzati caricati in background
+        Promise.all([
           api.get(`/api/dashboard/spese-per-categoria?anno=${anno}`).catch(() => ({ data: null })),
           api.get(`/api/dashboard/confronto-annuale?anno=${anno}`).catch(() => ({ data: null })),
           api.get(`/api/dashboard/stato-riconciliazione?anno=${anno}`).catch(() => ({ data: null })),
           api.get(`/api/contabilita/calcolo-imposte?regione=campania&anno=${anno}`).catch(() => ({ data: null }))
-        ]);
+        ]).then(([speseRes, confrontoRes, riconcRes, imposteRes]) => {
+          setSpeseCategoria(speseRes.data);
+          setConfrontoAnnuale(confrontoRes.data);
+          setStatoRiconciliazione(riconcRes.data);
+          setImposteData(imposteRes.data);
+        }).catch(e => console.warn('Errore grafici secondari:', e));
         
-        setTrendData(trendRes.data);
-        setPosCalendario(posRes.data);
-        setNotificheHaccp(notifRes.data.non_lette || 0);
-        setScadenzeData(scadenzeRes.data);
-        setBilancioIstantaneo(bilancioRes.data);
-        setSpeseCategoria(speseRes.data);
-        setConfrontoAnnuale(confrontoRes.data);
-        setStatoRiconciliazione(riconcRes.data);
-        setImposteData(imposteRes.data);
       } catch (e) {
         console.error("Dashboard error:", e);
         setErr("Backend non raggiungibile. Verifica che il server sia attivo.");
-      } finally {
         setLoading(false);
       }
     })();
+    
+    return () => {
+      clearTimeout(timeoutId);
+      controller.abort();
+    };
   }, [anno]);
 
   // Carica Volume Affari Reale quando toggle attivato
