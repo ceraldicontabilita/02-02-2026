@@ -578,7 +578,63 @@ Prima Nota  Da Riconciliare
 
 ---
 
-## 23. Clausola finale
+## 23. Importazione Fatture XML Noleggio ✅ IMPLEMENTATO (18 Gen 2026)
+
+**Script**: `/app/scripts/import_fatture_xml_noleggio.py`
+
+**Risultati importazione**:
+- 111 fatture XML processate
+- 5 targhe veicoli: GG262JA, GX037HJ, GE911SC, GW980EP, GG782PN
+- 30 verbali importati
+- 46 bolli importati
+- 2 riparazioni importate
+- 4 veicoli aggiornati nel sistema noleggio
+
+**Fornitori identificati**: ARVAL, ALD Automotive, Leasys, LeasePlan
+
+**Collection DB**: `fatture_noleggio_xml`
+
+---
+
+## 24. Ottimizzazione Dashboard ✅ (18 Gen 2026)
+
+**Problema risolto**: Dashboard lento con "Caricamento in corso..."
+
+**Fix applicati**:
+1. Disabilitata auto-riparazione automatica (eseguire manualmente)
+2. Caricamento grafici secondari in background (non bloccante)
+3. Timeout 3s per check status Parlant
+4. Caricamento progressivo: dati primari → dati secondari
+
+---
+
+## 25. Router INPS Documenti ✅ GIÀ IMPLEMENTATO
+
+**Router**: `/api/inps/`
+
+**Endpoint disponibili**:
+- `POST /cerca-delibere-fonsi` - Cerca email Delibere FONSI
+- `POST /cerca-dilazioni` - Cerca email dilazioni INPS
+- `GET /stats` - Statistiche documenti INPS
+
+**Status**: Funzionante (0 email trovate nella casella)
+
+---
+
+## 26. Router ADR ✅ GIÀ IMPLEMENTATO
+
+**Router**: `/api/adr/`
+
+**Endpoint disponibili**:
+- `POST /cerca-cartelle-email` - Cerca cartelle esattoriali
+- `GET /soggetti` - Lista soggetti con cartelle
+- `GET /stats` - Statistiche ADR
+
+**Status**: Funzionante (0 email trovate nella casella)
+
+---
+
+## 27. Clausola finale
 
 Questo PRD è vincolante.
 
