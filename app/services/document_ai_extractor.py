@@ -363,7 +363,7 @@ async def process_document(
     file_data: bytes,
     filename: str,
     document_type: str = None,
-    model: str = "gpt-4o"
+    model: str = "claude-sonnet-4-5-20250929"
 ) -> Dict[str, Any]:
     """
     Processa un documento completo: estrae testo e poi dati strutturati.
