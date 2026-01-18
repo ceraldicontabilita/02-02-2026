@@ -178,9 +178,17 @@ class DataPropagationService:
             "corrispettivo_id": corrispettivo.get("id"),
             "source": "corrispettivo_import",
             "created_at": datetime.now(timezone.utc).isoformat(),
-            # Dettaglio pagamenti
+            # Dettaglio pagamenti (struttura usata da ControlloMensile)
+            "dettaglio": {
+                "contanti": corrispettivo.get("pagato_contanti", 0),
+                "elettronico": corrispettivo.get("pagato_elettronico", 0),
+                "totale_iva": corrispettivo.get("totale_iva", 0),
+                "matricola_rt": corrispettivo.get("matricola_rt", ""),
+                "numero_documenti": corrispettivo.get("numero_documenti", 0)
+            },
+            # Campi flat per retrocompatibilità
             "pagato_contanti": corrispettivo.get("pagato_contanti", 0),
-            "pagato_pos": corrispettivo.get("pagato_pos", 0)
+            "pagato_elettronico": corrispettivo.get("pagato_elettronico", 0)
         }
         
         try:
