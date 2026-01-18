@@ -155,6 +155,18 @@ const NAV_ITEMS = [
     ]
   },
   
+  // === INTEGRAZIONI ===
+  { 
+    label: "Integrazioni", 
+    icon: "🔗", 
+    short: "Integr.",
+    isSubmenu: true,
+    children: [
+      { to: "/invoicetronic", label: "InvoiceTronic (SDI)", icon: "📧", isNew: true },
+      { to: "/pagopa", label: "PagoPA", icon: "💳", isNew: true },
+    ]
+  },
+  
   { to: "/admin", label: "Admin", icon: "⚙️", short: "Admin" },
 ];
 
