@@ -163,6 +163,7 @@ from app.routers import bonifici_stipendi  # Bonifici Stipendi da Email
 from app.routers import inps_documenti  # INPS - Delibere FONSI, Dilazioni
 from app.routers import adr  # ADR - Definizione Agevolata
 from app.routers import dimissioni  # Dimissioni dipendenti
+from app.routers import documenti_intelligenti  # Sistema classificazione email intelligente
 
 
 # =============================================================================
@@ -325,6 +326,9 @@ app.include_router(adr.router, prefix="/api/adr", tags=["ADR Definizione Agevola
 
 # --- Dimissioni Dipendenti ---
 app.include_router(dimissioni.router, prefix="/api/dimissioni", tags=["Dimissioni"])
+
+# --- Documenti Intelligenti (Classificazione Email) ---
+app.include_router(documenti_intelligenti.router, prefix="/api/documenti-smart", tags=["Documenti Intelligenti"])
 
 # --- Sincronizzazione Relazionale ---
 app.include_router(sync_relazionale.router, prefix="/api", tags=["Sincronizzazione Relazionale"])
