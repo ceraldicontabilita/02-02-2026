@@ -1176,8 +1176,22 @@ async def banca_veloce(
                 auto_confermati += 1
                 continue  # Non mostrare in lista
         
-        # Assegno non auto-confermato, aggiungi alla lista
-        assegni.append(ass)
+        # Assegno non auto-confermato, aggiungi alla lista con info fattura
+        # Aggiungi importo fattura per confronto visivo
+        ass_enriched = dict(ass)
+        if fattura:
+            ass_enriched["importo_fattura"] = importo_fattura
+            ass_enriched["fornitore_fattura"] = fattura.get("supplier_name") or fattura.get("cedente_denominazione") or ""
+        
+        # Se non c'è beneficiario ma c'è fornitore nel numero fattura, estrailo
+        if not ass_enriched.get("beneficiario") and not ass_enriched.get("fornitore"):
+            descrizione = ass_enriched.get("descrizione") or ""
+            if " - " in descrizione:
+                parts = descrizione.split(" - ")
+                if len(parts) > 1:
+                    ass_enriched["fornitore"] = parts[-1].strip()
+        
+        assegni.append(ass_enriched)
     
     # Log auto-conferme
     if auto_confermati > 0:
