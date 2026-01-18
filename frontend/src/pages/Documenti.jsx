@@ -52,6 +52,10 @@ export default function Documenti() {
   // Lock status per operazioni email
   const [emailLocked, setEmailLocked] = useState(false);
   const [currentOperation, setCurrentOperation] = useState(null);
+  
+  // PDF Viewer
+  const [selectedPdfDoc, setSelectedPdfDoc] = useState(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
 
   // Controlla lo stato del lock email
   const checkEmailLock = async () => {
