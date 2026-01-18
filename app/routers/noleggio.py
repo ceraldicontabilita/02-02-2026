@@ -375,22 +375,53 @@ async def scan_fatture_noleggio(anno: Optional[int] = None) -> Dict[str, Any]:
             if match:
                 targhe_trovate.add(match.group(1))
         
-        # Se nessuna targa trovata (es: LeasePlan), salva per associazione manuale
+        # Se nessuna targa trovata, prova ad associare intelligentemente
         if not targhe_trovate:
-            fatture_senza_targa.append({
-                "invoice_number": invoice_number,
-                "invoice_date": invoice_date,
-                "invoice_id": invoice_id,
-                "supplier": supplier,
-                "supplier_vat": supplier_vat,
-                "tipo_documento": invoice.get("tipo_documento", ""),
-                "codice_cliente": codice_cliente,
-                "total": invoice.get("total_amount", 0),
-                "pagato": invoice.get("pagato", False),
-                "prima_nota_banca_id": invoice.get("prima_nota_banca_id"),
-                "linee": linee
-            })
-            continue
+            # Controlla se è una fattura bollo/tassa proprietà
+            is_bollo = any(
+                any(kw in (l.get("descrizione") or "").lower() 
+                    for kw in ["tassa di propriet", "bollo", "addebito bollo"])
+                for l in linee
+            )
+            
+            # Per fatture bollo, cerca il veicolo attivo più recente di questo fornitore
+            if is_bollo and supplier_vat:
+                # Cerca veicolo con questo fornitore che ha data_fine nel futuro o nulla
+                from datetime import datetime
+                oggi = datetime.now().strftime('%Y-%m-%d')
+                
+                veicoli_attivi = await db[COLLECTION].find({
+                    "fornitore_piva": supplier_vat,
+                    "$or": [
+                        {"data_fine": {"$exists": False}},
+                        {"data_fine": None},
+                        {"data_fine": ""},
+                        {"data_fine": {"$gte": oggi}}
+                    ]
+                }).to_list(length=100)
+                
+                if veicoli_attivi:
+                    # Usa il primo veicolo attivo trovato
+                    targa_attiva = veicoli_attivi[0].get("targa")
+                    if targa_attiva:
+                        targhe_trovate.add(targa_attiva)
+            
+            # Se ancora nessuna targa, salva per associazione manuale
+            if not targhe_trovate:
+                fatture_senza_targa.append({
+                    "invoice_number": invoice_number,
+                    "invoice_date": invoice_date,
+                    "invoice_id": invoice_id,
+                    "supplier": supplier,
+                    "supplier_vat": supplier_vat,
+                    "tipo_documento": invoice.get("tipo_documento", ""),
+                    "codice_cliente": codice_cliente,
+                    "total": invoice.get("total_amount", 0),
+                    "pagato": invoice.get("pagato", False),
+                    "prima_nota_banca_id": invoice.get("prima_nota_banca_id"),
+                    "linee": linee
+                })
+                continue
         
         # Raggruppa le linee per targa E per categoria
         # Struttura: {targa: {categoria: {linee: [], totale_imponibile: 0, totale_iva: 0, metadata: {}}}}
