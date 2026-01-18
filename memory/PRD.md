@@ -500,7 +500,61 @@ Prima Nota  Da Riconciliare
 
 ---
 
-## 20. Clausola finale
+## 20. Sistema Classificazione Email Intelligente ✅ IMPLEMENTATO (18 Gen 2026)
+
+**Backend Router**: `/api/documenti-smart/`
+
+**Funzionalità**:
+- ✅ Scansione email con classificazione automatica
+- ✅ 10 regole predefinite per categorie (verbali, dimissioni, cartelle esattoriali, INPS, F24, ecc.)
+- ✅ Associazione automatica ai moduli del gestionale
+- ✅ Eliminazione email non rilevanti
+- ✅ Test-classify endpoint per verificare classificazione
+
+**Endpoint principali**:
+- `POST /scan` - Scansiona e classifica email
+- `POST /process` - Processa documenti classificati
+- `POST /associa-tutti` - Associa documenti alle sezioni gestionale
+- `GET /categories` - Lista mapping categorie
+- `GET /rules` - Lista regole di classificazione
+- `DELETE /cleanup-unmatched` - Elimina email non classificate
+
+**Files**:
+- `/app/app/services/email_classifier_service.py` (Servizio classificazione)
+- `/app/app/routers/documenti_intelligenti.py` (Router API)
+
+**Mapping Email → Gestionale**:
+| Categoria | Sezione Gestionale | Collection MongoDB |
+|-----------|-------------------|-------------------|
+| verbali | Noleggio Auto | verbali_noleggio |
+| dimissioni | Anagrafica Dipendenti | dimissioni |
+| cartelle_esattoriali | Commercialista | adr_definizione_agevolata |
+| inps_fonsi | INPS Documenti | delibere_fonsi |
+| bonifici_stipendi | Prima Nota Salari | bonifici_stipendi |
+| f24 | Gestione F24 | f24 |
+| buste_paga | Cedolini | cedolini_pdf |
+
+---
+
+## 21. Router Dimissioni ✅ IMPLEMENTATO (18 Gen 2026)
+
+**Backend Router**: `/api/dimissioni/`
+
+**Funzionalità**:
+- ✅ Ricerca email "Notifica richiesta recesso rapporto di lavoro"
+- ✅ Estrazione codice fiscale da subject/allegati
+- ✅ Estrazione data dimissioni
+- ✅ Associazione automatica a dipendente in anagrafica
+
+**Endpoint**:
+- `POST /cerca-email-dimissioni` - Cerca e estrae dati dimissioni
+- `POST /associa-dimissioni-dipendenti` - Aggiorna anagrafica dipendenti
+
+**File**: `/app/app/routers/dimissioni.py`
+
+---
+
+## 22. Clausola finale
 
 Questo PRD è vincolante.
 
