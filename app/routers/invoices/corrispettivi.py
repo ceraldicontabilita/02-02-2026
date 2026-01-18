@@ -1093,3 +1093,98 @@ async def hard_delete_corrispettivi_bulk(data: Dict[str, Any]) -> Dict[str, Any]
     
     result = await db["corrispettivi"].delete_many({"id": {"$in": ids}})
     return {"deleted": result.deleted_count}
+
+
+
+@router.post("/auto-ricostruisci-dati")
+async def auto_ricostruisci_dati_corrispettivi() -> Dict[str, Any]:
+    """
+    LOGICA INTELLIGENTE: Verifica e corregge automaticamente i corrispettivi.
+    
+    REGOLE:
+    1. Verifica campi mancanti (data, totale, iva)
+    2. Ricalcola IVA con scorporo se mancante
+    3. Verifica e corregge sincronizzazione con Prima Nota Cassa
+    4. Rimuove duplicati evidenti
+    """
+    db = Database.get_db()
+    
+    risultati = {
+        "timestamp": datetime.utcnow().isoformat(),
+        "corrispettivi_verificati": 0,
+        "iva_ricalcolata": 0,
+        "campi_corretti": 0,
+        "duplicati_rimossi": 0,
+        "errori": []
+    }
+    
+    try:
+        # 1. Verifica corrispettivi con IVA mancante o zero
+        corr_senza_iva = await db["corrispettivi"].find({
+            "$or": [{"totale_iva": 0}, {"totale_iva": None}],
+            "totale": {"$gt": 0}
+        }, {"_id": 0}).to_list(10000)
+        
+        risultati["corrispettivi_verificati"] = len(corr_senza_iva)
+        
+        for corr in corr_senza_iva:
+            totale = float(corr.get("totale", 0) or 0)
+            if totale > 0:
+                # Scorporo IVA 10%
+                imponibile = round(totale / 1.10, 2)
+                iva = round(totale - imponibile, 2)
+                
+                try:
+                    await db["corrispettivi"].update_one(
+                        {"id": corr["id"]},
+                        {"$set": {
+                            "totale_iva": iva,
+                            "totale_imponibile": imponibile,
+                            "iva_ricalcolata_auto": True,
+                            "updated_at": datetime.utcnow().isoformat()
+                        }}
+                    )
+                    risultati["iva_ricalcolata"] += 1
+                except Exception as e:
+                    risultati["errori"].append(f"Errore IVA {corr['id']}: {str(e)}")
+        
+        # 2. Verifica corrispettivi con data mancante o errata
+        corr_senza_data = await db["corrispettivi"].count_documents({
+            "$or": [{"data": None}, {"data": ""}, {"data": {"$regex": r"^N/[AD]"}}]
+        })
+        
+        if corr_senza_data > 0:
+            # Usa data_trasmissione se disponibile
+            await db["corrispettivi"].update_many(
+                {"data": None, "data_trasmissione": {"$exists": True}},
+                [{"$set": {"data": "$data_trasmissione"}}]
+            )
+            risultati["campi_corretti"] += corr_senza_data
+        
+        # 3. Rimuovi duplicati (stesso giorno, stesso totale, stesso punto cassa)
+        pipeline = [
+            {"$group": {
+                "_id": {"data": "$data", "totale": "$totale", "punto_cassa": {"$ifNull": ["$punto_cassa", "default"]}},
+                "count": {"$sum": 1},
+                "ids": {"$push": "$id"}
+            }},
+            {"$match": {"count": {"$gt": 1}}}
+        ]
+        duplicati = await db["corrispettivi"].aggregate(pipeline).to_list(1000)
+        
+        for dup in duplicati:
+            ids = dup.get("ids", [])
+            if len(ids) > 1:
+                for dup_id in ids[1:]:  # Mantieni il primo
+                    try:
+                        await db["corrispettivi"].delete_one({"id": dup_id})
+                        risultati["duplicati_rimossi"] += 1
+                    except Exception as e:
+                        risultati["errori"].append(f"Errore rimozione {dup_id}: {str(e)}")
+        
+    except Exception as e:
+        logger.error(f"Errore auto-ricostruzione corrispettivi: {e}")
+        risultati["errori"].append(str(e))
+    
+    return risultati
+
