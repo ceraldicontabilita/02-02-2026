@@ -512,7 +512,16 @@ async def import_fatture_xml_multipli(files: List[UploadFile] = File(...)):
     for file in files:
         try:
             content = await file.read()
-            xml_content = content.decode('utf-8', errors='replace')
+            # Prova diverse codifiche
+            xml_content = None
+            for encoding in ['utf-8', 'latin-1', 'iso-8859-1', 'cp1252']:
+                try:
+                    xml_content = content.decode(encoding)
+                    break
+                except UnicodeDecodeError:
+                    continue
+            if xml_content is None:
+                xml_content = content.decode('utf-8', errors='replace')
             parsed = parse_fattura_xml(xml_content)
             
             if parsed.get("error"):
