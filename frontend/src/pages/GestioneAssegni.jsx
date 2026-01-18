@@ -510,6 +510,31 @@ export default function GestioneAssegni() {
         Genera, collega e controlla i tuoi assegni in un'unica schermata
       </p>
 
+      {/* INFO CARD - Logica della pagina */}
+      <div style={{ 
+        background: 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)', 
+        borderRadius: 12, 
+        padding: 16, 
+        marginBottom: 20,
+        border: '1px solid #90caf9'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+          <span style={{ fontSize: 24 }}>🧠</span>
+          <div>
+            <h4 style={{ margin: '0 0 8px 0', color: '#1565c0' }}>Logica Intelligente Attiva</h4>
+            <p style={{ margin: 0, fontSize: 13, color: '#1976d2', lineHeight: 1.5 }}>
+              Questa pagina <strong>ricostruisce automaticamente</strong> i dati mancanti:
+            </p>
+            <ul style={{ margin: '8px 0 0 0', paddingLeft: 20, fontSize: 12, color: '#1976d2', lineHeight: 1.8 }}>
+              <li><strong>Beneficiario</strong>: estratto dalla descrizione del movimento bancario</li>
+              <li><strong>Fattura associata</strong>: trovata per corrispondenza importo esatto</li>
+              <li><strong>Pagamenti multipli</strong>: riconosciuti quando più assegni pagano una fattura</li>
+              <li><strong>Sincronizzazione</strong>: gli assegni sono estratti automaticamente dall'estratto conto</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
       {/* Action Bar - responsive */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
         <button
@@ -545,6 +570,32 @@ export default function GestioneAssegni() {
           }}
         >
           {autoAssociating ? 'Associando...' : 'Auto-Associa'}
+        </button>
+        
+        {/* Pulsante Sync da EC */}
+        <button
+          onClick={async () => {
+            try {
+              const res = await api.post('/api/assegni/sync-da-estratto-conto');
+              alert(`Sincronizzati ${res.data.assegni_creati} nuovi assegni dall'estratto conto`);
+              loadData();
+            } catch (e) {
+              alert('Errore sincronizzazione: ' + (e.response?.data?.detail || e.message));
+            }
+          }}
+          data-testid="sync-ec-btn"
+          style={{
+            padding: '10px 16px',
+            background: '#ff9800',
+            color: 'white',
+            border: 'none',
+            borderRadius: 8,
+            cursor: 'pointer',
+            fontWeight: 'bold',
+            fontSize: 13
+          }}
+        >
+          🔄 Sync da E/C
         </button>
         
         {/* Pulsante Stampa Selezionati */}
