@@ -135,7 +135,7 @@ async def proxy_get_session(session_id: str):
 async def proxy_get_events(session_id: str):
     """Proxy per ottenere eventi di una sessione."""
     try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
+        async with httpx.AsyncClient(timeout=120.0) as client:
             response = await client.get(f"{PARLANT_SERVER}/sessions/{session_id}/events")
             return response.json()
     except Exception as e:
@@ -148,7 +148,7 @@ async def proxy_post_event(session_id: str, request: Request):
     """Proxy per inviare un evento (messaggio) a una sessione."""
     try:
         body = await request.json()
-        async with httpx.AsyncClient(timeout=60.0) as client:
+        async with httpx.AsyncClient(timeout=120.0) as client:
             response = await client.post(
                 f"{PARLANT_SERVER}/sessions/{session_id}/events",
                 json=body,
