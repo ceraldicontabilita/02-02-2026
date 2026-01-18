@@ -551,7 +551,7 @@ function TabRetribuzione({ cedolini, dipendente, anno }) {
                 <td style={{ ...tdStyle, textAlign: 'center' }}>
                   {c.pdf_data ? (
                     <a
-                      href={`${process.env.REACT_APP_BACKEND_URL}/api/cedolini/${c.id}/download`}
+                      href={`${import.meta.env.VITE_BACKEND_URL || ''}/api/cedolini/${c.id}/download`}
                       target="_blank"
                       rel="noreferrer"
                       style={{ color: '#3b82f6', textDecoration: 'none', fontWeight: 600 }}
