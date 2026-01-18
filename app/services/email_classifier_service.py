@@ -119,11 +119,14 @@ EMAIL_RULES: List[EmailRule] = [
     ),
     
     # --- BONIFICI STIPENDI ---
+    # Accetta qualsiasi banca/mittente - match su contenuto
     EmailRule(
         name="bonifici_stipendi",
-        keywords=["Info Bonifico", "YouBusiness", "disposizione bonifico", "pagamento stipendio"],
-        subject_patterns=[r"info\s*bonifico", r"bonifico.*stipend", r"pagamento.*dipendent"],
-        sender_patterns=["bpm", "bnl", "intesa", "unicredit", "banco"],
+        keywords=["Info Bonifico", "YouBusiness", "disposizione bonifico", "pagamento stipendio",
+                  "bonifico sepa", "esito bonifico", "conferma bonifico", "accredito stipendio"],
+        subject_patterns=[r"info\s*bonifico", r"bonifico.*stipend", r"pagamento.*dipendent",
+                         r"esito.*bonifico", r"conferma.*bonifico", r"bonifico.*sepa"],
+        sender_patterns=[],  # Accetta QUALSIASI mittente
         category="bonifici_stipendi",
         gestionale_section="Prima Nota Salari",
         collection="bonifici_stipendi",
