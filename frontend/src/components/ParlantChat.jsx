@@ -114,9 +114,9 @@ export default function ParlantChat() {
         })
       });
 
-      // Poll for response
+      // Poll for response - Emcie può richiedere più tempo per le prime conversazioni
       let attempts = 0;
-      const maxAttempts = 30;
+      const maxAttempts = 90;  // 90 secondi max
       const pollInterval = 1000;
 
       const pollForResponse = async () => {
