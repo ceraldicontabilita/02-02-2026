@@ -168,6 +168,9 @@ app.include_router(public_api.router, prefix="/api", tags=["Public API"])
 # --- Authentication ---
 app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 
+# --- Parlant AI Agent ---
+app.include_router(parlant_router.router, prefix="/api/parlant", tags=["Parlant AI"])
+
 # --- F24 Module ---
 app.include_router(f24_main.router, prefix="/api/f24", tags=["F24"])
 app.include_router(f24_riconciliazione.router, prefix="/api/f24-riconciliazione", tags=["F24 Riconciliazione"])
