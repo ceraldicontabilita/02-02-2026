@@ -164,6 +164,7 @@ const NAV_ITEMS = [
     children: [
       { to: "/invoicetronic", label: "InvoiceTronic (SDI)", icon: "📧", isNew: true },
       { to: "/pagopa", label: "PagoPA", icon: "💳", isNew: true },
+      { to: "/classificazione-email", label: "Classificazione Email AI", icon: "🧠", isNew: true },
     ]
   },
   
