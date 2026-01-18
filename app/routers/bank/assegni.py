@@ -601,15 +601,15 @@ async def sync_assegni_da_estratto_conto() -> Dict[str, Any]:
     movimenti = await db.estratto_conto_movimenti.find({
         "$and": [
             {"$or": [
-                {"descrizione": {"$regex": "PRELIEVO\\s+ASSEGNO", "$options": "i"}},
-                {"descrizione": {"$regex": "VOSTRO\\s+ASSEGNO", "$options": "i"}},
-                {"descrizione": {"$regex": "VS\\.?\\s*ASSEGNO", "$options": "i"}},
-                {"descrizione": {"$regex": "PAGAMENTO\\s+ASSEGNO", "$options": "i"}},
-                {"descrizione_originale": {"$regex": "PRELIEVO\\s+ASSEGNO", "$options": "i"}},
-                {"descrizione_originale": {"$regex": "VOSTRO\\s+ASSEGNO", "$options": "i"}}
+                {"descrizione": {"$regex": "PRELIEVO.*ASSEGNO", "$options": "i"}},
+                {"descrizione": {"$regex": "VOSTRO.*ASSEGNO", "$options": "i"}},
+                {"descrizione": {"$regex": "VS\\..*ASSEGNO", "$options": "i"}},
+                {"descrizione": {"$regex": "PAGAMENTO.*ASSEGNO", "$options": "i"}},
+                {"descrizione_originale": {"$regex": "PRELIEVO.*ASSEGNO", "$options": "i"}},
+                {"descrizione_originale": {"$regex": "VOSTRO.*ASSEGNO", "$options": "i"}}
             ]},
             {"importo": {"$lt": 0}},  # Solo uscite
-            {"descrizione": {"$not": {"$regex": "RILASCIO\\s+CARNET", "$options": "i"}}}  # Escludi rilascio carnet
+            {"descrizione": {"$not": {"$regex": "RILASCIO.*CARNET", "$options": "i"}}}  # Escludi rilascio carnet
         ]
     }, {"_id": 0}).to_list(1000)
     
