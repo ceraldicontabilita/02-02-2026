@@ -890,27 +890,31 @@ export default function GestioneAssegni() {
         <div style={{ 
           marginBottom: 20, 
           padding: 15, 
-          background: combinazioneResult.associazioni_effettuate > 0 ? '#e3f2fd' : '#fff3e0',
+          background: combinazioneResult.match_trovati > 0 ? '#e3f2fd' : '#fff3e0',
           borderRadius: 8,
-          border: `1px solid ${combinazioneResult.associazioni_effettuate > 0 ? '#90caf9' : '#ffe0b2'}`
+          border: `1px solid ${combinazioneResult.match_trovati > 0 ? '#90caf9' : '#ffe0b2'}`
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div style={{ flex: 1 }}>
-              <strong style={{ color: combinazioneResult.associazioni_effettuate > 0 ? '#1565c0' : '#e65100' }}>
+              <strong style={{ color: combinazioneResult.match_trovati > 0 ? '#1565c0' : '#e65100' }}>
                 🔗 {combinazioneResult.message || 
-                  (combinazioneResult.associazioni_effettuate > 0 
-                    ? `Trovate ${combinazioneResult.associazioni_effettuate} combinazioni!`
+                  (combinazioneResult.match_trovati > 0 
+                    ? `Trovate ${combinazioneResult.match_trovati} combinazioni! (${combinazioneResult.assegni_associati} assegni associati)`
                     : 'Nessuna combinazione trovata')}
               </strong>
-              {combinazioneResult.dettagli && combinazioneResult.dettagli.length > 0 && (
+              <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
+                Analizzati: {combinazioneResult.assegni_analizzati || 0} assegni • 
+                Combinazioni testate: {combinazioneResult.combinazioni_testate || 0}
+              </div>
+              {combinazioneResult.dettagli_match && combinazioneResult.dettagli_match.length > 0 && (
                 <div style={{ marginTop: 10, fontSize: 13 }}>
                   <strong>Combinazioni trovate:</strong>
                   <ul style={{ margin: '5px 0', paddingLeft: 20 }}>
-                    {combinazioneResult.dettagli.map((d, i) => (
+                    {combinazioneResult.dettagli_match.map((d, i) => (
                       <li key={i} style={{ marginBottom: 8 }}>
                         <div>
                           <span style={{ color: '#1565c0', fontWeight: 600 }}>
-                            {d.assegni_numeri?.length || d.numero_assegni || '?'} Assegni
+                            {d.num_assegni} Assegni
                           </span>
                           {' → '}
                           <span style={{ color: '#2e7d32', fontWeight: 600 }}>
@@ -921,16 +925,20 @@ export default function GestioneAssegni() {
                           )}
                         </div>
                         <div style={{ fontSize: 11, color: '#666', marginTop: 2 }}>
-                          Somma assegni: {formatEuro(d.somma_assegni || d.importo_totale)} = Importo fattura: {formatEuro(d.importo_fattura)}
+                          Assegni: {d.assegni?.join(', ')} • 
+                          Somma: {formatEuro(d.somma_assegni)} = Fattura: {formatEuro(d.fattura_importo)}
+                          {d.differenza !== 0 && (
+                            <span style={{ color: '#f59e0b' }}> (diff: {formatEuro(d.differenza)})</span>
+                          )}
                         </div>
                       </li>
                     ))}
                   </ul>
                 </div>
               )}
-              {combinazioneResult.assegni_non_associati > 0 && (
+              {combinazioneResult.assegni_non_associabili && combinazioneResult.assegni_non_associabili.length > 0 && (
                 <div style={{ marginTop: 8, fontSize: 12, color: '#f59e0b' }}>
-                  ⚠️ {combinazioneResult.assegni_non_associati} assegni rimasti senza corrispondenza
+                  ⚠️ {combinazioneResult.assegni_non_associabili.length} assegni rimasti senza corrispondenza
                 </div>
               )}
             </div>
