@@ -311,6 +311,9 @@ app.include_router(invoicetronic.router, tags=["InvoiceTronic SDI"])
 # --- Verbali Noleggio da Email ---
 app.include_router(verbali_noleggio.router, tags=["Verbali Noleggio"])
 
+# --- Bonifici Stipendi da Email ---
+app.include_router(bonifici_stipendi.router, tags=["Bonifici Stipendi"])
+
 # --- Sincronizzazione Relazionale ---
 app.include_router(sync_relazionale.router, prefix="/api", tags=["Sincronizzazione Relazionale"])
 
