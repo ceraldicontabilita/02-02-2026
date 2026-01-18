@@ -158,14 +158,20 @@ Si scala:
 - **Auto-conferma assegni con match esatto** (18 Gen 2026)
 - **Import estratto conto con gestione duplicati** (18 Gen 2026)
 - **Integrazione Parlant.io con Emcie** (18 Gen 2026)
+- **Pagina F24: rimossi pulsanti Cassa/Assegno, solo pagamento Banca** (18 Gen 2026)
+- **Pagina F24: aggiunto pulsante "Vedi PDF" sempre visibile** (18 Gen 2026)
+- **Unificazione collection `fornitori` e `suppliers`** (18 Gen 2026) - 263 fornitori consolidati
+- **Implementato servizio Supervisione Contabile** (18 Gen 2026)
+- **Fix pagina Previsioni Acquisti** - funzionante (18 Gen 2026)
 
 ### 🔄 In Progress
 - UI pulsante aggiornamento bulk fornitori in `Fornitori.jsx`
 - Risoluzione 182 fornitori bancari senza IBAN (ridotti da 223)
+- Logica supervisione Cassa → Banca (backend pronto, da testare)
+- Auto-riconciliazione F24 con estratto conto (backend pronto, da testare)
 
 ### 📋 Backlog
 - Finalizzare importazione cedolini da PDF (OCR)
-- Unificare collection `fornitori` e `suppliers`
 - Dashboard Analytics
 - Integrazione Google Calendar
 - Report PDF via email
