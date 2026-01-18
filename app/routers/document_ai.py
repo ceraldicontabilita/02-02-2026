@@ -153,6 +153,10 @@ async def get_document_types():
             "f24": "Modello F24 - Versamenti fiscali e contributivi",
             "busta_paga": "Busta paga / Cedolino dipendente",
             "estratto_conto": "Estratto conto bancario",
+            "bonifico": "Ricevuta bonifico bancario",
+            "verbale": "Verbale / Multa stradale",
+            "cartella_esattoriale": "Cartella esattoriale AdER",
+            "delibera_inps": "Delibera / Comunicazione INPS",
             "fattura": "Fattura commerciale",
             "generico": "Documento generico (auto-detect)"
         }
