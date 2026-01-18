@@ -40,7 +40,7 @@ def decode_email_subject(subject: str) -> str:
     return ''.join(result)
 
 
-def estrai_dati_dimissioni(testo: str) -> Dict[str, Any]:
+def estrai_dati_dimissioni(testo: str, allegati: List[str] = None) -> Dict[str, Any]:
     """
     Estrae i dati dalla notifica dimissioni.
     Cerca: nome dipendente, codice fiscale, data dimissioni, data decorrenza
@@ -53,16 +53,30 @@ def estrai_dati_dimissioni(testo: str) -> Dict[str, Any]:
         "motivo": None
     }
     
-    # Cerca codice fiscale
+    # Cerca codice fiscale nel testo
     match = re.search(r'\b([A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z])\b', testo.upper())
     if match:
         dati["codice_fiscale"] = match.group(1)
+    
+    # Se non trovato nel testo, cerca nei nomi degli allegati
+    if not dati["codice_fiscale"] and allegati:
+        for allegato in allegati:
+            match = re.search(r'([A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z])', allegato.upper())
+            if match:
+                dati["codice_fiscale"] = match.group(1)
+                break
     
     # Cerca data dimissioni
     # Pattern: "data dimissioni: 01/12/2024" o "dal 01/12/2024"
     match = re.search(r'(?:data\s+dimission[ei]|dal|decorrenza)[:\s]+(\d{2}/\d{2}/\d{4})', testo, re.I)
     if match:
         dati["data_dimissioni"] = match.group(1)
+    
+    # Cerca data nel formato YYYYMMDD nel subject o testo
+    match = re.search(r'_(\d{8})\d+', testo)
+    if match and not dati["data_dimissioni"]:
+        data_str = match.group(1)
+        dati["data_dimissioni"] = f"{data_str[6:8]}/{data_str[4:6]}/{data_str[0:4]}"
     
     # Cerca data nel formato ISO
     match = re.search(r'(\d{4}-\d{2}-\d{2})', testo)
