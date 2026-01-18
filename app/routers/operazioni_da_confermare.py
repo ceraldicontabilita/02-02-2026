@@ -1176,12 +1176,43 @@ async def banca_veloce(
                 auto_confermati += 1
                 continue  # Non mostrare in lista
         
+        # Salta assegni con dati incompleti (importo 0 o data mancante)
+        if importo_assegno == 0 or not ass.get("data") and not ass.get("data_emissione"):
+            continue
+        
         # Assegno non auto-confermato, aggiungi alla lista con info fattura
         # Aggiungi importo fattura per confronto visivo
         ass_enriched = dict(ass)
         if fattura:
             ass_enriched["importo_fattura"] = importo_fattura
             ass_enriched["fornitore_fattura"] = fattura.get("supplier_name") or fattura.get("cedente_denominazione") or ""
+            
+            # Verifica se è un pagamento TD24 (fattura differita riepilogativa con imponibile 0)
+            tipo_doc = fattura.get("tipo_documento") or fattura.get("document_type") or ""
+            if tipo_doc == "TD24" and importo_fattura == 0:
+                ass_enriched["nota_td24"] = "Fattura TD24 riepilogativa - solo documentale"
+        
+        # Conta quanti assegni sono collegati alla stessa fattura (rate)
+        if numero_fattura:
+            rate_count = await db.assegni.count_documents({
+                "numero_fattura": numero_fattura,
+                "stato": {"$nin": ["incassato", "annullato"]}
+            })
+            if rate_count > 1:
+                # Calcola totale rate
+                rate_cursor = db.assegni.find(
+                    {"numero_fattura": numero_fattura, "stato": {"$nin": ["incassato", "annullato"]}},
+                    {"importo": 1}
+                )
+                totale_rate = 0
+                async for r in rate_cursor:
+                    totale_rate += abs(float(r.get("importo", 0) or 0))
+                
+                ass_enriched["info_rate"] = {
+                    "numero_rate": rate_count,
+                    "totale_rate": totale_rate,
+                    "importo_rata": importo_assegno
+                }
         
         # Se non c'è beneficiario ma c'è fornitore nel numero fattura, estrailo
         if not ass_enriched.get("beneficiario") and not ass_enriched.get("fornitore"):
