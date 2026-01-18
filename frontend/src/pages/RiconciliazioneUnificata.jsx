@@ -936,6 +936,7 @@ function MovimentoCard({ movimento, onConferma, onIgnora, processing, showFattur
               borderRadius: 6,
               fontSize: 11,
               display: 'inline-flex',
+              flexWrap: 'wrap',
               gap: 12,
               alignItems: 'center'
             }}>
@@ -953,6 +954,36 @@ function MovimentoCard({ movimento, onConferma, onIgnora, processing, showFattur
                     </>
                   )}
                 </>
+              )}
+              {/* Info pagamento rateale */}
+              {movimento.info_rate && movimento.info_rate.numero_rate > 1 && (
+                <div style={{ 
+                  width: '100%', 
+                  marginTop: 4,
+                  padding: '4px 8px',
+                  background: '#dbeafe',
+                  borderRadius: 4,
+                  color: '#1e40af'
+                }}>
+                  📊 <b>Pagamento in {movimento.info_rate.numero_rate} rate</b>: 
+                  Totale rate {formatEuro(movimento.info_rate.totale_rate)} 
+                  {movimento.importo_fattura > 0 && (
+                    <span> su fattura di {formatEuro(movimento.importo_fattura)}</span>
+                  )}
+                </div>
+              )}
+              {/* Nota TD24 */}
+              {movimento.nota_td24 && (
+                <div style={{ 
+                  width: '100%', 
+                  marginTop: 4,
+                  padding: '4px 8px',
+                  background: '#fce7f3',
+                  borderRadius: 4,
+                  color: '#9d174d'
+                }}>
+                  ℹ️ {movimento.nota_td24}
+                </div>
               )}
             </div>
           )}
