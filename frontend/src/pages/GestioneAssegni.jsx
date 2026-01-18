@@ -271,6 +271,10 @@ export default function GestioneAssegni() {
   const [autoAssociating, setAutoAssociating] = useState(false);
   const [autoAssocResult, setAutoAssocResult] = useState(null);
   
+  // Associazione combinata (più assegni = 1 fattura)
+  const [combinazioneLoading, setCombinazioneLoading] = useState(false);
+  const [combinazioneResult, setCombinazioneResult] = useState(null);
+  
   // Selezione multipla per stampa PDF
   const [selectedAssegni, setSelectedAssegni] = useState(new Set());
   
