@@ -237,30 +237,26 @@ export default function DashboardAnalytics() {
         return dataCorr.startsWith(String(anno));
       });
 
-      // Calcola KPI - usa corrispettivi come fatturato se fatture sono vuote
-      const fatturatoFatture = fatture.reduce((sum, f) => sum + (parseFloat(f.importo_totale || f.totale) || 0), 0);
-      const fatturatoCorr = corrispettivi.reduce((sum, c) => sum + (parseFloat(c.totale) || 0), 0);
-      const fatturatoTotale = fatturatoFatture + fatturatoCorr;
+      // LOGICA CORRETTA: Fatturato = SOLO corrispettivi
+      // Le fatture emesse di Ceraldi Group sono FIGURATIVE (già incluse nei corrispettivi)
+      // Non vanno sommate, servono solo per documentazione
+      const fatturatoTotale = corrispettivi.reduce((sum, c) => sum + (parseFloat(c.totale) || 0), 0);
       
+      // Entrate = movimenti Prima Nota tipo "entrata" (corrispettivi registrati)
       const entrateTotali = movimenti.filter(m => m.tipo === 'entrata').reduce((sum, m) => sum + (parseFloat(m.importo) || 0), 0);
       const usciteTotali = movimenti.filter(m => m.tipo === 'uscita').reduce((sum, m) => sum + Math.abs(parseFloat(m.importo) || 0), 0);
       const cashFlow = entrateTotali - usciteTotali;
 
-      // Fatturato mensile - combina fatture e corrispettivi
+      // Fatturato mensile - SOLO corrispettivi (fatture emesse sono figurative)
       const fatturatoMensile = MESI.map((mese, idx) => {
-        const meseFatture = fatture.filter(f => {
-          const data = new Date(f.data_fattura || f.data_ricezione || f.data);
-          return data.getMonth() === idx && data.getFullYear() === anno;
-        });
         const meseCorr = corrispettivi.filter(c => {
           const data = new Date(c.data);
           return data.getMonth() === idx && data.getFullYear() === anno;
         });
-        const totFatt = meseFatture.reduce((sum, f) => sum + (parseFloat(f.importo_totale || f.totale) || 0), 0);
         const totCorr = meseCorr.reduce((sum, c) => sum + (parseFloat(c.totale) || 0), 0);
         return {
           label: mese,
-          value: totFatt + totCorr,
+          value: totCorr,
           color: '#3b82f6'
         };
       });
