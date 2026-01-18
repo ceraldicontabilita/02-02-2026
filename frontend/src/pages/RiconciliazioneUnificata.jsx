@@ -1160,15 +1160,17 @@ function F24Tab({ f24, onConfermaF24, processing }) {
           
           {selezionati.size > 0 && (
             <>
-              <select 
-                value={metodoBatch}
-                onChange={e => setMetodoBatch(e.target.value)}
-                style={{ padding: '8px 12px', border: '1px solid #dc2626', borderRadius: 6, fontSize: 13, background: '#fee2e2' }}
-              >
-                <option value="banca">🏦 Banca (Bonifico)</option>
-                <option value="assegno">📝 Assegno</option>
-                <option value="cassa">💰 Cassa</option>
-              </select>
+              <span style={{ 
+                padding: '8px 12px', 
+                border: '1px solid #dc2626', 
+                borderRadius: 6, 
+                fontSize: 13, 
+                background: '#fee2e2',
+                fontWeight: 600,
+                color: '#991b1b'
+              }}>
+                🏦 Pagamento Banca
+              </span>
               
               <button 
                 onClick={confermaBatch}
