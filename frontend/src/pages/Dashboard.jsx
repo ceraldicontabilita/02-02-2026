@@ -30,6 +30,40 @@ export default function Dashboard() {
   const [volumeRealeLoading, setVolumeRealeLoading] = useState(false);
   // Bilancio Istantaneo
   const [bilancioIstantaneo, setBilancioIstantaneo] = useState(null);
+  
+  // Stato per auto-riparazione
+  const [autoRepairStatus, setAutoRepairStatus] = useState(null);
+
+  /**
+   * LOGICA INTELLIGENTE: Esegue auto-riparazione dei dati al caricamento.
+   */
+  const eseguiAutoRiparazione = async () => {
+    try {
+      // Esegue riparazioni in background senza bloccare il caricamento
+      const [fatRes, ricRes] = await Promise.all([
+        api.post('/api/fatture-ricevute/auto-ricostruisci-dati').catch(() => ({ data: {} })),
+        api.post('/api/operazioni-da-confermare/auto-ricostruisci-dati').catch(() => ({ data: {} }))
+      ]);
+      
+      const totaleCorrezioni = 
+        (fatRes.data.campi_corretti || 0) + 
+        (fatRes.data.fornitori_associati || 0) + 
+        (ricRes.data.riconciliazioni_auto || 0);
+      
+      if (totaleCorrezioni > 0) {
+        console.log('🔧 Auto-riparazione dashboard completata:', { fatture: fatRes.data, riconciliazione: ricRes.data });
+        setAutoRepairStatus({ fatture: fatRes.data, riconciliazione: ricRes.data, totale: totaleCorrezioni });
+      }
+    } catch (error) {
+      console.warn('Auto-riparazione non riuscita:', error);
+    }
+  };
+
+  useEffect(() => {
+    // Esegui auto-riparazione al primo caricamento
+    eseguiAutoRiparazione();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     (async () => {
