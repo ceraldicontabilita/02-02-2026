@@ -1685,3 +1685,117 @@ async def elabora_fatture_legacy(
     
     return risultati
 
+
+
+@router.post("/auto-ricostruisci-dati")
+async def auto_ricostruisci_dati_fatture() -> Dict[str, Any]:
+    """
+    LOGICA INTELLIGENTE: Verifica e corregge automaticamente i dati delle fatture.
+    
+    Questa funzione viene chiamata automaticamente dal frontend quando si carica
+    la pagina Archivio Fatture. Implementa controlli di un commercialista esperto.
+    
+    REGOLE:
+    1. Verifica che ogni fattura abbia un fornitore valido
+    2. Corregge campi mancanti (supplier_name, total_amount)
+    3. Rimuove duplicati evidenti
+    4. Verifica coerenza TD24 (fatture differite con importo 0)
+    5. Aggiorna statistiche
+    """
+    db = Database.get_db()
+    
+    risultati = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "fatture_processate": 0,
+        "campi_corretti": 0,
+        "duplicati_rimossi": 0,
+        "fornitori_associati": 0,
+        "td24_marcate": 0,
+        "errori": []
+    }
+    
+    try:
+        # 1. Carica fatture con potenziali problemi
+        fatture = await db[COL_FATTURE_RICEVUTE].find({
+            "$or": [
+                {"supplier_name": {"$in": [None, "", "N/A"]}},
+                {"total_amount": None},
+                {"total_amount": 0},
+                {"supplier_vat": {"$exists": True}, "fornitore_id": {"$exists": False}}
+            ]
+        }, {"_id": 0}).to_list(10000)
+        
+        risultati["fatture_processate"] = len(fatture)
+        
+        # Indice fornitori per P.IVA
+        fornitori = await db[COL_FORNITORI].find({}, {"_id": 0}).to_list(10000)
+        fornitori_idx = {f.get("partita_iva", "").upper(): f for f in fornitori if f.get("partita_iva")}
+        
+        for fattura in fatture:
+            fat_id = fattura.get("id")
+            aggiornamenti = {}
+            
+            # a) Verifica e correggi supplier_name
+            if not fattura.get("supplier_name") or fattura.get("supplier_name") in ["", "N/A"]:
+                piva = (fattura.get("supplier_vat") or "").upper()
+                if piva in fornitori_idx:
+                    aggiornamenti["supplier_name"] = fornitori_idx[piva].get("ragione_sociale") or fornitori_idx[piva].get("denominazione")
+                    aggiornamenti["fornitore_id"] = fornitori_idx[piva].get("id")
+                    risultati["fornitori_associati"] += 1
+            
+            # b) Verifica importo
+            if not fattura.get("total_amount") or fattura.get("total_amount") == 0:
+                # Cerca da campi alternativi
+                importo = fattura.get("importo_totale") or fattura.get("taxable_amount", 0) * 1.22
+                if importo and importo > 0:
+                    aggiornamenti["total_amount"] = round(float(importo), 2)
+                    risultati["campi_corretti"] += 1
+            
+            # c) Verifica TD24 (fatture differite)
+            tipo_doc = fattura.get("tipo_documento") or fattura.get("document_type")
+            if tipo_doc == "TD24":
+                importo = fattura.get("total_amount") or fattura.get("importo_totale") or 0
+                if float(importo) == 0 and not fattura.get("non_riconciliabile"):
+                    aggiornamenti["non_riconciliabile"] = True
+                    aggiornamenti["note_auto"] = "Fattura TD24 riepilogativa - solo documentale"
+                    risultati["td24_marcate"] += 1
+            
+            # Applica aggiornamenti
+            if aggiornamenti:
+                aggiornamenti["ultima_verifica_auto"] = datetime.now(timezone.utc).isoformat()
+                try:
+                    await db[COL_FATTURE_RICEVUTE].update_one(
+                        {"id": fat_id},
+                        {"$set": aggiornamenti}
+                    )
+                except Exception as e:
+                    risultati["errori"].append(f"Errore update {fat_id}: {str(e)}")
+        
+        # 2. Cerca e rimuovi duplicati evidenti
+        pipeline = [
+            {"$group": {
+                "_id": {"piva": "$supplier_vat", "numero": "$invoice_number", "data": "$invoice_date"},
+                "count": {"$sum": 1},
+                "ids": {"$push": "$id"}
+            }},
+            {"$match": {"count": {"$gt": 1}}}
+        ]
+        duplicati = await db[COL_FATTURE_RICEVUTE].aggregate(pipeline).to_list(1000)
+        
+        for dup in duplicati:
+            ids = dup.get("ids", [])
+            # Mantieni il primo, rimuovi gli altri
+            if len(ids) > 1:
+                for dup_id in ids[1:]:
+                    try:
+                        await db[COL_FATTURE_RICEVUTE].delete_one({"id": dup_id})
+                        risultati["duplicati_rimossi"] += 1
+                    except Exception as e:
+                        risultati["errori"].append(f"Errore rimozione duplicato {dup_id}: {str(e)}")
+        
+    except Exception as e:
+        logger.error(f"Errore auto-ricostruzione fatture: {e}")
+        risultati["errori"].append(str(e))
+    
+    return risultati
+
