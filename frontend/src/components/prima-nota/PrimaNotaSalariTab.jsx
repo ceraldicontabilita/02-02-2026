@@ -43,8 +43,36 @@ const PrimaNotaSalariTab = memo(function PrimaNotaSalariTab() {
 
   // Local state for modal
   const [showAggiustamentoModal, setShowAggiustamentoModal] = useState(false);
+  
+  // Stato per auto-riparazione
+  const [autoRepairStatus, setAutoRepairStatus] = useState(null);
+  const [autoRepairRunning, setAutoRepairRunning] = useState(false);
+
+  /**
+   * LOGICA INTELLIGENTE: Esegue auto-riparazione dei dati al caricamento.
+   */
+  const eseguiAutoRiparazione = useCallback(async () => {
+    setAutoRepairRunning(true);
+    try {
+      const res = await api.post('/api/prima-nota/salari/auto-ricostruisci-dati');
+      if (res.data.righe_pulite > 0 || res.data.correzioni > 0) {
+        console.log('🔧 Auto-riparazione salari completata:', res.data);
+        setAutoRepairStatus(res.data);
+        fetchSalari();
+      }
+    } catch (error) {
+      console.warn('Auto-riparazione salari non riuscita:', error);
+    } finally {
+      setAutoRepairRunning(false);
+    }
+  }, [fetchSalari]);
 
   // Load data on mount and when filters change
+  useEffect(() => {
+    eseguiAutoRiparazione();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     fetchSalari();
     fetchDipendentiLista();
