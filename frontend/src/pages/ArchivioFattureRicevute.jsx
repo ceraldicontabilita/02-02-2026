@@ -25,7 +25,6 @@ const MESI = [
 // Tabs della pagina unificata
 const TABS = [
   { id: 'archivio', label: '📋 Archivio', desc: 'Lista e ricerca fatture' },
-  { id: 'import', label: '📤 Import XML', desc: 'Import integrato' },
   { id: 'scadenze', label: '📅 Scadenze', desc: 'Scadenziario pagamenti' },
   { id: 'riconciliazione', label: '🔄 Riconcilia', desc: 'Match con banca' },
   { id: 'storico', label: '✅ Storico', desc: 'Pagamenti effettuati' },
