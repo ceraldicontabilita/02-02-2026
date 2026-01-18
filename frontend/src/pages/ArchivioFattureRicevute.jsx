@@ -456,7 +456,7 @@ export default function ArchivioFatture() {
               <div style={{ padding: 40, textAlign: 'center', color: '#6b7280' }}>
                 <div style={{ fontSize: 48, marginBottom: 16 }}>📭</div>
                 <p style={{ margin: 0 }}>Nessuna fattura trovata</p>
-                <p style={{ margin: '8px 0 0 0', fontSize: 14 }}>Usa i pulsanti "Carica XML" per importare fatture</p>
+                <p style={{ margin: '8px 0 0 0', fontSize: 14 }}>Vai a Import Unificato per importare fatture</p>
               </div>
             ) : (
               <div style={{ overflowX: 'auto' }}>
