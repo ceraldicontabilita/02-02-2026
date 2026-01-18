@@ -42,11 +42,14 @@ class ParlantAgentService:
         try:
             import parlant.sdk as p
             
-            # Configura chiave API per Gemini
-            if GOOGLE_API_KEY:
-                os.environ["GOOGLE_API_KEY"] = GOOGLE_API_KEY
+            # Verifica chiave API
+            if not GEMINI_API_KEY:
+                return {
+                    "success": False,
+                    "error": "GEMINI_API_KEY non configurata"
+                }
             
-            logger.info("Avvio server Parlant...")
+            logger.info(f"Avvio server Parlant con Gemini...")
             
             # Crea server con Gemini come NLP service
             self.server = p.Server(
