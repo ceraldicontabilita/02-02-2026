@@ -1042,6 +1042,164 @@ export default function Documenti() {
         💡 <strong>Configurazione Email:</strong> Le credenziali email sono configurate nel file .env del backend 
         (EMAIL_USER e EMAIL_APP_PASSWORD). Il sistema supporta Gmail con App Password.
       </div>
+        </>
+      ) : (
+        /* TAB AI ESTRATTI */
+        <div>
+          {/* Stats AI */}
+          {aiStats && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, marginBottom: 20 }}>
+              <div style={{ ...cardStyle, padding: '12px 16px', background: 'linear-gradient(135deg, #7c3aed, #a855f7)' }}>
+                <div style={{ fontSize: 24, fontWeight: 'bold', color: 'white' }}>{aiStats.totali?.documenti || 0}</div>
+                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)' }}>Documenti Totali</div>
+              </div>
+              <div style={{ ...cardStyle, padding: '12px 16px', background: '#dcfce7' }}>
+                <div style={{ fontSize: 24, fontWeight: 'bold', color: '#166534' }}>{aiStats.totali?.ai_processati || 0}</div>
+                <div style={{ fontSize: 12, color: '#166534' }}>AI Processati</div>
+              </div>
+              <div style={{ ...cardStyle, padding: '12px 16px', background: '#fef3c7' }}>
+                <div style={{ fontSize: 24, fontWeight: 'bold', color: '#92400e' }}>{aiStats.totali?.da_processare || 0}</div>
+                <div style={{ fontSize: 12, color: '#92400e' }}>Da Processare</div>
+              </div>
+            </div>
+          )}
+
+          {/* Upload nuovo documento */}
+          <div style={{ ...cardStyle, padding: 20, marginBottom: 20 }}>
+            <h3 style={{ margin: '0 0 16px', fontSize: 16, fontWeight: 600, color: '#1e293b' }}>
+              📤 Carica Documento per Estrazione AI
+            </h3>
+            <div style={{ 
+              border: '2px dashed #e2e8f0', 
+              borderRadius: 8, 
+              padding: 24, 
+              textAlign: 'center',
+              background: '#f8fafc'
+            }}>
+              <input
+                type="file"
+                accept=".pdf,.png,.jpg,.jpeg"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  
+                  const formData = new FormData();
+                  formData.append('file', file);
+                  formData.append('save_to_db', 'true');
+                  
+                  try {
+                    setAiLoading(true);
+                    const res = await api.post('/api/document-ai/extract', formData, {
+                      headers: { 'Content-Type': 'multipart/form-data' }
+                    });
+                    
+                    if (res.data.structured_data?.success) {
+                      alert(`✅ Documento estratto con successo!\nTipo: ${res.data.structured_data.document_type}\nSalvato in: ${res.data.gestionale_save?.collection || 'extracted_documents'}`);
+                      loadAiDocuments();
+                    } else {
+                      alert(`⚠️ Estrazione completata con errori: ${res.data.structured_data?.error || 'Unknown'}`);
+                    }
+                  } catch (error) {
+                    alert(`❌ Errore: ${error.response?.data?.detail || error.message}`);
+                  } finally {
+                    setAiLoading(false);
+                    e.target.value = '';
+                  }
+                }}
+                style={{ display: 'none' }}
+                id="ai-file-upload"
+              />
+              <label htmlFor="ai-file-upload" style={{ cursor: 'pointer' }}>
+                <div style={{ fontSize: 40, marginBottom: 8 }}>📄</div>
+                <div style={{ fontWeight: 600, color: '#1e293b', marginBottom: 4 }}>
+                  Clicca per caricare un documento
+                </div>
+                <div style={{ fontSize: 12, color: '#64748b' }}>
+                  PDF, PNG, JPG (max 20MB) - Il sistema estrarrà automaticamente i dati
+                </div>
+              </label>
+            </div>
+          </div>
+
+          {/* Lista documenti estratti */}
+          <div style={cardStyle}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#1e293b' }}>
+                🤖 Documenti Estratti con AI ({aiDocuments.length})
+              </h3>
+            </div>
+            
+            {aiLoading ? (
+              <div style={{ padding: 40, textAlign: 'center', color: '#64748b' }}>
+                ⏳ Caricamento...
+              </div>
+            ) : aiDocuments.length === 0 ? (
+              <div style={{ padding: 40, textAlign: 'center', color: '#64748b' }}>
+                <div style={{ fontSize: 48, marginBottom: 16 }}>🤖</div>
+                <div style={{ fontWeight: 600, marginBottom: 8 }}>Nessun documento estratto</div>
+                <div style={{ fontSize: 13 }}>Carica un documento PDF per estrarre i dati automaticamente</div>
+              </div>
+            ) : (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                  <thead>
+                    <tr style={{ background: '#f8fafc' }}>
+                      <th style={{ padding: 12, textAlign: 'left', fontWeight: 600, color: '#475569' }}>File</th>
+                      <th style={{ padding: 12, textAlign: 'left', fontWeight: 600, color: '#475569' }}>Tipo</th>
+                      <th style={{ padding: 12, textAlign: 'left', fontWeight: 600, color: '#475569' }}>Dati Estratti</th>
+                      <th style={{ padding: 12, textAlign: 'center', fontWeight: 600, color: '#475569' }}>OCR</th>
+                      <th style={{ padding: 12, textAlign: 'left', fontWeight: 600, color: '#475569' }}>Data</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {aiDocuments.map((doc, idx) => (
+                      <tr key={idx} style={{ borderTop: '1px solid #e2e8f0' }}>
+                        <td style={{ padding: 12 }}>
+                          <div style={{ fontWeight: 500, color: '#1e293b' }}>{doc.filename}</div>
+                        </td>
+                        <td style={{ padding: 12 }}>
+                          <span style={{
+                            display: 'inline-block',
+                            padding: '4px 10px',
+                            borderRadius: 20,
+                            fontSize: 11,
+                            fontWeight: 600,
+                            background: CATEGORY_COLORS[doc.document_type]?.bg || '#f1f5f9',
+                            color: CATEGORY_COLORS[doc.document_type]?.text || '#475569'
+                          }}>
+                            {CATEGORY_COLORS[doc.document_type]?.icon || '📄'} {doc.document_type?.toUpperCase()}
+                          </span>
+                        </td>
+                        <td style={{ padding: 12, maxWidth: 300 }}>
+                          <div style={{ fontSize: 11, color: '#64748b', lineHeight: 1.4 }}>
+                            {doc.extracted_data ? (
+                              Object.entries(doc.extracted_data).slice(0, 3).map(([key, value]) => (
+                                <div key={key}>
+                                  <strong>{key}:</strong> {typeof value === 'object' ? JSON.stringify(value).slice(0, 50) : String(value).slice(0, 50)}
+                                </div>
+                              ))
+                            ) : '-'}
+                          </div>
+                        </td>
+                        <td style={{ padding: 12, textAlign: 'center' }}>
+                          {doc.ocr_used ? (
+                            <span style={{ color: '#f59e0b' }}>📷 Sì</span>
+                          ) : (
+                            <span style={{ color: '#22c55e' }}>✓ No</span>
+                          )}
+                        </td>
+                        <td style={{ padding: 12, fontSize: 12, color: '#64748b' }}>
+                          {doc.created_at ? new Date(doc.created_at).toLocaleDateString('it-IT') : '-'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* PDF Viewer Modal */}
       {selectedPdfDoc && (
