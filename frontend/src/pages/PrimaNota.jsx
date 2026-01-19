@@ -241,24 +241,22 @@ function PrimaNotaDesktop() {
     }
   };
 
-  // POS (AVERE/Uscita) - Escono dalla cassa
+  // POS (AVERE/Uscita) - Escono dalla cassa - Campo unificato
   const handleSavePos = async () => {
-    const totale = (parseFloat(pos.pos1) || 0) + (parseFloat(pos.pos2) || 0) + (parseFloat(pos.pos3) || 0);
-    if (totale === 0) return alert('Inserisci almeno un importo POS');
+    const totale = parseFloat(pos.pos1) || 0;
+    if (totale === 0) return alert('Inserisci importo POS');
     setSavingPos(true);
     try {
       await api.post('/api/prima-nota/cassa', {
         data: pos.data,
         tipo: 'uscita',  // AVERE - escono dalla cassa
         importo: totale,
-        descrizione: `POS giornaliero ${pos.data} (POS1: €${pos.pos1 || 0}, POS2: €${pos.pos2 || 0}, POS3: €${pos.pos3 || 0})`,
+        descrizione: `POS giornaliero ${pos.data}`,
         categoria: 'POS',
-        source: 'manual_pos',
-        pos_details: { pos1: parseFloat(pos.pos1) || 0, pos2: parseFloat(pos.pos2) || 0, pos3: parseFloat(pos.pos3) || 0 }
+        source: 'manual_pos'
       });
       setPos({ data: today, pos1: '', pos2: '', pos3: '' });
       loadAllData();
-      alert(`✅ POS salvato! Totale: ${formatEuro(totale)}`);
     } catch (error) {
       alert('Errore: ' + (error.response?.data?.detail || error.message));
     } finally {
