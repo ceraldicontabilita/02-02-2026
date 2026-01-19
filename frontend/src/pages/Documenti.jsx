@@ -1221,37 +1221,79 @@ export default function Documenti() {
                     </tr>
                   </thead>
                   <tbody>
-                    {aiDocuments.map((doc, idx) => {
+                    {aiDocuments.filter(d => !aiFilterTipo || d.document_type === aiFilterTipo).map((doc, idx) => {
                       // Estrai periodo dai dati
                       const getPeriodo = () => {
                         const data = doc.extracted_data;
                         if (!data) return '-';
-                        // Busta paga
-                        if (data.periodo?.mese && data.periodo?.anno) {
-                          return `${data.periodo.mese}/${data.periodo.anno}`;
-                        }
-                        // F24
+                        if (data.periodo?.mese && data.periodo?.anno) return `${data.periodo.mese}/${data.periodo.anno}`;
                         if (data.data_versamento) return data.data_versamento;
-                        // Bonifico
                         if (data.data_operazione) return data.data_operazione;
-                        // Verbale
                         if (data.data_verbale) return data.data_verbale;
-                        // Cartella esattoriale
                         if (data.data_notifica) return data.data_notifica;
-                        // Estratto conto
                         if (data.periodo?.da) return `${data.periodo.da} - ${data.periodo.a || ''}`;
-                        // Fattura
                         if (data.data_fattura) return data.data_fattura;
-                        // Delibera INPS
                         if (data.data_documento) return data.data_documento;
                         return '-';
                       };
                       
+                      // Funzione per formattare descrizione leggibile
+                      const getDescrizione = () => {
+                        const data = doc.extracted_data;
+                        if (!data) return doc.filename;
+                        
+                        const tipo = doc.document_type?.toLowerCase();
+                        
+                        // BUSTA PAGA: "dipendente: VESPA VINCENZO"
+                        if (tipo === 'busta_paga') {
+                          const nome = data.dipendente?.nome_cognome || data.dipendente || '';
+                          return `dipendente: ${nome}`;
+                        }
+                        
+                        // F24: "contribuente: CERALDI GROUP - € 1.234,56"
+                        if (tipo === 'f24') {
+                          const contribuente = data.contribuente?.denominazione || data.contribuente || '';
+                          const importo = data.totale_versato || data.importo_totale || 0;
+                          return `contribuente: ${contribuente} - € ${Number(importo).toLocaleString('it-IT', { minimumFractionDigits: 2 })}`;
+                        }
+                        
+                        // BONIFICO: "P6325959 : 1 bonifico per totale euro 1.000,00 su Banca 05034 a favore di: Nome"
+                        if (tipo === 'bonifico') {
+                          const riferimento = data.riferimento || data.cro || '';
+                          const importo = data.importo || 0;
+                          const beneficiario = data.beneficiario?.denominazione || data.beneficiario || '';
+                          const banca = data.banca || '';
+                          return `${riferimento} : bonifico € ${Number(importo).toLocaleString('it-IT', { minimumFractionDigits: 2 })} ${banca ? `su ${banca}` : ''} a favore di: ${beneficiario}`;
+                        }
+                        
+                        // ESTRATTO CONTO
+                        if (tipo === 'estratto_conto') {
+                          const banca = data.banca || '';
+                          const conto = data.numero_conto || '';
+                          return `${banca} - Conto ${conto}`;
+                        }
+                        
+                        // CARTELLA ESATTORIALE
+                        if (tipo === 'cartella_esattoriale') {
+                          const numero = data.numero_cartella || '';
+                          const importo = data.importo_totale || 0;
+                          return `Cartella ${numero} - € ${Number(importo).toLocaleString('it-IT', { minimumFractionDigits: 2 })}`;
+                        }
+                        
+                        // FATTURA
+                        if (tipo === 'fattura') {
+                          const numero = data.numero_fattura || '';
+                          const fornitore = data.fornitore?.denominazione || data.fornitore || '';
+                          const importo = data.importo_totale || 0;
+                          return `Fatt. ${numero} - ${fornitore} € ${Number(importo).toLocaleString('it-IT', { minimumFractionDigits: 2 })}`;
+                        }
+                        
+                        // Default
+                        return doc.filename;
+                      };
+                      
                       return (
                       <tr key={idx} style={{ borderTop: '1px solid #e2e8f0' }}>
-                        <td style={{ padding: 12 }}>
-                          <div style={{ fontWeight: 500, color: '#1e293b' }}>{doc.filename}</div>
-                        </td>
                         <td style={{ padding: 12 }}>
                           <span style={{
                             display: 'inline-block',
@@ -1262,22 +1304,19 @@ export default function Documenti() {
                             background: CATEGORY_COLORS[doc.document_type]?.bg || '#f1f5f9',
                             color: CATEGORY_COLORS[doc.document_type]?.text || '#475569'
                           }}>
-                            {CATEGORY_COLORS[doc.document_type]?.icon || '📄'} {doc.document_type?.toUpperCase()}
+                            {CATEGORY_COLORS[doc.document_type]?.icon || '📄'} {doc.document_type?.toUpperCase().replace('_', ' ')}
                           </span>
+                        </td>
+                        <td style={{ padding: 12 }}>
+                          <div style={{ fontWeight: 500, color: '#1e293b', fontSize: 13 }}>
+                            {getDescrizione()}
+                          </div>
+                          <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>
+                            {doc.filename}
+                          </div>
                         </td>
                         <td style={{ padding: 12, fontSize: 12, color: '#1e293b', fontWeight: 500 }}>
                           {getPeriodo()}
-                        </td>
-                        <td style={{ padding: 12, maxWidth: 250 }}>
-                          <div style={{ fontSize: 11, color: '#64748b', lineHeight: 1.4 }}>
-                            {doc.extracted_data ? (
-                              Object.entries(doc.extracted_data).slice(0, 2).map(([key, value]) => (
-                                <div key={key}>
-                                  <strong>{key}:</strong> {typeof value === 'object' ? JSON.stringify(value).slice(0, 40) : String(value).slice(0, 40)}
-                                </div>
-                              ))
-                            ) : '-'}
-                          </div>
                         </td>
                         <td style={{ padding: 12, textAlign: 'center' }}>
                           {doc.ocr_used ? (
