@@ -45,6 +45,28 @@ Costruire un sistema contabile che:
 
 ---
 
+## 2.1 FLUSSO RICONCILIAZIONE PAGAMENTI
+
+Quando ci sono dati da riconciliare, il flusso è:
+
+1. **`/fatture-ricevute` (Tab Scadenze)** → Dove vedi le fatture da pagare
+   - Pulsante **"Paga"** → Pagamento manuale (Cassa o Banca) → Crea movimento in Prima Nota
+   - Pulsante **"Riconcilia"** → Abbina con movimento bancario esistente
+
+2. **`/riconciliazione`** → Centro di controllo unificato
+   - Tab **Banca**: Movimenti bancari da abbinare
+   - Tab **Stipendi**: Pagamenti salari da abbinare
+   - Tab **F24**: Versamenti fiscali da abbinare
+
+3. **`/prima-nota` (Cassa/Banca)** → Archivio finale
+   - Movimenti confermati e riconciliati
+   - Storico pagamenti
+
+**Regola**: Se paghi MANUALMENTE da fatture-ricevute, il movimento viene creato automaticamente in Prima Nota.
+Se il movimento esiste GIÀ in banca (estratto conto), usa "Riconcilia" per abbinarlo.
+
+---
+
 ## 3. Validatori automatici
 
 ### P0 – Bloccanti ✅ IMPLEMENTATO
