@@ -179,7 +179,7 @@ export default function ArchivioFatture() {
 
   useEffect(() => {
     // RIMOSSO per performance - eseguiAutoRiparazione() ora solo manuale
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   // ==================== FETCH FUNCTIONS ====================
