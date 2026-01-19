@@ -14,23 +14,27 @@ const pageStyle = {
     marginBottom: '24px',
     display: 'flex',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     flexWrap: 'wrap',
-    gap: '16px'
+    gap: '16px',
+    padding: '15px 20px',
+    background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
+    borderRadius: '12px',
+    color: 'white'
   },
   title: {
     margin: 0,
-    fontSize: '28px',
+    fontSize: '22px',
     fontWeight: 'bold',
-    color: '#1e293b',
+    color: 'white',
     display: 'flex',
     alignItems: 'center',
-    gap: '12px'
+    gap: '10px'
   },
   subtitle: {
     margin: '4px 0 0 0',
-    color: '#64748b',
-    fontSize: '14px'
+    color: 'rgba(255,255,255,0.9)',
+    fontSize: '13px'
   },
   statsGrid: {
     display: 'grid',
