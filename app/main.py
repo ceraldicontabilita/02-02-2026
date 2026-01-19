@@ -248,7 +248,7 @@ app.include_router(buste_paga.router, prefix="/api", tags=["Buste Paga"])
 app.include_router(shifts.router, prefix="/api/shifts", tags=["Shifts"])
 app.include_router(staff.router, prefix="/api/staff", tags=["Staff"])
 app.include_router(payroll.router, prefix="/api/payroll", tags=["Payroll"])
-app.include_router(noleggio.router, prefix="/api", tags=["Noleggio Auto"])
+app.include_router(noleggio.router, prefix="/api/noleggio", tags=["Noleggio Auto"])
 
 # --- Reports Module ---
 app.include_router(report_pdf.router, prefix="/api/report-pdf", tags=["Report PDF"])
