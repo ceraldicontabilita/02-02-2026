@@ -880,9 +880,10 @@ function QuickEntryCard({ title, color, children }) {
   );
 }
 
-function MovementsTable({ movimenti, tipo, loading, formatEuro, formatDate, onDelete, onEdit, readOnly = false }) {
+function MovementsTable({ movimenti, tipo, loading, formatEuro, formatDate, onDelete, onEdit, onSposta, readOnly = false }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [editingMovimento, setEditingMovimento] = useState(null);
+  const [spostando, setSpostando] = useState(null);
   const itemsPerPage = 50;
   
   if (loading) {
