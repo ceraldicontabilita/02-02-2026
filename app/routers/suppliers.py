@@ -4,7 +4,7 @@ API per CRUD fornitori, import Excel, metodi di pagamento.
 """
 from fastapi import APIRouter, HTTPException, Query, UploadFile, File, Body
 from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import uuid
 import logging
 import io
