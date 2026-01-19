@@ -54,10 +54,6 @@ export default function ChiusuraEsercizio() {
   }, [loadData]);
 
   const eseguiChiusura = async () => {
-    if (!window.confirm(`Sei sicuro di voler chiudere l'esercizio ${anno}? Questa operazione non può essere annullata.`)) {
-      return;
-    }
-    
     setExecuting(true);
     setError(null);
     setSuccess(null);
@@ -81,10 +77,6 @@ export default function ChiusuraEsercizio() {
 
   const apriNuovoEsercizio = async () => {
     const nuovoAnno = anno + 1;
-    if (!window.confirm(`Vuoi aprire l'esercizio ${nuovoAnno} riportando i saldi da ${anno}?`)) {
-      return;
-    }
-    
     setExecuting(true);
     setError(null);
     setSuccess(null);

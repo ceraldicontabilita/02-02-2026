@@ -74,9 +74,6 @@ export default function MagazzinoDoppiaVerita() {
 
   // Esegui pulizia effettiva
   async function eseguiPulizia() {
-    if (!window.confirm(`Confermi la rimozione di ${fornitoriEsclusi?.totale_prodotti || 0} prodotti dal magazzino?`)) {
-      return;
-    }
     setPuliziaInCorso(true);
     try {
       const res = await api.post('/api/magazzino-dv/pulizia-fornitori-esclusi?dry_run=false');

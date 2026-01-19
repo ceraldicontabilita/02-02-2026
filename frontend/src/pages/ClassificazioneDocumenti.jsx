@@ -131,10 +131,6 @@ export default function ClassificazioneDocumenti() {
   };
 
   const handleCleanup = async (confirm = false) => {
-    if (confirm && !window.confirm('ATTENZIONE: Le email non classificate verranno ELIMINATE definitivamente. Continuare?')) {
-      return;
-    }
-    
     setLoading(true);
     try {
       const res = await api.delete(`/api/documenti-smart/cleanup-unmatched?cartella=${scanSettings.cartella}&giorni=${scanSettings.giorni}&confirm=${confirm}`);

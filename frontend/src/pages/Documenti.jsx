@@ -1084,8 +1084,6 @@ export default function Documenti() {
               </div>
               <button
                 onClick={async () => {
-                  if (!window.confirm('Vuoi processare tutti gli allegati email con Document AI?\n\nQuesto estrarrà i dati e li salverà automaticamente nelle collection del gestionale (F24, cedolini, bonifici, ecc.)')) return;
-                  
                   setAiLoading(true);
                   try {
                     const res = await api.post('/api/document-ai/process-all-classified?save_to_gestionale=true');

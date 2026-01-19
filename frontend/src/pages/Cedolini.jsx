@@ -100,7 +100,6 @@ export default function Cedolini() {
 
   const handleConferma = async () => {
     if (!stima) return;
-    if (!window.confirm(`Confermare cedolino ${MESI[selectedMese-1]} ${anno}?\nNetto: €${stima.netto_in_busta.toFixed(2)}`)) return;
     try {
       await api.post('/api/cedolini/conferma', stima);
       alert('✅ Cedolino confermato');
