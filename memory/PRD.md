@@ -1,7 +1,24 @@
 # PRD – TechRecon Accounting System
 ## Product Requirements Document (PRD)
 ## TechRecon Accounting System – Versione Super Articolata
-### Ultimo aggiornamento: 17 Gennaio 2026
+### Ultimo aggiornamento: 19 Gennaio 2026
+
+---
+
+## 🚨 REGOLA FONDAMENTALE PER LO SVILUPPO
+
+**QUANDO SI CORREGGE UN PROBLEMA, CORREGGERE SEMPRE TUTTO, NON SOLO I CASI PRINCIPALI.**
+
+Questa regola è essenziale per evitare di ritornare continuamente sugli stessi argomenti. 
+Ogni fix deve essere:
+- **Completo**: Cercare TUTTI i punti dove esiste lo stesso problema
+- **Consistente**: Applicare la stessa soluzione ovunque
+- **Documentato**: Aggiornare questo PRD con le modifiche fatte
+
+Esempi:
+- Se correggo formato importi → cercare e correggere IN TUTTE le pagine
+- Se rimuovo un banner → rimuoverlo da TUTTE le pagine dove appare
+- Se miglioro un parser → verificare TUTTI i casi d'uso
 
 ---
 
