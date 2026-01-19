@@ -818,8 +818,29 @@ async def list_suppliers(
     suppliers_map = {}  # Usa piva come chiave per deduplicare
     
     # 1. Estrai fornitori unici da invoices (fonte principale)
-    # Usa supplier_vat come fonte primaria, con fallback a fornitore.partita_iva
+    # OTTIMIZZAZIONE PERFORMANCE: usa projection per escludere campi pesanti (xml_content, linee)
+    # e allowDiskUse per aggregazioni grandi
     pipeline = [
+        # Projection iniziale per ridurre memoria
+        {"$project": {
+            "supplier_vat": 1,
+            "supplier_name": 1,
+            "fornitore.partita_iva": 1,
+            "fornitore.denominazione": 1,
+            "fornitore.ragione_sociale": 1,
+            "fornitore.codice_fiscale": 1,
+            "fornitore.indirizzo": 1,
+            "fornitore.cap": 1,
+            "fornitore.comune": 1,
+            "fornitore.provincia": 1,
+            "fornitore.nazione": 1,
+            "fornitore.telefono": 1,
+            "fornitore.email": 1,
+            "fornitore.pec": 1,
+            "total_amount": 1,
+            "totale": 1,
+            "pagato": 1
+        }},
         {"$match": {"$or": [
             {"supplier_vat": {"$exists": True, "$ne": None, "$ne": ""}},
             {"fornitore.partita_iva": {"$exists": True, "$ne": None, "$ne": ""}}
@@ -835,7 +856,7 @@ async def list_suppliers(
         {"$sort": {"fatture_count": -1}}
     ]
     
-    invoice_suppliers = await db["invoices"].aggregate(pipeline).to_list(500)
+    invoice_suppliers = await db["invoices"].aggregate(pipeline, allowDiskUse=True).to_list(500)
     
     for item in invoice_suppliers:
         piva = item.get("_id")
