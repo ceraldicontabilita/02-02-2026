@@ -533,7 +533,6 @@ export default function ArchivioFatture() {
                       <th style={{ padding: '10px 12px', textAlign: 'right', fontWeight: '600' }}>Imponibile</th>
                       <th style={{ padding: '10px 12px', textAlign: 'right', fontWeight: '600' }}>IVA</th>
                       <th style={{ padding: '10px 12px', textAlign: 'right', fontWeight: '600' }}>Totale</th>
-                      <th style={{ padding: '10px 12px', textAlign: 'center', fontWeight: '600' }}>Metodo Pag.</th>
                       <th style={{ padding: '10px 12px', textAlign: 'center', fontWeight: '600' }}>Stato</th>
                       <th style={{ padding: '10px 12px', textAlign: 'center', fontWeight: '600' }}>Azioni</th>
                     </tr>
