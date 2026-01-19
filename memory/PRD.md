@@ -764,7 +764,38 @@ Sistema completo di estrazione dati da documenti usando OCR + LLM (Claude Sonnet
 
 ---
 
-## 32. Clausola finale
+## 32. Changelog Sessione 19 Gen 2026 (Seconda Parte)
+
+### ✅ Completati:
+1. **Modal Collega Fatture migliorato**:
+   - Draggable (trascinabile)
+   - Mostra importo assegno in evidenza
+   - Esclude fornitori pagati in contanti
+   - Mostra differenza tra importo assegno e fatture selezionate
+
+2. **Performance: Logiche Intelligenti spostate in Admin**:
+   - Rimossa auto-riparazione automatica da tutte le pagine
+   - Creata nuova tab "🔧 Manutenzione" in Admin
+   - 6 pulsanti per manutenzione singola + "Esegui Tutte"
+   - Pagine interessate: F24, Corrispettivi, Fatture Ricevute, Assegni, Analytics, Salari
+
+3. **PDF Carnet Assegni** (sessione precedente):
+   - Aggiunta intestazione azienda
+   - Colonne Data Fattura e N. Fattura corrette
+   - Stile professionale allineato a Prima Nota Commercialista
+
+### 🔄 File Modificati:
+- `/app/frontend/src/pages/GestioneAssegni.jsx` - Modal draggable, filtro contanti
+- `/app/frontend/src/pages/Admin.jsx` - Nuova tab Manutenzione
+- `/app/frontend/src/pages/F24.jsx` - Rimossa auto-riparazione
+- `/app/frontend/src/pages/Corrispettivi.jsx` - Rimossa auto-riparazione
+- `/app/frontend/src/pages/ArchivioFattureRicevute.jsx` - Rimossa auto-riparazione
+- `/app/frontend/src/pages/DashboardAnalytics.jsx` - Rimossa auto-riparazione
+- `/app/frontend/src/components/prima-nota/PrimaNotaSalariTab.jsx` - Rimossa auto-riparazione
+
+---
+
+## 33. Clausola finale
 
 Questo PRD è vincolante.
 
