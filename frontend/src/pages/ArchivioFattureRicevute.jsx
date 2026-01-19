@@ -21,10 +21,9 @@ const MESI = [
   { value: '12', label: 'Dicembre' }
 ];
 
-// Tabs della pagina unificata
+// Tabs della pagina unificata - Scadenze rimosso (centralizzato in Dashboard)
 const TABS = [
   { id: 'archivio', label: '📋 Archivio', desc: 'Lista e ricerca fatture' },
-  { id: 'scadenze', label: '📅 Scadenze', desc: 'Scadenziario pagamenti' },
   { id: 'riconciliazione', label: '🔄 Riconcilia', desc: 'Match con banca' },
   { id: 'storico', label: '✅ Storico', desc: 'Pagamenti effettuati' },
 ];
