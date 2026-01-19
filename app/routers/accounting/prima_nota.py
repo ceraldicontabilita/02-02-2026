@@ -2618,3 +2618,118 @@ async def fix_categories_and_duplicates(anno: int = Query(None, description="Ann
         "zeri_rimossi_banca": zero_banca.deleted_count
     }
 
+
+
+# ============== SPOSTAMENTO TRA CASSA E BANCA ==============
+
+@router.post("/sposta-movimento")
+async def sposta_movimento(
+    movimento_id: str = Body(...),
+    da: Literal["cassa", "banca"] = Body(...),
+    a: Literal["cassa", "banca"] = Body(...)
+) -> Dict[str, Any]:
+    """
+    Sposta un movimento da Prima Nota Cassa a Banca o viceversa.
+    Aggiorna anche il metodo di pagamento nella fattura collegata se presente.
+    """
+    if da == a:
+        raise HTTPException(status_code=400, detail="Origine e destinazione devono essere diverse")
+    
+    db = Database.get_db()
+    
+    # Determina collezioni
+    coll_origine = COLLECTION_PRIMA_NOTA_CASSA if da == "cassa" else COLLECTION_PRIMA_NOTA_BANCA
+    coll_dest = COLLECTION_PRIMA_NOTA_BANCA if da == "cassa" else COLLECTION_PRIMA_NOTA_CASSA
+    
+    # Trova il movimento
+    movimento = await db[coll_origine].find_one({"id": movimento_id}, {"_id": 0})
+    if not movimento:
+        raise HTTPException(status_code=404, detail=f"Movimento non trovato in prima nota {da}")
+    
+    try:
+        # Crea nuovo movimento nella destinazione
+        nuovo_movimento = {
+            **movimento,
+            "id": str(uuid.uuid4()),
+            "spostato_da": da,
+            "movimento_originale_id": movimento_id,
+            "data_spostamento": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+        # Aggiorna categoria se necessario
+        if a == "banca" and movimento.get("categoria") == "Pagamento fornitore":
+            nuovo_movimento["categoria"] = "Bonifico in uscita"
+        elif a == "cassa" and movimento.get("categoria") in ["Bonifico in uscita", "Pagamento fornitore"]:
+            nuovo_movimento["categoria"] = "Pagamento fornitore"
+        
+        # Inserisci in destinazione
+        await db[coll_dest].insert_one(nuovo_movimento)
+        
+        # Elimina da origine
+        await db[coll_origine].delete_one({"id": movimento_id})
+        
+        # Aggiorna fattura collegata se presente
+        fattura_id = movimento.get("fattura_id")
+        fattura_aggiornata = False
+        if fattura_id:
+            nuovo_metodo = "banca" if a == "banca" else "cassa"
+            result = await db[Collections.FATTURE_RICEVUTE].update_one(
+                {"id": fattura_id},
+                {"$set": {
+                    "metodo_pagamento": nuovo_metodo,
+                    "payment_method": nuovo_metodo,
+                    "metodo_pagamento_modificato_manualmente": True,
+                    "updated_at": datetime.now(timezone.utc).isoformat()
+                }}
+            )
+            fattura_aggiornata = result.modified_count > 0
+        
+        logger.info(f"Movimento {movimento_id} spostato da {da} a {a}")
+        
+        return {
+            "success": True,
+            "messaggio": f"Movimento spostato da {da.upper()} a {a.upper()}",
+            "nuovo_id": nuovo_movimento["id"],
+            "fattura_aggiornata": fattura_aggiornata,
+            "fattura_id": fattura_id
+        }
+        
+    except Exception as e:
+        logger.error(f"Errore spostamento movimento: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/verifica-metodo-fattura/{fattura_id}")
+async def verifica_metodo_fattura(fattura_id: str) -> Dict[str, Any]:
+    """
+    Verifica il metodo di pagamento attuale di una fattura.
+    Usato per determinare se rispettare la modifica manuale dell'utente.
+    """
+    db = Database.get_db()
+    
+    fattura = await db[Collections.FATTURE_RICEVUTE].find_one(
+        {"id": fattura_id},
+        {"_id": 0, "id": 1, "metodo_pagamento": 1, "metodo_pagamento_modificato_manualmente": 1, "supplier_vat": 1}
+    )
+    
+    if not fattura:
+        raise HTTPException(status_code=404, detail="Fattura non trovata")
+    
+    # Cerca metodo predefinito del fornitore
+    metodo_predefinito = None
+    if fattura.get("supplier_vat"):
+        fornitore = await db[Collections.SUPPLIERS].find_one(
+            {"partita_iva": fattura["supplier_vat"]},
+            {"_id": 0, "metodo_pagamento_predefinito": 1}
+        )
+        if fornitore:
+            metodo_predefinito = fornitore.get("metodo_pagamento_predefinito")
+    
+    return {
+        "fattura_id": fattura_id,
+        "metodo_attuale": fattura.get("metodo_pagamento"),
+        "modificato_manualmente": fattura.get("metodo_pagamento_modificato_manualmente", False),
+        "metodo_predefinito_fornitore": metodo_predefinito
+    }
+
