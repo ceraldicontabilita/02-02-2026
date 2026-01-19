@@ -124,10 +124,11 @@ class CalcolatoreImposte:
     async def calcola_imposte_da_db(self, db, anno: int = None) -> CalcoloImposte:
         """
         Calcola le imposte partendo dai dati nel database.
+        OTTIMIZZATO: Usa aggregazione MongoDB per performance.
         
         Args:
             db: Riferimento al database MongoDB
-            anno: Anno fiscale (opzionale, filtra le fatture)
+            anno: Anno fiscale (opzionale, default anno corrente)
             
         Returns:
             CalcoloImposte con tutti i dettagli
@@ -138,53 +139,58 @@ class CalcolatoreImposte:
         if anno is None:
             anno = dt.now().year
         
-        # 1. Calcola totali dalle fatture per l'anno specificato
-        totale_ricavi = 0.0
+        logger.info(f"Calcolo imposte per anno {anno}")
+        
+        # 1. Calcola totali costi usando aggregazione (molto più veloce)
         totale_costi = 0.0
         costi_per_tipo: Dict[str, float] = {}
         
-        # Filtra fatture per anno con regex per performance migliore
-        fatture_filter = {"invoice_date": {"$regex": f"^{anno}"}}
+        # Pipeline aggregazione per fatture
+        pipeline_fatture = [
+            {"$match": {"invoice_date": {"$regex": f"^{anno}"}}},
+            {"$project": {
+                "total_amount": 1,
+                "conto_costo_codice": 1,
+                "conto_costo_nome": 1
+            }},
+            {"$group": {
+                "_id": "$conto_costo_codice",
+                "nome": {"$first": "$conto_costo_nome"},
+                "totale": {"$sum": {"$toDouble": {"$ifNull": ["$total_amount", 0]}}}
+            }}
+        ]
         
-        # OTTIMIZZAZIONE: Proiezione minima - escludi xml_content e altri campi pesanti
-        projection = {
-            "_id": 0,
-            "total_amount": 1,
-            "categoria_contabile": 1,
-            "conto_costo_codice": 1,
-            "conto_costo_nome": 1
-        }
-        
-        # Calcola costi dalle fatture
-        fatture = await db["invoices"].find(fatture_filter, projection).to_list(10000)
-        
-        for fattura in fatture:
-            importo = float(fattura.get("total_amount", 0) or 0)
-            if importo <= 0:
-                continue
-                
-            categoria = fattura.get("categoria_contabile", "merci_generiche")
-            conto = fattura.get("conto_costo_codice", "05.01.01")
+        try:
+            risultati_fatture = await db["invoices"].aggregate(pipeline_fatture, allowDiskUse=True).to_list(500)
             
-            totale_costi += importo
-            
-            # Traccia costi per tipo di conto
-            if conto not in costi_per_tipo:
-                costi_per_tipo[conto] = {"nome": fattura.get("conto_costo_nome", ""), "importo": 0}
-            costi_per_tipo[conto]["importo"] += importo
+            for r in risultati_fatture:
+                codice = r.get("_id", "05.01.01") or "05.01.01"
+                importo = r.get("totale", 0) or 0
+                if importo > 0:
+                    totale_costi += importo
+                    costi_per_tipo[codice] = {"nome": r.get("nome", ""), "importo": importo}
+        except Exception as e:
+            logger.error(f"Errore aggregazione fatture: {e}")
         
-        # Calcola ricavi dai corrispettivi per l'anno
-        corr_filter = {"data": {"$regex": f"^{anno}"}}
-        corr_projection = {"_id": 0, "totale": 1}
+        # 2. Calcola ricavi dai corrispettivi usando aggregazione
+        totale_ricavi = 0.0
         
-        corrispettivi = await db["corrispettivi"].find(corr_filter, corr_projection).to_list(5000)
-        for corr in corrispettivi:
-            totale = float(corr.get("totale", 0) or 0)
-            if totale > 0:
-                # Scorporo IVA per avere il ricavo netto
-                iva_rate = 0.10  # 10% ristorazione
-                ricavo_netto = totale / (1 + iva_rate)
-                totale_ricavi += ricavo_netto
+        pipeline_corr = [
+            {"$match": {"data": {"$regex": f"^{anno}"}}},
+            {"$group": {
+                "_id": None,
+                "totale": {"$sum": {"$toDouble": {"$ifNull": ["$totale", 0]}}}
+            }}
+        ]
+        
+        try:
+            risultati_corr = await db["corrispettivi"].aggregate(pipeline_corr).to_list(1)
+            if risultati_corr:
+                totale_lordo = risultati_corr[0].get("totale", 0) or 0
+                # Scorporo IVA 10% ristorazione
+                totale_ricavi = totale_lordo / 1.10
+        except Exception as e:
+            logger.error(f"Errore aggregazione corrispettivi: {e}")
         
         # Utile civilistico
         utile_civilistico = totale_ricavi - totale_costi
