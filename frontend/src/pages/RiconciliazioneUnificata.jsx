@@ -452,9 +452,31 @@ export default function RiconciliazioneUnificata() {
 
   if (loading) {
     return (
-      <div style={{ padding: 40, textAlign: 'center' }}>
-        <div style={{ fontSize: 48, marginBottom: 16 }}>⏳</div>
-        <div>Caricamento riconciliazione...</div>
+      <div style={{ padding: 'clamp(12px, 3vw, 20px)' }}>
+        {/* Header con Gradiente anche durante il caricamento */}
+        <div style={{ 
+          marginBottom: 20, 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          padding: '15px 20px',
+          background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
+          borderRadius: 12,
+          color: 'white'
+        }}>
+          <div>
+            <h1 style={{ margin: 0, fontSize: 'clamp(18px, 4vw, 22px)', fontWeight: 'bold' }}>
+              🔗 Riconciliazione Smart
+            </h1>
+            <p style={{ margin: '4px 0 0', opacity: 0.9, fontSize: 13 }}>
+              Associa movimenti bancari a fatture, F24, stipendi e assegni
+            </p>
+          </div>
+        </div>
+        <div style={{ padding: 40, textAlign: 'center', background: 'white', borderRadius: 12 }}>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>⏳</div>
+          <div style={{ color: '#64748b' }}>Caricamento riconciliazione...</div>
+        </div>
       </div>
     );
   }
