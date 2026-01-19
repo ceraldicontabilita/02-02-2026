@@ -111,12 +111,14 @@ export default function Dashboard() {
           api.get(`/api/dashboard/spese-per-categoria?anno=${anno}`).catch(() => ({ data: null })),
           api.get(`/api/dashboard/confronto-annuale?anno=${anno}`).catch(() => ({ data: null })),
           api.get(`/api/dashboard/stato-riconciliazione?anno=${anno}`).catch(() => ({ data: null })),
-          api.get(`/api/contabilita/calcolo-imposte?regione=campania&anno=${anno}`).catch(() => ({ data: null }))
-        ]).then(([speseRes, confrontoRes, riconcRes, imposteRes]) => {
+          api.get(`/api/contabilita/calcolo-imposte?regione=campania&anno=${anno}`).catch(() => ({ data: null })),
+          api.get(`/api/f24/scadenze-prossime?giorni=60&limit=5`).catch(() => ({ data: null }))
+        ]).then(([speseRes, confrontoRes, riconcRes, imposteRes, f24Res]) => {
           setSpeseCategoria(speseRes.data);
           setConfrontoAnnuale(confrontoRes.data);
           setStatoRiconciliazione(riconcRes.data);
           setImposteData(imposteRes.data);
+          setScadenzeF24(f24Res.data);
         }).catch(e => console.warn('Errore grafici secondari:', e));
         
       } catch (e) {
