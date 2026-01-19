@@ -2084,7 +2084,7 @@ async def aggiorna_metodi_pagamento_da_fornitori():
     try:
         # 1. Recupera tutti i fornitori con metodo predefinito impostato
         fornitori = await db[COL_FORNITORI].find(
-            {"metodo_pagamento_predefinito": {"$exists": True, "$ne": None, "$ne": ""}},
+            {"metodo_pagamento_predefinito": {"$exists": True, "$nin": [None, ""]}},
             {"_id": 0, "id": 1, "partita_iva": 1, "ragione_sociale": 1, "denominazione": 1, "metodo_pagamento_predefinito": 1}
         ).to_list(None)
         
