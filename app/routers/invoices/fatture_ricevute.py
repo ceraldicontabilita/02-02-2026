@@ -1796,6 +1796,114 @@ async def auto_ricostruisci_dati_fatture() -> Dict[str, Any]:
     except Exception as e:
         logger.error(f"Errore auto-ricostruzione fatture: {e}")
         risultati["errori"].append(str(e))
+
+
+
+@router.post("/paga-manuale")
+async def paga_fattura_manuale(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Registra il pagamento manuale di una fattura (Cassa o Banca).
+    
+    Crea automaticamente:
+    1. Movimento in Prima Nota Cassa o Prima Nota Banca
+    2. Aggiorna stato scadenza a "pagata"
+    3. Marca la fattura come saldata
+    
+    Payload richiesto:
+    - fattura_id: ID della fattura
+    - scadenza_id: ID della scadenza (opzionale)
+    - importo: Importo pagato
+    - metodo: 'cassa' o 'banca'
+    - data_pagamento: Data del pagamento (YYYY-MM-DD)
+    - fornitore: Nome fornitore
+    - numero_fattura: Numero fattura
+    """
+    db = Database.get_db()
+    
+    fattura_id = payload.get("fattura_id")
+    scadenza_id = payload.get("scadenza_id")
+    importo = float(payload.get("importo", 0))
+    metodo = payload.get("metodo", "banca").lower()
+    data_pagamento = payload.get("data_pagamento")
+    fornitore = payload.get("fornitore", "Fornitore")
+    numero_fattura = payload.get("numero_fattura", "")
+    
+    if not fattura_id or importo <= 0:
+        raise HTTPException(status_code=400, detail="fattura_id e importo sono obbligatori")
+    
+    if metodo not in ["cassa", "banca"]:
+        raise HTTPException(status_code=400, detail="metodo deve essere 'cassa' o 'banca'")
+    
+    risultato = {
+        "success": True,
+        "movimento_id": None,
+        "metodo": metodo,
+        "importo": importo
+    }
+    
+    try:
+        # 1. Crea movimento in Prima Nota
+        movimento_id = str(uuid.uuid4())
+        movimento = {
+            "id": movimento_id,
+            "data": data_pagamento,
+            "descrizione": f"Pagamento Fatt. {numero_fattura} - {fornitore}",
+            "causale": f"Pagamento fattura fornitore",
+            "importo": importo,
+            "tipo": "uscita",
+            "categoria": "fornitori",
+            "stato": "confermato",
+            "fattura_collegata": fattura_id,
+            "fattura_numero": numero_fattura,
+            "fornitore": fornitore,
+            "metodo_pagamento": metodo,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "source": "pagamento_manuale"
+        }
+        
+        # Determina collection target
+        if metodo == "cassa":
+            collection = "prima_nota_cassa"
+        else:
+            collection = "prima_nota_banca"
+        
+        await db[collection].insert_one(movimento)
+        risultato["movimento_id"] = movimento_id
+        risultato["collection"] = collection
+        
+        # 2. Aggiorna scadenza come pagata
+        if scadenza_id:
+            await db[COL_SCADENZIARIO].update_one(
+                {"id": scadenza_id},
+                {"$set": {
+                    "stato": "pagato",
+                    "data_pagamento": data_pagamento,
+                    "metodo_effettivo": metodo,
+                    "movimento_id": movimento_id,
+                    "updated_at": datetime.now(timezone.utc).isoformat()
+                }}
+            )
+        
+        # 3. Aggiorna stato fattura
+        await db[COL_FATTURE_RICEVUTE].update_one(
+            {"id": fattura_id},
+            {"$set": {
+                "status": "paid",
+                "stato_pagamento": "pagata",
+                "data_pagamento": data_pagamento,
+                "metodo_pagamento_effettivo": metodo,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+        
+        logger.info(f"Pagamento manuale registrato: {fattura_id} -> {collection}, €{importo}")
+        
+    except Exception as e:
+        logger.error(f"Errore pagamento manuale: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    
+    return risultato
+
     
     return risultati
 
