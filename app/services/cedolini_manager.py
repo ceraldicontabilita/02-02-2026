@@ -319,44 +319,85 @@ async def processa_tutti_cedolini_pdf(db, filepath: str, filename: str) -> Dict[
     """
     Processa un file PDF di cedolini con flusso completo.
     Gestisce PDF multi-pagina con più dipendenti.
-    """
-    from app.parsers.payslip_parser_v2 import parse_payslip_pdf
     
+    Usa Document AI come prima scelta (più accurato), con fallback al parser regex.
+    """
     results = {
         "success": True,
         "cedolini_processati": 0,
         "anagrafiche_create": 0,
         "prima_nota_create": 0,
         "riconciliati": 0,
-        "errori": []
+        "errori": [],
+        "metodo": "document_ai"  # Traccia quale metodo è stato usato
     }
     
-    try:
-        cedolini = parse_payslip_pdf(pdf_path=filepath)
-        
-        for ced in cedolini:
-            res = await processa_cedolino_completo(
-                db=db,
-                cedolino_data=ced,
-                filename=filename,
-                filepath=filepath
-            )
-            
-            if res.get("success"):
-                results["cedolini_processati"] += 1
-                if res.get("anagrafica_creata"):
-                    results["anagrafiche_create"] += 1
-                if res.get("prima_nota_creata"):
-                    results["prima_nota_create"] += 1
-                if res.get("riconciliato"):
-                    results["riconciliati"] += 1
-            else:
-                if res.get("errore"):
-                    results["errori"].append(f"{ced.get('nome_dipendente', 'N/D')}: {res.get('errore')}")
+    cedolini = []
     
+    # PRIMA SCELTA: Document AI (più accurato)
+    try:
+        from app.services.document_ai_extractor import extract_document_data
+        import base64
+        
+        with open(filepath, 'rb') as f:
+            file_content = f.read()
+        
+        ai_result = await extract_document_data(
+            file_content=file_content,
+            filename=filename,
+            document_type="busta_paga"
+        )
+        
+        if ai_result.get("structured_data", {}).get("success"):
+            data = ai_result["structured_data"].get("data", {})
+            # Converti formato Document AI a formato legacy
+            cedolino = {
+                "nome_dipendente": data.get("dipendente", {}).get("nome_cognome", ""),
+                "codice_fiscale": data.get("dipendente", {}).get("codice_fiscale", ""),
+                "mese": data.get("periodo", {}).get("mese"),
+                "anno": data.get("periodo", {}).get("anno"),
+                "lordo": data.get("retribuzione", {}).get("lordo"),
+                "netto": data.get("retribuzione", {}).get("netto"),
+                "azienda": data.get("azienda", {}).get("denominazione", ""),
+                "raw_data": data
+            }
+            cedolini = [cedolino]
+            logger.info(f"Cedolino estratto con Document AI: {cedolino.get('nome_dipendente')}")
     except Exception as e:
-        results["success"] = False
-        results["errori"].append(str(e))
+        logger.warning(f"Document AI fallito per {filename}: {e}, uso fallback regex")
+        results["metodo"] = "regex_fallback"
+    
+    # FALLBACK: Parser regex legacy
+    if not cedolini:
+        try:
+            from app.parsers.payslip_parser_v2 import parse_payslip_pdf
+            cedolini = parse_payslip_pdf(pdf_path=filepath)
+            results["metodo"] = "regex_fallback"
+        except Exception as e:
+            results["success"] = False
+            results["errori"].append(f"Entrambi i parser falliti: {str(e)}")
+            return results
+    
+    # Processa i cedolini trovati
+    for ced in cedolini:
+        res = await processa_cedolino_completo(
+            db=db,
+            cedolino_data=ced,
+            filename=filename,
+            filepath=filepath
+        )
+        
+        if res.get("success"):
+            results["cedolini_processati"] += 1
+            if res.get("anagrafica_creata"):
+                results["anagrafiche_create"] += 1
+            if res.get("prima_nota_creata"):
+                results["prima_nota_create"] += 1
+            if res.get("riconciliato"):
+                results["riconciliati"] += 1
+        else:
+            if res.get("errore"):
+                results["errori"].append(f"{ced.get('nome_dipendente', 'N/D')}: {res.get('errore')}")
     
     return results
 
