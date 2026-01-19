@@ -570,10 +570,12 @@ export default function RiconciliazioneUnificata() {
             disabled={processing}
             style={{
               padding: '10px 16px',
-              background: '#f1f5f9',
+              background: 'rgba(255,255,255,0.9)',
+              color: '#1e3a5f',
               border: 'none',
               borderRadius: 8,
-              cursor: 'pointer'
+              cursor: 'pointer',
+              fontWeight: 600
             }}
           >
             🔄 Aggiorna
