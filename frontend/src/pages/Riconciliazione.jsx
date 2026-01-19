@@ -114,7 +114,7 @@ const pageStyle = {
     borderRadius: '8px',
     border: 'none',
     cursor: 'pointer',
-    fontWeight: '500',
+    fontWeight: '600',
     fontSize: '13px',
     display: 'inline-flex',
     alignItems: 'center',
@@ -130,9 +130,8 @@ const pageStyle = {
       background: '#ef4444',
       color: 'white'
     } : {
-      background: '#f1f5f9',
-      color: '#475569',
-      border: '1px solid #e2e8f0'
+      background: 'rgba(255,255,255,0.9)',
+      color: '#1e3a5f'
     })
   }),
   tabs: {
