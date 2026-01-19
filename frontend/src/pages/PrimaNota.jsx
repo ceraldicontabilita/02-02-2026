@@ -311,7 +311,6 @@ function PrimaNotaDesktop() {
   };
 
   const handleDeleteMovimento = async (tipo, id) => {
-    if (!confirm('Eliminare questo movimento?')) return;
     try {
       await api.delete(`/api/prima-nota/${tipo}/${id}`);
       loadAllData();
@@ -323,6 +322,24 @@ function PrimaNotaDesktop() {
   const handleEditMovimento = async (tipo, updated) => {
     // Ricarica i dati dopo la modifica
     loadAllData();
+  };
+
+  // Sposta movimento tra Cassa e Banca
+  const handleSpostaMovimento = async (movimentoId, da, a) => {
+    try {
+      const res = await api.post('/api/prima-nota/sposta-movimento', {
+        movimento_id: movimentoId,
+        da: da,
+        a: a
+      });
+      loadAllData();
+      // Feedback visivo opzionale
+      if (res.data.fattura_aggiornata) {
+        console.log(`Fattura ${res.data.fattura_id} aggiornata con nuovo metodo`);
+      }
+    } catch (error) {
+      alert('Errore spostamento: ' + (error.response?.data?.detail || error.message));
+    }
   };
 
   // Format helpers
