@@ -58,6 +58,123 @@ async def list_f24_models() -> Dict[str, Any]:
     }
 
 
+@router.get("/scadenze-prossime")
+async def get_scadenze_prossime_public(
+    giorni: int = 60,
+    limit: int = 5
+) -> Dict[str, Any]:
+    """
+    Get upcoming F24 deadlines for the dashboard widget (public, no auth).
+    Returns the next F24s sorted by due date with summary info.
+    """
+    from datetime import timezone
+    
+    db = Database.get_db()
+    today = datetime.now(timezone.utc).date()
+    
+    scadenze = []
+    totale_importo = 0
+    
+    # Get unpaid F24s from f24 collection
+    f24_list = await db["f24"].find(
+        {"status": {"$ne": "paid"}}, 
+        {"_id": 0, "id": 1, "tipo": 1, "descrizione": 1, "importo": 1, "scadenza": 1, "data_versamento": 1, "codici_tributo": 1, "tributo": 1}
+    ).to_list(500)
+    
+    # Also get from f24_models collection
+    f24_models = await db["f24_models"].find(
+        {"pagato": {"$ne": True}},
+        {"_id": 0, "id": 1, "tipo_modello": 1, "saldo_finale": 1, "data_scadenza": 1, "contribuente": 1}
+    ).to_list(100)
+    
+    # Process f24 collection
+    for f24 in f24_list:
+        try:
+            scadenza_str = f24.get("scadenza") or f24.get("data_versamento")
+            if not scadenza_str:
+                continue
+            
+            if isinstance(scadenza_str, str):
+                scadenza_str = scadenza_str.replace("Z", "+00:00")
+                if "T" in scadenza_str:
+                    scadenza = datetime.fromisoformat(scadenza_str).date()
+                else:
+                    try:
+                        scadenza = datetime.strptime(scadenza_str, "%d/%m/%Y").date()
+                    except ValueError:
+                        scadenza = datetime.strptime(scadenza_str, "%Y-%m-%d").date()
+            elif isinstance(scadenza_str, datetime):
+                scadenza = scadenza_str.date()
+            else:
+                continue
+            
+            giorni_mancanti = (scadenza - today).days
+            
+            if giorni_mancanti <= giorni:
+                importo = float(f24.get("importo", 0) or 0)
+                totale_importo += importo
+                
+                codici = f24.get("codici_tributo", [])
+                tipo_display = f24.get("tipo", "F24")
+                if codici:
+                    first_code = codici[0].get("codice", "") if isinstance(codici[0], dict) else str(codici[0])
+                    if first_code.startswith("60"):
+                        tipo_display = "IVA"
+                    elif first_code.startswith("51"):
+                        tipo_display = "INPS"
+                
+                scadenze.append({
+                    "id": f24.get("id"),
+                    "tipo": tipo_display,
+                    "descrizione": f24.get("descrizione", "") or f24.get("tributo", ""),
+                    "importo": importo,
+                    "data_scadenza": scadenza.isoformat(),
+                    "giorni_mancanti": giorni_mancanti
+                })
+        except Exception:
+            continue
+    
+    # Process f24_models collection
+    for f24 in f24_models:
+        try:
+            scadenza_str = f24.get("data_scadenza")
+            if not scadenza_str:
+                continue
+                
+            if isinstance(scadenza_str, str):
+                scadenza = datetime.strptime(scadenza_str[:10], "%Y-%m-%d").date()
+            elif isinstance(scadenza_str, datetime):
+                scadenza = scadenza_str.date()
+            else:
+                continue
+            
+            giorni_mancanti = (scadenza - today).days
+            
+            if giorni_mancanti <= giorni:
+                importo = float(f24.get("saldo_finale", 0) or 0)
+                totale_importo += importo
+                
+                scadenze.append({
+                    "id": f24.get("id"),
+                    "tipo": f24.get("tipo_modello", "F24"),
+                    "descrizione": f24.get("contribuente", ""),
+                    "importo": importo,
+                    "data_scadenza": scadenza.isoformat(),
+                    "giorni_mancanti": giorni_mancanti
+                })
+        except Exception:
+            continue
+    
+    # Sort by date (closest first)
+    scadenze.sort(key=lambda x: x["giorni_mancanti"])
+    
+    return {
+        "scadenze": scadenze[:limit],
+        "totale": len(scadenze),
+        "totale_importo": totale_importo
+    }
+
+
 @router.post("/upload")
 async def upload_f24_pdf(
     file: UploadFile = File(..., description="File PDF F24")
