@@ -15,6 +15,13 @@
 - ✅ **Ripristino scroll**: Implementato salvataggio/ripristino della posizione di scorrimento dopo operazioni di modifica
 - ✅ **Admin**: Aggiunto pulsante "Aggiorna Metodi Pagamento" nella sezione Manutenzione
 
+### 19 Gennaio 2026 - Prima Nota & Ciclo Passivo
+- ✅ **POS Unificato**: I 3 campi POS (POS1, POS2, POS3) sono stati unificati in un singolo campo "Totale POS"
+- ✅ **Sposta Movimenti Cassa↔Banca**: Nuovo endpoint `POST /api/prima-nota/sposta-movimento` e pulsanti nella tabella per spostare movimenti tra Prima Nota Cassa e Banca
+- ✅ **Aggiornamento fattura collegata**: Quando un movimento viene spostato, viene aggiornato anche il metodo_pagamento della fattura associata
+- ✅ **Logica Import XML rispetta scelta utente**: Se l'utente ha già impostato manualmente un metodo di pagamento (da email o spostamento), l'import XML lo rispetta invece di usare il default del fornitore
+- ✅ **Flag `metodo_pagamento_modificato_manualmente`**: Traccia se il metodo è stato cambiato dall'utente
+
 ---
 
 ## 🚨 REGOLA FONDAMENTALE PER LO SVILUPPO
