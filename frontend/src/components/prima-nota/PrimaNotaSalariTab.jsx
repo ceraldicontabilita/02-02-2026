@@ -181,7 +181,6 @@ const PrimaNotaSalariTab = memo(function PrimaNotaSalariTab() {
   }, [resetAllData]);
 
   const handlePulisciVuote = useCallback(async () => {
-    if (!window.confirm(`⚠️ Eliminare ${righeVuote} righe vuote (busta e bonifico entrambi a €0)?`)) return;
     try {
       const res = await api.delete('/api/prima-nota-salari/pulisci-righe-vuote');
       alert(`✅ Eliminate ${res.data.righe_eliminate} righe vuote`);
