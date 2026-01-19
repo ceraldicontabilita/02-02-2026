@@ -255,9 +255,10 @@ function PrimaNotaDesktop() {
         data: pos.data,
         tipo: 'uscita',  // AVERE - escono dalla cassa
         importo: totale,
-        descrizione: `POS giornaliero ${pos.data}`,
+        descrizione: `POS giornaliero ${pos.data} (provvisorio)`,
         categoria: 'POS',
-        source: 'manual_pos'
+        source: 'manual_pos',
+        provvisorio: true  // Sarà sovrascritto quando arriva XML
       });
       setPos({ data: today, pos1: '', pos2: '', pos3: '' });
       loadAllData();
