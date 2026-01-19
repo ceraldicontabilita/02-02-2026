@@ -797,14 +797,17 @@ function PrimaNotaDesktop() {
             ))}
           </div>
 
-          {/* Movements Table Banca - Estratto Conto (sola lettura) */}
+          {/* Movements Table Banca - Estratto Conto con possibilità di spostare */}
           <MovementsTable 
             movimenti={bancaData.movimenti || []}
             tipo="banca"
             loading={loading}
             formatEuro={formatEuro}
             formatDate={formatDate}
-            readOnly={true}
+            onDelete={(id) => handleDeleteMovimento('banca', id)}
+            onEdit={(updated) => handleEditMovimento('banca', updated)}
+            onSposta={handleSpostaMovimento}
+            readOnly={false}
           />
         </section>
       )}
