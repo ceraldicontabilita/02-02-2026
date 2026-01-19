@@ -118,7 +118,8 @@ export default function ArchivioFatture() {
   const [autoRepairRunning, setAutoRepairRunning] = useState(false);
 
   /**
-   * LOGICA INTELLIGENTE: Esegue auto-riparazione dei dati al caricamento.
+   * LOGICA INTELLIGENTE: Esegue auto-riparazione dei dati.
+   * DISABILITATA: Spostata in Admin per performance. Chiamare manualmente se necessario.
    */
   const eseguiAutoRiparazione = async () => {
     setAutoRepairRunning(true);
@@ -138,8 +139,7 @@ export default function ArchivioFatture() {
   };
 
   useEffect(() => {
-    // Al primo caricamento, esegui auto-riparazione
-    eseguiAutoRiparazione();
+    // RIMOSSO per performance - eseguiAutoRiparazione() ora solo manuale
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
