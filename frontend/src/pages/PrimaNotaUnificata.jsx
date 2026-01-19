@@ -953,32 +953,54 @@ export default function PrimaNotaUnificata() {
   );
 }
 
-// Componente Card Statistiche
+// Componente Card Statistiche - Compatto
+function MiniStatCard({ icon, label, value, color }) {
+  return (
+    <div style={{
+      padding: '8px 10px',
+      background: 'white',
+      borderRadius: 6,
+      border: '1px solid #e5e7eb',
+      borderLeft: `3px solid ${color}`,
+      display: 'flex',
+      alignItems: 'center',
+      gap: 8
+    }}>
+      <span style={{ fontSize: 14 }}>{icon}</span>
+      <div>
+        <div style={{ fontSize: 10, color: '#64748b' }}>{label}</div>
+        <div style={{ fontSize: 13, fontWeight: 700, color }}>{value}</div>
+      </div>
+    </div>
+  );
+}
+
+// Componente Card Statistiche (legacy)
 function StatCard({ icon, label, value, color, bgColor }) {
   return (
     <div style={{
-      padding: '14px 18px',
+      padding: '10px 12px',
       background: bgColor,
-      borderRadius: 10,
+      borderRadius: 8,
       display: 'flex',
       alignItems: 'center',
-      gap: 12
+      gap: 10
     }}>
       <div style={{
-        width: 40,
-        height: 40,
-        borderRadius: 8,
+        width: 32,
+        height: 32,
+        borderRadius: 6,
         background: 'white',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        fontSize: 20
+        fontSize: 16
       }}>
         {icon}
       </div>
       <div>
-        <div style={{ fontSize: 11, color, fontWeight: 500 }}>{label}</div>
-        <div style={{ fontSize: 16, fontWeight: 700, color }}>{value}</div>
+        <div style={{ fontSize: 10, color, fontWeight: 500 }}>{label}</div>
+        <div style={{ fontSize: 14, fontWeight: 700, color }}>{value}</div>
       </div>
     </div>
   );
