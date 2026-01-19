@@ -17,7 +17,7 @@ router = APIRouter()
 
 # Cache key per suppliers
 SUPPLIERS_CACHE_KEY = "suppliers_list"
-SUPPLIERS_CACHE_TTL = 120  # 2 minuti
+SUPPLIERS_CACHE_TTL = 300  # 5 minuti per performance migliori
 
 # Metodi di pagamento disponibili
 PAYMENT_METHODS = {
