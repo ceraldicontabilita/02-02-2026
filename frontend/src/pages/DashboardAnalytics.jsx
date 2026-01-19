@@ -413,51 +413,6 @@ export default function DashboardAnalytics() {
         </div>
       </div>
 
-      {/* INFO CARD - Logica Intelligente */}
-      <div style={{ 
-        background: 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)', 
-        borderRadius: 12, 
-        padding: 16, 
-        marginBottom: 16,
-        border: '1px solid #90caf9'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-          <span style={{ fontSize: 24 }}>🧠</span>
-          <div style={{ flex: 1 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h4 style={{ margin: '0 0 8px 0', color: '#1565c0' }}>Logica Intelligente Attiva</h4>
-              {autoRepairRunning && (
-                <span style={{ fontSize: 12, color: '#1976d2' }}>⏳ Verifica in corso...</span>
-              )}
-            </div>
-            <p style={{ margin: 0, fontSize: 13, color: '#1976d2', lineHeight: 1.5 }}>
-              I dati mostrati sono calcolati da <strong>Prima Nota Cassa</strong> (entrate corrispettivi) + <strong>Prima Nota Banca</strong> (movimenti bancari):
-            </p>
-            <ul style={{ margin: '8px 0 0 0', paddingLeft: 20, fontSize: 12, color: '#1976d2', lineHeight: 1.8, columns: 2 }}>
-              <li><strong>Fatturato</strong>: fatture emesse + corrispettivi</li>
-              <li><strong>Entrate</strong>: somma movimenti tipo "entrata"</li>
-              <li><strong>Uscite</strong>: somma movimenti tipo "uscita"</li>
-              <li><strong>Cash Flow</strong>: differenza entrate - uscite</li>
-            </ul>
-            {autoRepairStatus && (autoRepairStatus.correzioni_applicate > 0 || autoRepairStatus.discrepanze_trovate?.length > 0) && (
-              <div style={{ 
-                marginTop: 10, 
-                padding: '8px 12px', 
-                background: autoRepairStatus.discrepanze_trovate?.length > 0 ? '#fff3e0' : '#c8e6c9', 
-                borderRadius: 8, 
-                fontSize: 12,
-                color: autoRepairStatus.discrepanze_trovate?.length > 0 ? '#e65100' : '#2e7d32'
-              }}>
-                {autoRepairStatus.discrepanze_trovate?.length > 0 
-                  ? `⚠️ Trovate ${autoRepairStatus.discrepanze_trovate.length} discrepanze nei dati`
-                  : `✅ Verificati ${autoRepairStatus.movimenti_verificati} movimenti, ${autoRepairStatus.correzioni_applicate} correzioni applicate`
-                }
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
       {/* Alert Scadenze Urgenti - mostrato solo se ci sono scadenze */}
       {stats?.kpi?.scadenzeUrgenti > 0 && (
         <div style={{
