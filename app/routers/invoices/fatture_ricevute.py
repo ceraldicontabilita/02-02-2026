@@ -1904,6 +1904,142 @@ async def paga_fattura_manuale(payload: Dict[str, Any]) -> Dict[str, Any]:
     
     return risultato
 
+
+@router.post("/cambia-metodo-pagamento")
+async def cambia_metodo_pagamento_fattura(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Modifica il metodo di pagamento di una fattura già pagata.
     
-    return risultati
+    Sposta il movimento da Prima Nota Cassa a Prima Nota Banca (o viceversa),
+    mantenendo la stessa data del documento originale.
+    
+    Payload richiesto:
+    - fattura_id: ID della fattura
+    - importo: Importo del pagamento
+    - metodo_vecchio: 'cassa' o 'banca' (collection di origine)
+    - metodo_nuovo: 'cassa' o 'banca' (collection di destinazione)
+    - data_pagamento: Data del pagamento (usa la data del documento)
+    - fornitore: Nome fornitore
+    - numero_fattura: Numero fattura
+    """
+    db = Database.get_db()
+    
+    fattura_id = payload.get("fattura_id")
+    importo = float(payload.get("importo", 0))
+    metodo_vecchio = payload.get("metodo_vecchio", "").lower()
+    metodo_nuovo = payload.get("metodo_nuovo", "").lower()
+    data_pagamento = payload.get("data_pagamento")
+    fornitore = payload.get("fornitore", "Fornitore")
+    numero_fattura = payload.get("numero_fattura", "")
+    
+    if not fattura_id:
+        raise HTTPException(status_code=400, detail="fattura_id è obbligatorio")
+    
+    if metodo_vecchio not in ["cassa", "banca"] or metodo_nuovo not in ["cassa", "banca"]:
+        raise HTTPException(status_code=400, detail="metodo deve essere 'cassa' o 'banca'")
+    
+    if metodo_vecchio == metodo_nuovo:
+        raise HTTPException(status_code=400, detail="Il metodo di pagamento è già quello selezionato")
+    
+    # Determina collection origine e destinazione
+    col_origine = "prima_nota_cassa" if metodo_vecchio == "cassa" else "prima_nota_banca"
+    col_destinazione = "prima_nota_cassa" if metodo_nuovo == "cassa" else "prima_nota_banca"
+    
+    risultato = {
+        "success": True,
+        "metodo_vecchio": metodo_vecchio,
+        "metodo_nuovo": metodo_nuovo,
+        "movimento_spostato": False
+    }
+    
+    try:
+        # 1. Cerca il movimento esistente nella collection di origine
+        movimento = await db[col_origine].find_one({
+            "$or": [
+                {"fattura_collegata": fattura_id},
+                {"fattura_id": fattura_id},
+                {"fattura_numero": numero_fattura, "fornitore": fornitore}
+            ]
+        })
+        
+        if movimento:
+            # Rimuovi _id per evitare conflitto nell'insert
+            movimento_id = movimento.get("id") or str(uuid.uuid4())
+            movimento_clean = {k: v for k, v in movimento.items() if k != "_id"}
+            movimento_clean["id"] = movimento_id
+            movimento_clean["metodo_pagamento"] = metodo_nuovo
+            movimento_clean["spostato_da"] = col_origine
+            movimento_clean["spostato_at"] = datetime.now(timezone.utc).isoformat()
+            
+            # Se è specificata una data dal frontend, usala; altrimenti mantieni quella esistente
+            if data_pagamento:
+                movimento_clean["data"] = data_pagamento
+            
+            # Inserisci nella collection di destinazione
+            await db[col_destinazione].insert_one(movimento_clean)
+            
+            # Rimuovi dalla collection di origine
+            await db[col_origine].delete_one({"_id": movimento["_id"]})
+            
+            risultato["movimento_spostato"] = True
+            risultato["movimento_id"] = movimento_id
+            risultato["collection_origine"] = col_origine
+            risultato["collection_destinazione"] = col_destinazione
+            
+            logger.info(f"Movimento spostato: {movimento_id} da {col_origine} a {col_destinazione}")
+        else:
+            # Se non trova movimento, crea uno nuovo nella collection di destinazione
+            movimento_id = str(uuid.uuid4())
+            nuovo_movimento = {
+                "id": movimento_id,
+                "data": data_pagamento,
+                "descrizione": f"Pagamento Fatt. {numero_fattura} - {fornitore}",
+                "causale": f"Pagamento fattura fornitore",
+                "importo": importo,
+                "tipo": "uscita",
+                "categoria": "fornitori",
+                "stato": "confermato",
+                "fattura_collegata": fattura_id,
+                "fattura_numero": numero_fattura,
+                "fornitore": fornitore,
+                "metodo_pagamento": metodo_nuovo,
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "source": "cambio_metodo_pagamento"
+            }
+            
+            await db[col_destinazione].insert_one(nuovo_movimento)
+            risultato["movimento_id"] = movimento_id
+            risultato["movimento_creato_nuovo"] = True
+            risultato["collection_destinazione"] = col_destinazione
+            
+            logger.info(f"Nuovo movimento creato in {col_destinazione}: {movimento_id}")
+        
+        # 2. Aggiorna stato fattura con nuovo metodo
+        update_fattura = {
+            "metodo_pagamento_effettivo": metodo_nuovo,
+            "metodo_pagamento": metodo_nuovo,
+            "payment_method": metodo_nuovo,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+        # Aggiorna anche i riferimenti alle prime note
+        if metodo_nuovo == "cassa":
+            update_fattura["prima_nota_cassa_id"] = risultato.get("movimento_id")
+            update_fattura["prima_nota_banca_id"] = None
+        else:
+            update_fattura["prima_nota_banca_id"] = risultato.get("movimento_id")
+            update_fattura["prima_nota_cassa_id"] = None
+        
+        await db[COL_FATTURE_RICEVUTE].update_one(
+            {"id": fattura_id},
+            {"$set": update_fattura}
+        )
+        
+        logger.info(f"Metodo pagamento cambiato per fattura {fattura_id}: {metodo_vecchio} -> {metodo_nuovo}")
+        
+    except Exception as e:
+        logger.error(f"Errore cambio metodo pagamento: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    
+    return risultato
 
