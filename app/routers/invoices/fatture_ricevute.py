@@ -1220,10 +1220,16 @@ async def get_archivio_fatture(
             query["$or"] = search_filter
     
     # Query - ordina per data documento (supporta entrambi i formati)
+    # Escludi campi pesanti per velocizzare la risposta
     import time
     t1 = time.time()
     
-    cursor = db[COL_FATTURE_RICEVUTE].find(query, {"_id": 0})
+    projection = {
+        "_id": 0,
+        "xml_content": 0,  # Esclude XML per velocizzare
+        "linee": 0  # Esclude linee dettaglio per velocizzare la lista
+    }
+    cursor = db[COL_FATTURE_RICEVUTE].find(query, projection)
     cursor = cursor.sort([("invoice_date", -1), ("data_documento", -1)]).skip(skip).limit(limit)
     fatture = await cursor.to_list(limit)
     
