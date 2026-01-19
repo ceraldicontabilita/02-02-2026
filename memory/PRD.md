@@ -983,3 +983,38 @@ Ogni sviluppo futuro deve:
 - **Pulsanti primari**: verde (#10b981)
 
 ---
+
+## 39. Changelog Sessione 19 Gen 2026 (Refactoring noleggio.py)
+
+### ✅ Refactoring Completato
+
+**Struttura precedente**: 1 file monolitico di 1085 righe
+**Struttura nuova**: Modulo strutturato con 4 file
+
+```
+/app/app/services/noleggio/
+├── __init__.py     # Export pubblici
+├── constants.py    # Costanti e configurazioni fornitori
+├── parsers.py      # Funzioni di parsing (targhe, verbali, categorie)
+└── processors.py   # Business logic (scan fatture, processa fattura)
+
+/app/app/routers/noleggio.py  # Solo endpoint API (ridotto a ~380 righe)
+```
+
+### File Creati:
+- `/app/app/services/noleggio/__init__.py` - Export pubblici modulo
+- `/app/app/services/noleggio/constants.py` - Costanti FORNITORI_NOLEGGIO, TARGA_PATTERN
+- `/app/app/services/noleggio/parsers.py` - Funzioni estrai_*, categorizza_spesa
+- `/app/app/services/noleggio/processors.py` - processa_fattura_noleggio, scan_fatture_noleggio
+
+### File Modificati:
+- `/app/app/routers/noleggio.py` - Ridotto a soli endpoint API
+- `/app/app/routers/ciclo_passivo_integrato.py` - Aggiornato import
+- `/app/app/main.py` - Corretto prefix router a `/api/noleggio`
+
+### Performance:
+- Endpoint `/api/noleggio/veicoli` ottimizzato: **da 10s a 0.5s**
+- Aggiunta proiezione MongoDB per escludere campi pesanti
+- Default anno corrente per evitare scan completo
+
+---
