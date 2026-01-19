@@ -24,7 +24,7 @@ from app.database import Database
 from app.parsers.fattura_elettronica_parser import parse_fattura_xml
 
 # Import funzione per processare fatture noleggio auto
-from app.routers.noleggio import processa_fattura_noleggio
+from app.services.noleggio import processa_fattura_noleggio
 
 # Fuzzy matching per nomi fornitori
 try:
