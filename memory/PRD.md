@@ -957,3 +957,29 @@ Ogni sviluppo futuro deve:
 | /api/fatture-ricevute/archivio | ~29s | ~2.6s |
 
 ---
+
+## 38. Changelog Sessione 19 Gen 2026 (Uniformazione Grafica)
+
+### ✅ Pagine Uniformate con Header Gradiente Blu:
+
+| Pagina | File | Stato |
+|--------|------|-------|
+| Noleggio Auto | NoleggioAuto.jsx | ✅ Riferimento |
+| Corrispettivi | Corrispettivi.jsx | ✅ Già uniforme |
+| Fornitori | Fornitori.jsx | ✅ Aggiornato |
+| F24 | F24.jsx | ✅ Aggiornato |
+| Cedolini | CedoliniRiconciliazione.jsx | ✅ Aggiornato |
+| Riconciliazione | RiconciliazioneUnificata.jsx | ✅ Aggiornato |
+| Riconciliazione (simple) | Riconciliazione.jsx | ✅ Aggiornato |
+| Cedolini Calcolo | Cedolini.jsx | ✅ Aggiornato |
+
+### Stile Applicato:
+- **Header**: `linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)`
+- **Border-radius**: 12px
+- **Padding**: 15px 20px
+- **Titolo**: bianco, font-weight bold, size 18-22px
+- **Sottotitolo**: bianco, opacity 0.9, size 13px
+- **Pulsanti secondari**: bianco con testo blu scuro
+- **Pulsanti primari**: verde (#10b981)
+
+---
