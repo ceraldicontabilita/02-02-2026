@@ -278,6 +278,44 @@ export default function GestioneAssegni() {
   // Selezione multipla per stampa PDF
   const [selectedAssegni, setSelectedAssegni] = useState(new Set());
   
+  // Assegni non associati (per associazione manuale)
+  const [assegniNonAssociati, setAssegniNonAssociati] = useState([]);
+  const [loadingNonAssociati, setLoadingNonAssociati] = useState(false);
+  const [showNonAssociati, setShowNonAssociati] = useState(false);
+  
+  // Carica assegni senza beneficiario
+  const loadAssegniNonAssociati = async () => {
+    setLoadingNonAssociati(true);
+    try {
+      const res = await api.get('/api/assegni/senza-associazione');
+      setAssegniNonAssociati(res.data);
+    } catch (error) {
+      console.error('Error loading assegni non associati:', error);
+    } finally {
+      setLoadingNonAssociati(false);
+    }
+  };
+
+  // Associa manualmente un assegno a una fattura
+  const handleAssociaManuale = async (numeroAssegno, fatturaId) => {
+    try {
+      // Trova l'assegno completo
+      const assegnoData = assegni.find(a => a.numero === numeroAssegno);
+      if (!assegnoData) {
+        alert('Assegno non trovato');
+        return;
+      }
+      
+      // Apri il modal fatture per questo assegno
+      setEditingAssegnoForFatture(assegnoData);
+      setSelectedFatture(assegnoData.fatture_collegate || []);
+      loadFatture();
+      setShowFattureModal(true);
+    } catch (error) {
+      alert('Errore: ' + error.message);
+    }
+  };
+  
   const handleAutoAssocia = async () => {
     if (!window.confirm('Vuoi avviare l\'auto-associazione degli assegni alle fatture?\n\nIl sistema cercherà di abbinare:\n1. Assegni con importo uguale a fatture\n2. Assegni multipli con stesso importo a fatture di importo maggiore')) return;
     
