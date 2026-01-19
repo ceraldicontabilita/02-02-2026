@@ -122,11 +122,7 @@ export default function ArchivioFatture() {
 
   // Funzione per pagare manualmente una scadenza (Cassa o Banca)
   const handlePayManual = async (scadenza, metodo) => {
-    if (!window.confirm(`Confermi il pagamento di ${formatEuro(scadenza.importo_totale)} a ${scadenza.fornitore_nome} tramite ${metodo.toUpperCase()}?`)) {
-      setShowPayMenu(null);
-      return;
-    }
-    
+    setShowPayMenu(null);
     setPayingScadenza(scadenza.id);
     try {
       const dataPagamento = new Date().toISOString().slice(0, 10);
@@ -662,7 +658,6 @@ export default function ArchivioFatture() {
                                   }
                                 } else {
                                   // Non pagata - registra nuovo pagamento in banca
-                                  if (!window.confirm(`Pagare ${formatCurrency(importo)} a ${fornitoreNome} tramite BANCA?`)) return;
                                   try {
                                     await api.post('/api/fatture-ricevute/paga-manuale', {
                                       fattura_id: f.id,
