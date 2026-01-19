@@ -1,1 +1,170 @@
-{}
+{
+  "guideline_evaluations_3.1.2": [
+    {
+      "id": "e9553682bf531ea7bd3ee9a407e24afe",
+      "creation_utc": "2026-01-19T02:27:23.009560+00:00",
+      "version": "3.1.2",
+      "properties": {
+        "continuous": false,
+        "customer_dependent_action_data": {
+          "is_customer_dependent": false,
+          "customer_action": "",
+          "agent_action": ""
+        },
+        "agent_intention_condition": null,
+        "internal_action": null
+      }
+    },
+    {
+      "id": "4c2978b1da759ec9a096499c6348f52f",
+      "creation_utc": "2026-01-19T02:27:23.009950+00:00",
+      "version": "3.1.2",
+      "properties": {
+        "continuous": false,
+        "customer_dependent_action_data": {
+          "is_customer_dependent": false,
+          "customer_action": "",
+          "agent_action": ""
+        },
+        "agent_intention_condition": null,
+        "internal_action": null
+      }
+    },
+    {
+      "id": "33ef966af885c8fb3e8466ad8312929c",
+      "creation_utc": "2026-01-19T02:27:23.010043+00:00",
+      "version": "3.1.2",
+      "properties": {
+        "continuous": false,
+        "customer_dependent_action_data": {
+          "is_customer_dependent": false,
+          "customer_action": "",
+          "agent_action": ""
+        },
+        "agent_intention_condition": null,
+        "internal_action": null
+      }
+    },
+    {
+      "id": "c06d493c643a4c69a3f0ecd36666e0ac",
+      "creation_utc": "2026-01-19T02:27:23.010134+00:00",
+      "version": "3.1.2",
+      "properties": {
+        "continuous": false,
+        "customer_dependent_action_data": {
+          "is_customer_dependent": false,
+          "customer_action": "",
+          "agent_action": ""
+        },
+        "agent_intention_condition": null,
+        "internal_action": null
+      }
+    },
+    {
+      "id": "116ed07dcf5e348d1d5b1dab8a6d9064",
+      "creation_utc": "2026-01-19T02:27:23.010208+00:00",
+      "version": "3.1.2",
+      "properties": {
+        "continuous": false,
+        "customer_dependent_action_data": {
+          "is_customer_dependent": false,
+          "customer_action": "",
+          "agent_action": ""
+        },
+        "agent_intention_condition": null,
+        "internal_action": null
+      }
+    },
+    {
+      "id": "5aabb1ac304f22727c53ba9560e05045",
+      "creation_utc": "2026-01-19T02:27:23.511461+00:00",
+      "version": "3.1.2",
+      "properties": {
+        "continuous": false,
+        "customer_dependent_action_data": {
+          "is_customer_dependent": false,
+          "customer_action": "",
+          "agent_action": ""
+        },
+        "agent_intention_condition": null,
+        "internal_action": null
+      }
+    },
+    {
+      "id": "c9df38f6b463e7df72083279215f7c66",
+      "creation_utc": "2026-01-19T02:27:23.511643+00:00",
+      "version": "3.1.2",
+      "properties": {
+        "continuous": false,
+        "customer_dependent_action_data": {
+          "is_customer_dependent": false,
+          "customer_action": "",
+          "agent_action": ""
+        },
+        "agent_intention_condition": null,
+        "internal_action": null
+      }
+    },
+    {
+      "id": "7d5616144ceeb3f764aac69fe8a741c4",
+      "creation_utc": "2026-01-19T02:27:23.511768+00:00",
+      "version": "3.1.2",
+      "properties": {
+        "continuous": true,
+        "customer_dependent_action_data": {
+          "is_customer_dependent": false,
+          "customer_action": "",
+          "agent_action": ""
+        },
+        "agent_intention_condition": null,
+        "internal_action": null
+      }
+    },
+    {
+      "id": "d30955c217b8c00d20068eb2ca3f03e2",
+      "creation_utc": "2026-01-19T02:27:24.013451+00:00",
+      "version": "3.1.2",
+      "properties": {
+        "continuous": false,
+        "customer_dependent_action_data": {
+          "is_customer_dependent": true,
+          "customer_action": "Il cliente risponde riguardo a come ha bisogno di aiuto con la contabilità",
+          "agent_action": "L'agente risponde con un saluto cordiale e chiede come può aiutare con la contabilità"
+        },
+        "agent_intention_condition": null,
+        "internal_action": null
+      }
+    },
+    {
+      "id": "7f2c4481d95ace9789f2678f1b5069f1",
+      "creation_utc": "2026-01-19T02:27:24.013633+00:00",
+      "version": "3.1.2",
+      "properties": {
+        "continuous": false,
+        "customer_dependent_action_data": {
+          "is_customer_dependent": false,
+          "customer_action": "",
+          "agent_action": ""
+        },
+        "agent_intention_condition": null,
+        "internal_action": null
+      }
+    },
+    {
+      "id": "cca3f507148d32a86e09865d4fdaeb26",
+      "creation_utc": "2026-01-19T02:27:24.013739+00:00",
+      "version": "3.1.2",
+      "properties": {
+        "continuous": false,
+        "customer_dependent_action_data": {
+          "is_customer_dependent": true,
+          "customer_action": "Il cliente fornisce dettagli specifici sull'errore",
+          "agent_action": "L'agente chiede dettagli specifici sull'errore e prova a suggerire soluzioni basate sul contesto"
+        },
+        "agent_intention_condition": null,
+        "internal_action": null
+      }
+    }
+  ],
+  "journey_evaluations_3.1.2": []
+}
