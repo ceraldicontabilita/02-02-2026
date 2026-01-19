@@ -23,7 +23,7 @@ async def list_f24_models() -> Dict[str, Any]:
     
     db = Database.get_db()
     
-    # Query con proiezione limitata per performance
+    # Query semplice senza operatori speciali
     try:
         f24s = await db["f24_models"].find(
             {},
@@ -34,11 +34,9 @@ async def list_f24_models() -> Dict[str, Any]:
                 "data_scadenza": 1,
                 "saldo_finale": 1,
                 "pagato": 1,
-                "tributi_erario": {"$slice": 5},  # Limita tributi
-                "tributi_inps": {"$slice": 5},
                 "contribuente": 1
             }
-        ).sort("data_scadenza", -1).to_list(100)  # Limita a 100 per performance
+        ).sort("data_scadenza", -1).to_list(100)
         
         logger.info(f"F24 models query took {time.time() - t_start:.2f}s for {len(f24s)} items")
     except Exception as e:
