@@ -1170,17 +1170,38 @@ export default function Documenti() {
 
           {/* Lista documenti estratti */}
           <div style={cardStyle}>
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
               <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#1e293b' }}>
-                🤖 Documenti Estratti con AI ({aiDocuments.length})
+                🤖 Documenti Estratti con AI ({aiDocuments.filter(d => !aiFilterTipo || d.document_type === aiFilterTipo).length})
               </h3>
+              
+              {/* Filtro Tipo */}
+              <select
+                value={aiFilterTipo}
+                onChange={(e) => setAiFilterTipo(e.target.value)}
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: 8,
+                  border: '1px solid #e2e8f0',
+                  fontSize: 13,
+                  background: 'white'
+                }}
+              >
+                <option value="">Tutti i tipi</option>
+                <option value="busta_paga">💰 Busta Paga</option>
+                <option value="f24">📋 F24</option>
+                <option value="bonifico">💸 Bonifico</option>
+                <option value="estratto_conto">🏦 Estratto Conto</option>
+                <option value="cartella_esattoriale">⚠️ Cartella Esattoriale</option>
+                <option value="fattura">📄 Fattura</option>
+              </select>
             </div>
             
             {aiLoading ? (
               <div style={{ padding: 40, textAlign: 'center', color: '#64748b' }}>
                 ⏳ Caricamento...
               </div>
-            ) : aiDocuments.length === 0 ? (
+            ) : aiDocuments.filter(d => !aiFilterTipo || d.document_type === aiFilterTipo).length === 0 ? (
               <div style={{ padding: 40, textAlign: 'center', color: '#64748b' }}>
                 <div style={{ fontSize: 48, marginBottom: 16 }}>🤖</div>
                 <div style={{ fontWeight: 600, marginBottom: 8 }}>Nessun documento estratto</div>
@@ -1191,10 +1212,9 @@ export default function Documenti() {
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                   <thead>
                     <tr style={{ background: '#f8fafc' }}>
-                      <th style={{ padding: 12, textAlign: 'left', fontWeight: 600, color: '#475569' }}>File</th>
                       <th style={{ padding: 12, textAlign: 'left', fontWeight: 600, color: '#475569' }}>Tipo</th>
+                      <th style={{ padding: 12, textAlign: 'left', fontWeight: 600, color: '#475569' }}>Descrizione</th>
                       <th style={{ padding: 12, textAlign: 'left', fontWeight: 600, color: '#475569' }}>Periodo</th>
-                      <th style={{ padding: 12, textAlign: 'left', fontWeight: 600, color: '#475569' }}>Dati Estratti</th>
                       <th style={{ padding: 12, textAlign: 'center', fontWeight: 600, color: '#475569' }}>OCR</th>
                       <th style={{ padding: 12, textAlign: 'left', fontWeight: 600, color: '#475569' }}>Data</th>
                       <th style={{ padding: 12, textAlign: 'center', fontWeight: 600, color: '#475569' }}>Azioni</th>
