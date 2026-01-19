@@ -919,7 +919,7 @@ function MovimentoCard({ movimento, onConferma, onIgnora, processing, showFattur
   const hasMatch = movimento.associazione_automatica && suggerimento;
   
   // Estrai info extra dal movimento
-  const ragioneSociale = movimento.ragione_sociale || movimento.fornitore || movimento.dipendente?.nome_completo || movimento.nome_estratto;
+  const ragioneSociale = movimento.ragione_sociale || movimento.fornitore || movimento.dipendente?.nome_completo || movimento.dipendente || movimento.nome_estratto;
   const numeroFattura = movimento.numero_fattura || movimento.fattura_collegata;
   const datiIncompleti = movimento.dati_incompleti || movimento.stato === 'vuoto';
 
@@ -941,12 +941,30 @@ function MovimentoCard({ movimento, onConferma, onIgnora, processing, showFattur
         </div>
         
         <div style={{ flex: 1 }}>
-          <div style={{ fontWeight: 600, fontSize: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+          {/* NOME DIPENDENTE/FORNITORE - In evidenza */}
+          {ragioneSociale && (
+            <div style={{ 
+              fontWeight: 700, 
+              fontSize: 15, 
+              color: '#1e293b',
+              marginBottom: 4
+            }}>
+              {ragioneSociale}
+            </div>
+          )}
+          
+          <div style={{ fontWeight: 500, fontSize: 13, display: 'flex', alignItems: 'center', gap: 8, color: '#64748b' }}>
             <span>{(movimento.data || movimento.data_emissione) ? formatDateIT(movimento.data || movimento.data_emissione) : 'Data N/D'}</span>
             <span>•</span>
-            <span style={{ color: movimento.importo < 0 ? '#dc2626' : '#15803d' }}>
+            <span style={{ color: movimento.importo < 0 ? '#dc2626' : '#15803d', fontWeight: 700, fontSize: 15 }}>
               {movimento.importo ? formatEuro(Math.abs(movimento.importo)) : '€ 0,00'}
             </span>
+            {movimento.periodo && (
+              <>
+                <span>•</span>
+                <span style={{ fontSize: 11, color: '#64748b' }}>Periodo: {movimento.periodo || movimento.mese_riferimento}</span>
+              </>
+            )}
             {datiIncompleti && (
               <span style={{ 
                 fontSize: 10, 
@@ -962,21 +980,9 @@ function MovimentoCard({ movimento, onConferma, onIgnora, processing, showFattur
           </div>
           
           {/* Descrizione */}
-          <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>
+          <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>
             {movimento.descrizione?.substring(0, 100) || movimento.descrizione_originale?.substring(0, 100) || '-'}
           </div>
-          
-          {/* Ragione Sociale / Fornitore */}
-          {ragioneSociale && (
-            <div style={{ 
-              marginTop: 4, 
-              fontSize: 12, 
-              fontWeight: 600,
-              color: '#3b82f6'
-            }}>
-              👤 {ragioneSociale}
-            </div>
-          )}
           
           {/* Numero Fattura */}
           {numeroFattura && (
