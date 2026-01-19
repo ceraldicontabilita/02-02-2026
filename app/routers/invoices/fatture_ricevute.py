@@ -1139,20 +1139,26 @@ async def get_archivio_fatture(
     # Query base - include sia fatture migrate che nuove
     query = {}
     
-    # Filtro anno (supporta entrambi i formati)
+    # Filtro anno - usa range query per performance (evita $regex)
     if anno:
+        anno_start = f"{anno}-01-01"
+        anno_end = f"{anno}-12-31"
         query["$or"] = [
-            {"data_documento": {"$regex": f"^{anno}"}},
-            {"invoice_date": {"$regex": f"^{anno}"}}
+            {"data_documento": {"$gte": anno_start, "$lte": anno_end + "T23:59:59"}},
+            {"invoice_date": {"$gte": anno_start, "$lte": anno_end + "T23:59:59"}}
         ]
     
-    # Filtro mese (aggiunge al filtro anno esistente)
+    # Filtro mese - usa range query
     if mese and anno:
         mese_str = str(mese).zfill(2)
-        # Sostituisce $or con filtro più specifico
+        # Calcola ultimo giorno del mese
+        import calendar
+        last_day = calendar.monthrange(anno, mese)[1]
+        mese_start = f"{anno}-{mese_str}-01"
+        mese_end = f"{anno}-{mese_str}-{last_day:02d}"
         query["$or"] = [
-            {"data_documento": {"$regex": f"^{anno}-{mese_str}"}},
-            {"invoice_date": {"$regex": f"^{anno}-{mese_str}"}}
+            {"data_documento": {"$gte": mese_start, "$lte": mese_end + "T23:59:59"}},
+            {"invoice_date": {"$gte": mese_start, "$lte": mese_end + "T23:59:59"}}
         ]
     
     # Filtro fornitore per P.IVA (supporta entrambi gli schemi)
