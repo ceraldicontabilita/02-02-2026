@@ -192,16 +192,31 @@ async def upload_corrispettivo_xml(
         db = Database.get_db()
         
         corrispettivo_key = parsed.get("corrispettivo_key", "")
+        data_corrispettivo = parsed.get("data", "")
+        
+        # LOGICA SOVRASCRIZIONE:
+        # 1. Cerca prima per corrispettivo_key esatto (stesso registratore)
+        # 2. Se non trova, cerca per DATA (per sovrascrivere dati manuali provvisori)
         existing = None
+        existing_manuale = None
+        
         if corrispettivo_key:
             existing = await db["corrispettivi"].find_one({
                 "corrispettivo_key": corrispettivo_key,
                 "status": {"$nin": ["deleted", "archived"]}
             })
         
+        # Se non trovato per key, cerca record MANUALE per stessa DATA da sovrascrivere
+        if not existing and data_corrispettivo:
+            existing_manuale = await db["corrispettivi"].find_one({
+                "data": data_corrispettivo,
+                "source": "manual",  # Solo record manuali
+                "status": {"$nin": ["deleted", "archived"]}
+            })
+        
         corrispettivo_data = {
             "corrispettivo_key": corrispettivo_key,
-            "data": parsed.get("data", ""),
+            "data": data_corrispettivo,
             "matricola_rt": parsed.get("matricola_rt", ""),
             "numero_documento": parsed.get("numero_documento", ""),
             "partita_iva": parsed.get("partita_iva", ""),
@@ -215,36 +230,59 @@ async def upload_corrispettivo_xml(
             "numero_documenti": int(parsed.get("numero_documenti", 0) or 0),
             "riepilogo_iva": parsed.get("riepilogo_iva", []),
             "status": "imported",
+            "source": "xml",  # Marca come proveniente da XML
             "filename": file.filename,
             "updated_at": datetime.utcnow().isoformat()
         }
         
+        action = "created"
+        corrispettivo_id = None
+        movimento_manuale_eliminato = False
+        
         if existing:
-            # UPSERT - Aggiorna esistente MA preserva i dati manuali
-            # I campi manuali che NON devono essere sovrascritti dall'XML
-            campi_manuali_da_preservare = [
-                'pagato_elettronico_manuale',  # POS inserito manualmente
-                'note_manuali',
-                'prima_nota_id',
-                'riconciliato',
-                'fornitore_manuale'
-            ]
-            
-            # Se c'era un pagato_elettronico manuale e l'XML non ha elettronico, preserva
-            if existing.get('pagato_elettronico_manuale') and corrispettivo_data.get('pagato_elettronico', 0) == 0:
-                corrispettivo_data['pagato_elettronico'] = existing.get('pagato_elettronico', 0)
-            
-            # Preserva i campi manuali esistenti
-            for campo in campi_manuali_da_preservare:
-                if campo in existing and existing[campo]:
-                    corrispettivo_data[campo] = existing[campo]
-            
+            # Stesso corrispettivo (stessa matricola) - AGGIORNA con dati XML
             await db["corrispettivi"].update_one(
                 {"corrispettivo_key": corrispettivo_key},
                 {"$set": corrispettivo_data}
             )
             corrispettivo_id = existing.get("id")
             action = "updated"
+            
+        elif existing_manuale:
+            # Trovato record MANUALE per stessa data - SOVRASCRIVILO con XML
+            corrispettivo_id = existing_manuale.get("id")
+            corrispettivo_data["id"] = corrispettivo_id
+            corrispettivo_data["sovrascritto_manuale"] = True
+            corrispettivo_data["data_sovrascrizione"] = datetime.utcnow().isoformat()
+            
+            await db["corrispettivi"].update_one(
+                {"id": corrispettivo_id},
+                {"$set": corrispettivo_data}
+            )
+            action = "replaced_manual"
+            
+            # ELIMINA anche il movimento manuale dalla Prima Nota Cassa
+            # (il nuovo movimento XML verrà creato dopo)
+            mov_manuale = await db["prima_nota_cassa"].find_one({
+                "data": data_corrispettivo,
+                "categoria": "Corrispettivi",
+                "source": {"$in": ["manual_entry", "manual", "corrispettivo_manuale"]}
+            })
+            if mov_manuale:
+                await db["prima_nota_cassa"].delete_one({"_id": mov_manuale["_id"]})
+                movimento_manuale_eliminato = True
+                logger.info(f"Eliminato movimento manuale Prima Nota per data {data_corrispettivo}")
+            
+            # Elimina anche eventuali POS manuali per la stessa data
+            pos_manuale = await db["prima_nota_cassa"].find_one({
+                "data": data_corrispettivo,
+                "categoria": "POS",
+                "source": {"$in": ["manual_pos", "manual_entry", "manual"]}
+            })
+            if pos_manuale:
+                await db["prima_nota_cassa"].delete_one({"_id": pos_manuale["_id"]})
+                logger.info(f"Eliminato POS manuale Prima Nota per data {data_corrispettivo}")
+            
         else:
             # INSERT - Nuovo record
             corrispettivo_data["id"] = str(uuid.uuid4())
