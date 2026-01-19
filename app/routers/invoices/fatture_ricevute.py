@@ -349,7 +349,8 @@ async def import_fattura_xml(file: UploadFile = File(...)):
         
         # Pagamento
         "pagamento": parsed.get("pagamento", {}),
-        "metodo_pagamento": None,  # Da riconciliare
+        "metodo_pagamento": fornitore_obj.get("metodo_pagamento"),  # Usa metodo corretto (manuale o predefinito)
+        "metodo_pagamento_modificato_manualmente": bool(metodo_manuale_esistente),
         "pagato": False,
         "data_pagamento": None,
         
@@ -360,6 +361,7 @@ async def import_fattura_xml(file: UploadFile = File(...)):
         "has_pdf": parsed.get("has_pdf", False),
         "num_righe": len(parsed.get("linee", [])),
         "num_allegati": len(parsed.get("allegati", [])),
+        "is_bozza_email": False,  # Questo è un import XML completo
         
         # Causali
         "causali": parsed.get("causali", []),
