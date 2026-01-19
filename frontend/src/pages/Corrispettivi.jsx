@@ -21,7 +21,8 @@ export default function Corrispettivi() {
   const [autoRepairRunning, setAutoRepairRunning] = useState(false);
 
   /**
-   * LOGICA INTELLIGENTE: Esegue auto-riparazione dei dati al caricamento.
+   * LOGICA INTELLIGENTE: Esegue auto-riparazione dei dati.
+   * DISABILITATA: Spostata in Admin per performance. Chiamare manualmente se necessario.
    */
   const eseguiAutoRiparazione = async () => {
     setAutoRepairRunning(true);
@@ -40,7 +41,7 @@ export default function Corrispettivi() {
   };
 
   useEffect(() => {
-    eseguiAutoRiparazione();
+    // RIMOSSO per performance - eseguiAutoRiparazione() ora solo manuale
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
