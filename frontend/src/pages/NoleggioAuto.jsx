@@ -200,9 +200,43 @@ export default function NoleggioAuto() {
             background: '#fef3c7', 
             color: '#92400e', 
             borderRadius: 8,
-            fontSize: 13
+            fontSize: 13,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8
           }}>
-            ⚠️ {fattureNonAssociate} fatture non associate (es: LeasePlan)
+            ⚠️ {fattureNonAssociate} fatture non associate
+            <button
+              onClick={async () => {
+                try {
+                  const res = await api.get('/api/noleggio/fatture-non-associate');
+                  const fatture = res.data.fatture || [];
+                  if (fatture.length === 0) {
+                    alert('Nessuna fattura non associata');
+                    return;
+                  }
+                  // Mostra modal con lista fatture
+                  const dettagli = fatture.map(f => 
+                    `• ${f.fornitore || 'N/D'} - Fatt. ${f.numero || 'N/D'} del ${f.data || 'N/D'}\n  € ${Number(f.importo || 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })} - ${f.descrizione || ''}`
+                  ).join('\n\n');
+                  alert(`📋 FATTURE NON ASSOCIATE (${fatture.length}):\n\n${dettagli}`);
+                } catch (e) {
+                  alert('Errore: ' + e.message);
+                }
+              }}
+              style={{
+                padding: '4px 10px',
+                background: '#f59e0b',
+                color: 'white',
+                border: 'none',
+                borderRadius: 4,
+                cursor: 'pointer',
+                fontSize: 11,
+                fontWeight: 600
+              }}
+            >
+              👁️ Visualizza
+            </button>
           </span>
         )}
       </div>
