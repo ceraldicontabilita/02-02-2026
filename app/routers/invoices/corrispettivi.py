@@ -294,9 +294,10 @@ async def upload_corrispettivo_xml(
         corrispettivo_data.pop("_id", None)
         corrispettivo_data["id"] = corrispettivo_id
         
-        # Propaga corrispettivo a Prima Nota Cassa usando DataPropagationService (solo per nuovi)
+        # Propaga corrispettivo a Prima Nota Cassa usando DataPropagationService
+        # Per nuovi E per quelli che hanno sostituito record manuali
         propagation_result = {}
-        if action == "created":
+        if action in ["created", "replaced_manual"]:
             from app.services.data_propagation import get_propagation_service
             propagation_service = get_propagation_service()
             propagation_result = await propagation_service.propagate_corrispettivo_to_prima_nota(corrispettivo_data)
@@ -307,12 +308,19 @@ async def upload_corrispettivo_xml(
                     {"$set": {"prima_nota_id": propagation_result.get("movement_id")}}
                 )
         
+        action_msg = {
+            "created": "importato",
+            "updated": "aggiornato",
+            "replaced_manual": "sostituito dato manuale"
+        }.get(action, action)
+        
         return {
             "success": True,
             "action": action,
-            "message": f"Corrispettivo del {parsed.get('data')} {'aggiornato' if action == 'updated' else 'importato'}",
+            "message": f"Corrispettivo del {parsed.get('data')} {action_msg}",
             "corrispettivo": corrispettivo_data,
-            "prima_nota_id": propagation_result.get("movement_id")
+            "prima_nota_id": propagation_result.get("movement_id"),
+            "movimento_manuale_eliminato": movimento_manuale_eliminato if 'movimento_manuale_eliminato' in dir() else False
         }
         
     except HTTPException:
