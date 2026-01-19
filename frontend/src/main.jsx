@@ -96,7 +96,6 @@ const DashboardAnalytics = lazy(() => import("./pages/DashboardAnalytics.jsx"));
 
 // === FATTURE & ACQUISTI ===
 const ArchivioFattureRicevute = lazy(() => import("./pages/ArchivioFattureRicevute.jsx"));
-const DettaglioFattura = lazy(() => import("./pages/DettaglioFattura.jsx"));
 const Corrispettivi = lazy(() => import("./pages/Corrispettivi.jsx"));
 // CicloPassivoIntegrato è stato unificato in ArchivioFattureRicevute
 // const CicloPassivoIntegrato = lazy(() => import("./pages/CicloPassivoIntegrato.jsx"));
