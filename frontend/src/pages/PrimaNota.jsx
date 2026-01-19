@@ -219,6 +219,8 @@ function PrimaNotaDesktop() {
   // === SAVE HANDLERS CASSA ===
   
   // Corrispettivo (DARE/Entrata) - Importo al LORDO IVA
+  // NOTA: Questo è un dato PROVVISORIO per vedere il saldo cassa.
+  // Quando arriva l'XML dei corrispettivi, questo verrà SOVRASCRITTO.
   const handleSaveCorrispettivo = async () => {
     if (!corrispettivo.importo) return alert('Inserisci importo');
     setSavingCorrisp(true);
@@ -227,13 +229,13 @@ function PrimaNotaDesktop() {
         data: corrispettivo.data,
         tipo: 'entrata',  // DARE
         importo: parseFloat(corrispettivo.importo),
-        descrizione: `Corrispettivo giornaliero ${corrispettivo.data}`,
+        descrizione: `Corrispettivo giornaliero ${corrispettivo.data} (provvisorio)`,
         categoria: 'Corrispettivi',
-        source: 'manual_entry'
+        source: 'manual_entry',
+        provvisorio: true  // Sarà sovrascritto quando arriva XML
       });
       setCorrispettivo({ data: today, importo: '' });
       loadAllData();
-      alert('✅ Corrispettivo salvato!');
     } catch (error) {
       alert('Errore: ' + (error.response?.data?.detail || error.message));
     } finally {
@@ -242,6 +244,8 @@ function PrimaNotaDesktop() {
   };
 
   // POS (AVERE/Uscita) - Escono dalla cassa - Campo unificato
+  // NOTA: Questo è un dato PROVVISORIO per vedere il saldo cassa.
+  // Quando arriva l'XML dei corrispettivi, questo verrà SOVRASCRITTO.
   const handleSavePos = async () => {
     const totale = parseFloat(pos.pos1) || 0;
     if (totale === 0) return alert('Inserisci importo POS');
