@@ -400,14 +400,22 @@ async def import_fattura_xml(file: UploadFile = File(...)):
         "metodo_pagamento": None  # Default - sarà usato per routing Prima Nota
     }
     
-    # Recupera flag esclude_magazzino e metodo_pagamento dal DB
+    # Recupera flag esclude_magazzino e metodo_pagamento predefinito dal fornitore
     fornitore_db = await db[COL_FORNITORI].find_one(
         {"partita_iva": partita_iva}, 
-        {"_id": 0, "esclude_magazzino": 1, "metodo_pagamento": 1}
+        {"_id": 0, "esclude_magazzino": 1, "metodo_pagamento": 1, "metodo_pagamento_predefinito": 1}
     )
     if fornitore_db:
         fornitore_obj["esclude_magazzino"] = fornitore_db.get("esclude_magazzino", False)
-        fornitore_obj["metodo_pagamento"] = fornitore_db.get("metodo_pagamento")
+        # Priorità: metodo manuale utente > metodo predefinito fornitore
+        fornitore_obj["metodo_pagamento"] = (
+            metodo_manuale_esistente or 
+            fornitore_db.get("metodo_pagamento_predefinito") or
+            fornitore_db.get("metodo_pagamento")
+        )
+    elif metodo_manuale_esistente:
+        # Se non c'è fornitore in DB ma c'era un metodo manuale
+        fornitore_obj["metodo_pagamento"] = metodo_manuale_esistente
     
     risultato_integrazione = {}
     
