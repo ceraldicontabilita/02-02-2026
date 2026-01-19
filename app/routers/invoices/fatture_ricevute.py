@@ -1220,12 +1220,25 @@ async def get_archivio_fatture(
             query["$or"] = search_filter
     
     # Query - ordina per data documento (supporta entrambi i formati)
+    import time
+    t1 = time.time()
+    
     cursor = db[COL_FATTURE_RICEVUTE].find(query, {"_id": 0})
     cursor = cursor.sort([("invoice_date", -1), ("data_documento", -1)]).skip(skip).limit(limit)
     fatture = await cursor.to_list(limit)
     
-    # Conteggio totale
-    totale = await db[COL_FATTURE_RICEVUTE].count_documents(query)
+    t2 = time.time()
+    logger.info(f"Archivio query took {t2-t1:.2f}s for {len(fatture)} items")
+    
+    # Conteggio totale - usa estimated_document_count se query vuota, altrimenti count_documents
+    # Per velocità, se non c'è paginazione e abbiamo meno risultati del limit, il totale è len(fatture)
+    if len(fatture) < limit and skip == 0:
+        totale = len(fatture)
+    else:
+        totale = await db[COL_FATTURE_RICEVUTE].count_documents(query)
+    
+    t3 = time.time()
+    logger.info(f"Archivio count took {t3-t2:.2f}s, total={totale}")
     
     return {
         "fatture": fatture,
