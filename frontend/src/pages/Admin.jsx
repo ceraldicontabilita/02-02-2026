@@ -379,6 +379,7 @@ export default function Admin() {
         <button onClick={() => setActiveTab('fatture')} style={tabStyle(activeTab === 'fatture')}>📄 Fatture</button>
         <button onClick={() => setActiveTab('system')} style={tabStyle(activeTab === 'system')}>🗄️ Sistema</button>
         <button onClick={() => setActiveTab('sync')} style={tabStyle(activeTab === 'sync')}>🔄 Sincronizzazione</button>
+        <button onClick={() => setActiveTab('manutenzione')} style={tabStyle(activeTab === 'manutenzione')}>🔧 Manutenzione</button>
         <button onClick={() => setActiveTab('export')} style={tabStyle(activeTab === 'export')}>📥 Esportazioni</button>
       </div>
 
