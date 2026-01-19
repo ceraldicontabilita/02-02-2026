@@ -912,3 +912,48 @@ Ogni sviluppo futuro deve:
 - mantenere la tracciabilità completa.
 
 ---
+
+## 37. Changelog Sessione 19 Gen 2026 (Performance Fix)
+
+### ✅ Completati:
+
+1. **Ottimizzazione Performance API /api/suppliers**:
+   - Tempo ridotto da ~5.3s a ~0.07s (con cache)
+   - Implementato caching con TTL 5 minuti
+   - Query semplificata: prima carica da collection suppliers, poi arricchisce con stats fatture
+
+2. **Ottimizzazione Performance API /api/f24-public/models**:
+   - Tempo ridotto a ~0.25s
+   - Query con proiezione limitata (esclusi campi pesanti)
+   - Limite 100 documenti per performance
+
+3. **Refactoring Dashboard**:
+   - Card "Bilancio Istantaneo" più compatta (4 colonne su 1 riga)
+   - Card "Calcolo Imposte" più compatta (4 colonne su 1 riga)
+   - Aggiunto nuovo widget "Scadenze F24" con lista compatta
+   - Font ridotti e padding ottimizzato
+
+4. **Rimozione Tab Scadenze**:
+   - Rimossa da /fatture-ricevute (centralizzata in Dashboard)
+   - TABS ora contiene solo: archivio, riconciliazione, storico
+
+5. **Nuovo Endpoint Pubblico Scadenze F24**:
+   - `GET /api/f24-public/scadenze-prossime` (senza autenticazione)
+   - Combina dati da collections f24 e f24_models
+   - Ordina per giorni mancanti alla scadenza
+
+### 🔄 File Modificati:
+- `/app/app/routers/suppliers.py` - Ottimizzazione endpoint list_suppliers
+- `/app/app/routers/f24/f24_public.py` - Ottimizzato list_f24_models, aggiunto scadenze-prossime
+- `/app/app/routers/f24/f24_main.py` - Rimosso endpoint duplicato scadenze-prossime
+- `/app/frontend/src/pages/Dashboard.jsx` - Card compatte, widget Scadenze F24
+- `/app/frontend/src/pages/ArchivioFattureRicevute.jsx` - Tab Scadenze già rimossa
+
+### Performance Verificate (Test Report iteration_19):
+| Endpoint | Prima | Dopo |
+|----------|-------|------|
+| /api/suppliers | ~5.3s | ~0.07s (cache) |
+| /api/f24-public/models | timeout | ~0.25s |
+| /api/fatture-ricevute/archivio | ~29s | ~2.6s |
+
+---
