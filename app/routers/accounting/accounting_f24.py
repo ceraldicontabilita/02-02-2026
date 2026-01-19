@@ -205,17 +205,53 @@ async def upload_f24_pdf(
     - F24 contributi INPS
     
     Estrae: codice tributo, importo, periodo riferimento, scadenza
-    """
-    from app.parsers.f24_parser import parse_f24_pdf
     
+    Usa Document AI come prima scelta (più accurato), con fallback al parser regex.
+    """
     if not file.filename.lower().endswith('.pdf'):
         from fastapi import HTTPException
         raise HTTPException(status_code=400, detail="Solo file PDF supportati")
     
     pdf_bytes = await file.read()
+    parsed = None
+    metodo = "document_ai"
     
-    # Parse PDF
-    parsed = parse_f24_pdf(pdf_bytes)
+    # PRIMA SCELTA: Document AI (più accurato)
+    try:
+        from app.services.document_ai_extractor import extract_document_data
+        
+        ai_result = await extract_document_data(
+            file_content=pdf_bytes,
+            filename=file.filename,
+            document_type="f24"
+        )
+        
+        if ai_result.get("structured_data", {}).get("success"):
+            data = ai_result["structured_data"].get("data", {})
+            # Converti formato Document AI a formato legacy parser
+            parsed = {
+                "codice_fiscale": data.get("contribuente", {}).get("codice_fiscale"),
+                "contribuente": data.get("contribuente", {}).get("denominazione"),
+                "scadenza": data.get("data_versamento"),
+                "tributi_erario": data.get("tributi_erario", []),
+                "tributi_inps": data.get("tributi_inps", []),
+                "tributi_regioni": data.get("tributi_regioni", []),
+                "tributi_imu": data.get("tributi_imu", []),
+                "totale_debito": data.get("totale_versato") or data.get("importo_totale"),
+                "totale_credito": 0,
+                "saldo_finale": data.get("totale_versato") or data.get("importo_totale"),
+                "banca": data.get("banca_delegata")
+            }
+            logger.info(f"F24 estratto con Document AI: {parsed.get('contribuente')}")
+    except Exception as e:
+        logger.warning(f"Document AI fallito per {file.filename}: {e}, uso fallback regex")
+        metodo = "regex_fallback"
+    
+    # FALLBACK: Parser regex legacy
+    if not parsed:
+        from app.parsers.f24_parser import parse_f24_pdf
+        parsed = parse_f24_pdf(pdf_bytes)
+        metodo = "regex_fallback"
     
     if "error" in parsed and parsed["error"]:
         return {
