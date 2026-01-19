@@ -25,6 +25,7 @@ async def test_route():
 async def list_f24_models() -> Dict[str, Any]:
     """Lista tutti i modelli F24 importati da PDF."""
     import time
+    logger.info("=== /models endpoint called ===")
     t_start = time.time()
     
     db = Database.get_db()
