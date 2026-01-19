@@ -384,7 +384,6 @@ export default function RiconciliazioneUnificata() {
 
   // Ignora movimento
   const handleIgnora = async (movimento) => {
-    if (!window.confirm('Ignorare questo movimento?')) return;
     setProcessing(movimento.movimento_id || movimento.id);
     try {
       await api.post('/api/operazioni-da-confermare/smart/ignora', { 
@@ -424,11 +423,6 @@ export default function RiconciliazioneUnificata() {
 
   // Assegna automaticamente metodi pagamento basandosi su estratto conto
   const handleAssegnaMetodiAuto = async () => {
-    if (!window.confirm('Assegnare automaticamente i metodi di pagamento?\n\n' +
-        '• Se trovato in estratto conto → Bonifico/Assegno\n' +
-        '• Se NON trovato (estratto recente) → Cassa\n' +
-        '• Se estratto vecchio → Sospesa (da ricontrollare)')) return;
-    
     setProcessing('assegna-metodi');
     try {
       const res = await api.post('/api/riconciliazione-auto/assegna-metodi-aruba');

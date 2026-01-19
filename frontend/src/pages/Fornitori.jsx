@@ -978,7 +978,6 @@ export default function Fornitori() {
 
   // Eliminazione fornitore dal database
   const handleDelete = async (id, forceDelete = false) => {
-    if (!forceDelete && !window.confirm('Eliminare questo fornitore dal database?')) return;
     try {
       // DELETE dal database
       const url = forceDelete ? `/api/suppliers/${id}?force=true` : `/api/suppliers/${id}`;
@@ -986,11 +985,9 @@ export default function Fornitori() {
       reloadData(); // Ricarica dati
     } catch (error) {
       const errorMsg = error.response?.data?.detail || error.response?.data?.message || error.message;
-      // Se ci sono fatture collegate, chiedi conferma per eliminazione forzata
+      // Se ci sono fatture collegate, procedi con eliminazione forzata
       if (error.response?.status === 400 && errorMsg.includes('fatture collegate')) {
-        if (window.confirm(`${errorMsg}\n\nVuoi eliminare comunque il fornitore?\n\nATTENZIONE: Le fatture rimarranno nel sistema ma non saranno più associate a questo fornitore.`)) {
-          handleDelete(id, true); // Riprova con force=true
-        }
+        handleDelete(id, true); // Riprova con force=true
       } else {
         alert('Errore eliminazione: ' + errorMsg);
       }
@@ -1034,19 +1031,9 @@ export default function Fornitori() {
         }
         
         if (Object.keys(updates).length > 0) {
-          // Mostra conferma
-          const msg = `Dati trovati per P.IVA ${supplier.partita_iva}:\n\n` +
-            (updates.ragione_sociale ? `Ragione Sociale: ${updates.ragione_sociale}\n` : '') +
-            (updates.indirizzo ? `Indirizzo: ${updates.indirizzo}\n` : '') +
-            (updates.cap ? `CAP: ${updates.cap}\n` : '') +
-            (updates.comune ? `Comune: ${updates.comune}\n` : '') +
-            (updates.provincia ? `Provincia: ${updates.provincia}\n` : '') +
-            '\nVuoi aggiornare il fornitore?';
-          
-          if (window.confirm(msg)) {
-            await api.put(`/api/suppliers/${supplier.id}`, updates);
-            reloadData();
-          }
+          // Aggiorna automaticamente
+          await api.put(`/api/suppliers/${supplier.id}`, updates);
+          reloadData();
         } else {
           alert(`Nessun dato nuovo trovato per ${supplier.ragione_sociale || supplier.partita_iva}.\nI dati sono già completi o non disponibili su VIES.`);
         }
