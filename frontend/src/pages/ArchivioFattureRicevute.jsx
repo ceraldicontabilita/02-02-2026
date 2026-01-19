@@ -155,6 +155,8 @@ export default function ArchivioFatture() {
       setShowPayMenu(null);
     }
   };
+
+  /**
    * LOGICA INTELLIGENTE: Esegue auto-riparazione dei dati.
    * DISABILITATA: Spostata in Admin per performance. Chiamare manualmente se necessario.
    */
