@@ -261,25 +261,38 @@ async def import_fattura_xml(file: UploadFile = File(...)):
     partita_iva = parsed.get("supplier_vat", "")
     numero_doc = parsed.get("invoice_number", "")
     
-    # Controllo duplicato - Se esiste, aggiorna invece di bloccare
+    # Controllo duplicato - Se esiste una fattura precedente (da email o importata)
     duplicato = await check_duplicato(db, partita_iva, numero_doc)
+    metodo_manuale_esistente = None  # Metodo scelto manualmente dall'utente
+    
     if duplicato:
-        # Aggiorna la fattura esistente con i nuovi dati
-        update_data = {
-            "raw_xml": parsed.get("raw_xml"),
-            "updated_at": datetime.utcnow().isoformat(),
-            "reimported": True
-        }
-        await db["invoices"].update_one(
-            {"id": duplicato["id"]},
-            {"$set": update_data}
-        )
-        return {
-            "success": True,
-            "message": f"Fattura {numero_doc} già presente - dati aggiornati",
-            "azione": "aggiornato",
-            "fattura_id": duplicato["id"]
-        }
+        # Controlla se c'è un metodo di pagamento già scelto manualmente
+        if duplicato.get("metodo_pagamento_modificato_manualmente"):
+            metodo_manuale_esistente = duplicato.get("metodo_pagamento")
+            logger.info(f"Trovato metodo pagamento manuale: {metodo_manuale_esistente} per fattura {numero_doc}")
+        
+        # Se è una bozza da email, sovrascrivi con dati XML completi
+        if duplicato.get("source") == "email" or duplicato.get("is_bozza_email"):
+            logger.info(f"Sovrascrivo bozza email con XML per fattura {numero_doc}")
+            # Elimina la bozza - verrà ricreata con dati completi
+            await db[COL_FATTURE_RICEVUTE].delete_one({"id": duplicato["id"]})
+        else:
+            # Fattura già importata da XML - aggiorna solo i dati tecnici
+            update_data = {
+                "raw_xml": parsed.get("raw_xml"),
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+                "reimported": True
+            }
+            await db[COL_FATTURE_RICEVUTE].update_one(
+                {"id": duplicato["id"]},
+                {"$set": update_data}
+            )
+            return {
+                "success": True,
+                "message": f"Fattura {numero_doc} già presente - dati aggiornati",
+                "azione": "aggiornato",
+                "fattura_id": duplicato["id"]
+            }
     
     # Verifica/Crea fornitore
     fornitore_result = await get_or_create_fornitore(db, parsed)
