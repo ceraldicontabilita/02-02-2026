@@ -265,12 +265,12 @@ export default function Dashboard() {
         <ScadenzeWidget scadenze={scadenzeData} />
       )}
 
-      {/* Toggle Volume Affari Reale */}
+      {/* Toggle Volume Affari Reale - Compatto */}
       <div style={{ 
         background: showVolumeReale ? 'linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%)' : '#f7fafc',
-        borderRadius: 8,
-        padding: 12,
-        marginBottom: 12,
+        borderRadius: 6,
+        padding: 8,
+        marginBottom: 10,
         border: showVolumeReale ? 'none' : '1px dashed #e2e8f0',
         transition: 'all 0.3s ease'
       }}>
@@ -278,25 +278,12 @@ export default function Dashboard() {
           display: 'flex', 
           justifyContent: 'space-between', 
           alignItems: 'center',
-          marginBottom: showVolumeReale && volumeRealeData ? 12 : 0
+          marginBottom: showVolumeReale && volumeRealeData ? 8 : 0
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Lock size={16} color={showVolumeReale ? 'white' : '#718096'} />
-            <span style={{ 
-              fontWeight: 600, 
-              color: showVolumeReale ? 'white' : '#4a5568',
-              fontSize: 12
-            }}>
-              Volume Affari Reale
-            </span>
-            <span style={{ 
-              fontSize: 9, 
-              background: showVolumeReale ? 'rgba(255,255,255,0.2)' : '#e2e8f0',
-              color: showVolumeReale ? 'white' : '#718096',
-              padding: '2px 6px',
-              borderRadius: 4
-            }}>
-              RISERVATO
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Lock size={12} color={showVolumeReale ? 'white' : '#718096'} />
+            <span style={{ fontWeight: 600, color: showVolumeReale ? 'white' : '#4a5568', fontSize: 11 }}>
+              Volume Affari
             </span>
           </div>
           <button
@@ -305,18 +292,18 @@ export default function Dashboard() {
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 4,
-              padding: '4px 10px',
+              gap: 3,
+              padding: '3px 8px',
               background: showVolumeReale ? 'rgba(255,255,255,0.2)' : '#667eea',
               color: 'white',
               border: 'none',
               borderRadius: 4,
               cursor: 'pointer',
               fontWeight: 500,
-              fontSize: 11
+              fontSize: 10
             }}
           >
-            {showVolumeReale ? <EyeOff size={12} /> : <Eye size={12} />}
+            {showVolumeReale ? <EyeOff size={10} /> : <Eye size={10} />}
             {showVolumeReale ? 'Nascondi' : 'Mostra'}
           </button>
         </div>
