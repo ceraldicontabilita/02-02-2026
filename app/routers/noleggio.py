@@ -377,6 +377,8 @@ async def associa_fornitore(
         upsert=True
     )
     
+    _ = result  # Upsert always succeeds
+    
     return {
         "success": True,
         "targa": targa,
