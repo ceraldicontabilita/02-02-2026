@@ -6,6 +6,7 @@ import App from "./App.jsx";
 import "./styles.css";
 import { AnnoProvider } from "./contexts/AnnoContext.jsx";
 import { queryClient } from "./lib/queryClient.js";
+import { ConfirmProvider } from "./components/ui/ConfirmDialog.jsx";
 
 // Build timestamp: 2026-01-18T19:10:00 - Force cache invalidation
 
@@ -281,7 +282,9 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <AnnoProvider>
-          <RouterProvider router={router} />
+          <ConfirmProvider>
+            <RouterProvider router={router} />
+          </ConfirmProvider>
         </AnnoProvider>
       </QueryClientProvider>
     </ErrorBoundary>
