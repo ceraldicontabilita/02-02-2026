@@ -187,9 +187,8 @@ async def _processa_linee_fattura(
     linee_per_targa: Dict[str, Dict[str, Any]] = {}
     targhe_da_db = targhe_trovate.copy()
     
-    invoice_number = invoice_data["invoice_number"]
-    invoice_date = invoice_data["invoice_date"]
-    invoice_id = invoice_data["invoice_id"]
+    # Extract from invoice_data for local use
+    _ = (invoice_data["invoice_number"], invoice_data["invoice_date"], invoice_data["invoice_id"])  # Used in dicts below
     supplier = invoice_data["supplier"]
     supplier_vat = invoice_data["supplier_vat"]
     codice_cliente = invoice_data["codice_cliente"]
