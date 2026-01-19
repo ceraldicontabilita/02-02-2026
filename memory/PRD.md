@@ -1018,3 +1018,51 @@ Ogni sviluppo futuro deve:
 - Default anno corrente per evitare scan completo
 
 ---
+
+## 40. Changelog Sessione 19 Gen 2026 (Ottimizzazione Imposte + Refactoring)
+
+### ✅ Ottimizzazione API Calcolo Imposte
+
+**Prima**: Timeout >60 secondi  
+**Dopo**: ~0.36 secondi
+
+**Modifiche**:
+- Rimosso caricamento completo fatture con `.to_list()`
+- Implementato aggregazione MongoDB per calcolo totali
+- Aggiunta proiezione per escludere campi pesanti
+- Default anno corrente se non specificato
+
+**File modificato**: `/app/app/services/calcolo_imposte.py`
+
+---
+
+### ✅ Refactoring Moduli
+
+#### 1. Modulo Suppliers (`/app/app/services/suppliers/`)
+```
+├── __init__.py     # Export pubblici
+├── constants.py    # Collections, metodi pagamento, termini
+├── validators.py   # valida_fornitore, clean_mongo_doc
+├── iban_service.py # ricerca_iban_web, estrai_iban_da_fatture
+└── sync_service.py # sincronizza_da_fatture, aggiorna_da_invoices
+```
+
+#### 2. Modulo Ciclo Passivo (`/app/app/services/ciclo_passivo/`)
+```
+├── __init__.py        # Export pubblici
+├── constants.py       # Collections, metodi pag, conti contabili
+├── helpers.py         # estrai_codice_lotto, detect_centro_costo
+├── magazzino.py       # processa_carico_magazzino, genera_id_lotto
+├── prima_nota.py      # genera_scrittura_prima_nota
+├── scadenziario.py    # crea_scadenza_pagamento
+└── riconciliazione.py # cerca_match_bancario, esegui_riconciliazione
+```
+
+### Performance Verificate:
+| Endpoint | Prima | Dopo |
+|----------|-------|------|
+| /api/contabilita/calcolo-imposte | >60s | 0.36s |
+| /api/noleggio/veicoli | 10s | 0.5s |
+| /api/suppliers | 5.3s | 0.07s (cache) |
+
+---
