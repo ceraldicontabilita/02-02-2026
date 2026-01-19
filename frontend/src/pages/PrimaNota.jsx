@@ -623,17 +623,10 @@ function PrimaNotaDesktop() {
                 </button>
               </CompactEntryCard>
 
-              {/* POS */}
+              {/* POS - Campo Unificato */}
               <CompactEntryCard title="💳 POS" color="#3b82f6">
                 <input type="date" value={pos.data} onChange={(e) => setPos({...pos, data: e.target.value})} style={inputStyleCompact} />
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 4 }}>
-                  <input type="number" step="0.01" placeholder="P1" value={pos.pos1} onChange={(e) => setPos({...pos, pos1: e.target.value})} style={{...inputStyleCompact, padding: 6, fontSize: 11}} />
-                  <input type="number" step="0.01" placeholder="P2" value={pos.pos2} onChange={(e) => setPos({...pos, pos2: e.target.value})} style={{...inputStyleCompact, padding: 6, fontSize: 11}} />
-                  <input type="number" step="0.01" placeholder="P3" value={pos.pos3} onChange={(e) => setPos({...pos, pos3: e.target.value})} style={{...inputStyleCompact, padding: 6, fontSize: 11}} />
-                </div>
-                <div style={{ fontSize: 11, textAlign: 'center', background: 'rgba(255,255,255,0.7)', padding: 4, borderRadius: 4 }}>
-                  Tot: <strong>{formatEuro(posTotale)}</strong>
-                </div>
+                <input type="number" step="0.01" placeholder="€ Totale POS" value={pos.pos1} onChange={(e) => setPos({...pos, pos1: e.target.value, pos2: '', pos3: ''})} style={inputStyleCompact} />
                 <button onClick={handleSavePos} disabled={savingPos} style={buttonStyleCompact('#1d4ed8', savingPos)}>
                   {savingPos ? '⏳' : '💾'}
                 </button>
