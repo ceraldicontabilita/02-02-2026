@@ -350,34 +350,80 @@ export default function PrimaNotaUnificata() {
   };
 
   return (
-    <div style={{ padding: 'clamp(12px, 3vw, 20px)' }}>
+    <div style={{ padding: 12, maxWidth: 1400, margin: '0 auto' }}>
       {/* Page Info Card */}
       <div style={{ position: 'absolute', top: 70, right: 20, zIndex: 100 }}>
         <PageInfoCard pageKey={filtroTipo === 'cassa' ? 'prima-nota-cassa' : filtroTipo === 'banca' ? 'prima-nota-banca' : 'prima-nota-salari'} />
       </div>
       
-      {/* Header */}
-      <div style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+      {/* Header - Stile Noleggio Auto */}
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        marginBottom: 16,
+        padding: '12px 16px',
+        background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
+        borderRadius: 10,
+        color: 'white',
+        flexWrap: 'wrap',
+        gap: 10
+      }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: 'clamp(20px, 4vw, 26px)', color: '#1e293b' }}>
+          <h1 style={{ margin: 0, fontSize: 18, fontWeight: 'bold' }}>
             📒 Prima Nota {filtroTipo !== 'tutti' && `- ${FILTRI_TIPO.find(f => f.id === filtroTipo)?.label.replace(/📋|💰|🏦|👤/g, '').trim()}`}
           </h1>
-          <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: 13 }}>Anno {anno}</p>
+          <p style={{ margin: '2px 0 0 0', fontSize: 12, opacity: 0.9 }}>Anno {anno}</p>
         </div>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <button
-            onClick={() => setShowForm(!showForm)}
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+          {/* Filtro tipo - dropdown compatto */}
+          <select
+            value={filtroTipo}
+            onChange={(e) => setFiltroTipo(e.target.value)}
             style={{
-              padding: '10px 20px',
-              background: '#3b82f6',
-              color: 'white',
+              padding: '8px 12px',
+              fontSize: 13,
+              fontWeight: 'bold',
+              borderRadius: 6,
               border: 'none',
-              borderRadius: 8,
-              fontWeight: 600,
+              background: 'rgba(255,255,255,0.95)',
+              color: '#1e3a5f',
               cursor: 'pointer'
             }}
           >
-            {showForm ? '✕ Chiudi' : '+ Nuovo Movimento'}
+            {FILTRI_TIPO.map(f => (
+              <option key={f.id} value={f.id}>{f.label}</option>
+            ))}
+          </select>
+          
+          <button
+            onClick={() => setShowForm(!showForm)}
+            style={{
+              padding: '8px 14px',
+              background: showForm ? '#ef4444' : '#10b981',
+              color: 'white',
+              border: 'none',
+              borderRadius: 6,
+              fontWeight: 600,
+              cursor: 'pointer',
+              fontSize: 12
+            }}
+          >
+            {showForm ? '✕' : '+ Nuovo'}
+          </button>
+          <button
+            onClick={loadMovimenti}
+            style={{
+              padding: '8px 12px',
+              background: 'rgba(255,255,255,0.2)',
+              color: 'white',
+              border: '1px solid rgba(255,255,255,0.3)',
+              borderRadius: 6,
+              cursor: 'pointer',
+              fontWeight: '500'
+            }}
+          >
+            🔄
           </button>
           <ExportButton
             data={movimentiFiltrati}
@@ -395,18 +441,18 @@ export default function PrimaNotaUnificata() {
         </div>
       </div>
 
-      {/* Card Statistiche Cassa */}
+      {/* Card Statistiche Cassa - Compatte */}
       {(filtroTipo === 'cassa' || filtroTipo === 'tutti') && (
         <div style={{ 
           display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', 
-          gap: 12, 
-          marginBottom: 20 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', 
+          gap: 8, 
+          marginBottom: 12 
         }}>
-          <StatCard icon="📈" label="Corrispettivi" value={formatEuro(statsCassa.corrispettivi)} color="#10b981" bgColor="#d1fae5" />
-          <StatCard icon="💳" label="POS" value={formatEuro(statsCassa.pos)} color="#3b82f6" bgColor="#dbeafe" />
-          <StatCard icon="🏦" label="Versamenti" value={formatEuro(statsCassa.versamenti)} color="#8b5cf6" bgColor="#ede9fe" />
-          <StatCard icon="📄" label="Pag. Fornitori" value={formatEuro(statsCassa.pagamentiFornitori)} color="#f59e0b" bgColor="#fef3c7" />
+          <MiniStatCard icon="📈" label="Corrispettivi" value={formatEuro(statsCassa.corrispettivi)} color="#10b981" />
+          <MiniStatCard icon="💳" label="POS" value={formatEuro(statsCassa.pos)} color="#3b82f6" />
+          <MiniStatCard icon="🏦" label="Versamenti" value={formatEuro(statsCassa.versamenti)} color="#8b5cf6" />
+          <MiniStatCard icon="📄" label="Fornitori" value={formatEuro(statsCassa.pagamentiFornitori)} color="#f59e0b" />
         </div>
       )}
 
