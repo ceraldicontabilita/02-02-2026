@@ -1218,8 +1218,6 @@ function F24Tab({ f24, onConfermaF24, processing }) {
       return;
     }
     
-    if (!window.confirm(`Confermare ${selezionati.size} F24 come ${metodoBatch.toUpperCase()}?`)) return;
-    
     setSalvandoBatch(true);
     try {
       const operazioni = f24Validi
