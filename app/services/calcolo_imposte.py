@@ -174,14 +174,10 @@ class CalcolatoreImposte:
             costi_per_tipo[conto]["importo"] += importo
         
         # Calcola ricavi dai corrispettivi per l'anno
-        corr_filter = {}
-        if anno:
-            corr_filter["data"] = {
-                "$gte": f"{anno}-01-01",
-                "$lte": f"{anno}-12-31"
-            }
+        corr_filter = {"data": {"$regex": f"^{anno}"}}
+        corr_projection = {"_id": 0, "totale": 1}
         
-        corrispettivi = await db["corrispettivi"].find(corr_filter, {"_id": 0}).to_list(5000)
+        corrispettivi = await db["corrispettivi"].find(corr_filter, corr_projection).to_list(5000)
         for corr in corrispettivi:
             totale = float(corr.get("totale", 0) or 0)
             if totale > 0:
