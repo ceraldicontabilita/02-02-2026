@@ -557,36 +557,33 @@ export default function ArchivioFatture() {
                         <td style={{ padding: '10px 12px', textAlign: 'right' }}>{formatCurrency(f.iva)}</td>
                         <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 'bold' }}>{formatCurrency(f.total_amount || f.importo_totale)}</td>
                         
-                        {/* Colonna Metodo Pagamento con Select */}
+                        {/* Colonna Metodo Pagamento con Select - SEMPRE MODIFICABILE */}
                         <td style={{ padding: '10px 12px', textAlign: 'center' }}>
-                          {isPaid ? (
-                            <span style={{ fontSize: 11, color: '#6b7280' }}>
-                              {isCassa ? '💵 Cassa' : isBanca ? '🏦 Banca' : metodoPag || '-'}
-                            </span>
-                          ) : (
-                            <select
-                              value={f._selectedMetodo || (isBanca ? 'banca' : isCassa ? 'cassa' : 'banca')}
-                              onChange={(e) => {
-                                // Aggiorna stato locale temporaneo
-                                const newFatture = [...fatture];
-                                const idx = newFatture.findIndex(x => x.id === f.id);
-                                if (idx >= 0) {
-                                  newFatture[idx] = { ...newFatture[idx], _selectedMetodo: e.target.value };
-                                  setFatture(newFatture);
-                                }
-                              }}
-                              style={{
-                                padding: '4px 8px',
-                                borderRadius: 6,
-                                border: '1px solid #e2e8f0',
-                                fontSize: 11,
-                                background: 'white',
-                                cursor: 'pointer'
-                              }}
-                            >
-                              <option value="banca">🏦 Banca</option>
-                              <option value="cassa">💵 Cassa</option>
-                            </select>
+                          <select
+                            value={f._selectedMetodo || (isCassa ? 'cassa' : 'banca')}
+                            onChange={(e) => {
+                              // Aggiorna stato locale temporaneo
+                              const newFatture = [...fatture];
+                              const idx = newFatture.findIndex(x => x.id === f.id);
+                              if (idx >= 0) {
+                                newFatture[idx] = { ...newFatture[idx], _selectedMetodo: e.target.value, _metodoModificato: true };
+                                setFatture(newFatture);
+                              }
+                            }}
+                            style={{
+                              padding: '4px 8px',
+                              borderRadius: 6,
+                              border: f._metodoModificato ? '2px solid #f59e0b' : '1px solid #e2e8f0',
+                              fontSize: 11,
+                              background: f._metodoModificato ? '#fef3c7' : 'white',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            <option value="banca">🏦 Banca</option>
+                            <option value="cassa">💵 Cassa</option>
+                          </select>
+                          {f._metodoModificato && (
+                            <div style={{ fontSize: 9, color: '#f59e0b', marginTop: 2 }}>⚠️ Modificato</div>
                           )}
                         </td>
                         
@@ -604,49 +601,72 @@ export default function ArchivioFatture() {
                               📄
                             </a>
                             
-                            {/* Pulsante Paga (solo se non pagata) */}
-                            {!isPaid && (
-                              <button
-                                onClick={async () => {
-                                  const metodo = f._selectedMetodo || (isBanca ? 'banca' : isCassa ? 'cassa' : 'banca');
-                                  const importo = f.total_amount || f.importo_totale || 0;
-                                  const dataDoc = f.invoice_date || f.data_documento;
-                                  const fornitoreNome = f.supplier_name || f.fornitore_ragione_sociale || 'Fornitore';
-                                  const numFattura = f.invoice_number || f.numero_documento || '';
+                            {/* Pulsante Paga/Modifica - SEMPRE VISIBILE */}
+                            <button
+                              onClick={async () => {
+                                const metodoNuovo = f._selectedMetodo || (isBanca ? 'banca' : isCassa ? 'cassa' : 'banca');
+                                const metodoVecchio = isCassa ? 'cassa' : isBanca ? 'banca' : null;
+                                const importo = f.total_amount || f.importo_totale || 0;
+                                const dataDoc = f.invoice_date || f.data_documento;
+                                const fornitoreNome = f.supplier_name || f.fornitore_ragione_sociale || 'Fornitore';
+                                const numFattura = f.invoice_number || f.numero_documento || '';
+                                
+                                // Se già pagata e cambio metodo
+                                if (isPaid && metodoVecchio && metodoVecchio !== metodoNuovo) {
+                                  if (!window.confirm(`⚠️ MODIFICA METODO PAGAMENTO\n\nSpostare il pagamento di ${formatCurrency(importo)} a ${fornitoreNome}\nda Prima Nota ${metodoVecchio.toUpperCase()} → Prima Nota ${metodoNuovo.toUpperCase()}?\n\nData movimento: ${dataDoc}`)) return;
                                   
-                                  if (!window.confirm(`Registrare pagamento di ${formatCurrency(importo)} a ${fornitoreNome} tramite ${metodo.toUpperCase()}?\n\nData movimento: ${dataDoc}`)) return;
+                                  try {
+                                    await api.post('/api/fatture-ricevute/cambia-metodo-pagamento', {
+                                      fattura_id: f.id,
+                                      importo: importo,
+                                      metodo_vecchio: metodoVecchio,
+                                      metodo_nuovo: metodoNuovo,
+                                      data_pagamento: dataDoc,
+                                      fornitore: fornitoreNome,
+                                      numero_fattura: numFattura
+                                    });
+                                    alert(`✅ Pagamento spostato!\n\nDa Prima Nota ${metodoVecchio.toUpperCase()} → Prima Nota ${metodoNuovo.toUpperCase()}\nData: ${dataDoc}`);
+                                    fetchFatture();
+                                  } catch (error) {
+                                    alert(`❌ Errore: ${error.response?.data?.detail || error.message}`);
+                                  }
+                                } else if (!isPaid) {
+                                  // Nuovo pagamento
+                                  if (!window.confirm(`Registrare pagamento di ${formatCurrency(importo)} a ${fornitoreNome} tramite ${metodoNuovo.toUpperCase()}?\n\nData movimento: ${dataDoc}`)) return;
                                   
                                   try {
                                     await api.post('/api/fatture-ricevute/paga-manuale', {
                                       fattura_id: f.id,
                                       importo: importo,
-                                      metodo: metodo,
-                                      data_pagamento: dataDoc, // USA DATA DOCUMENTO, non oggi!
+                                      metodo: metodoNuovo,
+                                      data_pagamento: dataDoc,
                                       fornitore: fornitoreNome,
                                       numero_fattura: numFattura
                                     });
-                                    alert(`✅ Pagamento registrato!\n\nMovimento creato in Prima Nota ${metodo === 'cassa' ? 'Cassa' : 'Banca'} con data ${dataDoc}`);
+                                    alert(`✅ Pagamento registrato!\n\nMovimento creato in Prima Nota ${metodoNuovo === 'cassa' ? 'Cassa' : 'Banca'} con data ${dataDoc}`);
                                     fetchFatture();
                                   } catch (error) {
                                     alert(`❌ Errore: ${error.response?.data?.detail || error.message}`);
                                   }
-                                }}
-                                style={{ 
-                                  padding: '5px 10px', 
-                                  background: '#10b981', 
-                                  color: 'white', 
-                                  border: 'none', 
-                                  borderRadius: 6, 
-                                  cursor: 'pointer', 
-                                  fontSize: 11, 
-                                  fontWeight: 'bold' 
-                                }}
-                                title="Registra pagamento"
-                                data-testid={`btn-paga-archivio-${f.id}`}
-                              >
-                                💳 Paga
-                              </button>
-                            )}
+                                } else {
+                                  alert('ℹ️ Seleziona un metodo diverso per spostare il pagamento');
+                                }
+                              }}
+                              style={{ 
+                                padding: '5px 10px', 
+                                background: isPaid ? (f._metodoModificato ? '#f59e0b' : '#6b7280') : '#10b981', 
+                                color: 'white', 
+                                border: 'none', 
+                                borderRadius: 6, 
+                                cursor: 'pointer', 
+                                fontSize: 11, 
+                                fontWeight: 'bold' 
+                              }}
+                              title={isPaid ? "Modifica metodo pagamento" : "Registra pagamento"}
+                              data-testid={`btn-paga-archivio-${f.id}`}
+                            >
+                              {isPaid ? (f._metodoModificato ? '🔄 Sposta' : '✓ Pagata') : '💳 Paga'}
+                            </button>
                             
                             <button
                               onClick={() => navigate(`/fatture-ricevute/${f.id}`)}
