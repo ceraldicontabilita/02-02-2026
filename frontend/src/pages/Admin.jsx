@@ -971,6 +971,192 @@ export default function Admin() {
         </div>
       )}
 
+      {/* TAB MANUTENZIONE - Logiche Intelligenti */}
+      {activeTab === 'manutenzione' && (
+        <div style={cardStyle}>
+          <div style={cardHeaderStyle}>
+            <h3 style={{ margin: 0, fontSize: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+              🔧 Logiche Intelligenti (Manutenzione Dati)
+            </h3>
+          </div>
+          <div style={cardContentStyle}>
+            <div style={{ 
+              background: '#fef3c7', 
+              padding: 12, 
+              borderRadius: 8, 
+              marginBottom: 20,
+              fontSize: 13,
+              color: '#92400e'
+            }}>
+              ⚠️ <strong>Nota:</strong> Queste operazioni erano automatiche ma sono state spostate qui per migliorare le performance del sito.
+              Eseguile manualmente quando necessario (es. dopo import massivo di dati).
+            </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
+              {/* Ricostruzione Assegni */}
+              <div style={{ background: '#f8fafc', padding: 16, borderRadius: 8, border: '1px solid #e2e8f0' }}>
+                <h4 style={{ margin: '0 0 8px', color: '#1e293b', fontSize: 14 }}>📝 Assegni</h4>
+                <p style={{ fontSize: 12, color: '#64748b', marginBottom: 12 }}>
+                  Ricostruisce beneficiari mancanti e associa fatture agli assegni.
+                </p>
+                <button 
+                  onClick={async () => {
+                    if (!window.confirm('Eseguire ricostruzione dati assegni?')) return;
+                    try {
+                      const r = await api.post('/api/assegni/ricostruisci-dati');
+                      alert(`✅ Completato:\n• Beneficiari trovati: ${r.data.beneficiari_trovati || 0}\n• Fatture associate: ${r.data.fatture_associate || 0}`);
+                    } catch (e) {
+                      alert('Errore: ' + (e.response?.data?.detail || e.message));
+                    }
+                  }}
+                  style={{ ...buttonStyle('#3b82f6'), width: '100%' }}
+                >
+                  🔄 Ricostruisci Dati Assegni
+                </button>
+              </div>
+              
+              {/* Ricostruzione F24 */}
+              <div style={{ background: '#f8fafc', padding: 16, borderRadius: 8, border: '1px solid #e2e8f0' }}>
+                <h4 style={{ margin: '0 0 8px', color: '#1e293b', fontSize: 14 }}>📋 F24 e Riconciliazione</h4>
+                <p style={{ fontSize: 12, color: '#64748b', marginBottom: 12 }}>
+                  Corregge dati F24, riconcilia automaticamente movimenti bancari.
+                </p>
+                <button 
+                  onClick={async () => {
+                    if (!window.confirm('Eseguire auto-riparazione F24 e riconciliazione?')) return;
+                    try {
+                      const r = await api.post('/api/operazioni-da-confermare/auto-ricostruisci-dati');
+                      alert(`✅ Completato:\n• F24 corretti: ${r.data.f24_corretti || 0}\n• Riconciliazioni auto: ${r.data.riconciliazioni_auto || 0}`);
+                    } catch (e) {
+                      alert('Errore: ' + (e.response?.data?.detail || e.message));
+                    }
+                  }}
+                  style={{ ...buttonStyle('#10b981'), width: '100%' }}
+                >
+                  🔄 Ricostruisci Dati F24
+                </button>
+              </div>
+              
+              {/* Ricostruzione Fatture */}
+              <div style={{ background: '#f8fafc', padding: 16, borderRadius: 8, border: '1px solid #e2e8f0' }}>
+                <h4 style={{ margin: '0 0 8px', color: '#1e293b', fontSize: 14 }}>📄 Fatture Ricevute</h4>
+                <p style={{ fontSize: 12, color: '#64748b', marginBottom: 12 }}>
+                  Corregge campi mancanti, associa fornitori, rimuove duplicati.
+                </p>
+                <button 
+                  onClick={async () => {
+                    if (!window.confirm('Eseguire auto-riparazione fatture?')) return;
+                    try {
+                      const r = await api.post('/api/fatture-ricevute/auto-ricostruisci-dati');
+                      alert(`✅ Completato:\n• Campi corretti: ${r.data.campi_corretti || 0}\n• Fornitori associati: ${r.data.fornitori_associati || 0}\n• Duplicati rimossi: ${r.data.duplicati_rimossi || 0}`);
+                    } catch (e) {
+                      alert('Errore: ' + (e.response?.data?.detail || e.message));
+                    }
+                  }}
+                  style={{ ...buttonStyle('#f59e0b'), width: '100%' }}
+                >
+                  🔄 Ricostruisci Dati Fatture
+                </button>
+              </div>
+              
+              {/* Ricostruzione Corrispettivi */}
+              <div style={{ background: '#f8fafc', padding: 16, borderRadius: 8, border: '1px solid #e2e8f0' }}>
+                <h4 style={{ margin: '0 0 8px', color: '#1e293b', fontSize: 14 }}>🧾 Corrispettivi</h4>
+                <p style={{ fontSize: 12, color: '#64748b', marginBottom: 12 }}>
+                  Ricalcola IVA, rimuove duplicati nei corrispettivi.
+                </p>
+                <button 
+                  onClick={async () => {
+                    if (!window.confirm('Eseguire auto-riparazione corrispettivi?')) return;
+                    try {
+                      const r = await api.post('/api/corrispettivi/auto-ricostruisci-dati');
+                      alert(`✅ Completato:\n• IVA ricalcolata: ${r.data.iva_ricalcolata || 0}\n• Duplicati rimossi: ${r.data.duplicati_rimossi || 0}`);
+                    } catch (e) {
+                      alert('Errore: ' + (e.response?.data?.detail || e.message));
+                    }
+                  }}
+                  style={{ ...buttonStyle('#8b5cf6'), width: '100%' }}
+                >
+                  🔄 Ricostruisci Corrispettivi
+                </button>
+              </div>
+              
+              {/* Ricostruzione Salari */}
+              <div style={{ background: '#f8fafc', padding: 16, borderRadius: 8, border: '1px solid #e2e8f0' }}>
+                <h4 style={{ margin: '0 0 8px', color: '#1e293b', fontSize: 14 }}>👥 Salari e Cedolini</h4>
+                <p style={{ fontSize: 12, color: '#64748b', marginBottom: 12 }}>
+                  Pulisce righe vuote, corregge dati salari.
+                </p>
+                <button 
+                  onClick={async () => {
+                    if (!window.confirm('Eseguire auto-riparazione salari?')) return;
+                    try {
+                      const r = await api.post('/api/prima-nota/salari/auto-ricostruisci-dati');
+                      alert(`✅ Completato:\n• Righe pulite: ${r.data.righe_pulite || 0}\n• Correzioni: ${r.data.correzioni || 0}`);
+                    } catch (e) {
+                      alert('Errore: ' + (e.response?.data?.detail || e.message));
+                    }
+                  }}
+                  style={{ ...buttonStyle('#ec4899'), width: '100%' }}
+                >
+                  🔄 Ricostruisci Dati Salari
+                </button>
+              </div>
+              
+              {/* Analytics */}
+              <div style={{ background: '#f8fafc', padding: 16, borderRadius: 8, border: '1px solid #e2e8f0' }}>
+                <h4 style={{ margin: '0 0 8px', color: '#1e293b', fontSize: 14 }}>📊 Analytics</h4>
+                <p style={{ fontSize: 12, color: '#64748b', marginBottom: 12 }}>
+                  Verifica discrepanze e corregge dati analytics.
+                </p>
+                <button 
+                  onClick={async () => {
+                    if (!window.confirm('Eseguire verifica analytics?')) return;
+                    try {
+                      const r = await api.post('/api/analytics/auto-ricostruisci-dati');
+                      alert(`✅ Completato:\n• Correzioni applicate: ${r.data.correzioni_applicate || 0}\n• Discrepanze trovate: ${r.data.discrepanze_trovate?.length || 0}`);
+                    } catch (e) {
+                      alert('Errore: ' + (e.response?.data?.detail || e.message));
+                    }
+                  }}
+                  style={{ ...buttonStyle('#06b6d4'), width: '100%' }}
+                >
+                  🔄 Verifica Analytics
+                </button>
+              </div>
+            </div>
+            
+            {/* Pulsante Esegui Tutti */}
+            <div style={{ marginTop: 24, padding: 16, background: '#fef2f2', borderRadius: 8, border: '1px solid #fecaca' }}>
+              <h4 style={{ margin: '0 0 8px', color: '#991b1b', fontSize: 14 }}>⚠️ Esegui Tutte le Manutenzioni</h4>
+              <p style={{ fontSize: 12, color: '#7f1d1d', marginBottom: 12 }}>
+                Esegue tutte le operazioni di manutenzione in sequenza. Potrebbe richiedere alcuni minuti.
+              </p>
+              <button 
+                onClick={async () => {
+                  if (!window.confirm('⚠️ ATTENZIONE: Eseguire TUTTE le manutenzioni?\n\nQuesta operazione potrebbe richiedere diversi minuti.')) return;
+                  try {
+                    const results = [];
+                    results.push(await api.post('/api/assegni/ricostruisci-dati').catch(e => ({ data: { error: e.message } })));
+                    results.push(await api.post('/api/operazioni-da-confermare/auto-ricostruisci-dati').catch(e => ({ data: { error: e.message } })));
+                    results.push(await api.post('/api/fatture-ricevute/auto-ricostruisci-dati').catch(e => ({ data: { error: e.message } })));
+                    results.push(await api.post('/api/corrispettivi/auto-ricostruisci-dati').catch(e => ({ data: { error: e.message } })));
+                    results.push(await api.post('/api/prima-nota/salari/auto-ricostruisci-dati').catch(e => ({ data: { error: e.message } })));
+                    
+                    alert('✅ Tutte le manutenzioni completate!\n\nRicarica la pagina per vedere i risultati.');
+                  } catch (e) {
+                    alert('Errore: ' + e.message);
+                  }
+                }}
+                style={{ ...buttonStyle('#dc2626'), width: '100%' }}
+              >
+                🔄 Esegui Tutte le Manutenzioni
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* TAB ESPORTAZIONI */}
       {activeTab === 'export' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
