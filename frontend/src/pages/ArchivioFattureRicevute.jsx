@@ -627,7 +627,7 @@ export default function ArchivioFatture() {
                         <span style={styles.badge('#f59e0b')}>Da pagare</span>
                       </td>
                       <td style={styles.td}>
-                        <div style={{ display: 'flex', gap: 8 }}>
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'center', position: 'relative' }}>
                           {s.fattura_id && (
                             <a 
                               style={{ ...styles.button('secondary'), padding: '6px 10px', textDecoration: 'none' }}
@@ -640,6 +640,82 @@ export default function ArchivioFatture() {
                               📄
                             </a>
                           )}
+                          
+                          {/* Menu Paga Manuale */}
+                          <div style={{ position: 'relative' }}>
+                            <button 
+                              style={{
+                                ...styles.button('primary'),
+                                background: payingScadenza === s.id ? '#9ca3af' : '#10b981',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 4
+                              }}
+                              onClick={() => setShowPayMenu(showPayMenu === s.id ? null : s.id)}
+                              disabled={payingScadenza === s.id}
+                              data-testid={`btn-paga-${s.id}`}
+                            >
+                              {payingScadenza === s.id ? '⏳' : '💳'} Paga ▼
+                            </button>
+                            
+                            {/* Dropdown Menu */}
+                            {showPayMenu === s.id && (
+                              <div style={{
+                                position: 'absolute',
+                                top: '100%',
+                                left: 0,
+                                marginTop: 4,
+                                background: 'white',
+                                borderRadius: 8,
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                                border: '1px solid #e2e8f0',
+                                zIndex: 100,
+                                minWidth: 140,
+                                overflow: 'hidden'
+                              }}>
+                                <button
+                                  onClick={() => handlePayManual(s, 'cassa')}
+                                  style={{
+                                    width: '100%',
+                                    padding: '10px 14px',
+                                    border: 'none',
+                                    background: 'white',
+                                    cursor: 'pointer',
+                                    textAlign: 'left',
+                                    fontSize: 13,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 8,
+                                    borderBottom: '1px solid #f1f5f9'
+                                  }}
+                                  onMouseOver={(e) => e.target.style.background = '#f0fdf4'}
+                                  onMouseOut={(e) => e.target.style.background = 'white'}
+                                >
+                                  💵 Paga con CASSA
+                                </button>
+                                <button
+                                  onClick={() => handlePayManual(s, 'banca')}
+                                  style={{
+                                    width: '100%',
+                                    padding: '10px 14px',
+                                    border: 'none',
+                                    background: 'white',
+                                    cursor: 'pointer',
+                                    textAlign: 'left',
+                                    fontSize: 13,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 8
+                                  }}
+                                  onMouseOver={(e) => e.target.style.background = '#dbeafe'}
+                                  onMouseOut={(e) => e.target.style.background = 'white'}
+                                >
+                                  🏦 Paga con BANCA
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                          
                           <button 
                             style={styles.button('primary')}
                             onClick={() => {
