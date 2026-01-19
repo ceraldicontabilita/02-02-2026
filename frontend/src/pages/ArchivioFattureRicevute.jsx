@@ -691,14 +691,6 @@ export default function ArchivioFatture() {
                             >
                               🏦 {isPaid && metodoPagEffettivo === 'banca' ? '✓' : ''}
                             </button>
-                            
-                            <button
-                              onClick={() => navigate(`/fatture-ricevute/${f.id}`)}
-                              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14 }}
-                              title="Dettaglio"
-                            >
-                              👁️
-                            </button>
                           </div>
                         </td>
                       </tr>
