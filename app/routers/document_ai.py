@@ -58,6 +58,14 @@ async def extract_from_file(
         if save_to_db and result.get("structured_data", {}).get("success"):
             db = await get_database()
             
+            # Controllo duplicati: verifica se esiste già un documento con lo stesso filename
+            existing = await db["extracted_documents"].find_one({"filename": file.filename})
+            if existing:
+                result["saved_to_db"] = False
+                result["duplicate"] = True
+                result["message"] = f"Documento '{file.filename}' già presente nel database"
+                return result
+            
             # Salva in extracted_documents (archivio) - include file_base64 per visualizzazione
             doc = {
                 "filename": file.filename,
