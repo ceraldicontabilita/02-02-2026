@@ -125,6 +125,7 @@ export default function ArchivioFatture() {
 
   // Funzione per pagare manualmente una scadenza (Cassa o Banca)
   const handlePayManual = async (scadenza, metodo) => {
+    scrollPositionRef.current = window.scrollY; // Salva posizione
     setShowPayMenu(null);
     setPayingScadenza(scadenza.id);
     try {
@@ -141,10 +142,11 @@ export default function ArchivioFatture() {
         numero_fattura: scadenza.numero_fattura
       });
       
-      alert(`✅ Pagamento registrato!\n\nMovimento creato in Prima Nota ${metodo === 'cassa' ? 'Cassa' : 'Banca'}`);
-      
       // Ricarica dati
-      fetchDashboard();
+      await fetchDashboard();
+      
+      // Ripristina posizione scroll
+      setTimeout(() => window.scrollTo({ top: scrollPositionRef.current, behavior: 'instant' }), 100);
       
     } catch (error) {
       alert(`❌ Errore: ${error.response?.data?.detail || error.message}`);
