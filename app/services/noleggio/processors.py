@@ -411,7 +411,7 @@ async def scan_fatture_noleggio(anno: Optional[int] = None) -> Tuple[Dict[str, A
             "pagato": invoice.get("pagato", False)
         }
         
-        # Processa linee
+        # Processa linee (usa invoice_data internamente)
         linee_per_targa = await _processa_linee_fattura(
             linee, targhe_trovate, invoice_data, is_nota_credito, veicoli
         )
