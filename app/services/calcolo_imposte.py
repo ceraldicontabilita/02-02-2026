@@ -132,21 +132,31 @@ class CalcolatoreImposte:
         Returns:
             CalcoloImposte con tutti i dettagli
         """
+        from datetime import datetime as dt
+        
+        # Default anno corrente se non specificato
+        if anno is None:
+            anno = dt.now().year
+        
         # 1. Calcola totali dalle fatture per l'anno specificato
         totale_ricavi = 0.0
         totale_costi = 0.0
         costi_per_tipo: Dict[str, float] = {}
         
-        # Filtra fatture per anno se specificato
-        fatture_filter = {}
-        if anno:
-            fatture_filter["invoice_date"] = {
-                "$gte": f"{anno}-01-01",
-                "$lte": f"{anno}-12-31"
-            }
+        # Filtra fatture per anno con regex per performance migliore
+        fatture_filter = {"invoice_date": {"$regex": f"^{anno}"}}
+        
+        # OTTIMIZZAZIONE: Proiezione minima - escludi xml_content e altri campi pesanti
+        projection = {
+            "_id": 0,
+            "total_amount": 1,
+            "categoria_contabile": 1,
+            "conto_costo_codice": 1,
+            "conto_costo_nome": 1
+        }
         
         # Calcola costi dalle fatture
-        fatture = await db["invoices"].find(fatture_filter, {"_id": 0}).to_list(10000)
+        fatture = await db["invoices"].find(fatture_filter, projection).to_list(10000)
         
         for fattura in fatture:
             importo = float(fattura.get("total_amount", 0) or 0)
