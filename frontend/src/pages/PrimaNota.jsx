@@ -724,6 +724,7 @@ function PrimaNotaDesktop() {
             formatDate={formatDate}
             onDelete={(id) => handleDeleteMovimento('cassa', id)}
             onEdit={(updated) => handleEditMovimento('cassa', updated)}
+            onSposta={handleSpostaMovimento}
           />
         </section>
       )}
