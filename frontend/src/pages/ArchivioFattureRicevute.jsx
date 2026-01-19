@@ -107,6 +107,10 @@ export default function ArchivioFatture() {
   const [loadingSuggerimenti, setLoadingSuggerimenti] = useState(false);
   const [processing, setProcessing] = useState(false);
   
+  // Menu pagamento manuale
+  const [showPayMenu, setShowPayMenu] = useState(null); // ID della scadenza con menu aperto
+  const [payingScadenza, setPayingScadenza] = useState(null);
+  
   // Filtri (anno viene dal contesto globale)
   const [mese, setMese] = useState(searchParams.get('mese') || '');
   const [fornitore, setFornitore] = useState(searchParams.get('fornitore') || searchParams.get('fornitore_piva') || '');
@@ -117,7 +121,40 @@ export default function ArchivioFatture() {
   const [autoRepairStatus, setAutoRepairStatus] = useState(null);
   const [autoRepairRunning, setAutoRepairRunning] = useState(false);
 
-  /**
+  // Funzione per pagare manualmente una scadenza (Cassa o Banca)
+  const handlePayManual = async (scadenza, metodo) => {
+    if (!window.confirm(`Confermi il pagamento di ${formatEuro(scadenza.importo_totale)} a ${scadenza.fornitore_nome} tramite ${metodo.toUpperCase()}?`)) {
+      setShowPayMenu(null);
+      return;
+    }
+    
+    setPayingScadenza(scadenza.id);
+    try {
+      const dataPagamento = new Date().toISOString().slice(0, 10);
+      
+      // Registra il pagamento e crea movimento in Prima Nota
+      const res = await api.post('/api/fatture-ricevute/paga-manuale', {
+        fattura_id: scadenza.fattura_id,
+        scadenza_id: scadenza.id,
+        importo: scadenza.importo_totale,
+        metodo: metodo, // 'cassa' o 'banca'
+        data_pagamento: dataPagamento,
+        fornitore: scadenza.fornitore_nome,
+        numero_fattura: scadenza.numero_fattura
+      });
+      
+      alert(`✅ Pagamento registrato!\n\nMovimento creato in Prima Nota ${metodo === 'cassa' ? 'Cassa' : 'Banca'}`);
+      
+      // Ricarica dati
+      fetchDashboard();
+      
+    } catch (error) {
+      alert(`❌ Errore: ${error.response?.data?.detail || error.message}`);
+    } finally {
+      setPayingScadenza(null);
+      setShowPayMenu(null);
+    }
+  };
    * LOGICA INTELLIGENTE: Esegue auto-riparazione dei dati.
    * DISABILITATA: Spostata in Admin per performance. Chiamare manualmente se necessario.
    */
