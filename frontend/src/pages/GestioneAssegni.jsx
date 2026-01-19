@@ -985,6 +985,135 @@ export default function GestioneAssegni() {
         </div>
       )}
 
+      {/* SEZIONE ASSEGNI NON ASSOCIATI */}
+      <div style={{ 
+        background: 'white', 
+        borderRadius: 12, 
+        padding: 16, 
+        marginBottom: 16,
+        boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+      }}>
+        <div 
+          style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center',
+            cursor: 'pointer'
+          }}
+          onClick={() => {
+            if (!showNonAssociati && assegniNonAssociati.totale === undefined) {
+              loadAssegniNonAssociati();
+            }
+            setShowNonAssociati(!showNonAssociati);
+          }}
+        >
+          <h3 style={{ margin: 0, fontSize: 16, color: '#1e293b', display: 'flex', alignItems: 'center', gap: 8 }}>
+            ⚠️ Assegni Senza Beneficiario
+            {assegniNonAssociati.totale !== undefined && (
+              <span style={{ 
+                background: assegniNonAssociati.totale > 0 ? '#fef3c7' : '#dcfce7',
+                color: assegniNonAssociati.totale > 0 ? '#92400e' : '#166534',
+                padding: '2px 8px', 
+                borderRadius: 12, 
+                fontSize: 12,
+                fontWeight: 600
+              }}>
+                {assegniNonAssociati.totale}
+              </span>
+            )}
+          </h3>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                loadAssegniNonAssociati();
+              }}
+              disabled={loadingNonAssociati}
+              style={{
+                padding: '6px 12px',
+                background: '#f1f5f9',
+                border: 'none',
+                borderRadius: 6,
+                cursor: 'pointer',
+                fontSize: 12
+              }}
+            >
+              {loadingNonAssociati ? '⏳' : '🔄'} Aggiorna
+            </button>
+            <span style={{ fontSize: 18 }}>{showNonAssociati ? '▲' : '▼'}</span>
+          </div>
+        </div>
+        
+        {showNonAssociati && (
+          <div style={{ marginTop: 16 }}>
+            {loadingNonAssociati ? (
+              <div style={{ textAlign: 'center', padding: 20, color: '#64748b' }}>⏳ Caricamento...</div>
+            ) : assegniNonAssociati.totale === 0 ? (
+              <div style={{ 
+                textAlign: 'center', 
+                padding: 20, 
+                background: '#f0fdf4', 
+                borderRadius: 8,
+                color: '#166534'
+              }}>
+                ✅ Tutti gli assegni sono stati associati!
+              </div>
+            ) : (
+              <div>
+                <p style={{ margin: '0 0 12px', fontSize: 13, color: '#64748b' }}>
+                  Questi assegni hanno un importo ma nessun beneficiario. Clicca "Associa" per collegare manualmente a una fattura.
+                </p>
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                    <thead>
+                      <tr style={{ background: '#fef3c7' }}>
+                        <th style={{ padding: 10, textAlign: 'left' }}>Importo</th>
+                        <th style={{ padding: 10, textAlign: 'left' }}>Numero Assegno</th>
+                        <th style={{ padding: 10, textAlign: 'center' }}>Azioni</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Object.entries(assegniNonAssociati.per_importo || {}).map(([importo, info]) => (
+                        info.numeri.map((numero, idx) => (
+                          <tr key={numero} style={{ borderTop: '1px solid #e2e8f0' }}>
+                            <td style={{ padding: 10, fontWeight: 600, color: '#1e293b' }}>{importo}</td>
+                            <td style={{ padding: 10, fontFamily: 'monospace' }}>{numero}</td>
+                            <td style={{ padding: 10, textAlign: 'center' }}>
+                              <button
+                                onClick={() => {
+                                  const assegnoData = assegni.find(a => a.numero === numero);
+                                  if (assegnoData) {
+                                    openFattureModal(assegnoData);
+                                  } else {
+                                    alert(`Assegno ${numero} non trovato nella lista. Prova a rimuovere i filtri.`);
+                                  }
+                                }}
+                                style={{
+                                  padding: '6px 14px',
+                                  background: '#3b82f6',
+                                  color: 'white',
+                                  border: 'none',
+                                  borderRadius: 6,
+                                  cursor: 'pointer',
+                                  fontSize: 12,
+                                  fontWeight: 500
+                                }}
+                              >
+                                🔗 Associa Fattura
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* Assegni Table/Cards */}
       {loading ? (
         <div style={{ textAlign: 'center', padding: 40 }}>Caricamento...</div>
