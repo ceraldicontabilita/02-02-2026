@@ -456,61 +456,45 @@ export default function PrimaNotaUnificata() {
         </div>
       )}
 
-      {/* Form nuovo movimento - SEMPLIFICATO */}
+      {/* Form nuovo movimento - COMPATTO */}
       {showForm && (
         <div style={{ 
           background: 'white', 
-          borderRadius: 12, 
-          padding: 20, 
-          marginBottom: 20,
-          boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-          border: '2px solid #3b82f6'
+          borderRadius: 8, 
+          padding: 12, 
+          marginBottom: 12,
+          border: '1px solid #3b82f6'
         }}>
-          <h3 style={{ margin: '0 0 16px', fontSize: 16 }}>➕ Registra Movimento</h3>
-          
-          {/* Categorie rapide come pulsanti */}
-          <div style={{ marginBottom: 16 }}>
-            <label style={labelStyle}>Tipo Movimento</label>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              {CATEGORIE_RAPIDE.map(cat => (
-                <button
-                  key={cat.id}
-                  onClick={() => setNewMov(p => ({ ...p, categoria: cat.id }))}
-                  style={{
-                    padding: '10px 16px',
-                    background: newMov.categoria === cat.id ? cat.color : '#f1f5f9',
-                    color: newMov.categoria === cat.id ? 'white' : '#374151',
-                    border: 'none',
-                    borderRadius: 8,
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    fontSize: 13,
-                    transition: 'all 0.2s'
-                  }}
-                >
-                  {cat.label}
-                  <div style={{ 
-                    fontSize: 10, 
-                    fontWeight: 400, 
-                    opacity: 0.8,
-                    marginTop: 2
-                  }}>
-                    {cat.direzione === 'entrata' ? '↑ DARE' : '↓ AVERE'}
-                  </div>
-                </button>
-              ))}
-            </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+            <h3 style={{ margin: 0, fontSize: 14, fontWeight: 600 }}>➕ Nuovo Movimento</h3>
+            <span style={{ fontSize: 11, color: '#64748b' }}>
+              {CATEGORIE_RAPIDE.find(c => c.id === newMov.categoria)?.direzione === 'entrata' ? '↑ DARE (Entrata)' : '↓ AVERE (Uscita)'}
+            </span>
           </div>
-
-          {/* Campi input */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 }}>
+          
+          {/* Categorie rapide - dropdown compatto */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 8, marginBottom: 10 }}>
+            <div>
+              <label style={labelStyle}>Tipo</label>
+              <select
+                value={newMov.categoria}
+                onChange={e => setNewMov(p => ({ ...p, categoria: e.target.value }))}
+                style={{ ...inputStyle, padding: '8px 10px' }}
+              >
+                {CATEGORIE_RAPIDE.map(cat => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.label} ({cat.direzione === 'entrata' ? 'DARE' : 'AVERE'})
+                  </option>
+                ))}
+              </select>
+            </div>
             <div>
               <label style={labelStyle}>Data</label>
               <input 
                 type="date" 
                 value={newMov.data} 
                 onChange={e => setNewMov(p => ({ ...p, data: e.target.value }))}
-                style={inputStyle}
+                style={{ ...inputStyle, padding: '8px 10px' }}
               />
             </div>
             <div>
@@ -520,7 +504,7 @@ export default function PrimaNotaUnificata() {
                 step="0.01"
                 value={newMov.importo} 
                 onChange={e => setNewMov(p => ({ ...p, importo: e.target.value }))}
-                style={{ ...inputStyle, fontSize: 18, fontWeight: 700 }}
+                style={{ ...inputStyle, padding: '8px 10px', fontWeight: 700 }}
                 placeholder="0.00"
                 autoFocus
               />
@@ -535,8 +519,8 @@ export default function PrimaNotaUnificata() {
                     type="text" 
                     value={newMov.numero_fattura} 
                     onChange={e => setNewMov(p => ({ ...p, numero_fattura: e.target.value }))}
-                    style={inputStyle}
-                    placeholder="es. 123/2025"
+                    style={{ ...inputStyle, padding: '8px 10px' }}
+                    placeholder="123/2025"
                   />
                 </div>
                 <div>
