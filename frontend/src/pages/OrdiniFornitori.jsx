@@ -15,125 +15,129 @@ const AZIENDA = {
 
 const styles = {
   container: {
-    padding: 20,
+    padding: 12,
     maxWidth: 1400,
     margin: '0 auto'
   },
   card: {
     background: 'white',
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 20,
-    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
+    boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
     border: '1px solid #e5e7eb'
   },
   cardOrange: {
     background: '#fff7ed',
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 20,
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
     border: '1px solid #fed7aa'
   },
   cardGreen: {
     background: '#f0fdf4',
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 20,
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
     border: '1px solid #bbf7d0'
   },
   header: {
-    fontSize: 24,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#1e293b',
-    marginBottom: 12,
+    marginBottom: 8,
     display: 'flex',
     alignItems: 'center',
-    gap: 8
+    gap: 6
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#64748b',
-    marginBottom: 16
+    marginBottom: 10
   },
   row: {
     display: 'flex',
-    gap: 12,
+    gap: 8,
     alignItems: 'center',
     flexWrap: 'wrap'
   },
   btnPrimary: {
-    padding: '10px 18px',
+    padding: '6px 12px',
     background: '#3b82f6',
     color: 'white',
     border: 'none',
-    borderRadius: 8,
+    borderRadius: 6,
     cursor: 'pointer',
     fontWeight: '600',
-    fontSize: 14
+    fontSize: 12
   },
   btnSuccess: {
-    padding: '10px 18px',
+    padding: '6px 12px',
     background: '#10b981',
     color: 'white',
     border: 'none',
-    borderRadius: 8,
+    borderRadius: 6,
     cursor: 'pointer',
     fontWeight: '600',
-    fontSize: 14
+    fontSize: 12
   },
   btnSecondary: {
-    padding: '8px 14px',
+    padding: '5px 10px',
     background: '#f1f5f9',
     color: '#475569',
     border: '1px solid #e2e8f0',
-    borderRadius: 6,
+    borderRadius: 4,
     cursor: 'pointer',
-    fontSize: 13
+    fontSize: 11
   },
   error: {
     background: '#fef2f2',
     color: '#dc2626',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
+    padding: 8,
+    borderRadius: 6,
+    marginBottom: 10,
+    fontSize: 12,
     border: '1px solid #fecaca'
   },
   success: {
     background: '#f0fdf4',
     color: '#166534',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
+    padding: 8,
+    borderRadius: 6,
+    marginBottom: 10,
+    fontSize: 12,
     border: '1px solid #bbf7d0'
   },
   table: {
     width: '100%',
     borderCollapse: 'collapse',
-    fontSize: 14
+    fontSize: 12
   },
   th: {
-    padding: 12,
+    padding: 8,
     textAlign: 'left',
     fontWeight: '600',
     color: '#475569',
     borderBottom: '2px solid #e2e8f0',
-    background: '#f8fafc'
+    background: '#f8fafc',
+    fontSize: 11
   },
   td: {
-    padding: 12,
+    padding: 8,
     borderBottom: '1px solid #f1f5f9'
   },
   supplierCard: {
     background: 'white',
-    padding: 16,
-    borderRadius: 10,
-    marginBottom: 16,
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 10,
     border: '1px solid #fed7aa'
   },
   emptyState: {
     textAlign: 'center',
-    padding: 40,
-    color: '#64748b'
+    padding: 24,
+    color: '#64748b',
+    fontSize: 13
   },
   modal: {
     position: 'fixed',
@@ -146,27 +150,27 @@ const styles = {
   },
   modalContent: {
     background: 'white',
-    borderRadius: 12,
+    borderRadius: 10,
     width: '90%',
-    maxWidth: 700,
+    maxWidth: 650,
     maxHeight: '80vh',
     overflow: 'auto'
   },
   modalHeader: {
-    padding: 20,
+    padding: 14,
     borderBottom: '1px solid #eee',
     background: '#1e3a5f',
     color: 'white',
-    borderRadius: '12px 12px 0 0'
+    borderRadius: '10px 10px 0 0'
   },
   grid4: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-    gap: 16
+    gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))',
+    gap: 10
   },
   statCard: {
     textAlign: 'center',
-    padding: 12
+    padding: 8
   }
 };
 
