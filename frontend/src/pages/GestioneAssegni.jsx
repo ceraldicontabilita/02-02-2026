@@ -98,7 +98,7 @@ export default function GestioneAssegni() {
     }
   };
 
-  // Carica fatture non pagate per collegamento
+  // Carica fatture non pagate per collegamento (esclude pagamenti in contanti)
   const loadFatture = async (beneficiario = '') => {
     setLoadingFatture(true);
     try {
@@ -107,9 +107,19 @@ export default function GestioneAssegni() {
       if (beneficiario) {
         params.append('fornitore', beneficiario);
       }
-      const res = await api.get(`/api/invoices?${params}&limit=100`);
+      const res = await api.get(`/api/invoices?${params}&limit=200`);
       const items = res.data.items || res.data || [];
-      setFatture(items.filter(f => f.status !== 'paid'));
+      // Escludi fatture già pagate E fornitori pagati per contanti
+      const filtered = items.filter(f => {
+        if (f.status === 'paid') return false;
+        // Escludi se il metodo di pagamento è contanti
+        const paymentMethod = (f.payment_method || f.metodo_pagamento || '').toLowerCase();
+        if (paymentMethod.includes('contant') || paymentMethod.includes('cash') || paymentMethod === 'contanti') {
+          return false;
+        }
+        return true;
+      });
+      setFatture(filtered);
     } catch (error) {
       console.error('Error loading fatture:', error);
       setFatture([]);
