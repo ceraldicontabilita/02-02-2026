@@ -42,10 +42,14 @@ export default function GestioneAssegni() {
   const [selectedFatture, setSelectedFatture] = useState([]);
   const [showFattureModal, setShowFattureModal] = useState(false);
   const [editingAssegnoForFatture, setEditingAssegnoForFatture] = useState(null);
+  
+  // Drag state per modal
+  const [modalPosition, setModalPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
-    // Al primo caricamento, esegui ricostruzione automatica dati mancanti
-    ricostruisciDatiMancanti();
+    // RIMOSSO: ricostruisciDatiMancanti() automatico - ora solo manuale in Admin
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
