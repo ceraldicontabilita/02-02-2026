@@ -557,7 +557,7 @@ export default function ArchivioFatture() {
                         <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 'bold' }}>{formatCurrency(f.total_amount || f.importo_totale)}</td>
                         <td style={{ padding: '10px 12px', textAlign: 'center' }}>{getStatoBadge(f)}</td>
                         <td style={{ padding: '10px 12px', textAlign: 'center' }}>
-                          <div style={{ display: 'flex', gap: 6, justifyContent: 'center', alignItems: 'center' }}>
+                          <div style={{ display: 'flex', gap: 6, justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
                             <a
                               href={`/api/fatture-ricevute/fattura/${f.id}/view-assoinvoice`}
                               target="_blank"
@@ -569,72 +569,197 @@ export default function ArchivioFatture() {
                               📄
                             </a>
                             
-                            {/* Pulsante Paga/Modifica - SEMPRE VISIBILE */}
-                            <button
-                              onClick={async () => {
-                                const metodoNuovo = f._selectedMetodo || (isBanca ? 'banca' : isCassa ? 'cassa' : 'banca');
-                                const metodoVecchio = isCassa ? 'cassa' : isBanca ? 'banca' : null;
-                                const importo = f.total_amount || f.importo_totale || 0;
-                                const dataDoc = f.invoice_date || f.data_documento;
-                                const fornitoreNome = f.supplier_name || f.fornitore_ragione_sociale || 'Fornitore';
-                                const numFattura = f.invoice_number || f.numero_documento || '';
-                                
-                                // Se già pagata e cambio metodo
-                                if (isPaid && metodoVecchio && metodoVecchio !== metodoNuovo) {
-                                  if (!window.confirm(`⚠️ MODIFICA METODO PAGAMENTO\n\nSpostare il pagamento di ${formatCurrency(importo)} a ${fornitoreNome}\nda Prima Nota ${metodoVecchio.toUpperCase()} → Prima Nota ${metodoNuovo.toUpperCase()}?\n\nData movimento: ${dataDoc}`)) return;
+                            {/* Menu Paga/Modifica Pagamento */}
+                            <div style={{ position: 'relative' }}>
+                              <button
+                                onClick={() => setShowPayMenu(showPayMenu === f.id ? null : f.id)}
+                                style={{ 
+                                  padding: '5px 10px', 
+                                  background: isPaid ? '#6b7280' : '#10b981', 
+                                  color: 'white', 
+                                  border: 'none', 
+                                  borderRadius: 6, 
+                                  cursor: 'pointer', 
+                                  fontSize: 11, 
+                                  fontWeight: 'bold',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 4
+                                }}
+                                title={isPaid ? "Modifica metodo pagamento" : "Registra pagamento"}
+                                data-testid={`btn-paga-archivio-${f.id}`}
+                              >
+                                {isPaid ? '✓ Pagata ▼' : '💳 Paga ▼'}
+                              </button>
+                              
+                              {/* Dropdown Menu */}
+                              {showPayMenu === f.id && (
+                                <div style={{
+                                  position: 'absolute',
+                                  top: '100%',
+                                  right: 0,
+                                  marginTop: 4,
+                                  background: 'white',
+                                  borderRadius: 8,
+                                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                                  border: '1px solid #e2e8f0',
+                                  zIndex: 100,
+                                  minWidth: 160,
+                                  overflow: 'hidden'
+                                }}>
+                                  {/* Opzione Cassa */}
+                                  <button
+                                    onClick={async () => {
+                                      const importo = f.total_amount || f.importo_totale || 0;
+                                      const dataDoc = f.invoice_date || f.data_documento;
+                                      const fornitoreNome = f.supplier_name || f.fornitore_ragione_sociale || 'Fornitore';
+                                      const numFattura = f.invoice_number || f.numero_documento || '';
+                                      
+                                      if (isPaid) {
+                                        // Modifica metodo esistente
+                                        if (isCassa) {
+                                          alert('ℹ️ Questa fattura è già pagata in Cassa');
+                                          setShowPayMenu(null);
+                                          return;
+                                        }
+                                        if (!window.confirm(`⚠️ Spostare pagamento da BANCA a CASSA?\n\n${fornitoreNome}\n${formatCurrency(importo)}\nData: ${dataDoc}`)) {
+                                          setShowPayMenu(null);
+                                          return;
+                                        }
+                                        try {
+                                          await api.post('/api/fatture-ricevute/cambia-metodo-pagamento', {
+                                            fattura_id: f.id,
+                                            importo: importo,
+                                            metodo_vecchio: 'banca',
+                                            metodo_nuovo: 'cassa',
+                                            data_pagamento: dataDoc,
+                                            fornitore: fornitoreNome,
+                                            numero_fattura: numFattura
+                                          });
+                                          alert('✅ Pagamento spostato in Prima Nota Cassa');
+                                          fetchFatture();
+                                        } catch (error) {
+                                          alert(`❌ Errore: ${error.response?.data?.detail || error.message}`);
+                                        }
+                                      } else {
+                                        // Nuovo pagamento
+                                        if (!window.confirm(`Pagare ${formatCurrency(importo)} a ${fornitoreNome} tramite CASSA?\n\nData: ${dataDoc}`)) {
+                                          setShowPayMenu(null);
+                                          return;
+                                        }
+                                        try {
+                                          await api.post('/api/fatture-ricevute/paga-manuale', {
+                                            fattura_id: f.id,
+                                            importo: importo,
+                                            metodo: 'cassa',
+                                            data_pagamento: dataDoc,
+                                            fornitore: fornitoreNome,
+                                            numero_fattura: numFattura
+                                          });
+                                          alert('✅ Pagamento registrato in Prima Nota Cassa');
+                                          fetchFatture();
+                                        } catch (error) {
+                                          alert(`❌ Errore: ${error.response?.data?.detail || error.message}`);
+                                        }
+                                      }
+                                      setShowPayMenu(null);
+                                    }}
+                                    style={{
+                                      width: '100%',
+                                      padding: '10px 14px',
+                                      border: 'none',
+                                      background: isCassa && isPaid ? '#f0fdf4' : 'white',
+                                      cursor: 'pointer',
+                                      textAlign: 'left',
+                                      fontSize: 12,
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: 8,
+                                      borderBottom: '1px solid #f1f5f9'
+                                    }}
+                                    onMouseOver={(e) => e.currentTarget.style.background = '#f0fdf4'}
+                                    onMouseOut={(e) => e.currentTarget.style.background = isCassa && isPaid ? '#f0fdf4' : 'white'}
+                                  >
+                                    💵 {isPaid ? (isCassa ? '✓ Cassa' : 'Sposta in Cassa') : 'Paga con Cassa'}
+                                  </button>
                                   
-                                  try {
-                                    await api.post('/api/fatture-ricevute/cambia-metodo-pagamento', {
-                                      fattura_id: f.id,
-                                      importo: importo,
-                                      metodo_vecchio: metodoVecchio,
-                                      metodo_nuovo: metodoNuovo,
-                                      data_pagamento: dataDoc,
-                                      fornitore: fornitoreNome,
-                                      numero_fattura: numFattura
-                                    });
-                                    alert(`✅ Pagamento spostato!\n\nDa Prima Nota ${metodoVecchio.toUpperCase()} → Prima Nota ${metodoNuovo.toUpperCase()}\nData: ${dataDoc}`);
-                                    fetchFatture();
-                                  } catch (error) {
-                                    alert(`❌ Errore: ${error.response?.data?.detail || error.message}`);
-                                  }
-                                } else if (!isPaid) {
-                                  // Nuovo pagamento
-                                  if (!window.confirm(`Registrare pagamento di ${formatCurrency(importo)} a ${fornitoreNome} tramite ${metodoNuovo.toUpperCase()}?\n\nData movimento: ${dataDoc}`)) return;
-                                  
-                                  try {
-                                    await api.post('/api/fatture-ricevute/paga-manuale', {
-                                      fattura_id: f.id,
-                                      importo: importo,
-                                      metodo: metodoNuovo,
-                                      data_pagamento: dataDoc,
-                                      fornitore: fornitoreNome,
-                                      numero_fattura: numFattura
-                                    });
-                                    alert(`✅ Pagamento registrato!\n\nMovimento creato in Prima Nota ${metodoNuovo === 'cassa' ? 'Cassa' : 'Banca'} con data ${dataDoc}`);
-                                    fetchFatture();
-                                  } catch (error) {
-                                    alert(`❌ Errore: ${error.response?.data?.detail || error.message}`);
-                                  }
-                                } else {
-                                  alert('ℹ️ Seleziona un metodo diverso per spostare il pagamento');
-                                }
-                              }}
-                              style={{ 
-                                padding: '5px 10px', 
-                                background: isPaid ? (f._metodoModificato ? '#f59e0b' : '#6b7280') : '#10b981', 
-                                color: 'white', 
-                                border: 'none', 
-                                borderRadius: 6, 
-                                cursor: 'pointer', 
-                                fontSize: 11, 
-                                fontWeight: 'bold' 
-                              }}
-                              title={isPaid ? "Modifica metodo pagamento" : "Registra pagamento"}
-                              data-testid={`btn-paga-archivio-${f.id}`}
-                            >
-                              {isPaid ? (f._metodoModificato ? '🔄 Sposta' : '✓ Pagata') : '💳 Paga'}
-                            </button>
+                                  {/* Opzione Banca */}
+                                  <button
+                                    onClick={async () => {
+                                      const importo = f.total_amount || f.importo_totale || 0;
+                                      const dataDoc = f.invoice_date || f.data_documento;
+                                      const fornitoreNome = f.supplier_name || f.fornitore_ragione_sociale || 'Fornitore';
+                                      const numFattura = f.invoice_number || f.numero_documento || '';
+                                      
+                                      if (isPaid) {
+                                        // Modifica metodo esistente
+                                        if (isBanca) {
+                                          alert('ℹ️ Questa fattura è già pagata in Banca');
+                                          setShowPayMenu(null);
+                                          return;
+                                        }
+                                        if (!window.confirm(`⚠️ Spostare pagamento da CASSA a BANCA?\n\n${fornitoreNome}\n${formatCurrency(importo)}\nData: ${dataDoc}`)) {
+                                          setShowPayMenu(null);
+                                          return;
+                                        }
+                                        try {
+                                          await api.post('/api/fatture-ricevute/cambia-metodo-pagamento', {
+                                            fattura_id: f.id,
+                                            importo: importo,
+                                            metodo_vecchio: 'cassa',
+                                            metodo_nuovo: 'banca',
+                                            data_pagamento: dataDoc,
+                                            fornitore: fornitoreNome,
+                                            numero_fattura: numFattura
+                                          });
+                                          alert('✅ Pagamento spostato in Prima Nota Banca');
+                                          fetchFatture();
+                                        } catch (error) {
+                                          alert(`❌ Errore: ${error.response?.data?.detail || error.message}`);
+                                        }
+                                      } else {
+                                        // Nuovo pagamento
+                                        if (!window.confirm(`Pagare ${formatCurrency(importo)} a ${fornitoreNome} tramite BANCA?\n\nData: ${dataDoc}`)) {
+                                          setShowPayMenu(null);
+                                          return;
+                                        }
+                                        try {
+                                          await api.post('/api/fatture-ricevute/paga-manuale', {
+                                            fattura_id: f.id,
+                                            importo: importo,
+                                            metodo: 'banca',
+                                            data_pagamento: dataDoc,
+                                            fornitore: fornitoreNome,
+                                            numero_fattura: numFattura
+                                          });
+                                          alert('✅ Pagamento registrato in Prima Nota Banca');
+                                          fetchFatture();
+                                        } catch (error) {
+                                          alert(`❌ Errore: ${error.response?.data?.detail || error.message}`);
+                                        }
+                                      }
+                                      setShowPayMenu(null);
+                                    }}
+                                    style={{
+                                      width: '100%',
+                                      padding: '10px 14px',
+                                      border: 'none',
+                                      background: isBanca && isPaid ? '#dbeafe' : 'white',
+                                      cursor: 'pointer',
+                                      textAlign: 'left',
+                                      fontSize: 12,
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: 8
+                                    }}
+                                    onMouseOver={(e) => e.currentTarget.style.background = '#dbeafe'}
+                                    onMouseOut={(e) => e.currentTarget.style.background = isBanca && isPaid ? '#dbeafe' : 'white'}
+                                  >
+                                    🏦 {isPaid ? (isBanca ? '✓ Banca' : 'Sposta in Banca') : 'Paga con Banca'}
+                                  </button>
+                                </div>
+                              )}
+                            </div>
                             
                             <button
                               onClick={() => navigate(`/fatture-ricevute/${f.id}`)}
