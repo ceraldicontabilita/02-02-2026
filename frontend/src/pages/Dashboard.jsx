@@ -112,7 +112,7 @@ export default function Dashboard() {
           api.get(`/api/dashboard/confronto-annuale?anno=${anno}`).catch(() => ({ data: null })),
           api.get(`/api/dashboard/stato-riconciliazione?anno=${anno}`).catch(() => ({ data: null })),
           api.get(`/api/contabilita/calcolo-imposte?regione=campania&anno=${anno}`).catch(() => ({ data: null })),
-          api.get(`/api/f24/scadenze-prossime?giorni=60&limit=5`).catch(() => ({ data: null }))
+          api.get(`/api/f24-public/scadenze-prossime?giorni=60&limit=5`).catch(() => ({ data: null }))
         ]).then(([speseRes, confrontoRes, riconcRes, imposteRes, f24Res]) => {
           setSpeseCategoria(speseRes.data);
           setConfrontoAnnuale(confrontoRes.data);
