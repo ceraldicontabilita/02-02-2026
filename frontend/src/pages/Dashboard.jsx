@@ -378,118 +378,81 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* Widget Bilancio Istantaneo */}
+      {/* Widget Bilancio Istantaneo - COMPATTO */}
       {bilancioIstantaneo && (
         <div style={{
           background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
-          borderRadius: 12,
-          padding: 24,
-          marginTop: 20,
+          borderRadius: 10,
+          padding: 14,
+          marginTop: 12,
           color: 'white'
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-            <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
-              <TrendingUp size={24} /> Bilancio Istantaneo {anno}
+        }} data-testid="widget-bilancio-istantaneo">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+            <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 600 }}>
+              <TrendingUp size={18} /> Bilancio Istantaneo {anno}
             </h3>
-            <span style={{ fontSize: 12, opacity: 0.7 }}>
-              {bilancioIstantaneo.documenti?.fatture_ricevute || 0} fatture • {bilancioIstantaneo.documenti?.corrispettivi || 0} corrispettivi
+            <span style={{ fontSize: 11, opacity: 0.7 }}>
+              {bilancioIstantaneo.documenti?.fatture_ricevute || 0} fatt. • {bilancioIstantaneo.documenti?.corrispettivi || 0} corr.
             </span>
           </div>
           
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 20 }}>
-            <div style={{ background: 'rgba(16,185,129,0.2)', borderRadius: 8, padding: 16, borderLeft: '4px solid #10b981' }}>
-              <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 4 }}>RICAVI</div>
-              <div style={{ fontSize: 24, fontWeight: 700 }}>{formatEuro(bilancioIstantaneo.ricavi?.totale || 0)}</div>
-              <div style={{ fontSize: 11, opacity: 0.6 }}>
-                Corr: {formatEuro(bilancioIstantaneo.ricavi?.da_corrispettivi || 0)}
-              </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
+            <div style={{ background: 'rgba(16,185,129,0.2)', borderRadius: 6, padding: 10, borderLeft: '3px solid #10b981' }}>
+              <div style={{ fontSize: 10, opacity: 0.8 }}>RICAVI</div>
+              <div style={{ fontSize: 16, fontWeight: 700 }}>{formatEuro(bilancioIstantaneo.ricavi?.totale || 0)}</div>
             </div>
-            
-            <div style={{ background: 'rgba(239,68,68,0.2)', borderRadius: 8, padding: 16, borderLeft: '4px solid #ef4444' }}>
-              <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 4 }}>COSTI</div>
-              <div style={{ fontSize: 24, fontWeight: 700 }}>{formatEuro(bilancioIstantaneo.costi?.totale || 0)}</div>
-              <div style={{ fontSize: 11, opacity: 0.6 }}>
-                Da fatture acquisto
-              </div>
+            <div style={{ background: 'rgba(239,68,68,0.2)', borderRadius: 6, padding: 10, borderLeft: '3px solid #ef4444' }}>
+              <div style={{ fontSize: 10, opacity: 0.8 }}>COSTI</div>
+              <div style={{ fontSize: 16, fontWeight: 700 }}>{formatEuro(bilancioIstantaneo.costi?.totale || 0)}</div>
             </div>
-            
-            <div style={{ background: 'rgba(59,130,246,0.2)', borderRadius: 8, padding: 16, borderLeft: '4px solid #3b82f6' }}>
-              <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 4 }}>SALDO IVA</div>
-              <div style={{ 
-                fontSize: 24, 
-                fontWeight: 700,
-                color: (bilancioIstantaneo.iva?.saldo || 0) >= 0 ? '#f87171' : '#34d399'
-              }}>
+            <div style={{ background: 'rgba(59,130,246,0.2)', borderRadius: 6, padding: 10, borderLeft: '3px solid #3b82f6' }}>
+              <div style={{ fontSize: 10, opacity: 0.8 }}>SALDO IVA</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: (bilancioIstantaneo.iva?.saldo || 0) >= 0 ? '#f87171' : '#34d399' }}>
                 {formatEuro(bilancioIstantaneo.iva?.saldo || 0)}
               </div>
-              <div style={{ fontSize: 11, opacity: 0.6 }}>
-                Deb: {formatEuro(bilancioIstantaneo.iva?.debito || 0)} - Cred: {formatEuro(bilancioIstantaneo.iva?.credito || 0)}
-              </div>
             </div>
-            
             <div style={{ 
-              background: (bilancioIstantaneo.bilancio?.utile_lordo || 0) >= 0 
-                ? 'rgba(16,185,129,0.3)' 
-                : 'rgba(239,68,68,0.3)', 
-              borderRadius: 8, 
-              padding: 16, 
-              borderLeft: `4px solid ${(bilancioIstantaneo.bilancio?.utile_lordo || 0) >= 0 ? '#10b981' : '#ef4444'}`
+              background: (bilancioIstantaneo.bilancio?.utile_lordo || 0) >= 0 ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)', 
+              borderRadius: 6, padding: 10, 
+              borderLeft: `3px solid ${(bilancioIstantaneo.bilancio?.utile_lordo || 0) >= 0 ? '#10b981' : '#ef4444'}`
             }}>
-              <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 4 }}>UTILE LORDO</div>
-              <div style={{ 
-                fontSize: 24, 
-                fontWeight: 700,
-                color: (bilancioIstantaneo.bilancio?.utile_lordo || 0) >= 0 ? '#34d399' : '#f87171'
-              }}>
+              <div style={{ fontSize: 10, opacity: 0.8 }}>UTILE LORDO</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: (bilancioIstantaneo.bilancio?.utile_lordo || 0) >= 0 ? '#34d399' : '#f87171' }}>
                 {formatEuro(bilancioIstantaneo.bilancio?.utile_lordo || 0)}
-              </div>
-              <div style={{ fontSize: 11, opacity: 0.6 }}>
-                Margine: {bilancioIstantaneo.bilancio?.margine_percentuale || 0}%
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Widget IRES/IRAP */}
+      {/* Widget IRES/IRAP - COMPATTO */}
       {imposteData && (
-        <div style={{ borderRadius: 12, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', marginTop: 20, background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)', color: 'white' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-            <div>
-              <div style={{ fontSize: 18, fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 8 }}>
-                🧮 Calcolo Imposte {anno}
-              </div>
-              <div style={{ fontSize: 12, opacity: 0.8 }}>Regione Campania - Aliquota IRAP {imposteData.irap?.aliquota}%</div>
+        <div style={{ borderRadius: 10, padding: 14, boxShadow: '0 1px 4px rgba(0,0,0,0.06)', marginTop: 12, background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)', color: 'white' }} data-testid="widget-calcolo-imposte">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+            <div style={{ fontSize: 14, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+              🧮 Imposte {anno} <span style={{ fontSize: 10, opacity: 0.7, fontWeight: 400 }}>IRAP {imposteData.irap?.aliquota}%</span>
             </div>
-            <Link to="/contabilita" style={{
-              padding: '8px 16px',
-              background: 'rgba(255,255,255,0.2)',
-              color: 'white',
-              borderRadius: 6,
-              textDecoration: 'none',
-              fontSize: 13
-            }}>
+            <Link to="/contabilita" style={{ padding: '4px 10px', background: 'rgba(255,255,255,0.2)', color: 'white', borderRadius: 4, textDecoration: 'none', fontSize: 11 }}>
               Dettaglio →
             </Link>
           </div>
           
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 15 }}>
-            <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 10, padding: 15 }}>
-              <div style={{ fontSize: 12, opacity: 0.8 }}>Utile Civilistico</div>
-              <div style={{ fontSize: 22, fontWeight: 'bold' }}>{formatEuro(imposteData.utile_civilistico)}</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
+            <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 6, padding: 10 }}>
+              <div style={{ fontSize: 10, opacity: 0.8 }}>Utile</div>
+              <div style={{ fontSize: 16, fontWeight: 'bold' }}>{formatEuro(imposteData.utile_civilistico)}</div>
             </div>
-            <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 10, padding: 15 }}>
-              <div style={{ fontSize: 12, opacity: 0.8 }}>IRES Dovuta (24%)</div>
-              <div style={{ fontSize: 22, fontWeight: 'bold', color: '#fbbf24' }}>{formatEuro(imposteData.ires?.imposta_dovuta)}</div>
+            <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 6, padding: 10 }}>
+              <div style={{ fontSize: 10, opacity: 0.8 }}>IRES (24%)</div>
+              <div style={{ fontSize: 16, fontWeight: 'bold', color: '#fbbf24' }}>{formatEuro(imposteData.ires?.imposta_dovuta)}</div>
             </div>
-            <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 10, padding: 15 }}>
-              <div style={{ fontSize: 12, opacity: 0.8 }}>IRAP Dovuta</div>
-              <div style={{ fontSize: 22, fontWeight: 'bold', color: '#a78bfa' }}>{formatEuro(imposteData.irap?.imposta_dovuta)}</div>
+            <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 6, padding: 10 }}>
+              <div style={{ fontSize: 10, opacity: 0.8 }}>IRAP</div>
+              <div style={{ fontSize: 16, fontWeight: 'bold', color: '#a78bfa' }}>{formatEuro(imposteData.irap?.imposta_dovuta)}</div>
             </div>
-            <div style={{ background: 'rgba(239,68,68,0.3)', borderRadius: 10, padding: 15 }}>
-              <div style={{ fontSize: 12, opacity: 0.8 }}>TOTALE IMPOSTE</div>
-              <div style={{ fontSize: 22, fontWeight: 'bold' }}>{formatEuro(imposteData.totale_imposte)}</div>
-              <div style={{ fontSize: 11, opacity: 0.7 }}>Aliquota effettiva: {imposteData.aliquota_effettiva?.toFixed(1)}%</div>
+            <div style={{ background: 'rgba(239,68,68,0.3)', borderRadius: 6, padding: 10 }}>
+              <div style={{ fontSize: 10, opacity: 0.8 }}>TOTALE</div>
+              <div style={{ fontSize: 16, fontWeight: 'bold' }}>{formatEuro(imposteData.totale_imposte)}</div>
             </div>
           </div>
           
