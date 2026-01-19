@@ -47,6 +47,8 @@ PATTERN_COMMISSIONI_BANCARIE = [
 PATTERN_STIPENDI = [
     r"VOSTRA\s*DISPOSIZIONE.*FAVORE\s+([A-Za-zÀ-ÿ\s]+?)(?:\s*-\s*ADD\.TOT|\s*NOTPROVIDE|$)",
     r"VS\.DISP\..*FAVORE\s+([A-Za-zÀ-ÿ\s]+?)(?:\s*-\s*ADD\.TOT|\s*NOTPROVIDE|$)",
+    r"A\s+FAVORE\s+DI[:\s]+([A-Za-zÀ-ÿ\s]+?)(?:\s*-\s*|\s*NOTPROVIDE|$)",  # "a favore di: Nome Cognome"
+    r"FAVORE[:\s]+([A-Za-zÀ-ÿ\s]+?)(?:\s*-\s*|\s*\d|$)",  # "FAVORE: Nome" o "FAVORE Nome"
 ]
 
 # Pattern per F24
@@ -77,17 +79,29 @@ AZIENDA_ESCLUSIONE = [
 ]
 
 # Pattern per estrazione numeri fattura dalla causale
+# Supporta: "saldo fatture 0070042755 0070041249", "FATT. 123/2025", "N. 456"
 PATTERN_NUMERI_FATTURA = [
     r"(?:FT|FAT|FATT|FATTURA|N\.?\s*)[:\s]?\s*(\d+[\/-]?\d*)",
     r"(?:RIFER|RIF)[\.:]\s*(\d+[\/-]?\d*)",
     r"\b(\d{1,4}\/\d{2,4})\b",  # Pattern tipo 123/2025
+    r"saldo\s+fattur[ea]\s+([\d\s]+)",  # "saldo fatture 0070042755 0070041249"
+    r"(?:fattur[ea]|fatt\.?)\s*n?[°.]?\s*(\d{5,12})",  # Numeri fattura lunghi (tipo 0070042755)
 ]
 
 
 # ==================== ANALYZER FUNCTIONS ====================
 
 def estrai_nome_beneficiario(descrizione: str) -> Optional[str]:
-    """Estrae il nome del beneficiario dalla descrizione del bonifico."""
+    """
+    Estrae il nome del beneficiario dalla descrizione del bonifico.
+    Cerca pattern come:
+    - "a favore di: Nome Cognome"
+    - "FAVORE Nome Cognome"
+    - "VOSTRA DISPOSIZIONE...FAVORE Nome"
+    """
+    if not descrizione:
+        return None
+    
     for pattern in PATTERN_STIPENDI:
         match = re.search(pattern, descrizione, re.IGNORECASE)
         if match:
@@ -114,18 +128,49 @@ def estrai_nome_beneficiario(descrizione: str) -> Optional[str]:
 
 
 def estrai_numeri_fattura(descrizione: str) -> List[str]:
-    """Estrae numeri fattura dalla causale del bonifico."""
+    """
+    Estrae numeri fattura dalla causale del bonifico.
+    Supporta:
+    - "saldo fatture 0070042755 0070041249 0070040613"
+    - "FATT. 123/2025"
+    - "N. 456"
+    """
+    if not descrizione:
+        return []
+    
     numeri = []
+    
+    # Pattern speciale per "saldo fatture NNNNNN NNNNNN NNNNNN"
+    saldo_match = re.search(r'saldo\s+fattur[ea]s?\s+([\d\s]+)', descrizione, re.IGNORECASE)
+    if saldo_match:
+        nums_str = saldo_match.group(1)
+        # Estrai tutti i numeri separati da spazi
+        nums = re.findall(r'\d{5,12}', nums_str)
+        numeri.extend(nums)
+    
+    # Altri pattern
     for pattern in PATTERN_NUMERI_FATTURA:
         matches = re.findall(pattern, descrizione, re.IGNORECASE)
-        numeri.extend(matches)
+        for m in matches:
+            if isinstance(m, tuple):
+                numeri.extend(m)
+            else:
+                # Se è un match con spazi (es: "0070042755 0070041249")
+                if ' ' in m:
+                    numeri.extend(m.split())
+                else:
+                    numeri.append(m)
+    
     # Rimuovi duplicati mantenendo ordine
     seen = set()
     result = []
     for n in numeri:
-        if n not in seen:
+        n = str(n).strip()
+        if n and n not in seen and len(n) >= 3:
             seen.add(n)
             result.append(n)
+    
+    return result  # CORRETTO: ora restituisce il risultato!
 
 
 def estrai_numero_assegno(descrizione: str) -> Optional[str]:
