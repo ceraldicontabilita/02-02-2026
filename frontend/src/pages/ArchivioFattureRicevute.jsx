@@ -555,37 +555,6 @@ export default function ArchivioFatture() {
                         <td style={{ padding: '10px 12px', textAlign: 'right' }}>{formatCurrency(f.imponibile)}</td>
                         <td style={{ padding: '10px 12px', textAlign: 'right' }}>{formatCurrency(f.iva)}</td>
                         <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 'bold' }}>{formatCurrency(f.total_amount || f.importo_totale)}</td>
-                        
-                        {/* Colonna Metodo Pagamento con Select - SEMPRE MODIFICABILE */}
-                        <td style={{ padding: '10px 12px', textAlign: 'center' }}>
-                          <select
-                            value={f._selectedMetodo || (isCassa ? 'cassa' : 'banca')}
-                            onChange={(e) => {
-                              // Aggiorna stato locale temporaneo
-                              const newFatture = [...fatture];
-                              const idx = newFatture.findIndex(x => x.id === f.id);
-                              if (idx >= 0) {
-                                newFatture[idx] = { ...newFatture[idx], _selectedMetodo: e.target.value, _metodoModificato: true };
-                                setFatture(newFatture);
-                              }
-                            }}
-                            style={{
-                              padding: '4px 8px',
-                              borderRadius: 6,
-                              border: f._metodoModificato ? '2px solid #f59e0b' : '1px solid #e2e8f0',
-                              fontSize: 11,
-                              background: f._metodoModificato ? '#fef3c7' : 'white',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            <option value="banca">🏦 Banca</option>
-                            <option value="cassa">💵 Cassa</option>
-                          </select>
-                          {f._metodoModificato && (
-                            <div style={{ fontSize: 9, color: '#f59e0b', marginTop: 2 }}>⚠️ Modificato</div>
-                          )}
-                        </td>
-                        
                         <td style={{ padding: '10px 12px', textAlign: 'center' }}>{getStatoBadge(f)}</td>
                         <td style={{ padding: '10px 12px', textAlign: 'center' }}>
                           <div style={{ display: 'flex', gap: 6, justifyContent: 'center', alignItems: 'center' }}>
