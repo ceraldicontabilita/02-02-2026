@@ -533,12 +533,19 @@ export default function ArchivioFatture() {
                       <th style={{ padding: '10px 12px', textAlign: 'right', fontWeight: '600' }}>Imponibile</th>
                       <th style={{ padding: '10px 12px', textAlign: 'right', fontWeight: '600' }}>IVA</th>
                       <th style={{ padding: '10px 12px', textAlign: 'right', fontWeight: '600' }}>Totale</th>
+                      <th style={{ padding: '10px 12px', textAlign: 'center', fontWeight: '600' }}>Metodo Pag.</th>
                       <th style={{ padding: '10px 12px', textAlign: 'center', fontWeight: '600' }}>Stato</th>
                       <th style={{ padding: '10px 12px', textAlign: 'center', fontWeight: '600' }}>Azioni</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {fatture.map((f, idx) => (
+                    {fatture.map((f, idx) => {
+                      const isPaid = f.status === 'paid' || f.stato_pagamento === 'pagata';
+                      const metodoPag = f.metodo_pagamento || f.payment_method || '';
+                      const isCassa = metodoPag.toLowerCase().includes('contant') || metodoPag.toLowerCase() === 'cassa';
+                      const isBanca = metodoPag.toLowerCase().includes('banca') || metodoPag.toLowerCase().includes('bonifico') || metodoPag.toLowerCase().includes('sepa');
+                      
+                      return (
                       <tr key={f.id} style={{ borderBottom: '1px solid #f3f4f6', background: idx % 2 === 0 ? 'white' : '#f9fafb' }}>
                         <td style={{ padding: '10px 12px' }}>{f.invoice_date || f.data_documento}</td>
                         <td style={{ padding: '10px 12px', fontWeight: '500' }}>{f.invoice_number || f.numero_documento}</td>
@@ -549,9 +556,43 @@ export default function ArchivioFatture() {
                         <td style={{ padding: '10px 12px', textAlign: 'right' }}>{formatCurrency(f.imponibile)}</td>
                         <td style={{ padding: '10px 12px', textAlign: 'right' }}>{formatCurrency(f.iva)}</td>
                         <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 'bold' }}>{formatCurrency(f.total_amount || f.importo_totale)}</td>
+                        
+                        {/* Colonna Metodo Pagamento con Select */}
+                        <td style={{ padding: '10px 12px', textAlign: 'center' }}>
+                          {isPaid ? (
+                            <span style={{ fontSize: 11, color: '#6b7280' }}>
+                              {isCassa ? '💵 Cassa' : isBanca ? '🏦 Banca' : metodoPag || '-'}
+                            </span>
+                          ) : (
+                            <select
+                              value={f._selectedMetodo || (isBanca ? 'banca' : isCassa ? 'cassa' : 'banca')}
+                              onChange={(e) => {
+                                // Aggiorna stato locale temporaneo
+                                const newFatture = [...fatture];
+                                const idx = newFatture.findIndex(x => x.id === f.id);
+                                if (idx >= 0) {
+                                  newFatture[idx] = { ...newFatture[idx], _selectedMetodo: e.target.value };
+                                  setFatture(newFatture);
+                                }
+                              }}
+                              style={{
+                                padding: '4px 8px',
+                                borderRadius: 6,
+                                border: '1px solid #e2e8f0',
+                                fontSize: 11,
+                                background: 'white',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              <option value="banca">🏦 Banca</option>
+                              <option value="cassa">💵 Cassa</option>
+                            </select>
+                          )}
+                        </td>
+                        
                         <td style={{ padding: '10px 12px', textAlign: 'center' }}>{getStatoBadge(f)}</td>
                         <td style={{ padding: '10px 12px', textAlign: 'center' }}>
-                          <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
+                          <div style={{ display: 'flex', gap: 6, justifyContent: 'center', alignItems: 'center' }}>
                             <a
                               href={`/api/fatture-ricevute/fattura/${f.id}/view-assoinvoice`}
                               target="_blank"
@@ -560,8 +601,53 @@ export default function ArchivioFatture() {
                               title="Visualizza fattura"
                               data-testid={`btn-pdf-${f.id}`}
                             >
-                              📄 Vedi
+                              📄
                             </a>
+                            
+                            {/* Pulsante Paga (solo se non pagata) */}
+                            {!isPaid && (
+                              <button
+                                onClick={async () => {
+                                  const metodo = f._selectedMetodo || (isBanca ? 'banca' : isCassa ? 'cassa' : 'banca');
+                                  const importo = f.total_amount || f.importo_totale || 0;
+                                  const dataDoc = f.invoice_date || f.data_documento;
+                                  const fornitoreNome = f.supplier_name || f.fornitore_ragione_sociale || 'Fornitore';
+                                  const numFattura = f.invoice_number || f.numero_documento || '';
+                                  
+                                  if (!window.confirm(`Registrare pagamento di ${formatCurrency(importo)} a ${fornitoreNome} tramite ${metodo.toUpperCase()}?\n\nData movimento: ${dataDoc}`)) return;
+                                  
+                                  try {
+                                    await api.post('/api/fatture-ricevute/paga-manuale', {
+                                      fattura_id: f.id,
+                                      importo: importo,
+                                      metodo: metodo,
+                                      data_pagamento: dataDoc, // USA DATA DOCUMENTO, non oggi!
+                                      fornitore: fornitoreNome,
+                                      numero_fattura: numFattura
+                                    });
+                                    alert(`✅ Pagamento registrato!\n\nMovimento creato in Prima Nota ${metodo === 'cassa' ? 'Cassa' : 'Banca'} con data ${dataDoc}`);
+                                    fetchFatture();
+                                  } catch (error) {
+                                    alert(`❌ Errore: ${error.response?.data?.detail || error.message}`);
+                                  }
+                                }}
+                                style={{ 
+                                  padding: '5px 10px', 
+                                  background: '#10b981', 
+                                  color: 'white', 
+                                  border: 'none', 
+                                  borderRadius: 6, 
+                                  cursor: 'pointer', 
+                                  fontSize: 11, 
+                                  fontWeight: 'bold' 
+                                }}
+                                title="Registra pagamento"
+                                data-testid={`btn-paga-archivio-${f.id}`}
+                              >
+                                💳 Paga
+                              </button>
+                            )}
+                            
                             <button
                               onClick={() => navigate(`/fatture-ricevute/${f.id}`)}
                               style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14 }}
@@ -573,7 +659,8 @@ export default function ArchivioFatture() {
                           </div>
                         </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
