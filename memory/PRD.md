@@ -5,6 +5,18 @@
 
 ---
 
+## 📋 CHANGELOG RECENTE
+
+### 19 Gennaio 2026 - UX Improvements & Bulk Operations
+- ✅ **Rimossi tutti i `window.confirm()`**: Le azioni vengono eseguite direttamente senza dialog di conferma
+- ✅ **UI Compattata**: Padding, font-size e margini ridotti in `/ordini-fornitori` e altre pagine
+- ✅ **Nuovo endpoint**: `POST /api/fatture-ricevute/aggiorna-metodi-pagamento` - Aggiorna in massa i metodi di pagamento delle fatture basandosi sul metodo predefinito del fornitore
+- ✅ **Eliminato `DettaglioFattura.jsx`**: Pagina duplicata rimossa, funzionalità già presente in ArchivioFattureRicevute
+- ✅ **Ripristino scroll**: Implementato salvataggio/ripristino della posizione di scorrimento dopo operazioni di modifica
+- ✅ **Admin**: Aggiunto pulsante "Aggiorna Metodi Pagamento" nella sezione Manutenzione
+
+---
+
 ## 🚨 REGOLA FONDAMENTALE PER LO SVILUPPO
 
 **QUANDO SI CORREGGE UN PROBLEMA, CORREGGERE SEMPRE TUTTO, NON SOLO I CASI PRINCIPALI.**
