@@ -56,6 +56,8 @@ export default function Documenti() {
   const [aiDocuments, setAiDocuments] = useState([]);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiStats, setAiStats] = useState(null);
+  const [aiFilterTipo, setAiFilterTipo] = useState('');
+  const [selectedPdfDoc, setSelectedPdfDoc] = useState(null);
   
   // Load AI Documents
   const loadAiDocuments = async () => {
