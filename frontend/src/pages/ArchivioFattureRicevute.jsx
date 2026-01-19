@@ -110,6 +110,9 @@ export default function ArchivioFatture() {
   const [showPayMenu, setShowPayMenu] = useState(null); // ID della scadenza con menu aperto
   const [payingScadenza, setPayingScadenza] = useState(null);
   
+  // Ref per salvare posizione scroll
+  const scrollPositionRef = useRef(0);
+  
   // Filtri (anno viene dal contesto globale)
   const [mese, setMese] = useState(searchParams.get('mese') || '');
   const [fornitore, setFornitore] = useState(searchParams.get('fornitore') || searchParams.get('fornitore_piva') || '');
