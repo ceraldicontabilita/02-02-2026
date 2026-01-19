@@ -801,11 +801,14 @@ async def list_suppliers(
     use_cache: bool = Query(True, description="Use cached data for faster response")
 ) -> List[Dict[str, Any]]:
     """
-    Lista fornitori estratti da invoices + collezione fornitori + collezione suppliers.
-    Combina tutte le fonti e deduplica per P.IVA.
-    Default limit aumentato a 500 per mostrare tutti i fornitori.
+    Lista fornitori estratti da collezione suppliers + statistiche da invoices.
+    OTTIMIZZATO: Prima carica suppliers, poi arricchisce con stats delle fatture.
     """
+    import asyncio
+    import time
+    
     db = Database.get_db()
+    t_start = time.time()
     
     # Prova cache se non ci sono filtri specifici
     cache_key = f"{SUPPLIERS_CACHE_KEY}:all"
@@ -817,46 +820,86 @@ async def list_suppliers(
     
     suppliers_map = {}  # Usa piva come chiave per deduplicare
     
-    # 1. Estrai fornitori unici da invoices (fonte principale)
-    # OTTIMIZZAZIONE PERFORMANCE: usa projection per escludere campi pesanti (xml_content, linee)
-    # e allowDiskUse per aggregazioni grandi
-    pipeline = [
-        # Projection iniziale per ridurre memoria
-        {"$project": {
-            "supplier_vat": 1,
-            "supplier_name": 1,
-            "fornitore.partita_iva": 1,
-            "fornitore.denominazione": 1,
-            "fornitore.ragione_sociale": 1,
-            "fornitore.codice_fiscale": 1,
-            "fornitore.indirizzo": 1,
-            "fornitore.cap": 1,
-            "fornitore.comune": 1,
-            "fornitore.provincia": 1,
-            "fornitore.nazione": 1,
-            "fornitore.telefono": 1,
-            "fornitore.email": 1,
-            "fornitore.pec": 1,
-            "total_amount": 1,
-            "totale": 1,
-            "pagato": 1
-        }},
-        {"$match": {"$or": [
-            {"supplier_vat": {"$exists": True, "$ne": None, "$ne": ""}},
-            {"fornitore.partita_iva": {"$exists": True, "$ne": None, "$ne": ""}}
-        ]}},
-        {"$group": {
-            "_id": {"$ifNull": ["$supplier_vat", "$fornitore.partita_iva"]},
-            "supplier_name": {"$first": "$supplier_name"},
-            "fornitore": {"$first": "$fornitore"},
-            "fatture_count": {"$sum": 1},
-            "fatture_totale": {"$sum": {"$toDouble": {"$ifNull": ["$total_amount", "$totale"]}}},
-            "fatture_non_pagate": {"$sum": {"$cond": [{"$ne": ["$pagato", True]}, {"$toDouble": {"$ifNull": ["$total_amount", "$totale"]}}, 0]}}
-        }},
-        {"$sort": {"fatture_count": -1}}
-    ]
+    # ==================== STEP 1: Carica fornitori da collezione suppliers (VELOCE) ====================
+    # Questa è la fonte principale e già contiene i dati anagrafici completi
+    suppliers_query = {}
+    if search and search.strip():
+        search_lower = search.strip()
+        suppliers_query["$or"] = [
+            {"denominazione": {"$regex": search_lower, "$options": "i"}},
+            {"ragione_sociale": {"$regex": search_lower, "$options": "i"}},
+            {"partita_iva": {"$regex": search_lower, "$options": "i"}}
+        ]
+    if metodo_pagamento:
+        suppliers_query["metodo_pagamento"] = metodo_pagamento
     
-    invoice_suppliers = await db["invoices"].aggregate(pipeline, allowDiskUse=True).to_list(500)
+    saved_suppliers = await db[Collections.SUPPLIERS].find(suppliers_query, {"_id": 0}).to_list(1000)
+    
+    for supplier in saved_suppliers:
+        piva = supplier.get("partita_iva")
+        if piva:
+            suppliers_map[piva] = {
+                **supplier,
+                "fatture_count": supplier.get("fatture_count", 0),
+                "fatture_totale": 0,
+                "fatture_non_pagate": 0,
+                "source": "database"
+            }
+    
+    t_suppliers = time.time()
+    logger.info(f"Suppliers DB loaded in {t_suppliers - t_start:.2f}s ({len(suppliers_map)} items)")
+    
+    # ==================== STEP 2: Aggiungi statistiche fatture (OTTIMIZZATO) ====================
+    # Solo se non c'è ricerca specifica (per velocità)
+    if not search:
+        # Pipeline semplificata - solo stats aggregate
+        stats_pipeline = [
+            {"$match": {"$or": [
+                {"supplier_vat": {"$exists": True, "$ne": None, "$ne": ""}},
+                {"fornitore_partita_iva": {"$exists": True, "$ne": None, "$ne": ""}}
+            ]}},
+            {"$group": {
+                "_id": {"$ifNull": ["$supplier_vat", "$fornitore_partita_iva"]},
+                "fatture_count": {"$sum": 1},
+                "fatture_totale": {"$sum": {"$toDouble": {"$ifNull": ["$importo_totale", {"$ifNull": ["$total_amount", 0]}]}}},
+                "fatture_non_pagate": {"$sum": {"$cond": [{"$ne": ["$pagato", True]}, {"$toDouble": {"$ifNull": ["$importo_totale", {"$ifNull": ["$total_amount", 0]}]}}, 0]}}
+            }}
+        ]
+        
+        try:
+            invoice_stats = await db["invoices"].aggregate(stats_pipeline, allowDiskUse=True).to_list(1000)
+            
+            for stat in invoice_stats:
+                piva = stat.get("_id")
+                if not piva:
+                    continue
+                
+                if piva in suppliers_map:
+                    # Aggiorna stats nel fornitore esistente
+                    suppliers_map[piva]["fatture_count"] = stat.get("fatture_count", 0)
+                    suppliers_map[piva]["fatture_totale"] = stat.get("fatture_totale", 0)
+                    suppliers_map[piva]["fatture_non_pagate"] = stat.get("fatture_non_pagate", 0)
+                    suppliers_map[piva]["source"] = "merged"
+            
+            t_stats = time.time()
+            logger.info(f"Invoice stats loaded in {t_stats - t_suppliers:.2f}s")
+        except Exception as e:
+            logger.warning(f"Error loading invoice stats: {e}")
+    
+    # Converti in lista e ordina
+    suppliers = list(suppliers_map.values())
+    suppliers.sort(key=lambda x: x.get("fatture_count", 0), reverse=True)
+    
+    # Salva in cache se non ci sono filtri
+    if use_cache and not search and not metodo_pagamento and attivo is None:
+        await cache.set(cache_key, suppliers, SUPPLIERS_CACHE_TTL)
+        logger.debug(f"Suppliers cache SET ({len(suppliers)} items)")
+    
+    t_end = time.time()
+    logger.info(f"Suppliers endpoint total: {t_end - t_start:.2f}s ({len(suppliers)} items)")
+    
+    # Applica paginazione
+    return suppliers[skip:skip+limit]
     
     for item in invoice_suppliers:
         piva = item.get("_id")
