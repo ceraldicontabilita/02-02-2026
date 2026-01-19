@@ -1047,8 +1047,34 @@ function MovementsTable({ movimenti, tipo, loading, formatEuro, formatDate, onDe
                 {!readOnly && (
                   <td style={{ padding: '6px 8px', textAlign: 'center', whiteSpace: 'nowrap' }}>
                     <button 
+                      onClick={async () => {
+                        setSpostando(mov.id);
+                        try {
+                          await onSposta(mov.id, tipo, tipo === 'cassa' ? 'banca' : 'cassa');
+                        } finally {
+                          setSpostando(null);
+                        }
+                      }}
+                      disabled={spostando === mov.id}
+                      style={{ 
+                        background: tipo === 'cassa' ? '#2563eb' : '#7c3aed', 
+                        color: 'white',
+                        border: 'none', 
+                        borderRadius: 4,
+                        padding: '3px 6px',
+                        cursor: spostando === mov.id ? 'wait' : 'pointer', 
+                        fontSize: 10,
+                        marginRight: 4,
+                        opacity: spostando === mov.id ? 0.6 : 1
+                      }}
+                      title={tipo === 'cassa' ? 'Sposta in Banca' : 'Sposta in Cassa'}
+                      data-testid={`sposta-movimento-${mov.id}`}
+                    >
+                      {spostando === mov.id ? '⏳' : (tipo === 'cassa' ? '🏦' : '💵')}
+                    </button>
+                    <button 
                       onClick={() => setEditingMovimento(mov)}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, marginRight: 8 }}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, marginRight: 4 }}
                       title="Modifica"
                       data-testid={`edit-movimento-${mov.id}`}
                     >
