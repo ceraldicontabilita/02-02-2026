@@ -878,7 +878,31 @@ Sistema completo di estrazione dati da documenti usando OCR + LLM (Claude Sonnet
 
 ---
 
-## 35. Clausola finale
+## 35. Changelog Sessione 19 Gen 2026 (Quinta Parte)
+
+### ✅ Completati:
+1. **Rimossa colonna "Metodo Pag." duplicata** dalla tab Archivio Fatture Ricevute
+2. **Rimossa colonna "Stato" duplicata** dalla tab Archivio - lo stato è già visibile nei pulsanti
+3. **Implementato cambio metodo pagamento diretto** (senza pulsante "Sposta"):
+   - Pulsanti 💵 (Cassa) e 🏦 (Banca) - cliccando si sposta direttamente il pagamento
+   - Il pulsante attivo mostra ✓ ed è evidenziato (verde per Cassa, blu per Banca)
+   - Lo spostamento avviene senza conferma aggiuntiva
+   - Usa l'ID della prima nota per determinare se il pagamento è in cassa o banca
+4. **Ottimizzazione Performance Critiche**:
+   - Endpoint `/api/fatture-ricevute/archivio`: da 29s a ~1s
+   - Rimosso campo `xml_content` e `linee` dalla projection per velocizzare
+   - Ottimizzata la logica di filtro per anno (range query invece di regex)
+
+### 🔄 File Modificati:
+- `/app/frontend/src/pages/ArchivioFattureRicevute.jsx` - UI semplificata, colonne ridotte
+- `/app/app/routers/invoices/fatture_ricevute.py` - Ottimizzazione query
+
+### ⚠️ Da Ottimizzare in Futuro:
+- Endpoint `/api/suppliers` ancora lento (~5s) - richiede ottimizzazione aggregazione
+
+---
+
+## 36. Clausola finale
 
 Questo PRD è vincolante.
 
