@@ -854,7 +854,31 @@ Sistema completo di estrazione dati da documenti usando OCR + LLM (Claude Sonnet
 
 ---
 
-## 34. Clausola finale
+## 34. Changelog Sessione 19 Gen 2026 (Quarta Parte)
+
+### ✅ Completati:
+1. **Rimossa colonna "Metodo Pag." duplicata** dalla tab Archivio Fatture Ricevute
+   - La colonna era ridondante poiché lo stato è già visibile nella colonna "Stato"
+   - Il menu di pagamento ora è integrato nel pulsante "Paga ▼" / "Pagata ▼"
+   
+2. **Implementato cambio metodo pagamento per fatture già pagate**:
+   - Nuovo endpoint: `POST /api/fatture-ricevute/cambia-metodo-pagamento`
+   - Permette di spostare un pagamento da Prima Nota Cassa a Prima Nota Banca (e viceversa)
+   - Mantiene la data del documento originale
+   - Aggiorna automaticamente i riferimenti nella fattura
+   
+3. **Menu dropdown unificato per pagamenti nell'Archivio**:
+   - Pulsante "💳 Paga ▼" per fatture non pagate
+   - Pulsante "✓ Pagata ▼" per fatture già pagate
+   - Opzioni: "Paga con Cassa", "Paga con Banca", "Sposta in Cassa", "Sposta in Banca"
+
+### 🔄 File Modificati:
+- `/app/frontend/src/pages/ArchivioFattureRicevute.jsx` - Rimossa colonna duplicata, nuovo menu dropdown
+- `/app/app/routers/invoices/fatture_ricevute.py` - Nuovo endpoint cambio metodo pagamento
+
+---
+
+## 35. Clausola finale
 
 Questo PRD è vincolante.
 
