@@ -1235,26 +1235,6 @@ export default function Fornitori() {
               />
               Solo incompleti
             </label>
-
-            {/* New Button */}
-            <button
-              onClick={() => { setCurrentSupplier(null); setModalOpen(true); }}
-              style={{
-                padding: '10px 20px',
-                border: 'none',
-                borderRadius: '8px',
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                color: 'white',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: 500,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}
-            >
-              <Plus size={18} /> Nuovo Fornitore
-            </button>
           </div>
         </div>
 
