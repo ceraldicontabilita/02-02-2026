@@ -202,7 +202,7 @@ function DashboardGestioneRiservata({ onLogout }) {
   }
 
   async function handleDelete(id) {
-    if (!window.confirm("Eliminare questo movimento?")) return;
+    
     try {
       await api.delete(`/api/gestione-riservata/movimenti/${id}`);
       loadData();

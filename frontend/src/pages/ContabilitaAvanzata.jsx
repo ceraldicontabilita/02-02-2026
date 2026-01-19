@@ -86,7 +86,7 @@ export default function ContabilitaAvanzata() {
   useEffect(() => { fetchData(); }, [regione, selectedYear]);
 
   const handleRicategorizza = async () => {
-    if (!window.confirm('Vuoi ricategorizzare tutte le fatture? Questa operazione aggiornerà il Piano dei Conti.')) return;
+    
     setProcessing(true); setMessage(null);
     try {
       const res = await fetch(`${API}/api/contabilita/ricategorizza-fatture`, { method: 'POST' });

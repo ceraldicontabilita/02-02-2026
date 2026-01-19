@@ -127,7 +127,7 @@ export default function ArchivioBonifici() {
   };
 
   const handleRiconcilia = async () => {
-    if (!window.confirm('Vuoi avviare la riconciliazione dei bonifici con l\'estratto conto?\n\nL\'operazione verrà eseguita in background.')) return;
+    
     
     setRiconciliando(true);
     try {
@@ -180,7 +180,7 @@ export default function ArchivioBonifici() {
 
   // Elimina bonifico
   const handleDelete = async (id) => {
-    if (!window.confirm('Eliminare questo bonifico?')) return;
+    
     try {
       await api.delete(`/api/archivio-bonifici/transfers/${id}`);
       loadTransfers();
@@ -223,7 +223,7 @@ export default function ArchivioBonifici() {
 
   // Sincronizza IBAN dai bonifici all'anagrafica dipendenti
   const handleSyncIbanToAnagrafica = async () => {
-    if (!window.confirm('Sincronizzare gli IBAN dai bonifici all\'anagrafica dipendenti?')) return;
+    
     try {
       const res = await api.post('/api/archivio-bonifici/sync-iban-anagrafica');
       alert(`✅ Sincronizzazione completata!\n\nDipendenti aggiornati: ${res.data.dipendenti_aggiornati}\nBonifici analizzati: ${res.data.totale_bonifici_analizzati}`);
@@ -281,11 +281,11 @@ export default function ArchivioBonifici() {
   // Disassocia bonifico da salario (DOPPIA CONFERMA)
   const handleDisassocia = async (bonifico_id, dipendente_nome) => {
     const msg1 = `Rimuovere associazione con "${dipendente_nome || 'salario'}"?`;
-    if (!window.confirm(msg1)) return;
+    
     
     // Seconda conferma
     const msg2 = `⚠️ CONFERMA RIMOZIONE\n\nQuesta azione rimuoverà l'associazione tra il bonifico e il salario.\n\nSei sicuro di voler procedere?`;
-    if (!window.confirm(msg2)) return;
+    
     
     try {
       await api.delete(`/api/archivio-bonifici/disassocia-salario/${bonifico_id}`);
@@ -335,11 +335,11 @@ export default function ArchivioBonifici() {
 
   const handleDisassociaFattura = async (bonifico_id, fattura_numero) => {
     const msg1 = `Rimuovere associazione con fattura "${fattura_numero || 'N/D'}"?`;
-    if (!window.confirm(msg1)) return;
+    
     
     // Seconda conferma
     const msg2 = `⚠️ CONFERMA RIMOZIONE\n\nQuesta azione rimuoverà l'associazione tra il bonifico e la fattura.\n\nSei sicuro di voler procedere?`;
-    if (!window.confirm(msg2)) return;
+    
     
     try {
       await api.delete(`/api/archivio-bonifici/disassocia-fattura/${bonifico_id}`);

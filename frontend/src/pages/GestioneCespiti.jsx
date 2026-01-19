@@ -87,7 +87,7 @@ export default function GestioneCespiti() {
   };
 
   const handleCalcolaAmm = async () => {
-    if (!window.confirm(`Calcolare ammortamenti ${anno}?`)) return;
+    
     try { const r = await api.post(`/api/cespiti/registra/${anno}`); alert(r.data.messaggio); loadCespiti(); } catch (e) { alert('Errore'); }
   };
 
@@ -106,7 +106,7 @@ export default function GestioneCespiti() {
   const handleCancelEdit = () => { setEditingCespite(null); setEditData({}); };
 
   const handleDeleteCespite = async (cespite) => {
-    if (!window.confirm(`Eliminare il cespite "${cespite.descrizione}"?\n\nQuesta operazione è irreversibile.`)) return;
+    
     try { await api.delete(`/api/cespiti/${cespite.id}`); loadCespiti(); } catch (e) { alert('Errore: ' + (e.response?.data?.detail || e.message)); }
   };
 

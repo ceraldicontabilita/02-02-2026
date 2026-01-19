@@ -115,7 +115,7 @@ export default function RegoleCategorizzazione() {
   };
 
   const handleDeleteRule = async (tipo, pattern) => {
-    if (!window.confirm(`Eliminare la regola "${pattern}"?`)) return;
+    
     try {
       await api.delete(`/api/regole/regole/${tipo}/${encodeURIComponent(pattern)}`);
       setMessage({ type: 'success', text: '✅ Regola eliminata!' });
@@ -126,7 +126,7 @@ export default function RegoleCategorizzazione() {
   };
 
   const handleRicategorizza = async () => {
-    if (!window.confirm('Ricategorizzare tutte le fatture con le nuove regole?')) return;
+    
     setRicategorizzando(true);
     try {
       const res = await api.post('/api/contabilita/ricategorizza-fatture');

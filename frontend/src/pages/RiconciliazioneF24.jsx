@@ -138,7 +138,7 @@ export default function RiconciliazioneF24() {
 
   // Riconcilia - riassocia F24 a Quietanze
   const handleRiconcilia = async () => {
-    if (!window.confirm('Vuoi rifare il matching tra F24 e Quietanze?\nQuesto riassocerà automaticamente i documenti.')) return;
+    
     
     setUploading(true);
     try {
@@ -155,7 +155,7 @@ export default function RiconciliazioneF24() {
 
   // Segna come pagato manualmente
   const handleMarkAsPaid = async (f24Id) => {
-    if (!window.confirm('Segnare questo F24 come pagato?')) return;
+    
     try {
       await api.put(`/api/f24-riconciliazione/commercialista/${f24Id}/pagato`);
       await refreshAll();
@@ -165,7 +165,7 @@ export default function RiconciliazioneF24() {
   };
 
   const handleDeleteF24 = async (id) => {
-    if (!window.confirm('Eliminare questo F24?')) return;
+    
     try {
       await api.delete(`/api/f24-riconciliazione/commercialista/${id}`);
       await refreshAll();

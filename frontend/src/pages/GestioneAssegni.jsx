@@ -152,7 +152,7 @@ export default function GestioneAssegni() {
   };
 
   const handleClearEmpty = async () => {
-    if (!window.confirm('Sei sicuro di voler eliminare tutti gli assegni vuoti?')) return;
+    
     
     try {
       const res = await api.delete(`/api/assegni/clear-generated?stato=vuoto`);
@@ -165,7 +165,7 @@ export default function GestioneAssegni() {
 
   const handleDeleteCarnet = async (carnetId, carnetAssegni) => {
     const count = carnetAssegni.length;
-    if (!window.confirm(`Sei sicuro di voler eliminare l'intero Carnet "${carnetId}" con ${count} assegni?`)) return;
+    
     
     try {
       // Elimina tutti gli assegni del carnet
@@ -271,7 +271,7 @@ export default function GestioneAssegni() {
   };
 
   const handleDelete = async (assegno) => {
-    if (!window.confirm('Eliminare questo assegno?')) return;
+    
     
     try {
       await api.delete(`/api/assegni/${assegno.id}`);
@@ -331,7 +331,7 @@ export default function GestioneAssegni() {
   };
   
   const handleAutoAssocia = async () => {
-    if (!window.confirm('Vuoi avviare l\'auto-associazione degli assegni alle fatture?\n\nIl sistema cercherà di abbinare:\n1. Assegni con importo uguale a fatture\n2. Assegni multipli con stesso importo a fatture di importo maggiore')) return;
+    
     
     setAutoAssociating(true);
     setAutoAssocResult(null);
@@ -348,7 +348,7 @@ export default function GestioneAssegni() {
 
   // Nuova funzione: Associazione combinata (somma di più assegni = importo fattura)
   const handleAssociaCombinazioni = async () => {
-    if (!window.confirm('Vuoi cercare combinazioni di assegni?\n\nIl sistema cercherà:\n• Assegni senza beneficiario\n• Fatture non pagate\n• Combinazioni la cui SOMMA corrisponde all\'importo di una fattura')) return;
+    
     
     setCombinazioneLoading(true);
     setCombinazioneResult(null);

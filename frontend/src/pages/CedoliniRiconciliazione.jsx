@@ -158,7 +158,7 @@ export default function CedoliniRiconciliazione() {
 
   // Riconciliazione automatica
   const handleRiconciliaAutomatica = async () => {
-    if (!window.confirm('Avviare riconciliazione automatica?\nCercherà corrispondenze tra cedolini non pagati e bonifici/assegni.')) return;
+    
     
     try {
       const res = await api.post('/api/cedolini/riconcilia-automatica', { anno });

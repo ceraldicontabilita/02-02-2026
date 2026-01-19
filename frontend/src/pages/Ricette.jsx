@@ -419,7 +419,7 @@ export default function Ricette() {
   }
 
   async function handleDeleteRicetta(ricettaId) {
-    if (!window.confirm('Eliminare questa ricetta?')) return;
+    
     try {
       await api.delete(`/api/ricette/${ricettaId}`);
       loadRicette();

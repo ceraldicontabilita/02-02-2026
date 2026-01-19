@@ -117,7 +117,7 @@ export default function Admin() {
   }
 
   async function deleteEmailAccount(accountId) {
-    if (!window.confirm("Eliminare questo account email?")) return;
+    
     try {
       await api.delete(`/api/config/email-accounts/${accountId}`);
       loadEmailAccounts();
@@ -232,7 +232,7 @@ export default function Admin() {
   }
   
   async function correggiCorrispettivi() {
-    if (!window.confirm(`Correggere gli importi corrispettivi per l'anno ${anno}?\n\nQuesta operazione aggiungerà l'IVA agli importi registrati.`)) return;
+    
     setSyncLoading(true);
     try {
       const r = await api.post(`/api/prima-nota/cassa/fix-corrispettivi-importo?anno=${anno}`);
@@ -260,7 +260,7 @@ export default function Admin() {
   }
   
   async function impostaFattureBanca() {
-    if (!window.confirm("Impostare tutte le fatture senza metodo pagamento a 'Bonifico'?")) return;
+    
     setSyncLoading(true);
     try {
       const r = await api.post("/api/sync/fatture-to-banca");
@@ -1001,7 +1001,7 @@ export default function Admin() {
                 </p>
                 <button 
                   onClick={async () => {
-                    if (!window.confirm('Eseguire ricostruzione dati assegni?')) return;
+                    
                     try {
                       const r = await api.post('/api/assegni/ricostruisci-dati');
                       alert(`✅ Completato:\n• Beneficiari trovati: ${r.data.beneficiari_trovati || 0}\n• Fatture associate: ${r.data.fatture_associate || 0}`);
@@ -1023,7 +1023,7 @@ export default function Admin() {
                 </p>
                 <button 
                   onClick={async () => {
-                    if (!window.confirm('Eseguire auto-riparazione F24 e riconciliazione?')) return;
+                    
                     try {
                       const r = await api.post('/api/operazioni-da-confermare/auto-ricostruisci-dati');
                       alert(`✅ Completato:\n• F24 corretti: ${r.data.f24_corretti || 0}\n• Riconciliazioni auto: ${r.data.riconciliazioni_auto || 0}`);
@@ -1045,7 +1045,7 @@ export default function Admin() {
                 </p>
                 <button 
                   onClick={async () => {
-                    if (!window.confirm('Eseguire auto-riparazione fatture?')) return;
+                    
                     try {
                       const r = await api.post('/api/fatture-ricevute/auto-ricostruisci-dati');
                       alert(`✅ Completato:\n• Campi corretti: ${r.data.campi_corretti || 0}\n• Fornitori associati: ${r.data.fornitori_associati || 0}\n• Duplicati rimossi: ${r.data.duplicati_rimossi || 0}`);
@@ -1067,7 +1067,7 @@ export default function Admin() {
                 </p>
                 <button 
                   onClick={async () => {
-                    if (!window.confirm('Eseguire auto-riparazione corrispettivi?')) return;
+                    
                     try {
                       const r = await api.post('/api/corrispettivi/auto-ricostruisci-dati');
                       alert(`✅ Completato:\n• IVA ricalcolata: ${r.data.iva_ricalcolata || 0}\n• Duplicati rimossi: ${r.data.duplicati_rimossi || 0}`);
@@ -1089,7 +1089,7 @@ export default function Admin() {
                 </p>
                 <button 
                   onClick={async () => {
-                    if (!window.confirm('Eseguire auto-riparazione salari?')) return;
+                    
                     try {
                       const r = await api.post('/api/prima-nota/salari/auto-ricostruisci-dati');
                       alert(`✅ Completato:\n• Righe pulite: ${r.data.righe_pulite || 0}\n• Correzioni: ${r.data.correzioni || 0}`);
@@ -1111,7 +1111,7 @@ export default function Admin() {
                 </p>
                 <button 
                   onClick={async () => {
-                    if (!window.confirm('Eseguire verifica analytics?')) return;
+                    
                     try {
                       const r = await api.post('/api/analytics/auto-ricostruisci-dati');
                       alert(`✅ Completato:\n• Correzioni applicate: ${r.data.correzioni_applicate || 0}\n• Discrepanze trovate: ${r.data.discrepanze_trovate?.length || 0}`);
@@ -1134,7 +1134,7 @@ export default function Admin() {
               </p>
               <button 
                 onClick={async () => {
-                  if (!window.confirm('⚠️ ATTENZIONE: Eseguire TUTTE le manutenzioni?\n\nQuesta operazione potrebbe richiedere diversi minuti.')) return;
+                  
                   try {
                     const results = [];
                     results.push(await api.post('/api/assegni/ricostruisci-dati').catch(e => ({ data: { error: e.message } })));

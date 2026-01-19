@@ -46,7 +46,7 @@ export default function CentriCosto() {
   }
 
   async function assegnaCDCFatture() {
-    if (!window.confirm(`Assegnare automaticamente i centri di costo alle fatture del ${anno}?`)) return;
+    
     
     setAssigning(true);
     try {

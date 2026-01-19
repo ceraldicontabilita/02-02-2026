@@ -76,7 +76,7 @@ export default function Corrispettivi() {
   }
 
   async function handleDelete(id) {
-    if (!window.confirm("Eliminare questo corrispettivo?")) return;
+    
     try {
       await api.delete(`/api/corrispettivi/${id}`);
       loadCorrispettivi();

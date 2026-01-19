@@ -39,7 +39,7 @@ export default function PrevisioniAcquisti() {
   };
 
   const handlePopolaStorico = async () => {
-    if (!window.confirm('Vuoi popolare lo storico acquisti da tutte le fatture esistenti?\n\nQuesta operazione potrebbe richiedere qualche minuto.')) return;
+    
     
     setPopolando(true);
     try {

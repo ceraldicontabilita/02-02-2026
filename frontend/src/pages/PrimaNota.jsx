@@ -148,7 +148,7 @@ function PrimaNotaDesktop() {
 
   // Sincronizza fatture pagate con Prima Nota
   const handleSyncFatture = async () => {
-    if (!window.confirm(`Vuoi importare le fatture pagate del ${selectedYear} nella Prima Nota?\nLe fatture già importate verranno ignorate.`)) return;
+    
     
     setSyncing(true);
     try {

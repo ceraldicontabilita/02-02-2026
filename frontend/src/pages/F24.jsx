@@ -97,7 +97,7 @@ export default function F24() {
   }
 
   async function handleDeleteF24(f24Id) {
-    if (!window.confirm('Sei sicuro di voler eliminare questo F24?')) return;
+    
     try {
       await api.delete(`/api/f24-public/models/${f24Id}`);
       loadF24();
@@ -119,7 +119,7 @@ export default function F24() {
   }
 
   async function handleMarkAsPaid(f24Id) {
-    if (!window.confirm('Segnare questo F24 come pagato?')) return;
+    
     try {
       await api.put(`/api/f24-public/models/${f24Id}/pagato`);
       loadF24();

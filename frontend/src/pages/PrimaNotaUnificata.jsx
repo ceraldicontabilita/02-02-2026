@@ -276,7 +276,7 @@ export default function PrimaNotaUnificata() {
 
   // Elimina movimento
   const handleDelete = async (mov) => {
-    if (!window.confirm('Eliminare questo movimento?')) return;
+    
     
     try {
       const endpoint = mov._source === 'cassa' 

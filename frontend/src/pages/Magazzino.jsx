@@ -116,7 +116,7 @@ export default function Magazzino() {
   }
 
   async function handleDelete(id) {
-    if (!window.confirm("Eliminare questo prodotto?")) return;
+    
     try {
       await api.delete(`/api/warehouse/products/${id}`);
       loadProducts();

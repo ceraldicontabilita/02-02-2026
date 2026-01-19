@@ -68,7 +68,7 @@ export default function NoleggioAuto() {
   };
 
   const handleDelete = async (targa) => {
-    if (!window.confirm(`Eliminare il veicolo ${targa} dalla gestione?`)) return;
+    
     try {
       await api.delete(`/api/noleggio/veicoli/${targa}`);
       setSelectedVeicolo(null);

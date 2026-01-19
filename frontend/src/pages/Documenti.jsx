@@ -214,7 +214,7 @@ export default function Documenti() {
       ? `Vuoi scaricare i documenti dalle email degli ultimi ${giorniDownload} giorni?\n\nParole chiave: ${keywordsToSearch.slice(0, 5).join(', ')}${keywordsToSearch.length > 5 ? '...' : ''}\n\nIl download avverrà in background.`
       : `Vuoi scaricare TUTTI i documenti dalle email degli ultimi ${giorniDownload} giorni?\n\n⚠️ Nessuna parola chiave selezionata - verranno scaricati tutti gli allegati.\n\nIl download avverrà in background.`;
     
-    if (!window.confirm(message)) return;
+    
     
     setDownloading(true);
     setTaskStatus({ status: 'pending', message: 'Avvio download...' });
@@ -298,7 +298,7 @@ export default function Documenti() {
   };
 
   const handleDeleteDocument = async (docId) => {
-    if (!window.confirm('Vuoi eliminare questo documento?')) return;
+    
     
     try {
       await api.delete(`/api/documenti/documento/${docId}`);
@@ -1362,7 +1362,7 @@ export default function Documenti() {
                             )}
                             <button
                               onClick={async () => {
-                                if (!window.confirm(`Eliminare il documento "${doc.filename}"?`)) return;
+                                
                                 try {
                                   await api.delete(`/api/document-ai/extracted-documents/${doc._id || doc.id}`);
                                   loadAiDocuments();
