@@ -239,7 +239,6 @@ export default function OrdiniFornitori() {
   }
 
   async function handleDeleteOrder(orderId) {
-    if (!window.confirm("Eliminare questo ordine?")) return;
     try {
       await api.delete(`/api/ordini-fornitori/${orderId}`);
       setSuccess("Ordine eliminato");
