@@ -831,7 +831,7 @@ function DipendenteAccontiTab({ dipendente, editData, setEditData, editMode }) {
   };
   
   const handleRemoveAcconto = (accontoId) => {
-    if (!window.confirm('Eliminare questo acconto?')) return;
+    
     const updatedAcconti = acconti.filter(a => a.id !== accontoId);
     setEditData({ ...editData, acconti: updatedAcconti });
   };

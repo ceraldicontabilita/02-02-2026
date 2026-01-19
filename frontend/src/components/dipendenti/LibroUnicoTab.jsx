@@ -81,7 +81,7 @@ const LibroUnicoTab = memo(function LibroUnicoTab({
   }, [monthYear]);
 
   const handleDelete = useCallback((salaryId) => {
-    if (window.confirm('Eliminare questa busta paga?')) {
+    { // No confirm needed
       deleteMutation.mutate(salaryId);
     }
   }, [deleteMutation]);

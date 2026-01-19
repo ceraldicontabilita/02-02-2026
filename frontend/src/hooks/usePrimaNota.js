@@ -43,12 +43,12 @@ export function usePrimaNota() {
   }, [store]);
   
   const handleDeleteRecord = useCallback(async (recordId) => {
-    if (!window.confirm('Eliminare questo record?')) return false;
+    
     return await store.deleteRecord(recordId);
   }, [store]);
   
   const handleResetAllData = useCallback(async () => {
-    if (!window.confirm('⚠️ Eliminare TUTTI i dati della Prima Nota Salari?')) return false;
+    
     const success = await store.resetAllData();
     if (success) alert('✅ Dati eliminati');
     return success;

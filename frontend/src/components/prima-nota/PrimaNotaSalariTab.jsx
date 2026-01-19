@@ -175,7 +175,7 @@ const PrimaNotaSalariTab = memo(function PrimaNotaSalariTab() {
   }, [selectedYear, selectedMonth]);
 
   const handleReset = useCallback(async () => {
-    if (!window.confirm('⚠️ Eliminare TUTTI i dati della Prima Nota Salari?')) return;
+    
     const success = await resetAllData();
     if (success) alert('✅ Dati eliminati');
   }, [resetAllData]);
@@ -192,7 +192,7 @@ const PrimaNotaSalariTab = memo(function PrimaNotaSalariTab() {
   }, [righeVuote, fetchSalari]);
 
   const handleDelete = useCallback(async (recordId) => {
-    if (!window.confirm('Eliminare questo record?')) return;
+    
     await deleteRecord(recordId);
   }, [deleteRecord]);
 

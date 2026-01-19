@@ -53,7 +53,7 @@ export function useLibrettiSanitari() {
   }, [formData, loadData]);
 
   const handleDelete = useCallback(async (librettoId) => {
-    if (!window.confirm('Eliminare questo libretto sanitario?')) return false;
+    
     
     try {
       await api.delete(`/api/dipendenti/libretti/${librettoId}`);

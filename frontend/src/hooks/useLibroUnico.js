@@ -79,7 +79,7 @@ export function useLibroUnico(selectedYear, selectedMonth) {
   }, [selectedYear, selectedMonth]);
 
   const handleDelete = useCallback(async (salaryId) => {
-    if (!window.confirm('Eliminare questa busta paga?')) return false;
+    
     
     try {
       await api.delete(`/api/dipendenti/libro-unico/salaries/${salaryId}`);

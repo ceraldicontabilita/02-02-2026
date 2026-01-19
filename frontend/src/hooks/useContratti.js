@@ -60,7 +60,7 @@ export function useContratti() {
   }, [formData, loadData]);
 
   const handleTerminate = useCallback(async (contrattoId) => {
-    if (!window.confirm('Terminare questo contratto?')) return false;
+    
     
     try {
       await api.patch(`/api/dipendenti/contratti/${contrattoId}/termina`);

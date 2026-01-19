@@ -68,7 +68,7 @@ export default function AccontiTab({ dipendenteId, dipendenteName }) {
   };
 
   const handleDelete = async (accontoId, tipo) => {
-    if (!window.confirm('Eliminare questo acconto?')) return;
+    
     try {
       await api.delete(`/api/tfr/acconti/${accontoId}`);
       loadData();

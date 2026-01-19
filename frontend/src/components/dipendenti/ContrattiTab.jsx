@@ -107,7 +107,7 @@ const ContrattiTab = memo(function ContrattiTab() {
   }, [formData, createMutation]);
 
   const handleTerminate = useCallback((contrattoId) => {
-    if (window.confirm('Terminare questo contratto?')) {
+    { // No confirm needed
       terminateMutation.mutate(contrattoId);
     }
   }, [terminateMutation]);
