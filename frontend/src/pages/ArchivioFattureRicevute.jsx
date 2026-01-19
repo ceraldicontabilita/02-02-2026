@@ -599,9 +599,9 @@ export default function ArchivioFatture() {
                                     alert(`❌ Errore: ${error.response?.data?.detail || error.message}`);
                                   }
                                 } else {
-                                  // Non pagata - registra nuovo pagamento in cassa
-                                  if (!window.confirm(`Pagare ${formatCurrency(importo)} a ${fornitoreNome} tramite CASSA?`)) return;
+                                  // Non pagata - registra nuovo pagamento in cassa (senza conferma)
                                   try {
+                                    const scrollPos = window.scrollY;
                                     await api.post('/api/fatture-ricevute/paga-manuale', {
                                       fattura_id: f.id,
                                       importo: importo,
@@ -610,7 +610,8 @@ export default function ArchivioFatture() {
                                       fornitore: fornitoreNome,
                                       numero_fattura: numFattura
                                     });
-                                    fetchFatture();
+                                    await fetchFatture();
+                                    setTimeout(() => window.scrollTo(0, scrollPos), 100);
                                   } catch (error) {
                                     alert(`❌ Errore: ${error.response?.data?.detail || error.message}`);
                                   }
