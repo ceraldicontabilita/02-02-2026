@@ -298,11 +298,22 @@ export default function F24() {
         <PageInfoCard pageKey="f24" />
       </div>
       
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+      {/* Header con Gradiente */}
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        marginBottom: 20,
+        padding: '15px 20px',
+        background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
+        borderRadius: 12,
+        color: 'white',
+        flexWrap: 'wrap',
+        gap: 10
+      }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: "clamp(20px, 5vw, 28px)" }}>📋 Modelli F24</h1>
-          <p style={{ color: "#666", margin: "8px 0 0 0" }}>
+          <h1 style={{ margin: 0, fontSize: "clamp(18px, 4vw, 22px)", fontWeight: 'bold' }}>📋 Modelli F24</h1>
+          <p style={{ margin: "4px 0 0 0", fontSize: 13, opacity: 0.9 }}>
             Visualizzazione e gestione modelli F24
           </p>
         </div>
@@ -311,14 +322,15 @@ export default function F24() {
           data-testid="refresh-f24-btn"
           style={{
             padding: '10px 20px',
-            background: '#f5f5f5',
-            color: '#333',
-            border: '1px solid #ddd',
+            background: 'rgba(255,255,255,0.9)',
+            color: '#1e3a5f',
+            border: 'none',
             borderRadius: 8,
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
-            gap: 6
+            gap: 6,
+            fontWeight: 600
           }}
         >
           🔄 Aggiorna
