@@ -466,13 +466,24 @@ export default function RiconciliazioneUnificata() {
         <PageInfoCard pageKey="riconciliazione" />
       </div>
       
-      {/* Header */}
-      <div style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+      {/* Header con Gradiente */}
+      <div style={{ 
+        marginBottom: 20, 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        flexWrap: 'wrap', 
+        gap: 12,
+        padding: '15px 20px',
+        background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
+        borderRadius: 12,
+        color: 'white'
+      }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: 'clamp(20px, 4vw, 26px)', color: '#1e293b' }}>
+          <h1 style={{ margin: 0, fontSize: 'clamp(18px, 4vw, 22px)', fontWeight: 'bold' }}>
             🔗 Riconciliazione Smart
           </h1>
-          <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: 13 }}>
+          <p style={{ margin: '4px 0 0', opacity: 0.9, fontSize: 13 }}>
             Associa movimenti bancari a fatture, F24, stipendi e assegni
           </p>
         </div>
