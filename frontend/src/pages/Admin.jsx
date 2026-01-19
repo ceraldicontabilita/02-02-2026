@@ -1053,9 +1053,23 @@ export default function Admin() {
                       alert('Errore: ' + (e.response?.data?.detail || e.message));
                     }
                   }}
-                  style={{ ...buttonStyle('#f59e0b'), width: '100%' }}
+                  style={{ ...buttonStyle('#f59e0b'), width: '100%', marginBottom: 8 }}
                 >
                   🔄 Ricostruisci Dati Fatture
+                </button>
+                <button 
+                  onClick={async () => {
+                    try {
+                      const r = await api.post('/api/fatture-ricevute/aggiorna-metodi-pagamento');
+                      alert(`✅ Metodi pagamento aggiornati:\n• Fatture aggiornate: ${r.data.fatture_aggiornate || 0}\n• Senza fornitore/metodo: ${r.data.senza_fornitore_o_metodo || 0}\n• Fornitori con metodo: ${r.data.fornitori_con_metodo || 0}`);
+                    } catch (e) {
+                      alert('Errore: ' + (e.response?.data?.detail || e.message));
+                    }
+                  }}
+                  style={{ ...buttonStyle('#10b981'), width: '100%' }}
+                  data-testid="btn-aggiorna-metodi-pagamento"
+                >
+                  💳 Aggiorna Metodi Pagamento
                 </button>
               </div>
               
