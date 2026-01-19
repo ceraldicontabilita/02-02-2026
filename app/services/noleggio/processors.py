@@ -338,22 +338,43 @@ async def scan_fatture_noleggio(anno: Optional[int] = None) -> Tuple[Dict[str, A
     Scansiona le fatture XML per estrarre dati veicoli noleggio.
     Raggruppa per targa e per numero fattura (non per singola linea).
     
+    OTTIMIZZAZIONE: Se anno non specificato, usa anno corrente.
+    
     Returns: (veicoli_dict, fatture_senza_targa)
     """
+    from datetime import datetime as dt
+    
     db = Database.get_db()
     
     veicoli: Dict[str, Any] = {}
     fatture_senza_targa: List[dict] = []
     
-    # Query per P.IVA fornitori
+    # Default all'anno corrente se non specificato
+    if anno is None:
+        anno = dt.now().year
+    
+    # Query per P.IVA fornitori con proiezione per performance
     query: Dict[str, Any] = {
-        "supplier_vat": {"$in": list(FORNITORI_NOLEGGIO.values())}
+        "supplier_vat": {"$in": list(FORNITORI_NOLEGGIO.values())},
+        "invoice_date": {"$regex": f"^{anno}"}
     }
     
-    if anno:
-        query["invoice_date"] = {"$regex": f"^{anno}"}
+    # Proiezione per ridurre il payload (escludi xml_content e altri campi pesanti)
+    projection = {
+        "_id": 1,
+        "invoice_number": 1,
+        "invoice_date": 1,
+        "supplier_name": 1,
+        "supplier_vat": 1,
+        "tipo_documento": 1,
+        "total_amount": 1,
+        "pagato": 1,
+        "prima_nota_banca_id": 1,
+        "linee": 1,
+        "causali": 1
+    }
     
-    cursor = db["invoices"].find(query)
+    cursor = db["invoices"].find(query, projection)
     
     async for invoice in cursor:
         invoice_number = invoice.get("invoice_number", "")
