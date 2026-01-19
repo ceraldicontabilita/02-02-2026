@@ -49,7 +49,8 @@ const PrimaNotaSalariTab = memo(function PrimaNotaSalariTab() {
   const [autoRepairRunning, setAutoRepairRunning] = useState(false);
 
   /**
-   * LOGICA INTELLIGENTE: Esegue auto-riparazione dei dati al caricamento.
+   * LOGICA INTELLIGENTE: Esegue auto-riparazione dei dati.
+   * DISABILITATA: Spostata in Admin per performance. Chiamare manualmente se necessario.
    */
   const eseguiAutoRiparazione = useCallback(async () => {
     setAutoRepairRunning(true);
@@ -69,7 +70,7 @@ const PrimaNotaSalariTab = memo(function PrimaNotaSalariTab() {
 
   // Load data on mount and when filters change
   useEffect(() => {
-    eseguiAutoRiparazione();
+    // RIMOSSO per performance - eseguiAutoRiparazione() ora solo manuale
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
