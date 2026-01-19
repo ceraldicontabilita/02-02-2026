@@ -2068,3 +2068,108 @@ async def cambia_metodo_pagamento_fattura(payload: Dict[str, Any]) -> Dict[str, 
     
     return risultato
 
+
+
+@router.post("/aggiorna-metodi-pagamento")
+async def aggiorna_metodi_pagamento_da_fornitori():
+    """
+    Aggiorna in massa i metodi di pagamento di tutte le fatture,
+    applicando il metodo_pagamento_predefinito del rispettivo fornitore.
+    
+    Questo endpoint è utile per allineare i dati delle fatture esistenti
+    con le preferenze di pagamento configurate per ogni fornitore.
+    """
+    db = Database.get_db()
+    
+    try:
+        # 1. Recupera tutti i fornitori con metodo predefinito impostato
+        fornitori = await db[COL_FORNITORI].find(
+            {"metodo_pagamento_predefinito": {"$exists": True, "$ne": None, "$ne": ""}},
+            {"_id": 0, "id": 1, "partita_iva": 1, "ragione_sociale": 1, "denominazione": 1, "metodo_pagamento_predefinito": 1}
+        ).to_list(None)
+        
+        logger.info(f"Trovati {len(fornitori)} fornitori con metodo predefinito")
+        
+        # Crea mapping partita_iva -> metodo_pagamento
+        piva_to_metodo = {}
+        for f in fornitori:
+            piva = f.get("partita_iva")
+            if piva:
+                piva_to_metodo[piva] = f.get("metodo_pagamento_predefinito")
+        
+        # 2. Recupera tutte le fatture che hanno un fornitore con metodo predefinito
+        # ma non hanno ancora un metodo_pagamento assegnato o è diverso
+        fatture_cursor = db[COL_FATTURE_RICEVUTE].find(
+            {"$or": [
+                {"metodo_pagamento": {"$exists": False}},
+                {"metodo_pagamento": None},
+                {"metodo_pagamento": ""},
+                {"metodo_pagamento": "sospeso"},
+                {"metodo_pagamento": "da_definire"}
+            ]},
+            {"_id": 0, "id": 1, "supplier_vat": 1, "partita_iva_fornitore": 1, "fornitore_partita_iva": 1, "numero_documento": 1}
+        )
+        
+        aggiornate = 0
+        non_trovate = 0
+        errori = 0
+        dettagli = []
+        
+        async for fattura in fatture_cursor:
+            # Trova la partita IVA del fornitore (diversi campi possibili)
+            piva = (
+                fattura.get("supplier_vat") or 
+                fattura.get("partita_iva_fornitore") or 
+                fattura.get("fornitore_partita_iva")
+            )
+            
+            if not piva:
+                non_trovate += 1
+                continue
+            
+            # Normalizza
+            piva = piva.strip().upper()
+            
+            # Trova il metodo predefinito
+            metodo = piva_to_metodo.get(piva)
+            
+            if not metodo:
+                non_trovate += 1
+                continue
+            
+            try:
+                # Aggiorna la fattura
+                await db[COL_FATTURE_RICEVUTE].update_one(
+                    {"id": fattura.get("id")},
+                    {"$set": {
+                        "metodo_pagamento": metodo,
+                        "payment_method": metodo,
+                        "metodo_pagamento_auto": True,
+                        "updated_at": datetime.now(timezone.utc).isoformat()
+                    }}
+                )
+                aggiornate += 1
+                dettagli.append({
+                    "fattura_id": fattura.get("id"),
+                    "numero": fattura.get("numero_documento"),
+                    "metodo_assegnato": metodo
+                })
+            except Exception as e:
+                errori += 1
+                logger.error(f"Errore aggiornamento fattura {fattura.get('id')}: {e}")
+        
+        logger.info(f"Aggiornamento metodi pagamento completato: {aggiornate} aggiornate, {non_trovate} senza fornitore/metodo, {errori} errori")
+        
+        return {
+            "success": True,
+            "fatture_aggiornate": aggiornate,
+            "senza_fornitore_o_metodo": non_trovate,
+            "errori": errori,
+            "fornitori_con_metodo": len(fornitori),
+            "dettagli_prime_20": dettagli[:20] if dettagli else []
+        }
+        
+    except Exception as e:
+        logger.error(f"Errore aggiornamento massivo metodi pagamento: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
