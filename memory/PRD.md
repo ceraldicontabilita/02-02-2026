@@ -737,14 +737,34 @@ Sistema completo di estrazione dati da documenti usando OCR + LLM (Claude Sonnet
 3. ~~**Processamento automatico email con AI**~~ ✅ COMPLETATO - Pulsante "Processa Allegati Email" aggiunto
 4. **UI InvoiceTronic** - Completare integrazione SDI
 5. **3 assegni non associati** - UI per associazione manuale
-6. **Refactoring vecchi parser** - Deprecare parser regex obsoleti (payslip, f24) in favore di Document AI
+6. ~~**Refactoring vecchi parser**~~ ✅ PARZIALMENTE COMPLETATO (19 Gen 2026)
+   - Parser f24 e payslip ora usano Document AI come prima scelta
+   - Parser regex mantenuti come fallback
+   - `fatturapa_parser.py` spostato in `deprecated/`
 
 ### 🟠 P2 - Bassa Priorità:
 7. **Refactoring backend** - Modularizzare file grandi
 
 ---
 
-## 31. Clausola finale
+## 31. Changelog Sessione 19 Gen 2026
+
+### ✅ Completati:
+1. **Chat Parlant.io** - Riattivata (era solo un problema di avvio del servizio, creato supervisord)
+2. **Query F24** - Verificata veloce (~0.3s, già ottimizzata)
+3. **UI Assegni Non Associati** - Creata sezione dedicata per associazione manuale con 3 assegni
+4. **Refactoring Parser** - Document AI ora è prima scelta per F24 e cedolini
+
+### 🔄 Modifiche ai file:
+- `/app/app/services/cedolini_manager.py` - Document AI come prima scelta
+- `/app/app/routers/accounting/accounting_f24.py` - Document AI come prima scelta
+- `/app/frontend/src/pages/GestioneAssegni.jsx` - Nuova sezione assegni non associati
+- `/app/app/parsers/__init__.py` - Aggiornato per deprecazione
+- `/etc/supervisor/conf.d/parlant.conf` - Nuovo servizio per chat AI
+
+---
+
+## 32. Clausola finale
 
 Questo PRD è vincolante.
 
