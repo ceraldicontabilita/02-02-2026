@@ -574,56 +574,124 @@ export default function GestioneAssegni() {
     const selectedList = filteredAssegni.filter(a => selectedAssegni.has(a.id));
     const doc = new jsPDF();
     
-    // Header
-    doc.setFontSize(20);
-    doc.setTextColor(76, 175, 80);
-    doc.text('Report Assegni Selezionati', 14, 20);
+    // ==========================================
+    // INTESTAZIONE AZIENDA (stile Commercialista)
+    // ==========================================
+    doc.setFontSize(16);
+    doc.setTextColor(30, 58, 95);
+    doc.setFont(undefined, 'bold');
+    doc.text('CERALDI GROUP S.R.L.', 14, 18);
+    
+    doc.setFontSize(9);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(80);
+    doc.text('Via Roma, 123 - 80100 Napoli (NA)', 14, 24);
+    doc.text('P.IVA: 04523831214 - C.F.: 04523831214', 14, 29);
+    
+    // Linea separatrice
+    doc.setDrawColor(30, 58, 95);
+    doc.setLineWidth(0.5);
+    doc.line(14, 33, 196, 33);
+    
+    // ==========================================
+    // TITOLO DOCUMENTO
+    // ==========================================
+    doc.setFontSize(18);
+    doc.setTextColor(30, 58, 95);
+    doc.setFont(undefined, 'bold');
+    doc.text('REPORT ASSEGNI SELEZIONATI', 14, 45);
     
     doc.setFontSize(12);
-    doc.setTextColor(100);
-    doc.text(`Data: ${new Date().toLocaleDateString('it-IT')}`, 14, 30);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(80);
+    doc.text(`Data: ${new Date().toLocaleDateString('it-IT')}`, 14, 52);
     
-    // Summary
+    // ==========================================
+    // RIEPILOGO
+    // ==========================================
     const totale = selectedList.reduce((sum, a) => sum + (parseFloat(a.importo) || 0), 0);
-    doc.setFontSize(12);
-    doc.setTextColor(0);
-    doc.text(`Numero Assegni: ${selectedList.length}`, 14, 40);
-    doc.setFontSize(14);
-    doc.setTextColor(76, 175, 80);
-    doc.text(`Totale: ${formatEuro(totale)}`, 14, 50);
     
-    // Table
-    const tableData = selectedList.map(a => [
-      a.numero || '-',
-      STATI_ASSEGNO[a.stato]?.label || a.stato || '-',
-      (a.beneficiario || '-').substring(0, 30),
-      formatEuro(a.importo),
-      a.data_fattura?.substring(0, 10) || '-',
-      a.numero_fattura || '-'
-    ]);
+    doc.setFontSize(10);
+    doc.setTextColor(60);
+    doc.text(`Numero Assegni: ${selectedList.length}`, 14, 62);
+    
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(30, 58, 95);
+    doc.text(`Totale Importo: ${formatEuro(totale)}`, 140, 62);
+    doc.setFont(undefined, 'normal');
+    
+    // ==========================================
+    // TABELLA ASSEGNI
+    // ==========================================
+    const tableData = selectedList.map(a => {
+      // Estrai data fattura formattata
+      let dataFattura = '-';
+      if (a.data_fattura) {
+        try {
+          const d = new Date(a.data_fattura);
+          dataFattura = d.toLocaleDateString('it-IT');
+        } catch {
+          dataFattura = a.data_fattura.substring(0, 10);
+        }
+      }
+      
+      // Estrai numero fattura dalle fatture collegate o dal campo diretto
+      let numFattura = a.numero_fattura || '-';
+      if (numFattura === '-' && a.fatture_collegate && a.fatture_collegate.length > 0) {
+        numFattura = a.fatture_collegate.map(f => f.numero).filter(Boolean).join(', ') || '-';
+      }
+      
+      return [
+        a.numero || '-',
+        STATI_ASSEGNO[a.stato]?.label || a.stato || '-',
+        (a.beneficiario || '-').substring(0, 30),
+        formatEuro(a.importo),
+        dataFattura,
+        numFattura
+      ];
+    });
     
     autoTable(doc, {
-      startY: 60,
-      head: [['N. Assegno', 'Stato', 'Beneficiario', 'Importo', 'Data Fatt.', 'N. Fattura']],
+      startY: 70,
+      head: [['N. Assegno', 'Stato', 'Beneficiario', 'Importo', 'Data Fattura', 'N. Fattura']],
       body: tableData,
       theme: 'striped',
-      headStyles: { fillColor: [76, 175, 80] },
-      styles: { fontSize: 9 },
+      headStyles: { 
+        fillColor: [30, 58, 95],
+        textColor: 255,
+        fontStyle: 'bold',
+        fontSize: 9
+      },
+      styles: { 
+        fontSize: 9,
+        cellPadding: 3
+      },
       columnStyles: {
-        0: { cellWidth: 35 },
+        0: { cellWidth: 30 },
+        1: { cellWidth: 22 },
         2: { cellWidth: 45 },
-        3: { cellWidth: 25, halign: 'right' }
+        3: { cellWidth: 25, halign: 'right' },
+        4: { cellWidth: 25 },
+        5: { cellWidth: 30 }
+      },
+      alternateRowStyles: {
+        fillColor: [245, 247, 250]
       }
     });
     
-    // Footer
+    // ==========================================
+    // FOOTER
+    // ==========================================
     const pageCount = doc.internal.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
       doc.setPage(i);
       doc.setFontSize(8);
       doc.setTextColor(128);
+      doc.setDrawColor(200);
+      doc.line(14, doc.internal.pageSize.height - 15, 196, doc.internal.pageSize.height - 15);
       doc.text(
-        `Ceraldi Group S.R.L. - Generato il ${new Date().toLocaleDateString('it-IT')} - Pagina ${i}/${pageCount}`,
+        `CERALDI GROUP S.R.L. - Documento generato il ${new Date().toLocaleDateString('it-IT')} alle ${new Date().toLocaleTimeString('it-IT')} - Pagina ${i}/${pageCount}`,
         14,
         doc.internal.pageSize.height - 10
       );
