@@ -108,6 +108,25 @@ def estrai_data_verbale(descrizione: str) -> Optional[str]:
     return None
 
 
+def estrai_numero_verbale_completo(descrizione: str) -> Optional[str]:
+    """
+    Estrae il numero verbale completo da qualsiasi formato.
+    Supporta:
+    - "VERBALE NR 20250017442"
+    - "verbale n. 12345"
+    - "Verbale: 20250017442"
+    """
+    # Pattern per numero verbale lungo (Leasys style)
+    match = re.search(r'verbale[\s:]*n[r.]?\s*(\d{8,12})', descrizione, re.I)
+    if match:
+        return match.group(1).strip()
+    # Pattern alternativo
+    match = re.search(r'n[r.]?\s*verbale[\s:]*(\d{8,12})', descrizione, re.I)
+    if match:
+        return match.group(1).strip()
+    return None
+
+
 def categorizza_spesa(descrizione: str, importo: float, is_nota_credito: bool = False) -> tuple:
     """
     Categorizza una spesa in base alla descrizione.
@@ -124,13 +143,16 @@ def categorizza_spesa(descrizione: str, importo: float, is_nota_credito: bool = 
         importo_finale = -abs(importo)
     
     # STEP 1: VERBALI - Multe e sanzioni (alta priorità)
-    if any(kw in desc_lower for kw in ["verbale nr", "verbale n.", "multa", "sanzione", 
-                                        "contravvenzione", "infrazione", "codice strada"]):
+    # Include Leasys format: "VERBALE NR 20250017442"
+    if any(kw in desc_lower for kw in ["verbale nr", "verbale n.", "verbale:", "multa", "sanzione", 
+                                        "contravvenzione", "infrazione", "codice strada",
+                                        "riaddebito verbale", "rifatturazione verbale"]):
         # Estrai numero e data verbale
-        num_verbale = estrai_numero_verbale(descrizione)
+        num_verbale = estrai_numero_verbale(descrizione) or estrai_numero_verbale_completo(descrizione)
         data_verbale = estrai_data_verbale(descrizione)
         if num_verbale:
             metadata["numero_verbale"] = num_verbale
+            metadata["descrizione_ricerca"] = f"Verbale {num_verbale}"
         if data_verbale:
             metadata["data_verbale"] = data_verbale
         return ("verbali", importo_finale, metadata)
@@ -146,16 +168,18 @@ def categorizza_spesa(descrizione: str, importo: float, is_nota_credito: bool = 
     if any(kw in desc_lower for kw in riparazioni_keywords):
         return ("riparazioni", importo_finale, metadata)
     
-    # STEP 3: BOLLO - Tasse automobilistiche
+    # STEP 3: BOLLO - Tasse automobilistiche (incluso Leasys "Riaddebito Tassa Automobilistica")
     bollo_keywords = [
         "bollo", "tassa automobilistic", "tasse auto", "tassa di propriet",
         "addebito bollo", "imposta provincial", "ipt", "superbollo",
-        "rifatturazione (002) tasse"
+        "rifatturazione (002) tasse",
+        "riaddebito tassa automobilistic", "tassa regionale", "tassa automobilistica regionale"
     ]
     if any(kw in desc_lower for kw in bollo_keywords):
         # Escludi il bollo fiscale sulle fatture (€2)
         if "imposta di bollo" in desc_lower and importo <= 2.1:
             return ("canoni", importo_finale, metadata)
+        metadata["descrizione_ricerca"] = "Bollo Auto"
         return ("bollo", importo_finale, metadata)
     
     # STEP 4: PEDAGGIO - Gestione pedaggi e telepass
