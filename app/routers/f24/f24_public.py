@@ -15,6 +15,12 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+@router.get("/test")
+async def test_route():
+    """Test route."""
+    return {"status": "ok"}
+
+
 @router.get("/models")
 async def list_f24_models() -> Dict[str, Any]:
     """Lista tutti i modelli F24 importati da PDF."""
