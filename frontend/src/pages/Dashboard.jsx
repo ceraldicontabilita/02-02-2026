@@ -476,6 +476,95 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* Widget Scadenze F24 - COMPATTO */}
+      {scadenzeF24 && scadenzeF24.scadenze && scadenzeF24.scadenze.length > 0 && (
+        <div style={{ 
+          background: 'white', 
+          borderRadius: 10, 
+          padding: 14, 
+          marginTop: 12,
+          border: '1px solid #e5e7eb',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.06)'
+        }} data-testid="widget-scadenze-f24">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 16 }}>📋</span>
+              <span style={{ fontWeight: 600, fontSize: 14, color: '#1e3a5f' }}>Scadenze F24</span>
+              <span style={{ 
+                background: '#fee2e2', 
+                color: '#dc2626', 
+                fontSize: 10, 
+                padding: '2px 6px', 
+                borderRadius: 4,
+                fontWeight: 600
+              }}>
+                {scadenzeF24.totale || scadenzeF24.scadenze.length}
+              </span>
+            </div>
+            <Link to="/f24" style={{ fontSize: 11, color: '#3b82f6', textDecoration: 'none' }}>
+              Vedi tutti →
+            </Link>
+          </div>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {scadenzeF24.scadenze.slice(0, 4).map((f24, idx) => {
+              const isUrgente = f24.giorni_mancanti <= 7;
+              const isScaduto = f24.giorni_mancanti < 0;
+              return (
+                <div 
+                  key={idx}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '8px 10px',
+                    background: isScaduto ? '#fef2f2' : isUrgente ? '#fef3c7' : '#f8fafc',
+                    borderRadius: 6,
+                    borderLeft: `3px solid ${isScaduto ? '#dc2626' : isUrgente ? '#f59e0b' : '#3b82f6'}`
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
+                    <span style={{ fontSize: 14 }}>{f24.tipo === 'IVA' ? '🧾' : '📋'}</span>
+                    <div>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: '#1e293b' }}>
+                        {f24.descrizione || f24.tipo || 'F24'}
+                      </div>
+                      <div style={{ fontSize: 10, color: '#64748b' }}>
+                        {f24.tributo || f24.codice_tributo || ''}
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#dc2626' }}>
+                      {formatEuro(f24.importo)}
+                    </div>
+                    <div style={{ fontSize: 10, color: isScaduto ? '#dc2626' : isUrgente ? '#f59e0b' : '#64748b' }}>
+                      {isScaduto ? 'Scaduto' : f24.giorni_mancanti === 0 ? 'Oggi' : f24.giorni_mancanti === 1 ? 'Domani' : `${f24.giorni_mancanti}g`}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          
+          {scadenzeF24.totale_importo > 0 && (
+            <div style={{ 
+              marginTop: 10, 
+              paddingTop: 10, 
+              borderTop: '1px solid #e5e7eb',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <span style={{ fontSize: 11, color: '#64748b' }}>Totale da versare</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#dc2626' }}>
+                {formatEuro(scadenzeF24.totale_importo)}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Trend Mensile Chart */}
       {trendData && (
         <div style={{ background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', marginTop: 20 }}>
