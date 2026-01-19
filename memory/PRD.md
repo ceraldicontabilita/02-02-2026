@@ -795,7 +795,27 @@ Sistema completo di estrazione dati da documenti usando OCR + LLM (Claude Sonnet
 
 ---
 
-## 33. Clausola finale
+## 33. Changelog Sessione 19 Gen 2026 (Terza Parte)
+
+### ✅ Completati:
+1. **Fatture non associate con pulsante Visualizza** - Aggiunto in Noleggio Auto
+2. **Parser Noleggio migliorato**:
+   - Aggiunto "riaddebito tassa automobilistica regionale" come bollo
+   - Aggiunto numero verbale completo (es: 20250017442)
+   - Keywords migliorate per Leasys
+3. **Tab Stipendi Riconciliazione** - Nome dipendente ora visibile in evidenza
+4. **Banner Logica Intelligente** - Rimossi da TUTTE le pagine
+5. **Pagina Documenti AI** - Filtro tipo, descrizioni leggibili, controllo duplicati
+
+### 🔄 File Modificati:
+- `/app/app/routers/noleggio.py` - Parser bollo e verbali migliorato
+- `/app/frontend/src/pages/NoleggioAuto.jsx` - Pulsante visualizza fatture
+- `/app/frontend/src/pages/RiconciliazioneUnificata.jsx` - Nome dipendente visibile
+- `/app/frontend/src/pages/Documenti.jsx` - Filtri e descrizioni migliorate
+
+---
+
+## 34. Clausola finale
 
 Questo PRD è vincolante.
 
