@@ -533,16 +533,20 @@ export default function ArchivioFatture() {
                       <th style={{ padding: '10px 12px', textAlign: 'right', fontWeight: '600' }}>Imponibile</th>
                       <th style={{ padding: '10px 12px', textAlign: 'right', fontWeight: '600' }}>IVA</th>
                       <th style={{ padding: '10px 12px', textAlign: 'right', fontWeight: '600' }}>Totale</th>
-                      <th style={{ padding: '10px 12px', textAlign: 'center', fontWeight: '600' }}>Stato</th>
                       <th style={{ padding: '10px 12px', textAlign: 'center', fontWeight: '600' }}>Azioni</th>
                     </tr>
                   </thead>
                   <tbody>
                     {fatture.map((f, idx) => {
-                      const isPaid = f.status === 'paid' || f.stato_pagamento === 'pagata';
-                      const metodoPag = f.metodo_pagamento || f.payment_method || '';
-                      const isCassa = metodoPag.toLowerCase().includes('contant') || metodoPag.toLowerCase() === 'cassa';
-                      const isBanca = metodoPag.toLowerCase().includes('banca') || metodoPag.toLowerCase().includes('bonifico') || metodoPag.toLowerCase().includes('sepa');
+                      const isPaid = f.pagato || f.status === 'paid' || f.stato_pagamento === 'pagata';
+                      // Determina metodo EFFETTIVO del pagamento (se pagato) guardando prima_nota_id
+                      const hasCassaId = !!f.prima_nota_cassa_id;
+                      const hasBancaId = !!f.prima_nota_banca_id;
+                      // Se ha ID cassa -> è in cassa, altrimenti se ha ID banca -> è in banca
+                      const metodoPagEffettivo = hasCassaId ? 'cassa' : hasBancaId ? 'banca' : null;
+                      // Metodo configurato nel fornitore (per default quando non pagato)
+                      const metodoFornitore = (f.fornitore_metodo_pagamento || f.metodo_pagamento || '').toLowerCase();
+                      const isFornitoreCassa = metodoFornitore.includes('contant') || metodoFornitore === 'cassa';
                       
                       return (
                       <tr key={f.id} style={{ borderBottom: '1px solid #f3f4f6', background: idx % 2 === 0 ? 'white' : '#f9fafb' }}>
@@ -555,29 +559,151 @@ export default function ArchivioFatture() {
                         <td style={{ padding: '10px 12px', textAlign: 'right' }}>{formatCurrency(f.imponibile)}</td>
                         <td style={{ padding: '10px 12px', textAlign: 'right' }}>{formatCurrency(f.iva)}</td>
                         <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 'bold' }}>{formatCurrency(f.total_amount || f.importo_totale)}</td>
-                        <td style={{ padding: '10px 12px', textAlign: 'center' }}>{getStatoBadge(f)}</td>
                         <td style={{ padding: '10px 12px', textAlign: 'center' }}>
-                          <div style={{ display: 'flex', gap: 6, justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
+                          <div style={{ display: 'flex', gap: 4, justifyContent: 'center', alignItems: 'center' }}>
                             <a
                               href={`/api/fatture-ricevute/fattura/${f.id}/view-assoinvoice`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              style={{ padding: '5px 10px', background: '#2196f3', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 11, fontWeight: 'bold', textDecoration: 'none' }}
+                              style={{ padding: '5px 8px', background: '#2196f3', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 11, fontWeight: 'bold', textDecoration: 'none' }}
                               title="Visualizza fattura"
-                              data-testid={`btn-pdf-${f.id}`}
                             >
                               📄
                             </a>
                             
-                            {/* Menu Paga/Modifica Pagamento */}
-                            <div style={{ position: 'relative' }}>
-                              <button
-                                onClick={() => setShowPayMenu(showPayMenu === f.id ? null : f.id)}
-                                style={{ 
-                                  padding: '5px 10px', 
-                                  background: isPaid ? '#6b7280' : '#10b981', 
-                                  color: 'white', 
-                                  border: 'none', 
+                            {/* Pulsante Cassa - verde se attivo, grigio se non selezionato */}
+                            <button
+                              onClick={async () => {
+                                const importo = f.total_amount || f.importo_totale || 0;
+                                const dataDoc = f.invoice_date || f.data_documento;
+                                const fornitoreNome = f.supplier_name || f.fornitore_ragione_sociale || 'Fornitore';
+                                const numFattura = f.invoice_number || f.numero_documento || '';
+                                
+                                if (isPaid && metodoPagEffettivo === 'cassa') {
+                                  return; // Già in cassa, non fare nulla
+                                }
+                                
+                                if (isPaid && metodoPagEffettivo === 'banca') {
+                                  // Sposta da banca a cassa DIRETTAMENTE
+                                  try {
+                                    await api.post('/api/fatture-ricevute/cambia-metodo-pagamento', {
+                                      fattura_id: f.id,
+                                      importo: importo,
+                                      metodo_vecchio: 'banca',
+                                      metodo_nuovo: 'cassa',
+                                      data_pagamento: dataDoc,
+                                      fornitore: fornitoreNome,
+                                      numero_fattura: numFattura
+                                    });
+                                    fetchFatture();
+                                  } catch (error) {
+                                    alert(`❌ Errore: ${error.response?.data?.detail || error.message}`);
+                                  }
+                                } else {
+                                  // Non pagata - registra nuovo pagamento in cassa
+                                  if (!window.confirm(`Pagare ${formatCurrency(importo)} a ${fornitoreNome} tramite CASSA?`)) return;
+                                  try {
+                                    await api.post('/api/fatture-ricevute/paga-manuale', {
+                                      fattura_id: f.id,
+                                      importo: importo,
+                                      metodo: 'cassa',
+                                      data_pagamento: dataDoc,
+                                      fornitore: fornitoreNome,
+                                      numero_fattura: numFattura
+                                    });
+                                    fetchFatture();
+                                  } catch (error) {
+                                    alert(`❌ Errore: ${error.response?.data?.detail || error.message}`);
+                                  }
+                                }
+                              }}
+                              style={{ 
+                                padding: '5px 8px', 
+                                background: (isPaid && metodoPagEffettivo === 'cassa') ? '#10b981' : '#e5e7eb',
+                                color: (isPaid && metodoPagEffettivo === 'cassa') ? 'white' : '#374151',
+                                border: 'none', 
+                                borderRadius: 6, 
+                                cursor: (isPaid && metodoPagEffettivo === 'cassa') ? 'default' : 'pointer',
+                                fontSize: 11, 
+                                fontWeight: 'bold'
+                              }}
+                              title={isPaid && metodoPagEffettivo === 'cassa' ? 'Pagata in Cassa' : isPaid ? 'Sposta in Cassa' : 'Paga in Cassa'}
+                            >
+                              💵 {isPaid && metodoPagEffettivo === 'cassa' ? '✓' : ''}
+                            </button>
+                            
+                            {/* Pulsante Banca - blu se attivo, grigio se non selezionato */}
+                            <button
+                              onClick={async () => {
+                                const importo = f.total_amount || f.importo_totale || 0;
+                                const dataDoc = f.invoice_date || f.data_documento;
+                                const fornitoreNome = f.supplier_name || f.fornitore_ragione_sociale || 'Fornitore';
+                                const numFattura = f.invoice_number || f.numero_documento || '';
+                                
+                                if (isPaid && metodoPagEffettivo === 'banca') {
+                                  return; // Già in banca, non fare nulla
+                                }
+                                
+                                if (isPaid && metodoPagEffettivo === 'cassa') {
+                                  // Sposta da cassa a banca DIRETTAMENTE
+                                  try {
+                                    await api.post('/api/fatture-ricevute/cambia-metodo-pagamento', {
+                                      fattura_id: f.id,
+                                      importo: importo,
+                                      metodo_vecchio: 'cassa',
+                                      metodo_nuovo: 'banca',
+                                      data_pagamento: dataDoc,
+                                      fornitore: fornitoreNome,
+                                      numero_fattura: numFattura
+                                    });
+                                    fetchFatture();
+                                  } catch (error) {
+                                    alert(`❌ Errore: ${error.response?.data?.detail || error.message}`);
+                                  }
+                                } else {
+                                  // Non pagata - registra nuovo pagamento in banca
+                                  if (!window.confirm(`Pagare ${formatCurrency(importo)} a ${fornitoreNome} tramite BANCA?`)) return;
+                                  try {
+                                    await api.post('/api/fatture-ricevute/paga-manuale', {
+                                      fattura_id: f.id,
+                                      importo: importo,
+                                      metodo: 'banca',
+                                      data_pagamento: dataDoc,
+                                      fornitore: fornitoreNome,
+                                      numero_fattura: numFattura
+                                    });
+                                    fetchFatture();
+                                  } catch (error) {
+                                    alert(`❌ Errore: ${error.response?.data?.detail || error.message}`);
+                                  }
+                                }
+                              }}
+                              style={{ 
+                                padding: '5px 8px', 
+                                background: (isPaid && metodoPagEffettivo === 'banca') ? '#3b82f6' : '#e5e7eb',
+                                color: (isPaid && metodoPagEffettivo === 'banca') ? 'white' : '#374151',
+                                border: 'none', 
+                                borderRadius: 6, 
+                                cursor: (isPaid && metodoPagEffettivo === 'banca') ? 'default' : 'pointer',
+                                fontSize: 11, 
+                                fontWeight: 'bold'
+                              }}
+                              title={isPaid && metodoPagEffettivo === 'banca' ? 'Pagata in Banca' : isPaid ? 'Sposta in Banca' : 'Paga in Banca'}
+                            >
+                              🏦 {isPaid && metodoPagEffettivo === 'banca' ? '✓' : ''}
+                            </button>
+                            
+                            <button
+                              onClick={() => navigate(`/fatture-ricevute/${f.id}`)}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14 }}
+                              title="Dettaglio"
+                            >
+                              👁️
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                      ); 
                                   borderRadius: 6, 
                                   cursor: 'pointer', 
                                   fontSize: 11, 
