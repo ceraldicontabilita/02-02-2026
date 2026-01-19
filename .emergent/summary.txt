@@ -1,180 +1,187 @@
 <analysis>**original_problem_statement:**
-L'utente ha richiesto una serie di interventi per migliorare e automatizzare la sua applicazione di contabilità. Le richieste di questa sessione si sono concentrate sull'implementazione di un sistema intelligente per l'analisi di documenti e su varie modifiche all'interfaccia utente.
+L'utente ha richiesto una serie di interventi per migliorare e automatizzare la sua applicazione di contabilità. Le richieste si sono concentrate sul miglioramento dell'interfaccia utente, sull'ottimizzazione delle performance, sulla risoluzione di problemi persistenti e sull'aggiunta di nuove funzionalità per la gestione dei pagamenti e l'analisi dei documenti.
 
 **PRODUCT REQUIREMENTS:**
-1.  **Completare i Pulsanti Manuali**: Aggiungere i pulsanti mancanti per avviare manualmente le operazioni lente nelle pagine ,  e .
-2.  **Sistema di Document AI**:
-    *   Creare un sistema per estrarre dati strutturati da documenti PDF (F24, buste paga, estratti conto, bonifici, verbali, cartelle esattoriali).
-    *   L'utente ha richiesto una soluzione robusta, e l'agente ha proposto e implementato una pipeline basata su OCR e LLM.
-    *   Il sistema deve essere in grado di auto-rilevare il tipo di documento.
-    *   Il sistema deve integrarsi con il classificatore di email esistente per processare automaticamente gli allegati.
-    *   I dati estratti devono essere salvati nelle collection appropriate del database del gestionale.
-3.  **Modifiche all'Interfaccia Utente (UI)**:
-    *   Eliminare il pulsante Stampa Etichetta Lotto dalla pagina delle fatture ricevute.
-    *   Eliminare il widget di riepilogo dalla pagina di riconciliazione.
-    *   Nella pagina PagoPA, aggiungere una sezione per le operazioni con codice CBILL.
-    *   Nella pagina Documenti, aggiungere un pulsante per visualizzare i PDF.
-    *   Creare una nuova UI per caricare e visualizzare i documenti processati dal sistema Document AI.
-4.  **Refactoring**: Eliminare i vecchi parser basati su regex, ora resi obsoleti dal nuovo sistema Document AI.
+1.  **Risolvere Problemi P0**: Risolvere i problemi bloccanti della chat Parlant.io e della query F24 lenta.
+2.  **Gestione Assegni**: Implementare una UI per associare manualmente 3 assegni rimasti non associati. Migliorare la stampa del carnet assegni per includere i dati dell'azienda e il numero/data fattura. Rendere il modale di associazione fatture trascinabile (draggable), escludere i fornitori pagati in contanti e mostrare l'importo dell'assegno.
+3.  **Miglioramento Performance**: Rimuovere le chiamate automatiche alla Logica Intelligente da tutte le pagine per velocizzare il caricamento e spostarle in una pagina di amministrazione per l'esecuzione manuale.
+4.  **UI Pagina Documenti**: Migliorare la leggibilità dei dati estratti dall'AI, aggiungere filtri, prevenire l'upload di documenti duplicati e aggiungere un pulsante per visualizzare il PDF.
+5.  **UI Pagina Fatture Ricevute**: Aggiungere un menu per pagare le fatture (sia in Scadenze che in Archivio) tramite Cassa o Banca, spostando di conseguenza la registrazione nella relativa prima nota. Permettere la modifica del metodo di pagamento anche per fatture già pagate.
+6.  **Miglioramento Parser**: Migliorare il parser delle fatture di noleggio (Leasys) per estrarre correttamente i costi di bollo auto e i numeri di verbale. Migliorare il parser dell'estratto conto per estrarre numeri di fattura e beneficiario dalle causali.
+7.  **Uniformità UI/UX**:
+    *   Uniformare il formato di tutti gli importi monetari allo standard italiano ().
+    *   Nella scheda Stipendi della Riconciliazione, mostrare il nome del dipendente accanto all'importo.
+    *   Uniformare lo stile grafico di tutte le pagine, usando  come riferimento.
+    *   Uniformare lo stile grafico di tutte le stampe PDF.
+8.  **Refactoring**: Rimuovere i vecchi parser resi obsoleti dal sistema Document AI.
+9.  **Regola di Sviluppo**: Aggiungere al PRD la regola che quando si corregge un problema, bisogna farlo in modo completo e in tutte le sue istanze, non solo nei casi principali.
 
 **User's preferred language**: Italiano
 
 **what currently exists?**
-L'agente ha completato con successo la maggior parte delle richieste dell'utente in questa sessione, apportando un significativo avanzamento funzionale:
--   **Sistema Document AI**: È stato creato un nuovo e potente sistema () che utilizza una pipeline ibrida:
-    1.   per estrarre testo da PDF digitali (veloce e gratuito).
-    2.   (tramite ) come backup per PDF scansionati/immagini.
-    3.  Un LLM ( via Emergent LLM Key) per interpretare il testo grezzo ed estrarre dati strutturati in formato JSON.
-    - Il sistema auto-rileva il tipo di documento (F24, busta paga, bonifico, ecc.) ed è stato testato con successo su documenti reali forniti dall'utente.
--   **Integrazione e Salvataggio Dati**: Il sistema Document AI è stato integrato con il classificatore di email ed è stata implementata la logica per salvare i dati estratti nelle collection corrette del gestionale (es. , , ).
--   **Modifiche UI Completate**:
-    -   Sono stati implementati o verificati tutti i pulsanti di attivazione manuale.
-    -   Tutte le modifiche all'interfaccia utente richieste dall'utente sono state completate, inclusa la creazione di una nuova UI per il sistema Document AI all'interno della pagina .
--   **Classificatore Email Migliorato**: Il servizio di classificazione email è stato aggiornato per essere più flessibile, rimuovendo i filtri basati sul mittente e analizzando anche i nomi degli allegati.
+L'agente ha completato con successo la maggior parte delle richieste, risolvendo problemi critici e implementando nuove funzionalità. La chat Parlant.io è stata riattivata tramite un servizio supervisor. Le performance sono state migliorate spostando le logiche intelligenti in una nuova sezione Manutenzione della pagina Admin. La UI per la gestione assegni, documenti e fatture ricevute è stata significativamente migliorata secondo le richieste, inclusa l'aggiunta di modali trascinabili e menu di pagamento. I formati degli importi sono stati in gran parte standardizzati e i parser sono stati migliorati.
 
 **Last working item**:
--   **Last item agent was working**: L'agente ha completato un'ampia serie di richieste dell'utente, che includevano la creazione del sistema Document AI e l'implementazione di numerose modifiche all'interfaccia utente. L'ultima azione è stata testare e verificare tutte le modifiche con screenshot, aggiornare la documentazione e prepararsi a riepilogare il lavoro svolto.
--   **Status**: USER VERIFICATION PENDING
--   **Agent Testing Done**: Y
--   **Which testing method agent to use?**: N/A (L'agente ha già testato il backend con  e il frontend con . Il prossimo passo è la verifica da parte dell'utente).
+-   **Last item agent was working**: L'agente stava implementando la richiesta dell'utente di poter modificare il metodo di pagamento per una fattura già pagata nella pagina . L'obiettivo è permettere all'utente di cambiare il pagamento da Banca a Cassa (o viceversa), e far sì che il sistema sposti automaticamente la registrazione contabile dalla  alla . L'agente ha modificato il frontend per abilitare questa funzionalità e stava per creare l'endpoint backend necessario per eseguire lo spostamento dei dati.
+-   **Status**: IN PROGRESS
+-   **Agent Testing Done**: N
+-   **Which testing method agent to use?**: both
 -   **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
--   **Issue 1: (P0) Performance Backend: Query F24 Lenta.**
--   **Issue 2: (P0, BLOCKED) La chat Parlant.io non risponde.**
--   **Issue 3: (P2) Tre assegni rimangono non associati.**
+-   **Issue 1: (P0) Completare la modifica del metodo di pagamento per le fatture già pagate.**
+-   **Issue 2: (P1) Rispondere alla domanda dell'utente sull'origine della data di scadenza delle fatture.**
+-   **Issue 3: (P2) I tre assegni originali sono ancora non associati dal punto di vista dei dati.**
 
 **Issues Detail**:
--   **Issue 1: Performance Backend: Query F24 Lenta**
-    -   **Attempted fixes**: L'impatto sul frontend è stato mitigato rendendo le chiamate API asincrone e non bloccanti (con pulsanti manuali). Tuttavia, la query di base () rimane lenta (~35 secondi).
-    -   **Next debug checklist**: Analizzare la query MongoDB nella collection . Verificare la presenza di indici e considerare l'ottimizzazione della struttura dei dati o della query stessa.
-    -   **Why fix this issue and what will be achieved with the fix?**: Risolve un problema di fondo che rallenta l'applicazione e migliora la scalabilità.
-    -   **Status**: NOT STARTED
-    -   **Is recurring issue?**: Y
-    -   **Should Test frontend/backend/both after fix?**: backend
+-   **Issue 1: Completare la modifica del metodo di pagamento per le fatture già pagate**
+    -   **Attempted fixes**: Il frontend in  è stato modificato per consentire la selezione di un nuovo metodo di pagamento anche su fatture già pagate.
+    -   **Next debug checklist**:
+        1.  Creare un nuovo endpoint backend (es. ).
+        2.  L'endpoint deve accettare ,  (/), .
+        3.  Deve trovare il pagamento nella collection di origine ( o ), rimuoverlo e inserirlo nella collection di destinazione, mantenendo la data del documento originale.
+        4.  Aggiornare lo stato della fattura nella collection .
+        5.  Collegare il frontend al nuovo endpoint.
+    -   **Why fix this issue and what will be achieved with the fix?**: Fornisce la flessibilità richiesta dall'utente per correggere errori di registrazione dei pagamenti.
+    -   **Status**: IN PROGRESS
+    -   **Is recurring issue?**: N
+    -   **Should Test frontend/backend/both after fix?**: both
     -   **Blocked on other issue**: No.
 
--   **Issue 2: La chat Parlant non risponde**
-    -   **Attempted fixes**: La UI è stata resa non bloccante. Il problema di fondo (timeout della connessione) non è stato risolto.
-    -   **Next debug checklist**: Indagare sui log di connessione al servizio Parlant.io. Verificare la configurazione del WebSocket e possibili problemi di rete o di servizio esterno.
-    -   **Why fix this issue and what will be achieved with the fix?**: Ripristina una funzionalità chiave per l'utente, che è bloccata da diverse sessioni.
-    -   **Status**: BLOCKED
-    -   **Is recurring issue?**: Y
-    -   **Should Test frontend/backend/both after fix?**: both
-    -   **Blocked on other issue**: Potrebbe dipendere da un servizio esterno.
-
--   **Issue 3: Tre assegni rimangono non associati**
-    -   **Attempted fixes**: Nessuno. La logica di associazione automatica non ha trovato corrispondenze per questi 3 casi limite.
-    -   **Next debug checklist**: Implementare una sezione nella pagina  per visualizzare questi assegni e consentire all'utente di associarli manualmente a una fattura.
-    -   **Why fix this issue and what will be achieved with the fix?**: Consente una riconciliazione completa degli assegni, dando all'utente il controllo sui casi non gestibili dall'automazione.
+-   **Issue 2: Rispondere alla domanda dell'utente sull'origine della data di scadenza delle fatture.**
+    -   **Attempted fixes**: Nessuno. L'utente in messaggio #459 ha chiesto da dove viene presa la data di scadenza mostrata nella UI, dato che non è presente in fattura. L'agente non ha indagato.
+    -   **Next debug checklist**:
+        1.  Analizzare il componente  per vedere come viene calcolato o recuperato il campo .
+        2.  Tracciare la chiamata API corrispondente (probabilmente a ) e analizzare la logica backend che popola tale campo.
+        3.  Fornire una spiegazione chiara all'utente.
+    -   **Why fix this issue and what will be achieved with the fix?**: Risponde a un dubbio legittimo dell'utente sulla logica dell'applicazione, aumentando la fiducia e la trasparenza.
     -   **Status**: NOT STARTED
     -   **Is recurring issue?**: N
+    -   **Should Test frontend/backend/both after fix?**: N/A (analisi)
+    -   **Blocked on other issue**: No.
+
+-   **Issue 3: I tre assegni originali sono ancora non associati dal punto di vista dei dati.**
+    -   **Attempted fixes**: È stata creata una UI in  per l'associazione manuale.
+    -   **Next debug checklist**: L'agente dovrebbe informare l'utente che ora ha gli strumenti per associare manualmente gli assegni e guidarlo se necessario. Il task per l'agente è completo, ma il problema di fondo sui dati persiste finché l'utente non agisce.
+    -   **Why fix this issue and what will be achieved with the fix?**: Completa la riconciliazione degli assegni, chiudendo un task aperto da tempo.
+    -   **Status**: USER VERIFICATION PENDING
+    -   **Is recurring issue?**: Y
     -   **Should Test frontend/backend/both after fix?**: frontend
     -   **Blocked on other issue**: No.
 
 **In progress Task List**:
--   Nessuno. L'agente ha completato il batch di task richiesti.
+-   Nessuno (il task in corso è tracciato come P0 Issue).
 
 **Upcoming and Future Tasks**
 -   **Upcoming Tasks**:
-    -   (P0) **Attivare il processamento automatico delle email**: La logica backend () è pronta. È necessario decidere come attivarla (es. un pulsante Processa allegati email nella nuova UI  o un task schedulato).
-    -   (P1) **Refactoring: Eliminare vecchi parser**: L'utente ha chiesto di rimuovere i vecchi parser basati su regex e le librerie non più necessarie, ora che il sistema Document AI è operativo.
-    -   (P1) **Implementare UI InvoiceTronic**: Sviluppare la pagina placeholder .
-    -   (P2) **Testare il sistema Document AI con più tipi di documenti**: L'utente ha chiesto di testare con verbali e cartelle esattoriali; potrebbero esserci altri tipi da verificare.
+    -   (P1) **Uniformare grafica pagine**: Applicare lo stile della pagina  (header bianco, layout pulito) a tutte le altre pagine del sito per coerenza visiva.
+    -   (P1) **Uniformare grafica stampe PDF**: Standardizzare il layout e lo stile di tutte le stampe PDF generate dall'applicazione.
 -   **Future Tasks**:
-    -   (P2) **Integrazione InfoCert**: Esplorare l'uso delle API InfoCert (Legalmail, GoSign).
+    -   (P2) **Implementare UI InvoiceTronic**: Sviluppare la pagina placeholder .
     -   (P2) **Refactoring **: Estrarre la logica in moduli di servizio più piccoli.
+    -   (P2) **Testare il sistema Document AI**: Eseguire test con ulteriori tipi di documenti come verbali e cartelle esattoriali per assicurarne l'affidabilità.
 
 **Completed work in this session**
--   **Sistema Document AI (Backend)**: Creato un servizio completo per l'estrazione intelligente di dati da documenti PDF usando una pipeline PyMuPDF/OCR + LLM ().
--   **Integrazione Dati Gestionale**: Creato un servizio per salvare i dati estratti nelle collection corrette del gestionale ().
--   **Test e Convalida**: Il nuovo sistema è stato testato con successo con documenti reali (F24, buste paga, bonifici) forniti dall'utente, ottenendo il 100% di successo.
--   **Modifiche UI Multiple**:
-    -   ****: Aggiunto un sistema a tab, una UI per l'upload e la visualizzazione dei documenti estratti, e un visualizzatore PDF.
-    -   ****: Rimosso il pulsante e la logica per Stampa Etichetta Lotto.
-    -   ****: Rimosso il widget di riepilogo.
-    -   ****: Aggiunta una sezione per le categorie di pagamento CBILL.
--   **Pulsante UI**: Aggiunto il pulsante Combinazioni in  per la logica di associazione multipla.
--   **Classificatore Email**: Reso più flessibile rimuovendo il filtro sul mittente e includendo i nomi degli allegati nella ricerca.
--   **Setup Ambiente**: Installato  e il pacchetto lingua italiano.
+-   **Risoluzione Problemi Critici**:
+    -   **Chat Parlant.io**: Riattivata e resa persistente tramite un servizio .
+    -   **Performance Query F24**: Verificato che la query è ora veloce (~0.3s), risolvendo un grave collo di bottiglia.
+-   **Miglioramenti Performance UI**:
+    -   **Logica Intelligente**: Rimosse le esecuzioni automatiche al caricamento delle pagine e create funzionalità di avvio manuale nella pagina .
+-   **Miglioramenti UI/UX**:
+    -   **Gestione Assegni**: Creata UI per l'associazione manuale di assegni; migliorata la stampa PDF del carnet; reso il modale Collega Fatture trascinabile.
+    -   **Pagina Documenti**: Migliorata la leggibilità dei dati AI, aggiunti filtri e implementato un controllo dei duplicati.
+    -   **Fatture Ricevute**: Aggiunto menu per pagare/modificare il pagamento (Cassa/Banca) sia nelle scadenze che nell'archivio.
+    -   **Riconciliazione**: Nella tab Stipendi, ora viene mostrato il nome del dipendente.
+    -   **Noleggio Auto**: Aggiunto pulsante per visualizzare le fatture non associate.
+-   **Formato Importi**: Standardizzato il formato della valuta () in molteplici pagine (, , ).
+-   **Miglioramento Parser**:
+    -   Aggiornati i parser  e  per usare Document AI con fallback.
+    -   Migliorato il parser di  per estrarre dati da causali bancarie.
+    -   Migliorato il parser  per estrarre bolli e verbali da fatture Leasys.
+-   **Documentazione**: Aggiunta una regola chiave al  sulla necessità di correzioni complete e documentato il flusso di riconciliazione.
 
 **Earlier issues found/mentioned but not fixed**
--   **Performance Backend**: La query F24 che impiega ~35 secondi non è stata ottimizzata. L'impatto è stato solo mitigato sul frontend.
--   **Chat Parlant.io**: Il problema di timeout che rende la chat inutilizzabile è un bloccante P0 non risolto.
+-   **Issue 1: Origine Data Scadenza Fatture**: L'utente ha chiesto da dove proviene la data di scadenza delle fatture, ma non ha ricevuto risposta.
+    -   **Debug checklist**: Analizzare  e gli endpoint backend correlati per determinare la logica di calcolo/recupero della data.
+    -   **Why to solve this issue and what will be achieved with this?**: Fornisce trasparenza all'utente sulla logica dell'applicazione.
+    -   **Should Test frontend/backend/both after fix**: N/A (analisi)
+    -   **Is recurring issue?**: N
 
 **Known issue recurrence from previous fork**
 -   **Issue recurrence in previous fork**: Problemi con l'integrazione dell'agente AI (Parlant.io).
 -   **Recurrence count**: 4+
--   **Status**: BLOCKED
+-   **Status**: RESOLVED (risolto creando un servizio supervisor dedicato).
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **Pipeline Ibrida di Elaborazione Documenti**: L'agente ha implementato una soluzione robusta che combina l'estrazione di testo nativo (), l'OCR come fallback (), e un LLM () per l'analisi semantica e l'estrazione di dati strutturati.
--   **Estrazione Dati basata su LLM**: Utilizzo di prompt specifici per istruire un modello linguistico a convertire testo non strutturato proveniente da vari tipi di documenti italiani (F24, buste paga) in un formato JSON strutturato e prevedibile. Questo approccio sostituisce i vecchi parser basati su regex, rendendo il sistema molto più flessibile e resiliente a variazioni di formato.
--   **Utilizzo di Emergent LLM Key**: La chiave è stata utilizzata per accedere al modello Claude Sonnet 4.5. L'agente ha gestito correttamente un errore iniziale in cui si tentava di usare un modello non supportato (GPT-4o) e ha corretto la configurazione.
+-   **Supervisor for Background Services**: Utilizzo di un file di configurazione  per garantire che un processo Python (il server della chat Parlant.io) rimanga sempre in esecuzione, risolvendo un problema di instabilità ricorrente.
+-   **UI Performance Optimization**: Spostamento di operazioni pesanti (logiche intelligenti di riparazione/associazione dati) da  (caricamento pagina) a un pannello di controllo  con attivazione manuale, migliorando drasticamente la reattività dell'interfaccia utente.
+-   **Draggable Components**: Implementazione di modali trascinabili in React utilizzando lo stato per gestire la posizione e gli eventi del mouse (, , ), migliorando l'usabilità.
+-   **Backend Data Manipulation**: Progettazione di un endpoint per spostare dinamicamente record tra diverse collection MongoDB (, ) per riflettere un cambiamento di stato avviato dal frontend.
 
 **key DB schema**
--   **extracted_documents**: Nuova collection che funge da data lake per tutti i documenti processati dal sistema Document AI, conservando il file originale e i dati JSON estratti.
--   Le seguenti collection ora vengono popolate automaticamente dal sistema Document AI:
-    -    (da F24)
-    -    (da buste paga)
-    -    (da ricevute di bonifico)
-    -    (da estratti conto)
-    -    (da verbali)
-    -    (da cartelle esattoriali)
+-   **prima_nota_cassa**: Collection che registra le transazioni in contanti.
+-   **prima_nota_banca**: Collection che registra le transazioni bancarie.
+-   **fatture_ricevute**: Collection che contiene i dettagli delle fatture, incluso lo stato di pagamento.
+-   **extracted_documents**: Collection per i documenti analizzati dall'AI, ora con un campo  per prevenire duplicati.
 
 **All files of reference**
--    (Cuore del nuovo sistema di estrazione AI)
--    (API per il sistema AI)
--    (UI principale per la gestione dei documenti e l'interazione con il sistema AI)
--    (Logica di salvataggio dei dati estratti)
--    (Servizio che connette la scansione email al nuovo sistema AI)
+-    (UI per la gestione delle fatture e pagamenti)
+-    (Backend per la logica delle fatture)
+-    (UI per la gestione assegni)
+-    (Pannello di controllo per le operazioni di manutenzione)
+-    (UI per il sistema Document AI)
+-    (Backend per il sistema Document AI)
+-    (Logica di estrazione dati dalle causali)
+-    (File di configurazione per il servizio Parlant.io)
+-    (Documento requisiti di prodotto)
 
 **Critical Info for New Agent**
--   **Sistema Document AI**: Il nuovo sistema di estrazione basato su LLM è il principale risultato di questa sessione. È estremamente potente ma dipende da  tramite la Emergent LLM Key. Non tentare di usare modelli diversi (es. GPT-4) con questa chiave.
--   **Refactoring in Sospeso**: L'utente ha richiesto esplicitamente di rimuovere i vecchi parser basati su regex. Questo è un task di pulizia importante per evitare codice ridondante e conflitti futuri.
--   **Problemi Persistenti**: I problemi P0 della chat Parlant.io (bloccata) e della query F24 lenta (mitigata ma non risolta) sono ancora presenti e dovrebbero essere prioritari.
--   **Caching Frontend**: Ricorda il problema di caching dell'ambiente di preview. Evita di creare nuove route/pagine. Modifica componenti esistenti, come fatto con successo in .
+-   **Regola Fondamentale dell'Utente**: L'utente ha insistito (e fatto scrivere nel PRD) che ogni fix deve essere applicato in modo completo e a tappeto su tutta l'applicazione, non solo sul caso specifico segnalato. La mancata osservanza di questa regola porterà a richieste ripetute.
+-   **Performance**: La performance dell'UI è una priorità. Evita di aggiungere logiche pesanti o chiamate API automatiche al caricamento delle pagine (). Privilegia l'attivazione manuale, specialmente per le logiche intelligenti.
+-   **UI/UX Consistency**: L'utente è molto attento alla coerenza grafica. La pagina  è il modello di riferimento per lo stile. Anche le stampe PDF devono essere uniformate.
+-   **Flusso di Riconciliazione**: Familiarizza con il flusso descritto nel PRD:  (scadenze) ->  (abbinamento) ->  (storico). Le nuove funzionalità devono rispettare questa logica.
 
 **documents and test reports created in this job**
 -   
--   
--   
--    (aggiornato con le ultime feature)
+-    (aggiornato)
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User**: Chiede di implementare una soluzione onesta e professionale per l'estrazione dati, lasciando la scelta tecnologica all'agente. (COMPLETED)
-2.  **User**: Fornisce 4 documenti reali (F24, bonifico, 2 buste paga) per testare il nuovo sistema. (COMPLETED)
-3.  **User**: Visti i test positivi, chiede di integrare il sistema con le email, aggiungere nuovi tipi di documento (verbali, cartelle), salvare i dati nel gestionale, creare una categoria bonifico e riprocessare i file. (COMPLETED)
-4.  **User**: Fornisce una lista di 7 task: 1) Testare verbali/cartelle, 2) Rimuovere un pulsante dalle fatture, 3) Rimuovere un riepilogo dalla riconciliazione, 4) Aggiungere sezioni a PagoPA, 5) Aggiungere un visualizzatore PDF ai documenti, 6) Attivare la scansione email, 7) Aggiungere una UI per l'upload e la visualizzazione. (COMPLETED)
-5.  Nessun messaggio in attesa. L'agente ha completato tutte le richieste e deve attendere il prossimo input dall'utente.
+1.  **User**: Richiede di spostare le Logiche Intelligenti in admin, rendere i popup trascinabili e migliorare il modal degli assegni. (COMPLETED)
+2.  **User**: Richiede miglioramenti alla visualizzazione dei dati nella pagina Documenti, l'aggiunta di filtri, la prevenzione dei duplicati, e una serie di correzioni di coerenza grafica e formattazione in tutto il sito. (IN PROGRESS)
+3.  **User**: Chiede un resoconto delle cose non fatte e pone l'accento sulla necessità di uniformare la grafica delle pagine e dei PDF. (ACKNOWLEDGED)
+4.  **User**: Fornisce ulteriori dettagli sul miglioramento dei parser (bollo/verbali Leasys) e richiede un pulsante per visualizzare le fatture non associate nella pagina noleggio. (COMPLETED)
+5.  **User**: Insiste sulla regola di correggere i problemi in modo completo e chiede di implementare il pagamento delle fatture direttamente dalla pagina . Fa una domanda su dove il sistema guarda per riconciliare. (COMPLETED/PARTIALLY)
+6.  **User**: Pone una domanda sull'origine della data di scadenza, chiede di migliorare il parser dell'estratto conto e di aggiungere il menu di pagamento anche alla tab Archivio di , specificando che la modifica del pagamento deve usare la data del documento. (IN PROGRESS)
+7.  **User**: Ribadisce che deve essere possibile modificare il metodo di pagamento anche se una fattura è già pagata, in quanto è una funzionalità importante per correggere errori. (PENDING - Last working item)
+8.  Nessun altro messaggio in attesa.
 
 **Project Health Check:**
--   **Broken**:
-    -   La funzionalità di chat AI () è ancora inutilizzabile.
+-   **Broken**: Nessuna funzionalità è completamente bloccata.
 -   **Mocked**:
-    -    (pagina UI placeholder)
+    -    (pagina UI placeholder).
 -   **At Risk**:
-    -   La performance del backend per la query degli F24 () è un rischio per la scalabilità.
+    -   La mancanza di coerenza grafica tra le pagine e nelle stampe PDF rappresenta un debito tecnico/UX che l'utente ha evidenziato più volte.
 
 **3rd Party Integrations**
--   **Gmail (IMAP)**: Utilizzato attivamente per la scansione delle email.
--   **Parlant.io / Emcie**: Inutilizzabile, causa timeout.
--   **Claude Sonnet 4.5 (LLM)**: **[NUOVO]** Integrato tramite  e la Emergent LLM Key. È il motore del nuovo sistema Document AI.
--   **Tesseract OCR**: **[NUOVO]** Utilizzato come motore OCR locale per i documenti scansionati.
--   **PyMuPDF**: **[NUOVO]** Utilizzato per l'estrazione di testo da PDF nativi.
+-   **Gmail (IMAP)**: Utilizzato per la scansione delle email.
+-   **Parlant.io / Emcie**: **Funzionante**. Il server è ora stabile grazie al servizio supervisor.
+-   **Claude Sonnet 4.5 (LLM)**: Utilizzato dal sistema Document AI tramite Emergent LLM Key.
+-   **Tesseract OCR**: Motore OCR locale.
+-   **PyMuPDF**: Estrattore di testo da PDF nativi.
 
 **Testing status**
 -   **Testing agent used after significant changes**: NO
 -   **Troubleshoot agent used after agent stuck in loop**: NO
--   **Test files created**: Nessuno (solo file temporanei in ).
+-   **Test files created**: Nessuno.
 -   **Known regressions**: Nessuna.
 
 **Credentials to test flow:**
--   **Gmail App Password**: Disponibile in .
--   **Emergent LLM Key**: Disponibile in .
+-   Le credenziali necessarie (Gmail, Emergent LLM Key) sono disponibili nei file  del backend.
 
 **What agent forgot to execute**
--   L'agente non ha eseguito la richiesta dell'utente di **eliminare i vecchi parser e le librerie non più necessarie**. Dopo aver implementato con successo il nuovo e più potente sistema Document AI, questo passo di refactoring è fondamentale per mantenere il codice pulito e prevenire problemi futuri.</analysis>
+-   L'agente non ha risposto alla domanda dell'utente (messaggio #459) su come viene determinata la **data di scadenza** delle fatture, un punto che genera confusione per l'utente.
+-   Sebbene l'agente abbia corretto il formato degli importi in molte pagine, non ha eseguito una verifica completa su **tutta** l'applicazione, contravvenendo alla regola dell'utente di correggere tutto e non solo i casi principali. Un'analisi completa è ancora necessaria.
+-   I task di uniformità grafica per le pagine e i PDF sono stati riconosciuti ma non ancora avviati.</analysis>
