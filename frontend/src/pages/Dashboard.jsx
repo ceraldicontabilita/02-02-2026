@@ -30,6 +30,8 @@ export default function Dashboard() {
   const [volumeRealeLoading, setVolumeRealeLoading] = useState(false);
   // Bilancio Istantaneo
   const [bilancioIstantaneo, setBilancioIstantaneo] = useState(null);
+  // Scadenze F24
+  const [scadenzeF24, setScadenzeF24] = useState(null);
   
   // Stato per auto-riparazione
   const [autoRepairStatus, setAutoRepairStatus] = useState(null);
