@@ -12,7 +12,7 @@ import requests
 import time
 import os
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://payment-dashboard-60.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://tax-tracker-11.preview.emergentagent.com')
 
 class TestCorrispettiviAPI:
     """Test corrispettivi API with year filter"""
