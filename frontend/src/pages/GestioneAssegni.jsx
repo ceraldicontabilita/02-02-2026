@@ -1724,137 +1724,229 @@ export default function GestioneAssegni() {
         </div>
       )}
 
-      {/* Modal Collega Fatture */}
+      {/* Modal Collega Fatture - DRAGGABLE */}
       {showFattureModal && (
         <div style={{
-          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.3)',
           display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
         }} onClick={() => setShowFattureModal(false)}>
-          <div style={{
-            background: 'white', borderRadius: 12, padding: 24, maxWidth: 700, width: '95%', maxHeight: '80vh', overflow: 'auto'
-          }} onClick={e => e.stopPropagation()}>
-            <h2 style={{ marginTop: 0 }}>Collega Fatture all'Assegno</h2>
-            <p style={{ color: '#666', fontSize: 14, marginBottom: 10 }}>
-              Assegno: <strong>{editingAssegnoForFatture?.numero}</strong>
-            </p>
-            <p style={{ color: '#2196f3', fontSize: 13, marginBottom: 20 }}>
-              Puoi collegare fino a <strong>4 fatture</strong> a un singolo assegno.
-            </p>
-
-            {/* Fatture Selezionate */}
-            {selectedFatture.length > 0 && (
-              <div style={{ 
-                background: '#e8f5e9', 
-                padding: 15, 
-                borderRadius: 8, 
-                marginBottom: 20 
-              }}>
-                <strong>Fatture Selezionate ({selectedFatture.length}/4):</strong>
-                <div style={{ marginTop: 10 }}>
-                  {selectedFatture.map(f => (
-                    <div key={f.id} style={{ 
-                      display: 'flex', 
-                      justifyContent: 'space-between', 
-                      alignItems: 'center',
-                      padding: '5px 0',
-                      borderBottom: '1px solid #c8e6c9'
-                    }}>
-                      <span>{f.numero} - {f.fornitore}</span>
-                      <span style={{ fontWeight: 'bold' }}>{formatEuro(f.importo)}</span>
-                    </div>
-                  ))}
-                  <div style={{ 
-                    marginTop: 10, 
-                    paddingTop: 10, 
-                    borderTop: '2px solid #4caf50',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    fontWeight: 'bold',
-                    fontSize: 16
-                  }}>
-                    <span>TOTALE ASSEGNO:</span>
-                    <span style={{ color: '#2e7d32' }}>
-                      {formatEuro(selectedFatture.reduce((sum, f) => sum + (f.importo || 0), 0))}
-                    </span>
-                  </div>
-                </div>
+          <div 
+            style={{
+              position: 'absolute',
+              left: modalPosition.x || '50%',
+              top: modalPosition.y || '50%',
+              transform: modalPosition.x ? 'none' : 'translate(-50%, -50%)',
+              background: 'white', 
+              borderRadius: 12, 
+              padding: 0, 
+              maxWidth: 700, 
+              width: '95%', 
+              maxHeight: '85vh', 
+              overflow: 'hidden',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              cursor: isDragging ? 'grabbing' : 'default'
+            }} 
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Header Draggable */}
+            <div 
+              style={{
+                padding: '16px 24px',
+                background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
+                color: 'white',
+                cursor: 'grab',
+                userSelect: 'none',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}
+              onMouseDown={(e) => {
+                setIsDragging(true);
+                const rect = e.currentTarget.parentElement.getBoundingClientRect();
+                setDragOffset({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+              }}
+              onMouseMove={(e) => {
+                if (isDragging) {
+                  setModalPosition({
+                    x: e.clientX - dragOffset.x,
+                    y: e.clientY - dragOffset.y
+                  });
+                }
+              }}
+              onMouseUp={() => setIsDragging(false)}
+              onMouseLeave={() => setIsDragging(false)}
+            >
+              <div>
+                <h2 style={{ margin: 0, fontSize: 18 }}>📄 Collega Fatture all'Assegno</h2>
+                <p style={{ margin: '4px 0 0', fontSize: 12, opacity: 0.8 }}>Trascina per spostare</p>
               </div>
-            )}
-
-            {/* Lista Fatture Disponibili */}
-            <div style={{ marginBottom: 15 }}>
-              <label style={{ display: 'block', marginBottom: 5, fontWeight: 'bold' }}>
-                Fatture Disponibili (non pagate)
-              </label>
-              
-              {loadingFatture ? (
-                <div style={{ padding: 20, textAlign: 'center' }}>Caricamento...</div>
-              ) : fatture.length === 0 ? (
-                <div style={{ padding: 20, textAlign: 'center', color: '#666', background: '#f5f5f5', borderRadius: 8 }}>
-                  Nessuna fattura non pagata disponibile
-                </div>
-              ) : (
-                <div style={{ maxHeight: 300, overflow: 'auto', border: '1px solid #ddd', borderRadius: 8 }}>
-                  {fatture.map(f => {
-                    const isSelected = selectedFatture.find(sf => sf.id === f.id);
-                    const fornitore = f.supplier_name || f.cedente_denominazione || 'N/A';
-                    
-                    return (
-                      <div
-                        key={f.id}
-                        onClick={() => toggleFattura(f)}
-                        style={{
-                          padding: 12,
-                          borderBottom: '1px solid #eee',
-                          cursor: 'pointer',
-                          background: isSelected ? '#e3f2fd' : 'white',
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center'
-                        }}
-                      >
-                        <div>
-                          <div style={{ fontWeight: 'bold' }}>
-                            {isSelected ? '✓ ' : '○ '}
-                            {f.invoice_number || f.numero_fattura || 'N/A'}
-                          </div>
-                          <div style={{ fontSize: 12, color: '#666' }}>
-                            {fornitore} - {(f.invoice_date || f.data_fattura || '').slice(0, 10)}
-                          </div>
-                        </div>
-                        <div style={{ fontWeight: 'bold', color: '#1a365d' }}>
-                          {formatEuro(parseFloat(f.total_amount || f.importo_totale || 0))}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+              <button 
+                onClick={() => { setShowFattureModal(false); setSelectedFatture([]); setModalPosition({ x: 0, y: 0 }); }}
+                style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', width: 32, height: 32, borderRadius: '50%', cursor: 'pointer', fontSize: 18 }}
+              >×</button>
             </div>
             
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-              <button
-                onClick={() => { setShowFattureModal(false); setSelectedFatture([]); }}
-                style={{ padding: '10px 20px', background: '#9e9e9e', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer' }}
-              >
-                Annulla
-              </button>
-              <button
-                onClick={saveFattureCollegate}
-                disabled={selectedFatture.length === 0}
-                data-testid="salva-fatture-btn"
-                style={{ 
-                  padding: '10px 20px', 
-                  background: selectedFatture.length > 0 ? '#4caf50' : '#9e9e9e', 
-                  color: 'white', 
-                  border: 'none', 
+            {/* Content */}
+            <div style={{ padding: 24, maxHeight: 'calc(85vh - 120px)', overflowY: 'auto' }}>
+              {/* Info Assegno con Importo */}
+              <div style={{ 
+                background: '#f8fafc', 
+                padding: 16, 
+                borderRadius: 8, 
+                marginBottom: 20,
+                border: '1px solid #e2e8f0'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+                  <div>
+                    <div style={{ fontSize: 12, color: '#64748b', marginBottom: 4 }}>Assegno N.</div>
+                    <div style={{ fontSize: 18, fontWeight: 'bold', color: '#1e293b', fontFamily: 'monospace' }}>
+                      {editingAssegnoForFatture?.numero}
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: 12, color: '#64748b', marginBottom: 4 }}>Importo Assegno</div>
+                    <div style={{ fontSize: 22, fontWeight: 'bold', color: '#1e3a5f' }}>
+                      {formatEuro(editingAssegnoForFatture?.importo || 0)}
+                    </div>
+                  </div>
+                </div>
+                <p style={{ color: '#3b82f6', fontSize: 12, margin: '12px 0 0', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  ℹ️ Puoi collegare fino a <strong>4 fatture</strong> a un singolo assegno
+                </p>
+              </div>
+
+              {/* Fatture Selezionate */}
+              {selectedFatture.length > 0 && (
+                <div style={{ 
+                  background: '#ecfdf5', 
+                  padding: 16, 
                   borderRadius: 8, 
-                  cursor: selectedFatture.length > 0 ? 'pointer' : 'not-allowed',
-                  fontWeight: 'bold'
-                }}
-              >
-                ✓ Collega {selectedFatture.length} Fattur{selectedFatture.length === 1 ? 'a' : 'e'}
-              </button>
+                  marginBottom: 20,
+                  border: '1px solid #a7f3d0'
+                }}>
+                  <strong style={{ color: '#065f46' }}>✓ Fatture Selezionate ({selectedFatture.length}/4):</strong>
+                  <div style={{ marginTop: 10 }}>
+                    {selectedFatture.map(f => (
+                      <div key={f.id} style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'center',
+                        padding: '8px 0',
+                        borderBottom: '1px solid #d1fae5'
+                      }}>
+                        <span style={{ color: '#065f46' }}>{f.numero} - {f.fornitore}</span>
+                        <span style={{ fontWeight: 'bold', color: '#047857' }}>{formatEuro(f.importo)}</span>
+                      </div>
+                    ))}
+                    <div style={{ 
+                      marginTop: 12, 
+                      paddingTop: 12, 
+                      borderTop: '2px solid #10b981',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      fontWeight: 'bold',
+                      fontSize: 16
+                    }}>
+                      <span>TOTALE FATTURE:</span>
+                      <span style={{ color: '#047857' }}>
+                        {formatEuro(selectedFatture.reduce((sum, f) => sum + (f.importo || 0), 0))}
+                      </span>
+                    </div>
+                    {/* Differenza con importo assegno */}
+                    {editingAssegnoForFatture?.importo > 0 && (
+                      <div style={{ 
+                        marginTop: 8,
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        fontSize: 13,
+                        color: Math.abs((editingAssegnoForFatture?.importo || 0) - selectedFatture.reduce((sum, f) => sum + (f.importo || 0), 0)) < 1 ? '#10b981' : '#f59e0b'
+                      }}>
+                        <span>Differenza:</span>
+                        <span style={{ fontWeight: 600 }}>
+                          {formatEuro((editingAssegnoForFatture?.importo || 0) - selectedFatture.reduce((sum, f) => sum + (f.importo || 0), 0))}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Lista Fatture Disponibili */}
+              <div style={{ marginBottom: 15 }}>
+                <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, color: '#374151' }}>
+                  Fatture Disponibili (esclusi pagamenti in contanti)
+                </label>
+                
+                {loadingFatture ? (
+                  <div style={{ padding: 30, textAlign: 'center', color: '#64748b' }}>⏳ Caricamento...</div>
+                ) : fatture.length === 0 ? (
+                  <div style={{ padding: 30, textAlign: 'center', color: '#64748b', background: '#f8fafc', borderRadius: 8 }}>
+                    Nessuna fattura disponibile per assegno
+                  </div>
+                ) : (
+                  <div style={{ maxHeight: 280, overflow: 'auto', border: '1px solid #e2e8f0', borderRadius: 8 }}>
+                    {fatture.map(f => {
+                      const isSelected = selectedFatture.find(sf => sf.id === f.id);
+                      const fornitore = f.supplier_name || f.cedente_denominazione || 'N/A';
+                      
+                      return (
+                        <div
+                          key={f.id}
+                          onClick={() => toggleFattura(f)}
+                          style={{
+                            padding: 14,
+                            borderBottom: '1px solid #f1f5f9',
+                            cursor: 'pointer',
+                            background: isSelected ? '#dbeafe' : 'white',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            transition: 'background 0.15s'
+                          }}
+                        >
+                          <div>
+                            <div style={{ fontWeight: 600, color: isSelected ? '#1e40af' : '#1e293b' }}>
+                              {isSelected ? '✓ ' : '○ '}
+                              {f.invoice_number || f.numero_fattura || 'N/A'}
+                            </div>
+                            <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>
+                              {fornitore} • {(f.invoice_date || f.data_fattura || '').slice(0, 10)}
+                            </div>
+                          </div>
+                          <div style={{ fontWeight: 'bold', color: '#1e3a5f', fontSize: 15 }}>
+                            {formatEuro(parseFloat(f.total_amount || f.importo_totale || 0))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+              
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', paddingTop: 8 }}>
+                <button
+                  onClick={() => { setShowFattureModal(false); setSelectedFatture([]); setModalPosition({ x: 0, y: 0 }); }}
+                  style={{ padding: '10px 20px', background: '#64748b', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer' }}
+                >
+                  Annulla
+                </button>
+                <button
+                  onClick={saveFattureCollegate}
+                  disabled={selectedFatture.length === 0}
+                  data-testid="salva-fatture-btn"
+                  style={{ 
+                    padding: '10px 24px', 
+                    background: selectedFatture.length > 0 ? '#10b981' : '#9ca3af', 
+                    color: 'white', 
+                    border: 'none', 
+                    borderRadius: 8, 
+                    cursor: selectedFatture.length > 0 ? 'pointer' : 'not-allowed',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  ✓ Collega {selectedFatture.length} Fattur{selectedFatture.length === 1 ? 'a' : 'e'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
