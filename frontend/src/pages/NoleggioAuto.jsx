@@ -129,8 +129,8 @@ export default function NoleggioAuto() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <select
-            value={annoLocale || ''}
-            onChange={(e) => setAnnoLocale(e.target.value ? parseInt(e.target.value) : null)}
+            value={annoFiltro || ''}
+            onChange={(e) => setAnnoFiltro(e.target.value ? parseInt(e.target.value) : null)}
             style={{
               padding: '10px 15px',
               fontSize: 14,
@@ -156,7 +156,7 @@ export default function NoleggioAuto() {
             background: 'rgba(255,255,255,0.9)',
             color: '#1e3a5f',
           }}>
-            {annoLocale ? `Anno: ${annoLocale}` : 'Storico completo'}
+            {annoFiltro ? `Anno: ${annoFiltro}` : 'Storico completo'}
           </span>
         </div>
       </div>
@@ -349,7 +349,7 @@ export default function NoleggioAuto() {
               </div>
             </div>
             <div>
-              <h3 style={{ margin: '0 0 8px 0', fontSize: 14, color: '#6b7280' }}>Totale {selectedYear}</h3>
+              <h3 style={{ margin: '0 0 8px 0', fontSize: 14, color: '#6b7280' }}>Totale {annoFiltro}</h3>
               <div style={{ fontSize: 24, fontWeight: 'bold', color: '#1e3a5f' }}>
                 {formatEuro(selectedVeicolo.totale_generale)}
               </div>
@@ -510,7 +510,7 @@ export default function NoleggioAuto() {
 
           {categorie.every(cat => (selectedVeicolo[cat.key] || []).length === 0) && (
             <div style={{ textAlign: 'center', padding: 40, color: '#6b7280' }}>
-              Nessuna spesa registrata per {selectedYear}
+              Nessuna spesa registrata per {annoFiltro}
             </div>
           )}
         </div>
@@ -529,7 +529,7 @@ export default function NoleggioAuto() {
         ) : veicoli.length === 0 ? (
           <div style={{ padding: 40, textAlign: 'center' }}>
             <div style={{ fontSize: 48, marginBottom: 16 }}>🚗</div>
-            <div style={{ color: '#6b7280' }}>Nessun veicolo trovato per {selectedYear}</div>
+            <div style={{ color: '#6b7280' }}>Nessun veicolo trovato per {annoFiltro}</div>
             <div style={{ color: '#9ca3af', fontSize: 14, marginTop: 8 }}>
               I veicoli vengono rilevati automaticamente dalle fatture dei fornitori di noleggio
             </div>
