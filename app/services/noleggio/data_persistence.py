@@ -68,16 +68,22 @@ async def salva_costo_noleggio(
     
     # Crea record
     record_id = str(uuid.uuid4())
+    
+    # L'importo può essere in diversi campi, prendi il primo disponibile
+    importo_raw = dati.get("importo") or dati.get("imponibile") or dati.get("totale_imponibile") or 0
+    imponibile_raw = dati.get("imponibile") or dati.get("totale_imponibile") or importo_raw
+    totale_raw = dati.get("totale") or dati.get("totale_con_iva") or (imponibile_raw + float(dati.get("iva", 0) or dati.get("totale_iva", 0)))
+    
     record = {
         "id": record_id,
         "hash": record_hash,
         "targa": targa.upper(),
         "tipo_costo": tipo_costo,
         "data": dati.get("data"),
-        "importo": float(dati.get("importo", 0)),
-        "imponibile": float(dati.get("imponibile", dati.get("importo", 0))),
-        "iva": float(dati.get("iva", 0)),
-        "totale": float(dati.get("totale", dati.get("importo", 0))),
+        "importo": float(imponibile_raw),  # Usa imponibile come importo principale
+        "imponibile": float(imponibile_raw),
+        "iva": float(dati.get("iva", 0) or dati.get("totale_iva", 0)),
+        "totale": float(totale_raw),
         "numero_fattura": dati.get("numero_fattura"),
         "fattura_id": dati.get("fattura_id"),
         "fornitore": dati.get("fornitore"),
