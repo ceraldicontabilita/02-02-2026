@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
-import { formatEuro } from '../lib/utils';
+import { formatEuro, formatDateIT } from '../lib/utils';
 import { X, Mail, FileText, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 
 /**
@@ -197,7 +197,7 @@ export default function F24EmailSync({ onClose }) {
                         </div>
                       </div>
                       <div style={{ fontSize: 11, color: '#64748b', marginTop: 4 }}>
-                        Scadenza: {f24.data_scadenza || 'N/D'} • {f24.tributi} tributi
+                        Scadenza: {formatDateIT(f24.data_scadenza) || 'N/D'} • {f24.tributi} tributi
                       </div>
                     </div>
                   ))}
