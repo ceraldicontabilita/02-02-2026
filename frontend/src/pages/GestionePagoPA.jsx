@@ -180,7 +180,7 @@ export default function GestionePagoPA() {
                 <div>
                   <p className="text-sm text-gray-500">Importo Totale</p>
                   <p className="text-2xl font-bold" data-testid="stats-importo">
-                    €{(stats.importo_totale || 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+                    {formatEuro((stats.importo_totale || 0))}
                   </p>
                 </div>
                 <Download className="h-8 w-8 text-purple-500" />
@@ -403,7 +403,7 @@ export default function GestionePagoPA() {
                         {ricevuta.beneficiario || '-'}
                       </td>
                       <td className="py-3 px-4 text-right font-medium">
-                        €{(ricevuta.importo || 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+                        {formatEuro((ricevuta.importo || 0))}
                       </td>
                       <td className="py-3 px-4 text-center">
                         {ricevuta.movimento_banca_id ? (

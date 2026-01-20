@@ -214,7 +214,7 @@ export default function GestioneInvoiceTronic() {
               <div>
                 <p className="text-sm text-gray-500">Importo Totale</p>
                 <p className="text-2xl font-bold">
-                  €{fatture.reduce((sum, f) => sum + (f.importo || 0), 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+                  {formatEuro(fatture.reduce((sum, f) => sum + (f.importo || 0), 0))}
                 </p>
               </div>
               <Euro className="h-8 w-8 text-purple-500" />
@@ -276,7 +276,7 @@ export default function GestioneInvoiceTronic() {
                         </div>
                       </td>
                       <td className="py-3 px-4 text-right font-medium">
-                        €{(fattura.importo || 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+                        {formatEuro((fattura.importo || 0))}
                       </td>
                       <td className="py-3 px-4 text-center">
                         {fattura.stato === 'elaborata' ? (
