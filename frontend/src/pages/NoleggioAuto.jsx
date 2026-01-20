@@ -1,12 +1,10 @@
 import React, { useState, useEffect, useCallback } from "react";
 import api from "../api";
 import { formatEuro } from "../lib/utils";
-import { useAnnoGlobale } from "../contexts/AnnoContext";
 
 export default function NoleggioAuto() {
-  const { anno: annoGlobale } = useAnnoGlobale();
-  const [annoLocale, setAnnoLocale] = useState(null); // null = tutti gli anni
-  const selectedYear = annoLocale || annoGlobale;
+  // Mostra sempre TUTTI gli anni di default (senza filtro anno)
+  const [annoFiltro, setAnnoFiltro] = useState(null); // null = tutti gli anni
   const [veicoli, setVeicoli] = useState([]);
   const [statistiche, setStatistiche] = useState({});
   const [loading, setLoading] = useState(true);
