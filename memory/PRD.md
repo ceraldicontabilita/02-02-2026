@@ -105,6 +105,17 @@ La pagina **Regole Contabili** (`/app/frontend/src/pages/RegoleContabili.jsx`) �
 
 ## 📋 CHANGELOG RECENTE
 
+### 20 Gennaio 2026 - Sistema Classificazione Verbali Posta
+- ✅ **Servizio Classificazione**: Creato `verbali_classificazione.py` per classificare verbali dalla posta
+- ✅ **Logica Automatica**: Verbali classificati come aziendali/privati in base alla targa
+- ✅ **Collection Nuove**: `verbali_attesa_fattura`, `verbali_privati`
+- ✅ **API Endpoint**: 
+  - `POST /classifica-verbali-posta` - Classifica tutti i verbali
+  - `GET /verbali-attesa-fattura` - Verbali aziendali in attesa
+  - `GET /verbali-privati` - Verbali non aziendali
+  - `POST /riclassifica-verbale` - Riclassifica manualmente
+- 🔶 **IN CORSO**: Classificazione batch dei 23 verbali dalla posta
+
 ### 20 Gennaio 2026 - Sistema Riconciliazione Email ↔ Gestionale
 - ✅ **Indice Documenti**: Indicizzati 1637 fatture + 19 verbali con chiavi di ricerca
 - ✅ **Pattern Matching**: Sistema per estrarre numeri fattura, verbali, targhe, importi, P.IVA
