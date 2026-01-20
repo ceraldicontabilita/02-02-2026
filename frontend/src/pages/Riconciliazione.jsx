@@ -1,7 +1,6 @@
-import React
-import { formatDateIT } from '../lib/utils';, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import api from "../api";
-import { formatEuro } from "../lib/utils";
+import { formatEuro, formatDateIT } from "../lib/utils";
 
 // Stile comune (stesso di OperazioniDaConfermare)
 const pageStyle = {
