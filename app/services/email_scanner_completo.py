@@ -457,18 +457,38 @@ async def get_statistiche_documenti() -> Dict[str, Any]:
     """Statistiche complete dei documenti email."""
     db = Database.get_db()
     
-    stats = {
-        "totale_documenti": await db[COLL_DOCUMENTI_EMAIL].count_documents({}),
-        "per_tipo": {},
-        "associati": await db[COLL_DOCUMENTI_EMAIL].count_documents({"verbale_associato": {"$ne": None}}),
-        "non_associati": await db[COLL_DOCUMENTI_EMAIL].count_documents({"verbale_associato": None})
-    }
+    # Documenti email scaricati
+    totale = await db[COLL_DOCUMENTI_EMAIL].count_documents({})
     
-    # Conta per tipo
+    # Per tipo
+    per_tipo = {}
     pipeline = [
         {"$group": {"_id": "$tipo_cartella", "count": {"$sum": 1}}}
     ]
     async for doc in db[COLL_DOCUMENTI_EMAIL].aggregate(pipeline):
-        stats["per_tipo"][doc["_id"] or "sconosciuto"] = doc["count"]
+        per_tipo[doc["_id"] or "sconosciuto"] = doc["count"]
     
-    return stats
+    # Verbali
+    verbali_fatture = await db["verbali_noleggio_completi"].count_documents({})
+    verbali_con_pdf = await db["verbali_noleggio_completi"].count_documents({"pdf_downloaded": True})
+    verbali_attesa = await db[COLL_DOCUMENTI_EMAIL].count_documents({
+        "tipo_cartella": "verbale_noleggio",
+        "stato": "in_attesa_fattura"
+    })
+    verbali_associati = await db[COLL_DOCUMENTI_EMAIL].count_documents({
+        "tipo_cartella": "verbale_noleggio",
+        "verbale_associato": {"$ne": None}
+    })
+    
+    return {
+        "totale_documenti_email": totale,
+        "per_tipo": per_tipo,
+        "verbali": {
+            "estratti_da_fatture": verbali_fatture,
+            "con_pdf_scaricato": verbali_con_pdf,
+            "in_attesa_fattura": verbali_attesa,
+            "associati": verbali_associati
+        },
+        "esattoriali": per_tipo.get("esattoriale", 0) + per_tipo.get("esattoriale_regionale", 0),
+        "f24_tributi": per_tipo.get("f24_tributi", 0)
+    }
