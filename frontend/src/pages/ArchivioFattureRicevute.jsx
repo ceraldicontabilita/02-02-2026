@@ -657,15 +657,15 @@ export default function ArchivioFatture() {
                                 }
                               }}
                               style={{ 
-                                padding: '8px 14px', 
+                                padding: '10px 18px', 
                                 background: isRiconciliata ? '#d1d5db' : (isPaid && metodoPagEffettivo === 'cassa') ? '#10b981' : '#f0fdf4',
                                 color: isRiconciliata ? '#9ca3af' : (isPaid && metodoPagEffettivo === 'cassa') ? 'white' : '#16a34a',
                                 border: isRiconciliata ? '1px solid #d1d5db' : (isPaid && metodoPagEffettivo === 'cassa') ? 'none' : '2px solid #16a34a', 
                                 borderRadius: 8, 
                                 cursor: isRiconciliata ? 'not-allowed' : (isPaid && metodoPagEffettivo === 'cassa') ? 'default' : 'pointer',
-                                fontSize: 13, 
+                                fontSize: 14, 
                                 fontWeight: 'bold',
-                                minWidth: 70,
+                                minWidth: 90,
                                 transition: 'all 0.2s',
                                 opacity: isRiconciliata ? 0.6 : 1
                               }}
@@ -727,15 +727,15 @@ export default function ArchivioFatture() {
                                 }
                               }}
                               style={{ 
-                                padding: '8px 14px', 
+                                padding: '10px 18px', 
                                 background: isRiconciliata ? '#d1d5db' : (isPaid && metodoPagEffettivo === 'banca') ? '#3b82f6' : '#eff6ff',
                                 color: isRiconciliata ? '#9ca3af' : (isPaid && metodoPagEffettivo === 'banca') ? 'white' : '#2563eb',
                                 border: isRiconciliata ? '1px solid #d1d5db' : (isPaid && metodoPagEffettivo === 'banca') ? 'none' : '2px solid #2563eb', 
                                 borderRadius: 8, 
                                 cursor: isRiconciliata ? 'not-allowed' : (isPaid && metodoPagEffettivo === 'banca') ? 'default' : 'pointer',
-                                fontSize: 13, 
+                                fontSize: 14, 
                                 fontWeight: 'bold',
-                                minWidth: 70,
+                                minWidth: 90,
                                 transition: 'all 0.2s',
                                 opacity: isRiconciliata ? 0.6 : 1
                               }}
