@@ -216,7 +216,7 @@ export default function NoleggioAuto() {
                   }
                   // Mostra modal con lista fatture
                   const dettagli = fatture.map(f => 
-                    `• ${f.fornitore || 'N/D'} - Fatt. ${f.numero || 'N/D'} del ${f.data || 'N/D'}\n  € ${Number(f.importo || 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })} - ${f.descrizione || ''}`
+                    `• ${f.fornitore || 'N/D'} - Fatt. ${f.numero || 'N/D'} del ${f.data || 'N/D'}\n  ${formatEuro(Number(f.importo || 0))} - ${f.descrizione || ''}`
                   ).join('\n\n');
                   alert(`📋 FATTURE NON ASSOCIATE (${fatture.length}):\n\n${dettagli}`);
                 } catch (e) {
