@@ -1,21 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import api from '../api';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
+import { formatEuro, formatDateIT } from '../lib/utils';
 
-const formatEuro = (value) => {
-  if (value === null || value === undefined) return '€ 0,00';
-  return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(value);
-};
-
-const formatDate = (dateStr) => {
-  if (!dateStr) return '-';
-  try {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString('it-IT');
-  } catch {
-    return dateStr;
-  }
-};
+const formatDate = formatDateIT; // Alias per retrocompatibilità
 
 export default function ArchivioBonifici() {
   const { anno } = useAnnoGlobale();
