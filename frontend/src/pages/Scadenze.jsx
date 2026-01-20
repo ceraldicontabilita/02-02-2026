@@ -256,6 +256,144 @@ export default function Scadenze() {
         </div>
       )}
 
+      {/* Sezione Documenti da Riconciliare */}
+      {documentiRiconciliare && (documentiRiconciliare.verbali?.in_attesa_fattura > 0 || documentiRiconciliare.verbali?.estratti_da_fatture - documentiRiconciliare.verbali?.con_pdf_scaricato > 0) && (
+        <div style={{ 
+          background: 'linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%)',
+          borderRadius: 12,
+          padding: 20,
+          marginBottom: 20,
+          color: 'white'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 15 }}>
+            <span style={{ fontSize: 24 }}>🔄</span>
+            <h3 style={{ margin: 0 }}>Documenti da Riconciliare</h3>
+          </div>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
+            {/* Verbali in attesa di fattura */}
+            {documentiRiconciliare.verbali?.in_attesa_fattura > 0 && (
+              <div 
+                onClick={() => window.location.href = '/noleggio-auto'}
+                style={{
+                  background: 'rgba(255,255,255,0.15)',
+                  padding: 15,
+                  borderRadius: 10,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  borderLeft: '4px solid #fbbf24'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.25)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.15)'}
+                data-testid="verbali-attesa-fattura-card"
+              >
+                <div style={{ fontSize: 32, fontWeight: 700 }}>{documentiRiconciliare.verbali.in_attesa_fattura}</div>
+                <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>📧 Verbali in Attesa Fattura</div>
+                <div style={{ fontSize: 11, opacity: 0.8 }}>
+                  PDF arrivati via email, fattura non ancora ricevuta
+                </div>
+              </div>
+            )}
+            
+            {/* Fatture in attesa di verbale (PDF) */}
+            {documentiRiconciliare.verbali?.estratti_da_fatture - documentiRiconciliare.verbali?.con_pdf_scaricato > 0 && (
+              <div 
+                onClick={() => window.location.href = '/noleggio-auto'}
+                style={{
+                  background: 'rgba(255,255,255,0.15)',
+                  padding: 15,
+                  borderRadius: 10,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  borderLeft: '4px solid #34d399'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.25)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.15)'}
+                data-testid="fatture-attesa-verbale-card"
+              >
+                <div style={{ fontSize: 32, fontWeight: 700 }}>
+                  {documentiRiconciliare.verbali.estratti_da_fatture - documentiRiconciliare.verbali.con_pdf_scaricato}
+                </div>
+                <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>📄 Fatture in Attesa Verbale</div>
+                <div style={{ fontSize: 11, opacity: 0.8 }}>
+                  Fattura ricevuta, PDF verbale non ancora scaricato
+                </div>
+              </div>
+            )}
+            
+            {/* Esattoriali da processare */}
+            {documentiRiconciliare.esattoriali > 0 && (
+              <div style={{
+                background: 'rgba(255,255,255,0.15)',
+                padding: 15,
+                borderRadius: 10,
+                borderLeft: '4px solid #f87171'
+              }}>
+                <div style={{ fontSize: 32, fontWeight: 700 }}>{documentiRiconciliare.esattoriali}</div>
+                <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>💰 Cartelle Esattoriali</div>
+                <div style={{ fontSize: 11, opacity: 0.8 }}>
+                  Da verificare e processare
+                </div>
+              </div>
+            )}
+            
+            {/* F24/Tributi */}
+            {documentiRiconciliare.f24_tributi > 0 && (
+              <div style={{
+                background: 'rgba(255,255,255,0.15)',
+                padding: 15,
+                borderRadius: 10,
+                borderLeft: '4px solid #60a5fa'
+              }}>
+                <div style={{ fontSize: 32, fontWeight: 700 }}>{documentiRiconciliare.f24_tributi}</div>
+                <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>📋 F24/Tributi</div>
+                <div style={{ fontSize: 11, opacity: 0.8 }}>
+                  Documenti da posta
+                </div>
+              </div>
+            )}
+          </div>
+          
+          {/* Riepilogo totale */}
+          <div style={{ 
+            marginTop: 15, 
+            paddingTop: 15, 
+            borderTop: '1px solid rgba(255,255,255,0.2)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}>
+            <div style={{ fontSize: 13, opacity: 0.9 }}>
+              Totale documenti scaricati dalla posta: <strong>{documentiRiconciliare.totale_documenti_email}</strong>
+            </div>
+            <button
+              onClick={async () => {
+                try {
+                  await api.post('/api/email-scanner/associa');
+                  loadData();
+                  alert('Associazione completata!');
+                } catch (err) {
+                  alert('Errore: ' + (err.response?.data?.detail || err.message));
+                }
+              }}
+              style={{
+                padding: '8px 16px',
+                background: 'rgba(255,255,255,0.2)',
+                color: 'white',
+                border: '1px solid rgba(255,255,255,0.3)',
+                borderRadius: 8,
+                cursor: 'pointer',
+                fontSize: 13,
+                fontWeight: 600
+              }}
+              data-testid="btn-riconci-automatica"
+            >
+              🔄 Riconcilia Automaticamente
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Riepilogo IVA - Trimestrale e Mensile */}
       {(scadenzeIva || scadenzeIvaMensili) && (
         <div style={{ 
