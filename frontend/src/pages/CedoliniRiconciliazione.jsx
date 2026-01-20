@@ -203,7 +203,7 @@ export default function CedoliniRiconciliazione() {
     };
   }, [cedoliniFiltrati]);
 
-  const fmt = (v) => new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(v || 0);
+  const fmt = (v) => formatEuro(v || 0);
 
   // Determina se cedolino è pagabile in contanti (pre luglio 2018)
   const isPagabileContanti = (c) => {
