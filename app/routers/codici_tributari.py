@@ -133,6 +133,9 @@ async def get_stato_codice_tributo(
                             "descrizione": t.get("descrizione", CODICI_TRIBUTO_INFO.get(codice, {}).get("nome", ""))
                         })
         
+        # ORDINA PER DATA PAGAMENTO (più recenti prima)
+        pagamenti.sort(key=lambda x: x.get("data_pagamento") or "", reverse=True)
+        
         # Calcola totali
         totale_debito = sum(p["importo_debito"] for p in pagamenti)
         totale_credito = sum(p["importo_credito"] for p in pagamenti)
