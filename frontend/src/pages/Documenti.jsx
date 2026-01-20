@@ -1231,13 +1231,13 @@ export default function Documenti() {
                         const data = doc.extracted_data;
                         if (!data) return '-';
                         if (data.periodo?.mese && data.periodo?.anno) return `${data.periodo.mese}/${data.periodo.anno}`;
-                        if (data.data_versamento) return data.data_versamento;
-                        if (data.data_operazione) return data.data_operazione;
-                        if (data.data_verbale) return data.data_verbale;
-                        if (data.data_notifica) return data.data_notifica;
-                        if (data.periodo?.da) return `${data.periodo.da} - ${data.periodo.a || ''}`;
-                        if (data.data_fattura) return data.data_fattura;
-                        if (data.data_documento) return data.data_documento;
+                        if (data.data_versamento) return formatDateIT(data.data_versamento);
+                        if (data.data_operazione) return formatDateIT(data.data_operazione);
+                        if (data.data_verbale) return formatDateIT(data.data_verbale);
+                        if (data.data_notifica) return formatDateIT(data.data_notifica);
+                        if (data.periodo?.da) return `${formatDateIT(data.periodo.da)} - ${data.periodo.a ? formatDateIT(data.periodo.a) : ''}`;
+                        if (data.data_fattura) return formatDateIT(data.data_fattura);
+                        if (data.data_documento) return formatDateIT(data.data_documento);
                         return '-';
                       };
                       
