@@ -1,7 +1,7 @@
 # PRD – TechRecon Accounting System
 ## Product Requirements Document (PRD)
 ## TechRecon Accounting System – Versione Super Articolata
-### Ultimo aggiornamento: 20 Gennaio 2026
+### Ultimo aggiornamento: 20 Gennaio 2026 (Sessione 2 - Fix IVA + Codici Tributari)
 
 ---
 
