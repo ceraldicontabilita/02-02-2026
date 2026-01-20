@@ -449,22 +449,44 @@ export default function NoleggioAuto() {
                             </td>
                             <td style={{ padding: '8px 10px', textAlign: 'center' }}>
                               {s.fattura_id ? (
-                                <a 
-                                  href={`/api/fatture-ricevute/fattura/${s.fattura_id}/view-assoinvoice`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  style={{ 
-                                    padding: '4px 8px', 
-                                    background: '#dbeafe', 
-                                    color: '#2563eb', 
-                                    borderRadius: 4, 
-                                    textDecoration: 'none',
-                                    fontSize: 11
-                                  }}
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  📄 Vedi
-                                </a>
+                                <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
+                                  <a 
+                                    href={`/api/fatture-ricevute/fattura/${s.fattura_id}/view-assoinvoice`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{ 
+                                      padding: '4px 8px', 
+                                      background: '#dbeafe', 
+                                      color: '#2563eb', 
+                                      borderRadius: 4, 
+                                      textDecoration: 'none',
+                                      fontSize: 11
+                                    }}
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    📄 Fattura
+                                  </a>
+                                  {cat.key === 'verbali' && s.numero_verbale && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        // Apri modale dettaglio verbale
+                                        window.open(`/verbali-noleggio/${s.numero_verbale}`, '_blank');
+                                      }}
+                                      style={{ 
+                                        padding: '4px 8px', 
+                                        background: '#fef3c7', 
+                                        color: '#92400e', 
+                                        borderRadius: 4, 
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        fontSize: 11
+                                      }}
+                                    >
+                                      ⚠️ PDF
+                                    </button>
+                                  )}
+                                </div>
                               ) : (
                                 <span style={{ color: '#9ca3af', fontSize: 11 }}>-</span>
                               )}
