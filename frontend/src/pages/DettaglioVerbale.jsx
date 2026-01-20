@@ -238,11 +238,27 @@ export default function DettaglioVerbale() {
             {verbale?.pdf_disponibili && verbale.pdf_disponibili.length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {verbale.pdf_disponibili.map((pdf, idx) => (
-                  <a 
+                  <button 
                     key={idx}
-                    href={`/api/verbali-noleggio/pdf/${verbale.numero_verbale}?indice=${pdf.indice}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    onClick={async () => {
+                      try {
+                        const res = await api.get(`/api/verbali-noleggio/pdf/${verbale.numero_verbale}?indice=${pdf.indice}`);
+                        if (res.data?.content_base64) {
+                          const byteCharacters = atob(res.data.content_base64);
+                          const byteNumbers = new Array(byteCharacters.length);
+                          for (let i = 0; i < byteCharacters.length; i++) {
+                            byteNumbers[i] = byteCharacters.charCodeAt(i);
+                          }
+                          const byteArray = new Uint8Array(byteNumbers);
+                          const blob = new Blob([byteArray], { type: 'application/pdf' });
+                          const url = window.URL.createObjectURL(blob);
+                          window.open(url, '_blank');
+                        }
+                      } catch (err) {
+                        console.error('Errore download PDF:', err);
+                        alert('Errore durante il download del PDF');
+                      }
+                    }}
                     style={{ 
                       display: 'flex',
                       alignItems: 'center',
@@ -252,15 +268,19 @@ export default function DettaglioVerbale() {
                       color: '#166534', 
                       borderRadius: 8, 
                       textDecoration: 'none',
-                      border: '1px solid #bbf7d0'
+                      border: '1px solid #bbf7d0',
+                      cursor: 'pointer',
+                      width: '100%',
+                      textAlign: 'left'
                     }}
+                    data-testid={`pdf-download-${idx}`}
                   >
                     <span style={{ fontSize: 24 }}>📄</span>
                     <div>
                       <div style={{ fontWeight: '600' }}>{pdf.filename}</div>
                       <div style={{ fontSize: 11, opacity: 0.8 }}>{Math.round((pdf.size || 0) / 1024)} KB</div>
                     </div>
-                  </a>
+                  </button>
                 ))}
               </div>
             ) : (
