@@ -1468,7 +1468,7 @@ export default function Fornitori() {
                           }}>
                             <span style={{ color: '#6b7280' }}>{m.mese_nome}</span>
                             <span style={{ fontWeight: 600, color: '#1f2937' }}>
-                              {formatEuro(m.totale?)} 
+                              {formatEuro(m.totale || 0)} 
                               <span style={{ fontWeight: 400, color: '#9ca3af', marginLeft: '8px' }}>({m.numero_fatture} fatt.)</span>
                             </span>
                           </div>
