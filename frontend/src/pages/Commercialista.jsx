@@ -533,7 +533,7 @@ export default function Commercialista() {
       
       doc.setFontSize(12);
       doc.setTextColor(76, 175, 80);
-      doc.text(`Carnet ${carnet.id} - ${carnet.assegni.length} assegni - € ${carnet.totale)}`, 14, currentY);
+      doc.text(`Carnet ${carnet.id} - ${carnet.assegni.length} assegni - ${formatEuroStr(carnet.totale)}`, 14, currentY);
       currentY += 8;
       
       // Tabella assegni
@@ -541,7 +541,7 @@ export default function Commercialista() {
         a.numero || '-',
         a.data || '-',
         a.beneficiario || '-',
-        `${formatEuroStr(a.importo)}}`,
+        formatEuroStr(a.importo),
         a.stato || '-'
       ]);
       
