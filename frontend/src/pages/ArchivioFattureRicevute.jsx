@@ -292,16 +292,11 @@ export default function ArchivioFatture() {
 
   // ==================== HELPERS ====================
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(amount || 0);
-  };
-
-  const formatDate = (dateStr) => {
-    if (!dateStr) return '-';
-    try {
-      return new Date(dateStr).toLocaleDateString('it-IT');
-    } catch { return dateStr; }
-  };
+  // Usa formatEuro da utils.js (già importato)
+  const formatCurrency = formatEuro;
+  
+  // Usa formatDateIT da utils.js
+  const formatDate = formatDateIT;
 
   const isScadenzaPassata = (dataScadenza) => {
     if (!dataScadenza) return false;
