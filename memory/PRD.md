@@ -54,31 +54,6 @@ I dati estratti dalle fatture venivano calcolati "al volo" senza essere salvati,
 
 ---
 
-## 🔢 REGOLA FONDAMENTALE DI FORMATTAZIONE
-
-**TUTTE LE DATE E VALUTE DEVONO ESSERE IN FORMATO ITALIANO**
-
-### Date: formato GG/MM/AAAA
-- Esempio corretto: `25/01/2026`
-- Esempio SBAGLIATO: `01/25/2026` (americano), `2026-01-25` (ISO)
-- Usare SEMPRE: `formatDateIT()` da `/src/lib/utils.js`
-
-### Valuta: formato € 0.000,00
-- Esempio corretto: `€ 1.234,56`
-- Esempio SBAGLIATO: `€ 1234.56`, `1,234.56`
-- Punto (.) per separatore migliaia
-- Virgola (,) per decimali
-- Usare SEMPRE: `formatEuro()` da `/src/lib/utils.js`
-
-### File utility: `/app/frontend/src/lib/utils.js`
-```javascript
-import { formatDateIT, formatEuro, formatDateTimeIT } from '../lib/utils';
-```
-
-**APPLICARE IN TUTTE LE PAGINE, SENZA ECCEZIONI!**
-
----
-
 ## 🎨 REGOLA FONDAMENTALE DI STILE UI
 
 **TUTTE LE PAGINE DEVONO SEGUIRE LO STILE DELLA DASHBOARD**
