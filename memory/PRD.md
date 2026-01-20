@@ -105,6 +105,13 @@ La pagina **Regole Contabili** (`/app/frontend/src/pages/RegoleContabili.jsx`) �
 
 ## 📋 CHANGELOG RECENTE
 
+### 20 Gennaio 2026 - Correzione Globale Formati Data e Valuta (P2 COMPLETATO)
+- ✅ **Formato Valuta Italiano**: Applicato `formatEuro()` da utils.js in tutti i file frontend
+- ✅ **Formato**: `€ 0.000,00` (punto per migliaia, virgola per decimali)
+- ✅ **File Corretti**: ArchivioBonifici, ArchivioFattureRicevute, Cedolini, CedoliniRiconciliazione, Fornitori, Inventario, NoleggioAuto, ImportUnificato, Documenti, TFR, e altri
+- ✅ **Centralizzazione**: Tutte le formattazioni ora usano `formatEuro()` e `formatDateIT()` da `/app/frontend/src/lib/utils.js`
+- ⚠️ **Eccezioni**: Alcune formattazioni in PDF generation (jspdf) rimangono inline per compatibilità
+
 ### 20 Gennaio 2026 - Fix Noleggio Auto - Mostra Tutti gli Anni
 - ✅ **Bug Fix Critico**: I dati erano filtrati per anno corrente (2026), nascondendo i verbali/costi del 2023-2025
 - ✅ **Modifica Backend**: `scan_fatture_noleggio()` ora carica TUTTI gli anni quando `anno=None`
