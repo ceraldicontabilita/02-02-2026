@@ -60,24 +60,33 @@ def decode_header_value(value: str) -> str:
 
 def classifica_cartella(nome: str) -> str:
     """Classifica il tipo di cartella email."""
-    if nome.startswith('B') and len(nome) >= 11:
-        try:
-            int(nome[1:12])
+    # Verbali noleggio: B + 10-12 cifre oppure A/T/S + 10-12 cifre
+    if len(nome) >= 11:
+        if nome[0] in ['B', 'A', 'T', 'S'] and nome[1:].replace(' ', '').isdigit():
             return "verbale_noleggio"
-        except:
-            pass
+        # Pattern con spazi: A20111419225
+        if re.match(r'^[BATS]\d{10,12}$', nome):
+            return "verbale_noleggio"
     
+    # Esattoriali Agenzia Entrate Riscossione (071)
     if nome.startswith('071'):
         return "esattoriale"
     
+    # Esattoriali Regionali (371)
     if nome.startswith('371'):
         return "esattoriale_regionale"
     
+    # F24 e tributi DMRA
     if 'DMRA' in nome or nome.startswith('5100'):
         return "f24_tributi"
     
+    # Documenti numerici lunghi
     if re.match(r'^\d{10,}$', nome):
         return "documento_numerico"
+    
+    # 730 dichiarazioni
+    if '730' in nome:
+        return "dichiarazione_730"
     
     return "altro"
 
