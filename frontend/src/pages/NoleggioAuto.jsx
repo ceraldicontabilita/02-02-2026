@@ -420,7 +420,7 @@ export default function NoleggioAuto() {
                             {cat.key === 'verbali' && (
                               <td style={{ padding: '8px 10px', fontSize: 11, fontFamily: 'monospace', color: s.numero_verbale ? '#dc2626' : '#9ca3af' }}>
                                 {s.numero_verbale || "-"}
-                                {s.data_verbale && <div style={{ fontSize: 10, color: '#6b7280' }}>{s.data_verbale}</div>}
+                                {s.data_verbale && <div style={{ fontSize: 10, color: '#6b7280' }}>{formatDate(s.data_verbale)}</div>}
                               </td>
                             )}
                             <td style={{ padding: '8px 10px' }}>
