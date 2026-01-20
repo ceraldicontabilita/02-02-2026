@@ -627,54 +627,86 @@ function PrimaNotaDesktop() {
             <TinyStatCard title="Fatture" value={formatEuro(totaleFattureCassa)} color="#ef4444" />
           </div>
 
-          {/* Chiusure Giornaliere Serali - Compatte */}
-          <div style={{ background: '#f8fafc', borderRadius: 10, padding: 14, marginBottom: 16, border: '1px solid #e2e8f0' }}>
-            <h3 style={{ margin: '0 0 12px 0', fontSize: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span>⚡</span> Chiusure Giornaliere
-            </h3>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
-              {/* Corrispettivo */}
-              <CompactEntryCard title="📊 Corrispettivo" color="#f59e0b">
-                <input type="date" value={corrispettivo.data} onChange={(e) => setCorrispettivo({...corrispettivo, data: e.target.value})} style={inputStyleCompact} />
-                <input type="number" step="0.01" placeholder="€" value={corrispettivo.importo} onChange={(e) => setCorrispettivo({...corrispettivo, importo: e.target.value})} style={inputStyleCompact} />
-                <button onClick={handleSaveCorrispettivo} disabled={savingCorrisp} style={buttonStyleCompact('#92400e', savingCorrisp)}>
-                  {savingCorrisp ? '⏳' : '💾'}
-                </button>
-              </CompactEntryCard>
+          {/* Chiusure Giornaliere - Menu Compatto a Tendina */}
+          <div style={{ background: '#f8fafc', borderRadius: 10, padding: 12, marginBottom: 16, border: '1px solid #e2e8f0' }}>
+            <details style={{ cursor: 'pointer' }}>
+              <summary style={{ 
+                fontSize: 14, 
+                fontWeight: 'bold', 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 8,
+                padding: '4px 0',
+                userSelect: 'none'
+              }}>
+                <span>⚡</span> Chiusure Giornaliere
+                <span style={{ 
+                  marginLeft: 'auto', 
+                  fontSize: 11, 
+                  background: '#dbeafe', 
+                  color: '#1d4ed8', 
+                  padding: '2px 8px', 
+                  borderRadius: 4 
+                }}>
+                  Clicca per espandere
+                </span>
+              </summary>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginTop: 12 }}>
+                {/* Corrispettivo - Ultra compatto */}
+                <div style={{ background: 'white', borderRadius: 8, padding: 10, borderLeft: '3px solid #f59e0b' }}>
+                  <div style={{ fontSize: 11, fontWeight: 'bold', color: '#92400e', marginBottom: 6 }}>📊 Corrispettivo</div>
+                  <div style={{ display: 'flex', gap: 4 }}>
+                    <input type="date" value={corrispettivo.data} onChange={(e) => setCorrispettivo({...corrispettivo, data: e.target.value})} style={{ ...inputStyleCompact, flex: 1, padding: '4px 6px', fontSize: 11 }} />
+                    <input type="number" step="0.01" placeholder="€" value={corrispettivo.importo} onChange={(e) => setCorrispettivo({...corrispettivo, importo: e.target.value})} style={{ ...inputStyleCompact, width: 70, padding: '4px 6px', fontSize: 11 }} />
+                    <button onClick={handleSaveCorrispettivo} disabled={savingCorrisp} style={{ ...buttonStyleCompact('#92400e', savingCorrisp), padding: '4px 8px', minWidth: 32 }}>
+                      {savingCorrisp ? '⏳' : '💾'}
+                    </button>
+                  </div>
+                </div>
 
-              {/* POS - Campo Unificato */}
-              <CompactEntryCard title="💳 POS" color="#3b82f6">
-                <input type="date" value={pos.data} onChange={(e) => setPos({...pos, data: e.target.value})} style={inputStyleCompact} />
-                <input type="number" step="0.01" placeholder="€ Totale POS" value={pos.pos1} onChange={(e) => setPos({...pos, pos1: e.target.value, pos2: '', pos3: ''})} style={inputStyleCompact} />
-                <button onClick={handleSavePos} disabled={savingPos} style={buttonStyleCompact('#1d4ed8', savingPos)}>
-                  {savingPos ? '⏳' : '💾'}
-                </button>
-              </CompactEntryCard>
+                {/* POS - Ultra compatto */}
+                <div style={{ background: 'white', borderRadius: 8, padding: 10, borderLeft: '3px solid #3b82f6' }}>
+                  <div style={{ fontSize: 11, fontWeight: 'bold', color: '#1d4ed8', marginBottom: 6 }}>💳 POS</div>
+                  <div style={{ display: 'flex', gap: 4 }}>
+                    <input type="date" value={pos.data} onChange={(e) => setPos({...pos, data: e.target.value})} style={{ ...inputStyleCompact, flex: 1, padding: '4px 6px', fontSize: 11 }} />
+                    <input type="number" step="0.01" placeholder="€" value={pos.pos1} onChange={(e) => setPos({...pos, pos1: e.target.value, pos2: '', pos3: ''})} style={{ ...inputStyleCompact, width: 70, padding: '4px 6px', fontSize: 11 }} />
+                    <button onClick={handleSavePos} disabled={savingPos} style={{ ...buttonStyleCompact('#1d4ed8', savingPos), padding: '4px 8px', minWidth: 32 }}>
+                      {savingPos ? '⏳' : '💾'}
+                    </button>
+                  </div>
+                </div>
 
-              {/* Versamento */}
-              <CompactEntryCard title="🏦 Versamento" color="#10b981">
-                <input type="date" value={versamento.data} onChange={(e) => setVersamento({...versamento, data: e.target.value})} style={inputStyleCompact} />
-                <input type="number" step="0.01" placeholder="€" value={versamento.importo} onChange={(e) => setVersamento({...versamento, importo: e.target.value})} style={inputStyleCompact} />
-                <button onClick={handleSaveVersamento} disabled={savingVers} style={buttonStyleCompact('#059669', savingVers)}>
-                  {savingVers ? '⏳' : '💾'}
-                </button>
-              </CompactEntryCard>
+                {/* Versamento - Ultra compatto */}
+                <div style={{ background: 'white', borderRadius: 8, padding: 10, borderLeft: '3px solid #10b981' }}>
+                  <div style={{ fontSize: 11, fontWeight: 'bold', color: '#059669', marginBottom: 6 }}>🏦 Versamento</div>
+                  <div style={{ display: 'flex', gap: 4 }}>
+                    <input type="date" value={versamento.data} onChange={(e) => setVersamento({...versamento, data: e.target.value})} style={{ ...inputStyleCompact, flex: 1, padding: '4px 6px', fontSize: 11 }} />
+                    <input type="number" step="0.01" placeholder="€" value={versamento.importo} onChange={(e) => setVersamento({...versamento, importo: e.target.value})} style={{ ...inputStyleCompact, width: 70, padding: '4px 6px', fontSize: 11 }} />
+                    <button onClick={handleSaveVersamento} disabled={savingVers} style={{ ...buttonStyleCompact('#059669', savingVers), padding: '4px 8px', minWidth: 32 }}>
+                      {savingVers ? '⏳' : '💾'}
+                    </button>
+                  </div>
+                </div>
 
-              {/* Movimento */}
-              <CompactEntryCard title="✏️ Altro" color="#f97316">
-                <input type="date" value={movimento.data} onChange={(e) => setMovimento({...movimento, data: e.target.value})} style={inputStyleCompact} />
-                <select value={movimento.tipo} onChange={(e) => setMovimento({...movimento, tipo: e.target.value})} style={inputStyleCompact}>
-                  <option value="uscita">Uscita</option>
-                  <option value="entrata">Entrata</option>
-                </select>
-                <input type="number" step="0.01" placeholder="€" value={movimento.importo} onChange={(e) => setMovimento({...movimento, importo: e.target.value})} style={inputStyleCompact} />
-                <input type="text" placeholder="Desc." value={movimento.descrizione} onChange={(e) => setMovimento({...movimento, descrizione: e.target.value})} style={inputStyleCompact} />
-                <button onClick={handleSaveMovimento} disabled={savingMov} style={buttonStyleCompact('#ea580c', savingMov)}>
-                  {savingMov ? '⏳' : '💾'}
-                </button>
-              </CompactEntryCard>
-            </div>
+                {/* Movimento Altro - Ultra compatto */}
+                <div style={{ background: 'white', borderRadius: 8, padding: 10, borderLeft: '3px solid #f97316' }}>
+                  <div style={{ fontSize: 11, fontWeight: 'bold', color: '#ea580c', marginBottom: 6 }}>✏️ Altro</div>
+                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                    <input type="date" value={movimento.data} onChange={(e) => setMovimento({...movimento, data: e.target.value})} style={{ ...inputStyleCompact, width: 100, padding: '4px 6px', fontSize: 11 }} />
+                    <select value={movimento.tipo} onChange={(e) => setMovimento({...movimento, tipo: e.target.value})} style={{ ...inputStyleCompact, width: 60, padding: '4px 4px', fontSize: 10 }}>
+                      <option value="uscita">-</option>
+                      <option value="entrata">+</option>
+                    </select>
+                    <input type="number" step="0.01" placeholder="€" value={movimento.importo} onChange={(e) => setMovimento({...movimento, importo: e.target.value})} style={{ ...inputStyleCompact, width: 60, padding: '4px 6px', fontSize: 11 }} />
+                    <input type="text" placeholder="Desc." value={movimento.descrizione} onChange={(e) => setMovimento({...movimento, descrizione: e.target.value})} style={{ ...inputStyleCompact, flex: 1, padding: '4px 6px', fontSize: 11, minWidth: 80 }} />
+                    <button onClick={handleSaveMovimento} disabled={savingMov} style={{ ...buttonStyleCompact('#ea580c', savingMov), padding: '4px 8px', minWidth: 32 }}>
+                      {savingMov ? '⏳' : '💾'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </details>
           </div>
 
           {/* Filter - Bottoni Mesi */}
