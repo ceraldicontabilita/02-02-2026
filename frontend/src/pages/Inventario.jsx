@@ -350,7 +350,7 @@ export default function Inventario() {
                         fontWeight: 600,
                         color: prod.prezzo_per_kg ? '#15803d' : '#92400e'
                       }}>
-                        {prod.prezzo_per_kg ? `€${prod.prezzo_per_kg.toFixed(2)}/kg` : 'Prezzo N/D'}
+                        {prod.prezzo_per_kg ? `${formatEuro(prod.prezzo_per_kg)}/kg` : 'Prezzo N/D'}
                       </div>
                     </div>
                   ))}
