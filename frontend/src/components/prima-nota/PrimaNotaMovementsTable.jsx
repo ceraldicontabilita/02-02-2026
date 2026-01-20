@@ -229,7 +229,7 @@ function MovementRow({ mov, idx, activeTab, formatCurrency, onDelete, onEdit, ru
       background: idx % 2 === 0 ? 'white' : '#fafafa'
     }}>
       <td style={{ padding: 12, fontFamily: 'monospace' }}>
-        {new Date(mov.data).toLocaleDateString('it-IT')}
+        {formatDateIT(mov.data)}
       </td>
       <td style={{ padding: 12, textAlign: 'center' }}>
         <span style={{
@@ -334,7 +334,7 @@ function MobileMovementCard({ mov, formatCurrency, onDelete, onEdit }) {
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
         <span style={{ fontFamily: 'monospace', fontSize: 13 }}>
-          {new Date(mov.data).toLocaleDateString('it-IT')}
+          {formatDateIT(mov.data)}
         </span>
         <span style={{
           padding: '3px 8px',
