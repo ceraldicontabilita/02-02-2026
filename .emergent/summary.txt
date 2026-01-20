@@ -1,156 +1,165 @@
 <analysis>**original_problem_statement:**
-L'utente ha espresso una serie di richieste urgenti e complesse per evolvere il sistema gestionale, con un focus sul ciclo passivo, la prima nota e l'esperienza utente.
+L'utente ha inizialmente segnalato un bug nella pagina  che impediva la modifica del metodo di pagamento e ha richiesto di ingrandire i relativi pulsanti. Successivamente, ha sollevato un problema critico di dati mancanti nella sezione Noleggio Auto (verbali, riparazioni, bolli), richiedendo una soluzione per garantire la persistenza e la sicurezza dei dati.
 
-**Requisiti Principali:**
-1.  **Ciclo Passivo Automatizzato da Email**: Quando il sistema scarica email, deve estrarre Fornitore, Numero Fattura, Importo e Data. Questi dati devono popolare  come record **provvisorio**.
-2.  **Scelta Metodo di Pagamento**: Dal record provvisorio in , l'utente deve poter scegliere Cassa o Banca. Questa scelta deve creare automaticamente la registrazione corrispondente in  o .
-3.  **Sovrascrittura con XML**: Il dato letto da email è provvisorio. Quando viene caricato il file XML della fattura, questo deve **sovrascrivere** il record provvisorio (match su P.IVA + Numero Fattura), non creare un duplicato.
-4.  **Logica Corrispettivi e POS**: Anche le registrazioni manuali di Corrispettivi e POS in  sono **provvisorie**. Quando viene caricato l'XML dei corrispettivi, deve **sovrascrivere** i dati manuali di Corrispettivi e POS per la stessa **DATA**.
-5.  **Refactoring UI **:
-    *   Unificare i tre campi di input del POS in un unico campo.
-    *   Riscrivere la pagina  con la stessa grafica della pagina  (UI compatta, colori specifici).
-    *   Rendere più compatta la card Versamenti, usando un menu a tendina se necessario.
-6.  **Spostamento Movimenti**:
-    *   In  e , deve esserci la possibilità di spostare un movimento da un registro all'altro (es. da Cassa a Banca).
-    *   Questa operazione deve aggiornare anche lo stato della fattura collegata in .
-    *   L'azione di spostamento deve essere unificata con la selezione del metodo di pagamento (se un movimento è in Cassa e l'utente clicca Banca, deve spostarsi automaticamente).
+Le richieste si sono evolute in un complesso sistema di gestione del ciclo passivo e dei documenti, che include:
+1.  **Correzione Formati**: Standardizzare l'intera applicazione per utilizzare il formato data  e valuta , applicando la correzione retroattivamente dal 2018.
+2.  **Gestione Verbali Completa**: Riscansionare tutte le fatture dal 2018 per estrarre e associare ogni costo (verbali, riparazioni, bolli, extra) ai veicoli.
+3.  **Riconciliazione Automatica da Email**: Per ogni verbale trovato in una fattura XML, il sistema deve:
+    *   Cercare automaticamente nella casella di posta dell'utente (Gmail).
+    *   Scaricare il PDF del verbale corrispondente.
+    *   Associare il PDF a tutte le entità collegate: verbale, auto, dipendente, contratto, fattura e pagamento bancario.
+4.  **Operazioni Sospese**: Creare una sezione per i verbali trovati nelle fatture ma non ancora riconciliati con un estratto conto (bancario o carta di credito). Una volta trovato il pagamento, il verbale deve essere rimosso da questa lista.
+5.  **Indicizzazione e Ricerca Globale**: Creare un indice di **tutti i documenti** presenti nel gestionale (fatture, verbali, contratti, ecc.). Il sistema deve scansionare costantemente e interamente la casella di posta, cercare corrispondenze con l'indice e associare automaticamente i file trovati (PDF, etc.) ai documenti pertinenti, archiviandoli in modo sicuro.
+6.  **Classificazione Verbali Senza Fattura**: Per i verbali trovati via email ma non ancora presenti in una fattura, il sistema deve leggerne il contenuto (es. targa), classificarli come in attesa di fattura (se la targa è aziendale) o da verificare (se la targa è sconosciuta/privata) e gestirli in sezioni apposite.
 
 **User's preferred language**: Italiano
 
 **what currently exists?**
-L'agente ha implementato con successo gran parte delle richieste urgenti dell'utente.
-- Sono stati rimossi tutti i .
-- La pagina di Dettaglio Fattura è stata eliminata.
-- Sono stati creati gli endpoint e i componenti UI per l'aggiornamento massivo dei metodi di pagamento.
-- **Logica Dati Provvisori**: Il backend è stato aggiornato per trattare i dati manuali di Corrispettivi/POS come provvisori, che vengono sovrascritti dall'upload dell'XML corrispondente (match per data). Anche l'import delle fatture XML è stato modificato per rispettare le scelte manuali dell'utente sul metodo di pagamento.
-- **UI Prima Nota**: La pagina  è stata parzialmente modificata: i campi POS sono stati unificati in uno solo e sono stati aggiunti i pulsanti per spostare i movimenti tra Cassa e Banca. Il backend per questa funzionalità () è stato creato e testato con successo.
-- L'agente ha identificato che la richiesta dell'utente di modificare Prima Nota Unificata si riferisce in realtà alla pagina , poiché il file  non è utilizzato.
+L'agente ha risolto il bug sulla pagina  e ingrandito i pulsanti come richiesto. Ha identificato che i dati del noleggio mancavano perché venivano calcolati dinamicamente anziché essere persistiti; ha quindi creato un sistema di persistenza per i costi del noleggio () e ha eseguito una migrazione per popolarlo con i dati storici.
+
+È stato implementato un sistema avanzato per la gestione dei verbali:
+-   Scansione delle fatture per estrarre i dati dei verbali e salvarli nella collection .
+-   Creazione di una pagina di dettaglio () per visualizzare le informazioni di un singolo verbale.
+-   Implementazione della funzionalità per scaricare i PDF dei verbali dalla posta Gmail.
+-   Creazione di un servizio generico () per indicizzare i documenti e riconciliarli con le email.
+-   Refactoring dell'interfaccia della pagina  per renderla più compatta.
+
+L'agente ha scoperto che i dati dei verbali sono frammentati tra diverse collection e anni fiscali (2023, 2024, 2025), il che spiegava perché l'utente non visualizzava tutti i dati attesi. Infine, ha iniziato a implementare il sistema di classificazione per i verbali trovati via email che non hanno una fattura corrispondente.
 
 **Last working item**:
--   **Last item agent was working**: L'agente stava lavorando sulla richiesta dell'utente di testare la nuova logica dei corrispettivi e di uniformare l'UI della pagina  allo stile della pagina . Aveva iniziato il test creando record manuali di corrispettivi/POS e stava investigando come procedere con il refactoring dell'UI dopo aver capito che il file corretto da modificare è  e non .
--   **Status**: IN PROGRESS
--   **Agent Testing Done**: N (Il test della logica di sovrascrittura XML è iniziato ma non completato).
--   **Which testing method agent to use?**: both (Backend per la logica di sovrascrittura XML; Frontend per il restyling UI).
+-   **Last item agent was working**: L'agente stava implementando il sistema di classificazione per i verbali scaricati dalla posta ma non ancora associati a una fattura. Ha creato il servizio  ma si è bloccato a causa di continui errori di connessione al database () e altri problemi di stabilità del backend che gli hanno impedito di eseguire gli script di classificazione.
+-   **Status**: BLOCKED
+-   **Agent Testing Done**: N
+-   **Which testing method agent to use?**: backend testing agent (per validare gli script di classificazione e le operazioni sul DB) e successivamente frontend testing agent (per la nuova UI di visualizzazione).
 -   **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
--   **Issue 1: (P0) Testare la logica di sovrascrittura dei dati provvisori.**
--   **Issue 2: (P0) Completare il restyling della pagina .**
--   **Issue 3: (P1) Implementare il parsing delle fatture dalle email.**
--   **Issue 4: (P1) Completare il refactoring dei router backend (, ).**
--   **Issue 5: (P2) Rispondere alla vecchia domanda dell'utente sull'origine della data di scadenza delle fatture.**
+-   **Issue 1: (P0) Risolvere l'instabilità del backend e i problemi di connessione al database.**
+-   **Issue 2: (P0) Completare il sistema di classificazione dei verbali.**
+-   **Issue 3: (P1) Implementare l'interfaccia utente per la gestione dei verbali classificati.**
+-   **Issue 4: (P1) Rendere la riconciliazione email un processo in background.**
+-   **Issue 5: (P2) Standardizzare globalmente i formati di data e valuta.**
+-   **Issue 6: (P2) Testare la logica di sovrascrittura dei corrispettivi tramite XML.**
+-   **Issue 7: (P2) Eseguire il refactoring dei router backend (, ).**
 
 **Issues Detail**:
--   **Issue 1: Testare la logica di sovrascrittura dei dati provvisori**
-    -   **Attempted fixes**: L'agente ha creato i record manuali (provvisori) per Corrispettivi e POS tramite API.
+-   **Issue 1: Risolvere l'instabilità del backend e i problemi di connessione al database**
+    -   **Attempted fixes**: Riavvio del backend, tentativi di connessione con .
     -   **Next debug checklist**:
-        1.  Creare un file  di esempio che contenga dati per la stessa data dei record manuali.
-        2.  Chiamare l'endpoint  con il file di test.
-        3.  Verificare nel database (collection ) che i record con  e  per quella data siano stati rimossi.
-        4.  Verificare che siano stati creati i nuovi record con .
-    -   **Why fix this issue and what will be achieved with the fix?**: È una logica di business critica richiesta dall'utente per garantire che i dati finali provengano solo da fonti ufficiali (XML).
+        1.  Verificare  e  per assicurarsi che  e  () siano corretti.
+        2.  Controllare i log di supervisor () per errori all'avvio.
+        3.  Assicurarsi che il client Pymongo in  includa le opzioni TLS/SSL corrette (es. ).
+        4.  Isolare il problema testando la connessione al DB con uno script Python semplice dalla shell, usando le stesse credenziali.
+    -   **Why fix this issue and what will be achieved with the fix?**: È un bloccante critico per qualsiasi sviluppo sul backend, inclusa la funzionalità di classificazione dei verbali.
     -   **Status**: IN PROGRESS
+    -   **Is recurring issue?**: Y
+    -   **Should Test frontend/backend/both after fix?**: backend
+    -   **Blocked on other issue**: No.
+
+-   **Issue 2: Completare il sistema di classificazione dei verbali**
+    -   **Attempted fixes**: Creato il servizio  e gli endpoint API. I tentativi di esecuzione sono falliti a causa di timeout e problemi di connessione al DB.
+    -   **Next debug checklist**:
+        1.  Una volta stabilizzata la connessione al DB, rendere la logica di classificazione in  più efficiente.
+        2.  Il processo deve leggere i verbali dalla collection  (quelli scaricati da email), estrarre la targa, confrontarla con la lista di veicoli aziendali e inserirli nelle collection corrette ( o ).
+        3.  Creare un endpoint API affidabile per avviare questa classificazione in modo massivo.
+    -   **Why fix this issue and what will be achieved with the fix?**: È una richiesta esplicita dell'utente per gestire la discrepanza tra i documenti ricevuti via email e quelli presenti nelle fatture.
+    -   **Status**: BLOCKED
     -   **Is recurring issue?**: N
     -   **Should Test frontend/backend/both after fix?**: backend
-    -   **Blocked on other issue**: No.
-
--   **Issue 2: Completare il restyling della pagina **
-    -   **Next debug checklist**:
-        1.  Analizzare lo stile di  (header, card, colori).
-        2.  Applicare lo stesso stile (header con gradiente blu, ) a .
-        3.  Identificare la card Versamenti e le altre card principali.
-        4.  Ridurle in dimensioni per renderle più compatte, implementando un menu a tendina se necessario per contenere le azioni.
-        5.  Verificare il risultato con uno screenshot.
-    -   **Why fix this issue and what will be achieved with the fix?**: Soddisfa una richiesta esplicita dell'utente di uniformare l'UI e renderla più compatta e moderna.
-    -   **Status**: NOT STARTED
-    -   **Is recurring issue?**: Y (L'utente richiede spesso UI compatte).
-    -   **Should Test frontend/backend/both after fix?**: frontend
-    -   **Blocked on other issue**: No.
+    -   **Blocked on other issue**: Issue 1: Risolvere l'instabilità del backend e i problemi di connessione al database.
 
 **In progress Task List**:
--   **Task 1: Test della logica di sovrascrittura**
-    -   **Where to resume**: Eseguire l'upload di un file XML di test per verificare che i dati manuali vengano sostituiti.
-    -   **What will be achieved with this?**: Conferma che la regola XML è la fonte di verità funziona come richiesto.
+-   **Task 1: Implementazione della classificazione dei verbali**
+    -   **Where to resume**: Nei file  e . È necessario prima risolvere i problemi di connessione al DB, poi eseguire la logica di classificazione.
+    -   **What will be achieved with this?**: I verbali scaricati dalla posta verranno smistati automaticamente in In attesa di fattura o Da verificare, risolvendo il problema dei documenti non collegati.
     -   **Status**: IN PROGRESS
     -   **Should Test frontend/backend/both after fix?**: backend
-    -   **Blocked on something**: No.
+    -   **Blocked on something**: Stabilità del backend e connessione al database.
 
 **Upcoming and Future Tasks**
 -   **Upcoming Tasks**:
-    -   (P1) **Implementare il parsing delle fatture dalle email**: Sviluppare la logica per leggere le email, estrarre i dati delle fatture e creare record provvisori in .
-    -   (P1) **Completare il refactoring dei router backend**: Spostare la logica di business da  e  ai rispettivi moduli di servizio.
+    -   (P0) **UI per Verbali Classificati**: Creare una nuova pagina o una sezione in  per visualizzare e gestire le liste Verbali in attesa di fattura e Verbali da verificare.
+    -   (P1) **Riconciliazione Email in Background**: Trasformare la scansione completa della posta in un processo asincrono e creare un'interfaccia per monitorarne lo stato.
+    -   (P2) **Correzione Globale Formati**: Scansionare l'intera codebase (frontend e backend) per applicare in modo consistente i formati  e .
 -   **Future Tasks**:
-    -   (P2) **Rispondere alla domanda utente**: Analizzare il codice per spiegare da dove viene calcolata la data di scadenza delle fatture.
-    -   (P2) **Aggiungere Test Unitari**: Creare test per i moduli di servizio del backend.
+    -   (P2) Testare la logica di sovrascrittura dei corrispettivi tramite XML.
+    -   (P2) Eseguire il refactoring dei router backend.
+    -   (P2) Implementare OCR sui PDF dei verbali per estrarre automaticamente targa, data e importo.
+    -   (P3) Rispondere alla vecchia domanda dell'utente su come viene calcolata la data di scadenza delle fatture.
 
 **Completed work in this session**
--   **Rimozione **: Tutti i dialoghi di conferma sono stati eliminati dall'applicazione.
--   **Funzionalità Sposta Movimento in Prima Nota**:
-    -   Aggiunti pulsanti all'interfaccia di  per spostare movimenti tra Cassa e Banca.
-    -   Creato e testato l'endpoint backend .
--   **Unificazione Input POS**: I tre campi di input per il POS in  sono stati unificati in un singolo campo.
--   **Logica Dati Provvisori (Backend)**:
-    -   Modificato l'import dei corrispettivi XML per sovrascrivere i dati manuali basandosi sulla data.
-    -   Modificato l'import delle fatture XML per rispettare il metodo di pagamento scelto manualmente dall'utente.
+-   Risolto il bug che impediva il cambio del metodo di pagamento in .
+-   Ingranditi i pulsanti di azione nella stessa pagina.
+-   Implementato un sistema di persistenza per i costi del noleggio auto, risolvendo il problema dei dati mancanti, ed eseguita una migrazione per popolare i dati storici.
+-   Creato un sistema completo per la gestione dei verbali, inclusa la scansione delle fatture, una pagina di dettaglio (), e il download dei PDF da Gmail.
+-   Refactoring dell'interfaccia di  per renderla più compatta.
+-   Avviata la creazione di un servizio generico per la riconciliazione tra email e documenti del gestionale.
+-   Aggiornato il file  con le nuove specifiche.
+
+**Earlier issues found/mentioned but not fixed**
+-   La domanda dell'utente su come viene calcolata la data di scadenza delle fatture.
+-   Il refactoring dei router backend (, ).
+-   Il test completo della logica di sovrascrittura dei corrispettivi XML.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **Dati Provvisori vs. Definitivi**: Concetto chiave in cui i dati inseriti manualmente o da email sono temporanei () e vengono sempre sovrascritti dalla fonte di dati ufficiale (XML). La chiave di match per la sovrascrittura varia in base al contesto (Data per i corrispettivi, P.IVA+Numero per le fatture).
--   **Refactoring UI Guidato da Esempio**: Utilizzo di una pagina esistente () come template di stile per uniformare l'aspetto di altre sezioni dell'applicazione.
+-   **Persistenza vs. Calcolo Dinamico**: Il problema principale dei dati mancanti era che venivano calcolati dinamicamente. La soluzione è stata creare collection dedicate (, ) per rendere i dati stabili e affidabili.
+-   **Riconciliazione Multi-sorgente**: I verbali provengono da tre fonti (email, fatture XML, estratti conto). Il sistema sta evolvendo per collegare queste fonti, gestendo stati come In attesa di fattura e Sospeso.
+-   **Instabilità della Connessione al Database**: I ripetuti errori  indicano un problema nella configurazione del client Pymongo o nella gestione delle connessioni TLS/SSL nell'ambiente cloud.
 
 **key DB schema**
--   **prima_nota_cassa / prima_nota_banca**: Contengono i movimenti contabili. Ora includono i campi  e  per distinguere i dati temporanei.
--   **invoices**: Contiene le fatture. È stato aggiunto il campo  per dare priorità alla scelta dell'utente rispetto al default del fornitore. Potrebbe necessitare di .
--   **corrispettivi**: Contiene i dati degli XML dei corrispettivi. La logica di import ora si basa sulla  per sovrascrivere i record manuali.
+-   **invoices**: Fatture ricevute.
+-   **costi_noleggio**: **NUOVA**. Persiste i costi specifici (verbali, bolli, riparazioni) estratti dalle fatture e collegati a un veicolo.
+-   **verbali_noleggio**: Collection originale per i verbali scaricati da email, spesso con dati incompleti.
+-   **verbali_noleggio_completi**: **NUOVA**. Collection master per i verbali, popolata tramite la scansione delle fatture.
+-   **verbali_attesa_fattura**: **PIANIFICATA**. Per i verbali da email con targa aziendale ma senza fattura.
+-   **verbali_da_verificare**: **PIANIFICATA**. Per i verbali da email con targa sconosciuta.
+-   **document_index**: **NUOVA**. Indice generico per tutti i documenti, usato per la riconciliazione rapida con le email.
 
 **All files of reference**
--    (Pagina da modificare e testare)
--    (Template per lo stile)
--    (Logica di import da testare)
--    (Contiene l'endpoint di spostamento)
--    (Contiene la logica di pagamento/spostamento da replicare)
--    (Per verificare la navigazione)
+-    (Router centrale per la logica dei verbali)
+-    (Servizio per l'attività attualmente bloccata)
+-    (Potenziale fonte dei problemi di connessione al DB)
+-    (Credenziali del DB)
+-    (UI principale per i dati del noleggio)
+-    (Requisiti di prodotto aggiornati)
 
 **Critical Info for New Agent**
--   **La regola d'oro: l'XML è sempre la fonte di verità.** I dati manuali/email sono solo provvisori per fornire una visione anticipata del saldo. Questa è la logica di business più importante da rispettare.
--   **Il file corretto è **: L'utente si riferisce alla pagina come Prima Nota Unificata, ma la navigazione e il codice puntano a . **NON** lavorare su .
--   **Stringi tutto**: È una direttiva generale dell'utente per rendere l'interfaccia più compatta e moderna. Applica questo principio durante il refactoring dell'UI.
--   **Unificare le azioni**: L'utente vuole che l'azione di spostamento sia integrata nella selezione del metodo di pagamento, non un pulsante separato. La logica in  è l'esempio da seguire.
-
-**documents and test reports created in this job**
--   
+-   **L'instabilità del database è il bloccante principale.** Prima di procedere, devi risolvere l'errore . Controlla la configurazione del client Pymongo in  (il nome del DB corretto è ) e valuta l'aggiunta di opzioni TLS come .
+-   **Il problema principale dell'utente è la frammentazione dei dati.** I documenti esistono in più posti (email, fatture, banca). Il tuo obiettivo è unificarli. Il passo successivo è completare il sistema di classificazione per i verbali che esistono solo nelle email.
+-   **L'utente si aspetta un sistema proattivo.** L'obiettivo non è solo rispondere alle richieste, ma costruire sistemi automatici (scansione email, classificazione) che mantengano i dati dell'applicazione costantemente sincronizzati.
+-   **Quando l'utente segnala dati mancanti, controlla l'anno.** I dati esistono ma sono distribuiti tra il 2023, 2024 e 2025. L'utente potrebbe guardare l'anno sbagliato.
+-   **La riconciliazione email generica è una funzionalità strategica.** L'utente vuole un sistema che indicizzi tutti i documenti e scansioni l'intera casella di posta per trovare e collegare file pertinenti. Questo richiederà probabilmente processi in background.
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User**: Chiede di testare la nuova logica dei corrispettivi e di uniformare l'UI di Prima Nota Unificata allo stile di , compattando la card Versamenti.
-2.  **User**: Chiarisce la logica dei corrispettivi/POS manuali: devono essere sempre provvisori e sovrascritti dall'XML basandosi sulla **data**, poiché non hanno una matricola.
-3.  **User**: Chiede una spiegazione della logica dei corrispettivi e richiede che il pulsante Sposta sia unificato con la scelta del metodo di pagamento.
-4.  **Agent**: Completa le modifiche a  e riassume il lavoro fatto.
-5.  **User**: Dà istruzioni precise sulla logica di : POS unificato, pulsanti Sposta che aggiornino anche l'archivio fatture e la regola che l'import XML deve rispettare la scelta manuale dell'utente.
-6.  **Agent**: Conferma la comprensione della logica completa.
-7.  **Agent**: Inizia a implementare le modifiche su .
-8.  **Agent**: Chiede una sintesi delle nuove richieste per assicurarsi di aver capito.
-9.  **User**: Dettaglia le nuove richieste, tra cui la gestione delle fatture da email come dati provvisori, il restyling di  e la funzionalità di spostamento tra cassa e banca.
-10. **Agent**: Completa i task P0 precedenti (rimozione , ecc.) e riassume il lavoro.
+1.  **User**: Chiede di procedere con le correzioni e le implementazioni.
+2.  **User**: Chiede perché l'agente è fermo e di preparare un riassunto per il fork.
+3.  **User**: Approva il piano per la classificazione dei verbali e chiede di procedere.
+4.  **User**: Specifica la logica per i verbali senza fattura: registrarli, classificarli (aziendali vs. privati) e attendere la fattura.
+5.  **User**: Segnala di non vedere tutti i verbali che si aspetta nella pagina del noleggio.
+6.  **User**: Dettaglia i requisiti per un sistema completo di gestione verbali: riscansione dal 2018, download automatico dei PDF da email, collegamento a tutte le entità e una sezione operazioni sospese.
+7.  **User**: Esprime frustrazione per i dati mancanti nel noleggio, chiede misure di sicurezza e l'applicazione globale dei formati italiani per data e valuta.
+8.  **User**: Conferma la logica di importazione delle fatture da email.
+9.  **User**: Chiede da dove vengono recuperate le fatture.
+10. **User**: Chiede una spiegazione della logica della pagina .
 
 **Project Health Check:**
--   **Broken**: Nessuna.
--   **Mocked**: Funzionalità di parsing fatture da email (discussa ma non implementata).
+-   **Broken**: Il backend è instabile a causa di continui timeout di connessione al database, bloccando di fatto lo sviluppo.
+-   **Mocked**: L'OCR per la lettura del contenuto dei PDF non è implementato. Il sistema di riconciliazione email generico è progettato ma non funzionante a causa dei timeout.
 
 **3rd Party Integrations**
 -   Gmail (IMAP)
--   Claude Sonnet 4.5 (via Emergent LLM Key)
--   Tesseract OCR
--   PyMuPDF
+-   MongoDB Atlas
 
 **Testing status**
--   **Testing agent used after significant changes**: YES (nella sessione precedente).
+-   **Testing agent used after significant changes**: NO
 -   **Troubleshoot agent used after agent stuck in loop**: NO
 -   **Test files created**: No
--   **Known regressions**: Nessuna.
+-   **Known regressions**: None
 
 **What agent forgot to execute**
--   Non ha ancora implementato la logica per leggere le fatture dalle email, una richiesta chiave dell'utente.
--   Non ha ancora risposto alla domanda dell'utente su come viene calcolata la data di scadenza delle fatture (issue ereditato da fork precedenti).
--   Non ha completato il refactoring dei router backend (, ).</analysis>
+-   Non ha ancora eseguito una correzione globale e sistematica dei formati di data e valuta in tutta l'applicazione.
+-   Non ha risposto alla vecchia domanda dell'utente su come viene calcolata la data di scadenza delle fatture.
+-   Non ha completato il test della logica di sovrascrittura dei corrispettivi XML né il refactoring dei router backend.</analysis>
