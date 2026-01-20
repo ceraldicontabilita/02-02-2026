@@ -284,7 +284,7 @@ export default function ChiusuraEsercizio() {
               </div>
               <div style={{ color: stato?.stato === 'chiuso' ? '#15803d' : '#3b82f6', marginTop: 4 }}>
                 {stato?.stato === 'chiuso' ? 'Chiuso' : 'Aperto'}
-                {stato?.data_chiusura && ` il ${new Date(stato.data_chiusura).toLocaleDateString('it-IT')}`}
+                {stato?.data_chiusura && ` il ${formatDateIT(stato.data_chiusura)}`}
               </div>
             </div>
           </div>
@@ -695,7 +695,7 @@ export default function ChiusuraEsercizio() {
                 <tr key={i} style={{ borderBottom: '1px solid #f1f5f9' }}>
                   <td style={{ padding: '12px 16px', fontWeight: 600 }}>{c.anno}</td>
                   <td style={{ padding: '12px 16px', color: '#64748b' }}>
-                    {new Date(c.created_at).toLocaleDateString('it-IT')}
+                    {formatDateIT(c.created_at)}
                   </td>
                   <td style={{ 
                     padding: '12px 16px', 

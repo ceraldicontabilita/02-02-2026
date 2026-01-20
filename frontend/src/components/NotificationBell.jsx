@@ -1,3 +1,4 @@
+import { formatDateIT } from '../lib/utils';
 import React, { useState, useEffect, useRef } from "react";
 import { Bell, X, CheckCircle, AlertTriangle, Info, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -257,7 +258,7 @@ export default function NotificationBell() {
                           marginTop: '6px' 
                         }}>
                           <span style={{ fontSize: '11px', color: '#9ca3af' }}>
-                            {new Date(alert.created_at).toLocaleDateString("it-IT")}
+                            {formatDateIT(alert.created_at)}
                           </span>
                           {alert.link && (
                             <ExternalLink size={12} style={{ color: '#9ca3af' }} />
