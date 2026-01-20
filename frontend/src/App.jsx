@@ -71,6 +71,7 @@ const NAV_ITEMS = [
       { to: "/liquidazione-iva", label: "Liquidazione IVA", icon: "🧮" },
       { to: "/f24", label: "F24 / Tributi", icon: "📋" },
       { to: "/riconciliazione-f24", label: "Riconciliazione F24", icon: "🔄" },
+      { to: "/codici-tributari", label: "Codici Tributari", icon: "💰" },
       { to: "/contabilita", label: "IRES / IRAP", icon: "🧮" },
     ]
   },
