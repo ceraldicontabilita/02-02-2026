@@ -22,6 +22,18 @@ from app.services.noleggio import (
     categorizza_spesa
 )
 
+# Import servizio persistenza dati
+from app.services.noleggio.data_persistence import (
+    salva_costo_noleggio,
+    salva_veicolo,
+    persisti_dati_da_fatture,
+    recupera_costi_veicolo,
+    migra_dati_esistenti,
+    COLLECTION_COSTI,
+    COLLECTION_VEICOLI,
+    COLLECTION_AUDIT
+)
+
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
