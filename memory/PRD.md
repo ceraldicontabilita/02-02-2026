@@ -51,7 +51,39 @@ Ogni pagina attuale e futura DEVE rispettare questi criteri di uniformità:
 
 ---
 
+## 📚 REGOLA FONDAMENTALE: AGGIORNAMENTO REGOLE CONTABILI
+
+**OGNI VOLTA CHE SI IMPLEMENTA O MODIFICA UNA LOGICA DI BUSINESS, AGGIORNARE SEMPRE `/regole-contabili`**
+
+La pagina **Regole Contabili** (`/app/frontend/src/pages/RegoleContabili.jsx`) è il **dizionario ufficiale** di tutte le logiche di business implementate nel sistema. È fondamentale mantenerla aggiornata per:
+
+1. **Documentazione**: Permette agli sviluppatori futuri di capire la logica senza leggere il codice
+2. **Trasparenza**: L'utente può consultare le regole per capire il comportamento del sistema
+3. **Debugging**: Facilita l'identificazione di bug confrontando comportamento atteso vs effettivo
+4. **Onboarding**: Nuovo personale può formarsi rapidamente sulle logiche di business
+
+### Quando aggiornare:
+- ✅ Nuova logica di business implementata
+- ✅ Modifica a logica esistente
+- ✅ Bug fix che cambia il comportamento atteso
+- ✅ Nuovi casi d'uso scoperti (es. dati legacy)
+- ✅ Nuovi mapping o trasformazioni dati
+
+### Cosa documentare:
+- Nome della regola
+- Descrizione chiara del comportamento
+- Campi coinvolti (con valori possibili)
+- Casi particolari o eccezioni
+
+---
+
 ## 📋 CHANGELOG RECENTE
+
+### 20 Gennaio 2026 - Bug Fix Metodo Pagamento & Regole Contabili
+- ✅ **Bug Fix Critico**: Corretto bug che impediva la modifica del metodo di pagamento per fatture legacy
+- ✅ **Fallback Metodo Pagamento**: Aggiunta logica di fallback per determinare metodo effettivo da `metodo_pagamento` quando `prima_nota_*_id` sono null
+- ✅ **Regole Contabili Aggiornate**: Aggiunta sezione "Determinazione Metodo Pagamento Effettivo" con mapping completo
+- ✅ **PRD Aggiornato**: Aggiunta regola fondamentale per aggiornare sempre `/regole-contabili`
 
 ### 20 Gennaio 2026 - Formattazione Italiana & Bug Fix
 - ✅ **Utility Formattazione**: Create funzioni `formattaDataItaliana()` e `formattaValutaItaliana()`
