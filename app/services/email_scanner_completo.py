@@ -120,6 +120,7 @@ async def get_cartelle_da_scansionare() -> Dict[str, List[str]]:
             "esattoriale_regionale": [],
             "f24_tributi": [],
             "documento_numerico": [],
+            "dichiarazione_730": [],
             "altro": []
         }
         
@@ -135,6 +136,8 @@ async def get_cartelle_da_scansionare() -> Dict[str, List[str]]:
                     continue
                 
                 tipo = classifica_cartella(name)
+                if tipo not in risultato:
+                    risultato[tipo] = []
                 risultato[tipo].append(name)
         
         mail.logout()
