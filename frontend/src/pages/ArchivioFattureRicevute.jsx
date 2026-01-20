@@ -559,7 +559,7 @@ export default function ArchivioFatture() {
                       
                       return (
                       <tr key={f.id} style={{ borderBottom: '1px solid #f3f4f6', background: idx % 2 === 0 ? 'white' : '#f9fafb' }}>
-                        <td style={{ padding: '10px 12px' }}>{f.invoice_date || f.data_documento}</td>
+                        <td style={{ padding: '10px 12px' }}>{formatDateIT(f.invoice_date || f.data_documento)}</td>
                         <td style={{ padding: '10px 12px', fontWeight: '500' }}>{f.invoice_number || f.numero_documento}</td>
                         <td style={{ padding: '10px 12px' }}>
                           <div style={{ fontWeight: '500', fontSize: 13 }}>{f.supplier_name || f.fornitore_ragione_sociale}</div>
