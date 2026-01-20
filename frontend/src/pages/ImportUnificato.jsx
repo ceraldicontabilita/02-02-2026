@@ -972,13 +972,13 @@ export default function ImportUnificato() {
               </div>
               <div style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: 24, fontWeight: 700, color: '#16a34a' }}>
-                  {formatEuro(previewData.totale_entrate?)}
+                  {formatEuro(previewData.totale_entrate || 0)}
                 </div>
                 <div style={{ fontSize: 11, color: '#047857' }}>Entrate</div>
               </div>
               <div style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: 24, fontWeight: 700, color: '#dc2626' }}>
-                  {formatEuro(previewData.totale_uscite?)}
+                  {formatEuro(previewData.totale_uscite || 0)}
                 </div>
                 <div style={{ fontSize: 11, color: '#047857' }}>Uscite</div>
               </div>
