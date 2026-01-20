@@ -108,7 +108,7 @@ export default function Scadenze() {
     }
   };
 
-  const formatDate = (dateStr) => dateStr ? new Date(dateStr).toLocaleDateString('it-IT') : '-';
+  const formatDate = (dateStr) => dateStr ? formatDateIT(dateStr) : '-';
 
   const getPriorityStyle = (priorita, urgente) => {
     if (urgente) return { bg: '#fef2f2', border: '#dc2626', text: '#dc2626' };

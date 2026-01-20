@@ -194,7 +194,7 @@ export default function Inventario() {
                       Inventario {inv.anno}
                     </div>
                     <div style={{ fontSize: '13px', color: '#64748b', marginTop: '4px' }}>
-                      {inv.prodotti?.length || 0} prodotti • Creato il {new Date(inv.data_creazione).toLocaleDateString('it-IT')}
+                      {inv.prodotti?.length || 0} prodotti • Creato il {formatDateIT(inv.data_creazione)}
                     </div>
                   </div>
                   <div style={{ textAlign: 'right' }}>

@@ -1,3 +1,4 @@
+import { formatDateIT } from '../../lib/utils';
 import React, { useState, useEffect } from 'react';
 import { MANSIONI } from './constants';
 import api from '../../api';
@@ -655,7 +656,7 @@ function DipendenteBonificiTab({ bonifici, loading, onReload }) {
   const formatDate = (dateStr) => {
     if (!dateStr) return '-';
     const d = new Date(dateStr);
-    return d.toLocaleDateString('it-IT');
+    return formatDateIT(dateStr);
   };
   
   const formatEuro = (val) => {
@@ -798,7 +799,7 @@ function DipendenteAccontiTab({ dipendente, editData, setEditData, editMode }) {
   const formatDate = (dateStr) => {
     if (!dateStr) return '-';
     const d = new Date(dateStr);
-    return d.toLocaleDateString('it-IT');
+    return formatDateIT(dateStr);
   };
   
   const formatEuro = (val) => {

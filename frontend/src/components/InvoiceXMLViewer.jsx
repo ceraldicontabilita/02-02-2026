@@ -1,3 +1,4 @@
+import { formatDateIT } from '../lib/utils';
 import React, { useState } from 'react';
 
 /**
@@ -238,7 +239,7 @@ export default function InvoiceXMLViewer({ invoice: rawInvoice, onClose }) {
       ` : ''}
       
       <div style="margin-top: 20px; text-align: center; font-size: 9px; color: #999; border-top: 1px solid #ccc; padding-top: 10px;">
-        Documento generato il ${new Date().toLocaleDateString('it-IT')} - Sistema ERP Azienda Semplice
+        Documento generato il ${formatDateIT(new Date())} - Sistema ERP Azienda Semplice
       </div>
     `;
   };
@@ -346,7 +347,7 @@ export default function InvoiceXMLViewer({ invoice: rawInvoice, onClose }) {
       
       <div style="margin-top: 20px; text-align: center; font-size: 9px; color: #666; border-top: 1px solid #ccc; padding-top: 10px;">
         Documento informatico conforme alle specifiche tecniche dell'Agenzia delle Entrate<br>
-        Visualizzazione generata il ${new Date().toLocaleDateString('it-IT')} - Sistema ERP Azienda Semplice
+        Visualizzazione generata il ${formatDateIT(new Date())} - Sistema ERP Azienda Semplice
       </div>
     `;
   };
