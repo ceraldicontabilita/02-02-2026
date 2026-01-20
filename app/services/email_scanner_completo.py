@@ -60,32 +60,33 @@ def decode_header_value(value: str) -> str:
 
 def classifica_cartella(nome: str) -> str:
     """Classifica il tipo di cartella email."""
-    # Verbali noleggio: B + 10-12 cifre oppure A/T/S + 10-12 cifre
-    if len(nome) >= 11:
-        if nome[0] in ['B', 'A', 'T', 'S'] and nome[1:].replace(' ', '').isdigit():
-            return "verbale_noleggio"
-        # Pattern con spazi: A20111419225
-        if re.match(r'^[BATS]\d{10,12}$', nome):
+    nome_clean = nome.strip()
+    
+    # Verbali noleggio: B/A/T/S + 10-12 cifre
+    # Esempi: B20124359436, A18110589028, T23260589335
+    if len(nome_clean) >= 11 and nome_clean[0] in ['B', 'A', 'T', 'S']:
+        resto = nome_clean[1:]
+        if resto.isdigit() and len(resto) >= 10:
             return "verbale_noleggio"
     
     # Esattoriali Agenzia Entrate Riscossione (071)
-    if nome.startswith('071'):
+    if nome_clean.startswith('071') or nome_clean.replace(' ', '').startswith('071'):
         return "esattoriale"
     
     # Esattoriali Regionali (371)
-    if nome.startswith('371'):
+    if nome_clean.startswith('371') or nome_clean.replace(' ', '').startswith('371'):
         return "esattoriale_regionale"
     
     # F24 e tributi DMRA
-    if 'DMRA' in nome or nome.startswith('5100'):
+    if 'DMRA' in nome_clean or nome_clean.startswith('5100'):
         return "f24_tributi"
     
     # Documenti numerici lunghi
-    if re.match(r'^\d{10,}$', nome):
+    if re.match(r'^\d{10,}$', nome_clean):
         return "documento_numerico"
     
     # 730 dichiarazioni
-    if '730' in nome:
+    if '730' in nome_clean:
         return "dichiarazione_730"
     
     return "altro"
