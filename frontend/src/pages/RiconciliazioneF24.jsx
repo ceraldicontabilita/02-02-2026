@@ -548,7 +548,7 @@ export default function RiconciliazioneF24() {
                       <div>
                         <div style={{ fontWeight: 500 }}>{f24.file_name || 'F24'}</div>
                         <div style={{ fontSize: 12, color: '#6b7280' }}>
-                          Scadenza: {f24.dati_generali?.data_versamento || '-'}
+                          Scadenza: {formatDateIT(f24.dati_generali?.data_versamento) || '-'}
                         </div>
                       </div>
                     </div>
@@ -719,7 +719,7 @@ export default function RiconciliazioneF24() {
                         <div style={{ background: 'white', borderRadius: 8, padding: 12, border: '1px solid #dbeafe' }}>
                           <div style={{ fontSize: 11, color: '#3b82f6', fontWeight: 600, marginBottom: 8 }}>📤 F24 COMMERCIALISTA</div>
                           <div style={{ fontWeight: 600 }}>{f24.file_name || 'F24'}</div>
-                          <div style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>Scadenza: {f24.dati_generali?.data_versamento || '-'}</div>
+                          <div style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>Scadenza: {formatDateIT(f24.dati_generali?.data_versamento) || '-'}</div>
                           <div style={{ fontSize: 16, fontWeight: 700, color: '#1e40af', marginTop: 8 }}>{formatEuro(f24.totali?.saldo_netto || 0)}</div>
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px 0' }}>
@@ -769,7 +769,7 @@ export default function RiconciliazioneF24() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
                       <div>
                         <div style={{ fontWeight: 600 }}>{f24.file_name || 'F24'}</div>
-                        <div style={{ fontSize: 12, color: '#6b7280' }}>Scadenza: {f24.dati_generali?.data_versamento || '-'}</div>
+                        <div style={{ fontSize: 12, color: '#6b7280' }}>Scadenza: {formatDateIT(f24.dati_generali?.data_versamento) || '-'}</div>
                       </div>
                       <div style={{ fontSize: 18, fontWeight: 700, color: '#f97316' }}>
                         {formatEuro(f24.totali?.saldo_netto || 0)}
