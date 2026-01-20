@@ -811,25 +811,3 @@ async def riclassifica_verbale_endpoint(
         "message": f"Verbale {numero_verbale} riclassificato come {classificazione}"
     }
 
-        # Cerca in verbali_noleggio_completi
-        result = await db["verbali_noleggio_completi"].update_one(
-            {"numero_verbale": numero},
-            {"$set": {
-                "pdf_allegati": v_posta.get("pdf_allegati", []),
-                "pdf_downloaded": True,
-                "email_id": v_posta.get("email_id")
-            }}
-        )
-        
-        if result.modified_count > 0:
-            aggiornati += 1
-        else:
-            non_trovati.append(numero)
-    
-    return {
-        "success": True,
-        "verbali_aggiornati": aggiornati,
-        "verbali_non_trovati_in_fatture": len(non_trovati),
-        "numeri_non_trovati": non_trovati[:20]  # Max 20
-    }
-
