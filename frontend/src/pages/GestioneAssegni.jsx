@@ -1355,7 +1355,7 @@ export default function GestioneAssegni() {
                         <div style={{ fontSize: 12, color: '#2196f3', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
                           <span>📄 Fatt. {assegno.numero_fattura}</span>
                           {assegno.data_fattura && (
-                            <span style={{ color: '#666' }}>({new Date(assegno.data_fattura).toLocaleDateString('it-IT')})</span>
+                            <span style={{ color: '#666' }}>({formatDateIT(assegno.data_fattura)})</span>
                           )}
                           {/* Link alla fattura - usa fattura_collegata o prima di fatture_collegate */}
                           {(assegno.fattura_collegata || assegno.fatture_collegate?.[0]?.fattura_id) && (
@@ -1615,10 +1615,10 @@ export default function GestioneAssegni() {
                               <div>
                                 {assegno.numero_fattura && <span style={{ fontWeight: 500 }}>{assegno.numero_fattura}</span>}
                                 {assegno.fatture_collegate?.length > 1 && <span style={{ color: '#2196f3', marginLeft: 4 }}>({assegno.fatture_collegate.length})</span>}
-                                {assegno.data_fattura && <span style={{ color: '#666', marginLeft: 6 }}>{new Date(assegno.data_fattura).toLocaleDateString('it-IT')}</span>}
+                                {assegno.data_fattura && <span style={{ color: '#666', marginLeft: 6 }}>{formatDateIT(assegno.data_fattura)}</span>}
                                 {/* Mostra data dalla causale se presente */}
                                 {!assegno.data_fattura && assegno.data_emissione && (
-                                  <span style={{ color: '#666', marginLeft: 6 }}>{new Date(assegno.data_emissione).toLocaleDateString('it-IT')}</span>
+                                  <span style={{ color: '#666', marginLeft: 6 }}>{formatDateIT(assegno.data_emissione)}</span>
                                 )}
                               </div>
                             </div>
