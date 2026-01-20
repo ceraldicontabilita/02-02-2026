@@ -43,17 +43,19 @@ export default function Scadenze() {
       params.append('include_passate', includePassate);
       params.append('limit', '50');
       
-      const [scadenzeRes, ivaRes, ivaMensileRes, alertRes] = await Promise.all([
+      const [scadenzeRes, ivaRes, ivaMensileRes, alertRes, docRiconcRes] = await Promise.all([
         api.get(`/api/scadenze/tutte?${params}`),
         api.get(`/api/scadenze/iva/${anno}`),
         api.get(`/api/scadenze/iva-mensile/${anno}`),
-        api.get('/api/scadenze/dashboard-widget').catch(() => ({ data: null }))
+        api.get('/api/scadenze/dashboard-widget').catch(() => ({ data: null })),
+        api.get('/api/email-scanner/statistiche').catch(() => ({ data: null }))
       ]);
       
       setScadenze(scadenzeRes.data.scadenze || []);
       setScadenzeIva(ivaRes.data);
       setScadenzeIvaMensili(ivaMensileRes.data);
       setAlertWidget(alertRes.data);
+      setDocumentiRiconciliare(docRiconcRes.data);
     } catch (error) {
       console.error('Error loading scadenze:', error);
     } finally {
