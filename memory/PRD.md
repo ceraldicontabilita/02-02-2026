@@ -107,21 +107,22 @@ La pagina **Regole Contabili** (`/app/frontend/src/pages/RegoleContabili.jsx`) �
 
 ### 20 Gennaio 2026 - Scanner Email Completo (P0 COMPLETATO)
 - ✅ **Scansione Completa Posta**: Nuovo servizio `email_scanner_completo.py` che scansiona TUTTA la casella email
-- ✅ **Classificazione Automatica**: Cartelle classificate per tipo (verbali, esattoriali, F24/tributi)
-- ✅ **135 Documenti Scaricati**: 
-  - 70 verbali noleggio (B/A/T/S...)
-  - 42 esattoriali (071... + 371...)
-  - 23 F24/tributi (DMRA...)
-- ✅ **Associazione Automatica**: Verbali dalla posta associati ai verbali nelle fatture
-  - 2 verbali associati a fatture esistenti
-  - 68 verbali in attesa di fattura (PDF arrivato ma fattura non ancora ricevuta)
+- ✅ **Classificazione Automatica**: Cartelle classificate per tipo (verbali B/A/T/S, esattoriali 071/371, F24/DMRA)
+- ✅ **218+ Documenti Scaricati**: 
+  - 70+ verbali noleggio
+  - 42 esattoriali
+  - 23 F24/tributi
+- ✅ **Sezione in Scadenze**: Aggiunta sezione "Documenti da Riconciliare" nella pagina `/scadenze`:
+  - Verbali in attesa fattura (PDF arrivato, fattura non ancora)
+  - Fatture in attesa verbale (fattura con verbale ma PDF non scaricato)
+  - Cartelle esattoriali e F24
+  - Pulsante "Riconcilia Automaticamente"
 - ✅ **Nuova Collection**: `documenti_email` con tutti i documenti scaricati
 - ✅ **API Endpoints**:
   - `GET /api/email-scanner/cartelle` - Lista cartelle per tipo
   - `POST /api/email-scanner/scansiona` - Avvia scansione
   - `POST /api/email-scanner/associa` - Associa documenti a verbali
   - `GET /api/email-scanner/statistiche` - Statistiche complete
-- ✅ **Verbali in Attesa Fattura**: Endpoint `/api/verbali-noleggio/verbali-attesa-fattura` mostra i 68 verbali che aspettano una fattura
 
 ### 20 Gennaio 2026 - Sistema Classificazione Verbali Posta
 - ✅ **Servizio Classificazione**: Creato `verbali_classificazione.py` per classificare verbali dalla posta
