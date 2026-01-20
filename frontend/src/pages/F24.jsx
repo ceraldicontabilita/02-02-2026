@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React
+import { formatDateIT } from '../lib/utils';, { useState, useEffect } from "react";
 import api from "../api";
 import { ChevronDown, ChevronRight, Trash2, Edit, Eye, X } from "lucide-react";
 import { formatEuro } from "../lib/utils";
@@ -416,7 +417,7 @@ export default function F24() {
                   </div>
                   <div style={{ fontSize: 14 }}>{alert.descrizione || 'F24 in scadenza'}</div>
                   <div style={{ fontSize: 12, color: '#666', marginTop: 5 }}>
-                    Scadenza: {new Date(alert.scadenza).toLocaleDateString('it-IT')} • {alert.messaggio}
+                    Scadenza: {formatDateIT(alert.scadenza)} • {alert.messaggio}
                   </div>
                 </div>
                 <div style={{ textAlign: 'right', minWidth: 120 }}>
@@ -490,7 +491,7 @@ export default function F24() {
                         style={{ padding: 12, fontFamily: 'monospace' }}
                         onClick={() => hasTributi(f) && toggleRowExpand(f.id || i)}
                       >
-                        {f.scadenza ? new Date(f.scadenza).toLocaleDateString('it-IT') : 
+                        {f.scadenza ? formatDateIT(f.scadenza) : 
                          f.data_scadenza ? new Date(f.data_scadenza).toLocaleDateString('it-IT') :
                          f.date || "-"}
                       </td>

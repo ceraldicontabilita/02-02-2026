@@ -348,7 +348,7 @@ function PrimaNotaDesktop() {
   };
 
   // Format helpers
-  const formatDate = (dateStr) => new Date(dateStr).toLocaleDateString('it-IT');
+  const formatDate = (dateStr) => formatDateIT(dateStr);
   
   const posTotale = (parseFloat(pos.pos1) || 0) + (parseFloat(pos.pos2) || 0) + (parseFloat(pos.pos3) || 0);
 

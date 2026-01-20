@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React
+import { formatDateIT } from '../lib/utils';, { useState, useEffect } from "react";
 import api from "../api";
 import { formatEuro } from "../lib/utils";
 
@@ -283,7 +284,7 @@ export default function Riconciliazione() {
   const formatDate = (dateStr) => {
     if (!dateStr) return '-';
     try {
-      return new Date(dateStr).toLocaleDateString('it-IT');
+      return formatDateIT(dateStr);
     } catch { return dateStr; }
   };
 
