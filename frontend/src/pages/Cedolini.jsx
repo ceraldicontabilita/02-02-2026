@@ -111,7 +111,7 @@ export default function Cedolini() {
     }
   };
 
-  const fmt = (v) => v != null ? new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(v) : '-';
+  const fmt = (v) => v != null ? formatEuro(v) : '-';
 
   return (
     <div style={{ padding: 'clamp(12px, 3vw, 20px)' }}>
