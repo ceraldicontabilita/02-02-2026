@@ -1,11 +1,34 @@
 # PRD – TechRecon Accounting System
 ## Product Requirements Document (PRD)
 ## TechRecon Accounting System – Versione Super Articolata
-### Ultimo aggiornamento: 20 Gennaio 2026 (Sessione 2 - Fix IVA + Codici Tributari)
+### Ultimo aggiornamento: 20 Gennaio 2026 (Sessione 3 - Fix Formati Data)
 
 ---
 
-## 🔒 REGOLA FONDAMENTALE: PERSISTENZA DATI CRITICI
+## 🔢 REGOLA CRITICA: FORMATI ITALIANI
+
+**TUTTE LE DATE E VALUTE DEVONO ESSERE IN FORMATO ITALIANO - SENZA ECCEZIONI**
+
+### 📅 Date: formato GG/MM/AAAA
+- ✅ Corretto: `25/01/2026`
+- ❌ SBAGLIATO: `2026-01-25` (ISO), `01/25/2026` (USA)
+- Usare SEMPRE: `formatDateIT()` da `/src/lib/utils.js`
+- MAI usare: `toLocaleDateString()` direttamente
+- MAI usare: `.substring(0,10)` su date
+
+### 💶 Valuta: formato € 0.000,00
+- ✅ Corretto: `€ 1.234,56`
+- ❌ SBAGLIATO: `€ 1234.56`, `1,234.56`
+- Punto (.) = separatore migliaia
+- Virgola (,) = separatore decimali
+- Usare SEMPRE: `formatEuro()` da `/src/lib/utils.js`
+
+### 📁 File utility: `/app/frontend/src/lib/utils.js`
+```javascript
+import { formatDateIT, formatEuro, formatDateTimeIT } from '../lib/utils';
+```
+
+**NON DIMENTICARE MAI! CONTROLLARE OGNI VOLTA CHE SI VISUALIZZA UNA DATA!**
 
 **I DATI CRITICI (VERBALI, BOLLI, RIPARAZIONI) DEVONO ESSERE SEMPRE PERSISTITI NEL DATABASE**
 
