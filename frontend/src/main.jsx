@@ -229,6 +229,7 @@ const router = createBrowserRouter([
       { path: "liquidazione-iva", element: <LazyPage><LiquidazioneIVA /></LazyPage> },
       { path: "f24", element: <LazyPage><F24 /></LazyPage> },
       { path: "riconciliazione-f24", element: <LazyPage><RiconciliazioneF24 /></LazyPage> },
+      { path: "codici-tributari", element: <LazyPage><CodiciTributari /></LazyPage> },
       { path: "contabilita", element: <LazyPage><ContabilitaAvanzata /></LazyPage> },
       { path: "scadenze", element: <LazyPage><Scadenze /></LazyPage> },
       
