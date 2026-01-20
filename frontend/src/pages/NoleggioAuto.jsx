@@ -99,7 +99,7 @@ export default function NoleggioAuto() {
   const formatDate = (dateStr) => {
     if (!dateStr) return "-";
     try {
-      return new Date(dateStr).toLocaleDateString('it-IT');
+      return formatDateIT(dateStr);
     } catch {
       return dateStr;
     }

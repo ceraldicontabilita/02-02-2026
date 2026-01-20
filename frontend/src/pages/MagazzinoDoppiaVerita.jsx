@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
-import { formatEuro } from '../lib/utils';
+import { formatEuro, formatDateIT } from '../lib/utils';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
 
 export default function MagazzinoDoppiaVerita() {
@@ -595,7 +595,7 @@ function ProdottoDetailModal({ prodotto, onClose }) {
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: '11px', color: '#6b7280' }}>Ultimo Aggiorn.</div>
               <div style={{ fontSize: '14px', fontWeight: 500, color: '#6b7280' }}>
-                {prodotto.updated_at ? new Date(prodotto.updated_at).toLocaleDateString('it-IT') : '-'}
+                {prodotto.updated_at ? formatDateIT(prodotto.updated_at) : '-'}
               </div>
             </div>
           </div>

@@ -492,7 +492,7 @@ export default function F24() {
                         onClick={() => hasTributi(f) && toggleRowExpand(f.id || i)}
                       >
                         {f.scadenza ? formatDateIT(f.scadenza) : 
-                         f.data_scadenza ? new Date(f.data_scadenza).toLocaleDateString('it-IT') :
+                         f.data_scadenza ? formatDateIT(f.data_scadenza) :
                          f.date || "-"}
                       </td>
                       <td 

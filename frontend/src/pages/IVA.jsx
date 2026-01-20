@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import api from "../api";
-import { formatEuro } from "../lib/utils";
+import { formatEuro, formatDateIT } from "../lib/utils";
 import { useAnnoGlobale } from "../contexts/AnnoContext";
 
 // Stili comuni (come da DESIGN_SYSTEM.md)
@@ -413,7 +413,7 @@ export default function IVA() {
           {viewMode === "today" && todayData && (
             <div style={cardStyle}>
               <h2 style={{ margin: '0 0 20px 0', fontSize: 18, fontWeight: 'bold', color: '#1e3a5f' }}>
-                📊 IVA Oggi - {todayData.data || new Date().toLocaleDateString('it-IT')}
+                📊 IVA Oggi - {todayData.data || formatDateIT(new Date())}
               </h2>
               
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>

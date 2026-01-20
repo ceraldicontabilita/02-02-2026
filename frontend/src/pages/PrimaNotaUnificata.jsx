@@ -705,7 +705,7 @@ export default function PrimaNotaUnificata() {
                   
                   return (
                     <tr key={m.id || idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                      <td style={tdStyle}>{new Date(m.data || m.data_pagamento).toLocaleDateString('it-IT')}</td>
+                      <td style={tdStyle}>{formatDateIT(m.data || m.data_pagamento)}</td>
                       <td style={{ ...tdStyle, textAlign: 'center' }}>
                         <span style={{
                           display: 'inline-flex',

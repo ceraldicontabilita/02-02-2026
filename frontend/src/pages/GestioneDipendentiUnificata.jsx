@@ -594,7 +594,7 @@ function TabBonifici({ bonifici, dipendente, onReload }) {
           <tbody>
             {bonifici.map((b, idx) => (
               <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                <td style={tdStyle}>{b.data ? new Date(b.data).toLocaleDateString('it-IT') : '-'}</td>
+                <td style={tdStyle}>{b.data ? formatDateIT(b.data) : '-'}</td>
                 <td style={tdStyle}>{b.descrizione || b.causale || '-'}</td>
                 <td style={{ ...tdStyle, textAlign: 'right', fontWeight: 600 }}>{formatEuro(b.importo || 0)}</td>
                 <td style={{ ...tdStyle, fontFamily: 'monospace', fontSize: 11 }}>{b.iban?.substring(0, 20) || '-'}...</td>
@@ -748,7 +748,7 @@ function TabAcconti({ acconti: accontiData, dipendente, onReload }) {
           <tbody>
             {allAcconti.map((a, idx) => (
               <tr key={a.id || idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                <td style={tdStyle}>{a.data ? new Date(a.data).toLocaleDateString('it-IT') : '-'}</td>
+                <td style={tdStyle}>{a.data ? formatDateIT(a.data) : '-'}</td>
                 <td style={tdStyle}><span style={{ padding: '2px 8px', background: '#f1f5f9', borderRadius: 4, fontSize: 11 }}>{a.tipo || 'N/D'}</span></td>
                 <td style={{ ...tdStyle, textAlign: 'right', fontWeight: 600, color: '#f59e0b' }}>{formatEuro(a.importo || 0)}</td>
                 <td style={tdStyle}>{a.note || '-'}</td>
