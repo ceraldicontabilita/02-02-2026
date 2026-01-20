@@ -1157,7 +1157,8 @@ export default function Fornitori() {
               </h1>
               <p style={{ margin: '4px 0 0 0', fontSize: 13, opacity: 0.9 }}>
                 Anagrafica completa • Metodi di pagamento
-            </p>
+              </p>
+            </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <button 
