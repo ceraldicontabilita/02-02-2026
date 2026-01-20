@@ -117,6 +117,7 @@ const CedoliniRiconciliazione = lazy(() => import("./pages/CedoliniRiconciliazio
 const PrimaNotaSalari = lazy(() => import("./pages/PrimaNotaSalari.jsx"));
 const TFR = lazy(() => import("./pages/TFR.jsx"));
 const NoleggioAuto = lazy(() => import("./pages/NoleggioAuto.jsx"));
+const DettaglioVerbale = lazy(() => import("./pages/DettaglioVerbale.jsx"));
 
 // === FISCO & TRIBUTI ===
 const IVA = lazy(() => import("./pages/IVA.jsx"));
@@ -220,6 +221,7 @@ const router = createBrowserRouter([
       { path: "prima-nota-salari", element: <LazyPage><PrimaNotaSalari /></LazyPage> },
       { path: "tfr", element: <LazyPage><TFR /></LazyPage> },
       { path: "noleggio-auto", element: <LazyPage><NoleggioAuto /></LazyPage> },
+      { path: "verbali-noleggio/:numeroVerbale", element: <LazyPage><DettaglioVerbale /></LazyPage> },
       
       // === FISCO & TRIBUTI ===
       { path: "iva", element: <LazyPage><IVA /></LazyPage> },
