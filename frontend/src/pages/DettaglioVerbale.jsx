@@ -150,7 +150,7 @@ export default function DettaglioVerbale() {
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f3f4f6', paddingBottom: 8 }}>
                 <span style={{ color: '#6b7280' }}>Data Verbale:</span>
-                <strong>{verbale?.data_verbale || '-'}</strong>
+                <strong>{formatDateIT(verbale?.data_verbale) || '-'}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f3f4f6', paddingBottom: 8 }}>
                 <span style={{ color: '#6b7280' }}>Importo:</span>
