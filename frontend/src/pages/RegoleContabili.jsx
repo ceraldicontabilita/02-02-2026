@@ -22,6 +22,31 @@ export default function RegoleContabili() {
       colore: '#3b82f6',
       sottosezioni: [
         {
+          titolo: 'Determinazione Metodo Pagamento Effettivo',
+          regole: [
+            {
+              nome: 'Priorità Identificazione Metodo',
+              descrizione: 'Per determinare DOVE è stata pagata una fattura, il sistema usa questa priorità: 1) prima_nota_cassa_id o prima_nota_banca_id (fonte primaria - ID del movimento in Prima Nota). 2) metodo_pagamento_effettivo o metodo_pagamento salvato (fallback per dati legacy). 3) Se nessuno dei precedenti è disponibile, permette all\'utente di scegliere.',
+              campi: ['prima_nota_cassa_id (priorità 1)', 'prima_nota_banca_id (priorità 1)', 'metodo_pagamento_effettivo (priorità 2)', 'metodo_pagamento (priorità 2)']
+            },
+            {
+              nome: 'Mapping Metodo → Cassa',
+              descrizione: 'Il sistema identifica come "CASSA" i seguenti valori nel campo metodo_pagamento: contanti, cassa, cash, contante.',
+              campi: ['contanti → cassa', 'cassa → cassa', 'cash → cassa']
+            },
+            {
+              nome: 'Mapping Metodo → Banca',
+              descrizione: 'Il sistema identifica come "BANCA" i seguenti valori nel campo metodo_pagamento: bonifico, banca, bank, sepa, rid, sdd.',
+              campi: ['bonifico → banca', 'banca → banca', 'sepa → banca', 'rid → banca']
+            },
+            {
+              nome: 'Dati Legacy senza ID Prima Nota',
+              descrizione: 'Le fatture importate prima dell\'implementazione completa potrebbero avere pagato=true ma senza prima_nota_cassa_id/prima_nota_banca_id. In questo caso il sistema usa il campo metodo_pagamento per determinare il metodo effettivo.',
+              campi: ['pagato: true', 'prima_nota_*_id: null', 'metodo_pagamento: usato come fallback']
+            }
+          ]
+        },
+        {
           titolo: 'Flusso Dati Fatture',
           regole: [
             {
