@@ -335,6 +335,9 @@ app.include_router(documenti_intelligenti.router, prefix="/api/documenti-smart",
 # --- Document AI (OCR + LLM Extraction) ---
 app.include_router(document_ai.router, prefix="/api/document-ai", tags=["Document AI"])
 
+# --- Riconciliazione Email ↔ Gestionale ---
+app.include_router(email_reconciliation.router, tags=["Riconciliazione Email"])
+
 # --- Sincronizzazione Relazionale ---
 app.include_router(sync_relazionale.router, prefix="/api", tags=["Sincronizzazione Relazionale"])
 
