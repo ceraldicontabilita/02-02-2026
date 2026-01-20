@@ -105,6 +105,17 @@ La pagina **Regole Contabili** (`/app/frontend/src/pages/RegoleContabili.jsx`) �
 
 ## 📋 CHANGELOG RECENTE
 
+### 20 Gennaio 2026 - Fix Noleggio Auto - Mostra Tutti gli Anni
+- ✅ **Bug Fix Critico**: I dati erano filtrati per anno corrente (2026), nascondendo i verbali/costi del 2023-2025
+- ✅ **Modifica Backend**: `scan_fatture_noleggio()` ora carica TUTTI gli anni quando `anno=None`
+- ✅ **Modifica Frontend**: Rimossa dipendenza da `annoGlobale`, default a "Tutti gli anni"
+- ✅ **Dati Ora Visibili**:
+  - € 79.029,50 Canoni
+  - € 215,00 Verbali (19 verbali)
+  - € 2.544,74 Bollo
+  - € 1.360,00 Riparazioni
+  - € 84.717,24 Totale Generale
+
 ### 20 Gennaio 2026 - Scanner Email Completo (P0 COMPLETATO)
 - ✅ **Scansione Completa Posta**: Nuovo servizio `email_scanner_completo.py` che scansiona TUTTA la casella email
 - ✅ **Classificazione Automatica**: Cartelle classificate per tipo (verbali B/A/T/S, esattoriali 071/371, F24/DMRA)
