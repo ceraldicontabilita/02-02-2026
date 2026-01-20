@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React
+import { formatDateIT } from '../lib/utils';, { useState, useEffect } from 'react';
 import api from '../api';
 
 export default function HACCPScadenze() {
@@ -78,7 +79,7 @@ export default function HACCPScadenze() {
                     {scad.descrizione || scad.tipo || 'Scadenza'}
                   </h3>
                   <p style={{ color: '#64748b', fontSize: 14 }}>
-                    Scadenza: {scad.data_scadenza?.substring(0, 10) || '-'}
+                    Scadenza: {formatDateIT(scad.data_scadenza) || '-'}
                   </p>
                 </div>
                 <div style={{ textAlign: 'right' }}>
