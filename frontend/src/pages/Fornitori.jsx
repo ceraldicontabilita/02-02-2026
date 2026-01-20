@@ -1132,10 +1132,6 @@ export default function Fornitori() {
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f3f4f6', padding: '24px', position: 'relative' }}>
-      {/* Page Info Card */}
-      <div style={{ position: 'absolute', top: 24, right: 24, zIndex: 100 }}>
-        <PageInfoCard pageKey="fornitori" />
-      </div>
       
       <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
         
@@ -1152,12 +1148,15 @@ export default function Fornitori() {
           flexWrap: 'wrap',
           gap: 10
         }}>
-          <div>
-            <h1 style={{ margin: 0, fontSize: 22, fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 10 }}>
-              <Building2 size={24} /> Gestione Fornitori
-            </h1>
-            <p style={{ margin: '4px 0 0 0', fontSize: 13, opacity: 0.9 }}>
-              Anagrafica completa • Metodi di pagamento
+          <div style={{ display: 'flex', alignItems: 'center', gap: 15 }}>
+            {/* Page Info Card spostata a sinistra nel header */}
+            <PageInfoCard pageKey="fornitori" />
+            <div>
+              <h1 style={{ margin: 0, fontSize: 22, fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 10 }}>
+                <Building2 size={24} /> Gestione Fornitori
+              </h1>
+              <p style={{ margin: '4px 0 0 0', fontSize: 13, opacity: 0.9 }}>
+                Anagrafica completa • Metodi di pagamento
             </p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
