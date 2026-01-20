@@ -5,6 +5,12 @@ import autoTable from 'jspdf-autotable';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
 import { formatEuro } from '../lib/utils';
 
+// Funzione per formattare valuta come stringa pura (per PDF)
+const formatEuroStr = (val) => {
+  if (val == null || isNaN(val)) return '€ 0,00';
+  return `€ ${Number(val).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+};
+
 const MESI = [
   '', 'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
   'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'
