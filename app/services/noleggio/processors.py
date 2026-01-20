@@ -338,7 +338,7 @@ async def scan_fatture_noleggio(anno: Optional[int] = None) -> Tuple[Dict[str, A
     Scansiona le fatture XML per estrarre dati veicoli noleggio.
     Raggruppa per targa e per numero fattura (non per singola linea).
     
-    OTTIMIZZAZIONE: Se anno non specificato, usa anno corrente.
+    MODIFICA: Se anno non specificato, carica TUTTI gli anni.
     
     Returns: (veicoli_dict, fatture_senza_targa)
     """
@@ -349,15 +349,14 @@ async def scan_fatture_noleggio(anno: Optional[int] = None) -> Tuple[Dict[str, A
     veicoli: Dict[str, Any] = {}
     fatture_senza_targa: List[dict] = []
     
-    # Default all'anno corrente se non specificato
-    if anno is None:
-        anno = dt.now().year
-    
     # Query per P.IVA fornitori con proiezione per performance
     query: Dict[str, Any] = {
-        "supplier_vat": {"$in": list(FORNITORI_NOLEGGIO.values())},
-        "invoice_date": {"$regex": f"^{anno}"}
+        "supplier_vat": {"$in": list(FORNITORI_NOLEGGIO.values())}
     }
+    
+    # Se anno specificato, filtra per quell'anno
+    if anno is not None:
+        query["invoice_date"] = {"$regex": f"^{anno}"}
     
     # Proiezione per ridurre il payload (escludi xml_content e altri campi pesanti)
     projection = {
