@@ -1031,10 +1031,10 @@ export default function ImportUnificato() {
                         {tx.descrizione}
                       </td>
                       <td style={{ padding: 8, textAlign: 'right', color: '#16a34a', fontWeight: tx.entrata ? 600 : 400 }}>
-                        {tx.entrata ? `€${tx.entrata.toLocaleString('it-IT', { minimumFractionDigits: 2 })}` : '-'}
+                        {tx.entrata ? formatEuro(tx.entrata) : '-'}
                       </td>
                       <td style={{ padding: 8, textAlign: 'right', color: '#dc2626', fontWeight: tx.uscita ? 600 : 400 }}>
-                        {tx.uscita ? `€${tx.uscita.toLocaleString('it-IT', { minimumFractionDigits: 2 })}` : '-'}
+                        {tx.uscita ? formatEuro(tx.uscita) : '-'}
                       </td>
                       <td style={{ padding: 8 }}>
                         <span style={{ 
