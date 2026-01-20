@@ -5,6 +5,32 @@
 
 ---
 
+## 🔒 REGOLA FONDAMENTALE: PERSISTENZA DATI CRITICI
+
+**I DATI CRITICI (VERBALI, BOLLI, RIPARAZIONI) DEVONO ESSERE SEMPRE PERSISTITI NEL DATABASE**
+
+### Problema Risolto:
+I dati estratti dalle fatture venivano calcolati "al volo" senza essere salvati, causando perdita di dati tra sessioni diverse.
+
+### Soluzione Implementata:
+- **Collection `costi_noleggio`**: Salva tutti i costi critici (verbali, bolli, riparazioni, costi_extra)
+- **Collection `veicoli_noleggio`**: Salva i dati dei veicoli (targa, driver, fornitore, date noleggio)
+- **Collection `audit_noleggio`**: Traccia tutte le modifiche per audit trail
+
+### API per Gestione Dati:
+- `POST /api/noleggio/migra-dati`: Migra tutti i dati dal 2018 al 2026
+- `POST /api/noleggio/persisti-anno/{anno}`: Persiste dati di un anno specifico
+- `GET /api/noleggio/costi-persistiti/{targa}`: Recupera costi persistiti per veicolo
+- `GET /api/noleggio/statistiche-persistenza`: Statistiche integrità dati
+
+### Sicurezza Dati:
+1. **Hash univoco**: Ogni record ha un hash basato su (targa, tipo_costo, data, importo, numero_fattura)
+2. **No duplicati**: I record con stesso hash non vengono re-inseriti
+3. **Soft delete**: I record vengono marcati come `eliminato: true` invece di essere cancellati
+4. **Audit trail**: Ogni modifica viene loggata con timestamp e utente
+
+---
+
 ## 🔢 REGOLA FONDAMENTALE DI FORMATTAZIONE
 
 **TUTTE LE DATE E VALUTE DEVONO ESSERE IN FORMATO ITALIANO**
@@ -12,18 +38,18 @@
 ### Date: formato GG/MM/AAAA
 - Esempio corretto: `25/01/2026`
 - Esempio SBAGLIATO: `01/25/2026` (americano), `2026-01-25` (ISO)
-- Usare SEMPRE: `formattaDataItaliana()` da `/src/utils/dateUtils.js`
+- Usare SEMPRE: `formatDateIT()` da `/src/lib/utils.js`
 
 ### Valuta: formato € 0.000,00
 - Esempio corretto: `€ 1.234,56`
 - Esempio SBAGLIATO: `€ 1234.56`, `1,234.56`
 - Punto (.) per separatore migliaia
 - Virgola (,) per decimali
-- Usare SEMPRE: `formattaValutaItaliana()` da `/src/utils/dateUtils.js`
+- Usare SEMPRE: `formatEuro()` da `/src/lib/utils.js`
 
-### File utility: `/app/frontend/src/utils/dateUtils.js`
+### File utility: `/app/frontend/src/lib/utils.js`
 ```javascript
-import { formattaDataItaliana, formattaValutaItaliana, formatDate, formatCurrency } from '../utils/dateUtils';
+import { formatDateIT, formatEuro, formatDateTimeIT } from '../lib/utils';
 ```
 
 **APPLICARE IN TUTTE LE PAGINE, SENZA ECCEZIONI!**
