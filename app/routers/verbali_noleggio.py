@@ -24,8 +24,8 @@ router = APIRouter(prefix="/api/verbali-noleggio", tags=["Verbali Noleggio"])
 # Configurazione Email
 IMAP_SERVER = "imap.gmail.com"
 IMAP_PORT = 993
-EMAIL_ADDRESS = os.environ.get("GMAIL_EMAIL", "ceraldigroupsrl@gmail.com")
-EMAIL_PASSWORD = os.environ.get("GMAIL_APP_PASSWORD")
+EMAIL_ADDRESS = os.environ.get("EMAIL_ADDRESS", os.environ.get("GMAIL_EMAIL", "ceraldigroupsrl@gmail.com"))
+EMAIL_PASSWORD = os.environ.get("EMAIL_PASSWORD", os.environ.get("GMAIL_APP_PASSWORD"))
 
 # Collection
 COLLECTION_VERBALI = "verbali_noleggio"
