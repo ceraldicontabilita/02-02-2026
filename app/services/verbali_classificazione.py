@@ -369,14 +369,22 @@ async def verifica_nuove_fatture_per_verbali() -> Dict[str, Any]:
 async def get_verbali_attesa() -> List[Dict[str, Any]]:
     """Restituisce tutti i verbali in attesa di fattura."""
     db = Database.get_db()
-    cursor = db[COLLECTION_VERBALI_ATTESA].find({}, {"_id": 0}).sort("created_at", -1)
+    # Usa documenti_email con stato in_attesa_fattura
+    cursor = db["documenti_email"].find(
+        {"tipo_cartella": "verbale_noleggio", "stato": "in_attesa_fattura"},
+        {"_id": 0, "allegati": 0, "content_base64": 0}
+    ).sort("created_at", -1)
     return await cursor.to_list(500)
 
 
 async def get_verbali_privati() -> List[Dict[str, Any]]:
     """Restituisce tutti i verbali classificati come privati."""
     db = Database.get_db()
-    cursor = db[COLLECTION_VERBALI_PRIVATI].find({}, {"_id": 0}).sort("created_at", -1)
+    # Per ora non abbiamo classificazione privati - ritorna lista vuota
+    cursor = db["documenti_email"].find(
+        {"tipo_cartella": "verbale_noleggio", "stato": "privato"},
+        {"_id": 0, "allegati": 0}
+    ).sort("created_at", -1)
     return await cursor.to_list(500)
 
 
