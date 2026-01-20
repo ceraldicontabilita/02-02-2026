@@ -199,11 +199,11 @@ export default function Inventario() {
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <div style={{ fontSize: '24px', fontWeight: 700, color: '#10b981' }}>
-                      €{inv.importo_totale?}
+                      {formatEuro(inv.importo_totale || 0)}
                     </div>
                     {inv.importo_target > 0 && (
                       <div style={{ fontSize: '12px', color: '#64748b' }}>
-                        Target: €{inv.importo_target?.toLocaleString('it-IT')}
+                        Target: {formatEuro(inv.importo_target)}
                       </div>
                     )}
                   </div>
