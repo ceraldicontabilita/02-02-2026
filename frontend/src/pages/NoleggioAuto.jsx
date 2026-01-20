@@ -33,7 +33,9 @@ export default function NoleggioAuto() {
     setLoading(true);
     setErr("");
     try {
-      const annoParam = annoLocale ? `anno=${annoLocale}` : '';
+      // Usa annoLocale se impostato, altrimenti annoGlobale
+      const annoEffettivo = annoLocale !== null ? annoLocale : annoGlobale;
+      const annoParam = annoEffettivo ? `anno=${annoEffettivo}` : '';
       const [vRes, dRes, fRes] = await Promise.all([
         api.get(`/api/noleggio/veicoli?${annoParam}`),
         api.get('/api/noleggio/drivers'),
@@ -50,7 +52,7 @@ export default function NoleggioAuto() {
     } finally {
       setLoading(false);
     }
-  }, [annoLocale]);
+  }, [annoLocale, annoGlobale]);
 
   useEffect(() => { 
     fetchVeicoli(); 

@@ -548,6 +548,9 @@ export default function ArchivioFatture() {
                       const metodoFornitore = (f.fornitore_metodo_pagamento || f.metodo_pagamento || '').toLowerCase();
                       const isFornitoreCassa = metodoFornitore.includes('contant') || metodoFornitore === 'cassa';
                       
+                      // BLOCCO: Se riconciliata, non permettere modifica
+                      const isRiconciliata = f.riconciliato === true;
+                      
                       return (
                       <tr key={f.id} style={{ borderBottom: '1px solid #f3f4f6', background: idx % 2 === 0 ? 'white' : '#f9fafb' }}>
                         <td style={{ padding: '10px 12px' }}>{f.invoice_date || f.data_documento}</td>
@@ -560,7 +563,25 @@ export default function ArchivioFatture() {
                         <td style={{ padding: '10px 12px', textAlign: 'right' }}>{formatCurrency(f.iva)}</td>
                         <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 'bold' }}>{formatCurrency(f.total_amount || f.importo_totale)}</td>
                         <td style={{ padding: '10px 12px', textAlign: 'center' }}>
-                          <div style={{ display: 'flex', gap: 4, justifyContent: 'center', alignItems: 'center' }}>
+                          <div style={{ display: 'flex', gap: 4, justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
+                            {/* Badge RICONCILIATA se applicabile */}
+                            {isRiconciliata && (
+                              <span 
+                                style={{ 
+                                  padding: '4px 8px', 
+                                  background: '#10b981', 
+                                  color: 'white', 
+                                  borderRadius: 12, 
+                                  fontSize: 10, 
+                                  fontWeight: 'bold',
+                                  marginRight: 4
+                                }}
+                                title="Fattura riconciliata con estratto conto - non modificabile"
+                              >
+                                ✓ RICONCILIATA
+                              </span>
+                            )}
+                            
                             <a
                               href={`/api/fatture-ricevute/fattura/${f.id}/view-assoinvoice`}
                               target="_blank"
@@ -571,9 +592,15 @@ export default function ArchivioFatture() {
                               📄
                             </a>
                             
-                            {/* Pulsante Cassa - verde se attivo, grigio se non selezionato */}
+                            {/* Pulsante Cassa - verde se attivo, grigio se non selezionato - PULSANTE GRANDE */}
+                            {/* DISABILITATO se riconciliata */}
                             <button
+                              disabled={isRiconciliata}
                               onClick={async () => {
+                                if (isRiconciliata) {
+                                  alert('⛔ FATTURA RICONCILIATA: Questa fattura è stata riconciliata con l\'estratto conto bancario e non può essere modificata.');
+                                  return;
+                                }
                                 const importo = f.total_amount || f.importo_totale || 0;
                                 const dataDoc = f.invoice_date || f.data_documento;
                                 const fornitoreNome = f.supplier_name || f.fornitore_ragione_sociale || 'Fornitore';
@@ -619,23 +646,33 @@ export default function ArchivioFatture() {
                                 }
                               }}
                               style={{ 
-                                padding: '5px 8px', 
-                                background: (isPaid && metodoPagEffettivo === 'cassa') ? '#10b981' : '#e5e7eb',
-                                color: (isPaid && metodoPagEffettivo === 'cassa') ? 'white' : '#374151',
-                                border: 'none', 
-                                borderRadius: 6, 
-                                cursor: (isPaid && metodoPagEffettivo === 'cassa') ? 'default' : 'pointer',
-                                fontSize: 11, 
-                                fontWeight: 'bold'
+                                padding: '8px 14px', 
+                                background: isRiconciliata ? '#d1d5db' : (isPaid && metodoPagEffettivo === 'cassa') ? '#10b981' : '#f0fdf4',
+                                color: isRiconciliata ? '#9ca3af' : (isPaid && metodoPagEffettivo === 'cassa') ? 'white' : '#16a34a',
+                                border: isRiconciliata ? '1px solid #d1d5db' : (isPaid && metodoPagEffettivo === 'cassa') ? 'none' : '2px solid #16a34a', 
+                                borderRadius: 8, 
+                                cursor: isRiconciliata ? 'not-allowed' : (isPaid && metodoPagEffettivo === 'cassa') ? 'default' : 'pointer',
+                                fontSize: 13, 
+                                fontWeight: 'bold',
+                                minWidth: 70,
+                                transition: 'all 0.2s',
+                                opacity: isRiconciliata ? 0.6 : 1
                               }}
-                              title={isPaid && metodoPagEffettivo === 'cassa' ? 'Pagata in Cassa' : isPaid ? 'Sposta in Cassa' : 'Paga in Cassa'}
+                              title={isRiconciliata ? '⛔ Riconciliata - non modificabile' : isPaid && metodoPagEffettivo === 'cassa' ? 'Pagata in Cassa' : isPaid ? 'Sposta in Cassa' : 'Paga in Cassa'}
+                              data-testid={`btn-cassa-${f.id}`}
                             >
-                              💵 {isPaid && metodoPagEffettivo === 'cassa' ? '✓' : ''}
+                              💵 {(isPaid && metodoPagEffettivo === 'cassa') ? '✓' : 'Cassa'}
                             </button>
                             
-                            {/* Pulsante Banca - blu se attivo, grigio se non selezionato */}
+                            {/* Pulsante Banca - blu se attivo, grigio se non selezionato - PULSANTE GRANDE */}
+                            {/* DISABILITATO se riconciliata */}
                             <button
+                              disabled={isRiconciliata}
                               onClick={async () => {
+                                if (isRiconciliata) {
+                                  alert('⛔ FATTURA RICONCILIATA: Questa fattura è stata riconciliata con l\'estratto conto bancario e non può essere modificata.');
+                                  return;
+                                }
                                 const importo = f.total_amount || f.importo_totale || 0;
                                 const dataDoc = f.invoice_date || f.data_documento;
                                 const fornitoreNome = f.supplier_name || f.fornitore_ragione_sociale || 'Fornitore';
@@ -679,18 +716,22 @@ export default function ArchivioFatture() {
                                 }
                               }}
                               style={{ 
-                                padding: '5px 8px', 
-                                background: (isPaid && metodoPagEffettivo === 'banca') ? '#3b82f6' : '#e5e7eb',
-                                color: (isPaid && metodoPagEffettivo === 'banca') ? 'white' : '#374151',
-                                border: 'none', 
-                                borderRadius: 6, 
-                                cursor: (isPaid && metodoPagEffettivo === 'banca') ? 'default' : 'pointer',
-                                fontSize: 11, 
-                                fontWeight: 'bold'
+                                padding: '8px 14px', 
+                                background: isRiconciliata ? '#d1d5db' : (isPaid && metodoPagEffettivo === 'banca') ? '#3b82f6' : '#eff6ff',
+                                color: isRiconciliata ? '#9ca3af' : (isPaid && metodoPagEffettivo === 'banca') ? 'white' : '#2563eb',
+                                border: isRiconciliata ? '1px solid #d1d5db' : (isPaid && metodoPagEffettivo === 'banca') ? 'none' : '2px solid #2563eb', 
+                                borderRadius: 8, 
+                                cursor: isRiconciliata ? 'not-allowed' : (isPaid && metodoPagEffettivo === 'banca') ? 'default' : 'pointer',
+                                fontSize: 13, 
+                                fontWeight: 'bold',
+                                minWidth: 70,
+                                transition: 'all 0.2s',
+                                opacity: isRiconciliata ? 0.6 : 1
                               }}
-                              title={isPaid && metodoPagEffettivo === 'banca' ? 'Pagata in Banca' : isPaid ? 'Sposta in Banca' : 'Paga in Banca'}
+                              title={isRiconciliata ? '⛔ Riconciliata - non modificabile' : isPaid && metodoPagEffettivo === 'banca' ? 'Pagata in Banca' : isPaid ? 'Sposta in Banca' : 'Paga in Banca'}
+                              data-testid={`btn-banca-${f.id}`}
                             >
-                              🏦 {isPaid && metodoPagEffettivo === 'banca' ? '✓' : ''}
+                              🏦 {(isPaid && metodoPagEffettivo === 'banca') ? '✓' : 'Banca'}
                             </button>
                           </div>
                         </td>

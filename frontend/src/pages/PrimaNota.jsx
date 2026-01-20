@@ -977,7 +977,7 @@ function MovementsTable({ movimenti, tipo, loading, formatEuro, formatDate, onDe
               <th style={{ padding: '8px 8px', textAlign: 'right', fontWeight: 600, fontSize: 11 }}>DARE</th>
               <th style={{ padding: '8px 8px', textAlign: 'right', fontWeight: 600, fontSize: 11 }}>AVERE</th>
               <th style={{ padding: '8px 8px', textAlign: 'right', fontWeight: 600, fontSize: 11 }}>Saldo</th>
-              <th style={{ padding: '8px 8px', textAlign: 'center', fontWeight: 600, fontSize: 11 }}>Fattura</th>
+              <th style={{ padding: '8px 8px', textAlign: 'center', fontWeight: 600, fontSize: 11 }}>Documento</th>
               {!readOnly && <th style={{ padding: '8px 8px', textAlign: 'center', fontWeight: 600, fontSize: 11 }}>Azioni</th>}
             </tr>
           </thead>
@@ -1022,6 +1022,7 @@ function MovementsTable({ movimenti, tipo, loading, formatEuro, formatDate, onDe
                   {formatEuro(mov.saldoProgressivo)}
                 </td>
                 <td style={{ padding: '6px 8px', textAlign: 'center' }}>
+                  {/* Pulsante VEDI documento - Supporta: Fattura, F24, Corrispettivi, Bonifici */}
                   {mov.fattura_id ? (
                     <a
                       href={`/api/fatture-ricevute/fattura/${mov.fattura_id}/view-assoinvoice`}
@@ -1029,20 +1030,20 @@ function MovementsTable({ movimenti, tipo, loading, formatEuro, formatDate, onDe
                       rel="noopener noreferrer"
                       style={{
                         display: 'inline-block',
-                        padding: '4px 10px',
+                        padding: '6px 12px',
                         background: '#2196f3',
                         color: 'white',
                         border: 'none',
-                        borderRadius: 4,
+                        borderRadius: 6,
                         cursor: 'pointer',
-                        fontSize: 10,
+                        fontSize: 12,
                         fontWeight: 'bold',
                         textDecoration: 'none'
                       }}
-                      title="Visualizza Fattura AssoInvoice"
+                      title="Visualizza Fattura"
                       data-testid={`view-fattura-${mov.id || idx}`}
                     >
-                      📄 Vedi
+                      📄 Fattura
                     </a>
                   ) : mov.bonifico_pdf_id ? (
                     <a
@@ -1051,23 +1052,83 @@ function MovementsTable({ movimenti, tipo, loading, formatEuro, formatDate, onDe
                       rel="noopener noreferrer"
                       style={{
                         display: 'inline-block',
-                        padding: '4px 10px',
+                        padding: '6px 12px',
                         background: '#9c27b0',
                         color: 'white',
                         border: 'none',
-                        borderRadius: 4,
+                        borderRadius: 6,
                         cursor: 'pointer',
-                        fontSize: 10,
+                        fontSize: 12,
                         fontWeight: 'bold',
                         textDecoration: 'none'
                       }}
                       title="Visualizza Bonifico PDF"
                       data-testid={`view-bonifico-${mov.id || idx}`}
                     >
-                      📎 PDF
+                      📎 Bonifico
                     </a>
+                  ) : mov.f24_id ? (
+                    <a
+                      href={`/api/f24/${mov.f24_id}/view`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'inline-block',
+                        padding: '6px 12px',
+                        background: '#ef4444',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: 6,
+                        cursor: 'pointer',
+                        fontSize: 12,
+                        fontWeight: 'bold',
+                        textDecoration: 'none'
+                      }}
+                      title="Visualizza F24"
+                      data-testid={`view-f24-${mov.id || idx}`}
+                    >
+                      🏛️ F24
+                    </a>
+                  ) : mov.corrispettivo_id || mov.xml_filename ? (
+                    <a
+                      href={mov.corrispettivo_id ? `/api/corrispettivi/${mov.corrispettivo_id}/view` : `/api/corrispettivi/view-by-filename?filename=${encodeURIComponent(mov.xml_filename)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'inline-block',
+                        padding: '6px 12px',
+                        background: '#10b981',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: 6,
+                        cursor: 'pointer',
+                        fontSize: 12,
+                        fontWeight: 'bold',
+                        textDecoration: 'none'
+                      }}
+                      title="Visualizza Corrispettivo"
+                      data-testid={`view-corrispettivo-${mov.id || idx}`}
+                    >
+                      🧾 Corrisp.
+                    </a>
+                  ) : mov.categoria === 'F24' || (mov.descrizione && mov.descrizione.includes('F24')) ? (
+                    <span 
+                      style={{
+                        display: 'inline-block',
+                        padding: '6px 12px',
+                        background: '#fef3c7',
+                        color: '#92400e',
+                        border: '1px solid #f59e0b',
+                        borderRadius: 6,
+                        fontSize: 11,
+                        fontWeight: 'bold'
+                      }}
+                      title="F24 - Documento da allegare"
+                    >
+                      🏛️ F24
+                    </span>
                   ) : (
-                    <span style={{ color: '#9ca3af', fontSize: 10 }}>-</span>
+                    <span style={{ color: '#9ca3af', fontSize: 11 }}>-</span>
                   )}
                 </td>
                 {!readOnly && (

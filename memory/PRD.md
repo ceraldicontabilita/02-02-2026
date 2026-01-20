@@ -1,11 +1,67 @@
 # PRD – TechRecon Accounting System
 ## Product Requirements Document (PRD)
 ## TechRecon Accounting System – Versione Super Articolata
-### Ultimo aggiornamento: 19 Gennaio 2026
+### Ultimo aggiornamento: 20 Gennaio 2026
+
+---
+
+## 🔢 REGOLA FONDAMENTALE DI FORMATTAZIONE
+
+**TUTTE LE DATE E VALUTE DEVONO ESSERE IN FORMATO ITALIANO**
+
+### Date: formato GG/MM/AAAA
+- Esempio corretto: `25/01/2026`
+- Esempio SBAGLIATO: `01/25/2026` (americano), `2026-01-25` (ISO)
+- Usare SEMPRE: `formattaDataItaliana()` da `/src/utils/dateUtils.js`
+
+### Valuta: formato € 0.000,00
+- Esempio corretto: `€ 1.234,56`
+- Esempio SBAGLIATO: `€ 1234.56`, `1,234.56`
+- Punto (.) per separatore migliaia
+- Virgola (,) per decimali
+- Usare SEMPRE: `formattaValutaItaliana()` da `/src/utils/dateUtils.js`
+
+### File utility: `/app/frontend/src/utils/dateUtils.js`
+```javascript
+import { formattaDataItaliana, formattaValutaItaliana, formatDate, formatCurrency } from '../utils/dateUtils';
+```
+
+**APPLICARE IN TUTTE LE PAGINE, SENZA ECCEZIONI!**
+
+---
+
+## 🎨 REGOLA FONDAMENTALE DI STILE UI
+
+**TUTTE LE PAGINE DEVONO SEGUIRE LO STILE DELLA DASHBOARD**
+
+Ogni pagina attuale e futura DEVE rispettare questi criteri di uniformità:
+
+1. **Font**: Stesso font-family della Dashboard (Inter, system-ui, -apple-system)
+2. **Colori sfondo**: `#f0f2f5` (grigio chiaro) o `white` come nella Dashboard
+3. **Border-radius**: Angoli smussati uniformi (`border-radius: 12px` per card, `8px` per elementi piccoli)
+4. **Header**: Gradiente blu navy (`#1e3a5f` → `#2d5a87`) come nelle pagine consolidate
+5. **Card statistiche**: Sfondo pastello con colori coerenti (blu, verde, arancione, viola)
+6. **Padding/Margin**: Spaziature uniformi (`padding: 16px 24px` per header, `20px` per card)
+7. **Box-shadow**: `0 1px 3px rgba(0,0,0,0.1)` per le card
+
+**Pagina di riferimento**: `/dashboard`
+**Altre pagine conformi**: `/noleggio-auto`, `/fatture-ricevute`, `/fornitori`
+
+**NON CREARE mai pagine con stili diversi!**
 
 ---
 
 ## 📋 CHANGELOG RECENTE
+
+### 20 Gennaio 2026 - Formattazione Italiana & Bug Fix
+- ✅ **Utility Formattazione**: Create funzioni `formattaDataItaliana()` e `formattaValutaItaliana()`
+- ✅ **Bug Fix Noleggio**: Corretto parametro anno non passato all'API
+- ✅ **Dizionario Metodi Pagamento**: Nuovo endpoint `GET /api/suppliers/dizionario-metodi-pagamento`
+- ✅ **Regole di aggiornamento dizionario**: SI aggiorna da riconciliazione/estratto/fornitore - NO da Prima Nota/Ciclo Passivo
+- ✅ **Estratto Fatture Fornitore**: Nuovo modale con filtri (anno, data, importo, tipo) e metodo pagamento per controllo cartaceo
+- ✅ **4 Casi Flusso Pagamento**: Implementata logica completa con blocco post-riconciliazione e forzatura con autorizzazione
+- ✅ **Verifica Incoerenze**: Endpoint per rilevare discrepanze tra fatture e estratto conto
+- ✅ **Regole Contabili**: Aggiornata pagina `/regole-contabili` con tutte le logiche di business
 
 ### 19 Gennaio 2026 - UX Improvements & Bulk Operations
 - ✅ **Rimossi tutti i `window.confirm()`**: Le azioni vengono eseguite direttamente senza dialog di conferma

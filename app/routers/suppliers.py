@@ -1135,6 +1135,152 @@ async def get_supplier_fatturato(
     }
 
 
+# ==================== DIZIONARIO METODI PAGAMENTO ====================
+# NOTA: Questi endpoint devono stare PRIMA di /{supplier_id} per evitare conflitti
+
+@router.get("/dizionario-metodi-pagamento")
+async def get_dizionario_metodi_pagamento() -> Dict[str, Any]:
+    """
+    Restituisce il dizionario completo dei metodi di pagamento associati ai fornitori.
+    
+    Questo dizionario viene usato per:
+    - Consultazione rapida dei metodi di pagamento
+    - Controllo cartaceo
+    - Statistiche sui metodi di pagamento
+    """
+    db = Database.get_db()
+    
+    try:
+        # Recupera tutti i fornitori con il loro metodo di pagamento
+        fornitori = await db[Collections.SUPPLIERS].find(
+            {},
+            {"_id": 0, "id": 1, "partita_iva": 1, "ragione_sociale": 1, "denominazione": 1, 
+             "metodo_pagamento": 1, "metodo_pagamento_predefinito": 1, "iban": 1, "attivo": 1}
+        ).to_list(None)
+        
+        # Costruisci dizionario indicizzato per P.IVA
+        dizionario = {}
+        stats = {
+            "totale_fornitori": len(fornitori),
+            "per_metodo": {},
+            "senza_metodo": 0,
+            "con_iban": 0,
+            "senza_iban_ma_banca": 0
+        }
+        
+        metodi_bancari = ["bonifico", "banca", "sepa", "rid", "sdd", "assegno", "riba", "mav", "rav", "f24", "carta", "misto"]
+        
+        for f in fornitori:
+            piva = f.get("partita_iva", "")
+            metodo = f.get("metodo_pagamento_predefinito") or f.get("metodo_pagamento") or "da_configurare"
+            iban = f.get("iban")
+            
+            dizionario[piva] = {
+                "id": f.get("id"),
+                "ragione_sociale": f.get("ragione_sociale") or f.get("denominazione"),
+                "metodo_pagamento": metodo,
+                "iban": iban,
+                "attivo": f.get("attivo", True)
+            }
+            
+            # Statistiche
+            if metodo not in stats["per_metodo"]:
+                stats["per_metodo"][metodo] = 0
+            stats["per_metodo"][metodo] += 1
+            
+            if not metodo or metodo == "da_configurare":
+                stats["senza_metodo"] += 1
+            
+            if iban:
+                stats["con_iban"] += 1
+            elif metodo.lower() in metodi_bancari:
+                stats["senza_iban_ma_banca"] += 1
+        
+        return {
+            "dizionario": dizionario,
+            "stats": stats,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Errore recupero dizionario metodi pagamento: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/aggiorna-dizionario-metodo")
+async def aggiorna_dizionario_metodo(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Aggiorna il metodo di pagamento di un fornitore nel dizionario.
+    
+    REGOLE DI AGGIORNAMENTO:
+    - Questo endpoint viene chiamato SOLO da:
+      1. Riconciliazione pagamenti
+      2. Caricamento nuovo estratto conto
+      3. Creazione nuovo fornitore
+      4. Aggiornamento diretto fornitore
+      5. Eliminazione fornitore (per rimuovere dal dizionario)
+    
+    - NON viene chiamato da:
+      - Prima Nota Cassa/Banca
+      - Ciclo Passivo (cambio metodo su singola fattura)
+    
+    Il metodo cambiato su singola fattura NON modifica MAI il dizionario né il fornitore.
+    """
+    db = Database.get_db()
+    
+    partita_iva = payload.get("partita_iva")
+    nuovo_metodo = payload.get("metodo_pagamento")
+    iban = payload.get("iban")
+    source = payload.get("source", "unknown")  # riconciliazione, estratto_conto, nuovo_fornitore, aggiornamento_fornitore
+    
+    if not partita_iva:
+        raise HTTPException(status_code=400, detail="partita_iva è obbligatoria")
+    
+    # Verifica che la fonte sia valida
+    fonti_valide = ["riconciliazione", "estratto_conto", "nuovo_fornitore", "aggiornamento_fornitore", "eliminazione_fornitore"]
+    if source not in fonti_valide:
+        raise HTTPException(
+            status_code=403, 
+            detail=f"Fonte non valida: {source}. Il metodo di pagamento può essere aggiornato solo da: {', '.join(fonti_valide)}"
+        )
+    
+    try:
+        update_data = {
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+            "metodo_pagamento_updated_source": source,
+            "metodo_pagamento_updated_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+        if nuovo_metodo:
+            update_data["metodo_pagamento"] = nuovo_metodo
+            update_data["metodo_pagamento_predefinito"] = nuovo_metodo
+        
+        if iban:
+            update_data["iban"] = iban
+        
+        result = await db[Collections.SUPPLIERS].update_one(
+            {"partita_iva": partita_iva},
+            {"$set": update_data}
+        )
+        
+        if result.matched_count == 0:
+            return {"success": False, "message": "Fornitore non trovato"}
+        
+        logger.info(f"Dizionario metodi aggiornato: {partita_iva} -> {nuovo_metodo} (fonte: {source})")
+        
+        return {
+            "success": True,
+            "partita_iva": partita_iva,
+            "metodo_pagamento": nuovo_metodo,
+            "source": source,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Errore aggiornamento dizionario metodi: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.get("/{supplier_id}")
 async def get_supplier(supplier_id: str) -> Dict[str, Any]:
     """Dettaglio singolo fornitore."""
@@ -2059,4 +2205,225 @@ async def update_supplier_nome(
         return {"success": True, "created": True, "denominazione": denominazione}
     
     return {"success": True, "updated": True, "denominazione": denominazione}
+
+
+# ==================== ESTRATTO FATTURE FORNITORE ====================
+
+@router.get("/{supplier_id}/fatture")
+async def get_fatture_fornitore(
+    supplier_id: str,
+    anno: Optional[int] = Query(None, description="Anno delle fatture"),
+    data_da: Optional[str] = Query(None, description="Data inizio (YYYY-MM-DD)"),
+    data_a: Optional[str] = Query(None, description="Data fine (YYYY-MM-DD)"),
+    importo_min: Optional[float] = Query(None, description="Importo minimo"),
+    importo_max: Optional[float] = Query(None, description="Importo massimo"),
+    tipo: Optional[str] = Query(None, description="Tipo documento: fattura, nota_credito, tutti"),
+    limit: int = Query(100, description="Limite risultati"),
+    skip: int = Query(0, description="Offset")
+) -> Dict[str, Any]:
+    """
+    Restituisce l'estratto delle fatture ricevute e note credito di un fornitore.
+    
+    Include:
+    - Tutte le fatture passive
+    - Note credito
+    - Metodo di pagamento per ogni documento (per controllo cartaceo)
+    - Filtri per data, anno, importo
+    """
+    db = Database.get_db()
+    
+    try:
+        # Recupera fornitore
+        fornitore = await db[Collections.SUPPLIERS].find_one(
+            {"$or": [{"id": supplier_id}, {"partita_iva": supplier_id}]},
+            {"_id": 0}
+        )
+        
+        if not fornitore:
+            raise HTTPException(status_code=404, detail="Fornitore non trovato")
+        
+        partita_iva = fornitore.get("partita_iva")
+        
+        # Costruisci query per fatture
+        query = {
+            "$or": [
+                {"fornitore_partita_iva": partita_iva},
+                {"supplier_vat": partita_iva},
+                {"cedente_piva": partita_iva},
+                {"fornitore_id": fornitore.get("id")}
+            ]
+        }
+        
+        # Filtro anno
+        if anno:
+            query["$or"] = [
+                {"data_documento": {"$regex": f"^{anno}"}},
+                {"invoice_date": {"$regex": f"^{anno}"}}
+            ]
+        
+        # Filtro date
+        if data_da:
+            if "$and" not in query:
+                query["$and"] = []
+            query["$and"].append({
+                "$or": [
+                    {"data_documento": {"$gte": data_da}},
+                    {"invoice_date": {"$gte": data_da}}
+                ]
+            })
+        
+        if data_a:
+            if "$and" not in query:
+                query["$and"] = []
+            query["$and"].append({
+                "$or": [
+                    {"data_documento": {"$lte": data_a}},
+                    {"invoice_date": {"$lte": data_a}}
+                ]
+            })
+        
+        # Filtro importo
+        if importo_min is not None:
+            if "$and" not in query:
+                query["$and"] = []
+            query["$and"].append({
+                "$or": [
+                    {"importo_totale": {"$gte": importo_min}},
+                    {"total_amount": {"$gte": importo_min}}
+                ]
+            })
+        
+        if importo_max is not None:
+            if "$and" not in query:
+                query["$and"] = []
+            query["$and"].append({
+                "$or": [
+                    {"importo_totale": {"$lte": importo_max}},
+                    {"total_amount": {"$lte": importo_max}}
+                ]
+            })
+        
+        # Filtro tipo documento
+        if tipo and tipo != "tutti":
+            if tipo == "nota_credito":
+                query["tipo_documento"] = {"$in": ["TD04", "TD05", "NC"]}
+            elif tipo == "fattura":
+                query["tipo_documento"] = {"$nin": ["TD04", "TD05", "NC"]}
+        
+        # Query fatture
+        fatture_cursor = db["invoices"].find(
+            query, 
+            {"_id": 0}
+        ).sort([("data_documento", -1), ("invoice_date", -1)]).skip(skip).limit(limit)
+        
+        fatture = await fatture_cursor.to_list(limit)
+        
+        # Conta totale
+        totale = await db["invoices"].count_documents(query)
+        
+        # Calcola totali
+        totale_imponibile = 0
+        totale_iva = 0
+        totale_importo = 0
+        totale_note_credito = 0
+        fatture_pagate = 0
+        fatture_non_pagate = 0
+        
+        # Prepara estratto con metodo pagamento
+        estratto = []
+        for f in fatture:
+            data_doc = f.get("data_documento") or f.get("invoice_date") or ""
+            numero = f.get("numero_documento") or f.get("invoice_number") or ""
+            importo = f.get("importo_totale") or f.get("total_amount") or 0
+            imponibile = f.get("imponibile") or 0
+            iva = f.get("iva") or 0
+            tipo_doc = f.get("tipo_documento") or "TD01"
+            tipo_doc_desc = f.get("tipo_documento_desc") or "Fattura"
+            
+            # Metodo pagamento (per controllo cartaceo)
+            metodo_pag = f.get("metodo_pagamento_effettivo") or f.get("metodo_pagamento") or fornitore.get("metodo_pagamento") or "-"
+            
+            # Stato pagamento
+            pagato = f.get("pagato", False)
+            stato_pag = f.get("stato_pagamento") or ("pagata" if pagato else "da_pagare")
+            data_pag = f.get("data_pagamento") or ""
+            
+            # Riconciliazione
+            riconciliato = f.get("riconciliato", False)
+            
+            # Determina se è nota credito
+            is_nota_credito = tipo_doc in ["TD04", "TD05", "NC"]
+            
+            estratto.append({
+                "id": f.get("id"),
+                "data": data_doc,
+                "numero": numero,
+                "tipo_documento": tipo_doc,
+                "tipo_documento_desc": tipo_doc_desc,
+                "is_nota_credito": is_nota_credito,
+                "imponibile": imponibile,
+                "iva": iva,
+                "importo_totale": importo,
+                "metodo_pagamento": metodo_pag,
+                "pagato": pagato,
+                "stato_pagamento": stato_pag,
+                "data_pagamento": data_pag,
+                "riconciliato": riconciliato,
+                "prima_nota_cassa_id": f.get("prima_nota_cassa_id"),
+                "prima_nota_banca_id": f.get("prima_nota_banca_id")
+            })
+            
+            # Accumula totali
+            if is_nota_credito:
+                totale_note_credito += importo
+            else:
+                totale_imponibile += imponibile
+                totale_iva += iva
+                totale_importo += importo
+            
+            if pagato:
+                fatture_pagate += 1
+            else:
+                fatture_non_pagate += 1
+        
+        return {
+            "fornitore": {
+                "id": fornitore.get("id"),
+                "partita_iva": partita_iva,
+                "ragione_sociale": fornitore.get("ragione_sociale") or fornitore.get("denominazione"),
+                "metodo_pagamento_predefinito": fornitore.get("metodo_pagamento_predefinito") or fornitore.get("metodo_pagamento")
+            },
+            "estratto": estratto,
+            "totali": {
+                "numero_documenti": totale,
+                "imponibile": round(totale_imponibile, 2),
+                "iva": round(totale_iva, 2),
+                "importo_totale": round(totale_importo, 2),
+                "note_credito": round(totale_note_credito, 2),
+                "netto": round(totale_importo - totale_note_credito, 2),
+                "fatture_pagate": fatture_pagate,
+                "fatture_non_pagate": fatture_non_pagate
+            },
+            "filtri_applicati": {
+                "anno": anno,
+                "data_da": data_da,
+                "data_a": data_a,
+                "importo_min": importo_min,
+                "importo_max": importo_max,
+                "tipo": tipo
+            },
+            "pagination": {
+                "total": totale,
+                "limit": limit,
+                "skip": skip,
+                "has_more": (skip + limit) < totale
+            }
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Errore recupero fatture fornitore {supplier_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 

@@ -166,6 +166,7 @@ const Pianificazione = lazy(() => import("./pages/Pianificazione.jsx"));
 // === ADMIN ===
 const Admin = lazy(() => import("./pages/Admin.jsx"));
 const GestioneRiservata = lazy(() => import("./pages/GestioneRiservata.jsx"));
+const RegoleContabili = lazy(() => import("./pages/RegoleContabili.jsx"));
 
 // === INTEGRAZIONI ===
 const GestionePagoPA = lazy(() => import("./pages/GestionePagoPA.jsx"));
@@ -268,6 +269,7 @@ const router = createBrowserRouter([
       
       // === ADMIN ===
       { path: "admin", element: <LazyPage><Admin /></LazyPage> },
+      { path: "regole-contabili", element: <LazyPage><RegoleContabili /></LazyPage> },
       
       // === INTEGRAZIONI ===
       { path: "pagopa", element: <LazyPage><GestionePagoPA /></LazyPage> },

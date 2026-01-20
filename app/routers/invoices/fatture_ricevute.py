@@ -300,19 +300,54 @@ async def import_fattura_xml(file: UploadFile = File(...)):
     if fornitore_result.get("error"):
         raise HTTPException(status_code=400, detail=fornitore_result["error"])
     
-    # === VALIDATORE P0: TEMPORANEAMENTE DISABILITATO ===
-    # Metodo di pagamento e IBAN ora sono warning, non bloccanti
-    metodo_pag = fornitore_result.get("metodo_pagamento") or "da_configurare"
-    iban_fornitore = fornitore_result.get("iban")
+    # ==================== DETERMINA METODO PAGAMENTO ====================
+    # REGOLA ATOMICA: Il metodo di pagamento viene determinato qui e non più modificato
+    # Priorità: 1) Metodo manuale utente (se già modificato) 2) Metodo predefinito fornitore
     
+    # Recupera metodo pagamento dal fornitore in DB
+    fornitore_db = await db[COL_FORNITORI].find_one(
+        {"partita_iva": partita_iva}, 
+        {"_id": 0, "esclude_magazzino": 1, "metodo_pagamento": 1, "metodo_pagamento_predefinito": 1, "iban": 1}
+    )
+    
+    # Determina metodo pagamento finale
+    metodo_pagamento_finale = None
+    if metodo_manuale_esistente:
+        # L'utente ha già modificato manualmente - mantieni la sua scelta
+        metodo_pagamento_finale = metodo_manuale_esistente
+        logger.info(f"Metodo pagamento MANUALE utente: {metodo_pagamento_finale} per fattura {numero_doc}")
+    elif fornitore_db:
+        # Usa metodo predefinito del fornitore
+        metodo_pagamento_finale = (
+            fornitore_db.get("metodo_pagamento_predefinito") or
+            fornitore_db.get("metodo_pagamento") or
+            "da_configurare"
+        )
+        logger.info(f"Metodo pagamento da FORNITORE: {metodo_pagamento_finale} per fattura {numero_doc}")
+    else:
+        metodo_pagamento_finale = "da_configurare"
+        logger.warning(f"Fornitore non trovato in DB - metodo: da_configurare per fattura {numero_doc}")
+    
+    # Prepara oggetto fornitore per le funzioni integrate
+    fornitore_obj = {
+        "id": fornitore_result.get("fornitore_id"),
+        "partita_iva": partita_iva,
+        "ragione_sociale": fornitore_result.get("ragione_sociale"),
+        "esclude_magazzino": fornitore_db.get("esclude_magazzino", False) if fornitore_db else False,
+        "metodo_pagamento": metodo_pagamento_finale,
+        "iban": fornitore_db.get("iban") if fornitore_db else None
+    }
+    
+    # Warnings per metodo pagamento
     warnings = []
-    if not metodo_pag or metodo_pag in ["", "da_configurare", None]:
+    iban_fornitore = fornitore_obj.get("iban")
+    
+    if not metodo_pagamento_finale or metodo_pagamento_finale in ["", "da_configurare", None]:
         warnings.append(f"Fornitore senza metodo pagamento: {fornitore_result.get('ragione_sociale', '')}")
-        metodo_pag = "da_configurare"
     
     metodi_bancari = ["bonifico", "banca", "sepa", "rid", "sdd", "assegno", "misto"]
-    if metodo_pag.lower() in metodi_bancari and not iban_fornitore:
-        warnings.append(f"Fornitore senza IBAN (metodo: {metodo_pag})")
+    if metodo_pagamento_finale and metodo_pagamento_finale.lower() in metodi_bancari and not iban_fornitore:
+        warnings.append(f"Fornitore senza IBAN (metodo: {metodo_pagamento_finale})")
     
     # Verifica coerenza totali
     totali_coerenti = parsed.get("totali_coerenti", True)
@@ -347,10 +382,12 @@ async def import_fattura_xml(file: UploadFile = File(...)):
         # Destinatario (CessionarioCommittente) - NOI
         "cliente": parsed.get("cliente", {}),
         
-        # Pagamento
+        # Pagamento - METODO DETERMINATO ATOMICAMENTE
         "pagamento": parsed.get("pagamento", {}),
-        "metodo_pagamento": fornitore_obj.get("metodo_pagamento"),  # Usa metodo corretto (manuale o predefinito)
+        "metodo_pagamento": metodo_pagamento_finale,
         "metodo_pagamento_modificato_manualmente": bool(metodo_manuale_esistente),
+        "provvisorio": True,  # Sempre provvisorio fino a riconciliazione
+        "riconciliato": False,  # Non ancora riconciliato
         "pagato": False,
         "data_pagamento": None,
         
@@ -393,31 +430,7 @@ async def import_fattura_xml(file: UploadFile = File(...)):
             allegati_salvati.append(allegato_id)
     
     # ==================== INTEGRAZIONE CICLO PASSIVO ====================
-    # Prepara dati fornitore per le funzioni integrate
-    fornitore_obj = {
-        "id": fornitore_result.get("fornitore_id"),
-        "partita_iva": partita_iva,
-        "ragione_sociale": fornitore_result.get("ragione_sociale"),
-        "esclude_magazzino": False,  # Default
-        "metodo_pagamento": None  # Default - sarà usato per routing Prima Nota
-    }
-    
-    # Recupera flag esclude_magazzino e metodo_pagamento predefinito dal fornitore
-    fornitore_db = await db[COL_FORNITORI].find_one(
-        {"partita_iva": partita_iva}, 
-        {"_id": 0, "esclude_magazzino": 1, "metodo_pagamento": 1, "metodo_pagamento_predefinito": 1}
-    )
-    if fornitore_db:
-        fornitore_obj["esclude_magazzino"] = fornitore_db.get("esclude_magazzino", False)
-        # Priorità: metodo manuale utente > metodo predefinito fornitore
-        fornitore_obj["metodo_pagamento"] = (
-            metodo_manuale_esistente or 
-            fornitore_db.get("metodo_pagamento_predefinito") or
-            fornitore_db.get("metodo_pagamento")
-        )
-    elif metodo_manuale_esistente:
-        # Se non c'è fornitore in DB ma c'era un metodo manuale
-        fornitore_obj["metodo_pagamento"] = metodo_manuale_esistente
+    # fornitore_obj è già stato preparato sopra con metodo pagamento corretto
     
     risultato_integrazione = {}
     
@@ -1901,10 +1914,13 @@ async def paga_fattura_manuale(payload: Dict[str, Any]) -> Dict[str, Any]:
             "tipo": "uscita",
             "categoria": "fornitori",
             "stato": "confermato",
+            "fattura_id": fattura_id,  # ID per collegamento a vista fattura
             "fattura_collegata": fattura_id,
             "fattura_numero": numero_fattura,
             "fornitore": fornitore,
             "metodo_pagamento": metodo,
+            "provvisorio": True,  # Resta provvisorio fino a riconciliazione
+            "riconciliato": False,  # Non ancora riconciliato con estratto conto
             "created_at": datetime.now(timezone.utc).isoformat(),
             "source": "pagamento_manuale"
         }
@@ -1933,15 +1949,29 @@ async def paga_fattura_manuale(payload: Dict[str, Any]) -> Dict[str, Any]:
             )
         
         # 3. Aggiorna stato fattura
+        update_fields = {
+            "status": "paid",
+            "pagato": True,
+            "stato_pagamento": "pagata",
+            "data_pagamento": data_pagamento,
+            "metodo_pagamento_effettivo": metodo,
+            "metodo_pagamento": metodo,
+            "metodo_pagamento_modificato_manualmente": True,  # L'utente ha scelto manualmente
+            "provvisorio": True,  # Resta provvisorio fino a riconciliazione
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+        # Imposta il riferimento al movimento in prima nota
+        if metodo == "cassa":
+            update_fields["prima_nota_cassa_id"] = movimento_id
+            update_fields["prima_nota_banca_id"] = None
+        else:
+            update_fields["prima_nota_banca_id"] = movimento_id
+            update_fields["prima_nota_cassa_id"] = None
+        
         await db[COL_FATTURE_RICEVUTE].update_one(
             {"id": fattura_id},
-            {"$set": {
-                "status": "paid",
-                "stato_pagamento": "pagata",
-                "data_pagamento": data_pagamento,
-                "metodo_pagamento_effettivo": metodo,
-                "updated_at": datetime.now(timezone.utc).isoformat()
-            }}
+            {"$set": update_fields}
         )
         
         logger.info(f"Pagamento manuale registrato: {fattura_id} -> {collection}, €{importo}")
@@ -1956,19 +1986,23 @@ async def paga_fattura_manuale(payload: Dict[str, Any]) -> Dict[str, Any]:
 @router.post("/cambia-metodo-pagamento")
 async def cambia_metodo_pagamento_fattura(payload: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Modifica il metodo di pagamento di una fattura già pagata.
+    Modifica il metodo di pagamento di una fattura.
     
-    Sposta il movimento da Prima Nota Cassa a Prima Nota Banca (o viceversa),
-    mantenendo la stessa data del documento originale.
+    REGOLE:
+    - CASO 1: Fattura non riconciliata → modifica permessa, marca come modificata manualmente
+    - CASO 2: Fattura riconciliata → BLOCCO, richiede forzatura con autorizzazione
+    - CASO 3: Forzatura con autorizzazione → permette modifica ma logga l'operazione
     
     Payload richiesto:
     - fattura_id: ID della fattura
     - importo: Importo del pagamento
     - metodo_vecchio: 'cassa' o 'banca' (collection di origine)
     - metodo_nuovo: 'cassa' o 'banca' (collection di destinazione)
-    - data_pagamento: Data del pagamento (usa la data del documento)
+    - data_pagamento: Data del pagamento
     - fornitore: Nome fornitore
     - numero_fattura: Numero fattura
+    - forza_modifica: (opzionale) true per forzare modifica su fattura riconciliata
+    - motivo_forzatura: (opzionale) motivo della forzatura
     """
     db = Database.get_db()
     
@@ -1979,15 +2013,49 @@ async def cambia_metodo_pagamento_fattura(payload: Dict[str, Any]) -> Dict[str, 
     data_pagamento = payload.get("data_pagamento")
     fornitore = payload.get("fornitore", "Fornitore")
     numero_fattura = payload.get("numero_fattura", "")
+    forza_modifica = payload.get("forza_modifica", False)
+    motivo_forzatura = payload.get("motivo_forzatura", "")
     
     if not fattura_id:
         raise HTTPException(status_code=400, detail="fattura_id è obbligatorio")
     
-    if metodo_vecchio not in ["cassa", "banca"] or metodo_nuovo not in ["cassa", "banca"]:
+    if metodo_vecchio not in ["cassa", "banca", ""] or metodo_nuovo not in ["cassa", "banca"]:
         raise HTTPException(status_code=400, detail="metodo deve essere 'cassa' o 'banca'")
     
     if metodo_vecchio == metodo_nuovo:
         raise HTTPException(status_code=400, detail="Il metodo di pagamento è già quello selezionato")
+    
+    # ==================== VERIFICA STATO RICONCILIAZIONE ====================
+    fattura = await db[COL_FATTURE_RICEVUTE].find_one({"id": fattura_id}, {"_id": 0})
+    if not fattura:
+        raise HTTPException(status_code=404, detail="Fattura non trovata")
+    
+    is_riconciliata = fattura.get("riconciliato", False)
+    
+    if is_riconciliata and not forza_modifica:
+        # BLOCCO: fattura già riconciliata con estratto conto
+        raise HTTPException(
+            status_code=403, 
+            detail="FATTURA RICONCILIATA: Questa fattura è già stata riconciliata con l'estratto conto bancario. "
+                   "Per modificare il metodo di pagamento è necessaria una forzatura con autorizzazione. "
+                   "Imposta forza_modifica=true e fornisci motivo_forzatura."
+        )
+    
+    if is_riconciliata and forza_modifica:
+        # Log della forzatura
+        logger.warning(f"FORZATURA MODIFICA FATTURA RICONCILIATA: {fattura_id} - Motivo: {motivo_forzatura}")
+        # Salva nel log delle forzature
+        await db["log_forzature"].insert_one({
+            "id": str(uuid.uuid4()),
+            "tipo": "modifica_metodo_pagamento",
+            "fattura_id": fattura_id,
+            "numero_fattura": numero_fattura,
+            "fornitore": fornitore,
+            "metodo_vecchio": metodo_vecchio,
+            "metodo_nuovo": metodo_nuovo,
+            "motivo": motivo_forzatura,
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        })
     
     # Determina collection origine e destinazione
     col_origine = "prima_nota_cassa" if metodo_vecchio == "cassa" else "prima_nota_banca"
@@ -2067,6 +2135,7 @@ async def cambia_metodo_pagamento_fattura(payload: Dict[str, Any]) -> Dict[str, 
             "metodo_pagamento_effettivo": metodo_nuovo,
             "metodo_pagamento": metodo_nuovo,
             "payment_method": metodo_nuovo,
+            "metodo_pagamento_modificato_manualmente": True,  # L'utente ha scelto manualmente
             "updated_at": datetime.now(timezone.utc).isoformat()
         }
         
@@ -2090,6 +2159,219 @@ async def cambia_metodo_pagamento_fattura(payload: Dict[str, Any]) -> Dict[str, 
         raise HTTPException(status_code=500, detail=str(e))
     
     return risultato
+
+
+@router.post("/riconcilia-con-estratto-conto")
+async def riconcilia_fattura_con_estratto_conto(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Riconcilia una fattura con un movimento dell'estratto conto bancario.
+    
+    CASO 3: Dopo che l'utente ha inserito la fattura (magari in cassa per errore),
+    quando si carica l'estratto conto e si trova il pagamento in banca,
+    questo endpoint:
+    1. Sposta automaticamente il movimento da cassa a banca
+    2. Marca la fattura come RICONCILIATA (non più modificabile)
+    3. Collega la fattura al movimento bancario
+    
+    Payload:
+    - fattura_id: ID fattura
+    - movimento_banca_id: ID movimento estratto conto
+    """
+    db = Database.get_db()
+    
+    fattura_id = payload.get("fattura_id")
+    movimento_banca_id = payload.get("movimento_banca_id")
+    
+    if not fattura_id or not movimento_banca_id:
+        raise HTTPException(status_code=400, detail="fattura_id e movimento_banca_id sono obbligatori")
+    
+    # Recupera fattura
+    fattura = await db[COL_FATTURE_RICEVUTE].find_one({"id": fattura_id}, {"_id": 0})
+    if not fattura:
+        raise HTTPException(status_code=404, detail="Fattura non trovata")
+    
+    # Recupera movimento banca
+    movimento_banca = await db["estratto_conto"].find_one({"id": movimento_banca_id}, {"_id": 0})
+    if not movimento_banca:
+        raise HTTPException(status_code=404, detail="Movimento bancario non trovato")
+    
+    risultato = {
+        "success": True,
+        "fattura_id": fattura_id,
+        "movimento_banca_id": movimento_banca_id,
+        "azioni": []
+    }
+    
+    try:
+        # Se la fattura era in cassa, sposta in banca
+        if fattura.get("prima_nota_cassa_id"):
+            # Cerca movimento in cassa
+            mov_cassa = await db["prima_nota_cassa"].find_one(
+                {"$or": [
+                    {"id": fattura.get("prima_nota_cassa_id")},
+                    {"fattura_id": fattura_id},
+                    {"fattura_collegata": fattura_id}
+                ]},
+                {"_id": 0}
+            )
+            
+            if mov_cassa:
+                # Sposta in banca
+                mov_cassa_clean = {k: v for k, v in mov_cassa.items() if k != "_id"}
+                mov_cassa_clean["riconciliato"] = True
+                mov_cassa_clean["movimento_banca_id"] = movimento_banca_id
+                mov_cassa_clean["data_riconciliazione"] = datetime.now(timezone.utc).isoformat()
+                mov_cassa_clean["spostato_da"] = "prima_nota_cassa"
+                mov_cassa_clean["spostato_per"] = "riconciliazione_automatica"
+                
+                await db["prima_nota_banca"].insert_one(mov_cassa_clean)
+                await db["prima_nota_cassa"].delete_one({"id": mov_cassa.get("id")})
+                
+                risultato["azioni"].append("Movimento spostato da Cassa a Banca")
+                risultato["movimento_prima_nota_id"] = mov_cassa.get("id")
+        
+        # Aggiorna fattura come riconciliata
+        update_fattura = {
+            "riconciliato": True,
+            "provvisorio": False,
+            "data_riconciliazione": datetime.now(timezone.utc).isoformat(),
+            "movimento_banca_riconciliato_id": movimento_banca_id,
+            "metodo_pagamento": "banca",
+            "metodo_pagamento_effettivo": "banca",
+            "prima_nota_banca_id": fattura.get("prima_nota_cassa_id") or fattura.get("prima_nota_banca_id"),
+            "prima_nota_cassa_id": None,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+        await db[COL_FATTURE_RICEVUTE].update_one(
+            {"id": fattura_id},
+            {"$set": update_fattura}
+        )
+        risultato["azioni"].append("Fattura marcata come RICONCILIATA")
+        
+        # Marca anche il movimento banca come riconciliato
+        await db["estratto_conto"].update_one(
+            {"id": movimento_banca_id},
+            {"$set": {
+                "riconciliato": True,
+                "fattura_riconciliata_id": fattura_id,
+                "data_riconciliazione": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+        risultato["azioni"].append("Movimento bancario marcato come riconciliato")
+        
+        logger.info(f"Riconciliazione completata: fattura {fattura_id} -> movimento {movimento_banca_id}")
+        
+    except Exception as e:
+        logger.error(f"Errore riconciliazione: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    
+    return risultato
+
+
+@router.get("/verifica-incoerenze-estratto-conto")
+async def verifica_incoerenze_estratto_conto():
+    """
+    CASO 4: Verifica se ci sono incoerenze tra le fatture e l'estratto conto.
+    
+    Controlla:
+    1. Fatture marcate come "cassa" ma trovate in estratto conto bancario
+    2. Fatture marcate come "banca" ma non trovate in estratto conto
+    3. Importi discordanti tra fattura e movimento bancario
+    
+    Restituisce avvisi per ogni incoerenza trovata.
+    """
+    db = Database.get_db()
+    
+    avvisi = []
+    
+    try:
+        # Recupera fatture pagate ma non riconciliate
+        fatture = await db[COL_FATTURE_RICEVUTE].find(
+            {
+                "pagato": True,
+                "riconciliato": {"$ne": True}
+            },
+            {"_id": 0}
+        ).to_list(500)
+        
+        for fattura in fatture:
+            fattura_id = fattura.get("id")
+            importo = fattura.get("importo_totale", 0)
+            fornitore = fattura.get("fornitore_ragione_sociale", "")
+            numero = fattura.get("numero_documento", "")
+            metodo_attuale = fattura.get("metodo_pagamento", "")
+            
+            # Cerca in estratto conto
+            # Tolleranza importo
+            importo_min = importo - max(1.0, importo * 0.01)
+            importo_max = importo + max(1.0, importo * 0.01)
+            
+            # Normalizza fornitore
+            fornitore_words = []
+            if fornitore:
+                fornitore_clean = re.sub(r'(S\.?R\.?L\.?|S\.?P\.?A\.?|S\.?N\.?C\.?|DI|DEL|\d+)', '', fornitore, flags=re.IGNORECASE)
+                fornitore_words = [w.strip() for w in fornitore_clean.split() if len(w.strip()) > 2]
+            
+            # Query estratto conto
+            mov_banca = await db["estratto_conto"].find(
+                {
+                    "tipo": "uscita",
+                    "$or": [
+                        {"importo": {"$gte": importo_min, "$lte": importo_max}},
+                        {"importo": {"$gte": -importo_max, "$lte": -importo_min}}
+                    ],
+                    "riconciliato": {"$ne": True}
+                },
+                {"_id": 0}
+            ).to_list(50)
+            
+            for mov in mov_banca:
+                descrizione = (mov.get("descrizione", "") or "").upper()
+                causale = (mov.get("causale", "") or "").upper()
+                testo = f"{descrizione} {causale}"
+                
+                # Verifica match fornitore
+                match_fornitore = False
+                for word in fornitore_words[:3]:
+                    if word.upper() in testo:
+                        match_fornitore = True
+                        break
+                
+                if match_fornitore:
+                    # Trovato match in banca!
+                    if metodo_attuale == "cassa":
+                        # INCOERENZA: fattura in cassa ma pagamento in banca
+                        avvisi.append({
+                            "tipo": "INCOERENZA_METODO",
+                            "gravita": "alta",
+                            "fattura_id": fattura_id,
+                            "numero_fattura": numero,
+                            "fornitore": fornitore,
+                            "importo_fattura": importo,
+                            "importo_banca": abs(mov.get("importo", 0)),
+                            "movimento_banca_id": mov.get("id"),
+                            "data_movimento": mov.get("data"),
+                            "messaggio": f"⚠️ INCOERENZA: Fattura {numero} ({fornitore}) è in CASSA ma trovata in estratto conto BANCA",
+                            "azione_suggerita": "Riconciliare e spostare automaticamente in Banca"
+                        })
+                        break
+        
+        # Conta statistiche
+        stats = {
+            "fatture_verificate": len(fatture),
+            "incoerenze_trovate": len(avvisi),
+            "incoerenze_metodo": len([a for a in avvisi if a["tipo"] == "INCOERENZA_METODO"])
+        }
+        
+    except Exception as e:
+        logger.error(f"Errore verifica incoerenze: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    
+    return {
+        "avvisi": avvisi,
+        "stats": stats
+    }
 
 
 

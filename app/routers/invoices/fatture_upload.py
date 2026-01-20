@@ -252,9 +252,19 @@ async def find_check_numbers_for_invoice(db, importo: float, data_fattura: str, 
         return None
 
 
-async def riconcilia_con_estratto_conto(db, importo: float, data_fattura: str, fornitore: str) -> Dict[str, Any]:
+async def riconcilia_con_estratto_conto(db, importo: float, data_fattura: str, fornitore: str, numero_fattura: str = None) -> Dict[str, Any]:
     """
     Cerca riconciliazione nell'estratto conto (bonifici, assegni, qualsiasi movimento).
+    
+    REGOLE DI MATCH (in ordine di priorità):
+    1. Importo + Nome fornitore/beneficiario (MATCH FORTE)
+    2. Importo + Numero fattura in causale (MATCH FORTE)  
+    3. Solo importo esatto con tolleranza minima (MATCH DEBOLE)
+    
+    NOTE: La DATA NON È un criterio obbligatorio perché un bonifico può essere:
+    - Contestuale alla fattura
+    - Differito rispetto alla fattura
+    - In anticipo rispetto alla data fattura
     
     Returns:
         Dict con info riconciliazione o {"trovato": False}
@@ -264,85 +274,118 @@ async def riconcilia_con_estratto_conto(db, importo: float, data_fattura: str, f
         "metodo_suggerito": None,
         "movimento_banca_id": None,
         "data_pagamento": None,
-        "descrizione_banca": None
+        "descrizione_banca": None,
+        "match_tipo": None,
+        "match_score": 0
     }
     
     try:
         if not importo or importo <= 0:
             return result
         
-        # Tolleranza importo
-        importo_min = importo - 1.0
-        importo_max = importo + 1.0
+        # Tolleranza importo: ±1€ o ±1% (usa il maggiore)
+        tolleranza = max(1.0, importo * 0.01)
+        importo_min = importo - tolleranza
+        importo_max = importo + tolleranza
         
-        # Range date (180 giorni prima della data fattura, 60 dopo)
-        data_min = None
-        data_max = None
-        if data_fattura:
-            try:
-                data_doc = datetime.strptime(data_fattura, "%Y-%m-%d")
-                data_min = (data_doc - timedelta(days=180)).strftime("%Y-%m-%d")
-                data_max = (data_doc + timedelta(days=60)).strftime("%Y-%m-%d")
-            except:
-                pass
-        
-        # Normalizza nome fornitore per ricerca
+        # Normalizza nome fornitore per ricerca (estrai parole significative)
         fornitore_words = []
         if fornitore:
-            # Estrai parole significative dal nome fornitore
-            fornitore_clean = re.sub(r'(S\.?R\.?L\.?|S\.?P\.?A\.?|S\.?N\.?C\.?|S\.?A\.?S\.?|DI|DEL|DELLA|IL|LA|\d+)', '', fornitore, flags=re.IGNORECASE)
-            fornitore_words = [w for w in fornitore_clean.split() if len(w) > 2]
+            # Rimuovi forme societarie e parole comuni
+            fornitore_clean = re.sub(
+                r'(S\.?R\.?L\.?|S\.?P\.?A\.?|S\.?N\.?C\.?|S\.?A\.?S\.?|DI|DEL|DELLA|IL|LA|LO|GLI|LE|UN|UNA|E|ED|\d+)', 
+                '', 
+                fornitore, 
+                flags=re.IGNORECASE
+            )
+            fornitore_words = [w.strip() for w in fornitore_clean.split() if len(w.strip()) > 2]
         
-        # Cerca movimento uscita con importo corrispondente
+        # Query base: cerca movimenti in uscita con importo compatibile
+        # NON filtrare per data - lascia che il match avvenga su altri criteri
         query = {
             "tipo": "uscita",
             "$or": [
                 {"importo": {"$gte": importo_min, "$lte": importo_max}},
-                {"importo": {"$gte": -importo_max, "$lte": -importo_min}}
-            ]
+                {"importo": {"$gte": -importo_max, "$lte": -importo_min}}  # Importi negativi
+            ],
+            # Escludi movimenti già riconciliati
+            "riconciliato": {"$ne": True}
         }
-        if data_min and data_max:
-            query["data"] = {"$gte": data_min, "$lte": data_max}
         
-        # Cerca nell'estratto conto
-        movimenti = await db["estratto_conto"].find(query, {"_id": 0}).limit(20).to_list(20)
+        # Cerca nell'estratto conto (senza limite di data)
+        movimenti = await db["estratto_conto"].find(query, {"_id": 0}).limit(50).to_list(50)
+        
+        best_match = None
+        best_score = 0
         
         for mov in movimenti:
-            descrizione = mov.get("descrizione", "").upper()
+            descrizione = (mov.get("descrizione", "") or "").upper()
+            causale = (mov.get("causale", "") or "").upper()
+            beneficiario = (mov.get("beneficiario", "") or "").upper()
+            testo_ricerca = f"{descrizione} {causale} {beneficiario}"
             
-            # Verifica se il fornitore è menzionato nella descrizione
-            fornitore_match = False
+            score = 0
+            match_reasons = []
+            
+            # 1. Match per nome fornitore (PESO: 50 punti)
             if fornitore_words:
-                for word in fornitore_words[:3]:  # Max 3 parole
-                    if word.upper() in descrizione:
-                        fornitore_match = True
-                        break
+                matches_found = 0
+                for word in fornitore_words[:4]:  # Max 4 parole significative
+                    if word.upper() in testo_ricerca:
+                        matches_found += 1
+                if matches_found > 0:
+                    # Più parole matchano, più alto il punteggio
+                    score += 25 + (matches_found * 10)
+                    match_reasons.append(f"fornitore({matches_found} parole)")
             
-            # Se fornitore match o importo esatto (tolleranza 0.50)
+            # 2. Match per numero fattura in causale (PESO: 40 punti)
+            if numero_fattura:
+                # Normalizza numero fattura (rimuovi spazi, slash)
+                num_clean = numero_fattura.replace(" ", "").replace("/", "").upper()
+                if num_clean in testo_ricerca.replace(" ", "").replace("/", ""):
+                    score += 40
+                    match_reasons.append("numero_fattura")
+            
+            # 3. Match per importo esatto (PESO: 30 punti)
             importo_mov = abs(mov.get("importo", 0))
-            importo_esatto = abs(importo_mov - importo) < 0.50
+            differenza = abs(importo_mov - importo)
+            if differenza < 0.10:  # Quasi esatto
+                score += 30
+                match_reasons.append("importo_esatto")
+            elif differenza < 0.50:
+                score += 20
+                match_reasons.append("importo_quasi")
+            elif differenza < tolleranza:
+                score += 10
+                match_reasons.append("importo_tolleranza")
             
-            if fornitore_match or importo_esatto:
+            # Se abbiamo un match significativo (score >= 50)
+            if score >= 50 and score > best_score:
                 # Determina metodo pagamento dalla descrizione
-                if "BONIFICO" in descrizione or "BON" in descrizione:
+                metodo = "bonifico"  # Default
+                if any(x in descrizione for x in ["BONIFICO", "BON.", "SEPA"]):
                     metodo = "bonifico"
-                elif "ASSEGNO" in descrizione or "ASS" in descrizione:
+                elif any(x in descrizione for x in ["ASSEGNO", "ASS.", "CHK"]):
                     metodo = "assegno"
-                elif "PRELIEVO" in descrizione or "BANCOMAT" in descrizione:
+                elif any(x in descrizione for x in ["PRELIEVO", "BANCOMAT", "CASH"]):
                     metodo = "cassa"
-                else:
-                    metodo = "bonifico"  # Default
+                elif any(x in descrizione for x in ["RID", "SDD", "ADDEBITO"]):
+                    metodo = "rid"
                 
-                result = {
+                best_match = {
                     "trovato": True,
                     "metodo_suggerito": metodo,
                     "movimento_banca_id": mov.get("id"),
                     "data_pagamento": mov.get("data"),
                     "descrizione_banca": descrizione[:100],
                     "importo_banca": importo_mov,
-                    "match_tipo": "fornitore" if fornitore_match else "importo"
+                    "match_tipo": " + ".join(match_reasons),
+                    "match_score": score
                 }
-                break
+                best_score = score
+        
+        if best_match:
+            return best_match
         
         return result
         

@@ -995,9 +995,8 @@ export default function Fornitori() {
   };
 
   const handleViewInvoices = (supplier) => {
-    // Usa la partita IVA per filtrare (più affidabile del nome)
-    const pivaParam = supplier.partita_iva ? `fornitore_piva=${encodeURIComponent(supplier.partita_iva)}` : `fornitore=${encodeURIComponent(supplier.ragione_sociale || supplier.denominazione || '')}`;
-    navigate(`/fatture-ricevute?${pivaParam}`);
+    // Apre il modale con estratto fatture invece di navigare
+    handleViewInvoicesModal(supplier);
   };
 
   // Ricerca dati azienda tramite Partita IVA
@@ -1048,6 +1047,15 @@ export default function Fornitori() {
   // Stato per modale fatturato
   const [fatturatoModal, setFatturatoModal] = useState({ open: false, data: null, loading: false });
   
+  // Stato per modale estratto fatture
+  const [estrattoModal, setEstrattoModal] = useState({ 
+    open: false, 
+    fornitore: null, 
+    data: null, 
+    loading: false,
+    filtri: { anno: new Date().getFullYear(), data_da: '', data_a: '', importo_min: '', importo_max: '', tipo: 'tutti' }
+  });
+  
   // Mostra fatturato fornitore per anno
   const handleShowFatturato = async (supplier, anno) => {
     if (!supplier.partita_iva) {
@@ -1063,6 +1071,54 @@ export default function Fornitori() {
     } catch (error) {
       alert('Errore caricamento fatturato: ' + (error.response?.data?.detail || error.message));
       setFatturatoModal({ open: false, data: null, loading: false });
+    }
+  };
+  
+  // Mostra estratto fatture fornitore
+  const handleViewInvoicesModal = async (supplier) => {
+    if (!supplier.partita_iva && !supplier.id) {
+      alert('Questo fornitore non ha una Partita IVA');
+      return;
+    }
+    
+    setEstrattoModal({ 
+      open: true, 
+      fornitore: supplier, 
+      data: null, 
+      loading: true,
+      filtri: { anno: selectedYear, data_da: '', data_a: '', importo_min: '', importo_max: '', tipo: 'tutti' }
+    });
+    
+    try {
+      const res = await api.get(`/api/suppliers/${supplier.id || supplier.partita_iva}/fatture?anno=${selectedYear}`);
+      setEstrattoModal(prev => ({ ...prev, data: res.data, loading: false }));
+    } catch (error) {
+      alert('Errore caricamento fatture: ' + (error.response?.data?.detail || error.message));
+      setEstrattoModal(prev => ({ ...prev, open: false, loading: false }));
+    }
+  };
+  
+  // Ricarica estratto con filtri
+  const reloadEstratto = async () => {
+    if (!estrattoModal.fornitore) return;
+    
+    setEstrattoModal(prev => ({ ...prev, loading: true }));
+    
+    try {
+      const { anno, data_da, data_a, importo_min, importo_max, tipo } = estrattoModal.filtri;
+      const params = new URLSearchParams();
+      if (anno) params.append('anno', anno);
+      if (data_da) params.append('data_da', data_da);
+      if (data_a) params.append('data_a', data_a);
+      if (importo_min) params.append('importo_min', importo_min);
+      if (importo_max) params.append('importo_max', importo_max);
+      if (tipo && tipo !== 'tutti') params.append('tipo', tipo);
+      
+      const res = await api.get(`/api/suppliers/${estrattoModal.fornitore.id || estrattoModal.fornitore.partita_iva}/fatture?${params.toString()}`);
+      setEstrattoModal(prev => ({ ...prev, data: res.data, loading: false }));
+    } catch (error) {
+      alert('Errore: ' + (error.response?.data?.detail || error.message));
+      setEstrattoModal(prev => ({ ...prev, loading: false }));
     }
   };
 
@@ -1427,6 +1483,319 @@ export default function Fornitori() {
                   )}
                 </div>
               ) : null}
+            </div>
+          </div>
+        </div>
+        </Portal>
+      )}
+
+      {/* MODALE ESTRATTO FATTURE */}
+      {estrattoModal.open && (
+        <Portal>
+        <div style={{
+          position: 'fixed',
+          top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '16px',
+            width: '95%',
+            maxWidth: '1200px',
+            maxHeight: '90vh',
+            overflow: 'hidden',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
+            {/* Header */}
+            <div style={{
+              padding: '20px 24px',
+              borderBottom: '1px solid #e5e7eb',
+              background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
+              color: 'white'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontSize: '20px', fontWeight: 700 }}>
+                    📋 Estratto Fatture
+                  </div>
+                  <div style={{ fontSize: '14px', opacity: 0.9, marginTop: 4 }}>
+                    {estrattoModal.fornitore?.ragione_sociale || estrattoModal.fornitore?.denominazione}
+                    {' • '}{estrattoModal.fornitore?.partita_iva}
+                  </div>
+                </div>
+                <button
+                  onClick={() => setEstrattoModal(prev => ({ ...prev, open: false }))}
+                  style={{
+                    width: '36px', height: '36px',
+                    borderRadius: '50%',
+                    border: 'none',
+                    background: 'rgba(255,255,255,0.2)',
+                    color: 'white',
+                    cursor: 'pointer',
+                    fontSize: '18px'
+                  }}
+                >×</button>
+              </div>
+            </div>
+
+            {/* Filtri */}
+            <div style={{ 
+              padding: '16px 24px', 
+              borderBottom: '1px solid #e5e7eb',
+              background: '#f8fafc',
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: 12,
+              alignItems: 'flex-end'
+            }}>
+              <div>
+                <label style={{ fontSize: 11, color: '#6b7280', display: 'block', marginBottom: 4 }}>Anno</label>
+                <select
+                  value={estrattoModal.filtri.anno || ''}
+                  onChange={(e) => setEstrattoModal(prev => ({ 
+                    ...prev, 
+                    filtri: { ...prev.filtri, anno: e.target.value ? parseInt(e.target.value) : null }
+                  }))}
+                  style={{ padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13 }}
+                >
+                  <option value="">Tutti</option>
+                  {[2024, 2025, 2026].map(y => <option key={y} value={y}>{y}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={{ fontSize: 11, color: '#6b7280', display: 'block', marginBottom: 4 }}>Data Da</label>
+                <input
+                  type="date"
+                  value={estrattoModal.filtri.data_da}
+                  onChange={(e) => setEstrattoModal(prev => ({ 
+                    ...prev, 
+                    filtri: { ...prev.filtri, data_da: e.target.value }
+                  }))}
+                  style={{ padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13 }}
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: 11, color: '#6b7280', display: 'block', marginBottom: 4 }}>Data A</label>
+                <input
+                  type="date"
+                  value={estrattoModal.filtri.data_a}
+                  onChange={(e) => setEstrattoModal(prev => ({ 
+                    ...prev, 
+                    filtri: { ...prev.filtri, data_a: e.target.value }
+                  }))}
+                  style={{ padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13 }}
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: 11, color: '#6b7280', display: 'block', marginBottom: 4 }}>Importo Min</label>
+                <input
+                  type="number"
+                  placeholder="€"
+                  value={estrattoModal.filtri.importo_min}
+                  onChange={(e) => setEstrattoModal(prev => ({ 
+                    ...prev, 
+                    filtri: { ...prev.filtri, importo_min: e.target.value }
+                  }))}
+                  style={{ padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, width: 100 }}
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: 11, color: '#6b7280', display: 'block', marginBottom: 4 }}>Importo Max</label>
+                <input
+                  type="number"
+                  placeholder="€"
+                  value={estrattoModal.filtri.importo_max}
+                  onChange={(e) => setEstrattoModal(prev => ({ 
+                    ...prev, 
+                    filtri: { ...prev.filtri, importo_max: e.target.value }
+                  }))}
+                  style={{ padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, width: 100 }}
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: 11, color: '#6b7280', display: 'block', marginBottom: 4 }}>Tipo</label>
+                <select
+                  value={estrattoModal.filtri.tipo}
+                  onChange={(e) => setEstrattoModal(prev => ({ 
+                    ...prev, 
+                    filtri: { ...prev.filtri, tipo: e.target.value }
+                  }))}
+                  style={{ padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13 }}
+                >
+                  <option value="tutti">Tutti</option>
+                  <option value="fattura">Solo Fatture</option>
+                  <option value="nota_credito">Solo Note Credito</option>
+                </select>
+              </div>
+              <button
+                onClick={reloadEstratto}
+                disabled={estrattoModal.loading}
+                style={{
+                  padding: '8px 16px',
+                  background: '#2563eb',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 6,
+                  cursor: estrattoModal.loading ? 'wait' : 'pointer',
+                  fontSize: 13,
+                  fontWeight: 600
+                }}
+              >
+                🔍 Filtra
+              </button>
+            </div>
+
+            {/* Content */}
+            <div style={{ flex: 1, overflow: 'auto', padding: '16px 24px' }}>
+              {estrattoModal.loading ? (
+                <div style={{ textAlign: 'center', padding: 40 }}>
+                  <div className="spinner" style={{ width: 40, height: 40, margin: '0 auto' }}></div>
+                  <p style={{ marginTop: 16, color: '#6b7280' }}>Caricamento fatture...</p>
+                </div>
+              ) : estrattoModal.data ? (
+                <>
+                  {/* Totali */}
+                  <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', 
+                    gap: 12, 
+                    marginBottom: 20 
+                  }}>
+                    <div style={{ background: '#f0f9ff', padding: 16, borderRadius: 8, textAlign: 'center' }}>
+                      <div style={{ fontSize: 11, color: '#0369a1' }}>Documenti</div>
+                      <div style={{ fontSize: 24, fontWeight: 700, color: '#0c4a6e' }}>{estrattoModal.data.totali?.numero_documenti || 0}</div>
+                    </div>
+                    <div style={{ background: '#f0fdf4', padding: 16, borderRadius: 8, textAlign: 'center' }}>
+                      <div style={{ fontSize: 11, color: '#16a34a' }}>Totale</div>
+                      <div style={{ fontSize: 20, fontWeight: 700, color: '#15803d' }}>€ {(estrattoModal.data.totali?.importo_totale || 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}</div>
+                    </div>
+                    <div style={{ background: '#fef2f2', padding: 16, borderRadius: 8, textAlign: 'center' }}>
+                      <div style={{ fontSize: 11, color: '#dc2626' }}>Note Credito</div>
+                      <div style={{ fontSize: 20, fontWeight: 700, color: '#b91c1c' }}>- € {(estrattoModal.data.totali?.note_credito || 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}</div>
+                    </div>
+                    <div style={{ background: '#fef3c7', padding: 16, borderRadius: 8, textAlign: 'center' }}>
+                      <div style={{ fontSize: 11, color: '#92400e' }}>Netto</div>
+                      <div style={{ fontSize: 20, fontWeight: 700, color: '#78350f' }}>€ {(estrattoModal.data.totali?.netto || 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}</div>
+                    </div>
+                  </div>
+
+                  {/* Tabella Fatture */}
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                      <thead>
+                        <tr style={{ background: '#f3f4f6' }}>
+                          <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 600 }}>Data</th>
+                          <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 600 }}>Numero</th>
+                          <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 600 }}>Tipo</th>
+                          <th style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 600 }}>Imponibile</th>
+                          <th style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 600 }}>IVA</th>
+                          <th style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 600 }}>Totale</th>
+                          <th style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 600 }}>Metodo Pag.</th>
+                          <th style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 600 }}>Stato</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(estrattoModal.data.estratto || []).map((f, idx) => (
+                          <tr key={f.id || idx} style={{ borderBottom: '1px solid #e5e7eb', background: f.is_nota_credito ? '#fef2f2' : (idx % 2 === 0 ? 'white' : '#f9fafb') }}>
+                            <td style={{ padding: '10px 12px' }}>{f.data}</td>
+                            <td style={{ padding: '10px 12px', fontWeight: 500 }}>{f.numero}</td>
+                            <td style={{ padding: '10px 12px' }}>
+                              {f.is_nota_credito ? (
+                                <span style={{ background: '#fecaca', color: '#991b1b', padding: '2px 8px', borderRadius: 4, fontSize: 11 }}>NC</span>
+                              ) : (
+                                <span style={{ background: '#dbeafe', color: '#1e40af', padding: '2px 8px', borderRadius: 4, fontSize: 11 }}>{f.tipo_documento}</span>
+                              )}
+                            </td>
+                            <td style={{ padding: '10px 12px', textAlign: 'right' }}>€ {(f.imponibile || 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}</td>
+                            <td style={{ padding: '10px 12px', textAlign: 'right' }}>€ {(f.iva || 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}</td>
+                            <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 600 }}>
+                              {f.is_nota_credito ? '-' : ''} € {(f.importo_totale || 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+                            </td>
+                            <td style={{ padding: '10px 12px', textAlign: 'center' }}>
+                              <span style={{ 
+                                padding: '2px 8px', 
+                                borderRadius: 4, 
+                                fontSize: 11,
+                                background: f.metodo_pagamento === 'cassa' || f.metodo_pagamento === 'contanti' ? '#dcfce7' : '#dbeafe',
+                                color: f.metodo_pagamento === 'cassa' || f.metodo_pagamento === 'contanti' ? '#166534' : '#1e40af'
+                              }}>
+                                {f.metodo_pagamento || '-'}
+                              </span>
+                            </td>
+                            <td style={{ padding: '10px 12px', textAlign: 'center' }}>
+                              {f.riconciliato ? (
+                                <span style={{ background: '#10b981', color: 'white', padding: '2px 8px', borderRadius: 12, fontSize: 10, fontWeight: 600 }}>✓ RICONCILIATA</span>
+                              ) : f.pagato ? (
+                                <span style={{ background: '#22c55e', color: 'white', padding: '2px 8px', borderRadius: 12, fontSize: 10 }}>Pagata</span>
+                              ) : (
+                                <span style={{ background: '#f59e0b', color: 'white', padding: '2px 8px', borderRadius: 12, fontSize: 10 }}>Da pagare</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                        {(!estrattoModal.data.estratto || estrattoModal.data.estratto.length === 0) && (
+                          <tr>
+                            <td colSpan={8} style={{ padding: 40, textAlign: 'center', color: '#6b7280' }}>
+                              Nessuna fattura trovata con i filtri selezionati
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              ) : null}
+            </div>
+
+            {/* Footer */}
+            <div style={{ 
+              padding: '16px 24px', 
+              borderTop: '1px solid #e5e7eb',
+              background: '#f8fafc',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <div style={{ fontSize: 12, color: '#6b7280' }}>
+                Metodo pagamento predefinito fornitore: <strong>{estrattoModal.data?.fornitore?.metodo_pagamento_predefinito || '-'}</strong>
+              </div>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <button
+                  onClick={() => window.print()}
+                  style={{
+                    padding: '8px 16px',
+                    background: '#f3f4f6',
+                    color: '#374151',
+                    border: '1px solid #d1d5db',
+                    borderRadius: 6,
+                    cursor: 'pointer',
+                    fontSize: 13
+                  }}
+                >
+                  🖨️ Stampa
+                </button>
+                <button
+                  onClick={() => setEstrattoModal(prev => ({ ...prev, open: false }))}
+                  style={{
+                    padding: '8px 16px',
+                    background: '#1e3a5f',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: 6,
+                    cursor: 'pointer',
+                    fontSize: 13,
+                    fontWeight: 600
+                  }}
+                >
+                  Chiudi
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -1234,3 +1234,380 @@ async def auto_ricostruisci_dati_corrispettivi() -> Dict[str, Any]:
     
     return risultati
 
+
+# ==================== VISUALIZZAZIONE CORRISPETTIVO ====================
+
+def generate_corrispettivo_html(corrispettivo: Dict, movimento: Dict = None) -> str:
+    """
+    Genera HTML per visualizzare il corrispettivo in formato scontrino.
+    """
+    # Estrai dati dal corrispettivo o movimento
+    data = corrispettivo.get("data", "")
+    totale = corrispettivo.get("totale", 0) or corrispettivo.get("importo", 0) or 0
+    pagato_contanti = corrispettivo.get("pagato_contanti", 0) or 0
+    pagato_elettronico = corrispettivo.get("pagato_elettronico", 0) or 0
+    totale_iva = corrispettivo.get("totale_iva", 0) or corrispettivo.get("imposta", 0) or 0
+    totale_imponibile = corrispettivo.get("totale_imponibile", 0) or corrispettivo.get("imponibile", 0) or 0
+    matricola_rt = corrispettivo.get("matricola_rt", "") or ""
+    numero_documenti = corrispettivo.get("numero_documenti", 0) or 0
+    
+    # Dati aggiuntivi dal movimento prima nota
+    if movimento:
+        dettaglio = movimento.get("dettaglio", {})
+        if dettaglio:
+            pagato_contanti = dettaglio.get("contanti", pagato_contanti) or pagato_contanti
+            pagato_elettronico = dettaglio.get("elettronico", pagato_elettronico) or pagato_elettronico
+            totale_iva = dettaglio.get("totale_iva", totale_iva) or totale_iva
+            matricola_rt = dettaglio.get("matricola_rt", matricola_rt) or matricola_rt
+            numero_documenti = dettaglio.get("numero_documenti", numero_documenti) or numero_documenti
+        totale_iva = movimento.get("imposta", totale_iva) or totale_iva
+        totale_imponibile = movimento.get("imponibile", totale_imponibile) or totale_imponibile
+    
+    # Riepilogo IVA
+    riepilogo_iva = corrispettivo.get("riepilogo_iva", []) or []
+    dettaglio_iva = corrispettivo.get("dettaglio_iva", []) or movimento.get("dettaglio_iva", []) if movimento else []
+    
+    # Pagato non riscosso
+    pagato_non_riscosso = corrispettivo.get("pagato_non_riscosso", 0) or 0
+    
+    # Annulli
+    totale_annulli = corrispettivo.get("totale_ammontare_annulli", 0) or 0
+    
+    # Formatta importi
+    def fmt_euro(val):
+        try:
+            return f"€ {float(val):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        except:
+            return "€ 0,00"
+    
+    # Formatta data
+    def fmt_data(d):
+        if not d:
+            return "-"
+        try:
+            if "T" in str(d):
+                d = str(d).split("T")[0]
+            parts = str(d).split("-")
+            if len(parts) == 3:
+                return f"{parts[2]}/{parts[1]}/{parts[0]}"
+            return d
+        except:
+            return d
+    
+    # Genera righe IVA
+    iva_rows = ""
+    iva_list = dettaglio_iva or riepilogo_iva
+    for iva in iva_list:
+        aliquota = iva.get("aliquota", iva.get("aliquota_iva", 0))
+        imponibile = iva.get("imponibile", iva.get("ammontare", 0))
+        imposta = iva.get("imposta", 0)
+        iva_rows += f"""
+        <tr>
+            <td style="padding: 6px 12px;">Aliquota {aliquota}%</td>
+            <td style="padding: 6px 12px; text-align: right;">{fmt_euro(imponibile)}</td>
+            <td style="padding: 6px 12px; text-align: right;">{fmt_euro(imposta)}</td>
+        </tr>"""
+    
+    if not iva_rows and totale_imponibile:
+        # Default 10%
+        iva_rows = f"""
+        <tr>
+            <td style="padding: 6px 12px;">Aliquota 10%</td>
+            <td style="padding: 6px 12px; text-align: right;">{fmt_euro(totale_imponibile)}</td>
+            <td style="padding: 6px 12px; text-align: right;">{fmt_euro(totale_iva)}</td>
+        </tr>"""
+    
+    html = f"""<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Corrispettivo del {fmt_data(data)}</title>
+    <style>
+        * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+        body {{ 
+            font-family: 'Courier New', monospace; 
+            background: #f0f2f5; 
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }}
+        .scontrino {{
+            background: white;
+            width: 100%;
+            max-width: 420px;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            border: 1px solid #e0e0e0;
+        }}
+        .header {{
+            text-align: center;
+            border-bottom: 2px dashed #333;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }}
+        .ragione-sociale {{
+            font-size: 18px;
+            font-weight: bold;
+            color: #1a1a1a;
+            margin-bottom: 8px;
+        }}
+        .info-azienda {{
+            font-size: 12px;
+            color: #666;
+            line-height: 1.6;
+        }}
+        .tipo-documento {{
+            background: #10b981;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            display: inline-block;
+            margin-top: 12px;
+        }}
+        .section {{
+            margin: 20px 0;
+            padding: 15px 0;
+            border-bottom: 1px dashed #ccc;
+        }}
+        .section-title {{
+            font-size: 11px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }}
+        .row {{
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            font-size: 14px;
+        }}
+        .row.highlight {{
+            background: #f8f9fa;
+            padding: 10px;
+            margin: 8px -10px;
+            border-radius: 4px;
+        }}
+        .label {{ color: #555; }}
+        .value {{ font-weight: bold; color: #1a1a1a; }}
+        .value.green {{ color: #10b981; }}
+        .value.blue {{ color: #3b82f6; }}
+        .value.red {{ color: #ef4444; }}
+        .totale {{
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #1e3a5f, #2d5a87);
+            color: white;
+            border-radius: 8px;
+            margin: 20px 0;
+        }}
+        .totale-label {{ font-size: 12px; opacity: 0.9; }}
+        .totale-value {{ font-size: 32px; font-weight: bold; margin-top: 8px; }}
+        .iva-table {{
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            margin: 10px 0;
+        }}
+        .iva-table th {{
+            background: #f3f4f6;
+            padding: 8px 12px;
+            text-align: left;
+            font-size: 11px;
+            color: #666;
+        }}
+        .iva-table td {{
+            border-bottom: 1px solid #f0f0f0;
+        }}
+        .footer {{
+            text-align: center;
+            padding-top: 20px;
+            border-top: 2px dashed #333;
+            margin-top: 20px;
+        }}
+        .matricola {{
+            background: #f3f4f6;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-size: 12px;
+            margin-bottom: 12px;
+        }}
+        .matricola-label {{ font-size: 10px; color: #888; }}
+        .matricola-value {{ font-weight: bold; color: #333; font-size: 14px; }}
+        .data-ora {{
+            font-size: 14px;
+            color: #333;
+            font-weight: bold;
+        }}
+        .print-btn {{
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            z-index: 1000;
+        }}
+        .print-btn:hover {{ background: #059669; }}
+        @media print {{ 
+            .print-btn {{ display: none; }} 
+            body {{ background: white; padding: 0; }}
+            .scontrino {{ box-shadow: none; border: none; }}
+        }}
+    </style>
+</head>
+<body>
+    <button class="print-btn" onclick="window.print()">🖨️ Stampa</button>
+    
+    <div class="scontrino">
+        <div class="header">
+            <div class="ragione-sociale">CERALDI CAFFÈ</div>
+            <div class="info-azienda">
+                Piazza Carità<br>
+                80134 Napoli (NA)<br>
+                P.IVA: 04523831214
+            </div>
+            <div class="tipo-documento">🧾 CORRISPETTIVO GIORNALIERO</div>
+        </div>
+        
+        <div class="totale">
+            <div class="totale-label">TOTALE INCASSO</div>
+            <div class="totale-value">{fmt_euro(totale)}</div>
+        </div>
+        
+        <div class="section">
+            <div class="section-title">📊 Dettaglio Pagamenti</div>
+            <div class="row">
+                <span class="label">💵 Pagamento Contanti</span>
+                <span class="value green">{fmt_euro(pagato_contanti)}</span>
+            </div>
+            <div class="row">
+                <span class="label">💳 Pagamento Elettronico</span>
+                <span class="value blue">{fmt_euro(pagato_elettronico)}</span>
+            </div>
+            {'<div class="row"><span class="label">⏳ Non Riscosso</span><span class="value red">' + fmt_euro(pagato_non_riscosso) + '</span></div>' if pagato_non_riscosso > 0 else ''}
+            {'<div class="row"><span class="label">❌ Annulli</span><span class="value red">-' + fmt_euro(totale_annulli) + '</span></div>' if totale_annulli > 0 else ''}
+        </div>
+        
+        <div class="section">
+            <div class="section-title">📋 Riepilogo IVA</div>
+            <table class="iva-table">
+                <thead>
+                    <tr>
+                        <th>Descrizione</th>
+                        <th style="text-align: right;">Imponibile</th>
+                        <th style="text-align: right;">Imposta</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {iva_rows}
+                    <tr style="font-weight: bold; background: #f8f9fa;">
+                        <td style="padding: 10px 12px;">TOTALE</td>
+                        <td style="padding: 10px 12px; text-align: right;">{fmt_euro(totale_imponibile)}</td>
+                        <td style="padding: 10px 12px; text-align: right;">{fmt_euro(totale_iva)}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="section">
+            <div class="section-title">📈 Statistiche</div>
+            <div class="row">
+                <span class="label">Numero Documenti</span>
+                <span class="value">{numero_documenti}</span>
+            </div>
+        </div>
+        
+        <div class="footer">
+            {f'<div class="matricola"><div class="matricola-label">Matricola RT</div><div class="matricola-value">{matricola_rt}</div></div>' if matricola_rt else ''}
+            <div class="data-ora">{fmt_data(data)}</div>
+        </div>
+    </div>
+</body>
+</html>"""
+    
+    return html
+
+
+@router.get("/view-by-filename")
+async def view_corrispettivo_by_filename(filename: str = Query(...)):
+    """
+    Visualizza il corrispettivo cercando per filename XML.
+    """
+    from fastapi.responses import HTMLResponse
+    
+    db = Database.get_db()
+    
+    # Cerca il movimento in prima nota cassa con quel filename
+    movimento = await db["prima_nota_cassa"].find_one(
+        {"xml_filename": filename},
+        {"_id": 0}
+    )
+    
+    if not movimento:
+        raise HTTPException(status_code=404, detail="Corrispettivo non trovato per questo filename")
+    
+    # Cerca il corrispettivo associato per data
+    corrispettivo = await db["corrispettivi"].find_one(
+        {"data": movimento.get("data")},
+        {"_id": 0}
+    )
+    
+    # Se non trovato, usa i dati del movimento stesso
+    if not corrispettivo:
+        corrispettivo = {
+            "data": movimento.get("data"),
+            "totale": movimento.get("importo"),
+            "pagato_contanti": movimento.get("pagato_contanti"),
+            "pagato_elettronico": movimento.get("pagato_elettronico"),
+            "totale_iva": movimento.get("imposta"),
+            "totale_imponibile": movimento.get("imponibile"),
+            "dettaglio_iva": movimento.get("dettaglio_iva", []),
+            "matricola_rt": movimento.get("dettaglio", {}).get("matricola_rt", ""),
+            "numero_documenti": movimento.get("dettaglio", {}).get("numero_documenti", 0)
+        }
+    
+    html_content = generate_corrispettivo_html(corrispettivo, movimento)
+    
+    return HTMLResponse(content=html_content, status_code=200)
+
+
+@router.get("/{corrispettivo_id}/view")
+async def view_corrispettivo(corrispettivo_id: str):
+    """
+    Visualizza il corrispettivo in formato HTML (stile scontrino).
+    """
+    from fastapi.responses import HTMLResponse
+    
+    db = Database.get_db()
+    
+    # Cerca il corrispettivo
+    corrispettivo = await db["corrispettivi"].find_one({"id": corrispettivo_id}, {"_id": 0})
+    
+    if not corrispettivo:
+        raise HTTPException(status_code=404, detail="Corrispettivo non trovato")
+    
+    # Cerca anche il movimento associato in prima nota per dati aggiuntivi
+    movimento = await db["prima_nota_cassa"].find_one(
+        {"$or": [
+            {"corrispettivo_id": corrispettivo_id},
+            {"data": corrispettivo.get("data"), "categoria": "Corrispettivi"}
+        ]},
+        {"_id": 0}
+    )
+    
+    html_content = generate_corrispettivo_html(corrispettivo, movimento)
+    
+    return HTMLResponse(content=html_content, status_code=200)
+
