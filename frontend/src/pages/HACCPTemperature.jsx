@@ -1,3 +1,4 @@
+import { formatDateIT } from '../lib/utils';
 import React, { useState, useEffect } from 'react';
 import api from '../api';
 
@@ -54,7 +55,7 @@ export default function HACCPTemperature() {
                     display: 'flex',
                     justifyContent: 'space-between'
                   }}>
-                    <span>{t.data?.substring(0, 10)}</span>
+                    <span>{formatDateIT(t.data)}</span>
                     <span style={{ fontWeight: 600, color: t.temperatura > 8 ? '#dc2626' : '#059669' }}>
                       {t.temperatura}°C
                     </span>
@@ -80,7 +81,7 @@ export default function HACCPTemperature() {
                     display: 'flex',
                     justifyContent: 'space-between'
                   }}>
-                    <span>{t.data?.substring(0, 10)}</span>
+                    <span>{formatDateIT(t.data)}</span>
                     <span style={{ fontWeight: 600, color: t.temperatura > -15 ? '#dc2626' : '#059669' }}>
                       {t.temperatura}°C
                     </span>

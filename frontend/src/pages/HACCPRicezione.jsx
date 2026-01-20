@@ -1,3 +1,4 @@
+import { formatDateIT } from '../lib/utils';
 import React, { useState, useEffect } from 'react';
 import api from '../api';
 
@@ -64,7 +65,7 @@ export default function HACCPRicezione() {
             <tbody>
               {ricezioni.map((ric, idx) => (
                 <tr key={ric.id || idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <td style={{ padding: 12 }}>{ric.data?.substring(0, 10) || '-'}</td>
+                  <td style={{ padding: 12 }}>{formatDateIT(ric.data) || '-'}</td>
                   <td style={{ padding: 12 }}>{ric.fornitore || '-'}</td>
                   <td style={{ padding: 12 }}>{ric.prodotto || '-'}</td>
                   <td style={{ padding: 12, textAlign: 'center', fontWeight: 600 }}>

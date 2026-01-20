@@ -286,7 +286,7 @@ export default function Commercialista() {
         const importo = parseFloat(m.amount || m.importo || 0);
         
         return [
-          data.substring(0, 10),
+          formatDateIT(data),
           tipo === 'entrata' ? '↑ ENTRATA' : '↓ USCITA',
           formatEuro(importo),
           (m.description || m.descrizione || '-').substring(0, 50),

@@ -1,3 +1,4 @@
+import { formatDateIT } from '../lib/utils';
 import React, { useState, useEffect } from 'react';
 import api from '../api';
 
@@ -64,7 +65,7 @@ export default function HACCPSanificazioni() {
             <tbody>
               {sanificazioni.map((san, idx) => (
                 <tr key={san.id || idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <td style={{ padding: 12 }}>{san.data?.substring(0, 10) || '-'}</td>
+                  <td style={{ padding: 12 }}>{formatDateIT(san.data) || '-'}</td>
                   <td style={{ padding: 12 }}>{san.area || san.attrezzatura || '-'}</td>
                   <td style={{ padding: 12 }}>{san.operatore || '-'}</td>
                   <td style={{ padding: 12, color: '#64748b' }}>{san.prodotto || '-'}</td>
