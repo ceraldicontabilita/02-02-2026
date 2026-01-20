@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
-import { formatEuro } from '../lib/utils';
+import { formatEuro, formatDateIT } from '../lib/utils';
 import InvoiceXMLViewer from '../components/InvoiceXMLViewer';
 import { PageInfoCard } from '../components/PageInfoCard';
 
