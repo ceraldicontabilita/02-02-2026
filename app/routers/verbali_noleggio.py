@@ -686,6 +686,131 @@ async def unifica_verbali() -> Dict[str, Any]:
         if not numero:
             continue
         
+
+
+@router.post("/classifica-verbali-posta")
+async def classifica_verbali_posta_endpoint() -> Dict[str, Any]:
+    """
+    Classifica tutti i verbali scaricati dalla posta.
+    
+    Per ogni verbale determina se è:
+    - AZIENDALE: targa presente nei veicoli gestiti → in attesa fattura
+    - PRIVATO: targa non aziendale → archiviato separatamente
+    - SCONOSCIUTO: nessuna targa trovata → da verificare manualmente
+    """
+    from app.services.verbali_classificazione import processa_verbali_posta
+    
+    try:
+        risultato = await processa_verbali_posta()
+        return {
+            "success": True,
+            "message": "Classificazione completata",
+            **risultato
+        }
+    except Exception as e:
+        logger.error(f"Errore classificazione: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/verbali-attesa-fattura")
+async def get_verbali_attesa_endpoint() -> Dict[str, Any]:
+    """
+    Restituisce i verbali aziendali in attesa di fattura.
+    
+    Questi verbali sono stati ricevuti via email ma non ancora
+    fatturati dal fornitore noleggio.
+    """
+    from app.services.verbali_classificazione import get_verbali_attesa
+    
+    verbali = await get_verbali_attesa()
+    
+    # Raggruppa per stato
+    in_attesa = [v for v in verbali if v.get("stato") == "in_attesa_fattura"]
+    da_verificare = [v for v in verbali if v.get("stato") == "da_verificare"]
+    fatturati = [v for v in verbali if v.get("stato") == "fatturato"]
+    
+    return {
+        "in_attesa_fattura": in_attesa,
+        "da_verificare": da_verificare,
+        "fatturati": fatturati,
+        "totale": len(verbali),
+        "statistiche": {
+            "in_attesa": len(in_attesa),
+            "da_verificare": len(da_verificare),
+            "fatturati": len(fatturati)
+        }
+    }
+
+
+@router.get("/verbali-privati")
+async def get_verbali_privati_endpoint() -> Dict[str, Any]:
+    """
+    Restituisce i verbali classificati come privati (non aziendali).
+    
+    Questi verbali hanno targhe non presenti nei veicoli gestiti.
+    """
+    from app.services.verbali_classificazione import get_verbali_privati
+    
+    verbali = await get_verbali_privati()
+    
+    return {
+        "verbali": verbali,
+        "totale": len(verbali),
+        "nota": "Verbali con targhe non aziendali"
+    }
+
+
+@router.post("/verifica-nuove-fatture")
+async def verifica_nuove_fatture_endpoint() -> Dict[str, Any]:
+    """
+    Verifica se ci sono nuove fatture che matchano verbali in attesa.
+    
+    Da chiamare dopo ogni import di fatture per associare
+    automaticamente i verbali alle fatture corrispondenti.
+    """
+    from app.services.verbali_classificazione import verifica_nuove_fatture_per_verbali
+    
+    try:
+        risultato = await verifica_nuove_fatture_per_verbali()
+        return {
+            "success": True,
+            "message": f"Trovate {risultato['nuove_associazioni']} nuove associazioni",
+            **risultato
+        }
+    except Exception as e:
+        logger.error(f"Errore verifica fatture: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/riclassifica-verbale")
+async def riclassifica_verbale_endpoint(
+    numero_verbale: str,
+    classificazione: str,
+    targa: str = None
+) -> Dict[str, Any]:
+    """
+    Riclassifica manualmente un verbale.
+    
+    Args:
+        numero_verbale: Numero del verbale da riclassificare
+        classificazione: "aziendale" o "privato"
+        targa: Targa da associare (opzionale)
+    """
+    from app.services.verbali_classificazione import riclassifica_verbale
+    
+    if classificazione not in ["aziendale", "privato"]:
+        raise HTTPException(status_code=400, detail="Classificazione deve essere 'aziendale' o 'privato'")
+    
+    success = await riclassifica_verbale(numero_verbale, classificazione, targa)
+    
+    if not success:
+        raise HTTPException(status_code=404, detail="Verbale non trovato")
+    
+    return {
+        "success": True,
+        "message": f"Verbale {numero_verbale} riclassificato come {classificazione}"
+    }
+
         # Cerca in verbali_noleggio_completi
         result = await db["verbali_noleggio_completi"].update_one(
             {"numero_verbale": numero},
