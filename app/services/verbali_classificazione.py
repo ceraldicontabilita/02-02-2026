@@ -102,18 +102,11 @@ async def get_targhe_aziendali() -> set:
         if v.get("targa"):
             targhe.add(normalizza_targa(v["targa"]))
     
-    # Targhe dalle fatture noleggio
-    fornitori_noleggio = ["01924961004", "04911190488", "06714021000", "02615080963"]
-    cursor = db["invoices"].find(
-        {"supplier_vat": {"$in": fornitori_noleggio}},
-        {"linee.descrizione": 1}
-    )
-    async for f in cursor:
-        for linea in f.get("linee", []):
-            desc = linea.get("descrizione", "")
-            match = re.search(TARGA_PATTERN, desc.upper())
-            if match:
-                targhe.add(normalizza_targa(match.group(1)))
+    # Targhe dai verbali già estratti dalle fatture (più veloce)
+    cursor = db["verbali_noleggio_completi"].find({"targa": {"$ne": None}}, {"targa": 1})
+    async for v in cursor:
+        if v.get("targa"):
+            targhe.add(normalizza_targa(v["targa"]))
     
     return targhe
 
