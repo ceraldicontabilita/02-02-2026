@@ -539,11 +539,22 @@ export default function ArchivioFatture() {
                   <tbody>
                     {fatture.map((f, idx) => {
                       const isPaid = f.pagato || f.status === 'paid' || f.stato_pagamento === 'pagata';
-                      // Determina metodo EFFETTIVO del pagamento (se pagato) guardando prima_nota_id
+                      // Determina metodo EFFETTIVO del pagamento guardando:
+                      // 1. prima_nota_cassa_id / prima_nota_banca_id (fonte primaria)
+                      // 2. metodo_pagamento / metodo_pagamento_effettivo (fallback per dati legacy)
                       const hasCassaId = !!f.prima_nota_cassa_id;
                       const hasBancaId = !!f.prima_nota_banca_id;
-                      // Se ha ID cassa -> è in cassa, altrimenti se ha ID banca -> è in banca
-                      const metodoPagEffettivo = hasCassaId ? 'cassa' : hasBancaId ? 'banca' : null;
+                      const metodoSalvato = (f.metodo_pagamento_effettivo || f.metodo_pagamento || '').toLowerCase();
+                      const isCassaByMetodo = metodoSalvato.includes('contant') || metodoSalvato === 'cassa' || metodoSalvato.includes('cash');
+                      const isBancaByMetodo = metodoSalvato.includes('bonifico') || metodoSalvato === 'banca' || metodoSalvato.includes('bank') || metodoSalvato.includes('sepa') || metodoSalvato.includes('rid');
+                      
+                      // Priorità: ID prima nota > metodo salvato > null
+                      const metodoPagEffettivo = hasCassaId ? 'cassa' 
+                        : hasBancaId ? 'banca' 
+                        : isCassaByMetodo ? 'cassa'
+                        : isBancaByMetodo ? 'banca'
+                        : null;
+                      
                       // Metodo configurato nel fornitore (per default quando non pagato)
                       const metodoFornitore = (f.fornitore_metodo_pagamento || f.metodo_pagamento || '').toLowerCase();
                       const isFornitoreCassa = metodoFornitore.includes('contant') || metodoFornitore === 'cassa';
