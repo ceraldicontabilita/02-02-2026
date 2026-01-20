@@ -406,7 +406,7 @@ export default function Inventario() {
                         />
                       </td>
                       <td style={{ padding: '12px', textAlign: 'right', fontWeight: 600, color: '#1e293b' }}>
-                        €{(prod.quantita * prod.prezzo_unitario).toFixed(2)}
+                        {formatEuro(prod.quantita * prod.prezzo_unitario)}
                       </td>
                       <td style={{ padding: '12px', textAlign: 'center' }}>
                         <button
@@ -425,7 +425,7 @@ export default function Inventario() {
                       TOTALE INVENTARIO:
                     </td>
                     <td style={{ padding: '14px 12px', fontWeight: 700, fontSize: '18px', color: '#15803d', textAlign: 'right' }}>
-                      €{totaleCorrente.toFixed(2)}
+                      {formatEuro(totaleCorrente)}
                     </td>
                     <td></td>
                   </tr>
