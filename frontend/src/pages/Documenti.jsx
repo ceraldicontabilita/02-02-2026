@@ -374,13 +374,19 @@ export default function Documenti() {
 
   const formatDate = (dateStr) => {
     if (!dateStr) return '-';
-    return new Date(dateStr).toLocaleDateString('it-IT', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    // Usa formatDateIT per avere formato italiano
+    const formatted = formatDateIT(dateStr);
+    // Aggiungi orario se presente
+    if (dateStr.includes('T')) {
+      try {
+        const d = new Date(dateStr);
+        const time = d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+        return `${formatted} ${time}`;
+      } catch {
+        return formatted;
+      }
+    }
+    return formatted;
   };
 
   // Styles
