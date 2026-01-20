@@ -105,6 +105,14 @@ La pagina **Regole Contabili** (`/app/frontend/src/pages/RegoleContabili.jsx`) �
 
 ## 📋 CHANGELOG RECENTE
 
+### 20 Gennaio 2026 - Sistema Riconciliazione Email ↔ Gestionale
+- ✅ **Indice Documenti**: Indicizzati 1637 fatture + 19 verbali con chiavi di ricerca
+- ✅ **Pattern Matching**: Sistema per estrarre numeri fattura, verbali, targhe, importi, P.IVA
+- ✅ **API Riconciliazione**: Endpoint completi per scansione posta e associazione PDF
+- ✅ **Archivio PDF**: Collection per archiviare PDF scaricati dalla posta
+- ✅ **Log Riconciliazioni**: Traccia di tutti i match trovati
+- **Collections Nuove**: `indice_documenti`, `archivio_email`, `archivio_pdf`, `log_riconciliazione`
+
 ### 20 Gennaio 2026 - Restyling UI Prima Nota
 - ✅ **Chiusure Giornaliere Compatte**: Sezione ripiegabile con `<details>` e 4 box su una riga
 - ✅ **Input Ultra-Compatti**: Ridotti padding e font-size per massimizzare spazio
