@@ -1432,7 +1432,7 @@ export default function Fornitori() {
                   }}>
                     <div style={{ fontSize: '14px', color: '#0369a1', marginBottom: '4px' }}>TOTALE FATTURATO {fatturatoModal.data.anno}</div>
                     <div style={{ fontSize: '36px', fontWeight: 700, color: '#0c4a6e' }}>
-                      {formatEuro(fatturatoModal.data.totale_fatturato?)}
+                      {formatEuro(fatturatoModal.data.totale_fatturato || 0)}
                     </div>
                     <div style={{ fontSize: '14px', color: '#0369a1', marginTop: '8px' }}>
                       {fatturatoModal.data.numero_fatture} fatture
