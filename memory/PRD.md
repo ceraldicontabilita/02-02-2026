@@ -105,6 +105,13 @@ La pagina **Regole Contabili** (`/app/frontend/src/pages/RegoleContabili.jsx`) �
 
 ## 📋 CHANGELOG RECENTE
 
+### 20 Gennaio 2026 - Sistema Persistenza Dati Noleggio
+- ✅ **Persistenza Dati Critici**: Creato sistema per salvare verbali, bolli, riparazioni nel database
+- ✅ **Nuove Collections**: `costi_noleggio`, `veicoli_noleggio`, `audit_noleggio`
+- ✅ **API Migrazione**: Endpoint per migrare dati esistenti dal 2018 al 2026
+- ✅ **Hash Univoco**: Sistema anti-duplicati basato su hash del contenuto
+- ✅ **Soft Delete**: I record vengono marcati come eliminati, non cancellati
+
 ### 20 Gennaio 2026 - Bug Fix Metodo Pagamento & Regole Contabili
 - ✅ **Bug Fix Critico**: Corretto bug che impediva la modifica del metodo di pagamento per fatture legacy
 - ✅ **Fallback Metodo Pagamento**: Aggiunta logica di fallback per determinare metodo effettivo da `metodo_pagamento` quando `prima_nota_*_id` sono null
