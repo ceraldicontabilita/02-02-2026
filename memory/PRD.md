@@ -107,25 +107,12 @@ La pagina **Regole Contabili** (`/app/frontend/src/pages/RegoleContabili.jsx`) �
 
 ### 20 Gennaio 2026 - Ottimizzazione Pagina IVA + Sistema Codici Tributari (P0 COMPLETATO)
 - ✅ **Fix Performance IVA**: Endpoint `/api/iva/monthly/{year}/{month}` ottimizzato da 11.5s a 1.4s (8x più veloce)
-  - Causa: 62+ query individuali al database (2 query per giorno x 31 giorni)
-  - Soluzione: Aggregazione MongoDB + caricamento batch fatture + elaborazione in memoria
 - ✅ **Nuova Pagina Codici Tributari**: `/codici-tributari` con sistema completo di gestione F24
-  - Lista tutti i 37 codici tributo pagati
-  - Filtraggio per anno
-  - Dettaglio per codice con storico pagamenti
-  - Categorizzazione (IRPEF, INPS, INAIL, Addizionali, TFR, Credito, Ravvedimento)
-  - Riepilogo annuale per categoria
-  - Ricerca per codice o descrizione
 - ✅ **API Codici Tributari**: Nuovo router `/api/codici-tributari/`
-  - `GET /codici-tributo/lista` - Lista tutti i codici
-  - `GET /codici-tributo/stato/{codice}` - Stato pagamento codice specifico
-  - `GET /codici-tributo/riconciliazione` - Riconciliazione a 3 vie
-  - `GET /codici-tributo/cerca` - Ricerca codici
-  - `GET /codici-tributo/riepilogo-annuale/{anno}` - Riepilogo per categoria
-- ✅ **Riconciliazione a 3 Vie**: Struttura per tracciare:
-  - Livello 1: F24 ricevuto dal commercialista (email)
-  - Livello 2: Pagamento in banca
-  - Livello 3: Quietanza dal cassetto fiscale (PDF)
+- ✅ **Fix Download PDF Verbali**: Ora i PDF si aprono correttamente in nuova tab
+- ✅ **Pagamenti ordinati per data**: Storico pagamenti in ordine cronologico decrescente
+- ✅ **Sostituzione toLocaleDateString**: Aggiornati 50+ file per usare `formatDateIT`
+- ✅ **Database cleanup**: Eliminato database vuoto `azienda_semplice`
 
 ### 20 Gennaio 2026 - Correzione Globale Formati Data e Valuta (P2 COMPLETATO)
 - ✅ **Formato Valuta Italiano**: Applicato `formatEuro()` da utils.js in tutti i file frontend
