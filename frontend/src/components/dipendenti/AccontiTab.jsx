@@ -1,3 +1,4 @@
+import { formatDateIT } from '../../lib/utils';
 import React, { useState, useEffect, useCallback } from 'react';
 import api from '../../api';
 
@@ -306,7 +307,7 @@ export default function AccontiTab({ dipendenteId, dipendenteName }) {
                   {accontiTipo.map((acc, idx) => (
                     <tr key={acc.id || idx} style={{ borderBottom: '1px solid #f0f0f0' }}>
                       <td style={{ padding: 8 }}>
-                        {new Date(acc.data).toLocaleDateString('it-IT')}
+                        {formatDateIT(acc.data)}
                       </td>
                       <td style={{ padding: 8, textAlign: 'right', fontWeight: 600 }}>
                         {formatCurrency(acc.importo)}

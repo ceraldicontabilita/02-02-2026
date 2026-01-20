@@ -1,3 +1,4 @@
+import { formatDateIT } from '../../lib/utils';
 /**
  * Tab Contratti - Componente ottimizzato
  * Gestisce visualizzazione e gestione contratti dipendenti
@@ -253,10 +254,10 @@ const ContrattiTab = memo(function ContrattiTab() {
                     <td style={{ padding: 12, fontWeight: 500 }}>{contratto.dipendente_nome}</td>
                     <td style={{ padding: 12 }}>{contratto.tipologia}</td>
                     <td style={{ padding: 12, textAlign: 'center' }}>
-                      {contratto.data_inizio ? new Date(contratto.data_inizio).toLocaleDateString('it-IT') : '-'}
+                      {contratto.data_inizio ? formatDateIT(contratto.data_inizio) : '-'}
                     </td>
                     <td style={{ padding: 12, textAlign: 'center' }}>
-                      {contratto.data_fine ? new Date(contratto.data_fine).toLocaleDateString('it-IT') : 'Indeterminato'}
+                      {contratto.data_fine ? formatDateIT(contratto.data_fine) : 'Indeterminato'}
                     </td>
                     <td style={{ padding: 12, textAlign: 'center' }}>{contratto.ore_settimanali || '-'}</td>
                     <td style={{ padding: 12, textAlign: 'center' }}>

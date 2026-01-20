@@ -1,3 +1,4 @@
+import { formatDateIT } from '../../lib/utils';
 /**
  * Tab Libretti Sanitari - Componente ottimizzato
  * Gestisce visualizzazione e gestione libretti sanitari
@@ -147,7 +148,7 @@ const LibrettiSanitariTab = memo(function LibrettiSanitariTab() {
           </div>
           {scaduti.map(l => (
             <div key={l.id} style={{ fontSize: 14, color: '#991b1b' }}>
-              • {l.dipendente_nome} - Scaduto il {new Date(l.data_scadenza).toLocaleDateString('it-IT')}
+              • {l.dipendente_nome} - Scaduto il {formatDateIT(l.data_scadenza)}
             </div>
           ))}
         </div>
@@ -166,7 +167,7 @@ const LibrettiSanitariTab = memo(function LibrettiSanitariTab() {
           </div>
           {inScadenza.map(l => (
             <div key={l.id} style={{ fontSize: 14, color: '#92400e' }}>
-              • {l.dipendente_nome} - Scade il {new Date(l.data_scadenza).toLocaleDateString('it-IT')}
+              • {l.dipendente_nome} - Scade il {formatDateIT(l.data_scadenza)}
             </div>
           ))}
         </div>
@@ -203,10 +204,10 @@ const LibrettiSanitariTab = memo(function LibrettiSanitariTab() {
                       <td style={{ padding: 12, fontWeight: 500 }}>{libretto.dipendente_nome}</td>
                       <td style={{ padding: 12 }}>{libretto.numero_libretto}</td>
                       <td style={{ padding: 12, textAlign: 'center' }}>
-                        {libretto.data_rilascio ? new Date(libretto.data_rilascio).toLocaleDateString('it-IT') : '-'}
+                        {libretto.data_rilascio ? formatDateIT(libretto.data_rilascio) : '-'}
                       </td>
                       <td style={{ padding: 12, textAlign: 'center' }}>
-                        {libretto.data_scadenza ? new Date(libretto.data_scadenza).toLocaleDateString('it-IT') : '-'}
+                        {libretto.data_scadenza ? formatDateIT(libretto.data_scadenza) : '-'}
                       </td>
                       <td style={{ padding: 12, textAlign: 'center' }}>
                         <span style={{
