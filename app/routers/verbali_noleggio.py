@@ -400,3 +400,189 @@ async def stats_verbali() -> Dict[str, Any]:
         "associati_a_fatture": associati,
         "non_associati": totale - associati
     }
+
+
+@router.post("/scansiona-fatture")
+async def scansiona_fatture_per_verbali_endpoint() -> Dict[str, Any]:
+    """
+    Scansiona TUTTE le fatture dei fornitori noleggio dal 2022 al 2026
+    ed estrae tutti i verbali con associazioni complete.
+    """
+    from app.services.verbali_service import scansiona_e_salva_tutti_verbali
+    
+    try:
+        risultato = await scansiona_e_salva_tutti_verbali()
+        return {
+            "success": True,
+            "message": "Scansione completata",
+            **risultato
+        }
+    except Exception as e:
+        logger.error(f"Errore scansione verbali: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/verbali-completi")
+async def get_verbali_completi(
+    anno: int = None,
+    targa: str = None,
+    stato_pagamento: str = None,
+    limit: int = 100
+) -> Dict[str, Any]:
+    """
+    Restituisce i verbali con tutte le associazioni.
+    
+    Filtri opzionali:
+    - anno: Anno del verbale
+    - targa: Filtra per targa veicolo
+    - stato_pagamento: da_verificare, pagato, sospeso
+    """
+    from app.services.verbali_service import COLLECTION_VERBALI
+    db = Database.get_db()
+    
+    query = {}
+    if anno:
+        query["anno"] = str(anno)
+    if targa:
+        query["targa"] = targa.upper()
+    if stato_pagamento:
+        query["stato_pagamento"] = stato_pagamento
+    
+    cursor = db[COLLECTION_VERBALI].find(query, {"_id": 0}).sort("data_fattura", -1).limit(limit)
+    verbali = await cursor.to_list(limit)
+    
+    # Statistiche
+    totale = await db[COLLECTION_VERBALI].count_documents(query if query else {})
+    pagati = await db[COLLECTION_VERBALI].count_documents({"stato_pagamento": "pagato"})
+    sospesi = await db[COLLECTION_VERBALI].count_documents({"stato_pagamento": "sospeso"})
+    da_verificare = await db[COLLECTION_VERBALI].count_documents({"stato_pagamento": "da_verificare"})
+    
+    return {
+        "verbali": verbali,
+        "count": len(verbali),
+        "totale": totale,
+        "statistiche": {
+            "pagati": pagati,
+            "sospesi": sospesi,
+            "da_verificare": da_verificare
+        }
+    }
+
+
+@router.get("/operazioni-sospese")
+async def get_operazioni_sospese_endpoint() -> Dict[str, Any]:
+    """
+    Restituisce tutte le operazioni sospese (verbali non trovati nell'estratto conto).
+    """
+    from app.services.verbali_service import get_operazioni_sospese
+    
+    sospese = await get_operazioni_sospese()
+    
+    return {
+        "operazioni": sospese,
+        "count": len(sospese),
+        "nota": "Queste operazioni non sono state trovate nell'estratto conto. Cerca manualmente nei documenti bancari."
+    }
+
+
+@router.post("/riconcilia")
+async def riconcilia_verbali_endpoint() -> Dict[str, Any]:
+    """
+    Tenta di riconciliare tutti i verbali con l'estratto conto.
+    """
+    from app.services.verbali_service import riconcilia_verbali
+    
+    try:
+        risultato = await riconcilia_verbali()
+        return {
+            "success": True,
+            "message": "Riconciliazione completata",
+            **risultato
+        }
+    except Exception as e:
+        logger.error(f"Errore riconciliazione: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/risolvi-sospeso")
+async def risolvi_sospeso_endpoint(
+    riferimento: str,
+    movimento_id: str
+) -> Dict[str, Any]:
+    """
+    Risolve un'operazione sospesa associandola manualmente a un movimento bancario.
+    """
+    from app.services.verbali_service import risolvi_operazione_sospesa
+    
+    success = await risolvi_operazione_sospesa(riferimento, movimento_id)
+    
+    if not success:
+        raise HTTPException(status_code=404, detail="Operazione sospesa non trovata")
+    
+    return {
+        "success": True,
+        "message": f"Operazione {riferimento} risolta e associata al movimento {movimento_id}"
+    }
+
+
+@router.get("/dettaglio/{numero_verbale}")
+async def get_dettaglio_verbale(numero_verbale: str) -> Dict[str, Any]:
+    """
+    Restituisce il dettaglio completo di un verbale con tutti i documenti associati.
+    """
+    from app.services.verbali_service import COLLECTION_VERBALI
+    db = Database.get_db()
+    
+    # Cerca nel nuovo sistema
+    verbale = await db[COLLECTION_VERBALI].find_one(
+        {"numero_verbale": numero_verbale},
+        {"_id": 0}
+    )
+    
+    if not verbale:
+        # Cerca nel vecchio sistema
+        verbale = await db["verbali_noleggio"].find_one(
+            {"numero_verbale": numero_verbale},
+            {"_id": 0}
+        )
+    
+    if not verbale:
+        raise HTTPException(status_code=404, detail="Verbale non trovato")
+    
+    # Carica info aggiuntive
+    risultato = {**verbale}
+    
+    # Carica info veicolo se presente
+    if verbale.get("targa"):
+        veicolo = await db["veicoli_noleggio"].find_one(
+            {"targa": verbale["targa"]},
+            {"_id": 0}
+        )
+        risultato["veicolo_info"] = veicolo
+    
+    # Carica fattura se presente
+    if verbale.get("fattura_id"):
+        fattura = await db["invoices"].find_one(
+            {"id": verbale["fattura_id"]},
+            {"_id": 0, "linee": 0}  # Escludi linee per non appesantire
+        )
+        risultato["fattura_info"] = fattura
+    
+    # Carica movimento bancario se riconciliato
+    if verbale.get("movimento_banca_id"):
+        movimento = await db["prima_nota_banca"].find_one(
+            {"id": verbale["movimento_banca_id"]},
+            {"_id": 0}
+        )
+        risultato["movimento_info"] = movimento
+    
+    # Carica PDF se disponibili
+    pdf_list = verbale.get("pdf_allegati", [])
+    if pdf_list:
+        risultato["pdf_disponibili"] = [
+            {"filename": p.get("filename"), "size": p.get("size"), "indice": i}
+            for i, p in enumerate(pdf_list)
+        ]
+    
+    return risultato
+
