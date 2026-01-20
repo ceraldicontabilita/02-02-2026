@@ -126,6 +126,7 @@ const F24 = lazy(() => import("./pages/F24.jsx"));
 const RiconciliazioneF24 = lazy(() => import("./pages/RiconciliazioneF24.jsx"));
 const ContabilitaAvanzata = lazy(() => import("./pages/ContabilitaAvanzata.jsx"));
 const Scadenze = lazy(() => import("./pages/Scadenze.jsx"));
+const CodiciTributari = lazy(() => import("./pages/CodiciTributari.jsx"));
 
 // === MAGAZZINO ===
 const Magazzino = lazy(() => import("./pages/Magazzino.jsx"));
