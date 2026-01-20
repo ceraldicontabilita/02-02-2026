@@ -1252,7 +1252,7 @@ export default function Documenti() {
                         if (tipo === 'f24') {
                           const contribuente = data.contribuente?.denominazione || data.contribuente || '';
                           const importo = data.totale_versato || data.importo_totale || 0;
-                          return `contribuente: ${contribuente} - € ${Number(importo).toLocaleString('it-IT', { minimumFractionDigits: 2 })}`;
+                          return `contribuente: ${contribuente} - ${formatEuro(Number(importo))}`;
                         }
                         
                         // BONIFICO: "P6325959 : 1 bonifico per totale euro 1.000,00 su Banca 05034 a favore di: Nome"
@@ -1261,7 +1261,7 @@ export default function Documenti() {
                           const importo = data.importo || 0;
                           const beneficiario = data.beneficiario?.denominazione || data.beneficiario || '';
                           const banca = data.banca || '';
-                          return `${riferimento} : bonifico € ${Number(importo).toLocaleString('it-IT', { minimumFractionDigits: 2 })} ${banca ? `su ${banca}` : ''} a favore di: ${beneficiario}`;
+                          return `${riferimento} : bonifico ${formatEuro(Number(importo))} ${banca ? `su ${banca}` : ''} a favore di: ${beneficiario}`;
                         }
                         
                         // ESTRATTO CONTO
@@ -1275,7 +1275,7 @@ export default function Documenti() {
                         if (tipo === 'cartella_esattoriale') {
                           const numero = data.numero_cartella || '';
                           const importo = data.importo_totale || 0;
-                          return `Cartella ${numero} - € ${Number(importo).toLocaleString('it-IT', { minimumFractionDigits: 2 })}`;
+                          return `Cartella ${numero} - ${formatEuro(Number(importo))}`;
                         }
                         
                         // FATTURA
@@ -1283,7 +1283,7 @@ export default function Documenti() {
                           const numero = data.numero_fattura || '';
                           const fornitore = data.fornitore?.denominazione || data.fornitore || '';
                           const importo = data.importo_totale || 0;
-                          return `Fatt. ${numero} - ${fornitore} € ${Number(importo).toLocaleString('it-IT', { minimumFractionDigits: 2 })}`;
+                          return `Fatt. ${numero} - ${fornitore} ${formatEuro(Number(importo))}`;
                         }
                         
                         // Default
