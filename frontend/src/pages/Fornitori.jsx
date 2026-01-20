@@ -690,7 +690,7 @@ function SupplierCard({ supplier, onEdit, onDelete, onViewInvoices, onChangeMeto
             fontSize: '13px',
             color: '#0284c7',
             transition: 'all 0.2s',
-            minWidth: '90px'
+            minWidth: '70px'
           }}
           onMouseEnter={(e) => { if (!loadingFatturato) { e.currentTarget.style.backgroundColor = '#e0f2fe'; } }}
           onMouseLeave={(e) => { if (!loadingFatturato) { e.currentTarget.style.backgroundColor = 'transparent'; } }}
@@ -698,6 +698,34 @@ function SupplierCard({ supplier, onEdit, onDelete, onViewInvoices, onChangeMeto
           data-testid={`btn-fatturato-${supplier.id}`}
           >
             <TrendingUp size={15} /> {loadingFatturato ? '...' : `${selectedYear}`}
+          </button>
+        )}
+        {/* Pulsante Fatturato 2025 - sempre visibile */}
+        {selectedYear !== 2025 && (
+          <button onClick={async () => {
+            setLoadingFatturato(true);
+            await onShowFatturato(supplier, 2025);
+            setLoadingFatturato(false);
+          }} disabled={loadingFatturato} style={{
+            flex: 1,
+            padding: '12px',
+            border: 'none',
+            backgroundColor: loadingFatturato ? '#e0f2fe' : 'transparent',
+            cursor: loadingFatturato ? 'wait' : 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '6px',
+            fontSize: '13px',
+            color: '#6b7280',
+            transition: 'all 0.2s',
+            minWidth: '70px'
+          }}
+          onMouseEnter={(e) => { if (!loadingFatturato) { e.currentTarget.style.backgroundColor = '#f3f4f6'; } }}
+          onMouseLeave={(e) => { if (!loadingFatturato) { e.currentTarget.style.backgroundColor = 'transparent'; } }}
+          title="Visualizza fatturato 2025"
+          >
+            <TrendingUp size={15} /> 2025
           </button>
         )}
         {/* Pulsante Cerca P.IVA - sempre visibile se ha P.IVA */}
