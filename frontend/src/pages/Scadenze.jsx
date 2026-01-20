@@ -19,6 +19,7 @@ export default function Scadenze() {
   const [viewingInvoice, setViewingInvoice] = useState(null);
   const [invoiceData, setInvoiceData] = useState(null);
   const [loadingInvoice, setLoadingInvoice] = useState(false);
+  const [documentiRiconciliare, setDocumentiRiconciliare] = useState(null);
   const [nuovaScadenza, setNuovaScadenza] = useState({
     data_scadenza: '',
     descrizione: '',
