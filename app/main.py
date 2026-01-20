@@ -165,6 +165,7 @@ from app.routers import adr  # ADR - Definizione Agevolata
 from app.routers import dimissioni  # Dimissioni dipendenti
 from app.routers import documenti_intelligenti  # Sistema classificazione email intelligente
 from app.routers import document_ai  # Document AI - Estrazione dati con OCR + LLM
+from app.routers import email_reconciliation  # Riconciliazione Email ↔ Gestionale
 
 
 # =============================================================================
