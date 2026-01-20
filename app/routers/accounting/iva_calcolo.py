@@ -174,15 +174,56 @@ async def get_iva_daily(date_param: str) -> Dict[str, Any]:
 async def get_iva_monthly(year: int, month: int) -> Dict[str, Any]:
     """IVA progressiva giornaliera per mese.
     
+    OTTIMIZZATO: Usa aggregazioni MongoDB invece di query giornaliere.
     Le Note Credito (TD04, TD08) vengono SOTTRATTE dal totale IVA credito.
     """
     db = Database.get_db()
     
-    # Tipi documento Note Credito
-    NOTE_CREDITO_TYPES = ["TD04", "TD08"]
-    
     try:
         _, num_days = monthrange(year, month)
+        month_prefix = f"{year}-{month:02d}"
+        
+        # STEP 1: Aggregazione corrispettivi per giorno (1 query invece di 31)
+        corr_pipeline = [
+            {"$match": {"data": {"$regex": f"^{month_prefix}"}}},
+            {"$group": {
+                "_id": {"$substr": ["$data", 8, 2]},  # Estrai giorno dalla data YYYY-MM-DD
+                "iva_debito": {"$sum": {"$toDouble": {"$ifNull": ["$totale_iva", 0]}}}
+            }}
+        ]
+        corr_by_day = {r["_id"]: r["iva_debito"] for r in await db["corrispettivi"].aggregate(corr_pipeline).to_list(100)}
+        
+        # STEP 2: Carica tutte le fatture del mese in una sola query
+        fatture_match = {
+            "$or": [
+                {"data_ricezione": {"$regex": f"^{month_prefix}"}},
+                {"$and": [
+                    {"data_ricezione": {"$exists": False}},
+                    {"invoice_date": {"$regex": f"^{month_prefix}"}}
+                ]}
+            ]
+        }
+        fatture_projection = {
+            "_id": 0, "data_ricezione": 1, "invoice_date": 1, "tipo_documento": 1,
+            "riepilogo_iva": 1, "iva": 1, "vat_amount": 1, "imponibile": 1,
+            "taxable_amount": 1, "total_amount": 1, "importo_totale": 1
+        }
+        fatture = await db["invoices"].find(fatture_match, fatture_projection).to_list(5000)
+        
+        # STEP 3: Raggruppa fatture per giorno in memoria (molto più veloce)
+        fatture_by_day = {}
+        for f in fatture:
+            # Determina la data effettiva
+            data_eff = f.get("data_ricezione") or f.get("invoice_date") or ""
+            if not data_eff.startswith(month_prefix):
+                continue
+            giorno = data_eff[8:10] if len(data_eff) >= 10 else "01"
+            
+            if giorno not in fatture_by_day:
+                fatture_by_day[giorno] = []
+            fatture_by_day[giorno].append(f)
+        
+        # STEP 4: Calcola IVA per ogni giorno
         daily_data = []
         iva_debito_prog = 0
         iva_credito_prog = 0
@@ -191,48 +232,37 @@ async def get_iva_monthly(year: int, month: int) -> Dict[str, Any]:
         imponibile_nc_prog = 0
         
         for day in range(1, num_days + 1):
-            date_str = f"{year}-{month:02d}-{day:02d}"
+            day_str = f"{day:02d}"
             
-            # Corrispettivi
-            corr = await db["corrispettivi"].find({"data": date_str}, {"_id": 0, "totale_iva": 1}).to_list(1000)
-            iva_deb = sum(float(c.get('totale_iva', 0) or 0) for c in corr)
+            # IVA Debito da corrispettivi
+            iva_deb = corr_by_day.get(day_str, 0)
             
-            # Fatture RICEVUTE nel giorno (usa data_ricezione, fallback a invoice_date)
-            fatt = await db["invoices"].find({
-                "$or": [
-                    {"data_ricezione": date_str},
-                    {"$and": [{"data_ricezione": {"$exists": False}}, {"invoice_date": date_str}]}
-                ]
-            }, {"_id": 0}).to_list(1000)
-            
+            # IVA Credito da fatture
             iva_cred = 0
             iva_nc = 0
             imponibile = 0
             imponibile_nc = 0
             
-            for f in fatt:
+            for f in fatture_by_day.get(day_str, []):
                 tipo_doc = f.get('tipo_documento', '')
                 is_nota_credito = tipo_doc in NOTE_CREDITO_TYPES
                 
-                # Usa riepilogo_iva se disponibile (più accurato)
+                # Calcola IVA dalla fattura
                 riepilogo = f.get('riepilogo_iva', [])
                 f_iva = 0
                 f_imponibile = 0
                 
                 if riepilogo:
                     for r in riepilogo:
-                        # Escludi operazioni con natura (esenti, non imponibili, etc.)
                         if r.get('natura'):
                             continue
                         f_iva += float(r.get('imposta', 0) or 0)
                         f_imponibile += float(r.get('imponibile', 0) or 0)
                 else:
-                    # Fallback: usa campi diretti
                     f_iva = float(f.get('iva', 0) or f.get('vat_amount', 0) or 0)
                     f_imponibile = float(f.get('imponibile', 0) or f.get('taxable_amount', 0) or 0)
                     total = float(f.get('total_amount', 0) or f.get('importo_totale', 0) or 0)
                     
-                    # Fallback estremo: stima IVA al 22% solo se mancante
                     if f_iva == 0 and total > 0:
                         f_iva = total - (total / 1.22)
                     if f_imponibile == 0 and total > 0:
@@ -261,7 +291,7 @@ async def get_iva_monthly(year: int, month: int) -> Dict[str, Any]:
                 "iva_debito": round(iva_deb, 2),
                 "iva_credito_lordo": round(iva_cred, 2),
                 "iva_note_credito": round(iva_nc, 2),
-                "iva_credito": round(iva_cred_netta, 2),  # Netto (fatture - NC)
+                "iva_credito": round(iva_cred_netta, 2),
                 "imponibile": round(imponibile, 2),
                 "imponibile_nc": round(imponibile_nc, 2),
                 "imponibile_netto": round(imponibile_netto, 2),
@@ -281,7 +311,7 @@ async def get_iva_monthly(year: int, month: int) -> Dict[str, Any]:
                 "iva_debito": round(iva_debito_prog, 2),
                 "iva_credito_lordo": round(iva_credito_prog + iva_note_credito_prog, 2),
                 "iva_note_credito": round(iva_note_credito_prog, 2),
-                "iva_credito": round(iva_credito_prog, 2),  # Netto
+                "iva_credito": round(iva_credito_prog, 2),
                 "imponibile_fatture": round(imponibile_prog, 2),
                 "imponibile_note_credito": round(imponibile_nc_prog, 2),
                 "imponibile_netto": round(imponibile_prog - imponibile_nc_prog, 2),
