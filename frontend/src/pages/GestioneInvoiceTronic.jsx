@@ -263,7 +263,7 @@ export default function GestioneInvoiceTronic() {
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4 text-gray-400" />
-                          {fattura.data_ricezione || '-'}
+                          {formatDateIT(fattura.data_ricezione) || '-'}
                         </div>
                       </td>
                       <td className="py-3 px-4 font-mono text-sm">

@@ -480,7 +480,7 @@ export default function GestioneAssegni() {
           const d = new Date(a.data_fattura);
           dataFattura = d.toLocaleDateString('it-IT');
         } catch {
-          dataFattura = a.data_fattura.substring(0, 10);
+          dataFattura = formatDateIT(a.data_fattura);
         }
       }
       
@@ -646,7 +646,7 @@ export default function GestioneAssegni() {
           const d = new Date(a.data_fattura);
           dataFattura = d.toLocaleDateString('it-IT');
         } catch {
-          dataFattura = a.data_fattura.substring(0, 10);
+          dataFattura = formatDateIT(a.data_fattura);
         }
       }
       
@@ -1885,7 +1885,7 @@ export default function GestioneAssegni() {
                               {f.invoice_number || f.numero_fattura || 'N/A'}
                             </div>
                             <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>
-                              {fornitore} • {(f.invoice_date || f.data_fattura || '').slice(0, 10)}
+                              {fornitore} • {formatDateIT(f.invoice_date || f.data_fattura)}
                             </div>
                           </div>
                           <div style={{ fontWeight: 'bold', color: '#1e3a5f', fontSize: 15 }}>

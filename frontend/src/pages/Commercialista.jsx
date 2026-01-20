@@ -365,7 +365,7 @@ export default function Commercialista() {
     if (fattureCassaData.fatture?.length > 0) {
       const tableData = fattureCassaData.fatture.map(f => {
         const numero = f.invoice_number || f.numero_fattura || '-';
-        const data = (f.invoice_date || f.data_fattura || '').substring(0, 10);
+        const data = formatDateIT(f.invoice_date || f.data_fattura);
         const fornitore = f.supplier_name || f.cedente_denominazione || '-';
         const importo = parseFloat(f.total_amount || f.importo_totale || 0);
         
@@ -433,7 +433,7 @@ export default function Commercialista() {
         a.stato || '-',
         a.beneficiario || '-',
         `${formatEuroStr(a.importo)}}`,
-        a.data_fattura?.substring(0, 10) || '-',
+        formatDateIT(a.data_fattura) || '-',
         a.numero_fattura || '-'
       ]);
       
