@@ -1432,7 +1432,7 @@ export default function Fornitori() {
                   }}>
                     <div style={{ fontSize: '14px', color: '#0369a1', marginBottom: '4px' }}>TOTALE FATTURATO {fatturatoModal.data.anno}</div>
                     <div style={{ fontSize: '36px', fontWeight: 700, color: '#0c4a6e' }}>
-                      € {fatturatoModal.data.totale_fatturato?.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+                      {formatEuro(fatturatoModal.data.totale_fatturato?)}
                     </div>
                     <div style={{ fontSize: '14px', color: '#0369a1', marginTop: '8px' }}>
                       {fatturatoModal.data.numero_fatture} fatture
@@ -1444,12 +1444,12 @@ export default function Fornitori() {
                     <div style={{ background: '#f0fdf4', borderRadius: '8px', padding: '12px', textAlign: 'center' }}>
                       <div style={{ fontSize: '12px', color: '#16a34a' }}>Pagate</div>
                       <div style={{ fontSize: '20px', fontWeight: 700, color: '#15803d' }}>{fatturatoModal.data.fatture_pagate || 0}</div>
-                      <div style={{ fontSize: '11px', color: '#6b7280' }}>€ {(fatturatoModal.data.importo_pagato || 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}</div>
+                      <div style={{ fontSize: '11px', color: '#6b7280' }}>{formatEuro((fatturatoModal.data.importo_pagato || 0))}</div>
                     </div>
                     <div style={{ background: '#fef2f2', borderRadius: '8px', padding: '12px', textAlign: 'center' }}>
                       <div style={{ fontSize: '12px', color: '#dc2626' }}>Da Pagare</div>
                       <div style={{ fontSize: '20px', fontWeight: 700, color: '#b91c1c' }}>{fatturatoModal.data.fatture_non_pagate || 0}</div>
-                      <div style={{ fontSize: '11px', color: '#6b7280' }}>€ {(fatturatoModal.data.importo_non_pagato || 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}</div>
+                      <div style={{ fontSize: '11px', color: '#6b7280' }}>{formatEuro((fatturatoModal.data.importo_non_pagato || 0))}</div>
                     </div>
                   </div>
 
@@ -1468,7 +1468,7 @@ export default function Fornitori() {
                           }}>
                             <span style={{ color: '#6b7280' }}>{m.mese_nome}</span>
                             <span style={{ fontWeight: 600, color: '#1f2937' }}>
-                              € {m.totale?.toLocaleString('it-IT', { minimumFractionDigits: 2 })} 
+                              {formatEuro(m.totale?)} 
                               <span style={{ fontWeight: 400, color: '#9ca3af', marginLeft: '8px' }}>({m.numero_fatture} fatt.)</span>
                             </span>
                           </div>
@@ -1674,15 +1674,15 @@ export default function Fornitori() {
                     </div>
                     <div style={{ background: '#f0fdf4', padding: 16, borderRadius: 8, textAlign: 'center' }}>
                       <div style={{ fontSize: 11, color: '#16a34a' }}>Totale</div>
-                      <div style={{ fontSize: 20, fontWeight: 700, color: '#15803d' }}>€ {(estrattoModal.data.totali?.importo_totale || 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}</div>
+                      <div style={{ fontSize: 20, fontWeight: 700, color: '#15803d' }}>{formatEuro((estrattoModal.data.totali?.importo_totale || 0))}</div>
                     </div>
                     <div style={{ background: '#fef2f2', padding: 16, borderRadius: 8, textAlign: 'center' }}>
                       <div style={{ fontSize: 11, color: '#dc2626' }}>Note Credito</div>
-                      <div style={{ fontSize: 20, fontWeight: 700, color: '#b91c1c' }}>- € {(estrattoModal.data.totali?.note_credito || 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}</div>
+                      <div style={{ fontSize: 20, fontWeight: 700, color: '#b91c1c' }}>- {formatEuro((estrattoModal.data.totali?.note_credito || 0))}</div>
                     </div>
                     <div style={{ background: '#fef3c7', padding: 16, borderRadius: 8, textAlign: 'center' }}>
                       <div style={{ fontSize: 11, color: '#92400e' }}>Netto</div>
-                      <div style={{ fontSize: 20, fontWeight: 700, color: '#78350f' }}>€ {(estrattoModal.data.totali?.netto || 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}</div>
+                      <div style={{ fontSize: 20, fontWeight: 700, color: '#78350f' }}>{formatEuro((estrattoModal.data.totali?.netto || 0))}</div>
                     </div>
                   </div>
 
@@ -1713,10 +1713,10 @@ export default function Fornitori() {
                                 <span style={{ background: '#dbeafe', color: '#1e40af', padding: '2px 8px', borderRadius: 4, fontSize: 11 }}>{f.tipo_documento}</span>
                               )}
                             </td>
-                            <td style={{ padding: '10px 12px', textAlign: 'right' }}>€ {(f.imponibile || 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}</td>
-                            <td style={{ padding: '10px 12px', textAlign: 'right' }}>€ {(f.iva || 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}</td>
+                            <td style={{ padding: '10px 12px', textAlign: 'right' }}>{formatEuro((f.imponibile || 0))}</td>
+                            <td style={{ padding: '10px 12px', textAlign: 'right' }}>{formatEuro((f.iva || 0))}</td>
                             <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 600 }}>
-                              {f.is_nota_credito ? '-' : ''} € {(f.importo_totale || 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+                              {f.is_nota_credito ? '-' : ''} {formatEuro((f.importo_totale || 0))}
                             </td>
                             <td style={{ padding: '10px 12px', textAlign: 'center' }}>
                               <span style={{ 
