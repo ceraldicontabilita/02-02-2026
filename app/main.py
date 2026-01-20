@@ -191,6 +191,7 @@ app.include_router(f24_public.router, prefix="/api/f24-public", tags=["F24 Publi
 app.include_router(quietanze.router, prefix="/api/quietanze-f24", tags=["Quietanze F24"])
 app.include_router(email_f24.router, prefix="/api/email-f24", tags=["Email F24"])
 app.include_router(f24_gestione_avanzata.router, prefix="/api/f24-avanzato", tags=["F24 Gestione Avanzata"])
+app.include_router(codici_tributari.router, prefix="/api/codici-tributari", tags=["Codici Tributari"])
 
 # --- Accounting Module ---
 app.include_router(accounting_main.router, prefix="/api/accounting", tags=["Accounting"])
