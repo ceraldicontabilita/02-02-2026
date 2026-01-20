@@ -262,7 +262,7 @@ export default function Inventario() {
             {importoTarget > 0 && (
               <div style={{ flex: 1, minWidth: '300px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#64748b', marginBottom: '6px' }}>
-                  <span>Progresso: €{totaleCorrente.toFixed(2)} / €{parseFloat(importoTarget).toFixed(2)}</span>
+                  <span>Progresso: {formatEuro(totaleCorrente)} / {formatEuro(parseFloat(importoTarget))}</span>
                   <span style={{ color: percentualeRaggiunta >= 100 ? '#10b981' : '#f59e0b' }}>
                     {percentualeRaggiunta.toFixed(1)}%
                   </span>
@@ -277,7 +277,7 @@ export default function Inventario() {
                 </div>
                 {importoTarget > 0 && (
                   <div style={{ fontSize: '12px', marginTop: '4px', color: differenza > 0 ? '#f59e0b' : '#10b981' }}>
-                    {differenza > 0 ? `Mancano €${differenza.toFixed(2)}` : `Superato di €${Math.abs(differenza).toFixed(2)}`}
+                    {differenza > 0 ? `Mancano ${formatEuro(differenza)}` : `Superato di ${formatEuro(Math.abs(differenza))}`}
                   </div>
                 )}
               </div>
