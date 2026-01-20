@@ -359,7 +359,7 @@ export default function Commercialista() {
     doc.text(`Totale Fatture: ${fattureCassaData.totale_fatture}`, 14, 45);
     doc.setFontSize(14);
     doc.setTextColor(255, 152, 0);
-    doc.text(`Totale: € ${fattureCassaData.totale_importo?.toLocaleString('it-IT', {minimumFractionDigits: 2})}`, 14, 55);
+    doc.text(`Totale: ${formatEuroStr(fattureCassaData.totale_importo)}}`, 14, 55);
     
     // Table
     if (fattureCassaData.fatture?.length > 0) {
@@ -373,7 +373,7 @@ export default function Commercialista() {
           numero,
           data,
           fornitore.substring(0, 30),
-          `€ ${importo.toLocaleString('it-IT', {minimumFractionDigits: 2})}`
+          `${formatEuroStr(importo)}}`
         ];
       });
       
@@ -424,7 +424,7 @@ export default function Commercialista() {
     doc.text(`Numero Assegni: ${carnet.assegni.length}`, 14, 45);
     doc.setFontSize(14);
     doc.setTextColor(76, 175, 80);
-    doc.text(`Totale: € ${carnet.totale?.toLocaleString('it-IT', {minimumFractionDigits: 2})}`, 14, 55);
+    doc.text(`Totale: ${formatEuroStr(carnet.totale)}}`, 14, 55);
     
     // Table
     if (carnet.assegni?.length > 0) {
@@ -432,7 +432,7 @@ export default function Commercialista() {
         a.numero || '-',
         a.stato || '-',
         a.beneficiario || '-',
-        `€ ${(a.importo || 0).toLocaleString('it-IT', {minimumFractionDigits: 2})}`,
+        `${formatEuroStr(a.importo)}}`,
         a.data_fattura?.substring(0, 10) || '-',
         a.numero_fattura || '-'
       ]);
@@ -519,7 +519,7 @@ export default function Commercialista() {
     doc.setFontSize(14);
     doc.setTextColor(0);
     const totaleImporto = carnetsArray.reduce((sum, c) => sum + c.totale, 0);
-    doc.text(`Totale Generale: € ${totaleImporto.toLocaleString('it-IT', {minimumFractionDigits: 2})}`, 14, 42);
+    doc.text(`Totale Generale: ${formatEuroStr(totaleImporto)}}`, 14, 42);
     
     // Tabella con tutti gli assegni raggruppati per carnet
     let currentY = 55;
@@ -533,7 +533,7 @@ export default function Commercialista() {
       
       doc.setFontSize(12);
       doc.setTextColor(76, 175, 80);
-      doc.text(`Carnet ${carnet.id} - ${carnet.assegni.length} assegni - € ${carnet.totale.toLocaleString('it-IT', {minimumFractionDigits: 2})}`, 14, currentY);
+      doc.text(`Carnet ${carnet.id} - ${carnet.assegni.length} assegni - € ${carnet.totale)}`, 14, currentY);
       currentY += 8;
       
       // Tabella assegni
@@ -541,7 +541,7 @@ export default function Commercialista() {
         a.numero || '-',
         a.data || '-',
         a.beneficiario || '-',
-        `€ ${parseFloat(a.importo || 0).toLocaleString('it-IT', {minimumFractionDigits: 2})}`,
+        `${formatEuroStr(a.importo)}}`,
         a.stato || '-'
       ]);
       
