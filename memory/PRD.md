@@ -105,6 +105,11 @@ La pagina **Regole Contabili** (`/app/frontend/src/pages/RegoleContabili.jsx`) �
 
 ## 📋 CHANGELOG RECENTE
 
+### 20 Gennaio 2026 - Restyling UI Prima Nota
+- ✅ **Chiusure Giornaliere Compatte**: Sezione ripiegabile con `<details>` e 4 box su una riga
+- ✅ **Input Ultra-Compatti**: Ridotti padding e font-size per massimizzare spazio
+- ✅ **Coerenza con NoleggioAuto**: Stesso stile header e layout
+
 ### 20 Gennaio 2026 - Sistema Completo Verbali Noleggio
 - ✅ **Scansione Fatture**: Endpoint `/api/verbali-noleggio/scansiona-fatture` scansiona tutte le fatture dal 2022 e estrae verbali
 - ✅ **19 Verbali Trovati**: Estratti dalle fatture ALD, ARVAL, Leasys con associazioni complete
