@@ -105,6 +105,15 @@ La pagina **Regole Contabili** (`/app/frontend/src/pages/RegoleContabili.jsx`) �
 
 ## 📋 CHANGELOG RECENTE
 
+### 20 Gennaio 2026 - Sistema Completo Verbali Noleggio
+- ✅ **Scansione Fatture**: Endpoint `/api/verbali-noleggio/scansiona-fatture` scansiona tutte le fatture dal 2022 e estrae verbali
+- ✅ **19 Verbali Trovati**: Estratti dalle fatture ALD, ARVAL, Leasys con associazioni complete
+- ✅ **Pagina Dettaglio Verbale**: Nuova pagina `/verbali-noleggio/{numero}` con tutti i dettagli
+- ✅ **Riconciliazione Automatica**: 18 verbali riconciliati automaticamente con estratto conto
+- ✅ **Operazioni Sospese**: 1 verbale (A25111540620) marcato come sospeso da verificare
+- ✅ **Collection Nuove**: `verbali_noleggio_completi`, `operazioni_sospese`
+- 🔶 **MOCKED**: Download PDF da posta (richiede credenziali Gmail App Password)
+
 ### 20 Gennaio 2026 - Sistema Persistenza Dati Noleggio
 - ✅ **Persistenza Dati Critici**: Creato sistema per salvare verbali, bolli, riparazioni nel database
 - ✅ **Nuove Collections**: `costi_noleggio`, `veicoli_noleggio`, `audit_noleggio`
