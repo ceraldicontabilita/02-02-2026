@@ -95,10 +95,7 @@ export default function TFR() {
     }
   };
 
-  const formatCurrency = (val) => {
-    if (val == null || isNaN(val)) return '€0,00';
-    return `€${Number(val).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  };
+  const formatCurrency = (val) => formatEuro(val);
 
   const getDipendenteNome = (id) => {
     const d = dipendenti.find(x => x.id === id);
