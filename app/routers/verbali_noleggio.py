@@ -586,3 +586,125 @@ async def get_dettaglio_verbale(numero_verbale: str) -> Dict[str, Any]:
     
     return risultato
 
+
+
+@router.get("/tutti-verbali")
+async def get_tutti_verbali(
+    anno: int = None,
+    include_senza_fattura: bool = True
+) -> Dict[str, Any]:
+    """
+    Restituisce TUTTI i verbali da entrambe le collection:
+    - verbali_noleggio_completi (estratti dalle fatture)
+    - verbali_noleggio (scaricati dalla posta)
+    
+    Unifica i dati e identifica:
+    - Verbali con fattura e PDF
+    - Verbali con fattura ma senza PDF
+    - Verbali con PDF ma senza fattura (da verificare)
+    """
+    db = Database.get_db()
+    
+    # 1. Prendi verbali estratti dalle fatture
+    query_completi = {}
+    if anno:
+        query_completi["anno"] = str(anno)
+    
+    verbali_completi = await db["verbali_noleggio_completi"].find(query_completi, {"_id": 0}).to_list(1000)
+    
+    # 2. Prendi verbali scaricati dalla posta
+    verbali_posta = await db["verbali_noleggio"].find({}, {"_id": 0}).to_list(1000)
+    
+    # Crea dizionario per lookup veloce
+    posta_by_numero = {v.get("numero_verbale"): v for v in verbali_posta if v.get("numero_verbale")}
+    completi_by_numero = {v.get("numero_verbale"): v for v in verbali_completi if v.get("numero_verbale")}
+    
+    # 3. Unifica
+    risultato = {
+        "con_fattura_e_pdf": [],
+        "con_fattura_senza_pdf": [],
+        "con_pdf_senza_fattura": [],
+        "statistiche": {
+            "totale_verbali_fattura": len(verbali_completi),
+            "totale_verbali_posta": len(verbali_posta),
+            "con_pdf": 0,
+            "senza_pdf": 0,
+            "importo_totale": 0
+        }
+    }
+    
+    # Processa verbali dalle fatture
+    for v in verbali_completi:
+        numero = v.get("numero_verbale")
+        v_posta = posta_by_numero.get(numero)
+        
+        # Aggiungi PDF dalla posta se disponibile
+        if v_posta and v_posta.get("pdf_allegati"):
+            v["pdf_allegati"] = v_posta.get("pdf_allegati", [])
+            v["pdf_downloaded"] = True
+            risultato["con_fattura_e_pdf"].append(v)
+            risultato["statistiche"]["con_pdf"] += 1
+        else:
+            risultato["con_fattura_senza_pdf"].append(v)
+            risultato["statistiche"]["senza_pdf"] += 1
+        
+        risultato["statistiche"]["importo_totale"] += float(v.get("importo", 0))
+    
+    # Processa verbali dalla posta che NON sono nelle fatture
+    if include_senza_fattura:
+        for numero, v_posta in posta_by_numero.items():
+            if numero not in completi_by_numero:
+                risultato["con_pdf_senza_fattura"].append({
+                    "numero_verbale": numero,
+                    "pdf_allegati": v_posta.get("pdf_allegati", []),
+                    "email_id": v_posta.get("email_id"),
+                    "data_download": v_posta.get("data_download"),
+                    "note": "Verbale scaricato dalla posta ma non presente nelle fatture"
+                })
+    
+    return risultato
+
+
+@router.post("/unifica-verbali")
+async def unifica_verbali() -> Dict[str, Any]:
+    """
+    Unifica i PDF scaricati dalla posta con i verbali estratti dalle fatture.
+    Aggiorna verbali_noleggio_completi con i PDF da verbali_noleggio.
+    """
+    db = Database.get_db()
+    
+    # Prendi verbali con PDF dalla posta
+    verbali_posta = await db["verbali_noleggio"].find(
+        {"pdf_allegati": {"$exists": True, "$ne": []}}
+    ).to_list(1000)
+    
+    aggiornati = 0
+    non_trovati = []
+    
+    for v_posta in verbali_posta:
+        numero = v_posta.get("numero_verbale")
+        if not numero:
+            continue
+        
+        # Cerca in verbali_noleggio_completi
+        result = await db["verbali_noleggio_completi"].update_one(
+            {"numero_verbale": numero},
+            {"$set": {
+                "pdf_allegati": v_posta.get("pdf_allegati", []),
+                "pdf_downloaded": True,
+                "email_id": v_posta.get("email_id")
+            }}
+        )
+        
+        if result.modified_count > 0:
+            aggiornati += 1
+        else:
+            non_trovati.append(numero)
+    
+    return {
+        "success": True,
+        "verbali_aggiornati": aggiornati,
+        "verbali_non_trovati_in_fatture": len(non_trovati),
+        "numeri_non_trovati": non_trovati[:20]  # Max 20
+    }
+
