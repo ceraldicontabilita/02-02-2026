@@ -397,3 +397,129 @@ async def associa_fornitore(
         "fornitore": fornitore_nome,
         "message": f"Targa {targa} associata a {fornitore_nome}"
     }
+
+
+
+@router.post("/migra-dati")
+async def migra_dati() -> Dict[str, Any]:
+    """
+    Migra tutti i dati estratti dalle fatture nel database persistente.
+    Esegue scansione di tutti gli anni (2018-2026) e salva in MongoDB.
+    
+    OPERAZIONE SICURA: Non elimina dati esistenti, solo aggiunge.
+    """
+    db = Database.get_db()
+    
+    try:
+        risultato = await migra_dati_esistenti(db)
+        
+        return {
+            "success": True,
+            "message": "Migrazione completata con successo",
+            "anni_elaborati": risultato.get("anni_elaborati", []),
+            "totale_veicoli": risultato.get("totale_veicoli", 0),
+            "totale_costi": risultato.get("totale_costi", 0)
+        }
+    except Exception as e:
+        logger.error(f"Errore migrazione: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/persisti-anno/{anno}")
+async def persisti_anno(anno: int) -> Dict[str, Any]:
+    """
+    Persiste i dati di un anno specifico nel database.
+    Utile per aggiornare solo dati recenti.
+    """
+    db = Database.get_db()
+    
+    if anno < 2018 or anno > 2030:
+        raise HTTPException(status_code=400, detail="Anno non valido (2018-2030)")
+    
+    try:
+        # Scansiona fatture dell'anno
+        veicoli_fatture, _ = await scan_fatture_noleggio(anno)
+        
+        if not veicoli_fatture:
+            return {
+                "success": True,
+                "message": f"Nessun veicolo trovato per {anno}",
+                "veicoli_salvati": 0,
+                "costi_salvati": 0
+            }
+        
+        # Persisti nel database
+        risultato = await persisti_dati_da_fatture(db, list(veicoli_fatture.values()))
+        
+        return {
+            "success": True,
+            "anno": anno,
+            "veicoli_salvati": risultato.get("veicoli_salvati", 0),
+            "costi_salvati": risultato.get("costi_salvati", 0),
+            "errori": risultato.get("errori", 0)
+        }
+    except Exception as e:
+        logger.error(f"Errore persistenza anno {anno}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/costi-persistiti/{targa}")
+async def get_costi_persistiti(
+    targa: str,
+    anno: Optional[int] = Query(None),
+    tipo_costo: Optional[str] = Query(None)
+) -> Dict[str, Any]:
+    """
+    Recupera i costi persistiti per un veicolo dal database.
+    I dati persistiti sono la fonte di verità per verbali, bolli, riparazioni.
+    """
+    db = Database.get_db()
+    
+    costi = await recupera_costi_veicolo(db, targa, anno, tipo_costo)
+    
+    # Raggruppa per tipo
+    raggruppati = {}
+    for c in costi:
+        tipo = c.get("tipo_costo", "altro")
+        if tipo not in raggruppati:
+            raggruppati[tipo] = []
+        raggruppati[tipo].append(c)
+    
+    return {
+        "targa": targa.upper(),
+        "anno": anno,
+        "totale_costi": len(costi),
+        "costi_per_tipo": raggruppati,
+        "totale_importo": sum(c.get("importo", 0) for c in costi)
+    }
+
+
+@router.get("/statistiche-persistenza")
+async def get_statistiche_persistenza() -> Dict[str, Any]:
+    """
+    Statistiche sulla persistenza dati per verificare integrità.
+    """
+    db = Database.get_db()
+    
+    # Conta documenti per collection
+    veicoli_count = await db[COLLECTION_VEICOLI].count_documents({})
+    costi_count = await db[COLLECTION_COSTI].count_documents({"eliminato": {"$ne": True}})
+    audit_count = await db[COLLECTION_AUDIT].count_documents({})
+    
+    # Statistiche per tipo costo
+    pipeline = [
+        {"$match": {"eliminato": {"$ne": True}}},
+        {"$group": {
+            "_id": "$tipo_costo",
+            "count": {"$sum": 1},
+            "totale_importo": {"$sum": "$importo"}
+        }}
+    ]
+    tipo_stats = await db[COLLECTION_COSTI].aggregate(pipeline).to_list(100)
+    
+    return {
+        "veicoli_salvati": veicoli_count,
+        "costi_salvati": costi_count,
+        "audit_logs": audit_count,
+        "costi_per_tipo": {s["_id"]: {"count": s["count"], "totale": s["totale_importo"]} for s in tipo_stats}
+    }
