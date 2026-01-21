@@ -574,28 +574,45 @@ export default function ClassificazioneDocumenti() {
 
           {/* Mapping Gestionale */}
           {stats?.mapping_gestionale && Object.keys(stats.mapping_gestionale).length > 0 && (
-            <div className="bg-white border rounded-xl p-6">
-              <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
-                <FolderOpen className="w-5 h-5 text-indigo-600" />
+            <div style={{ 
+              background: 'white', 
+              borderRadius: 12, 
+              padding: 20, 
+              boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+            }}>
+              <h3 style={{ margin: '0 0 16px 0', fontSize: 16, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <FolderOpen style={{ width: 20, height: 20, color: '#4f46e5' }} />
                 Mapping Sezioni Gestionale
               </h3>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
                 {Object.entries(stats.mapping_gestionale).map(([section, data]) => {
                   const sectionConfig = GESTIONALE_SECTIONS[section];
                   return (
                     <a
                       key={section}
                       href={sectionConfig?.path || '#'}
-                      className="border rounded-lg p-4 hover:border-indigo-300 hover:shadow-md transition-all flex items-center justify-between"
+                      style={{ 
+                        border: '1px solid #e5e7eb', 
+                        borderRadius: 8, 
+                        padding: 16, 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'space-between',
+                        textDecoration: 'none',
+                        color: 'inherit'
+                      }}
                     >
                       <div>
-                        <div className="font-medium">{section}</div>
-                        <div className="text-sm text-gray-500">{data.categoria}</div>
+                        <div style={{ fontWeight: 500 }}>{section}</div>
+                        <div style={{ fontSize: 14, color: '#6b7280' }}>{data.categoria}</div>
                       </div>
                       <div 
-                        className="text-2xl font-bold"
-                        style={{ color: sectionConfig?.color || '#6366f1' }}
+                        style={{ 
+                          fontSize: 24, 
+                          fontWeight: 'bold',
+                          color: sectionConfig?.color || '#6366f1'
+                        }}
                       >
                         {data.documenti}
                       </div>
