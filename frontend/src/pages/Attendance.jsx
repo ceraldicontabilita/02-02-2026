@@ -217,6 +217,25 @@ export default function Attendance() {
     }
   };
 
+  // Carica storico ore
+  const loadStoricoOre = async () => {
+    if (!storicoEmployee) {
+      toast.error('Seleziona un dipendente');
+      return;
+    }
+    
+    try {
+      setLoadingStorico(true);
+      const res = await api.get(`/api/attendance/ore-lavorate/${storicoEmployee}?mese=${storicoMese}&anno=${storicoAnno}`);
+      setStoricoData(res.data);
+    } catch (error) {
+      console.error('Errore caricamento storico:', error);
+      toast.error('Errore caricamento storico ore');
+    } finally {
+      setLoadingStorico(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
