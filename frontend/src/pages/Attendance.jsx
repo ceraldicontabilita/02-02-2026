@@ -99,6 +99,13 @@ export default function Attendance() {
     data_fine: '',
     motivo: ''
   });
+  
+  // Storico Ore
+  const [storicoEmployee, setStoricoEmployee] = useState('');
+  const [storicoMese, setStoricoMese] = useState(new Date().getMonth() + 1);
+  const [storicoAnno, setStoricoAnno] = useState(new Date().getFullYear());
+  const [storicoData, setStoricoData] = useState(null);
+  const [loadingStorico, setLoadingStorico] = useState(false);
 
   // Carica dati
   const loadData = useCallback(async () => {
