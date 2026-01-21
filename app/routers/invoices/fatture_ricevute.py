@@ -447,49 +447,38 @@ async def import_fattura_xml(file: UploadFile = File(...)):
         logger.error(f"Errore magazzino: {e}")
         risultato_integrazione["magazzino"] = {"error": str(e)}
     
-    # 2. PRIMA NOTA - Scrittura contabile Dare/Avere
-    try:
-        scrittura_id = await genera_scrittura_prima_nota(db, fattura_id, fattura, fornitore_obj)
-        risultato_integrazione["prima_nota"] = {"scrittura_id": scrittura_id, "status": "ok"}
-        # Aggiorna fattura con riferimento prima nota
-        await db[COL_FATTURE_RICEVUTE].update_one(
-            {"id": fattura_id},
-            {"$set": {"prima_nota_id": scrittura_id}}
-        )
-    except Exception as e:
-        logger.error(f"Errore prima nota: {e}")
-        risultato_integrazione["prima_nota"] = {"error": str(e)}
+    # 2. PRIMA NOTA - NON scrivere automaticamente!
+    # La scrittura avviene SOLO dopo conferma utente tramite Riconciliazione Intelligente
+    # Lo stato parte come "in_attesa_conferma"
+    risultato_integrazione["prima_nota"] = {
+        "status": "in_attesa_conferma",
+        "message": "Scrittura Prima Nota in attesa di conferma metodo pagamento dall'utente"
+    }
     
-    # 3. SCADENZIARIO - Crea scadenza pagamento
+    # 3. SCADENZIARIO - Crea scadenza pagamento (ma senza riconciliazione automatica)
     try:
         scadenza_id = await crea_scadenza_pagamento(db, fattura_id, fattura, fornitore_obj)
         risultato_integrazione["scadenziario"] = {"scadenza_id": scadenza_id, "status": "ok"}
-        
-        # 4. RICONCILIAZIONE AUTOMATICA - Cerca match con movimenti bancari
-        scadenza = await db[COL_SCADENZIARIO].find_one({"id": scadenza_id}, {"_id": 0})
-        if scadenza:
-            match = await cerca_match_bancario(db, scadenza)
-            if match:
-                source_col = match.get("source_collection", "estratto_conto_movimenti")
-                ric_result = await esegui_riconciliazione(db, scadenza_id, match.get("id"), source_col)
-                risultato_integrazione["riconciliazione"] = {
-                    "automatica": True,
-                    "transazione_id": match.get("id"),
-                    **ric_result
-                }
-            else:
-                risultato_integrazione["riconciliazione"] = {"automatica": False, "message": "Nessun match bancario trovato"}
+        # La riconciliazione avviene dopo conferma utente
+        risultato_integrazione["riconciliazione"] = {
+            "automatica": False, 
+            "message": "Riconciliazione in attesa di conferma metodo pagamento"
+        }
     except Exception as e:
-        logger.error(f"Errore scadenziario/riconciliazione: {e}")
+        logger.error(f"Errore scadenziario: {e}")
         risultato_integrazione["scadenziario"] = {"error": str(e)}
     
-    # Aggiorna flag integrazione completata
+    # Aggiorna flag integrazione con NUOVO stato riconciliazione intelligente
     await db[COL_FATTURE_RICEVUTE].update_one(
         {"id": fattura_id},
-        {"$set": {"integrazione_completata": True, "updated_at": datetime.now(timezone.utc).isoformat()}}
+        {"$set": {
+            "integrazione_completata": False,  # Non completata fino a conferma
+            "stato_riconciliazione": "in_attesa_conferma",  # NUOVO: stato per UI
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
     )
     
-    logger.info(f"✅ Fattura importata con integrazione completa: {numero_doc} - Fornitore: {fornitore_result.get('ragione_sociale')}")
+    logger.info(f"✅ Fattura importata IN ATTESA CONFERMA: {numero_doc} - Fornitore: {fornitore_result.get('ragione_sociale')}")
     
     return {
         "success": True,
