@@ -505,6 +505,81 @@ async def riconcilia_verbale(numero_verbale: str) -> Dict[str, Any]:
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.post("/collega-driver-massivo")
+async def collega_driver_massivo() -> Dict[str, Any]:
+    """
+    Collega automaticamente i verbali ai driver.
+    
+    Per ogni verbale con targa ma senza driver:
+    1. Trova il veicolo dalla targa
+    2. Trova il driver assegnato al veicolo
+    3. Aggiorna il verbale con driver_id e driver_nome
+    """
+    db = Database.get_db()
+    
+    try:
+        # Trova verbali con targa ma senza driver
+        verbali = await db["verbali_noleggio"].find({
+            "targa": {"$exists": True, "$ne": None, "$ne": ""},
+            "$or": [
+                {"driver_id": {"$exists": False}},
+                {"driver_id": None},
+                {"driver_id": ""}
+            ]
+        }).to_list(1000)
+        
+        collegati = 0
+        errori = []
+        
+        for verbale in verbali:
+            targa = verbale.get("targa")
+            if not targa:
+                continue
+            
+            # Trova veicolo
+            veicolo = await db["veicoli_noleggio"].find_one({"targa": targa.upper()})
+            if not veicolo:
+                continue
+            
+            driver_id = veicolo.get("driver_id")
+            if not driver_id:
+                continue
+            
+            # Trova nome driver
+            try:
+                driver = await db["dipendenti"].find_one({"_id": ObjectId(driver_id)})
+                driver_nome = f"{driver.get('nome', '')} {driver.get('cognome', '')}" if driver else None
+            except:
+                driver_nome = None
+            
+            # Aggiorna verbale
+            update_data = {
+                "driver_id": driver_id,
+                "veicolo_id": str(veicolo.get("_id")),
+                "updated_at": datetime.now(timezone.utc)
+            }
+            if driver_nome:
+                update_data["driver_nome"] = driver_nome.strip()
+            
+            await db["verbali_noleggio"].update_one(
+                {"_id": verbale["_id"]},
+                {"$set": update_data}
+            )
+            collegati += 1
+        
+        return {
+            "success": True,
+            "verbali_analizzati": len(verbali),
+            "collegati_a_driver": collegati,
+            "errori": errori
+        }
+    except Exception as e:
+        logger.error(f"Errore collegamento driver massivo: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
+
 @router.get("/per-driver/{driver_id}")
 async def get_verbali_per_driver(driver_id: str) -> Dict[str, Any]:
     """Lista verbali associati a un driver specifico."""
