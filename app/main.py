@@ -173,6 +173,7 @@ from app.routers import document_ai  # Document AI - Estrazione dati con OCR + L
 from app.routers import email_reconciliation  # Riconciliazione Email ↔ Gestionale
 from app.routers import email_scanner  # Scanner Email Completo - Tutta la posta
 from app.routers import codici_tributari  # Gestione Codici Tributari F24 - Riconciliazione 3 vie
+from app.routers import riconciliazione_intelligente_api  # Riconciliazione Intelligente - Conferma Pagamenti
 
 
 # =============================================================================
@@ -214,6 +215,7 @@ app.include_router(regole_categorizzazione.router, prefix="/api/regole", tags=["
 app.include_router(iva_calcolo.router, prefix="/api/iva", tags=["IVA Calcolo"])
 app.include_router(liquidazione_iva.router, prefix="/api", tags=["Liquidazione IVA"])
 app.include_router(riconciliazione_automatica.router, prefix="/api/riconciliazione-auto", tags=["Riconciliazione Automatica"])
+app.include_router(riconciliazione_intelligente_api.router, prefix="/api/riconciliazione-intelligente", tags=["Riconciliazione Intelligente"])
 
 # --- To-Do Module ---
 app.include_router(todo.router, prefix="/api/todo", tags=["To-Do"])
