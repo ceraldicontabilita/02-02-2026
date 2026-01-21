@@ -1,7 +1,7 @@
 # PRD – TechRecon Accounting System
 ## Product Requirements Document (PRD)
 ## TechRecon Accounting System – Versione Super Articolata
-### Ultimo aggiornamento: 21 Gennaio 2026 (Sessione 4 - Sistema Contabile Partita Doppia)
+### Ultimo aggiornamento: 21 Gennaio 2026 (Sessione 5 - Riconciliazione Intelligente)
 
 ---
 
@@ -12,6 +12,47 @@
 2. Chiedere conferma all'utente
 3. Non procedere automaticamente senza approvazione
 4. Aggiornare questo PRD ad ogni modifica significativa
+
+---
+
+## ✅ FEATURE COMPLETATA: RICONCILIAZIONE INTELLIGENTE (21/01/2026)
+
+### Descrizione
+Sistema completo per gestione conferma pagamenti e riconciliazione automatica.
+
+### Flusso Implementato
+1. **Import XML** → Fattura in stato "in_attesa_conferma" (NON scrive in Prima Nota)
+2. **Utente conferma metodo** (Cassa/Banca) → Solo allora scrive in Prima Nota
+3. **Sistema verifica con estratto conto** → Propone correzioni se necessario
+
+### Stati Implementati
+- `in_attesa_conferma` - Importata, attende scelta Cassa/Banca
+- `confermata_cassa` - Confermata cassa, in verifica con estratto
+- `confermata_banca` - Confermata banca, in attesa riconciliazione
+- `sospesa_attesa_estratto` - Estratto conto non copre la data fattura
+- `da_verificare_spostamento` - Trovato in estratto ma era cassa - propone spostamento
+- `da_verificare_match_incerto` - Match parziale (importo/causale diversi)
+- `anomalia_non_in_estratto` - Banca confermata ma non trovata in estratto
+- `riconciliata` - Tutto ok, operazione chiusa
+- `lock_manuale` - Bloccata dall'utente, no auto-verifica
+
+### API Riconciliazione Intelligente
+- `GET /api/riconciliazione-intelligente/dashboard` - Dashboard operazioni
+- `POST /api/riconciliazione-intelligente/conferma-pagamento` - Conferma metodo
+- `POST /api/riconciliazione-intelligente/applica-spostamento` - Sposta Cassa→Banca
+- `POST /api/riconciliazione-intelligente/rianalizza` - Ri-analizza dopo nuovo estratto
+- `GET /api/riconciliazione-intelligente/stato-estratto` - Info estratto conto
+- `POST /api/riconciliazione-intelligente/lock-manuale` - Blocca fattura
+- `POST /api/riconciliazione-intelligente/migra-fatture-legacy` - Migra fatture esistenti
+
+### File Creati
+- `/app/app/services/riconciliazione_intelligente.py` - Servizio core
+- `/app/app/routers/riconciliazione_intelligente_api.py` - Router API
+- `/app/frontend/src/pages/RiconciliazioneIntelligente.jsx` - UI Dashboard
+
+### Test
+- 26 test automatici passati (100%)
+- Report: `/app/test_reports/iteration_22.json`
 
 ---
 
