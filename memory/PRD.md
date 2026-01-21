@@ -103,6 +103,34 @@ La pagina **Regole Contabili** (`/app/frontend/src/pages/RegoleContabili.jsx`) �
 
 ## 📋 CHANGELOG RECENTE
 
+### 21 Gennaio 2026 - Reconciliazione Verbali + Ottimizzazione Performance (P0 COMPLETATO)
+- ✅ **Sistema Reconciliazione Verbali Completo**: Implementata pagina `/verbali-riconciliazione` con:
+  - Dashboard con statistiche (totale verbali, da riconciliare, riconciliati, totale importo)
+  - Filtri per stato e targa
+  - Bottoni "Scan Fatture Noleggiatori" e "Associa Driver"
+  - Dettaglio verbale con info fattura e driver associato
+  - Documentazione scenari A (pago prima) e B (fattura prima)
+- ✅ **Backend Verbali Riconciliazione**: Nuovo router `/api/verbali-riconciliazione/` con:
+  - `GET /dashboard` - Stats riepilogative
+  - `GET /lista` - Lista verbali con filtri
+  - `POST /scan-fatture-verbali` - Scansione automatica fatture
+  - `POST /collega-driver-massivo` - Associazione automatica driver
+  - `POST /riconcilia/{numero}` - Riconciliazione singolo verbale
+- ✅ **Fix Performance Pagina Riconciliazione Smart**: Da timeout a ~2.9s
+  - Ottimizzato endpoint `cerca-stipendi` (da timeout a ~0.5s)
+  - Aggiunta proiezione e limit alla query MongoDB
+  - Aggiunto indice su `pagato` nella collection `cedolini`
+- ✅ **Pulizia Dati Prima Nota Cassa**: Eliminati 1503 movimenti bancari importati erroneamente
+  - Nuovo endpoint `/api/prima-nota/cassa/elimina-movimenti-bancari-errati`
+  - Nuovo endpoint `/api/prima-nota/cassa/analisi-movimenti-bancari-errati`
+  - Aggiunta validazione nell'import CSV per bloccare estratti conto bancari
+- ✅ **Regole Contabili Aggiornate**:
+  - Nuova sezione "⚠️ REGOLA IMPORTAZIONE ESTRATTO CONTO" in Prima Nota
+  - Nuova sezione "🚗 Verbali Noleggio (Multas)" con flusso completo:
+    - Stati: da_scaricare → salvato → fattura_ricevuta → pagato → riconciliato
+    - Scenari A e B documentati
+    - Catena associazione: Verbale → Fattura → Veicolo → Driver
+
 ### 20 Gennaio 2026 - Ottimizzazione Pagina IVA + Sistema Codici Tributari (P0 COMPLETATO)
 - ✅ **Fix Performance IVA**: Endpoint `/api/iva/monthly/{year}/{month}` ottimizzato da 11.5s a 1.4s (8x più veloce)
 - ✅ **Nuova Pagina Codici Tributari**: `/codici-tributari` con sistema completo di gestione F24
