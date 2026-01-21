@@ -215,6 +215,9 @@ app.include_router(iva_calcolo.router, prefix="/api/iva", tags=["IVA Calcolo"])
 app.include_router(liquidazione_iva.router, prefix="/api", tags=["Liquidazione IVA"])
 app.include_router(riconciliazione_automatica.router, prefix="/api/riconciliazione-auto", tags=["Riconciliazione Automatica"])
 
+# --- To-Do Module ---
+app.include_router(todo.router, prefix="/api/todo", tags=["To-Do"])
+
 # --- Bank Module ---
 app.include_router(bank_main.router, prefix="/api/bank", tags=["Bank"])
 app.include_router(bank_reconciliation.router, prefix="/api/bank-reconciliation", tags=["Bank Reconciliation"])
