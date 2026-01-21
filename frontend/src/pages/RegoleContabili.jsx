@@ -201,16 +201,41 @@ export default function RegoleContabili() {
       colore: '#8b5cf6',
       sottosezioni: [
         {
+          titolo: '📚 REGOLE DI RAGIONERIA GENERALE',
+          regole: [
+            {
+              nome: 'Principio della Partita Doppia',
+              descrizione: 'Ogni operazione contabile deve essere registrata in DUE conti: uno in DARE e uno in AVERE. La somma dei DARE deve sempre essere uguale alla somma degli AVERE.',
+              campi: ['DARE = AVERE (sempre)', 'Tolleranza: ±0.01€ per arrotondamenti']
+            },
+            {
+              nome: 'Data del Movimento',
+              descrizione: 'La data da usare è la DATA DOCUMENTO (data della fattura/verbale), NON la data di ricezione. Questo perché la competenza contabile è determinata dalla data dell\'operazione economica.',
+              campi: ['✅ Data documento (corretta)', '❌ Data ricezione (ERRORE)']
+            },
+            {
+              nome: 'DARE vs AVERE - Regola Base',
+              descrizione: 'DARE = Entrate di denaro (incassi, rimborsi ricevuti, vendite). AVERE = Uscite di denaro (pagamenti, acquisti, spese). Un RIMBORSO RICEVUTO è un\'entrata → va in DARE!',
+              campi: ['DARE: +Cassa, +Banca, +Crediti', 'AVERE: +Debiti, +Costi, -Cassa']
+            },
+            {
+              nome: 'Tipi di Conti',
+              descrizione: 'ATTIVO (aumenta in DARE): Cassa, Banca, Crediti. PASSIVO (aumenta in AVERE): Debiti, Capitale. COSTO (aumenta in DARE): Acquisti, Spese. RICAVO (aumenta in AVERE): Vendite, Prestazioni.',
+              campi: ['Attivo: 1.x.x', 'Passivo: 3.x.x', 'Costo: 6.x.x', 'Ricavo: 7.x.x']
+            }
+          ]
+        },
+        {
           titolo: 'Struttura',
           regole: [
             {
               nome: 'Prima Nota Cassa',
-              descrizione: 'Registra tutti i movimenti in contanti: incassi corrispettivi, pagamenti fornitori in cassa, versamenti, prelievi.',
-              campi: ['collection: prima_nota_cassa', 'tipo: entrata/uscita']
+              descrizione: 'Registra SOLO movimenti in contanti: Corrispettivi giornalieri, Incassi POS. NON inserire bonifici o operazioni bancarie!',
+              campi: ['collection: prima_nota_cassa', 'tipo: entrata/uscita', 'Solo: Corrispettivi, POS']
             },
             {
               nome: 'Prima Nota Banca',
-              descrizione: 'Registra tutti i movimenti bancari: bonifici in uscita (fornitori), bonifici in entrata, addebiti diretti, POS. I dati provengono da estratto_conto_movimenti.',
+              descrizione: 'Registra tutti i movimenti bancari: bonifici in uscita (fornitori), bonifici in entrata, addebiti diretti, F24, stipendi. I dati provengono dall\'estratto conto importato.',
               campi: ['collection: estratto_conto_movimenti', 'tipo: entrata/uscita']
             },
             {
@@ -230,13 +255,33 @@ export default function RegoleContabili() {
             },
             {
               nome: 'Prima Nota Cassa - Contenuto Corretto',
-              descrizione: 'Prima Nota Cassa deve contenere SOLO: Corrispettivi XML (incassi giornalieri), POS manuali (inseriti dall\'utente prima dell\'XML), Pagamenti fornitori in contanti, Versamenti/Prelievi manuali.',
-              campi: ['Corrispettivi', 'POS manuali', 'Pagamenti contanti', 'Versamenti']
+              descrizione: 'Prima Nota Cassa deve contenere SOLO: Corrispettivi XML (incassi giornalieri), POS (incassi elettronici). I pagamenti fornitori in contanti sono rari e da inserire manualmente.',
+              campi: ['✅ Corrispettivi', '✅ POS', '❌ Bonifici', '❌ F24', '❌ Stipendi']
             },
             {
               nome: 'Correzione Errori',
               descrizione: 'Se sono stati importati erroneamente movimenti bancari in Prima Nota Cassa, usare l\'endpoint: DELETE /api/prima-nota/cassa/elimina-movimenti-bancari-errati',
               campi: ['DELETE /api/prima-nota/cassa/elimina-movimenti-bancari-errati']
+            }
+          ]
+        },
+        {
+          titolo: '🔄 Motore Contabile (Partita Doppia)',
+          regole: [
+            {
+              nome: 'Piano dei Conti Italiano',
+              descrizione: 'Il sistema usa un piano dei conti semplificato per PMI conforme alla normativa italiana. Ogni conto ha un codice (es. 1.1.1 = Cassa contanti) e un tipo (attivo/passivo/costo/ricavo).',
+              campi: ['GET /api/accounting-engine/piano-conti']
+            },
+            {
+              nome: 'Validazione Automatica',
+              descrizione: 'Ogni operazione viene validata automaticamente: verifica DARE=AVERE, verifica data documento, verifica conto corretto per il tipo di operazione.',
+              campi: ['POST /api/accounting-engine/valida-operazione']
+            },
+            {
+              nome: 'Storno Operazioni',
+              descrizione: 'Le operazioni sono REVERSIBILI tramite storno. Invece di cancellare, si crea una scrittura inversa che annulla l\'effetto contabile. Questo garantisce la tracciabilità completa.',
+              campi: ['POST /api/accounting-engine/storna-operazione/{id}']
             }
           ]
         },
