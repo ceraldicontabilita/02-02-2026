@@ -152,102 +152,177 @@ export default function ClassificazioneDocumenti() {
   };
 
   return (
-    <div className="space-y-6" data-testid="classificazione-documenti-page">
+    <div style={{ padding: 20, maxWidth: 1400, margin: '0 auto' }} data-testid="classificazione-documenti-page">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        marginBottom: 20,
+        padding: '15px 20px',
+        background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
+        borderRadius: 12,
+        color: 'white',
+        flexWrap: 'wrap',
+        gap: 10
+      }}>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <Brain className="w-7 h-7 text-indigo-600" />
-            Classificazione Intelligente Email
-          </h1>
-          <p className="text-gray-500 mt-1">
+          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 'bold' }}>🧠 Classificazione Intelligente Email</h1>
+          <p style={{ margin: '4px 0 0 0', fontSize: 13, opacity: 0.9 }}>
             Scansiona email, classifica automaticamente e associa al gestionale
           </p>
         </div>
-        
-        <div className="flex gap-2">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <button
             onClick={() => { loadData(); loadStats(); }}
-            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center gap-2"
             disabled={loading}
+            style={{ 
+              padding: '10px 20px',
+              background: 'rgba(255,255,255,0.95)',
+              color: '#1e3a5f',
+              border: 'none',
+              borderRadius: 8,
+              cursor: loading ? 'not-allowed' : 'pointer',
+              fontWeight: '600',
+              opacity: loading ? 0.6 : 1
+            }}
             data-testid="refresh-btn"
           >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            Aggiorna
+            🔄 Aggiorna
           </button>
         </div>
       </div>
 
       {/* Info Card */}
-      <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-xl p-4">
-        <div className="flex items-start gap-3">
-          <Zap className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" />
+      <div style={{ 
+        background: '#eff6ff', 
+        borderRadius: 12, 
+        padding: 16, 
+        marginBottom: 20,
+        borderLeft: '4px solid #6366f1'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+          <Zap style={{ width: 20, height: 20, color: '#6366f1', flexShrink: 0, marginTop: 2 }} />
           <div>
-            <h3 className="font-semibold text-indigo-900">Sistema di Classificazione Intelligente</h3>
-            <p className="text-sm text-indigo-700 mt-1">
+            <h3 style={{ margin: 0, fontWeight: 600, color: '#312e81' }}>Sistema di Classificazione Intelligente</h3>
+            <p style={{ margin: '4px 0 0 0', fontSize: 13, color: '#4338ca' }}>
               Scansiona le email e le classifica in base a {rules.length} regole predefinite.
               Ogni categoria viene associata alla sezione corretta del gestionale.
             </p>
-            <div className="flex flex-wrap gap-2 mt-3">
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 12 }}>
               {Object.entries(GESTIONALE_SECTIONS).slice(0, 5).map(([name, config]) => (
                 <span 
                   key={name}
-                  className="text-xs px-2 py-1 rounded-full"
-                  style={{ backgroundColor: config.color + '20', color: config.color }}
+                  style={{ 
+                    fontSize: 11, 
+                    padding: '4px 10px', 
+                    borderRadius: 12,
+                    background: config.color + '20', 
+                    color: config.color,
+                    fontWeight: 500
+                  }}
                 >
                   {name}
                 </span>
               ))}
-              <span className="text-xs text-indigo-600">+{Object.keys(GESTIONALE_SECTIONS).length - 5} altre</span>
+              <span style={{ fontSize: 11, color: '#6366f1', padding: '4px 0' }}>+{Object.keys(GESTIONALE_SECTIONS).length - 5} altre</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="border-b border-gray-200">
-        <nav className="flex gap-4">
-          {[
-            { id: 'classificazione', label: 'Classificazione', icon: Brain },
-            { id: 'documenti', label: 'Documenti', icon: FileText },
-            { id: 'regole', label: 'Regole', icon: Settings },
-          ].map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              data-testid={`tab-${tab.id}`}
-              className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
-                activeTab === tab.id
-                  ? 'border-indigo-600 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              <tab.icon className="w-4 h-4" />
-              {tab.label}
-            </button>
-          ))}
-        </nav>
-      </div>
+      {/* Statistiche */}
+      {stats && (
+        <div style={{ 
+          background: 'white', 
+          borderRadius: 12, 
+          padding: 16, 
+          boxShadow: '0 2px 8px rgba(0,0,0,0.08)', 
+          marginBottom: 20 
+        }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12 }}>
+            <div style={{ 
+              background: 'white', 
+              borderRadius: 8, 
+              padding: '10px 12px', 
+              boxShadow: '0 1px 4px rgba(0,0,0,0.06)', 
+              borderLeft: '3px solid #6366f1' 
+            }}>
+              <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>📊 Classificati</div>
+              <div style={{ fontSize: 18, fontWeight: 'bold', color: '#6366f1' }}>{stats.totale_classificati || 0}</div>
+            </div>
+            <div style={{ 
+              background: 'white', 
+              borderRadius: 8, 
+              padding: '10px 12px', 
+              boxShadow: '0 1px 4px rgba(0,0,0,0.06)', 
+              borderLeft: '3px solid #22c55e' 
+            }}>
+              <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>✅ Processati</div>
+              <div style={{ fontSize: 18, fontWeight: 'bold', color: '#22c55e' }}>{stats.processati || 0}</div>
+            </div>
+            <div style={{ 
+              background: 'white', 
+              borderRadius: 8, 
+              padding: '10px 12px', 
+              boxShadow: '0 1px 4px rgba(0,0,0,0.06)', 
+              borderLeft: '3px solid #f59e0b' 
+            }}>
+              <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>⏳ Da Processare</div>
+              <div style={{ fontSize: 18, fontWeight: 'bold', color: '#f59e0b' }}>{stats.da_processare || 0}</div>
+            </div>
+            <div style={{ 
+              background: 'white', 
+              borderRadius: 8, 
+              padding: '10px 12px', 
+              boxShadow: '0 1px 4px rgba(0,0,0,0.06)', 
+              borderLeft: '3px solid #ef4444' 
+            }}>
+              <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>❌ Errori</div>
+              <div style={{ fontSize: 18, fontWeight: 'bold', color: '#ef4444' }}>{stats.errori || 0}</div>
+            </div>
+            <div style={{ 
+              background: '#1e3a5f', 
+              borderRadius: 8, 
+              padding: '10px 12px', 
+              color: 'white'
+            }}>
+              <div style={{ fontSize: 11, opacity: 0.9, marginBottom: 4 }}>📧 Email Scansite</div>
+              <div style={{ fontSize: 18, fontWeight: 'bold' }}>{stats.email_scansionate || 0}</div>
+            </div>
+          </div>
+        </div>
+      )}
 
-      {/* Tab: Classificazione */}
-      {activeTab === 'classificazione' && (
-        <div className="space-y-6">
-          {/* Statistiche */}
-          {stats && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-white border rounded-xl p-4">
-                <div className="text-3xl font-bold text-indigo-600">{stats.totale_classificati || 0}</div>
-                <div className="text-sm text-gray-500">Documenti Classificati</div>
-              </div>
-              <div className="bg-white border rounded-xl p-4">
-                <div className="text-3xl font-bold text-green-600">{stats.processati || 0}</div>
-                <div className="text-sm text-gray-500">Processati</div>
-              </div>
-              <div className="bg-white border rounded-xl p-4">
-                <div className="text-3xl font-bold text-amber-600">{stats.da_processare || 0}</div>
-                <div className="text-sm text-gray-500">Da Processare</div>
-              </div>
-              <div className="bg-white border rounded-xl p-4">
+      {/* Tabs */}
+      <div style={{ display: 'flex', gap: 8, borderBottom: '2px solid #e5e7eb', paddingBottom: 8, marginBottom: 20 }}>
+        {[
+          { id: 'classificazione', label: 'Classificazione', icon: '🧠' },
+          { id: 'documenti', label: 'Documenti', icon: '📄' },
+          { id: 'regole', label: 'Regole', icon: '⚙️' },
+        ].map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            data-testid={`tab-${tab.id}`}
+            style={{
+              padding: '10px 16px',
+              fontSize: 14,
+              fontWeight: activeTab === tab.id ? 'bold' : 'normal',
+              borderRadius: '8px 8px 0 0',
+              border: 'none',
+              background: activeTab === tab.id ? '#1e3a5f' : 'transparent',
+              color: activeTab === tab.id ? 'white' : '#6b7280',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6
+            }}
+          >
+            {tab.icon} {tab.label}
+          </button>
+        ))}
+      </div>
                 <div className="text-3xl font-bold text-purple-600">{stats.regole_attive || rules.length}</div>
                 <div className="text-sm text-gray-500">Regole Attive</div>
               </div>
