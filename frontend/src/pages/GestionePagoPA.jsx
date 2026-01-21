@@ -471,52 +471,53 @@ export default function GestionePagoPA() {
                     <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 500, color: '#6b7280', fontSize: 13 }}>Codice CBILL</th>
                     <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 500, color: '#6b7280', fontSize: 13 }}>Beneficiario</th>
                     <th style={{ textAlign: 'right', padding: '12px 16px', fontWeight: 500, color: '#6b7280', fontSize: 13 }}>Importo</th>
-                    <th className="text-center py-3 px-4 font-medium text-gray-500">Stato</th>
-                    <th className="text-center py-3 px-4 font-medium text-gray-500">Azioni</th>
+                    <th style={{ textAlign: 'center', padding: '12px 16px', fontWeight: 500, color: '#6b7280', fontSize: 13 }}>Stato</th>
+                    <th style={{ textAlign: 'center', padding: '12px 16px', fontWeight: 500, color: '#6b7280', fontSize: 13 }}>Azioni</th>
                   </tr>
                 </thead>
                 <tbody>
                   {ricevuteFiltrate.map((ricevuta, idx) => (
-                    <tr key={ricevuta._id || idx} className="border-b hover:bg-gray-50">
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-gray-400" />
-                          {ricevuta.data_pagamento || '-'}
-                        </div>
+                    <tr key={ricevuta._id || idx} style={{ borderBottom: '1px solid #e5e7eb' }}>
+                      <td style={{ padding: '12px 16px' }}>
+                        📅 {ricevuta.data_pagamento || '-'}
                       </td>
-                      <td className="py-3 px-4 font-mono text-sm">
+                      <td style={{ padding: '12px 16px', fontFamily: 'monospace', fontSize: 13 }}>
                         {ricevuta.codice_cbill || '-'}
                       </td>
-                      <td className="py-3 px-4">
+                      <td style={{ padding: '12px 16px' }}>
                         {ricevuta.beneficiario || '-'}
                       </td>
-                      <td className="py-3 px-4 text-right font-medium">
+                      <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 500 }}>
                         {formatEuro((ricevuta.importo || 0))}
                       </td>
-                      <td className="py-3 px-4 text-center">
+                      <td style={{ padding: '12px 16px', textAlign: 'center' }}>
                         {ricevuta.movimento_banca_id ? (
-                          <Badge className="bg-green-100 text-green-800">
-                            <CheckCircle2 className="h-3 w-3 mr-1" />
-                            Associata
-                          </Badge>
+                          <span style={{ padding: '4px 8px', background: '#dcfce7', color: '#166534', borderRadius: 4, fontSize: 12, fontWeight: 600 }}>
+                            ✅ Associata
+                          </span>
                         ) : (
-                          <Badge variant="outline" className="border-orange-300 text-orange-700">
-                            <AlertCircle className="h-3 w-3 mr-1" />
-                            Da Associare
-                          </Badge>
+                          <span style={{ padding: '4px 8px', background: '#ffedd5', color: '#9a3412', borderRadius: 4, fontSize: 12, fontWeight: 600 }}>
+                            ⏳ Da Associare
+                          </span>
                         )}
                       </td>
-                      <td className="py-3 px-4 text-center">
-                        <div className="flex justify-center gap-2">
-                          <Button variant="ghost" size="sm" data-testid={`view-ricevuta-${idx}`}>
-                            <Eye className="h-4 w-4" />
-                          </Button>
+                      <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                        <div style={{ display: 'flex', justifyContent: 'center', gap: 8 }}>
+                          <button 
+                            style={{ padding: '6px 10px', background: 'transparent', border: '1px solid #e5e7eb', borderRadius: 6, cursor: 'pointer' }}
+                            data-testid={`view-ricevuta-${idx}`}
+                          >
+                            👁️
+                          </button>
                           {ricevuta.pdf_url && (
-                            <Button variant="ghost" size="sm" asChild>
-                              <a href={ricevuta.pdf_url} target="_blank" rel="noopener noreferrer">
-                                <Download className="h-4 w-4" />
-                              </a>
-                            </Button>
+                            <a 
+                              href={ricevuta.pdf_url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              style={{ padding: '6px 10px', background: 'transparent', border: '1px solid #e5e7eb', borderRadius: 6, textDecoration: 'none' }}
+                            >
+                              📥
+                            </a>
                           )}
                         </div>
                       </td>
@@ -526,8 +527,8 @@ export default function GestionePagoPA() {
               </table>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
