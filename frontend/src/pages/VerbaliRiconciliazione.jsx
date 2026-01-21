@@ -74,6 +74,22 @@ export default function VerbaliRiconciliazione() {
     }
   };
 
+  const handleCollegaDriver = async () => {
+    setCollegandoDriver(true);
+    setError('');
+    setSuccessMsg('');
+    try {
+      const res = await api.post('/api/verbali-riconciliazione/collega-driver-massivo');
+      setSuccessMsg(`Driver collegati: ${res.data.collegati_a_driver} verbali associati su ${res.data.verbali_analizzati} analizzati`);
+      loadDashboard();
+      loadVerbali();
+    } catch (e) {
+      setError('Errore durante collegamento driver');
+    } finally {
+      setCollegandoDriver(false);
+    }
+  };
+
   const handleRiconcilia = async (numeroVerbale) => {
     try {
       const res = await api.post(`/api/verbali-riconciliazione/riconcilia/${numeroVerbale}`);
