@@ -1813,9 +1813,6 @@ async def cerca_stipendi_per_associazione(
             "is_match": is_match,
             "_diff": diff
         })
-        
-        if len(results) >= limit:
-            break
     
     # Ordina per match esatto prima
     if target_importo:
@@ -1826,7 +1823,7 @@ async def cerca_stipendi_per_associazione(
         r.pop("_diff", None)
     
     return {
-        "stipendi": results[:limit],
+        "stipendi": results,
         "totale": len(results)
     }
 
