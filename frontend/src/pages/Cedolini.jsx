@@ -61,6 +61,17 @@ const formatDate = (dateStr) => {
   }
 };
 
+// Converti mese numerico in chiave stringa
+const getMeseKey = (meseNum) => {
+  const map = {
+    1: 'gennaio', 2: 'febbraio', 3: 'marzo', 4: 'aprile',
+    5: 'maggio', 6: 'giugno', 7: 'luglio', 8: 'agosto',
+    9: 'settembre', 10: 'ottobre', 11: 'novembre', 12: 'dicembre',
+    13: '13esima', 14: '14esima'
+  };
+  return map[meseNum] || 'gennaio';
+};
+
 export default function Cedolini() {
   const [loading, setLoading] = useState(true);
   const [cedolini, setCedolini] = useState([]);
