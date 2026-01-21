@@ -235,19 +235,12 @@ export default function RiconciliazioneIntelligente() {
     try {
       setLoading(true);
       const [dashRes, estrattoRes] = await Promise.all([
-        fetch(`${API_URL}/api/riconciliazione-intelligente/dashboard`),
-        fetch(`${API_URL}/api/riconciliazione-intelligente/stato-estratto`)
+        api.get('/api/riconciliazione-intelligente/dashboard'),
+        api.get('/api/riconciliazione-intelligente/stato-estratto')
       ]);
       
-      if (dashRes.ok) {
-        const data = await dashRes.json();
-        setDashboard(data);
-      }
-      
-      if (estrattoRes.ok) {
-        const data = await estrattoRes.json();
-        setStatoEstratto(data);
-      }
+      setDashboard(dashRes.data);
+      setStatoEstratto(estrattoRes.data);
     } catch (error) {
       console.error('Errore caricamento dashboard:', error);
       toast.error('Errore caricamento dati');
@@ -264,15 +257,14 @@ export default function RiconciliazioneIntelligente() {
   const handleConferma = async (fatturaId, metodo) => {
     try {
       setActionLoading(true);
-      const res = await fetch(`${API_URL}/api/riconciliazione-intelligente/conferma-pagamento`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fattura_id: fatturaId, metodo })
+      const res = await api.post('/api/riconciliazione-intelligente/conferma-pagamento', {
+        fattura_id: fatturaId, 
+        metodo
       });
       
-      const data = await res.json();
+      const data = res.data;
       
-      if (res.ok && data.success) {
+      if (data.success) {
         toast.success(`Pagamento confermato come ${metodo.toUpperCase()}`);
         
         if (data.warnings?.length > 0) {
