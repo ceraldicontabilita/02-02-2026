@@ -1,7 +1,7 @@
 # PRD – TechRecon Accounting System
 ## Product Requirements Document (PRD)
 ## TechRecon Accounting System – Versione Super Articolata
-### Ultimo aggiornamento: 21 Gennaio 2026 (Sessione 5 - Riconciliazione Intelligente)
+### Ultimo aggiornamento: 21 Gennaio 2026 (Sessione 6 - Motore Contabile + Attendance + Riconciliazione Estesa)
 
 ---
 
@@ -15,7 +15,91 @@
 
 ---
 
-## ✅ FEATURE COMPLETATA: RICONCILIAZIONE INTELLIGENTE (21/01/2026)
+## ✅ NUOVE FEATURE COMPLETATE (21/01/2026 - Sessione 6)
+
+### 1. MOTORE CONTABILE (Soluzione C) - COMPLETATO
+Sistema contabile con partita doppia e persistenza.
+
+**Caratteristiche:**
+- Piano dei Conti italiano (27 conti)
+- 15 regole contabili predefinite
+- Validazione partita doppia (DARE = AVERE)
+- Persistenza scritture in `scritture_contabili`
+- Integrazione con Riconciliazione Intelligente
+
+**API:**
+- `GET /api/accounting-engine/piano-conti`
+- `GET /api/accounting-engine/regole-contabili`
+- `GET /api/accounting-engine/bilancio-verifica`
+- `GET /api/accounting-engine/statistiche-contabili`
+- `GET /api/accounting-engine/scritture`
+
+**File:**
+- `/app/app/services/accounting_engine.py` (esteso con persistenza)
+- `/app/app/routers/accounting/accounting_engine_api.py` (nuovi endpoint)
+
+---
+
+### 2. SISTEMA ATTENDANCE (Presenze) - COMPLETATO
+Sistema completo per gestione presenze dipendenti.
+
+**Funzionalità:**
+- Timbrature (entrata, uscita, pause)
+- Ferie e permessi
+- Malattia e altre assenze
+- Calcolo ore lavorate
+- Dashboard presenze giornaliere
+- Approvazione richieste
+
+**API:**
+- `GET /api/attendance/dashboard-presenze` - Dashboard giornaliera
+- `POST /api/attendance/timbratura` - Registra timbratura
+- `POST /api/attendance/richiesta-assenza` - Crea richiesta
+- `PUT /api/attendance/richiesta-assenza/{id}/approva` - Approva
+- `PUT /api/attendance/richiesta-assenza/{id}/rifiuta` - Rifiuta
+- `GET /api/attendance/richieste-pending` - Richieste da approvare
+- `GET /api/attendance/ore-lavorate/{employee_id}` - Ore mensili
+- `GET /api/attendance/saldo-ferie/{employee_id}` - Saldo ferie/permessi
+
+**File:**
+- `/app/app/routers/attendance.py`
+- `/app/frontend/src/pages/Attendance.jsx`
+
+---
+
+### 3. RICONCILIAZIONE INTELLIGENTE ESTESA (Casi 19-35) - COMPLETATO
+Estensione con casi avanzati di riconciliazione.
+
+**Nuovi Stati:**
+- `parzialmente_pagata` - Pagamento parziale
+- `pagamento_cumulativo` - Bonifico per N fatture
+- `con_nota_credito` - NC applicata
+- `sconto_applicato` - Sconto cassa
+
+**Nuove API:**
+- `POST /api/riconciliazione-intelligente/pagamento-parziale` - Caso 19
+- `POST /api/riconciliazione-intelligente/applica-nota-credito` - Caso 21
+- `POST /api/riconciliazione-intelligente/cerca-bonifico-cumulativo` - Caso 23
+- `POST /api/riconciliazione-intelligente/riconcilia-bonifico-cumulativo` - Caso 23
+- `POST /api/riconciliazione-intelligente/pagamento-con-sconto` - Caso 31
+
+**Casi Implementati:**
+| # | Caso | Descrizione |
+|---|------|-------------|
+| 19 | Pagamento parziale | Fattura €1.000, pago €500, residuo €500 |
+| 21 | Nota di credito | Fattura €1.000, NC €200, dovuto €800 |
+| 23 | Bonifico cumulativo | 1 bonifico per N fatture |
+| 31 | Sconto cassa | Fattura €1.000, pago €980 (sconto 2%) |
+
+---
+
+### Test Sessione 6
+- **34 test automatici passati (100%)**
+- Report: `/app/test_reports/iteration_23.json`
+
+---
+
+## ✅ FEATURE COMPLETATA: RICONCILIAZIONE INTELLIGENTE (21/01/2026 - Sessione 5)
 
 ### Descrizione
 Sistema completo per gestione conferma pagamenti e riconciliazione automatica.
@@ -24,6 +108,7 @@ Sistema completo per gestione conferma pagamenti e riconciliazione automatica.
 1. **Import XML** → Fattura in stato "in_attesa_conferma" (NON scrive in Prima Nota)
 2. **Utente conferma metodo** (Cassa/Banca) → Solo allora scrive in Prima Nota
 3. **Sistema verifica con estratto conto** → Propone correzioni se necessario
+4. **Genera scrittura contabile** in partita doppia
 
 ### Stati Implementati
 - `in_attesa_conferma` - Importata, attende scelta Cassa/Banca
@@ -36,7 +121,7 @@ Sistema completo per gestione conferma pagamenti e riconciliazione automatica.
 - `riconciliata` - Tutto ok, operazione chiusa
 - `lock_manuale` - Bloccata dall'utente, no auto-verifica
 
-### API Riconciliazione Intelligente
+### API Riconciliazione Intelligente Base
 - `GET /api/riconciliazione-intelligente/dashboard` - Dashboard operazioni
 - `POST /api/riconciliazione-intelligente/conferma-pagamento` - Conferma metodo
 - `POST /api/riconciliazione-intelligente/applica-spostamento` - Sposta Cassa→Banca
@@ -50,7 +135,7 @@ Sistema completo per gestione conferma pagamenti e riconciliazione automatica.
 - `/app/app/routers/riconciliazione_intelligente_api.py` - Router API
 - `/app/frontend/src/pages/RiconciliazioneIntelligente.jsx` - UI Dashboard
 
-### Test
+### Test Sessione 5
 - 26 test automatici passati (100%)
 - Report: `/app/test_reports/iteration_22.json`
 
