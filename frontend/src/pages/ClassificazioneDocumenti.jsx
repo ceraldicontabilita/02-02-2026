@@ -338,13 +338,13 @@ export default function ClassificazioneDocumenti() {
               📧 Scansione Email
             </h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 16 }}>
               <div>
-                <label className="block text-sm text-gray-600 mb-1">Cartella</label>
+                <label style={{ display: 'block', fontSize: 14, color: '#6b7280', marginBottom: 4 }}>Cartella</label>
                 <select
                   value={scanSettings.cartella}
                   onChange={(e) => setScanSettings({...scanSettings, cartella: e.target.value})}
-                  className="w-full border rounded-lg px-3 py-2"
+                  style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: 8, padding: '8px 12px' }}
                   data-testid="select-cartella"
                 >
                   <option value="INBOX">INBOX</option>
@@ -354,42 +354,54 @@ export default function ClassificazioneDocumenti() {
               </div>
               
               <div>
-                <label className="block text-sm text-gray-600 mb-1">Ultimi giorni</label>
+                <label style={{ display: 'block', fontSize: 14, color: '#6b7280', marginBottom: 4 }}>Ultimi giorni</label>
                 <input
                   type="number"
                   value={scanSettings.giorni}
                   onChange={(e) => setScanSettings({...scanSettings, giorni: parseInt(e.target.value) || 30})}
-                  className="w-full border rounded-lg px-3 py-2"
+                  style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: 8, padding: '8px 12px' }}
                   min="1"
                   max="365"
                   data-testid="input-giorni"
                 />
               </div>
               
-              <div className="flex items-end gap-2">
-                <label className="flex items-center gap-2 cursor-pointer">
+              <div style={{ display: 'flex', alignItems: 'end', gap: 8 }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
                   <input
                     type="checkbox"
                     checked={scanSettings.dry_run}
                     onChange={(e) => setScanSettings({...scanSettings, dry_run: e.target.checked})}
-                    className="w-4 h-4 text-indigo-600"
+                    style={{ width: 16, height: 16 }}
                     data-testid="checkbox-dryrun"
                   />
-                  <span className="text-sm">Solo anteprima</span>
+                  <span style={{ fontSize: 14 }}>Solo anteprima</span>
                 </label>
               </div>
               
-              <div className="flex items-end">
+              <div style={{ display: 'flex', alignItems: 'end' }}>
                 <button
                   onClick={handleScan}
                   disabled={scanning}
                   data-testid="btn-scan"
-                  className="w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg flex items-center justify-center gap-2 disabled:opacity-50"
+                  style={{ 
+                    width: '100%', 
+                    padding: '8px 16px', 
+                    background: scanning ? '#9ca3af' : '#4f46e5', 
+                    color: 'white', 
+                    border: 'none',
+                    borderRadius: 8, 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    gap: 8,
+                    cursor: scanning ? 'not-allowed' : 'pointer'
+                  }}
                 >
                   {scanning ? (
-                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <RefreshCw style={{ width: 16, height: 16 }} />
                   ) : (
-                    <Search className="w-4 h-4" />
+                    <Search style={{ width: 16, height: 16 }} />
                   )}
                   {scanning ? 'Scansione...' : 'Scansiona Email'}
                 </button>
