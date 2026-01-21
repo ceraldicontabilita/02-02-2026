@@ -1789,6 +1789,12 @@ async def get_template_prima_nota_cassa():
 async def import_prima_nota_cassa_csv(file: UploadFile = File(...)) -> Dict[str, Any]:
     """
     Importa movimenti nella Prima Nota Cassa da file CSV.
+    
+    ⚠️ ATTENZIONE: 
+    - NON usare questo endpoint per importare estratti conto bancari!
+    - L'estratto conto va importato in /api/estratto-conto-movimenti/import
+    - Prima Nota Cassa è SOLO per: corrispettivi, pagamenti contanti, versamenti manuali
+    
     Formato atteso:
     - Separatore: ; (punto e virgola)
     - Colonne: Data;Tipo;Importo;Descrizione;Categoria;Riferimento
@@ -1800,12 +1806,26 @@ async def import_prima_nota_cassa_csv(file: UploadFile = File(...)) -> Dict[str,
     
     db = Database.get_db()
     
+    # Keywords che indicano che il file è un estratto conto bancario (errore!)
+    KEYWORDS_BANCARIE = ['INC.POS', 'INCAS.', 'BONIFICO', 'SEPA', 'ADDEBITO', 'NUMIA', 
+                         'PRELIEVO ATM', 'RICARICA CARTA', 'CANONE MENSILE']
+    
     try:
         content = await file.read()
         try:
             text = content.decode('utf-8')
         except:
             text = content.decode('latin-1')
+        
+        # CONTROLLO: Verifica se il file sembra essere un estratto conto bancario
+        text_upper = text.upper()
+        detected_bancarie = [kw for kw in KEYWORDS_BANCARIE if kw in text_upper]
+        if detected_bancarie:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"⚠️ ERRORE: Il file sembra essere un estratto conto bancario (trovate keywords: {', '.join(detected_bancarie[:3])}). "
+                       f"L'estratto conto va importato in /api/estratto-conto-movimenti/import, NON in Prima Nota Cassa!"
+            )
         
         lines = text.strip().split('\n')
         
