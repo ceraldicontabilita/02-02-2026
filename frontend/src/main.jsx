@@ -201,6 +201,7 @@ const router = createBrowserRouter([
       // ciclo-passivo ora reindirizza a fatture-ricevute con tab import
       { path: "ciclo-passivo", element: <LazyPage><ArchivioFattureRicevute /></LazyPage> },
       { path: "fatture-ricevute", element: <LazyPage><ArchivioFattureRicevute /></LazyPage> },
+      { path: "archivio-fatture-ricevute", element: <LazyPage><ArchivioFattureRicevute /></LazyPage> },
       { path: "corrispettivi", element: <LazyPage><Corrispettivi /></LazyPage> },
       { path: "fornitori", element: <LazyPage><Fornitori /></LazyPage> },
       { path: "ordini-fornitori", element: <LazyPage><OrdiniFornitori /></LazyPage> },
