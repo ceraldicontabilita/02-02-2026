@@ -247,6 +247,9 @@ const router = createBrowserRouter([
       // === TO-DO ===
       { path: "todo", element: <LazyPage><ToDo /></LazyPage> },
       
+      // === ATTENDANCE ===
+      { path: "attendance", element: <LazyPage><Attendance /></LazyPage> },
+      
       // === MAGAZZINO ===
       { path: "magazzino", element: <LazyPage><Magazzino /></LazyPage> },
       { path: "inventario", element: <LazyPage><Inventario /></LazyPage> },
