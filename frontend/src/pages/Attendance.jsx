@@ -746,7 +746,7 @@ export default function Attendance() {
             </Card>
           )}
         </div>
-      )
+      )}
 
       {/* Modal Timbratura */}
       {showTimbratura && (
