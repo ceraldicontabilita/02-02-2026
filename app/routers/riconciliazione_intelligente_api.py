@@ -115,18 +115,37 @@ async def get_dashboard_riconciliazione() -> Dict[str, Any]:
         })
     
     # Sospese (limit 50)
-    sospese = await db["invoices"].find(
+    sospese_raw = await db["invoices"].find(
         {"stato_riconciliazione": StatoRiconciliazione.SOSPESA_ATTESA_ESTRATTO.value},
-        {"_id": 0, "id": 1, "numero_documento": 1, "data_documento": 1,
-         "importo_totale": 1, "fornitore_ragione_sociale": 1}
-    ).sort("data_documento", -1).to_list(50)
+        {"_id": 0}
+    ).sort([("data_documento", -1), ("invoice_date", -1)]).to_list(50)
+    
+    sospese = []
+    for f in sospese_raw:
+        sospese.append({
+            "id": f.get("id"),
+            "numero_documento": f.get("numero_documento") or f.get("invoice_number"),
+            "data_documento": f.get("data_documento") or f.get("invoice_date"),
+            "importo_totale": f.get("importo_totale") or f.get("total_amount", 0),
+            "fornitore_ragione_sociale": f.get("fornitore_ragione_sociale") or f.get("supplier_name")
+        })
     
     # Anomalie (limit 50)
-    anomalie = await db["invoices"].find(
+    anomalie_raw = await db["invoices"].find(
         {"stato_riconciliazione": StatoRiconciliazione.ANOMALIA_NON_IN_ESTRATTO.value},
-        {"_id": 0, "id": 1, "numero_documento": 1, "data_documento": 1,
-         "importo_totale": 1, "fornitore_ragione_sociale": 1, "metodo_pagamento_confermato": 1}
-    ).sort("data_documento", -1).to_list(50)
+        {"_id": 0}
+    ).sort([("data_documento", -1), ("invoice_date", -1)]).to_list(50)
+    
+    anomalie = []
+    for f in anomalie_raw:
+        anomalie.append({
+            "id": f.get("id"),
+            "numero_documento": f.get("numero_documento") or f.get("invoice_number"),
+            "data_documento": f.get("data_documento") or f.get("invoice_date"),
+            "importo_totale": f.get("importo_totale") or f.get("total_amount", 0),
+            "fornitore_ragione_sociale": f.get("fornitore_ragione_sociale") or f.get("supplier_name"),
+            "metodo_pagamento_confermato": f.get("metodo_pagamento_confermato")
+        })
     
     return {
         "success": True,
