@@ -643,6 +643,28 @@ class RiconciliazioneIntelligente:
         risultato["movimento_prima_nota_collection"] = collection_prima_nota
         
         # =====================================================================
+        # GENERA SCRITTURA CONTABILE (Partita Doppia)
+        # =====================================================================
+        scrittura_contabile_id = None
+        if ACCOUNTING_ENGINE_AVAILABLE:
+            try:
+                engine = get_accounting_engine_persistent(self.db)
+                scrittura = await engine.genera_scrittura_da_pagamento(
+                    fattura_id=fattura_id,
+                    metodo=metodo,
+                    importo=importo,
+                    data_documento=data_pagamento,
+                    numero_documento=numero_fattura,
+                    fornitore_nome=fornitore_nome
+                )
+                scrittura_contabile_id = scrittura.get("id")
+                risultato["scrittura_contabile_id"] = scrittura_contabile_id
+                logger.info(f"✅ Scrittura contabile creata: {scrittura_contabile_id}")
+            except Exception as e:
+                logger.error(f"Errore creazione scrittura contabile: {e}")
+                risultato["warnings"].append(f"Scrittura contabile non creata: {e}")
+        
+        # =====================================================================
         # AGGIORNA STATO FATTURA
         # =====================================================================
         update_fattura = {
@@ -656,6 +678,9 @@ class RiconciliazioneIntelligente:
             f"prima_nota_{metodo}_id": movimento_id,
             "updated_at": datetime.now(timezone.utc).isoformat()
         }
+        
+        if scrittura_contabile_id:
+            update_fattura["scrittura_contabile_id"] = scrittura_contabile_id
         
         # Se spostamento proposto, salva dati match per UI
         if risultato.get("match_estratto"):
