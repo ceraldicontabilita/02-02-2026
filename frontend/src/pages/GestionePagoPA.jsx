@@ -288,71 +288,71 @@ export default function GestionePagoPA() {
             </div>
 
             {/* AdER */}
-            <div className="p-4 rounded-lg border-2 border-red-200 bg-red-50">
-              <div className="flex items-center gap-3 mb-2">
-                <span className="text-2xl">⚖️</span>
+            <div style={{ padding: 16, borderRadius: 8, border: '2px solid #fecaca', background: '#fef2f2' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+                <span style={{ fontSize: 24 }}>⚖️</span>
                 <div>
-                  <h4 className="font-semibold text-red-900">Agenzia Riscossione</h4>
-                  <p className="text-xs text-red-700">AdER - Cartelle esattoriali</p>
+                  <h4 style={{ margin: 0, fontWeight: 600, color: '#991b1b' }}>Agenzia Riscossione</h4>
+                  <p style={{ margin: 0, fontSize: 12, color: '#ef4444' }}>AdER - Cartelle esattoriali</p>
                 </div>
               </div>
-              <ul className="text-sm text-red-800 space-y-1">
-                <li>• Rottamazione quater</li>
-                <li>• Rateizzazione cartelle</li>
-                <li>• Definizione agevolata</li>
+              <ul style={{ fontSize: 13, color: '#991b1b', margin: 0, paddingLeft: 16 }}>
+                <li>Rottamazione quater</li>
+                <li>Rateizzazione cartelle</li>
+                <li>Definizione agevolata</li>
               </ul>
             </div>
 
             {/* TARI */}
-            <div className="p-4 rounded-lg border-2 border-amber-200 bg-amber-50">
-              <div className="flex items-center gap-3 mb-2">
-                <span className="text-2xl">🗑️</span>
+            <div style={{ padding: 16, borderRadius: 8, border: '2px solid #fde68a', background: '#fefce8' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+                <span style={{ fontSize: 24 }}>🗑️</span>
                 <div>
-                  <h4 className="font-semibold text-amber-900">TARI</h4>
-                  <p className="text-xs text-amber-700">Tassa rifiuti</p>
+                  <h4 style={{ margin: 0, fontWeight: 600, color: '#92400e' }}>TARI</h4>
+                  <p style={{ margin: 0, fontSize: 12, color: '#f59e0b' }}>Tassa rifiuti</p>
                 </div>
               </div>
-              <ul className="text-sm text-amber-800 space-y-1">
-                <li>• Rate TARI annuali</li>
-                <li>• Conguagli</li>
-                <li>• Accertamenti</li>
+              <ul style={{ fontSize: 13, color: '#92400e', margin: 0, paddingLeft: 16 }}>
+                <li>Rate TARI annuali</li>
+                <li>Conguagli</li>
+                <li>Accertamenti</li>
               </ul>
             </div>
 
             {/* COSAP / Tosap */}
-            <div className="p-4 rounded-lg border-2 border-purple-200 bg-purple-50">
-              <div className="flex items-center gap-3 mb-2">
-                <span className="text-2xl">🏪</span>
+            <div style={{ padding: 16, borderRadius: 8, border: '2px solid #e9d5ff', background: '#faf5ff' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+                <span style={{ fontSize: 24 }}>🏪</span>
                 <div>
-                  <h4 className="font-semibold text-purple-900">COSAP / TOSAP</h4>
-                  <p className="text-xs text-purple-700">Occupazione suolo pubblico</p>
+                  <h4 style={{ margin: 0, fontWeight: 600, color: '#7c3aed' }}>COSAP / TOSAP</h4>
+                  <p style={{ margin: 0, fontSize: 12, color: '#a855f7' }}>Occupazione suolo pubblico</p>
                 </div>
               </div>
-              <ul className="text-sm text-purple-800 space-y-1">
-                <li>• Canone occupazione</li>
-                <li>• Rinnovi annuali</li>
-                <li>• Plateatici</li>
+              <ul style={{ fontSize: 13, color: '#7c3aed', margin: 0, paddingLeft: 16 }}>
+                <li>Canone occupazione</li>
+                <li>Rinnovi annuali</li>
+                <li>Plateatici</li>
               </ul>
             </div>
 
             {/* Altri tributi */}
-            <div className="p-4 rounded-lg border-2 border-gray-200 bg-gray-50">
-              <div className="flex items-center gap-3 mb-2">
-                <span className="text-2xl">📄</span>
+            <div style={{ padding: 16, borderRadius: 8, border: '2px solid #e5e7eb', background: '#f9fafb' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+                <span style={{ fontSize: 24 }}>📄</span>
                 <div>
-                  <h4 className="font-semibold text-gray-900">Altri Tributi</h4>
-                  <p className="text-xs text-gray-700">Pagamenti vari</p>
+                  <h4 style={{ margin: 0, fontWeight: 600, color: '#374151' }}>Altri Tributi</h4>
+                  <p style={{ margin: 0, fontSize: 12, color: '#6b7280' }}>Pagamenti vari</p>
                 </div>
               </div>
-              <ul className="text-sm text-gray-800 space-y-1">
-                <li>• IMU / TASI</li>
-                <li>• Bollo auto</li>
-                <li>• Multe e sanzioni</li>
+              <ul style={{ fontSize: 13, color: '#374151', margin: 0, paddingLeft: 16 }}>
+                <li>IMU / TASI</li>
+                <li>Bollo auto</li>
+                <li>Multe e sanzioni</li>
               </ul>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Filtri */}
       <Card>
