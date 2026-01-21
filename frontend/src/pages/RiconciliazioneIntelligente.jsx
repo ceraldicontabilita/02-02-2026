@@ -334,7 +334,7 @@ export default function RiconciliazioneIntelligente() {
       }
     } catch (error) {
       console.error('Errore:', error);
-      toast.error('Errore di comunicazione');
+      toast.error(error.response?.data?.detail || 'Errore di comunicazione');
     } finally {
       setActionLoading(false);
     }
@@ -344,18 +344,14 @@ export default function RiconciliazioneIntelligente() {
   const handleLock = async (fatturaId) => {
     try {
       setActionLoading(true);
-      const res = await fetch(`${API_URL}/api/riconciliazione-intelligente/lock-manuale`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          fattura_id: fatturaId, 
-          motivo: 'Bloccata manualmente dall\'utente'
-        })
+      const res = await api.post('/api/riconciliazione-intelligente/lock-manuale', { 
+        fattura_id: fatturaId, 
+        motivo: 'Bloccata manualmente dall\'utente'
       });
       
-      const data = await res.json();
+      const data = res.data;
       
-      if (res.ok && data.success) {
+      if (data.success) {
         toast.success('Operazione bloccata');
         await loadDashboard();
       } else {
@@ -363,7 +359,7 @@ export default function RiconciliazioneIntelligente() {
       }
     } catch (error) {
       console.error('Errore:', error);
-      toast.error('Errore di comunicazione');
+      toast.error(error.response?.data?.detail || 'Errore di comunicazione');
     } finally {
       setActionLoading(false);
     }
@@ -373,13 +369,11 @@ export default function RiconciliazioneIntelligente() {
   const handleRianalizza = async () => {
     try {
       setActionLoading(true);
-      const res = await fetch(`${API_URL}/api/riconciliazione-intelligente/rianalizza`, {
-        method: 'POST'
-      });
+      const res = await api.post('/api/riconciliazione-intelligente/rianalizza');
       
-      const data = await res.json();
+      const data = res.data;
       
-      if (res.ok && data.success) {
+      if (data.success) {
         toast.success(`Ri-analisi completata: ${data.analizzate} fatture analizzate`);
         if (data.spostamenti_proposti?.length > 0) {
           toast.info(`${data.spostamenti_proposti.length} spostamenti proposti!`);
@@ -393,7 +387,7 @@ export default function RiconciliazioneIntelligente() {
       }
     } catch (error) {
       console.error('Errore:', error);
-      toast.error('Errore di comunicazione');
+      toast.error(error.response?.data?.detail || 'Errore di comunicazione');
     } finally {
       setActionLoading(false);
     }
