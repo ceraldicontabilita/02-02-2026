@@ -355,79 +355,122 @@ export default function GestionePagoPA() {
       </div>
 
       {/* Filtri */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Cerca per codice CBILL o beneficiario..."
-                  value={filtro}
-                  onChange={(e) => setFiltro(e.target.value)}
-                  className="pl-10"
-                  data-testid="search-pagopa-input"
-                />
-              </div>
-            </div>
-            
-            <div className="flex gap-2">
-              <Button
-                variant={statoFiltro === 'tutti' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setStatoFiltro('tutti')}
-              >
-                Tutti
-              </Button>
-              <Button
-                variant={statoFiltro === 'associati' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setStatoFiltro('associati')}
-              >
-                Associati
-              </Button>
-              <Button
-                variant={statoFiltro === 'non_associati' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setStatoFiltro('non_associati')}
-              >
-                Da Associare
-              </Button>
-            </div>
+      <div style={{ 
+        background: 'white', 
+        borderRadius: 12, 
+        padding: 16, 
+        boxShadow: '0 2px 8px rgba(0,0,0,0.08)', 
+        marginBottom: 20 
+      }}>
+        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+          <div style={{ flex: 1, minWidth: 250 }}>
+            <input
+              type="text"
+              placeholder="🔍 Cerca per codice CBILL o beneficiario..."
+              value={filtro}
+              onChange={(e) => setFiltro(e.target.value)}
+              style={{ 
+                width: '100%', 
+                padding: '10px 12px', 
+                border: '1px solid #e5e7eb', 
+                borderRadius: 8,
+                fontSize: 14
+              }}
+              data-testid="search-pagopa-input"
+            />
           </div>
-        </CardContent>
-      </Card>
+          
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              onClick={() => setStatoFiltro('tutti')}
+              style={{
+                padding: '8px 16px',
+                background: statoFiltro === 'tutti' ? '#1e3a5f' : 'white',
+                color: statoFiltro === 'tutti' ? 'white' : '#6b7280',
+                border: '1px solid #e5e7eb',
+                borderRadius: 6,
+                cursor: 'pointer',
+                fontWeight: 500,
+                fontSize: 13
+              }}
+            >
+              Tutti
+            </button>
+            <button
+              onClick={() => setStatoFiltro('associati')}
+              style={{
+                padding: '8px 16px',
+                background: statoFiltro === 'associati' ? '#22c55e' : 'white',
+                color: statoFiltro === 'associati' ? 'white' : '#6b7280',
+                border: '1px solid #e5e7eb',
+                borderRadius: 6,
+                cursor: 'pointer',
+                fontWeight: 500,
+                fontSize: 13
+              }}
+            >
+              ✅ Associati
+            </button>
+            <button
+              onClick={() => setStatoFiltro('non_associati')}
+              style={{
+                padding: '8px 16px',
+                background: statoFiltro === 'non_associati' ? '#f97316' : 'white',
+                color: statoFiltro === 'non_associati' ? 'white' : '#6b7280',
+                border: '1px solid #e5e7eb',
+                borderRadius: 6,
+                cursor: 'pointer',
+                fontWeight: 500,
+                fontSize: 13
+              }}
+            >
+              ⏳ Da Associare
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* Lista Ricevute */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Ricevute PagoPA</CardTitle>
-          <CardDescription>
+      <div style={{ 
+        background: 'white', 
+        borderRadius: 12, 
+        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+        overflow: 'hidden'
+      }}>
+        <div style={{ 
+          padding: '16px 20px', 
+          background: '#f8fafc', 
+          borderBottom: '1px solid #e5e7eb'
+        }}>
+          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#1f2937' }}>
+            📄 Ricevute PagoPA
+          </h2>
+          <p style={{ margin: '4px 0 0 0', fontSize: 13, color: '#6b7280' }}>
             {ricevuteFiltrate.length} ricevute {filtro && `(filtrate per "${filtro}")`}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+          </p>
+        </div>
+        <div style={{ padding: 16 }}>
           {loading ? (
-            <div className="flex justify-center py-8">
-              <RefreshCw className="h-8 w-8 animate-spin text-gray-400" />
+            <div style={{ display: 'flex', justifyContent: 'center', padding: 32 }}>
+              <RefreshCw style={{ width: 32, height: 32, animation: 'spin 1s linear infinite', color: '#9ca3af' }} />
             </div>
           ) : ricevuteFiltrate.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <FileText className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-              <p>Nessuna ricevuta PagoPA trovata</p>
-              <p className="text-sm mt-2">
+            <div style={{ textAlign: 'center', padding: 32, color: '#9ca3af' }}>
+              <FileText style={{ width: 48, height: 48, margin: '0 auto 16px', opacity: 0.5 }} />
+              <p style={{ margin: 0 }}>Nessuna ricevuta PagoPA trovata</p>
+              <p style={{ fontSize: 13, marginTop: 8 }}>
                 Carica le ricevute PDF dalla sezione Documenti o importa da email
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-3 px-4 font-medium text-gray-500">Data</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-500">Codice CBILL</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-500">Beneficiario</th>
-                    <th className="text-right py-3 px-4 font-medium text-gray-500">Importo</th>
+                  <tr style={{ borderBottom: '2px solid #e5e7eb', background: '#f9fafb' }}>
+                    <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 500, color: '#6b7280', fontSize: 13 }}>Data</th>
+                    <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 500, color: '#6b7280', fontSize: 13 }}>Codice CBILL</th>
+                    <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 500, color: '#6b7280', fontSize: 13 }}>Beneficiario</th>
+                    <th style={{ textAlign: 'right', padding: '12px 16px', fontWeight: 500, color: '#6b7280', fontSize: 13 }}>Importo</th>
                     <th className="text-center py-3 px-4 font-medium text-gray-500">Stato</th>
                     <th className="text-center py-3 px-4 font-medium text-gray-500">Azioni</th>
                   </tr>
