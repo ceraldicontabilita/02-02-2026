@@ -94,6 +94,7 @@ from app.routers.f24 import (
 # --- Accounting Module ---
 from app.routers.accounting import (
     accounting_main, accounting_extended, accounting_f24,
+    accounting_engine_api,
     prima_nota, prima_nota_automation, prima_nota_salari,
     piano_conti, bilancio, centri_costo, contabilita_avanzata,
     regole_categorizzazione, iva_calcolo, liquidazione_iva,
