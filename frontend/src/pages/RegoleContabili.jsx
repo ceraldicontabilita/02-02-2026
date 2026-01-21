@@ -337,6 +337,99 @@ export default function RegoleContabili() {
           ]
         }
       ]
+    },
+    {
+      id: 'verbali',
+      titolo: '🚗 Verbali Noleggio (Multas)',
+      icona: '🚗',
+      colore: '#dc2626',
+      sottosezioni: [
+        {
+          titolo: 'Flusso Riconciliazione Verbali',
+          regole: [
+            {
+              nome: 'Scenario A: Pago Prima della Fattura',
+              descrizione: '1) Driver trova verbale sul parabrezza. 2) Pago subito (prima che arrivi la fattura dal noleggiatore). 3) Scarico il verbale da email/posta → Salvo. 4) Arriva fattura noleggiatore (es. ALD) con numero verbale → Associo. 5) Riconcilio: Verbale + Fattura + Pagamento.',
+              campi: ['stato: pagato → fattura_ricevuta → riconciliato']
+            },
+            {
+              nome: 'Scenario B: Fattura Prima del Pagamento',
+              descrizione: '1) Arriva fattura noleggiatore (es. ALD €35 spese notifica). 2) Estraggo numero verbale dalla descrizione fattura. 3) Cerco/scarico verbale originale da email. 4) Pago il verbale. 5) Riconcilio: Fattura + Verbale + Pagamento.',
+              campi: ['stato: fattura_ricevuta → pagato → riconciliato']
+            },
+            {
+              nome: 'Differenza Multa vs Spese Notifica',
+              descrizione: 'IMPORTANTE: La fattura del noleggiatore (es. €35) NON è la multa! È solo il costo di "rinotifica" che il noleggiatore addebita. Il verbale vero è un documento separato con importo diverso (es. €80, €150, ecc.).',
+              campi: ['Fattura noleggiatore = spese notifica (€35)', 'Verbale = multa vera (importo variabile)']
+            }
+          ]
+        },
+        {
+          titolo: 'Stati del Verbale',
+          regole: [
+            {
+              nome: 'Stati Progressivi',
+              descrizione: 'Un verbale passa attraverso questi stati durante il suo ciclo di vita.',
+              campi: ['da_scaricare → salvato → fattura_ricevuta → pagato → riconciliato']
+            },
+            {
+              nome: 'da_scaricare',
+              descrizione: 'Verbale identificato (es. da email) ma PDF non ancora scaricato/salvato nel sistema.',
+              campi: ['stato: da_scaricare']
+            },
+            {
+              nome: 'salvato',
+              descrizione: 'PDF del verbale scaricato e salvato. In attesa di fattura noleggiatore o pagamento.',
+              campi: ['stato: salvato', 'pdf_id']
+            },
+            {
+              nome: 'fattura_ricevuta',
+              descrizione: 'Fattura del noleggiatore associata. Il numero verbale è stato estratto dalla descrizione fattura.',
+              campi: ['stato: fattura_ricevuta', 'fattura_id', 'fattura_numero']
+            },
+            {
+              nome: 'pagato',
+              descrizione: 'Pagamento del verbale registrato (trovato in estratto conto o registrato manualmente).',
+              campi: ['stato: pagato', 'pagamento_id', 'data_pagamento', 'importo']
+            },
+            {
+              nome: 'riconciliato',
+              descrizione: 'Ciclo completo: Verbale + Fattura noleggiatore + Pagamento + Veicolo + Driver tutti collegati.',
+              campi: ['stato: riconciliato', 'driver_id', 'veicolo_id', 'targa']
+            }
+          ]
+        },
+        {
+          titolo: 'Catena di Associazione',
+          regole: [
+            {
+              nome: 'Verbale → Fattura → Veicolo → Driver',
+              descrizione: 'La riconciliazione completa collega: 1) Numero verbale nella fattura. 2) Targa veicolo nella fattura. 3) Veicolo in anagrafica noleggio. 4) Driver assegnato al veicolo alla data del verbale.',
+              campi: ['numero_verbale', 'targa', 'veicolo_id', 'driver_id', 'driver_nome']
+            },
+            {
+              nome: 'Estrazione Automatica',
+              descrizione: 'Il sistema estrae automaticamente: numero verbale e targa dalla descrizione delle fatture noleggiatori (ALD, ARVAL, LEASYS, ecc.).',
+              campi: ['Pattern verbale: A25111540620, B23123049750', 'Pattern targa: GE911SC, GX037HJ']
+            }
+          ]
+        },
+        {
+          titolo: 'Collections MongoDB',
+          regole: [
+            {
+              nome: 'verbali_noleggio',
+              descrizione: 'Collection principale con tutti i verbali e il loro stato di riconciliazione.',
+              campi: ['collection: verbali_noleggio']
+            },
+            {
+              nome: 'verbali_noleggio_completi',
+              descrizione: 'Collection di staging con verbali completi scaricati da email. Deve essere sincronizzata con verbali_noleggio.',
+              campi: ['collection: verbali_noleggio_completi', 'sync → verbali_noleggio']
+            }
+          ]
+        }
+      ]
     }
   ];
 
