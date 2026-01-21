@@ -733,39 +733,74 @@ export default function RiconciliazioneIntelligente() {
       </div>
 
       {/* Statistiche */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Statistiche Riconciliazione</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center p-4 bg-emerald-50 rounded-lg">
-              <div className="text-2xl font-bold text-emerald-600">
+      <div style={{ 
+        background: 'white', 
+        borderRadius: 12, 
+        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+        overflow: 'hidden'
+      }}>
+        <div style={{ 
+          padding: '16px 20px', 
+          background: '#f8fafc', 
+          borderBottom: '1px solid #e5e7eb'
+        }}>
+          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#1f2937' }}>
+            📊 Statistiche Riconciliazione
+          </h2>
+        </div>
+        <div style={{ padding: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+            <div style={{ 
+              background: '#ecfdf5', 
+              borderRadius: 8, 
+              padding: 16, 
+              textAlign: 'center',
+              borderLeft: '3px solid #10b981'
+            }}>
+              <div style={{ fontSize: 24, fontWeight: 'bold', color: '#10b981' }}>
                 {conteggi.riconciliata || 0}
               </div>
-              <div className="text-sm text-emerald-700">Riconciliate</div>
+              <div style={{ fontSize: 12, color: '#065f46' }}>Riconciliate</div>
             </div>
-            <div className="text-center p-4 bg-green-50 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">
+            <div style={{ 
+              background: '#f0fdf4', 
+              borderRadius: 8, 
+              padding: 16, 
+              textAlign: 'center',
+              borderLeft: '3px solid #22c55e'
+            }}>
+              <div style={{ fontSize: 24, fontWeight: 'bold', color: '#22c55e' }}>
                 {conteggi.confermata_cassa || 0}
               </div>
-              <div className="text-sm text-green-700">Confermate Cassa</div>
+              <div style={{ fontSize: 12, color: '#166534' }}>Confermate Cassa</div>
             </div>
-            <div className="text-center p-4 bg-blue-50 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">
+            <div style={{ 
+              background: '#eff6ff', 
+              borderRadius: 8, 
+              padding: 16, 
+              textAlign: 'center',
+              borderLeft: '3px solid #3b82f6'
+            }}>
+              <div style={{ fontSize: 24, fontWeight: 'bold', color: '#3b82f6' }}>
                 {conteggi.confermata_banca || 0}
               </div>
-              <div className="text-sm text-blue-700">Confermate Banca</div>
+              <div style={{ fontSize: 12, color: '#1e40af' }}>Confermate Banca</div>
             </div>
-            <div className="text-center p-4 bg-gray-50 rounded-lg">
-              <div className="text-2xl font-bold text-gray-600">
+            <div style={{ 
+              background: '#f9fafb', 
+              borderRadius: 8, 
+              padding: 16, 
+              textAlign: 'center',
+              borderLeft: '3px solid #6b7280'
+            }}>
+              <div style={{ fontSize: 24, fontWeight: 'bold', color: '#6b7280' }}>
                 {conteggi.lock_manuale || 0}
               </div>
-              <div className="text-sm text-gray-700">Bloccate</div>
+              <div style={{ fontSize: 12, color: '#374151' }}>Bloccate</div>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
