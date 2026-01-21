@@ -57,6 +57,7 @@ const NAV_ITEMS = [
       { to: "/prima-nota-salari", label: "💰 Prima Nota Salari", icon: "💰", isNew: true },
       { to: "/tfr", label: "TFR e Accantonamenti", icon: "🏢" },
       { to: "/noleggio-auto", label: "Noleggio Auto", icon: "🚗" },
+      { to: "/verbali-riconciliazione", label: "🚗 Riconciliazione Verbali", icon: "🔄", isNew: true },
     ]
   },
   
