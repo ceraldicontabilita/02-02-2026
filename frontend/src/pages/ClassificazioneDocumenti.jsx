@@ -410,25 +410,25 @@ export default function ClassificazioneDocumenti() {
 
             {/* Risultati scansione */}
             {scanResults && (
-              <div className="mt-6 border-t pt-4" data-testid="scan-results">
-                <h4 className="font-medium mb-3">Risultati Scansione</h4>
+              <div style={{ marginTop: 24, borderTop: '1px solid #e5e7eb', paddingTop: 16 }} data-testid="scan-results">
+                <h4 style={{ fontWeight: 500, marginBottom: 12 }}>Risultati Scansione</h4>
                 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                  <div className="bg-gray-50 rounded-lg p-3 text-center">
-                    <div className="text-xl font-bold">{scanResults.email_totali}</div>
-                    <div className="text-xs text-gray-500">Email Totali</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 16 }}>
+                  <div style={{ background: '#f9fafb', borderRadius: 8, padding: 12, textAlign: 'center' }}>
+                    <div style={{ fontSize: 20, fontWeight: 'bold' }}>{scanResults.email_totali}</div>
+                    <div style={{ fontSize: 12, color: '#6b7280' }}>Email Totali</div>
                   </div>
-                  <div className="bg-green-50 rounded-lg p-3 text-center">
-                    <div className="text-xl font-bold text-green-600">{scanResults.email_classificate}</div>
-                    <div className="text-xs text-gray-500">Classificate</div>
+                  <div style={{ background: '#f0fdf4', borderRadius: 8, padding: 12, textAlign: 'center' }}>
+                    <div style={{ fontSize: 20, fontWeight: 'bold', color: '#16a34a' }}>{scanResults.email_classificate}</div>
+                    <div style={{ fontSize: 12, color: '#6b7280' }}>Classificate</div>
                   </div>
-                  <div className="bg-amber-50 rounded-lg p-3 text-center">
-                    <div className="text-xl font-bold text-amber-600">{scanResults.email_non_classificate}</div>
-                    <div className="text-xs text-gray-500">Non Classificate</div>
+                  <div style={{ background: '#fffbeb', borderRadius: 8, padding: 12, textAlign: 'center' }}>
+                    <div style={{ fontSize: 20, fontWeight: 'bold', color: '#d97706' }}>{scanResults.email_non_classificate}</div>
+                    <div style={{ fontSize: 12, color: '#6b7280' }}>Non Classificate</div>
                   </div>
-                  <div className="bg-blue-50 rounded-lg p-3 text-center">
-                    <div className="text-xl font-bold text-blue-600">{scanResults.documenti_salvati}</div>
-                    <div className="text-xs text-gray-500">PDF Salvati</div>
+                  <div style={{ background: '#eff6ff', borderRadius: 8, padding: 12, textAlign: 'center' }}>
+                    <div style={{ fontSize: 20, fontWeight: 'bold', color: '#2563eb' }}>{scanResults.documenti_salvati}</div>
+                    <div style={{ fontSize: 12, color: '#6b7280' }}>PDF Salvati</div>
                   </div>
                 </div>
 
