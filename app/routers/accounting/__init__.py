@@ -2,6 +2,7 @@
 from . import accounting_main
 from . import accounting_extended
 from . import accounting_f24
+from . import accounting_engine_api
 from . import prima_nota
 from . import prima_nota_automation
 from . import prima_nota_salari
@@ -17,6 +18,7 @@ __all__ = [
     'accounting_main',
     'accounting_extended',
     'accounting_f24',
+    'accounting_engine_api',
     'prima_nota',
     'prima_nota_automation',
     'prima_nota_salari',
