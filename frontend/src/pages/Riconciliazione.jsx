@@ -173,6 +173,7 @@ export default function Riconciliazione() {
   const [fattureNonPagate, setFattureNonPagate] = useState([]);
   const [selectedMovimento, setSelectedMovimento] = useState(null);
   const [matchingFatture, setMatchingFatture] = useState([]);
+  const [loadError, setLoadError] = useState('');
 
   useEffect(() => {
     loadStats();
@@ -180,8 +181,11 @@ export default function Riconciliazione() {
 
   useEffect(() => {
     if (activeTab === "manuale") {
-      loadMovimentiNonRiconciliati();
-      loadFattureNonPagate();
+      // Carica in parallelo ma con gestione errori separata
+      Promise.all([
+        loadMovimentiNonRiconciliati(),
+        loadFattureNonPagate()
+      ]).catch(e => console.error("Errore caricamento dati manuali:", e));
     }
   }, [activeTab]);
 
