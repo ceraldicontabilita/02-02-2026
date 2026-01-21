@@ -655,17 +655,17 @@ export default function ArchivioFatture() {
                                 }
                               }}
                               style={{ 
-                                padding: '10px 18px', 
-                                background: isRiconciliata ? '#d1d5db' : (isPaid && metodoPagEffettivo === 'cassa') ? '#10b981' : '#f0fdf4',
+                                padding: '8px 14px', 
+                                background: isRiconciliata ? '#e5e7eb' : (isPaid && metodoPagEffettivo === 'cassa') ? '#10b981' : '#f0fdf4',
                                 color: isRiconciliata ? '#9ca3af' : (isPaid && metodoPagEffettivo === 'cassa') ? 'white' : '#16a34a',
-                                border: isRiconciliata ? '1px solid #d1d5db' : (isPaid && metodoPagEffettivo === 'cassa') ? 'none' : '2px solid #16a34a', 
-                                borderRadius: 8, 
+                                border: isRiconciliata ? 'none' : (isPaid && metodoPagEffettivo === 'cassa') ? 'none' : '2px solid #16a34a', 
+                                borderRadius: 6, 
                                 cursor: isRiconciliata ? 'not-allowed' : (isPaid && metodoPagEffettivo === 'cassa') ? 'default' : 'pointer',
-                                fontSize: 14, 
-                                fontWeight: 'bold',
-                                minWidth: 90,
+                                fontSize: 12, 
+                                fontWeight: '600',
+                                minWidth: 70,
                                 transition: 'all 0.2s',
-                                opacity: isRiconciliata ? 0.6 : 1
+                                opacity: isRiconciliata ? 0.5 : 1
                               }}
                               title={isRiconciliata ? '⛔ Riconciliata - non modificabile' : isPaid && metodoPagEffettivo === 'cassa' ? 'Pagata in Cassa' : isPaid ? 'Sposta in Cassa' : 'Paga in Cassa'}
                               data-testid={`btn-cassa-${f.id}`}
