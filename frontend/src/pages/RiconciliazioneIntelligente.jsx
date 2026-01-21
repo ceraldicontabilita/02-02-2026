@@ -10,11 +10,11 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import api from '../api';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Alert, AlertDescription } from '../components/ui/alert';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import {
   CheckCircle, AlertTriangle, Clock, XCircle, RefreshCw, 
   ArrowRight, Banknote, Wallet, Lock, Unlock, Info,
