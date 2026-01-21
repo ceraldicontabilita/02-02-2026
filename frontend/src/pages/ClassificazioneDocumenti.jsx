@@ -323,17 +323,19 @@ export default function ClassificazioneDocumenti() {
           </button>
         ))}
       </div>
-                <div className="text-3xl font-bold text-purple-600">{stats.regole_attive || rules.length}</div>
-                <div className="text-sm text-gray-500">Regole Attive</div>
-              </div>
-            </div>
-          )}
 
+      {/* Tab: Classificazione */}
+      {activeTab === 'classificazione' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           {/* Scansione Email */}
-          <div className="bg-white border rounded-xl p-6">
-            <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
-              <Mail className="w-5 h-5 text-indigo-600" />
-              Scansione Email
+          <div style={{ 
+            background: 'white', 
+            borderRadius: 12, 
+            padding: 20, 
+            boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+          }}>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: 16, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
+              📧 Scansione Email
             </h3>
             
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
