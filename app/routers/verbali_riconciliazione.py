@@ -99,8 +99,9 @@ async def get_verbali_dashboard() -> Dict[str, Any]:
     db = Database.get_db()
     
     try:
-        # Conta verbali per stato
+        # Conta verbali per stato - USA PROIEZIONE per evitare di caricare PDF
         pipeline = [
+            {"$project": {"stato": 1, "importo": 1}},  # Solo campi necessari
             {"$group": {
                 "_id": "$stato",
                 "count": {"$sum": 1},
@@ -118,7 +119,7 @@ async def get_verbali_dashboard() -> Dict[str, Any]:
             totale_verbali += s["count"]
             totale_importo += s["totale_importo"]
         
-        # Verbali da riconciliare (hanno fattura ma non pagamento o viceversa)
+        # Verbali da riconciliare - solo count
         da_riconciliare = await db["verbali_noleggio"].count_documents({
             "$or": [
                 {"stato": "fattura_ricevuta", "pagamento_id": {"$exists": False}},
@@ -127,8 +128,18 @@ async def get_verbali_dashboard() -> Dict[str, Any]:
             ]
         })
         
-        # Ultimi 5 verbali inseriti
-        ultimi = await db["verbali_noleggio"].find().sort("created_at", -1).limit(5).to_list(5)
+        # Ultimi 5 verbali - ESCLUDI campi pesanti (pdf_content, pdf_base64, etc)
+        projection = {
+            "_id": 1,
+            "id": 1,
+            "numero_verbale": 1,
+            "targa": 1,
+            "importo": 1,
+            "stato": 1,
+            "data_violazione": 1,
+            "created_at": 1
+        }
+        ultimi = await db["verbali_noleggio"].find({}, projection).sort("created_at", -1).limit(5).to_list(5)
         
         return {
             "success": True,
