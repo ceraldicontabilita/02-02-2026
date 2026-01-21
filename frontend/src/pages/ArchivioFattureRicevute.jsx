@@ -725,17 +725,17 @@ export default function ArchivioFatture() {
                                 }
                               }}
                               style={{ 
-                                padding: '10px 18px', 
-                                background: isRiconciliata ? '#d1d5db' : (isPaid && metodoPagEffettivo === 'banca') ? '#3b82f6' : '#eff6ff',
+                                padding: '8px 14px', 
+                                background: isRiconciliata ? '#e5e7eb' : (isPaid && metodoPagEffettivo === 'banca') ? '#3b82f6' : '#eff6ff',
                                 color: isRiconciliata ? '#9ca3af' : (isPaid && metodoPagEffettivo === 'banca') ? 'white' : '#2563eb',
-                                border: isRiconciliata ? '1px solid #d1d5db' : (isPaid && metodoPagEffettivo === 'banca') ? 'none' : '2px solid #2563eb', 
-                                borderRadius: 8, 
+                                border: isRiconciliata ? 'none' : (isPaid && metodoPagEffettivo === 'banca') ? 'none' : '2px solid #2563eb', 
+                                borderRadius: 6, 
                                 cursor: isRiconciliata ? 'not-allowed' : (isPaid && metodoPagEffettivo === 'banca') ? 'default' : 'pointer',
-                                fontSize: 14, 
-                                fontWeight: 'bold',
-                                minWidth: 90,
+                                fontSize: 12, 
+                                fontWeight: '600',
+                                minWidth: 70,
                                 transition: 'all 0.2s',
-                                opacity: isRiconciliata ? 0.6 : 1
+                                opacity: isRiconciliata ? 0.5 : 1
                               }}
                               title={isRiconciliata ? '⛔ Riconciliata - non modificabile' : isPaid && metodoPagEffettivo === 'banca' ? 'Pagata in Banca' : isPaid ? 'Sposta in Banca' : 'Paga in Banca'}
                               data-testid={`btn-banca-${f.id}`}
