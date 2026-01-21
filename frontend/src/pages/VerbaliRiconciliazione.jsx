@@ -117,7 +117,9 @@ export default function VerbaliRiconciliazione() {
         padding: '20px 24px',
         background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
         borderRadius: 12,
-        color: 'white'
+        color: 'white',
+        flexWrap: 'wrap',
+        gap: 12
       }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 24, fontWeight: 'bold' }}>🚗 Riconciliazione Verbali Noleggio</h1>
@@ -125,6 +127,7 @@ export default function VerbaliRiconciliazione() {
             Gestione completa: Verbale → Fattura → Veicolo → Driver
           </p>
         </div>
+        <div style={{ display: 'flex', gap: 12 }}>
         <button
           onClick={handleScanFatture}
           disabled={scanning}
