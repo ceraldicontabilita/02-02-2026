@@ -8,6 +8,7 @@ FLUSSO:
 1. Import XML → Fattura in stato "in_attesa_conferma" (NON scrive in Prima Nota)
 2. Utente conferma metodo (Cassa/Banca) → Solo allora scrive in Prima Nota
 3. Sistema verifica con estratto conto → Propone correzioni se necessario
+4. Genera automaticamente scrittura contabile in partita doppia
 
 STATI FATTURA:
 - in_attesa_conferma: Importata, attende scelta Cassa/Banca
@@ -37,6 +38,13 @@ try:
     FUZZY_AVAILABLE = True
 except ImportError:
     FUZZY_AVAILABLE = False
+
+# Import motore contabile per scritture partita doppia
+try:
+    from app.services.accounting_engine import get_accounting_engine_persistent
+    ACCOUNTING_ENGINE_AVAILABLE = True
+except ImportError:
+    ACCOUNTING_ENGINE_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
