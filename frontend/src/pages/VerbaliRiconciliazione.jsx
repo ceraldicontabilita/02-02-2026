@@ -22,6 +22,7 @@ export default function VerbaliRiconciliazione() {
   const [soloRiconciliare, setSoloRiconciliare] = useState(false);
   const [selectedVerbale, setSelectedVerbale] = useState(null);
   const [scanning, setScanning] = useState(false);
+  const [collegandoDriver, setCollegandoDriver] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
