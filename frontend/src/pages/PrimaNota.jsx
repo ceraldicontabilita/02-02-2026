@@ -1220,11 +1220,23 @@ function MovementsTable({ movimenti, tipo, loading, formatEuro, formatDate, onDe
         </div>
       )}
 
-      {/* Footer */}
+      {/* Footer con Paginazione ANCHE IN BASSO */}
       {movimenti.length > 0 && (
-        <div style={{ padding: 12, background: '#f9fafb', borderTop: '1px solid #e5e7eb', fontSize: 12, color: '#6b7280', display: 'flex', justifyContent: 'space-between' }}>
-          <span>Mostrando {start + 1}-{Math.min(start + itemsPerPage, movimenti.length)} di {movimenti.length} movimenti</span>
-          {totalPages > 1 && <span>Pagina {currentPage}/{totalPages}</span>}
+        <div style={{ padding: 12, background: '#f9fafb', borderTop: '1px solid #e5e7eb', fontSize: 12, color: '#6b7280' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>Mostrando {start + 1}-{Math.min(start + itemsPerPage, movimenti.length)} di {movimenti.length} movimenti</span>
+            {totalPages > 1 && (
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <span>📄 Pagina {currentPage} di {totalPages}</span>
+                <div style={{ display: 'flex', gap: 4 }}>
+                  <button onClick={() => setCurrentPage(1)} disabled={currentPage === 1} style={{ padding: '4px 8px', borderRadius: 4, border: 'none', cursor: 'pointer', opacity: currentPage === 1 ? 0.5 : 1, background: '#e5e7eb' }}>⏮️</button>
+                  <button onClick={() => setCurrentPage(p => Math.max(1, p-1))} disabled={currentPage === 1} style={{ padding: '4px 8px', borderRadius: 4, border: 'none', cursor: 'pointer', opacity: currentPage === 1 ? 0.5 : 1, background: '#e5e7eb' }}>◀️</button>
+                  <button onClick={() => setCurrentPage(p => Math.min(totalPages, p+1))} disabled={currentPage === totalPages} style={{ padding: '4px 8px', borderRadius: 4, border: 'none', cursor: 'pointer', opacity: currentPage === totalPages ? 0.5 : 1, background: '#e5e7eb' }}>▶️</button>
+                  <button onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages} style={{ padding: '4px 8px', borderRadius: 4, border: 'none', cursor: 'pointer', opacity: currentPage === totalPages ? 0.5 : 1, background: '#e5e7eb' }}>⏭️</button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
