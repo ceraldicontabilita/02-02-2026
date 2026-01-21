@@ -14,7 +14,7 @@ import sys
 import os
 
 # Add the backend path
-sys.path.insert(0, '/app/backend')
+sys.path.insert(0, '/app')
 
 from app.services.riconciliazione_intelligente import (
     RiconciliazioneIntelligente,
