@@ -1,60 +1,163 @@
-import React, { useState, useEffect, useMemo } from 'react';
+/**
+ * CedoliniRiconciliazione.jsx
+ * 
+ * Gestione Buste Paga - Stile Dipendenti in Cloud
+ * Features:
+ * - Tabs per mesi con conteggi e totali
+ * - Tabella cedolini per mese
+ * - Dettaglio cedolino con pannello laterale
+ * - Caricamento PDF buste paga
+ */
+
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import api from '../api';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
-import { formatEuro, formatDateIT } from '../lib/utils';
+import { 
+  ChevronLeft, ChevronRight, RefreshCw, Upload, Download,
+  Search, FileText, MoreHorizontal, X, Calendar,
+  Check, Euro, User, Clock
+} from 'lucide-react';
+import { toast } from 'sonner';
 
-const MESI = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
+// Mesi con chiavi
+const MESI = [
+  { key: 1, label: 'Gennaio', short: 'Gen' },
+  { key: 2, label: 'Febbraio', short: 'Feb' },
+  { key: 3, label: 'Marzo', short: 'Mar' },
+  { key: 4, label: 'Aprile', short: 'Apr' },
+  { key: 5, label: 'Maggio', short: 'Mag' },
+  { key: 6, label: 'Giugno', short: 'Giu' },
+  { key: 7, label: 'Luglio', short: 'Lug' },
+  { key: 8, label: 'Agosto', short: 'Ago' },
+  { key: 9, label: 'Settembre', short: 'Set' },
+  { key: 10, label: 'Ottobre', short: 'Ott' },
+  { key: 11, label: 'Novembre', short: 'Nov' },
+  { key: 12, label: 'Dicembre', short: 'Dic' },
+  { key: 13, label: '13esima', short: '13°' },
+  { key: 14, label: '14esima', short: '14°' },
+];
 
-// Luglio 2018 = limite pagamento contanti
-const DATA_LIMITE_CONTANTI = new Date('2018-07-01');
+// Formatta importo
+const formatEuro = (value) => {
+  if (!value && value !== 0) return '-';
+  return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(value);
+};
 
-/**
- * Pagina Cedolini con Riconciliazione Pagamenti
- * - Storico: inserimento manuale o import Excel
- * - Dal 2026: parser automatico + riconciliazione bonifici/assegni
- */
+// Formatta importo breve (es. €17k)
+const formatEuroShort = (value) => {
+  if (!value) return '€0';
+  if (value >= 1000) {
+    return `€${Math.round(value / 1000)}k`;
+  }
+  return `€${Math.round(value)}`;
+};
+
+// Formatta data
+const formatDate = (dateStr) => {
+  if (!dateStr) return '-';
+  try {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' });
+  } catch {
+    return dateStr;
+  }
+};
+
+const formatDateShort = (dateStr) => {
+  if (!dateStr) return '-';
+  try {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('it-IT');
+  } catch {
+    return dateStr;
+  }
+};
+
 export default function CedoliniRiconciliazione() {
-  const { anno } = useAnnoGlobale();
-  const [cedolini, setCedolini] = useState([]);
+  const { anno, setAnno } = useAnnoGlobale();
   const [loading, setLoading] = useState(true);
-  const [filtroStato, setFiltroStato] = useState('tutti');
-  const [filtroMese, setFiltroMese] = useState('');
-  const [search, setSearch] = useState('');
+  const [cedolini, setCedolini] = useState([]);
+  const [employees, setEmployees] = useState([]);
+  
+  // Filtri
+  const [meseSelezionato, setMeseSelezionato] = useState(1);
+  const [filtroEmployee, setFiltroEmployee] = useState('');
+  const [searchText, setSearchText] = useState('');
+  
+  // Dettaglio cedolino
+  const [showDettaglio, setShowDettaglio] = useState(false);
+  const [cedolinoSelezionato, setCedolinoSelezionato] = useState(null);
+  
+  // Upload
   const [showUpload, setShowUpload] = useState(false);
-  const [showManual, setShowManual] = useState(null); // cedolino da pagare manualmente
   const [uploading, setUploading] = useState(false);
-  const [uploadResult, setUploadResult] = useState(null);
 
-  // Form pagamento manuale
-  const [pagamentoForm, setPagamentoForm] = useState({
-    importo_pagato: '',
-    metodo: 'contanti',
-    data_pagamento: new Date().toISOString().split('T')[0],
-    note: ''
-  });
-
-  useEffect(() => {
-    loadCedolini();
-  }, [anno]);
-
-  const loadCedolini = async () => {
-    setLoading(true);
+  // Carica dati
+  const loadData = useCallback(async () => {
     try {
-      // Carica tutti i cedolini dell'anno
-      const res = await api.get(`/api/cedolini/lista-completa?anno=${anno}`);
-      setCedolini(res.data?.cedolini || res.data || []);
-    } catch (e) {
-      console.error('Errore caricamento cedolini:', e);
-      // Fallback: prova altro endpoint
-      try {
-        const res2 = await api.get(`/api/employees/payslips?anno=${anno}`);
-        setCedolini(res2.data || []);
-      } catch {
-        setCedolini([]);
-      }
+      setLoading(true);
+      
+      const [cedRes, empRes] = await Promise.all([
+        api.get(`/api/cedolini?anno=${anno}`),
+        api.get('/api/employees?limit=200')
+      ]);
+      
+      setCedolini(cedRes.data.cedolini || cedRes.data || []);
+      
+      // Normalizza employees
+      const emps = (empRes.data.employees || empRes.data || [])
+        .filter(e => e.status === 'attivo' || !e.status)
+        .map(e => ({
+          ...e,
+          nome_completo: e.nome_completo || e.name || `${e.nome || ''} ${e.cognome || ''}`.trim()
+        }));
+      setEmployees(emps);
+      
+    } catch (error) {
+      console.error('Errore caricamento:', error);
     } finally {
       setLoading(false);
     }
+  }, [anno]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  // Calcola stats per mese
+  const stats = useMemo(() => {
+    const result = {};
+    MESI.forEach(m => {
+      const meseCedolini = cedolini.filter(c => c.mese === m.key);
+      result[m.key] = {
+        count: meseCedolini.length,
+        totale: meseCedolini.reduce((sum, c) => sum + (c.netto || c.netto_mese || 0), 0)
+      };
+    });
+    return result;
+  }, [cedolini]);
+
+  // Filtra cedolini
+  const cedoliniFiltrati = useMemo(() => {
+    return cedolini.filter(c => {
+      if (c.mese !== meseSelezionato) return false;
+      if (filtroEmployee) {
+        const empId = c.dipendente_id || c.employee_id;
+        if (empId !== filtroEmployee) return false;
+      }
+      if (searchText) {
+        const search = searchText.toLowerCase();
+        const nome = (c.dipendente_nome || c.nome_dipendente || c.employee_nome || '').toLowerCase();
+        return nome.includes(search);
+      }
+      return true;
+    });
+  }, [cedolini, meseSelezionato, filtroEmployee, searchText]);
+
+  // Apri dettaglio
+  const openDettaglio = (cedolino) => {
+    setCedolinoSelezionato(cedolino);
+    setShowDettaglio(true);
   };
 
   // Upload PDF
@@ -63,7 +166,6 @@ export default function CedoliniRiconciliazione() {
     if (!file) return;
 
     setUploading(true);
-    setUploadResult(null);
     const formData = new FormData();
     formData.append('file', file);
 
@@ -71,526 +173,581 @@ export default function CedoliniRiconciliazione() {
       const res = await api.post('/api/employees/paghe/upload-pdf', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      setUploadResult(res.data);
-      loadCedolini();
-    } catch (e) {
-      setUploadResult({ error: e.response?.data?.detail || e.message });
+      toast.success(`Caricato: ${res.data?.cedolini_creati || 0} cedolini`);
+      loadData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Errore upload');
     } finally {
       setUploading(false);
       e.target.value = '';
+      setShowUpload(false);
     }
   };
 
-  // Upload Excel storico
-  const handleUploadExcel = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setUploading(true);
-    setUploadResult(null);
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-      const res = await api.post('/api/cedolini/import-excel-storico', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-      setUploadResult(res.data);
-      loadCedolini();
-    } catch (e) {
-      setUploadResult({ error: e.response?.data?.detail || e.message });
-    } finally {
-      setUploading(false);
-      e.target.value = '';
-    }
+  // Naviga anno
+  const navigateAnno = (delta) => {
+    setAnno(prev => prev + delta);
   };
 
-  // Upload Paghe + Bonifici (due file Excel)
-  const [filePaghe, setFilePaghe] = useState(null);
-  const [fileBonifici, setFileBonifici] = useState(null);
-  
-  const handleUploadPagheBonifici = async () => {
-    if (!filePaghe) {
-      alert('Seleziona almeno il file paghe');
-      return;
-    }
-
-    setUploading(true);
-    setUploadResult(null);
-    const formData = new FormData();
-    formData.append('file_paghe', filePaghe);
-    if (fileBonifici) {
-      formData.append('file_bonifici', fileBonifici);
-    }
-
-    try {
-      const res = await api.post('/api/cedolini/import-paghe-bonifici', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-      setUploadResult(res.data);
-      setFilePaghe(null);
-      setFileBonifici(null);
-      loadCedolini();
-    } catch (e) {
-      setUploadResult({ error: e.response?.data?.detail || e.message });
-    } finally {
-      setUploading(false);
-    }
+  // Get nome dipendente
+  const getNomeDipendente = (ced) => {
+    return ced.dipendente_nome || ced.nome_dipendente || ced.employee_nome || 'N/D';
   };
 
-  // Registra pagamento manuale
-  const handlePagamentoManuale = async () => {
-    if (!showManual || !pagamentoForm.importo_pagato) return;
-
-    try {
-      await api.post(`/api/cedolini/${showManual.id}/registra-pagamento`, {
-        importo_pagato: parseFloat(pagamentoForm.importo_pagato),
-        metodo_pagamento: pagamentoForm.metodo,
-        data_pagamento: pagamentoForm.data_pagamento,
-        note: pagamentoForm.note
-      });
-      setShowManual(null);
-      setPagamentoForm({ importo_pagato: '', metodo: 'contanti', data_pagamento: new Date().toISOString().split('T')[0], note: '' });
-      loadCedolini();
-    } catch (e) {
-      alert('Errore: ' + (e.response?.data?.detail || e.message));
-    }
-  };
-
-  // Riconciliazione automatica
-  const handleRiconciliaAutomatica = async () => {
-    
-    
-    try {
-      const res = await api.post('/api/cedolini/riconcilia-automatica', { anno });
-      alert(`Riconciliazione completata!\n- Bonifici trovati: ${res.data.bonifici_match || 0}\n- Assegni trovati: ${res.data.assegni_match || 0}\n- Da verificare: ${res.data.da_verificare || 0}`);
-      loadCedolini();
-    } catch (e) {
-      alert('Errore: ' + (e.response?.data?.detail || e.message));
-    }
-  };
-
-  // Filtri
-  const cedoliniFiltrati = useMemo(() => {
-    return cedolini.filter(c => {
-      // Stato
-      if (filtroStato === 'pagati' && !c.pagato) return false;
-      if (filtroStato === 'da_pagare' && c.pagato) return false;
-      
-      // Mese
-      if (filtroMese && c.mese != filtroMese) return false;
-      
-      // Search
-      if (search) {
-        const s = search.toLowerCase();
-        const nome = (c.dipendente_nome || c.nome_dipendente || c.nome_completo || '').toLowerCase();
-        if (!nome.includes(s)) return false;
-      }
-      
-      return true;
-    });
-  }, [cedolini, filtroStato, filtroMese, search]);
-
-  // Totali
-  const totali = useMemo(() => {
-    const da_pagare = cedoliniFiltrati.filter(c => !c.pagato);
-    const pagati = cedoliniFiltrati.filter(c => c.pagato);
-    return {
-      totale_netto: cedoliniFiltrati.reduce((s, c) => s + (c.netto || c.netto_mese || 0), 0),
-      totale_pagato: pagati.reduce((s, c) => s + (c.importo_pagato || c.netto || c.netto_mese || 0), 0),
-      count_da_pagare: da_pagare.length,
-      count_pagati: pagati.length
-    };
-  }, [cedoliniFiltrati]);
-
-  const fmt = (v) => formatEuro(v || 0);
-
-  // Determina se cedolino è pagabile in contanti (pre luglio 2018)
-  const isPagabileContanti = (c) => {
-    const annoCed = parseInt(c.anno);
-    const meseCed = parseInt(c.mese);
-    if (annoCed < 2018) return true;
-    if (annoCed === 2018 && meseCed < 7) return true;
-    return false;
-  };
-
-  // Badge stato
-  const StatoBadge = ({ cedolino }) => {
-    if (cedolino.pagato) {
-      const metodo = cedolino.metodo_pagamento || 'bonifico';
-      const colors = {
-        contanti: { bg: '#dcfce7', color: '#166534', icon: '💵' },
-        bonifico: { bg: '#dbeafe', color: '#1e40af', icon: '🏦' },
-        assegno: { bg: '#fef3c7', color: '#92400e', icon: '📝' }
-      };
-      const style = colors[metodo] || colors.bonifico;
-      return (
-        <span style={{ padding: '4px 10px', borderRadius: 12, fontSize: 11, fontWeight: 600, background: style.bg, color: style.color }}>
-          {style.icon} {metodo.charAt(0).toUpperCase() + metodo.slice(1)}
-        </span>
-      );
-    }
+  if (loading) {
     return (
-      <span style={{ padding: '4px 10px', borderRadius: 12, fontSize: 11, fontWeight: 600, background: '#fee2e2', color: '#991b1b' }}>
-        ⏳ Da pagare
-      </span>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+        <RefreshCw style={{ width: 32, height: 32, animation: 'spin 1s linear infinite', color: '#3b82f6' }} />
+      </div>
     );
-  };
+  }
 
   return (
-    <div style={{ padding: 'clamp(12px, 3vw, 20px)' }}>
-      {/* Header con Gradiente */}
+    <div style={{ padding: 20, maxWidth: 1400, margin: '0 auto' }} data-testid="cedolini-page">
+      {/* Header */}
       <div style={{ 
-        marginBottom: 20, 
         display: 'flex', 
         justifyContent: 'space-between', 
         alignItems: 'center', 
-        flexWrap: 'wrap', 
-        gap: 12,
+        marginBottom: 20,
         padding: '15px 20px',
         background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
         borderRadius: 12,
-        color: 'white'
+        color: 'white',
+        flexWrap: 'wrap',
+        gap: 10
       }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: 'clamp(18px, 4vw, 22px)', fontWeight: 'bold' }}>
-            📑 Cedolini & Riconciliazione
-          </h1>
-          <p style={{ margin: '4px 0 0', opacity: 0.9, fontSize: 13 }}>
-            Anno {anno} • {cedolini.length} cedolini
-          </p>
-        </div>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <button
-            onClick={() => setShowUpload(!showUpload)}
-            style={{ padding: '10px 16px', background: 'rgba(255,255,255,0.9)', color: '#1e3a5f', border: 'none', borderRadius: 8, fontWeight: 600, cursor: 'pointer' }}
-          >
-            📤 Import
-          </button>
-          <button
-            onClick={handleRiconciliaAutomatica}
-            style={{ padding: '10px 16px', background: '#10b981', color: 'white', border: 'none', borderRadius: 8, fontWeight: 600, cursor: 'pointer' }}
-          >
-            🔄 Riconcilia Auto
-          </button>
-        </div>
-      </div>
-
-      {/* Panel Upload */}
-      {showUpload && (
-        <div style={{ background: 'white', borderRadius: 12, padding: 20, marginBottom: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.1)', border: '2px solid #3b82f6' }}>
-          <h3 style={{ margin: '0 0 16px', fontSize: 16 }}>📤 Importa Cedolini</h3>
-          
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
-            {/* Upload PDF */}
-            <div style={{ padding: 16, background: '#f0f9ff', borderRadius: 8, border: '1px dashed #3b82f6' }}>
-              <h4 style={{ margin: '0 0 8px', fontSize: 14 }}>📄 Upload PDF (dal 2026)</h4>
-              <p style={{ fontSize: 12, color: '#64748b', margin: '0 0 12px' }}>
-                Carica buste paga PDF. Estrae automaticamente nome, periodo e importo netto.
-              </p>
-              <input
-                type="file"
-                accept=".pdf,.zip,.rar"
-                onChange={handleUploadPDF}
-                disabled={uploading}
-                style={{ fontSize: 13 }}
-              />
-            </div>
-
-            {/* Upload Excel Storico */}
-            <div style={{ padding: 16, background: '#fef3c7', borderRadius: 8, border: '1px dashed #f59e0b' }}>
-              <h4 style={{ margin: '0 0 8px', fontSize: 14 }}>📊 Import Excel (storico)</h4>
-              <p style={{ fontSize: 12, color: '#64748b', margin: '0 0 12px' }}>
-                <strong>File 1 (Paghe):</strong> NOME DIPENDENTE, MESE, ANNO, IMPORTO netto<br/>
-                <strong>File 2 (Bonifici - opzionale):</strong> NOME DIPENDENTE, MESE, ANNO, IMPORTO erogato
-              </p>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <label style={{ fontSize: 12 }}>
-                  📋 File Paghe (obbligatorio):
-                  <input
-                    type="file"
-                    accept=".xlsx,.xls,.csv"
-                    onChange={(e) => setFilePaghe(e.target.files?.[0] || null)}
-                    disabled={uploading}
-                    style={{ fontSize: 13, marginLeft: 8 }}
-                  />
-                </label>
-                
-                <label style={{ fontSize: 12 }}>
-                  🏦 File Bonifici (opzionale):
-                  <input
-                    type="file"
-                    accept=".xlsx,.xls,.csv"
-                    onChange={(e) => setFileBonifici(e.target.files?.[0] || null)}
-                    disabled={uploading}
-                    style={{ fontSize: 13, marginLeft: 8 }}
-                  />
-                </label>
-                
-                <button
-                  onClick={handleUploadPagheBonifici}
-                  disabled={uploading || !filePaghe}
-                  style={{
-                    padding: '8px 16px',
-                    background: filePaghe ? '#f59e0b' : '#d1d5db',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: 6,
-                    cursor: filePaghe ? 'pointer' : 'not-allowed',
-                    fontWeight: 600,
-                    fontSize: 13,
-                    marginTop: 8
-                  }}
-                >
-                  📤 Importa {filePaghe ? (fileBonifici ? 'Paghe + Bonifici' : 'Solo Paghe') : ''}
-                </button>
-              </div>
-            </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div>
+            <h1 style={{ margin: 0, fontSize: 22, fontWeight: 'bold' }}>📄 Buste Paga</h1>
+            <p style={{ margin: '4px 0 0 0', fontSize: 13, opacity: 0.9 }}>
+              Gestione cedolini e buste paga dipendenti
+            </p>
           </div>
-
-          {uploading && <div style={{ marginTop: 12, color: '#3b82f6' }}>⏳ Caricamento in corso...</div>}
           
-          {uploadResult && (
-            <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: uploadResult.error ? '#fee2e2' : '#dcfce7' }}>
-              {uploadResult.error ? (
-                <span style={{ color: '#991b1b' }}>❌ {uploadResult.error}</span>
-              ) : (
-                <span style={{ color: '#166534' }}>
-                  ✅ Importati: {uploadResult.imported || 0} | 
-                  Bonifici: {uploadResult.bonifici_matched || 0} | 
-                  Contanti: {uploadResult.contanti_assigned || 0} | 
-                  Duplicati: {uploadResult.skipped_duplicates || 0}
-                </span>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Riepilogo Totali */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
-        <div style={{ padding: 16, background: '#dbeafe', borderRadius: 10, textAlign: 'center' }}>
-          <div style={{ fontSize: 11, color: '#1e40af', fontWeight: 500 }}>Totale Netto</div>
-          <div style={{ fontSize: 20, fontWeight: 700, color: '#1e3a8a' }}>{fmt(totali.totale_netto)}</div>
-        </div>
-        <div style={{ padding: 16, background: '#dcfce7', borderRadius: 10, textAlign: 'center' }}>
-          <div style={{ fontSize: 11, color: '#166534', fontWeight: 500 }}>Totale Pagato</div>
-          <div style={{ fontSize: 20, fontWeight: 700, color: '#15803d' }}>{fmt(totali.totale_pagato)}</div>
-        </div>
-        <div style={{ padding: 16, background: '#fee2e2', borderRadius: 10, textAlign: 'center' }}>
-          <div style={{ fontSize: 11, color: '#991b1b', fontWeight: 500 }}>Da Pagare</div>
-          <div style={{ fontSize: 20, fontWeight: 700, color: '#dc2626' }}>{totali.count_da_pagare}</div>
-        </div>
-        <div style={{ padding: 16, background: '#f1f5f9', borderRadius: 10, textAlign: 'center' }}>
-          <div style={{ fontSize: 11, color: '#64748b', fontWeight: 500 }}>Pagati</div>
-          <div style={{ fontSize: 20, fontWeight: 700, color: '#374151' }}>{totali.count_pagati}</div>
-        </div>
-      </div>
-
-      {/* Filtri */}
-      <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
-        <select
-          value={filtroStato}
-          onChange={(e) => setFiltroStato(e.target.value)}
-          style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid #e2e8f0', fontSize: 13 }}
-        >
-          <option value="tutti">Tutti gli stati</option>
-          <option value="da_pagare">⏳ Da pagare</option>
-          <option value="pagati">✅ Pagati</option>
-        </select>
-
-        <select
-          value={filtroMese}
-          onChange={(e) => setFiltroMese(e.target.value)}
-          style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid #e2e8f0', fontSize: 13 }}
-        >
-          <option value="">Tutti i mesi</option>
-          {MESI.map((m, i) => <option key={i+1} value={i+1}>{m}</option>)}
-        </select>
-
-        <input
-          type="text"
-          placeholder="🔍 Cerca dipendente..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid #e2e8f0', fontSize: 13, flex: 1, minWidth: 200 }}
-        />
-      </div>
-
-      {/* Tabella Cedolini */}
-      <div style={{ background: 'white', borderRadius: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
-        {loading ? (
-          <div style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>⏳ Caricamento...</div>
-        ) : cedoliniFiltrati.length === 0 ? (
-          <div style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>
-            <div style={{ fontSize: 40, marginBottom: 8, opacity: 0.5 }}>📑</div>
-            <div>Nessun cedolino trovato</div>
+          {/* Navigazione Anno */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 20 }}>
+            <button
+              onClick={() => navigateAnno(-1)}
+              style={{
+                padding: '6px 10px',
+                background: 'rgba(255,255,255,0.2)',
+                border: 'none',
+                borderRadius: 6,
+                cursor: 'pointer',
+                color: 'white'
+              }}
+            >
+              <ChevronLeft style={{ width: 16, height: 16 }} />
+            </button>
+            <span style={{ 
+              padding: '8px 20px', 
+              background: 'rgba(255,255,255,0.95)', 
+              color: '#1e3a5f',
+              borderRadius: 6,
+              fontWeight: 'bold',
+              fontSize: 18
+            }}>
+              {anno}
+            </span>
+            <button
+              onClick={() => navigateAnno(1)}
+              style={{
+                padding: '6px 10px',
+                background: 'rgba(255,255,255,0.2)',
+                border: 'none',
+                borderRadius: 6,
+                cursor: 'pointer',
+                color: 'white'
+              }}
+            >
+              <ChevronRight style={{ width: 16, height: 16 }} />
+            </button>
           </div>
-        ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 800 }}>
-              <thead>
-                <tr style={{ background: '#f8fafc' }}>
-                  <th style={thStyle}>Dipendente</th>
-                  <th style={thStyle}>Periodo</th>
-                  <th style={{ ...thStyle, textAlign: 'right' }}>Netto Cedolino</th>
-                  <th style={{ ...thStyle, textAlign: 'right' }}>Importo Pagato</th>
-                  <th style={{ ...thStyle, textAlign: 'center' }}>Stato</th>
-                  <th style={{ ...thStyle, textAlign: 'center' }}>Azioni</th>
+        </div>
+        
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button 
+            onClick={loadData}
+            style={{ 
+              padding: '10px 20px',
+              background: 'rgba(255,255,255,0.2)',
+              color: 'white',
+              border: 'none',
+              borderRadius: 8,
+              cursor: 'pointer',
+              fontWeight: '600'
+            }}
+          >
+            🔄 Aggiorna
+          </button>
+          <button 
+            onClick={() => setShowUpload(true)}
+            style={{ 
+              padding: '10px 20px',
+              background: '#10b981',
+              color: 'white',
+              border: 'none',
+              borderRadius: 8,
+              cursor: 'pointer',
+              fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8
+            }}
+            data-testid="btn-carica-cedolino"
+          >
+            <Upload style={{ width: 16, height: 16 }} />
+            Carica buste paga e CU
+          </button>
+        </div>
+      </div>
+
+      {/* Tabs Mesi con Stats */}
+      <div style={{ 
+        background: 'white', 
+        borderRadius: 12, 
+        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+        marginBottom: 20,
+        overflow: 'hidden'
+      }}>
+        <div style={{ 
+          display: 'flex', 
+          overflowX: 'auto',
+          borderBottom: '1px solid #e5e7eb',
+          padding: '0 8px'
+        }}>
+          {MESI.map(mese => {
+            const meseStats = stats[mese.key] || { count: 0, totale: 0 };
+            const isActive = meseSelezionato === mese.key;
+            
+            return (
+              <button
+                key={mese.key}
+                onClick={() => setMeseSelezionato(mese.key)}
+                style={{
+                  padding: '12px 16px',
+                  background: 'transparent',
+                  border: 'none',
+                  borderBottom: isActive ? '3px solid #3b82f6' : '3px solid transparent',
+                  cursor: 'pointer',
+                  minWidth: 75,
+                  textAlign: 'center',
+                  transition: 'all 0.2s'
+                }}
+                data-testid={`tab-mese-${mese.key}`}
+              >
+                <div style={{ 
+                  fontSize: 13, 
+                  fontWeight: isActive ? 600 : 400,
+                  color: isActive ? '#3b82f6' : '#6b7280'
+                }}>
+                  {mese.label}
+                </div>
+                {meseStats.count > 0 && (
+                  <>
+                    <div style={{ 
+                      fontSize: 11, 
+                      color: '#9ca3af',
+                      marginTop: 2
+                    }}>
+                      {meseStats.count} buste
+                    </div>
+                    <div style={{ 
+                      fontSize: 12, 
+                      fontWeight: 600,
+                      color: isActive ? '#3b82f6' : '#1f2937',
+                      marginTop: 2
+                    }}>
+                      {formatEuroShort(meseStats.totale)}
+                    </div>
+                  </>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Filtri */}
+        <div style={{ 
+          padding: '12px 16px', 
+          display: 'flex', 
+          gap: 12, 
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          borderBottom: '1px solid #e5e7eb'
+        }}>
+          <select
+            value={filtroEmployee}
+            onChange={(e) => setFiltroEmployee(e.target.value)}
+            style={{
+              padding: '8px 12px',
+              border: '1px solid #e5e7eb',
+              borderRadius: 6,
+              fontSize: 13,
+              minWidth: 200
+            }}
+            data-testid="filtro-employee"
+          >
+            <option value="">Seleziona dipendente</option>
+            {employees.map(e => (
+              <option key={e.id} value={e.id}>{e.nome_completo}</option>
+            ))}
+          </select>
+          
+          <div style={{ flex: 1 }} />
+          
+          <div style={{ position: 'relative' }}>
+            <Search style={{ 
+              position: 'absolute', 
+              left: 10, 
+              top: '50%', 
+              transform: 'translateY(-50%)',
+              width: 16, 
+              height: 16, 
+              color: '#9ca3af' 
+            }} />
+            <input
+              type="text"
+              placeholder="Cerca"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              style={{
+                padding: '8px 12px 8px 36px',
+                border: '1px solid #e5e7eb',
+                borderRadius: 6,
+                fontSize: 13,
+                width: 200
+              }}
+              data-testid="search-cedolini"
+            />
+          </div>
+          
+          <button
+            style={{
+              padding: '8px 16px',
+              background: 'white',
+              border: '1px solid #e5e7eb',
+              borderRadius: 6,
+              cursor: 'pointer',
+              fontSize: 13,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6
+            }}
+          >
+            <Download style={{ width: 14, height: 14 }} />
+            Esporta
+          </button>
+        </div>
+
+        {/* Tabella Cedolini */}
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ background: '#f9fafb' }}>
+                <th style={{ width: 40, padding: '12px 16px', textAlign: 'center', borderBottom: '1px solid #e5e7eb' }}>
+                  <input type="checkbox" />
+                </th>
+                <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 500, color: '#6b7280', fontSize: 13, borderBottom: '1px solid #e5e7eb' }}>
+                  Dipendente ↑
+                </th>
+                <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 500, color: '#6b7280', fontSize: 13, borderBottom: '1px solid #e5e7eb' }}>
+                  Mese di competenza
+                </th>
+                <th style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 500, color: '#6b7280', fontSize: 13, borderBottom: '1px solid #e5e7eb' }}>
+                  Netto
+                </th>
+                <th style={{ padding: '12px 16px', textAlign: 'center', fontWeight: 500, color: '#6b7280', fontSize: 13, borderBottom: '1px solid #e5e7eb' }}>
+                  Stato
+                </th>
+                <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 500, color: '#6b7280', fontSize: 13, borderBottom: '1px solid #e5e7eb' }}>
+                  Data emissione
+                </th>
+                <th style={{ padding: '12px 16px', textAlign: 'center', fontWeight: 500, color: '#6b7280', fontSize: 13, borderBottom: '1px solid #e5e7eb' }}>
+                  Azioni
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {cedoliniFiltrati.length === 0 ? (
+                <tr>
+                  <td colSpan="7" style={{ padding: 40, textAlign: 'center', color: '#9ca3af' }}>
+                    <FileText style={{ width: 48, height: 48, margin: '0 auto 16px', opacity: 0.3 }} />
+                    <p style={{ margin: 0 }}>Nessun cedolino per {MESI.find(m => m.key === meseSelezionato)?.label} {anno}</p>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {cedoliniFiltrati.map((c, idx) => (
-                  <tr key={c.id || idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                    <td style={tdStyle}>
-                      <div style={{ fontWeight: 600 }}>{c.dipendente_nome || c.nome_dipendente || c.nome_completo || '-'}</div>
-                      <div style={{ fontSize: 11, color: '#64748b' }}>{c.codice_fiscale || ''}</div>
-                    </td>
-                    <td style={tdStyle}>
-                      {MESI[(c.mese || 1) - 1]} {c.anno}
-                    </td>
-                    <td style={{ ...tdStyle, textAlign: 'right', fontWeight: 600 }}>
-                      {fmt(c.netto || c.netto_mese || 0)}
-                    </td>
-                    <td style={{ ...tdStyle, textAlign: 'right', fontWeight: 600, color: c.pagato ? '#15803d' : '#94a3b8' }}>
-                      {c.pagato ? fmt(c.importo_pagato || c.netto || c.netto_mese || 0) : '-'}
-                    </td>
-                    <td style={{ ...tdStyle, textAlign: 'center' }}>
-                      <StatoBadge cedolino={c} />
-                    </td>
-                    <td style={{ ...tdStyle, textAlign: 'center' }}>
-                      {!c.pagato && (
-                        <button
-                          onClick={() => {
-                            setShowManual(c);
-                            setPagamentoForm({
-                              importo_pagato: c.netto || c.netto_mese || '',
-                              metodo: isPagabileContanti(c) ? 'contanti' : 'bonifico',
-                              data_pagamento: new Date().toISOString().split('T')[0],
-                              note: ''
-                            });
-                          }}
-                          style={{ padding: '6px 12px', background: '#10b981', color: 'white', border: 'none', borderRadius: 6, fontSize: 12, cursor: 'pointer' }}
-                        >
-                          💰 Paga
-                        </button>
-                      )}
-                      {c.pagato && c.bonifico_id && (
-                        <a href={`/archivio-bonifici?id=${c.bonifico_id}`} style={{ color: '#3b82f6', fontSize: 12 }}>
-                          🔗 Bonifico
-                        </a>
-                      )}
-                      {c.pagato && c.assegno_id && (
-                        <a href={`/assegni?id=${c.assegno_id}`} style={{ color: '#3b82f6', fontSize: 12 }}>
-                          🔗 Assegno
-                        </a>
-                      )}
-                      {c.pdf_data && (
-                        <button
-                          onClick={() => {
-                            const pdfData = c.pdf_data;
-                            const byteCharacters = atob(pdfData);
-                            const byteNumbers = new Array(byteCharacters.length);
-                            for (let i = 0; i < byteCharacters.length; i++) {
-                              byteNumbers[i] = byteCharacters.charCodeAt(i);
-                            }
-                            const byteArray = new Uint8Array(byteNumbers);
-                            const blob = new Blob([byteArray], { type: 'application/pdf' });
-                            const url = URL.createObjectURL(blob);
-                            window.open(url, '_blank');
-                          }}
-                          style={{ padding: '4px 8px', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 14, marginLeft: 4 }}
-                          title="Visualizza PDF"
-                        >
-                          📄
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+              ) : (
+                cedoliniFiltrati.map((cedolino, idx) => {
+                  const nome = getNomeDipendente(cedolino);
+                  return (
+                    <tr key={cedolino.id || idx} style={{ borderBottom: '1px solid #e5e7eb' }}>
+                      <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                        <input type="checkbox" />
+                      </td>
+                      <td style={{ padding: '12px 16px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <div style={{ 
+                            width: 32, height: 32, borderRadius: '50%', 
+                            background: '#e0e7ff', 
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: 12, fontWeight: 600, color: '#4338ca'
+                          }}>
+                            {nome.substring(0, 2).toUpperCase()}
+                          </div>
+                          <span 
+                            style={{ color: '#3b82f6', fontWeight: 500, cursor: 'pointer' }}
+                            onClick={() => openDettaglio(cedolino)}
+                          >
+                            {nome}
+                          </span>
+                        </div>
+                      </td>
+                      <td style={{ padding: '12px 16px', color: '#6b7280' }}>
+                        {cedolino.periodo || `${MESI.find(m => m.key === cedolino.mese)?.label || ''} ${cedolino.anno}`}
+                      </td>
+                      <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 500 }}>
+                        {formatEuro(cedolino.netto || cedolino.netto_mese)}
+                      </td>
+                      <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                        {cedolino.pagato ? (
+                          <span style={{ 
+                            padding: '4px 10px', background: '#dcfce7', color: '#166534', 
+                            borderRadius: 12, fontSize: 11, fontWeight: 600 
+                          }}>
+                            ✓ Pagato
+                          </span>
+                        ) : cedolino.stato === 'confermato' ? (
+                          <span style={{ 
+                            padding: '4px 10px', background: '#dbeafe', color: '#1e40af', 
+                            borderRadius: 12, fontSize: 11, fontWeight: 600 
+                          }}>
+                            Confermato
+                          </span>
+                        ) : (
+                          <span style={{ 
+                            padding: '4px 10px', background: '#fef3c7', color: '#92400e', 
+                            borderRadius: 12, fontSize: 11, fontWeight: 600 
+                          }}>
+                            Da pagare
+                          </span>
+                        )}
+                      </td>
+                      <td style={{ padding: '12px 16px', color: '#6b7280' }}>
+                        {formatDateShort(cedolino.created_at || cedolino.data_emissione)}
+                      </td>
+                      <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                        <div style={{ display: 'flex', justifyContent: 'center', gap: 8 }}>
+                          <button
+                            onClick={() => openDettaglio(cedolino)}
+                            style={{
+                              padding: '6px 12px', background: 'transparent',
+                              border: '1px solid #e5e7eb', borderRadius: 6,
+                              cursor: 'pointer', fontSize: 12, color: '#3b82f6', fontWeight: 500
+                            }}
+                            data-testid={`vedi-dettaglio-${idx}`}
+                          >
+                            Vedi dettaglio
+                          </button>
+                          <button style={{
+                            padding: '6px 8px', background: 'transparent',
+                            border: '1px solid #e5e7eb', borderRadius: 6, cursor: 'pointer'
+                          }}>
+                            <MoreHorizontal style={{ width: 14, height: 14, color: '#6b7280' }} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Totale */}
+        {cedoliniFiltrati.length > 0 && (
+          <div style={{ 
+            padding: '12px 16px', 
+            background: '#f0fdf4', 
+            borderTop: '1px solid #e5e7eb',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}>
+            <span style={{ fontWeight: 500, color: '#166534' }}>
+              Totale {MESI.find(m => m.key === meseSelezionato)?.label}: {cedoliniFiltrati.length} buste
+            </span>
+            <span style={{ fontWeight: 700, color: '#166534', fontSize: 18 }}>
+              {formatEuro(cedoliniFiltrati.reduce((sum, c) => sum + (c.netto || c.netto_mese || 0), 0))}
+            </span>
           </div>
         )}
       </div>
 
-      {/* Modal Pagamento Manuale */}
-      {showManual && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ background: 'white', borderRadius: 12, padding: 24, width: '90%', maxWidth: 450, boxShadow: '0 20px 25px rgba(0,0,0,0.15)' }}>
-            <h3 style={{ margin: '0 0 16px', fontSize: 18 }}>💰 Registra Pagamento</h3>
-            
-            <div style={{ background: '#f8fafc', padding: 12, borderRadius: 8, marginBottom: 16 }}>
-              <div style={{ fontWeight: 600 }}>{showManual.dipendente_nome || showManual.nome_dipendente || showManual.nome_completo}</div>
-              <div style={{ fontSize: 13, color: '#64748b' }}>
-                {MESI[(showManual.mese || 1) - 1]} {showManual.anno} • Netto: {fmt(showManual.netto || showManual.netto_mese)}
+      {/* Modale Dettaglio */}
+      {showDettaglio && cedolinoSelezionato && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex', justifyContent: 'flex-end', zIndex: 1000
+        }}>
+          {/* PDF Viewer */}
+          <div style={{ flex: 1, background: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {cedolinoSelezionato.pdf_url ? (
+              <iframe src={cedolinoSelezionato.pdf_url} style={{ width: '100%', height: '100%', border: 'none' }} title="Busta Paga PDF" />
+            ) : (
+              <div style={{ textAlign: 'center', color: '#9ca3af' }}>
+                <FileText style={{ width: 64, height: 64, margin: '0 auto 16px', opacity: 0.3 }} />
+                <p>Nessun PDF allegato</p>
+              </div>
+            )}
+          </div>
+
+          {/* Pannello Dettaglio */}
+          <div style={{ width: 400, background: 'white', boxShadow: '-4px 0 20px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <h2 style={{ margin: 0, fontSize: 20, color: '#1e3a5f' }}>
+                  {cedolinoSelezionato.periodo || `${MESI.find(m => m.key === cedolinoSelezionato.mese)?.label} ${cedolinoSelezionato.anno}`}
+                </h2>
+                <p style={{ margin: '4px 0 0 0', color: '#6b7280' }}>{getNomeDipendente(cedolinoSelezionato)}</p>
+              </div>
+              <button onClick={() => setShowDettaglio(false)} style={{ padding: 8, background: 'transparent', border: 'none', cursor: 'pointer' }}>
+                <X style={{ width: 20, height: 20, color: '#6b7280' }} />
+              </button>
+            </div>
+
+            <div style={{ flex: 1, padding: 20, overflowY: 'auto' }}>
+              <h3 style={{ margin: '0 0 16px 0', fontSize: 14, color: '#374151' }}>Informazioni Generali</h3>
+
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 6 }}>Dipendente</label>
+                <div style={{ padding: '10px 12px', background: '#f9fafb', borderRadius: 6, display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#e0e7ff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 600, color: '#4338ca' }}>
+                    {getNomeDipendente(cedolinoSelezionato).substring(0, 2).toUpperCase()}
+                  </div>
+                  <span>{getNomeDipendente(cedolinoSelezionato)}</span>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 6 }}>Netto</label>
+                  <div style={{ padding: '10px 12px', background: '#f0fdf4', borderRadius: 6, fontWeight: 600, color: '#166534' }}>
+                    {formatEuro(cedolinoSelezionato.netto || cedolinoSelezionato.netto_mese)}
+                  </div>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 6 }}>Lordo</label>
+                  <div style={{ padding: '10px 12px', background: '#f9fafb', borderRadius: 6 }}>
+                    {formatEuro(cedolinoSelezionato.lordo)}
+                  </div>
+                </div>
+              </div>
+
+              {cedolinoSelezionato.costo_azienda && (
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 6 }}>Costo Azienda</label>
+                  <div style={{ padding: '10px 12px', background: '#fef2f2', borderRadius: 6, fontWeight: 500, color: '#991b1b' }}>
+                    {formatEuro(cedolinoSelezionato.costo_azienda)}
+                  </div>
+                </div>
+              )}
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 6 }}>INPS Dipendente</label>
+                  <div style={{ padding: '10px 12px', background: '#f9fafb', borderRadius: 6 }}>
+                    {formatEuro(cedolinoSelezionato.inps_dipendente)}
+                  </div>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 6 }}>IRPEF</label>
+                  <div style={{ padding: '10px 12px', background: '#f9fafb', borderRadius: 6 }}>
+                    {formatEuro(cedolinoSelezionato.irpef)}
+                  </div>
+                </div>
+              </div>
+
+              {cedolinoSelezionato.ore_lavorate && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 6 }}>Ore Lavorate</label>
+                    <div style={{ padding: '10px 12px', background: '#f9fafb', borderRadius: 6 }}>
+                      {cedolinoSelezionato.ore_lavorate}h
+                    </div>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 6 }}>Giorni</label>
+                    <div style={{ padding: '10px 12px', background: '#f9fafb', borderRadius: 6 }}>
+                      {cedolinoSelezionato.giorni_lavorati}gg
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 6 }}>Stato Pagamento</label>
+                <div style={{ padding: '10px 12px', background: '#f9fafb', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span>{cedolinoSelezionato.pagato ? '✓ Pagato' : 'Da pagare'}</span>
+                  {cedolinoSelezionato.metodo_pagamento && (
+                    <span style={{ fontSize: 12, color: '#6b7280' }}>{cedolinoSelezionato.metodo_pagamento}</span>
+                  )}
+                </div>
               </div>
             </div>
 
-            <div style={{ marginBottom: 12 }}>
-              <label style={labelStyle}>Importo Pagato €</label>
-              <input
-                type="number"
-                step="0.01"
-                value={pagamentoForm.importo_pagato}
-                onChange={(e) => setPagamentoForm({ ...pagamentoForm, importo_pagato: e.target.value })}
-                style={inputStyle}
-              />
-            </div>
-
-            <div style={{ marginBottom: 12 }}>
-              <label style={labelStyle}>Metodo Pagamento</label>
-              <select
-                value={pagamentoForm.metodo}
-                onChange={(e) => setPagamentoForm({ ...pagamentoForm, metodo: e.target.value })}
-                style={inputStyle}
-              >
-                {isPagabileContanti(showManual) && <option value="contanti">💵 Contanti</option>}
-                <option value="bonifico">🏦 Bonifico</option>
-                <option value="assegno">📝 Assegno</option>
-              </select>
-              {!isPagabileContanti(showManual) && (
-                <div style={{ fontSize: 11, color: '#f59e0b', marginTop: 4 }}>
-                  ⚠️ Dal luglio 2018 non è più possibile pagare in contanti
-                </div>
-              )}
-            </div>
-
-            <div style={{ marginBottom: 12 }}>
-              <label style={labelStyle}>Data Pagamento</label>
-              <input
-                type="date"
-                value={pagamentoForm.data_pagamento}
-                onChange={(e) => setPagamentoForm({ ...pagamentoForm, data_pagamento: e.target.value })}
-                style={inputStyle}
-              />
-            </div>
-
-            <div style={{ marginBottom: 16 }}>
-              <label style={labelStyle}>Note (opzionale)</label>
-              <input
-                type="text"
-                value={pagamentoForm.note}
-                onChange={(e) => setPagamentoForm({ ...pagamentoForm, note: e.target.value })}
-                style={inputStyle}
-                placeholder="es. Bonifico BPM, Assegno n. 123"
-              />
-            </div>
-
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button
-                onClick={() => setShowManual(null)}
-                style={{ flex: 1, padding: 12, background: '#f1f5f9', border: 'none', borderRadius: 8, fontWeight: 600, cursor: 'pointer' }}
-              >
-                Annulla
+            <div style={{ padding: '16px 20px', borderTop: '1px solid #e5e7eb', display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+              <button onClick={() => setShowDettaglio(false)} style={{ padding: '10px 20px', background: 'white', border: '1px solid #e5e7eb', borderRadius: 6, cursor: 'pointer', fontWeight: 500 }}>
+                Chiudi
               </button>
-              <button
-                onClick={handlePagamentoManuale}
-                style={{ flex: 1, padding: 12, background: '#10b981', color: 'white', border: 'none', borderRadius: 8, fontWeight: 600, cursor: 'pointer' }}
-              >
-                ✅ Conferma Pagamento
+              <button style={{ padding: '10px 20px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: 500 }}>
+                Aggiorna dati
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modale Upload */}
+      {showUpload && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
+        }}>
+          <div style={{ background: 'white', borderRadius: 12, width: 450, padding: 24 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <h2 style={{ margin: 0, fontSize: 18 }}>Carica Buste Paga</h2>
+              <button onClick={() => setShowUpload(false)} style={{ padding: 8, background: 'transparent', border: 'none', cursor: 'pointer' }}>
+                <X style={{ width: 20, height: 20 }} />
+              </button>
+            </div>
+
+            <div style={{ 
+              padding: 32, background: '#f9fafb', borderRadius: 8,
+              border: '2px dashed #e5e7eb', textAlign: 'center'
+            }}>
+              <Upload style={{ width: 40, height: 40, margin: '0 auto 16px', color: '#3b82f6' }} />
+              <p style={{ margin: '0 0 8px 0', fontWeight: 500 }}>
+                {uploading ? 'Caricamento in corso...' : 'Trascina qui il PDF delle buste paga'}
+              </p>
+              <p style={{ margin: '0 0 16px 0', fontSize: 13, color: '#6b7280' }}>
+                oppure
+              </p>
+              <label style={{
+                display: 'inline-block', padding: '10px 20px',
+                background: '#3b82f6', color: 'white', borderRadius: 6,
+                cursor: 'pointer', fontWeight: 500
+              }}>
+                Seleziona file
+                <input type="file" accept=".pdf,.xlsx,.xls" onChange={handleUploadPDF} style={{ display: 'none' }} />
+              </label>
+            </div>
+
+            <div style={{ marginTop: 16, padding: 12, background: '#eff6ff', borderRadius: 6, fontSize: 13, color: '#1e40af' }}>
+              <strong>Formati supportati:</strong> PDF buste paga, Excel paghe
             </div>
           </div>
         </div>
@@ -598,8 +755,3 @@ export default function CedoliniRiconciliazione() {
     </div>
   );
 }
-
-const thStyle = { padding: '12px 10px', textAlign: 'left', fontWeight: 600, color: '#374151', fontSize: 12 };
-const tdStyle = { padding: '12px 10px' };
-const labelStyle = { display: 'block', fontSize: 12, color: '#64748b', marginBottom: 4, fontWeight: 500 };
-const inputStyle = { width: '100%', padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 14, boxSizing: 'border-box' };
