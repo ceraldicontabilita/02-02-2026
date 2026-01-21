@@ -1,121 +1,192 @@
+/**
+ * Cedolini.jsx
+ * 
+ * Gestione Buste Paga (Cedolini) - Stile Dipendenti in Cloud
+ * Features:
+ * - Visualizzazione cedolini per mese
+ * - Caricamento PDF buste paga
+ * - Dettaglio cedolino con visualizzatore PDF
+ */
+
 import React, { useState, useEffect, useCallback } from 'react';
 import api from '../api';
-import { useAnnoGlobale } from '../contexts/AnnoContext';
-import { ExportButton } from '../components/ExportButton';
-import { formatEuro } from '../lib/utils';
+import { 
+  ChevronLeft, ChevronRight, RefreshCw, Upload, Download,
+  Search, FileText, Eye, MoreHorizontal, X, Calendar,
+  User, Euro, Check
+} from 'lucide-react';
+import { toast } from 'sonner';
 
-const MESI = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
+// Mesi
+const MESI = [
+  { key: 'gennaio', label: 'Gennaio', num: 1 },
+  { key: 'febbraio', label: 'Febbraio', num: 2 },
+  { key: 'marzo', label: 'Marzo', num: 3 },
+  { key: 'aprile', label: 'Aprile', num: 4 },
+  { key: 'maggio', label: 'Maggio', num: 5 },
+  { key: 'giugno', label: 'Giugno', num: 6 },
+  { key: 'luglio', label: 'Luglio', num: 7 },
+  { key: 'agosto', label: 'Agosto', num: 8 },
+  { key: 'settembre', label: 'Settembre', num: 9 },
+  { key: 'ottobre', label: 'Ottobre', num: 10 },
+  { key: 'novembre', label: 'Novembre', num: 11 },
+  { key: 'dicembre', label: 'Dicembre', num: 12 },
+  { key: '13esima', label: '13esima', num: 13 },
+  { key: '14esima', label: '14esima', num: 14 },
+];
 
-/**
- * Pagina Cedolini / Buste Paga
- * Layout coerente con le altre pagine dipendenti
- */
+// Formatta importo
+const formatEuro = (value) => {
+  if (!value && value !== 0) return '-';
+  return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(value);
+};
+
+// Formatta importo breve (es. €17k)
+const formatEuroShort = (value) => {
+  if (!value) return '€ 0';
+  if (value >= 1000) {
+    return `€ ${Math.round(value / 1000)}k`;
+  }
+  return formatEuro(value);
+};
+
+// Formatta data
+const formatDate = (dateStr) => {
+  if (!dateStr) return '-';
+  try {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' });
+  } catch {
+    return dateStr;
+  }
+};
+
 export default function Cedolini() {
-  const { anno } = useAnnoGlobale();
-  const [dipendenti, setDipendenti] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedDip, setSelectedDip] = useState(null);
-  const [selectedMese, setSelectedMese] = useState(new Date().getMonth() + 1);
   const [cedolini, setCedolini] = useState([]);
-  const [loadingCedolini, setLoadingCedolini] = useState(false);
-  const [calculating, setCalculating] = useState(false);
-  const [stima, setStima] = useState(null);
+  const [employees, setEmployees] = useState([]);
+  const [stats, setStats] = useState({});
   
-  const [formData, setFormData] = useState({
-    ore_lavorate: 160,
-    paga_oraria: '',
-    straordinari: 0,
-    festivita: 0,
-    domenicali: 0,
-    malattia_ore: 0,
-    malattia_giorni: 0,
-    assenze: 0
+  // Filtri
+  const [anno, setAnno] = useState(new Date().getFullYear());
+  const [meseSelezionato, setMeseSelezionato] = useState('gennaio');
+  const [filtroEmployee, setFiltroEmployee] = useState('');
+  const [searchText, setSearchText] = useState('');
+  
+  // Dettaglio cedolino
+  const [showDettaglio, setShowDettaglio] = useState(false);
+  const [cedolinoSelezionato, setCedolinoSelezionato] = useState(null);
+  
+  // Upload
+  const [showUpload, setShowUpload] = useState(false);
+  const [uploadForm, setUploadForm] = useState({
+    employee_id: '',
+    mese: 'gennaio',
+    anno: new Date().getFullYear(),
+    netto: '',
+    data_emissione: '',
+    note: ''
   });
 
-  const loadCedoliniDipendente = useCallback(async (dipId) => {
+  // Carica dati
+  const loadData = useCallback(async () => {
     try {
-      setLoadingCedolini(true);
-      const res = await api.get(`/api/cedolini/dipendente/${dipId}?anno=${anno}`);
-      // L'API restituisce { cedolini: [...] }
-      setCedolini(res.data?.cedolini || res.data || []);
-    } catch (e) {
-      setCedolini([]);
-    } finally {
-      setLoadingCedolini(false);
-    }
-  }, [anno]);
-
-  const loadDipendenti = async () => {
-    try {
-      const res = await api.get('/api/dipendenti');
-      setDipendenti(res.data.filter(d => d.status === 'attivo' || d.status === 'active' || !d.status));
-    } catch (e) {
-      console.error('Errore:', e);
+      setLoading(true);
+      
+      const [cedRes, empRes] = await Promise.all([
+        api.get(`/api/cedolini?anno=${anno}`),
+        api.get('/api/employees?limit=200')
+      ]);
+      
+      setCedolini(cedRes.data.cedolini || []);
+      setStats(cedRes.data.stats || {});
+      
+      // Normalizza employees
+      const emps = (empRes.data.employees || empRes.data || [])
+        .filter(e => e.status === 'attivo' || !e.status)
+        .map(e => ({
+          ...e,
+          nome_completo: e.nome_completo || e.name || `${e.nome || ''} ${e.cognome || ''}`.trim()
+        }));
+      setEmployees(emps);
+      
+    } catch (error) {
+      console.error('Errore caricamento:', error);
+      toast.error('Errore caricamento cedolini');
     } finally {
       setLoading(false);
     }
+  }, [anno]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  // Filtra cedolini
+  const cedoliniFiltrati = cedolini.filter(c => {
+    if (c.mese !== meseSelezionato) return false;
+    if (filtroEmployee && c.employee_id !== filtroEmployee) return false;
+    if (searchText) {
+      const search = searchText.toLowerCase();
+      const nome = (c.employee_nome || '').toLowerCase();
+      return nome.includes(search);
+    }
+    return true;
+  });
+
+  // Apri dettaglio
+  const openDettaglio = (cedolino) => {
+    setCedolinoSelezionato(cedolino);
+    setShowDettaglio(true);
   };
 
-  useEffect(() => {
-    loadDipendenti();
-  }, []);
-
-  useEffect(() => {
-    if (selectedDip) {
-      loadCedoliniDipendente(selectedDip.id);
-      setFormData(f => ({
-        ...f,
-        paga_oraria: selectedDip.stipendio_orario || selectedDip.paga_oraria || ''
-      }));
-      setStima(null);
-    }
-  }, [selectedDip, anno, loadCedoliniDipendente]);
-
-  const handleCalcola = async () => {
-    if (!selectedDip || !formData.paga_oraria) {
-      alert('Seleziona un dipendente e inserisci la paga oraria');
+  // Upload cedolino
+  const handleUpload = async () => {
+    if (!uploadForm.employee_id || !uploadForm.netto) {
+      toast.error('Compila tutti i campi obbligatori');
       return;
     }
+    
     try {
-      setCalculating(true);
-      const res = await api.post('/api/cedolini/stima', {
-        dipendente_id: selectedDip.id,
-        mese: selectedMese,
-        anno,
-        ore_lavorate: parseFloat(formData.ore_lavorate) || 0,
-        paga_oraria: parseFloat(formData.paga_oraria) || 0,
-        straordinari_ore: parseFloat(formData.straordinari) || 0,
-        festivita_ore: parseFloat(formData.festivita) || 0,
-        ore_domenicali: parseFloat(formData.domenicali) || 0,
-        ore_malattia: parseFloat(formData.malattia_ore) || 0,
-        giorni_malattia: parseInt(formData.malattia_giorni) || 0,
-        assenze_ore: parseFloat(formData.assenze) || 0
+      const res = await api.post('/api/cedolini', {
+        ...uploadForm,
+        netto: parseFloat(uploadForm.netto)
       });
-      setStima(res.data);
-    } catch (e) {
-      alert('Errore: ' + (e.response?.data?.detail || e.message));
-    } finally {
-      setCalculating(false);
+      
+      if (res.data.success) {
+        toast.success('Cedolino caricato');
+        setShowUpload(false);
+        setUploadForm({
+          employee_id: '',
+          mese: 'gennaio',
+          anno: anno,
+          netto: '',
+          data_emissione: '',
+          note: ''
+        });
+        loadData();
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Errore caricamento');
     }
   };
 
-  const handleConferma = async () => {
-    if (!stima) return;
-    try {
-      await api.post('/api/cedolini/conferma', stima);
-      alert('✅ Cedolino confermato');
-      setStima(null);
-      loadCedoliniDipendente(selectedDip.id);
-    } catch (e) {
-      alert('Errore: ' + (e.response?.data?.detail || e.message));
-    }
+  // Naviga anno
+  const navigateAnno = (delta) => {
+    setAnno(prev => prev + delta);
   };
 
-  const fmt = (v) => v != null ? formatEuro(v) : '-';
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+        <RefreshCw style={{ width: 32, height: 32, animation: 'spin 1s linear infinite', color: '#3b82f6' }} />
+      </div>
+    );
+  }
 
   return (
-    <div style={{ padding: 'clamp(12px, 3vw, 20px)' }}>
-      {/* Header con Gradiente */}
+    <div style={{ padding: 20, maxWidth: 1400, margin: '0 auto' }} data-testid="cedolini-page">
+      {/* Header */}
       <div style={{ 
         display: 'flex', 
         justifyContent: 'space-between', 
@@ -128,194 +199,861 @@ export default function Cedolini() {
         flexWrap: 'wrap',
         gap: 10
       }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: 'clamp(18px, 4vw, 22px)', fontWeight: 'bold' }}>
-            📋 Cedolini / Buste Paga
-          </h1>
-          <p style={{ margin: '4px 0 0 0', fontSize: 13, opacity: 0.9 }}>
-            Calcolo e gestione cedolini mensili • Anno {anno}
-          </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div>
+            <h1 style={{ margin: 0, fontSize: 22, fontWeight: 'bold' }}>📄 Buste Paga</h1>
+            <p style={{ margin: '4px 0 0 0', fontSize: 13, opacity: 0.9 }}>
+              Gestione cedolini e buste paga dipendenti
+            </p>
+          </div>
+          
+          {/* Navigazione Anno */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 20 }}>
+            <button
+              onClick={() => navigateAnno(-1)}
+              style={{
+                padding: '6px 10px',
+                background: 'rgba(255,255,255,0.2)',
+                border: 'none',
+                borderRadius: 6,
+                cursor: 'pointer',
+                color: 'white'
+              }}
+            >
+              <ChevronLeft style={{ width: 16, height: 16 }} />
+            </button>
+            <span style={{ 
+              padding: '8px 20px', 
+              background: 'rgba(255,255,255,0.95)', 
+              color: '#1e3a5f',
+              borderRadius: 6,
+              fontWeight: 'bold',
+              fontSize: 18
+            }}>
+              {anno}
+            </span>
+            <button
+              onClick={() => navigateAnno(1)}
+              style={{
+                padding: '6px 10px',
+                background: 'rgba(255,255,255,0.2)',
+                border: 'none',
+                borderRadius: 6,
+                cursor: 'pointer',
+                color: 'white'
+              }}
+            >
+              <ChevronRight style={{ width: 16, height: 16 }} />
+            </button>
+          </div>
         </div>
-        <ExportButton
-          data={cedolini}
-          columns={[
-            { key: 'dipendente_nome', label: 'Dipendente' },
-            { key: 'mese', label: 'Mese' },
-            { key: 'anno', label: 'Anno' },
-            { key: 'lordo', label: 'Lordo' },
-            { key: 'netto', label: 'Netto' },
-            { key: 'inps_dipendente', label: 'INPS Dip' },
-            { key: 'irpef', label: 'IRPEF' },
-            { key: 'stato', label: 'Stato' }
-          ]}
-          filename={`cedolini_${anno}`}
-          format="csv"
-        />
+        
+        <button 
+          onClick={() => setShowUpload(true)}
+          style={{ 
+            padding: '10px 20px',
+            background: '#10b981',
+            color: 'white',
+            border: 'none',
+            borderRadius: 8,
+            cursor: 'pointer',
+            fontWeight: '600',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8
+          }}
+          data-testid="btn-carica-cedolino"
+        >
+          <Upload style={{ width: 16, height: 16 }} />
+          Carica buste paga e CU
+        </button>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(250px, 350px) 1fr', gap: 20 }}>
-        {/* Lista dipendenti */}
-        <div style={{ background: 'white', borderRadius: 12, padding: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-          <h3 style={{ margin: '0 0 12px 0', fontSize: 14, color: '#64748b' }}>Seleziona Dipendente</h3>
-          {loading ? (
-            <div style={{ textAlign: 'center', padding: 20, color: '#94a3b8' }}>Caricamento...</div>
-          ) : (
-            <div style={{ maxHeight: 500, overflowY: 'auto' }}>
-              {dipendenti.map(dip => (
-                <div
-                  key={dip.id}
-                  onClick={() => setSelectedDip(dip)}
-                  style={{
-                    padding: '12px 14px',
-                    borderRadius: 8,
-                    cursor: 'pointer',
-                    marginBottom: 6,
-                    background: selectedDip?.id === dip.id ? '#dbeafe' : '#f8fafc',
-                    border: selectedDip?.id === dip.id ? '2px solid #3b82f6' : '1px solid #e2e8f0',
-                  }}
-                >
-                  <div style={{ fontWeight: 600, fontSize: 14 }}>{dip.nome_completo || dip.nome}</div>
-                  <div style={{ fontSize: 11, color: '#64748b' }}>{dip.mansione || 'N/D'}</div>
+      {/* Tabs Mesi con Stats */}
+      <div style={{ 
+        background: 'white', 
+        borderRadius: 12, 
+        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+        marginBottom: 20,
+        overflow: 'hidden'
+      }}>
+        <div style={{ 
+          display: 'flex', 
+          overflowX: 'auto',
+          borderBottom: '1px solid #e5e7eb',
+          padding: '0 8px'
+        }}>
+          {MESI.map(mese => {
+            const meseStats = stats[mese.key] || { count: 0, totale: 0 };
+            const isActive = meseSelezionato === mese.key;
+            
+            return (
+              <button
+                key={mese.key}
+                onClick={() => setMeseSelezionato(mese.key)}
+                style={{
+                  padding: '12px 16px',
+                  background: 'transparent',
+                  border: 'none',
+                  borderBottom: isActive ? '3px solid #3b82f6' : '3px solid transparent',
+                  cursor: 'pointer',
+                  minWidth: 80,
+                  textAlign: 'center',
+                  transition: 'all 0.2s'
+                }}
+                data-testid={`tab-${mese.key}`}
+              >
+                <div style={{ 
+                  fontSize: 13, 
+                  fontWeight: isActive ? 600 : 400,
+                  color: isActive ? '#3b82f6' : '#6b7280'
+                }}>
+                  {mese.label}
                 </div>
-              ))}
-            </div>
-          )}
+                {meseStats.count > 0 && (
+                  <>
+                    <div style={{ 
+                      fontSize: 11, 
+                      color: '#9ca3af',
+                      marginTop: 2
+                    }}>
+                      {meseStats.count} buste
+                    </div>
+                    <div style={{ 
+                      fontSize: 12, 
+                      fontWeight: 600,
+                      color: isActive ? '#3b82f6' : '#1f2937',
+                      marginTop: 2
+                    }}>
+                      {formatEuroShort(meseStats.totale)}
+                    </div>
+                  </>
+                )}
+              </button>
+            );
+          })}
         </div>
 
-        {/* Dettaglio */}
-        <div style={{ background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-          {!selectedDip ? (
-            <div style={{ textAlign: 'center', padding: 60, color: '#94a3b8' }}>
-              <div style={{ fontSize: 48, marginBottom: 12 }}>👈</div>
-              <div>Seleziona un dipendente dalla lista</div>
+        {/* Filtri */}
+        <div style={{ 
+          padding: '12px 16px', 
+          display: 'flex', 
+          gap: 12, 
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          borderBottom: '1px solid #e5e7eb'
+        }}>
+          <select
+            value={filtroEmployee}
+            onChange={(e) => setFiltroEmployee(e.target.value)}
+            style={{
+              padding: '8px 12px',
+              border: '1px solid #e5e7eb',
+              borderRadius: 6,
+              fontSize: 13,
+              minWidth: 200
+            }}
+            data-testid="filtro-employee"
+          >
+            <option value="">Seleziona dipendente</option>
+            {employees.map(e => (
+              <option key={e.id} value={e.id}>{e.nome_completo}</option>
+            ))}
+          </select>
+          
+          <div style={{ flex: 1 }} />
+          
+          <div style={{ position: 'relative' }}>
+            <Search style={{ 
+              position: 'absolute', 
+              left: 10, 
+              top: '50%', 
+              transform: 'translateY(-50%)',
+              width: 16, 
+              height: 16, 
+              color: '#9ca3af' 
+            }} />
+            <input
+              type="text"
+              placeholder="Cerca"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              style={{
+                padding: '8px 12px 8px 36px',
+                border: '1px solid #e5e7eb',
+                borderRadius: 6,
+                fontSize: 13,
+                width: 200
+              }}
+              data-testid="search-cedolini"
+            />
+          </div>
+          
+          <button
+            style={{
+              padding: '8px 16px',
+              background: 'white',
+              border: '1px solid #e5e7eb',
+              borderRadius: 6,
+              cursor: 'pointer',
+              fontSize: 13,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6
+            }}
+          >
+            <Download style={{ width: 14, height: 14 }} />
+            Esporta
+          </button>
+        </div>
+
+        {/* Tabella Cedolini */}
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ background: '#f9fafb' }}>
+                <th style={{ 
+                  width: 40, 
+                  padding: '12px 16px', 
+                  textAlign: 'center',
+                  borderBottom: '1px solid #e5e7eb'
+                }}>
+                  <input type="checkbox" />
+                </th>
+                <th style={{ 
+                  padding: '12px 16px', 
+                  textAlign: 'left',
+                  fontWeight: 500,
+                  color: '#6b7280',
+                  fontSize: 13,
+                  borderBottom: '1px solid #e5e7eb'
+                }}>
+                  Dipendente ↑
+                </th>
+                <th style={{ 
+                  padding: '12px 16px', 
+                  textAlign: 'left',
+                  fontWeight: 500,
+                  color: '#6b7280',
+                  fontSize: 13,
+                  borderBottom: '1px solid #e5e7eb'
+                }}>
+                  Mese di competenza
+                </th>
+                <th style={{ 
+                  padding: '12px 16px', 
+                  textAlign: 'right',
+                  fontWeight: 500,
+                  color: '#6b7280',
+                  fontSize: 13,
+                  borderBottom: '1px solid #e5e7eb'
+                }}>
+                  Netto
+                </th>
+                <th style={{ 
+                  padding: '12px 16px', 
+                  textAlign: 'left',
+                  fontWeight: 500,
+                  color: '#6b7280',
+                  fontSize: 13,
+                  borderBottom: '1px solid #e5e7eb'
+                }}>
+                  Descrizione
+                </th>
+                <th style={{ 
+                  padding: '12px 16px', 
+                  textAlign: 'left',
+                  fontWeight: 500,
+                  color: '#6b7280',
+                  fontSize: 13,
+                  borderBottom: '1px solid #e5e7eb'
+                }}>
+                  Data di emissione
+                </th>
+                <th style={{ 
+                  padding: '12px 16px', 
+                  textAlign: 'center',
+                  fontWeight: 500,
+                  color: '#6b7280',
+                  fontSize: 13,
+                  borderBottom: '1px solid #e5e7eb'
+                }}>
+                  Azioni
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {cedoliniFiltrati.length === 0 ? (
+                <tr>
+                  <td colSpan="7" style={{ padding: 40, textAlign: 'center', color: '#9ca3af' }}>
+                    <FileText style={{ width: 48, height: 48, margin: '0 auto 16px', opacity: 0.3 }} />
+                    <p style={{ margin: 0 }}>Nessun cedolino per {MESI.find(m => m.key === meseSelezionato)?.label} {anno}</p>
+                  </td>
+                </tr>
+              ) : (
+                cedoliniFiltrati.map((cedolino, idx) => (
+                  <tr 
+                    key={cedolino.id || idx} 
+                    style={{ borderBottom: '1px solid #e5e7eb' }}
+                  >
+                    <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                      <input type="checkbox" />
+                    </td>
+                    <td style={{ padding: '12px 16px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <div style={{ 
+                          width: 32, 
+                          height: 32, 
+                          borderRadius: '50%', 
+                          background: '#e0e7ff', 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center',
+                          fontSize: 12,
+                          fontWeight: 600,
+                          color: '#4338ca'
+                        }}>
+                          {(cedolino.employee_nome || '??').substring(0, 2).toUpperCase()}
+                        </div>
+                        <span style={{ 
+                          color: '#3b82f6', 
+                          fontWeight: 500,
+                          cursor: 'pointer'
+                        }}
+                          onClick={() => openDettaglio(cedolino)}
+                        >
+                          {cedolino.employee_nome || 'N/D'}
+                        </span>
+                        {cedolino.confermato && (
+                          <Check style={{ width: 16, height: 16, color: '#22c55e' }} />
+                        )}
+                      </div>
+                    </td>
+                    <td style={{ padding: '12px 16px', color: '#6b7280' }}>
+                      {MESI.find(m => m.key === cedolino.mese)?.label || cedolino.mese} {cedolino.anno}
+                    </td>
+                    <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 500 }}>
+                      {formatEuro(cedolino.netto)}
+                    </td>
+                    <td style={{ padding: '12px 16px', color: '#6b7280' }}>
+                      {cedolino.descrizione || '-'}
+                    </td>
+                    <td style={{ padding: '12px 16px', color: '#6b7280' }}>
+                      {formatDate(cedolino.data_emissione)}
+                    </td>
+                    <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                      <div style={{ display: 'flex', justifyContent: 'center', gap: 8 }}>
+                        <button
+                          onClick={() => openDettaglio(cedolino)}
+                          style={{
+                            padding: '6px 12px',
+                            background: 'transparent',
+                            border: '1px solid #e5e7eb',
+                            borderRadius: 6,
+                            cursor: 'pointer',
+                            fontSize: 12,
+                            color: '#3b82f6',
+                            fontWeight: 500
+                          }}
+                          data-testid={`vedi-dettaglio-${idx}`}
+                        >
+                          Vedi dettaglio
+                        </button>
+                        <button
+                          style={{
+                            padding: '6px 8px',
+                            background: 'transparent',
+                            border: '1px solid #e5e7eb',
+                            borderRadius: 6,
+                            cursor: 'pointer'
+                          }}
+                        >
+                          <MoreHorizontal style={{ width: 14, height: 14, color: '#6b7280' }} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Modale Dettaglio Cedolino */}
+      {showDettaglio && cedolinoSelezionato && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          justifyContent: 'flex-end',
+          zIndex: 1000
+        }}>
+          {/* PDF Viewer (left side) */}
+          <div style={{ 
+            flex: 1, 
+            background: '#f3f4f6', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center'
+          }}>
+            {cedolinoSelezionato.pdf_url ? (
+              <iframe 
+                src={cedolinoSelezionato.pdf_url} 
+                style={{ width: '100%', height: '100%', border: 'none' }}
+                title="Busta Paga PDF"
+              />
+            ) : (
+              <div style={{ textAlign: 'center', color: '#9ca3af' }}>
+                <FileText style={{ width: 64, height: 64, margin: '0 auto 16px', opacity: 0.3 }} />
+                <p>Nessun PDF allegato</p>
+              </div>
+            )}
+          </div>
+
+          {/* Pannello Dettaglio (right side) */}
+          <div style={{ 
+            width: 400, 
+            background: 'white', 
+            boxShadow: '-4px 0 20px rgba(0,0,0,0.1)',
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
+            {/* Header Pannello */}
+            <div style={{ 
+              padding: '16px 20px', 
+              borderBottom: '1px solid #e5e7eb',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'flex-start'
+            }}>
+              <div>
+                <h2 style={{ margin: 0, fontSize: 20, color: '#1e3a5f' }}>
+                  {MESI.find(m => m.key === cedolinoSelezionato.mese)?.label} {cedolinoSelezionato.anno}
+                </h2>
+                <p style={{ margin: '4px 0 0 0', color: '#6b7280' }}>
+                  {cedolinoSelezionato.employee_nome}
+                </p>
+              </div>
+              <button
+                onClick={() => setShowDettaglio(false)}
+                style={{
+                  padding: 8,
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer'
+                }}
+              >
+                <X style={{ width: 20, height: 20, color: '#6b7280' }} />
+              </button>
             </div>
-          ) : (
-            <>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                <h2 style={{ margin: 0, fontSize: 18 }}>{selectedDip.nome_completo || selectedDip.nome}</h2>
+
+            {/* Contenuto Pannello */}
+            <div style={{ flex: 1, padding: 20, overflowY: 'auto' }}>
+              <h3 style={{ margin: '0 0 16px 0', fontSize: 14, color: '#374151' }}>
+                Informazioni Generali
+              </h3>
+
+              {/* Dipendente */}
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 6 }}>
+                  Dipendente *
+                </label>
+                <div style={{ 
+                  padding: '10px 12px', 
+                  background: '#f9fafb', 
+                  borderRadius: 6,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10
+                }}>
+                  <div style={{ 
+                    width: 28, 
+                    height: 28, 
+                    borderRadius: '50%', 
+                    background: '#e0e7ff', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    fontSize: 10,
+                    fontWeight: 600,
+                    color: '#4338ca'
+                  }}>
+                    {(cedolinoSelezionato.employee_nome || '??').substring(0, 2).toUpperCase()}
+                  </div>
+                  <span>{cedolinoSelezionato.employee_nome}</span>
+                </div>
+              </div>
+
+              {/* Stipendio Netto */}
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 6 }}>
+                  Stipendio netto *
+                </label>
+                <div style={{ 
+                  padding: '10px 12px', 
+                  background: '#f9fafb', 
+                  borderRadius: 6,
+                  fontWeight: 500
+                }}>
+                  {formatEuro(cedolinoSelezionato.netto)}
+                </div>
+              </div>
+
+              {/* Mese/Anno di competenza */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 6 }}>
+                    Mese di competenza *
+                  </label>
+                  <div style={{ 
+                    padding: '10px 12px', 
+                    background: '#f9fafb', 
+                    borderRadius: 6
+                  }}>
+                    {MESI.find(m => m.key === cedolinoSelezionato.mese)?.label}
+                  </div>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 6 }}>
+                    Anno di competenza *
+                  </label>
+                  <div style={{ 
+                    padding: '10px 12px', 
+                    background: '#f9fafb', 
+                    borderRadius: 6,
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}>
+                    <ChevronLeft style={{ width: 14, height: 14, color: '#9ca3af' }} />
+                    <span>{cedolinoSelezionato.anno}</span>
+                    <ChevronRight style={{ width: 14, height: 14, color: '#9ca3af' }} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Data emissione */}
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 6 }}>
+                  Data di emissione *
+                </label>
+                <div style={{ 
+                  padding: '10px 12px', 
+                  background: '#f9fafb', 
+                  borderRadius: 6,
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  <span>{formatDate(cedolinoSelezionato.data_emissione)}</span>
+                  <Calendar style={{ width: 14, height: 14, color: '#9ca3af' }} />
+                </div>
+              </div>
+
+              {/* Note */}
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 6 }}>
+                  Note
+                </label>
+                <div style={{ 
+                  padding: '10px 12px', 
+                  background: '#f9fafb', 
+                  borderRadius: 6,
+                  minHeight: 80,
+                  color: cedolinoSelezionato.note ? '#1f2937' : '#9ca3af'
+                }}>
+                  {cedolinoSelezionato.note || 'Nessuna nota'}
+                </div>
+              </div>
+
+              {/* Allegati */}
+              <div>
+                <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 6 }}>
+                  Allegati
+                </label>
+                <div style={{ 
+                  padding: 16, 
+                  background: '#f9fafb', 
+                  borderRadius: 6,
+                  border: '2px dashed #e5e7eb',
+                  textAlign: 'center'
+                }}>
+                  <Upload style={{ width: 24, height: 24, margin: '0 auto 8px', color: '#3b82f6' }} />
+                  <p style={{ margin: 0, fontSize: 13, color: '#3b82f6' }}>
+                    Scegli file <span style={{ color: '#6b7280' }}>o trascina più file qui</span>
+                  </p>
+                </div>
+                
+                {cedolinoSelezionato.pdf_url && (
+                  <div style={{ 
+                    marginTop: 12, 
+                    padding: '10px 12px', 
+                    background: 'white', 
+                    border: '1px solid #e5e7eb',
+                    borderRadius: 6,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <FileText style={{ width: 20, height: 20, color: '#ef4444' }} />
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 500 }}>
+                          Busta paga - {cedolinoSelezionato.employee_nome} - {MESI.find(m => m.key === cedolinoSelezionato.mese)?.label} {cedolinoSelezionato.anno}.pdf
+                        </div>
+                        <div style={{ fontSize: 11, color: '#9ca3af' }}>
+                          Caricato il {formatDate(cedolinoSelezionato.created_at)}
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <Download style={{ width: 16, height: 16, color: '#6b7280', cursor: 'pointer' }} />
+                      <X style={{ width: 16, height: 16, color: '#6b7280', cursor: 'pointer' }} />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Footer Pannello */}
+            <div style={{ 
+              padding: '16px 20px', 
+              borderTop: '1px solid #e5e7eb',
+              display: 'flex',
+              gap: 12,
+              justifyContent: 'flex-end'
+            }}>
+              <button
+                onClick={() => setShowDettaglio(false)}
+                style={{
+                  padding: '10px 20px',
+                  background: 'white',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: 6,
+                  cursor: 'pointer',
+                  fontWeight: 500
+                }}
+              >
+                Chiudi
+              </button>
+              <button
+                style={{
+                  padding: '10px 20px',
+                  background: '#3b82f6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 6,
+                  cursor: 'pointer',
+                  fontWeight: 500
+                }}
+              >
+                Aggiorna dati
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modale Upload */}
+      {showUpload && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{ 
+            background: 'white', 
+            borderRadius: 12, 
+            width: 500,
+            maxHeight: '90vh',
+            overflow: 'auto'
+          }}>
+            <div style={{ 
+              padding: '16px 20px', 
+              borderBottom: '1px solid #e5e7eb',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <h2 style={{ margin: 0, fontSize: 18 }}>Carica Cedolino</h2>
+              <button
+                onClick={() => setShowUpload(false)}
+                style={{ padding: 8, background: 'transparent', border: 'none', cursor: 'pointer' }}
+              >
+                <X style={{ width: 20, height: 20 }} />
+              </button>
+            </div>
+
+            <div style={{ padding: 20 }}>
+              {/* Dipendente */}
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', fontSize: 13, marginBottom: 6, fontWeight: 500 }}>
+                  Dipendente *
+                </label>
                 <select
-                  value={selectedMese}
-                  onChange={(e) => setSelectedMese(parseInt(e.target.value))}
-                  style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid #e2e8f0', fontSize: 14 }}
+                  value={uploadForm.employee_id}
+                  onChange={(e) => setUploadForm({ ...uploadForm, employee_id: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: 6
+                  }}
                 >
-                  {MESI.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
+                  <option value="">Seleziona dipendente</option>
+                  {employees.map(e => (
+                    <option key={e.id} value={e.id}>{e.nome_completo}</option>
+                  ))}
                 </select>
               </div>
 
-              {/* Form Calcolo */}
-              <div style={{ marginBottom: 24 }}>
-                <h3 style={{ fontSize: 14, color: '#64748b', marginBottom: 12, borderBottom: '1px solid #e2e8f0', paddingBottom: 8 }}>
-                  🧮 Calcola Cedolino {MESI[selectedMese - 1]} {anno}
-                </h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 }}>
-                  <InputField label="Paga Oraria €" value={formData.paga_oraria} onChange={(v) => setFormData({ ...formData, paga_oraria: v })} type="number" step="0.01" />
-                  <InputField label="Ore Lavorate" value={formData.ore_lavorate} onChange={(v) => setFormData({ ...formData, ore_lavorate: v })} type="number" />
-                  <InputField label="Straordinari (h)" value={formData.straordinari} onChange={(v) => setFormData({ ...formData, straordinari: v })} type="number" />
-                  <InputField label="Festività (h)" value={formData.festivita} onChange={(v) => setFormData({ ...formData, festivita: v })} type="number" />
-                  <InputField label="Domenicali (h)" value={formData.domenicali} onChange={(v) => setFormData({ ...formData, domenicali: v })} type="number" />
-                  <InputField label="Malattia (h)" value={formData.malattia_ore} onChange={(v) => setFormData({ ...formData, malattia_ore: v })} type="number" />
-                </div>
-                <button
-                  onClick={handleCalcola}
-                  disabled={calculating}
-                  style={{ marginTop: 16, padding: '10px 24px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: 600 }}
-                >
-                  {calculating ? 'Calcolo...' : '🧮 Calcola Stima'}
-                </button>
-              </div>
-
-              {/* Risultato Stima */}
-              {stima && (
-                <div style={{ background: '#eff6ff', borderRadius: 8, padding: 16, marginBottom: 24, border: '1px solid #bfdbfe' }}>
-                  <h3 style={{ fontSize: 14, color: '#1e40af', margin: '0 0 12px 0' }}>📊 Stima Cedolino</h3>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12 }}>
-                    <ResultBox label="Lordo" value={fmt(stima.lordo_totale)} color="#1e40af" />
-                    <ResultBox label="INPS" value={`-${fmt(stima.inps_dipendente)}`} color="#dc2626" />
-                    <ResultBox label="IRPEF" value={`-${fmt(stima.irpef_netta)}`} color="#dc2626" />
-                    <ResultBox label="Netto" value={fmt(stima.netto_in_busta)} color="#15803d" highlight />
-                    <ResultBox label="Costo Azienda" value={fmt(stima.costo_totale_azienda)} color="#7c3aed" />
-                  </div>
-                  <button
-                    onClick={handleConferma}
-                    style={{ marginTop: 16, padding: '10px 24px', background: '#10b981', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: 600 }}
+              {/* Mese/Anno */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 13, marginBottom: 6, fontWeight: 500 }}>
+                    Mese *
+                  </label>
+                  <select
+                    value={uploadForm.mese}
+                    onChange={(e) => setUploadForm({ ...uploadForm, mese: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: 6
+                    }}
                   >
-                    ✅ Conferma Cedolino
-                  </button>
+                    {MESI.map(m => (
+                      <option key={m.key} value={m.key}>{m.label}</option>
+                    ))}
+                  </select>
                 </div>
-              )}
-
-              {/* Storico Cedolini */}
-              <div>
-                <h3 style={{ fontSize: 14, color: '#64748b', marginBottom: 12, borderBottom: '1px solid #e2e8f0', paddingBottom: 8 }}>
-                  📚 Storico Cedolini {anno}
-                </h3>
-                {loadingCedolini ? (
-                  <div style={{ textAlign: 'center', padding: 20, color: '#94a3b8' }}>Caricamento...</div>
-                ) : cedolini.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: 40, color: '#94a3b8', background: '#f8fafc', borderRadius: 8 }}>
-                    <div style={{ fontSize: 32, marginBottom: 8 }}>📭</div>
-                    <div>Nessun cedolino per {anno}</div>
-                  </div>
-                ) : (
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-                    <thead>
-                      <tr style={{ background: '#f8fafc' }}>
-                        <th style={{ padding: 10, textAlign: 'left' }}>Mese</th>
-                        <th style={{ padding: 10, textAlign: 'right' }}>Ore</th>
-                        <th style={{ padding: 10, textAlign: 'right' }}>Lordo</th>
-                        <th style={{ padding: 10, textAlign: 'right' }}>Netto</th>
-                        <th style={{ padding: 10, textAlign: 'center' }}>Stato</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {cedolini.map((c, idx) => (
-                        <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                          <td style={{ padding: 10 }}>{MESI[c.mese - 1] || c.mese}</td>
-                          <td style={{ padding: 10, textAlign: 'right' }}>{c.ore_lavorate}</td>
-                          <td style={{ padding: 10, textAlign: 'right' }}>{fmt(c.lordo || c.lordo_totale)}</td>
-                          <td style={{ padding: 10, textAlign: 'right', fontWeight: 600, color: '#15803d' }}>{fmt(c.netto || c.netto_in_busta)}</td>
-                          <td style={{ padding: 10, textAlign: 'center' }}>
-                            {c.pagato ? <span style={{ color: '#16a34a' }}>✓ Pagato</span> : <span style={{ color: '#f59e0b' }}>⏳</span>}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
+                <div>
+                  <label style={{ display: 'block', fontSize: 13, marginBottom: 6, fontWeight: 500 }}>
+                    Anno *
+                  </label>
+                  <input
+                    type="number"
+                    value={uploadForm.anno}
+                    onChange={(e) => setUploadForm({ ...uploadForm, anno: parseInt(e.target.value) })}
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: 6
+                    }}
+                  />
+                </div>
               </div>
-            </>
-          )}
+
+              {/* Netto */}
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', fontSize: 13, marginBottom: 6, fontWeight: 500 }}>
+                  Stipendio Netto (€) *
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={uploadForm.netto}
+                  onChange={(e) => setUploadForm({ ...uploadForm, netto: e.target.value })}
+                  placeholder="0,00"
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: 6
+                  }}
+                />
+              </div>
+
+              {/* Data emissione */}
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', fontSize: 13, marginBottom: 6, fontWeight: 500 }}>
+                  Data Emissione
+                </label>
+                <input
+                  type="date"
+                  value={uploadForm.data_emissione}
+                  onChange={(e) => setUploadForm({ ...uploadForm, data_emissione: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: 6
+                  }}
+                />
+              </div>
+
+              {/* Note */}
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', fontSize: 13, marginBottom: 6, fontWeight: 500 }}>
+                  Note
+                </label>
+                <textarea
+                  value={uploadForm.note}
+                  onChange={(e) => setUploadForm({ ...uploadForm, note: e.target.value })}
+                  placeholder="Note opzionali..."
+                  rows={3}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: 6,
+                    resize: 'vertical'
+                  }}
+                />
+              </div>
+            </div>
+
+            <div style={{ 
+              padding: '16px 20px', 
+              borderTop: '1px solid #e5e7eb',
+              display: 'flex',
+              gap: 12,
+              justifyContent: 'flex-end'
+            }}>
+              <button
+                onClick={() => setShowUpload(false)}
+                style={{
+                  padding: '10px 20px',
+                  background: 'white',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: 6,
+                  cursor: 'pointer'
+                }}
+              >
+                Annulla
+              </button>
+              <button
+                onClick={handleUpload}
+                style={{
+                  padding: '10px 20px',
+                  background: '#10b981',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 6,
+                  cursor: 'pointer',
+                  fontWeight: 500
+                }}
+              >
+                Carica Cedolino
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-  );
-}
-
-function InputField({ label, value, onChange, type = 'text', step }) {
-  return (
-    <div style={{ background: '#f8fafc', borderRadius: 8, padding: 12 }}>
-      <label style={{ fontSize: 11, color: '#64748b', display: 'block', marginBottom: 4 }}>{label}</label>
-      <input
-        type={type}
-        step={step}
-        value={value || ''}
-        onChange={(e) => onChange(e.target.value)}
-        style={{ width: '100%', padding: '8px 10px', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 14 }}
-      />
-    </div>
-  );
-}
-
-function ResultBox({ label, value, color, highlight }) {
-  return (
-    <div style={{ 
-      background: highlight ? '#dcfce7' : 'white', 
-      borderRadius: 8, 
-      padding: 12, 
-      border: highlight ? '2px solid #86efac' : '1px solid #e2e8f0' 
-    }}>
-      <div style={{ fontSize: 11, color: '#64748b', marginBottom: 4 }}>{label}</div>
-      <div style={{ fontSize: highlight ? 20 : 16, fontWeight: 700, color }}>{value}</div>
+      )}
     </div>
   );
 }
