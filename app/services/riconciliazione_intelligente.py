@@ -64,6 +64,11 @@ class StatoRiconciliazione(Enum):
     ANOMALIA_NON_IN_ESTRATTO = "anomalia_non_in_estratto"
     RICONCILIATA = "riconciliata"
     LOCK_MANUALE = "lock_manuale"
+    # Nuovi stati per casi estesi
+    PARZIALMENTE_PAGATA = "parzialmente_pagata"
+    PAGAMENTO_CUMULATIVO = "pagamento_cumulativo"
+    CON_NOTA_CREDITO = "con_nota_credito"
+    SCONTO_APPLICATO = "sconto_applicato"
 
 
 class TipoMatch(Enum):
