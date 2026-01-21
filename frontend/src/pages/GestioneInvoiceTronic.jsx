@@ -280,14 +280,6 @@ export default function GestioneInvoiceTronic() {
           </div>
         </div>
       </div>
-        </Card>
-        
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Da Elaborare</p>
-                <p className="text-2xl font-bold text-orange-600">
                   {fatture.filter(f => f.stato === 'da_elaborare').length}
                 </p>
               </div>
