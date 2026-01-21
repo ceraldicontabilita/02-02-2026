@@ -23,8 +23,6 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-const API_URL = process.env.REACT_APP_BACKEND_URL || '';
-
 // Stati e loro configurazione
 const STATI_CONFIG = {
   in_attesa_conferma: { label: 'In Attesa Conferma', color: 'bg-yellow-100 text-yellow-800', icon: Clock },
