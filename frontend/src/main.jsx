@@ -217,6 +217,7 @@ const router = createBrowserRouter([
       { path: "prima-nota/:tipo", element: <LazyPage><PrimaNota /></LazyPage> },
       { path: "riconciliazione", element: <LazyPage><RiconciliazioneUnificata /></LazyPage> },
       { path: "riconciliazione/:tab", element: <LazyPage><RiconciliazioneUnificata /></LazyPage> },
+      { path: "riconciliazione-intelligente", element: <LazyPage><RiconciliazioneIntelligente /></LazyPage> },
       { path: "gestione-assegni", element: <LazyPage><GestioneAssegni /></LazyPage> },
       { path: "archivio-bonifici", element: <LazyPage><ArchivioBonifici /></LazyPage> },
       
