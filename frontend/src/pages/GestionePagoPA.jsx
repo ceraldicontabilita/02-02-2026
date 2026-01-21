@@ -106,98 +106,133 @@ export default function GestionePagoPA() {
   });
 
   return (
-    <div className="p-6 space-y-6 bg-gray-50 min-h-screen" data-testid="gestione-pagopa">
+    <div style={{ padding: 20, maxWidth: 1400, margin: '0 auto' }} data-testid="gestione-pagopa">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        marginBottom: 20,
+        padding: '15px 20px',
+        background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
+        borderRadius: 12,
+        color: 'white',
+        flexWrap: 'wrap',
+        gap: 10
+      }}>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Gestione PagoPA</h1>
-          <p className="text-gray-600">Associa ricevute PagoPA ai movimenti bancari</p>
+          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 'bold' }}>💳 Gestione PagoPA</h1>
+          <p style={{ margin: '4px 0 0 0', fontSize: 13, opacity: 0.9 }}>
+            Associa ricevute PagoPA ai movimenti bancari
+          </p>
         </div>
-        
-        <div className="flex gap-2">
-          <Button 
-            variant="outline" 
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button 
             onClick={() => { fetchStats(); fetchRicevute(); }}
             disabled={loading}
+            style={{ 
+              padding: '10px 20px',
+              background: 'rgba(255,255,255,0.95)',
+              color: '#1e3a5f',
+              border: 'none',
+              borderRadius: 8,
+              cursor: loading ? 'not-allowed' : 'pointer',
+              fontWeight: '600',
+              opacity: loading ? 0.6 : 1
+            }}
             data-testid="refresh-pagopa-btn"
           >
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            Aggiorna
-          </Button>
-          <Button 
+            🔄 Aggiorna
+          </button>
+          <button 
             onClick={handleAutoAssocia}
             disabled={autoAssociaLoading}
+            style={{ 
+              padding: '10px 20px',
+              background: '#10b981',
+              color: 'white',
+              border: 'none',
+              borderRadius: 8,
+              cursor: autoAssociaLoading ? 'not-allowed' : 'pointer',
+              fontWeight: '600',
+              opacity: autoAssociaLoading ? 0.6 : 1
+            }}
             data-testid="auto-associa-pagopa-btn"
           >
-            <Link2 className={`h-4 w-4 mr-2 ${autoAssociaLoading ? 'animate-spin' : ''}`} />
-            Auto-Associa
-          </Button>
+            🔗 Auto-Associa
+          </button>
         </div>
       </div>
 
       {/* Stats Cards */}
       {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500">Ricevute Totali</p>
-                  <p className="text-2xl font-bold" data-testid="stats-totali">{stats.totale_ricevute || 0}</p>
-                </div>
-                <FileText className="h-8 w-8 text-blue-500" />
+        <div style={{ 
+          background: 'white', 
+          borderRadius: 12, 
+          padding: 16, 
+          boxShadow: '0 2px 8px rgba(0,0,0,0.08)', 
+          marginBottom: 20 
+        }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+            <div style={{ 
+              background: 'white', 
+              borderRadius: 8, 
+              padding: '10px 12px', 
+              boxShadow: '0 1px 4px rgba(0,0,0,0.06)', 
+              borderLeft: '3px solid #3b82f6' 
+            }}>
+              <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>📄 Ricevute Totali</div>
+              <div style={{ fontSize: 18, fontWeight: 'bold', color: '#3b82f6' }} data-testid="stats-totali">{stats.totale_ricevute || 0}</div>
+            </div>
+            <div style={{ 
+              background: 'white', 
+              borderRadius: 8, 
+              padding: '10px 12px', 
+              boxShadow: '0 1px 4px rgba(0,0,0,0.06)', 
+              borderLeft: '3px solid #22c55e' 
+            }}>
+              <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>✅ Associate</div>
+              <div style={{ fontSize: 18, fontWeight: 'bold', color: '#22c55e' }} data-testid="stats-associate">{stats.associate || 0}</div>
+            </div>
+            <div style={{ 
+              background: 'white', 
+              borderRadius: 8, 
+              padding: '10px 12px', 
+              boxShadow: '0 1px 4px rgba(0,0,0,0.06)', 
+              borderLeft: '3px solid #f97316' 
+            }}>
+              <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>⏳ Da Associare</div>
+              <div style={{ fontSize: 18, fontWeight: 'bold', color: '#f97316' }} data-testid="stats-da-associare">{stats.da_associare || 0}</div>
+            </div>
+            <div style={{ 
+              background: '#1e3a5f', 
+              borderRadius: 8, 
+              padding: '10px 12px', 
+              color: 'white'
+            }}>
+              <div style={{ fontSize: 11, opacity: 0.9, marginBottom: 4 }}>💰 Importo Totale</div>
+              <div style={{ fontSize: 18, fontWeight: 'bold' }} data-testid="stats-importo">
+                {formatEuro((stats.importo_totale || 0))}
               </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500">Associate</p>
-                  <p className="text-2xl font-bold text-green-600" data-testid="stats-associate">{stats.associate || 0}</p>
-                </div>
-                <CheckCircle2 className="h-8 w-8 text-green-500" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500">Da Associare</p>
-                  <p className="text-2xl font-bold text-orange-600" data-testid="stats-da-associare">{stats.da_associare || 0}</p>
-                </div>
-                <AlertCircle className="h-8 w-8 text-orange-500" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500">Importo Totale</p>
-                  <p className="text-2xl font-bold" data-testid="stats-importo">
-                    {formatEuro((stats.importo_totale || 0))}
-                  </p>
-                </div>
-                <Download className="h-8 w-8 text-purple-500" />
-              </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       )}
 
       {/* Info Card */}
-      <Alert>
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          <strong>Come funziona:</strong> Il sistema cerca nei movimenti bancari il codice CBILL (bollettino) 
-          presente nella ricevuta PagoPA e li associa automaticamente. Puoi anche associare manualmente 
-          cliccando su una ricevuta non associata.
-        </AlertDescription>
+      <div style={{ 
+        padding: 12, 
+        background: '#eff6ff', 
+        borderRadius: 8, 
+        borderLeft: '4px solid #3b82f6',
+        fontSize: 13,
+        color: '#1e40af',
+        marginBottom: 20
+      }}>
+        <strong>ℹ️ Come funziona:</strong> Il sistema cerca nei movimenti bancari il codice CBILL (bollettino) 
+        presente nella ricevuta PagoPA e li associa automaticamente. Puoi anche associare manualmente 
+        cliccando su una ricevuta non associata.
+      </div>
       </Alert>
 
       {/* Categorie Pagamenti CBILL */}
