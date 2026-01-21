@@ -1741,11 +1741,13 @@ async def cerca_stipendi_per_associazione(
         "dipendente_nome": 1,
         "dipendente": 1,
         "nome_completo": 1,
+        "nome_dipendente": 1,
         "periodo": 1,
         "anno": 1,
         "mese": 1,
         "netto": 1,
         "netto_in_busta": 1,
+        "netto_mese": 1,
         "lordo": 1,
         "lordo_totale": 1
     }
@@ -1758,7 +1760,7 @@ async def cerca_stipendi_per_associazione(
     results = []
     
     for ced in all_cedolini:
-        netto = ced.get("netto") or ced.get("netto_in_busta") or 0
+        netto = ced.get("netto") or ced.get("netto_in_busta") or ced.get("netto_mese") or 0
         if netto <= 0:
             continue
             
@@ -1768,6 +1770,7 @@ async def cerca_stipendi_per_associazione(
             ced.get("dipendente_nome") or 
             ced.get("dipendente") or 
             ced.get("nome_completo") or
+            ced.get("nome_dipendente") or
             "Dipendente sconosciuto"
         )
         
