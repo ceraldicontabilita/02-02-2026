@@ -98,8 +98,27 @@ export default function Cedolini() {
         api.get('/api/employees?limit=200')
       ]);
       
-      setCedolini(cedRes.data.cedolini || []);
-      setStats(cedRes.data.stats || {});
+      // Adatta struttura cedolini dal backend
+      const cedoliniData = (cedRes.data.cedolini || []).map(c => ({
+        ...c,
+        employee_nome: c.dipendente_nome || c.nome_dipendente || 'N/D',
+        employee_id: c.dipendente_id,
+        // Converti mese numerico in chiave stringa
+        mese: getMeseKey(c.mese)
+      }));
+      
+      setCedolini(cedoliniData);
+      
+      // Calcola stats
+      const statsCalc = {};
+      MESI.forEach(m => {
+        const meseCedolini = cedoliniData.filter(c => c.mese === m.key);
+        statsCalc[m.key] = {
+          count: meseCedolini.length,
+          totale: meseCedolini.reduce((sum, c) => sum + (c.netto || 0), 0)
+        };
+      });
+      setStats(statsCalc);
       
       // Normalizza employees
       const emps = (empRes.data.employees || empRes.data || [])
