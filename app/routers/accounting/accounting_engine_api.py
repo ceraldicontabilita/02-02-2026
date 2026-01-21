@@ -302,3 +302,129 @@ async def storna_operazione(operazione_id: str, motivo: str = Query(...)) -> Dic
         "storno_id": storno["id"],
         "operazione_originale_id": operazione_id
     }
+
+
+
+@router.get("/scritture")
+async def get_scritture_contabili(
+    data_da: str = Query(None, description="Data inizio (YYYY-MM-DD)"),
+    data_a: str = Query(None, description="Data fine (YYYY-MM-DD)"),
+    tipo: str = Query(None, description="Tipo operazione"),
+    prima_nota: str = Query(None, description="cassa o banca"),
+    limit: int = Query(100, ge=1, le=1000)
+) -> Dict[str, Any]:
+    """
+    Recupera le scritture contabili con filtri.
+    """
+    db = Database.get_db()
+    
+    query = {"stato": {"$ne": "stornata"}}
+    
+    if data_da:
+        query["data_documento"] = {"$gte": data_da}
+    if data_a:
+        if "data_documento" in query:
+            query["data_documento"]["$lte"] = data_a
+        else:
+            query["data_documento"] = {"$lte": data_a}
+    if tipo:
+        query["tipo_operazione"] = tipo
+    if prima_nota:
+        query["prima_nota"] = prima_nota
+    
+    scritture = await db.scritture_contabili.find(
+        query, {"_id": 0}
+    ).sort("data_documento", -1).to_list(limit)
+    
+    return {
+        "success": True,
+        "count": len(scritture),
+        "scritture": scritture
+    }
+
+
+@router.get("/scritture/fattura/{fattura_id}")
+async def get_scrittura_by_fattura(fattura_id: str) -> Dict[str, Any]:
+    """
+    Recupera la scrittura contabile collegata a una fattura.
+    """
+    db = Database.get_db()
+    
+    scrittura = await db.scritture_contabili.find_one(
+        {"fattura_id": fattura_id, "stato": {"$ne": "stornata"}},
+        {"_id": 0}
+    )
+    
+    if not scrittura:
+        raise HTTPException(status_code=404, detail="Nessuna scrittura trovata per questa fattura")
+    
+    return {
+        "success": True,
+        "scrittura": scrittura
+    }
+
+
+@router.get("/bilancio-periodo")
+async def get_bilancio_periodo(
+    data_da: str = Query(None, description="Data inizio"),
+    data_a: str = Query(None, description="Data fine")
+) -> Dict[str, Any]:
+    """
+    Calcola il bilancio di verifica per un periodo specifico.
+    """
+    from app.services.accounting_engine import get_accounting_engine_persistent
+    
+    db = Database.get_db()
+    engine = get_accounting_engine_persistent(db)
+    
+    bilancio = await engine.calcola_bilancio_periodo(data_da=data_da, data_a=data_a)
+    
+    return {
+        "success": True,
+        **bilancio
+    }
+
+
+@router.get("/statistiche-contabili")
+async def get_statistiche_contabili() -> Dict[str, Any]:
+    """
+    Statistiche generali sulle scritture contabili.
+    """
+    db = Database.get_db()
+    
+    # Totale scritture
+    totale = await db.scritture_contabili.count_documents({})
+    valide = await db.scritture_contabili.count_documents({"stato": {"$ne": "stornata"}})
+    stornate = await db.scritture_contabili.count_documents({"stato": "stornata"})
+    
+    # Per tipo operazione
+    pipeline = [
+        {"$match": {"stato": {"$ne": "stornata"}}},
+        {"$group": {
+            "_id": "$tipo_operazione",
+            "count": {"$sum": 1},
+            "totale_importo": {"$sum": "$importo_dare"}
+        }},
+        {"$sort": {"count": -1}}
+    ]
+    per_tipo = await db.scritture_contabili.aggregate(pipeline).to_list(50)
+    
+    # Per prima nota
+    pipeline_pn = [
+        {"$match": {"stato": {"$ne": "stornata"}}},
+        {"$group": {
+            "_id": "$prima_nota",
+            "count": {"$sum": 1},
+            "totale": {"$sum": "$importo_dare"}
+        }}
+    ]
+    per_prima_nota = await db.scritture_contabili.aggregate(pipeline_pn).to_list(10)
+    
+    return {
+        "success": True,
+        "totale_scritture": totale,
+        "scritture_valide": valide,
+        "scritture_stornate": stornate,
+        "per_tipo_operazione": {item["_id"]: {"count": item["count"], "totale": item["totale_importo"]} for item in per_tipo},
+        "per_prima_nota": {item["_id"] or "altro": {"count": item["count"], "totale": item["totale"]} for item in per_prima_nota}
+    }
