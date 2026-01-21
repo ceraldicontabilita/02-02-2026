@@ -395,8 +395,8 @@ export default function RiconciliazioneIntelligente() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <RefreshCw className="h-8 w-8 animate-spin text-blue-600" />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+        <RefreshCw style={{ width: 32, height: 32, animation: 'spin 1s linear infinite', color: '#3b82f6' }} />
       </div>
     );
   }
@@ -404,104 +404,181 @@ export default function RiconciliazioneIntelligente() {
   const conteggi = dashboard?.conteggi || {};
 
   return (
-    <div className="p-6 space-y-6 bg-gray-50 min-h-screen" data-testid="riconciliazione-intelligente-page">
+    <div style={{ padding: 20, maxWidth: 1400, margin: '0 auto' }} data-testid="riconciliazione-intelligente-page">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        marginBottom: 20,
+        padding: '15px 20px',
+        background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
+        borderRadius: 12,
+        color: 'white',
+        flexWrap: 'wrap',
+        gap: 10
+      }}>
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Riconciliazione Intelligente</h1>
-          <p className="text-gray-500 mt-1">
+          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 'bold' }}>🔄 Riconciliazione Intelligente</h1>
+          <p style={{ margin: '4px 0 0 0', fontSize: 13, opacity: 0.9 }}>
             Gestione conferme pagamento e riconciliazione automatica
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={loadDashboard} data-testid="btn-refresh">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Aggiorna
-          </Button>
-          <Button onClick={handleRianalizza} disabled={actionLoading} data-testid="btn-rianalizza">
-            <Search className="h-4 w-4 mr-2" />
-            Ri-analizza Operazioni
-          </Button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button 
+            onClick={loadDashboard}
+            style={{ 
+              padding: '10px 20px',
+              background: 'rgba(255,255,255,0.95)',
+              color: '#1e3a5f',
+              border: 'none',
+              borderRadius: 8,
+              cursor: 'pointer',
+              fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6
+            }}
+            data-testid="btn-refresh"
+          >
+            🔄 Aggiorna
+          </button>
+          <button 
+            onClick={handleRianalizza}
+            disabled={actionLoading}
+            style={{ 
+              padding: '10px 20px',
+              background: '#10b981',
+              color: 'white',
+              border: 'none',
+              borderRadius: 8,
+              cursor: actionLoading ? 'not-allowed' : 'pointer',
+              fontWeight: '600',
+              opacity: actionLoading ? 0.6 : 1,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6
+            }}
+            data-testid="btn-rianalizza"
+          >
+            🔍 Ri-analizza Operazioni
+          </button>
         </div>
       </div>
 
       {/* Info Estratto Conto */}
-      <Card className="bg-blue-50 border-blue-200">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Banknote className="h-8 w-8 text-blue-600" />
-              <div>
-                <div className="font-semibold text-blue-900">Stato Estratto Conto</div>
-                <div className="text-blue-700">
-                  Ultimo movimento: <strong>{formatDate(statoEstratto?.ultima_data_movimento)}</strong>
-                </div>
-              </div>
-            </div>
-            <div className="text-right text-sm text-blue-700">
-              <div>{statoEstratto?.totale_movimenti || 0} movimenti totali</div>
-              <div>{statoEstratto?.movimenti_non_riconciliati || 0} da riconciliare</div>
+      <div style={{ 
+        background: '#eff6ff', 
+        borderRadius: 12, 
+        padding: 16, 
+        marginBottom: 20,
+        borderLeft: '4px solid #3b82f6',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: 10
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <Banknote style={{ width: 32, height: 32, color: '#3b82f6' }} />
+          <div>
+            <div style={{ fontWeight: 600, color: '#1e40af' }}>Stato Estratto Conto</div>
+            <div style={{ color: '#3b82f6', fontSize: 14 }}>
+              Ultimo movimento: <strong>{formatDate(statoEstratto?.ultima_data_movimento)}</strong>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+        <div style={{ textAlign: 'right', fontSize: 13, color: '#3b82f6' }}>
+          <div>{statoEstratto?.totale_movimenti || 0} movimenti totali</div>
+          <div style={{ fontWeight: 600 }}>{statoEstratto?.movimenti_non_riconciliati || 0} da riconciliare</div>
+        </div>
+      </div>
 
       {/* Contatori */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <Card className={`cursor-pointer ${activeTab === 'da-confermare' ? 'ring-2 ring-yellow-500' : ''}`}
-              onClick={() => setActiveTab('da-confermare')}>
-          <CardContent className="p-4 text-center">
-            <Clock className="h-8 w-8 mx-auto text-yellow-600 mb-2" />
-            <div className="text-3xl font-bold text-yellow-600">
-              {conteggi.in_attesa_conferma || 0}
-            </div>
-            <div className="text-sm text-gray-600">Da Confermare</div>
-          </CardContent>
-        </Card>
-
-        <Card className={`cursor-pointer ${activeTab === 'spostamenti' ? 'ring-2 ring-purple-500' : ''}`}
-              onClick={() => setActiveTab('spostamenti')}>
-          <CardContent className="p-4 text-center">
-            <ArrowRight className="h-8 w-8 mx-auto text-purple-600 mb-2" />
-            <div className="text-3xl font-bold text-purple-600">
-              {conteggi.da_verificare_spostamento || 0}
-            </div>
-            <div className="text-sm text-gray-600">Spostamenti</div>
-          </CardContent>
-        </Card>
-
-        <Card className={`cursor-pointer ${activeTab === 'match-incerti' ? 'ring-2 ring-amber-500' : ''}`}
-              onClick={() => setActiveTab('match-incerti')}>
-          <CardContent className="p-4 text-center">
-            <AlertTriangle className="h-8 w-8 mx-auto text-amber-600 mb-2" />
-            <div className="text-3xl font-bold text-amber-600">
-              {conteggi.da_verificare_match_incerto || 0}
-            </div>
-            <div className="text-sm text-gray-600">Match Incerti</div>
-          </CardContent>
-        </Card>
-
-        <Card className={`cursor-pointer ${activeTab === 'sospese' ? 'ring-2 ring-orange-500' : ''}`}
-              onClick={() => setActiveTab('sospese')}>
-          <CardContent className="p-4 text-center">
-            <Clock className="h-8 w-8 mx-auto text-orange-600 mb-2" />
-            <div className="text-3xl font-bold text-orange-600">
-              {conteggi.sospesa_attesa_estratto || 0}
-            </div>
-            <div className="text-sm text-gray-600">Sospese</div>
-          </CardContent>
-        </Card>
-
-        <Card className={`cursor-pointer ${activeTab === 'anomalie' ? 'ring-2 ring-red-500' : ''}`}
-              onClick={() => setActiveTab('anomalie')}>
-          <CardContent className="p-4 text-center">
-            <XCircle className="h-8 w-8 mx-auto text-red-600 mb-2" />
-            <div className="text-3xl font-bold text-red-600">
-              {conteggi.anomalia_non_in_estratto || 0}
-            </div>
-            <div className="text-sm text-gray-600">Anomalie</div>
-          </CardContent>
-        </Card>
+      <div style={{ 
+        background: 'white', 
+        borderRadius: 12, 
+        padding: 16, 
+        boxShadow: '0 2px 8px rgba(0,0,0,0.08)', 
+        marginBottom: 20 
+      }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12 }}>
+          <div 
+            onClick={() => setActiveTab('da-confermare')}
+            style={{ 
+              background: 'white', 
+              borderRadius: 8, 
+              padding: '10px 12px', 
+              boxShadow: '0 1px 4px rgba(0,0,0,0.06)', 
+              borderLeft: '3px solid #eab308',
+              cursor: 'pointer',
+              outline: activeTab === 'da-confermare' ? '2px solid #eab308' : 'none'
+            }}
+          >
+            <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>⏳ Da Confermare</div>
+            <div style={{ fontSize: 18, fontWeight: 'bold', color: '#eab308' }}>{conteggi.in_attesa_conferma || 0}</div>
+          </div>
+          <div 
+            onClick={() => setActiveTab('spostamenti')}
+            style={{ 
+              background: 'white', 
+              borderRadius: 8, 
+              padding: '10px 12px', 
+              boxShadow: '0 1px 4px rgba(0,0,0,0.06)', 
+              borderLeft: '3px solid #a855f7',
+              cursor: 'pointer',
+              outline: activeTab === 'spostamenti' ? '2px solid #a855f7' : 'none'
+            }}
+          >
+            <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>➡️ Spostamenti</div>
+            <div style={{ fontSize: 18, fontWeight: 'bold', color: '#a855f7' }}>{conteggi.da_verificare_spostamento || 0}</div>
+          </div>
+          <div 
+            onClick={() => setActiveTab('match-incerti')}
+            style={{ 
+              background: 'white', 
+              borderRadius: 8, 
+              padding: '10px 12px', 
+              boxShadow: '0 1px 4px rgba(0,0,0,0.06)', 
+              borderLeft: '3px solid #f59e0b',
+              cursor: 'pointer',
+              outline: activeTab === 'match-incerti' ? '2px solid #f59e0b' : 'none'
+            }}
+          >
+            <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>⚠️ Match Incerti</div>
+            <div style={{ fontSize: 18, fontWeight: 'bold', color: '#f59e0b' }}>{conteggi.da_verificare_match_incerto || 0}</div>
+          </div>
+          <div 
+            onClick={() => setActiveTab('sospese')}
+            style={{ 
+              background: 'white', 
+              borderRadius: 8, 
+              padding: '10px 12px', 
+              boxShadow: '0 1px 4px rgba(0,0,0,0.06)', 
+              borderLeft: '3px solid #f97316',
+              cursor: 'pointer',
+              outline: activeTab === 'sospese' ? '2px solid #f97316' : 'none'
+            }}
+          >
+            <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>⏸️ Sospese</div>
+            <div style={{ fontSize: 18, fontWeight: 'bold', color: '#f97316' }}>{conteggi.sospesa_attesa_estratto || 0}</div>
+          </div>
+          <div 
+            onClick={() => setActiveTab('anomalie')}
+            style={{ 
+              background: '#1e3a5f', 
+              borderRadius: 8, 
+              padding: '10px 12px', 
+              boxShadow: '0 1px 4px rgba(0,0,0,0.06)', 
+              color: 'white',
+              cursor: 'pointer',
+              outline: activeTab === 'anomalie' ? '2px solid #ef4444' : 'none'
+            }}
+          >
+            <div style={{ fontSize: 11, opacity: 0.9, marginBottom: 4 }}>❌ Anomalie</div>
+            <div style={{ fontSize: 18, fontWeight: 'bold' }}>{conteggi.anomalia_non_in_estratto || 0}</div>
+          </div>
+        </div>
       </div>
 
       {/* Tabs Content */}
