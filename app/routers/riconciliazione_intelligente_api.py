@@ -545,3 +545,142 @@ async def get_statistiche() -> Dict[str, Any]:
             for item in importi_per_stato
         }
     }
+
+
+
+# =============================================================================
+# MIGRAZIONE FATTURE ESISTENTI
+# =============================================================================
+
+@router.post("/migra-fatture-legacy")
+async def migra_fatture_legacy(payload: Dict[str, Any] = {}) -> Dict[str, Any]:
+    """
+    Migra le fatture esistenti al nuovo sistema di riconciliazione intelligente.
+    
+    Payload (opzionale):
+    {
+        "anno": 2025,  // Solo anno specifico
+        "limit": 100   // Limite fatture da migrare
+    }
+    
+    LOGICA MIGRAZIONE:
+    - Fatture con pagato=True e prima_nota_cassa_id → confermata_cassa
+    - Fatture con pagato=True e prima_nota_banca_id → confermata_banca  
+    - Fatture con riconciliato=True → riconciliata
+    - Altre fatture → in_attesa_conferma
+    """
+    db = Database.get_db()
+    
+    anno = payload.get("anno")
+    limit = payload.get("limit", 500)
+    
+    # Query per fatture senza stato_riconciliazione
+    query = {"stato_riconciliazione": {"$exists": False}}
+    if anno:
+        query["data_documento"] = {"$regex": f"^{anno}"}
+    
+    fatture = await db["invoices"].find(
+        query,
+        {"_id": 0, "id": 1, "pagato": 1, "riconciliato": 1, 
+         "prima_nota_cassa_id": 1, "prima_nota_banca_id": 1,
+         "metodo_pagamento": 1, "provvisorio": 1}
+    ).to_list(limit)
+    
+    risultato = {
+        "migrate": 0,
+        "in_attesa_conferma": 0,
+        "confermata_cassa": 0,
+        "confermata_banca": 0,
+        "riconciliata": 0,
+        "dettagli": []
+    }
+    
+    for fattura in fatture:
+        fattura_id = fattura.get("id")
+        pagato = fattura.get("pagato", False)
+        riconciliato = fattura.get("riconciliato", False)
+        has_cassa = bool(fattura.get("prima_nota_cassa_id"))
+        has_banca = bool(fattura.get("prima_nota_banca_id"))
+        metodo = (fattura.get("metodo_pagamento") or "").lower()
+        
+        # Determina stato
+        if riconciliato:
+            nuovo_stato = StatoRiconciliazione.RICONCILIATA.value
+            risultato["riconciliata"] += 1
+        elif pagato and has_cassa:
+            nuovo_stato = StatoRiconciliazione.CONFERMATA_CASSA.value
+            risultato["confermata_cassa"] += 1
+        elif pagato and has_banca:
+            nuovo_stato = StatoRiconciliazione.CONFERMATA_BANCA.value
+            risultato["confermata_banca"] += 1
+        elif pagato:
+            # Pagato ma senza riferimento prima nota
+            if metodo in ["contanti", "cassa", "cash"]:
+                nuovo_stato = StatoRiconciliazione.CONFERMATA_CASSA.value
+                risultato["confermata_cassa"] += 1
+            else:
+                nuovo_stato = StatoRiconciliazione.CONFERMATA_BANCA.value
+                risultato["confermata_banca"] += 1
+        else:
+            nuovo_stato = StatoRiconciliazione.IN_ATTESA_CONFERMA.value
+            risultato["in_attesa_conferma"] += 1
+        
+        # Aggiorna fattura
+        await db["invoices"].update_one(
+            {"id": fattura_id},
+            {"$set": {
+                "stato_riconciliazione": nuovo_stato,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+        risultato["migrate"] += 1
+    
+    logger.info(f"Migrazione completata: {risultato['migrate']} fatture migrate")
+    
+    return {
+        "success": True,
+        **risultato
+    }
+
+
+@router.post("/imposta-stato-fattura")
+async def imposta_stato_fattura(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Imposta manualmente lo stato di una fattura.
+    Utile per correzioni manuali.
+    
+    Payload:
+    {
+        "fattura_id": "uuid",
+        "stato": "in_attesa_conferma" | "confermata_cassa" | etc.
+    }
+    """
+    db = Database.get_db()
+    
+    fattura_id = payload.get("fattura_id")
+    stato = payload.get("stato")
+    
+    if not fattura_id or not stato:
+        raise HTTPException(status_code=400, detail="fattura_id e stato obbligatori")
+    
+    # Verifica stato valido
+    stati_validi = [s.value for s in StatoRiconciliazione]
+    if stato not in stati_validi:
+        raise HTTPException(status_code=400, detail=f"Stato non valido. Stati ammessi: {stati_validi}")
+    
+    result = await db["invoices"].update_one(
+        {"id": fattura_id},
+        {"$set": {
+            "stato_riconciliazione": stato,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Fattura non trovata")
+    
+    return {
+        "success": True,
+        "fattura_id": fattura_id,
+        "nuovo_stato": stato
+    }
