@@ -653,7 +653,10 @@ async def get_dashboard_presenze(data: str = Query(None)) -> Dict[str, Any]:
     
     for dip in dipendenti:
         emp_id = dip["id"]
-        nome_completo = f"{dip.get('nome', '')} {dip.get('cognome', '')}".strip()
+        # Usa nome_completo se disponibile, altrimenti costruisci da nome+cognome
+        nome_completo = dip.get("nome_completo") or f"{dip.get('nome', '')} {dip.get('cognome', '')}".strip()
+        if not nome_completo:
+            continue  # Salta dipendenti senza nome
         
         if emp_id in assenze_per_dip:
             assenza = assenze_per_dip[emp_id]
