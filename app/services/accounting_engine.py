@@ -691,3 +691,282 @@ def valida_operazione_prima_nota(operazione: Dict, tipo_prima_nota: str) -> Tupl
             errori.append("ERRORE CONTABILE: Un rimborso RICEVUTO è un'ENTRATA (DARE), non un'uscita")
     
     return len(errori) == 0, errori
+
+
+
+# =============================================================================
+# PERSISTENZA DATABASE
+# =============================================================================
+
+class AccountingEnginePersistence(AccountingEngine):
+    """
+    Estende AccountingEngine con persistenza MongoDB.
+    
+    Collections utilizzate:
+    - scritture_contabili: Tutte le scritture in partita doppia
+    - bilancio_verifica: Snapshot periodici del bilancio
+    """
+    
+    COLLECTION_SCRITTURE = "scritture_contabili"
+    
+    def __init__(self, db):
+        """
+        Inizializza con connessione database.
+        
+        Args:
+            db: Connessione MongoDB
+        """
+        super().__init__(db)
+        if not db:
+            raise ValueError("Database connection required for persistence")
+    
+    async def salva_scrittura(self, scrittura: Dict[str, Any]) -> str:
+        """
+        Salva una scrittura contabile nel database.
+        
+        Args:
+            scrittura: Scrittura da salvare
+            
+        Returns:
+            ID della scrittura salvata
+        """
+        # Verifica duplicati tramite hash
+        esistente = await self.db[self.COLLECTION_SCRITTURE].find_one(
+            {"hash": scrittura.get("hash")},
+            {"_id": 0, "id": 1}
+        )
+        
+        if esistente:
+            logger.warning(f"Scrittura duplicata ignorata: {scrittura.get('hash')[:8]}")
+            return esistente.get("id")
+        
+        await self.db[self.COLLECTION_SCRITTURE].insert_one(scrittura.copy())
+        logger.info(f"Scrittura salvata: {scrittura.get('id')} - {scrittura.get('descrizione')[:50]}")
+        
+        return scrittura.get("id")
+    
+    async def get_scritture(
+        self, 
+        data_da: str = None, 
+        data_a: str = None,
+        tipo_operazione: str = None,
+        prima_nota: str = None,
+        limit: int = 500
+    ) -> List[Dict]:
+        """
+        Recupera scritture contabili con filtri.
+        
+        Args:
+            data_da: Data inizio (YYYY-MM-DD)
+            data_a: Data fine (YYYY-MM-DD)
+            tipo_operazione: Filtro tipo operazione
+            prima_nota: Filtro prima nota (cassa/banca)
+            limit: Numero massimo risultati
+            
+        Returns:
+            Lista scritture
+        """
+        query = {"stato": {"$ne": StatoTransazione.STORNATA.value}}
+        
+        if data_da:
+            query["data_documento"] = {"$gte": data_da}
+        if data_a:
+            if "data_documento" in query:
+                query["data_documento"]["$lte"] = data_a
+            else:
+                query["data_documento"] = {"$lte": data_a}
+        if tipo_operazione:
+            query["tipo_operazione"] = tipo_operazione
+        if prima_nota:
+            query["prima_nota"] = prima_nota
+        
+        scritture = await self.db[self.COLLECTION_SCRITTURE].find(
+            query, {"_id": 0}
+        ).sort("data_documento", -1).to_list(limit)
+        
+        return scritture
+    
+    async def get_scrittura_by_fattura(self, fattura_id: str) -> Optional[Dict]:
+        """
+        Recupera scrittura contabile collegata a una fattura.
+        
+        Args:
+            fattura_id: ID fattura
+            
+        Returns:
+            Scrittura o None
+        """
+        return await self.db[self.COLLECTION_SCRITTURE].find_one(
+            {"fattura_id": fattura_id, "stato": {"$ne": StatoTransazione.STORNATA.value}},
+            {"_id": 0}
+        )
+    
+    async def storna_scrittura(self, scrittura_id: str, motivo: str) -> Dict[str, Any]:
+        """
+        Storna una scrittura esistente.
+        
+        Args:
+            scrittura_id: ID scrittura da stornare
+            motivo: Motivo dello storno
+            
+        Returns:
+            Scrittura di storno creata
+        """
+        # Recupera scrittura originale
+        originale = await self.db[self.COLLECTION_SCRITTURE].find_one(
+            {"id": scrittura_id},
+            {"_id": 0}
+        )
+        
+        if not originale:
+            raise ValueError(f"Scrittura non trovata: {scrittura_id}")
+        
+        if originale.get("stato") == StatoTransazione.STORNATA.value:
+            raise ValueError("Scrittura già stornata")
+        
+        # Crea storno
+        storno = self.crea_storno(originale, motivo)
+        
+        # Salva storno
+        await self.db[self.COLLECTION_SCRITTURE].insert_one(storno.copy())
+        
+        # Aggiorna originale come stornata
+        await self.db[self.COLLECTION_SCRITTURE].update_one(
+            {"id": scrittura_id},
+            {"$set": {
+                "stato": StatoTransazione.STORNATA.value,
+                "stornato_da": storno["id"],
+                "stornato_at": datetime.now(timezone.utc).isoformat(),
+                "motivo_storno": motivo
+            }}
+        )
+        
+        logger.info(f"Scrittura stornata: {scrittura_id} → {storno['id']}")
+        
+        return storno
+    
+    async def genera_scrittura_da_pagamento(
+        self,
+        fattura_id: str,
+        metodo: str,  # "cassa" o "banca"
+        importo: float,
+        data_documento: str,
+        numero_documento: str,
+        fornitore_nome: str
+    ) -> Dict[str, Any]:
+        """
+        Genera e salva una scrittura contabile da conferma pagamento.
+        
+        Integrato con Riconciliazione Intelligente.
+        
+        Args:
+            fattura_id: ID fattura
+            metodo: "cassa" o "banca"
+            importo: Importo pagamento
+            data_documento: Data documento
+            numero_documento: Numero fattura
+            fornitore_nome: Nome fornitore
+            
+        Returns:
+            Scrittura creata e salvata
+        """
+        # Determina tipo operazione
+        if metodo == "cassa":
+            tipo_operazione = "pagamento_fornitore_contanti"
+        else:
+            tipo_operazione = "pagamento_fornitore_bonifico"
+        
+        descrizione = f"Pagamento Fatt. {numero_documento} - {fornitore_nome}"
+        
+        # Crea scrittura
+        scrittura = self.crea_scrittura_contabile(
+            tipo_operazione=tipo_operazione,
+            importo=importo,
+            data_documento=data_documento,
+            descrizione=descrizione,
+            riferimento_documento=numero_documento,
+            fornitore=fornitore_nome,
+            fattura_id=fattura_id
+        )
+        
+        # Salva
+        await self.salva_scrittura(scrittura)
+        
+        return scrittura
+    
+    async def calcola_bilancio_periodo(
+        self, 
+        data_da: str = None, 
+        data_a: str = None
+    ) -> Dict[str, Any]:
+        """
+        Calcola il bilancio di verifica per un periodo.
+        
+        Args:
+            data_da: Data inizio
+            data_a: Data fine
+            
+        Returns:
+            Bilancio di verifica con totali
+        """
+        scritture = await self.get_scritture(data_da=data_da, data_a=data_a, limit=10000)
+        
+        if not scritture:
+            return {
+                "periodo": {"da": data_da, "a": data_a},
+                "conti": [],
+                "totale_dare": 0,
+                "totale_avere": 0,
+                "quadratura": True
+            }
+        
+        # Calcola saldi per conto
+        saldi = {}
+        for s in scritture:
+            conto_dare = s.get("conto_dare")
+            conto_avere = s.get("conto_avere")
+            importo = s.get("importo_dare", 0)
+            
+            if conto_dare:
+                if conto_dare not in saldi:
+                    saldi[conto_dare] = {"dare": 0, "avere": 0}
+                saldi[conto_dare]["dare"] += importo
+            
+            if conto_avere:
+                if conto_avere not in saldi:
+                    saldi[conto_avere] = {"dare": 0, "avere": 0}
+                saldi[conto_avere]["avere"] += importo
+        
+        # Costruisci risultato
+        conti = []
+        for codice, valori in saldi.items():
+            info = self.piano_conti.get(codice, {})
+            saldo = valori["dare"] - valori["avere"]
+            conti.append({
+                "codice": codice,
+                "nome": info.get("nome", "Sconosciuto"),
+                "tipo": info.get("tipo", TipoConto.ATTIVO).value if info.get("tipo") else "sconosciuto",
+                "dare": valori["dare"],
+                "avere": valori["avere"],
+                "saldo": saldo
+            })
+        
+        # Ordina per codice
+        conti.sort(key=lambda x: x["codice"])
+        
+        totale_dare = sum(c["dare"] for c in conti)
+        totale_avere = sum(c["avere"] for c in conti)
+        
+        return {
+            "periodo": {"da": data_da, "a": data_a},
+            "conti": conti,
+            "totale_dare": round(totale_dare, 2),
+            "totale_avere": round(totale_avere, 2),
+            "quadratura": abs(totale_dare - totale_avere) < 0.01,
+            "differenza": round(totale_dare - totale_avere, 2)
+        }
+
+
+def get_accounting_engine_persistent(db) -> AccountingEnginePersistence:
+    """Factory per ottenere il motore contabile con persistenza."""
+    return AccountingEnginePersistence(db)
