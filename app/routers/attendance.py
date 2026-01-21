@@ -809,7 +809,9 @@ async def get_presenze_mese(anno: int = Query(...), mese: int = Query(...)) -> D
     
     # Prima aggiungi le presenze esplicite
     for p in presenze_db:
-        key = f"{p[\"employee_id\"]}_{p[\"data\"]}"
+        emp_id = p["employee_id"]
+        data = p["data"]
+        key = f"{emp_id}_{data}"
         presenze_map[key] = p.get("stato", "presente")
     
     # Poi sovrascrivi con le assenze approvate
