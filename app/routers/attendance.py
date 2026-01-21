@@ -764,3 +764,129 @@ async def get_saldo_ferie(employee_id: str, anno: int = Query(None)) -> Dict[str
         "anno": anno,
         "saldo": saldo
     }
+
+
+
+# =============================================================================
+# CALENDARIO PRESENZE - Nuovi Endpoint
+# =============================================================================
+
+@router.get("/presenze-mese")
+async def get_presenze_mese(anno: int = Query(...), mese: int = Query(...)) -> Dict[str, Any]:
+    """
+    Recupera tutte le presenze del mese per tutti i dipendenti.
+    Ritorna un dizionario con chiave "employeeId_YYYY-MM-DD" e valore lo stato.
+    """
+    db = Database.get_db()
+    
+    # Calcola range date
+    primo_giorno = f"{anno}-{str(mese).zfill(2)}-01"
+    if mese == 12:
+        ultimo_giorno = f"{anno + 1}-01-01"
+    else:
+        ultimo_giorno = f"{anno}-{str(mese + 1).zfill(2)}-01"
+    
+    # Recupera presenze dal DB
+    presenze_db = await db["attendance_presenze_calendario"].find(
+        {
+            "data": {"$gte": primo_giorno, "$lt": ultimo_giorno}
+        },
+        {"_id": 0}
+    ).to_list(10000)
+    
+    # Recupera assenze approvate nel mese
+    assenze = await db["attendance_assenze"].find({
+        "stato": "approved",
+        "$or": [
+            {"data_inizio": {"$gte": primo_giorno, "$lt": ultimo_giorno}},
+            {"data_fine": {"$gte": primo_giorno, "$lt": ultimo_giorno}},
+            {"data_inizio": {"$lte": primo_giorno}, "data_fine": {"$gte": ultimo_giorno}}
+        ]
+    }, {"_id": 0}).to_list(1000)
+    
+    # Costruisci mappa presenze
+    presenze_map = {}
+    
+    # Prima aggiungi le presenze esplicite
+    for p in presenze_db:
+        key = f"{p[\"employee_id\"]}_{p[\"data\"]}"
+        presenze_map[key] = p.get("stato", "presente")
+    
+    # Poi sovrascrivi con le assenze approvate
+    for a in assenze:
+        emp_id = a["employee_id"]
+        tipo = a.get("tipo", "assente")
+        
+        # Mappa tipo assenza a stato calendario
+        stato_map = {
+            "ferie": "ferie",
+            "permesso": "permesso",
+            "malattia": "malattia",
+            "rol": "rol",
+            "maternita": "assente",
+            "paternita": "assente",
+            "lutto": "assente",
+            "matrimonio": "assente",
+            "altro": "assente"
+        }
+        stato = stato_map.get(tipo, "assente")
+        
+        # Itera sui giorni dellassenza
+        start = datetime.strptime(a["data_inizio"], "%Y-%m-%d")
+        end = datetime.strptime(a["data_fine"], "%Y-%m-%d")
+        current = start
+        while current <= end:
+            data_str = current.strftime("%Y-%m-%d")
+            if data_str >= primo_giorno and data_str < ultimo_giorno:
+                key = f"{emp_id}_{data_str}"
+                presenze_map[key] = stato
+            current += timedelta(days=1)
+    
+    return {
+        "success": True,
+        "anno": anno,
+        "mese": mese,
+        "presenze": presenze_map
+    }
+
+
+@router.post("/set-presenza")
+async def set_presenza(data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Imposta lo stato presenza per un dipendente in una data specifica.
+    """
+    db = Database.get_db()
+    
+    employee_id = data.get("employee_id")
+    data_str = data.get("data")
+    stato = data.get("stato")
+    
+    if not employee_id or not data_str or not stato:
+        raise HTTPException(status_code=400, detail="Campi obbligatori: employee_id, data, stato")
+    
+    # Upsert presenza
+    await db["attendance_presenze_calendario"].update_one(
+        {"employee_id": employee_id, "data": data_str},
+        {
+            "$set": {
+                "employee_id": employee_id,
+                "data": data_str,
+                "stato": stato,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            },
+            "$setOnInsert": {
+                "id": str(uuid.uuid4()),
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+        },
+        upsert=True
+    )
+    
+    return {
+        "success": True,
+        "message": f"Presenza impostata: {stato}",
+        "employee_id": employee_id,
+        "data": data_str,
+        "stato": stato
+    }
+
