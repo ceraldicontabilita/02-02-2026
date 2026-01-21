@@ -664,55 +664,104 @@ export default function Attendance() {
 
       {/* Tab Richieste */}
       {activeTab === 'richieste' && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Richieste in Attesa di Approvazione</CardTitle>
-          </CardHeader>
-          <CardContent>
+        <div style={{ 
+          background: 'white', 
+          borderRadius: 12, 
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          overflow: 'hidden'
+        }}>
+          <div style={{ 
+            padding: '16px 20px', 
+            background: '#fefce8', 
+            borderBottom: '3px solid #eab308',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8
+          }}>
+            <FileText style={{ width: 20, height: 20, color: '#ca8a04' }} />
+            <span style={{ fontWeight: 'bold', color: '#854d0e' }}>
+              Richieste in Attesa di Approvazione
+            </span>
+          </div>
+          <div style={{ padding: 16 }}>
             {richiestePending.length === 0 ? (
-              <Alert>
-                <Check className="h-4 w-4" />
-                <AlertDescription>Nessuna richiesta in attesa</AlertDescription>
-              </Alert>
+              <div style={{ 
+                textAlign: 'center', 
+                padding: 40, 
+                color: '#9ca3af' 
+              }}>
+                ✅ Nessuna richiesta in attesa
+              </div>
             ) : (
-              <div className="space-y-3">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {richiestePending.map((r) => (
-                  <div key={r.id} className="border rounded-lg p-4 bg-white flex justify-between items-center">
+                  <div key={r.id} style={{ 
+                    padding: 16, 
+                    background: '#f9fafb', 
+                    borderRadius: 8,
+                    borderLeft: '4px solid #eab308',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}>
                     <div>
-                      <div className="font-semibold">{r.employee_nome}</div>
-                      <div className="text-sm text-gray-600">
-                        <Badge variant="outline" className="mr-2">{r.tipo}</Badge>
-                        {formatDate(r.data_inizio)} - {formatDate(r.data_fine)}
-                        <span className="ml-2">({r.giorni_totali} giorni)</span>
+                      <div style={{ fontWeight: 600, color: '#1f2937', marginBottom: 4 }}>{r.employee_nome}</div>
+                      <div style={{ fontSize: 13, color: '#6b7280' }}>
+                        <span style={{ 
+                          display: 'inline-block',
+                          padding: '2px 8px', 
+                          background: '#fef3c7', 
+                          color: '#92400e', 
+                          borderRadius: 4, 
+                          fontSize: 11, 
+                          fontWeight: 600,
+                          marginRight: 8
+                        }}>{r.tipo}</span>
+                        📅 {formatDate(r.data_inizio)} → {formatDate(r.data_fine)}
+                        <span style={{ marginLeft: 8, fontWeight: 600 }}>({r.giorni_totali} giorni)</span>
                       </div>
-                      {r.motivo && <div className="text-sm text-gray-500 mt-1">{r.motivo}</div>}
+                      {r.motivo && <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 4 }}>{r.motivo}</div>}
                     </div>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        className="bg-green-600 hover:bg-green-700"
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
                         onClick={() => handleApprova(r.id)}
                         data-testid={`btn-approva-${r.id}`}
+                        style={{
+                          padding: '8px 16px',
+                          background: '#22c55e',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: 6,
+                          fontSize: 13,
+                          fontWeight: 600,
+                          cursor: 'pointer'
+                        }}
                       >
-                        <Check className="h-4 w-4 mr-1" />
-                        Approva
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
+                        ✓ Approva
+                      </button>
+                      <button
                         onClick={() => handleRifiuta(r.id)}
                         data-testid={`btn-rifiuta-${r.id}`}
+                        style={{
+                          padding: '8px 16px',
+                          background: '#ef4444',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: 6,
+                          fontSize: 13,
+                          fontWeight: 600,
+                          cursor: 'pointer'
+                        }}
                       >
-                        <X className="h-4 w-4 mr-1" />
-                        Rifiuta
-                      </Button>
+                        ✕ Rifiuta
+                      </button>
                     </div>
                   </div>
                 ))}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {/* Tab Storico Ore */}
