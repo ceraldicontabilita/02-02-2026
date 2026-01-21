@@ -39,7 +39,8 @@ const NAV_ITEMS = [
     isSubmenu: true,
     children: [
       { to: "/prima-nota", label: "📒 Prima Nota Unificata", icon: "📒", isNew: true },
-      { to: "/riconciliazione", label: "⚡ Riconciliazione Smart", icon: "⚡", isNew: true },
+      { to: "/riconciliazione-intelligente", label: "🧠 Riconciliazione Intelligente", icon: "🧠", isNew: true },
+      { to: "/riconciliazione", label: "⚡ Riconciliazione Smart", icon: "⚡" },
       { to: "/gestione-assegni", label: "Gestione Assegni", icon: "📝" },
       { to: "/archivio-bonifici", label: "Archivio Bonifici", icon: "📂" },
     ]
