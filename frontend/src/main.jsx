@@ -118,6 +118,7 @@ const PrimaNotaSalari = lazy(() => import("./pages/PrimaNotaSalari.jsx"));
 const TFR = lazy(() => import("./pages/TFR.jsx"));
 const NoleggioAuto = lazy(() => import("./pages/NoleggioAuto.jsx"));
 const DettaglioVerbale = lazy(() => import("./pages/DettaglioVerbale.jsx"));
+const VerbaliRiconciliazione = lazy(() => import("./pages/VerbaliRiconciliazione.jsx"));
 
 // === FISCO & TRIBUTI ===
 const IVA = lazy(() => import("./pages/IVA.jsx"));
