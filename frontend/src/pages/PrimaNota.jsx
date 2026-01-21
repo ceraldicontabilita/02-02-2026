@@ -1039,6 +1039,96 @@ function MovementsTable({ movimenti, tipo, loading, formatEuro, formatDate, onDe
         />
       )}
       
+      {/* FILTRI AVANZATI */}
+      <div style={{ 
+        padding: '12px 16px', 
+        background: '#f8fafc', 
+        borderBottom: '1px solid #e5e7eb',
+        display: 'flex',
+        gap: 12,
+        flexWrap: 'wrap',
+        alignItems: 'center'
+      }}>
+        <span style={{ fontWeight: 600, fontSize: 12, color: '#374151' }}>🔍 Filtri:</span>
+        
+        {/* Filtro Descrizione */}
+        <input
+          type="text"
+          placeholder="Cerca descrizione..."
+          value={filtroDescrizione}
+          onChange={(e) => { setFiltroDescrizione(e.target.value); setCurrentPage(1); }}
+          style={{ 
+            padding: '6px 10px', 
+            border: '1px solid #d1d5db', 
+            borderRadius: 6, 
+            fontSize: 12,
+            width: 180
+          }}
+          data-testid="filtro-descrizione"
+        />
+        
+        {/* Filtro Categoria */}
+        <select
+          value={filtroCategoria}
+          onChange={(e) => { setFiltroCategoria(e.target.value); setCurrentPage(1); }}
+          style={{ 
+            padding: '6px 10px', 
+            border: '1px solid #d1d5db', 
+            borderRadius: 6, 
+            fontSize: 12,
+            background: 'white'
+          }}
+          data-testid="filtro-categoria"
+        >
+          <option value="">Tutte le categorie</option>
+          {categorieUniche.map(cat => (
+            <option key={cat} value={cat}>{cat}</option>
+          ))}
+        </select>
+        
+        {/* Filtro DARE/AVERE */}
+        <select
+          value={filtroDareAvere}
+          onChange={(e) => { setFiltroDareAvere(e.target.value); setCurrentPage(1); }}
+          style={{ 
+            padding: '6px 10px', 
+            border: '1px solid #d1d5db', 
+            borderRadius: 6, 
+            fontSize: 12,
+            background: 'white'
+          }}
+          data-testid="filtro-dare-avere"
+        >
+          <option value="">DARE + AVERE</option>
+          <option value="dare">Solo DARE (Entrate)</option>
+          <option value="avere">Solo AVERE (Uscite)</option>
+        </select>
+        
+        {/* Contatore risultati */}
+        <span style={{ fontSize: 12, color: '#6b7280' }}>
+          {movimentiFiltrati.length} / {movimenti.length} movimenti
+        </span>
+        
+        {/* Reset Filtri */}
+        {(filtroDescrizione || filtroCategoria || filtroDareAvere) && (
+          <button
+            onClick={resetFilters}
+            style={{
+              padding: '6px 12px',
+              background: '#ef4444',
+              color: 'white',
+              border: 'none',
+              borderRadius: 6,
+              fontSize: 12,
+              cursor: 'pointer'
+            }}
+            data-testid="btn-reset-filtri"
+          >
+            ✕ Reset
+          </button>
+        )}
+      </div>
+      
       {/* Pagination Header */}
       {totalPages > 1 && (
         <div style={{ 
