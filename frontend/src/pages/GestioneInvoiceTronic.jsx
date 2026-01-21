@@ -95,89 +95,191 @@ export default function GestioneInvoiceTronic() {
   };
 
   return (
-    <div className="p-6 space-y-6 bg-gray-50 min-h-screen" data-testid="gestione-invoicetronic">
+    <div style={{ padding: 20, maxWidth: 1400, margin: '0 auto' }} data-testid="gestione-invoicetronic">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        marginBottom: 20,
+        padding: '15px 20px',
+        background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
+        borderRadius: 12,
+        color: 'white',
+        flexWrap: 'wrap',
+        gap: 10
+      }}>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">InvoiceTronic - Fatturazione Elettronica</h1>
-          <p className="text-gray-600">Ricezione automatica fatture passive via SDI</p>
+          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 'bold' }}>📨 InvoiceTronic - Fatturazione Elettronica</h1>
+          <p style={{ margin: '4px 0 0 0', fontSize: 13, opacity: 0.9 }}>
+            Ricezione automatica fatture passive via SDI
+          </p>
         </div>
-        
-        <div className="flex gap-2 items-center">
-          {getStatusBadge()}
-          <Button 
-            variant="outline" 
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {status?.connected && (
+            <span style={{ 
+              padding: '6px 12px', 
+              background: '#22c55e', 
+              color: 'white', 
+              borderRadius: 6, 
+              fontSize: 12, 
+              fontWeight: 600 
+            }}>✅ Connesso</span>
+          )}
+          {status && !status.connected && (
+            <span style={{ 
+              padding: '6px 12px', 
+              background: '#ef4444', 
+              color: 'white', 
+              borderRadius: 6, 
+              fontSize: 12, 
+              fontWeight: 600 
+            }}>❌ Disconnesso</span>
+          )}
+          <button 
             onClick={() => { fetchStatus(); fetchFatture(); }}
             disabled={loading}
+            style={{ 
+              padding: '10px 20px',
+              background: 'rgba(255,255,255,0.95)',
+              color: '#1e3a5f',
+              border: 'none',
+              borderRadius: 8,
+              cursor: loading ? 'not-allowed' : 'pointer',
+              fontWeight: '600',
+              opacity: loading ? 0.6 : 1
+            }}
             data-testid="refresh-invoicetronic-btn"
           >
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            Aggiorna
-          </Button>
-          <Button 
+            🔄 Aggiorna
+          </button>
+          <button 
             onClick={handleSincronizza}
             disabled={sincronizzaLoading || !status?.connected}
+            style={{ 
+              padding: '10px 20px',
+              background: (sincronizzaLoading || !status?.connected) ? '#9ca3af' : '#10b981',
+              color: 'white',
+              border: 'none',
+              borderRadius: 8,
+              cursor: (sincronizzaLoading || !status?.connected) ? 'not-allowed' : 'pointer',
+              fontWeight: '600'
+            }}
             data-testid="sincronizza-invoicetronic-btn"
           >
-            <Download className={`h-4 w-4 mr-2 ${sincronizzaLoading ? 'animate-spin' : ''}`} />
-            Sincronizza SDI
-          </Button>
+            📥 Sincronizza SDI
+          </button>
         </div>
       </div>
 
       {/* Info Connessione */}
       {status && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Stato Connessione</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div style={{ 
+          background: 'white', 
+          borderRadius: 12, 
+          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+          overflow: 'hidden',
+          marginBottom: 20
+        }}>
+          <div style={{ 
+            padding: '16px 20px', 
+            background: '#f8fafc', 
+            borderBottom: '1px solid #e5e7eb'
+          }}>
+            <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#1f2937' }}>📡 Stato Connessione</h2>
+          </div>
+          <div style={{ padding: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
               <div>
-                <p className="text-sm text-gray-500">Ambiente</p>
-                <p className="font-medium">{status.environment === 'sandbox' ? 'Sandbox (Test)' : 'Produzione'}</p>
+                <p style={{ fontSize: 12, color: '#6b7280', marginBottom: 4 }}>Ambiente</p>
+                <p style={{ fontWeight: 500, margin: 0 }}>{status.environment === 'sandbox' ? '🧪 Sandbox (Test)' : '🚀 Produzione'}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Codice Destinatario</p>
-                <p className="font-mono font-medium">{status.codice_destinatario || 'Non configurato'}</p>
+                <p style={{ fontSize: 12, color: '#6b7280', marginBottom: 4 }}>Codice Destinatario</p>
+                <p style={{ fontWeight: 500, margin: 0, fontFamily: 'monospace' }}>{status.codice_destinatario || 'Non configurato'}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Ultima Sincronizzazione</p>
-                <p className="font-medium">{status.last_sync || 'Mai'}</p>
+                <p style={{ fontSize: 12, color: '#6b7280', marginBottom: 4 }}>Ultima Sincronizzazione</p>
+                <p style={{ fontWeight: 500, margin: 0 }}>{status.last_sync || 'Mai'}</p>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {/* Alert Sandbox */}
       {status?.environment === 'sandbox' && (
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            <strong>Ambiente Sandbox:</strong> L'integrazione è in modalità test. Per ricevere fatture reali, 
-            è necessario:
-            <ol className="list-decimal ml-4 mt-2 text-sm">
-              <li>Accedere al portale dell'Agenzia delle Entrate (Fatture e Corrispettivi)</li>
-              <li>Registrare il codice destinatario <strong>{status.codice_destinatario}</strong></li>
-              <li>Acquistare crediti su InvoiceTronic per l'ambiente di produzione</li>
-            </ol>
-          </AlertDescription>
-        </Alert>
+        <div style={{ 
+          padding: 12, 
+          background: '#fef3c7', 
+          borderRadius: 8, 
+          borderLeft: '4px solid #f59e0b',
+          fontSize: 13,
+          color: '#92400e',
+          marginBottom: 20
+        }}>
+          <strong>⚠️ Ambiente Sandbox:</strong> L'integrazione è in modalità test. Per ricevere fatture reali, 
+          è necessario:
+          <ol style={{ margin: '8px 0 0 16px', paddingLeft: 0 }}>
+            <li>Accedere al portale dell'Agenzia delle Entrate (Fatture e Corrispettivi)</li>
+            <li>Registrare il codice destinatario <strong>{status.codice_destinatario}</strong></li>
+            <li>Acquistare crediti su InvoiceTronic per l'ambiente di produzione</li>
+          </ol>
+        </div>
       )}
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Fatture Ricevute</p>
-                <p className="text-2xl font-bold" data-testid="stats-totali">{fatture.length}</p>
-              </div>
-              <FileText className="h-8 w-8 text-blue-500" />
+      <div style={{ 
+        background: 'white', 
+        borderRadius: 12, 
+        padding: 16, 
+        boxShadow: '0 2px 8px rgba(0,0,0,0.08)', 
+        marginBottom: 20 
+      }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+          <div style={{ 
+            background: 'white', 
+            borderRadius: 8, 
+            padding: '10px 12px', 
+            boxShadow: '0 1px 4px rgba(0,0,0,0.06)', 
+            borderLeft: '3px solid #3b82f6' 
+          }}>
+            <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>📄 Fatture Ricevute</div>
+            <div style={{ fontSize: 18, fontWeight: 'bold', color: '#3b82f6' }} data-testid="stats-totali">{fatture.length}</div>
+          </div>
+          <div style={{ 
+            background: 'white', 
+            borderRadius: 8, 
+            padding: '10px 12px', 
+            boxShadow: '0 1px 4px rgba(0,0,0,0.06)', 
+            borderLeft: '3px solid #22c55e' 
+          }}>
+            <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>✅ Importate</div>
+            <div style={{ fontSize: 18, fontWeight: 'bold', color: '#22c55e' }}>{fatture.filter(f => f.importata).length}</div>
+          </div>
+          <div style={{ 
+            background: 'white', 
+            borderRadius: 8, 
+            padding: '10px 12px', 
+            boxShadow: '0 1px 4px rgba(0,0,0,0.06)', 
+            borderLeft: '3px solid #f97316' 
+          }}>
+            <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>⏳ Da Importare</div>
+            <div style={{ fontSize: 18, fontWeight: 'bold', color: '#f97316' }}>{fatture.filter(f => !f.importata).length}</div>
+          </div>
+          <div style={{ 
+            background: '#1e3a5f', 
+            borderRadius: 8, 
+            padding: '10px 12px', 
+            color: 'white'
+          }}>
+            <div style={{ fontSize: 11, opacity: 0.9, marginBottom: 4 }}>💰 Totale Imponibile</div>
+            <div style={{ fontSize: 18, fontWeight: 'bold' }}>
+              {formatEuro(fatture.reduce((sum, f) => sum + (f.importo_totale || 0), 0))}
             </div>
-          </CardContent>
+          </div>
+        </div>
+      </div>
         </Card>
         
         <Card>
