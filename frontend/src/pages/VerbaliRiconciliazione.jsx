@@ -168,6 +168,7 @@ export default function VerbaliRiconciliazione() {
         >
           {collegandoDriver ? '⏳ Collegando...' : '👤 Associa Driver'}
         </button>
+        </div>
       </div>
 
       {/* Messaggi */}
