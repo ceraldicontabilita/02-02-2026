@@ -486,99 +486,179 @@ export default function Attendance() {
 
       {/* Tab Presenze */}
       {activeTab === 'dashboard' && (
-        <div className="grid md:grid-cols-3 gap-4">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
           {/* Presenti */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <UserCheck className="h-5 w-5 text-green-600" />
+          <div style={{ 
+            background: 'white', 
+            borderRadius: 12, 
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+            overflow: 'hidden'
+          }}>
+            <div style={{ 
+              padding: '12px 16px', 
+              background: '#f0fdf4', 
+              borderBottom: '3px solid #22c55e',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8
+            }}>
+              <UserCheck style={{ width: 20, height: 20, color: '#22c55e' }} />
+              <span style={{ fontWeight: 'bold', color: '#166534' }}>
                 Presenti ({dashboard?.presenti?.length || 0})
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 max-h-96 overflow-y-auto">
+              </span>
+            </div>
+            <div style={{ padding: 12, maxHeight: 400, overflowY: 'auto' }}>
               {dashboard?.presenti?.length === 0 ? (
-                <p className="text-gray-500 text-sm">Nessuno presente</p>
+                <p style={{ color: '#9ca3af', fontSize: 14, textAlign: 'center', padding: 20 }}>Nessuno presente</p>
               ) : (
                 dashboard?.presenti?.map((p, idx) => (
-                  <div key={idx} className="p-2 bg-green-50 rounded flex justify-between items-center">
+                  <div key={idx} style={{ 
+                    padding: '10px 12px', 
+                    marginBottom: 8, 
+                    background: '#f9fafb', 
+                    borderRadius: 8,
+                    borderLeft: '3px solid #22c55e',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}>
                     <div>
-                      <div className="font-medium">{p.nome}</div>
-                      <div className="text-sm text-gray-600">
-                        <LogIn className="h-3 w-3 inline mr-1" />
-                        {formatTime(p.entrata)}
-                        {p.uscita && (
-                          <>
-                            <LogOut className="h-3 w-3 inline mx-1 ml-2" />
-                            {formatTime(p.uscita)}
-                          </>
-                        )}
+                      <div style={{ fontWeight: 600, color: '#1f2937' }}>{p.nome}</div>
+                      <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>
+                        🕐 {formatTime(p.entrata) || '-'}
+                        {p.uscita && ` → ${formatTime(p.uscita)}`}
                       </div>
                     </div>
                     {p.in_ufficio && (
-                      <Badge className="bg-green-500 text-white">In sede</Badge>
+                      <span style={{ 
+                        padding: '4px 8px', 
+                        background: '#22c55e', 
+                        color: 'white', 
+                        borderRadius: 4, 
+                        fontSize: 11, 
+                        fontWeight: 600 
+                      }}>In sede</span>
                     )}
                   </div>
                 ))
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* Assenti */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Calendar className="h-5 w-5 text-orange-600" />
+          <div style={{ 
+            background: 'white', 
+            borderRadius: 12, 
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+            overflow: 'hidden'
+          }}>
+            <div style={{ 
+              padding: '12px 16px', 
+              background: '#fff7ed', 
+              borderBottom: '3px solid #f97316',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8
+            }}>
+              <Calendar style={{ width: 20, height: 20, color: '#f97316' }} />
+              <span style={{ fontWeight: 'bold', color: '#9a3412' }}>
                 Assenti ({dashboard?.assenti?.length || 0})
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 max-h-96 overflow-y-auto">
+              </span>
+            </div>
+            <div style={{ padding: 12, maxHeight: 400, overflowY: 'auto' }}>
               {dashboard?.assenti?.length === 0 ? (
-                <p className="text-gray-500 text-sm">Nessuna assenza</p>
+                <p style={{ color: '#9ca3af', fontSize: 14, textAlign: 'center', padding: 20 }}>Nessuna assenza</p>
               ) : (
                 dashboard?.assenti?.map((a, idx) => (
-                  <div key={idx} className="p-2 bg-orange-50 rounded">
-                    <div className="font-medium">{a.nome}</div>
-                    <div className="text-sm">
-                      <Badge variant="outline">{a.tipo_assenza}</Badge>
-                      {a.motivo && <span className="ml-2 text-gray-500">{a.motivo}</span>}
+                  <div key={idx} style={{ 
+                    padding: '10px 12px', 
+                    marginBottom: 8, 
+                    background: '#f9fafb', 
+                    borderRadius: 8,
+                    borderLeft: '3px solid #f97316'
+                  }}>
+                    <div style={{ fontWeight: 600, color: '#1f2937' }}>{a.nome}</div>
+                    <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>
+                      <span style={{ 
+                        display: 'inline-block',
+                        padding: '2px 6px', 
+                        background: '#fed7aa', 
+                        color: '#9a3412', 
+                        borderRadius: 4, 
+                        fontSize: 10, 
+                        fontWeight: 600,
+                        marginRight: 6
+                      }}>{a.tipo_assenza}</span>
+                      {a.motivo && <span>{a.motivo}</span>}
                     </div>
                   </div>
                 ))
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* Non timbrato */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-red-600" />
+          <div style={{ 
+            background: 'white', 
+            borderRadius: 12, 
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+            overflow: 'hidden'
+          }}>
+            <div style={{ 
+              padding: '12px 16px', 
+              background: '#fef2f2', 
+              borderBottom: '3px solid #ef4444',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8
+            }}>
+              <AlertTriangle style={{ width: 20, height: 20, color: '#ef4444' }} />
+              <span style={{ fontWeight: 'bold', color: '#991b1b' }}>
                 Non Timbrato ({dashboard?.non_timbrato?.length || 0})
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 max-h-96 overflow-y-auto">
+              </span>
+            </div>
+            <div style={{ padding: 12, maxHeight: 400, overflowY: 'auto' }}>
               {dashboard?.non_timbrato?.length === 0 ? (
-                <p className="text-gray-500 text-sm">Tutti hanno timbrato</p>
+                <p style={{ color: '#9ca3af', fontSize: 14, textAlign: 'center', padding: 20 }}>✅ Tutti hanno timbrato</p>
               ) : (
                 dashboard?.non_timbrato?.map((n, idx) => (
-                  <div key={idx} className="p-2 bg-red-50 rounded flex justify-between items-center">
-                    <span className="font-medium">{n.nome}</span>
-                    <Button
-                      size="sm"
-                      variant="outline"
+                  <div key={idx} style={{ 
+                    padding: '10px 12px', 
+                    marginBottom: 8, 
+                    background: '#f9fafb', 
+                    borderRadius: 8,
+                    borderLeft: '3px solid #ef4444',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}>
+                    <span style={{ fontWeight: 600, color: '#1f2937' }}>{n.nome}</span>
+                    <button
                       onClick={() => {
                         setTimbraturaForm({ employee_id: n.employee_id, tipo: 'entrata' });
                         setShowTimbratura(true);
                       }}
+                      style={{
+                        padding: '4px 10px',
+                        background: '#3b82f6',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: 4,
+                        fontSize: 12,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 4
+                      }}
                     >
-                      <Clock className="h-3 w-3 mr-1" />
-                      Timbra
-                    </Button>
+                      ⏱️ Timbra
+                    </button>
                   </div>
                 ))
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       )}
 
