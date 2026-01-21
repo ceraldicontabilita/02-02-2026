@@ -218,6 +218,9 @@ app.include_router(liquidazione_iva.router, prefix="/api", tags=["Liquidazione I
 app.include_router(riconciliazione_automatica.router, prefix="/api/riconciliazione-auto", tags=["Riconciliazione Automatica"])
 app.include_router(riconciliazione_intelligente_api.router, prefix="/api/riconciliazione-intelligente", tags=["Riconciliazione Intelligente"])
 
+# --- Attendance Module ---
+app.include_router(attendance.router, prefix="/api/attendance", tags=["Attendance"])
+
 # --- To-Do Module ---
 app.include_router(todo.router, prefix="/api/todo", tags=["To-Do"])
 
