@@ -125,7 +125,9 @@ class TestConfermaPagamento:
         )
         assert response.status_code == 400
         data = response.json()
-        assert "non trovata" in data.get("detail", "").lower()
+        # Error message can be in 'detail' or 'message' field
+        error_msg = (data.get("detail", "") or data.get("message", "")).lower()
+        assert "non trovata" in error_msg
         print("✅ Errore per fattura non trovata")
     
     def test_conferma_pagamento_cassa_success(self):
