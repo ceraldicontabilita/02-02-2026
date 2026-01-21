@@ -267,6 +267,94 @@ async def delete_banca_by_source(source: str) -> Dict[str, Any]:
     return {"message": f"Eliminati {result.deleted_count} movimenti con source={source}"}
 
 
+@router.delete("/cassa/elimina-movimenti-bancari-errati")
+async def elimina_movimenti_bancari_da_cassa() -> Dict[str, Any]:
+    """
+    Elimina i movimenti bancari importati erroneamente in Prima Nota Cassa.
+    
+    REGOLA CONTABILE:
+    L'estratto conto bancario NON deve mai essere importato in Prima Nota Cassa.
+    - Estratto conto → estratto_conto_movimenti (alimenta Prima Nota Banca)
+    - Prima Nota Cassa → solo contanti, POS manuali, corrispettivi
+    
+    Questo endpoint elimina i movimenti con source='csv_import' che contengono
+    keywords bancarie come: POS, BONIFICO, SEPA, INCAS, ADDEBITO, ACCREDITO, F24, STIPEND
+    """
+    db = Database.get_db()
+    
+    # Keywords che identificano movimenti bancari (da estratto conto)
+    bancari_keywords = ['INC.POS', 'INCAS', 'BONIFICO', 'SEPA', 'ADDEBITO', 'ACCREDITO', 
+                        'NUMIA', 'BANK', 'BANCA', 'VERS. CONTANTI', 'PRELIEVO ATM']
+    
+    # Trova tutti i movimenti csv_import che sono bancari
+    movimenti_csv = await db[COLLECTION_PRIMA_NOTA_CASSA].find(
+        {"source": "csv_import"},
+        {"_id": 1, "descrizione": 1, "importo": 1, "data": 1}
+    ).to_list(10000)
+    
+    ids_da_eliminare = []
+    for m in movimenti_csv:
+        desc = (m.get('descrizione') or '').upper()
+        if any(kw in desc for kw in bancari_keywords):
+            ids_da_eliminare.append(m['_id'])
+    
+    # Elimina i movimenti identificati
+    deleted_count = 0
+    if ids_da_eliminare:
+        result = await db[COLLECTION_PRIMA_NOTA_CASSA].delete_many({"_id": {"$in": ids_da_eliminare}})
+        deleted_count = result.deleted_count
+    
+    # Conta quanti csv_import rimangono (potrebbero essere legittimi)
+    remaining = await db[COLLECTION_PRIMA_NOTA_CASSA].count_documents({"source": "csv_import"})
+    
+    return {
+        "success": True,
+        "message": f"Eliminati {deleted_count} movimenti bancari da Prima Nota Cassa",
+        "movimenti_eliminati": deleted_count,
+        "csv_import_rimanenti": remaining,
+        "regola": "L'estratto conto bancario va importato SOLO in estratto_conto_movimenti, NON in prima_nota_cassa"
+    }
+
+
+@router.get("/cassa/analisi-movimenti-bancari-errati")
+async def analisi_movimenti_bancari_errati_in_cassa() -> Dict[str, Any]:
+    """
+    Analizza i movimenti che potrebbero essere stati importati erroneamente in Prima Nota Cassa.
+    Utile per preview prima della cancellazione.
+    """
+    db = Database.get_db()
+    
+    bancari_keywords = ['INC.POS', 'INCAS', 'BONIFICO', 'SEPA', 'ADDEBITO', 'ACCREDITO', 
+                        'NUMIA', 'BANK', 'BANCA', 'VERS. CONTANTI', 'PRELIEVO ATM']
+    
+    movimenti_csv = await db[COLLECTION_PRIMA_NOTA_CASSA].find(
+        {"source": "csv_import"},
+        {"_id": 0, "id": 1, "descrizione": 1, "importo": 1, "data": 1, "tipo": 1}
+    ).to_list(10000)
+    
+    bancari = []
+    non_bancari = []
+    totale_importo_bancari = 0
+    
+    for m in movimenti_csv:
+        desc = (m.get('descrizione') or '').upper()
+        if any(kw in desc for kw in bancari_keywords):
+            bancari.append(m)
+            totale_importo_bancari += abs(m.get('importo', 0))
+        else:
+            non_bancari.append(m)
+    
+    return {
+        "totale_csv_import": len(movimenti_csv),
+        "movimenti_bancari_errati": len(bancari),
+        "movimenti_legittimi": len(non_bancari),
+        "totale_importo_da_eliminare": round(totale_importo_bancari, 2),
+        "campione_bancari": bancari[:10],
+        "campione_legittimi": non_bancari[:5],
+        "azione_consigliata": "DELETE /api/prima-nota/cassa/elimina-movimenti-bancari-errati"
+    }
+
+
 # ============== ENDPOINT PARAMETRICI (DOPO I BULK DELETE) ==============
 
 @router.delete("/cassa/{movimento_id}")
