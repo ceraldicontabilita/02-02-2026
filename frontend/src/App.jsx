@@ -145,6 +145,9 @@ const NAV_ITEMS = [
   // === TO-DO ===
   { to: "/todo", label: "To-Do", icon: "📝", short: "ToDo" },
   
+  // === ATTENDANCE ===
+  { to: "/attendance", label: "Presenze", icon: "⏰", short: "Pres.", isNew: true },
+  
   // === STRUMENTI ===
   { 
     label: "Strumenti", 
