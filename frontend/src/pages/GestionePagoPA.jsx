@@ -233,47 +233,57 @@ export default function GestionePagoPA() {
         presente nella ricevuta PagoPA e li associa automaticamente. Puoi anche associare manualmente 
         cliccando su una ricevuta non associata.
       </div>
-      </Alert>
-
       {/* Categorie Pagamenti CBILL */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">📋 Tipologie Pagamenti CBILL</CardTitle>
-          <CardDescription>
+      <div style={{ 
+        background: 'white', 
+        borderRadius: 12, 
+        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+        overflow: 'hidden',
+        marginBottom: 20
+      }}>
+        <div style={{ 
+          padding: '16px 20px', 
+          background: '#f8fafc', 
+          borderBottom: '1px solid #e5e7eb'
+        }}>
+          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#1f2937' }}>
+            📋 Tipologie Pagamenti CBILL
+          </h2>
+          <p style={{ margin: '4px 0 0 0', fontSize: 13, color: '#6b7280' }}>
             Pagamenti identificabili tramite codice CBILL per rateizzazioni e tributi
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          </p>
+        </div>
+        <div style={{ padding: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
             {/* INPS */}
-            <div className="p-4 rounded-lg border-2 border-blue-200 bg-blue-50">
-              <div className="flex items-center gap-3 mb-2">
-                <span className="text-2xl">🏛️</span>
+            <div style={{ padding: 16, borderRadius: 8, border: '2px solid #bfdbfe', background: '#eff6ff' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+                <span style={{ fontSize: 24 }}>🏛️</span>
                 <div>
-                  <h4 className="font-semibold text-blue-900">Rateizzi INPS</h4>
-                  <p className="text-xs text-blue-700">Dilazioni contributive</p>
+                  <h4 style={{ margin: 0, fontWeight: 600, color: '#1e40af' }}>Rateizzi INPS</h4>
+                  <p style={{ margin: 0, fontSize: 12, color: '#3b82f6' }}>Dilazioni contributive</p>
                 </div>
               </div>
-              <ul className="text-sm text-blue-800 space-y-1">
-                <li>• Rateizzazione contributi</li>
-                <li>• Avvisi di addebito</li>
-                <li>• Sanzioni INPS</li>
+              <ul style={{ fontSize: 13, color: '#1e40af', margin: 0, paddingLeft: 16 }}>
+                <li>Rateizzazione contributi</li>
+                <li>Avvisi di addebito</li>
+                <li>Sanzioni INPS</li>
               </ul>
             </div>
 
             {/* Agenzia Entrate */}
-            <div className="p-4 rounded-lg border-2 border-green-200 bg-green-50">
-              <div className="flex items-center gap-3 mb-2">
-                <span className="text-2xl">📊</span>
+            <div style={{ padding: 16, borderRadius: 8, border: '2px solid #bbf7d0', background: '#f0fdf4' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+                <span style={{ fontSize: 24 }}>📊</span>
                 <div>
-                  <h4 className="font-semibold text-green-900">Agenzia delle Entrate</h4>
-                  <p className="text-xs text-green-700">Imposte e tributi</p>
+                  <h4 style={{ margin: 0, fontWeight: 600, color: '#166534' }}>Agenzia delle Entrate</h4>
+                  <p style={{ margin: 0, fontSize: 12, color: '#22c55e' }}>Imposte e tributi</p>
                 </div>
               </div>
-              <ul className="text-sm text-green-800 space-y-1">
-                <li>• Rateizzazione imposte</li>
-                <li>• Avvisi bonari</li>
-                <li>• Comunicazioni di irregolarità</li>
+              <ul style={{ fontSize: 13, color: '#166534', margin: 0, paddingLeft: 16 }}>
+                <li>Rateizzazione imposte</li>
+                <li>Avvisi bonari</li>
+                <li>Comunicazioni di irregolarità</li>
               </ul>
             </div>
 
