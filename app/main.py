@@ -199,6 +199,7 @@ app.include_router(codici_tributari.router, prefix="/api/codici-tributari", tags
 app.include_router(accounting_main.router, prefix="/api/accounting", tags=["Accounting"])
 app.include_router(accounting_extended.router, prefix="/api/accounting", tags=["Accounting Extended"])
 app.include_router(accounting_f24.router, prefix="/api/f24", tags=["F24 Accounting"])
+app.include_router(accounting_engine_api.router, prefix="/api/accounting-engine", tags=["Accounting Engine - Partita Doppia"])
 app.include_router(prima_nota.router, prefix="/api/prima-nota", tags=["Prima Nota"])
 app.include_router(prima_nota_automation.router, prefix="/api/prima-nota-auto", tags=["Prima Nota Automation"])
 app.include_router(prima_nota_salari.router, prefix="/api/prima-nota-salari", tags=["Prima Nota Salari"])
