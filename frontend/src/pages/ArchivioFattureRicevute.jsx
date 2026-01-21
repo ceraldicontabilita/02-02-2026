@@ -558,18 +558,22 @@ export default function ArchivioFatture() {
                       const isRiconciliata = f.riconciliato === true;
                       
                       return (
-                      <tr key={f.id} style={{ borderBottom: '1px solid #f3f4f6', background: idx % 2 === 0 ? 'white' : '#f9fafb' }}>
-                        <td style={{ padding: '10px 12px' }}>{formatDateIT(f.invoice_date || f.data_documento)}</td>
-                        <td style={{ padding: '10px 12px', fontWeight: '500' }}>{f.invoice_number || f.numero_documento}</td>
-                        <td style={{ padding: '10px 12px' }}>
-                          <div style={{ fontWeight: '500', fontSize: 13 }}>{f.supplier_name || f.fornitore_ragione_sociale}</div>
-                          <div style={{ fontSize: 11, color: '#6b7280' }}>{f.supplier_vat || f.fornitore_partita_iva}</div>
+                      <tr key={f.id} style={{ 
+                        background: idx % 2 === 0 ? 'white' : '#f8fafc', 
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                        transition: 'background 0.2s'
+                      }}>
+                        <td style={{ padding: '14px 16px', borderRadius: '8px 0 0 8px' }}>{formatDateIT(f.invoice_date || f.data_documento)}</td>
+                        <td style={{ padding: '14px 16px', fontWeight: '600', color: '#1e3a5f' }}>{f.invoice_number || f.numero_documento}</td>
+                        <td style={{ padding: '14px 16px' }}>
+                          <div style={{ fontWeight: '500', fontSize: 13, color: '#374151' }}>{f.supplier_name || f.fornitore_ragione_sociale}</div>
+                          <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>{f.supplier_vat || f.fornitore_partita_iva}</div>
                         </td>
-                        <td style={{ padding: '10px 12px', textAlign: 'right' }}>{formatCurrency(f.imponibile)}</td>
-                        <td style={{ padding: '10px 12px', textAlign: 'right' }}>{formatCurrency(f.iva)}</td>
-                        <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 'bold' }}>{formatCurrency(f.total_amount || f.importo_totale)}</td>
-                        <td style={{ padding: '10px 12px', textAlign: 'center' }}>
-                          <div style={{ display: 'flex', gap: 4, justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
+                        <td style={{ padding: '14px 16px', textAlign: 'right', fontFamily: 'monospace' }}>{formatCurrency(f.imponibile)}</td>
+                        <td style={{ padding: '14px 16px', textAlign: 'right', fontFamily: 'monospace', color: '#6b7280' }}>{formatCurrency(f.iva)}</td>
+                        <td style={{ padding: '14px 16px', textAlign: 'right', fontWeight: 'bold', fontFamily: 'monospace', color: '#1e3a5f' }}>{formatCurrency(f.total_amount || f.importo_totale)}</td>
+                        <td style={{ padding: '14px 16px', textAlign: 'center', borderRadius: '0 8px 8px 0' }}>
+                          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', alignItems: 'center' }}>
                             {/* Badge RICONCILIATA se applicabile */}
                             {isRiconciliata && (
                               <span 
