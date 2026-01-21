@@ -129,6 +129,9 @@ const ContabilitaAvanzata = lazy(() => import("./pages/ContabilitaAvanzata.jsx")
 const Scadenze = lazy(() => import("./pages/Scadenze.jsx"));
 const CodiciTributari = lazy(() => import("./pages/CodiciTributari.jsx"));
 
+// === TO-DO ===
+const ToDo = lazy(() => import("./pages/ToDo.jsx"));
+
 // === MAGAZZINO ===
 const Magazzino = lazy(() => import("./pages/Magazzino.jsx"));
 const Inventario = lazy(() => import("./pages/Inventario.jsx"));
