@@ -162,7 +162,7 @@ async def get_lista_verbali(
     targa: Optional[str] = Query(None, description="Filtra per targa veicolo"),
     da_riconciliare: bool = Query(False, description="Solo verbali da riconciliare")
 ) -> Dict[str, Any]:
-    """Lista verbali con filtri."""
+    """Lista verbali con filtri. OTTIMIZZATO per escludere PDF."""
     db = Database.get_db()
     
     try:
@@ -181,7 +181,31 @@ async def get_lista_verbali(
                 {"stato": "salvato"}
             ]
         
-        verbali = await db["verbali_noleggio"].find(query).sort("created_at", -1).to_list(500)
+        # PROIEZIONE: escludi campi pesanti (PDF base64)
+        projection = {
+            "_id": 1,
+            "id": 1,
+            "numero_verbale": 1,
+            "targa": 1,
+            "importo": 1,
+            "stato": 1,
+            "data_violazione": 1,
+            "scadenza_pagamento": 1,
+            "driver_nome": 1,
+            "driver_id": 1,
+            "veicolo_id": 1,
+            "fattura_id": 1,
+            "fattura_numero": 1,
+            "pagamento_id": 1,
+            "data_pagamento": 1,
+            "note": 1,
+            "source": 1,
+            "created_at": 1,
+            "updated_at": 1
+            # ESCLUDI: pdf_content, pdf_base64, email_body, attachment_content, etc.
+        }
+        
+        verbali = await db["verbali_noleggio"].find(query, projection).sort("created_at", -1).to_list(500)
         
         return {
             "success": True,
