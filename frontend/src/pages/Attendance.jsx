@@ -27,7 +27,7 @@ import {
 import {
   Clock, Users, UserCheck, UserX, Calendar, Plus,
   RefreshCw, Check, X, Sun, Moon, Coffee, LogIn, LogOut,
-  FileText, Timer, AlertTriangle
+  FileText, Timer, AlertTriangle, History, TrendingUp
 } from 'lucide-react';
 import { toast } from 'sonner';
 
