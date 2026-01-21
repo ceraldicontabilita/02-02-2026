@@ -347,38 +347,58 @@ export default function Attendance() {
       </div>
 
       {/* Contatori */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4 text-center">
-            <Users className="h-8 w-8 mx-auto text-gray-600 mb-2" />
-            <div className="text-3xl font-bold text-gray-800">{riepilogo.totale_dipendenti || 0}</div>
-            <div className="text-sm text-gray-600">Totale Dipendenti</div>
-          </CardContent>
-        </Card>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 15, marginBottom: 20 }}>
+        <div style={{ 
+          background: 'white', 
+          borderRadius: 10, 
+          padding: 15, 
+          textAlign: 'center',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          borderLeft: '4px solid #6b7280'
+        }}>
+          <Users className="h-7 w-7 mx-auto text-gray-600 mb-1" />
+          <div style={{ fontSize: 28, fontWeight: 'bold', color: '#374151' }}>{riepilogo.totale_dipendenti || 0}</div>
+          <div style={{ fontSize: 12, color: '#6b7280' }}>Totale Dipendenti</div>
+        </div>
         
-        <Card className="bg-green-50 border-green-200">
-          <CardContent className="p-4 text-center">
-            <UserCheck className="h-8 w-8 mx-auto text-green-600 mb-2" />
-            <div className="text-3xl font-bold text-green-600">{riepilogo.presenti || 0}</div>
-            <div className="text-sm text-green-700">Presenti</div>
-          </CardContent>
-        </Card>
+        <div style={{ 
+          background: '#f0fdf4', 
+          borderRadius: 10, 
+          padding: 15, 
+          textAlign: 'center',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          borderLeft: '4px solid #22c55e'
+        }}>
+          <UserCheck className="h-7 w-7 mx-auto text-green-600 mb-1" />
+          <div style={{ fontSize: 28, fontWeight: 'bold', color: '#16a34a' }}>{riepilogo.presenti || 0}</div>
+          <div style={{ fontSize: 12, color: '#15803d' }}>Presenti</div>
+        </div>
         
-        <Card className="bg-orange-50 border-orange-200">
-          <CardContent className="p-4 text-center">
-            <Calendar className="h-8 w-8 mx-auto text-orange-600 mb-2" />
-            <div className="text-3xl font-bold text-orange-600">{riepilogo.assenti || 0}</div>
-            <div className="text-sm text-orange-700">Assenti</div>
-          </CardContent>
-        </Card>
+        <div style={{ 
+          background: '#fff7ed', 
+          borderRadius: 10, 
+          padding: 15, 
+          textAlign: 'center',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          borderLeft: '4px solid #f97316'
+        }}>
+          <Calendar className="h-7 w-7 mx-auto text-orange-600 mb-1" />
+          <div style={{ fontSize: 28, fontWeight: 'bold', color: '#ea580c' }}>{riepilogo.assenti || 0}</div>
+          <div style={{ fontSize: 12, color: '#c2410c' }}>Assenti</div>
+        </div>
         
-        <Card className="bg-red-50 border-red-200">
-          <CardContent className="p-4 text-center">
-            <AlertTriangle className="h-8 w-8 mx-auto text-red-600 mb-2" />
-            <div className="text-3xl font-bold text-red-600">{riepilogo.non_timbrato || 0}</div>
-            <div className="text-sm text-red-700">Non Timbrato</div>
-          </CardContent>
-        </Card>
+        <div style={{ 
+          background: '#fef2f2', 
+          borderRadius: 10, 
+          padding: 15, 
+          textAlign: 'center',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          borderLeft: '4px solid #ef4444'
+        }}>
+          <AlertTriangle className="h-7 w-7 mx-auto text-red-600 mb-1" />
+          <div style={{ fontSize: 28, fontWeight: 'bold', color: '#dc2626' }}>{riepilogo.non_timbrato || 0}</div>
+          <div style={{ fontSize: 12, color: '#b91c1c' }}>Non Timbrato</div>
+        </div>
       </div>
 
       {/* Tabs */}
