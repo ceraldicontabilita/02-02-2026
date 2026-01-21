@@ -128,6 +128,26 @@ export default function VerbaliRiconciliazione() {
         >
           {scanning ? '⏳ Scanning...' : '🔍 Scan Fatture Noleggiatori'}
         </button>
+        <button
+          onClick={handleCollegaDriver}
+          disabled={collegandoDriver}
+          style={{
+            padding: '12px 24px',
+            background: 'rgba(255,255,255,0.2)',
+            color: 'white',
+            border: '2px solid white',
+            borderRadius: 8,
+            cursor: collegandoDriver ? 'wait' : 'pointer',
+            fontWeight: 'bold',
+            fontSize: 14,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8
+          }}
+          data-testid="btn-collega-driver"
+        >
+          {collegandoDriver ? '⏳ Collegando...' : '👤 Associa Driver'}
+        </button>
       </div>
 
       {/* Messaggi */}
