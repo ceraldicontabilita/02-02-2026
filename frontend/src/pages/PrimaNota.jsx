@@ -972,7 +972,28 @@ function MovementsTable({ movimenti, tipo, loading, formatEuro, formatDate, onDe
           onClose={() => setEditingMovimento(null)}
           onSave={(updated) => {
             onEdit(updated);
-            setEditingMovimento(null);
+            // Trova l'indice del movimento corrente e passa al successivo
+            const currentIndex = currentWithBalance.findIndex(m => m.id === editingMovimento.id);
+            const nextIndex = currentIndex + 1;
+            if (nextIndex < currentWithBalance.length) {
+              // C'è un movimento successivo nella pagina corrente
+              setEditingMovimento(currentWithBalance[nextIndex]);
+            } else if (currentPage < totalPages) {
+              // Vai alla pagina successiva e apri il primo movimento
+              setCurrentPage(currentPage + 1);
+              // Il movimento verrà aperto dopo il cambio pagina
+              setTimeout(() => {
+                const firstOfNextPage = movimentiWithBalance[start + itemsPerPage];
+                if (firstOfNextPage) {
+                  setEditingMovimento(firstOfNextPage);
+                } else {
+                  setEditingMovimento(null);
+                }
+              }, 100);
+            } else {
+              // Fine lista
+              setEditingMovimento(null);
+            }
           }}
         />
       )}
