@@ -723,13 +723,13 @@ class RiconciliazioneIntelligente:
                 "message": "Operazione bloccata come CASSA. Non verrà più verificata automaticamente."
             }
         
-        # Applica spostamento
+        # Applica spostamento - normalizza campi
         movimento_cassa_id = fattura.get("prima_nota_cassa_id")
-        importo = float(fattura.get("importo_totale", 0))
-        numero_fattura = fattura.get("numero_documento", "")
-        fornitore_nome = fattura.get("fornitore_ragione_sociale", "")
+        importo = float(fattura.get("importo_totale") or fattura.get("total_amount") or 0)
+        numero_fattura = fattura.get("numero_documento") or fattura.get("invoice_number") or ""
+        fornitore_nome = fattura.get("fornitore_ragione_sociale") or fattura.get("supplier_name") or ""
         fornitore_id = fattura.get("fornitore_id")
-        data_pagamento = fattura.get("data_pagamento_confermato") or fattura.get("data_documento")
+        data_pagamento = fattura.get("data_pagamento_confermato") or fattura.get("data_documento") or fattura.get("invoice_date")
         
         # 1. Recupera e elimina movimento da cassa
         if movimento_cassa_id:
