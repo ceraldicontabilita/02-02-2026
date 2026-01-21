@@ -133,6 +133,9 @@ const CodiciTributari = lazy(() => import("./pages/CodiciTributari.jsx"));
 // === TO-DO ===
 const ToDo = lazy(() => import("./pages/ToDo.jsx"));
 
+// === ATTENDANCE ===
+const Attendance = lazy(() => import("./pages/Attendance.jsx"));
+
 // === MAGAZZINO ===
 const Magazzino = lazy(() => import("./pages/Magazzino.jsx"));
 const Inventario = lazy(() => import("./pages/Inventario.jsx"));
