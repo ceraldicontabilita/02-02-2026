@@ -210,13 +210,33 @@ export default function RegoleContabili() {
             },
             {
               nome: 'Prima Nota Banca',
-              descrizione: 'Registra tutti i movimenti bancari: bonifici in uscita (fornitori), bonifici in entrata, addebiti diretti, POS.',
-              campi: ['collection: prima_nota_banca', 'tipo: entrata/uscita']
+              descrizione: 'Registra tutti i movimenti bancari: bonifici in uscita (fornitori), bonifici in entrata, addebiti diretti, POS. I dati provengono da estratto_conto_movimenti.',
+              campi: ['collection: estratto_conto_movimenti', 'tipo: entrata/uscita']
             },
             {
               nome: 'Collegamento Documenti',
               descrizione: 'Ogni movimento può essere collegato al documento di origine: Fattura, Corrispettivo XML, F24, Bonifico PDF.',
               campi: ['fattura_id', 'corrispettivo_id', 'f24_id', 'bonifico_pdf_id', 'xml_filename']
+            }
+          ]
+        },
+        {
+          titolo: '⚠️ REGOLA IMPORTAZIONE ESTRATTO CONTO',
+          regole: [
+            {
+              nome: 'Estratto Conto → SOLO Prima Nota Banca',
+              descrizione: 'L\'estratto conto bancario deve essere importato ESCLUSIVAMENTE nella collection estratto_conto_movimenti, che alimenta la Prima Nota Banca. NON deve MAI essere importato in Prima Nota Cassa.',
+              campi: ['✅ estratto_conto_movimenti (corretto)', '❌ prima_nota_cassa (ERRORE)']
+            },
+            {
+              nome: 'Prima Nota Cassa - Contenuto Corretto',
+              descrizione: 'Prima Nota Cassa deve contenere SOLO: Corrispettivi XML (incassi giornalieri), POS manuali (inseriti dall\'utente prima dell\'XML), Pagamenti fornitori in contanti, Versamenti/Prelievi manuali.',
+              campi: ['Corrispettivi', 'POS manuali', 'Pagamenti contanti', 'Versamenti']
+            },
+            {
+              nome: 'Correzione Errori',
+              descrizione: 'Se sono stati importati erroneamente movimenti bancari in Prima Nota Cassa, usare l\'endpoint: DELETE /api/prima-nota/cassa/elimina-movimenti-bancari-errati',
+              campi: ['DELETE /api/prima-nota/cassa/elimina-movimenti-bancari-errati']
             }
           ]
         },
