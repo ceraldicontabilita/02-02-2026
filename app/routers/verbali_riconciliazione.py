@@ -42,6 +42,28 @@ def extract_verbale_from_description(description: str) -> Optional[str]:
         r'verbale[:\s]+([A-Z]\d{8,})',
         r'([A-Z]\d{10,})',  # Pattern generico tipo A25111540620
         r'([B]\d{10,})',    # Pattern B + 10 cifre
+        r'Nr[:\s]*([A-Z]\d{8,})',  # Nr: A25111540620
+        r'Numero[:\s]*([A-Z]\d{8,})',  # Numero: A25111540620
+    ]
+    
+    for pattern in patterns:
+        match = re.search(pattern, description, re.IGNORECASE)
+        if match:
+            return match.group(1).upper()
+    
+    return None
+
+
+def extract_targa_from_description(description: str) -> Optional[str]:
+    """Estrae la targa dalla descrizione fattura."""
+    if not description:
+        return None
+    
+    # Pattern per targhe italiane
+    patterns = [
+        r'TARGA[:\s]*([A-Z]{2}\d{3}[A-Z]{2})',  # TARGA: GE911SC
+        r'targa[:\s]*([A-Z]{2}\d{3}[A-Z]{2})',
+        r'([A-Z]{2}\d{3}[A-Z]{2})',  # Pattern generico targa
     ]
     
     for pattern in patterns:
