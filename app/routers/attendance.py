@@ -604,22 +604,22 @@ async def get_ore_lavorate(
 async def get_dashboard_presenze(data: str = Query(None)) -> Dict[str, Any]:
     """
     Dashboard presenze giornaliera.
-    Mostra solo dipendenti attivi (attivo: true e stato != dimesso)
+    Mostra solo dipendenti attivi (status: attivo)
     """
     db = Database.get_db()
     
     if not data:
         data = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     
-    # Solo dipendenti attivi e non dimessi
+    # Solo dipendenti con status "attivo" (esclude dimessi, cessati, inattivi)
     dipendenti = await db["employees"].find(
         {
-            "$and": [
-                {"$or": [{"attivo": True}, {"attivo": {"$exists": False}}]},
-                {"stato": {"$nin": ["dimesso", "cessato", "inattivo"]}}
+            "$or": [
+                {"status": "attivo"},
+                {"status": {"$exists": False}}  # Per retrocompatibilità
             ]
         },
-        {"_id": 0, "id": 1, "nome": 1, "cognome": 1, "nome_completo": 1}
+        {"_id": 0, "id": 1, "nome": 1, "cognome": 1, "nome_completo": 1, "name": 1}
     ).to_list(500)
     
     # Timbrature di oggi
