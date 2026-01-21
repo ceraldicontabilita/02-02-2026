@@ -21,31 +21,66 @@ router = APIRouter()
 
 @router.get("")
 async def list_employees(skip: int = 0, limit: int = 10000) -> List[Dict[str, Any]]:
-    """Lista dipendenti con ultimi dati busta paga."""
+    """Lista dipendenti con ultimi dati busta paga. OTTIMIZZATO con aggregazione."""
     db = Database.get_db()
+    
+    # Prima carica tutti i dipendenti
     employees = await db[Collections.EMPLOYEES].find({}, {"_id": 0}).skip(skip).limit(limit).to_list(limit)
     
+    if not employees:
+        return []
+    
+    # Estrai tutti i codici fiscali
+    codici_fiscali = [emp.get("codice_fiscale") for emp in employees if emp.get("codice_fiscale")]
+    
+    # Query SINGOLA per ottenere l'ultimo cedolino di ogni dipendente
+    if codici_fiscali:
+        pipeline = [
+            {"$match": {"codice_fiscale": {"$in": codici_fiscali}}},
+            {"$sort": {"anno": -1, "mese": -1}},
+            {"$group": {
+                "_id": "$codice_fiscale",
+                "netto_mese": {"$first": "$netto_mese"},
+                "retribuzione_netta": {"$first": "$retribuzione_netta"},
+                "lordo": {"$first": "$lordo"},
+                "retribuzione_lorda": {"$first": "$retribuzione_lorda"},
+                "ore_lavorate": {"$first": "$ore_lavorate"},
+                "ore_ordinarie": {"$first": "$ore_ordinarie"},
+                "periodo": {"$first": "$periodo"},
+                "mese": {"$first": "$mese"},
+                "anno": {"$first": "$anno"},
+                "qualifica": {"$first": "$qualifica"}
+            }}
+        ]
+        
+        cedolini_map = {}
+        async for doc in db["cedolini"].aggregate(pipeline):
+            cedolini_map[doc["_id"]] = doc
+    else:
+        cedolini_map = {}
+    
+    # Arricchisci dipendenti con dati cedolini
     for emp in employees:
         cf = emp.get("codice_fiscale")
-        if cf:
-            # Usa collection cedolini unificata
-            latest = await db["cedolini"].find_one({"codice_fiscale": cf}, {"_id": 0}, sort=[("anno", -1), ("mese", -1)])
-            if latest:
-                emp["netto"] = latest.get("netto_mese", latest.get("retribuzione_netta", 0))
-                emp["lordo"] = latest.get("lordo", latest.get("retribuzione_lorda", 0))
-                emp["ore_ordinarie"] = latest.get("ore_lavorate", latest.get("ore_ordinarie", 0))
-                # Handle mese/anno as strings or integers
-                mese_val = latest.get('mese', 0)
-                anno_val = latest.get('anno', 0)
-                try:
-                    mese_int = int(mese_val) if mese_val else 0
-                    anno_int = int(anno_val) if anno_val else 0
-                    fallback_periodo = f"{mese_int:02d}/{anno_int}"
-                except (ValueError, TypeError):
-                    fallback_periodo = f"{mese_val}/{anno_val}"
-                emp["ultimo_periodo"] = latest.get("periodo", fallback_periodo)
-                if not emp.get("role") or emp.get("role") == "-":
-                    emp["role"] = latest.get("qualifica", emp.get("role", ""))
+        if cf and cf in cedolini_map:
+            latest = cedolini_map[cf]
+            emp["netto"] = latest.get("netto_mese") or latest.get("retribuzione_netta", 0)
+            emp["lordo"] = latest.get("lordo") or latest.get("retribuzione_lorda", 0)
+            emp["ore_ordinarie"] = latest.get("ore_lavorate") or latest.get("ore_ordinarie", 0)
+            
+            # Handle mese/anno
+            mese_val = latest.get('mese', 0)
+            anno_val = latest.get('anno', 0)
+            try:
+                mese_int = int(mese_val) if mese_val else 0
+                anno_int = int(anno_val) if anno_val else 0
+                fallback_periodo = f"{mese_int:02d}/{anno_int}"
+            except (ValueError, TypeError):
+                fallback_periodo = f"{mese_val}/{anno_val}"
+            emp["ultimo_periodo"] = latest.get("periodo") or fallback_periodo
+            
+            if not emp.get("role") or emp.get("role") == "-":
+                emp["role"] = latest.get("qualifica") or emp.get("role", "")
         
         if not emp.get("nome_completo"):
             emp["nome_completo"] = emp.get("name") if emp.get("name") and emp.get("name") != emp.get("ultimo_periodo") else None
