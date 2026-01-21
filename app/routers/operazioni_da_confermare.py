@@ -1683,11 +1683,12 @@ async def cerca_fatture_per_associazione(
 @router.get("/smart/cerca-stipendi")
 async def cerca_stipendi_per_associazione(
     dipendente: Optional[str] = Query(None, description="Nome dipendente"),
-    importo: Optional[float] = Query(None, description="Importo da matchare")
+    importo: Optional[float] = Query(None, description="Importo da matchare"),
+    limit: int = Query(50, description="Limite risultati")
 ) -> Dict[str, Any]:
     """
     Cerca stipendi per associazione manuale.
-    Se non viene passato il nome dipendente, restituisce tutti i dipendenti attivi.
+    OTTIMIZZATO: limita i risultati e usa proiezione.
     """
     from app.services.riconciliazione_smart import cerca_dipendente_per_nome, cerca_stipendi_non_pagati, trova_combinazioni_somma
     
@@ -1712,7 +1713,7 @@ async def cerca_stipendi_per_associazione(
                     "netto": s.get("netto"),
                     "lordo": s.get("lordo"),
                     "pagato": s.get("pagato", False)
-                } for s in stipendi],
+                } for s in stipendi[:limit]],
                 "totale": len(stipendi)
             }
             
@@ -1726,25 +1727,43 @@ async def cerca_stipendi_per_associazione(
                     "id": s.get("id"),
                     "periodo": s.get("periodo"),
                     "netto": s.get("netto")
-                } for s in combo] for combo in combos]
+                } for s in combo] for combo in combos[:5]]
             
             return result
     
-    # Cerca TUTTI i cedolini non pagati direttamente (non passando per employees)
-    # Questo cattura anche i cedolini importati senza dipendente_id valido
+    # Cerca cedolini non pagati con PROIEZIONE minima e LIMIT
+    target_importo = abs(importo) if importo else None
+    
+    projection = {
+        "_id": 0,
+        "id": 1,
+        "dipendente_id": 1,
+        "dipendente_nome": 1,
+        "dipendente": 1,
+        "nome_completo": 1,
+        "periodo": 1,
+        "anno": 1,
+        "mese": 1,
+        "netto": 1,
+        "netto_in_busta": 1,
+        "lordo": 1,
+        "lordo_totale": 1
+    }
+    
     all_cedolini = await db["cedolini"].find(
         {"$or": [{"pagato": False}, {"pagato": {"$exists": False}}]},
-        {"_id": 0}
-    ).to_list(500)
+        projection
+    ).limit(limit * 2).to_list(limit * 2)  # Carica solo il doppio del limit
     
     results = []
-    target_importo = abs(importo) if importo else None
     
     for ced in all_cedolini:
         netto = ced.get("netto") or ced.get("netto_in_busta") or 0
+        if netto <= 0:
+            continue
+            
         lordo = ced.get("lordo") or ced.get("lordo_totale") or 0
         
-        # Nome dipendente - cerca in vari campi
         dip_nome = (
             ced.get("dipendente_nome") or 
             ced.get("dipendente") or 
@@ -1752,21 +1771,19 @@ async def cerca_stipendi_per_associazione(
             "Dipendente sconosciuto"
         )
         
-        # Periodo
         periodo = ced.get("periodo")
         if not periodo and (ced.get("anno") or ced.get("mese")):
             anno = ced.get("anno", "")
             mese = str(ced.get("mese", "")).zfill(2)
             periodo = f"{anno}-{mese}" if anno else f"?-{mese}"
         
-        # Data dal periodo
         data = None
         if periodo:
             try:
                 parts = periodo.split("-")
                 if len(parts) == 2:
                     anno_p, mese_p = parts
-                    data = f"{anno_p}-{mese_p.zfill(2)}-28"  # Ultimo giorno del mese circa
+                    data = f"{anno_p}-{mese_p.zfill(2)}-28"
             except:
                 pass
         
@@ -1786,20 +1803,20 @@ async def cerca_stipendi_per_associazione(
             "is_match": is_match,
             "_diff": diff
         })
+        
+        if len(results) >= limit:
+            break
     
-    # Filtra cedolini senza importo
-    results = [r for r in results if r.get('netto', 0) > 0]
-    
-    # Ordina per match esatto prima, poi per differenza importo
+    # Ordina per match esatto prima
     if target_importo:
         results.sort(key=lambda x: (not x.get("is_match", False), x.get("_diff", 9999999)))
     
-    # Rimuovi campo _diff dal risultato
+    # Rimuovi campo _diff
     for r in results:
         r.pop("_diff", None)
     
     return {
-        "stipendi": results,
+        "stipendi": results[:limit],
         "totale": len(results)
     }
 
