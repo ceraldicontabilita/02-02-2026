@@ -225,6 +225,7 @@ const router = createBrowserRouter([
       { path: "tfr", element: <LazyPage><TFR /></LazyPage> },
       { path: "noleggio-auto", element: <LazyPage><NoleggioAuto /></LazyPage> },
       { path: "verbali-noleggio/:numeroVerbale", element: <LazyPage><DettaglioVerbale /></LazyPage> },
+      { path: "verbali-riconciliazione", element: <LazyPage><VerbaliRiconciliazione /></LazyPage> },
       
       // === FISCO & TRIBUTI ===
       { path: "iva", element: <LazyPage><IVA /></LazyPage> },
