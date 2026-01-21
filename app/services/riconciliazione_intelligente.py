@@ -474,12 +474,12 @@ class RiconciliazioneIntelligente:
             risultato["error"] = f"Fattura già in stato '{stato_attuale}', non modificabile"
             return risultato
         
-        # Dati fattura
-        importo = float(fattura.get("importo_totale", 0))
-        data_fattura = fattura.get("data_documento", "")
-        numero_fattura = fattura.get("numero_documento", "")
-        fornitore_nome = fattura.get("fornitore_ragione_sociale", "")
-        fornitore_piva = fattura.get("fornitore_partita_iva", "")
+        # Dati fattura - normalizza campi (supporta formato legacy e standard)
+        importo = float(fattura.get("importo_totale") or fattura.get("total_amount") or 0)
+        data_fattura = fattura.get("data_documento") or fattura.get("invoice_date") or ""
+        numero_fattura = fattura.get("numero_documento") or fattura.get("invoice_number") or ""
+        fornitore_nome = fattura.get("fornitore_ragione_sociale") or fattura.get("supplier_name") or ""
+        fornitore_piva = fattura.get("fornitore_partita_iva") or fattura.get("supplier_vat") or ""
         fornitore_id = fattura.get("fornitore_id")
         
         if not data_pagamento:
