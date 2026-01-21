@@ -62,25 +62,57 @@ async def get_dashboard_riconciliazione() -> Dict[str, Any]:
         stati_count[stato.value] = count
     
     # Fatture in attesa conferma (limit 50)
-    in_attesa = await db["invoices"].find(
+    # Nota: I campi possono essere sia nel formato standard che nel formato legacy
+    in_attesa_raw = await db["invoices"].find(
         {"stato_riconciliazione": StatoRiconciliazione.IN_ATTESA_CONFERMA.value},
-        {"_id": 0, "id": 1, "numero_documento": 1, "data_documento": 1, 
-         "importo_totale": 1, "fornitore_ragione_sociale": 1, "metodo_pagamento": 1}
-    ).sort("data_documento", -1).to_list(50)
+        {"_id": 0}
+    ).sort([("data_documento", -1), ("invoice_date", -1)]).to_list(50)
+    
+    # Normalizza i campi
+    in_attesa = []
+    for f in in_attesa_raw:
+        in_attesa.append({
+            "id": f.get("id"),
+            "numero_documento": f.get("numero_documento") or f.get("invoice_number"),
+            "data_documento": f.get("data_documento") or f.get("invoice_date"),
+            "importo_totale": f.get("importo_totale") or f.get("total_amount", 0),
+            "fornitore_ragione_sociale": f.get("fornitore_ragione_sociale") or f.get("supplier_name"),
+            "metodo_pagamento": f.get("metodo_pagamento")
+        })
     
     # Spostamenti proposti (limit 50)
-    spostamenti = await db["invoices"].find(
+    spostamenti_raw = await db["invoices"].find(
         {"stato_riconciliazione": StatoRiconciliazione.DA_VERIFICARE_SPOSTAMENTO.value},
-        {"_id": 0, "id": 1, "numero_documento": 1, "data_documento": 1,
-         "importo_totale": 1, "fornitore_ragione_sociale": 1, "match_estratto_proposto": 1}
-    ).sort("data_documento", -1).to_list(50)
+        {"_id": 0}
+    ).sort([("data_documento", -1), ("invoice_date", -1)]).to_list(50)
+    
+    spostamenti = []
+    for f in spostamenti_raw:
+        spostamenti.append({
+            "id": f.get("id"),
+            "numero_documento": f.get("numero_documento") or f.get("invoice_number"),
+            "data_documento": f.get("data_documento") or f.get("invoice_date"),
+            "importo_totale": f.get("importo_totale") or f.get("total_amount", 0),
+            "fornitore_ragione_sociale": f.get("fornitore_ragione_sociale") or f.get("supplier_name"),
+            "match_estratto_proposto": f.get("match_estratto_proposto")
+        })
     
     # Match incerti (limit 50)
-    match_incerti = await db["invoices"].find(
+    match_incerti_raw = await db["invoices"].find(
         {"stato_riconciliazione": StatoRiconciliazione.DA_VERIFICARE_MATCH_INCERTO.value},
-        {"_id": 0, "id": 1, "numero_documento": 1, "data_documento": 1,
-         "importo_totale": 1, "fornitore_ragione_sociale": 1, "match_estratto_proposto": 1}
-    ).sort("data_documento", -1).to_list(50)
+        {"_id": 0}
+    ).sort([("data_documento", -1), ("invoice_date", -1)]).to_list(50)
+    
+    match_incerti = []
+    for f in match_incerti_raw:
+        match_incerti.append({
+            "id": f.get("id"),
+            "numero_documento": f.get("numero_documento") or f.get("invoice_number"),
+            "data_documento": f.get("data_documento") or f.get("invoice_date"),
+            "importo_totale": f.get("importo_totale") or f.get("total_amount", 0),
+            "fornitore_ragione_sociale": f.get("fornitore_ragione_sociale") or f.get("supplier_name"),
+            "match_estratto_proposto": f.get("match_estratto_proposto")
+        })
     
     # Sospese (limit 50)
     sospese = await db["invoices"].find(
