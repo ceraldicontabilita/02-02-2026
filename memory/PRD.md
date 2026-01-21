@@ -1,7 +1,65 @@
 # PRD – TechRecon Accounting System
 ## Product Requirements Document (PRD)
 ## TechRecon Accounting System – Versione Super Articolata
-### Ultimo aggiornamento: 20 Gennaio 2026 (Sessione 3 - Fix Formati Data)
+### Ultimo aggiornamento: 21 Gennaio 2026 (Sessione 4 - Sistema Contabile Partita Doppia)
+
+---
+
+## ⚠️ REGOLA CRITICA PER AGENTE: RISPONDERE PRIMA DI PROCEDERE
+
+**L'agente DEVE SEMPRE:**
+1. Spiegare cosa farà PRIMA di modificare il codice
+2. Chiedere conferma all'utente
+3. Non procedere automaticamente senza approvazione
+4. Aggiornare questo PRD ad ogni modifica significativa
+
+---
+
+## 📚 REGOLE DI RAGIONERIA GENERALE (PARTITA DOPPIA)
+
+### Principio Fondamentale
+Ogni operazione contabile deve essere registrata in DUE conti:
+- Uno in **DARE**
+- Uno in **AVERE**
+- **DARE = AVERE** (sempre, tolleranza ±0.01€)
+
+### Data del Movimento
+- ✅ Usare **DATA DOCUMENTO** (data della fattura)
+- ❌ NON usare data di ricezione
+- La competenza contabile è determinata dalla data dell'operazione economica
+
+### DARE vs AVERE
+| Operazione | DARE | AVERE |
+|------------|------|-------|
+| Incasso corrispettivo | Cassa | Ricavi vendite |
+| Incasso POS | Cassa POS | Ricavi vendite |
+| Pagamento fornitore (bonifico) | Debiti fornitori | Banca |
+| Pagamento fornitore (contanti) | Debiti fornitori | Cassa |
+| **Rimborso RICEVUTO** | **Banca/Cassa** | Rimborsi attivi |
+| Pagamento F24 | Debiti tributari | Banca |
+| Pagamento verbale/multa | Sanzioni | Banca |
+
+### Tipi di Conti (Piano dei Conti Italiano)
+- **ATTIVO (1.x.x)**: Cassa, Banca, Crediti - aumenta in DARE
+- **PASSIVO (3.x.x)**: Debiti, Capitale - aumenta in AVERE
+- **COSTO (6.x.x)**: Acquisti, Spese - aumenta in DARE
+- **RICAVO (7.x.x)**: Vendite, Prestazioni - aumenta in AVERE
+
+### Prima Nota Cassa vs Banca
+| Prima Nota CASSA | Prima Nota BANCA |
+|------------------|------------------|
+| ✅ Corrispettivi XML | ✅ Bonifici |
+| ✅ POS (incassi carte) | ✅ Addebiti SEPA |
+| ❌ Bonifici | ✅ F24 |
+| ❌ F24 | ✅ Stipendi |
+| ❌ Stipendi | ✅ RID |
+
+### API Motore Contabile
+- `GET /api/accounting-engine/piano-conti` - Piano dei conti italiano
+- `GET /api/accounting-engine/regole-contabili` - Regole operative
+- `POST /api/accounting-engine/valida-operazione` - Validazione automatica
+- `POST /api/accounting-engine/storna-operazione/{id}` - Storno (reversibile)
+- `POST /api/accounting-engine/analizza-prima-nota/{tipo}` - Analisi errori
 
 ---
 
