@@ -735,3 +735,183 @@ async def imposta_stato_fattura(payload: Dict[str, Any]) -> Dict[str, Any]:
         "fattura_id": fattura_id,
         "nuovo_stato": stato
     }
+
+
+
+# =============================================================================
+# CASI ESTESI
+# =============================================================================
+
+@router.post("/pagamento-parziale")
+async def registra_pagamento_parziale(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Registra un pagamento parziale su una fattura.
+    
+    Caso 19: Fattura €1.000, pago €500, residuo €500.
+    
+    Payload:
+    {
+        "fattura_id": "uuid",
+        "importo_pagato": 500.00,
+        "metodo": "cassa" | "banca",
+        "data_pagamento": "YYYY-MM-DD" (opzionale),
+        "note": "Note" (opzionale)
+    }
+    """
+    db = Database.get_db()
+    service = get_riconciliazione_service(db)
+    
+    fattura_id = payload.get("fattura_id")
+    importo = payload.get("importo_pagato")
+    metodo = payload.get("metodo", "").lower()
+    data = payload.get("data_pagamento")
+    note = payload.get("note", "")
+    
+    if not fattura_id or not importo or metodo not in ["cassa", "banca"]:
+        raise HTTPException(status_code=400, detail="fattura_id, importo_pagato e metodo obbligatori")
+    
+    risultato = await service.registra_pagamento_parziale(
+        fattura_id=fattura_id,
+        importo_pagato=float(importo),
+        metodo=metodo,
+        data_pagamento=data,
+        note=note
+    )
+    
+    if not risultato.get("success"):
+        raise HTTPException(status_code=400, detail=risultato.get("error"))
+    
+    return risultato
+
+
+@router.post("/applica-nota-credito")
+async def applica_nota_credito(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Applica una nota di credito a una fattura.
+    
+    Caso 21: Fattura €1.000, NC €200, dovuto €800.
+    
+    Payload:
+    {
+        "fattura_id": "uuid",
+        "nota_credito_id": "uuid" (se in sistema),
+        "importo_nc": 200.00 (se inserimento manuale),
+        "numero_nc": "NC/123" (se inserimento manuale)
+    }
+    """
+    db = Database.get_db()
+    service = get_riconciliazione_service(db)
+    
+    risultato = await service.applica_nota_credito(
+        fattura_id=payload.get("fattura_id"),
+        nota_credito_id=payload.get("nota_credito_id"),
+        importo_nc=payload.get("importo_nc"),
+        numero_nc=payload.get("numero_nc")
+    )
+    
+    if not risultato.get("success"):
+        raise HTTPException(status_code=400, detail=risultato.get("error"))
+    
+    return risultato
+
+
+@router.post("/cerca-bonifico-cumulativo")
+async def cerca_bonifico_cumulativo(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Cerca fatture che matchano un bonifico cumulativo.
+    
+    Caso 23: Bonifico €3.000 per 3 fatture.
+    
+    Payload:
+    {
+        "importo_movimento": 3000.00,
+        "data_movimento": "2026-01-20",
+        "descrizione_movimento": "BONIFICO FORNITORE XYZ"
+    }
+    """
+    db = Database.get_db()
+    service = get_riconciliazione_service(db)
+    
+    risultato = await service.cerca_bonifico_cumulativo(
+        importo_movimento=payload.get("importo_movimento", 0),
+        data_movimento=payload.get("data_movimento", ""),
+        descrizione_movimento=payload.get("descrizione_movimento", "")
+    )
+    
+    return {
+        "success": True,
+        **risultato
+    }
+
+
+@router.post("/riconcilia-bonifico-cumulativo")
+async def riconcilia_bonifico_cumulativo(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Riconcilia un bonifico cumulativo con multiple fatture.
+    
+    Payload:
+    {
+        "movimento_id": "uuid",
+        "fatture_ids": ["uuid1", "uuid2", "uuid3"]
+    }
+    """
+    db = Database.get_db()
+    service = get_riconciliazione_service(db)
+    
+    movimento_id = payload.get("movimento_id")
+    fatture_ids = payload.get("fatture_ids", [])
+    
+    if not movimento_id or not fatture_ids:
+        raise HTTPException(status_code=400, detail="movimento_id e fatture_ids obbligatori")
+    
+    risultato = await service.riconcilia_bonifico_cumulativo(
+        movimento_id=movimento_id,
+        fatture_ids=fatture_ids
+    )
+    
+    if not risultato.get("success"):
+        raise HTTPException(status_code=400, detail=risultato.get("error"))
+    
+    return risultato
+
+
+@router.post("/pagamento-con-sconto")
+async def registra_pagamento_con_sconto(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Registra un pagamento con sconto cassa.
+    
+    Caso 31: Fattura €1.000, pago €980 (sconto 2%).
+    
+    Payload:
+    {
+        "fattura_id": "uuid",
+        "importo_pagato": 980.00,
+        "metodo": "cassa" | "banca",
+        "percentuale_sconto": 2.0 (opzionale, calcolata se omessa),
+        "data_pagamento": "YYYY-MM-DD" (opzionale)
+    }
+    """
+    db = Database.get_db()
+    service = get_riconciliazione_service(db)
+    
+    fattura_id = payload.get("fattura_id")
+    importo = payload.get("importo_pagato")
+    metodo = payload.get("metodo", "").lower()
+    percentuale = payload.get("percentuale_sconto")
+    data = payload.get("data_pagamento")
+    
+    if not fattura_id or not importo or metodo not in ["cassa", "banca"]:
+        raise HTTPException(status_code=400, detail="fattura_id, importo_pagato e metodo obbligatori")
+    
+    risultato = await service.registra_pagamento_con_sconto(
+        fattura_id=fattura_id,
+        importo_pagato=float(importo),
+        metodo=metodo,
+        percentuale_sconto=float(percentuale) if percentuale else None,
+        data_pagamento=data
+    )
+    
+    if not risultato.get("success"):
+        raise HTTPException(status_code=400, detail=risultato.get("error"))
+    
+    return risultato
