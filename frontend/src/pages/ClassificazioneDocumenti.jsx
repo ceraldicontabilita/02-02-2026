@@ -514,29 +514,54 @@ export default function ClassificazioneDocumenti() {
 
                 {/* Cleanup */}
                 {scanResults.email_non_classificate > 0 && (
-                  <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                    <div className="flex items-center justify-between">
+                  <div style={{ 
+                    marginTop: 16, 
+                    padding: 12, 
+                    background: '#fef2f2', 
+                    border: '1px solid #fecaca', 
+                    borderRadius: 8 
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <div>
-                        <span className="text-red-700 font-medium">
+                        <span style={{ color: '#b91c1c', fontWeight: 500 }}>
                           {scanResults.email_non_classificate} email non classificate
                         </span>
-                        <p className="text-sm text-red-600 mt-1">
+                        <p style={{ fontSize: 14, color: '#dc2626', margin: '4px 0 0 0' }}>
                           Queste email non corrispondono a nessuna regola e possono essere eliminate.
                         </p>
                       </div>
-                      <div className="flex gap-2">
+                      <div style={{ display: 'flex', gap: 8 }}>
                         <button
                           onClick={() => handleCleanup(false)}
-                          className="px-3 py-1.5 text-sm border border-red-300 text-red-700 rounded-lg hover:bg-red-100"
+                          style={{ 
+                            padding: '6px 12px', 
+                            fontSize: 14, 
+                            border: '1px solid #fca5a5', 
+                            color: '#b91c1c', 
+                            background: 'transparent',
+                            borderRadius: 8,
+                            cursor: 'pointer'
+                          }}
                         >
                           Preview
                         </button>
                         <button
                           onClick={() => handleCleanup(true)}
                           data-testid="btn-cleanup"
-                          className="px-3 py-1.5 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center gap-1"
+                          style={{ 
+                            padding: '6px 12px', 
+                            fontSize: 14, 
+                            background: '#dc2626', 
+                            color: 'white', 
+                            border: 'none',
+                            borderRadius: 8, 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: 4,
+                            cursor: 'pointer'
+                          }}
                         >
-                          <Trash2 className="w-3 h-3" />
+                          <Trash2 style={{ width: 12, height: 12 }} />
                           Elimina
                         </button>
                       </div>
