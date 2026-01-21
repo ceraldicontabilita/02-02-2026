@@ -489,6 +489,265 @@ export default function Attendance() {
         </Card>
       )}
 
+      {/* Tab Storico Ore */}
+      {activeTab === 'storico' && (
+        <div className="space-y-4">
+          {/* Filtri */}
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex flex-wrap gap-4 items-end">
+                <div className="flex-1 min-w-[200px]">
+                  <Label>Dipendente *</Label>
+                  <Select
+                    value={storicoEmployee}
+                    onValueChange={setStoricoEmployee}
+                  >
+                    <SelectTrigger data-testid="select-storico-employee">
+                      <SelectValue placeholder="Seleziona dipendente" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {employees.map((e) => (
+                        <SelectItem key={e.id} value={e.id}>
+                          {e.nome} {e.cognome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="w-32">
+                  <Label>Mese</Label>
+                  <Select
+                    value={storicoMese.toString()}
+                    onValueChange={(v) => setStoricoMese(parseInt(v))}
+                  >
+                    <SelectTrigger data-testid="select-storico-mese">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[
+                        { value: '1', label: 'Gennaio' },
+                        { value: '2', label: 'Febbraio' },
+                        { value: '3', label: 'Marzo' },
+                        { value: '4', label: 'Aprile' },
+                        { value: '5', label: 'Maggio' },
+                        { value: '6', label: 'Giugno' },
+                        { value: '7', label: 'Luglio' },
+                        { value: '8', label: 'Agosto' },
+                        { value: '9', label: 'Settembre' },
+                        { value: '10', label: 'Ottobre' },
+                        { value: '11', label: 'Novembre' },
+                        { value: '12', label: 'Dicembre' }
+                      ].map((m) => (
+                        <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="w-28">
+                  <Label>Anno</Label>
+                  <Select
+                    value={storicoAnno.toString()}
+                    onValueChange={(v) => setStoricoAnno(parseInt(v))}
+                  >
+                    <SelectTrigger data-testid="select-storico-anno">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[2024, 2025, 2026, 2027].map((a) => (
+                        <SelectItem key={a} value={a.toString()}>{a}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <Button 
+                  onClick={loadStoricoOre} 
+                  disabled={loadingStorico}
+                  data-testid="btn-carica-storico"
+                >
+                  {loadingStorico ? (
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <History className="h-4 w-4 mr-2" />
+                  )}
+                  Carica Storico
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Risultati */}
+          {storicoData && (
+            <>
+              {/* Riepilogo */}
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <Card className="bg-blue-50 border-blue-200">
+                  <CardContent className="p-4 text-center">
+                    <Calendar className="h-6 w-6 mx-auto text-blue-600 mb-1" />
+                    <div className="text-2xl font-bold text-blue-700">
+                      {storicoData.riepilogo?.giorni_lavorati || 0}
+                    </div>
+                    <div className="text-xs text-blue-600">Giorni Lavorati</div>
+                  </CardContent>
+                </Card>
+                
+                <Card className="bg-green-50 border-green-200">
+                  <CardContent className="p-4 text-center">
+                    <Clock className="h-6 w-6 mx-auto text-green-600 mb-1" />
+                    <div className="text-2xl font-bold text-green-700">
+                      {storicoData.riepilogo?.ore_totali?.toFixed(1) || 0}
+                    </div>
+                    <div className="text-xs text-green-600">Ore Totali</div>
+                  </CardContent>
+                </Card>
+                
+                <Card className="bg-gray-50 border-gray-200">
+                  <CardContent className="p-4 text-center">
+                    <Timer className="h-6 w-6 mx-auto text-gray-600 mb-1" />
+                    <div className="text-2xl font-bold text-gray-700">
+                      {storicoData.riepilogo?.ore_ordinarie?.toFixed(1) || 0}
+                    </div>
+                    <div className="text-xs text-gray-600">Ore Ordinarie</div>
+                  </CardContent>
+                </Card>
+                
+                <Card className="bg-orange-50 border-orange-200">
+                  <CardContent className="p-4 text-center">
+                    <TrendingUp className="h-6 w-6 mx-auto text-orange-600 mb-1" />
+                    <div className="text-2xl font-bold text-orange-700">
+                      {storicoData.riepilogo?.ore_straordinario?.toFixed(1) || 0}
+                    </div>
+                    <div className="text-xs text-orange-600">Ore Straordinario</div>
+                  </CardContent>
+                </Card>
+                
+                <Card className="bg-purple-50 border-purple-200">
+                  <CardContent className="p-4 text-center">
+                    <Calendar className="h-6 w-6 mx-auto text-purple-600 mb-1" />
+                    <div className="text-2xl font-bold text-purple-700">
+                      {storicoData.riepilogo?.ore_assenza || 0}
+                    </div>
+                    <div className="text-xs text-purple-600">Ore Assenza</div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Dettaglio Giorni */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg">Dettaglio Giornaliero</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {storicoData.dettaglio_giorni?.length === 0 ? (
+                    <Alert>
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertDescription>Nessuna timbratura registrata per questo mese</AlertDescription>
+                    </Alert>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b bg-gray-50">
+                            <th className="text-left p-2">Data</th>
+                            <th className="text-center p-2">Entrata</th>
+                            <th className="text-center p-2">Uscita</th>
+                            <th className="text-right p-2">Ore Ordinarie</th>
+                            <th className="text-right p-2">Straordinario</th>
+                            <th className="text-right p-2 font-bold">Totale</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {storicoData.dettaglio_giorni?.map((g, idx) => (
+                            <tr key={idx} className="border-b hover:bg-gray-50">
+                              <td className="p-2 font-medium">{formatDate(g.data)}</td>
+                              <td className="p-2 text-center">
+                                {g.entrata ? (
+                                  <span className="text-green-600">
+                                    <LogIn className="h-3 w-3 inline mr-1" />
+                                    {formatTime(g.entrata)}
+                                  </span>
+                                ) : '-'}
+                              </td>
+                              <td className="p-2 text-center">
+                                {g.uscita ? (
+                                  <span className="text-red-600">
+                                    <LogOut className="h-3 w-3 inline mr-1" />
+                                    {formatTime(g.uscita)}
+                                  </span>
+                                ) : '-'}
+                              </td>
+                              <td className="p-2 text-right">{g.ore_ordinarie?.toFixed(2) || '-'}</td>
+                              <td className="p-2 text-right">
+                                {g.ore_straordinario > 0 ? (
+                                  <span className="text-orange-600 font-medium">
+                                    +{g.ore_straordinario.toFixed(2)}
+                                  </span>
+                                ) : '-'}
+                              </td>
+                              <td className="p-2 text-right font-bold">{g.ore_totali?.toFixed(2) || '-'}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                        <tfoot>
+                          <tr className="bg-gray-100 font-bold">
+                            <td colSpan="3" className="p-2">TOTALE MESE</td>
+                            <td className="p-2 text-right">{storicoData.riepilogo?.ore_ordinarie?.toFixed(2)}</td>
+                            <td className="p-2 text-right text-orange-600">
+                              {storicoData.riepilogo?.ore_straordinario > 0 ? 
+                                `+${storicoData.riepilogo?.ore_straordinario?.toFixed(2)}` : '-'}
+                            </td>
+                            <td className="p-2 text-right">{storicoData.riepilogo?.ore_totali?.toFixed(2)}</td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Assenze del mese */}
+              {storicoData.assenze?.length > 0 && (
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg">Assenze nel Periodo</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      {storicoData.assenze.map((a, idx) => (
+                        <div key={idx} className="flex justify-between items-center p-2 bg-purple-50 rounded">
+                          <div>
+                            <Badge variant="outline" className="mr-2">{a.tipo}</Badge>
+                            <span className="text-sm">
+                              {formatDate(a.data_inizio)} - {formatDate(a.data_fine)}
+                            </span>
+                          </div>
+                          <div className="text-right">
+                            <span className="font-medium">{a.giorni_totali} giorni</span>
+                            <span className="text-gray-500 text-sm ml-2">({a.ore_totali} ore)</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </>
+          )}
+
+          {/* Placeholder iniziale */}
+          {!storicoData && !loadingStorico && (
+            <Card>
+              <CardContent className="p-8 text-center text-gray-500">
+                <History className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>Seleziona un dipendente e clicca "Carica Storico" per visualizzare le ore lavorate</p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )
+
       {/* Modal Timbratura */}
       {showTimbratura && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
