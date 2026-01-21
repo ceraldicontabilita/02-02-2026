@@ -402,29 +402,65 @@ export default function Attendance() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b pb-2">
-        <Button
-          variant={activeTab === 'dashboard' ? 'default' : 'ghost'}
+      <div style={{ display: 'flex', gap: 8, borderBottom: '2px solid #e5e7eb', paddingBottom: 8, marginBottom: 20 }}>
+        <button
           onClick={() => setActiveTab('dashboard')}
+          style={{
+            padding: '10px 16px',
+            fontSize: 14,
+            fontWeight: activeTab === 'dashboard' ? 'bold' : 'normal',
+            borderRadius: '8px 8px 0 0',
+            border: 'none',
+            background: activeTab === 'dashboard' ? '#1e3a5f' : 'transparent',
+            color: activeTab === 'dashboard' ? 'white' : '#6b7280',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6
+          }}
         >
-          <Users className="h-4 w-4 mr-2" />
+          <Users className="h-4 w-4" />
           Presenze Oggi
-        </Button>
-        <Button
-          variant={activeTab === 'richieste' ? 'default' : 'ghost'}
+        </button>
+        <button
           onClick={() => setActiveTab('richieste')}
+          style={{
+            padding: '10px 16px',
+            fontSize: 14,
+            fontWeight: activeTab === 'richieste' ? 'bold' : 'normal',
+            borderRadius: '8px 8px 0 0',
+            border: 'none',
+            background: activeTab === 'richieste' ? '#1e3a5f' : 'transparent',
+            color: activeTab === 'richieste' ? 'white' : '#6b7280',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6
+          }}
         >
-          <FileText className="h-4 w-4 mr-2" />
+          <FileText className="h-4 w-4" />
           Richieste Pending ({richiestePending.length})
-        </Button>
-        <Button
-          variant={activeTab === 'storico' ? 'default' : 'ghost'}
+        </button>
+        <button
           onClick={() => setActiveTab('storico')}
+          style={{
+            padding: '10px 16px',
+            fontSize: 14,
+            fontWeight: activeTab === 'storico' ? 'bold' : 'normal',
+            borderRadius: '8px 8px 0 0',
+            border: 'none',
+            background: activeTab === 'storico' ? '#1e3a5f' : 'transparent',
+            color: activeTab === 'storico' ? 'white' : '#6b7280',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6
+          }}
           data-testid="tab-storico-ore"
         >
-          <History className="h-4 w-4 mr-2" />
+          <History className="h-4 w-4" />
           Storico Ore
-        </Button>
+        </button>
       </div>
 
       {/* Tab Presenze */}
