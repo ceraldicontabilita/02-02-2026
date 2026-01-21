@@ -1734,6 +1734,18 @@ async def cerca_stipendi_per_associazione(
     # Cerca cedolini non pagati con PROIEZIONE minima e LIMIT
     target_importo = abs(importo) if importo else None
     
+    # Cerca cedolini non pagati CON netto > 0 - query ottimizzata
+    query = {
+        "$and": [
+            {"$or": [{"pagato": False}, {"pagato": {"$exists": False}}]},
+            {"$or": [
+                {"netto": {"$gt": 0}},
+                {"netto_in_busta": {"$gt": 0}},
+                {"netto_mese": {"$gt": 0}}
+            ]}
+        ]
+    }
+    
     projection = {
         "_id": 0,
         "id": 1,
@@ -1752,17 +1764,12 @@ async def cerca_stipendi_per_associazione(
         "lordo_totale": 1
     }
     
-    all_cedolini = await db["cedolini"].find(
-        {"$or": [{"pagato": False}, {"pagato": {"$exists": False}}]},
-        projection
-    ).limit(limit * 2).to_list(limit * 2)  # Carica solo il doppio del limit
+    all_cedolini = await db["cedolini"].find(query, projection).limit(limit).to_list(limit)
     
     results = []
     
     for ced in all_cedolini:
         netto = ced.get("netto") or ced.get("netto_in_busta") or ced.get("netto_mese") or 0
-        if netto <= 0:
-            continue
             
         lordo = ced.get("lordo") or ced.get("lordo_totale") or 0
         
