@@ -247,33 +247,102 @@ export default function Attendance() {
   const riepilogo = dashboard?.riepilogo || {};
 
   return (
-    <div className="p-6 space-y-6 bg-gray-50 min-h-screen" data-testid="attendance-page">
+    <div style={{ padding: 20, maxWidth: 1600, margin: '0 auto' }} data-testid="attendance-page">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        marginBottom: 20,
+        padding: '15px 20px',
+        background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
+        borderRadius: 12,
+        color: 'white',
+        flexWrap: 'wrap',
+        gap: 10
+      }}>
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Gestione Presenze</h1>
-          <p className="text-gray-500 mt-1">Timbrature, ferie e permessi</p>
+          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 'bold' }}>👥 Gestione Presenze</h1>
+          <p style={{ margin: '4px 0 0 0', fontSize: 13, opacity: 0.9 }}>
+            Timbrature, ferie e permessi
+          </p>
         </div>
-        <div className="flex gap-2">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <Input
             type="date"
             value={dataSelezionata}
             onChange={(e) => setDataSelezionata(e.target.value)}
-            className="w-40"
+            style={{
+              padding: '8px 12px',
+              fontSize: 14,
+              borderRadius: 8,
+              border: 'none',
+              background: 'rgba(255,255,255,0.95)',
+              color: '#1e3a5f',
+              fontWeight: 'bold'
+            }}
             data-testid="date-selector"
           />
-          <Button variant="outline" onClick={loadData} data-testid="btn-refresh">
-            <RefreshCw className="h-4 w-4 mr-2" />
+          <button 
+            onClick={loadData}
+            style={{
+              padding: '10px 15px',
+              fontSize: 14,
+              fontWeight: 'bold',
+              borderRadius: 8,
+              border: 'none',
+              background: 'rgba(255,255,255,0.95)',
+              color: '#1e3a5f',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6
+            }}
+            data-testid="btn-refresh"
+          >
+            <RefreshCw className="h-4 w-4" />
             Aggiorna
-          </Button>
-          <Button onClick={() => setShowTimbratura(true)} data-testid="btn-nuova-timbratura">
-            <Clock className="h-4 w-4 mr-2" />
+          </button>
+          <button 
+            onClick={() => setShowTimbratura(true)}
+            style={{
+              padding: '10px 15px',
+              fontSize: 14,
+              fontWeight: 'bold',
+              borderRadius: 8,
+              border: 'none',
+              background: '#10b981',
+              color: 'white',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6
+            }}
+            data-testid="btn-nuova-timbratura"
+          >
+            <Clock className="h-4 w-4" />
             Nuova Timbratura
-          </Button>
-          <Button variant="secondary" onClick={() => setShowRichiesta(true)} data-testid="btn-nuova-richiesta">
-            <Calendar className="h-4 w-4 mr-2" />
+          </button>
+          <button 
+            onClick={() => setShowRichiesta(true)}
+            style={{
+              padding: '10px 15px',
+              fontSize: 14,
+              fontWeight: 'bold',
+              borderRadius: 8,
+              border: 'none',
+              background: 'rgba(255,255,255,0.2)',
+              color: 'white',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6
+            }}
+            data-testid="btn-nuova-richiesta"
+          >
+            <Calendar className="h-4 w-4" />
             Richiesta Assenza
-          </Button>
+          </button>
         </div>
       </div>
 
