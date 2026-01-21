@@ -247,7 +247,7 @@ export default function Attendance() {
   const riepilogo = dashboard?.riepilogo || {};
 
   return (
-    <div style={{ padding: 20, maxWidth: 1600, margin: '0 auto' }} data-testid="attendance-page">
+    <div style={{ padding: 20, maxWidth: 1400, margin: '0 auto' }} data-testid="attendance-page">
       {/* Header */}
       <div style={{ 
         display: 'flex', 
@@ -267,137 +267,158 @@ export default function Attendance() {
             Timbrature, ferie e permessi
           </p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <Input
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <input
             type="date"
             value={dataSelezionata}
             onChange={(e) => setDataSelezionata(e.target.value)}
             style={{
-              padding: '8px 12px',
+              padding: '10px 15px',
               fontSize: 14,
+              fontWeight: 'bold',
               borderRadius: 8,
               border: 'none',
               background: 'rgba(255,255,255,0.95)',
               color: '#1e3a5f',
-              fontWeight: 'bold'
+              cursor: 'pointer'
             }}
             data-testid="date-selector"
           />
-          <button 
-            onClick={loadData}
-            style={{
-              padding: '10px 15px',
-              fontSize: 14,
-              fontWeight: 'bold',
-              borderRadius: 8,
-              border: 'none',
-              background: 'rgba(255,255,255,0.95)',
-              color: '#1e3a5f',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6
-            }}
-            data-testid="btn-refresh"
-          >
-            <RefreshCw className="h-4 w-4" />
-            Aggiorna
-          </button>
-          <button 
-            onClick={() => setShowTimbratura(true)}
-            style={{
-              padding: '10px 15px',
-              fontSize: 14,
-              fontWeight: 'bold',
-              borderRadius: 8,
-              border: 'none',
-              background: '#10b981',
-              color: 'white',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6
-            }}
-            data-testid="btn-nuova-timbratura"
-          >
-            <Clock className="h-4 w-4" />
-            Nuova Timbratura
-          </button>
-          <button 
-            onClick={() => setShowRichiesta(true)}
-            style={{
-              padding: '10px 15px',
-              fontSize: 14,
-              fontWeight: 'bold',
-              borderRadius: 8,
-              border: 'none',
-              background: 'rgba(255,255,255,0.2)',
-              color: 'white',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6
-            }}
-            data-testid="btn-nuova-richiesta"
-          >
-            <Calendar className="h-4 w-4" />
-            Richiesta Assenza
-          </button>
+          <span style={{ 
+            padding: '10px 20px',
+            fontSize: 16,
+            fontWeight: 'bold',
+            borderRadius: 8,
+            background: 'rgba(255,255,255,0.9)',
+            color: '#1e3a5f',
+          }}>
+            {formatDate(dataSelezionata)}
+          </span>
         </div>
       </div>
 
-      {/* Contatori */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 15, marginBottom: 20 }}>
-        <div style={{ 
-          background: 'white', 
-          borderRadius: 10, 
-          padding: 15, 
-          textAlign: 'center',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-          borderLeft: '4px solid #6b7280'
-        }}>
-          <Users className="h-7 w-7 mx-auto text-gray-600 mb-1" />
-          <div style={{ fontSize: 28, fontWeight: 'bold', color: '#374151' }}>{riepilogo.totale_dipendenti || 0}</div>
-          <div style={{ fontSize: 12, color: '#6b7280' }}>Totale Dipendenti</div>
-        </div>
-        
-        <div style={{ 
-          background: '#f0fdf4', 
-          borderRadius: 10, 
-          padding: 15, 
-          textAlign: 'center',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-          borderLeft: '4px solid #22c55e'
-        }}>
-          <UserCheck className="h-7 w-7 mx-auto text-green-600 mb-1" />
-          <div style={{ fontSize: 28, fontWeight: 'bold', color: '#16a34a' }}>{riepilogo.presenti || 0}</div>
-          <div style={{ fontSize: 12, color: '#15803d' }}>Presenti</div>
-        </div>
-        
-        <div style={{ 
-          background: '#fff7ed', 
-          borderRadius: 10, 
-          padding: 15, 
-          textAlign: 'center',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-          borderLeft: '4px solid #f97316'
-        }}>
-          <Calendar className="h-7 w-7 mx-auto text-orange-600 mb-1" />
-          <div style={{ fontSize: 28, fontWeight: 'bold', color: '#ea580c' }}>{riepilogo.assenti || 0}</div>
-          <div style={{ fontSize: 12, color: '#c2410c' }}>Assenti</div>
-        </div>
-        
-        <div style={{ 
-          background: '#fef2f2', 
-          borderRadius: 10, 
-          padding: 15, 
-          textAlign: 'center',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-          borderLeft: '4px solid #ef4444'
-        }}>
-          <AlertTriangle className="h-7 w-7 mx-auto text-red-600 mb-1" />
-          <div style={{ fontSize: 28, fontWeight: 'bold', color: '#dc2626' }}>{riepilogo.non_timbrato || 0}</div>
-          <div style={{ fontSize: 12, color: '#b91c1c' }}>Non Timbrato</div>
+      {/* Azioni */}
+      <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap', alignItems: 'center' }}>
+        <button 
+          onClick={loadData}
+          style={{ 
+            padding: '10px 20px',
+            background: '#e5e7eb',
+            color: '#374151',
+            border: 'none',
+            borderRadius: 8,
+            cursor: 'pointer',
+            fontWeight: '600'
+          }}
+          data-testid="btn-refresh"
+        >
+          🔄 Aggiorna
+        </button>
+        <button 
+          onClick={() => setShowTimbratura(true)}
+          style={{ 
+            padding: '10px 20px',
+            background: '#10b981',
+            color: 'white',
+            border: 'none',
+            borderRadius: 8,
+            cursor: 'pointer',
+            fontWeight: '600'
+          }}
+          data-testid="btn-nuova-timbratura"
+        >
+          ⏱️ Nuova Timbratura
+        </button>
+        <button 
+          onClick={() => setShowRichiesta(true)}
+          style={{ 
+            padding: '10px 20px',
+            background: '#f59e0b',
+            color: 'white',
+            border: 'none',
+            borderRadius: 8,
+            cursor: 'pointer',
+            fontWeight: '600'
+          }}
+          data-testid="btn-nuova-richiesta"
+        >
+          📅 Richiesta Assenza
+        </button>
+        {richiestePending.length > 0 && (
+          <span style={{ 
+            padding: '8px 16px', 
+            background: '#fef3c7', 
+            color: '#92400e', 
+            borderRadius: 8,
+            fontSize: 13,
+            fontWeight: '600'
+          }}>
+            ⚠️ {richiestePending.length} richieste da approvare
+          </span>
+        )}
+      </div>
+
+      {/* Statistiche */}
+      <div style={{ 
+        background: 'white', 
+        borderRadius: 12, 
+        padding: 16, 
+        boxShadow: '0 2px 8px rgba(0,0,0,0.08)', 
+        marginBottom: 20 
+      }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12 }}>
+          <div style={{ 
+            background: 'white', 
+            borderRadius: 8, 
+            padding: '10px 12px', 
+            boxShadow: '0 1px 4px rgba(0,0,0,0.06)', 
+            borderLeft: '3px solid #6b7280' 
+          }}>
+            <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>👥 Dipendenti</div>
+            <div style={{ fontSize: 16, fontWeight: 'bold', color: '#374151' }}>{riepilogo.totale_dipendenti || 0}</div>
+          </div>
+          <div style={{ 
+            background: 'white', 
+            borderRadius: 8, 
+            padding: '10px 12px', 
+            boxShadow: '0 1px 4px rgba(0,0,0,0.06)', 
+            borderLeft: '3px solid #22c55e' 
+          }}>
+            <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>✅ Presenti</div>
+            <div style={{ fontSize: 16, fontWeight: 'bold', color: '#22c55e' }}>{riepilogo.presenti || 0}</div>
+          </div>
+          <div style={{ 
+            background: 'white', 
+            borderRadius: 8, 
+            padding: '10px 12px', 
+            boxShadow: '0 1px 4px rgba(0,0,0,0.06)', 
+            borderLeft: '3px solid #f97316' 
+          }}>
+            <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>📅 Assenti</div>
+            <div style={{ fontSize: 16, fontWeight: 'bold', color: '#f97316' }}>{riepilogo.assenti || 0}</div>
+          </div>
+          <div style={{ 
+            background: 'white', 
+            borderRadius: 8, 
+            padding: '10px 12px', 
+            boxShadow: '0 1px 4px rgba(0,0,0,0.06)', 
+            borderLeft: '3px solid #ef4444' 
+          }}>
+            <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>⚠️ Non Timbrato</div>
+            <div style={{ fontSize: 16, fontWeight: 'bold', color: '#ef4444' }}>{riepilogo.non_timbrato || 0}</div>
+          </div>
+          <div style={{ 
+            background: '#1e3a5f', 
+            borderRadius: 8, 
+            padding: '10px 12px', 
+            boxShadow: '0 1px 4px rgba(0,0,0,0.06)', 
+            color: 'white' 
+          }}>
+            <div style={{ fontSize: 11, opacity: 0.9, marginBottom: 4 }}>📊 In Ufficio</div>
+            <div style={{ fontSize: 16, fontWeight: 'bold' }}>
+              {dashboard?.presenti?.filter(p => p.in_ufficio)?.length || 0}
+            </div>
+          </div>
         </div>
       </div>
 
