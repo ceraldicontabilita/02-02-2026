@@ -282,7 +282,7 @@ export default function RiconciliazioneIntelligente() {
       }
     } catch (error) {
       console.error('Errore conferma:', error);
-      toast.error('Errore di comunicazione');
+      toast.error(error.response?.data?.detail || 'Errore di comunicazione');
     } finally {
       setActionLoading(false);
     }
@@ -292,19 +292,15 @@ export default function RiconciliazioneIntelligente() {
   const handleApplicaSpostamento = async (fatturaId, movimentoId) => {
     try {
       setActionLoading(true);
-      const res = await fetch(`${API_URL}/api/riconciliazione-intelligente/applica-spostamento`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          fattura_id: fatturaId, 
-          movimento_estratto_id: movimentoId,
-          conferma: true
-        })
+      const res = await api.post('/api/riconciliazione-intelligente/applica-spostamento', { 
+        fattura_id: fatturaId, 
+        movimento_estratto_id: movimentoId,
+        conferma: true
       });
       
-      const data = await res.json();
+      const data = res.data;
       
-      if (res.ok && data.success) {
+      if (data.success) {
         toast.success('Spostamento applicato: CASSA → BANCA');
         await loadDashboard();
       } else {
@@ -312,7 +308,7 @@ export default function RiconciliazioneIntelligente() {
       }
     } catch (error) {
       console.error('Errore spostamento:', error);
-      toast.error('Errore di comunicazione');
+      toast.error(error.response?.data?.detail || 'Errore di comunicazione');
     } finally {
       setActionLoading(false);
     }
@@ -322,19 +318,15 @@ export default function RiconciliazioneIntelligente() {
   const handleRifiutaSpostamento = async (fatturaId) => {
     try {
       setActionLoading(true);
-      const res = await fetch(`${API_URL}/api/riconciliazione-intelligente/applica-spostamento`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          fattura_id: fatturaId, 
-          movimento_estratto_id: null,
-          conferma: false
-        })
+      const res = await api.post('/api/riconciliazione-intelligente/applica-spostamento', { 
+        fattura_id: fatturaId, 
+        movimento_estratto_id: null,
+        conferma: false
       });
       
-      const data = await res.json();
+      const data = res.data;
       
-      if (res.ok && data.success) {
+      if (data.success) {
         toast.success('Operazione bloccata come CASSA');
         await loadDashboard();
       } else {
