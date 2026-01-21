@@ -101,6 +101,9 @@ from app.routers.accounting import (
     riconciliazione_automatica
 )
 
+# --- To-Do Module ---
+from app.routers import todo
+
 # --- Bank Module ---
 from app.routers.bank import (
     bank_main, bank_reconciliation, bank_statement_import,
