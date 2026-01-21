@@ -314,52 +314,59 @@ export default function GestioneInvoiceTronic() {
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-3 px-4 font-medium text-gray-500">Data Ricezione</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-500">Numero</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-500">Fornitore</th>
-                    <th className="text-right py-3 px-4 font-medium text-gray-500">Importo</th>
-                    <th className="text-center py-3 px-4 font-medium text-gray-500">Stato</th>
-                    <th className="text-center py-3 px-4 font-medium text-gray-500">Azioni</th>
+                  <tr style={{ borderBottom: '2px solid #e5e7eb', background: '#f9fafb' }}>
+                    <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 500, color: '#6b7280', fontSize: 13 }}>Data Ricezione</th>
+                    <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 500, color: '#6b7280', fontSize: 13 }}>Numero</th>
+                    <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 500, color: '#6b7280', fontSize: 13 }}>Fornitore</th>
+                    <th style={{ textAlign: 'right', padding: '12px 16px', fontWeight: 500, color: '#6b7280', fontSize: 13 }}>Importo</th>
+                    <th style={{ textAlign: 'center', padding: '12px 16px', fontWeight: 500, color: '#6b7280', fontSize: 13 }}>Stato</th>
+                    <th style={{ textAlign: 'center', padding: '12px 16px', fontWeight: 500, color: '#6b7280', fontSize: 13 }}>Azioni</th>
                   </tr>
                 </thead>
                 <tbody>
                   {fatture.map((fattura, idx) => (
-                    <tr key={fattura.id || idx} className="border-b hover:bg-gray-50">
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-gray-400" />
-                          {formatDateIT(fattura.data_ricezione) || '-'}
+                    <tr key={fattura.id || idx} style={{ borderBottom: '1px solid #e5e7eb' }}>
+                      <td style={{ padding: '12px 16px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          📅 {formatDateIT(fattura.data_ricezione) || '-'}
                         </div>
                       </td>
-                      <td className="py-3 px-4 font-mono text-sm">
+                      <td style={{ padding: '12px 16px', fontFamily: 'monospace', fontSize: 13 }}>
                         {fattura.numero || '-'}
                       </td>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-2">
-                          <Building2 className="h-4 w-4 text-gray-400" />
-                          {fattura.fornitore || '-'}
+                      <td style={{ padding: '12px 16px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          🏢 {fattura.fornitore || '-'}
                         </div>
                       </td>
-                      <td className="py-3 px-4 text-right font-medium">
+                      <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 500 }}>
                         {formatEuro((fattura.importo || 0))}
                       </td>
-                      <td className="py-3 px-4 text-center">
+                      <td style={{ padding: '12px 16px', textAlign: 'center' }}>
                         {fattura.stato === 'elaborata' ? (
-                          <Badge className="bg-green-100 text-green-800">Elaborata</Badge>
+                          <span style={{ padding: '4px 8px', background: '#dcfce7', color: '#166534', borderRadius: 4, fontSize: 12, fontWeight: 600 }}>✅ Elaborata</span>
                         ) : fattura.stato === 'errore' ? (
-                          <Badge variant="destructive">Errore</Badge>
+                          <span style={{ padding: '4px 8px', background: '#fee2e2', color: '#991b1b', borderRadius: 4, fontSize: 12, fontWeight: 600 }}>❌ Errore</span>
                         ) : (
-                          <Badge variant="outline">Da Elaborare</Badge>
+                          <span style={{ padding: '4px 8px', background: '#f3f4f6', color: '#374151', borderRadius: 4, fontSize: 12, fontWeight: 600 }}>⏳ Da Elaborare</span>
                         )}
                       </td>
-                      <td className="py-3 px-4 text-center">
-                        <Button variant="ghost" size="sm" data-testid={`view-fattura-${idx}`}>
-                          <ExternalLink className="h-4 w-4" />
-                        </Button>
+                      <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                        <button 
+                          style={{ 
+                            padding: '6px 10px', 
+                            background: 'transparent', 
+                            border: '1px solid #e5e7eb', 
+                            borderRadius: 6, 
+                            cursor: 'pointer' 
+                          }}
+                          data-testid={`view-fattura-${idx}`}
+                        >
+                          🔗
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -367,8 +374,8 @@ export default function GestioneInvoiceTronic() {
               </table>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
