@@ -328,6 +328,14 @@ export default function Attendance() {
           <FileText className="h-4 w-4 mr-2" />
           Richieste Pending ({richiestePending.length})
         </Button>
+        <Button
+          variant={activeTab === 'storico' ? 'default' : 'ghost'}
+          onClick={() => setActiveTab('storico')}
+          data-testid="tab-storico-ore"
+        >
+          <History className="h-4 w-4 mr-2" />
+          Storico Ore
+        </Button>
       </div>
 
       {/* Tab Presenze */}
