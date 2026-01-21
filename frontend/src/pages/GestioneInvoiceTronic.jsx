@@ -280,61 +280,36 @@ export default function GestioneInvoiceTronic() {
           </div>
         </div>
       </div>
-                  {fatture.filter(f => f.stato === 'da_elaborare').length}
-                </p>
-              </div>
-              <AlertCircle className="h-8 w-8 text-orange-500" />
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Elaborate</p>
-                <p className="text-2xl font-bold text-green-600">
-                  {fatture.filter(f => f.stato === 'elaborata').length}
-                </p>
-              </div>
-              <CheckCircle2 className="h-8 w-8 text-green-500" />
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Importo Totale</p>
-                <p className="text-2xl font-bold">
-                  {formatEuro(fatture.reduce((sum, f) => sum + (f.importo || 0), 0))}
-                </p>
-              </div>
-              <Euro className="h-8 w-8 text-purple-500" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
 
       {/* Lista Fatture */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Fatture Ricevute da SDI</CardTitle>
-          <CardDescription>
+      <div style={{ 
+        background: 'white', 
+        borderRadius: 12, 
+        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+        overflow: 'hidden'
+      }}>
+        <div style={{ 
+          padding: '16px 20px', 
+          background: '#f8fafc', 
+          borderBottom: '1px solid #e5e7eb'
+        }}>
+          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#1f2937' }}>
+            📄 Fatture Ricevute da SDI
+          </h2>
+          <p style={{ margin: '4px 0 0 0', fontSize: 13, color: '#6b7280' }}>
             {fatture.length} fatture nel sistema
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+          </p>
+        </div>
+        <div style={{ padding: 16 }}>
           {loading ? (
-            <div className="flex justify-center py-8">
-              <RefreshCw className="h-8 w-8 animate-spin text-gray-400" />
+            <div style={{ display: 'flex', justifyContent: 'center', padding: 32 }}>
+              <RefreshCw style={{ width: 32, height: 32, animation: 'spin 1s linear infinite', color: '#9ca3af' }} />
             </div>
           ) : fatture.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <FileText className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-              <p>Nessuna fattura ricevuta</p>
-              <p className="text-sm mt-2">
+            <div style={{ textAlign: 'center', padding: 32, color: '#9ca3af' }}>
+              <FileText style={{ width: 48, height: 48, margin: '0 auto 16px', opacity: 0.5 }} />
+              <p style={{ margin: 0 }}>Nessuna fattura ricevuta</p>
+              <p style={{ fontSize: 13, marginTop: 8 }}>
                 Le fatture arriveranno automaticamente quando i fornitori le invieranno al tuo codice destinatario
               </p>
             </div>
