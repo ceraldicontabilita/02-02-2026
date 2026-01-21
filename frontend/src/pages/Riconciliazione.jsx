@@ -191,11 +191,13 @@ export default function Riconciliazione() {
 
   const loadStats = async () => {
     setLoading(true);
+    setLoadError('');
     try {
-      const res = await api.get("/api/riconciliazione-auto/stats-riconciliazione");
+      const res = await api.get("/api/riconciliazione-auto/stats-riconciliazione", { timeout: 30000 });
       setStats(res.data);
     } catch (e) {
       console.error("Errore caricamento stats:", e);
+      setLoadError('Errore caricamento statistiche - riprova');
     } finally {
       setLoading(false);
     }
