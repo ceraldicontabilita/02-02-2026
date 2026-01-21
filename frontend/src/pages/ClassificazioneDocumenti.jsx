@@ -434,21 +434,33 @@ export default function ClassificazioneDocumenti() {
 
                 {/* Per categoria */}
                 {scanResults.per_categoria && Object.keys(scanResults.per_categoria).length > 0 && (
-                  <div className="mb-4">
-                    <h5 className="text-sm font-medium mb-2">Per Categoria:</h5>
-                    <div className="flex flex-wrap gap-2">
+                  <div style={{ marginBottom: 16 }}>
+                    <h5 style={{ fontSize: 14, fontWeight: 500, marginBottom: 8 }}>Per Categoria:</h5>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                       {Object.entries(scanResults.per_categoria).map(([cat, data]) => {
                         const config = getCategoryConfig(cat);
                         return (
                           <div 
                             key={cat}
-                            className="px-3 py-2 rounded-lg flex items-center gap-2"
-                            style={{ backgroundColor: config.bg, color: config.text }}
+                            style={{ 
+                              padding: '8px 12px', 
+                              borderRadius: 8, 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              gap: 8,
+                              backgroundColor: config.bg, 
+                              color: config.text 
+                            }}
                           >
-                            <span className="font-medium">{config.label}</span>
-                            <span className="bg-white/50 px-2 py-0.5 rounded text-sm">{data.count}</span>
-                            <ArrowRight className="w-3 h-3" />
-                            <span className="text-xs">{data.gestionale_section}</span>
+                            <span style={{ fontWeight: 500 }}>{config.label}</span>
+                            <span style={{ 
+                              background: 'rgba(255,255,255,0.5)', 
+                              padding: '2px 8px', 
+                              borderRadius: 4, 
+                              fontSize: 14 
+                            }}>{data.count}</span>
+                            <ArrowRight style={{ width: 12, height: 12 }} />
+                            <span style={{ fontSize: 12 }}>{data.gestionale_section}</span>
                           </div>
                         );
                       })}
@@ -458,23 +470,43 @@ export default function ClassificazioneDocumenti() {
 
                 {/* Azioni post-scansione */}
                 {!scanSettings.dry_run && scanResults.documenti_salvati > 0 && (
-                  <div className="flex gap-2">
+                  <div style={{ display: 'flex', gap: 8 }}>
                     <button
                       onClick={handleProcess}
                       disabled={processing}
                       data-testid="btn-process"
-                      className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center gap-2"
+                      style={{ 
+                        padding: '8px 16px', 
+                        background: processing ? '#9ca3af' : '#16a34a', 
+                        color: 'white', 
+                        border: 'none',
+                        borderRadius: 8, 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: 8,
+                        cursor: processing ? 'not-allowed' : 'pointer'
+                      }}
                     >
-                      <CheckCircle className="w-4 h-4" />
+                      <CheckCircle style={{ width: 16, height: 16 }} />
                       Processa Documenti
                     </button>
                     <button
                       onClick={handleAssociaTutti}
                       disabled={processing}
                       data-testid="btn-associa"
-                      className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg flex items-center gap-2"
+                      style={{ 
+                        padding: '8px 16px', 
+                        background: processing ? '#9ca3af' : '#9333ea', 
+                        color: 'white', 
+                        border: 'none',
+                        borderRadius: 8, 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: 8,
+                        cursor: processing ? 'not-allowed' : 'pointer'
+                      }}
                     >
-                      <ArrowRight className="w-4 h-4" />
+                      <ArrowRight style={{ width: 16, height: 16 }} />
                       Associa al Gestionale
                     </button>
                   </div>
