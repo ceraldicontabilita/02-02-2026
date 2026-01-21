@@ -578,17 +578,16 @@ export default function ArchivioFatture() {
                             {isRiconciliata && (
                               <span 
                                 style={{ 
-                                  padding: '4px 8px', 
+                                  padding: '6px 10px', 
                                   background: '#10b981', 
                                   color: 'white', 
-                                  borderRadius: 12, 
-                                  fontSize: 10, 
-                                  fontWeight: 'bold',
-                                  marginRight: 4
+                                  borderRadius: 6, 
+                                  fontSize: 11, 
+                                  fontWeight: 'bold'
                                 }}
                                 title="Fattura riconciliata con estratto conto - non modificabile"
                               >
-                                ✓ RICONCILIATA
+                                ✓ RICONC.
                               </span>
                             )}
                             
@@ -596,10 +595,10 @@ export default function ArchivioFatture() {
                               href={`/api/fatture-ricevute/fattura/${f.id}/view-assoinvoice`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              style={{ padding: '5px 8px', background: '#2196f3', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 11, fontWeight: 'bold', textDecoration: 'none' }}
+                              style={{ padding: '8px 12px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontWeight: '600', textDecoration: 'none' }}
                               title="Visualizza fattura"
                             >
-                              📄
+                              📄 Vedi
                             </a>
                             
                             {/* Pulsante Cassa - verde se attivo, grigio se non selezionato - PULSANTE GRANDE */}
