@@ -944,16 +944,48 @@ function MovementsTable({ movimenti, tipo, loading, formatEuro, formatDate, onDe
   const [spostando, setSpostando] = useState(null);
   const itemsPerPage = 50;
   
+  // FILTRI AVANZATI
+  const [filtroDescrizione, setFiltroDescrizione] = useState('');
+  const [filtroCategoria, setFiltroCategoria] = useState('');
+  const [filtroTipo, setFiltroTipo] = useState('');
+  const [filtroDareAvere, setFiltroDareAvere] = useState(''); // dare = entrata, avere = uscita
+  
+  // Lista categorie uniche
+  const categorieUniche = [...new Set(movimenti.map(m => m.categoria).filter(Boolean))].sort();
+  
   if (loading) {
     return <div style={{ textAlign: 'center', padding: 40, color: '#6b7280' }}>⏳ Caricamento...</div>;
   }
 
-  const totalPages = Math.ceil(movimenti.length / itemsPerPage);
+  // Applica filtri
+  let movimentiFiltrati = movimenti;
+  
+  if (filtroDescrizione) {
+    movimentiFiltrati = movimentiFiltrati.filter(m => 
+      (m.descrizione || '').toLowerCase().includes(filtroDescrizione.toLowerCase())
+    );
+  }
+  
+  if (filtroCategoria) {
+    movimentiFiltrati = movimentiFiltrati.filter(m => m.categoria === filtroCategoria);
+  }
+  
+  if (filtroTipo) {
+    movimentiFiltrati = movimentiFiltrati.filter(m => m.tipo === filtroTipo);
+  }
+  
+  if (filtroDareAvere === 'dare') {
+    movimentiFiltrati = movimentiFiltrati.filter(m => m.tipo === 'entrata');
+  } else if (filtroDareAvere === 'avere') {
+    movimentiFiltrati = movimentiFiltrati.filter(m => m.tipo === 'uscita');
+  }
+
+  const totalPages = Math.ceil(movimentiFiltrati.length / itemsPerPage);
   const start = (currentPage - 1) * itemsPerPage;
-  const _currentMovimenti = movimenti.slice(start, start + itemsPerPage);
+  const _currentMovimenti = movimentiFiltrati.slice(start, start + itemsPerPage);
 
   // Calculate running balance using reduce
-  const movimentiWithBalance = [...movimenti].reverse().reduce((acc, m) => {
+  const movimentiWithBalance = [...movimentiFiltrati].reverse().reduce((acc, m) => {
     const prevBalance = acc.length > 0 ? acc[acc.length - 1].saldoProgressivo : 0;
     const newBalance = m.tipo === 'entrata' ? prevBalance + m.importo : prevBalance - m.importo;
     acc.push({ ...m, saldoProgressivo: newBalance });
@@ -961,6 +993,15 @@ function MovementsTable({ movimenti, tipo, loading, formatEuro, formatDate, onDe
   }, []).reverse();
 
   const currentWithBalance = movimentiWithBalance.slice(start, start + itemsPerPage);
+  
+  // Reset pagina quando cambiano i filtri
+  const resetFilters = () => {
+    setFiltroDescrizione('');
+    setFiltroCategoria('');
+    setFiltroTipo('');
+    setFiltroDareAvere('');
+    setCurrentPage(1);
+  };
 
   return (
     <div style={{ background: 'white', borderRadius: 12, overflow: 'hidden', border: '1px solid #e5e7eb' }}>
