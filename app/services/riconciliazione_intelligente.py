@@ -973,6 +973,504 @@ class RiconciliazioneIntelligente:
         
         return risultato
 
+    # =========================================================================
+    # CASI ESTESI: PAGAMENTI PARZIALI
+    # =========================================================================
+    
+    async def registra_pagamento_parziale(
+        self,
+        fattura_id: str,
+        importo_pagato: float,
+        metodo: str,
+        data_pagamento: str = None,
+        note: str = ""
+    ) -> Dict[str, Any]:
+        """
+        Registra un pagamento parziale su una fattura.
+        
+        Caso 19: Fattura €1.000, pago solo €500 ora, resto dopo.
+        
+        Args:
+            fattura_id: ID fattura
+            importo_pagato: Importo di questo pagamento
+            metodo: "cassa" o "banca"
+            data_pagamento: Data pagamento
+            note: Note
+            
+        Returns:
+            Dict con risultato e residuo
+        """
+        fattura = await self.db["invoices"].find_one(
+            {"id": fattura_id}, {"_id": 0}
+        )
+        
+        if not fattura:
+            return {"success": False, "error": "Fattura non trovata"}
+        
+        importo_totale = float(fattura.get("importo_totale") or fattura.get("total_amount") or 0)
+        importi_pagati = fattura.get("pagamenti_parziali", [])
+        totale_gia_pagato = sum(p.get("importo", 0) for p in importi_pagati)
+        
+        if importo_pagato <= 0:
+            return {"success": False, "error": "Importo deve essere positivo"}
+        
+        if importo_pagato + totale_gia_pagato > importo_totale:
+            return {"success": False, "error": f"Importo supera il residuo di €{importo_totale - totale_gia_pagato:.2f}"}
+        
+        if not data_pagamento:
+            data_pagamento = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        
+        # Crea record pagamento
+        pagamento_id = str(uuid.uuid4())
+        pagamento = {
+            "id": pagamento_id,
+            "importo": importo_pagato,
+            "metodo": metodo,
+            "data": data_pagamento,
+            "note": note,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+        # Crea movimento in prima nota
+        numero_fattura = fattura.get("numero_documento") or fattura.get("invoice_number") or ""
+        fornitore_nome = fattura.get("fornitore_ragione_sociale") or fattura.get("supplier_name") or ""
+        
+        collection = f"prima_nota_{metodo}"
+        movimento = {
+            "id": str(uuid.uuid4()),
+            "data": data_pagamento,
+            "tipo": "uscita",
+            "categoria": "Pagamento parziale fornitore",
+            "descrizione": f"Pagamento parziale Fatt. {numero_fattura} - {fornitore_nome}",
+            "importo": importo_pagato,
+            "fattura_id": fattura_id,
+            "pagamento_parziale_id": pagamento_id,
+            "metodo_pagamento": metodo,
+            "source": "pagamento_parziale",
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        await self.db[collection].insert_one(movimento.copy())
+        
+        # Aggiorna fattura
+        nuovo_totale_pagato = totale_gia_pagato + importo_pagato
+        residuo = importo_totale - nuovo_totale_pagato
+        
+        nuovo_stato = StatoRiconciliazione.RICONCILIATA.value if residuo <= 0.01 else StatoRiconciliazione.PARZIALMENTE_PAGATA.value
+        
+        await self.db["invoices"].update_one(
+            {"id": fattura_id},
+            {
+                "$push": {"pagamenti_parziali": pagamento},
+                "$set": {
+                    "totale_pagato": nuovo_totale_pagato,
+                    "residuo_da_pagare": max(0, residuo),
+                    "stato_riconciliazione": nuovo_stato,
+                    "parzialmente_pagata": residuo > 0.01,
+                    "updated_at": datetime.now(timezone.utc).isoformat()
+                }
+            }
+        )
+        
+        logger.info(f"✅ Pagamento parziale: €{importo_pagato:.2f} su Fatt. {numero_fattura}. Residuo: €{residuo:.2f}")
+        
+        return {
+            "success": True,
+            "pagamento_id": pagamento_id,
+            "importo_pagato": importo_pagato,
+            "totale_pagato": nuovo_totale_pagato,
+            "residuo": max(0, residuo),
+            "stato": nuovo_stato
+        }
+    
+    # =========================================================================
+    # CASI ESTESI: NOTE DI CREDITO
+    # =========================================================================
+    
+    async def applica_nota_credito(
+        self,
+        fattura_id: str,
+        nota_credito_id: str = None,
+        importo_nc: float = None,
+        numero_nc: str = None
+    ) -> Dict[str, Any]:
+        """
+        Applica una nota di credito a una fattura.
+        
+        Caso 21: Fattura €1.000, poi NC €200, importo dovuto diventa €800.
+        
+        Args:
+            fattura_id: ID fattura da creditare
+            nota_credito_id: ID nota credito (se già in sistema)
+            importo_nc: Importo NC (se inserimento manuale)
+            numero_nc: Numero NC (se inserimento manuale)
+            
+        Returns:
+            Dict con nuovo importo dovuto
+        """
+        fattura = await self.db["invoices"].find_one(
+            {"id": fattura_id}, {"_id": 0}
+        )
+        
+        if not fattura:
+            return {"success": False, "error": "Fattura non trovata"}
+        
+        importo_totale = float(fattura.get("importo_totale") or fattura.get("total_amount") or 0)
+        note_credito = fattura.get("note_credito_collegate", [])
+        totale_nc = sum(nc.get("importo", 0) for nc in note_credito)
+        
+        # Recupera o crea nota credito
+        if nota_credito_id:
+            nc = await self.db["invoices"].find_one(
+                {"id": nota_credito_id, "tipo_documento": "nota_credito"},
+                {"_id": 0}
+            )
+            if not nc:
+                return {"success": False, "error": "Nota credito non trovata"}
+            importo_nc = float(nc.get("importo_totale") or nc.get("total_amount") or 0)
+            numero_nc = nc.get("numero_documento") or nc.get("invoice_number") or ""
+        
+        if not importo_nc or importo_nc <= 0:
+            return {"success": False, "error": "Importo nota credito non valido"}
+        
+        # Record nota credito
+        nc_record = {
+            "id": nota_credito_id or str(uuid.uuid4()),
+            "numero": numero_nc,
+            "importo": importo_nc,
+            "data_applicazione": datetime.now(timezone.utc).isoformat()
+        }
+        
+        nuovo_totale_nc = totale_nc + importo_nc
+        nuovo_importo_dovuto = importo_totale - nuovo_totale_nc
+        
+        if nuovo_importo_dovuto < 0:
+            return {"success": False, "error": f"La NC supera l'importo fattura. Credito risultante: €{abs(nuovo_importo_dovuto):.2f}"}
+        
+        # Aggiorna fattura
+        await self.db["invoices"].update_one(
+            {"id": fattura_id},
+            {
+                "$push": {"note_credito_collegate": nc_record},
+                "$set": {
+                    "totale_note_credito": nuovo_totale_nc,
+                    "importo_dovuto_netto": nuovo_importo_dovuto,
+                    "stato_riconciliazione": StatoRiconciliazione.CON_NOTA_CREDITO.value if nuovo_importo_dovuto > 0 else StatoRiconciliazione.RICONCILIATA.value,
+                    "updated_at": datetime.now(timezone.utc).isoformat()
+                }
+            }
+        )
+        
+        numero_fattura = fattura.get("numero_documento") or fattura.get("invoice_number") or ""
+        logger.info(f"✅ NC €{importo_nc:.2f} applicata a Fatt. {numero_fattura}. Nuovo dovuto: €{nuovo_importo_dovuto:.2f}")
+        
+        return {
+            "success": True,
+            "importo_originale": importo_totale,
+            "totale_note_credito": nuovo_totale_nc,
+            "importo_dovuto_netto": nuovo_importo_dovuto
+        }
+    
+    # =========================================================================
+    # CASI ESTESI: BONIFICO CUMULATIVO
+    # =========================================================================
+    
+    async def cerca_bonifico_cumulativo(
+        self,
+        importo_movimento: float,
+        data_movimento: str,
+        descrizione_movimento: str
+    ) -> Dict[str, Any]:
+        """
+        Cerca fatture che insieme matchano un bonifico cumulativo.
+        
+        Caso 23: Un bonifico €3.000 per 3 fatture da €1.000 ciascuna.
+        
+        Args:
+            importo_movimento: Importo del movimento bancario
+            data_movimento: Data del movimento
+            descrizione_movimento: Descrizione/causale
+            
+        Returns:
+            Dict con fatture candidate
+        """
+        risultato = {
+            "trovato": False,
+            "fatture_candidate": [],
+            "somma_fatture": 0,
+            "differenza": 0,
+            "confidenza": ConfidenzaMatch.NESSUNA.value
+        }
+        
+        # Estrai info dalla descrizione
+        descrizione_lower = descrizione_movimento.lower()
+        
+        # Cerca fatture non pagate dello stesso fornitore
+        # Prova a estrarre nome fornitore dalla descrizione
+        parole_comuni = {"bonifico", "pagamento", "saldo", "fattura", "fatture", "fatt"}
+        parole_desc = [p for p in descrizione_lower.split() if len(p) >= 3 and p not in parole_comuni]
+        
+        if not parole_desc:
+            return risultato
+        
+        # Cerca fatture con fornitore simile e non pagate
+        query = {
+            "stato_riconciliazione": StatoRiconciliazione.IN_ATTESA_CONFERMA.value,
+            "$or": [
+                {"fornitore_ragione_sociale": {"$regex": "|".join(parole_desc[:3]), "$options": "i"}},
+                {"supplier_name": {"$regex": "|".join(parole_desc[:3]), "$options": "i"}}
+            ]
+        }
+        
+        fatture = await self.db["invoices"].find(
+            query,
+            {"_id": 0, "id": 1, "numero_documento": 1, "invoice_number": 1,
+             "importo_totale": 1, "total_amount": 1, "data_documento": 1, "invoice_date": 1,
+             "fornitore_ragione_sociale": 1, "supplier_name": 1}
+        ).to_list(50)
+        
+        if not fatture:
+            return risultato
+        
+        # Ordina per importo discendente
+        for f in fatture:
+            f["_importo"] = float(f.get("importo_totale") or f.get("total_amount") or 0)
+        fatture.sort(key=lambda x: x["_importo"], reverse=True)
+        
+        # Cerca combinazione che matcha l'importo
+        tolleranza = max(5.0, importo_movimento * 0.005)  # 0.5% o €5
+        
+        # Prova combinazioni
+        from itertools import combinations
+        
+        for n in range(1, min(len(fatture) + 1, 6)):  # Max 5 fatture
+            for combo in combinations(range(len(fatture)), n):
+                somma = sum(fatture[i]["_importo"] for i in combo)
+                if abs(somma - importo_movimento) <= tolleranza:
+                    risultato["trovato"] = True
+                    risultato["fatture_candidate"] = [
+                        {
+                            "id": fatture[i]["id"],
+                            "numero": fatture[i].get("numero_documento") or fatture[i].get("invoice_number"),
+                            "importo": fatture[i]["_importo"],
+                            "fornitore": fatture[i].get("fornitore_ragione_sociale") or fatture[i].get("supplier_name")
+                        }
+                        for i in combo
+                    ]
+                    risultato["somma_fatture"] = somma
+                    risultato["differenza"] = abs(somma - importo_movimento)
+                    risultato["confidenza"] = ConfidenzaMatch.ALTA.value if risultato["differenza"] < 1 else ConfidenzaMatch.MEDIA.value
+                    return risultato
+        
+        return risultato
+    
+    async def riconcilia_bonifico_cumulativo(
+        self,
+        movimento_id: str,
+        fatture_ids: List[str]
+    ) -> Dict[str, Any]:
+        """
+        Riconcilia un bonifico cumulativo con multiple fatture.
+        
+        Args:
+            movimento_id: ID movimento in estratto conto
+            fatture_ids: Lista ID fatture da collegare
+            
+        Returns:
+            Dict con risultato
+        """
+        risultato = {
+            "success": False,
+            "fatture_riconciliate": [],
+            "importo_totale": 0
+        }
+        
+        # Recupera movimento
+        movimento = await self.db["estratto_conto_movimenti"].find_one(
+            {"id": movimento_id}, {"_id": 0}
+        )
+        
+        if not movimento:
+            return {"success": False, "error": "Movimento non trovato"}
+        
+        importo_movimento = abs(float(movimento.get("importo", 0)))
+        
+        # Verifica fatture
+        totale_fatture = 0
+        fatture_valide = []
+        
+        for fid in fatture_ids:
+            f = await self.db["invoices"].find_one({"id": fid}, {"_id": 0})
+            if f:
+                importo = float(f.get("importo_totale") or f.get("total_amount") or 0)
+                totale_fatture += importo
+                fatture_valide.append({
+                    "id": fid,
+                    "numero": f.get("numero_documento") or f.get("invoice_number"),
+                    "importo": importo
+                })
+        
+        if not fatture_valide:
+            return {"success": False, "error": "Nessuna fattura valida"}
+        
+        # Verifica corrispondenza importi
+        if abs(totale_fatture - importo_movimento) > 5.0:
+            return {
+                "success": False, 
+                "error": f"Importo fatture (€{totale_fatture:.2f}) non corrisponde a movimento (€{importo_movimento:.2f})"
+            }
+        
+        # Riconcilia tutte le fatture
+        for f in fatture_valide:
+            # Crea movimento in prima nota banca
+            pn_id = str(uuid.uuid4())
+            pn = {
+                "id": pn_id,
+                "data": movimento.get("data"),
+                "tipo": "uscita",
+                "categoria": "Pagamento fornitore (cumulativo)",
+                "descrizione": f"Bonifico cumulativo - Fatt. {f['numero']}",
+                "importo": f["importo"],
+                "fattura_id": f["id"],
+                "movimento_estratto_id": movimento_id,
+                "bonifico_cumulativo": True,
+                "source": "riconciliazione_cumulativa",
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+            await self.db["prima_nota_banca"].insert_one(pn.copy())
+            
+            # Aggiorna fattura
+            await self.db["invoices"].update_one(
+                {"id": f["id"]},
+                {"$set": {
+                    "stato_riconciliazione": StatoRiconciliazione.RICONCILIATA.value,
+                    "metodo_pagamento_confermato": "banca",
+                    "prima_nota_banca_id": pn_id,
+                    "pagato": True,
+                    "riconciliato": True,
+                    "bonifico_cumulativo_id": movimento_id,
+                    "updated_at": datetime.now(timezone.utc).isoformat()
+                }}
+            )
+            
+            risultato["fatture_riconciliate"].append(f)
+        
+        # Aggiorna movimento estratto
+        await self.db["estratto_conto_movimenti"].update_one(
+            {"id": movimento_id},
+            {"$set": {
+                "riconciliato": True,
+                "bonifico_cumulativo": True,
+                "fatture_collegate": [f["id"] for f in fatture_valide],
+                "riconciliato_at": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+        
+        risultato["success"] = True
+        risultato["importo_totale"] = totale_fatture
+        
+        logger.info(f"✅ Bonifico cumulativo riconciliato: {len(fatture_valide)} fatture, €{totale_fatture:.2f}")
+        
+        return risultato
+    
+    # =========================================================================
+    # CASI ESTESI: SCONTO CASSA
+    # =========================================================================
+    
+    async def registra_pagamento_con_sconto(
+        self,
+        fattura_id: str,
+        importo_pagato: float,
+        metodo: str,
+        percentuale_sconto: float = None,
+        data_pagamento: str = None
+    ) -> Dict[str, Any]:
+        """
+        Registra un pagamento con sconto cassa.
+        
+        Caso 31: Fattura €1.000, pago €980 (sconto 2%).
+        
+        Args:
+            fattura_id: ID fattura
+            importo_pagato: Importo effettivamente pagato
+            metodo: "cassa" o "banca"
+            percentuale_sconto: Percentuale sconto applicato (calcolata se non fornita)
+            data_pagamento: Data pagamento
+            
+        Returns:
+            Dict con risultato
+        """
+        fattura = await self.db["invoices"].find_one(
+            {"id": fattura_id}, {"_id": 0}
+        )
+        
+        if not fattura:
+            return {"success": False, "error": "Fattura non trovata"}
+        
+        importo_originale = float(fattura.get("importo_totale") or fattura.get("total_amount") or 0)
+        
+        if importo_pagato >= importo_originale:
+            return {"success": False, "error": "Per sconto, importo pagato deve essere < importo fattura"}
+        
+        # Calcola sconto
+        importo_sconto = importo_originale - importo_pagato
+        if not percentuale_sconto:
+            percentuale_sconto = round((importo_sconto / importo_originale) * 100, 2)
+        
+        if not data_pagamento:
+            data_pagamento = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        
+        numero_fattura = fattura.get("numero_documento") or fattura.get("invoice_number") or ""
+        fornitore_nome = fattura.get("fornitore_ragione_sociale") or fattura.get("supplier_name") or ""
+        
+        # Crea movimento in prima nota
+        collection = f"prima_nota_{metodo}"
+        pn_id = str(uuid.uuid4())
+        movimento = {
+            "id": pn_id,
+            "data": data_pagamento,
+            "tipo": "uscita",
+            "categoria": "Pagamento fornitore con sconto",
+            "descrizione": f"Pagamento Fatt. {numero_fattura} - {fornitore_nome} (sconto {percentuale_sconto}%)",
+            "importo": importo_pagato,
+            "importo_originale": importo_originale,
+            "sconto_applicato": importo_sconto,
+            "percentuale_sconto": percentuale_sconto,
+            "fattura_id": fattura_id,
+            "metodo_pagamento": metodo,
+            "source": "pagamento_con_sconto",
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        await self.db[collection].insert_one(movimento.copy())
+        
+        # Aggiorna fattura
+        await self.db["invoices"].update_one(
+            {"id": fattura_id},
+            {"$set": {
+                "stato_riconciliazione": StatoRiconciliazione.SCONTO_APPLICATO.value,
+                "metodo_pagamento_confermato": metodo,
+                f"prima_nota_{metodo}_id": pn_id,
+                "pagato": True,
+                "riconciliato": True,
+                "sconto_cassa_applicato": True,
+                "importo_pagato_effettivo": importo_pagato,
+                "sconto_importo": importo_sconto,
+                "sconto_percentuale": percentuale_sconto,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+        
+        logger.info(f"✅ Pagamento con sconto: Fatt. {numero_fattura}, €{importo_pagato:.2f} (sconto €{importo_sconto:.2f})")
+        
+        return {
+            "success": True,
+            "importo_originale": importo_originale,
+            "importo_pagato": importo_pagato,
+            "sconto_importo": importo_sconto,
+            "sconto_percentuale": percentuale_sconto
+        }
+
+
+
 
 # =============================================================================
 # FUNZIONI HELPER GLOBALI
