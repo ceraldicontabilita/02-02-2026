@@ -582,27 +582,34 @@ export default function RiconciliazioneIntelligente() {
       </div>
 
       {/* Tabs Content */}
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            {activeTab === 'da-confermare' && 'Fatture in Attesa Conferma Metodo'}
-            {activeTab === 'spostamenti' && 'Spostamenti Proposti (Cassa → Banca)'}
-            {activeTab === 'match-incerti' && 'Match Incerti da Verificare'}
-            {activeTab === 'sospese' && 'Operazioni Sospese (Attesa Estratto)'}
-            {activeTab === 'anomalie' && 'Anomalie (Banca non trovata in Estratto)'}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+      <div style={{ 
+        background: 'white', 
+        borderRadius: 12, 
+        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+        overflow: 'hidden',
+        marginBottom: 20
+      }}>
+        <div style={{ 
+          padding: '16px 20px', 
+          background: '#f8fafc', 
+          borderBottom: '1px solid #e5e7eb'
+        }}>
+          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#1f2937' }}>
+            {activeTab === 'da-confermare' && '📋 Fatture in Attesa Conferma Metodo'}
+            {activeTab === 'spostamenti' && '➡️ Spostamenti Proposti (Cassa → Banca)'}
+            {activeTab === 'match-incerti' && '⚠️ Match Incerti da Verificare'}
+            {activeTab === 'sospese' && '⏸️ Operazioni Sospese (Attesa Estratto)'}
+            {activeTab === 'anomalie' && '❌ Anomalie (Banca non trovata in Estratto)'}
+          </h2>
+        </div>
+        <div style={{ padding: 20 }}>
           {/* Tab Da Confermare */}
           {activeTab === 'da-confermare' && (
-            <div className="space-y-4">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {dashboard?.fatture_in_attesa_conferma?.length === 0 ? (
-                <Alert>
-                  <CheckCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    Nessuna fattura in attesa di conferma metodo pagamento.
-                  </AlertDescription>
-                </Alert>
+                <div style={{ textAlign: 'center', padding: 40, color: '#9ca3af' }}>
+                  ✅ Nessuna fattura in attesa di conferma metodo pagamento.
+                </div>
               ) : (
                 dashboard?.fatture_in_attesa_conferma?.map(fattura => (
                   <FatturaCard
@@ -618,14 +625,11 @@ export default function RiconciliazioneIntelligente() {
 
           {/* Tab Spostamenti */}
           {activeTab === 'spostamenti' && (
-            <div className="space-y-4">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {dashboard?.spostamenti_proposti?.length === 0 ? (
-                <Alert>
-                  <CheckCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    Nessuno spostamento proposto.
-                  </AlertDescription>
-                </Alert>
+                <div style={{ textAlign: 'center', padding: 40, color: '#9ca3af' }}>
+                  ✅ Nessuno spostamento proposto.
+                </div>
               ) : (
                 dashboard?.spostamenti_proposti?.map(fattura => (
                   <SpostamentoCard
@@ -642,14 +646,11 @@ export default function RiconciliazioneIntelligente() {
 
           {/* Tab Match Incerti */}
           {activeTab === 'match-incerti' && (
-            <div className="space-y-4">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {dashboard?.match_incerti?.length === 0 ? (
-                <Alert>
-                  <CheckCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    Nessun match incerto da verificare.
-                  </AlertDescription>
-                </Alert>
+                <div style={{ textAlign: 'center', padding: 40, color: '#9ca3af' }}>
+                  ✅ Nessun match incerto da verificare.
+                </div>
               ) : (
                 dashboard?.match_incerti?.map(fattura => (
                   <SpostamentoCard
@@ -666,38 +667,45 @@ export default function RiconciliazioneIntelligente() {
 
           {/* Tab Sospese */}
           {activeTab === 'sospese' && (
-            <div className="space-y-4">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {dashboard?.sospese_attesa_estratto?.length === 0 ? (
-                <Alert>
-                  <CheckCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    Nessuna operazione sospesa in attesa di estratto conto.
-                  </AlertDescription>
-                </Alert>
+                <div style={{ textAlign: 'center', padding: 40, color: '#9ca3af' }}>
+                  ✅ Nessuna operazione sospesa in attesa di estratto conto.
+                </div>
               ) : (
                 <>
-                  <Alert className="bg-orange-50 border-orange-200">
-                    <Clock className="h-4 w-4 text-orange-600" />
-                    <AlertDescription className="text-orange-800">
-                      Queste operazioni sono in attesa di un estratto conto aggiornato per completare la verifica.
-                      Carica un nuovo estratto conto e clicca "Ri-analizza Operazioni".
-                    </AlertDescription>
-                  </Alert>
-                  <div className="space-y-2">
-                    {dashboard?.sospese_attesa_estratto?.map(fattura => (
-                      <div key={fattura.id} className="border rounded p-3 bg-white flex justify-between items-center">
-                        <div>
-                          <span className="font-semibold">{fattura.numero_documento}</span>
-                          <span className="text-gray-500 mx-2">-</span>
-                          <span className="text-gray-600">{fattura.fornitore_ragione_sociale}</span>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <span className="font-medium">{formatCurrency(fattura.importo_totale)}</span>
-                          <span className="text-sm text-gray-500">{formatDate(fattura.data_documento)}</span>
-                        </div>
-                      </div>
-                    ))}
+                  <div style={{ 
+                    padding: 12, 
+                    background: '#fff7ed', 
+                    borderRadius: 8, 
+                    borderLeft: '4px solid #f97316',
+                    fontSize: 13,
+                    color: '#9a3412'
+                  }}>
+                    ⏳ Queste operazioni sono in attesa di un estratto conto aggiornato per completare la verifica.
+                    Carica un nuovo estratto conto e clicca "Ri-analizza Operazioni".
                   </div>
+                  {dashboard?.sospese_attesa_estratto?.map(fattura => (
+                    <div key={fattura.id} style={{ 
+                      padding: 12, 
+                      background: '#f9fafb', 
+                      borderRadius: 8, 
+                      borderLeft: '3px solid #f97316',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center'
+                    }}>
+                      <div>
+                        <span style={{ fontWeight: 600 }}>{fattura.numero_documento}</span>
+                        <span style={{ color: '#9ca3af', margin: '0 8px' }}>-</span>
+                        <span style={{ color: '#6b7280' }}>{fattura.fornitore_ragione_sociale}</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                        <span style={{ fontWeight: 600, color: '#22c55e' }}>{formatCurrency(fattura.importo_totale)}</span>
+                        <span style={{ fontSize: 13, color: '#9ca3af' }}>{formatDate(fattura.data_documento)}</span>
+                      </div>
+                    </div>
+                  ))}
                 </>
               )}
             </div>
@@ -705,14 +713,11 @@ export default function RiconciliazioneIntelligente() {
 
           {/* Tab Anomalie */}
           {activeTab === 'anomalie' && (
-            <div className="space-y-4">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {dashboard?.anomalie?.length === 0 ? (
-                <Alert>
-                  <CheckCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    Nessuna anomalia rilevata.
-                  </AlertDescription>
-                </Alert>
+                <div style={{ textAlign: 'center', padding: 40, color: '#9ca3af' }}>
+                  ✅ Nessuna anomalia rilevata.
+                </div>
               ) : (
                 dashboard?.anomalie?.map(fattura => (
                   <AnomaliaCard
@@ -724,8 +729,8 @@ export default function RiconciliazioneIntelligente() {
               )}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Statistiche */}
       <Card>
