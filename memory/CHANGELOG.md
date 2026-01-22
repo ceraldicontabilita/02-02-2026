@@ -3,6 +3,53 @@
 
 ---
 
+## 22 Gennaio 2026 - Sessione 12 (Learning Machine & Gestione Magazzino)
+
+### ✅ Learning Machine - Classificazione Automatica Costi (CDC)
+Implementato sistema completo di classificazione automatica delle fatture per centro di costo:
+
+**Servizio `/app/app/services/learning_machine_cdc.py`:**
+- 38 centri di costo configurati per bar/pasticceria (ATECO 56.10.30)
+- Pattern matching intelligente su fornitore e descrizione linee fattura
+- Calcolo automatico deducibilità IRES/IRAP e detraibilità IVA
+
+**Router `/app/app/routers/learning_machine_cdc.py`:**
+- `GET /api/learning-machine/centri-costo` - Lista centri di costo
+- `POST /api/learning-machine/riclassifica-fatture?anno=X` - Riclassifica automatica tutte le fatture
+- `POST /api/learning-machine/processa-quietanza-f24` - Processa F24 con riconciliazione banca
+- `GET /api/learning-machine/costo-personale-completo/{anno}` - Costo personale da cedolini + F24
+- `GET /api/learning-machine/riepilogo-centri-costo/{anno}` - Riepilogo con calcoli fiscali
+
+### ✅ Gestione Magazzino Avanzata
+Implementato sistema completo per bar/pasticceria:
+
+**Servizio `/app/app/services/magazzino_categorie.py`:**
+- 26 categorie merceologiche specifiche (Caffè, Vini, Farine, Latticini, ecc.)
+- Parsing intelligente linee fattura XML
+- Estrazione automatica quantità e unità di misura
+- Classificazione prodotti con confidence score
+- Calcolo scarichi ricetta proporzionali alle porzioni
+
+**Router `/app/app/routers/magazzino_avanzato.py`:**
+- `POST /api/magazzino/carico-da-fattura/{id}` - Carico automatico da XML fattura
+- `POST /api/magazzino/carico-massivo?anno=X` - Carico batch tutte le fatture
+- `POST /api/magazzino/scarico-produzione` - Scarico per lotto produzione
+- `GET /api/magazzino/giacenze` - Giacenze raggruppate per categoria
+- `GET /api/magazzino/movimenti` - Storico movimenti
+- `GET /api/magazzino/lotti-produzione` - Registro lotti
+- `GET /api/magazzino/categorie-merceologiche` - Lista categorie
+
+### ✅ Bug Fix
+- Fix TypeError in `calcola_scarico_ricetta`: gestione quantità come stringa/numero
+
+### ✅ Test E2E Eseguiti
+- ✅ Carico magazzino da fattura XML (14 linee processate)
+- ✅ Scarico produzione con calcolo ingredienti proporzionale
+- ✅ Registrazione movimenti e lotti
+- ✅ Riepilogo centri di costo (24 centri, €524.867 imponibile)
+
+---
+
 ## 22 Gennaio 2026 - Sessione 11 (Conto Economico COMPLETO)
 
 ### ✅ Conto Economico Dettagliato (Art. 2425 c.c.)
