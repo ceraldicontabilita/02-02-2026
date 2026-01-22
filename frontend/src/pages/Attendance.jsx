@@ -131,6 +131,42 @@ export default function Attendance() {
     const nextIndex = (currentIndex + 1) % statiArray.length;
     const nextState = statiArray[nextIndex];
     
+    // Mappa stato presenza a codice giustificativo
+    const mappaGiustificativi = {
+      'ferie': 'FER',
+      'permesso': 'PER',
+      'malattia': 'MAL',
+      'rol': 'ROL',
+      'assente': 'AI'
+    };
+    
+    const codiceGiustificativo = mappaGiustificativi[nextState];
+    
+    // Se è un giustificativo con limite, valida prima
+    if (codiceGiustificativo) {
+      try {
+        const validazione = await api.post('/api/giustificativi/valida-giustificativo', {
+          employee_id: employeeId,
+          codice_giustificativo: codiceGiustificativo,
+          data: dateStr,
+          ore: 8
+        });
+        
+        if (!validazione.data.valido) {
+          toast.error(`⛔ ${validazione.data.messaggio}`);
+          return; // Blocca l'inserimento
+        }
+        
+        // Mostra warning se vicino al limite
+        if (validazione.data.warnings?.length > 0) {
+          toast.warning(validazione.data.warnings[0]);
+        }
+      } catch (err) {
+        console.error('Errore validazione giustificativo:', err);
+        // Continua comunque se la validazione fallisce
+      }
+    }
+    
     // Aggiorna UI ottimisticamente
     const key = `${employeeId}_${dateStr}`;
     setPresenze(prev => ({ ...prev, [key]: nextState }));
