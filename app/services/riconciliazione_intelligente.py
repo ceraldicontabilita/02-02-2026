@@ -100,6 +100,10 @@ TOLLERANZA_IMPORTO_PARZIALE = 5.00    # €5.00 per match parziale
 TOLLERANZA_PERCENTUALE = 0.01          # 1% per match percentuale
 TOLLERANZA_GIORNI_RICERCA = 120        # Cerca movimenti fino a 120 giorni prima
 
+# Tolleranze per arrotondamenti (Caso 37)
+TOLLERANZA_ARROTONDAMENTO_DEFAULT = 1.00  # €1.00 tolleranza arrotondamento default
+TOLLERANZA_ARROTONDAMENTO_MAX = 5.00      # €5.00 tolleranza arrotondamento massima
+
 
 # =============================================================================
 # CLASSE PRINCIPALE: RiconciliazioneIntelligente
