@@ -223,6 +223,7 @@ async def create_dipendente(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
         "bonifici_associati": data.get("bonifici_associati", []),
         # Status
         "attivo": True,
+        "in_carico": data.get("in_carico", True),  # Flag per presenze (default: true per nuovi dipendenti)
         "created_at": datetime.utcnow().isoformat(),
         "updated_at": datetime.utcnow().isoformat()
     }
