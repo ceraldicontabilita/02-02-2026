@@ -389,18 +389,22 @@ export default function Attendance() {
     const key = `${employee.id}_${day.dateStr}`;
     const stato = presenze[key] || (day.isWeekend ? 'riposo' : null);
     const config = stato ? STATI_PRESENZA[stato] : null;
+    const nota = notePresenze[key];
+    
+    // Determina se la cella è selezionata (in modalità multi-select)
+    const isHighlighted = multiSelectMode && selectedStato && stato === selectedStato;
     
     return (
       <td
         key={day.day}
-        onClick={() => handleCellClick(employee.id, day.dateStr, stato)}
+        onClick={() => multiSelectMode ? handleMultiSelectClick(employee.id, day.dateStr) : handleCellClick(employee.id, day.dateStr, stato)}
         style={{
           width: 28,
           minWidth: 28,
           height: 28,
           padding: 0,
           textAlign: 'center',
-          cursor: 'pointer',
+          cursor: multiSelectMode ? 'crosshair' : 'pointer',
           background: config ? config.bg : (day.isWeekend ? '#f3f4f6' : 'white'),
           borderRight: '1px solid #e5e7eb',
           borderBottom: '1px solid #e5e7eb',
@@ -408,12 +412,26 @@ export default function Attendance() {
           fontWeight: 600,
           color: config ? config.color : '#9ca3af',
           transition: 'all 0.15s ease',
-          userSelect: 'none'
+          userSelect: 'none',
+          outline: isHighlighted ? '2px solid #3b82f6' : 'none',
+          outlineOffset: '-2px',
+          position: 'relative'
         }}
-        title={`${employee.nome_completo} - ${day.day}/${currentMonth + 1}: ${config?.name || 'Non definito'}`}
+        title={`${employee.nome_completo} - ${day.day}/${currentMonth + 1}: ${config?.name || 'Non definito'}${nota?.protocollo_malattia ? ` (Prot: ${nota.protocollo_malattia})` : ''}`}
         data-testid={`cell-${employee.id}-${day.day}`}
       >
         {config?.label || ''}
+        {nota?.protocollo_malattia && (
+          <span style={{
+            position: 'absolute',
+            top: -2,
+            right: -2,
+            width: 6,
+            height: 6,
+            background: '#ef4444',
+            borderRadius: '50%'
+          }} title={`Prot: ${nota.protocollo_malattia}`} />
+        )}
       </td>
     );
   };
