@@ -1279,43 +1279,117 @@ def get_descrizione_tributo_locale(codice: str) -> str:
 def confronta_codici_tributo(f24_commercialista: Dict, quietanza: Dict) -> Dict[str, Any]:
     """
     Confronta i codici tributo tra F24 commercialista e quietanza.
+    
+    Logica di riconciliazione:
+    1. Estrae i codici tributo (senza periodo) da entrambi i documenti
+    2. Confronta codice per codice
+    3. Se i codici base sono uguali → stesso F24
+    4. Se la quietanza ha codici extra di sanzione/interessi → RAVVEDIMENTO
+    
+    Codici sanzione ravvedimento:
+    - 8901 (IRPEF), 8902 (Add. Regionale), 8903 (Add. Comunale), 8904 (IVA)
+    - 8906 (Sostituti), 8907 (IRAP), 8908 (Altre imposte)
+    
+    Codici interessi ravvedimento:
+    - 1989 (IRPEF), 1990 (Add. Regionale), 1991 (IVA), 1993 (IRAP)
+    - 1994 (Sostituti), 1668 (Interessi dilazione), 3805 (IRAP regionale)
     """
+    # Codici che indicano sanzioni e interessi per ravvedimento
+    CODICI_SANZIONI = {'8901', '8902', '8903', '8904', '8905', '8906', '8907', '8908', '8909', '8910', '8911', '8913', '8918', '8926', '8929'}
+    CODICI_INTERESSI = {'1989', '1990', '1991', '1993', '1994', '1668', '3805', '3857'}
+    CODICI_RAVVEDIMENTO = CODICI_SANZIONI.union(CODICI_INTERESSI)
+    
+    # Estrai codici tributo da F24 commercialista
     codici_f24 = set()
+    codici_f24_con_periodo = set()
+    importi_f24 = {}
+    
+    for sezione in ['sezione_erario', 'sezione_inps', 'sezione_regioni', 'sezione_tributi_locali']:
+        for item in f24_commercialista.get(sezione, []):
+            codice = item.get('codice_tributo') or item.get('causale') or ''
+            codice = str(codice).strip()
+            if codice:
+                codici_f24.add(codice)
+                periodo = item.get('periodo_riferimento', item.get('anno_riferimento', ''))
+                codici_f24_con_periodo.add(f"{codice}_{periodo}")
+                importi_f24[codice] = importi_f24.get(codice, 0) + (item.get('debito', 0) or 0)
+    
+    # Estrai codici tributo da quietanza
     codici_quietanza = set()
+    codici_quietanza_con_periodo = set()
+    importi_quietanza = {}
     
-    for item in f24_commercialista.get("sezione_erario", []):
-        key = f"{item['codice_tributo']}_{item.get('periodo_riferimento', '')}"
-        codici_f24.add(key)
-    for item in f24_commercialista.get("sezione_inps", []):
-        key = f"{item['causale']}_{item.get('periodo_riferimento', '')}"
-        codici_f24.add(key)
+    for sezione in ['sezione_erario', 'sezione_inps', 'sezione_regioni', 'sezione_tributi_locali']:
+        for item in quietanza.get(sezione, []):
+            codice = item.get('codice_tributo') or item.get('causale') or ''
+            codice = str(codice).strip()
+            if codice:
+                codici_quietanza.add(codice)
+                periodo = item.get('periodo_riferimento', item.get('anno_riferimento', ''))
+                codici_quietanza_con_periodo.add(f"{codice}_{periodo}")
+                importi_quietanza[codice] = importi_quietanza.get(codice, 0) + (item.get('debito', 0) or 0)
     
-    for item in quietanza.get("sezione_erario", []):
-        key = f"{item['codice_tributo']}_{item.get('periodo_riferimento', '')}"
-        codici_quietanza.add(key)
-    for item in quietanza.get("sezione_inps", []):
-        key = f"{item['causale']}_{item.get('periodo_riferimento', '')}"
-        codici_quietanza.add(key)
-    
+    # Analisi dei codici
     codici_match = codici_f24.intersection(codici_quietanza)
-    codici_mancanti = codici_f24 - codici_quietanza
-    codici_extra = codici_quietanza - codici_f24
+    codici_mancanti_in_quietanza = codici_f24 - codici_quietanza
+    codici_extra_in_quietanza = codici_quietanza - codici_f24
     
-    importo_f24 = f24_commercialista.get("totali", {}).get("saldo_netto", 0)
-    importo_quietanza = quietanza.get("totali", {}).get("saldo_netto", 0)
+    # Identifica codici ravvedimento negli extra
+    codici_ravv_trovati = codici_extra_in_quietanza.intersection(CODICI_RAVVEDIMENTO)
+    codici_sanzioni_trovati = codici_extra_in_quietanza.intersection(CODICI_SANZIONI)
+    codici_interessi_trovati = codici_extra_in_quietanza.intersection(CODICI_INTERESSI)
+    
+    # Calcola importi
+    importo_f24 = f24_commercialista.get("totali", {}).get("saldo_netto", 0) or \
+                  f24_commercialista.get("totali", {}).get("saldo_finale", 0) or 0
+    importo_quietanza = quietanza.get("totali", {}).get("saldo_delega", 0) or \
+                        quietanza.get("totali", {}).get("totale_debito", 0) or \
+                        abs(quietanza.get("totali", {}).get("saldo_netto", 0) or 0)
     differenza = round(importo_quietanza - importo_f24, 2)
     
-    match_percentage = len(codici_match) / max(len(codici_f24), 1) * 100
-    is_match = match_percentage >= 70
+    # Logica di matching
+    # 1. Se tutti i codici base dell'F24 sono presenti nella quietanza → MATCH
+    codici_base_f24 = codici_f24 - CODICI_RAVVEDIMENTO
+    codici_base_quietanza = codici_quietanza - CODICI_RAVVEDIMENTO
+    
+    match_codici_base = codici_base_f24.issubset(codici_base_quietanza)
+    
+    # 2. Calcola percentuale di match
+    if len(codici_base_f24) > 0:
+        match_percentage = len(codici_base_f24.intersection(codici_base_quietanza)) / len(codici_base_f24) * 100
+    else:
+        match_percentage = 0
+    
+    # 3. Determina se è un ravvedimento
+    is_ravvedimento = False
+    tipo_ravvedimento = None
+    
+    if match_codici_base and len(codici_ravv_trovati) > 0:
+        is_ravvedimento = True
+        if codici_sanzioni_trovati and codici_interessi_trovati:
+            tipo_ravvedimento = "COMPLETO"
+        elif codici_sanzioni_trovati:
+            tipo_ravvedimento = "SOLO_SANZIONI"
+        elif codici_interessi_trovati:
+            tipo_ravvedimento = "SOLO_INTERESSI"
+    
+    # 4. Determina il match finale
+    # Match se: codici base corrispondono (con o senza ravvedimento)
+    is_match = match_percentage >= 70 or (match_codici_base and len(codici_base_f24) > 0)
     
     return {
         "match": is_match,
         "match_percentage": round(match_percentage, 1),
         "codici_match": list(codici_match),
-        "codici_mancanti": list(codici_mancanti),
-        "codici_extra": list(codici_extra),
+        "codici_mancanti": list(codici_mancanti_in_quietanza),
+        "codici_extra": list(codici_extra_in_quietanza),
         "importo_f24": importo_f24,
         "importo_quietanza": importo_quietanza,
         "differenza_importo": differenza,
-        "is_ravvedimento": differenza > 0 and quietanza.get("has_ravvedimento", False)
+        "is_ravvedimento": is_ravvedimento,
+        "tipo_ravvedimento": tipo_ravvedimento,
+        "codici_sanzioni_trovati": list(codici_sanzioni_trovati),
+        "codici_interessi_trovati": list(codici_interessi_trovati),
+        "importo_sanzioni": sum(importi_quietanza.get(c, 0) for c in codici_sanzioni_trovati),
+        "importo_interessi": sum(importi_quietanza.get(c, 0) for c in codici_interessi_trovati)
     }
