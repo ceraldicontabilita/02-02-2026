@@ -250,6 +250,7 @@ async def get_giustificativi_dipendente(
     """
     Ritorna i contatori giustificativi per un dipendente.
     Include ore usate, limiti e saldo residuo.
+    OTTIMIZZATO: Usa aggregazione invece di N query singole.
     """
     db = Database.get_db()
     
@@ -282,8 +283,42 @@ async def get_giustificativi_dipendente(
     )
     limiti_per_codice = limiti_custom.get("limiti", {}) if limiti_custom else {}
     
-    # Calcola ore usate per ogni giustificativo
+    # OTTIMIZZAZIONE: Carica tutte le ore usate in una sola query aggregata
     mese_corrente = datetime.now().month
+    data_inizio_anno = f"{anno}-01-01"
+    data_fine_anno = f"{anno+1}-01-01"
+    data_inizio_mese = f"{anno}-{mese_corrente:02d}-01"
+    data_fine_mese = f"{anno}-{mese_corrente+1:02d}-01" if mese_corrente < 12 else f"{anno+1}-01-01"
+    
+    # Aggregazione per presenze_mensili (anno)
+    presenze_anno = await db["presenze_mensili"].aggregate([
+        {"$match": {
+            "employee_id": employee_id,
+            "data": {"$gte": data_inizio_anno, "$lt": data_fine_anno}
+        }},
+        {"$group": {
+            "_id": "$stato",
+            "ore": {"$sum": {"$ifNull": ["$ore", 8]}}
+        }}
+    ]).to_list(100)
+    
+    # Aggregazione per presenze_mensili (mese corrente)
+    presenze_mese = await db["presenze_mensili"].aggregate([
+        {"$match": {
+            "employee_id": employee_id,
+            "data": {"$gte": data_inizio_mese, "$lt": data_fine_mese}
+        }},
+        {"$group": {
+            "_id": "$stato",
+            "ore": {"$sum": {"$ifNull": ["$ore", 8]}}
+        }}
+    ]).to_list(100)
+    
+    # Converti in dizionari per lookup veloce
+    ore_anno_per_codice = {p["_id"]: p["ore"] for p in presenze_anno if p["_id"]}
+    ore_mese_per_codice = {p["_id"]: p["ore"] for p in presenze_mese if p["_id"]}
+    
+    # Calcola risultati per ogni giustificativo
     risultato = []
     
     for giust in giustificativi:
@@ -293,11 +328,9 @@ async def get_giustificativi_dipendente(
         limite_annuale = limiti_per_codice.get(codice, {}).get("limite_annuale_ore") or giust.get("limite_annuale_ore")
         limite_mensile = limiti_per_codice.get(codice, {}).get("limite_mensile_ore") or giust.get("limite_mensile_ore")
         
-        # Calcola ore usate nell'anno
-        ore_anno = await _calcola_ore_giustificativo(db, employee_id, codice, anno)
-        
-        # Calcola ore usate nel mese corrente
-        ore_mese = await _calcola_ore_giustificativo(db, employee_id, codice, anno, mese_corrente)
+        # Ore usate (lookup veloce)
+        ore_anno = ore_anno_per_codice.get(codice, 0) + ore_anno_per_codice.get(codice.lower(), 0)
+        ore_mese = ore_mese_per_codice.get(codice, 0) + ore_mese_per_codice.get(codice.lower(), 0)
         
         # Calcola residui
         residuo_annuale = None
