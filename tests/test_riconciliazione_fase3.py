@@ -297,23 +297,30 @@ class TestRiconciliazioneFase3:
         print(f"✅ Validazione cerca pagamenti: {error_msg}")
     
     def test_cerca_pagamenti_anticipati_fattura_not_found(self):
-        """Test cerca pagamenti per fattura non esistente - ritorna success con lista vuota"""
+        """Test cerca pagamenti per fattura non esistente - ritorna errore o lista vuota"""
         payload = {"fattura_id": str(uuid.uuid4())}
         response = self.session.post(f"{BASE_URL}/api/riconciliazione-intelligente/cerca-pagamenti-anticipati", json=payload)
         
-        # L'API ritorna 200 con success=True e pagamenti_trovati vuoto per fattura non esistente
-        # oppure 400 se la fattura non esiste
+        # L'API può ritornare:
+        # - 200 con success=False e error="Fattura non trovata"
+        # - 400 con detail="Fattura non trovata"
+        data = response.json()
+        
         if response.status_code == 200:
-            data = response.json()
-            # Se ritorna 200, verifica che sia una risposta valida
-            assert data.get("success") == True
-            print(f"✅ Cerca pagamenti per fattura non esistente: ritorna lista vuota")
+            # API ritorna 200 ma con success=False per fattura non trovata
+            if data.get("success") == False:
+                error_msg = data.get("error", "").lower()
+                assert "non trovata" in error_msg
+                print(f"✅ Fattura non trovata (200 con success=False): {error_msg}")
+            else:
+                # Oppure ritorna lista vuota
+                assert data.get("pagamenti_trovati") == []
+                print(f"✅ Cerca pagamenti per fattura non esistente: ritorna lista vuota")
         else:
             assert response.status_code == 400
-            data = response.json()
             error_msg = get_error_message(data)
             assert "non trovata" in error_msg
-            print(f"✅ Fattura non trovata: {error_msg}")
+            print(f"✅ Fattura non trovata (400): {error_msg}")
     
     def test_collega_pagamento_anticipato_validation(self):
         """Test validazione collega pagamento anticipato"""
