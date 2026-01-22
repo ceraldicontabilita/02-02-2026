@@ -13,7 +13,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import api from '../api';
 import { 
   ChevronLeft, ChevronRight, RefreshCw, Plus, Calendar,
-  Users, Clock, FileText, History, Settings, Check, X
+  Users, Clock, FileText, History, Settings, Check, X, FileDown
 } from 'lucide-react';
 import { toast } from 'sonner';
 
