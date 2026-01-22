@@ -8,16 +8,19 @@ Modulo per la gestione delle presenze dipendenti:
 - Straordinari
 - Calcolo ore lavorate
 - Report presenze
+- Generazione PDF per consulente
 
 Autore: Sistema Gestionale
-Data: 21 Gennaio 2026
+Data: 22 Gennaio 2026
 """
 
 from fastapi import APIRouter, HTTPException, Query
+from fastapi.responses import StreamingResponse
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone, timedelta, date
 from enum import Enum
 import uuid
+import io
 
 from app.database import Database
 
