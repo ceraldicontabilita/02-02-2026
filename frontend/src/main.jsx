@@ -280,10 +280,10 @@ const router = createBrowserRouter([
       { path: "chiusura-esercizio", element: <LazyPage><ChiusuraEsercizio /></LazyPage> },
       
       // === STRUMENTI ===
-      { path: "documenti", element: <LazyPage><Documenti /></LazyPage> },
+      { path: "documenti", element: <Navigate to="/classificazione-email?tab=documenti" replace /> },
       { path: "import-unificato", element: <LazyPage><ImportUnificato /></LazyPage> },
       { path: "import-export", element: <LazyPage><ImportUnificato /></LazyPage> }, /* Redirect legacy route */
-      { path: "regole-categorizzazione", element: <LazyPage><RegoleCategorizzazione /></LazyPage> },
+      { path: "regole-categorizzazione", element: <Navigate to="/classificazione-email?tab=regole" replace /> },
       { path: "verifica-coerenza", element: <LazyPage><VerificaCoerenza /></LazyPage> },
       { path: "commercialista", element: <LazyPage><Commercialista /></LazyPage> },
       { path: "pianificazione", element: <LazyPage><Pianificazione /></LazyPage> },
