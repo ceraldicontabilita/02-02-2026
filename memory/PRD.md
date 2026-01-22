@@ -102,31 +102,30 @@ Sistema ERP contabile per aziende italiane con:
 - Casi speciali: Assegni Multipli, Arrotondamenti, Pagamenti Anticipati
 - Auto-riconciliazione F24
 
-### 3.5 ✅ Bilancio e Contabilità Economica (DEFINITIVO 22/01/2026)
+### 3.5 ✅ Bilancio e Contabilità Economica (COMPLETO 22/01/2026)
 
-#### REGOLA CONTABILE FONDAMENTALE ⚠️
-**Le fatture emesse a clienti NON sono ricavi aggiuntivi!**
-L'importo è già nei corrispettivi (scontrino originale). Non sommare per evitare doppio conteggio.
+#### REGOLE CONTABILI FONDAMENTALI
+1. **Ricavi** = SOLO Corrispettivi (vendite al pubblico)
+2. **Fatture emesse a clienti** = NON sono ricavi aggiuntivi (già nei corrispettivi)
+3. **IVA debito** = SOLO da corrispettivi
 
-#### Struttura Database (Sistema NON multi-utente)
-- `corrispettivi`: Vendite al pubblico = **UNICA fonte RICAVI**
-- `invoices`: Fatture RICEVUTE da fornitori = **COSTI**
-- P.IVA azienda: 04523831214
+#### Conto Economico Dettagliato (Art. 2425 c.c.)
+Sistema di **classificazione automatica** dei costi per natura:
 
-#### Conto Economico (per competenza)
-| Voce | Formula |
-|------|---------|
-| RICAVI | Solo Corrispettivi (totale_imponibile) |
-| COSTI | Fatture Ricevute - Note Credito (TD04, TD08) |
-| UTILE | RICAVI - COSTI |
+| Voce | Deducibilità | IVA Detraibile |
+|------|--------------|----------------|
+| B6 - Materie prime/merci | 100% | 100% |
+| B7 - Energia, acqua | 100% | 100% |
+| **B7 - Telefonia** | **80%** | **50%** |
+| **B7 - Carburante auto** | **20%** | **40%** |
+| **B8 - Noleggio auto** | **20% (max €3.615)** | **40%** |
+| B9 - Personale (stipendi, INPS, TFR) | 100% | N/A |
+| C17 - Interessi mutui | Limite ROL 30% | N/A |
 
-#### Liquidazione IVA
-| Voce | Fonte |
-|------|-------|
-| IVA Debito | Solo da corrispettivi (totale_iva) |
-| IVA Credito | Da fatture ricevute - NC |
+#### Endpoint
+- `/api/bilancio/conto-economico-dettagliato` - CE con tutte le voci e regole fiscali
 
-📄 **Documentazione completa:** `/app/app/REGOLE_CONTABILI.md`
+📄 **Documentazione:** `/app/app/REGOLE_CONTABILI.md`
 
 ### 3.6 ✅ Classificazione Documenti
 - Pagina unificata `/classificazione-email`
