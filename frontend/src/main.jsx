@@ -156,6 +156,7 @@ const Ricette = lazy(() => import("./pages/Ricette.jsx"));
 const DizionarioProdotti = lazy(() => import("./pages/DizionarioProdotti.jsx"));
 const CentriCosto = lazy(() => import("./pages/CentriCosto.jsx"));
 const UtileObiettivo = lazy(() => import("./pages/UtileObiettivo.jsx"));
+const LearningMachineDashboard = lazy(() => import("./pages/LearningMachineDashboard.jsx"));
 
 // === CONTABILITÀ & BILANCIO ===
 const Bilancio = lazy(() => import("./pages/Bilancio.jsx"));
