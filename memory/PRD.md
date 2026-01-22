@@ -218,12 +218,14 @@ GET  /api/f24-riconciliazione/quietanze
 Nessun task P0 in sospeso.
 
 ### 7.2 🟡 P1 - Media Priorità
-1. Report PDF annuale ferie/permessi per dipendente
-2. Riconciliazione email in background (asincrona)
+1. **Refactoring Backend**: Suddividere file grandi (suppliers.py 95KB, operazioni_da_confermare.py 90KB, documenti.py 88KB)
+2. **UI Learning Machine**: Interfaccia per visualizzare/filtrare i 869 documenti classificati
+3. Report PDF annuale ferie/permessi per dipendente
 
 ### 7.3 🟠 P2 - Bassa Priorità
-3. Refactoring router backend (modularizzazione)
-4. Test automatici E2E con Playwright
+4. Automazione completa certificati medici
+5. Riconciliazione email in background (asincrona)
+6. Test automatici E2E con Playwright
 
 ---
 
