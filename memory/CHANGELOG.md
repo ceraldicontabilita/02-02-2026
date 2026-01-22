@@ -3,29 +3,33 @@
 
 ---
 
-## 22 Gennaio 2026 - Sessione 11 (Correzione Logica Contabile COMPLETA)
+## 22 Gennaio 2026 - Sessione 11 (Logica Contabile DEFINITIVA)
 
-### ✅ Correzione CRITICA della Logica Contabile
-- **Problema Identificato**: Le fatture nella collezione `invoices` erano considerate "emesse" ma sono TUTTE RICEVUTE (da fornitori)
-- **Soluzione**:
-  - RICAVI = SOLO Corrispettivi (vendite al pubblico, `totale_imponibile`)
-  - COSTI = Fatture Ricevute (imponibile) - Note Credito (TD04, TD08)
-  - Rimosso campo `altri_ricavi` (non esistono fatture emesse a clienti)
+### ✅ Documentazione Regole Contabili
+- Creato `/app/app/REGOLE_CONTABILI.md` con documentazione completa
+- Aggiunta intestazione dettagliata in `bilancio.py` e `liquidazione_iva.py`
 
-### ✅ Bug Fix Multipli (Testing Agent)
-1. `get_confronto_annuale`: KeyError 'altri_ricavi' - rimosso riferimento a campi inesistenti
-2. `export_bilancio_pdf`: TypeError Query format - usate funzioni helper invece di endpoint
-3. `export_bilancio_pdf`: KeyError 'altri_ricavi' - aggiornata tabella PDF
-4. `export_confronto_pdf`: KeyError 'costi_operativi' - aggiornata tabella PDF
+### ✅ REGOLA CRITICA IMPLEMENTATA ⚠️
+**Le fatture emesse a clienti NON sono ricavi aggiuntivi!**
+- Quando un cliente chiede fattura dopo lo scontrino, l'importo è GIÀ nei corrispettivi
+- NON sommare le fatture emesse ai ricavi (doppio conteggio!)
+- NON calcolare IVA sulle fatture emesse (già versata con corrispettivi!)
 
-### ✅ Aggiornamento Analytics Router
-- Riscritto `/app/app/routers/reports/analytics.py` per usare le collezioni corrette
-- Ricavi da `corrispettivi`, Costi da `invoices`
+### ✅ Struttura Database Documentata
+- `corrispettivi`: UNICA fonte di RICAVI (vendite al pubblico)
+- `invoices`: TUTTE fatture RICEVUTE (COSTI)
+- Sistema NON multi-utente
+- P.IVA azienda: 04523831214
 
-### ✅ Test Suite Completa
-- 12 test automatici (100% passed)
-- Valori verificati 2025: Ricavi €857,515.42, Costi €496,180.07, Utile €361,335.35 (42.1%)
-- File: `/app/tests/test_iteration_31_bilancio_corrected.py`
+### ✅ Calcoli Verificati 2025
+| Voce | Valore |
+|------|--------|
+| Ricavi (Corrispettivi) | €857,515.42 |
+| Costi (Fatture - NC) | €496,180.07 |
+| **UTILE** | **€361,335.35** (42.1%) |
+| IVA Vendite | €85,715.39 |
+| IVA Acquisti | €82,202.56 |
+| IVA Netta | €3,512.83 |
 
 ---
 
