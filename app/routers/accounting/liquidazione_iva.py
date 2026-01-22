@@ -1,11 +1,35 @@
 """
 Liquidazione IVA Router - Calcolo preciso IVA mensile per confronto con commercialista.
 
-Questo modulo implementa la logica di liquidazione IVA secondo le norme italiane:
-- IVA ordinaria per competenza
-- Gestione deroghe temporali (regola 15 e 12 giorni)
-- Note di credito (TD04, TD08) sottratte dal totale
-- Export PDF per documentazione
+================================================================================
+LOGICA LIQUIDAZIONE IVA - CONTABILITÀ ITALIANA
+================================================================================
+
+IVA A DEBITO (da versare all'Erario):
+-------------------------------------
+- Fonte: SOLO corrispettivi (collezione 'corrispettivi')
+- Campo: totale_iva
+- IMPORTANTE: Le fatture emesse a clienti NON generano IVA debito aggiuntiva!
+             L'IVA è già inclusa nei corrispettivi (lo scontrino originale)
+
+IVA A CREDITO (detraibile):
+---------------------------
+- Fonte: Fatture ricevute da fornitori (collezione 'invoices')
+- Campo: iva
+- Tipi documento: TD01, TD24, TD02, TD06, TD27
+- Note Credito (TD04, TD08): riducono l'IVA credito
+
+DEROGHE TEMPORALI:
+------------------
+1. Regola 15 giorni: fattura mese precedente registrata entro il 15 del mese corrente
+2. Regola 12 giorni: fattura registrata entro 12 giorni dalla data operazione
+
+FORMULA:
+--------
+IVA DA VERSARE = IVA DEBITO (corrispettivi) - IVA CREDITO (fatture - NC)
+Se negativo = credito da riportare al mese successivo
+
+================================================================================
 """
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import StreamingResponse
