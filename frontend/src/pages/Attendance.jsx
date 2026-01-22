@@ -196,6 +196,124 @@ export default function Attendance() {
     }
   };
 
+  // === SELEZIONE MULTIPLA: Click su cella in modalità selezione rapida ===
+  const handleMultiSelectClick = async (employeeId, dateStr) => {
+    if (!selectedStato) return;
+    
+    const key = `${employeeId}_${dateStr}`;
+    const currentState = presenze[key];
+    
+    // Se lo stato è già quello selezionato, rimuovi (torna a riposo)
+    const newState = currentState === selectedStato ? 'riposo' : selectedStato;
+    
+    // Mappa stato presenza a codice giustificativo per validazione
+    const mappaGiustificativi = {
+      'ferie': 'FER',
+      'permesso': 'PER',
+      'malattia': 'MAL',
+      'rol': 'ROL',
+      'assente': 'AI'
+    };
+    
+    const codiceGiustificativo = mappaGiustificativi[newState];
+    
+    // Se è un giustificativo con limite, valida prima
+    if (codiceGiustificativo && newState !== 'riposo') {
+      try {
+        const validazione = await api.post('/api/giustificativi/valida-giustificativo', {
+          employee_id: employeeId,
+          codice_giustificativo: codiceGiustificativo,
+          data: dateStr,
+          ore: 8
+        });
+        
+        if (!validazione.data.valido) {
+          toast.error(`⛔ ${validazione.data.messaggio}`);
+          return;
+        }
+      } catch (err) {
+        console.error('Errore validazione:', err);
+      }
+    }
+    
+    // Aggiorna UI
+    setPresenze(prev => ({ ...prev, [key]: newState }));
+    
+    // Salva nel backend
+    try {
+      await api.post('/api/attendance/set-presenza', {
+        employee_id: employeeId,
+        data: dateStr,
+        stato: newState
+      });
+      
+      // Se è malattia, apri dialog per protocollo
+      if (newState === 'malattia') {
+        const protocollo = prompt('Inserisci numero protocollo certificato medico (opzionale):');
+        if (protocollo) {
+          setNotePresenze(prev => ({
+            ...prev,
+            [key]: { ...prev[key], protocollo_malattia: protocollo }
+          }));
+          // Salva nota nel backend
+          await api.post('/api/attendance/set-nota-presenza', {
+            employee_id: employeeId,
+            data: dateStr,
+            protocollo_malattia: protocollo
+          }).catch(() => {});
+        }
+      }
+    } catch (error) {
+      setPresenze(prev => ({ ...prev, [key]: currentState }));
+      toast.error('Errore salvataggio');
+    }
+  };
+
+  // Attiva/disattiva modalità selezione rapida
+  const toggleMultiSelectMode = (stato) => {
+    if (selectedStato === stato) {
+      // Disattiva
+      setSelectedStato(null);
+      setMultiSelectMode(false);
+      toast.info('Modalità selezione rapida disattivata');
+    } else {
+      // Attiva
+      setSelectedStato(stato);
+      setMultiSelectMode(true);
+      toast.success(`Modalità ${STATI_PRESENZA[stato]?.name} attivata - Clicca sulle celle per applicare`);
+    }
+  };
+
+  // === GENERAZIONE PDF PER CONSULENTE ===
+  const generatePdfConsulente = async () => {
+    try {
+      setGeneratingPdf(true);
+      toast.info('Generazione PDF in corso...');
+      
+      const response = await api.post('/api/attendance/genera-pdf-consulente', {
+        anno: currentYear,
+        mese: currentMonth + 1
+      }, { responseType: 'blob' });
+      
+      // Download file
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Presenze_${MESI[currentMonth]}_${currentYear}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      toast.success('PDF generato con successo!');
+    } catch (error) {
+      console.error('Errore generazione PDF:', error);
+      toast.error('Errore nella generazione del PDF');
+    } finally {
+      setGeneratingPdf(false);
+    }
+  };
+
   // Naviga mese
   const navigateMonth = (delta) => {
     setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() + delta, 1));
