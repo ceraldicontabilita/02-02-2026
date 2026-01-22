@@ -1121,7 +1121,9 @@ async def genera_pdf_consulente(data: Dict[str, Any]):
     
     note = {}
     for n in note_raw:
-        key = f"{n[\"employee_id\"]}_{n[\"data\"]}"
+        emp_id = n["employee_id"]
+        data_val = n["data"]
+        key = f"{emp_id}_{data_val}"
         note[key] = n
     
     # Recupera acconti del mese
