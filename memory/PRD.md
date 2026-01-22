@@ -280,14 +280,16 @@ GET  /api/liquidazione-iva/export/pdf/{anno}/{mese}
 Nessun task P0 in sospeso.
 
 ### 7.2 🟡 P1 - Media Priorità
-1. **Refactoring Backend**: Suddividere file grandi (suppliers.py 95KB, operazioni_da_confermare.py 90KB, documenti.py 88KB)
-2. **UI Learning Machine**: Interfaccia per visualizzare/filtrare i 869 documenti classificati
-3. Report PDF annuale ferie/permessi per dipendente
+1. **UI Learning Machine & Magazzino**: Dashboard per visualizzare centri di costo, giacenze magazzino, attivare lotti produzione
+2. **Riconciliazione F24/Banca**: Parsing quietanze F24 e riconciliazione automatica con estratto conto
+3. **Refactoring Backend**: Suddividere file grandi (suppliers.py 95KB, operazioni_da_confermare.py 90KB, documenti.py 88KB)
+4. Report PDF annuale ferie/permessi per dipendente
 
 ### 7.3 🟠 P2 - Bassa Priorità
-4. Automazione completa certificati medici
-5. Riconciliazione email in background (asincrona)
-6. Test automatici E2E con Playwright
+5. UI Feedback Loop per correzione classificazioni automatiche
+6. Automazione completa certificati medici
+7. Riconciliazione email in background (asincrona)
+8. Test automatici E2E con Playwright
 
 ---
 
