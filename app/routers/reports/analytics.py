@@ -1,4 +1,10 @@
-"""Analytics router - Business analytics."""
+"""Analytics router - Business analytics.
+
+LOGICA CONTABILE CORRETTA:
+- RICAVI: dalla collezione 'corrispettivi' (vendite al pubblico)
+- COSTI: dalla collezione 'invoices' (fatture ricevute da fornitori)
+- Il sistema NON è multi-utente, quindi non filtra per user_id
+"""
 from fastapi import APIRouter, Depends, Query
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta
@@ -21,33 +27,113 @@ async def get_analytics_dashboard(
     current_user: Dict[str, Any] = Depends(get_current_user),
     year: Optional[int] = Query(None, description="Filter by year")
 ) -> Dict[str, Any]:
-    """Get analytics dashboard data (Real Data)."""
+    """
+    Get analytics dashboard data.
+    
+    RICAVI = Corrispettivi (totale_imponibile, al netto IVA)
+    COSTI = Fatture Ricevute (imponibile, escluse note credito)
+    """
     db = Database.get_db()
-    user_id = current_user["user_id"]
     
     # Date ranges
     today = datetime.utcnow()
+    current_year = year or today.year
     
-    # Logic for year filtering
-    if year:
-        # If year is selected, we filter data for that year (Jan 1 to Dec 31)
-        start_date = datetime(year, 1, 1)
-        end_date = datetime(year, 12, 31, 23, 59, 59)
+    # Define date range
+    start_date = f"{current_year}-01-01"
+    end_date = f"{current_year}-12-31"
+    
+    # === RICAVI (Corrispettivi - vendite al pubblico) ===
+    revenue_cursor = db["corrispettivi"].aggregate([
+        {"$match": {
+            "data": {"$gte": start_date, "$lte": end_date}
+        }},
+        {"$group": {
+            "_id": None, 
+            "totale_imponibile": {"$sum": {"$ifNull": ["$totale_imponibile", 0]}},
+            "totale_lordo": {"$sum": {"$ifNull": ["$totale", 0]}},
+            "count": {"$sum": 1}
+        }}
+    ])
+    revenue_res = await revenue_cursor.to_list(1)
+    revenue = revenue_res[0]["totale_imponibile"] if revenue_res else 0.0
+    revenue_lordo = revenue_res[0]["totale_lordo"] if revenue_res else 0.0
+    num_corrispettivi = revenue_res[0]["count"] if revenue_res else 0
+    
+    # === COSTI (Fatture Ricevute - escluse NC) ===
+    expenses_cursor = db[Collections.INVOICES].aggregate([
+        {"$match": {
+            "tipo_documento": {"$nin": ["TD04", "TD08"]},  # Escludi Note Credito
+            "$or": [
+                {"invoice_date": {"$gte": start_date, "$lte": end_date}},
+                {"data_ricezione": {"$gte": start_date, "$lte": end_date}}
+            ]
+        }},
+        {"$group": {
+            "_id": None, 
+            "totale_imponibile": {"$sum": {"$ifNull": ["$imponibile", {"$subtract": ["$total_amount", {"$ifNull": ["$iva", 0]}]}]}},
+            "totale_lordo": {"$sum": "$total_amount"},
+            "count": {"$sum": 1}
+        }}
+    ])
+    expenses_res = await expenses_cursor.to_list(1)
+    expenses = expenses_res[0]["totale_imponibile"] if expenses_res else 0.0
+    num_fatture = expenses_res[0]["count"] if expenses_res else 0
+    
+    # === Note Credito (riducono i costi) ===
+    nc_cursor = db[Collections.INVOICES].aggregate([
+        {"$match": {
+            "tipo_documento": {"$in": ["TD04", "TD08"]},
+            "$or": [
+                {"invoice_date": {"$gte": start_date, "$lte": end_date}},
+                {"data_ricezione": {"$gte": start_date, "$lte": end_date}}
+            ]
+        }},
+        {"$group": {
+            "_id": None, 
+            "totale": {"$sum": {"$ifNull": ["$imponibile", {"$subtract": ["$total_amount", {"$ifNull": ["$iva", 0]}]}]}},
+            "count": {"$sum": 1}
+        }}
+    ])
+    nc_res = await nc_cursor.to_list(1)
+    note_credito = nc_res[0]["totale"] if nc_res else 0.0
+    
+    # Costi netti
+    expenses_netti = expenses - note_credito
+    profit = revenue - expenses_netti
+    
+    # === TREND MENSILE ===
+    trend = []
+    for month in range(1, 13):
+        month_str = f"{current_year}-{month:02d}"
+        month_label = calendar.month_abbr[month]
         
-        # Revenue (Cash In in that year)
-        revenue_cursor = db[Collections.CASH_MOVEMENTS].aggregate([
+        # Ricavi mensili (corrispettivi)
+        rev_agg = await db["corrispettivi"].aggregate([
+            {"$match": {"data": {"$regex": f"^{month_str}"}}},
+            {"$group": {"_id": None, "total": {"$sum": {"$ifNull": ["$totale_imponibile", 0]}}}}
+        ]).to_list(1)
+        m_rev = rev_agg[0]["total"] if rev_agg else 0.0
+        
+        # Costi mensili (fatture)
+        exp_agg = await db[Collections.INVOICES].aggregate([
             {"$match": {
-                "user_id": user_id,
-                "type": "entrata",
-                "date": {"$gte": start_date.strftime("%Y-%m-%d"), "$lte": end_date.strftime("%Y-%m-%d")}
+                "tipo_documento": {"$nin": ["TD04", "TD08"]},
+                "$or": [
+                    {"invoice_date": {"$regex": f"^{month_str}"}},
+                    {"data_ricezione": {"$regex": f"^{month_str}"}}
+                ]
             }},
-            {"$group": {"_id": None, "total": {"$sum": "$amount"}}}
-        ])
-        revenue_res = await revenue_cursor.to_list(1)
-        revenue = revenue_res[0]["total"] if revenue_res else 0.0
+            {"$group": {"_id": None, "total": {"$sum": {"$ifNull": ["$imponibile", {"$subtract": ["$total_amount", {"$ifNull": ["$iva", 0]}]}]}}}}
+        ]).to_list(1)
+        m_exp = exp_agg[0]["total"] if exp_agg else 0.0
         
-        # Expenses (Invoices date in that year + Cash Out in that year)
-        invoices_cursor = db[Collections.INVOICES].aggregate([
+        trend.append({
+            "month": month_label,
+            "entrate": round(m_rev, 2),
+            "uscite": round(m_exp, 2),
+            "saldo": round(m_rev - m_exp, 2)
+        })
             {"$match": {
                 "user_id": user_id,
                 "invoice_date": {"$gte": start_date.strftime("%Y-%m-%d"), "$lte": end_date.strftime("%Y-%m-%d")},
