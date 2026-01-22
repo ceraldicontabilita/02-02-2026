@@ -3,6 +3,31 @@
 
 ---
 
+## 22 Gennaio 2026 - Sessione 11 (Correzione Logica Contabile)
+
+### ✅ Correzione Conto Economico
+- **Problema**: I calcoli utilizzavano la Prima Nota invece delle collezioni corrette
+- **Soluzione**: Riscritta la logica per usare:
+  - `corrispettivi` (campo `totale_imponibile`) per i ricavi vendite
+  - `invoices` con filtro `tipo_documento` per fatture emesse (TD01, TD24, TD26)
+  - `invoices` per fatture ricevute (esclusi TD01, TD24, TD26, TD04, TD08)
+  - Note di credito (TD04, TD08) sottratte dai costi
+- **Nuovi campi risposta**: `note_credito`, `margine_percentuale`, `dettaglio_iva`, `statistiche`
+
+### ✅ Aggiornamento Frontend Bilancio
+- Le Note di Credito ora visualizzate in verde separatamente
+- Margine percentuale mostrato nel risultato
+
+### ✅ Fix Endpoint /api/bilancio/riepilogo
+- Corretto bug: usava endpoint con Query params invece di helper functions
+
+### ✅ Test Suite Completa
+- 13 test automatici (100% passed)
+- Copertura: Conto Economico, Stato Patrimoniale, Confronto Annuale, Liquidazione IVA
+- File: `/app/tests/test_iteration_30_bilancio_iva.py`
+
+---
+
 ## 22 Gennaio 2026 - Sessione 10
 
 ### ✅ Sistema Notifiche Limiti Giustificativi
