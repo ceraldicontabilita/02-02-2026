@@ -289,6 +289,10 @@ async def get_conto_economico(
     num_note_credito = note_credito[0]["count"] if note_credito else 0
     
     # === CALCOLI FINALI ===
+    # REGOLA CONTABILE ITALIANA:
+    # - Ricavi = SOLO Corrispettivi (vendite al pubblico)
+    # - Le fatture emesse a clienti NON sono ricavi aggiuntivi (già nei corrispettivi)
+    # - Costi = Fatture Ricevute da fornitori - Note Credito
     
     # Ricavi = Solo Corrispettivi (imponibile)
     totale_ricavi = totale_corrispettivi
@@ -313,7 +317,8 @@ async def get_conto_economico(
         "ricavi": {
             "corrispettivi": round(totale_corrispettivi, 2),
             "corrispettivi_lordi": round(totale_lordo_corrispettivi, 2),
-            "totale_ricavi": round(totale_ricavi, 2)
+            "totale_ricavi": round(totale_ricavi, 2),
+            # NOTA: Le fatture emesse NON compaiono qui perché l'importo è già nei corrispettivi
         },
         "costi": {
             "acquisti": round(totale_acquisti, 2),
@@ -327,7 +332,7 @@ async def get_conto_economico(
             "tipo": "utile" if utile_perdita >= 0 else "perdita"
         },
         "dettaglio_iva": {
-            "iva_vendite": round(iva_vendite, 2),
+            "iva_vendite": round(iva_vendite, 2),  # Solo da corrispettivi (NON da fatture emesse)
             "iva_acquisti": round(iva_acquisti - iva_note_credito, 2),
             "iva_netta": round(iva_vendite - (iva_acquisti - iva_note_credito), 2)
         },
