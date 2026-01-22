@@ -1,5 +1,50 @@
 """
 Bilancio Router - Stato Patrimoniale e Conto Economico
+
+================================================================================
+LOGICA CONTABILE ITALIANA - REGOLE FONDAMENTALI
+================================================================================
+
+STRUTTURA DATABASE (Sistema NON multi-utente):
+---------------------------------------------
+1. CORRISPETTIVI: Vendite al pubblico (scontrini/ricevute fiscali)
+   - Rappresentano l'UNICA fonte di RICAVI
+   - Contengono: totale, totale_imponibile, totale_iva
+   - P.IVA azienda: 04523831214
+
+2. INVOICES: TUTTE fatture RICEVUTE da fornitori (ciclo passivo)
+   - Rappresentano i COSTI (acquisti)
+   - Tipi documento: TD01 (ordinaria), TD24 (differita), TD04/TD08 (note credito)
+   - Hanno sempre 'supplier_name' (fornitore) e 'supplier_vat'
+
+3. FATTURE EMESSE A CLIENTI (quando caricate):
+   - NON sono ricavi aggiuntivi!
+   - Sono fatture che SOSTITUISCONO uno scontrino già emesso
+   - L'importo è GIÀ CONTEGGIATO nei corrispettivi
+   - Servono solo per il cliente che vuole detrarre l'IVA
+   - NON calcolare l'IVA sulle fatture emesse (già nei corrispettivi!)
+
+CONTO ECONOMICO (per competenza):
+---------------------------------
+RICAVI = Solo Corrispettivi (totale_imponibile)
+         - Le fatture emesse NON sono ricavi aggiuntivi
+         
+COSTI = Fatture Ricevute (imponibile) - Note Credito (TD04, TD08)
+
+UTILE/PERDITA = RICAVI - COSTI
+
+LIQUIDAZIONE IVA:
+-----------------
+IVA DEBITO = IVA da corrispettivi (totale_iva)
+             - NON include IVA da fatture emesse (sarebbe doppio!)
+             
+IVA CREDITO = IVA da fatture ricevute (iva)
+              - Meno IVA da note di credito
+
+IVA DA VERSARE = IVA DEBITO - IVA CREDITO
+                 (se negativo = credito da riportare)
+
+================================================================================
 """
 from fastapi import APIRouter, Query, HTTPException
 from fastapi.responses import StreamingResponse
@@ -14,6 +59,9 @@ router = APIRouter()
 
 COLLECTION_PRIMA_NOTA_CASSA = "prima_nota_cassa"
 COLLECTION_PRIMA_NOTA_BANCA = "prima_nota_banca"
+
+# P.IVA dell'azienda (per identificare fatture emesse vs ricevute)
+PIVA_AZIENDA = "04523831214"
 
 
 @router.get("/stato-patrimoniale")
