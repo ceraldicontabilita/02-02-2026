@@ -21,7 +21,8 @@ import { PageInfoCard } from '../components/PageInfoCard';
 
 const TABS = [
   { id: 'anagrafica', label: '👤 Anagrafica', icon: '👤' },
-  { id: 'contratti', label: '📋 Contratti', icon: '📋' },
+  { id: 'giustificativi', label: '📋 Giustificativi', icon: '📋' },
+  { id: 'contratti', label: '📄 Contratti', icon: '📄' },
   { id: 'retribuzione', label: '💰 Retribuzione', icon: '💰' },
   { id: 'bonifici', label: '🏦 Bonifici', icon: '🏦' },
   { id: 'acconti', label: '💵 Acconti', icon: '💵' },
