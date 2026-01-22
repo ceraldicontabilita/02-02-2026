@@ -1,7 +1,7 @@
 # PRD – TechRecon Accounting System
 ## Product Requirements Document (PRD)
 ## TechRecon Accounting System – Versione Super Articolata
-### Ultimo aggiornamento: 21 Gennaio 2026 (Sessione 6 - Motore Contabile + Attendance + Riconciliazione Estesa)
+### Ultimo aggiornamento: 22 Gennaio 2026 (Sessione 7 - Flag In Carico + Cedolini + UI Attendance)
 
 ---
 
@@ -15,7 +15,71 @@
 
 ---
 
-## ✅ NUOVE FEATURE COMPLETATE (21/01/2026 - Sessione 6)
+## ✅ NUOVE FEATURE COMPLETATE (22/01/2026 - Sessione 7)
+
+### 1. FLAG "IN CARICO" PER DIPENDENTI - COMPLETATO
+Sistema per filtrare i dipendenti nel modulo presenze.
+
+**Caratteristiche:**
+- Campo `in_carico` (boolean, default: true) nel record dipendente
+- Dipendenti con `in_carico=false` non appaiono nel calendario presenze
+- Toggle visivo nel tab Anagrafica di Gestione Dipendenti
+- Retrocompatibilità: dipendenti senza il campo sono considerati "in carico"
+
+**API:**
+- `GET /api/attendance/dipendenti-in-carico` - Lista dipendenti con stato in_carico
+- `PUT /api/attendance/set-in-carico/{employee_id}` - Modifica flag in_carico
+
+**File:**
+- `/app/app/routers/attendance.py` (nuovi endpoint + filtro dashboard)
+- `/app/app/routers/employees/dipendenti.py` (campo in_carico)
+- `/app/frontend/src/pages/Attendance.jsx` (filtro in_carico)
+- `/app/frontend/src/pages/GestioneDipendentiUnificata.jsx` (toggle in Anagrafica)
+
+---
+
+### 2. PAGINA CEDOLINI (Buste Paga) - COMPLETATO
+Nuova UI per gestione buste paga stile "Dipendenti in Cloud".
+
+**Caratteristiche:**
+- Tabs mensili con conteggio e totali (Gennaio-Dicembre + 13esima + 14esima)
+- Tabella cedolini con filtro dipendente e ricerca
+- Modale dettaglio cedolino con visualizzatore PDF
+- Upload PDF buste paga
+- Navigazione anno
+
+**File:**
+- `/app/frontend/src/pages/CedoliniRiconciliazione.jsx`
+- `/app/app/routers/cedolini.py` (backend esistente)
+
+---
+
+### 3. UI CALENDARIO PRESENZE - AGGIORNATO
+Miglioramenti alla pagina Attendance.
+
+**Caratteristiche:**
+- Vista calendario mensile con click per cambiare stato
+- Tab "Storico Ore" funzionante
+- Filtro automatico per dipendenti in_carico
+- Statistiche riepilogative
+
+**File:**
+- `/app/frontend/src/pages/Attendance.jsx`
+
+---
+
+### Test Sessione 7
+- **9 test automatici passati (100%)**
+- Report: `/app/test_reports/iteration_24.json`
+- Funzionalità testate:
+  - Flag in_carico (GET/PUT endpoints)
+  - Filtro dashboard presenze
+  - Storico ore
+  - Cedolini
+
+---
+
+## ✅ FEATURE COMPLETATE (21/01/2026 - Sessione 6)
 
 ### 1. MOTORE CONTABILE (Soluzione C) - COMPLETATO
 Sistema contabile con partita doppia e persistenza.
