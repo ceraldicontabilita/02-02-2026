@@ -31,7 +31,11 @@ const GESTIONALE_SECTIONS = {
 };
 
 export default function ClassificazioneDocumenti() {
-  const [activeTab, setActiveTab] = useState('classificazione');
+  // Leggi tab iniziale da URL params
+  const [searchParams] = useSearchParams();
+  const initialTab = searchParams.get('tab') || 'classificazione';
+  
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [stats, setStats] = useState(null);
   const [rules, setRules] = useState([]);
   const [scanResults, setScanResults] = useState(null);
