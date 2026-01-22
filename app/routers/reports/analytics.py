@@ -1,9 +1,10 @@
 """Analytics router - Business analytics.
 
-LOGICA CONTABILE CORRETTA:
-- RICAVI: dalla collezione 'corrispettivi' (vendite al pubblico)
-- COSTI: dalla collezione 'invoices' (fatture ricevute da fornitori)
-- Il sistema NON è multi-utente, quindi non filtra per user_id
+LOGICA CONTABILE CORRETTA (Contabilità Italiana):
+- RICAVI: dalla collezione 'corrispettivi' (vendite al pubblico, imponibile)
+- COSTI: dalla collezione 'invoices' (fatture ricevute da fornitori, imponibile - NC)
+
+Il sistema NON è multi-utente, le collezioni non hanno user_id.
 """
 from fastapi import APIRouter, Depends, Query
 from typing import Dict, Any, List, Optional
@@ -97,10 +98,12 @@ async def get_analytics_dashboard(
     ])
     nc_res = await nc_cursor.to_list(1)
     note_credito = nc_res[0]["totale"] if nc_res else 0.0
+    num_nc = nc_res[0]["count"] if nc_res else 0
     
     # Costi netti
     expenses_netti = expenses - note_credito
     profit = revenue - expenses_netti
+    margine_pct = round((profit / revenue * 100), 1) if revenue > 0 else 0
     
     # === TREND MENSILE ===
     trend = []
@@ -115,7 +118,7 @@ async def get_analytics_dashboard(
         ]).to_list(1)
         m_rev = rev_agg[0]["total"] if rev_agg else 0.0
         
-        # Costi mensili (fatture)
+        # Costi mensili (fatture - NC)
         exp_agg = await db[Collections.INVOICES].aggregate([
             {"$match": {
                 "tipo_documento": {"$nin": ["TD04", "TD08"]},
@@ -128,157 +131,75 @@ async def get_analytics_dashboard(
         ]).to_list(1)
         m_exp = exp_agg[0]["total"] if exp_agg else 0.0
         
+        # NC mensili
+        nc_agg = await db[Collections.INVOICES].aggregate([
+            {"$match": {
+                "tipo_documento": {"$in": ["TD04", "TD08"]},
+                "$or": [
+                    {"invoice_date": {"$regex": f"^{month_str}"}},
+                    {"data_ricezione": {"$regex": f"^{month_str}"}}
+                ]
+            }},
+            {"$group": {"_id": None, "total": {"$sum": {"$ifNull": ["$imponibile", {"$subtract": ["$total_amount", {"$ifNull": ["$iva", 0]}]}]}}}}
+        ]).to_list(1)
+        m_nc = nc_agg[0]["total"] if nc_agg else 0.0
+        
         trend.append({
             "month": month_label,
             "entrate": round(m_rev, 2),
-            "uscite": round(m_exp, 2),
-            "saldo": round(m_rev - m_exp, 2)
+            "uscite": round(m_exp - m_nc, 2),
+            "saldo": round(m_rev - (m_exp - m_nc), 2)
         })
-            {"$match": {
-                "user_id": user_id,
-                "invoice_date": {"$gte": start_date.strftime("%Y-%m-%d"), "$lte": end_date.strftime("%Y-%m-%d")},
-                "status": {"$ne": "deleted"}
-            }},
-            {"$group": {"_id": None, "total": {"$sum": "$total_amount"}}}
-        ])
-        inv_res = await invoices_cursor.to_list(1)
-        expenses_inv = inv_res[0]["total"] if inv_res else 0.0
-        
-        cash_out_cursor = db[Collections.CASH_MOVEMENTS].aggregate([
-            {"$match": {
-                "user_id": user_id,
-                "type": "uscita",
-                "date": {"$gte": start_date.strftime("%Y-%m-%d"), "$lte": end_date.strftime("%Y-%m-%d")}
-            }},
-            {"$group": {"_id": None, "total": {"$sum": "$amount"}}}
-        ])
-        cash_res = await cash_out_cursor.to_list(1)
-        expenses_cash = cash_res[0]["total"] if cash_res else 0.0
-        
-        expenses = expenses_inv + expenses_cash
-        
-        # Monthly Trend for that year (Jan-Dec)
-        trend = []
-        for i in range(1, 13):
-            month_str = f"{year}-{i:02d}"
-            month_label = calendar.month_abbr[i]
-            
-            # Cash In
-            rev_agg = await db[Collections.CASH_MOVEMENTS].aggregate([
-                {"$match": {"user_id": user_id, "type": "entrata", "date": {"$regex": f"^{month_str}"}}},
-                {"$group": {"_id": None, "total": {"$sum": "$amount"}}}
-            ]).to_list(1)
-            m_rev = rev_agg[0]["total"] if rev_agg else 0.0
-            
-            # Invoices (Expenses)
-            exp_agg = await db[Collections.INVOICES].aggregate([
-                {"$match": {"user_id": user_id, "invoice_date": {"$regex": f"^{month_str}"}}},
-                {"$group": {"_id": None, "total": {"$sum": "$total_amount"}}}
-            ]).to_list(1)
-            m_exp = exp_agg[0]["total"] if exp_agg else 0.0
-            
-            trend.append({
-                "month": month_label,
-                "entrate": m_rev,
-                "uscite": m_exp,
-                "saldo": m_rev - m_exp
-            })
-            
-    else:
-        # Default: Last 30 days logic (as before)
-        last_30_days = today - timedelta(days=30)
-        
-        # Revenue
-        revenue_cursor = db[Collections.CASH_MOVEMENTS].aggregate([
-            {"$match": {
-                "user_id": user_id,
-                "type": "entrata",
-                "date": {"$gte": last_30_days.isoformat()}
-            }},
-            {"$group": {"_id": None, "total": {"$sum": "$amount"}}}
-        ])
-        revenue_res = await revenue_cursor.to_list(1)
-        revenue = revenue_res[0]["total"] if revenue_res else 0.0
-        
-        # Expenses
-        invoices_cursor = db[Collections.INVOICES].aggregate([
-            {"$match": {
-                "user_id": user_id,
-                "invoice_date": {"$gte": last_30_days.strftime("%Y-%m-%d")},
-                "status": {"$ne": "deleted"}
-            }},
-            {"$group": {"_id": None, "total": {"$sum": "$total_amount"}}}
-        ])
-        inv_res = await invoices_cursor.to_list(1)
-        expenses_inv = inv_res[0]["total"] if inv_res else 0.0
-        
-        cash_out_cursor = db[Collections.CASH_MOVEMENTS].aggregate([
-            {"$match": {
-                "user_id": user_id,
-                "type": "uscita",
-                "date": {"$gte": last_30_days.isoformat()}
-            }},
-            {"$group": {"_id": None, "total": {"$sum": "$amount"}}}
-        ])
-        cash_res = await cash_out_cursor.to_list(1)
-        expenses_cash = cash_res[0]["total"] if cash_res else 0.0
-        
-        expenses = expenses_inv + expenses_cash
-        
-        # Monthly Trend (Last 12 months)
-        trend = []
-        for i in range(11, -1, -1):
-            d = today - timedelta(days=i*30) 
-            month_str = d.strftime("%Y-%m")
-            month_label = d.strftime("%b")
-            
-            rev_agg = await db[Collections.CASH_MOVEMENTS].aggregate([
-                {"$match": {"user_id": user_id, "type": "entrata", "date": {"$regex": f"^{month_str}"}}},
-                {"$group": {"_id": None, "total": {"$sum": "$amount"}}}
-            ]).to_list(1)
-            m_rev = rev_agg[0]["total"] if rev_agg else 0.0
-            
-            exp_agg = await db[Collections.INVOICES].aggregate([
-                {"$match": {"user_id": user_id, "invoice_date": {"$regex": f"^{month_str}"}}},
-                {"$group": {"_id": None, "total": {"$sum": "$total_amount"}}}
-            ]).to_list(1)
-            m_exp = exp_agg[0]["total"] if exp_agg else 0.0
-            
-            trend.append({
-                "month": month_label,
-                "entrate": m_rev,
-                "uscite": m_exp,
-                "saldo": m_rev - m_exp
-            })
-
-    # 4. Top Suppliers (Filtered by Year if present)
-    match_query = {"user_id": user_id}
+    
+    # === TOP FORNITORI ===
+    match_query = {}
     if year:
-        match_query["invoice_date"] = {"$regex": f"^{year}-"}
+        match_query["$or"] = [
+            {"invoice_date": {"$regex": f"^{year}-"}},
+            {"data_ricezione": {"$regex": f"^{year}-"}}
+        ]
         
     top_suppliers = await db[Collections.INVOICES].aggregate([
-        {"$match": match_query},
-        {"$group": {"_id": "$supplier_name", "amount": {"$sum": "$total_amount"}, "count": {"$sum": 1}}},
+        {"$match": match_query} if match_query else {"$match": {}},
+        {"$group": {
+            "_id": "$supplier_name", 
+            "amount": {"$sum": {"$ifNull": ["$imponibile", {"$subtract": ["$total_amount", {"$ifNull": ["$iva", 0]}]}]}}, 
+            "count": {"$sum": 1}
+        }},
         {"$sort": {"amount": -1}},
         {"$limit": 5},
-        {"$project": {"name": "$_id", "amount": 1, "count": 1, "_id": 0}}
+        {"$project": {"name": "$_id", "amount": {"$round": ["$amount", 2]}, "count": 1, "_id": 0}}
     ]).to_list(5)
     
-    # 5. Category Distribution
+    # === DISTRIBUZIONE PER CATEGORIA ===
     cat_dist = await db[Collections.INVOICES].aggregate([
-        {"$match": match_query},
-        {"$group": {"_id": "$category", "amount": {"$sum": "$total_amount"}}},
-        {"$project": {"category": {"$ifNull": ["$_id", "Generale"]}, "amount": 1, "_id": 0}},
+        {"$match": match_query} if match_query else {"$match": {}},
+        {"$group": {
+            "_id": "$category", 
+            "amount": {"$sum": {"$ifNull": ["$imponibile", {"$subtract": ["$total_amount", {"$ifNull": ["$iva", 0]}]}]}}
+        }},
+        {"$project": {"category": {"$ifNull": ["$_id", "Non categorizzato"]}, "amount": {"$round": ["$amount", 2]}, "_id": 0}},
+        {"$sort": {"amount": -1}},
         {"$limit": 8}
     ]).to_list(8)
 
     return {
-        "revenue": revenue,
-        "expenses": expenses,
-        "profit": revenue - expenses,
+        "anno": current_year,
+        "revenue": round(revenue, 2),
+        "revenue_lordo": round(revenue_lordo, 2),
+        "expenses": round(expenses_netti, 2),
+        "note_credito": round(note_credito, 2),
+        "profit": round(profit, 2),
+        "margine_percentuale": margine_pct,
         "monthly_trend": trend,
         "top_suppliers": top_suppliers,
-        "category_distribution": cat_dist
+        "category_distribution": cat_dist,
+        "statistiche": {
+            "num_corrispettivi": num_corrispettivi,
+            "num_fatture": num_fatture,
+            "num_note_credito": num_nc
+        },
+        "note": "Ricavi = Corrispettivi (imponibile). Costi = Fatture ricevute - Note credito (imponibile)."
     }
 
 
@@ -287,263 +208,175 @@ async def get_analytics_dashboard(
     summary="Get supplier analytics"
 )
 async def get_supplier_analytics(
-    current_user: Dict[str, Any] = Depends(get_current_user)
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    year: Optional[int] = Query(None, description="Filter by year")
 ) -> Dict[str, Any]:
     """Get supplier analytics."""
     db = Database.get_db()
-    user_id = current_user["user_id"]
     
-    count = await db[Collections.SUPPLIERS].count_documents({"user_id": user_id})
+    # Match query per anno
+    match_query = {}
+    if year:
+        match_query["$or"] = [
+            {"invoice_date": {"$regex": f"^{year}-"}},
+            {"data_ricezione": {"$regex": f"^{year}-"}}
+        ]
     
+    # Conta fornitori unici
+    unique_suppliers = await db[Collections.INVOICES].distinct("supplier_name", match_query if match_query else None)
+    count = len([s for s in unique_suppliers if s])
+    
+    # Top fornitori
     top = await db[Collections.INVOICES].aggregate([
-        {"$match": {"user_id": user_id}},
-        {"$group": {"_id": "$supplier_name", "total": {"$sum": "$total_amount"}, "count": {"$sum": 1}}},
+        {"$match": match_query} if match_query else {"$match": {}},
+        {"$group": {
+            "_id": "$supplier_name", 
+            "total": {"$sum": {"$ifNull": ["$imponibile", {"$subtract": ["$total_amount", {"$ifNull": ["$iva", 0]}]}]}}, 
+            "count": {"$sum": 1}
+        }},
+        {"$match": {"_id": {"$ne": None}}},
         {"$sort": {"total": -1}},
-        {"$limit": 20},
-        {"$project": {"name": "$_id", "total": 1, "count": 1, "_id": 0}}
-    ]).to_list(20)
+        {"$limit": 10},
+        {"$project": {"name": "$_id", "total": {"$round": ["$total", 2]}, "count": 1, "_id": 0}}
+    ]).to_list(10)
     
     return {
         "total_suppliers": count,
-        "top_suppliers": top
+        "top_suppliers": top,
+        "year": year
     }
 
 
 @router.get(
-    "/alerts",
-    summary="Get analytics alerts"
+    "/kpi",
+    summary="Get KPI summary"
 )
-async def get_alerts(
-    current_user: Dict[str, Any] = Depends(get_current_user)
-) -> List[Dict[str, Any]]:
-    """Get analytics alerts (Low stock, unpaid)."""
-    db = Database.get_db()
-    user_id = current_user["user_id"]
-    alerts = []
-    
-    # 1. Low Stock
-    low_stock = await db[Collections.WAREHOUSE_PRODUCTS].find(
-        {"user_id": user_id, "$expr": {"$lt": ["$quantity_available", "$minimum_stock"]}},
-        {"product_name": 1, "quantity_available": 1}
-    ).limit(5).to_list(5)
-    
-    for p in low_stock:
-        alerts.append({
-            "severity": "medium",
-            "title": "Scorta Bassa",
-            "description": f"{p.get('product_name')} in esaurimento ({p.get('quantity_available')})",
-            "date": datetime.utcnow().isoformat()
-        })
-        
-    # 2. Overdue Invoices
-    today = datetime.utcnow().strftime("%Y-%m-%d")
-    overdue = await db[Collections.INVOICES].find(
-        {"user_id": user_id, "payment_status": {"$ne": "paid"}, "due_date": {"$lt": today}},
-        {"invoice_number": 1, "supplier_name": 1, "due_date": 1}
-    ).limit(5).to_list(5)
-    
-    for i in overdue:
-        alerts.append({
-            "severity": "high",
-            "title": "Fattura Scaduta",
-            "description": f"Fattura {i.get('invoice_number')} di {i.get('supplier_name')} scaduta il {i.get('due_date')}",
-            "date": today
-        })
-        
-    return alerts
-
-
-@router.get(
-    "/payment-deadlines",
-    summary="Get payment deadlines"
-)
-async def get_payment_deadlines(
-    current_user: Dict[str, Any] = Depends(get_current_user)
-) -> List[Dict[str, Any]]:
-    """Get upcoming payment deadlines."""
-    db = Database.get_db()
-    user_id = current_user["user_id"]
-    
-    # Get unpaid invoices sorted by due date
-    invoices = await db[Collections.INVOICES].find(
-        {"user_id": user_id, "payment_status": {"$ne": "paid"}},
-        {"_id": 0, "invoice_number": 1, "supplier_name": 1, "due_date": 1, "total_amount": 1, "payment_status": 1}
-    ).sort("due_date", 1).limit(20).to_list(20)
-    
-    return invoices
-
-
-@router.get(
-    "/inventory",
-    summary="Get inventory analytics"
-)
-async def get_inventory_analytics(
-    current_user: Dict[str, Any] = Depends(get_current_user)
+async def get_kpi_summary(
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    year: Optional[int] = Query(None, description="Filter by year")
 ) -> Dict[str, Any]:
-    """Get inventory analytics."""
+    """Get key performance indicators."""
     db = Database.get_db()
-    user_id = current_user["user_id"]
     
-    # Stats
-    total_items = await db[Collections.WAREHOUSE_PRODUCTS].count_documents({"user_id": user_id})
+    today = datetime.utcnow()
+    current_year = year or today.year
+    start_date = f"{current_year}-01-01"
+    end_date = f"{current_year}-12-31"
     
-    # Calculate value (approx)
-    pipeline = [
-        {"$match": {"user_id": user_id}},
-        {"$group": {"_id": None, "value": {"$sum": {"$multiply": ["$quantity_available", "$unit_price_avg"]}}}}
-    ]
-    val_res = await db[Collections.WAREHOUSE_PRODUCTS].aggregate(pipeline).to_list(1)
-    total_value = val_res[0]["value"] if val_res else 0.0
-    
-    # Low stock
-    low_stock = await db[Collections.WAREHOUSE_PRODUCTS].find(
-        {"user_id": user_id, "$expr": {"$lt": ["$quantity_available", "$minimum_stock"]}},
-        {"product_name": 1, "quantity_available": 1, "minimum_stock": 1, "_id": 0}
-    ).to_list(10)
-    
-    return {
-        "total_value": total_value,
-        "items_count": total_items,
-        "low_stock": low_stock,
-        "expiring_soon": [] # Todo: implement expiry
-    }
-
-
-@router.get(
-    "/categorie-analitiche",
-    summary="Get analytics by category"
-)
-async def get_categorie_analitiche(
-    period: str = Query("month"),
-    current_user: Dict[str, Any] = Depends(get_current_user)
-) -> Dict[str, Any]:
-    """Get analytics grouped by category."""
-    db = Database.get_db()
-    user_id = current_user["user_id"]
-    
-    # Aggregate invoices by category
-    pipeline = [
-        {"$match": {"user_id": user_id}},
+    # Corrispettivi (Ricavi)
+    corr = await db["corrispettivi"].aggregate([
+        {"$match": {"data": {"$gte": start_date, "$lte": end_date}}},
         {"$group": {
-            "_id": "$category",
-            "total": {"$sum": "$total_amount"},
-            "count": {"$sum": 1},
-            "nome": {"$first": "$category"} # fallback
+            "_id": None,
+            "totale": {"$sum": {"$ifNull": ["$totale_imponibile", 0]}},
+            "count": {"$sum": 1}
+        }}
+    ]).to_list(1)
+    ricavi = corr[0]["totale"] if corr else 0
+    num_corr = corr[0]["count"] if corr else 0
+    
+    # Fatture (Costi)
+    fatt = await db[Collections.INVOICES].aggregate([
+        {"$match": {
+            "tipo_documento": {"$nin": ["TD04", "TD08"]},
+            "$or": [
+                {"invoice_date": {"$gte": start_date, "$lte": end_date}},
+                {"data_ricezione": {"$gte": start_date, "$lte": end_date}}
+            ]
         }},
-        {"$sort": {"total": -1}}
-    ]
+        {"$group": {
+            "_id": None,
+            "totale": {"$sum": {"$ifNull": ["$imponibile", {"$subtract": ["$total_amount", {"$ifNull": ["$iva", 0]}]}]}},
+            "count": {"$sum": 1}
+        }}
+    ]).to_list(1)
+    costi = fatt[0]["totale"] if fatt else 0
+    num_fatt = fatt[0]["count"] if fatt else 0
     
-    results = await db[Collections.INVOICES].aggregate(pipeline).to_list(100)
+    # Note Credito
+    nc = await db[Collections.INVOICES].aggregate([
+        {"$match": {
+            "tipo_documento": {"$in": ["TD04", "TD08"]},
+            "$or": [
+                {"invoice_date": {"$gte": start_date, "$lte": end_date}},
+                {"data_ricezione": {"$gte": start_date, "$lte": end_date}}
+            ]
+        }},
+        {"$group": {"_id": None, "totale": {"$sum": {"$ifNull": ["$imponibile", {"$subtract": ["$total_amount", {"$ifNull": ["$iva", 0]}]}]}}}}
+    ]).to_list(1)
+    note_credito = nc[0]["totale"] if nc else 0
     
-    # Format for frontend
-    formatted = []
-    for r in results:
-        formatted.append({
-            "categoria_id": r.get("_id") or "unk",
-            "nome": r.get("_id") or "Generale",
-            "totale_uscite": r.get("total", 0),
-            "totale_entrate": 0, # TODO: Entrate categories
-            "saldo": -r.get("total", 0),
-            "num_movimenti": r.get("count", 0),
-            "colore": "#3b82f6"
-        })
+    # Calcoli
+    costi_netti = costi - note_credito
+    utile = ricavi - costi_netti
+    margine = round((utile / ricavi * 100), 1) if ricavi > 0 else 0
+    
+    # Media mensile
+    mesi_passati = today.month if current_year == today.year else 12
+    media_ricavi = ricavi / mesi_passati if mesi_passati > 0 else 0
+    media_costi = costi_netti / mesi_passati if mesi_passati > 0 else 0
     
     return {
-        "period": period,
-        "categorie_analytics": formatted,
-        "totali": {
-            "entrate": 0,
-            "uscite": sum(r.get("total", 0) for r in results),
-            "saldo": -sum(r.get("total", 0) for r in results)
-        },
-        "top_spese": formatted[:5],
-        "top_entrate": []
+        "anno": current_year,
+        "ricavi_totali": round(ricavi, 2),
+        "costi_totali": round(costi_netti, 2),
+        "utile": round(utile, 2),
+        "margine_percentuale": margine,
+        "media_ricavi_mensile": round(media_ricavi, 2),
+        "media_costi_mensile": round(media_costi, 2),
+        "num_corrispettivi": num_corr,
+        "num_fatture": num_fatt,
+        "mesi_analizzati": mesi_passati
     }
 
 
-
-@router.post(
-    "/auto-ricostruisci-dati",
-    summary="Auto-riparazione dati analytics"
+@router.get(
+    "/self-repair",
+    summary="Run self-repair diagnostics"
 )
-async def auto_ricostruisci_dati_analytics() -> Dict[str, Any]:
-    """
-    LOGICA INTELLIGENTE: Verifica e corregge automaticamente i dati per Analytics.
-    
-    REGOLE:
-    1. Verifica coerenza Prima Nota Cassa con corrispettivi
-    2. Verifica coerenza Prima Nota Banca con estratto conto
-    3. Corregge movimenti con importi errati o tipo errato
-    4. Sincronizza saldi tra fonti
-    """
+async def run_self_repair(
+    current_user: Dict[str, Any] = Depends(get_current_user)
+) -> Dict[str, Any]:
+    """Run self-repair diagnostics on the database."""
     db = Database.get_db()
-    
     risultati = {
-        "timestamp": datetime.utcnow().isoformat(),
-        "movimenti_verificati": 0,
-        "correzioni_applicate": 0,
-        "discrepanze_trovate": [],
+        "status": "ok",
+        "controlli": [],
         "errori": []
     }
     
     try:
-        # 1. Verifica movimenti Prima Nota con tipo mancante
-        movimenti_senza_tipo = await db.prima_nota_cassa.count_documents({
-            "$or": [{"tipo": None}, {"tipo": ""}]
+        # 1. Verifica corrispettivi
+        corr_count = await db["corrispettivi"].count_documents({})
+        corr_no_imponibile = await db["corrispettivi"].count_documents({"totale_imponibile": {"$exists": False}})
+        risultati["controlli"].append({
+            "nome": "Corrispettivi",
+            "totale": corr_count,
+            "senza_imponibile": corr_no_imponibile,
+            "status": "warning" if corr_no_imponibile > 0 else "ok"
         })
-        if movimenti_senza_tipo > 0:
-            # Correggi basandosi sull'importo (positivo = entrata, negativo = uscita)
-            await db.prima_nota_cassa.update_many(
-                {"tipo": None, "importo": {"$gt": 0}},
-                {"$set": {"tipo": "entrata"}}
-            )
-            await db.prima_nota_cassa.update_many(
-                {"tipo": None, "importo": {"$lt": 0}},
-                {"$set": {"tipo": "uscita"}}
-            )
-            risultati["correzioni_applicate"] += movimenti_senza_tipo
         
-        # 2. Stessa verifica per Prima Nota Banca
-        movimenti_banca_senza_tipo = await db.prima_nota_banca.count_documents({
-            "$or": [{"tipo": None}, {"tipo": ""}]
+        # 2. Verifica fatture
+        fatt_count = await db[Collections.INVOICES].count_documents({})
+        fatt_no_imponibile = await db[Collections.INVOICES].count_documents({"imponibile": {"$exists": False}})
+        risultati["controlli"].append({
+            "nome": "Fatture",
+            "totale": fatt_count,
+            "senza_imponibile": fatt_no_imponibile,
+            "status": "warning" if fatt_no_imponibile > fatt_count * 0.5 else "ok"
         })
-        if movimenti_banca_senza_tipo > 0:
-            await db.prima_nota_banca.update_many(
-                {"tipo": None, "importo": {"$gt": 0}},
-                {"$set": {"tipo": "entrata"}}
-            )
-            await db.prima_nota_banca.update_many(
-                {"tipo": None, "importo": {"$lt": 0}},
-                {"$set": {"tipo": "uscita"}}
-            )
-            risultati["correzioni_applicate"] += movimenti_banca_senza_tipo
         
-        # 3. Verifica totali corrispettivi vs Prima Nota Cassa
-        corr_totale = await db.corrispettivi.aggregate([
-            {"$group": {"_id": None, "totale": {"$sum": {"$toDouble": {"$ifNull": ["$totale", 0]}}}}}
-        ]).to_list(1)
-        
-        cassa_entrate = await db.prima_nota_cassa.aggregate([
-            {"$match": {"tipo": "entrata"}},
-            {"$group": {"_id": None, "totale": {"$sum": {"$toDouble": {"$ifNull": ["$importo", 0]}}}}}
-        ]).to_list(1)
-        
-        totale_corr = corr_totale[0]["totale"] if corr_totale else 0
-        totale_cassa = cassa_entrate[0]["totale"] if cassa_entrate else 0
-        
-        if abs(totale_corr - totale_cassa) > 100:  # Tolleranza 100€
-            risultati["discrepanze_trovate"].append({
-                "tipo": "corrispettivi_vs_cassa",
-                "corrispettivi": round(totale_corr, 2),
-                "prima_nota_cassa": round(totale_cassa, 2),
-                "differenza": round(totale_corr - totale_cassa, 2)
-            })
-        
-        risultati["movimenti_verificati"] = movimenti_senza_tipo + movimenti_banca_senza_tipo
+        # 3. Verifica tipi documento
+        tipi = await db[Collections.INVOICES].aggregate([
+            {"$group": {"_id": "$tipo_documento", "count": {"$sum": 1}}}
+        ]).to_list(20)
+        risultati["controlli"].append({
+            "nome": "Tipi Documento",
+            "dettaglio": {t["_id"] or "null": t["count"] for t in tipi}
+        })
         
     except Exception as e:
-        logger.error(f"Errore auto-ricostruzione analytics: {e}")
+        risultati["status"] = "error"
         risultati["errori"].append(str(e))
     
     return risultati
-
