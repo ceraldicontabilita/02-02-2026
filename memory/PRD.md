@@ -95,6 +95,7 @@ Sistema ERP contabile per aziende italiane con:
 - Tab Saldo Ferie in Attendance
 - Cedolini e TFR
 - Presenze (timbrature, assenze, ferie)
+- **Alert Limiti Giustificativi** (notifiche al 90% del limite)
 
 ### 3.4 ✅ Riconciliazione Intelligente
 - Stati: `in_attesa_conferma`, `confermata_cassa`, `confermata_banca`, `riconciliata`
