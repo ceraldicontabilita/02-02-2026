@@ -56,7 +56,10 @@ export default function LearningMachineDashboard() {
         api.get('/api/magazzino/movimenti?limit=20').catch(() => ({ data: [] })),
         api.get('/api/magazzino/categorie-merceologiche').catch(() => ({ data: [] })),
         api.get('/api/magazzino/lotti-produzione').catch(() => ({ data: [] })),
-        api.get('/api/ricette').catch(() => ({ data: { ricette: [] } }))
+        api.get('/api/ricette').catch(() => ({ data: { ricette: [] } })),
+        api.get('/api/f24-riconciliazione/stato-riconciliazione').catch(() => ({ data: null })),
+        api.get('/api/f24-riconciliazione/commercialista?limit=100').catch(() => ({ data: { f24_list: [] } })),
+        api.get('/api/quietanze-f24').catch(() => ({ data: [] }))
       ]);
       
       setCentriCosto(cdcRes.data.centri_costo || []);
@@ -66,6 +69,9 @@ export default function LearningMachineDashboard() {
       setCategorie(catRes.data || []);
       setLottiProduzione(lottiRes.data || []);
       setRicette(ricetteRes.data.ricette || ricetteRes.data || []);
+      setF24StatoRiconciliazione(f24StatoRes.data);
+      setF24List(f24ListRes.data?.f24_list || []);
+      setQuietanze(Array.isArray(quietanzeRes.data) ? quietanzeRes.data : quietanzeRes.data?.quietanze || []);
     } catch (err) {
       console.error('Errore caricamento dati:', err);
     } finally {
@@ -83,6 +89,20 @@ export default function LearningMachineDashboard() {
       alert('Errore: ' + (err.response?.data?.detail || err.message));
     } finally {
       setRiclassificando(false);
+    }
+  }
+  
+  async function riconciliaF24() {
+    setRiconciliando(true);
+    setRisultatoRiconciliazione(null);
+    try {
+      const res = await api.post('/api/f24-riconciliazione/riconcilia-f24');
+      setRisultatoRiconciliazione(res.data);
+      loadData();
+    } catch (err) {
+      alert('Errore riconciliazione: ' + (err.response?.data?.detail || err.message));
+    } finally {
+      setRiconciliando(false);
     }
   }
 
