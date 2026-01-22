@@ -647,7 +647,7 @@ export default function ClassificazioneDocumenti() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <span style={{ fontSize: 13, color: '#6b7280' }}>{documents.length} documenti</span>
               <button
-                onClick={loadDocuments}
+                onClick={loadData}
                 style={{
                   padding: '6px 12px',
                   fontSize: 12,
