@@ -95,9 +95,9 @@ export default function Attendance() {
         api.get('/api/attendance/richieste-pending')
       ]);
       
-      // Normalizza employees - filtra solo attivi
+      // Normalizza employees - filtra solo attivi E in_carico
       const emps = (empRes.data.employees || empRes.data || [])
-        .filter(e => e.status === 'attivo' || !e.status)
+        .filter(e => (e.status === 'attivo' || !e.status) && (e.in_carico !== false))
         .map(e => ({
           ...e,
           nome_completo: e.nome_completo || e.name || `${e.nome || ''} ${e.cognome || ''}`.trim()
