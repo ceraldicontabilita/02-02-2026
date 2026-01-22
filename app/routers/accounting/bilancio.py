@@ -457,15 +457,13 @@ async def get_confronto_annuale(
         }
     
     # Confronto Conto Economico
+    # NOTA: I ricavi derivano SOLO dai corrispettivi (vendite al pubblico)
+    # I costi derivano dalle fatture ricevute - note credito
     confronto_ce = {
         "ricavi": {
             "corrispettivi": calc_variazione(
                 ce_corrente["ricavi"]["corrispettivi"],
                 ce_precedente["ricavi"]["corrispettivi"]
-            ),
-            "altri_ricavi": calc_variazione(
-                ce_corrente["ricavi"]["altri_ricavi"],
-                ce_precedente["ricavi"]["altri_ricavi"]
             ),
             "totale_ricavi": calc_variazione(
                 ce_corrente["ricavi"]["totale"],
@@ -477,9 +475,9 @@ async def get_confronto_annuale(
                 ce_corrente["costi"]["acquisti"],
                 ce_precedente["costi"]["acquisti"]
             ),
-            "costi_operativi": calc_variazione(
-                ce_corrente["costi"]["costi_operativi"],
-                ce_precedente["costi"]["costi_operativi"]
+            "note_credito": calc_variazione(
+                ce_corrente["costi"]["note_credito"],
+                ce_precedente["costi"]["note_credito"]
             ),
             "totale_costi": calc_variazione(
                 ce_corrente["costi"]["totale"],
