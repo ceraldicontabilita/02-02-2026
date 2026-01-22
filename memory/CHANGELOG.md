@@ -3,28 +3,29 @@
 
 ---
 
-## 22 Gennaio 2026 - Sessione 11 (Correzione Logica Contabile)
+## 22 Gennaio 2026 - Sessione 11 (Correzione Logica Contabile COMPLETA)
 
-### ✅ Correzione Conto Economico
-- **Problema**: I calcoli utilizzavano la Prima Nota invece delle collezioni corrette
-- **Soluzione**: Riscritta la logica per usare:
-  - `corrispettivi` (campo `totale_imponibile`) per i ricavi vendite
-  - `invoices` con filtro `tipo_documento` per fatture emesse (TD01, TD24, TD26)
-  - `invoices` per fatture ricevute (esclusi TD01, TD24, TD26, TD04, TD08)
-  - Note di credito (TD04, TD08) sottratte dai costi
-- **Nuovi campi risposta**: `note_credito`, `margine_percentuale`, `dettaglio_iva`, `statistiche`
+### ✅ Correzione CRITICA della Logica Contabile
+- **Problema Identificato**: Le fatture nella collezione `invoices` erano considerate "emesse" ma sono TUTTE RICEVUTE (da fornitori)
+- **Soluzione**:
+  - RICAVI = SOLO Corrispettivi (vendite al pubblico, `totale_imponibile`)
+  - COSTI = Fatture Ricevute (imponibile) - Note Credito (TD04, TD08)
+  - Rimosso campo `altri_ricavi` (non esistono fatture emesse a clienti)
 
-### ✅ Aggiornamento Frontend Bilancio
-- Le Note di Credito ora visualizzate in verde separatamente
-- Margine percentuale mostrato nel risultato
+### ✅ Bug Fix Multipli (Testing Agent)
+1. `get_confronto_annuale`: KeyError 'altri_ricavi' - rimosso riferimento a campi inesistenti
+2. `export_bilancio_pdf`: TypeError Query format - usate funzioni helper invece di endpoint
+3. `export_bilancio_pdf`: KeyError 'altri_ricavi' - aggiornata tabella PDF
+4. `export_confronto_pdf`: KeyError 'costi_operativi' - aggiornata tabella PDF
 
-### ✅ Fix Endpoint /api/bilancio/riepilogo
-- Corretto bug: usava endpoint con Query params invece di helper functions
+### ✅ Aggiornamento Analytics Router
+- Riscritto `/app/app/routers/reports/analytics.py` per usare le collezioni corrette
+- Ricavi da `corrispettivi`, Costi da `invoices`
 
 ### ✅ Test Suite Completa
-- 13 test automatici (100% passed)
-- Copertura: Conto Economico, Stato Patrimoniale, Confronto Annuale, Liquidazione IVA
-- File: `/app/tests/test_iteration_30_bilancio_iva.py`
+- 12 test automatici (100% passed)
+- Valori verificati 2025: Ricavi €857,515.42, Costi €496,180.07, Utile €361,335.35 (42.1%)
+- File: `/app/tests/test_iteration_31_bilancio_corrected.py`
 
 ---
 
