@@ -5,8 +5,7 @@ import { useAnnoGlobale } from '../contexts/AnnoContext';
 import { 
   Brain, Warehouse, TrendingUp, RefreshCw, Package, 
   AlertTriangle, PlayCircle, FileText, ChevronDown, ChevronUp,
-  Calculator, Percent, Euro, Box, Factory, Receipt, 
-  CheckCircle2, XCircle, Clock, Upload, Link2
+  Calculator, Percent, Euro, Box, Factory
 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 
@@ -30,18 +29,10 @@ export default function LearningMachineDashboard() {
   
   // Produzione
   const [ricette, setRicette] = useState([]);
-  const [showProduzioneModal, setShowProduzioneModal] = useState(false);
   const [selectedRicetta, setSelectedRicetta] = useState(null);
   const [porzioniProduzione, setPorzioniProduzione] = useState(10);
   const [producendo, setProducendo] = useState(false);
   const [risultatoProduzione, setRisultatoProduzione] = useState(null);
-  
-  // F24 Riconciliazione
-  const [f24StatoRiconciliazione, setF24StatoRiconciliazione] = useState(null);
-  const [f24List, setF24List] = useState([]);
-  const [quietanze, setQuietanze] = useState([]);
-  const [riconciliando, setRiconciliando] = useState(false);
-  const [risultatoRiconciliazione, setRisultatoRiconciliazione] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -50,16 +41,13 @@ export default function LearningMachineDashboard() {
   async function loadData() {
     setLoading(true);
     try {
-      const [cdcRes, giacenzeRes, movRes, catRes, lottiRes, ricetteRes, f24StatoRes, f24ListRes, quietanzeRes] = await Promise.all([
+      const [cdcRes, giacenzeRes, movRes, catRes, lottiRes, ricetteRes] = await Promise.all([
         api.get(`/api/learning-machine/riepilogo-centri-costo/${anno}`).catch(() => ({ data: { centri_costo: [], totali: {} } })),
         api.get('/api/magazzino/giacenze').catch(() => ({ data: { per_categoria: {}, totale_articoli: 0, valore_magazzino: 0 } })),
         api.get('/api/magazzino/movimenti?limit=20').catch(() => ({ data: [] })),
         api.get('/api/magazzino/categorie-merceologiche').catch(() => ({ data: [] })),
         api.get('/api/magazzino/lotti-produzione').catch(() => ({ data: [] })),
-        api.get('/api/ricette').catch(() => ({ data: { ricette: [] } })),
-        api.get('/api/f24-riconciliazione/stato-riconciliazione').catch(() => ({ data: null })),
-        api.get('/api/f24-riconciliazione/commercialista?limit=100').catch(() => ({ data: { f24_list: [] } })),
-        api.get('/api/quietanze-f24').catch(() => ({ data: [] }))
+        api.get('/api/ricette').catch(() => ({ data: { ricette: [] } }))
       ]);
       
       setCentriCosto(cdcRes.data.centri_costo || []);
@@ -69,9 +57,6 @@ export default function LearningMachineDashboard() {
       setCategorie(catRes.data || []);
       setLottiProduzione(lottiRes.data || []);
       setRicette(ricetteRes.data.ricette || ricetteRes.data || []);
-      setF24StatoRiconciliazione(f24StatoRes.data);
-      setF24List(f24ListRes.data?.f24_list || []);
-      setQuietanze(Array.isArray(quietanzeRes.data) ? quietanzeRes.data : quietanzeRes.data?.quietanze || []);
     } catch (err) {
       console.error('Errore caricamento dati:', err);
     } finally {
@@ -89,20 +74,6 @@ export default function LearningMachineDashboard() {
       alert('Errore: ' + (err.response?.data?.detail || err.message));
     } finally {
       setRiclassificando(false);
-    }
-  }
-  
-  async function riconciliaF24() {
-    setRiconciliando(true);
-    setRisultatoRiconciliazione(null);
-    try {
-      const res = await api.post('/api/f24-riconciliazione/riconcilia-f24');
-      setRisultatoRiconciliazione(res.data);
-      loadData();
-    } catch (err) {
-      alert('Errore riconciliazione: ' + (err.response?.data?.detail || err.message));
-    } finally {
-      setRiconciliando(false);
     }
   }
 
