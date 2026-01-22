@@ -898,3 +898,76 @@ async def set_presenza(data: Dict[str, Any]) -> Dict[str, Any]:
         "stato": stato
     }
 
+
+
+# =============================================================================
+# GESTIONE FLAG IN_CARICO
+# =============================================================================
+
+@router.get("/dipendenti-in-carico")
+async def get_dipendenti_in_carico() -> Dict[str, Any]:
+    """
+    Ritorna tutti i dipendenti attivi con il loro stato in_carico.
+    Utile per la gestione del modulo presenze.
+    """
+    db = Database.get_db()
+    
+    dipendenti = await db["employees"].find(
+        {
+            "$or": [
+                {"status": "attivo"},
+                {"status": {"$exists": False}}
+            ]
+        },
+        {"_id": 0, "id": 1, "nome": 1, "cognome": 1, "nome_completo": 1, "name": 1, 
+         "in_carico": 1, "mansione": 1, "status": 1}
+    ).sort("nome_completo", 1).to_list(500)
+    
+    # Normalizza il campo in_carico (default True per retrocompatibilità)
+    for dip in dipendenti:
+        if "in_carico" not in dip:
+            dip["in_carico"] = True
+        dip["nome_completo"] = dip.get("nome_completo") or dip.get("name") or \
+                              f"{dip.get('nome', '')} {dip.get('cognome', '')}".strip()
+    
+    in_carico_count = sum(1 for d in dipendenti if d.get("in_carico", True))
+    non_in_carico_count = len(dipendenti) - in_carico_count
+    
+    return {
+        "success": True,
+        "totale": len(dipendenti),
+        "in_carico": in_carico_count,
+        "non_in_carico": non_in_carico_count,
+        "dipendenti": dipendenti
+    }
+
+
+@router.put("/set-in-carico/{employee_id}")
+async def set_in_carico(employee_id: str, data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Imposta il flag in_carico per un dipendente.
+    Payload: { "in_carico": true/false }
+    """
+    db = Database.get_db()
+    
+    in_carico = data.get("in_carico", True)
+    
+    result = await db["employees"].update_one(
+        {"$or": [{"id": employee_id}, {"codice_fiscale": employee_id}]},
+        {"$set": {
+            "in_carico": in_carico,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Dipendente non trovato")
+    
+    logger.info(f"✅ Flag in_carico impostato: {employee_id} -> {in_carico}")
+    
+    return {
+        "success": True,
+        "employee_id": employee_id,
+        "in_carico": in_carico
+    }
+
