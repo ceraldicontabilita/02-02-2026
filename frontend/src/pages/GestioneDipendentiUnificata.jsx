@@ -151,11 +151,13 @@ export default function GestioneDipendentiUnificata() {
         case 'giustificativi':
           // I giustificativi vengono caricati dal componente TabGiustificativi stesso
           // Non serve caricare nulla qui
+          console.log('Case giustificativi - nessuna azione');
           break;
       }
     } catch (e) {
       console.error('Errore caricamento tab:', e);
     } finally {
+      console.log('Setting loadingTab = false');
       setLoadingTab(false);
     }
   };
