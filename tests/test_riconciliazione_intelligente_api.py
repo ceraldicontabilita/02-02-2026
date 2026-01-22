@@ -14,7 +14,7 @@ import uuid
 from datetime import datetime
 
 # Base URL from environment
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://attendance-ai-13.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://pastry-inventory-4.preview.emergentagent.com').rstrip('/')
 
 
 class TestRiconciliazioneIntelligenteDashboard:
