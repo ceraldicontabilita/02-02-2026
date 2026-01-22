@@ -18,147 +18,104 @@
 ### 1.2 Fatture Ricevute (collezione: `invoices`)
 **Cosa sono:** Fatture PASSIVE ricevute dai fornitori per acquisti.
 
+**CLASSIFICAZIONE AUTOMATICA:**
+Il sistema classifica automaticamente le fatture in base al fornitore:
+- Enel, Edison, A2A → Energia (B7)
+- TIM, Vodafone, Fastweb → Telefonia (B7, ded. 80%, IVA 50%)
+- ARVAL, Leasys, ALD → Noleggio Auto (B8, ded. 20%, max €3.615,20)
+- Benzinai, Q8, Esso → Carburante Auto (ded. 20%, IVA 40%)
+- Corrieri, BRT, DHL → Trasporti (B7)
+- Assicurazioni → Assicurazioni (B7, IVA esente)
+
+### 1.3 Cedolini (collezione: `cedolini`)
+**Cosa sono:** Buste paga dipendenti.
+
 | Campo | Descrizione |
 |-------|-------------|
-| `total_amount` | Importo totale fattura |
-| `imponibile` | Base imponibile |
-| `iva` | IVA della fattura |
-| `supplier_name` | Nome fornitore |
-| `supplier_vat` | P.IVA fornitore |
-| `tipo_documento` | TD01, TD24, TD04, TD08, etc. |
-
-**Tipi Documento:**
-- `TD01`: Fattura ordinaria (acquisto)
-- `TD24`: Fattura differita (acquisto)
-- `TD02`: Acconto/anticipo su fattura
-- `TD04`: Nota di credito (riduce i costi)
-- `TD08`: Nota di credito semplificata (riduce i costi)
-- `TD06`: Parcella
-- `TD27`: Fattura per autoconsumo
-
-**REGOLA FONDAMENTALE:** Tutte le fatture in questa collezione sono COSTI.
+| `lordo` | Retribuzione lorda |
+| `netto` | Retribuzione netta |
+| `inps_azienda` | Contributi INPS carico azienda |
+| `tfr` | Accantonamento TFR |
+| `costo_azienda` | Costo totale per l'azienda |
 
 ---
 
-## 2. FATTURE EMESSE A CLIENTI
+## 2. CONTO ECONOMICO DETTAGLIATO (Art. 2425 c.c.)
 
-### 2.1 Cosa sono
-Quando un cliente paga con scontrino e poi chiede fattura, viene emessa una **fattura differita** che fa riferimento allo scontrino originale.
+### A) VALORE DELLA PRODUZIONE
+| Voce | Fonte | Deducibilità | IVA |
+|------|-------|--------------|-----|
+| A1 - Ricavi vendite | corrispettivi | 100% | Da versare |
 
-### 2.2 REGOLA CRITICA ⚠️
+### B) COSTI DELLA PRODUZIONE
 
-> **Le fatture emesse a clienti NON sono ricavi aggiuntivi!**
-> 
-> L'importo della fattura è GIÀ CONTEGGIATO nei corrispettivi.
-> Sommarle ai ricavi creerebbe un **DOPPIO CONTEGGIO**.
+| Voce | Fonte | Deducibilità | IVA Detraibile |
+|------|-------|--------------|----------------|
+| B6 - Materie prime/merci | invoices (default) | 100% | 100% |
+| B7 - Energia elettrica/gas | invoices (Enel...) | 100% | 100% |
+| B7 - Acqua | invoices (ABC...) | 100% | 100% |
+| **B7 - Telefonia** | invoices (TIM...) | **80%** | **50%** |
+| B7 - Consulenze | invoices (Studio...) | 100% | 100% |
+| B7 - Manutenzioni | invoices | 100% (limite 5%) | 100% |
+| B7 - Assicurazioni | invoices | 100% | Esente |
+| B7 - Trasporti | invoices (BRT...) | 100% | 100% |
+| B7 - Pubblicità | invoices | 100% | 100% |
+| **B7 - Carburante auto** | invoices | **20%** | **40%** |
+| **B8 - Noleggio auto** | invoices (ARVAL...) | **20% su max €3.615** | **40%** |
+| B8 - Affitti immobili | invoices | 100% | Spesso esente |
+| B8 - Leasing | invoices | Varia | 100% |
+| B9a - Salari e stipendi | cedolini (lordo) | 100% | N/A |
+| B9b - Oneri sociali | cedolini (inps_azienda) | 100% | N/A |
+| B9c - TFR | cedolini (tfr) | 100% | N/A |
+| B14 - Oneri diversi | invoices (altro) | 100% | 100% |
 
-### 2.3 Trattamento Corretto
+### C) PROVENTI E ONERI FINANZIARI
 
-| Aspetto | Trattamento |
-|---------|-------------|
-| **Ricavi** | NON sommare - già nei corrispettivi |
-| **IVA Debito** | NON sommare - già calcolata sui corrispettivi |
-| **Archivio** | Conservare per obblighi fiscali e clienti |
-
-### 2.4 Esempio Pratico
-
-```
-Cliente compra merce per €122 (€100 + €22 IVA)
-1. Emesso scontrino fiscale -> Registrato in CORRISPETTIVI
-2. Cliente chiede fattura -> Emessa fattura per €122
-3. Fattura emessa NON va aggiunta ai ricavi (già in corrispettivi!)
-```
-
----
-
-## 3. CONTO ECONOMICO
-
-### 3.1 Formula
-
-```
-RICAVI = Corrispettivi (totale_imponibile)
-
-COSTI = Fatture Ricevute (imponibile) 
-        - Note di Credito (TD04, TD08)
-
-UTILE/PERDITA = RICAVI - COSTI
-
-MARGINE % = (UTILE / RICAVI) × 100
-```
-
-### 3.2 Cosa NON includere
-
-❌ Fatture emesse a clienti (già nei corrispettivi)
-❌ IVA (va nel calcolo IVA separato)
-❌ Movimenti di cassa/banca (sono flussi finanziari, non economici)
+| Voce | Deducibilità | Note |
+|------|--------------|------|
+| C17 - Interessi passivi mutui | Limite ROL 30% | Art. 96 TUIR |
+| C17 - Commissioni bancarie | 100% | IVA esente |
 
 ---
 
-## 4. LIQUIDAZIONE IVA MENSILE
+## 3. REGOLE FISCALI SPECIFICHE
 
-### 4.1 Formula
+### 3.1 AUTO AZIENDALI (Art. 164 TUIR)
 
-```
-IVA A DEBITO = IVA da Corrispettivi (totale_iva)
+| Costo | Deducibilità | IVA Detraibile |
+|-------|--------------|----------------|
+| Noleggio | 20% su max €3.615,20/anno | 40% |
+| Carburante | 20% | 40% |
+| Manutenzione | 20% | 40% |
+| Assicurazione | 20% | Esente |
 
-IVA A CREDITO = IVA da Fatture Ricevute (iva)
-               - IVA da Note di Credito
+**Se auto assegnata a dipendente**: Deducibilità sale al **70%**
 
-IVA DA VERSARE = IVA DEBITO - IVA CREDITO
-```
+### 3.2 TELEFONIA (Art. 102 TUIR)
+- **Deducibilità**: 80%
+- **IVA Detraibile**: 50%
 
-### 4.2 Regole Temporali
+### 3.3 SPESE DI RAPPRESENTANZA
+- **Deducibilità**: Limiti su ricavi
+  - Fino a €10M: 1,5% dei ricavi
+  - €10M-€50M: 0,6%
+  - Oltre €50M: 0,4%
+- **IVA**: Indetraibile
 
-- **Corrispettivi:** IVA del mese di emissione
-- **Fatture Ricevute:** Detraibili nel mese di registrazione SDI
-  - Deroga 15 giorni: fattura mese precedente registrata entro il 15
-  - Deroga 12 giorni: fattura registrata entro 12 giorni dalla data operazione
-
-### 4.3 IMPORTANTE ⚠️
-
-> **NON calcolare l'IVA sulle fatture emesse a clienti!**
-> 
-> L'IVA è già stata versata con i corrispettivi.
-> Aggiungerla creerebbe un **DOPPIO VERSAMENTO**.
-
----
-
-## 5. STATO PATRIMONIALE
-
-### 5.1 ATTIVO
-
-| Voce | Fonte Dati |
-|------|------------|
-| Cassa | Saldo `prima_nota_cassa` |
-| Banca | Saldo `prima_nota_banca` |
-| Crediti vs Clienti | Fatture emesse non incassate (se presenti) |
-
-### 5.2 PASSIVO
-
-| Voce | Fonte Dati |
-|------|------------|
-| Debiti vs Fornitori | Fatture ricevute non pagate |
-| Patrimonio Netto | Differenza per quadratura |
+### 3.4 INTERESSI PASSIVI (Art. 96 TUIR)
+- **Limite ROL**: 30% del Risultato Operativo Lordo
+- Eccedenza riportabile agli anni successivi
 
 ---
 
-## 6. RIFERIMENTI NORMATIVI
+## 4. ENDPOINT API
 
-- **DPR 633/72**: Disciplina IVA
-- **Art. 21-bis DPR 633/72**: Fatturazione differita
-- **Art. 22 DPR 633/72**: Corrispettivi e scontrini
-- **Circolare AdE 1/E 2018**: Fatture elettroniche
-
----
-
-## 7. CHECKLIST IMPLEMENTAZIONE
-
-✅ Ricavi = SOLO corrispettivi (totale_imponibile)
-✅ Costi = Fatture ricevute - Note credito
-✅ IVA debito = SOLO da corrispettivi (totale_iva)
-✅ IVA credito = Da fatture ricevute
-✅ Fatture emesse = NON contare come ricavi aggiuntivi
-✅ Fatture emesse = NON contare per IVA debito
+| Endpoint | Descrizione |
+|----------|-------------|
+| `/api/bilancio/conto-economico` | CE semplificato |
+| `/api/bilancio/conto-economico-dettagliato` | CE con tutte le voci |
+| `/api/bilancio/stato-patrimoniale` | Stato Patrimoniale |
+| `/api/liquidazione-iva/calcola/{anno}/{mese}` | Liquidazione IVA |
 
 ---
 
