@@ -873,6 +873,8 @@ export default function LearningMachineDashboard() {
                     {quietanze.slice(0, 20).map((q, i) => {
                       const dg = q.dati_generali || {};
                       const tot = q.totali || {};
+                      // Calcola importo versato (usa totale_debito o saldo_delega o totale_versato)
+                      const importoVersato = tot.totale_debito || tot.saldo_delega || tot.totale_versato || tot.totale || Math.abs(tot.saldo_netto || 0);
                       return (
                         <div 
                           key={q.id || i}
@@ -896,7 +898,7 @@ export default function LearningMachineDashboard() {
                           </div>
                           <div style={{ textAlign: 'right' }}>
                             <div style={{ fontWeight: 700, color: '#16a34a' }}>
-                              {formatEuro(tot.totale_versato || tot.totale || 0)}
+                              {formatEuro(importoVersato)}
                             </div>
                             <span style={{
                               padding: '2px 8px',
