@@ -1,0 +1,109 @@
+{
+  "summary": "Iteration 31 - Fixed critical bugs in Bilancio accounting logic. All 12 backend tests passed (100%). Frontend verified displaying correct values.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/tests/test_iteration_31_bilancio_corrected.py",
+    "/app/test_reports/pytest/pytest_iteration_31.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "FIXED: get_confronto_annuale was referencing non-existent 'altri_ricavi' and 'costi_operativi' fields",
+    "FIXED: export_bilancio_pdf was calling endpoint functions with Query params instead of helper functions",
+    "FIXED: export_bilancio_pdf was referencing 'altri_ricavi' and 'altri_costi' which don't exist",
+    "FIXED: export_confronto_pdf was referencing 'altri_ricavi' and 'costi_operativi' which don't exist",
+    "FIXED: PDF table styling indices were incorrect after removing rows"
+  ],
+  "updated_files": [
+    "/app/app/routers/accounting/bilancio.py",
+    "/app/tests/test_iteration_31_bilancio_corrected.py"
+  ],
+  "success_rate": {
+    "backend": "100% (12/12 tests passed)",
+    "frontend": "100% - Bilancio page displaying correct values"
+  },
+  "test_credentials": "N/A - no auth required for bilancio endpoints",
+  "seed_data_creation": "None - used existing data",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Accounting logic fully corrected. Conto Economico now shows: corrispettivi ONLY (no altri_ricavi), acquisti, note_credito, totale_costi (netto). Stato Patrimoniale is balanced. PDF exports working correctly.",
+  "features_tested": {
+    "GET /api/bilancio/conto-economico?anno=2025": {
+      "status": "✅ VERIFIED",
+      "details": "Returns corrispettivi €857,515.42, acquisti €510,523.78, note_credito €14,343.71, totale_costi €496,180.07, utile €361,335.35, margine 42.1%. NO altri_ricavi field."
+    },
+    "GET /api/bilancio/stato-patrimoniale?anno=2025": {
+      "status": "✅ VERIFIED",
+      "details": "Returns balanced attivo/passivo €1,863,023.03"
+    },
+    "GET /api/bilancio/riepilogo?anno=2025": {
+      "status": "✅ VERIFIED",
+      "details": "Returns combined stato patrimoniale and conto economico"
+    },
+    "GET /api/bilancio/confronto-annuale?anno_corrente=2025&anno_precedente=2024": {
+      "status": "✅ VERIFIED (FIXED)",
+      "details": "Was broken due to KeyError 'altri_ricavi'. Now returns correct comparison with corrispettivi, note_credito instead of altri_ricavi, costi_operativi"
+    },
+    "GET /api/bilancio/export-pdf?anno=2025": {
+      "status": "✅ VERIFIED (FIXED)",
+      "details": "Was broken due to Query param issue and missing fields. Now generates valid PDF"
+    },
+    "GET /api/bilancio/export/pdf/confronto?anno_corrente=2025&anno_precedente=2024": {
+      "status": "✅ VERIFIED (FIXED)",
+      "details": "Was broken due to missing fields. Now generates valid PDF"
+    },
+    "GET /api/liquidazione-iva/calcola/2025/1": {
+      "status": "✅ VERIFIED",
+      "details": "Returns IVA debito €5,830.62 (from corrispettivi), IVA credito €18,790.04 (from fatture)"
+    },
+    "GET /api/liquidazione-iva/riepilogo-annuale/2025": {
+      "status": "✅ VERIFIED",
+      "details": "Returns 12 months of IVA data"
+    },
+    "Frontend /bilancio": {
+      "status": "✅ VERIFIED",
+      "details": "Displays correct values: Ricavi €857,515.42, Costi €496,180.07, Utile €361,335.35, Margine 42.1%"
+    }
+  },
+  "bugs_fixed": [
+    {
+      "file": "/app/app/routers/accounting/bilancio.py",
+      "function": "get_confronto_annuale",
+      "issue": "KeyError: 'altri_ricavi' - was trying to access non-existent field",
+      "fix": "Removed references to altri_ricavi and costi_operativi, now uses corrispettivi and note_credito"
+    },
+    {
+      "file": "/app/app/routers/accounting/bilancio.py",
+      "function": "export_bilancio_pdf",
+      "issue": "TypeError: unsupported format string passed to Query.__format__ - was calling endpoint functions with Query params",
+      "fix": "Changed to use helper functions _get_stato_patrimoniale_data and _get_conto_economico_data"
+    },
+    {
+      "file": "/app/app/routers/accounting/bilancio.py",
+      "function": "export_bilancio_pdf",
+      "issue": "KeyError: 'altri_ricavi' and 'altri_costi' - was referencing non-existent fields in PDF table",
+      "fix": "Updated PDF table to use correct field names: corrispettivi, note_credito, totale"
+    },
+    {
+      "file": "/app/app/routers/accounting/bilancio.py",
+      "function": "export_confronto_pdf",
+      "issue": "KeyError: 'altri_ricavi' and 'costi_operativi' - was referencing non-existent fields",
+      "fix": "Updated PDF table to use correct field names"
+    }
+  ],
+  "expected_vs_actual_values": {
+    "corrispettivi": {"expected": 857515.42, "actual": 857515.42, "match": true},
+    "acquisti": {"expected": 510523.78, "actual": 510523.78, "match": true},
+    "note_credito": {"expected": 14343.71, "actual": 14343.71, "match": true},
+    "costi_netti": {"expected": 496180.07, "actual": 496180.07, "match": true},
+    "utile": {"expected": 361335.35, "actual": 361335.35, "match": true},
+    "margine": {"expected": 42.1, "actual": 42.1, "match": true}
+  }
+}
