@@ -109,21 +109,29 @@ Sistema ERP contabile per aziende italiane con:
 2. **Fatture emesse a clienti** = NON sono ricavi aggiuntivi (già nei corrispettivi)
 3. **IVA debito** = SOLO da corrispettivi
 
-#### Conto Economico Dettagliato (Art. 2425 c.c.)
-Sistema di **classificazione automatica** dei costi per natura:
+#### Learning Machine - Classificazione Automatica per Centro di Costo
+Il sistema classifica **automaticamente** ogni fattura leggendo:
+- Nome fornitore
+- Descrizione linee fattura
+- Keywords specifiche per bar/pasticceria (ATECO 56.10.30)
 
-| Voce | Deducibilità | IVA Detraibile |
-|------|--------------|----------------|
-| B6 - Materie prime/merci | 100% | 100% |
-| B7 - Energia, acqua | 100% | 100% |
+**38 Centri di Costo** configurati con regole fiscali:
+| Centro | Deducibilità IRES | IVA Detraibile |
+|--------|-------------------|----------------|
+| B6 - Materie prime (caffè, farina, ecc.) | 100% | 100% |
+| B7 - Energia, Acqua | 100% | 100% |
 | **B7 - Telefonia** | **80%** | **50%** |
 | **B7 - Carburante auto** | **20%** | **40%** |
 | **B8 - Noleggio auto** | **20% (max €3.615)** | **40%** |
-| B9 - Personale (stipendi, INPS, TFR) | 100% | N/A |
-| C17 - Interessi mutui | Limite ROL 30% | N/A |
+| B9 - Personale | 100% | N/A |
+| C17 - Oneri finanziari | 100% | Esente |
 
-#### Endpoint
-- `/api/bilancio/conto-economico-dettagliato` - CE con tutte le voci e regole fiscali
+#### Endpoint Learning Machine CDC
+- `/api/learning-machine/centri-costo` - Lista centri di costo
+- `/api/learning-machine/riclassifica-fatture?anno=X` - Riclassifica automatica
+- `/api/learning-machine/processa-quietanza-f24` - Processa F24 e riconcilia con banca
+- `/api/learning-machine/costo-personale-completo/{anno}` - Costo personale da cedolini + F24
+- `/api/learning-machine/riepilogo-centri-costo/{anno}` - Riepilogo con calcoli fiscali
 
 📄 **Documentazione:** `/app/app/REGOLE_CONTABILI.md`
 
