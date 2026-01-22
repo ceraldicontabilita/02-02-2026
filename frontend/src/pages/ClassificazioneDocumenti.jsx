@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import api from '../api';
-import { FileText, Mail, CheckCircle, AlertCircle, Trash2, RefreshCw, Settings, Search, ArrowRight, Zap, Brain, FolderOpen, Eye, Download } from 'lucide-react';
+import { FileText, Mail, CheckCircle, AlertCircle, Trash2, RefreshCw, Settings, Search, ArrowRight, Zap, Brain, FolderOpen, Eye, Download, Edit2, X } from 'lucide-react';
 
 // Mapping categorie -> colori e icone
 const CATEGORY_CONFIG = {
@@ -15,7 +15,29 @@ const CATEGORY_CONFIG = {
   buste_paga: { bg: '#cffafe', text: '#0891b2', icon: FileText, label: 'Buste Paga', section: 'Cedolini' },
   estratti_conto: { bg: '#f1f5f9', text: '#475569', icon: FileText, label: 'Estratti Conto', section: 'Banca' },
   fatture: { bg: '#ecfdf5', text: '#059669', icon: FileText, label: 'Fatture', section: 'Ciclo Passivo' },
+  quietanze_f24: { bg: '#d1fae5', text: '#047857', icon: FileText, label: 'Quietanze F24', section: 'Gestione F24' },
+  inps_contributi: { bg: '#ede9fe', text: '#6d28d9', icon: FileText, label: 'Contributi INPS', section: 'INPS Documenti' },
+  agenzia_entrate: { bg: '#fce7f3', text: '#be185d', icon: AlertCircle, label: 'Agenzia Entrate', section: 'Commercialista' },
+  altro: { bg: '#f3f4f6', text: '#6b7280', icon: FileText, label: 'Altro', section: 'Documenti' },
 };
+
+// Lista categorie per il dropdown di correzione
+const CATEGORIE_CORREZIONE = [
+  { value: 'F24', label: 'F24' },
+  { value: 'QUIETANZE_F24', label: 'Quietanze F24' },
+  { value: 'BUSTE_PAGA', label: 'Buste Paga / Cedolini' },
+  { value: 'FATTURE_FORNITORI', label: 'Fatture Fornitori' },
+  { value: 'INPS_CONTRIBUTI', label: 'Contributi INPS' },
+  { value: 'INPS_FONSI', label: 'Delibere FONSI' },
+  { value: 'INPS_DILAZIONI', label: 'Dilazioni INPS' },
+  { value: 'AGENZIA_ENTRATE', label: 'Agenzia Entrate' },
+  { value: 'CARTELLE_ESATTORIALI', label: 'Cartelle Esattoriali' },
+  { value: 'VERBALI_MULTE', label: 'Verbali / Multe' },
+  { value: 'ESTRATTI_CONTO', label: 'Estratti Conto' },
+  { value: 'BONIFICI_STIPENDI', label: 'Bonifici Stipendi' },
+  { value: 'DIMISSIONI', label: 'Dimissioni' },
+  { value: 'ALTRO', label: 'Altro' },
+];
 
 // Mapping sezioni gestionale
 const GESTIONALE_SECTIONS = {
@@ -43,6 +65,13 @@ export default function ClassificazioneDocumenti() {
   const [loading, setLoading] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [processing, setProcessing] = useState(false);
+  
+  // Stato per modale correzione
+  const [showCorrezioneModal, setShowCorrezioneModal] = useState(false);
+  const [docToCorrect, setDocToCorrect] = useState(null);
+  const [nuovaCategoria, setNuovaCategoria] = useState('');
+  const [keywordsNuove, setKeywordsNuove] = useState('');
+  const [salvandoCorrezione, setSalvandoCorrezione] = useState(false);
   
   // Impostazioni scansione
   const [scanSettings, setScanSettings] = useState({
