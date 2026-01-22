@@ -1,7 +1,7 @@
 # PRD – TechRecon Accounting System
 ## Product Requirements Document (PRD)
 ## TechRecon Accounting System – Versione Super Articolata
-### Ultimo aggiornamento: 22 Gennaio 2026 (Sessione 7 - Flag In Carico + Cedolini + UI Attendance)
+### Ultimo aggiornamento: 22 Gennaio 2026 (Sessione 8 - Sistema Giustificativi + Saldo Ferie + Riconciliazione Fase 3)
 
 ---
 
@@ -15,7 +15,77 @@
 
 ---
 
-## ✅ NUOVE FEATURE COMPLETATE (22/01/2026 - Sessione 7)
+## ✅ NUOVE FEATURE COMPLETATE (22/01/2026 - Sessione 8)
+
+### 1. SISTEMA GIUSTIFICATIVI DIPENDENTI - COMPLETATO
+Sistema completo per la gestione dei giustificativi con limiti massimali (stile "Dipendenti in Cloud").
+
+**26 Codici Giustificativi Standard Italiani:**
+- Assenza: AI, ASNR, AS
+- Ferie: FER (208h/anno)
+- Permessi: PER, ROL (72h/anno), EXF (32h/anno), PNR, DON, L104, STUD, SIN, VIS
+- Congedi: CP, CPFNR, CMAT, CPAT, CLUT
+- Malattia: MAL, MALF
+- Infortunio: INF
+- Formazione: CFG, CFGA
+- Lavoro: SMART, TRAS
+
+**API:**
+- `POST /api/giustificativi/init-giustificativi` - Inizializza codici standard
+- `GET /api/giustificativi/giustificativi` - Lista con filtro categoria
+- `GET /api/giustificativi/dipendente/{id}/giustificativi` - Contatori per dipendente
+- `POST /api/giustificativi/valida-giustificativo` - Valida inserimento con limiti
+- `PUT /api/giustificativi/giustificativi/{codice}` - Modifica limiti
+- `PUT /api/giustificativi/dipendente/{id}/giustificativi/limiti` - Limiti custom
+
+**Validazione Automatica:**
+- Il sistema blocca l'inserimento se si superano i limiti annuali/mensili
+- Integrato nel modulo Attendance (validazione pre-salvataggio)
+
+**File:**
+- `/app/app/routers/employees/giustificativi.py`
+- `/app/frontend/src/pages/GestioneDipendentiUnificata.jsx` (Tab Giustificativi)
+
+**Collections MongoDB:** giustificativi, giustificativi_dipendente, riporti_ferie
+
+---
+
+### 2. TAB SALDO FERIE - COMPLETATO
+Nuova tab nel modulo Attendance per visualizzare il saldo ferie e permessi.
+
+**Caratteristiche:**
+- Saldo Ferie: maturate/godute/residue (giorni e ore)
+- ROL: maturati/goduti/residui
+- Ex-Festività: maturate/godute/residue
+- Permessi: ore godute anno
+- Dettaglio mensile
+
+**API:**
+- `GET /api/giustificativi/dipendente/{id}/saldo-ferie`
+- `POST /api/giustificativi/dipendente/{id}/riporto-ferie`
+
+**File:**
+- `/app/frontend/src/pages/Attendance.jsx` (Tab Saldo Ferie)
+
+---
+
+### 3. RICONCILIAZIONE INTELLIGENTE FASE 3 - COMPLETATO
+(Implementato nella sessione precedente)
+
+- Caso 36: Gestione Assegni Multipli
+- Caso 37: Arrotondamenti Automatici (tolleranza €1-5)
+- Caso 38: Pagamento Anticipato
+
+---
+
+### Test Sessione 8
+- **24 test automatici passati (100%)**
+- Report: `/app/test_reports/iteration_26.json`
+- Test file: `/app/tests/test_giustificativi.py`
+
+---
+
+## ✅ FEATURE COMPLETATE (22/01/2026 - Sessione 7)
 
 ### 1. FLAG "IN CARICO" PER DIPENDENTI - COMPLETATO
 Sistema per filtrare i dipendenti nel modulo presenze.
