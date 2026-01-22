@@ -1,157 +1,125 @@
-# CHANGELOG - Azienda in Cloud ERP
-
-## Gennaio 2026
-
-### 17 Gennaio 2026 (Sessione 2)
-
-#### 🔍 Ricerca IBAN Automatica
-- **Nuovo endpoint**: `POST /api/suppliers/ricerca-iban-web` - Ricerca automatica IBAN da fatture XML
-- **Nuovo endpoint**: `POST /api/suppliers/ricerca-iban-singolo/{id}` - Ricerca IBAN singolo fornitore
-- **Risultato**: 41 IBAN trovati automaticamente su 223 fornitori con metodo bancario
-- **Fornitori senza IBAN**: Ridotti da 223 a 182 (miglioramento del 18%)
-- **Fonte dati**: IBAN estratti dalle fatture XML già importate (fonte più affidabile)
+# CHANGELOG – TechRecon Accounting System
+## Storico Modifiche
 
 ---
 
-### 17 Gennaio 2026
+## 22 Gennaio 2026 - Sessione 9
 
-#### 🔧 Gestione Fornitori Avanzata
-- **Nuovo endpoint**: `POST /api/suppliers/update-all-incomplete` - Aggiornamento bulk fornitori con dati incompleti
-- **Nuovo endpoint**: `GET /api/suppliers/validazione-p0` - Verifica stato conformità P0 fornitori
-- **Nuovo endpoint**: `POST /api/suppliers/sync-iban` - Sincronizza IBAN dalle fatture XML esistenti
-- **Fix UI**: Risolto bug che nascondeva il pulsante "Cerca P.IVA" in `Fornitori.jsx`
-- **Risultato sync IBAN**: 17 fornitori aggiornati automaticamente, 231 ancora da completare
+### ✅ Unificazione Pagine Documenti
+- Unificate `/documenti`, `/regole-categorizzazione`, `/classificazione-email` in `ClassificazioneDocumenti.jsx`
+- Navigazione a tab (Classificazione, Documenti, Regole)
+- Aggiunto pulsante "Vedi PDF" con endpoint `/api/documenti-smart/documenti/{id}/pdf`
+- Rotte legacy reindirizzano alla nuova pagina
 
-#### ✅ Validatori P0 Bloccanti
-- **File modificato**: `/app/app/routers/invoices/fatture_ricevute.py`
-  - Blocco import fattura se fornitore senza metodo pagamento
-  - Blocco import fattura se metodo bancario senza IBAN
-- **File modificato**: `/app/app/routers/cedolini_riconciliazione.py`
-  - Blocco pagamento stipendi in contanti post giugno 2018 (Legge antiriciclaggio)
+### ✅ Fix Tab Giustificativi
+- Ottimizzato endpoint da N+1 query a 2 aggregazioni MongoDB
+- Tempo risposta: da timeout a ~0.7s
 
-#### 🎨 Refactoring UI Prima Nota
-- **Nuove pagine create**:
-  - `/app/frontend/src/pages/PrimaNota.jsx` - Redesign completo basato su progetto riferimento
-  - `/app/frontend/src/pages/PrimaNotaSalari.jsx` - Nuova pagina per gestione salari
-- **Nuovi componenti**: `/app/frontend/src/components/prima-nota/` - Componenti modulari
-- **Nuovo store**: `/app/frontend/src/stores/primaNotaStore.js` - State management con Zustand
-- **Logica DARE/AVERE**: Implementata logica contabile personalizzata per CASSA e BANCA separati
+### ✅ Sistema Giustificativi Completo
+- 26 codici standard italiani (FER, ROL, EXF, MAL, etc.)
+- Validazione limiti annuali/mensili
+- Tab "Giustificativi" in Gestione Dipendenti
+- Tab "Saldo Ferie" in Attendance
 
-#### 🐛 Bug Fixes
-- **Fix conferma multipla fatture**: Risolto errore 400 su `operazioni_da_confermare.py`
-- **Fix F24**: Corretta visualizzazione importi totali e funzionalità conferma
-- **Fix import corrispettivi XML**: Corretta estrazione pagamento elettronico
-- **Fix import cedolini Excel**: Risolti problemi parsing da `paghe.xlsx` e `bonifici dip.xlsx`
+### ✅ Riconciliazione Intelligente Fase 3
+- Caso 36: Gestione Assegni Multipli
+- Caso 37: Arrotondamenti Automatici (tolleranza €1-5)
+- Caso 38: Pagamento Anticipato
 
-#### 🔄 Automatizzazione Riconciliazione
-- Implementata logica auto-assegnazione metodi di pagamento
-- Auto-refresh riconciliazione bancaria ogni 30 minuti
+### ✅ Flag "In Carico" Dipendenti
+- Campo `in_carico: boolean` in anagrafica
+- Toggle switch in UI
+- Filtro automatico nelle presenze
 
 ---
 
-### 10 Gennaio 2026
+## 21 Gennaio 2026 - Sessione 8
 
-#### 🎨 Fix Logo Aziendale
-- **Problema**: File `logo-ceraldi.png` corrotto (conteneva HTML)
-- **Soluzione**: 
-  - Ripristinato da `logo_ceraldi.png` valido
-  - Convertito in **bianco** per visibilità su sidebar scura
-  - Salvato nel database MongoDB (`settings_assets`)
-- **Nuovi endpoint**:
-  - `GET /api/settings/logo` - Recupera logo
-  - `POST /api/settings/logo` - Upload nuovo logo
+### ✅ Motore Contabile (Partita Doppia)
+- Piano dei Conti italiano (27 conti)
+- 15 regole contabili predefinite
+- Validazione DARE = AVERE
+- Persistenza scritture
 
-#### 🔍 Riconciliazione Automatica Migliorata
-- **File modificato**: `/app/app/routers/accounting/riconciliazione_automatica.py`
-- **Nuovo sistema a punteggio (score)**:
-  - Importo esatto (±0.05€) → +10 punti
-  - Nome fornitore in descrizione → +5 punti
-  - Numero fattura in descrizione → +5 punti
-- **Funzioni aggiunte**:
-  - `match_fornitore_descrizione()` - Confronto intelligente nomi
-  - `match_numero_fattura_descrizione()` - Estrazione numeri fattura
-- **Logica**:
-  - Score ≥ 15 → Match sicuro automatico
-  - Score 10-14 → Match se unica fattura
-  - Score = 10 → Operazione da confermare
+### ✅ Sistema Attendance (Presenze)
+- Timbrature (entrata, uscita, pause)
+- Ferie, permessi, malattia
+- Dashboard presenze giornaliere
+- Approvazione richieste
 
-#### 🍰 Ricerca Web Ricette + Normalizzazione 1kg
-- **Nuovo file**: `/app/app/routers/haccp_v2/ricette_web_search.py`
-- **Funzionalità**:
-  - Ricerca ricette con Claude Sonnet 4.5
-  - Normalizzazione automatica a 1kg ingrediente base
-  - Categorie: dolci, rosticceria napoletana/siciliana, contorni, basi
-- **Importazione massiva completata**:
-  - 63 nuove ricette importate con AI
-  - Database totale: **158 ricette**
-  - 122 normalizzate a 1kg (77.2%)
-- **Ricette aggiunte per categoria**:
-  | Categoria | Nuove | Esempi |
-  |-----------|-------|--------|
-  | Dolci | 23 | Millefoglie, Profiteroles, Sacher, Saint Honoré |
-  | Rosticceria Napoletana | 12 | Calzone fritto, Casatiello, Danubio, Graffa |
-  | Rosticceria Siciliana | 10 | Cartocciate, Iris, Sfincione, Panelle |
-  | Contorni | 9 | Parmigiana, Caponata, Carciofi alla romana |
-  | Basi | 9 | Besciamella, Crema diplomatica, Pasta brisée |
+### ✅ Riconciliazione Intelligente (Casi 19-35)
+- Pagamento parziale
+- Note di credito
+- Bonifico cumulativo
+- Sconto cassa
 
 ---
 
-## Dicembre 2025 - Gennaio 2026 (Sessioni Precedenti)
+## 20 Gennaio 2026 - Sessioni 5-7
 
-### Modulo HACCP Completo
-- Temperature positive/negative con soglie allarme
-- Sanificazione e disinfestazione
-- Ricettario dinamico collegato a fatture XML
-- Gestione non conformità
-- Libro allergeni stampabile PDF
-- Etichette lotto con evidenziazione allergeni
+### ✅ Riconciliazione Intelligente Base
+- Stati: `in_attesa_conferma`, `confermata_cassa`, `confermata_banca`, `riconciliata`
+- Dashboard operazioni
+- Lock manuale
 
-### Associazione Bonifici ↔ Salari
-- Dropdown suggerimenti compatibili in Archivio Bonifici
-- Endpoint `/api/archivio-bonifici/operazioni-salari-compatibili`
-- Endpoint `/api/archivio-bonifici/associa-salario`
+### ✅ Classificazione Email Intelligente
+- 10 regole predefinite
+- Associazione automatica ai moduli
+- Scansione IMAP
 
-### Gestione Allergeni
-- Backend libro allergeni (`/api/haccp-v2/libro-allergeni/`)
-- Lista allergeni UE standard
-- Stampa PDF registro allergeni
-- Integrazione in EtichettaLotto.jsx
+### ✅ Document AI
+- OCR + LLM (Claude Sonnet 4.5)
+- Estrazione dati da PDF
+- Supporto F24, buste paga, fatture
 
-### Sistema Email Aruba
-- Download notifiche fatture via IMAP
-- Parsing HTML per estrazione dati
-- Workflow operazioni da confermare
-- Riconciliazione automatica con estratto conto
+### ✅ Performance
+- Ottimizzazione `/api/suppliers`: da 5s a 0.07s (cache)
+- Ottimizzazione `/api/fatture-ricevute/archivio`: da 29s a 2.6s
+- Ottimizzazione `/api/f24-public/models`: ~0.25s
 
-### Refactoring UI
-- Conversione pagine a stili inline
-- Hook `useResponsive.js` per design adattivo
-- Pagina `LibroAllergeni.jsx` responsive (esempio)
+### ✅ UI/UX
+- Uniformazione header gradiente blu navy
+- Pagine auto-sufficienti (self-healing)
+- Pulsanti manutenzione in Admin
 
 ---
 
-## Note Tecniche
+## 19 Gennaio 2026 - Sessioni 1-4
 
-### Normalizzazione Ricette
-```
-Formula: fattore = 1000 / grammi_ingrediente_base
+### ✅ Sistema Completo Verbali Noleggio
+- Scansione fatture noleggiatori
+- 19 verbali estratti
+- Riconciliazione automatica
 
-Esempio:
-- Ricetta con 300g farina → fattore = 3.33
-- Tutti gli ingredienti × 3.33
-- Risultato: farina = 1000g, altri proporzionati
-```
+### ✅ Scanner Email Completo
+- 218+ documenti scaricati
+- Classificazione automatica cartelle
 
-### Match Riconciliazione
-```python
-# Calcolo score
-score = 0
-if importo_match: score += 10
-if fornitore_in_descrizione: score += 5
-if numero_fattura_in_descrizione: score += 5
+### ✅ Bonifici Stipendi
+- 736 bonifici estratti da email
+- 522 associati a dipendenti
 
-# Decisione
-if score >= 15: riconcilia_automatico()
-elif score >= 10 and fattura_unica: riconcilia_automatico()
-else: crea_operazione_da_confermare()
-```
+### ✅ Pulizia Dati
+- 83 fatture duplicate eliminate
+- 171 assegni vuoti eliminati
+- 82 TD24 marcate non riconciliabili
+
+---
+
+## 18 Gennaio 2026
+
+### ✅ Auto-conferma Assegni
+- Match esatto importo = auto-conferma
+
+### ✅ Unificazione Collection Fornitori
+- 263 fornitori consolidati
+
+### ✅ Logica TD24
+- Fatture differite escluse da riconciliazione
+
+### ✅ Correzione Numeri Assegni
+- 205 numeri corretti (da CRA a NUM reale)
+
+---
+
+*Ultimo aggiornamento: 22 Gennaio 2026*
