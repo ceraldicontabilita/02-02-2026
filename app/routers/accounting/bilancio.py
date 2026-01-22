@@ -362,6 +362,380 @@ async def get_riepilogo_bilancio(anno: int = Query(None)) -> Dict[str, Any]:
     }
 
 
+@router.get("/conto-economico-dettagliato")
+async def get_conto_economico_dettagliato(
+    anno: int = Query(None, description="Anno di riferimento"),
+    mese: int = Query(None, description="Mese (1-12)")
+) -> Dict[str, Any]:
+    """
+    Conto Economico DETTAGLIATO secondo schema civilistico art. 2425 c.c.
+    
+    Classifica automaticamente i costi per natura con regole di:
+    - Deducibilità ai fini IRES/IRPEF
+    - Detraibilità IVA
+    
+    VOCI PRINCIPALI:
+    - B6: Acquisti materie prime e merci
+    - B7: Costi per servizi (energia, telefonia, consulenze, manutenzioni, ecc.)
+    - B8: Godimento beni terzi (affitti, noleggio auto con limite €3.615,20)
+    - B9: Costi del personale (stipendi, contributi, TFR)
+    - C17: Interessi passivi (mutui, commissioni bancarie)
+    """
+    from app.services.classificazione_costi import classifica_fornitore, calcola_deducibilita, CATEGORIE_CONTO_ECONOMICO
+    
+    db = Database.get_db()
+    
+    if not anno:
+        anno = datetime.now().year
+    
+    # Periodo
+    if mese:
+        data_inizio = f"{anno}-{mese:02d}-01"
+        import calendar
+        ultimo_giorno = calendar.monthrange(anno, mese)[1]
+        data_fine = f"{anno}-{mese:02d}-{ultimo_giorno}"
+    else:
+        data_inizio = f"{anno}-01-01"
+        data_fine = f"{anno}-12-31"
+    
+    # === A) RICAVI ===
+    # A1: Ricavi delle vendite (Corrispettivi)
+    corrispettivi = await db["corrispettivi"].aggregate([
+        {"$match": {"data": {"$gte": data_inizio, "$lte": data_fine}}},
+        {"$group": {
+            "_id": None,
+            "totale_imponibile": {"$sum": {"$ifNull": ["$totale_imponibile", 0]}},
+            "totale_iva": {"$sum": {"$ifNull": ["$totale_iva", 0]}},
+            "totale_lordo": {"$sum": {"$ifNull": ["$totale", 0]}},
+            "count": {"$sum": 1}
+        }}
+    ]).to_list(1)
+    
+    ricavi_vendite = corrispettivi[0]["totale_imponibile"] if corrispettivi else 0
+    iva_vendite = corrispettivi[0]["totale_iva"] if corrispettivi else 0
+    
+    # === B) COSTI DELLA PRODUZIONE ===
+    # Recupera tutte le fatture e classifica per categoria
+    fatture = await db[Collections.INVOICES].find({
+        "tipo_documento": {"$nin": ["TD04", "TD08"]},
+        "$or": [
+            {"invoice_date": {"$gte": data_inizio, "$lte": data_fine}},
+            {"data_ricezione": {"$gte": data_inizio, "$lte": data_fine}}
+        ]
+    }).to_list(None)
+    
+    # Classifica ogni fattura
+    costi_per_categoria = {}
+    for fatt in fatture:
+        supplier = fatt.get("supplier_name", "")
+        descrizione = fatt.get("descrizione", "")
+        categoria = classifica_fornitore(supplier, descrizione)
+        
+        imponibile = fatt.get("imponibile") or (fatt.get("total_amount", 0) - fatt.get("iva", 0))
+        iva = fatt.get("iva", 0)
+        
+        if categoria not in costi_per_categoria:
+            costi_per_categoria[categoria] = {
+                "imponibile": 0,
+                "iva": 0,
+                "count": 0
+            }
+        
+        costi_per_categoria[categoria]["imponibile"] += imponibile
+        costi_per_categoria[categoria]["iva"] += iva
+        costi_per_categoria[categoria]["count"] += 1
+    
+    # Note di credito
+    note_credito = await db[Collections.INVOICES].aggregate([
+        {"$match": {
+            "tipo_documento": {"$in": ["TD04", "TD08"]},
+            "$or": [
+                {"invoice_date": {"$gte": data_inizio, "$lte": data_fine}},
+                {"data_ricezione": {"$gte": data_inizio, "$lte": data_fine}}
+            ]
+        }},
+        {"$group": {
+            "_id": None,
+            "totale": {"$sum": {"$ifNull": ["$imponibile", {"$subtract": ["$total_amount", {"$ifNull": ["$iva", 0]}]}]}},
+            "iva": {"$sum": {"$ifNull": ["$iva", 0]}}
+        }}
+    ]).to_list(1)
+    
+    totale_nc = note_credito[0]["totale"] if note_credito else 0
+    
+    # === B9) COSTI DEL PERSONALE ===
+    # Recupera dai cedolini
+    cedolini = await db["cedolini"].aggregate([
+        {"$match": {"anno": anno}},
+        {"$group": {
+            "_id": None,
+            "totale_lordo": {"$sum": "$lordo"},
+            "totale_netto": {"$sum": "$netto"},
+            "totale_inps": {"$sum": "$inps_dipendente"},
+            "totale_irpef": {"$sum": "$irpef"},
+            "count": {"$sum": 1}
+        }}
+    ]).to_list(1)
+    
+    if cedolini:
+        ced = cedolini[0]
+        costo_personale = {
+            "B9a_salari_stipendi": round(ced["totale_lordo"], 2),
+            "B9b_oneri_sociali": round(ced["totale_inps"] * 2.5, 2),  # Stima INPS carico azienda
+            "B9c_tfr": round(ced["totale_lordo"] * 0.0691, 2),  # 6.91% del lordo
+            "totale": 0,
+            "num_cedolini": ced["count"]
+        }
+        costo_personale["totale"] = round(
+            costo_personale["B9a_salari_stipendi"] + 
+            costo_personale["B9b_oneri_sociali"] + 
+            costo_personale["B9c_tfr"], 2
+        )
+    else:
+        costo_personale = {"B9a_salari_stipendi": 0, "B9b_oneri_sociali": 0, "B9c_tfr": 0, "totale": 0, "num_cedolini": 0}
+    
+    # === Costruisci il Conto Economico dettagliato ===
+    # Organizza per macrocategoria
+    B6_merci = costi_per_categoria.get("B6_MATERIE_PRIME", {"imponibile": 0, "iva": 0, "count": 0})
+    
+    B7_servizi = {
+        "energia": costi_per_categoria.get("B7_UTENZE_ENERGIA", {"imponibile": 0, "iva": 0, "count": 0}),
+        "acqua": costi_per_categoria.get("B7_UTENZE_ACQUA", {"imponibile": 0, "iva": 0, "count": 0}),
+        "telefonia": costi_per_categoria.get("B7_TELEFONIA", {"imponibile": 0, "iva": 0, "count": 0}),
+        "consulenze": costi_per_categoria.get("B7_CONSULENZE", {"imponibile": 0, "iva": 0, "count": 0}),
+        "manutenzioni": costi_per_categoria.get("B7_MANUTENZIONI", {"imponibile": 0, "iva": 0, "count": 0}),
+        "assicurazioni": costi_per_categoria.get("B7_ASSICURAZIONI", {"imponibile": 0, "iva": 0, "count": 0}),
+        "trasporti": costi_per_categoria.get("B7_TRASPORTI", {"imponibile": 0, "iva": 0, "count": 0}),
+        "pubblicita": costi_per_categoria.get("B7_PUBBLICITA", {"imponibile": 0, "iva": 0, "count": 0}),
+        "altri_servizi": costi_per_categoria.get("B7_SERVIZI", {"imponibile": 0, "iva": 0, "count": 0}),
+    }
+    totale_B7 = sum(v["imponibile"] for v in B7_servizi.values())
+    
+    B8_godimento = {
+        "affitti": costi_per_categoria.get("B8_GODIMENTO_AFFITTI", {"imponibile": 0, "iva": 0, "count": 0}),
+        "noleggio_auto": costi_per_categoria.get("B8_NOLEGGIO_AUTO", {"imponibile": 0, "iva": 0, "count": 0}),
+        "leasing": costi_per_categoria.get("B8_LEASING", {"imponibile": 0, "iva": 0, "count": 0}),
+    }
+    totale_B8 = sum(v["imponibile"] for v in B8_godimento.values())
+    
+    # Costi auto (carburante, manutenzione auto)
+    costi_auto = {
+        "carburante": costi_per_categoria.get("AUTO_CARBURANTE", {"imponibile": 0, "iva": 0, "count": 0}),
+        "manutenzione_auto": costi_per_categoria.get("AUTO_MANUTENZIONE", {"imponibile": 0, "iva": 0, "count": 0}),
+    }
+    totale_costi_auto = sum(v["imponibile"] for v in costi_auto.values())
+    
+    # Oneri finanziari
+    C17_finanziari = {
+        "commissioni_bancarie": costi_per_categoria.get("C17_COMMISSIONI_BANCARIE", {"imponibile": 0, "iva": 0, "count": 0}),
+    }
+    totale_C17 = sum(v["imponibile"] for v in C17_finanziari.values())
+    
+    # Altri costi (B14)
+    B14_altri = costi_per_categoria.get("B14_ONERI_DIVERSI", {"imponibile": 0, "iva": 0, "count": 0})
+    
+    # === CALCOLI DEDUCIBILITÀ ===
+    # Telefonia: deducibile 80%
+    tel_deducibile = B7_servizi["telefonia"]["imponibile"] * 0.80
+    tel_indeducibile = B7_servizi["telefonia"]["imponibile"] * 0.20
+    
+    # Noleggio auto: deducibile 20%, max €3.615,20/anno
+    noleggio_imponibile = B8_godimento["noleggio_auto"]["imponibile"]
+    noleggio_limitato = min(noleggio_imponibile, 3615.20)
+    noleggio_deducibile = noleggio_limitato * 0.20
+    noleggio_indeducibile = noleggio_imponibile - noleggio_deducibile
+    
+    # Carburante auto: 20%
+    carburante_deducibile = costi_auto["carburante"]["imponibile"] * 0.20
+    carburante_indeducibile = costi_auto["carburante"]["imponibile"] * 0.80
+    
+    # TOTALI
+    totale_costi_produzione = (
+        B6_merci["imponibile"] +
+        totale_B7 +
+        totale_B8 +
+        costo_personale["totale"] +
+        totale_costi_auto +
+        B14_altri["imponibile"] -
+        totale_nc
+    )
+    
+    totale_costi = totale_costi_produzione + totale_C17
+    
+    # RISULTATO
+    risultato_operativo = ricavi_vendite - totale_costi_produzione
+    risultato_ante_imposte = risultato_operativo - totale_C17
+    
+    # Calcolo costi indeducibili totali
+    totale_indeducibile = tel_indeducibile + noleggio_indeducibile + carburante_indeducibile
+    
+    return {
+        "anno": anno,
+        "mese": mese,
+        "periodo": {"da": data_inizio, "a": data_fine},
+        
+        "A_RICAVI": {
+            "A1_vendite": {
+                "corrispettivi": round(ricavi_vendite, 2),
+                "corrispettivi_lordi": round(corrispettivi[0]["totale_lordo"] if corrispettivi else 0, 2),
+                "iva_vendite": round(iva_vendite, 2),
+                "note": "UNICA fonte ricavi - Le fatture emesse sono già incluse"
+            },
+            "totale_ricavi": round(ricavi_vendite, 2)
+        },
+        
+        "B_COSTI_PRODUZIONE": {
+            "B6_materie_prime_merci": {
+                "imponibile": round(B6_merci["imponibile"], 2),
+                "iva": round(B6_merci["iva"], 2),
+                "num_fatture": B6_merci["count"],
+                "deducibilita": "100%",
+                "detraibilita_iva": "100%"
+            },
+            "B7_servizi": {
+                "dettaglio": {
+                    "energia_elettrica_gas": {
+                        "imponibile": round(B7_servizi["energia"]["imponibile"], 2),
+                        "deducibilita": "100%",
+                        "detraibilita_iva": "100%"
+                    },
+                    "acqua": {
+                        "imponibile": round(B7_servizi["acqua"]["imponibile"], 2),
+                        "deducibilita": "100%",
+                        "detraibilita_iva": "100%"
+                    },
+                    "telefonia": {
+                        "imponibile": round(B7_servizi["telefonia"]["imponibile"], 2),
+                        "deducibile": round(tel_deducibile, 2),
+                        "indeducibile": round(tel_indeducibile, 2),
+                        "deducibilita": "80%",
+                        "detraibilita_iva": "50%",
+                        "note": "Art. 102 TUIR"
+                    },
+                    "consulenze": {
+                        "imponibile": round(B7_servizi["consulenze"]["imponibile"], 2),
+                        "deducibilita": "100%"
+                    },
+                    "manutenzioni": {
+                        "imponibile": round(B7_servizi["manutenzioni"]["imponibile"], 2),
+                        "deducibilita": "100%",
+                        "note": "Limite 5% beni ammortizzabili"
+                    },
+                    "assicurazioni": {
+                        "imponibile": round(B7_servizi["assicurazioni"]["imponibile"], 2),
+                        "deducibilita": "100%",
+                        "detraibilita_iva": "Esente art. 10"
+                    },
+                    "trasporti": {
+                        "imponibile": round(B7_servizi["trasporti"]["imponibile"], 2),
+                        "deducibilita": "100%"
+                    },
+                    "pubblicita": {
+                        "imponibile": round(B7_servizi["pubblicita"]["imponibile"], 2),
+                        "deducibilita": "100%"
+                    },
+                    "altri_servizi": {
+                        "imponibile": round(B7_servizi["altri_servizi"]["imponibile"], 2)
+                    }
+                },
+                "totale": round(totale_B7, 2)
+            },
+            "B7_auto_aziendali": {
+                "carburante": {
+                    "imponibile": round(costi_auto["carburante"]["imponibile"], 2),
+                    "deducibile": round(carburante_deducibile, 2),
+                    "indeducibile": round(carburante_indeducibile, 2),
+                    "deducibilita": "20% (70% se assegnata)",
+                    "detraibilita_iva": "40%",
+                    "note": "Art. 164 TUIR"
+                },
+                "manutenzione": {
+                    "imponibile": round(costi_auto["manutenzione_auto"]["imponibile"], 2),
+                    "deducibilita": "20%",
+                    "detraibilita_iva": "40%"
+                },
+                "totale": round(totale_costi_auto, 2)
+            },
+            "B8_godimento_beni_terzi": {
+                "affitti_locazioni": {
+                    "imponibile": round(B8_godimento["affitti"]["imponibile"], 2),
+                    "deducibilita": "100%",
+                    "detraibilita_iva": "Spesso esente immobili"
+                },
+                "noleggio_auto": {
+                    "imponibile": round(noleggio_imponibile, 2),
+                    "importo_limitato": round(noleggio_limitato, 2),
+                    "deducibile": round(noleggio_deducibile, 2),
+                    "indeducibile": round(noleggio_indeducibile, 2),
+                    "deducibilita": "20% su max €3.615,20/anno",
+                    "detraibilita_iva": "40%",
+                    "note": "Art. 164 TUIR - 70% se assegnata a dipendente"
+                },
+                "leasing": {
+                    "imponibile": round(B8_godimento["leasing"]["imponibile"], 2)
+                },
+                "totale": round(totale_B8, 2)
+            },
+            "B9_costo_personale": {
+                "B9a_salari_stipendi": round(costo_personale["B9a_salari_stipendi"], 2),
+                "B9b_oneri_sociali": round(costo_personale["B9b_oneri_sociali"], 2),
+                "B9c_tfr": round(costo_personale["B9c_tfr"], 2),
+                "totale": round(costo_personale["totale"], 2),
+                "num_cedolini": costo_personale["num_cedolini"],
+                "deducibilita": "100%",
+                "note": "Fuori campo IVA"
+            },
+            "B14_oneri_diversi": {
+                "imponibile": round(B14_altri["imponibile"], 2),
+                "num_fatture": B14_altri["count"]
+            },
+            "note_credito_ricevute": {
+                "totale": round(totale_nc, 2),
+                "note": "Riducono i costi"
+            },
+            "totale_costi_produzione": round(totale_costi_produzione, 2)
+        },
+        
+        "C_PROVENTI_ONERI_FINANZIARI": {
+            "C17_interessi_oneri": {
+                "commissioni_bancarie": {
+                    "imponibile": round(C17_finanziari["commissioni_bancarie"]["imponibile"], 2),
+                    "deducibilita": "100%",
+                    "detraibilita_iva": "Esente art. 10"
+                },
+                "interessi_passivi_mutui": {
+                    "imponibile": 0,  # Da implementare con collezione mutui
+                    "deducibilita": "Limite ROL 30%",
+                    "note": "Art. 96 TUIR"
+                }
+            },
+            "totale_oneri_finanziari": round(totale_C17, 2)
+        },
+        
+        "RISULTATO": {
+            "risultato_operativo": round(risultato_operativo, 2),
+            "risultato_ante_imposte": round(risultato_ante_imposte, 2),
+            "tipo": "utile" if risultato_ante_imposte >= 0 else "perdita",
+            "margine_percentuale": round((risultato_ante_imposte / ricavi_vendite * 100), 1) if ricavi_vendite > 0 else 0
+        },
+        
+        "FISCALE": {
+            "totale_costi_indeducibili": round(totale_indeducibile, 2),
+            "dettaglio_indeducibili": {
+                "telefonia_20%": round(tel_indeducibile, 2),
+                "noleggio_auto_80%": round(noleggio_indeducibile, 2),
+                "carburante_80%": round(carburante_indeducibile, 2)
+            },
+            "reddito_fiscale_stimato": round(risultato_ante_imposte + totale_indeducibile, 2),
+            "note": "Il reddito fiscale va calcolato con variazioni in aumento/diminuzione"
+        },
+        
+        "STATISTICHE": {
+            "totale_fatture_classificate": len(fatture),
+            "categorie_riconosciute": len(costi_per_categoria)
+        }
+    }
+
 
 @router.get("/export-pdf")
 async def export_bilancio_pdf(anno: int = Query(None)):
