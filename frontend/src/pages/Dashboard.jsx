@@ -1749,7 +1749,7 @@ function ScadenzeWidget({ scadenze }) {
 
             <p style={{ fontSize: 12, color: '#94a3b8', marginBottom: 12, textAlign: 'center' }}>
               💡 Se paghi in <strong>CASSA</strong> la scadenza viene saldata immediatamente.<br/>
-              Se paghi in <strong>BANCA</strong> verrà riconciliata quando troveremo il movimento nell'estratto conto.
+              Se paghi in <strong>BANCA</strong> verrà riconciliata quando troveremo il movimento nell&apos;estratto conto.
             </p>
 
             <button
