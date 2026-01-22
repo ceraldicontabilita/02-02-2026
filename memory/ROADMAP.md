@@ -3,23 +3,12 @@
 
 ---
 
-## 🔴 P0 - Alta Priorità
+## ✅ Completato Recentemente
 
-### 1. Frontend Riconciliazione F24
-**Status**: Backend esistente, frontend mancante  
-**Descrizione**: Creare interfaccia utente per:
-- Upload file F24 da commercialista
-- Visualizzazione dati importati
-- Gestione processo di riconciliazione con estratto conto
-- Dashboard stato riconciliazione
-
-**API esistenti**:
-- `GET /api/f24-riconciliazione/dashboard`
-- `POST /api/f24-riconciliazione/commercialista/upload`
-- `GET /api/f24-riconciliazione/quietanze`
-- `GET /api/f24-riconciliazione/alerts`
-
-**File riferimento**: `/app/frontend/src/pages/RiconciliazioneF24.jsx`
+### Alert Limiti Giustificativi (22 Gen 2026)
+- ✅ Endpoint `/api/giustificativi/alert-limiti`
+- ✅ Widget Dashboard
+- ✅ Soglia configurabile (80%, 90%, 100%)
 
 ---
 
