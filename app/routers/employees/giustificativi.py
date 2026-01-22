@@ -805,7 +805,6 @@ async def get_alert_limiti_giustificativi(
         anno = datetime.now().year
     
     mese_corrente = datetime.now().month
-    soglia = soglia_percentuale / 100.0
     
     # Recupera tutti i dipendenti in carico
     dipendenti = await db["employees"].find(
