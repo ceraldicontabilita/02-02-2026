@@ -265,6 +265,11 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* Alert Limiti Giustificativi */}
+      {alertGiustificativi && alertGiustificativi.totale_alerts > 0 && (
+        <AlertGiustificativiWidget data={alertGiustificativi} />
+      )}
+
       {/* Widget Scadenze */}
       {scadenzeData && scadenzeData.scadenze && scadenzeData.scadenze.length > 0 && (
         <ScadenzeWidget scadenze={scadenzeData} />
