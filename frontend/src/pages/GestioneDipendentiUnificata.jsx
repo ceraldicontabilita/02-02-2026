@@ -975,47 +975,35 @@ function TabGiustificativi({ dipendente, anno }) {
   const [error, setError] = useState(null);
   const [selectedCategoria, setSelectedCategoria] = useState('tutti');
   
+  // Carica dati al mount e quando cambia dipendente
   useEffect(() => {
-    let isMounted = true;
-    
-    const loadGiustificativi = async () => {
+    const fetchData = async () => {
       if (!dipendente?.id) {
         setLoading(false);
         return;
       }
+      
+      setLoading(true);
+      setError(null);
+      
       try {
-        setLoading(true);
-        setError(null);
-        
-        // Usa fetch nativo per evitare problemi con axios
-        const baseUrl = import.meta.env.VITE_BACKEND_URL || '';
-        const giustUrl = `${baseUrl}/api/giustificativi/dipendente/${dipendente.id}/giustificativi?anno=${anno}`;
-        const ferieUrl = `${baseUrl}/api/giustificativi/dipendente/${dipendente.id}/saldo-ferie?anno=${anno}`;
-        
+        // Chiamate API con api axios
         const [giustRes, ferieRes] = await Promise.all([
-          fetch(giustUrl).then(r => r.json()),
-          fetch(ferieUrl).then(r => r.json())
+          api.get(`/api/giustificativi/dipendente/${dipendente.id}/giustificativi`, { params: { anno } }),
+          api.get(`/api/giustificativi/dipendente/${dipendente.id}/saldo-ferie`, { params: { anno } })
         ]);
         
-        if (isMounted) {
-          setGiustificativi(giustRes.giustificativi || []);
-          setSaldoFerie(ferieRes);
-        }
+        setGiustificativi(giustRes.data?.giustificativi || []);
+        setSaldoFerie(ferieRes.data || null);
+        setLoading(false);
       } catch (err) {
-        console.error('Errore caricamento giustificativi:', err);
-        if (isMounted) {
-          setError(err.message || 'Errore caricamento');
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+        console.error('Errore caricamento:', err);
+        setError(err.response?.data?.detail || err.message || 'Errore');
+        setLoading(false);
       }
     };
     
-    loadGiustificativi();
-    
-    return () => { isMounted = false; };
+    fetchData();
   }, [dipendente?.id, anno]);
   
   // Se non c'è dipendente selezionato
