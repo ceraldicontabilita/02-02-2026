@@ -317,6 +317,35 @@ function DipendenteFormAnagrafica({ dipendente, editData, setEditData, editMode 
           <input type="text" value={dipendente.livello || '-'} disabled style={inputStyle} />
         )}
       </div>
+      
+      {/* Flag In Carico - per modulo presenze */}
+      <div style={{ gridColumn: 'span 3', marginTop: 12, padding: 12, background: '#f0f9ff', borderRadius: 8, border: '1px solid #bae6fd' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <label style={{ ...labelStyle, marginBottom: 0, fontSize: 13, color: '#0369a1' }}>📋 Gestione Presenze</label>
+            <p style={{ margin: '4px 0 0 0', fontSize: 11, color: '#64748b' }}>
+              Se attivo, il dipendente comparirà nel modulo presenze e nel calendario timbrature
+            </p>
+          </div>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: editMode ? 'pointer' : 'default' }}>
+            <input 
+              type="checkbox" 
+              checked={getValue('in_carico') !== false}
+              onChange={(e) => handleChange('in_carico', e.target.checked)}
+              disabled={!editMode}
+              style={{ width: 18, height: 18, cursor: editMode ? 'pointer' : 'default' }}
+              data-testid="in-carico-toggle"
+            />
+            <span style={{ 
+              fontSize: 13, 
+              fontWeight: 600, 
+              color: getValue('in_carico') !== false ? '#059669' : '#dc2626'
+            }}>
+              {getValue('in_carico') !== false ? '✓ In Carico' : '✗ Non in Carico'}
+            </span>
+          </label>
+        </div>
+      </div>
     </div>
   );
 }
