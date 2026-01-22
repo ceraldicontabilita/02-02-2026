@@ -174,6 +174,7 @@ from app.routers import email_reconciliation  # Riconciliazione Email ↔ Gestio
 from app.routers import email_scanner  # Scanner Email Completo - Tutta la posta
 from app.routers import codici_tributari  # Gestione Codici Tributari F24 - Riconciliazione 3 vie
 from app.routers import learning_machine  # Learning Machine - Classificazione documenti intelligente
+from app.routers import learning_machine_cdc  # Learning Machine CDC - Classificazione per Centro di Costo
 from app.routers import riconciliazione_intelligente_api  # Riconciliazione Intelligente - Conferma Pagamenti
 from app.routers import attendance  # Gestione Presenze Dipendenti (legacy)
 from app.routers.attendance_module import router as attendance_router_new  # Modulo refactored
