@@ -977,6 +977,7 @@ function TabGiustificativi({ dipendente, anno }) {
   
   useEffect(() => {
     const loadGiustificativi = async () => {
+      console.log('TabGiustificativi useEffect triggerato, dip.id:', dipendente?.id);
       if (!dipendente?.id) {
         setLoading(false);
         return;
@@ -984,16 +985,19 @@ function TabGiustificativi({ dipendente, anno }) {
       try {
         setLoading(true);
         setError(null);
+        console.log('Chiamando API giustificativi per:', dipendente.id);
         const [giustRes, ferieRes] = await Promise.all([
           api.get(`/api/giustificativi/dipendente/${dipendente.id}/giustificativi?anno=${anno}`),
           api.get(`/api/giustificativi/dipendente/${dipendente.id}/saldo-ferie?anno=${anno}`)
         ]);
+        console.log('API risposta giustificativi:', giustRes.data?.totale_giustificativi);
         setGiustificativi(giustRes.data.giustificativi || []);
         setSaldoFerie(ferieRes.data);
       } catch (err) {
         console.error('Errore caricamento giustificativi:', err);
         setError(err.message || 'Errore caricamento');
       } finally {
+        console.log('Setting loading=false');
         setLoading(false);
       }
     };
