@@ -102,7 +102,19 @@ Sistema ERP contabile per aziende italiane con:
 - Casi speciali: Assegni Multipli, Arrotondamenti, Pagamenti Anticipati
 - Auto-riconciliazione F24
 
-### 3.5 ✅ Classificazione Documenti
+### 3.5 ✅ Bilancio e Contabilità Economica (AGGIORNATO 22/01/2026)
+- **Conto Economico** (per competenza):
+  - Ricavi: Corrispettivi (`totale_imponibile`), Fatture Emesse (TD01, TD24, TD26)
+  - Costi: Fatture Ricevute (imponibile), Note Credito (TD04, TD08 sottratte), Altri Costi Operativi
+  - Margine percentuale calcolato automaticamente
+- **Stato Patrimoniale**: Attivo = Passivo (bilanciamento verificato)
+- **Liquidazione IVA**:
+  - IVA Debito da corrispettivi
+  - IVA Credito da fatture (con deroghe temporali 15gg e 12gg)
+  - Note Credito gestite correttamente
+- **Confronto Annuale**: Variazioni assolute e percentuali anno su anno
+
+### 3.6 ✅ Classificazione Documenti
 - Pagina unificata `/classificazione-email`
 - 3 tab: Classificazione, Documenti, Regole
 - Scansione email automatica
