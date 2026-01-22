@@ -966,12 +966,8 @@ function TabGiustificativi({ dipendente, anno }) {
   const [loading, setLoading] = useState(true);
   const [selectedCategoria, setSelectedCategoria] = useState('tutti');
   
-  useEffect(() => {
+  const loadGiustificativi = useCallback(async () => {
     if (!dipendente?.id) return;
-    loadGiustificativi();
-  }, [dipendente?.id, anno]);
-  
-  const loadGiustificativi = async () => {
     try {
       setLoading(true);
       const [giustRes, ferieRes] = await Promise.all([
@@ -985,7 +981,11 @@ function TabGiustificativi({ dipendente, anno }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [dipendente?.id, anno]);
+  
+  useEffect(() => {
+    loadGiustificativi();
+  }, [loadGiustificativi]);
   
   const categorie = ['tutti', 'ferie', 'permesso', 'assenza', 'congedo', 'malattia', 'formazione', 'lavoro'];
   
