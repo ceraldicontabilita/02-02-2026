@@ -852,6 +852,27 @@ export default function ClassificazioneDocumenti() {
                             >
                               <Download style={{ width: 12, height: 12 }} /> Scarica
                             </button>
+                            
+                            {/* Tasto Correggi Categoria */}
+                            <button
+                              onClick={() => handleOpenCorrezione(doc)}
+                              data-testid={`correggi-${idx}`}
+                              style={{
+                                padding: '6px 12px',
+                                fontSize: 11,
+                                background: '#f59e0b',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: 6,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 4
+                              }}
+                              title="Correggi classificazione"
+                            >
+                              <Edit2 style={{ width: 12, height: 12 }} /> Correggi
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -861,6 +882,143 @@ export default function ClassificazioneDocumenti() {
               </table>
             </div>
           )}
+        </div>
+      )}
+      
+      {/* Modale Correzione Categoria */}
+      {showCorrezioneModal && docToCorrect && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: 12,
+            padding: 24,
+            maxWidth: 500,
+            width: '90%',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.2)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: '#1e3a5f' }}>
+                🧠 Correggi Classificazione
+              </h3>
+              <button
+                onClick={() => setShowCorrezioneModal(false)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}
+              >
+                <X style={{ width: 20, height: 20, color: '#9ca3af' }} />
+              </button>
+            </div>
+            
+            <div style={{ marginBottom: 16, padding: 12, background: '#f8fafc', borderRadius: 8 }}>
+              <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 4 }}>Documento:</div>
+              <div style={{ fontWeight: 500, fontSize: 14 }}>{docToCorrect.filename || docToCorrect.subject || 'N/D'}</div>
+              <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 4 }}>
+                Classificato come: <strong>{docToCorrect.categoria || docToCorrect.tipo || 'N/D'}</strong>
+              </div>
+            </div>
+            
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 6 }}>
+                Categoria Corretta *
+              </label>
+              <select
+                value={nuovaCategoria}
+                onChange={(e) => setNuovaCategoria(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: 8,
+                  fontSize: 14,
+                  background: 'white'
+                }}
+              >
+                <option value="">-- Seleziona categoria --</option>
+                {CATEGORIE_CORREZIONE.map(cat => (
+                  <option key={cat.value} value={cat.value}>{cat.label}</option>
+                ))}
+              </select>
+            </div>
+            
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 6 }}>
+                Keywords aggiuntive (opzionale)
+              </label>
+              <input
+                type="text"
+                value={keywordsNuove}
+                onChange={(e) => setKeywordsNuove(e.target.value)}
+                placeholder="parola1, parola2, parola3..."
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: 8,
+                  fontSize: 14
+                }}
+              />
+              <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 4 }}>
+                Aggiungi parole chiave per migliorare il riconoscimento futuro
+              </div>
+            </div>
+            
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setShowCorrezioneModal(false)}
+                style={{
+                  padding: '10px 20px',
+                  background: '#f3f4f6',
+                  color: '#374151',
+                  border: 'none',
+                  borderRadius: 8,
+                  cursor: 'pointer',
+                  fontSize: 14,
+                  fontWeight: 500
+                }}
+              >
+                Annulla
+              </button>
+              <button
+                onClick={handleSalvaCorrezione}
+                disabled={!nuovaCategoria || salvandoCorrezione}
+                style={{
+                  padding: '10px 20px',
+                  background: nuovaCategoria ? '#1e3a5f' : '#e5e7eb',
+                  color: nuovaCategoria ? 'white' : '#9ca3af',
+                  border: 'none',
+                  borderRadius: 8,
+                  cursor: nuovaCategoria && !salvandoCorrezione ? 'pointer' : 'not-allowed',
+                  fontSize: 14,
+                  fontWeight: 500,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8
+                }}
+              >
+                {salvandoCorrezione ? (
+                  <>
+                    <RefreshCw style={{ width: 14, height: 14, animation: 'spin 1s linear infinite' }} />
+                    Salvataggio...
+                  </>
+                ) : (
+                  <>
+                    <Brain style={{ width: 14, height: 14 }} />
+                    Salva e Apprendi
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
