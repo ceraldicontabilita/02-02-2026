@@ -5,7 +5,8 @@ import { useAnnoGlobale } from '../contexts/AnnoContext';
 import { 
   Brain, Warehouse, TrendingUp, RefreshCw, Package, 
   AlertTriangle, PlayCircle, FileText, ChevronDown, ChevronUp,
-  Calculator, Percent, Euro, Box, Factory
+  Calculator, Percent, Euro, Box, Factory, Receipt, 
+  CheckCircle2, XCircle, Clock, Upload, Link2
 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 
@@ -34,6 +35,13 @@ export default function LearningMachineDashboard() {
   const [porzioniProduzione, setPorzioniProduzione] = useState(10);
   const [producendo, setProducendo] = useState(false);
   const [risultatoProduzione, setRisultatoProduzione] = useState(null);
+  
+  // F24 Riconciliazione
+  const [f24StatoRiconciliazione, setF24StatoRiconciliazione] = useState(null);
+  const [f24List, setF24List] = useState([]);
+  const [quietanze, setQuietanze] = useState([]);
+  const [riconciliando, setRiconciliando] = useState(false);
+  const [risultatoRiconciliazione, setRisultatoRiconciliazione] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -42,7 +50,7 @@ export default function LearningMachineDashboard() {
   async function loadData() {
     setLoading(true);
     try {
-      const [cdcRes, giacenzeRes, movRes, catRes, lottiRes, ricetteRes] = await Promise.all([
+      const [cdcRes, giacenzeRes, movRes, catRes, lottiRes, ricetteRes, f24StatoRes, f24ListRes, quietanzeRes] = await Promise.all([
         api.get(`/api/learning-machine/riepilogo-centri-costo/${anno}`).catch(() => ({ data: { centri_costo: [], totali: {} } })),
         api.get('/api/magazzino/giacenze').catch(() => ({ data: { per_categoria: {}, totale_articoli: 0, valore_magazzino: 0 } })),
         api.get('/api/magazzino/movimenti?limit=20').catch(() => ({ data: [] })),
