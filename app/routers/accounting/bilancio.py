@@ -381,17 +381,19 @@ async def export_bilancio_pdf(anno: int = Query(None)):
     ce = conto_economico
     # NOTA: I ricavi derivano SOLO dai corrispettivi (vendite al pubblico)
     # I costi derivano dalle fatture ricevute - note credito
+    # Helper function returns 'totale' instead of 'totale_ricavi'/'totale_costi' and 'utile_lordo' instead of 'utile_perdita'
+    utile_perdita = ce['risultato']['utile_lordo']
     ce_data = [
         ['RICAVI', ''],
         ['Corrispettivi (Vendite al Pubblico)', f"€ {ce['ricavi']['corrispettivi']:,.2f}"],
-        ['TOTALE RICAVI', f"€ {ce['ricavi']['totale_ricavi']:,.2f}"],
+        ['TOTALE RICAVI', f"€ {ce['ricavi']['totale']:,.2f}"],
         ['', ''],
         ['COSTI', ''],
         ['Acquisti (Fatture Ricevute)', f"€ {ce['costi']['acquisti']:,.2f}"],
         ['Note di Credito Ricevute', f"-€ {ce['costi']['note_credito']:,.2f}"],
-        ['TOTALE COSTI (Netto)', f"€ {ce['costi']['totale_costi']:,.2f}"],
+        ['TOTALE COSTI (Netto)', f"€ {ce['costi']['totale']:,.2f}"],
         ['', ''],
-        ['RISULTATO', f"€ {ce['risultato']['utile_perdita']:,.2f}"]
+        ['RISULTATO', f"€ {utile_perdita:,.2f}"]
     ]
     
     ce_table = Table(ce_data, colWidths=[10*cm, 6*cm])
@@ -402,7 +404,7 @@ async def export_bilancio_pdf(anno: int = Query(None)):
         ('BACKGROUND', (0, 2), (-1, 2), colors.HexColor('#22c55e')),  # TOTALE RICAVI
         ('BACKGROUND', (0, 4), (-1, 4), colors.HexColor('#fee2e2')),  # COSTI header
         ('BACKGROUND', (0, 7), (-1, 7), colors.HexColor('#ef4444')),  # TOTALE COSTI
-        ('BACKGROUND', (0, 9), (-1, 9), colors.HexColor('#1e293b') if ce['risultato']['utile_perdita'] >= 0 else colors.HexColor('#dc2626')),  # RISULTATO
+        ('BACKGROUND', (0, 9), (-1, 9), colors.HexColor('#1e293b') if utile_perdita >= 0 else colors.HexColor('#dc2626')),  # RISULTATO
         ('TEXTCOLOR', (0, 2), (-1, 2), colors.white),
         ('TEXTCOLOR', (0, 7), (-1, 7), colors.white),
         ('TEXTCOLOR', (0, 9), (-1, 9), colors.white),
