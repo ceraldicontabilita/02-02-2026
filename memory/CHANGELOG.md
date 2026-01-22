@@ -3,33 +3,39 @@
 
 ---
 
-## 22 Gennaio 2026 - Sessione 11 (Logica Contabile DEFINITIVA)
+## 22 Gennaio 2026 - Sessione 11 (Conto Economico COMPLETO)
 
-### ✅ Documentazione Regole Contabili
-- Creato `/app/app/REGOLE_CONTABILI.md` con documentazione completa
-- Aggiunta intestazione dettagliata in `bilancio.py` e `liquidazione_iva.py`
+### ✅ Conto Economico Dettagliato (Art. 2425 c.c.)
+Implementato endpoint `/api/bilancio/conto-economico-dettagliato` con:
 
-### ✅ REGOLA CRITICA IMPLEMENTATA ⚠️
-**Le fatture emesse a clienti NON sono ricavi aggiuntivi!**
-- Quando un cliente chiede fattura dopo lo scontrino, l'importo è GIÀ nei corrispettivi
-- NON sommare le fatture emesse ai ricavi (doppio conteggio!)
-- NON calcolare IVA sulle fatture emesse (già versata con corrispettivi!)
+**Classificazione automatica costi per natura:**
+- B6 - Materie prime e merci (riconosciute automaticamente)
+- B7 - Servizi (energia, acqua, telefonia, consulenze, manutenzioni, assicurazioni)
+- B7 - Auto aziendali (carburante, manutenzione)
+- B8 - Godimento beni terzi (affitti, noleggio auto, leasing)
+- B9 - Costo del personale (dai cedolini: stipendi, INPS, TFR)
+- C17 - Oneri finanziari (commissioni bancarie, interessi mutui)
 
-### ✅ Struttura Database Documentata
-- `corrispettivi`: UNICA fonte di RICAVI (vendite al pubblico)
-- `invoices`: TUTTE fatture RICEVUTE (COSTI)
-- Sistema NON multi-utente
-- P.IVA azienda: 04523831214
+**Regole fiscali implementate:**
+| Voce | Deducibilità | IVA |
+|------|--------------|-----|
+| Telefonia | 80% | 50% |
+| Noleggio auto | 20% su max €3.615/anno | 40% |
+| Carburante | 20% | 40% |
+| Interessi mutui | Limite ROL 30% | - |
 
-### ✅ Calcoli Verificati 2025
-| Voce | Valore |
-|------|--------|
-| Ricavi (Corrispettivi) | €857,515.42 |
-| Costi (Fatture - NC) | €496,180.07 |
-| **UTILE** | **€361,335.35** (42.1%) |
-| IVA Vendite | €85,715.39 |
-| IVA Acquisti | €82,202.56 |
-| IVA Netta | €3,512.83 |
+**Calcolo automatico:**
+- Costi indeducibili (telefonia 20%, noleggio 80%, carburante 80%)
+- Reddito fiscale stimato
+
+### ✅ Servizio Classificazione Costi
+Creato `/app/app/services/classificazione_costi.py`:
+- Pattern matching per riconoscimento fornitori
+- Funzione `classifica_fornitore()` per assegnazione automatica categoria
+- Funzione `calcola_deducibilita()` per regole fiscali
+
+### ✅ Documentazione Completa
+Aggiornato `/app/app/REGOLE_CONTABILI.md` con tutte le voci del piano dei conti
 
 ---
 
