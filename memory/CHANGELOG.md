@@ -12,6 +12,28 @@
 - Soglia configurabile (default 80%, warning a 90%, critical a 100%)
 - Visualizza: dipendente, tipo giustificativo, ore usate/limite, percentuale
 
+### ✅ Selezione Rapida Presenze
+- Toolbar con pulsanti colorati per ogni stato (P, A, F, PE, M, R, SW, T)
+- Click su stato → poi click multiplo su celle per applicare
+- Cursore cambia a crosshair in modalità selezione
+- Toast di conferma attivazione/disattivazione
+
+### ✅ Generazione PDF per Consulente Lavoro
+- Endpoint `POST /api/attendance/genera-pdf-consulente`
+- PDF landscape A4 con:
+  - Tabella presenze mensili per dipendente
+  - Totali per tipo (P, F, M, PE)
+  - Sezione protocolli certificati malattia
+  - Acconti mensili (se presenti)
+  - Legenda
+
+### ✅ Sistema Certificati Medici
+- Endpoint `POST /api/inps/scansiona-certificati-medici` - Scansiona email INPS
+- Estrazione automatica: protocollo, codice fiscale, date malattia
+- Associazione automatica dipendente tramite codice fiscale
+- Salvataggio PDF allegato
+- Aggiornamento automatico note presenze con protocollo
+
 ### ✅ Documentazione
 - Ricostruito PRD.md da zero (~200 righe)
 - Creato CHANGELOG.md separato
