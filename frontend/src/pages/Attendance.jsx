@@ -65,6 +65,17 @@ export default function Attendance() {
   
   // Richieste pending
   const [richiestePending, setRichiestePending] = useState([]);
+  
+  // === SELEZIONE MULTIPLA ===
+  const [selectedStato, setSelectedStato] = useState(null); // Stato selezionato per inserimento rapido
+  const [multiSelectMode, setMultiSelectMode] = useState(false);
+  const [selectedCells, setSelectedCells] = useState(new Set()); // Celle selezionate
+  
+  // Note presenze (protocolli malattia, etc.)
+  const [notePresenze, setNotePresenze] = useState({}); // { "employeeId_YYYY-MM-DD": { protocollo: "xxx", note: "..." } }
+  
+  // Generazione PDF
+  const [generatingPdf, setGeneratingPdf] = useState(false);
 
   // Calcola giorni del mese
   const getDaysInMonth = (year, month) => {
