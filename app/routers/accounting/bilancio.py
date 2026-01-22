@@ -464,33 +464,51 @@ async def get_conto_economico_dettagliato(
     totale_nc = note_credito[0]["totale"] if note_credito else 0
     
     # === B9) COSTI DEL PERSONALE ===
-    # Recupera dai cedolini
+    # Recupera dai cedolini (anno può essere int o stringa)
     cedolini = await db["cedolini"].aggregate([
-        {"$match": {"anno": anno}},
+        {"$match": {
+            "$or": [{"anno": anno}, {"anno": str(anno)}]
+        }},
         {"$group": {
             "_id": None,
-            "totale_lordo": {"$sum": "$lordo"},
-            "totale_netto": {"$sum": "$netto"},
-            "totale_inps": {"$sum": "$inps_dipendente"},
-            "totale_irpef": {"$sum": "$irpef"},
+            "totale_lordo": {"$sum": {"$ifNull": ["$lordo", 0]}},
+            "totale_netto": {"$sum": {"$ifNull": ["$netto", 0]}},
+            "totale_inps_dip": {"$sum": {"$ifNull": ["$inps_dipendente", 0]}},
+            "totale_inps_az": {"$sum": {"$ifNull": ["$inps_azienda", 0]}},
+            "totale_inail": {"$sum": {"$ifNull": ["$inail", 0]}},
+            "totale_tfr": {"$sum": {"$ifNull": ["$tfr", 0]}},
+            "totale_costo_azienda": {"$sum": {"$ifNull": ["$costo_azienda", 0]}},
+            "totale_irpef": {"$sum": {"$ifNull": ["$irpef", 0]}},
             "count": {"$sum": 1}
         }}
     ]).to_list(1)
     
-    if cedolini:
+    if cedolini and cedolini[0]["count"] > 0:
         ced = cedolini[0]
-        costo_personale = {
-            "B9a_salari_stipendi": round(ced["totale_lordo"], 2),
-            "B9b_oneri_sociali": round(ced["totale_inps"] * 2.5, 2),  # Stima INPS carico azienda
-            "B9c_tfr": round(ced["totale_lordo"] * 0.0691, 2),  # 6.91% del lordo
-            "totale": 0,
-            "num_cedolini": ced["count"]
-        }
-        costo_personale["totale"] = round(
-            costo_personale["B9a_salari_stipendi"] + 
-            costo_personale["B9b_oneri_sociali"] + 
-            costo_personale["B9c_tfr"], 2
-        )
+        lordo = ced["totale_lordo"]
+        
+        # Se abbiamo costo_azienda diretto, usalo
+        if ced["totale_costo_azienda"] > 0:
+            costo_personale = {
+                "B9a_salari_stipendi": round(lordo, 2),
+                "B9b_oneri_sociali": round(ced["totale_inps_az"] + ced["totale_inail"], 2),
+                "B9c_tfr": round(ced["totale_tfr"], 2),
+                "totale": round(ced["totale_costo_azienda"], 2),
+                "num_cedolini": ced["count"]
+            }
+        else:
+            # Stima oneri se non disponibili
+            # INPS azienda circa 30% del lordo, TFR 6.91% del lordo
+            inps_azienda = ced["totale_inps_az"] if ced["totale_inps_az"] > 0 else (lordo * 0.30)
+            tfr = ced["totale_tfr"] if ced["totale_tfr"] > 0 else (lordo * 0.0691)
+            costo_personale = {
+                "B9a_salari_stipendi": round(lordo, 2),
+                "B9b_oneri_sociali": round(inps_azienda, 2),
+                "B9c_tfr": round(tfr, 2),
+                "totale": round(lordo + inps_azienda + tfr, 2),
+                "num_cedolini": ced["count"],
+                "note": "Oneri stimati (dati parziali)" if ced["totale_inps_az"] == 0 else None
+            }
     else:
         costo_personale = {"B9a_salari_stipendi": 0, "B9b_oneri_sociali": 0, "B9c_tfr": 0, "totale": 0, "num_cedolini": 0}
     
