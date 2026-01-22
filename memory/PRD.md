@@ -203,16 +203,15 @@ GET  /api/f24-riconciliazione/quietanze
 ## 7. BACKLOG E PRIORITÀ
 
 ### 7.1 🔴 P0 - Alta Priorità
-1. **Frontend Riconciliazione F24** - Interfaccia per gestire riconciliazione F24 (backend esistente)
+Nessun task P0 in sospeso.
 
 ### 7.2 🟡 P1 - Media Priorità
-2. Notifiche limiti giustificativi (90% utilizzo)
-3. Report PDF annuale ferie/permessi
-4. Riconciliazione email in background (asincrona)
+1. Report PDF annuale ferie/permessi per dipendente
+2. Riconciliazione email in background (asincrona)
 
 ### 7.3 🟠 P2 - Bassa Priorità
-5. Refactoring router backend (modularizzazione)
-6. Performance endpoint `/api/suppliers` (~5s → target <1s)
+3. Refactoring router backend (modularizzazione)
+4. Test automatici E2E con Playwright
 
 ---
 
