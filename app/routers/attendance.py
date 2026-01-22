@@ -1108,7 +1108,9 @@ async def genera_pdf_consulente(data: Dict[str, Any]):
     
     presenze = {}
     for p in presenze_raw:
-        key = f"{p[\"employee_id\"]}_{p[\"data\"]}"
+        emp_id = p["employee_id"]
+        data_val = p["data"]
+        key = f"{emp_id}_{data_val}"
         presenze[key] = p.get("stato")
     
     # Recupera note (protocolli malattia)
