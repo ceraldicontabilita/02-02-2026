@@ -632,79 +632,169 @@ export default function ClassificazioneDocumenti() {
 
       {/* Tab: Documenti */}
       {activeTab === 'documenti' && (
-        <div className="bg-white border rounded-xl">
-          <div className="p-4 border-b flex items-center justify-between">
-            <h3 className="font-semibold">Documenti Classificati</h3>
-            <span className="text-sm text-gray-500">{documents.length} documenti</span>
+        <div style={{ background: 'white', borderRadius: 12, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+          <div style={{ 
+            padding: '16px 20px', 
+            borderBottom: '1px solid #e5e7eb',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            background: '#f8fafc'
+          }}>
+            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#1e3a5f' }}>
+              📄 Documenti Classificati
+            </h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span style={{ fontSize: 13, color: '#6b7280' }}>{documents.length} documenti</span>
+              <button
+                onClick={loadDocuments}
+                style={{
+                  padding: '6px 12px',
+                  fontSize: 12,
+                  background: '#1e3a5f',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 6,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4
+                }}
+              >
+                <RefreshCw className="w-3 h-3" /> Aggiorna
+              </button>
+            </div>
           </div>
           
           {loading ? (
-            <div className="p-8 text-center text-gray-500">Caricamento...</div>
+            <div style={{ padding: 40, textAlign: 'center', color: '#6b7280' }}>Caricamento...</div>
           ) : documents.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">
-              Nessun documento classificato. Esegui una scansione per iniziare.
+            <div style={{ padding: 60, textAlign: 'center' }}>
+              <FolderOpen style={{ width: 48, height: 48, margin: '0 auto 16px', color: '#9ca3af' }} />
+              <p style={{ color: '#6b7280', margin: 0 }}>
+                Nessun documento classificato. Esegui una scansione per iniziare.
+              </p>
             </div>
           ) : (
-            <div className="divide-y max-h-[600px] overflow-y-auto">
-              {documents.map((doc, idx) => {
-                const config = getCategoryConfig(doc.tipo);
-                const IconComponent = config.icon;
-                return (
-                  <div key={doc._id || idx} className="p-4 hover:bg-gray-50 flex items-center gap-4">
-                    <div 
-                      className="w-10 h-10 rounded-lg flex items-center justify-center"
-                      style={{ backgroundColor: config.bg }}
-                    >
-                      <IconComponent className="w-5 h-5" style={{ color: config.text }} />
-                    </div>
-                    
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium truncate">{doc.filename}</div>
-                      <div className="text-sm text-gray-500 truncate">{doc.subject}</div>
-                    </div>
-                    
-                    <div className="text-right">
-                      <div 
-                        className="text-xs px-2 py-1 rounded-full inline-block"
-                        style={{ backgroundColor: config.bg, color: config.text }}
-                      >
-                        {config.label}
-                      </div>
-                      <div className="text-xs text-gray-400 mt-1">
-                        {doc.processed ? '✓ Processato' : '○ Da processare'}
-                      </div>
-                    </div>
-                    
-                    <div className="text-xs text-gray-400 flex items-center gap-1">
-                      <ArrowRight className="w-3 h-3" />
-                      {config.section}
-                    </div>
-                    
-                    {/* Tasto Vedi PDF */}
-                    {doc.file_path && (
-                      <button
-                        onClick={() => window.open(`${import.meta.env.VITE_BACKEND_URL || ''}/api/documenti-smart/view/${doc._id || doc.id}`, '_blank')}
-                        data-testid={`view-pdf-${idx}`}
-                        style={{
-                          padding: '6px 12px',
-                          fontSize: 12,
-                          background: '#3b82f6',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: 6,
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 4,
-                          marginLeft: 8
-                        }}
-                      >
-                        📄 Vedi PDF
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
+            <div style={{ maxHeight: 600, overflowY: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                <thead>
+                  <tr style={{ background: '#f9fafb', borderBottom: '2px solid #e5e7eb' }}>
+                    <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 600, color: '#374151' }}>Documento</th>
+                    <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 600, color: '#374151' }}>Categoria</th>
+                    <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 600, color: '#374151' }}>Destinazione</th>
+                    <th style={{ textAlign: 'center', padding: '12px 16px', fontWeight: 600, color: '#374151' }}>Stato</th>
+                    <th style={{ textAlign: 'center', padding: '12px 16px', fontWeight: 600, color: '#374151', width: 180 }}>Azioni</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {documents.map((doc, idx) => {
+                    const config = getCategoryConfig(doc.tipo);
+                    const IconComponent = config.icon;
+                    return (
+                      <tr key={doc._id || idx} style={{ borderBottom: '1px solid #e5e7eb' }}>
+                        <td style={{ padding: '12px 16px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                            <div 
+                              style={{ 
+                                width: 40, 
+                                height: 40, 
+                                borderRadius: 8, 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                justifyContent: 'center',
+                                background: config.bg 
+                              }}
+                            >
+                              <IconComponent style={{ width: 20, height: 20, color: config.text }} />
+                            </div>
+                            <div>
+                              <div style={{ fontWeight: 500, maxWidth: 250, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {doc.filename}
+                              </div>
+                              <div style={{ fontSize: 11, color: '#9ca3af', maxWidth: 250, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {doc.subject || doc.email_from || '-'}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td style={{ padding: '12px 16px' }}>
+                          <span 
+                            style={{ 
+                              padding: '4px 10px', 
+                              borderRadius: 20, 
+                              fontSize: 11, 
+                              fontWeight: 500,
+                              background: config.bg, 
+                              color: config.text 
+                            }}
+                          >
+                            {config.label}
+                          </span>
+                        </td>
+                        <td style={{ padding: '12px 16px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#6b7280' }}>
+                            <ArrowRight style={{ width: 12, height: 12 }} />
+                            {config.section}
+                          </div>
+                        </td>
+                        <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                          {doc.processed ? (
+                            <span style={{ color: '#059669', fontSize: 12 }}>✓ Processato</span>
+                          ) : (
+                            <span style={{ color: '#d97706', fontSize: 12 }}>○ In attesa</span>
+                          )}
+                        </td>
+                        <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                          <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+                            {/* Tasto Vedi PDF */}
+                            <button
+                              onClick={() => window.open(`${import.meta.env.VITE_BACKEND_URL || ''}/api/documenti-smart/view/${doc._id || doc.id}`, '_blank')}
+                              data-testid={`view-pdf-${idx}`}
+                              style={{
+                                padding: '6px 12px',
+                                fontSize: 11,
+                                background: '#3b82f6',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: 6,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 4
+                              }}
+                              title="Visualizza documento"
+                            >
+                              <Eye style={{ width: 12, height: 12 }} /> Vedi
+                            </button>
+                            
+                            {/* Tasto Scarica */}
+                            <button
+                              onClick={() => window.open(`${import.meta.env.VITE_BACKEND_URL || ''}/api/documenti-smart/download/${doc._id || doc.id}`, '_blank')}
+                              data-testid={`download-pdf-${idx}`}
+                              style={{
+                                padding: '6px 12px',
+                                fontSize: 11,
+                                background: '#059669',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: 6,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 4
+                              }}
+                              title="Scarica documento"
+                            >
+                              <Download style={{ width: 12, height: 12 }} /> Scarica
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           )}
         </div>
