@@ -761,3 +761,228 @@ async def set_riporto_ferie(
         "ferie_riportate": ferie,
         "rol_riportati": rol
     }
+
+
+# =============================================================================
+# NOTIFICHE LIMITI GIUSTIFICATIVI
+# =============================================================================
+
+@router.get("/alert-limiti")
+async def get_alert_limiti_giustificativi(
+    soglia_percentuale: float = Query(90, description="Soglia % per generare alert (default 90%)"),
+    anno: int = Query(None)
+) -> Dict[str, Any]:
+    """
+    Ritorna gli alert per dipendenti vicini al limite dei giustificativi.
+    
+    Verifica:
+    - Dipendenti che hanno usato >= soglia_percentuale del limite annuale
+    - Dipendenti che hanno usato >= soglia_percentuale del limite mensile
+    
+    Returns:
+    {
+        "alerts": [
+            {
+                "employee_id": "...",
+                "employee_nome": "Mario Rossi",
+                "codice": "FER",
+                "descrizione": "Ferie",
+                "tipo_limite": "annuale",
+                "ore_usate": 187,
+                "limite": 208,
+                "percentuale": 89.9,
+                "ore_residue": 21,
+                "livello": "warning" | "critical"
+            }
+        ],
+        "totale_alerts": 5,
+        "dipendenti_coinvolti": 3
+    }
+    """
+    db = Database.get_db()
+    
+    if not anno:
+        anno = datetime.now().year
+    
+    mese_corrente = datetime.now().month
+    soglia = soglia_percentuale / 100.0
+    
+    # Recupera tutti i dipendenti in carico
+    dipendenti = await db["employees"].find(
+        {"$or": [{"in_carico": True}, {"in_carico": {"$exists": False}}]},
+        {"_id": 0, "id": 1, "nome": 1, "cognome": 1, "nome_completo": 1}
+    ).to_list(500)
+    
+    # Recupera giustificativi con limiti
+    giustificativi = await db["giustificativi"].find(
+        {"attivo": True, "$or": [
+            {"limite_annuale_ore": {"$ne": None, "$gt": 0}},
+            {"limite_mensile_ore": {"$ne": None, "$gt": 0}}
+        ]},
+        {"_id": 0}
+    ).to_list(100)
+    
+    if not giustificativi:
+        return {"alerts": [], "totale_alerts": 0, "dipendenti_coinvolti": 0}
+    
+    # Date per query
+    data_inizio_anno = f"{anno}-01-01"
+    data_fine_anno = f"{anno+1}-01-01"
+    data_inizio_mese = f"{anno}-{mese_corrente:02d}-01"
+    data_fine_mese = f"{anno}-{mese_corrente+1:02d}-01" if mese_corrente < 12 else f"{anno+1}-01-01"
+    
+    alerts = []
+    dipendenti_set = set()
+    
+    for dip in dipendenti:
+        emp_id = dip.get("id")
+        if not emp_id:
+            continue
+        
+        nome = dip.get("nome_completo") or f"{dip.get('nome', '')} {dip.get('cognome', '')}".strip()
+        
+        # Recupera limiti custom per questo dipendente
+        limiti_custom = await db["giustificativi_dipendente"].find_one(
+            {"employee_id": emp_id, "anno": anno},
+            {"_id": 0, "limiti": 1}
+        )
+        limiti_per_codice = limiti_custom.get("limiti", {}) if limiti_custom else {}
+        
+        # Aggregazione ore anno per tutti i codici
+        presenze_anno = await db["presenze_mensili"].aggregate([
+            {"$match": {
+                "employee_id": emp_id,
+                "data": {"$gte": data_inizio_anno, "$lt": data_fine_anno}
+            }},
+            {"$group": {"_id": "$stato", "ore": {"$sum": {"$ifNull": ["$ore", 8]}}}}
+        ]).to_list(100)
+        
+        # Aggregazione ore mese corrente
+        presenze_mese = await db["presenze_mensili"].aggregate([
+            {"$match": {
+                "employee_id": emp_id,
+                "data": {"$gte": data_inizio_mese, "$lt": data_fine_mese}
+            }},
+            {"$group": {"_id": "$stato", "ore": {"$sum": {"$ifNull": ["$ore", 8]}}}}
+        ]).to_list(100)
+        
+        ore_anno = {p["_id"]: p["ore"] for p in presenze_anno if p["_id"]}
+        ore_mese = {p["_id"]: p["ore"] for p in presenze_mese if p["_id"]}
+        
+        for giust in giustificativi:
+            codice = giust["codice"]
+            
+            # Determina limiti (custom o default)
+            limite_annuale = limiti_per_codice.get(codice, {}).get("limite_annuale_ore") or giust.get("limite_annuale_ore")
+            limite_mensile = limiti_per_codice.get(codice, {}).get("limite_mensile_ore") or giust.get("limite_mensile_ore")
+            
+            ore_usate_anno = ore_anno.get(codice, 0) + ore_anno.get(codice.lower(), 0)
+            ore_usate_mese = ore_mese.get(codice, 0) + ore_mese.get(codice.lower(), 0)
+            
+            # Verifica limite annuale
+            if limite_annuale and limite_annuale > 0 and ore_usate_anno > 0:
+                percentuale = (ore_usate_anno / limite_annuale) * 100
+                if percentuale >= soglia_percentuale:
+                    livello = "critical" if percentuale >= 100 else "warning"
+                    alerts.append({
+                        "employee_id": emp_id,
+                        "employee_nome": nome,
+                        "codice": codice,
+                        "descrizione": giust.get("descrizione"),
+                        "categoria": giust.get("categoria"),
+                        "tipo_limite": "annuale",
+                        "ore_usate": round(ore_usate_anno, 1),
+                        "limite": limite_annuale,
+                        "percentuale": round(percentuale, 1),
+                        "ore_residue": round(max(0, limite_annuale - ore_usate_anno), 1),
+                        "livello": livello,
+                        "anno": anno
+                    })
+                    dipendenti_set.add(emp_id)
+            
+            # Verifica limite mensile
+            if limite_mensile and limite_mensile > 0 and ore_usate_mese > 0:
+                percentuale = (ore_usate_mese / limite_mensile) * 100
+                if percentuale >= soglia_percentuale:
+                    livello = "critical" if percentuale >= 100 else "warning"
+                    alerts.append({
+                        "employee_id": emp_id,
+                        "employee_nome": nome,
+                        "codice": codice,
+                        "descrizione": giust.get("descrizione"),
+                        "categoria": giust.get("categoria"),
+                        "tipo_limite": "mensile",
+                        "ore_usate": round(ore_usate_mese, 1),
+                        "limite": limite_mensile,
+                        "percentuale": round(percentuale, 1),
+                        "ore_residue": round(max(0, limite_mensile - ore_usate_mese), 1),
+                        "livello": livello,
+                        "anno": anno,
+                        "mese": mese_corrente
+                    })
+                    dipendenti_set.add(emp_id)
+    
+    # Ordina: critical prima, poi per percentuale decrescente
+    alerts.sort(key=lambda x: (0 if x["livello"] == "critical" else 1, -x["percentuale"]))
+    
+    return {
+        "success": True,
+        "alerts": alerts,
+        "totale_alerts": len(alerts),
+        "dipendenti_coinvolti": len(dipendenti_set),
+        "soglia_percentuale": soglia_percentuale,
+        "anno": anno,
+        "mese_corrente": mese_corrente
+    }
+
+
+@router.get("/riepilogo-limiti")
+async def get_riepilogo_limiti(anno: int = Query(None)) -> Dict[str, Any]:
+    """
+    Ritorna un riepilogo compatto dei limiti per tutti i dipendenti.
+    Utile per la dashboard.
+    """
+    db = Database.get_db()
+    
+    if not anno:
+        anno = datetime.now().year
+    
+    # Conta dipendenti attivi
+    totale_dipendenti = await db["employees"].count_documents(
+        {"$or": [{"in_carico": True}, {"in_carico": {"$exists": False}}]}
+    )
+    
+    # Recupera alert (soglia 80% per avere anche quelli vicini)
+    alert_data = await get_alert_limiti_giustificativi(soglia_percentuale=80, anno=anno)
+    
+    # Separa per livello
+    critical = [a for a in alert_data["alerts"] if a["livello"] == "critical"]
+    warning = [a for a in alert_data["alerts"] if a["livello"] == "warning"]
+    
+    # Raggruppa per tipo giustificativo
+    per_giustificativo = {}
+    for a in alert_data["alerts"]:
+        codice = a["codice"]
+        if codice not in per_giustificativo:
+            per_giustificativo[codice] = {
+                "codice": codice,
+                "descrizione": a["descrizione"],
+                "critical": 0,
+                "warning": 0
+            }
+        if a["livello"] == "critical":
+            per_giustificativo[codice]["critical"] += 1
+        else:
+            per_giustificativo[codice]["warning"] += 1
+    
+    return {
+        "success": True,
+        "anno": anno,
+        "totale_dipendenti": totale_dipendenti,
+        "dipendenti_con_alert": alert_data["dipendenti_coinvolti"],
+        "totale_critical": len(critical),
+        "totale_warning": len(warning),
+        "per_giustificativo": list(per_giustificativo.values()),
+        "top_critical": critical[:5],  # Top 5 più critici
+        "top_warning": warning[:5]     # Top 5 warning
+    }
