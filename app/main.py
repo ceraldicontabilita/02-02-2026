@@ -132,7 +132,7 @@ from app.routers import ciclo_passivo_integrato
 
 # --- Employees Module ---
 from app.routers.employees import (
-    dipendenti, employees_payroll, employee_contracts, buste_paga, shifts, staff
+    dipendenti, employees_payroll, employee_contracts, buste_paga, shifts, staff, giustificativi
 )
 
 # --- Noleggio Module ---
