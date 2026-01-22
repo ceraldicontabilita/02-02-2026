@@ -677,64 +677,102 @@ async def _get_stato_patrimoniale_data(anno: int) -> Dict[str, Any]:
 
 
 async def _get_conto_economico_data(anno: int) -> Dict[str, Any]:
-    """Helper interno per ottenere conto economico."""
+    """Helper interno per ottenere conto economico (logica corretta per competenza)."""
     db = Database.get_db()
     
     data_inizio = f"{anno}-01-01"
     data_fine = f"{anno}-12-31"
     
-    # Corrispettivi
-    corrispettivi = await db[COLLECTION_PRIMA_NOTA_CASSA].aggregate([
+    # 1. Corrispettivi (vendite al pubblico) - dalla collezione corrispettivi
+    corrispettivi_result = await db["corrispettivi"].aggregate([
         {"$match": {
-            "data": {"$gte": data_inizio, "$lte": data_fine},
-            "tipo": "entrata",
+            "data": {"$gte": data_inizio, "$lte": data_fine}
+        }},
+        {"$group": {
+            "_id": None,
+            "totale_imponibile": {"$sum": {"$ifNull": ["$totale_imponibile", 0]}}
+        }}
+    ]).to_list(1)
+    totale_corrispettivi = corrispettivi_result[0]["totale_imponibile"] if corrispettivi_result else 0
+    
+    # 2. Fatture Emesse (altri ricavi)
+    fatture_emesse = await db[Collections.INVOICES].aggregate([
+        {"$match": {
+            "tipo_documento": {"$in": ["TD01", "TD24", "TD26"]},
+            "invoice_date": {"$gte": data_inizio, "$lte": data_fine}
+        }},
+        {"$group": {
+            "_id": None,
+            "totale": {"$sum": {"$ifNull": ["$imponibile", {"$subtract": ["$total_amount", {"$ifNull": ["$iva", 0]}]}]}}
+        }}
+    ]).to_list(1)
+    totale_altri_ricavi = fatture_emesse[0]["totale"] if fatture_emesse else 0
+    
+    # 3. Fatture Ricevute (acquisti) - escluse note credito e fatture emesse
+    fatture_ricevute = await db[Collections.INVOICES].aggregate([
+        {"$match": {
+            "tipo_documento": {"$nin": ["TD01", "TD24", "TD26", "TD04", "TD08"]},
             "$or": [
-                {"categoria": {"$regex": "corrisp", "$options": "i"}},
-                {"source": "corrispettivo"}
+                {"invoice_date": {"$gte": data_inizio, "$lte": data_fine}},
+                {"data_ricezione": {"$gte": data_inizio, "$lte": data_fine}}
             ]
         }},
-        {"$group": {"_id": None, "totale": {"$sum": "$importo"}}}
+        {"$group": {
+            "_id": None,
+            "totale": {"$sum": {"$ifNull": ["$imponibile", {"$subtract": ["$total_amount", {"$ifNull": ["$iva", 0]}]}]}}
+        }}
     ]).to_list(1)
-    totale_corrispettivi = corrispettivi[0]["totale"] if corrispettivi else 0
+    totale_acquisti = fatture_ricevute[0]["totale"] if fatture_ricevute else 0
     
-    # Altri ricavi
-    altri_ricavi = await db[COLLECTION_PRIMA_NOTA_CASSA].aggregate([
+    # 4. Note Credito (riducono i costi)
+    note_credito = await db[Collections.INVOICES].aggregate([
         {"$match": {
-            "data": {"$gte": data_inizio, "$lte": data_fine},
-            "tipo": "entrata",
-            "categoria": {"$not": {"$regex": "corrisp", "$options": "i"}},
-            "source": {"$ne": "corrispettivo"}
-        }},
-        {"$group": {"_id": None, "totale": {"$sum": "$importo"}}}
-    ]).to_list(1)
-    totale_altri_ricavi = altri_ricavi[0]["totale"] if altri_ricavi else 0
-    
-    # Acquisti (fatture)
-    acquisti = await db[Collections.INVOICES].aggregate([
-        {"$match": {
+            "tipo_documento": {"$in": ["TD04", "TD08"]},
             "$or": [
-                {"data_ricezione": {"$gte": data_inizio, "$lte": data_fine}},
-                {"invoice_date": {"$gte": data_inizio, "$lte": data_fine}}
+                {"invoice_date": {"$gte": data_inizio, "$lte": data_fine}},
+                {"data_ricezione": {"$gte": data_inizio, "$lte": data_fine}}
             ]
         }},
-        {"$group": {"_id": None, "totale": {"$sum": "$total_amount"}}}
+        {"$group": {
+            "_id": None,
+            "totale": {"$sum": {"$ifNull": ["$imponibile", {"$subtract": ["$total_amount", {"$ifNull": ["$iva", 0]}]}]}}
+        }}
     ]).to_list(1)
-    totale_acquisti = acquisti[0]["totale"] if acquisti else 0
+    totale_note_credito = note_credito[0]["totale"] if note_credito else 0
     
-    # Costi operativi (uscite banca/cassa non fatture)
-    costi_op = await db[COLLECTION_PRIMA_NOTA_BANCA].aggregate([
+    # 5. Altri costi operativi (dalla prima nota, non legati a fatture)
+    altri_costi_cassa = await db[COLLECTION_PRIMA_NOTA_CASSA].aggregate([
         {"$match": {
             "data": {"$gte": data_inizio, "$lte": data_fine},
             "tipo": "uscita",
-            "categoria": {"$nin": ["Fatture", "Fornitori", "Stipendi"]}
+            "source": {"$nin": ["fattura_pagata", "pagamento_fattura"]},
+            "fattura_id": {"$exists": False}
         }},
-        {"$group": {"_id": None, "totale": {"$sum": "$importo"}}}
+        {"$group": {"_id": None, "totale": {"$sum": {"$abs": "$importo"}}}}
     ]).to_list(1)
-    totale_costi_op = costi_op[0]["totale"] if costi_op else 0
     
+    altri_costi_banca = await db[COLLECTION_PRIMA_NOTA_BANCA].aggregate([
+        {"$match": {
+            "data": {"$gte": data_inizio, "$lte": data_fine},
+            "tipo": "uscita",
+            "source": {"$nin": ["fattura_pagata", "pagamento_fattura", "bonifico_fattura"]},
+            "fattura_id": {"$exists": False}
+        }},
+        {"$group": {"_id": None, "totale": {"$sum": {"$abs": "$importo"}}}}
+    ]).to_list(1)
+    
+    totale_costi_op = (altri_costi_cassa[0]["totale"] if altri_costi_cassa else 0) + \
+                      (altri_costi_banca[0]["totale"] if altri_costi_banca else 0)
+    
+    # Calcoli finali
     totale_ricavi = totale_corrispettivi + totale_altri_ricavi
-    totale_costi = totale_acquisti + totale_costi_op
+    costi_netti_acquisti = totale_acquisti - totale_note_credito
+    totale_costi = costi_netti_acquisti + totale_costi_op
     risultato_operativo = totale_ricavi - totale_costi
+    
+    # Stima imposte (IRES 24% + IRAP 3.9% = ~28%)
+    aliquota_imposte = 0.28
+    utile_netto = risultato_operativo * (1 - aliquota_imposte) if risultato_operativo > 0 else risultato_operativo
     
     return {
         "anno": anno,
@@ -744,14 +782,14 @@ async def _get_conto_economico_data(anno: int) -> Dict[str, Any]:
             "totale": round(totale_ricavi, 2)
         },
         "costi": {
-            "acquisti": round(totale_acquisti, 2),
+            "acquisti": round(costi_netti_acquisti, 2),
             "costi_operativi": round(totale_costi_op, 2),
             "totale": round(totale_costi, 2)
         },
         "risultato": {
             "risultato_operativo": round(risultato_operativo, 2),
             "utile_lordo": round(risultato_operativo, 2),
-            "utile_netto": round(risultato_operativo * 0.76, 2)  # IRES 24% approx
+            "utile_netto": round(utile_netto, 2)
         }
     }
 
