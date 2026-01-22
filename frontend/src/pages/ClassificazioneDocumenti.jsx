@@ -168,6 +168,41 @@ export default function ClassificazioneDocumenti() {
     setLoading(true);
     try {
       const res = await api.delete(`/api/documenti-smart/cleanup-unmatched?cartella=${scanSettings.cartella}&giorni=${scanSettings.giorni}&confirm=${confirm}`);
+      
+  // Funzione per aprire il modale di correzione
+  const handleOpenCorrezione = (doc) => {
+    setDocToCorrect(doc);
+    setNuovaCategoria(doc.categoria || doc.tipo || '');
+    setKeywordsNuove('');
+    setShowCorrezioneModal(true);
+  };
+  
+  // Funzione per salvare la correzione (feedback)
+  const handleSalvaCorrezione = async () => {
+    if (!docToCorrect || !nuovaCategoria) return;
+    
+    setSalvandoCorrezione(true);
+    try {
+      const keywords = keywordsNuove.split(',').map(k => k.trim().toLowerCase()).filter(k => k.length > 0);
+      
+      await api.post('/api/learning-machine/feedback', {
+        document_id: docToCorrect._key || docToCorrect.id || docToCorrect._id,
+        categoria_corretta: nuovaCategoria,
+        keywords_nuove: keywords.length > 0 ? keywords : null,
+        note: `Correzione manuale da ${docToCorrect.categoria || docToCorrect.tipo || 'N/D'} a ${nuovaCategoria}`
+      });
+      
+      alert(`✅ Correzione salvata!\n\nIl sistema ha appreso questa correzione e migliorerà le classificazioni future.`);
+      setShowCorrezioneModal(false);
+      setDocToCorrect(null);
+      loadData(); // Ricarica documenti
+    } catch (error) {
+      console.error('Errore salvataggio correzione:', error);
+      alert('Errore: ' + (error.response?.data?.detail || error.message));
+    } finally {
+      setSalvandoCorrezione(false);
+    }
+  };
       alert(confirm 
         ? `Eliminate ${res.data.eliminati} email non rilevanti` 
         : `Preview: ${res.data.email_da_eliminare} email verrebbero eliminate`
