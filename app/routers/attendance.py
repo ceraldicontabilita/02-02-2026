@@ -1171,7 +1171,9 @@ async def genera_pdf_consulente(data: Dict[str, Any]):
     
     for dip in dipendenti:
         emp_id = dip.get("id")
-        nome = dip.get("nome_completo") or dip.get("name") or f"{dip.get(\"nome\", \"\")} {dip.get(\"cognome\", \"\")}".strip()
+        nome_val = dip.get("nome", "")
+        cognome_val = dip.get("cognome", "")
+        nome = dip.get("nome_completo") or dip.get("name") or f"{nome_val} {cognome_val}".strip()
         
         row = [nome[:20]]  # Tronca nome
         totali = {"P": 0, "F": 0, "M": 0, "PE": 0}
