@@ -1047,7 +1047,9 @@ async def get_note_presenze(anno: int, mese: int) -> Dict[str, Any]:
     # Converti in dizionario per accesso rapido
     note_dict = {}
     for n in note:
-        key = f"{n[\"employee_id\"]}_{n[\"data\"]}"
+        emp_id = n["employee_id"]
+        data_val = n["data"]
+        key = f"{emp_id}_{data_val}"
         note_dict[key] = n
     
     return {"success": True, "note": note_dict}
