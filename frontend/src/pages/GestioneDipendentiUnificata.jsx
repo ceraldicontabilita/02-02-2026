@@ -104,6 +104,7 @@ export default function GestioneDipendentiUnificata() {
 
   const loadTabData = async () => {
     if (!selectedDip) return;
+    console.log('loadTabData chiamato, tab:', activeTab, 'dip:', selectedDip?.id);
     setLoadingTab(true);
     
     try {
