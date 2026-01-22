@@ -393,20 +393,22 @@ async def export_bilancio_pdf(anno: int = Query(None)):
     ]
     
     ce_table = Table(ce_data, colWidths=[10*cm, 6*cm])
+    # Table rows: 0=RICAVI header, 1=Corrispettivi, 2=TOTALE RICAVI, 3=empty, 
+    #             4=COSTI header, 5=Acquisti, 6=Note Credito, 7=TOTALE COSTI, 8=empty, 9=RISULTATO
     ce_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#dcfce7')),
-        ('BACKGROUND', (0, 3), (-1, 3), colors.HexColor('#22c55e')),
-        ('BACKGROUND', (0, 5), (-1, 5), colors.HexColor('#fee2e2')),
-        ('BACKGROUND', (0, 8), (-1, 8), colors.HexColor('#ef4444')),
-        ('BACKGROUND', (0, 10), (-1, 10), colors.HexColor('#1e293b') if ce['risultato']['utile_perdita'] >= 0 else colors.HexColor('#dc2626')),
-        ('TEXTCOLOR', (0, 3), (-1, 3), colors.white),
-        ('TEXTCOLOR', (0, 8), (-1, 8), colors.white),
-        ('TEXTCOLOR', (0, 10), (-1, 10), colors.white),
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#dcfce7')),  # RICAVI header
+        ('BACKGROUND', (0, 2), (-1, 2), colors.HexColor('#22c55e')),  # TOTALE RICAVI
+        ('BACKGROUND', (0, 4), (-1, 4), colors.HexColor('#fee2e2')),  # COSTI header
+        ('BACKGROUND', (0, 7), (-1, 7), colors.HexColor('#ef4444')),  # TOTALE COSTI
+        ('BACKGROUND', (0, 9), (-1, 9), colors.HexColor('#1e293b') if ce['risultato']['utile_perdita'] >= 0 else colors.HexColor('#dc2626')),  # RISULTATO
+        ('TEXTCOLOR', (0, 2), (-1, 2), colors.white),
+        ('TEXTCOLOR', (0, 7), (-1, 7), colors.white),
+        ('TEXTCOLOR', (0, 9), (-1, 9), colors.white),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTNAME', (0, 3), (-1, 3), 'Helvetica-Bold'),
-        ('FONTNAME', (0, 5), (-1, 5), 'Helvetica-Bold'),
-        ('FONTNAME', (0, 8), (-1, 8), 'Helvetica-Bold'),
-        ('FONTNAME', (0, 10), (-1, 10), 'Helvetica-Bold'),
+        ('FONTNAME', (0, 2), (-1, 2), 'Helvetica-Bold'),
+        ('FONTNAME', (0, 4), (-1, 4), 'Helvetica-Bold'),
+        ('FONTNAME', (0, 7), (-1, 7), 'Helvetica-Bold'),
+        ('FONTNAME', (0, 9), (-1, 9), 'Helvetica-Bold'),
         ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
         ('GRID', (0, 0), (-1, -1), 0.5, colors.gray),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
