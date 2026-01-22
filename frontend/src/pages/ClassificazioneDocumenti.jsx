@@ -674,6 +674,29 @@ export default function ClassificazioneDocumenti() {
                       <ArrowRight className="w-3 h-3" />
                       {config.section}
                     </div>
+                    
+                    {/* Tasto Vedi PDF */}
+                    {doc.file_path && (
+                      <button
+                        onClick={() => window.open(`${import.meta.env.VITE_BACKEND_URL || ''}/api/documenti-smart/view/${doc._id || doc.id}`, '_blank')}
+                        data-testid={`view-pdf-${idx}`}
+                        style={{
+                          padding: '6px 12px',
+                          fontSize: 12,
+                          background: '#3b82f6',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: 6,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 4,
+                          marginLeft: 8
+                        }}
+                      >
+                        📄 Vedi PDF
+                      </button>
+                    )}
                   </div>
                 );
               })}
