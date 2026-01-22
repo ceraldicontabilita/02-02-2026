@@ -424,3 +424,96 @@ async def associa_tutti_documenti() -> Dict[str, Any]:
             risultati["errori"].append(f"Errore: {str(e)}")
     
     return risultati
+
+
+
+# ============================================================
+# ENDPOINT VISUALIZZAZIONE PDF
+# ============================================================
+
+from fastapi.responses import FileResponse, StreamingResponse, RedirectResponse
+import os
+
+@router.get("/view/{document_id}")
+async def view_document_pdf(document_id: str):
+    """
+    Visualizza o scarica il PDF di un documento classificato.
+    """
+    db = Database.get_db()
+    
+    # Cerca il documento
+    from bson import ObjectId
+    try:
+        doc = await db["documents_classified"].find_one({"_id": ObjectId(document_id)})
+    except:
+        doc = await db["documents_classified"].find_one({"id": document_id})
+    
+    if not doc:
+        raise HTTPException(status_code=404, detail="Documento non trovato")
+    
+    file_path = doc.get("file_path")
+    
+    if not file_path or not os.path.exists(file_path):
+        # Prova path alternativo
+        filename = doc.get("filename", "")
+        alt_paths = [
+            f"/app/uploads/email_attachments/{filename}",
+            f"/app/uploads/documents/{filename}",
+            f"/tmp/email_attachments/{filename}"
+        ]
+        
+        for alt in alt_paths:
+            if os.path.exists(alt):
+                file_path = alt
+                break
+    
+    if not file_path or not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail=f"File non trovato: {doc.get('filename', 'N/D')}")
+    
+    # Determina content type
+    filename = os.path.basename(file_path)
+    if filename.lower().endswith('.pdf'):
+        media_type = "application/pdf"
+    elif filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+        media_type = "image/png" if filename.lower().endswith('.png') else "image/jpeg"
+    elif filename.lower().endswith('.xml'):
+        media_type = "application/xml"
+    else:
+        media_type = "application/octet-stream"
+    
+    return FileResponse(
+        file_path,
+        media_type=media_type,
+        filename=filename
+    )
+
+
+@router.get("/download/{document_id}")
+async def download_document(document_id: str):
+    """
+    Scarica un documento classificato.
+    """
+    db = Database.get_db()
+    
+    from bson import ObjectId
+    try:
+        doc = await db["documents_classified"].find_one({"_id": ObjectId(document_id)})
+    except:
+        doc = await db["documents_classified"].find_one({"id": document_id})
+    
+    if not doc:
+        raise HTTPException(status_code=404, detail="Documento non trovato")
+    
+    file_path = doc.get("file_path")
+    filename = doc.get("filename", "document")
+    
+    if not file_path or not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="File non trovato")
+    
+    return FileResponse(
+        file_path,
+        media_type="application/octet-stream",
+        filename=filename,
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
