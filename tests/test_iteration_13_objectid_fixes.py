@@ -23,7 +23,7 @@ from datetime import datetime
 # Get BASE_URL from environment
 BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
 if not BASE_URL:
-    BASE_URL = "https://hr-dashboard-104.preview.emergentagent.com"
+    BASE_URL = "https://staffmanage-15.preview.emergentagent.com"
 
 
 class TestHealthCheck:
