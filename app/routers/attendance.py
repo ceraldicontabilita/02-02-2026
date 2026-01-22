@@ -1154,7 +1154,7 @@ async def genera_pdf_consulente(data: Dict[str, Any]):
     
     # Titolo
     elements.append(Paragraph(f"RIEPILOGO PRESENZE - {MESI[mese-1].upper()} {anno}", title_style))
-    elements.append(Paragraph(f"Generato il {datetime.now().strftime(\"%d/%m/%Y %H:%M\")}", subtitle_style))
+    elements.append(Paragraph(f"Generato il {datetime.now().strftime('%d/%m/%Y %H:%M')}", subtitle_style))
     
     # Header tabella
     header = ["Dipendente"] + [str(g) for g in range(1, giorni_mese + 1)] + ["P", "F", "M", "PE", "Acc.€"]
