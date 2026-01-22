@@ -719,7 +719,7 @@ export default function Attendance() {
             }}>
               <span style={{ fontSize: 16 }}>👆</span>
               <strong>Modalità {STATI_PRESENZA[selectedStato]?.name} attiva</strong> - 
-              Clicca sulle celle per applicare "{STATI_PRESENZA[selectedStato]?.label}" a più giorni/dipendenti
+              Clicca sulle celle per applicare &quot;{STATI_PRESENZA[selectedStato]?.label}&quot; a più giorni/dipendenti
             </div>
           )}
 
