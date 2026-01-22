@@ -352,6 +352,12 @@ export default function GestioneDipendentiUnificata() {
                         saving={saving}
                       />
                     )}
+                    {activeTab === 'giustificativi' && (
+                      <TabGiustificativi 
+                        dipendente={selectedDip}
+                        anno={anno}
+                      />
+                    )}
                     {activeTab === 'contratti' && (
                       <TabContratti 
                         contratti={contratti}
