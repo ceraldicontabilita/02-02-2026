@@ -1,159 +1,87 @@
-# ROADMAP - Azienda in Cloud ERP
-
-## Legenda Priorità
-- 🔴 **P0** - Critico / In corso
-- 🟡 **P1** - Alta priorità
-- 🟢 **P2** - Media priorità
-- ⚪ **P3** - Backlog
+# ROADMAP – TechRecon Accounting System
+## Piano di Sviluppo Futuro
 
 ---
 
-## ✅ Completato
+## 🔴 P0 - Alta Priorità
 
-### Gennaio 2026
-- [x] 🔴 Validatori P0 bloccanti (fatture e salari)
-- [x] 🔴 Refactoring UI Prima Nota e Prima Nota Salari
-- [x] 🔴 Fix bug conferma multipla fatture
-- [x] 🔴 Fix visualizzazione F24 pendenti
-- [x] 🔴 Fix import corrispettivi XML
-- [x] 🔴 Fix import cedolini Excel
-- [x] 🔴 Riconciliazione automatica con auto-refresh
-- [x] 🔴 Endpoint bulk update fornitori (backend)
-- [x] 🔴 Sync IBAN da fatture esistenti
-- [x] 🔴 Endpoint validazione P0 fornitori
-- [x] 🔴 Ricerca web ricette con AI (Claude Sonnet 4.5)
-- [x] 🔴 Normalizzazione automatica ricette a 1kg
-- [x] 🔴 Importazione massiva ricette (158 totali)
-- [x] 🔴 Miglioramento riconciliazione (match triplo)
-- [x] 🔴 Fix logo aziendale (bianco + database)
+### 1. Frontend Riconciliazione F24
+**Status**: Backend esistente, frontend mancante  
+**Descrizione**: Creare interfaccia utente per:
+- Upload file F24 da commercialista
+- Visualizzazione dati importati
+- Gestione processo di riconciliazione con estratto conto
+- Dashboard stato riconciliazione
 
-### Dicembre 2025
-- [x] Modulo HACCP completo
-- [x] Associazione bonifici ↔ salari
-- [x] Gestione allergeni + libro stampabile
-- [x] Sistema email Aruba
-- [x] Hook useResponsive.js
+**API esistenti**:
+- `GET /api/f24-riconciliazione/dashboard`
+- `POST /api/f24-riconciliazione/commercialista/upload`
+- `GET /api/f24-riconciliazione/quietanze`
+- `GET /api/f24-riconciliazione/alerts`
+
+**File riferimento**: `/app/frontend/src/pages/RiconciliazioneF24.jsx`
 
 ---
 
-## 🔴 P0 - In Corso / Prossimi
+## 🟡 P1 - Media Priorità
 
-### UI Aggiornamento Bulk Fornitori
-**Stato**: IN CORSO
-- [ ] Aggiungere pulsante "Aggiorna Tutti i Dati" in `Fornitori.jsx`
-- [ ] Collegare al endpoint `/api/suppliers/update-all-incomplete`
-- [ ] Implementare indicatore di caricamento
-- [ ] Notifica toast con risultato (X aggiornati, Y falliti)
+### 2. Notifiche Limiti Giustificativi
+**Descrizione**: Sistema di alert quando dipendente raggiunge 90% del limite
+- Notifica visiva nella dashboard
+- Email opzionale
+- Configurazione soglie personalizzabili
 
-### Risoluzione 231 Fornitori senza IBAN
-**Stato**: BLOCCATO su UI bulk update
-- [ ] Completare UI bulk update
-- [ ] Eseguire aggiornamento massivo
-- [ ] Verificare risultati con `/api/suppliers/validazione-p0`
-- [ ] Lista fornitori per inserimento manuale IBAN
+### 3. Report PDF Annuale Ferie/Permessi
+**Descrizione**: Generazione report stampabile per ogni dipendente
+- Riepilogo annuale ferie/ROL/ex-festività
+- Dettaglio mensile
+- Firma responsabile
 
----
-
-## 🟡 P1 - Alta Priorità
-
-### Verifica Funzionamento Validatori P0
-- [ ] Test import fattura fornitore senza metodo pagamento
-- [ ] Test import fattura bancaria senza IBAN
-- [ ] Test pagamento stipendio in contanti post 06/2018
-- [ ] Documentare messaggi di errore
-
-### Investigare Errori 404 Generici
-- [ ] Identificare pagine/azioni che causano 404
-- [ ] Aggiungere logging dettagliato
-- [ ] Correggere endpoint mancanti
+### 4. Riconciliazione Email in Background
+**Descrizione**: Trasformare scansione email in processo asincrono
+- Task in background con Celery o similar
+- Progress bar in UI
+- Notifica completamento
 
 ---
 
-## 🟡 P1 - Alta Priorità
+## 🟠 P2 - Bassa Priorità
 
-### Miglioramenti Ricettario
-- [ ] Calcolo automatico food cost da prezzi fatture XML
-- [ ] Suggerimenti ingredienti da magazzino
-- [ ] Export ricette in PDF
-- [ ] Filtro per allergeni
+### 5. Refactoring Router Backend
+**Descrizione**: Migliorare organizzazione codice
+- Suddividere router grandi (>500 righe)
+- Standardizzare naming convention
+- Documentazione OpenAPI completa
 
----
+### 6. Ottimizzazione Performance Fornitori
+**Target**: `/api/suppliers` da ~5s a <1s
+**Approccio**: 
+- Caching più aggressivo
+- Paginazione server-side
+- Query projection limitata
 
-## 🟢 P2 - Media Priorità
-
-### Svuotamento PDF Residui
-- [ ] Rimuovere file PDF da `/app/uploads`
-- [ ] Rimuovere file PDF da `/app/tmp`
-- [ ] Liberare spazio disco
-
-### Import Cedolini da PDF
-- [ ] Estrazione OCR dati da cedolini PDF
-- [ ] Parsing strutturato informazioni
-- [ ] Integrazione con sistema esistente
-
-### Unificazione Collection
-- [ ] Merge `fornitori` con `suppliers`
-- [ ] Aggiornare tutti gli endpoint
-- [ ] Migrare dati esistenti
-
-### Refactoring Responsive (IN PAUSA)
-Rendere l'applicazione adattiva per PC, tablet (12") e smartphone (6").
-
-**Pagine da convertire** (in ordine di priorità):
-1. [ ] Dashboard principale (`/`)
-2. [ ] ArchivioBonifici.jsx
-3. [ ] RicettarioDinamico.jsx *(parzialmente fatto)*
-4. [ ] HACCPTemperature.jsx
-5. [ ] HACCPSanificazione.jsx
-6. [ ] HACCPNonConformita.jsx
-7. [ ] Tutte le altre pagine ERP
-
-**Pattern da seguire**:
-- Usare hook `useResponsive.js`
-- Riferimento: `LibroAllergeni.jsx` (completato)
-- Stili inline condizionali basati su viewport
+### 7. Test Automatici E2E
+**Descrizione**: Suite test Playwright
+- Flussi critici (import fattura → riconciliazione)
+- Test regressione
+- CI/CD integration
 
 ---
 
-## ⚪ P3 - Backlog / Futuro
+## 🔵 Idee Future
 
-### Integrazioni
-- [ ] Collegamento con commercialista (export dati)
-- [ ] API pubblica per integrazioni terze
-- [ ] Webhook per eventi
+### Integrazione Google Calendar
+- Scadenze F24 in calendario
+- Reminder automatici
 
-### Mobile
-- [ ] PWA con offline support
-- [ ] App nativa (React Native)
-- [ ] Notifiche push mobile
+### Dashboard Mobile
+- App PWA responsive
+- Notifiche push
 
-### AI Avanzato
-- [ ] Previsioni acquisti basate su storico
-- [ ] Suggerimenti automatici riconciliazione
-- [ ] Analisi anomalie spese
-
-### Multi-Azienda
-- [ ] Supporto più sedi/punti vendita
-- [ ] Consolidamento bilanci
-- [ ] Permessi per ruolo
+### AI Assistant
+- Chat per query contabili
+- Suggerimenti automatici
 
 ---
 
-## Note per Sviluppo
-
-### Vincoli da Rispettare
-1. **Stili inline** - No CSS esterno
-2. **MongoDB** - Escludere sempre `_id`
-3. **Responsive** - Usare `useResponsive.js`
-4. **API prefix** - Sempre `/api/`
-
-### File di Riferimento
-- Hook responsive: `/app/frontend/src/hooks/useResponsive.js`
-- Esempio responsive: `/app/frontend/src/pages/LibroAllergeni.jsx`
-- Riconciliazione: `/app/app/routers/accounting/riconciliazione_automatica.py`
-- Ricette AI: `/app/app/routers/haccp_v2/ricette_web_search.py`
-
-### Credenziali Test
-- MongoDB: già configurato in `.env`
-- Email Aruba: `ceraldigroupsrl@gmail.com`
-- LLM: `EMERGENT_LLM_KEY` in `.env`
+*Ultimo aggiornamento: 22 Gennaio 2026*
