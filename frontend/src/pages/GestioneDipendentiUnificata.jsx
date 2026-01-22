@@ -963,21 +963,29 @@ const getMeseName = (mese) => {
 function TabGiustificativi({ dipendente, anno }) {
   const [giustificativi, setGiustificativi] = useState([]);
   const [saldoFerie, setSaldoFerie] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [selectedCategoria, setSelectedCategoria] = useState('tutti');
   
   const loadGiustificativi = useCallback(async () => {
-    if (!dipendente?.id) return;
+    if (!dipendente?.id) {
+      setLoading(false);
+      return;
+    }
     try {
       setLoading(true);
+      setError(null);
+      console.log('Carico giustificativi per:', dipendente.id, anno);
       const [giustRes, ferieRes] = await Promise.all([
         api.get(`/api/giustificativi/dipendente/${dipendente.id}/giustificativi?anno=${anno}`),
         api.get(`/api/giustificativi/dipendente/${dipendente.id}/saldo-ferie?anno=${anno}`)
       ]);
+      console.log('Giustificativi caricati:', giustRes.data);
       setGiustificativi(giustRes.data.giustificativi || []);
       setSaldoFerie(ferieRes.data);
     } catch (err) {
       console.error('Errore caricamento giustificativi:', err);
+      setError(err.message || 'Errore caricamento');
     } finally {
       setLoading(false);
     }
@@ -986,6 +994,11 @@ function TabGiustificativi({ dipendente, anno }) {
   useEffect(() => {
     loadGiustificativi();
   }, [loadGiustificativi]);
+  
+  // Se non c'è dipendente selezionato
+  if (!dipendente?.id) {
+    return <div style={{ textAlign: 'center', padding: 40, color: '#6b7280' }}>Seleziona un dipendente</div>;
+  }
   
   const categorie = ['tutti', 'ferie', 'permesso', 'assenza', 'congedo', 'malattia', 'formazione', 'lavoro'];
   
