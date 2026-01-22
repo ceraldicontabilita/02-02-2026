@@ -186,22 +186,24 @@ export default function Bilancio() {
         {/* RICAVI */}
         <div style={{ background: '#f0fdf4', borderRadius: 12, padding: 24, marginBottom: 20 }}>
           <h3 style={{ color: '#166534', marginBottom: 20, borderBottom: '2px solid #22c55e', paddingBottom: 10 }}>
-            RICAVI
+            RICAVI (Vendite al Pubblico)
           </h3>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <tbody>
               <tr>
-                <td style={{ padding: '12px 0', color: '#374151', fontSize: 15 }}>Corrispettivi (Vendite)</td>
+                <td style={{ padding: '12px 0', color: '#374151', fontSize: 15 }}>Corrispettivi (Imponibile)</td>
                 <td style={{ padding: '12px 0', textAlign: 'right', fontWeight: 500, fontSize: 16 }}>
                   {formatEuro(ricavi.corrispettivi)}
                 </td>
               </tr>
-              <tr>
-                <td style={{ padding: '12px 0', color: '#374151', fontSize: 15 }}>Altri Ricavi</td>
-                <td style={{ padding: '12px 0', textAlign: 'right', fontWeight: 500, fontSize: 16 }}>
-                  {formatEuro(ricavi.altri_ricavi)}
-                </td>
-              </tr>
+              {ricavi.corrispettivi_lordi && (
+                <tr>
+                  <td style={{ padding: '12px 0', color: '#6b7280', fontSize: 13, fontStyle: 'italic' }}>
+                    (Lordo incl. IVA: {formatEuro(ricavi.corrispettivi_lordi)})
+                  </td>
+                  <td></td>
+                </tr>
+              )}
               <tr style={{ borderTop: '2px solid #22c55e', background: '#dcfce7' }}>
                 <td style={{ padding: '12px 0', fontWeight: 700, fontSize: 16 }}>TOTALE RICAVI</td>
                 <td style={{ padding: '12px 0', textAlign: 'right', fontWeight: 700, fontSize: 18, color: '#16a34a' }}>
@@ -215,32 +217,26 @@ export default function Bilancio() {
         {/* COSTI */}
         <div style={{ background: '#fef2f2', borderRadius: 12, padding: 24, marginBottom: 20 }}>
           <h3 style={{ color: '#991b1b', marginBottom: 20, borderBottom: '2px solid #ef4444', paddingBottom: 10 }}>
-            COSTI
+            COSTI (Fatture Ricevute da Fornitori)
           </h3>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <tbody>
               <tr>
-                <td style={{ padding: '12px 0', color: '#374151', fontSize: 15 }}>Acquisti (Fatture Fornitori)</td>
+                <td style={{ padding: '12px 0', color: '#374151', fontSize: 15 }}>Acquisti (Imponibile)</td>
                 <td style={{ padding: '12px 0', textAlign: 'right', fontWeight: 500, fontSize: 16 }}>
                   {formatEuro(costi.acquisti)}
                 </td>
               </tr>
               {costi.note_credito > 0 && (
                 <tr>
-                  <td style={{ padding: '12px 0', color: '#16a34a', fontSize: 15 }}>- Note di Credito</td>
+                  <td style={{ padding: '12px 0', color: '#16a34a', fontSize: 15 }}>- Note di Credito Ricevute</td>
                   <td style={{ padding: '12px 0', textAlign: 'right', fontWeight: 500, fontSize: 16, color: '#16a34a' }}>
                     -{formatEuro(costi.note_credito)}
                   </td>
                 </tr>
               )}
-              <tr>
-                <td style={{ padding: '12px 0', color: '#374151', fontSize: 15 }}>Altri Costi Operativi</td>
-                <td style={{ padding: '12px 0', textAlign: 'right', fontWeight: 500, fontSize: 16 }}>
-                  {formatEuro(costi.altri_costi)}
-                </td>
-              </tr>
               <tr style={{ borderTop: '2px solid #ef4444', background: '#fee2e2' }}>
-                <td style={{ padding: '12px 0', fontWeight: 700, fontSize: 16 }}>TOTALE COSTI</td>
+                <td style={{ padding: '12px 0', fontWeight: 700, fontSize: 16 }}>TOTALE COSTI (Netto)</td>
                 <td style={{ padding: '12px 0', textAlign: 'right', fontWeight: 700, fontSize: 18, color: '#dc2626' }}>
                   {formatEuro(costi.totale_costi)}
                 </td>
