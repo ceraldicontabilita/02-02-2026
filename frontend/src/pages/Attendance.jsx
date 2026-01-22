@@ -1210,7 +1210,7 @@ export default function Attendance() {
             }}>
               <History style={{ width: 48, height: 48, margin: '0 auto 16px', color: '#9ca3af', opacity: 0.5 }} />
               <p style={{ color: '#9ca3af', margin: 0 }}>
-                Seleziona un dipendente e clicca "Carica Storico" per visualizzare le ore lavorate
+                Seleziona un dipendente e clicca &quot;Carica Storico&quot; per visualizzare le ore lavorate
               </p>
             </div>
           )}
