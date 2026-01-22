@@ -1,0 +1,94 @@
+{
+  "summary": "Iteration 28 - Verified unified Classificazione Documenti page with 3 tabs (Classificazione, Documenti, Regole). All 15 backend tests passed (100%). Frontend tabs work correctly with URL parameters and redirects.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {
+        "endpoint": "/api/documenti-smart/test-classify",
+        "issue": "Classifier returns low confidence matches (0.2) for unrelated emails - may cause false positives",
+        "priority": "LOW"
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/tests/test_iteration_28_classificazione.py",
+    "/app/test_reports/pytest/pytest_iteration_28.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Unified page ClassificazioneDocumenti.jsx correctly implements 3 tabs with URL parameter support",
+    "Redirects in main.jsx work correctly: /documenti → /classificazione-email?tab=documenti, /regole-categorizzazione → /classificazione-email?tab=regole",
+    "Backend endpoints /api/documenti-smart/view/{id} and /api/documenti-smart/download/{id} return proper 404 for non-existent documents",
+    "Tab Documenti shows table with correct columns (Documento, Categoria, Destinazione, Stato, Azioni) when documents exist",
+    "Tab Regole displays all 10 classification rules with priority, keywords, collection, and azione",
+    "Header uses navy blue gradient (#1e3a5f) consistent with site design"
+  ],
+  "updated_files": [
+    "/app/tests/test_iteration_28_classificazione.py"
+  ],
+  "success_rate": {
+    "backend": "100% (15/15 tests passed)",
+    "frontend": "100% - All tabs and redirects work correctly"
+  },
+  "test_credentials": "N/A - no auth required",
+  "seed_data_creation": "None - tested with existing data (0 documents)",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Classificazione Documenti page unified with 3 tabs. URL params ?tab=documenti and ?tab=regole work. Redirects from /documenti and /regole-categorizzazione work. Backend endpoints for view/download PDF return 404 when document not found (no test documents in DB currently).",
+  "features_tested": {
+    "Pagina /classificazione-email con 3 tab": {
+      "status": "✅ VERIFIED",
+      "details": "Page loads with Classificazione, Documenti, Regole tabs"
+    },
+    "URL /classificazione-email?tab=documenti": {
+      "status": "✅ VERIFIED",
+      "details": "Opens Documenti tab directly"
+    },
+    "URL /classificazione-email?tab=regole": {
+      "status": "✅ VERIFIED",
+      "details": "Opens Regole tab directly"
+    },
+    "Redirect /documenti → /classificazione-email?tab=documenti": {
+      "status": "✅ VERIFIED",
+      "details": "Redirect works correctly"
+    },
+    "Redirect /regole-categorizzazione → /classificazione-email?tab=regole": {
+      "status": "✅ VERIFIED",
+      "details": "Redirect works correctly"
+    },
+    "GET /api/documenti-smart/view/{id}": {
+      "status": "✅ VERIFIED",
+      "details": "Returns 404 for non-existent document, endpoint structure correct"
+    },
+    "GET /api/documenti-smart/download/{id}": {
+      "status": "✅ VERIFIED",
+      "details": "Returns 404 for non-existent document, endpoint structure correct"
+    },
+    "Tab Documenti - tabella con colonne": {
+      "status": "✅ VERIFIED (code review)",
+      "details": "Table has columns: Documento, Categoria, Destinazione, Stato, Azioni (visible when documents exist)"
+    },
+    "Tab Documenti - bottoni Vedi e Scarica": {
+      "status": "✅ VERIFIED (code review)",
+      "details": "Buttons present in code with data-testid view-pdf-{idx} and download-pdf-{idx}"
+    },
+    "Tab Regole - lista regole": {
+      "status": "✅ VERIFIED",
+      "details": "Shows 10 rules with priorità, keywords, collection, azione"
+    }
+  },
+  "api_endpoints_tested": {
+    "GET /api/documenti-smart/stats": "✅ 200 - Returns classification statistics",
+    "GET /api/documenti-smart/rules": "✅ 200 - Returns 10 classification rules",
+    "GET /api/documenti-smart/documents": "✅ 200 - Returns document list (0 documents)",
+    "GET /api/documenti-smart/categories": "✅ 200 - Returns category mapping",
+    "GET /api/documenti-smart/view/{id}": "✅ 404 - Correct error for non-existent document",
+    "GET /api/documenti-smart/download/{id}": "✅ 404 - Correct error for non-existent document",
+    "POST /api/documenti-smart/test-classify": "✅ 200 - Classification works for verbali, dimissioni, f24"
+  }
+}
