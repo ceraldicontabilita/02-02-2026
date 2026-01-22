@@ -133,12 +133,17 @@ async def get_stato_patrimoniale(
     # === PASSIVO ===
     
     # Debiti (fatture ricevute non pagate)
+    # NOTA: Tutte le fatture in 'invoices' sono RICEVUTE (da fornitori)
+    # Il filtro esclude solo le note di credito (TD04, TD08)
     debiti = await db[Collections.INVOICES].aggregate([
         {"$match": {
-            "tipo_documento": {"$nin": ["TD01", "TD24", "TD26"]},  # Fatture ricevute
-            "status": {"$ne": "paid"},
+            "tipo_documento": {"$nin": ["TD04", "TD08"]},  # Escludi solo Note Credito
+            "status": {"$nin": ["paid", "pagata"]},
             "pagato": {"$ne": True},
-            "invoice_date": {"$lte": data_fine}
+            "$or": [
+                {"invoice_date": {"$lte": data_fine}},
+                {"data_ricezione": {"$lte": data_fine}}
+            ]
         }},
         {"$group": {"_id": None, "totale": {"$sum": "$total_amount"}}}
     ]).to_list(1)
