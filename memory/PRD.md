@@ -159,6 +159,8 @@ GET  /api/attendance/dashboard-presenze
 POST /api/attendance/timbratura
 GET  /api/giustificativi/dipendente/{id}/giustificativi
 POST /api/giustificativi/valida-giustificativo
+GET  /api/giustificativi/alert-limiti          # Alert limiti (soglia 90%)
+GET  /api/giustificativi/riepilogo-limiti      # Riepilogo per dashboard
 ```
 
 ### 5.2 Riconciliazione
