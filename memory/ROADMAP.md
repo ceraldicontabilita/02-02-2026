@@ -30,20 +30,13 @@
 
 ## 🟠 P2 - Bassa Priorità
 
-### 5. Refactoring Router Backend
+### 3. Refactoring Router Backend
 **Descrizione**: Migliorare organizzazione codice
 - Suddividere router grandi (>500 righe)
 - Standardizzare naming convention
 - Documentazione OpenAPI completa
 
-### 6. Ottimizzazione Performance Fornitori
-**Target**: `/api/suppliers` da ~5s a <1s
-**Approccio**: 
-- Caching più aggressivo
-- Paginazione server-side
-- Query projection limitata
-
-### 7. Test Automatici E2E
+### 4. Test Automatici E2E
 **Descrizione**: Suite test Playwright
 - Flussi critici (import fattura → riconciliazione)
 - Test regressione
