@@ -320,8 +320,8 @@ async def export_bilancio_pdf(anno: int = Query(None)):
     if not anno:
         anno = datetime.now().year
     
-    # Carica dati
-    stato_patrimoniale = await get_stato_patrimoniale(anno=anno)
+    # Carica dati usando le funzioni helper (non le endpoint functions)
+    stato_patrimoniale = await _get_stato_patrimoniale_data(anno)
     conto_economico = await get_conto_economico(anno=anno)
     
     # Crea PDF
