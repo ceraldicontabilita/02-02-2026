@@ -39,6 +39,14 @@ Implementato sistema completo per bar/pasticceria:
 - `GET /api/magazzino/lotti-produzione` - Registro lotti
 - `GET /api/magazzino/categorie-merceologiche` - Lista categorie
 
+### ✅ Dashboard Learning Machine (NUOVA)
+Creata interfaccia utente completa `/app/frontend/src/pages/LearningMachineDashboard.jsx`:
+- **Tab Centri di Costo**: Grafico torta distribuzione costi, lista espandibile CDC con dettagli fiscali
+- **Tab Magazzino**: Grafico barre giacenze per categoria, tabella ultimi movimenti
+- **Tab Produzione**: Form avvio lotto produzione, storico lotti con alert ingredienti mancanti
+- Rotta: `/learning-machine`
+- Link nel menu laterale sotto "Cucina"
+
 ### ✅ Bug Fix
 - Fix TypeError in `calcola_scarico_ricetta`: gestione quantità come stringa/numero
 
@@ -47,6 +55,7 @@ Implementato sistema completo per bar/pasticceria:
 - ✅ Scarico produzione con calcolo ingredienti proporzionale
 - ✅ Registrazione movimenti e lotti
 - ✅ Riepilogo centri di costo (24 centri, €524.867 imponibile)
+- ✅ Dashboard UI funzionante su tutti e 3 i tab
 
 ---
 
