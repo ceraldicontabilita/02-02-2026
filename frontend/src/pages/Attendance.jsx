@@ -613,6 +613,116 @@ export default function Attendance() {
             </div>
           </div>
 
+          {/* === TOOLBAR SELEZIONE RAPIDA === */}
+          <div style={{ 
+            padding: '10px 16px', 
+            background: multiSelectMode ? '#fef3c7' : '#f1f5f9', 
+            borderBottom: '1px solid #e5e7eb',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            flexWrap: 'wrap'
+          }}>
+            <span style={{ fontSize: 12, fontWeight: 600, color: '#374151', marginRight: 4 }}>
+              ⚡ Selezione Rapida:
+            </span>
+            {Object.entries(STATI_PRESENZA).filter(([key]) => key !== 'riposo').map(([key, config]) => (
+              <button
+                key={key}
+                onClick={() => toggleMultiSelectMode(key)}
+                style={{
+                  padding: '6px 12px',
+                  background: selectedStato === key ? config.color : config.bg,
+                  color: selectedStato === key ? 'white' : config.color,
+                  border: selectedStato === key ? `2px solid ${config.color}` : `1px solid ${config.color}40`,
+                  borderRadius: 6,
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  fontSize: 11,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  transition: 'all 0.15s ease',
+                  boxShadow: selectedStato === key ? '0 2px 8px rgba(0,0,0,0.15)' : 'none'
+                }}
+                data-testid={`btn-select-${key}`}
+              >
+                <span style={{ 
+                  width: 16, 
+                  height: 16, 
+                  borderRadius: 3, 
+                  background: selectedStato === key ? 'white' : config.bg,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 9,
+                  fontWeight: 700,
+                  color: config.color
+                }}>
+                  {config.label}
+                </span>
+                {config.name}
+              </button>
+            ))}
+            
+            {multiSelectMode && (
+              <button
+                onClick={() => { setSelectedStato(null); setMultiSelectMode(false); }}
+                style={{
+                  padding: '6px 12px',
+                  background: '#ef4444',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 6,
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  fontSize: 11,
+                  marginLeft: 'auto'
+                }}
+              >
+                ✕ Disattiva
+              </button>
+            )}
+            
+            {/* Pulsante PDF */}
+            <button
+              onClick={generatePdfConsulente}
+              disabled={generatingPdf}
+              style={{
+                padding: '6px 12px',
+                background: '#1e3a5f',
+                color: 'white',
+                border: 'none',
+                borderRadius: 6,
+                cursor: generatingPdf ? 'wait' : 'pointer',
+                fontWeight: 600,
+                fontSize: 11,
+                marginLeft: multiSelectMode ? 8 : 'auto',
+                opacity: generatingPdf ? 0.7 : 1
+              }}
+              data-testid="btn-genera-pdf"
+            >
+              📄 {generatingPdf ? 'Generando...' : 'PDF Consulente'}
+            </button>
+          </div>
+
+          {multiSelectMode && (
+            <div style={{ 
+              padding: '8px 16px', 
+              background: '#fef9c3', 
+              borderBottom: '1px solid #fcd34d',
+              fontSize: 12,
+              color: '#854d0e',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6
+            }}>
+              <span style={{ fontSize: 16 }}>👆</span>
+              <strong>Modalità {STATI_PRESENZA[selectedStato]?.name} attiva</strong> - 
+              Clicca sulle celle per applicare "{STATI_PRESENZA[selectedStato]?.label}" a più giorni/dipendenti
+            </div>
+          )}
+
           {/* Tabella Calendario */}
           <div style={{ overflowX: 'auto' }}>
             <table style={{ 
