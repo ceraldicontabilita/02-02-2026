@@ -259,13 +259,13 @@ async def get_conto_economico(
         },
         "ricavi": {
             "corrispettivi": round(totale_corrispettivi, 2),
-            "altri_ricavi": round(totale_altri_ricavi, 2),
+            "corrispettivi_lordi": round(totale_lordo_corrispettivi, 2),
             "totale_ricavi": round(totale_ricavi, 2)
         },
         "costi": {
             "acquisti": round(totale_acquisti, 2),
             "note_credito": round(totale_note_credito, 2),
-            "altri_costi": round(totale_altri_costi, 2),
+            "costi_netti": round(costi_netti, 2),
             "totale_costi": round(totale_costi, 2)
         },
         "risultato": {
@@ -275,14 +275,15 @@ async def get_conto_economico(
         },
         "dettaglio_iva": {
             "iva_vendite": round(iva_vendite, 2),
-            "iva_acquisti": round(iva_acquisti, 2),
-            "iva_netta": round(iva_vendite - iva_acquisti, 2)
+            "iva_acquisti": round(iva_acquisti - iva_note_credito, 2),
+            "iva_netta": round(iva_vendite - (iva_acquisti - iva_note_credito), 2)
         },
         "statistiche": {
             "num_corrispettivi": num_corrispettivi,
             "num_fatture_ricevute": num_fatture,
             "num_note_credito": num_note_credito
-        }
+        },
+        "note": "Ricavi = Corrispettivi (vendite al pubblico). Costi = Fatture ricevute - Note credito."
     }
 
 
