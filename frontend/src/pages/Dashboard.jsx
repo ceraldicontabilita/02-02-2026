@@ -33,6 +33,9 @@ export default function Dashboard() {
   // Scadenze F24
   const [scadenzeF24, setScadenzeF24] = useState(null);
   
+  // Alert Limiti Giustificativi
+  const [alertGiustificativi, setAlertGiustificativi] = useState(null);
+  
   // Stato per auto-riparazione
   const [autoRepairStatus, setAutoRepairStatus] = useState(null);
 
