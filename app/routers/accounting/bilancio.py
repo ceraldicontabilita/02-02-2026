@@ -324,8 +324,9 @@ async def get_riepilogo_bilancio(anno: int = Query(None)) -> Dict[str, Any]:
     if not anno:
         anno = datetime.now().year
     
-    stato_patrimoniale = await get_stato_patrimoniale(anno=anno)
-    conto_economico = await get_conto_economico(anno=anno)
+    # Use helper functions to avoid Query parameter issues
+    stato_patrimoniale = await _get_stato_patrimoniale_data(anno)
+    conto_economico = await _get_conto_economico_data(anno)
     
     return {
         "anno": anno,
