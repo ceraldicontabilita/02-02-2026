@@ -986,13 +986,16 @@ function TabGiustificativi({ dipendente, anno }) {
         setLoading(true);
         setError(null);
         console.log('Chiamando API giustificativi per:', dipendente.id);
-        const [giustRes, ferieRes] = await Promise.all([
-          api.get(`/api/giustificativi/dipendente/${dipendente.id}/giustificativi?anno=${anno}`),
-          api.get(`/api/giustificativi/dipendente/${dipendente.id}/saldo-ferie?anno=${anno}`)
-        ]);
+        
+        // Chiamata singola invece di Promise.all per debug
+        const giustRes = await api.get(`/api/giustificativi/dipendente/${dipendente.id}/giustificativi?anno=${anno}`);
         console.log('API risposta giustificativi:', giustRes.data?.totale_giustificativi);
         setGiustificativi(giustRes.data.giustificativi || []);
+        
+        const ferieRes = await api.get(`/api/giustificativi/dipendente/${dipendente.id}/saldo-ferie?anno=${anno}`);
+        console.log('API risposta ferie:', ferieRes.data?.employee_nome);
         setSaldoFerie(ferieRes.data);
+        
       } catch (err) {
         console.error('Errore caricamento giustificativi:', err);
         setError(err.message || 'Errore caricamento');
