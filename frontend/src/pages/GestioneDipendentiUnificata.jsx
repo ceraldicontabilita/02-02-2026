@@ -446,6 +446,38 @@ function TabAnagrafica({ formData, setFormData, editMode, setEditMode, onSave, s
         <Field label="Data Assunzione" value={formData.data_assunzione} onChange={v => handleChange('data_assunzione', v)} disabled={!editMode} type="date" />
       </div>
 
+      {/* Flag In Carico - per modulo presenze */}
+      <div style={{ marginTop: 20, padding: 16, background: '#f0f9ff', borderRadius: 10, border: '1px solid #bae6fd' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ fontWeight: 600, fontSize: 14, color: '#0369a1', marginBottom: 4 }}>📋 Gestione Presenze</div>
+            <p style={{ margin: 0, fontSize: 12, color: '#64748b' }}>
+              Se attivo, il dipendente comparirà nel modulo presenze e nel calendario timbrature
+            </p>
+          </div>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: editMode ? 'pointer' : 'default' }}>
+            <input 
+              type="checkbox" 
+              checked={formData.in_carico !== false}
+              onChange={(e) => handleChange('in_carico', e.target.checked)}
+              disabled={!editMode}
+              style={{ width: 20, height: 20, cursor: editMode ? 'pointer' : 'default' }}
+              data-testid="in-carico-toggle"
+            />
+            <span style={{ 
+              fontSize: 14, 
+              fontWeight: 600, 
+              padding: '6px 12px',
+              borderRadius: 6,
+              background: formData.in_carico !== false ? '#dcfce7' : '#fee2e2',
+              color: formData.in_carico !== false ? '#166534' : '#dc2626'
+            }}>
+              {formData.in_carico !== false ? '✓ In Carico' : '✗ Non in Carico'}
+            </span>
+          </label>
+        </div>
+      </div>
+
       {/* IBAN multipli */}
       <div style={{ marginTop: 24 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
