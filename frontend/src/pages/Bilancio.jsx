@@ -225,6 +225,14 @@ export default function Bilancio() {
                   {formatEuro(costi.acquisti)}
                 </td>
               </tr>
+              {costi.note_credito > 0 && (
+                <tr>
+                  <td style={{ padding: '12px 0', color: '#16a34a', fontSize: 15 }}>- Note di Credito</td>
+                  <td style={{ padding: '12px 0', textAlign: 'right', fontWeight: 500, fontSize: 16, color: '#16a34a' }}>
+                    -{formatEuro(costi.note_credito)}
+                  </td>
+                </tr>
+              )}
               <tr>
                 <td style={{ padding: '12px 0', color: '#374151', fontSize: 15 }}>Altri Costi Operativi</td>
                 <td style={{ padding: '12px 0', textAlign: 'right', fontWeight: 500, fontSize: 16 }}>
