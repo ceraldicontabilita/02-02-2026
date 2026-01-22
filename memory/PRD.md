@@ -102,17 +102,21 @@ Sistema ERP contabile per aziende italiane con:
 - Casi speciali: Assegni Multipli, Arrotondamenti, Pagamenti Anticipati
 - Auto-riconciliazione F24
 
-### 3.5 ✅ Bilancio e Contabilità Economica (AGGIORNATO 22/01/2026)
+### 3.5 ✅ Bilancio e Contabilità Economica (CORRETTO 22/01/2026)
+- **Struttura DB**:
+  - `corrispettivi`: Vendite al pubblico (scontrini) = UNICA fonte di RICAVI
+  - `invoices`: TUTTE fatture RICEVUTE da fornitori = COSTI
+  - NON esistono fatture emesse a clienti nel sistema
 - **Conto Economico** (per competenza):
-  - Ricavi: Corrispettivi (`totale_imponibile`), Fatture Emesse (TD01, TD24, TD26)
-  - Costi: Fatture Ricevute (imponibile), Note Credito (TD04, TD08 sottratte), Altri Costi Operativi
+  - Ricavi: SOLO Corrispettivi (`totale_imponibile`)
+  - Costi: Fatture Ricevute (imponibile) - Note Credito (TD04, TD08)
   - Margine percentuale calcolato automaticamente
 - **Stato Patrimoniale**: Attivo = Passivo (bilanciamento verificato)
 - **Liquidazione IVA**:
   - IVA Debito da corrispettivi
-  - IVA Credito da fatture (con deroghe temporali 15gg e 12gg)
+  - IVA Credito da fatture ricevute
   - Note Credito gestite correttamente
-- **Confronto Annuale**: Variazioni assolute e percentuali anno su anno
+- **PDF Export**: Funziona correttamente per bilancio e confronto annuale
 
 ### 3.6 ✅ Classificazione Documenti
 - Pagina unificata `/classificazione-email`
