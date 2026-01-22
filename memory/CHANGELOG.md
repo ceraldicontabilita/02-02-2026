@@ -44,18 +44,33 @@ Creata interfaccia utente completa `/app/frontend/src/pages/LearningMachineDashb
 - **Tab Centri di Costo**: Grafico torta distribuzione costi, lista espandibile CDC con dettagli fiscali
 - **Tab Magazzino**: Grafico barre giacenze per categoria, tabella ultimi movimenti
 - **Tab Produzione**: Form avvio lotto produzione, storico lotti con alert ingredienti mancanti
+- **Tab F24 & Banca**: Stato riconciliazione, lista F24 commercialista e quietanze, pulsante riconciliazione
 - Rotta: `/learning-machine`
 - Link nel menu laterale sotto "Cucina"
 
+### ✅ Riconciliazione F24/Banca (UI)
+Aggiunto tab "F24 & Banca" nella dashboard Learning Machine:
+- Visualizzazione stato riconciliazione (46 F24, 50 quietanze)
+- Lista F24 commercialista con stato (DA PAGARE / PAGATO)
+- Lista quietanze F24 con importi
+- Pulsante "Riconcilia F24 ↔ Banca" (richiede upload estratto conto CSV)
+
+**Endpoint esistenti già funzionanti:**
+- `POST /api/f24-riconciliazione/upload-estratto-bpm` - Upload CSV estratto conto
+- `POST /api/f24-riconciliazione/riconcilia-f24` - Esegue riconciliazione
+- `GET /api/f24-riconciliazione/stato-riconciliazione` - Stato riconciliazione
+
 ### ✅ Bug Fix
 - Fix TypeError in `calcola_scarico_ricetta`: gestione quantità come stringa/numero
+- Fix visualizzazione importi quietanze: uso `totale_debito` invece di `totale_versato`
 
 ### ✅ Test E2E Eseguiti
 - ✅ Carico magazzino da fattura XML (14 linee processate)
 - ✅ Scarico produzione con calcolo ingredienti proporzionale
 - ✅ Registrazione movimenti e lotti
 - ✅ Riepilogo centri di costo (24 centri, €524.867 imponibile)
-- ✅ Dashboard UI funzionante su tutti e 3 i tab
+- ✅ Dashboard UI funzionante su tutti e 4 i tab
+- ✅ Riconciliazione F24 (messaggio corretto: manca estratto conto)
 
 ---
 
