@@ -376,6 +376,7 @@ app.include_router(websocket_realtime.router, prefix="/api", tags=["WebSocket Re
 from app.routers import haccp
 app.include_router(haccp.router, tags=["HACCP"])
 app.include_router(haccp.haccp_completo_router, tags=["HACCP Completo"])
+app.include_router(learning_machine.router, prefix="/api/learning-machine", tags=["Learning Machine"])
 
 
 # =============================================================================
