@@ -1,7 +1,7 @@
 # PRD – TechRecon Accounting System
 ## Product Requirements Document (PRD)
 ## TechRecon Accounting System – Versione Super Articolata
-### Ultimo aggiornamento: 22 Gennaio 2026 (Sessione 8 - Sistema Giustificativi + Saldo Ferie + Riconciliazione Fase 3)
+### Ultimo aggiornamento: 22 Gennaio 2026 (Sessione 9 - Fix Giustificativi + Date + F24)
 
 ---
 
