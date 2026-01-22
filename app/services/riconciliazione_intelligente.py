@@ -1478,6 +1478,623 @@ class RiconciliazioneIntelligente:
             "sconto_percentuale": percentuale_sconto
         }
 
+    # =========================================================================
+    # CASO 36: GESTIONE ASSEGNI MULTIPLI
+    # =========================================================================
+    
+    async def registra_assegni_multipli(
+        self,
+        fattura_id: str,
+        assegni: List[Dict[str, Any]],
+        metodo: str = "banca"
+    ) -> Dict[str, Any]:
+        """
+        Registra pagamento con assegni multipli per una singola fattura.
+        
+        Caso 36: 2 assegni (€1.028,82 + €1.421,77) = €2.450,59 → Fattura €2.450,00
+        
+        Args:
+            fattura_id: ID fattura da pagare
+            assegni: Lista di assegni [{"numero": "123", "importo": 1028.82, "data": "2026-01-15", "banca": "BPM"}]
+            metodo: "banca" o "cassa" (default: banca)
+            
+        Returns:
+            Dict con risultato operazione
+        """
+        risultato = {
+            "success": False,
+            "fattura_id": fattura_id,
+            "assegni": [],
+            "totale_assegni": 0,
+            "differenza": 0
+        }
+        
+        # Recupera fattura
+        fattura = await self.db["invoices"].find_one({"id": fattura_id}, {"_id": 0})
+        if not fattura:
+            risultato["error"] = "Fattura non trovata"
+            return risultato
+        
+        # Dati fattura
+        importo_fattura = float(fattura.get("importo_totale") or fattura.get("total_amount") or 0)
+        numero_fattura = fattura.get("numero_documento") or fattura.get("invoice_number") or ""
+        fornitore_nome = fattura.get("fornitore_ragione_sociale") or fattura.get("supplier_name") or ""
+        fornitore_id = fattura.get("fornitore_id")
+        
+        # Calcola totale assegni
+        totale_assegni = sum(float(a.get("importo", 0)) for a in assegni)
+        differenza = abs(totale_assegni - importo_fattura)
+        
+        risultato["totale_assegni"] = totale_assegni
+        risultato["importo_fattura"] = importo_fattura
+        risultato["differenza"] = differenza
+        
+        # Verifica tolleranza (max €5 di differenza per arrotondamenti)
+        if differenza > TOLLERANZA_ARROTONDAMENTO_MAX:
+            risultato["error"] = f"Somma assegni (€{totale_assegni:.2f}) troppo diversa da fattura (€{importo_fattura:.2f}). Differenza: €{differenza:.2f}"
+            return risultato
+        
+        # Registra gruppo assegni
+        gruppo_id = str(uuid.uuid4())
+        assegni_registrati = []
+        
+        for idx, assegno in enumerate(assegni):
+            assegno_id = str(uuid.uuid4())
+            assegno_record = {
+                "id": assegno_id,
+                "gruppo_id": gruppo_id,
+                "fattura_id": fattura_id,
+                "numero_assegno": assegno.get("numero", f"ASS-{idx+1}"),
+                "importo": float(assegno.get("importo", 0)),
+                "data_assegno": assegno.get("data", datetime.now(timezone.utc).strftime("%Y-%m-%d")),
+                "banca_emittente": assegno.get("banca", ""),
+                "note": assegno.get("note", ""),
+                "stato": "registrato",
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+            await self.db["assegni"].insert_one(assegno_record.copy())
+            assegni_registrati.append(assegno_record)
+        
+        # Crea movimento in Prima Nota
+        pn_id = str(uuid.uuid4())
+        movimento = {
+            "id": pn_id,
+            "data": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+            "tipo": "uscita",
+            "categoria": "Pagamento fornitore (assegni multipli)",
+            "descrizione": f"Pagamento Fatt. {numero_fattura} - {fornitore_nome} ({len(assegni)} assegni)",
+            "importo": totale_assegni,
+            "fattura_id": fattura_id,
+            "fattura_numero": numero_fattura,
+            "fornitore_id": fornitore_id,
+            "fornitore_nome": fornitore_nome,
+            "metodo_pagamento": "assegni_multipli",
+            "gruppo_assegni_id": gruppo_id,
+            "num_assegni": len(assegni),
+            "stato": "registrato",
+            "provvisorio": False,
+            "source": "assegni_multipli",
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+        collection = f"prima_nota_{metodo}"
+        await self.db[collection].insert_one(movimento.copy())
+        
+        # Se c'è differenza (arrotondamento), registra abbuono
+        if differenza > 0.01:
+            abbuono_tipo = "attivo" if totale_assegni > importo_fattura else "passivo"
+            abbuono = {
+                "id": str(uuid.uuid4()),
+                "data": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+                "tipo": abbuono_tipo,
+                "importo": differenza,
+                "fattura_id": fattura_id,
+                "descrizione": f"Arrotondamento assegni Fatt. {numero_fattura}",
+                "source": "assegni_multipli_arrotondamento",
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+            await self.db["abbuoni_arrotondamenti"].insert_one(abbuono.copy())
+            risultato["arrotondamento"] = {
+                "tipo": abbuono_tipo,
+                "importo": differenza
+            }
+        
+        # Aggiorna fattura
+        await self.db["invoices"].update_one(
+            {"id": fattura_id},
+            {"$set": {
+                "stato_riconciliazione": StatoRiconciliazione.ASSEGNI_MULTIPLI.value,
+                "metodo_pagamento_confermato": "assegni_multipli",
+                f"prima_nota_{metodo}_id": pn_id,
+                "gruppo_assegni_id": gruppo_id,
+                "num_assegni": len(assegni),
+                "pagato": True,
+                "riconciliato": True,
+                "importo_pagato_effettivo": totale_assegni,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+        
+        logger.info(f"✅ Assegni multipli: Fatt. {numero_fattura}, {len(assegni)} assegni, totale €{totale_assegni:.2f}")
+        
+        risultato["success"] = True
+        risultato["assegni"] = assegni_registrati
+        risultato["gruppo_id"] = gruppo_id
+        risultato["movimento_prima_nota_id"] = pn_id
+        
+        return risultato
+
+    # =========================================================================
+    # CASO 37: ARROTONDAMENTI AUTOMATICI
+    # =========================================================================
+    
+    async def riconcilia_con_arrotondamento(
+        self,
+        fattura_id: str,
+        importo_pagato: float,
+        metodo: str,
+        tolleranza: float = None,
+        data_pagamento: str = None
+    ) -> Dict[str, Any]:
+        """
+        Riconcilia fattura con tolleranza per arrotondamenti.
+        
+        Caso 37: Fattura €999.99, bonifico €1000.00 → riconcilia automaticamente
+        
+        Args:
+            fattura_id: ID fattura
+            importo_pagato: Importo effettivamente pagato
+            metodo: "cassa" o "banca"
+            tolleranza: Tolleranza massima (default: €1.00)
+            data_pagamento: Data pagamento (opzionale)
+            
+        Returns:
+            Dict con risultato operazione
+        """
+        risultato = {
+            "success": False,
+            "fattura_id": fattura_id
+        }
+        
+        if tolleranza is None:
+            tolleranza = TOLLERANZA_ARROTONDAMENTO_DEFAULT
+        
+        # Limita tolleranza massima
+        tolleranza = min(tolleranza, TOLLERANZA_ARROTONDAMENTO_MAX)
+        
+        # Recupera fattura
+        fattura = await self.db["invoices"].find_one({"id": fattura_id}, {"_id": 0})
+        if not fattura:
+            risultato["error"] = "Fattura non trovata"
+            return risultato
+        
+        # Dati fattura
+        importo_fattura = float(fattura.get("importo_totale") or fattura.get("total_amount") or 0)
+        numero_fattura = fattura.get("numero_documento") or fattura.get("invoice_number") or ""
+        fornitore_nome = fattura.get("fornitore_ragione_sociale") or fattura.get("supplier_name") or ""
+        fornitore_id = fattura.get("fornitore_id")
+        
+        if not data_pagamento:
+            data_pagamento = fattura.get("data_documento") or fattura.get("invoice_date") or datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        
+        # Calcola differenza
+        differenza = importo_pagato - importo_fattura
+        differenza_abs = abs(differenza)
+        
+        risultato["importo_fattura"] = importo_fattura
+        risultato["importo_pagato"] = importo_pagato
+        risultato["differenza"] = differenza
+        risultato["tolleranza"] = tolleranza
+        
+        # Verifica se entro tolleranza
+        if differenza_abs > tolleranza:
+            risultato["error"] = f"Differenza €{differenza_abs:.2f} supera tolleranza €{tolleranza:.2f}"
+            return risultato
+        
+        # Crea movimento Prima Nota
+        pn_id = str(uuid.uuid4())
+        movimento = {
+            "id": pn_id,
+            "data": data_pagamento,
+            "tipo": "uscita",
+            "categoria": "Pagamento fornitore",
+            "descrizione": f"Pagamento Fatt. {numero_fattura} - {fornitore_nome}",
+            "importo": importo_pagato,
+            "fattura_id": fattura_id,
+            "fattura_numero": numero_fattura,
+            "fornitore_id": fornitore_id,
+            "fornitore_nome": fornitore_nome,
+            "metodo_pagamento": metodo,
+            "stato": "registrato",
+            "provvisorio": False,
+            "con_arrotondamento": True,
+            "arrotondamento_importo": differenza,
+            "source": "riconciliazione_arrotondamento",
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+        collection = f"prima_nota_{metodo}"
+        await self.db[collection].insert_one(movimento.copy())
+        
+        # Registra arrotondamento se significativo
+        if differenza_abs > 0.01:
+            # Abbuono attivo se pagato più della fattura, passivo se pagato meno
+            abbuono_tipo = "attivo" if differenza > 0 else "passivo"
+            abbuono = {
+                "id": str(uuid.uuid4()),
+                "data": data_pagamento,
+                "tipo": abbuono_tipo,
+                "importo": differenza_abs,
+                "fattura_id": fattura_id,
+                "fattura_numero": numero_fattura,
+                "fornitore_id": fornitore_id,
+                "fornitore_nome": fornitore_nome,
+                "descrizione": f"Arrotondamento Fatt. {numero_fattura}" + 
+                              (f" (pagato €{importo_pagato:.2f} invece di €{importo_fattura:.2f})" if differenza_abs > 0.05 else ""),
+                "source": "arrotondamento_automatico",
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+            await self.db["abbuoni_arrotondamenti"].insert_one(abbuono.copy())
+            
+            risultato["arrotondamento"] = {
+                "tipo": abbuono_tipo,
+                "importo": differenza_abs,
+                "descrizione": "Abbuono attivo (pagato più)" if differenza > 0 else "Abbuono passivo (pagato meno)"
+            }
+        
+        # Aggiorna fattura
+        await self.db["invoices"].update_one(
+            {"id": fattura_id},
+            {"$set": {
+                "stato_riconciliazione": StatoRiconciliazione.ARROTONDAMENTO_APPLICATO.value,
+                "metodo_pagamento_confermato": metodo,
+                f"prima_nota_{metodo}_id": pn_id,
+                "pagato": True,
+                "riconciliato": True,
+                "importo_pagato_effettivo": importo_pagato,
+                "arrotondamento_applicato": True,
+                "arrotondamento_importo": differenza,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+        
+        logger.info(f"✅ Arrotondamento: Fatt. {numero_fattura}, pagato €{importo_pagato:.2f} (diff: €{differenza:.2f})")
+        
+        risultato["success"] = True
+        risultato["movimento_prima_nota_id"] = pn_id
+        
+        return risultato
+
+    # =========================================================================
+    # CASO 38: PAGAMENTO ANTICIPATO
+    # =========================================================================
+    
+    async def registra_pagamento_anticipato(
+        self,
+        fornitore_id: str = None,
+        fornitore_nome: str = None,
+        fornitore_piva: str = None,
+        importo: float = 0,
+        metodo: str = "banca",
+        data_pagamento: str = None,
+        riferimento: str = "",
+        note: str = ""
+    ) -> Dict[str, Any]:
+        """
+        Registra un pagamento anticipato (prima della fattura).
+        
+        Caso 38: Bonifico €500 il 10/01, Fattura €500 arriva il 15/01
+        
+        Args:
+            fornitore_id: ID fornitore (opzionale)
+            fornitore_nome: Nome fornitore
+            fornitore_piva: P.IVA fornitore
+            importo: Importo pagamento
+            metodo: "cassa" o "banca"
+            data_pagamento: Data pagamento
+            riferimento: Riferimento ordine/contratto
+            note: Note aggiuntive
+            
+        Returns:
+            Dict con ID pagamento anticipato
+        """
+        risultato = {
+            "success": False
+        }
+        
+        if not importo or importo <= 0:
+            risultato["error"] = "Importo deve essere maggiore di zero"
+            return risultato
+        
+        if not fornitore_nome and not fornitore_id and not fornitore_piva:
+            risultato["error"] = "Specificare almeno un identificativo fornitore"
+            return risultato
+        
+        if not data_pagamento:
+            data_pagamento = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        
+        # Crea record pagamento anticipato
+        pagamento_id = str(uuid.uuid4())
+        pagamento = {
+            "id": pagamento_id,
+            "tipo": "pagamento_anticipato",
+            "fornitore_id": fornitore_id,
+            "fornitore_nome": fornitore_nome,
+            "fornitore_piva": fornitore_piva,
+            "importo": importo,
+            "importo_residuo": importo,  # Inizialmente tutto il pagamento è residuo
+            "metodo": metodo,
+            "data_pagamento": data_pagamento,
+            "riferimento": riferimento,
+            "note": note,
+            "stato": "in_attesa_fattura",
+            "fatture_collegate": [],
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+        await self.db["pagamenti_anticipati"].insert_one(pagamento.copy())
+        
+        # Crea movimento in Prima Nota
+        pn_id = str(uuid.uuid4())
+        movimento = {
+            "id": pn_id,
+            "data": data_pagamento,
+            "tipo": "uscita",
+            "categoria": "Pagamento anticipato fornitore",
+            "descrizione": f"Pagamento anticipato - {fornitore_nome or 'N/D'}" + (f" - Rif: {riferimento}" if riferimento else ""),
+            "importo": importo,
+            "pagamento_anticipato_id": pagamento_id,
+            "fornitore_id": fornitore_id,
+            "fornitore_nome": fornitore_nome,
+            "metodo_pagamento": metodo,
+            "stato": "registrato",
+            "provvisorio": False,
+            "source": "pagamento_anticipato",
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+        collection = f"prima_nota_{metodo}"
+        await self.db[collection].insert_one(movimento.copy())
+        
+        logger.info(f"✅ Pagamento anticipato: {fornitore_nome}, €{importo:.2f}")
+        
+        risultato["success"] = True
+        risultato["pagamento_anticipato_id"] = pagamento_id
+        risultato["movimento_prima_nota_id"] = pn_id
+        risultato["importo"] = importo
+        risultato["stato"] = "in_attesa_fattura"
+        
+        return risultato
+
+    async def cerca_pagamenti_anticipati_per_fattura(
+        self,
+        fattura_id: str
+    ) -> Dict[str, Any]:
+        """
+        Cerca pagamenti anticipati che potrebbero corrispondere a una fattura.
+        
+        Cerca per:
+        - Fornitore (ID, nome, P.IVA)
+        - Importo simile (con tolleranza)
+        - Data pagamento precedente alla fattura
+        
+        Args:
+            fattura_id: ID fattura
+            
+        Returns:
+            Lista di pagamenti anticipati candidati
+        """
+        risultato = {
+            "success": False,
+            "fattura_id": fattura_id,
+            "pagamenti_trovati": []
+        }
+        
+        # Recupera fattura
+        fattura = await self.db["invoices"].find_one({"id": fattura_id}, {"_id": 0})
+        if not fattura:
+            risultato["error"] = "Fattura non trovata"
+            return risultato
+        
+        # Dati fattura
+        importo_fattura = float(fattura.get("importo_totale") or fattura.get("total_amount") or 0)
+        data_fattura = fattura.get("data_documento") or fattura.get("invoice_date") or ""
+        fornitore_nome = fattura.get("fornitore_ragione_sociale") or fattura.get("supplier_name") or ""
+        fornitore_piva = fattura.get("fornitore_partita_iva") or fattura.get("supplier_vat") or ""
+        fornitore_id = fattura.get("fornitore_id")
+        
+        # Cerca pagamenti anticipati in attesa
+        query = {
+            "stato": "in_attesa_fattura",
+            "importo_residuo": {"$gt": 0}
+        }
+        
+        # Filtra per fornitore se disponibile
+        if fornitore_id:
+            query["$or"] = [
+                {"fornitore_id": fornitore_id},
+                {"fornitore_piva": fornitore_piva},
+                {"fornitore_nome": {"$regex": fornitore_nome[:10], "$options": "i"}} if fornitore_nome else {}
+            ]
+        elif fornitore_piva:
+            query["fornitore_piva"] = fornitore_piva
+        
+        pagamenti = await self.db["pagamenti_anticipati"].find(query, {"_id": 0}).to_list(50)
+        
+        # Filtra e ordina per rilevanza
+        candidati = []
+        for pag in pagamenti:
+            pag_importo = float(pag.get("importo_residuo", 0))
+            differenza = abs(pag_importo - importo_fattura)
+            
+            # Calcola score di match
+            score = 0
+            
+            # Match importo esatto
+            if differenza <= 0.01:
+                score += 100
+            elif differenza <= 1.00:
+                score += 80
+            elif differenza <= 5.00:
+                score += 50
+            elif differenza <= importo_fattura * 0.05:  # 5%
+                score += 30
+            else:
+                continue  # Troppo diverso
+            
+            # Match fornitore
+            if pag.get("fornitore_id") == fornitore_id:
+                score += 50
+            if pag.get("fornitore_piva") == fornitore_piva:
+                score += 40
+            
+            # Data pagamento precedente alla fattura
+            pag_data = pag.get("data_pagamento", "")
+            if pag_data and data_fattura and pag_data <= data_fattura:
+                score += 20
+            
+            candidati.append({
+                **pag,
+                "score_match": score,
+                "differenza_importo": differenza
+            })
+        
+        # Ordina per score decrescente
+        candidati.sort(key=lambda x: x["score_match"], reverse=True)
+        
+        risultato["success"] = True
+        risultato["pagamenti_trovati"] = candidati[:10]  # Max 10 risultati
+        risultato["importo_fattura"] = importo_fattura
+        
+        return risultato
+
+    async def collega_pagamento_anticipato_a_fattura(
+        self,
+        pagamento_anticipato_id: str,
+        fattura_id: str,
+        importo_da_collegare: float = None
+    ) -> Dict[str, Any]:
+        """
+        Collega un pagamento anticipato a una fattura.
+        
+        Args:
+            pagamento_anticipato_id: ID pagamento anticipato
+            fattura_id: ID fattura
+            importo_da_collegare: Importo da collegare (default: tutto il residuo)
+            
+        Returns:
+            Dict con risultato operazione
+        """
+        risultato = {
+            "success": False,
+            "pagamento_anticipato_id": pagamento_anticipato_id,
+            "fattura_id": fattura_id
+        }
+        
+        # Recupera pagamento anticipato
+        pagamento = await self.db["pagamenti_anticipati"].find_one(
+            {"id": pagamento_anticipato_id}, {"_id": 0}
+        )
+        if not pagamento:
+            risultato["error"] = "Pagamento anticipato non trovato"
+            return risultato
+        
+        # Recupera fattura
+        fattura = await self.db["invoices"].find_one({"id": fattura_id}, {"_id": 0})
+        if not fattura:
+            risultato["error"] = "Fattura non trovata"
+            return risultato
+        
+        # Dati
+        importo_residuo = float(pagamento.get("importo_residuo", 0))
+        importo_fattura = float(fattura.get("importo_totale") or fattura.get("total_amount") or 0)
+        numero_fattura = fattura.get("numero_documento") or fattura.get("invoice_number") or ""
+        
+        if importo_da_collegare is None:
+            importo_da_collegare = min(importo_residuo, importo_fattura)
+        
+        if importo_da_collegare > importo_residuo:
+            risultato["error"] = f"Importo da collegare (€{importo_da_collegare:.2f}) supera residuo disponibile (€{importo_residuo:.2f})"
+            return risultato
+        
+        # Aggiorna pagamento anticipato
+        nuovo_residuo = importo_residuo - importo_da_collegare
+        fatture_collegate = pagamento.get("fatture_collegate", [])
+        fatture_collegate.append({
+            "fattura_id": fattura_id,
+            "fattura_numero": numero_fattura,
+            "importo_collegato": importo_da_collegare,
+            "data_collegamento": datetime.now(timezone.utc).isoformat()
+        })
+        
+        nuovo_stato = "completato" if nuovo_residuo <= 0.01 else "parzialmente_utilizzato"
+        
+        await self.db["pagamenti_anticipati"].update_one(
+            {"id": pagamento_anticipato_id},
+            {"$set": {
+                "importo_residuo": nuovo_residuo,
+                "fatture_collegate": fatture_collegate,
+                "stato": nuovo_stato,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+        
+        # Determina se fattura completamente pagata
+        importo_residuo_fattura = importo_fattura - importo_da_collegare
+        fattura_completata = importo_residuo_fattura <= 0.01
+        
+        # Aggiorna fattura
+        update_fattura = {
+            "pagamento_anticipato_id": pagamento_anticipato_id,
+            "importo_da_anticipato": importo_da_collegare,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+        if fattura_completata:
+            update_fattura.update({
+                "stato_riconciliazione": StatoRiconciliazione.PAGAMENTO_ANTICIPATO.value,
+                "metodo_pagamento_confermato": pagamento.get("metodo", "banca"),
+                "pagato": True,
+                "riconciliato": True,
+                "importo_pagato_effettivo": importo_da_collegare
+            })
+        else:
+            update_fattura.update({
+                "stato_riconciliazione": StatoRiconciliazione.PARZIALMENTE_PAGATA.value,
+                "importo_residuo": importo_residuo_fattura
+            })
+        
+        await self.db["invoices"].update_one({"id": fattura_id}, {"$set": update_fattura})
+        
+        logger.info(f"✅ Collegato pagamento anticipato a Fatt. {numero_fattura}: €{importo_da_collegare:.2f}")
+        
+        risultato["success"] = True
+        risultato["importo_collegato"] = importo_da_collegare
+        risultato["residuo_pagamento"] = nuovo_residuo
+        risultato["residuo_fattura"] = importo_residuo_fattura if not fattura_completata else 0
+        risultato["fattura_completata"] = fattura_completata
+        risultato["stato_pagamento"] = nuovo_stato
+        
+        return risultato
+
+    async def get_pagamenti_anticipati_in_attesa(self) -> Dict[str, Any]:
+        """
+        Ritorna tutti i pagamenti anticipati in attesa di fattura.
+        """
+        pagamenti = await self.db["pagamenti_anticipati"].find(
+            {"stato": {"$in": ["in_attesa_fattura", "parzialmente_utilizzato"]}},
+            {"_id": 0}
+        ).sort("data_pagamento", -1).to_list(100)
+        
+        totale = sum(float(p.get("importo_residuo", 0)) for p in pagamenti)
+        
+        return {
+            "success": True,
+            "count": len(pagamenti),
+            "totale_residuo": totale,
+            "pagamenti": pagamenti
+        }
+
 
 
 
