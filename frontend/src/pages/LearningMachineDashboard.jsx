@@ -205,8 +205,7 @@ export default function LearningMachineDashboard() {
         {[
           { id: 'centri-costo', label: 'Centri di Costo', icon: Calculator },
           { id: 'magazzino', label: 'Magazzino', icon: Warehouse },
-          { id: 'produzione', label: 'Produzione', icon: Factory },
-          { id: 'f24', label: 'F24 & Banca', icon: Receipt }
+          { id: 'produzione', label: 'Produzione', icon: Factory }
         ].map(tab => (
           <button
             key={tab.id}
