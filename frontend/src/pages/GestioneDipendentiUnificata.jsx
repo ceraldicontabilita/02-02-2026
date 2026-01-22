@@ -974,37 +974,59 @@ function TabGiustificativi({ dipendente, anno }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedCategoria, setSelectedCategoria] = useState('tutti');
+  const [dataLoaded, setDataLoaded] = useState(false);
   
   // Carica dati al mount e quando cambia dipendente
   useEffect(() => {
+    if (!dipendente?.id || dataLoaded) return;
+    
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+    
     const fetchData = async () => {
-      if (!dipendente?.id) {
-        setLoading(false);
-        return;
-      }
-      
       setLoading(true);
       setError(null);
       
       try {
-        // Chiamate API con api axios
-        const [giustRes, ferieRes] = await Promise.all([
-          api.get(`/api/giustificativi/dipendente/${dipendente.id}/giustificativi`, { params: { anno } }),
-          api.get(`/api/giustificativi/dipendente/${dipendente.id}/saldo-ferie`, { params: { anno } })
-        ]);
+        const giustRes = await api.get(`/api/giustificativi/dipendente/${dipendente.id}/giustificativi`, { 
+          params: { anno },
+          signal: controller.signal 
+        });
+        
+        const ferieRes = await api.get(`/api/giustificativi/dipendente/${dipendente.id}/saldo-ferie`, { 
+          params: { anno },
+          signal: controller.signal 
+        });
         
         setGiustificativi(giustRes.data?.giustificativi || []);
         setSaldoFerie(ferieRes.data || null);
-        setLoading(false);
+        setDataLoaded(true);
       } catch (err) {
-        console.error('Errore caricamento:', err);
-        setError(err.response?.data?.detail || err.message || 'Errore');
+        if (err.name === 'AbortError' || err.name === 'CanceledError') {
+          setError('Timeout - riprova');
+        } else {
+          setError(err.response?.data?.detail || err.message || 'Errore');
+        }
+      } finally {
+        clearTimeout(timeoutId);
         setLoading(false);
       }
     };
     
     fetchData();
-  }, [dipendente?.id, anno]);
+    
+    return () => {
+      clearTimeout(timeoutId);
+      controller.abort();
+    };
+  }, [dipendente?.id, anno, dataLoaded]);
+  
+  // Reset quando cambia dipendente
+  useEffect(() => {
+    setDataLoaded(false);
+    setGiustificativi([]);
+    setSaldoFerie(null);
+  }, [dipendente?.id]);
   
   // Se non c'è dipendente selezionato
   if (!dipendente?.id) {
@@ -1012,7 +1034,17 @@ function TabGiustificativi({ dipendente, anno }) {
   }
   
   if (error) {
-    return <div style={{ textAlign: 'center', padding: 40, color: '#dc2626' }}>Errore: {error}</div>;
+    return (
+      <div style={{ textAlign: 'center', padding: 40 }}>
+        <div style={{ color: '#dc2626', marginBottom: 16 }}>Errore: {error}</div>
+        <button 
+          onClick={() => { setError(null); setDataLoaded(false); }}
+          style={{ padding: '8px 16px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer' }}
+        >
+          Riprova
+        </button>
+      </div>
+    );
   }
   
   const categorie = ['tutti', 'ferie', 'permesso', 'assenza', 'congedo', 'malattia', 'formazione', 'lavoro'];
