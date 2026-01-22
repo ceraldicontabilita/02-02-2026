@@ -12,7 +12,7 @@ import requests
 import time
 import os
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://staffmanage-15.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://attendance-ai-13.preview.emergentagent.com')
 
 class TestCorrispettiviAPI:
     """Test corrispettivi API with year filter"""
