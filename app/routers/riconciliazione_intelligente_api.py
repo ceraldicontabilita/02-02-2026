@@ -915,3 +915,209 @@ async def registra_pagamento_con_sconto(payload: Dict[str, Any]) -> Dict[str, An
         raise HTTPException(status_code=400, detail=risultato.get("error"))
     
     return risultato
+
+
+# =============================================================================
+# FASE 3: CASI ESTESI (36-38)
+# =============================================================================
+
+@router.post("/assegni-multipli")
+async def registra_assegni_multipli(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Registra pagamento con assegni multipli.
+    
+    Caso 36: 2 assegni (€1.028,82 + €1.421,77) → Fattura €2.450,00
+    
+    Payload:
+    {
+        "fattura_id": "uuid",
+        "assegni": [
+            {"numero": "123456", "importo": 1028.82, "data": "2026-01-15", "banca": "BPM"},
+            {"numero": "123457", "importo": 1421.77, "data": "2026-01-15", "banca": "BPM"}
+        ],
+        "metodo": "banca" (opzionale, default: banca)
+    }
+    """
+    db = Database.get_db()
+    service = get_riconciliazione_service(db)
+    
+    fattura_id = payload.get("fattura_id")
+    assegni = payload.get("assegni", [])
+    metodo = payload.get("metodo", "banca")
+    
+    if not fattura_id:
+        raise HTTPException(status_code=400, detail="fattura_id obbligatorio")
+    
+    if not assegni or len(assegni) < 1:
+        raise HTTPException(status_code=400, detail="Specificare almeno un assegno")
+    
+    # Valida assegni
+    for idx, ass in enumerate(assegni):
+        if not ass.get("importo"):
+            raise HTTPException(status_code=400, detail=f"Assegno {idx+1}: importo obbligatorio")
+    
+    risultato = await service.registra_assegni_multipli(
+        fattura_id=fattura_id,
+        assegni=assegni,
+        metodo=metodo
+    )
+    
+    if not risultato.get("success"):
+        raise HTTPException(status_code=400, detail=risultato.get("error"))
+    
+    return risultato
+
+
+@router.post("/riconcilia-con-arrotondamento")
+async def riconcilia_con_arrotondamento(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Riconcilia fattura con tolleranza per arrotondamenti.
+    
+    Caso 37: Fattura €999.99, bonifico €1000.00 → riconcilia automaticamente
+    
+    Payload:
+    {
+        "fattura_id": "uuid",
+        "importo_pagato": 1000.00,
+        "metodo": "banca",
+        "tolleranza": 1.00 (opzionale, default €1.00, max €5.00),
+        "data_pagamento": "YYYY-MM-DD" (opzionale)
+    }
+    """
+    db = Database.get_db()
+    service = get_riconciliazione_service(db)
+    
+    fattura_id = payload.get("fattura_id")
+    importo_pagato = payload.get("importo_pagato")
+    metodo = payload.get("metodo", "").lower()
+    tolleranza = payload.get("tolleranza")
+    data_pagamento = payload.get("data_pagamento")
+    
+    if not fattura_id or not importo_pagato or metodo not in ["cassa", "banca"]:
+        raise HTTPException(status_code=400, detail="fattura_id, importo_pagato e metodo (cassa/banca) obbligatori")
+    
+    risultato = await service.riconcilia_con_arrotondamento(
+        fattura_id=fattura_id,
+        importo_pagato=float(importo_pagato),
+        metodo=metodo,
+        tolleranza=float(tolleranza) if tolleranza else None,
+        data_pagamento=data_pagamento
+    )
+    
+    if not risultato.get("success"):
+        raise HTTPException(status_code=400, detail=risultato.get("error"))
+    
+    return risultato
+
+
+@router.post("/pagamento-anticipato")
+async def registra_pagamento_anticipato(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Registra un pagamento anticipato (prima della fattura).
+    
+    Caso 38: Bonifico €500 il 10/01, Fattura €500 arriva il 15/01
+    
+    Payload:
+    {
+        "fornitore_id": "uuid" (opzionale),
+        "fornitore_nome": "Nome Fornitore",
+        "fornitore_piva": "01234567890" (opzionale),
+        "importo": 500.00,
+        "metodo": "banca",
+        "data_pagamento": "2026-01-10" (opzionale),
+        "riferimento": "Ordine 123" (opzionale),
+        "note": "Note" (opzionale)
+    }
+    """
+    db = Database.get_db()
+    service = get_riconciliazione_service(db)
+    
+    importo = payload.get("importo")
+    metodo = payload.get("metodo", "banca").lower()
+    
+    if not importo or float(importo) <= 0:
+        raise HTTPException(status_code=400, detail="importo deve essere maggiore di zero")
+    
+    if metodo not in ["cassa", "banca"]:
+        raise HTTPException(status_code=400, detail="metodo deve essere 'cassa' o 'banca'")
+    
+    risultato = await service.registra_pagamento_anticipato(
+        fornitore_id=payload.get("fornitore_id"),
+        fornitore_nome=payload.get("fornitore_nome"),
+        fornitore_piva=payload.get("fornitore_piva"),
+        importo=float(importo),
+        metodo=metodo,
+        data_pagamento=payload.get("data_pagamento"),
+        riferimento=payload.get("riferimento", ""),
+        note=payload.get("note", "")
+    )
+    
+    if not risultato.get("success"):
+        raise HTTPException(status_code=400, detail=risultato.get("error"))
+    
+    return risultato
+
+
+@router.get("/pagamenti-anticipati")
+async def get_pagamenti_anticipati() -> Dict[str, Any]:
+    """
+    Lista pagamenti anticipati in attesa di fattura.
+    """
+    db = Database.get_db()
+    service = get_riconciliazione_service(db)
+    
+    return await service.get_pagamenti_anticipati_in_attesa()
+
+
+@router.post("/cerca-pagamenti-anticipati")
+async def cerca_pagamenti_anticipati_per_fattura(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Cerca pagamenti anticipati che potrebbero corrispondere a una fattura.
+    
+    Payload:
+    {
+        "fattura_id": "uuid"
+    }
+    """
+    db = Database.get_db()
+    service = get_riconciliazione_service(db)
+    
+    fattura_id = payload.get("fattura_id")
+    if not fattura_id:
+        raise HTTPException(status_code=400, detail="fattura_id obbligatorio")
+    
+    return await service.cerca_pagamenti_anticipati_per_fattura(fattura_id)
+
+
+@router.post("/collega-pagamento-anticipato")
+async def collega_pagamento_anticipato(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Collega un pagamento anticipato a una fattura.
+    
+    Payload:
+    {
+        "pagamento_anticipato_id": "uuid",
+        "fattura_id": "uuid",
+        "importo_da_collegare": 500.00 (opzionale, default: tutto il residuo)
+    }
+    """
+    db = Database.get_db()
+    service = get_riconciliazione_service(db)
+    
+    pagamento_id = payload.get("pagamento_anticipato_id")
+    fattura_id = payload.get("fattura_id")
+    importo = payload.get("importo_da_collegare")
+    
+    if not pagamento_id or not fattura_id:
+        raise HTTPException(status_code=400, detail="pagamento_anticipato_id e fattura_id obbligatori")
+    
+    risultato = await service.collega_pagamento_anticipato_a_fattura(
+        pagamento_anticipato_id=pagamento_id,
+        fattura_id=fattura_id,
+        importo_da_collegare=float(importo) if importo else None
+    )
+    
+    if not risultato.get("success"):
+        raise HTTPException(status_code=400, detail=risultato.get("error"))
+    
+    return risultato
