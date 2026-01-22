@@ -377,16 +377,17 @@ async def export_bilancio_pdf(anno: int = Query(None)):
     elements.append(Paragraph("CONTO ECONOMICO", section_style))
     
     ce = conto_economico
+    # NOTA: I ricavi derivano SOLO dai corrispettivi (vendite al pubblico)
+    # I costi derivano dalle fatture ricevute - note credito
     ce_data = [
         ['RICAVI', ''],
-        ['Corrispettivi (Vendite)', f"€ {ce['ricavi']['corrispettivi']:,.2f}"],
-        ['Altri Ricavi', f"€ {ce['ricavi']['altri_ricavi']:,.2f}"],
+        ['Corrispettivi (Vendite al Pubblico)', f"€ {ce['ricavi']['corrispettivi']:,.2f}"],
         ['TOTALE RICAVI', f"€ {ce['ricavi']['totale_ricavi']:,.2f}"],
         ['', ''],
         ['COSTI', ''],
-        ['Acquisti (Fatture Fornitori)', f"€ {ce['costi']['acquisti']:,.2f}"],
-        ['Altri Costi Operativi', f"€ {ce['costi']['altri_costi']:,.2f}"],
-        ['TOTALE COSTI', f"€ {ce['costi']['totale_costi']:,.2f}"],
+        ['Acquisti (Fatture Ricevute)', f"€ {ce['costi']['acquisti']:,.2f}"],
+        ['Note di Credito Ricevute', f"-€ {ce['costi']['note_credito']:,.2f}"],
+        ['TOTALE COSTI (Netto)', f"€ {ce['costi']['totale_costi']:,.2f}"],
         ['', ''],
         ['RISULTATO', f"€ {ce['risultato']['utile_perdita']:,.2f}"]
     ]
