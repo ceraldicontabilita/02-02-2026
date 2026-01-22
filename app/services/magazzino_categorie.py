@@ -432,7 +432,13 @@ def calcola_scarico_ricetta(
     
     scarichi = []
     for ing in ingredienti_ricetta:
-        qta_originale = ing.get("quantita", 0) or ing.get("quantita_originale", 0)
+        # Gestisce quantità come stringa o numero
+        qta_raw = ing.get("quantita", 0) or ing.get("quantita_originale", 0)
+        try:
+            qta_originale = float(qta_raw) if qta_raw else 0.0
+        except (ValueError, TypeError):
+            qta_originale = 0.0
+        
         unita = ing.get("unita", "") or ing.get("unita_originale", "")
         
         scarichi.append({
