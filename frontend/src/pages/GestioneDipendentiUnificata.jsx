@@ -146,6 +146,11 @@ export default function GestioneDipendentiUnificata() {
           const accRes = await api.get(`/api/tfr/acconti/${selectedDip.id}`);
           setAcconti(Array.isArray(accRes.data) ? accRes.data : accRes.data?.acconti || []);
           break;
+          
+        case 'giustificativi':
+          // I giustificativi vengono caricati dal componente TabGiustificativi stesso
+          // Non serve caricare nulla qui
+          break;
       }
     } catch (e) {
       console.error('Errore caricamento tab:', e);
