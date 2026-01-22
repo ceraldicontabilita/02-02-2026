@@ -135,19 +135,46 @@ Il sistema classifica **automaticamente** ogni fattura leggendo:
 
 📄 **Documentazione:** `/app/app/REGOLE_CONTABILI.md`
 
-### 3.6 ✅ Classificazione Documenti
+### 3.6 ✅ Gestione Magazzino Avanzata (NUOVO - 22/01/2026)
+
+Sistema completo di gestione magazzino per bar/pasticceria integrato con il ciclo della Learning Machine:
+
+#### Funzionalità
+- **Carico automatico da XML**: Parsing linee fattura con estrazione quantità/unità
+- **26 categorie merceologiche**: Caffè, Vini, Farine, Latticini, Cacao, ecc.
+- **Classificazione intelligente**: Pattern matching con confidence score
+- **Distinta base (Ricette)**: Calcolo ingredienti proporzionale alle porzioni
+- **Scarico per produzione**: Genera lotti con tracciabilità completa
+- **Collegamento CDC**: Ogni articolo collegato al centro di costo
+
+#### Endpoint Magazzino Avanzato
+- `POST /api/magazzino/carico-da-fattura/{id}` - Carico da singola fattura XML
+- `POST /api/magazzino/carico-massivo?anno=X` - Carico batch tutte le fatture
+- `POST /api/magazzino/scarico-produzione?ricetta_id=X&porzioni_prodotte=Y` - Scarico per lotto
+- `GET /api/magazzino/giacenze` - Giacenze raggruppate per categoria con valore
+- `GET /api/magazzino/movimenti` - Storico movimenti (carico/scarico)
+- `GET /api/magazzino/lotti-produzione` - Registro lotti produzione
+- `GET /api/magazzino/categorie-merceologiche` - Lista 26 categorie
+
+#### Collezioni Database Magazzino
+- `warehouse_stocks` - Giacenze articoli
+- `movimenti_magazzino` - Storico movimenti
+- `lotti_produzione` - Registro lotti
+- `acquisti_prodotti` - Log prodotti caricati
+
+### 3.7 ✅ Classificazione Documenti
 - Pagina unificata `/classificazione-email`
 - 3 tab: Classificazione, Documenti, Regole
 - Scansione email automatica
 - Visualizzazione PDF integrata
 
-### 3.6 ✅ F24
+### 3.8 ✅ F24
 - Import da commercialista
 - Riconciliazione con estratto conto
 - Gestione quietanze
 - Codici tributari
 
-### 3.7 ✅ Noleggio Auto
+### 3.9 ✅ Noleggio Auto
 - Gestione veicoli e contratti
 - Verbali (multe)
 - Bolli e riparazioni
