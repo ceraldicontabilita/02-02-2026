@@ -3,6 +3,31 @@
 
 ---
 
+## 22 Gennaio 2026 - Sessione 10
+
+### ✅ Sistema Notifiche Limiti Giustificativi
+- Nuovo endpoint `GET /api/giustificativi/alert-limiti` per monitorare dipendenti vicini al limite
+- Nuovo endpoint `GET /api/giustificativi/riepilogo-limiti` per dashboard
+- Widget `AlertGiustificativiWidget` nella Dashboard
+- Soglia configurabile (default 80%, warning a 90%, critical a 100%)
+- Visualizza: dipendente, tipo giustificativo, ore usate/limite, percentuale
+
+### ✅ Documentazione
+- Ricostruito PRD.md da zero (~200 righe)
+- Creato CHANGELOG.md separato
+- Creato ROADMAP.md per backlog
+- Creato README.md completo (~900 righe) con:
+  - Architettura e diagrammi
+  - Regole di business
+  - Logica contabile (partita doppia)
+  - Standard UI/UX
+  - API Reference completa
+  - Database schema
+  - Flussi operativi
+  - Guida sviluppo
+
+---
+
 ## 22 Gennaio 2026 - Sessione 9
 
 ### ✅ Unificazione Pagine Documenti
