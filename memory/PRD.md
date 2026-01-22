@@ -102,21 +102,31 @@ Sistema ERP contabile per aziende italiane con:
 - Casi speciali: Assegni Multipli, Arrotondamenti, Pagamenti Anticipati
 - Auto-riconciliazione F24
 
-### 3.5 ✅ Bilancio e Contabilità Economica (CORRETTO 22/01/2026)
-- **Struttura DB**:
-  - `corrispettivi`: Vendite al pubblico (scontrini) = UNICA fonte di RICAVI
-  - `invoices`: TUTTE fatture RICEVUTE da fornitori = COSTI
-  - NON esistono fatture emesse a clienti nel sistema
-- **Conto Economico** (per competenza):
-  - Ricavi: SOLO Corrispettivi (`totale_imponibile`)
-  - Costi: Fatture Ricevute (imponibile) - Note Credito (TD04, TD08)
-  - Margine percentuale calcolato automaticamente
-- **Stato Patrimoniale**: Attivo = Passivo (bilanciamento verificato)
-- **Liquidazione IVA**:
-  - IVA Debito da corrispettivi
-  - IVA Credito da fatture ricevute
-  - Note Credito gestite correttamente
-- **PDF Export**: Funziona correttamente per bilancio e confronto annuale
+### 3.5 ✅ Bilancio e Contabilità Economica (DEFINITIVO 22/01/2026)
+
+#### REGOLA CONTABILE FONDAMENTALE ⚠️
+**Le fatture emesse a clienti NON sono ricavi aggiuntivi!**
+L'importo è già nei corrispettivi (scontrino originale). Non sommare per evitare doppio conteggio.
+
+#### Struttura Database (Sistema NON multi-utente)
+- `corrispettivi`: Vendite al pubblico = **UNICA fonte RICAVI**
+- `invoices`: Fatture RICEVUTE da fornitori = **COSTI**
+- P.IVA azienda: 04523831214
+
+#### Conto Economico (per competenza)
+| Voce | Formula |
+|------|---------|
+| RICAVI | Solo Corrispettivi (totale_imponibile) |
+| COSTI | Fatture Ricevute - Note Credito (TD04, TD08) |
+| UTILE | RICAVI - COSTI |
+
+#### Liquidazione IVA
+| Voce | Fonte |
+|------|-------|
+| IVA Debito | Solo da corrispettivi (totale_iva) |
+| IVA Credito | Da fatture ricevute - NC |
+
+📄 **Documentazione completa:** `/app/app/REGOLE_CONTABILI.md`
 
 ### 3.6 ✅ Classificazione Documenti
 - Pagina unificata `/classificazione-email`
