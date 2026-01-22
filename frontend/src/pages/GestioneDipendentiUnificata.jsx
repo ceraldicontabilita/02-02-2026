@@ -954,3 +954,199 @@ const getMeseName = (mese) => {
   const mesi = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
   return mesi[(mese || 1) - 1] || mese;
 };
+
+
+// ============================================
+// TAB GIUSTIFICATIVI
+// ============================================
+
+function TabGiustificativi({ dipendente, anno }) {
+  const [giustificativi, setGiustificativi] = useState([]);
+  const [saldoFerie, setSaldoFerie] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [selectedCategoria, setSelectedCategoria] = useState('tutti');
+  
+  useEffect(() => {
+    if (!dipendente?.id) return;
+    loadGiustificativi();
+  }, [dipendente?.id, anno]);
+  
+  const loadGiustificativi = async () => {
+    try {
+      setLoading(true);
+      const [giustRes, ferieRes] = await Promise.all([
+        api.get(`/api/giustificativi/dipendente/${dipendente.id}/giustificativi?anno=${anno}`),
+        api.get(`/api/giustificativi/dipendente/${dipendente.id}/saldo-ferie?anno=${anno}`)
+      ]);
+      setGiustificativi(giustRes.data.giustificativi || []);
+      setSaldoFerie(ferieRes.data);
+    } catch (err) {
+      console.error('Errore caricamento giustificativi:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const categorie = ['tutti', 'ferie', 'permesso', 'assenza', 'congedo', 'malattia', 'formazione', 'lavoro'];
+  
+  const filteredGiustificativi = selectedCategoria === 'tutti' 
+    ? giustificativi 
+    : giustificativi.filter(g => g.categoria === selectedCategoria);
+  
+  if (loading) return <div style={{ textAlign: 'center', padding: 40, color: '#6b7280' }}>Caricamento...</div>;
+  
+  return (
+    <div>
+      {/* Riepilogo Ferie/ROL/Ex-Festività */}
+      {saldoFerie && (
+        <div style={{ marginBottom: 24 }}>
+          <h4 style={{ margin: '0 0 12px 0', color: '#1e3a5f', fontSize: 15 }}>📊 Riepilogo {anno}</h4>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+            {/* Ferie */}
+            <div style={{ background: '#dcfce7', borderRadius: 10, padding: 16, border: '1px solid #86efac' }}>
+              <div style={{ fontSize: 12, color: '#166534', marginBottom: 4 }}>🏖️ FERIE</div>
+              <div style={{ fontSize: 24, fontWeight: 700, color: '#166534' }}>
+                {saldoFerie.ferie?.giorni_residui?.toFixed(1) || 0} <span style={{ fontSize: 12 }}>giorni</span>
+              </div>
+              <div style={{ fontSize: 11, color: '#15803d', marginTop: 4 }}>
+                Maturate: {saldoFerie.ferie?.maturate?.toFixed(0)}h | Godute: {saldoFerie.ferie?.godute?.toFixed(0)}h
+              </div>
+            </div>
+            
+            {/* ROL */}
+            <div style={{ background: '#dbeafe', borderRadius: 10, padding: 16, border: '1px solid #93c5fd' }}>
+              <div style={{ fontSize: 12, color: '#1e40af', marginBottom: 4 }}>⏰ ROL</div>
+              <div style={{ fontSize: 24, fontWeight: 700, color: '#1e40af' }}>
+                {saldoFerie.rol?.residui?.toFixed(0) || 0} <span style={{ fontSize: 12 }}>ore</span>
+              </div>
+              <div style={{ fontSize: 11, color: '#1d4ed8', marginTop: 4 }}>
+                Maturati: {saldoFerie.rol?.maturati?.toFixed(0)}h | Goduti: {saldoFerie.rol?.goduti?.toFixed(0)}h
+              </div>
+            </div>
+            
+            {/* Ex Festività */}
+            <div style={{ background: '#fef3c7', borderRadius: 10, padding: 16, border: '1px solid #fcd34d' }}>
+              <div style={{ fontSize: 12, color: '#92400e', marginBottom: 4 }}>📅 EX FESTIVITÀ</div>
+              <div style={{ fontSize: 24, fontWeight: 700, color: '#92400e' }}>
+                {saldoFerie.ex_festivita?.residue?.toFixed(0) || 0} <span style={{ fontSize: 12 }}>ore</span>
+              </div>
+              <div style={{ fontSize: 11, color: '#b45309', marginTop: 4 }}>
+                Maturate: {saldoFerie.ex_festivita?.maturate?.toFixed(0)}h | Godute: {saldoFerie.ex_festivita?.godute?.toFixed(0)}h
+              </div>
+            </div>
+            
+            {/* Permessi */}
+            <div style={{ background: '#f3e8ff', borderRadius: 10, padding: 16, border: '1px solid #d8b4fe' }}>
+              <div style={{ fontSize: 12, color: '#6b21a8', marginBottom: 4 }}>🎫 PERMESSI</div>
+              <div style={{ fontSize: 24, fontWeight: 700, color: '#6b21a8' }}>
+                {saldoFerie.permessi?.goduti_anno?.toFixed(0) || 0} <span style={{ fontSize: 12 }}>ore usate</span>
+              </div>
+              <div style={{ fontSize: 11, color: '#7c3aed', marginTop: 4 }}>
+                Anno {anno}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Filtro Categorie */}
+      <div style={{ marginBottom: 16, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        {categorie.map(cat => (
+          <button
+            key={cat}
+            onClick={() => setSelectedCategoria(cat)}
+            style={{
+              padding: '6px 14px',
+              borderRadius: 20,
+              border: 'none',
+              background: selectedCategoria === cat ? '#1e3a5f' : '#e5e7eb',
+              color: selectedCategoria === cat ? 'white' : '#374151',
+              cursor: 'pointer',
+              fontSize: 12,
+              fontWeight: 500,
+              textTransform: 'capitalize'
+            }}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
+      
+      {/* Tabella Giustificativi */}
+      <div style={{ background: 'white', borderRadius: 10, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+          <thead>
+            <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e5e7eb' }}>
+              <th style={{ ...thStyle, width: 80 }}>Codice</th>
+              <th style={thStyle}>Descrizione</th>
+              <th style={{ ...thStyle, width: 100, textAlign: 'center' }}>Limite Anno</th>
+              <th style={{ ...thStyle, width: 100, textAlign: 'center' }}>Limite Mese</th>
+              <th style={{ ...thStyle, width: 100, textAlign: 'center' }}>Usate Anno</th>
+              <th style={{ ...thStyle, width: 100, textAlign: 'center' }}>Usate Mese</th>
+              <th style={{ ...thStyle, width: 100, textAlign: 'center' }}>Residuo</th>
+              <th style={{ ...thStyle, width: 80, textAlign: 'center' }}>Stato</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredGiustificativi.map((g, idx) => {
+              const superato = g.superato_annuale || g.superato_mensile;
+              const warning = g.residuo_annuale !== null && g.residuo_annuale < 10 && g.residuo_annuale >= 0;
+              
+              return (
+                <tr 
+                  key={g.codice}
+                  style={{ 
+                    background: superato ? '#fef2f2' : (idx % 2 === 0 ? 'white' : '#f9fafb'),
+                    borderBottom: '1px solid #e5e7eb'
+                  }}
+                >
+                  <td style={{ ...tdStyle, fontWeight: 600, color: '#1e3a5f' }}>{g.codice}</td>
+                  <td style={tdStyle}>
+                    {g.descrizione}
+                    {g.retribuito && <span style={{ marginLeft: 6, fontSize: 10, color: '#059669' }}>💰 Retribuito</span>}
+                  </td>
+                  <td style={{ ...tdStyle, textAlign: 'center' }}>
+                    {g.limite_annuale_ore != null ? `${g.limite_annuale_ore}h` : '-'}
+                  </td>
+                  <td style={{ ...tdStyle, textAlign: 'center' }}>
+                    {g.limite_mensile_ore != null ? `${g.limite_mensile_ore}h` : '-'}
+                  </td>
+                  <td style={{ ...tdStyle, textAlign: 'center', fontWeight: g.ore_usate_anno > 0 ? 600 : 400 }}>
+                    {g.ore_usate_anno > 0 ? `${g.ore_usate_anno.toFixed(1)}h` : '-'}
+                  </td>
+                  <td style={{ ...tdStyle, textAlign: 'center' }}>
+                    {g.ore_usate_mese > 0 ? `${g.ore_usate_mese.toFixed(1)}h` : '-'}
+                  </td>
+                  <td style={{ 
+                    ...tdStyle, 
+                    textAlign: 'center',
+                    color: superato ? '#dc2626' : (warning ? '#d97706' : '#059669'),
+                    fontWeight: 600
+                  }}>
+                    {g.residuo_annuale != null ? `${g.residuo_annuale.toFixed(1)}h` : '-'}
+                  </td>
+                  <td style={{ ...tdStyle, textAlign: 'center' }}>
+                    {superato ? (
+                      <span style={{ color: '#dc2626', fontWeight: 600 }}>⛔ SUPERATO</span>
+                    ) : warning ? (
+                      <span style={{ color: '#d97706' }}>⚠️ Attenzione</span>
+                    ) : (
+                      <span style={{ color: '#059669' }}>✓ OK</span>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      
+      {/* Legenda */}
+      <div style={{ marginTop: 16, padding: 12, background: '#f0f9ff', borderRadius: 8, fontSize: 11, color: '#0369a1' }}>
+        <strong>ℹ️ Note:</strong> I limiti mostrati sono quelli di default del CCNL. Possono essere personalizzati per ogni dipendente.
+        Se viene superato un limite, il sistema bloccherà l'inserimento di nuovi giustificativi di quel tipo.
+      </div>
+    </div>
+  );
+}
+
