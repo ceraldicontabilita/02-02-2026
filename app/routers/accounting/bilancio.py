@@ -794,15 +794,15 @@ async def export_confronto_pdf(
     elements.append(Paragraph("📈 CONTO ECONOMICO", subtitle_style))
     
     ce = confronto["conto_economico"]
+    # NOTA: I ricavi derivano SOLO dai corrispettivi (vendite al pubblico)
     ce_data = [
         ["Voce", f"{anno_precedente}", f"{anno_corrente}", "Variazione", "%"],
         ["RICAVI", "", "", "", ""],
         ["  Corrispettivi", fmt_eur(ce["ricavi"]["corrispettivi"]["precedente"]), fmt_eur(ce["ricavi"]["corrispettivi"]["attuale"]), fmt_eur(ce["ricavi"]["corrispettivi"]["variazione"]), fmt_pct(ce["ricavi"]["corrispettivi"]["variazione_pct"])],
-        ["  Altri ricavi", fmt_eur(ce["ricavi"]["altri_ricavi"]["precedente"]), fmt_eur(ce["ricavi"]["altri_ricavi"]["attuale"]), fmt_eur(ce["ricavi"]["altri_ricavi"]["variazione"]), fmt_pct(ce["ricavi"]["altri_ricavi"]["variazione_pct"])],
         ["  TOTALE RICAVI", fmt_eur(ce["ricavi"]["totale_ricavi"]["precedente"]), fmt_eur(ce["ricavi"]["totale_ricavi"]["attuale"]), fmt_eur(ce["ricavi"]["totale_ricavi"]["variazione"]), fmt_pct(ce["ricavi"]["totale_ricavi"]["variazione_pct"])],
         ["COSTI", "", "", "", ""],
         ["  Acquisti", fmt_eur(ce["costi"]["acquisti"]["precedente"]), fmt_eur(ce["costi"]["acquisti"]["attuale"]), fmt_eur(ce["costi"]["acquisti"]["variazione"]), fmt_pct(ce["costi"]["acquisti"]["variazione_pct"])],
-        ["  Costi operativi", fmt_eur(ce["costi"]["costi_operativi"]["precedente"]), fmt_eur(ce["costi"]["costi_operativi"]["attuale"]), fmt_eur(ce["costi"]["costi_operativi"]["variazione"]), fmt_pct(ce["costi"]["costi_operativi"]["variazione_pct"])],
+        ["  Note Credito", fmt_eur(ce["costi"]["note_credito"]["precedente"]), fmt_eur(ce["costi"]["note_credito"]["attuale"]), fmt_eur(ce["costi"]["note_credito"]["variazione"]), fmt_pct(ce["costi"]["note_credito"]["variazione_pct"])],
         ["  TOTALE COSTI", fmt_eur(ce["costi"]["totale_costi"]["precedente"]), fmt_eur(ce["costi"]["totale_costi"]["attuale"]), fmt_eur(ce["costi"]["totale_costi"]["variazione"]), fmt_pct(ce["costi"]["totale_costi"]["variazione_pct"])],
         ["RISULTATO", "", "", "", ""],
         ["  Utile lordo", fmt_eur(ce["risultato"]["utile_lordo"]["precedente"]), fmt_eur(ce["risultato"]["utile_lordo"]["attuale"]), fmt_eur(ce["risultato"]["utile_lordo"]["variazione"]), fmt_pct(ce["risultato"]["utile_lordo"]["variazione_pct"])],
@@ -818,11 +818,11 @@ async def export_confronto_pdf(
         ('ALIGN', (1, 0), (-1, -1), 'RIGHT'),
         ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#e5e7eb')),
         ('BACKGROUND', (0, 1), (-1, 1), colors.HexColor('#f0f9ff')),
-        ('BACKGROUND', (0, 5), (-1, 5), colors.HexColor('#fef2f2')),
-        ('BACKGROUND', (0, 9), (-1, 9), colors.HexColor('#f0fdf4')),
-        ('FONTNAME', (0, 4), (-1, 4), 'Helvetica-Bold'),
-        ('FONTNAME', (0, 8), (-1, 8), 'Helvetica-Bold'),
-        ('FONTNAME', (0, 11), (-1, 11), 'Helvetica-Bold'),
+        ('BACKGROUND', (0, 4), (-1, 4), colors.HexColor('#fef2f2')),
+        ('BACKGROUND', (0, 8), (-1, 8), colors.HexColor('#f0fdf4')),
+        ('FONTNAME', (0, 3), (-1, 3), 'Helvetica-Bold'),
+        ('FONTNAME', (0, 7), (-1, 7), 'Helvetica-Bold'),
+        ('FONTNAME', (0, 10), (-1, 10), 'Helvetica-Bold'),
     ]))
     elements.append(ce_table)
     elements.append(Spacer(1, 30))
