@@ -79,6 +79,57 @@ Miglioramenti alla pagina Attendance.
 
 ---
 
+## ✅ RICONCILIAZIONE INTELLIGENTE FASE 3 (22/01/2026) - COMPLETATO
+
+Implementazione di 3 nuovi casi avanzati di riconciliazione, ispirata a Odoo 19.0.
+
+### Caso 36: Gestione Assegni Multipli
+Pagamento di una singola fattura con più assegni.
+- Es: 2 assegni (€1.028,82 + €1.421,77) → Fattura €2.450,00
+- Tolleranza arrotondamento fino a €5.00
+- Tracciamento assegni individuali (numero, data, banca)
+
+**API:**
+- `POST /api/riconciliazione-intelligente/assegni-multipli`
+
+**Collection:** `assegni`
+
+### Caso 37: Arrotondamenti Automatici
+Riconciliazione con tolleranza per differenze di centesimi.
+- Tolleranza default: €1.00, max: €5.00
+- Registra abbuoni attivi/passivi
+- Es: Fattura €999.99, bonifico €1000.00 → riconcilia automaticamente
+
+**API:**
+- `POST /api/riconciliazione-intelligente/riconcilia-con-arrotondamento`
+
+**Collection:** `abbuoni_arrotondamenti`
+
+### Caso 38: Pagamento Anticipato
+Gestione pagamenti effettuati prima dell'arrivo della fattura.
+- Registra pagamento anticipato con fornitore e importo
+- Cerca automaticamente match quando arriva fattura
+- Collega pagamento a fattura
+
+**API:**
+- `POST /api/riconciliazione-intelligente/pagamento-anticipato`
+- `GET /api/riconciliazione-intelligente/pagamenti-anticipati`
+- `POST /api/riconciliazione-intelligente/cerca-pagamenti-anticipati`
+- `POST /api/riconciliazione-intelligente/collega-pagamento-anticipato`
+
+**Collection:** `pagamenti_anticipati`
+
+### Test Fase 3
+- **28 test automatici passati (100%)**
+- Report: `/app/test_reports/iteration_25.json`
+- Test file: `/app/tests/test_riconciliazione_fase3.py`
+
+**File modificati:**
+- `/app/app/services/riconciliazione_intelligente.py` (nuovi metodi)
+- `/app/app/routers/riconciliazione_intelligente_api.py` (7 nuovi endpoint)
+
+---
+
 ## ✅ FEATURE COMPLETATE (21/01/2026 - Sessione 6)
 
 ### 1. MOTORE CONTABILE (Soluzione C) - COMPLETATO
