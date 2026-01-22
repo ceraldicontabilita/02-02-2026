@@ -246,6 +246,11 @@ async def riconcilia_con_quietanza(
                 "importo_quietanza": confronto["importo_quietanza"],
                 "differenza": confronto["differenza_importo"],
                 "is_ravvedimento": confronto["is_ravvedimento"],
+                "tipo_ravvedimento": confronto.get("tipo_ravvedimento"),
+                "codici_sanzioni": confronto.get("codici_sanzioni_trovati", []),
+                "codici_interessi": confronto.get("codici_interessi_trovati", []),
+                "importo_sanzioni": confronto.get("importo_sanzioni", 0),
+                "importo_interessi": confronto.get("importo_interessi", 0),
                 "codici_match": confronto["codici_match"][:5]  # Primi 5 codici
             })
             
