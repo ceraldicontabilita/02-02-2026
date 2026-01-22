@@ -266,6 +266,7 @@ app.include_router(employee_contracts.router, prefix="/api/contracts", tags=["Em
 app.include_router(buste_paga.router, prefix="/api", tags=["Buste Paga"])
 app.include_router(shifts.router, prefix="/api/shifts", tags=["Shifts"])
 app.include_router(staff.router, prefix="/api/staff", tags=["Staff"])
+app.include_router(giustificativi.router, prefix="/api/giustificativi", tags=["Giustificativi Dipendenti"])
 app.include_router(payroll.router, prefix="/api/payroll", tags=["Payroll"])
 app.include_router(noleggio.router, prefix="/api/noleggio", tags=["Noleggio Auto"])
 
