@@ -14,19 +14,13 @@
 
 ## 🟡 P1 - Media Priorità
 
-### 2. Notifiche Limiti Giustificativi
-**Descrizione**: Sistema di alert quando dipendente raggiunge 90% del limite
-- Notifica visiva nella dashboard
-- Email opzionale
-- Configurazione soglie personalizzabili
-
-### 3. Report PDF Annuale Ferie/Permessi
+### 1. Report PDF Annuale Ferie/Permessi
 **Descrizione**: Generazione report stampabile per ogni dipendente
 - Riepilogo annuale ferie/ROL/ex-festività
 - Dettaglio mensile
 - Firma responsabile
 
-### 4. Riconciliazione Email in Background
+### 2. Riconciliazione Email in Background
 **Descrizione**: Trasformare scansione email in processo asincrono
 - Task in background con Celery o similar
 - Progress bar in UI
