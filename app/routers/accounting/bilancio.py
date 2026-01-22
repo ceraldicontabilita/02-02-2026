@@ -343,16 +343,18 @@ async def export_bilancio_pdf(anno: int = Query(None)):
     elements.append(Paragraph("STATO PATRIMONIALE", section_style))
     
     sp = stato_patrimoniale
+    # Calcola totale passivo per il PDF
+    totale_passivo = sp['passivo']['debiti']['totale'] + sp['passivo']['patrimonio_netto']
     sp_data = [
         ['ATTIVO', '', 'PASSIVO', ''],
         ['Cassa', f"€ {sp['attivo']['disponibilita_liquide']['cassa']:,.2f}", 
-         'Debiti vs Fornitori', f"€ {sp['passivo']['debiti']['debiti_vs_fornitori']:,.2f}"],
+         'Debiti vs Fornitori', f"€ {sp['passivo']['debiti']['totale']:,.2f}"],
         ['Banca', f"€ {sp['attivo']['disponibilita_liquide']['banca']:,.2f}", '', ''],
-        ['Crediti vs Clienti', f"€ {sp['attivo']['crediti']['crediti_vs_clienti']:,.2f}", 
+        ['Crediti vs Clienti', f"€ {sp['attivo']['crediti']['totale']:,.2f}", 
          'Patrimonio Netto', f"€ {sp['passivo']['patrimonio_netto']:,.2f}"],
         ['', '', '', ''],
         ['TOTALE ATTIVO', f"€ {sp['attivo']['totale_attivo']:,.2f}", 
-         'TOTALE PASSIVO', f"€ {sp['passivo']['totale_passivo']:,.2f}"]
+         'TOTALE PASSIVO', f"€ {totale_passivo:,.2f}"]
     ]
     
     sp_table = Table(sp_data, colWidths=[5*cm, 4*cm, 5*cm, 4*cm])
