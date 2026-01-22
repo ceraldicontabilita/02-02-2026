@@ -64,11 +64,16 @@ class StatoRiconciliazione(Enum):
     ANOMALIA_NON_IN_ESTRATTO = "anomalia_non_in_estratto"
     RICONCILIATA = "riconciliata"
     LOCK_MANUALE = "lock_manuale"
-    # Nuovi stati per casi estesi
+    # Nuovi stati per casi estesi (Fase 2)
     PARZIALMENTE_PAGATA = "parzialmente_pagata"
     PAGAMENTO_CUMULATIVO = "pagamento_cumulativo"
     CON_NOTA_CREDITO = "con_nota_credito"
     SCONTO_APPLICATO = "sconto_applicato"
+    # Nuovi stati per casi estesi (Fase 3)
+    ASSEGNI_MULTIPLI = "assegni_multipli"          # Caso 36: Pagamento con più assegni
+    ARROTONDAMENTO_APPLICATO = "arrotondamento"    # Caso 37: Riconciliato con arrotondamento
+    PAGAMENTO_ANTICIPATO = "pagamento_anticipato"  # Caso 38: Pagamento prima della fattura
+    IN_ATTESA_FATTURA = "in_attesa_fattura"        # Pagamento anticipato in attesa di fattura
 
 
 class TipoMatch(Enum):
