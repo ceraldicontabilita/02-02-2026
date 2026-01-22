@@ -974,3 +974,290 @@ async def set_in_carico(employee_id: str, data: Dict[str, Any]) -> Dict[str, Any
         "in_carico": in_carico
     }
 
+
+
+
+# =============================================================================
+# NOTE PRESENZE (Protocolli Malattia, etc.)
+# =============================================================================
+
+@router.post("/set-nota-presenza")
+async def set_nota_presenza(data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Imposta una nota per una presenza (es. protocollo certificato medico).
+    
+    Payload:
+    {
+        "employee_id": "...",
+        "data": "YYYY-MM-DD",
+        "protocollo_malattia": "xxxxx",
+        "note": "..."
+    }
+    """
+    db = Database.get_db()
+    
+    employee_id = data.get("employee_id")
+    data_str = data.get("data")
+    protocollo = data.get("protocollo_malattia")
+    note = data.get("note")
+    
+    if not employee_id or not data_str:
+        raise HTTPException(400, "employee_id e data sono obbligatori")
+    
+    update_fields = {"updated_at": datetime.now(timezone.utc).isoformat()}
+    if protocollo:
+        update_fields["protocollo_malattia"] = protocollo
+    if note:
+        update_fields["note"] = note
+    
+    await db["attendance_note_presenze"].update_one(
+        {"employee_id": employee_id, "data": data_str},
+        {
+            "$set": update_fields,
+            "$setOnInsert": {
+                "id": str(uuid.uuid4()),
+                "employee_id": employee_id,
+                "data": data_str,
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+        },
+        upsert=True
+    )
+    
+    return {"success": True, "message": "Nota salvata"}
+
+
+@router.get("/note-presenze/{anno}/{mese}")
+async def get_note_presenze(anno: int, mese: int) -> Dict[str, Any]:
+    """Recupera tutte le note presenze per un mese."""
+    db = Database.get_db()
+    
+    # Genera range date
+    data_inizio = f"{anno}-{mese:02d}-01"
+    if mese == 12:
+        data_fine = f"{anno + 1}-01-01"
+    else:
+        data_fine = f"{anno}-{mese + 1:02d}-01"
+    
+    note = await db["attendance_note_presenze"].find(
+        {"data": {"$gte": data_inizio, "$lt": data_fine}},
+        {"_id": 0}
+    ).to_list(1000)
+    
+    # Converti in dizionario per accesso rapido
+    note_dict = {}
+    for n in note:
+        key = f"{n[\"employee_id\"]}_{n[\"data\"]}"
+        note_dict[key] = n
+    
+    return {"success": True, "note": note_dict}
+
+
+# =============================================================================
+# GENERAZIONE PDF PER CONSULENTE DEL LAVORO
+# =============================================================================
+
+@router.post("/genera-pdf-consulente")
+async def genera_pdf_consulente(data: Dict[str, Any]):
+    """
+    Genera un PDF riepilogativo delle presenze per il consulente del lavoro.
+    Include:
+    - Riepilogo presenze per dipendente
+    - Dettaglio giorni (P, F, M, etc.)
+    - Protocolli certificati malattia
+    - Acconti mensili
+    - Note
+    """
+    try:
+        from reportlab.lib import colors
+        from reportlab.lib.pagesizes import A4, landscape
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.units import mm
+        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
+        from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+    except ImportError:
+        raise HTTPException(500, "reportlab non installato. Eseguire: pip install reportlab")
+    
+    db = Database.get_db()
+    
+    anno = data.get("anno", datetime.now().year)
+    mese = data.get("mese", datetime.now().month)
+    
+    MESI = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
+            "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"]
+    
+    # Recupera dipendenti in carico
+    dipendenti = await db["employees"].find(
+        {"$or": [{"in_carico": True}, {"in_carico": {"$exists": False}}]},
+        {"_id": 0, "id": 1, "nome": 1, "cognome": 1, "nome_completo": 1, "name": 1}
+    ).sort("cognome", 1).to_list(500)
+    
+    # Recupera presenze del mese
+    data_inizio = f"{anno}-{mese:02d}-01"
+    if mese == 12:
+        data_fine = f"{anno + 1}-01-01"
+    else:
+        data_fine = f"{anno}-{mese + 1:02d}-01"
+    
+    presenze_raw = await db["attendance_presenze_calendario"].find(
+        {"data": {"$gte": data_inizio, "$lt": data_fine}},
+        {"_id": 0}
+    ).to_list(10000)
+    
+    presenze = {}
+    for p in presenze_raw:
+        key = f"{p[\"employee_id\"]}_{p[\"data\"]}"
+        presenze[key] = p.get("stato")
+    
+    # Recupera note (protocolli malattia)
+    note_raw = await db["attendance_note_presenze"].find(
+        {"data": {"$gte": data_inizio, "$lt": data_fine}},
+        {"_id": 0}
+    ).to_list(1000)
+    
+    note = {}
+    for n in note_raw:
+        key = f"{n[\"employee_id\"]}_{n[\"data\"]}"
+        note[key] = n
+    
+    # Recupera acconti del mese
+    acconti_raw = await db["acconti_dipendenti"].find(
+        {"anno": anno, "mese": mese},
+        {"_id": 0}
+    ).to_list(500)
+    
+    acconti = {a.get("employee_id"): a.get("importo", 0) for a in acconti_raw}
+    
+    # Calcola giorni del mese
+    import calendar
+    giorni_mese = calendar.monthrange(anno, mese)[1]
+    
+    # Genera PDF
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=landscape(A4), 
+                           leftMargin=10*mm, rightMargin=10*mm,
+                           topMargin=15*mm, bottomMargin=15*mm)
+    
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle("Title", parent=styles["Heading1"], 
+                                  fontSize=16, alignment=TA_CENTER, spaceAfter=10)
+    subtitle_style = ParagraphStyle("Subtitle", parent=styles["Normal"],
+                                     fontSize=10, alignment=TA_CENTER, spaceAfter=15)
+    
+    elements = []
+    
+    # Titolo
+    elements.append(Paragraph(f"RIEPILOGO PRESENZE - {MESI[mese-1].upper()} {anno}", title_style))
+    elements.append(Paragraph(f"Generato il {datetime.now().strftime(\"%d/%m/%Y %H:%M\")}", subtitle_style))
+    
+    # Header tabella
+    header = ["Dipendente"] + [str(g) for g in range(1, giorni_mese + 1)] + ["P", "F", "M", "PE", "Acc.€"]
+    
+    # Mappa stati a label
+    stato_label = {
+        "presente": "P", "assente": "A", "ferie": "F", "permesso": "PE",
+        "malattia": "M", "rol": "R", "smartworking": "SW", "trasferta": "T", "riposo": "-"
+    }
+    
+    table_data = [header]
+    
+    note_malattia_list = []  # Per sezione note in fondo
+    
+    for dip in dipendenti:
+        emp_id = dip.get("id")
+        nome = dip.get("nome_completo") or dip.get("name") or f"{dip.get(\"nome\", \"\")} {dip.get(\"cognome\", \"\")}".strip()
+        
+        row = [nome[:20]]  # Tronca nome
+        totali = {"P": 0, "F": 0, "M": 0, "PE": 0}
+        
+        for g in range(1, giorni_mese + 1):
+            data_str = f"{anno}-{mese:02d}-{g:02d}"
+            key = f"{emp_id}_{data_str}"
+            stato = presenze.get(key, "")
+            label = stato_label.get(stato, "-")
+            row.append(label)
+            
+            # Conta totali
+            if label == "P" or label == "SW" or label == "T":
+                totali["P"] += 1
+            elif label == "F":
+                totali["F"] += 1
+            elif label == "M":
+                totali["M"] += 1
+                # Controlla se cè protocollo
+                nota = note.get(key)
+                if nota and nota.get("protocollo_malattia"):
+                    note_malattia_list.append({
+                        "dipendente": nome,
+                        "data": f"{g:02d}/{mese:02d}/{anno}",
+                        "protocollo": nota.get("protocollo_malattia")
+                    })
+            elif label == "PE" or label == "R":
+                totali["PE"] += 1
+        
+        # Acconti
+        acconto = acconti.get(emp_id, 0)
+        
+        row.extend([str(totali["P"]), str(totali["F"]), str(totali["M"]), str(totali["PE"]), 
+                    f"{acconto:.0f}" if acconto else "-"])
+        table_data.append(row)
+    
+    # Crea tabella
+    col_widths = [50*mm] + [5.5*mm] * giorni_mese + [10*mm, 10*mm, 10*mm, 10*mm, 15*mm]
+    
+    table = Table(table_data, colWidths=col_widths, repeatRows=1)
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1e3a5f")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("FONTSIZE", (0, 0), (-1, -1), 7),
+        ("FONTSIZE", (0, 0), (0, -1), 8),
+        ("ALIGN", (1, 0), (-1, -1), "CENTER"),
+        ("ALIGN", (0, 0), (0, -1), "LEFT"),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f8fafc")]),
+        ("TOPPADDING", (0, 0), (-1, -1), 2),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 2),
+    ]))
+    
+    elements.append(table)
+    
+    # Sezione Protocolli Malattia
+    if note_malattia_list:
+        elements.append(Spacer(1, 15*mm))
+        elements.append(Paragraph("PROTOCOLLI CERTIFICATI MALATTIA", title_style))
+        
+        note_header = ["Dipendente", "Data", "N. Protocollo INPS"]
+        note_data = [note_header]
+        for nm in note_malattia_list:
+            note_data.append([nm["dipendente"], nm["data"], nm["protocollo"]])
+        
+        note_table = Table(note_data, colWidths=[80*mm, 40*mm, 80*mm])
+        note_table.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#3b82f6")),
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+            ("FONTSIZE", (0, 0), (-1, -1), 9),
+            ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+            ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+        ]))
+        elements.append(note_table)
+    
+    # Legenda
+    elements.append(Spacer(1, 10*mm))
+    legenda = Paragraph(
+        "<b>Legenda:</b> P=Presente, F=Ferie, M=Malattia, PE=Permesso, R=ROL, SW=Smart Working, T=Trasferta, A=Assente",
+        ParagraphStyle("Legenda", fontSize=8, textColor=colors.grey)
+    )
+    elements.append(legenda)
+    
+    # Build PDF
+    doc.build(elements)
+    buffer.seek(0)
+    
+    filename = f"Presenze_{MESI[mese-1]}_{anno}.pdf"
+    
+    return StreamingResponse(
+        buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
