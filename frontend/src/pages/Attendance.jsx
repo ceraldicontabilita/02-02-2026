@@ -307,6 +307,7 @@ export default function Attendance() {
           { id: 'calendario', label: 'Calendario', icon: '📅' },
           { id: 'richieste', label: `Richieste (${richiestePending.length})`, icon: '📋' },
           { id: 'storico', label: 'Storico Ore', icon: '⏱️' },
+          { id: 'saldo-ferie', label: 'Saldo Ferie', icon: '🏖️' },
         ].map(tab => (
           <button
             key={tab.id}
