@@ -198,6 +198,20 @@ POST /api/f24-riconciliazione/commercialista/upload
 GET  /api/f24-riconciliazione/quietanze
 ```
 
+### 5.5 Bilancio e IVA
+```
+GET  /api/bilancio/conto-economico?anno={anno}&mese={mese}
+GET  /api/bilancio/stato-patrimoniale?anno={anno}
+GET  /api/bilancio/confronto-annuale?anno_corrente={anno}&anno_precedente={anno}
+GET  /api/bilancio/riepilogo?anno={anno}
+GET  /api/bilancio/export-pdf?anno={anno}
+GET  /api/bilancio/export/pdf/confronto?anno_corrente={anno}&anno_precedente={anno}
+GET  /api/liquidazione-iva/calcola/{anno}/{mese}?credito_precedente={value}
+GET  /api/liquidazione-iva/confronto/{anno}/{mese}?iva_debito_commercialista={val}&iva_credito_commercialista={val}
+GET  /api/liquidazione-iva/riepilogo-annuale/{anno}
+GET  /api/liquidazione-iva/export/pdf/{anno}/{mese}
+```
+
 ---
 
 ## 6. VALIDATORI AUTOMATICI
