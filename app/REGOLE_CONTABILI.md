@@ -108,7 +108,54 @@ Il sistema classifica automaticamente le fatture in base al fornitore:
 
 ---
 
-## 4. ENDPOINT API
+## 4. GESTIONE MAGAZZINO BAR/PASTICCERIA
+
+### 4.1 Categorie Merceologiche
+Il sistema gestisce 26 categorie specifiche per bar/pasticceria:
+
+| Codice | Categoria | Centro Costo |
+|--------|-----------|--------------|
+| BEV-CAF | Caffè e derivati | 1.1_CAFFE_BEVANDE_CALDE |
+| BEV-VRS | Vini rossi | 1.2_BEVANDE_FREDDE_ALCOLICI |
+| BEV-VBI | Vini bianchi | 1.2_BEVANDE_FREDDE_ALCOLICI |
+| BEV-SPU | Spumanti e Prosecco | 1.2_BEVANDE_FREDDE_ALCOLICI |
+| BEV-BIR | Birre | 1.2_BEVANDE_FREDDE_ALCOLICI |
+| BEV-LIQ | Liquori e distillati | 1.2_BEVANDE_FREDDE_ALCOLICI |
+| MP-FAR | Farine e amidi | 1.3_MATERIE_PRIME_PASTICCERIA |
+| MP-ZUC | Zuccheri e dolcificanti | 1.3_MATERIE_PRIME_PASTICCERIA |
+| MP-UOV | Uova e ovoprodotti | 1.3_MATERIE_PRIME_PASTICCERIA |
+| MP-LAT | Latticini | 1.3_MATERIE_PRIME_PASTICCERIA |
+| MP-CAC | Cacao e cioccolato | 1.3_MATERIE_PRIME_PASTICCERIA |
+| MP-FRS | Frutta secca | 1.3_MATERIE_PRIME_PASTICCERIA |
+| SL-BAS | Basi e paste | 1.4_PRODOTTI_SEMIFINITI |
+| SL-CRE | Creme e farciture | 1.4_PRODOTTI_SEMIFINITI |
+| GEL-BAS | Basi per gelato | 1.5_GELATI_GRANITE |
+| IMB-CAR | Imballaggi carta | 13.1_IMBALLAGGI |
+| IMB-PLA | Imballaggi plastica | 13.1_IMBALLAGGI |
+
+### 4.2 Flusso Carico Magazzino
+1. **Import Fattura XML** → Sistema legge linee fattura
+2. **Classificazione** → Pattern matching su descrizione e fornitore
+3. **Estrazione Quantità** → Parsing unità di misura (KG, LT, PZ, CF)
+4. **Aggiornamento Stock** → Prezzo medio ponderato
+5. **Registrazione Movimento** → Tracciabilità completa
+
+### 4.3 Flusso Scarico Produzione (Distinta Base)
+1. **Selezione Ricetta** → Es: "Sfogliatella napoletana"
+2. **Porzioni da Produrre** → Es: 100 pezzi
+3. **Calcolo Ingredienti** → Proporzionale (fattore = porzioni / base_ricetta)
+4. **Verifica Disponibilità** → Check giacenze
+5. **Scarico e Lotto** → Genera LOTTO-YYYYMMDDHHMMSS
+
+### 4.4 Collezioni Database
+- `warehouse_stocks` - Giacenze con prezzo medio ponderato
+- `movimenti_magazzino` - Log carico/scarico
+- `lotti_produzione` - Registro lotti con ingredienti usati
+- `ricette` - Distinte base con ingredienti e procedimento
+
+---
+
+## 5. ENDPOINT API
 
 | Endpoint | Descrizione |
 |----------|-------------|
@@ -116,9 +163,14 @@ Il sistema classifica automaticamente le fatture in base al fornitore:
 | `/api/bilancio/conto-economico-dettagliato` | CE con tutte le voci |
 | `/api/bilancio/stato-patrimoniale` | Stato Patrimoniale |
 | `/api/liquidazione-iva/calcola/{anno}/{mese}` | Liquidazione IVA |
+| `/api/learning-machine/riclassifica-fatture` | Classifica automatica CDC |
+| `/api/learning-machine/riepilogo-centri-costo/{anno}` | Riepilogo fiscale |
+| `/api/magazzino/carico-da-fattura/{id}` | Carico da XML |
+| `/api/magazzino/scarico-produzione` | Scarico per lotto |
+| `/api/magazzino/giacenze` | Situazione stock |
 
 ---
 
-*Documento aggiornato: 22 Gennaio 2026*
+*Documento aggiornato: 22 Gennaio 2026 (Sessione 12)*
 *Sistema: NON multi-utente*
 *P.IVA Azienda: 04523831214*
