@@ -1,5 +1,6 @@
 # CONOSCENZA COMPLETA DEL SISTEMA ERP
 ## Azienda: Bar/Pasticceria (ATECO 56.10.30)
+## P.IVA: 04523831214
 ## Ultimo aggiornamento: 22 Gennaio 2026
 
 ---
@@ -9,17 +10,18 @@
 | Risorsa | Quantità |
 |---------|----------|
 | Pagine Frontend | 66 |
-| Router Backend | 152 |
+| Router Backend | 152 (96 registrati in main.py) |
 | Collezioni DB | 83 |
 | Fatture | 3.753 |
 | Corrispettivi | 1.060 giorni |
 | Cedolini | 1.873 |
-| F24 Commercialista | 46 |
+| Dipendenti Attivi | 24 |
+| F24 Commercialista | 46 (34 da pagare, 9 pagati, 3 eliminati) |
 | Quietanze F24 | 303 |
 | Estratto Conto Movimenti | 4.261 |
 | Ricette | 159 |
 | Articoli Magazzino | 1.345 |
-| Dipendenti Attivi | 24 |
+| Fornitori | 820+ |
 
 ---
 
@@ -27,8 +29,20 @@
 
 ### 2.1 FATTURE (`invoices`)
 - **Totale**: 3.753 documenti
-- **Struttura**: id, invoice_number, invoice_date, tipo_documento, supplier_name, supplier_vat, total_amount, imponibile, iva, linee[], riepilogo_iva[]
-- **Linee fattura**: numero_linea, descrizione, quantita, unita_misura, prezzo_unitario, prezzo_totale, aliquota_iva
+- **Anni**: 2017-2026
+- **Struttura XML FatturaPA**: 
+  - Header: CedentePrestatore (fornitore), CessionarioCommittente (azienda)
+  - Body: DatiGeneraliDocumento, DatiBeniServizi (linee), DatiPagamento
+
+**CAMPI PRINCIPALI:**
+```
+id, invoice_number, invoice_date, tipo_documento,
+supplier_name, supplier_vat, supplier_address,
+total_amount, imponibile, iva_totale,
+linee[]: {descrizione, quantita, prezzo_unitario, prezzo_totale, aliquota_iva}
+riepilogo_iva[]: {aliquota, imponibile, imposta}
+centro_costo, imponibile_deducibile, iva_detraibile
+```
 
 **TOP 10 FORNITORI:**
 | Fornitore | Fatture | P.IVA |
@@ -47,43 +61,52 @@
 ### 2.2 CORRISPETTIVI (`corrispettivi`)
 - **Totale**: 1.060 documenti
 - **Struttura**: data, anno, mese, totale_giornaliero, imponibile, iva, numero_scontrini
+- **Fonte**: Registratore di cassa telematico
 
 ### 2.3 CEDOLINI (`cedolini`)
 - **Totale**: 1.873 documenti
+- **Anni**: 2014-2026
 - **Struttura**: dipendente_id, dipendente_nome, mese, anno, lordo, netto, inps_dipendente, irpef, inps_azienda, inail, tfr, costo_azienda, ore_lavorate
 
-**TOTALI COSTO PERSONALE:**
-- INPS Azienda: €639,00
-- IRPEF: €384,86
-- TFR: €157,78
-- INAIL: €42,60
+**RIEPILOGO ANNUALE:**
+| Anno | Cedolini | Netto Totale |
+|------|----------|--------------|
+| 2025 | 344 | €41.549,77 |
+| 2024 | 305 | €12.951,05 |
+| 2023 | 281 | €56.653,55 |
+| 2022 | 90 | €64.188,99 |
+| 2021 | 148 | €70.286,34 |
 
 ### 2.4 F24 (`f24_commercialista`)
 - **Totale**: 46 documenti
-- **Stati**: da_pagare (34), pagato (9), eliminato (3)
-- **Totale da pagare**: €90.710,17
-- **Totale pagato**: €45.719,93
+- **Da pagare**: 34 (€90.710,17)
+- **Pagati**: 9 (€45.719,93)
+- **Eliminati**: 3 (€18.670,32)
 
 **CODICI TRIBUTO PIÙ USATI:**
-| Codice | Descrizione | Occorrenze |
-|--------|-------------|------------|
-| 1040 | Ritenute su redditi lavoro dipendente | 11 |
+| Codice | Descrizione | Occ. |
+|--------|-------------|------|
+| 1040 | Ritenute lavoro dipendente | 11 |
 | 1001 | IRPEF | 8 |
-| 1990 | Interessi ravvedimento Add. Regionale | 8 |
+| 1990 | Interessi ravvedimento Add. Reg. | 8 |
 | 8918 | Sanzione ravvedimento | 8 |
 | 1704 | Imp. sostitutiva TFR rivalutazione | 6 |
 | 1701 | Imp. sostitutiva TFR acconto | 5 |
 
+**CODICI RAVVEDIMENTO:**
+- Sanzioni: 8904 (IVA), 8918, 8948
+- Interessi: 1989 (IRPEF), 1990, 1991 (IVA)
+
 ### 2.5 QUIETANZE F24 (`quietanze_f24`)
 - **Totale**: 303 documenti
 - **Totale versato**: €288.318,86
-- **Struttura**: dati_generali{data_pagamento, protocollo_telematico}, totali{totale_debito, saldo_delega}, sezione_erario[], sezione_inps[]
+- **Struttura**: dati_generali{data_pagamento, protocollo_telematico}, totali{totale_debito}, sezione_erario[], sezione_inps[]
 
 ### 2.6 ESTRATTO CONTO (`estratto_conto_movimenti`)
 - **Totale**: 4.261 movimenti
-- **Anni**: 2020-2026
-- **Entrate totali**: €1.311.120,77
-- **Uscite totali**: €-1.334.343,39
+- **Periodo**: 2020-2026
+- **Entrate**: €1.311.120,77
+- **Uscite**: €-1.334.343,39
 
 **PER TIPO:**
 | Tipo | Movimenti | Importo |
@@ -92,179 +115,212 @@
 | uscita | 1.698 | €-1.334.343,39 |
 | carta_credito | 281 | €43.768,45 |
 
+**CAUSALI FREQUENTI:**
+- GIROCONTO INTERNO: 1.069
+- Provvigioni Nexi: 304
+- Commissioni: 292
+- POS BANCOMAT: 240
+- I24 AGENZIA ENTRATE: 20 (pagamenti F24)
+
 ### 2.7 MAGAZZINO (`warehouse_stocks`)
 - **Totale articoli**: 1.345
-- **Categorie**: GENERAL (1.288), BEVERAGE (31), UTILITIES (13), Altri (11), Zuccheri (2)
-- **Movimenti**: 14 registrati
+- **Valore stimato**: €69.674,70
+- **Categorie**: GENERAL (1.288), BEVERAGE (31), UTILITIES (13)
+- **Movimenti registrati**: 14
 
 ### 2.8 RICETTE (`ricette`)
 - **Totale**: 159 ricette
 - **Categorie**: pasticceria, dolci, contorni, basi, bar
-- **Struttura**: nome, porzioni, categoria, ingredienti[], procedimento, food_cost
+- **Esempi**: Tiramisù (10 porz), Cheesecake (12 porz), Pasta frolla, Crema pasticcera
 
 ---
 
 ## 3. CENTRI DI COSTO
 
-| Codice | Nome | Tipo | Fatture | Imponibile |
-|--------|------|------|---------|------------|
-| CDC-99 | COSTI GENERALI / STRUTTURA | struttura | 2.366 | €963.790,64 |
-| CDC-03 | LABORATORIO | operativo | 533 | €203.716,69 |
-| CDC-01 | BAR / CAFFETTERIA | operativo | 149 | €155.637,30 |
-| CDC-02 | PASTICCERIA | operativo | 176 | €36.132,32 |
-| CDC-91 | AMMINISTRAZIONE | supporto | 36 | €18.015,83 |
-| CDC-04 | ASPORTO / DELIVERY | operativo | 39 | €9.109,33 |
-| CDC-92 | MARKETING | supporto | 4 | €789,23 |
-| CDC-90 | PERSONALE | supporto | - | - |
+| Codice | Nome | Tipo | Fatture |
+|--------|------|------|---------|
+| CDC-01 | BAR / CAFFETTERIA | operativo | 149 |
+| CDC-02 | PASTICCERIA | operativo | 176 |
+| CDC-03 | LABORATORIO | operativo | 533 |
+| CDC-04 | ASPORTO / DELIVERY | operativo | 39 |
+| CDC-90 | PERSONALE | supporto | - |
+| CDC-91 | AMMINISTRAZIONE | supporto | 36 |
+| CDC-92 | MARKETING | supporto | 4 |
+| CDC-99 | COSTI GENERALI | struttura | 2.366 |
 
-**NON CLASSIFICATI**: 450 fatture, €112.053,15
-
----
-
-## 4. CODICI TRIBUTO F24
-
-### 4.1 Codici Principali
-| Codice | Descrizione |
-|--------|-------------|
-| 1001 | IRPEF |
-| 1040 | Ritenute lavoro dipendente |
-| 1631 | Credito d'imposta locazioni |
-| 1701 | Imposta sostitutiva TFR acconto |
-| 1704 | Imposta sostitutiva TFR rivalutazione |
-| 2001 | IRES saldo |
-| 2002 | IRES acconto prima rata |
-| 6006 | IVA mese giugno |
-| 6007 | IVA mese luglio |
-| 6009 | IVA mese settembre |
-| 6010 | IVA mese ottobre |
-
-### 4.2 Codici Ravvedimento
-| Codice | Descrizione |
-|--------|-------------|
-| 8904 | Sanzione IVA |
-| 8918 | Sanzione ravvedimento |
-| 8948 | Sanzione |
-| 1989 | Interessi IRPEF |
-| 1990 | Interessi Add. Regionale |
-| 1991 | Interessi IVA |
+**NON CLASSIFICATI**: 450 fatture (€112.053,15)
 
 ---
 
-## 5. PAGINE FRONTEND PRINCIPALI
+## 4. API PRINCIPALI (96 Router Registrati)
 
-### Dashboard e Generale
+### Contabilità
+| Endpoint | Funzione |
+|----------|----------|
+| `/api/bilancio/*` | Conto economico, stato patrimoniale |
+| `/api/iva/*` | Calcoli IVA, liquidazione |
+| `/api/invoices/*` | Fatture ricevute |
+| `/api/corrispettivi/*` | Corrispettivi giornalieri |
+| `/api/prima-nota/*` | Prima nota contabile |
+
+### F24 e Tributi
+| Endpoint | Funzione |
+|----------|----------|
+| `/api/f24/*` | Gestione F24 |
+| `/api/f24-riconciliazione/*` | Riconciliazione F24 ↔ Banca |
+| `/api/quietanze-f24/*` | Quietanze F24 |
+| `/api/codici-tributari/*` | Database codici tributo |
+
+### Banca
+| Endpoint | Funzione |
+|----------|----------|
+| `/api/estratto-conto/*` | Estratto conto |
+| `/api/bank/*` | Operazioni bancarie |
+| `/api/operazioni-da-confermare/*` | Riconciliazione smart |
+| `/api/assegni/*` | Gestione assegni |
+
+### Personale
+| Endpoint | Funzione |
+|----------|----------|
+| `/api/dipendenti/*` | Anagrafica dipendenti |
+| `/api/cedolini/*` | Gestione cedolini |
+| `/api/prima-nota-salari/*` | Prima nota salari |
+| `/api/tfr/*` | Gestione TFR |
+
+### Magazzino
+| Endpoint | Funzione |
+|----------|----------|
+| `/api/magazzino/*` | Gestione magazzino |
+| `/api/ricette/*` | Ricette e produzione |
+| `/api/warehouse/*` | Warehouse stocks |
+| `/api/lotti/*` | Tracciabilità lotti |
+
+### Learning Machine
+| Endpoint | Funzione |
+|----------|----------|
+| `/api/learning-machine/*` | Classificazione automatica, feedback |
+| `/api/documenti-smart/*` | Classificazione email |
+
+---
+
+## 5. PAGINE FRONTEND (66 totali)
+
+### Core
 - `/dashboard` - Dashboard principale
 - `/analytics` - Analytics avanzate
 - `/bilancio` - Conto Economico
 - `/stato-patrimoniale` - Stato Patrimoniale
+- `/learning-machine` - Learning Machine Dashboard
 
 ### Fatturazione
-- `/fatture-ricevute` - Ciclo passivo
+- `/fatture-ricevute` - Ciclo passivo (3.753 fatture)
 - `/fatture-emesse` - Ciclo attivo
-- `/fornitori` - Anagrafica fornitori
+- `/fornitori` - Anagrafica fornitori (820+)
+- `/corrispettivi` - Corrispettivi (1.060 giorni)
 
-### F24 e Tributi
-- `/f24` - Gestione F24
+### F24
+- `/f24` - Gestione F24 (46)
 - `/riconciliazione-f24` - Riconciliazione F24 ↔ Quietanze
-- `/quietanze-f24` - Quietanze F24
+- `/quietanze-f24` - Quietanze F24 (303)
 
 ### Banca
-- `/riconciliazione` - Riconciliazione Smart (Banca ↔ Fatture/F24/Stipendi)
-- `/riconciliazione-intelligente` - Riconciliazione Intelligente
-- `/estratto-conto` - Estratto conto
+- `/riconciliazione` - Riconciliazione Smart
+- `/riconciliazione-intelligente` - Riconciliazione AI
+- `/estratto-conto` - Estratto conto (4.261 mov)
 
 ### Personale
-- `/dipendenti` - Anagrafica dipendenti
-- `/cedolini` - Gestione cedolini
+- `/dipendenti` - Anagrafica (24 attivi)
+- `/cedolini` - Cedolini (1.873)
 - `/prima-nota-salari` - Prima nota salari
 
 ### Magazzino
-- `/magazzino` - Gestione magazzino
-- `/ricette` - Ricette e food cost
+- `/magazzino` - Gestione magazzino (1.345 articoli)
+- `/ricette` - Ricette (159)
 - `/dizionario-prodotti` - Dizionario prodotti
 
-### Learning Machine
-- `/learning-machine` - Dashboard Learning Machine (CDC + Magazzino + Produzione)
-- `/classificazione-email` - Classificazione documenti email
+### Documenti
+- `/classificazione-email` - Classificazione documenti
+- `/documenti` - Gestione documenti
 
 ---
 
-## 6. ROUTER BACKEND PRINCIPALI
+## 6. PARSER E SERVIZI
 
-### Contabilità
-- `/api/bilancio/*` - Conto economico, stato patrimoniale
-- `/api/iva/*` - Calcoli IVA, liquidazione
-- `/api/invoices/*` - Fatture ricevute
+### Parser Fatture XML (`invoice_xml_parser.py`)
+Estrae da FatturaPA:
+- CedentePrestatore → supplier (name, vat, address)
+- DatiGeneraliDocumento → invoice (date, number, total)
+- DettaglioLinee → products (description, qty, price, vat)
+- DatiPagamento → payment (method, due_date)
 
-### F24
-- `/api/f24/*` - F24 tributi
-- `/api/f24-riconciliazione/*` - Riconciliazione F24 ↔ Banca
-- `/api/quietanze-f24/*` - Quietanze F24
+### Parser F24 (`parser_f24.py`)
+Estrae da PDF F24:
+- Dati generali (data scadenza, contribuente)
+- Sezione Erario (codici tributo IRPEF, IVA, IRES)
+- Sezione INPS (contributi)
+- Sezione Regioni (addizionali)
+- Confronto quietanze per ravvedimento
 
-### Learning Machine
-- `/api/learning-machine/*` - Classificazione automatica, feedback, CDC
-- `/api/magazzino/*` - Gestione magazzino avanzata
-
-### Banca
-- `/api/estratto-conto/*` - Estratto conto
-- `/api/operazioni-da-confermare/*` - Riconciliazione smart
+### Riconciliazione Smart (`riconciliazione_smart.py`)
+Pattern riconosciuti:
+- `I24 AGENZIA ENTRATE` → F24
+- `STIP*, SALARIO` → Stipendi
+- `ASSEGNO N.` → Assegni
+- `BONIFICO*` → Bonifici
 
 ---
 
-## 7. RELAZIONI PRINCIPALI
+## 7. RELAZIONI DATABASE
 
 ```
-invoices (fatture)
-    ├── supplier_id → suppliers
-    ├── linee[] → acquisti_prodotti → warehouse_stocks
-    ├── centro_costo → centri_costo
-    └── movimento_id → estratto_conto_movimenti
+invoices ─┬─► suppliers (supplier_vat)
+          ├─► warehouse_stocks (linee → carico magazzino)
+          ├─► centri_costo (centro_costo)
+          └─► estratto_conto_movimenti (riconciliazione)
 
-f24_commercialista
-    ├── quietanza_id → quietanze_f24
-    └── movimento_banca_id → estratto_conto_movimenti
+f24_commercialista ─┬─► quietanze_f24 (riconciliazione codici tributo)
+                    └─► estratto_conto_movimenti (I24 AGENZIA ENTRATE)
 
-cedolini
-    ├── dipendente_id → anagrafica_dipendenti
-    └── bonifico_id → bonifici_stipendi → estratto_conto_movimenti
+cedolini ─┬─► anagrafica_dipendenti (dipendente_id)
+          └─► bonifici_stipendi (riconciliazione)
 
-ricette
-    └── ingredienti[] → warehouse_stocks
-
-warehouse_stocks
-    ├── fattura_id → invoices
-    └── categoria → categorie_merceologiche
+ricette ──► warehouse_stocks (ingredienti → scarico produzione)
 ```
 
 ---
 
-## 8. SERVIZI CHIAVE
+## 8. FLUSSI AUTOMATIZZATI
 
-### Parser
-- `parser_f24.py` - Parsing F24 PDF con riconoscimento codici tributo
-- `parser_xml_fattura.py` - Parsing fatture XML FatturaPA
-- `email_document_downloader.py` - Download allegati email
+### 1. Import Fatture XML
+```
+Email/Upload → Parser XML → invoices → 
+  → Classificazione CDC → centro_costo
+  → Carico Magazzino → warehouse_stocks
+```
 
-### Classificazione
-- `learning_machine_cdc.py` - Classificazione automatica centri di costo
-- `riconciliazione_smart.py` - Riconciliazione intelligente banca
+### 2. Riconciliazione F24
+```
+F24 Commercialista → Confronto Quietanze →
+  → Match codici tributo → stato: pagato
+  → Collegamento banca (I24 AGENZIA ENTRATE)
+```
 
-### Magazzino
-- `magazzino_categorie.py` - Classificazione prodotti, scarico ricette
+### 3. Riconciliazione Banca
+```
+Estratto Conto → Pattern Matching →
+  → Fatture (bonifici fornitori)
+  → F24 (I24 AGENZIA)
+  → Stipendi (STIP*)
+  → Assegni (ASSEGNO N.)
+```
+
+### 4. Scarico Produzione
+```
+Ricetta → Calcolo ingredienti (porzioni) →
+  → Verifica giacenze → Scarico magazzino
+  → Lotto produzione
+```
 
 ---
 
-## 9. PATTERN RICONOSCIMENTO BANCA
-
-| Pattern | Tipo | Esempio |
-|---------|------|---------|
-| I24 AGENZIA ENTRATE | F24 | Pagamento tributi |
-| STIP*, SALARIO, NETTO | Stipendio | Bonifico stipendio |
-| ASSEGNO N. | Assegno | Pagamento assegno |
-| BONIFICO*, BONIF | Bonifico | Bonifico generico |
-| POS*, CARTA | POS | Incasso POS |
-| COMM*, SPESE | Commissioni | Commissioni bancarie |
-
----
-
-*Documento generato automaticamente - 22 Gennaio 2026*
+*Sistema ERP Completo - Memoria Aggiornata 22/01/2026*
