@@ -974,59 +974,51 @@ function TabGiustificativi({ dipendente, anno }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedCategoria, setSelectedCategoria] = useState('tutti');
-  const [dataLoaded, setDataLoaded] = useState(false);
   
   // Carica dati al mount e quando cambia dipendente
   useEffect(() => {
-    if (!dipendente?.id || dataLoaded) return;
+    if (!dipendente?.id) {
+      setLoading(false);
+      return;
+    }
     
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+    let cancelled = false;
     
     const fetchData = async () => {
       setLoading(true);
       setError(null);
       
       try {
+        // Prima chiamata - giustificativi
         const giustRes = await api.get(`/api/giustificativi/dipendente/${dipendente.id}/giustificativi`, { 
           params: { anno },
-          signal: controller.signal 
+          timeout: 60000 // 60 secondi di timeout
         });
         
+        if (cancelled) return;
+        setGiustificativi(giustRes.data?.giustificativi || []);
+        
+        // Seconda chiamata - ferie
         const ferieRes = await api.get(`/api/giustificativi/dipendente/${dipendente.id}/saldo-ferie`, { 
           params: { anno },
-          signal: controller.signal 
+          timeout: 60000
         });
         
-        setGiustificativi(giustRes.data?.giustificativi || []);
+        if (cancelled) return;
         setSaldoFerie(ferieRes.data || null);
-        setDataLoaded(true);
+        setLoading(false);
       } catch (err) {
-        if (err.name === 'AbortError' || err.name === 'CanceledError') {
-          setError('Timeout - riprova');
-        } else {
-          setError(err.response?.data?.detail || err.message || 'Errore');
-        }
-      } finally {
-        clearTimeout(timeoutId);
+        if (cancelled) return;
+        console.error('Errore caricamento:', err);
+        setError(err.response?.data?.detail || err.message || 'Errore caricamento');
         setLoading(false);
       }
     };
     
     fetchData();
     
-    return () => {
-      clearTimeout(timeoutId);
-      controller.abort();
-    };
-  }, [dipendente?.id, anno, dataLoaded]);
-  
-  // Reset quando cambia dipendente
-  useEffect(() => {
-    setDataLoaded(false);
-    setGiustificativi([]);
-    setSaldoFerie(null);
-  }, [dipendente?.id]);
+    return () => { cancelled = true; };
+  }, [dipendente?.id, anno]);
   
   // Se non c'è dipendente selezionato
   if (!dipendente?.id) {
@@ -1037,12 +1029,6 @@ function TabGiustificativi({ dipendente, anno }) {
     return (
       <div style={{ textAlign: 'center', padding: 40 }}>
         <div style={{ color: '#dc2626', marginBottom: 16 }}>Errore: {error}</div>
-        <button 
-          onClick={() => { setError(null); setDataLoaded(false); }}
-          style={{ padding: '8px 16px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer' }}
-        >
-          Riprova
-        </button>
       </div>
     );
   }
