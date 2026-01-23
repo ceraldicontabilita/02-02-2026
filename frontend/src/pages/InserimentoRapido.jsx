@@ -273,7 +273,7 @@ export default function InserimentoRapido() {
     }
     setLoading(true);
     try {
-      await api.post('/api/prima-nota/movimento', {
+      await api.post('/api/rapido/versamento-banca', {
         data: formData.data || new Date().toISOString().split('T')[0],
         importo: parseFloat(formData.importo),
         descrizione: formData.descrizione || 'Versamento in banca',
