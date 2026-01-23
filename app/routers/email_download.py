@@ -208,6 +208,37 @@ async def get_inbox_stats() -> Dict[str, Any]:
     return stats
 
 
+@router.post("/sync-filesystem")
+async def sync_filesystem() -> Dict[str, Any]:
+    """
+    Sincronizza i PDF dal filesystem con documents_inbox.
+    Scansiona /app/documents e aggiunge/aggiorna i record nel database.
+    """
+    db = Database.get_db()
+    stats = await sync_filesystem_pdfs_to_db(db)
+    
+    return {
+        "success": True,
+        "message": "Sincronizzazione filesystem completata",
+        "stats": stats
+    }
+
+
+@router.post("/associa-f24-filesystem")
+async def associa_f24_filesystem() -> Dict[str, Any]:
+    """
+    Associa i PDF F24 dal filesystem ai record f24_commercialista.
+    """
+    db = Database.get_db()
+    stats = await associate_f24_from_filesystem(db)
+    
+    return {
+        "success": True,
+        "message": "Associazione F24 completata",
+        "stats": stats
+    }
+
+
 @router.get("/statistiche")
 async def get_statistiche_allegati() -> Dict[str, Any]:
     """
