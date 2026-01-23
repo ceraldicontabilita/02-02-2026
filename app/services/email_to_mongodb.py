@@ -151,9 +151,9 @@ async def download_and_save_emails(
     try:
         # Connetti a IMAP
         conn = imaplib.IMAP4_SSL(IMAP_SERVER)
-        conn.login(EMAIL_USER, EMAIL_PASSWORD)
+        conn.login(email_user, email_password)
         conn.select(folder)
-        logger.info(f"Connesso a {IMAP_SERVER} come {EMAIL_USER}")
+        logger.info(f"Connesso a {IMAP_SERVER} come {email_user}")
         
         # Cerca email degli ultimi N giorni
         from datetime import timedelta
