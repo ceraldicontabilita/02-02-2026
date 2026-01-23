@@ -56,10 +56,12 @@ class TestSuppliersValidation:
         assert response.status_code in [200, 404]
     
     def test_validate_iban_invalid(self, client):
-        """Test POST /api/suppliers/validate-iban with invalid IBAN"""
-        payload = {"iban": "INVALID"}
-        response = client.post("/api/suppliers/validate-iban", json=payload)
-        # Should return 200 with invalid=true or 400/422/404
+        """Test validate-iban endpoint with invalid IBAN"""
+        # Try both GET and POST as endpoint may vary
+        response = client.get("/api/suppliers/validate-iban", params={"iban": "INVALID"})
+        if response.status_code == 405:
+            response = client.post("/api/suppliers/validate-iban", json={"iban": "INVALID"})
+        # Should return 200 with validation result or error
         assert response.status_code in [200, 400, 404, 422]
 
 
