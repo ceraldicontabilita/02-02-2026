@@ -568,16 +568,137 @@ async def smart_auto_associate(db: AsyncIOMotorDatabase) -> Dict[str, int]:
     """
     stats = {"associated": 0, "skipped": 0, "errors": 0}
     
-    # Mappatura categoria -> collezione destinazione e campo match
-    association_rules = {
-        "f24": {
-            "target_collection": "f24_commercialista",
-            "match_fields": ["file_name", "filename"]
-        },
-        "busta_paga": {
-            "target_collection": "cedolini", 
-            "match_fields": ["dipendente", "mese", "anno"]
-        },
+    # ========== ASSOCIAZIONE CEDOLINI (BUSTE PAGA) ==========
+    # Pattern filename: "Busta paga - Vespa Vincenzo - Settembre 2024 - 2.pdf"
+    mesi_it = {
+        "gennaio": 1, "febbraio": 2, "marzo": 3, "aprile": 4,
+        "maggio": 5, "giugno": 6, "luglio": 7, "agosto": 8,
+        "settembre": 9, "ottobre": 10, "novembre": 11, "dicembre": 12
+    }
+    
+    cursor = db["cedolini_email_attachments"].find({"associato": False})
+    async for pdf_doc in cursor:
+        try:
+            filename = pdf_doc.get("filename", "")
+            
+            # Estrai nome dipendente e periodo dal filename
+            # Pattern: "Busta paga - COGNOME NOME - MESE ANNO"
+            import re
+            match = re.search(r'[Bb]usta\s*[Pp]aga\s*-\s*([^-]+)\s*-\s*(\w+)\s*(\d{4})', filename)
+            
+            if match:
+                nome_completo = match.group(1).strip()
+                mese_str = match.group(2).lower()
+                anno = int(match.group(3))
+                mese = mesi_it.get(mese_str, pdf_doc.get("mese"))
+                
+                # Cerca dipendente per nome/cognome
+                parts = nome_completo.split()
+                if len(parts) >= 2:
+                    cognome = parts[0]
+                    nome = " ".join(parts[1:])
+                    
+                    # Cerca cedolino corrispondente
+                    cedolino = await db["cedolini"].find_one({
+                        "mese": mese,
+                        "anno": anno,
+                        "$or": [
+                            {"pdf_data": None},
+                            {"pdf_data": ""},
+                            {"pdf_data": {"$exists": False}}
+                        ]
+                    })
+                    
+                    if not cedolino:
+                        # Cerca anche per nome dipendente
+                        cedolino = await db["cedolini"].find_one({
+                            "dipendente": {"$regex": cognome, "$options": "i"},
+                            "mese": mese,
+                            "anno": anno,
+                            "$or": [
+                                {"pdf_data": None},
+                                {"pdf_data": ""},
+                                {"pdf_data": {"$exists": False}}
+                            ]
+                        })
+                    
+                    if cedolino:
+                        # Associa
+                        await db["cedolini"].update_one(
+                            {"id": cedolino["id"]},
+                            {"$set": {
+                                "pdf_data": pdf_doc["pdf_data"],
+                                "pdf_filename": filename,
+                                "pdf_hash": pdf_doc.get("pdf_hash")
+                            }}
+                        )
+                        await db["cedolini_email_attachments"].update_one(
+                            {"id": pdf_doc["id"]},
+                            {"$set": {
+                                "associato": True,
+                                "documento_associato_id": cedolino["id"],
+                                "documento_associato_collection": "cedolini",
+                                "associated_at": datetime.now(timezone.utc).isoformat()
+                            }}
+                        )
+                        stats["associated"] += 1
+                        logger.info(f"Cedolino associato: {filename} -> {cedolino['id']}")
+                        continue
+            
+            stats["skipped"] += 1
+            
+        except Exception as e:
+            logger.error(f"Errore auto-associazione cedolino: {e}")
+            stats["errors"] += 1
+    
+    # ========== ASSOCIAZIONE F24 ==========
+    cursor = db["f24_email_attachments"].find({"associato": False})
+    async for pdf_doc in cursor:
+        try:
+            filename = pdf_doc.get("filename", "")
+            
+            # Cerca F24 con lo stesso filename
+            f24 = await db["f24_commercialista"].find_one({
+                "$or": [
+                    {"file_name": filename},
+                    {"filename": filename},
+                    {"file_name": {"$regex": filename[:30], "$options": "i"}}
+                ],
+                "$or": [
+                    {"pdf_data": None},
+                    {"pdf_data": ""},
+                    {"pdf_data": {"$exists": False}}
+                ]
+            })
+            
+            if f24:
+                await db["f24_commercialista"].update_one(
+                    {"id": f24["id"]},
+                    {"$set": {
+                        "pdf_data": pdf_doc["pdf_data"],
+                        "pdf_filename": filename,
+                        "pdf_hash": pdf_doc.get("pdf_hash")
+                    }}
+                )
+                await db["f24_email_attachments"].update_one(
+                    {"id": pdf_doc["id"]},
+                    {"$set": {
+                        "associato": True,
+                        "documento_associato_id": f24["id"],
+                        "documento_associato_collection": "f24_commercialista",
+                        "associated_at": datetime.now(timezone.utc).isoformat()
+                    }}
+                )
+                stats["associated"] += 1
+                logger.info(f"F24 associato: {filename}")
+            else:
+                stats["skipped"] += 1
+                
+        except Exception as e:
+            logger.error(f"Errore auto-associazione F24: {e}")
+            stats["errors"] += 1
+    
+    return stats
         "quietanza": {
             "target_collection": "quietanze_f24",
             "match_fields": ["tributo", "periodo"]
