@@ -372,21 +372,50 @@ async def mark_f24_pagato(f24_id: str) -> Dict[str, Any]:
 @router.get("/commercialista/{f24_id}/pdf")
 async def get_f24_pdf(f24_id: str):
     """Restituisce il PDF di un F24 commercialista."""
-    from fastapi.responses import FileResponse
+    from fastapi.responses import Response
+    import base64
     
     db = Database.get_db()
     f24 = await db[COLL_F24_COMMERCIALISTA].find_one({"id": f24_id})
     if not f24:
         raise HTTPException(status_code=404, detail="F24 non trovato")
     
-    file_path = f24.get("file_path")
-    if not file_path or not os.path.exists(file_path):
+    filename = f24.get("file_name", f24.get("filename", "F24.pdf"))
+    pdf_bytes = None
+    
+    # 1. Cerca pdf_data nella collezione
+    pdf_data = f24.get("pdf_data")
+    if pdf_data:
+        pdf_bytes = base64.b64decode(pdf_data)
+    
+    # 2. Cerca file_path
+    if not pdf_bytes:
+        file_path = f24.get("file_path")
+        if file_path and os.path.exists(file_path):
+            with open(file_path, "rb") as fl:
+                pdf_bytes = fl.read()
+    
+    # 3. Cerca in f24_models (collezione legacy)
+    if not pdf_bytes and filename:
+        models_doc = await db["f24_models"].find_one(
+            {"filename": filename},
+            {"pdf_data": 1}
+        )
+        if models_doc and models_doc.get("pdf_data"):
+            pdf_bytes = base64.b64decode(models_doc["pdf_data"])
+            # Copia pdf_data per le prossime volte
+            await db[COLL_F24_COMMERCIALISTA].update_one(
+                {"id": f24_id},
+                {"$set": {"pdf_data": models_doc["pdf_data"]}}
+            )
+    
+    if not pdf_bytes:
         raise HTTPException(status_code=404, detail="PDF non trovato")
     
-    return FileResponse(
-        file_path,
+    return Response(
+        content=pdf_bytes,
         media_type="application/pdf",
-        filename=f24.get("file_name", "F24.pdf")
+        headers={"Content-Disposition": f'inline; filename="{filename}"'}
     )
 
 
