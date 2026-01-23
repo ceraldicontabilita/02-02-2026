@@ -605,54 +605,45 @@ async def upload_f24_pdf_overwrite(
             "descrizione": t.get("descrizione", "")
         })
     
-    f24_record = {
+    # Converto al formato f24_commercialista
+    f24_doc = {
         "id": f24_id,
-        "data_scadenza": data_scadenza,
-        "scadenza_display": data_scadenza,
-        "codice_fiscale": parsed.get("dati_generali", {}).get("codice_fiscale"),
-        "contribuente": parsed.get("dati_generali", {}).get("ragione_sociale"),
-        "banca": parsed.get("dati_generali", {}).get("banca"),
-        "tipo_f24": parsed.get("dati_generali", {}).get("tipo_f24", "F24"),
-        "tributi_erario": tributi_erario,
-        "tributi_inps": tributi_inps,
-        "tributi_regioni": tributi_regioni,
-        "tributi_imu": tributi_imu,
-        "totale_debito": totali.get("totale_debito", 0),
-        "totale_credito": totali.get("totale_credito", 0),
-        "saldo_finale": totali.get("saldo_finale", 0),
+        "f24_key": f"{parsed.get('dati_generali', {}).get('codice_fiscale', '')}_{data_scadenza}",
+        "file_name": file.filename,
+        "file_path": None,
+        "dati_generali": parsed.get("dati_generali", {}),
+        "sezione_erario": parsed.get("sezione_erario", []),
+        "sezione_inps": parsed.get("sezione_inps", []),
+        "sezione_regioni": parsed.get("sezione_regioni", []),
+        "sezione_tributi_locali": parsed.get("sezione_tributi_locali", []),
+        "sezione_inail": parsed.get("sezione_inail", []),
+        "totali": totali,
         "has_ravvedimento": parsed.get("has_ravvedimento", False),
-        "pagato": existing.get("pagato", False) if existing else False,
-        "filename": file.filename,
+        "status": existing.get("status", "da_pagare") if existing else "da_pagare",
+        "riconciliato": existing.get("riconciliato", False) if existing else False,
         "pdf_data": base64.b64encode(pdf_bytes).decode('utf-8'),
-        "source": "pdf_upload",
         "updated_at": datetime.utcnow().isoformat()
     }
     
     if existing:
-        await db["f24_models"].update_one(
+        await db[F24_COLLECTION].update_one(
             {"id": f24_id},
-            {"$set": f24_record}
+            {"$set": f24_doc}
         )
         action = "aggiornato"
     else:
-        f24_record["created_at"] = datetime.utcnow().isoformat()
-        await db["f24_models"].insert_one(f24_record.copy())
+        f24_doc["created_at"] = datetime.utcnow().isoformat()
+        await db[F24_COLLECTION].insert_one(f24_doc.copy())
         action = "creato"
     
-    logger.info(f"F24 {action}: {f24_id} - Scadenza {data_scadenza} - €{totali.get('saldo_finale', 0):.2f}")
+    logger.info(f"F24 {action}: {f24_id} - €{totali.get('saldo_netto', totali.get('saldo_finale', 0)):.2f}")
     
     return {
         "success": True,
         "action": action,
         "id": f24_id,
         "scadenza": data_scadenza,
-        "saldo_finale": totali.get("saldo_finale", 0),
-        "tributi": {
-            "erario": len(tributi_erario),
-            "inps": len(tributi_inps),
-            "regioni": len(tributi_regioni),
-            "imu": len(tributi_imu)
-        },
+        "saldo_finale": totali.get("saldo_netto", totali.get("saldo_finale", 0)),
         "filename": file.filename
     }
 
