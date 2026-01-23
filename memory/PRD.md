@@ -356,7 +356,7 @@ GET  /api/liquidazione-iva/export/pdf/{anno}/{mese}
 /app/app/routers/attendance.py                # Presenze
 /app/app/routers/employees/giustificativi.py  # Giustificativi
 /app/app/routers/employees/dipendenti.py      # Anagrafica
-/app/app/routers/suppliers_module/            # NUOVO: Fornitori modularizzato
+/app/app/routers/suppliers_module/            # Fornitori modularizzato
     ├── __init__.py                           # Router aggregato
     ├── base.py                               # CRUD base (722 righe)
     ├── bulk.py                               # Operazioni massive (389 righe)
@@ -364,6 +364,15 @@ GET  /api/liquidazione-iva/export/pdf/{anno}/{mese}
     ├── iban.py                               # Gestione IBAN (338 righe)
     ├── import_export.py                      # Import Excel (236 righe)
     └── validation.py                         # Validazione P0 (200 righe)
+/app/app/routers/prima_nota_module/           # NUOVO: Prima Nota modularizzato
+    ├── __init__.py                           # Router aggregato (109 righe)
+    ├── common.py                             # Costanti e utility (82 righe)
+    ├── cassa.py                              # CRUD Prima Nota Cassa (277 righe)
+    ├── banca.py                              # CRUD Prima Nota Banca (207 righe)
+    ├── salari.py                             # Prima Nota Salari (139 righe)
+    ├── stats.py                              # Statistiche e Export (184 righe)
+    ├── sync.py                               # Sync corrispettivi/fatture (488 righe)
+    └── manutenzione.py                       # Fix e cleanup (485 righe)
 /app/app/routers/riconciliazione_intelligente_api.py
 /app/app/routers/documenti_intelligenti.py    # Classificazione email
 /app/app/routers/f24/f24_riconciliazione.py   # F24
