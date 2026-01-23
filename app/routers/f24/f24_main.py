@@ -42,9 +42,9 @@ CODICI_TRIBUTO_F24 = {
     "3848": {"sezione": "imu", "descrizione": "Addizionale comunale IRPEF - saldo", "tipo": "debito"},
 }
 
-# Directory per salvare i PDF F24
-F24_UPLOAD_DIR = "/app/uploads/f24"
-os.makedirs(F24_UPLOAD_DIR, exist_ok=True)
+# Directory per salvare i PDF F24 (DEPRECATED - ora usiamo MongoDB)
+# F24_UPLOAD_DIR = "/app/uploads/f24"
+# os.makedirs(F24_UPLOAD_DIR, exist_ok=True)
 
 
 # ============== UPLOAD ZIP MASSIVO F24 ==============
