@@ -34,20 +34,10 @@ async def upload_quietanza_f24(
     file_id = str(uuid.uuid4())
     content = await file.read()
     
-    # Parsing del PDF direttamente dal contenuto
-    import io
-    import fitz  # PyMuPDF
-    
+    # Parsing del PDF direttamente dal contenuto in memoria
     try:
-        # Crea un documento PDF dal contenuto in memoria
-        pdf_doc = fitz.open(stream=content, filetype="pdf")
-        text = ""
-        for page in pdf_doc:
-            text += page.get_text()
-        pdf_doc.close()
-        
-        # Parsing semplificato
-        parsed_data = parse_quietanza_from_text(text, content)
+        from app.services.f24_parser import parse_quietanza_f24
+        parsed_data = parse_quietanza_f24(content)  # Passa bytes direttamente
     except Exception as e:
         logger.error(f"Errore parsing F24: {e}")
         raise HTTPException(status_code=500, detail=f"Errore parsing PDF: {str(e)}")
