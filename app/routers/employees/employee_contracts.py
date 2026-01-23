@@ -266,7 +266,13 @@ async def generate_contract(employee_id: str, data: Dict[str, Any] = Body(...)) 
         # Move to contracts dir
         shutil.move(output_path, final_path)
         
-        # Record contract generation
+        # Read file and encode to base64 for MongoDB (architettura MongoDB-first)
+        import base64
+        with open(final_path, 'rb') as f:
+            file_content = f.read()
+        file_base64 = base64.b64encode(file_content).decode('utf-8')
+        
+        # Record contract generation with base64 content
         contract_record = {
             "id": str(uuid.uuid4()),
             "employee_id": employee_id,
@@ -275,6 +281,7 @@ async def generate_contract(employee_id: str, data: Dict[str, Any] = Body(...)) 
             "contract_name": ct["name"],
             "filename": final_filename,
             "filepath": final_path,
+            "file_data": file_base64,  # Architettura MongoDB-first
             "generated_at": datetime.utcnow().isoformat(),
             "additional_data": additional_data
         }
