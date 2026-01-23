@@ -113,22 +113,21 @@ async def upload_f24_zip(
                 })
                 continue
             
-            # Genera nome file univoco
+            # Genera ID univoco
             file_id = str(uuid4())
             safe_filename = os.path.basename(pdf_name).replace(" ", "_")
             stored_filename = f"{file_id}_{safe_filename}"
-            file_path = os.path.join(F24_UPLOAD_DIR, stored_filename)
             
-            # Salva il file
-            with open(file_path, 'wb') as f:
-                f.write(pdf_content)
+            # Architettura MongoDB-only: salva PDF come Base64
+            import base64
+            pdf_base64 = base64.b64encode(pdf_content).decode('utf-8')
             
-            # Crea record nel database
+            # Crea record nel database con pdf_data
             doc = {
                 "id": file_id,
                 "original_filename": pdf_name,
                 "stored_filename": stored_filename,
-                "file_path": file_path,
+                "pdf_data": pdf_base64,  # Architettura MongoDB-only
                 "file_hash": file_hash,
                 "file_size": len(pdf_content),
                 "status": "pending",  # pending, processed, error
