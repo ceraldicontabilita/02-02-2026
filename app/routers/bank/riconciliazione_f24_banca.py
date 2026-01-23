@@ -191,7 +191,7 @@ async def riconcilia_f24_con_banca():
         
         # Aggiorna stato F24 nel database
         for f24_pagato in result["f24_riconciliati"]:
-            await db["f24_commercialista"].update_one(
+            await db[COLL_F24_COMMERCIALISTA].update_one(
                 {"id": f24_pagato.get("id")},
                 {"$set": {
                     "stato_pagamento": "PAGATO",
@@ -201,7 +201,7 @@ async def riconcilia_f24_con_banca():
             )
         
         for f24_non_pagato in result["f24_non_pagati"]:
-            await db["f24_commercialista"].update_one(
+            await db[COLL_F24_COMMERCIALISTA].update_one(
                 {"id": f24_non_pagato.get("id")},
                 {"$set": {"stato_pagamento": "DA_PAGARE"}}
             )
