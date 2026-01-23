@@ -377,19 +377,13 @@ async def get_f24_pdf(f24_id: str):
     if not f24:
         raise HTTPException(status_code=404, detail="F24 non trovato")
     
-    # Cerca PDF nei dati o nel file_path
+    # Architettura MongoDB-only: cerca PDF solo in pdf_data
     pdf_data = f24.get("pdf_data")
-    file_path = f24.get("file_path")
     filename = f24.get("file_name", f24.get("filename", f"F24_{f24_id}.pdf"))
     pdf_bytes = None
     
     if pdf_data:
         pdf_bytes = base64.b64decode(pdf_data)
-    elif file_path:
-        import os
-        if os.path.exists(file_path):
-            with open(file_path, "rb") as f:
-                pdf_bytes = f.read()
     
     # Se non trovato, cerca in f24_models (collezione legacy con pdf_data)
     if not pdf_bytes and filename:
