@@ -909,15 +909,18 @@ async def processa_f24_scaricati() -> Dict[str, Any]:
     f24_errori = []
     
     from app.services.parser_f24 import parse_f24_commercialista
+    import base64
     
     for doc in f24_docs:
         try:
-            filepath = doc.get("filepath")
-            if not filepath or not os.path.exists(filepath):
-                f24_errori.append({"file": doc["filename"], "errore": "File non trovato"})
+            # Architettura MongoDB-first: usa pdf_data
+            pdf_data = doc.get("pdf_data")
+            if not pdf_data:
+                f24_errori.append({"file": doc["filename"], "errore": "PDF non disponibile in MongoDB"})
                 continue
             
-            parsed = parse_f24_commercialista(filepath)
+            pdf_content = base64.b64decode(pdf_data)
+            parsed = parse_f24_commercialista(pdf_content=pdf_content)
             
             if parsed.get("success") and parsed.get("f24_data"):
                 f24_data = parsed["f24_data"]
