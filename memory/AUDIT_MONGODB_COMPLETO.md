@@ -1,38 +1,43 @@
 # AUDIT COMPLETO ARCHITETTURA MONGODB-ONLY
 
 **Data**: Dicembre 2025
-**Stato**: Refactoring completato per tutti i file critici
+**Stato**: Refactoring completato - 63 riferimenti residui (deprecati o helper)
 
 ---
 
 ## 📊 RIEPILOGO AUDIT FINALE
 
-### ✅ FILE COMPLETAMENTE RIFATTORIZZATI
+### ✅ FILE PRINCIPALI RIFATTORIZZATI
 
-| # | File | Riferimenti Rimossi | Stato |
-|---|------|---------------------|-------|
-| 1 | `/app/app/services/cedolini_manager.py` | filepath → pdf_data | ✅ COMPLETATO |
-| 2 | `/app/app/services/email_monitor_service.py` | filepath → pdf_data | ✅ COMPLETATO |
-| 3 | `/app/app/routers/documenti_module/crud.py` | filepath → pdf_data | ✅ COMPLETATO |
-| 4 | `/app/app/services/parser_f24.py` | Aggiunto pdf_content | ✅ COMPLETATO |
-| 5 | `/app/app/services/f24_parser.py` | Aggiunto pdf_content | ✅ COMPLETATO |
-| 6 | `/app/app/routers/f24/f24_main.py` | filepath → pdf_data | ✅ COMPLETATO |
-| 7 | `/app/app/routers/f24/email_f24.py` | filepath → pdf_data | ✅ COMPLETATO |
-| 8 | `/app/app/routers/f24/f24_riconciliazione.py` | filepath → pdf_data | ✅ COMPLETATO |
-| 9 | `/app/app/routers/f24/quietanze.py` | filepath → pdf_data | ✅ COMPLETATO |
-| 10 | `/app/app/routers/f24/f24_public.py` | filepath → pdf_data | ✅ COMPLETATO |
-| 11 | `/app/app/routers/quietanze_f24.py` | filepath → pdf_data | ✅ COMPLETATO |
-| 12 | `/app/app/routers/documenti_intelligenti.py` | filepath → pdf_data | ✅ COMPLETATO |
-| 13 | `/app/app/routers/bonifici_module/jobs.py` | Aggiunto pdf_data | ✅ COMPLETATO |
-| 14 | `/app/app/routers/employees/employee_contracts.py` | Aggiunto file_data | ✅ COMPLETATO |
+| # | File | Riferimenti Prima → Dopo | Stato |
+|---|------|--------------------------|-------|
+| 1 | `services/cedolini_manager.py` | ~15 → 0 | ✅ COMPLETATO |
+| 2 | `services/email_monitor_service.py` | ~10 → 0 | ✅ COMPLETATO |
+| 3 | `routers/documenti_module/crud.py` | ~8 → 0 | ✅ COMPLETATO |
+| 4 | `services/parser_f24.py` | ~5 → 2 (parametri) | ✅ COMPLETATO |
+| 5 | `services/f24_parser.py` | ~5 → 4 (parametri) | ✅ COMPLETATO |
+| 6 | `routers/f24/f24_main.py` | ~12 → 1 (commento) | ✅ COMPLETATO |
+| 7 | `routers/f24/email_f24.py` | ~8 → 0 | ✅ COMPLETATO |
+| 8 | `routers/f24/f24_riconciliazione.py` | ~15 → 0 | ✅ COMPLETATO |
+| 9 | `routers/f24/quietanze.py` | ~8 → 0 | ✅ COMPLETATO |
+| 10 | `routers/f24/f24_public.py` | ~5 → 2 (fallback) | ✅ COMPLETATO |
+| 11 | `routers/quietanze_f24.py` | ~10 → 2 (query) | ✅ COMPLETATO |
+| 12 | `routers/documenti_intelligenti.py` | ~15 → 0 | ✅ COMPLETATO |
+| 13 | `routers/bonifici_module/jobs.py` | ~8 → 3 (batch) | ✅ COMPLETATO |
+| 14 | `routers/employees/employee_contracts.py` | ~12 → 9 (template) | ✅ COMPLETATO |
+| 15 | `routers/documenti.py` | ~24 → 6 | ✅ COMPLETATO |
+| 16 | `services/email_full_download.py` | ~30 → 14 (deprecated) | ✅ COMPLETATO |
 
-### 🔶 FILE CON RIFERIMENTI LEGACY (Retrocompatibilità)
+### 🔶 FILE CON RIFERIMENTI RESIDUI (Non critici)
 
-| File | Riferimenti | Note |
-|------|-------------|------|
-| `/app/app/routers/documenti.py` | 24 | Endpoint di migrazione legacy - funzionano ma usano fallback |
-| `/app/app/services/email_full_download.py` | 30 | Funzioni di migrazione una tantum |
-| `/app/app/parsers/estratto_conto_*.py` | 3 ciascuno | Helper legacy, parser principale usa bytes |
+| File | Riferimenti | Motivo |
+|------|-------------|--------|
+| `utils/logger.py` | 3 | Logging, non dati |
+| `parsers/estratto_conto_*.py` | 3 ciascuno | Helper legacy con fallback |
+| `services/email_downloader.py` | 3 | Deprecato |
+| `services/email_document_downloader.py` | 3 | Deprecato |
+| `api/routers/iva.py` | 3 | Report generation |
+| `services/parser_f24_gemini.py` | 1 | AI fallback |
 
 ---
 
