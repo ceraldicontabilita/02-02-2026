@@ -673,17 +673,19 @@ async def smart_auto_associate(db: AsyncIOMotorDatabase) -> Dict[str, int]:
         try:
             filename = pdf_doc.get("filename", "")
             
-            # Cerca F24 con lo stesso filename
+            # Cerca F24 con lo stesso filename che non ha ancora pdf_data
             f24 = await db["f24_commercialista"].find_one({
-                "$or": [
-                    {"file_name": filename},
-                    {"filename": filename},
-                    {"file_name": {"$regex": filename[:30], "$options": "i"}}
-                ],
-                "$or": [
-                    {"pdf_data": None},
-                    {"pdf_data": ""},
-                    {"pdf_data": {"$exists": False}}
+                "$and": [
+                    {"$or": [
+                        {"file_name": filename},
+                        {"filename": filename},
+                        {"file_name": {"$regex": filename[:30], "$options": "i"}}
+                    ]},
+                    {"$or": [
+                        {"pdf_data": None},
+                        {"pdf_data": ""},
+                        {"pdf_data": {"$exists": False}}
+                    ]}
                 ]
             })
             
