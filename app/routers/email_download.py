@@ -274,7 +274,8 @@ async def get_pdf_content(collection: str, pdf_id: str):
     db = Database.get_db()
     
     # Verifica che la collezione sia valida
-    if collection not in CATEGORY_COLLECTIONS.values():
+    valid_collections = list(CATEGORY_COLLECTIONS.values()) + ["documents_inbox"]
+    if collection not in valid_collections:
         raise HTTPException(status_code=400, detail="Collezione non valida")
     
     doc = await db[collection].find_one({"id": pdf_id})
@@ -293,6 +294,39 @@ async def get_pdf_content(collection: str, pdf_id: str):
         media_type="application/pdf",
         headers={"Content-Disposition": f'inline; filename="{filename}"'}
     )
+
+
+@router.get("/inbox-documents")
+async def list_inbox_documents(
+    category: str = Query(default=None),
+    status: str = Query(default=None),
+    limit: int = Query(default=50, le=200)
+) -> Dict[str, Any]:
+    """Lista documenti in documents_inbox con PDF salvato in MongoDB."""
+    db = Database.get_db()
+    
+    query = {}
+    if category:
+        query["category"] = category
+    if status:
+        query["status"] = status
+    
+    # Solo documenti con pdf_data (salvati su MongoDB)
+    query["pdf_data"] = {"$exists": True, "$ne": None}
+    
+    cursor = db["documents_inbox"].find(
+        query,
+        {"_id": 0, "pdf_data": 0}  # Escludi PDF dalla lista
+    ).sort("downloaded_at", -1).limit(limit)
+    
+    docs = await cursor.to_list(limit)
+    total = await db["documents_inbox"].count_documents({"pdf_data": {"$exists": True}})
+    
+    return {
+        "count": len(docs),
+        "total_in_mongodb": total,
+        "documents": docs
+    }
 
 
 @router.delete("/pulisci-duplicati")
