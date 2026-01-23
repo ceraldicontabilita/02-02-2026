@@ -2313,29 +2313,45 @@ async def upload_documento_automatico(
                 result["message"] = "Errore parsing PDF Cedolino"
                 
         elif tipo_rilevato == 'estratto_conto':
-            # Import estratto conto - salva file e indirizza
-            upload_dir = Path("/tmp/documents_upload")
-            upload_dir.mkdir(parents=True, exist_ok=True)
+            # Import estratto conto - salva in MongoDB per processamento
+            import base64 as b64
             
-            temp_file = upload_dir / f"ec_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{filename}"
-            with open(temp_file, 'wb') as f:
-                f.write(content)
+            doc_id = f"ec_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}"
+            estratto_doc = {
+                "id": doc_id,
+                "filename": filename,
+                "pdf_data": b64.b64encode(content).decode('utf-8'),  # MongoDB-only
+                "category": "estratto_conto",
+                "status": "da_processare",
+                "processed": False,
+                "source": "upload_manuale",
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+            await db["documents_inbox"].insert_one(dict(estratto_doc).copy())
             
-            result["message"] = "Estratto conto salvato. Usa la pagina Import Estratto Conto per processarlo."
-            result["filepath"] = str(temp_file)
+            result["message"] = "Estratto conto salvato in MongoDB. Usa la pagina Import Estratto Conto per processarlo."
+            result["doc_id"] = doc_id
             result["azione_richiesta"] = "Vai a Banca > Import Estratto Conto"
             
         elif tipo_rilevato == 'bonifici':
-            # Salva per archivio bonifici
-            upload_dir = Path("/tmp/documents_upload")
-            upload_dir.mkdir(parents=True, exist_ok=True)
+            # Salva per archivio bonifici in MongoDB
+            import base64 as b64
             
-            temp_file = upload_dir / f"bonifici_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{filename}"
-            with open(temp_file, 'wb') as f:
-                f.write(content)
+            doc_id = f"bonifici_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}"
+            bonifici_doc = {
+                "id": doc_id,
+                "filename": filename,
+                "pdf_data": b64.b64encode(content).decode('utf-8'),  # MongoDB-only
+                "category": "bonifico",
+                "status": "da_processare",
+                "processed": False,
+                "source": "upload_manuale",
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+            await db["documents_inbox"].insert_one(dict(bonifici_doc).copy())
             
-            result["message"] = "File bonifici salvato. Usa Archivio Bonifici per processarlo."
-            result["filepath"] = str(temp_file)
+            result["message"] = "File bonifici salvato in MongoDB. Usa Archivio Bonifici per processarlo."
+            result["doc_id"] = doc_id
             result["azione_richiesta"] = "Vai a Banca > Archivio Bonifici"
             
     except Exception as e:
