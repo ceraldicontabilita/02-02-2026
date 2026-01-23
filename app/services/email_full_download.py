@@ -1276,13 +1276,6 @@ async def process_cedolini_to_prima_nota(db: AsyncIOMotorDatabase) -> Dict[str, 
                 mese_nome = match.group(1).lower()
                 parsed_data['mese'] = mesi_it.get(mese_nome[:3])
                 parsed_data['anno'] = int(match.group(2))
-                    if mese_str.isdigit():
-                        parsed_data['mese'] = int(mese_str)
-                    else:
-                        parsed_data['mese'] = mesi_it.get(mese_str[:3], None)
-                    parsed_data['anno'] = int(match.group(2))
-                    if parsed_data.get('mese'):
-                        break
             
             # Importi
             # Netto - pattern per cedolini italiani: cerca dopo "TOTALE NETTO" o simili
