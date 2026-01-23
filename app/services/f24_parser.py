@@ -39,10 +39,13 @@ def parse_data(value: str) -> Optional[str]:
     return value
 
 
-def extract_text_from_pdf(pdf_path: str) -> str:
-    """Estrae tutto il testo da un PDF."""
+def extract_text_from_pdf(pdf_path_or_bytes) -> str:
+    """Estrae tutto il testo da un PDF. Accetta path o bytes."""
     try:
-        doc = fitz.open(pdf_path)
+        if isinstance(pdf_path_or_bytes, bytes):
+            doc = fitz.open(stream=pdf_path_or_bytes, filetype="pdf")
+        else:
+            doc = fitz.open(pdf_path_or_bytes)
         text = ""
         for page in doc:
             text += page.get_text()
@@ -53,7 +56,7 @@ def extract_text_from_pdf(pdf_path: str) -> str:
         return ""
 
 
-def parse_quietanza_f24(pdf_path: str) -> Dict[str, Any]:
+def parse_quietanza_f24(pdf_path_or_bytes) -> Dict[str, Any]:
     """
     Parsa una quietanza F24 ed estrae tutti i dati strutturati.
     
