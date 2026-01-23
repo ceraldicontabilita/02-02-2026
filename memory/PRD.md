@@ -350,6 +350,14 @@ GET  /api/liquidazione-iva/export/pdf/{anno}/{mese}
 /app/app/routers/attendance.py                # Presenze
 /app/app/routers/employees/giustificativi.py  # Giustificativi
 /app/app/routers/employees/dipendenti.py      # Anagrafica
+/app/app/routers/suppliers_module/            # NUOVO: Fornitori modularizzato
+    ├── __init__.py                           # Router aggregato
+    ├── base.py                               # CRUD base (722 righe)
+    ├── bulk.py                               # Operazioni massive (389 righe)
+    ├── common.py                             # Costanti condivise (48 righe)
+    ├── iban.py                               # Gestione IBAN (338 righe)
+    ├── import_export.py                      # Import Excel (236 righe)
+    └── validation.py                         # Validazione P0 (200 righe)
 /app/app/routers/riconciliazione_intelligente_api.py
 /app/app/routers/documenti_intelligenti.py    # Classificazione email
 /app/app/routers/f24/f24_riconciliazione.py   # F24
