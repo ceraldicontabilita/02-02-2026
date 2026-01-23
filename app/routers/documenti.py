@@ -377,15 +377,27 @@ async def download_documento(doc_id: str):
     if not doc:
         raise HTTPException(status_code=404, detail="Documento non trovato")
     
-    filepath = doc.get("filepath")
-    if not filepath or not os.path.exists(filepath):
-        raise HTTPException(status_code=404, detail="File non trovato su disco")
+    # Prima prova pdf_data (MongoDB), poi filepath come fallback
+    pdf_data = doc.get("pdf_data")
+    if pdf_data:
+        import base64
+        content = base64.b64decode(pdf_data)
+        return Response(
+            content=content,
+            media_type="application/pdf",
+            headers={"Content-Disposition": f'attachment; filename="{doc.get("filename", "documento.pdf")}"'}
+        )
     
-    return FileResponse(
-        path=filepath,
-        filename=doc.get("filename", "documento"),
-        media_type="application/octet-stream"
-    )
+    # Fallback per vecchi documenti con filepath
+    filepath = doc.get("filepath")
+    if filepath and os.path.exists(filepath):
+        return FileResponse(
+            path=filepath,
+            filename=doc.get("filename", "documento"),
+            media_type="application/octet-stream"
+        )
+    
+    raise HTTPException(status_code=404, detail="PDF non disponibile")
 
 
 @router.post("/documento/{doc_id}/processa")
@@ -402,9 +414,17 @@ async def processa_documento(
     if not doc:
         raise HTTPException(status_code=404, detail="Documento non trovato")
     
-    filepath = doc.get("filepath")
-    if not filepath or not os.path.exists(filepath):
-        raise HTTPException(status_code=404, detail="File non trovato su disco")
+    # Usa pdf_data da MongoDB
+    pdf_data = doc.get("pdf_data")
+    if not pdf_data:
+        # Fallback filepath
+        filepath = doc.get("filepath")
+        if filepath and os.path.exists(filepath):
+            with open(filepath, 'rb') as f:
+                import base64
+                pdf_data = base64.b64encode(f.read()).decode('utf-8')
+        else:
+            raise HTTPException(status_code=404, detail="PDF non disponibile")
     
     # Mappa destinazioni agli endpoint
     destination_map = {
