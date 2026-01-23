@@ -188,6 +188,7 @@ from app.routers import magazzino_avanzato  # Magazzino Avanzato - Categorie mer
 from app.routers import riconciliazione_intelligente_api  # Riconciliazione Intelligente - Conferma Pagamenti
 from app.routers import attendance  # Gestione Presenze Dipendenti (legacy)
 from app.routers.attendance_module import router as attendance_router_new  # Modulo refactored
+from app.routers import inserimento_rapido  # Inserimento Rapido - Mobile
 
 
 # =============================================================================
