@@ -152,6 +152,14 @@ async def process_files_background(job_id: str, file_paths: List[Path]):
             text = read_pdf_text(p)
             transfers = extract_transfers_from_text(text) if text.strip() else []
             
+            # Architettura MongoDB-only: leggi PDF e codifica in Base64
+            import base64
+            try:
+                with open(p, 'rb') as pdf_file:
+                    pdf_data = base64.b64encode(pdf_file.read()).decode('utf-8')
+            except:
+                pdf_data = None
+            
             # Fallback: estrai dati dal nome file
             if not transfers or (transfers and not transfers[0].get('importo')):
                 filename_data = parse_filename_data(p.name)
@@ -170,6 +178,7 @@ async def process_files_background(job_id: str, file_paths: List[Path]):
                 t['job_id'] = job_id
                 t['id'] = str(uuid.uuid4())
                 t['dedup_key'] = build_dedup_key(t)
+                t['pdf_data'] = pdf_data  # Architettura MongoDB-only
                 t['created_at'] = datetime.now(timezone.utc).isoformat()
                 
                 if isinstance(t.get('data'), datetime):
