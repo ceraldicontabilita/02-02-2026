@@ -477,15 +477,8 @@ async def delete_f24_commercialista(f24_id: str) -> Dict[str, Any]:
     })
     cascade_results["alerts"] = alert_result.deleted_count
     
-    # Se già eliminato, cancella definitivamente
+    # Se già eliminato, cancella definitivamente (architettura MongoDB-only)
     if f24.get("status") == "eliminato":
-        # Elimina anche il file PDF fisico
-        if f24.get("file_path") and os.path.exists(f24.get("file_path")):
-            try:
-                os.remove(f24.get("file_path"))
-            except:
-                pass
-        
         await db[COLL_F24_COMMERCIALISTA].delete_one({"id": f24_id})
         return {
             "success": True,
