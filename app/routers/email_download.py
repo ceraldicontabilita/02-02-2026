@@ -43,7 +43,7 @@ async def get_download_status() -> Dict[str, Any]:
 @router.post("/start-full-download")
 async def start_full_download(
     background_tasks: BackgroundTasks,
-    days_back: int = Query(default=365, description="Giorni indietro da scaricare"),
+    days_back: int = Query(default=1, description="Giorni indietro da scaricare (default 1 giorno)"),
     folder: str = Query(default="INBOX", description="Cartella IMAP")
 ) -> Dict[str, Any]:
     """
