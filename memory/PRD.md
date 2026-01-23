@@ -285,6 +285,16 @@ GET  /api/liquidazione-iva/export/pdf/{anno}/{mese}
 - Corretto per cercare pattern F24 (I24 AGENZIA, AGENZIA ENTRATE, ecc.) nella collezione corretta
 - Ora trova 136 movimenti F24 (€196.073,15 totali)
 
+✅ **RISOLTO (23/01/2026)**: Consolidamento F24 
+- Collezioni `f24`, `f24_models` DEPRECATE → ora usano tutte `f24_commercialista`
+- Router `email_f24`, `f24_gestione_avanzata`, `f24_tributi`, `accounting_f24` DISABILITATI
+- Creato file centralizzato `/app/app/db_collections.py` con nomi collezioni e query pattern
+- Aggiunto endpoint `/api/f24/upload-pdf` con parsing automatico
+
+✅ **RISOLTO (23/01/2026)**: Consolidamento Magazzino
+- Collezione `warehouse_stocks` DEPRECATA → ora usano tutte `warehouse_inventory`
+- Router `magazzino_avanzato.py` aggiornato per usare nuovo schema
+
 ### 7.2 🟡 P1 - Media Priorità
 1. **Pulizia UI Duplicata**: Eliminare `LearningMachineDashboard.jsx` ridondante e verificare navigazione
 2. **Test E2E Feedback Loop**: Testare il flusso "Correggi" in `ClassificazioneDocumenti.jsx` → API feedback → salvataggio
