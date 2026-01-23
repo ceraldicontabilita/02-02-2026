@@ -6,6 +6,8 @@ Questo router gestisce:
 2. Scarico per produzione (distinta base / ricette)
 3. Gestione giacenze e lotti
 4. Reportistica per centro di costo
+
+NOTA: Usa warehouse_inventory come collezione principale
 """
 
 from fastapi import APIRouter, HTTPException, Query
@@ -15,6 +17,7 @@ import logging
 import uuid
 
 from app.database import Database, Collections
+from app.db_collections import COLL_WAREHOUSE, COLL_WAREHOUSE_MOVEMENTS
 from app.services.magazzino_categorie import (
     parse_linea_fattura,
     classifica_prodotto,
