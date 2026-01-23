@@ -119,22 +119,27 @@ async def processa_allegati_f24() -> Dict[str, Any]:
     }
     
     for allegato in allegati:
-        file_path = allegato.get("file_path")
-        if not file_path or not os.path.exists(file_path):
+        # Architettura MongoDB-only: usa pdf_data
+        pdf_data = allegato.get("pdf_data")
+        if not pdf_data:
             risultati["errori"] += 1
             risultati["dettagli"].append({
                 "file": allegato.get("original_filename"),
-                "errore": "File non trovato"
+                "errore": "PDF non disponibile in MongoDB"
             })
             continue
         
         try:
+            # Decodifica PDF da Base64
+            import base64
+            pdf_content = base64.b64decode(pdf_data)
+            
             # Determina il tipo di documento basato sul mittente
             categoria = allegato.get("categoria_f24", "generico")
             mittente_tipo = allegato.get("mittente_tipo", "sconosciuto")
             
-            # Prova a parsare come F24 commercialista
-            parsed_f24 = parse_f24_commercialista(file_path)
+            # Prova a parsare come F24 commercialista (architettura MongoDB-only: usa bytes)
+            parsed_f24 = parse_f24_commercialista(pdf_content=pdf_content)
             
             # Se ha codici tributo, è un F24
             has_tributi = (
@@ -148,7 +153,7 @@ async def processa_allegati_f24() -> Dict[str, Any]:
                 f24_doc = {
                     "id": allegato.get("id"),
                     "file_name": allegato.get("original_filename"),
-                    "file_path": file_path,
+                    "pdf_data": pdf_data,  # Architettura MongoDB-only
                     "email_from": allegato.get("email_from"),
                     "email_date": allegato.get("email_date"),
                     "mittente_tipo": mittente_tipo,
@@ -176,8 +181,8 @@ async def processa_allegati_f24() -> Dict[str, Any]:
                     "codici": len(parsed_f24.get("codici_univoci", []))
                 })
             else:
-                # Prova come quietanza
-                parsed_quietanza = parse_quietanza_f24(file_path)
+                # Prova come quietanza (architettura MongoDB-only: usa bytes)
+                parsed_quietanza = parse_quietanza_f24(pdf_content=pdf_content)
                 
                 has_quietanza_data = (
                     len(parsed_quietanza.get("sezione_erario", [])) > 0 or
@@ -188,7 +193,7 @@ async def processa_allegati_f24() -> Dict[str, Any]:
                     quietanza_doc = {
                         "id": allegato.get("id"),
                         "file_name": allegato.get("original_filename"),
-                        "file_path": file_path,
+                        "pdf_data": pdf_data,  # Architettura MongoDB-only
                         "email_from": allegato.get("email_from"),
                         "dati_generali": parsed_quietanza.get("dati_generali", {}),
                         "sezione_erario": parsed_quietanza.get("sezione_erario", []),
