@@ -106,24 +106,36 @@ async def get_movimenti_f24_banca(
 ):
     """
     Recupera i movimenti F24 identificati negli estratti conto.
+    Cerca nella collezione estratto_conto_movimenti i movimenti con pattern F24
+    (I24 AGENZIA ENTRATE, AGENZIA DELLE ENTRATE, etc.)
     """
     db = Database.get_db()
     
-    query = {}
-    if data_da:
-        query["data_contabile"] = {"$gte": data_da}
-    if data_a:
-        if "data_contabile" in query:
-            query["data_contabile"]["$lte"] = data_a
-        else:
-            query["data_contabile"] = {"$lte": data_a}
+    # Query per identificare i pagamenti F24 dalla descrizione_originale
+    query = {
+        "$or": [
+            {"descrizione_originale": {"$regex": "I24.*AGENZIA", "$options": "i"}},
+            {"descrizione_originale": {"$regex": "AGENZIA.*ENTRATE", "$options": "i"}},
+            {"descrizione_originale": {"$regex": "F24", "$options": "i"}},
+            {"categoria": {"$regex": "Tasse|Imposte|Tributi|F24", "$options": "i"}}
+        ]
+    }
     
-    movimenti = await db["movimenti_f24_banca"].find(
+    # Filtri opzionali per data
+    if data_da or data_a:
+        date_filter = {}
+        if data_da:
+            date_filter["$gte"] = data_da
+        if data_a:
+            date_filter["$lte"] = data_a
+        query["data"] = date_filter
+    
+    movimenti = await db["estratto_conto_movimenti"].find(
         query,
         {"_id": 0}
-    ).sort("data_contabile", -1).limit(limit).to_list(limit)
+    ).sort("data", -1).limit(limit).to_list(limit)
     
-    # Calcola totale
+    # Calcola totale (in valore assoluto perché sono uscite negative)
     totale = sum(abs(m.get("importo", 0)) for m in movimenti)
     
     return {
