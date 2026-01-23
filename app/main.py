@@ -145,7 +145,7 @@ from app.routers.reports import (
 
 # --- Core Routers (non modulari) ---
 from app.routers import (
-    auth, cash, chart_of_accounts, notifications,
+    auth, suppliers, cash, chart_of_accounts, notifications,
     cash_register, failed_invoices, settings as settings_router,
     config, search, incasso_reale, ocr_assegni, cart, portal, orders,
     portal_extended, cash_register_extended, finanziaria, public_api,
