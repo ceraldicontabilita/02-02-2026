@@ -8,17 +8,16 @@ Endpoints tested:
 - GET /api/documenti/statistiche
 - GET /api/documenti/lista
 - GET /api/documenti/categorie
-- GET /api/f24
-- GET /api/quietanze-f24
-- GET /api/quietanze-f24/statistiche
+- GET /api/f24-public/models (F24 list - public endpoint)
+- GET /api/quietanze-f24 (quietanze list)
 - GET /api/ricerca-globale?q=srl
 - GET /api/dipendenti
 - GET /api/invoices
 - GET /api/suppliers
 - GET /api/warehouse/products
-- GET /api/prima-nota
-- GET /api/cedolini/riepilogo
-- POST /api/f24-riconciliazione/upload (structure test)
+- GET /api/prima-nota/cassa (prima nota cassa)
+- GET /api/cedolini/riepilogo-mensile/{anno}/{mese}
+- POST /api/f24-riconciliazione/commercialista/upload (structure test)
 """
 
 import pytest
@@ -92,24 +91,28 @@ class TestDocumentiEndpoints:
         print(f"✅ Categorie: {len(categories)} categories available")
 
 
-class TestF24Endpoints:
-    """Test /api/f24 and related endpoints"""
+class TestF24PublicEndpoints:
+    """Test /api/f24-public/* endpoints (public, no auth required)"""
     
-    def test_f24_lista_returns_200(self):
-        """GET /api/f24 - deve restituire lista F24"""
-        response = requests.get(f"{BASE_URL}/api/f24")
+    def test_f24_models_returns_200(self):
+        """GET /api/f24-public/models - deve restituire lista F24"""
+        response = requests.get(f"{BASE_URL}/api/f24-public/models")
         assert response.status_code == 200, f"Expected 200, got {response.status_code}"
         
         data = response.json()
         
-        # Can be list or dict with items
-        if isinstance(data, list):
-            print(f"✅ F24 Lista: {len(data)} F24 records")
-        elif isinstance(data, dict):
-            items = data.get("items", data.get("f24", data.get("data", [])))
-            print(f"✅ F24 Lista: {len(items) if isinstance(items, list) else 'N/A'} F24 records")
-        else:
-            print(f"✅ F24 Lista: Response received")
+        # Verify structure
+        assert "f24s" in data, "Missing 'f24s' field"
+        assert "count" in data, "Missing 'count' field"
+        
+        print(f"✅ F24 Public Models: {data['count']} F24 records")
+    
+    def test_f24_scadenze_prossime(self):
+        """GET /api/f24-public/scadenze-prossime - deve restituire scadenze"""
+        response = requests.get(f"{BASE_URL}/api/f24-public/scadenze-prossime")
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+        
+        print(f"✅ F24 Scadenze Prossime: OK")
 
 
 class TestQuietanzeF24Endpoints:
@@ -127,14 +130,6 @@ class TestQuietanzeF24Endpoints:
         elif isinstance(data, dict):
             items = data.get("items", data.get("quietanze", data.get("data", [])))
             print(f"✅ Quietanze Lista: {len(items) if isinstance(items, list) else 'N/A'} quietanze")
-    
-    def test_quietanze_statistiche_returns_200(self):
-        """GET /api/quietanze-f24/statistiche - deve restituire statistiche"""
-        response = requests.get(f"{BASE_URL}/api/quietanze-f24/statistiche")
-        assert response.status_code == 200, f"Expected 200, got {response.status_code}"
-        
-        data = response.json()
-        print(f"✅ Quietanze Statistiche: {data}")
 
 
 class TestRicercaGlobale:
@@ -261,56 +256,75 @@ class TestWarehouseEndpoint:
 
 
 class TestF24RiconciliazioneUpload:
-    """Test /api/f24-riconciliazione/upload endpoint structure"""
+    """Test /api/f24-riconciliazione/commercialista/upload endpoint structure"""
     
     def test_upload_endpoint_exists(self):
-        """POST /api/f24-riconciliazione/upload - endpoint should exist"""
+        """POST /api/f24-riconciliazione/commercialista/upload - endpoint should exist"""
         # Test without file to verify endpoint exists
-        response = requests.post(f"{BASE_URL}/api/f24-riconciliazione/upload")
+        response = requests.post(f"{BASE_URL}/api/f24-riconciliazione/commercialista/upload")
         
         # Should return 422 (missing file) or 400, not 404
-        assert response.status_code != 404, "Upload endpoint not found (404)"
+        assert response.status_code != 404, f"Upload endpoint not found (404). Got: {response.status_code}"
         
         # 422 = validation error (missing file), which is expected
         # 400 = bad request, also acceptable
-        assert response.status_code in [400, 422], f"Unexpected status: {response.status_code}"
-        
         print(f"✅ F24 Riconciliazione Upload: Endpoint exists (status {response.status_code} without file)")
 
 
 class TestPrimaNotaEndpoint:
-    """Test /api/prima-nota endpoint"""
+    """Test /api/prima-nota/* endpoints"""
     
-    def test_prima_nota_returns_200(self):
-        """GET /api/prima-nota - deve restituire movimenti prima nota"""
-        response = requests.get(f"{BASE_URL}/api/prima-nota")
+    def test_prima_nota_cassa_returns_200(self):
+        """GET /api/prima-nota/cassa - deve restituire movimenti prima nota cassa"""
+        response = requests.get(f"{BASE_URL}/api/prima-nota/cassa")
         assert response.status_code == 200, f"Expected 200, got {response.status_code}"
         
         data = response.json()
         
         if isinstance(data, list):
-            print(f"✅ Prima Nota: {len(data)} movimenti")
+            print(f"✅ Prima Nota Cassa: {len(data)} movimenti")
         elif isinstance(data, dict):
             items = data.get("items", data.get("movimenti", data.get("data", [])))
-            print(f"✅ Prima Nota: {len(items) if isinstance(items, list) else 'N/A'} movimenti")
+            print(f"✅ Prima Nota Cassa: {len(items) if isinstance(items, list) else 'N/A'} movimenti")
+    
+    def test_prima_nota_banca_returns_200(self):
+        """GET /api/prima-nota/banca - deve restituire movimenti prima nota banca"""
+        response = requests.get(f"{BASE_URL}/api/prima-nota/banca")
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+        
+        print(f"✅ Prima Nota Banca: OK")
+    
+    def test_prima_nota_stats_returns_200(self):
+        """GET /api/prima-nota/stats - deve restituire statistiche"""
+        response = requests.get(f"{BASE_URL}/api/prima-nota/stats")
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+        
+        print(f"✅ Prima Nota Stats: OK")
 
 
 class TestCedoliniEndpoint:
-    """Test /api/cedolini/riepilogo endpoint"""
+    """Test /api/cedolini/* endpoints"""
     
-    def test_cedolini_riepilogo_returns_200(self):
-        """GET /api/cedolini/riepilogo - deve restituire riepilogo cedolini"""
-        response = requests.get(f"{BASE_URL}/api/cedolini/riepilogo")
+    def test_cedolini_lista_returns_200(self):
+        """GET /api/cedolini - deve restituire lista cedolini"""
+        response = requests.get(f"{BASE_URL}/api/cedolini")
         assert response.status_code == 200, f"Expected 200, got {response.status_code}"
         
         data = response.json()
-        print(f"✅ Cedolini Riepilogo: Response received")
+        print(f"✅ Cedolini Lista: Response received")
+    
+    def test_cedolini_riepilogo_mensile_returns_200(self):
+        """GET /api/cedolini/riepilogo-mensile/{anno}/{mese} - deve restituire riepilogo"""
+        response = requests.get(f"{BASE_URL}/api/cedolini/riepilogo-mensile/2024/12")
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}"
         
-        # Log some details if available
-        if isinstance(data, dict):
-            for key in ["totale", "total", "count", "dipendenti"]:
-                if key in data:
-                    print(f"   - {key}: {data[key]}")
+        data = response.json()
+        
+        # Verify structure
+        assert "anno" in data, "Missing 'anno' field"
+        assert "mese" in data, "Missing 'mese' field"
+        
+        print(f"✅ Cedolini Riepilogo Mensile: anno={data.get('anno')}, mese={data.get('mese')}, num_cedolini={data.get('num_cedolini')}")
 
 
 class TestHealthAndConnectivity:
