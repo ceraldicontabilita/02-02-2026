@@ -300,6 +300,17 @@ GET  /api/liquidazione-iva/export/pdf/{anno}/{mese}
 - Eliminata `LearningMachineDashboard.jsx` - funzionalità duplicate in CentriCosto, Magazzino, Ricette
 - Route `/learning-machine` ora redirect a `/centri-costo`
 
+✅ **RISOLTO (23/01/2026)**: Bug Report PDF Ferie/Permessi per Tutti i Dipendenti
+- L'endpoint `/api/dipendenti/report-ferie-permessi-tutti` restituiva errore 404
+- **Causa**: Ordine rotte FastAPI errato - la rotta dinamica `/{dipendente_id}` intercettava la rotta statica
+- **Fix**: Spostata la rotta statica PRIMA di quella dinamica in `dipendenti.py`
+- Ora genera correttamente un PDF con il riepilogo ferie/permessi per tutti i 34 dipendenti
+
+✅ **RISOLTO (23/01/2026)**: Pulizia Codice Duplicato `suppliers.py`
+- Rimosso endpoint `/import-excel` duplicato (righe 2087-2167) - era definito 2 volte
+- File ridotto da 2429 a 2346 righe
+- Route `/learning-machine` ora redirect a `/centri-costo`
+
 ✅ **RISOLTO (23/01/2026)**: Test E2E Feedback Loop
 - Endpoint `/api/learning-machine/feedback` funzionante
 - Feedback salvato in collezione `learning_feedback`
