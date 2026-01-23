@@ -6,7 +6,7 @@ import requests
 import time
 import os
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://pastryman.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://code-cleanup-105.preview.emergentagent.com').rstrip('/')
 
 class TestVerbaliRiconciliazioneAPI:
     """Test Verbali Riconciliazione endpoints"""
