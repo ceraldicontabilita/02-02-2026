@@ -33,12 +33,10 @@
 | File | Riferimenti | Priorità | Azione Richiesta |
 |------|-------------|----------|------------------|
 | `/app/app/services/email_full_download.py` | 30 | P1 | Rimuovere logiche filesystem legacy |
-| `/app/app/routers/f24/f24_main.py` | filesystem | P1 | Usare `pdf_data` per download F24 |
-| `/app/app/routers/f24/quietanze.py` | filesystem | P1 | Usare `pdf_data` per quietanze |
-| `/app/app/routers/quietanze_f24.py` | filesystem | P1 | Usare `pdf_data` |
 | `/app/app/routers/bonifici_module/jobs.py` | filesystem | P2 | Usare `pdf_data` |
 | `/app/app/routers/employees/dipendenti.py` | filesystem | P2 | Report PDF in memoria |
 | `/app/app/services/liquidazione_iva.py` | filesystem | P2 | Generare PDF in memoria |
+| `/app/app/routers/documenti.py` | 19 (legacy) | P3 | Endpoint di migrazione - bassa priorità |
 
 ---
 
