@@ -15,9 +15,9 @@ from . import suppliers_base, suppliers_import, suppliers_iban, suppliers_metodi
 # Router principale che combina tutti i sub-router
 router = APIRouter()
 
-# Include tutti i sub-router
-router.include_router(suppliers_base.router)
-router.include_router(suppliers_import.router)
-router.include_router(suppliers_iban.router)
-router.include_router(suppliers_metodi.router)
-router.include_router(suppliers_validazione.router)
+# Include tutti i sub-router (senza prefix - gli endpoint mantengono i loro path)
+router.include_router(suppliers_metodi.router, tags=["Suppliers Metodi"])
+router.include_router(suppliers_validazione.router, tags=["Suppliers Validazione"])
+router.include_router(suppliers_iban.router, tags=["Suppliers IBAN"])
+router.include_router(suppliers_import.router, tags=["Suppliers Import"])
+router.include_router(suppliers_base.router, tags=["Suppliers Base"])
