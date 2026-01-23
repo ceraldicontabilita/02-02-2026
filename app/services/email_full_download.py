@@ -1163,6 +1163,197 @@ async def associate_f24_from_filesystem(db: AsyncIOMotorDatabase) -> Dict[str, i
                 with open(filepath, "rb") as f:
                     pdf_content = f.read()
                 
+
+
+async def process_cedolini_to_prima_nota(db: AsyncIOMotorDatabase) -> Dict[str, Any]:
+    """
+    Processa i cedolini scaricati ed estrae i dati per prima_nota_salari.
+    Usa PyMuPDF per estrarre testo e pattern matching per i dati.
+    """
+    import fitz  # PyMuPDF
+    
+    stats = {
+        "processed": 0,
+        "created_prima_nota": 0,
+        "skipped": 0,
+        "errors": []
+    }
+    
+    mesi_it = {
+        "gennaio": 1, "febbraio": 2, "marzo": 3, "aprile": 4,
+        "maggio": 5, "giugno": 6, "luglio": 7, "agosto": 8,
+        "settembre": 9, "ottobre": 10, "novembre": 11, "dicembre": 12,
+        "gen": 1, "feb": 2, "mar": 3, "apr": 4, "mag": 5, "giu": 6,
+        "lug": 7, "ago": 8, "set": 9, "ott": 10, "nov": 11, "dic": 12
+    }
+    
+    # Trova cedolini non processati
+    cursor = db["cedolini_email_attachments"].find({
+        "processed": {"$ne": True},
+        "pdf_data": {"$exists": True, "$ne": None}
+    })
+    
+    async for cedolino in cursor:
+        try:
+            # Decodifica PDF
+            pdf_bytes = base64.b64decode(cedolino["pdf_data"])
+            
+            # Estrai testo con PyMuPDF
+            doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+            text = ""
+            for page in doc:
+                text += page.get_text()
+            doc.close()
+            
+            if not text.strip():
+                stats["skipped"] += 1
+                continue
+            
+            # Estrai dati dal testo
+            parsed_data = {}
+            
+            # Nome dipendente (pattern comuni)
+            nome_patterns = [
+                r'(?:Dipendente|Cognome e Nome|Lavoratore|Nome)[:\s]+([A-Z][A-Za-z]+\s+[A-Z][A-Za-z]+)',
+                r'(?:Sig\.|Sig\.ra|Dott\.|Dott\.ssa)\s+([A-Z][A-Za-z]+\s+[A-Z][A-Za-z]+)',
+            ]
+            for pattern in nome_patterns:
+                match = re.search(pattern, text)
+                if match:
+                    parsed_data['dipendente_nome'] = match.group(1).strip()
+                    break
+            
+            # Se non trovato nel testo, usa il filename
+            if not parsed_data.get('dipendente_nome'):
+                filename = cedolino.get("filename", "")
+                # Pattern: "Busta paga - Nome Cognome - ..."
+                match = re.search(r'(?:Busta paga|Cedolino)[^\w]*([A-Za-z]+\s+[A-Za-z]+)', filename, re.IGNORECASE)
+                if match:
+                    parsed_data['dipendente_nome'] = match.group(1).title()
+            
+            # Codice Fiscale
+            cf_match = re.search(r'([A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z])', text)
+            if cf_match:
+                parsed_data['codice_fiscale'] = cf_match.group(1)
+            
+            # Periodo (mese/anno)
+            periodo_patterns = [
+                r'(?:Periodo|Mese|Competenza)[:\s]+(\w+)[/\-\s]+(\d{4})',
+                r'(\w+)\s+(\d{4})',  # "Dicembre 2025"
+                r'(\d{1,2})[/\-](\d{4})',  # "12/2025"
+            ]
+            for pattern in periodo_patterns:
+                match = re.search(pattern, text, re.IGNORECASE)
+                if match:
+                    mese_str = match.group(1).lower()
+                    if mese_str.isdigit():
+                        parsed_data['mese'] = int(mese_str)
+                    else:
+                        parsed_data['mese'] = mesi_it.get(mese_str[:3], None)
+                    parsed_data['anno'] = int(match.group(2))
+                    if parsed_data.get('mese'):
+                        break
+            
+            # Importi
+            # Netto
+            netto_patterns = [
+                r'(?:Netto|Netto a pagare|Netto in busta|Totale netto)[:\s]*[€]?\s*([\d.,]+)',
+                r'NETTO[:\s]*[€]?\s*([\d.,]+)',
+            ]
+            for pattern in netto_patterns:
+                match = re.search(pattern, text, re.IGNORECASE)
+                if match:
+                    val = match.group(1).replace('.', '').replace(',', '.')
+                    try:
+                        parsed_data['netto'] = float(val)
+                        break
+                    except:
+                        pass
+            
+            # Lordo
+            lordo_match = re.search(r'(?:Lordo|Retribuzione lorda|Totale competenze)[:\s]*[€]?\s*([\d.,]+)', text, re.IGNORECASE)
+            if lordo_match:
+                val = lordo_match.group(1).replace('.', '').replace(',', '.')
+                try:
+                    parsed_data['lordo'] = float(val)
+                except:
+                    pass
+            
+            # INPS
+            inps_match = re.search(r'(?:INPS|Contributi INPS|Contr\. INPS)[:\s]*[€]?\s*([\d.,]+)', text, re.IGNORECASE)
+            if inps_match:
+                val = inps_match.group(1).replace('.', '').replace(',', '.')
+                try:
+                    parsed_data['inps'] = float(val)
+                except:
+                    pass
+            
+            # IRPEF
+            irpef_match = re.search(r'(?:IRPEF|Ritenute IRPEF|Imposta)[:\s]*[€]?\s*([\d.,]+)', text, re.IGNORECASE)
+            if irpef_match:
+                val = irpef_match.group(1).replace('.', '').replace(',', '.')
+                try:
+                    parsed_data['irpef'] = float(val)
+                except:
+                    pass
+            
+            # Se abbiamo abbastanza dati, crea record in prima_nota_salari
+            if parsed_data.get('dipendente_nome') and parsed_data.get('netto'):
+                # Cerca dipendente esistente
+                dipendente = await db["employees"].find_one({
+                    "$or": [
+                        {"nome_completo": {"$regex": parsed_data['dipendente_nome'], "$options": "i"}},
+                        {"codice_fiscale": parsed_data.get('codice_fiscale', '')}
+                    ]
+                })
+                
+                dipendente_id = dipendente["id"] if dipendente else None
+                
+                # Verifica se esiste già in prima_nota_salari
+                existing = await db["prima_nota_salari"].find_one({
+                    "dipendente_nome": {"$regex": parsed_data['dipendente_nome'], "$options": "i"},
+                    "mese": parsed_data.get('mese'),
+                    "anno": parsed_data.get('anno')
+                })
+                
+                if not existing:
+                    # Crea nuovo record
+                    salario_doc = {
+                        "id": str(uuid.uuid4()),
+                        "dipendente_id": dipendente_id,
+                        "dipendente_nome": parsed_data['dipendente_nome'],
+                        "codice_fiscale": parsed_data.get('codice_fiscale'),
+                        "mese": parsed_data.get('mese'),
+                        "anno": parsed_data.get('anno'),
+                        "netto": parsed_data.get('netto', 0),
+                        "lordo": parsed_data.get('lordo', 0),
+                        "inps": parsed_data.get('inps', 0),
+                        "irpef": parsed_data.get('irpef', 0),
+                        "cedolino_id": cedolino["id"],
+                        "source": "email_cedolino_auto",
+                        "created_at": datetime.now(timezone.utc).isoformat()
+                    }
+                    
+                    await db["prima_nota_salari"].insert_one(salario_doc)
+                    stats["created_prima_nota"] += 1
+                    logger.info(f"Prima nota salari creata: {parsed_data['dipendente_nome']} {parsed_data.get('mese')}/{parsed_data.get('anno')} - €{parsed_data.get('netto')}")
+            
+            # Aggiorna cedolino come processato
+            await db["cedolini_email_attachments"].update_one(
+                {"id": cedolino["id"]},
+                {"$set": {
+                    "processed": True,
+                    "parsed_data": parsed_data,
+                    "processed_at": datetime.now(timezone.utc).isoformat()
+                }}
+            )
+            stats["processed"] += 1
+            
+        except Exception as e:
+            logger.error(f"Errore processing cedolino {cedolino.get('filename')}: {e}")
+            stats["errors"].append(f"{cedolino.get('filename')}: {str(e)}")
+    
+    return stats
                 pdf_base64 = base64.b64encode(pdf_content).decode('utf-8')
                 
                 await db["f24_commercialista"].update_one(
