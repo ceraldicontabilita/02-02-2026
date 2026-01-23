@@ -262,6 +262,9 @@ class EmailFullDownloader:
         """Estrae tutti i PDF da un'email."""
         pdfs = []
         
+        # Estensioni da escludere (firme, certificati, non PDF)
+        EXCLUDED_EXTENSIONS = {'.p7s', '.p7m', '.p7c', '.sig', '.asc', '.gpg', '.pgp', '.xml', '.txt'}
+        
         if msg.is_multipart():
             for part in msg.walk():
                 content_type = part.get_content_type()
@@ -271,17 +274,29 @@ class EmailFullDownloader:
                 filename = part.get_filename()
                 if filename:
                     filename = decode_mime_header(filename)
+                    
+                    # Salta file esclusi
+                    ext = os.path.splitext(filename.lower())[1]
+                    if ext in EXCLUDED_EXTENSIONS:
+                        continue
                 
+                # Solo PDF veri
                 is_pdf = (
                     content_type == "application/pdf" or
-                    (filename and filename.lower().endswith(".pdf")) or
-                    "attachment" in content_disposition.lower()
+                    (filename and filename.lower().endswith(".pdf"))
                 )
                 
-                if is_pdf:
+                # Oppure allegati che sembrano documenti
+                is_document = (
+                    "attachment" in content_disposition.lower() and
+                    filename and
+                    any(filename.lower().endswith(ext) for ext in ['.pdf', '.png', '.jpg', '.jpeg'])
+                )
+                
+                if is_pdf or is_document:
                     try:
                         content = part.get_payload(decode=True)
-                        if content and len(content) > 100:  # PDF valido
+                        if content and len(content) > 500:  # File valido (>500 bytes)
                             if not filename:
                                 filename = f"allegato_{uuid.uuid4().hex[:8]}.pdf"
                             pdfs.append((filename, content))
