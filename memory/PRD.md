@@ -1,6 +1,6 @@
 # PRD – TechRecon Accounting System
 ## Product Requirements Document
-### Ultimo aggiornamento: Dicembre 2025 (Sessione 19 - Architettura MongoDB-Only)
+### Ultimo aggiornamento: Dicembre 2025 (Sessione 19 - Audit e Refactoring MongoDB-Only)
 
 ---
 
@@ -14,6 +14,7 @@ Sistema ERP contabile per aziende italiane con:
 - Scalabilità senza introdurre incoerenze
 - **NUOVO**: Interfaccia mobile-first per inserimenti rapidi
 - **NUOVO**: Architettura MongoDB-Only per persistenza dati
+- **NUOVO**: Ricerca Globale funzionante (fatture, fornitori, prodotti, dipendenti)
 
 ### 1.2 Stack Tecnologico
 - **Frontend**: React + Vite + TailwindCSS + Shadcn/UI
@@ -27,6 +28,17 @@ Sistema ERP contabile per aziende italiane con:
 - Gli endpoint di download devono leggere da `pdf_data`, NON da `filepath`
 - Gli endpoint di eliminazione devono operare SOLO sul database
 - I riferimenti `filepath` rimasti sono per endpoint di migrazione legacy
+
+### 1.4 File Completamente Rifattorizzati (Sessione 19)
+| File | Stato |
+|------|-------|
+| `services/cedolini_manager.py` | ✅ MongoDB-only |
+| `services/email_monitor_service.py` | ✅ MongoDB-only |
+| `routers/documenti_module/crud.py` | ✅ MongoDB-only |
+| `services/parser_f24.py` | ✅ Supporta bytes |
+| `routers/f24/f24_main.py` | ✅ MongoDB-only |
+| `services/f24_parser.py` | ✅ Supporta bytes |
+| `routers/quietanze_f24.py` | ✅ MongoDB-only |
 
 ---
 
