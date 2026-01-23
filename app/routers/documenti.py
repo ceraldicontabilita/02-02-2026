@@ -10,6 +10,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 import os
 import shutil
+import base64
+import hashlib
+import uuid
 
 from app.database import Database
 from app.services.email_document_downloader import (
