@@ -346,7 +346,13 @@ GET  /api/liquidazione-iva/export/pdf/{anno}/{mese}
    - Test files: `test_prima_nota.py`, `test_fatture_ricevute.py`, `test_suppliers_dipendenti.py`, `test_core.py`
    - Coverage: Prima Nota (13 test), Fatture Ricevute (14 test), Suppliers/Dipendenti (11 test), Core (9 test)
    - Tutti i test passano
-7. **CANDIDATI FUTURI REFACTORING** (file >2000 righe):
+7. ✅ **COMPLETATO (23/01/2026)**: Refactoring `archivio_bonifici.py` → modulo `bonifici_module/`
+   - File monolitico di 2438 righe suddiviso in 6 file modulari (1205 righe totali, **-50.6%**)
+   - Struttura: `common.py`, `pdf_parser.py`, `jobs.py`, `transfers.py`, `riconciliazione.py`
+8. ✅ **COMPLETATO (23/01/2026)**: Refactoring `operazioni_da_confermare.py` → modulo `operazioni_module/`
+   - File monolitico di 2378 righe suddiviso in 5 file modulari (790 righe totali, **-66.8%**)
+   - Struttura: `common.py`, `base.py`, `smart.py`, `carta.py`
+9. **CANDIDATI FUTURI REFACTORING** (file >2000 righe):
    - `archivio_bonifici.py` (2438 righe)
    - `operazioni_da_confermare.py` (2378 righe)
    - `documenti.py` (2354 righe)
