@@ -902,10 +902,6 @@ async def populate_payslips_pdf_data(db: AsyncIOMotorDatabase) -> Dict[str, int]
             # Se non ha pdf_data, lo salta - i nuovi documenti devono averlo
             stats["skipped"] += 1
             continue
-                    "pdf_size": len(pdf_content)
-                }}
-            )
-            stats["updated"] += 1
             
         except Exception as e:
             logger.error(f"Errore popolamento payslip: {e}")
