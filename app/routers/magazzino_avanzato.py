@@ -92,7 +92,7 @@ async def carico_da_fattura(fattura_id: str) -> Dict[str, Any]:
                 codice_prodotto = f"{dati_prodotto['categoria_codice']}_{dati_prodotto['descrizione_normalizzata'][:20]}".replace(" ", "_")
             
             # Cerca o crea articolo in magazzino
-            articolo = await db["warehouse_stocks"].find_one({"codice": codice_prodotto})
+            articolo = await db[COLL_WAREHOUSE].find_one({"codice": codice_prodotto})
             
             if articolo:
                 # Aggiorna giacenza e prezzo medio ponderato
@@ -110,7 +110,7 @@ async def carico_da_fattura(fattura_id: str) -> Dict[str, Any]:
                 else:
                     nuovo_prezzo = dati_prodotto["prezzo_unitario"]
                 
-                await db["warehouse_stocks"].update_one(
+                await db[COLL_WAREHOUSE].update_one(
                     {"_id": articolo["_id"]},
                     {"$set": {
                         "giacenza": nuova_giacenza,
@@ -144,7 +144,7 @@ async def carico_da_fattura(fattura_id: str) -> Dict[str, Any]:
                     "ultimo_carico": datetime.utcnow().isoformat(),
                     "ultimo_fornitore": fornitore
                 }
-                await db["warehouse_stocks"].insert_one(nuovo_articolo)
+                await db[COLL_WAREHOUSE].insert_one(nuovo_articolo)
             
             # Registra movimento di carico
             movimento = {
@@ -305,7 +305,7 @@ async def scarico_per_produzione(
         
         try:
             # Cerca articolo in magazzino (match fuzzy sul nome)
-            articolo = await db["warehouse_stocks"].find_one({
+            articolo = await db[COLL_WAREHOUSE].find_one({
                 "$or": [
                     {"descrizione": {"$regex": ingrediente, "$options": "i"}},
                     {"descrizione_normalizzata": {"$regex": ingrediente.upper()[:10]}}
@@ -318,7 +318,7 @@ async def scarico_per_produzione(
                 if giacenza >= qta_necessaria:
                     # Scarica
                     nuova_giacenza = giacenza - qta_necessaria
-                    await db["warehouse_stocks"].update_one(
+                    await db[COLL_WAREHOUSE].update_one(
                         {"_id": articolo["_id"]},
                         {"$set": {
                             "giacenza": nuova_giacenza,
@@ -405,7 +405,7 @@ async def get_giacenze(
     if sotto_scorta:
         query["$expr"] = {"$lt": ["$giacenza", "$giacenza_minima"]}
     
-    articoli = await db["warehouse_stocks"].find(
+    articoli = await db[COLL_WAREHOUSE].find(
         query,
         {"_id": 0, "codice": 1, "descrizione": 1, "categoria": 1, "categoria_id": 1,
          "giacenza": 1, "giacenza_minima": 1, "unita_misura": 1, "prezzo_acquisto": 1,
