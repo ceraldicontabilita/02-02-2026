@@ -1,6 +1,6 @@
 # PRD – TechRecon Accounting System
 ## Product Requirements Document
-### Ultimo aggiornamento: 22 Gennaio 2026 (Sessione 12)
+### Ultimo aggiornamento: 23 Gennaio 2026 (Sessione 13)
 
 ---
 
@@ -277,11 +277,14 @@ GET  /api/liquidazione-iva/export/pdf/{anno}/{mese}
 ## 7. BACKLOG E PRIORITÀ
 
 ### 7.1 🔴 P0 - Alta Priorità
-Nessun task P0 in sospeso.
+✅ **RISOLTO (23/01/2026)**: Bug Endpoint `/api/f24-riconciliazione/movimenti-f24-banca`
+- L'endpoint leggeva dalla collezione vuota `movimenti_f24_banca` invece che da `estratto_conto_movimenti`
+- Corretto per cercare pattern F24 (I24 AGENZIA, AGENZIA ENTRATE, ecc.) nella collezione corretta
+- Ora trova 136 movimenti F24 (€196.073,15 totali)
 
 ### 7.2 🟡 P1 - Media Priorità
-1. **UI Learning Machine & Magazzino**: Dashboard per visualizzare centri di costo, giacenze magazzino, attivare lotti produzione
-2. **Riconciliazione F24/Banca**: Parsing quietanze F24 e riconciliazione automatica con estratto conto
+1. **Pulizia UI Duplicata**: Eliminare `LearningMachineDashboard.jsx` ridondante e verificare navigazione
+2. **Test E2E Feedback Loop**: Testare il flusso "Correggi" in `ClassificazioneDocumenti.jsx` → API feedback → salvataggio
 3. **Refactoring Backend**: Suddividere file grandi (suppliers.py 95KB, operazioni_da_confermare.py 90KB, documenti.py 88KB)
 4. Report PDF annuale ferie/permessi per dipendente
 
