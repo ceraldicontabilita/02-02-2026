@@ -123,12 +123,12 @@ async def upload_f24_commercialista(
             is_ravvedimento_update = True
             f24_precedente = existing
     
-    # Salva nel database
+    # Salva nel database con pdf_data (architettura MongoDB-only)
     documento = {
         "id": file_id,
         "f24_key": f24_key,
         "file_name": file.filename,
-        "file_path": file_path,
+        "pdf_data": pdf_base64,  # Architettura MongoDB-only
         "parser_used": parser_used,  # Traccia quale parser è stato usato
         "dati_generali": parsed.get("dati_generali", {}),
         "sezione_erario": parsed.get("sezione_erario", []),
