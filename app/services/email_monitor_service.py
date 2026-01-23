@@ -154,7 +154,7 @@ async def processa_nuovi_documenti(db) -> Dict[str, Any]:
             {
                 "category": "busta_paga", 
                 "processed": {"$ne": True},
-                "pdf_data": {"$exists": True, "$ne": None, "$ne": ""}
+                "pdf_data": {"$exists": True, "$nin": [None, ""]}
             },
             {"_id": 0}
         ).to_list(100)
