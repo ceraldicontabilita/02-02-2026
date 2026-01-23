@@ -95,6 +95,7 @@ const PageLoader = () => (
 const Dashboard = lazy(() => import("./pages/Dashboard.jsx"));
 const DashboardAnalytics = lazy(() => import("./pages/DashboardAnalytics.jsx"));
 const InserimentoRapido = lazy(() => import("./pages/InserimentoRapido.jsx"));
+const DocumentiNonAssociati = lazy(() => import("./pages/DocumentiNonAssociati.jsx"));
 
 // === FATTURE & ACQUISTI ===
 const ArchivioFattureRicevute = lazy(() => import("./pages/ArchivioFattureRicevute.jsx"));
