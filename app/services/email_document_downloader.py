@@ -1,6 +1,7 @@
 """
 Servizio Download Documenti da Email
-Scarica automaticamente allegati dalle email e li categorizza.
+Scarica automaticamente allegati dalle email e li salva su MongoDB Atlas.
+IMPORTANTE: Tutto va salvato su MongoDB, NIENTE filesystem!
 Supporta: F24, Fatture, Buste Paga, Estratti Conto, Quietanze
 """
 
@@ -10,6 +11,7 @@ from email.header import decode_header
 import os
 import re
 import uuid
+import base64
 from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional, Tuple
 import logging
