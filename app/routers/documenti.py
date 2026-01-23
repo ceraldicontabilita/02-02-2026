@@ -1221,16 +1221,21 @@ async def sync_buste_paga() -> Dict[str, Any]:
             dipendenti[nome_completo] = dip
     
     for doc in docs:
-        filepath = doc.get("filepath")
+        # Architettura MongoDB-only: usa pdf_data
+        pdf_data = doc.get("pdf_data")
         filename = doc.get("filename", "")
         
-        if not filepath or not os.path.exists(filepath):
-            errori.append({"file": filename, "errore": "File non trovato"})
+        if not pdf_data:
+            errori.append({"file": filename, "errore": "PDF non disponibile in MongoDB"})
             continue
         
         try:
-            # Usa il parser
-            parser = PayslipPDFParser(filepath)
+            # Decodifica PDF da Base64
+            import base64
+            pdf_content = base64.b64decode(pdf_data)
+            
+            # Usa il parser con bytes
+            parser = PayslipPDFParser(pdf_content=pdf_content)
             parsed_pages = parser.parse()
             
             if not parsed_pages:
@@ -1272,7 +1277,7 @@ async def sync_buste_paga() -> Dict[str, Any]:
                     "iban": page_data.get("iban"),
                     "matricola": page_data.get("matricola"),
                     "filename": filename,
-                    "filepath": filepath,
+                    "pdf_data": pdf_data,  # Architettura MongoDB-only
                     "page_number": page_data.get("page_number", 1),
                     "email_source": {
                         "subject": doc.get("email_subject"),
