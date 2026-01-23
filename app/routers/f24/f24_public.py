@@ -314,17 +314,40 @@ async def upload_f24_pdf(
         "created_at": datetime.utcnow().isoformat()
     }
     
-    # Check for duplicates
-    existing = await db["f24_models"].find_one({
-        "data_scadenza": data_scadenza,
-        "saldo_finale": totali.get("saldo_finale", 0)
+    # Check for duplicates nella collezione unificata
+    existing = await db[F24_COLLECTION].find_one({
+        "$or": [
+            {"dati_generali.data_scadenza": data_scadenza, "totali.saldo_netto": totali.get("saldo_finale", 0)},
+            {"file_name": file.filename}
+        ]
     })
     
     if existing:
         raise HTTPException(status_code=409, detail="F24 già presente nel sistema")
     
+    # Converto al formato f24_commercialista
+    f24_doc = {
+        "id": f24_id,
+        "f24_key": f"{parsed.get('dati_generali', {}).get('codice_fiscale', '')}_{data_scadenza}",
+        "file_name": file.filename,
+        "file_path": None,  # PDF in memoria
+        "dati_generali": parsed.get("dati_generali", {}),
+        "sezione_erario": parsed.get("sezione_erario", []),
+        "sezione_inps": parsed.get("sezione_inps", []),
+        "sezione_regioni": parsed.get("sezione_regioni", []),
+        "sezione_tributi_locali": parsed.get("sezione_tributi_locali", []),
+        "sezione_inail": parsed.get("sezione_inail", []),
+        "totali": totali,
+        "has_ravvedimento": parsed.get("has_ravvedimento", False),
+        "status": "da_pagare",
+        "riconciliato": False,
+        "pdf_data": base64.b64encode(pdf_bytes).decode('utf-8'),
+        "created_at": datetime.utcnow().isoformat(),
+        "updated_at": datetime.utcnow().isoformat()
+    }
+    
     # Insert into database
-    await db["f24_models"].insert_one(f24_record.copy())
+    await db[F24_COLLECTION].insert_one(f24_doc.copy())
     
     logger.info(f"F24 importato: {f24_id} - Scadenza {data_scadenza} - €{totali.get('saldo_finale', 0):.2f}")
     
