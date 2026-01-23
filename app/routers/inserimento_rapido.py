@@ -278,6 +278,75 @@ async def paga_fattura_rapido(
     }
 
 
+@router.get("/ultimi-inserimenti")
+async def get_ultimi_inserimenti(limit: int = 10) -> Dict[str, Any]:
+    """Recupera gli ultimi inserimenti da tutte le sezioni."""
+    db = Database.get_db()
+    
+    inserimenti = []
+    
+    # Corrispettivi
+    cursor = db["corrispettivi_manuali"].find(
+        {"source": "inserimento_rapido"},
+        {"_id": 0}
+    ).sort("created_at", -1).limit(limit)
+    async for doc in cursor:
+        inserimenti.append({
+            "tipo": "corrispettivo",
+            "descrizione": f"Corrispettivo €{doc.get('importo', 0):.2f}",
+            "data": doc.get("data"),
+            "created_at": doc.get("created_at"),
+            "importo": doc.get("importo")
+        })
+    
+    # Versamenti banca
+    cursor = db["prima_nota_banca"].find(
+        {"source": "inserimento_rapido", "tipo": "VERSAMENTO_ENTRATA"},
+        {"_id": 0}
+    ).sort("created_at", -1).limit(limit)
+    async for doc in cursor:
+        inserimenti.append({
+            "tipo": "versamento",
+            "descrizione": f"Versamento banca €{doc.get('importo', 0):.2f}",
+            "data": doc.get("data"),
+            "created_at": doc.get("created_at"),
+            "importo": doc.get("importo")
+        })
+    
+    # Acconti
+    cursor = db["acconti_dipendenti"].find(
+        {"source": "inserimento_rapido"},
+        {"_id": 0}
+    ).sort("created_at", -1).limit(limit)
+    async for doc in cursor:
+        inserimenti.append({
+            "tipo": "acconto",
+            "descrizione": f"Acconto {doc.get('dipendente_nome', '')} €{doc.get('importo', 0):.2f}",
+            "data": doc.get("data"),
+            "created_at": doc.get("created_at"),
+            "importo": doc.get("importo")
+        })
+    
+    # Presenze
+    cursor = db["presenze"].find(
+        {"source": "inserimento_rapido"},
+        {"_id": 0}
+    ).sort("created_at", -1).limit(limit)
+    async for doc in cursor:
+        inserimenti.append({
+            "tipo": "presenza",
+            "descrizione": f"{doc.get('dipendente_nome', '')} - {doc.get('tipo', '')}",
+            "data": doc.get("data"),
+            "created_at": doc.get("created_at"),
+            "ore": doc.get("ore")
+        })
+    
+    # Ordina per data creazione
+    inserimenti.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+    
+    return {"inserimenti": inserimenti[:limit]}
+
+
 @router.get("/dipendenti-attivi")
 async def get_dipendenti_attivi() -> Dict[str, Any]:
     """Lista dipendenti attivi per selezione rapida."""
