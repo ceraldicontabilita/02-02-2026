@@ -271,13 +271,27 @@ async def get_dipendenti_attivi() -> Dict[str, Any]:
     """Lista dipendenti attivi per selezione rapida."""
     db = Database.get_db()
     
-    cursor = db["dipendenti"].find(
-        {"$or": [{"in_carico": True}, {"in_carico": {"$exists": False}}]},
-        {"_id": 0, "id": 1, "nome": 1, "cognome": 1}
-    ).sort("cognome", 1)
+    # Prima prova 'employees', poi 'dipendenti', poi 'anagrafica_dipendenti'
+    collections_to_try = ["employees", "dipendenti", "anagrafica_dipendenti", "_deprecated_anagrafica_dipendenti"]
     
     dipendenti = []
-    async for d in cursor:
-        dipendenti.append(d)
+    for coll_name in collections_to_try:
+        cursor = db[coll_name].find(
+            {"$or": [{"in_carico": True}, {"in_carico": {"$exists": False}}, {"active": True}, {"active": {"$exists": False}}]},
+            {"_id": 0, "id": 1, "nome": 1, "cognome": 1, "name": 1, "surname": 1}
+        ).sort([("cognome", 1), ("surname", 1)])
+        
+        async for d in cursor:
+            # Normalizza i campi
+            dipendente = {
+                "id": d.get("id", str(d.get("_id", ""))),
+                "nome": d.get("nome") or d.get("name", ""),
+                "cognome": d.get("cognome") or d.get("surname", "")
+            }
+            if dipendente["nome"] or dipendente["cognome"]:
+                dipendenti.append(dipendente)
+        
+        if dipendenti:
+            break  # Usa la prima collezione con dati
     
     return {"dipendenti": dipendenti}
