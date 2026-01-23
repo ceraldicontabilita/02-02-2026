@@ -155,8 +155,8 @@ async def carico_da_fattura(fattura_id: str) -> Dict[str, Any]:
                 "id": str(uuid.uuid4()),
                 "tipo": "carico",
                 "data": data_fattura,
-                "codice_articolo": codice_prodotto,
-                "descrizione_articolo": dati_prodotto["descrizione_originale"],
+                "prodotto_id": articolo.get("id") if articolo else nuovo_articolo.get("id"),
+                "prodotto_descrizione": dati_prodotto["descrizione_originale"],
                 "quantita": dati_prodotto["quantita"],
                 "unita_misura": dati_prodotto["unita_misura"],
                 "prezzo_unitario": dati_prodotto["prezzo_unitario"],
@@ -164,15 +164,13 @@ async def carico_da_fattura(fattura_id: str) -> Dict[str, Any]:
                 "fattura_id": fattura_id,
                 "numero_fattura": numero_fattura,
                 "fornitore": fornitore,
-                "categoria_id": dati_prodotto["categoria_id"],
-                "categoria_nome": dati_prodotto["categoria_nome"],
-                "centro_costo": dati_prodotto["centro_costo"],
+                "categoria": dati_prodotto["categoria_nome"],
                 "created_at": datetime.utcnow().isoformat()
             }
-            await db["movimenti_magazzino"].insert_one(movimento)
+            await db[COLL_WAREHOUSE_MOVEMENTS].insert_one(movimento)
             
             risultato["articoli_caricati"].append({
-                "codice": codice_prodotto,
+                "nome": dati_prodotto["descrizione_normalizzata"],
                 "descrizione": dati_prodotto["descrizione_normalizzata"],
                 "quantita": dati_prodotto["quantita"],
                 "unita": dati_prodotto["unita_misura"],
