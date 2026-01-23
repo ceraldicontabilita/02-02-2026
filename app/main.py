@@ -216,9 +216,10 @@ app.include_router(accounting_extended.router, prefix="/api/accounting", tags=["
 # DISABILITATO: accounting_f24 - non usato, duplicato con f24_main
 # app.include_router(accounting_f24.router, prefix="/api/f24", tags=["F24 Accounting"])
 app.include_router(accounting_engine_api.router, prefix="/api/accounting-engine", tags=["Accounting Engine - Partita Doppia"])
-app.include_router(prima_nota.router, prefix="/api/prima-nota", tags=["Prima Nota"])
+# Prima Nota - Modulo refactorizzato (cassa, banca, salari unificati)
+app.include_router(prima_nota_router, prefix="/api/prima-nota", tags=["Prima Nota"])
 app.include_router(prima_nota_automation.router, prefix="/api/prima-nota-auto", tags=["Prima Nota Automation"])
-app.include_router(prima_nota_salari.router, prefix="/api/prima-nota-salari", tags=["Prima Nota Salari"])
+# NOTA: prima_nota_salari integrato nel nuovo modulo prima_nota_module
 app.include_router(piano_conti.router, prefix="/api/piano-conti", tags=["Piano dei Conti"])
 app.include_router(bilancio.router, prefix="/api/bilancio", tags=["Bilancio"])
 app.include_router(centri_costo.router, prefix="/api/centri-costo", tags=["Centri di Costo"])
