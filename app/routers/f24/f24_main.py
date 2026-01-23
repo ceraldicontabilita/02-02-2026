@@ -871,12 +871,12 @@ async def upload_quietanza_f24(
             "data_pagamento": existing.get("dati_generali", {}).get("data_pagamento")
         }
     
-    # Salva nel database
+    # Salva nel database con pdf_data (architettura MongoDB-only)
     documento = {
         "id": file_id,
         "f24_key": f24_key,
         "file_name": file.filename,
-        "file_path": file_path,
+        "pdf_data": pdf_base64,  # Architettura MongoDB-only
         "dati_generali": parsed_data.get("dati_generali", {}),
         "sezione_erario": parsed_data.get("sezione_erario", []),
         "sezione_inps": parsed_data.get("sezione_inps", []),
