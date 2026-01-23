@@ -19,10 +19,10 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 
 logger = logging.getLogger(__name__)
 
-# Configurazione IMAP
-IMAP_SERVER = os.environ.get("IMAP_SERVER", "imap.pec.aruba.it")
-EMAIL_USER = os.environ.get("EMAIL_USER", "ceraldicom@pec.it")
-EMAIL_PASSWORD = os.environ.get("EMAIL_PASSWORD", "Aldoceraldicom2024")
+# Configurazione IMAP - Usa variabili d'ambiente
+IMAP_SERVER = os.environ.get("IMAP_SERVER", "imap.gmail.com")
+EMAIL_USER = os.environ.get("EMAIL_USER", os.environ.get("GMAIL_EMAIL", ""))
+EMAIL_PASSWORD = os.environ.get("EMAIL_PASSWORD", os.environ.get("EMAIL_APP_PASSWORD", ""))
 
 # Mapping categoria -> collezione MongoDB
 CATEGORY_COLLECTIONS = {
