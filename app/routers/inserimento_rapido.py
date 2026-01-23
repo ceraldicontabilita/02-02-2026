@@ -227,6 +227,45 @@ async def salva_presenza(data: PresenzaInput) -> Dict[str, Any]:
     return {"success": True, "id": doc["id"], "message": "Presenza salvata"}
 
 
+@router.post("/paga-fattura")
+async def paga_fattura_rapido(
+    invoice_id: str,
+    metodo_pagamento: str,
+    importo: Optional[float] = None
+) -> Dict[str, Any]:
+    """Registra il pagamento di una fattura (endpoint rapido senza auth)."""
+    db = Database.get_db()
+    
+    # Trova la fattura
+    fattura = await db["invoices"].find_one({"id": invoice_id})
+    if not fattura:
+        raise HTTPException(status_code=404, detail="Fattura non trovata")
+    
+    # Usa l'importo fornito o quello della fattura
+    amount = importo or fattura.get("total_amount", 0)
+    
+    # Aggiorna la fattura
+    update = {
+        "metodo_pagamento": metodo_pagamento,
+        "pagata": True,
+        "data_pagamento": datetime.now(timezone.utc).isoformat().split("T")[0],
+        "importo_pagato": amount,
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db["invoices"].update_one(
+        {"id": invoice_id},
+        {"$set": update}
+    )
+    
+    return {
+        "success": True,
+        "message": f"Fattura pagata in {metodo_pagamento}",
+        "invoice_id": invoice_id,
+        "importo": amount
+    }
+
+
 @router.get("/dipendenti-attivi")
 async def get_dipendenti_attivi() -> Dict[str, Any]:
     """Lista dipendenti attivi per selezione rapida."""
