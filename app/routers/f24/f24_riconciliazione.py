@@ -771,25 +771,24 @@ async def upload_quietanze_multiplo(
             })
             continue
         
-        # Salva file
+        # Architettura MongoDB-only: leggi e codifica in Base64
         file_id = str(uuid.uuid4())
-        file_path = os.path.join(QUIETANZE_DIR, f"{file_id}_{file.filename}")
         
         try:
             content = await file.read()
-            with open(file_path, "wb") as f:
-                f.write(content)
+            import base64
+            pdf_base64 = base64.b64encode(content).decode('utf-8')
         except Exception as e:
             risultati["dettaglio"].append({
                 "filename": file.filename,
                 "success": False,
-                "error": f"Errore salvataggio: {str(e)}"
+                "error": f"Errore lettura file: {str(e)}"
             })
             continue
         
-        # Parsing quietanza
+        # Parsing quietanza con bytes
         try:
-            parsed = parse_quietanza_f24(file_path)
+            parsed = parse_quietanza_f24(pdf_content=content)
         except Exception as e:
             logger.error(f"Errore parsing quietanza {file.filename}: {e}")
             risultati["dettaglio"].append({
@@ -829,11 +828,11 @@ async def upload_quietanze_multiplo(
             if t.get("codice_tributo"):
                 codici_quietanza.add(t["codice_tributo"])
         
-        # Salva quietanza nel database
+        # Salva quietanza nel database con pdf_data (architettura MongoDB-only)
         quietanza_doc = {
             "id": file_id,
             "filename": file.filename,
-            "file_path": file_path,
+            "pdf_data": pdf_base64,  # Architettura MongoDB-only
             "dati_generali": dg,
             "protocollo_telematico": protocollo,
             "data_pagamento": data_pagamento,
