@@ -398,21 +398,37 @@ async def get_giacenze(
     categoria: str = Query(None, description="Filtra per categoria"),
     sotto_scorta: bool = Query(False, description="Solo articoli sotto scorta minima")
 ) -> Dict[str, Any]:
-    """Restituisce le giacenze di magazzino."""
+    """Restituisce le giacenze di magazzino dalla collezione warehouse_inventory."""
     db = Database.get_db()
     
     query = {}
     if categoria:
-        query["categoria_id"] = categoria
+        query["categoria"] = {"$regex": categoria, "$options": "i"}
     if sotto_scorta:
         query["$expr"] = {"$lt": ["$giacenza", "$giacenza_minima"]}
     
-    articoli = await db[COLL_WAREHOUSE].find(
+    articoli_raw = await db[COLL_WAREHOUSE].find(
         query,
-        {"_id": 0, "codice": 1, "descrizione": 1, "categoria": 1, "categoria_id": 1,
-         "giacenza": 1, "giacenza_minima": 1, "unita_misura": 1, "prezzo_acquisto": 1,
-         "ultimo_carico": 1, "ultimo_fornitore": 1}
+        {"_id": 0}
     ).sort("categoria", 1).to_list(500)
+    
+    # Trasforma nel formato atteso
+    articoli = []
+    for art in articoli_raw:
+        prezzi = art.get("prezzi", {})
+        prezzo = prezzi.get("ultimo", prezzi.get("medio", 0)) if isinstance(prezzi, dict) else 0
+        articoli.append({
+            "id": art.get("id"),
+            "nome": art.get("nome"),
+            "descrizione": art.get("nome"),
+            "categoria": art.get("categoria", "Altro"),
+            "giacenza": art.get("giacenza", 0),
+            "giacenza_minima": art.get("giacenza_minima", 0),
+            "unita_misura": art.get("unita_misura", "PZ"),
+            "prezzo_acquisto": prezzo,
+            "ultimo_acquisto": art.get("ultimo_acquisto"),
+            "ultimo_fornitore": art.get("ultimo_fornitore")
+        })
     
     # Raggruppa per categoria
     per_categoria = {}
