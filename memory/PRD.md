@@ -1,6 +1,6 @@
 # PRD – TechRecon Accounting System
 ## Product Requirements Document
-### Ultimo aggiornamento: 23 Gennaio 2026 (Sessione 18 - Associazione PDF F24 + Fix Viewer)
+### Ultimo aggiornamento: Dicembre 2025 (Sessione 19 - Architettura MongoDB-Only)
 
 ---
 
@@ -13,12 +13,20 @@ Sistema ERP contabile per aziende italiane con:
 - Tracciabilità completa di ogni operazione
 - Scalabilità senza introdurre incoerenze
 - **NUOVO**: Interfaccia mobile-first per inserimenti rapidi
+- **NUOVO**: Architettura MongoDB-Only per persistenza dati
 
 ### 1.2 Stack Tecnologico
 - **Frontend**: React + Vite + TailwindCSS + Shadcn/UI
 - **Backend**: FastAPI (Python)
-- **Database**: MongoDB Atlas
+- **Database**: MongoDB Atlas (**UNICA fonte di persistenza dati**)
 - **Integrazioni**: InvoiceTronic (SDI), PagoPA, Email IMAP
+
+### 1.3 ⚠️ ARCHITETTURA MONGODB-ONLY (CRITICO)
+**REGOLA FONDAMENTALE**: Nessun file o dato deve essere salvato sul filesystem locale.
+- Tutti i PDF devono essere salvati come Base64 nel campo `pdf_data` in MongoDB
+- Gli endpoint di download devono leggere da `pdf_data`, NON da `filepath`
+- Gli endpoint di eliminazione devono operare SOLO sul database
+- I riferimenti `filepath` rimasti sono per endpoint di migrazione legacy
 
 ---
 
