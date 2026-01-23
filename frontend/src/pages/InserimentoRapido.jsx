@@ -320,13 +320,23 @@ export default function InserimentoRapido() {
   const handlePagaFattura = async (fattura, metodo) => {
     setLoading(true);
     try {
-      await api.patch(`/api/fatture-ricevute/${fattura.id}`, {
-        metodo_pagamento: metodo,
-        pagata: true,
-        data_pagamento: new Date().toISOString().split('T')[0]
-      });
+      // Prova prima su invoices, poi su fatture-ricevute
+      const id = fattura.id || fattura._id;
+      try {
+        await api.patch(`/api/invoices/${id}`, {
+          metodo_pagamento: metodo,
+          pagata: true,
+          data_pagamento: new Date().toISOString().split('T')[0]
+        });
+      } catch {
+        await api.patch(`/api/fatture-ricevute/${id}`, {
+          metodo_pagamento: metodo,
+          pagata: true,
+          data_pagamento: new Date().toISOString().split('T')[0]
+        });
+      }
       showMessage(`Fattura pagata in ${metodo}!`);
-      setFatture(prev => prev.filter(f => f.id !== fattura.id));
+      setFatture(prev => prev.filter(f => (f.id || f._id) !== id));
     } catch (err) {
       showMessage(err.response?.data?.detail || 'Errore', 'error');
     }
