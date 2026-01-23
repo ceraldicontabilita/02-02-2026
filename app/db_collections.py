@@ -49,7 +49,11 @@ COLL_CORRISPETTIVI = "corrispettivi"
 
 # Documenti
 COLL_DOCUMENTI_EMAIL = "documenti_email"
-COLL_DOCUMENTI_CLASSIFICATI = "documenti_classificati"
+COLL_DOCUMENTI_CLASSIFICATI = "documenti_classificati"  # Documenti classificati dalla Learning Machine
+
+# Learning Machine
+COLL_LEARNING_FEEDBACK = "learning_feedback"  # Feedback utente per correzioni classificazione
+COLL_LEARNING_RULES = "learning_rules"  # Regole apprese dal sistema
 
 # Noleggio Auto
 COLL_VEICOLI_NOLEGGIO = "veicoli_noleggio"
