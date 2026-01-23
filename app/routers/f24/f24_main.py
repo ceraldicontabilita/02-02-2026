@@ -319,9 +319,32 @@ async def get_f24_forms(
     limit: int = 10000,
     current_user: Dict[str, Any] = Depends(get_current_user)
 ) -> List[Dict[str, Any]]:
-    """Get list of F24 forms."""
+    """Get list of F24 forms dalla collezione unificata."""
     db = Database.get_db()
-    forms = await db[COLL_F24].find({}, {"_id": 0}).sort("scadenza", 1).skip(skip).limit(limit).to_list(limit)
+    
+    # Escludi eliminati
+    forms_raw = await db[COLL_F24].find(
+        {"status": {"$ne": "eliminato"}},
+        {"_id": 0}
+    ).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
+    
+    # Trasforma nel formato legacy per compatibilità frontend
+    forms = []
+    for f in forms_raw:
+        totali = f.get("totali", {})
+        dati = f.get("dati_generali", {})
+        forms.append({
+            "id": f.get("id"),
+            "tipo": "F24",
+            "descrizione": dati.get("ragione_sociale", f.get("file_name", "")),
+            "importo": totali.get("saldo_netto", 0),
+            "scadenza": dati.get("data_scadenza", dati.get("data_versamento", "")),
+            "status": f.get("status", "da_pagare"),
+            "created_at": f.get("created_at"),
+            "sezione_erario": f.get("sezione_erario", []),
+            "sezione_inps": f.get("sezione_inps", [])
+        })
+    
     return forms
 
 
