@@ -1,6 +1,6 @@
 # PRD – TechRecon Accounting System
 ## Product Requirements Document
-### Ultimo aggiornamento: 23 Gennaio 2026 (Sessione 17 - Inserimento Rapido Mobile + Download Email)
+### Ultimo aggiornamento: 23 Gennaio 2026 (Sessione 18 - Associazione PDF F24 + Fix Viewer)
 
 ---
 
@@ -12,6 +12,7 @@ Sistema ERP contabile per aziende italiane con:
 - Riduzione errore umano tramite validazione automatica
 - Tracciabilità completa di ogni operazione
 - Scalabilità senza introdurre incoerenze
+- **NUOVO**: Interfaccia mobile-first per inserimenti rapidi
 
 ### 1.2 Stack Tecnologico
 - **Frontend**: React + Vite + TailwindCSS + Shadcn/UI
