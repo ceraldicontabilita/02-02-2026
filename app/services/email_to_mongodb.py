@@ -24,10 +24,15 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 
 logger = logging.getLogger(__name__)
 
-# Configurazione IMAP da .env
+# Configurazione IMAP da .env - lette a runtime
 IMAP_SERVER = "imap.gmail.com"
-EMAIL_USER = os.environ.get("EMAIL_USER", os.environ.get("GMAIL_EMAIL", ""))
-EMAIL_PASSWORD = os.environ.get("EMAIL_PASSWORD", os.environ.get("EMAIL_APP_PASSWORD", os.environ.get("GMAIL_APP_PASSWORD", "")))
+
+
+def get_email_credentials():
+    """Ottieni credenziali email da environment."""
+    email_user = os.environ.get("EMAIL_USER") or os.environ.get("GMAIL_EMAIL") or ""
+    email_password = os.environ.get("EMAIL_PASSWORD") or os.environ.get("EMAIL_APP_PASSWORD") or os.environ.get("GMAIL_APP_PASSWORD") or ""
+    return email_user, email_password
 
 
 def decode_mime_header(header_value: str) -> str:
