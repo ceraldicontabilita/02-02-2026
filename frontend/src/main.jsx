@@ -271,7 +271,8 @@ const router = createBrowserRouter([
       { path: "dizionario-prodotti", element: <LazyPage><DizionarioProdotti /></LazyPage> },
       { path: "centri-costo", element: <LazyPage><CentriCosto /></LazyPage> },
       { path: "utile-obiettivo", element: <LazyPage><UtileObiettivo /></LazyPage> },
-      { path: "learning-machine", element: <LazyPage><LearningMachineDashboard /></LazyPage> },
+      // learning-machine RIMOSSA - redirect a centri-costo
+      { path: "learning-machine", element: <Navigate to="/centri-costo" replace /> },
       
       // === CONTABILITÀ & BILANCIO ===
       { path: "bilancio", element: <LazyPage><Bilancio /></LazyPage> },
