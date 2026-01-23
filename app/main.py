@@ -266,7 +266,7 @@ app.include_router(invoices_emesse.router, prefix="/api/invoices/emesse", tags=[
 app.include_router(invoices_main.router, prefix="/api/invoices", tags=["Invoices"])
 app.include_router(invoices_export.router, prefix="/api/invoices", tags=["Invoices Export"])
 app.include_router(fatture_upload.router, prefix="/api/fatture", tags=["Fatture Upload"])
-app.include_router(fatture_ricevute.router, prefix="/api/fatture-ricevute", tags=["Fatture Ricevute"])
+app.include_router(fatture_ricevute_router, prefix="/api/fatture-ricevute", tags=["Fatture Ricevute"])
 app.include_router(corrispettivi.router, prefix="/api/corrispettivi", tags=["Corrispettivi"])
 
 # --- Ciclo Passivo Integrato (XML → Magazzino → Prima Nota → Scadenziario → Riconciliazione) ---
