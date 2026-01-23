@@ -818,7 +818,7 @@ async def get_codice_info(
 
 # ============== PARSING QUIETANZE F24 ==============
 from app.services.f24_parser import parse_quietanza_f24, generate_f24_summary
-import shutil
+import base64
 
 
 @router.post(
@@ -831,24 +831,22 @@ async def upload_quietanza_f24(
     """
     Upload e parsing di una quietanza F24 PDF.
     Estrae automaticamente tutti i dati e li salva nel database.
+    Architettura MongoDB-only: salva PDF come Base64.
     """
     if not file.filename.lower().endswith('.pdf'):
         raise HTTPException(status_code=400, detail="Il file deve essere un PDF")
     
-    # Salva il file
+    # Leggi contenuto PDF
     file_id = str(uuid4())
-    file_path = os.path.join(F24_UPLOAD_DIR, f"{file_id}_{file.filename}")
+    content = await file.read()
     
-    try:
-        with open(file_path, "wb") as buffer:
-            content = await file.read()
-            buffer.write(content)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Errore salvataggio file: {str(e)}")
+    # Architettura MongoDB-only: codifica in Base64
+    pdf_base64 = base64.b64encode(content).decode('utf-8')
     
-    # Parsing del PDF
+    # Parsing del PDF direttamente dai bytes
     try:
-        parsed_data = parse_quietanza_f24(file_path)
+        # Il parser supporta pdf_content bytes
+        parsed_data = parse_quietanza_f24(pdf_content=content)
     except Exception as e:
         logger.error(f"Errore parsing F24: {e}")
         raise HTTPException(status_code=500, detail=f"Errore parsing PDF: {str(e)}")
