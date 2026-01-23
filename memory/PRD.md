@@ -314,9 +314,9 @@ GET  /api/liquidazione-iva/export/pdf/{anno}/{mese}
 - `db_collections.py` aggiornato con documentazione
 
 ### 7.4 🔵 P3 - Backlog
-1. **Suddivisione router monolitici** - `suppliers.py` (93KB), `prima_nota.py` (100KB) - richiede approccio alternativo
+1. **Suddivisione router monolitici** - `suppliers.py` (2346 righe), `prima_nota.py` (100KB) - richiede approccio alternativo
 2. **Pulizia inconsistenze cedolini** - campi `netto` vs `netto_mese`
-3. Report PDF annuale ferie/permessi per dipendente
+3. ✅ **RISOLTO (23/01/2026)**: Report PDF annuale ferie/permessi per TUTTI i dipendenti (`/api/dipendenti/report-ferie-permessi-tutti`)
 4. Test automatici con pytest
 
 ### 7.3 🟠 P2 - Bassa Priorità
