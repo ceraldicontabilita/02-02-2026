@@ -374,4 +374,4 @@ Questo PRD è vincolante. Ogni sviluppo futuro deve:
 
 ---
 
-*Documento generato il 22 Gennaio 2026*
+*Documento generato il 23 Gennaio 2026*
