@@ -146,27 +146,31 @@ async def processa_nuovi_documenti(db) -> Dict[str, Any]:
         "errori": []
     }
     
-    # 1. Processa buste paga con FLUSSO COMPLETO
+    # 1. Processa buste paga con FLUSSO COMPLETO (MongoDB-only)
     try:
         from app.services.cedolini_manager import processa_tutti_cedolini_pdf
         
         docs = await db["documents_inbox"].find(
-            {"category": "busta_paga", "processed": {"$ne": True}},
+            {
+                "category": "busta_paga", 
+                "processed": {"$ne": True},
+                "pdf_data": {"$exists": True, "$ne": None, "$ne": ""}
+            },
             {"_id": 0}
         ).to_list(100)
         
         for doc in docs:
-            filepath = doc.get("filepath")
+            pdf_data = doc.get("pdf_data")
             filename = doc.get("filename", "")
             
-            if not filepath or not os.path.exists(filepath):
+            if not pdf_data:
                 continue
             
             try:
-                # Usa il nuovo manager completo
+                # Usa il nuovo manager completo con architettura MongoDB-only
                 res = await processa_tutti_cedolini_pdf(
                     db=db,
-                    filepath=filepath,
+                    pdf_data=pdf_data,
                     filename=filename
                 )
                 
