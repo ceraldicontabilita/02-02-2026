@@ -122,9 +122,10 @@ from app.routers.warehouse import (
 
 # --- Invoices Module ---
 from app.routers.invoices import (
-    invoices_main, invoices_emesse, invoices_export, fatture_upload, corrispettivi,
-    fatture_ricevute
+    invoices_main, invoices_emesse, invoices_export, fatture_upload, corrispettivi
 )
+# Fatture Ricevute modularizzato
+from app.routers.fatture_module import router as fatture_ricevute_router
 
 # --- Sync Relazionale ---
 from app.routers import sync_relazionale
