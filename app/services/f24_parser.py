@@ -39,13 +39,18 @@ def parse_data(value: str) -> Optional[str]:
     return value
 
 
-def extract_text_from_pdf(pdf_path_or_bytes) -> str:
-    """Estrae tutto il testo da un PDF. Accetta path o bytes."""
+def extract_text_from_pdf(pdf_path: str = None, pdf_content: bytes = None) -> str:
+    """
+    Estrae tutto il testo da un PDF.
+    Supporta sia filepath (legacy) che bytes (architettura MongoDB-only).
+    """
     try:
-        if isinstance(pdf_path_or_bytes, bytes):
-            doc = fitz.open(stream=pdf_path_or_bytes, filetype="pdf")
+        if pdf_content:
+            doc = fitz.open(stream=pdf_content, filetype="pdf")
+        elif pdf_path:
+            doc = fitz.open(pdf_path)
         else:
-            doc = fitz.open(pdf_path_or_bytes)
+            return ""
         text = ""
         for page in doc:
             text += page.get_text()
