@@ -336,12 +336,13 @@ GET  /api/liquidazione-iva/export/pdf/{anno}/{mese}
 4. ✅ **COMPLETATO (23/01/2026)**: Refactoring `prima_nota.py` → modulo `prima_nota_module/`
    - File monolitico di 2843 righe suddiviso in 8 file modulari (1971 righe totali, -30.7%)
    - Struttura: `common.py`, `cassa.py`, `banca.py`, `salari.py`, `stats.py`, `sync.py`, `manutenzione.py`
-   - Rimossi endpoint duplicati, codice riorganizzato per funzionalità
    - File deprecated eliminato
-   - Tutti gli endpoint funzionanti e testati
-5. Test automatici con pytest
-6. **CANDIDATI FUTURI REFACTORING** (file >2000 righe):
-   - `fatture_ricevute.py` (2469 righe)
+5. ✅ **COMPLETATO (23/01/2026)**: Refactoring `fatture_ricevute.py` → modulo `fatture_module/`
+   - File monolitico di 2469 righe suddiviso in 6 file modulari (1275 righe totali, **-48.4%**)
+   - Struttura: `common.py`, `helpers.py`, `import_xml.py`, `crud.py`, `pagamento.py`
+   - File deprecated eliminato
+6. Test automatici con pytest
+7. **CANDIDATI FUTURI REFACTORING** (file >2000 righe):
    - `archivio_bonifici.py` (2438 righe)
    - `operazioni_da_confermare.py` (2378 righe)
    - `documenti.py` (2354 righe)
