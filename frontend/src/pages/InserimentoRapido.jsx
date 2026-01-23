@@ -323,21 +323,12 @@ export default function InserimentoRapido() {
   const handlePagaFattura = async (fattura, metodo) => {
     setLoading(true);
     try {
-      // Prova prima su invoices, poi su fatture-ricevute
       const id = fattura.id || fattura._id;
-      try {
-        await api.patch(`/api/invoices/${id}`, {
-          metodo_pagamento: metodo,
-          pagata: true,
-          data_pagamento: new Date().toISOString().split('T')[0]
-        });
-      } catch {
-        await api.patch(`/api/fatture-ricevute/${id}`, {
-          metodo_pagamento: metodo,
-          pagata: true,
-          data_pagamento: new Date().toISOString().split('T')[0]
-        });
-      }
+      const importo = fattura.total_amount || fattura.importo || 0;
+      
+      // Usa l'endpoint payment che registra il pagamento
+      await api.post(`/api/invoices/${id}/payment?amount=${importo}&payment_method=${metodo}`);
+      
       showMessage(`Fattura pagata in ${metodo}!`);
       setFatture(prev => prev.filter(f => (f.id || f._id) !== id));
     } catch (err) {
