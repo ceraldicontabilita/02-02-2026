@@ -178,10 +178,19 @@ async def salva_presenza(data: PresenzaInput) -> Dict[str, Any]:
     """Salva una presenza o assenza."""
     db = Database.get_db()
     
-    # Verifica dipendente
-    dipendente = await db["dipendenti"].find_one({"id": data.dipendente_id})
+    # Cerca dipendente in più collezioni
+    dipendente = None
+    for coll in ["employees", "dipendenti", "anagrafica_dipendenti"]:
+        dipendente = await db[coll].find_one({"id": data.dipendente_id})
+        if dipendente:
+            break
+    
     if not dipendente:
         raise HTTPException(status_code=404, detail="Dipendente non trovato")
+    
+    # Estrai nome/cognome
+    nome = dipendente.get("nome") or dipendente.get("name", "")
+    cognome = dipendente.get("cognome") or dipendente.get("surname", "")
     
     # Mappa tipo a giustificativo
     tipo_map = {
@@ -199,7 +208,7 @@ async def salva_presenza(data: PresenzaInput) -> Dict[str, Any]:
     doc = {
         "id": str(uuid.uuid4()),
         "dipendente_id": data.dipendente_id,
-        "dipendente_nome": f"{dipendente.get('cognome', '')} {dipendente.get('nome', '')}",
+        "dipendente_nome": f"{cognome} {nome}".strip(),
         "data": data.data,
         "tipo": data.tipo,
         "giustificativo_codice": giustificativo["codice"],
