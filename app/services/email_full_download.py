@@ -849,17 +849,12 @@ async def smart_auto_associate_v2(db: AsyncIOMotorDatabase) -> Dict[str, Any]:
                 })
             
             if invoice and pdf_data:
-                with open(filepath, "rb") as f:
-                    pdf_content = f.read()
-                
-                pdf_base64 = base64.b64encode(pdf_content).decode('utf-8')
-                
+                # Architettura MongoDB-only: usa pdf_data già presente
                 await db["invoices"].update_one(
                     {"id": invoice["id"]},
                     {"$set": {
-                        "pdf_data": pdf_base64,
-                        "pdf_hash": calculate_pdf_hash(pdf_content),
-                        "pdf_filepath": filepath
+                        "pdf_data": pdf_data,  # MongoDB-only
+                        "pdf_hash": calculate_pdf_hash(base64.b64decode(pdf_data)) if pdf_data else None
                     }}
                 )
                 
@@ -885,39 +880,28 @@ async def smart_auto_associate_v2(db: AsyncIOMotorDatabase) -> Dict[str, Any]:
 
 async def populate_payslips_pdf_data(db: AsyncIOMotorDatabase) -> Dict[str, int]:
     """
-    Popola il campo pdf_data nei payslips leggendo i file dal filesystem.
-    Funzione dedicata per il batch processing.
+    DEPRECATO: Funzione di migrazione legacy per popolare pdf_data da filesystem.
+    I nuovi documenti devono già avere pdf_data quando vengono scaricati dalle email.
+    Mantenuta per retrocompatibilità con dati esistenti.
     """
-    stats = {"updated": 0, "skipped": 0, "errors": 0}
+    stats = {"updated": 0, "skipped": 0, "errors": 0, "deprecated": True}
     
+    logger.warning("populate_payslips_pdf_data è DEPRECATO. I nuovi flussi usano pdf_data direttamente.")
+    
+    # Cerca payslips che hanno solo pdf_data mancante (per migrazione)
     cursor = db["payslips"].find({
-        "filepath": {"$exists": True, "$ne": None, "$ne": ""}
+        "$or": [
+            {"pdf_data": None},
+            {"pdf_data": ""},
+            {"pdf_data": {"$exists": False}}
+        ]
     })
     
     async for payslip in cursor:
         try:
-            filepath = payslip.get("filepath", "")
-            
-            # Già ha pdf_data?
-            if payslip.get("pdf_data"):
-                stats["skipped"] += 1
-                continue
-            
-            if not os.path.exists(filepath):
-                logger.warning(f"File non trovato: {filepath}")
-                stats["errors"] += 1
-                continue
-            
-            with open(filepath, "rb") as f:
-                pdf_content = f.read()
-            
-            pdf_base64 = base64.b64encode(pdf_content).decode('utf-8')
-            
-            await db["payslips"].update_one(
-                {"id": payslip["id"]},
-                {"$set": {
-                    "pdf_data": pdf_base64,
-                    "pdf_hash": calculate_pdf_hash(pdf_content),
+            # Se non ha pdf_data, lo salta - i nuovi documenti devono averlo
+            stats["skipped"] += 1
+            continue
                     "pdf_size": len(pdf_content)
                 }}
             )
