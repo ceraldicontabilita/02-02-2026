@@ -132,9 +132,14 @@ export default function F24() {
 
   async function handleViewPdf(f24) {
     try {
-      // Prova a recuperare il PDF originale
-      const pdfUrl = `${api.defaults.baseURL}/api/f24-public/pdf/${f24.id}`;
-      setViewingPdf({ url: pdfUrl, name: f24.filename || `F24_${f24.data_scadenza || 'sconosciuto'}.pdf`, f24 });
+      // Costruisci URL completo per il PDF
+      const baseUrl = window.location.origin;
+      const pdfUrl = `${baseUrl}/api/f24-public/pdf/${f24.id}`;
+      setViewingPdf({ 
+        url: pdfUrl, 
+        name: f24.file_name || f24.filename || `F24_${f24.data_scadenza || 'sconosciuto'}.pdf`, 
+        f24 
+      });
     } catch (e) {
       alert("Impossibile visualizzare il PDF: " + e.message);
     }
