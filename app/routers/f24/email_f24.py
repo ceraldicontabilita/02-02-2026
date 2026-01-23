@@ -11,6 +11,7 @@ from app.services.parser_f24 import parse_f24_commercialista
 from app.services.f24_parser import parse_quietanza_f24
 from app.services.codici_tributo_db import get_info_codice_tributo, classifica_f24_per_mittente
 import os
+import base64
 import logging
 
 router = APIRouter()
