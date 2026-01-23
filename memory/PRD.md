@@ -296,10 +296,20 @@ GET  /api/liquidazione-iva/export/pdf/{anno}/{mese}
 - Router `magazzino_avanzato.py` aggiornato per usare nuovo schema
 
 ### 7.2 🟡 P1 - Media Priorità
-1. **Pulizia UI Duplicata**: Eliminare `LearningMachineDashboard.jsx` ridondante e verificare navigazione
-2. **Test E2E Feedback Loop**: Testare il flusso "Correggi" in `ClassificazioneDocumenti.jsx` → API feedback → salvataggio
-3. **Refactoring Backend**: Suddividere file grandi (suppliers.py 95KB, operazioni_da_confermare.py 90KB, documenti.py 88KB)
-4. Report PDF annuale ferie/permessi per dipendente
+✅ **RISOLTO (23/01/2026)**: Pulizia UI Duplicata
+- Eliminata `LearningMachineDashboard.jsx` - funzionalità duplicate in CentriCosto, Magazzino, Ricette
+- Route `/learning-machine` ora redirect a `/centri-costo`
+
+✅ **RISOLTO (23/01/2026)**: Test E2E Feedback Loop
+- Endpoint `/api/learning-machine/feedback` funzionante
+- Feedback salvato in collezione `learning_feedback`
+- Documento aggiornato con categoria corretta
+- Keywords apprese per future classificazioni
+
+### 7.3 🟢 P2 - Bassa Priorità
+1. **Suddivisione router monolitici** - `suppliers.py` (93KB, 30 endpoint), `prima_nota.py` (100KB)
+2. **Unificazione dipendenti** - `employees` vs `anagrafica_dipendenti`
+3. Report PDF annuale ferie/permessi per dipendente
 
 ### 7.3 🟠 P2 - Bassa Priorità
 5. UI Feedback Loop per correzione classificazioni automatiche
