@@ -307,9 +307,17 @@ GET  /api/liquidazione-iva/export/pdf/{anno}/{mese}
 - Keywords apprese per future classificazioni
 
 ### 7.3 🟢 P2 - Bassa Priorità
-1. **Suddivisione router monolitici** - Tentativo di modularizzare `suppliers.py` (93KB) non riuscito per limiti FastAPI su sub-router con path vuoti. File mantenuto funzionante. Richiede approccio diverso (es. file separati con prefix diversi)
-2. **Unificazione dipendenti** - `employees` vs `anagrafica_dipendenti`
+✅ **RISOLTO (23/01/2026)**: Unificazione Dipendenti
+- Collezione UNICA: `employees` (34 dipendenti)
+- `anagrafica_dipendenti` → rinominata `_deprecated_anagrafica_dipendenti` (backup)
+- Router `bonifici_stipendi.py` aggiornato per usare solo `employees`
+- `db_collections.py` aggiornato con documentazione
+
+### 7.4 🔵 P3 - Backlog
+1. **Suddivisione router monolitici** - `suppliers.py` (93KB), `prima_nota.py` (100KB) - richiede approccio alternativo
+2. **Pulizia inconsistenze cedolini** - campi `netto` vs `netto_mese`
 3. Report PDF annuale ferie/permessi per dipendente
+4. Test automatici con pytest
 
 ### 7.3 🟠 P2 - Bassa Priorità
 5. UI Feedback Loop per correzione classificazioni automatiche
