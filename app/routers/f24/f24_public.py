@@ -1,5 +1,6 @@
 """
 F24 Public Router - Endpoints F24 senza autenticazione
+NOTA: Usa f24_commercialista come collezione unica per F24
 """
 from fastapi import APIRouter, UploadFile, File, HTTPException, Body, Query
 from fastapi.responses import Response
@@ -10,9 +11,13 @@ import logging
 import base64
 
 from app.database import Database
+from app.db_collections import COLL_F24
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+# Collezione F24 unica
+F24_COLLECTION = COLL_F24  # "f24_commercialista"
 
 
 @router.get("/test")
@@ -23,27 +28,35 @@ async def test_route():
 
 @router.get("/models")
 async def list_f24_models() -> Dict[str, Any]:
-    """Lista tutti i modelli F24 importati da PDF."""
+    """Lista tutti i modelli F24."""
     import time
     logger.info("=== /models endpoint called ===")
     t_start = time.time()
     
     db = Database.get_db()
     
-    # Query semplice senza operatori speciali
     try:
-        f24s = await db["f24_models"].find(
-            {},
-            {
-                "_id": 0,
-                "id": 1,
-                "tipo_modello": 1,
-                "data_scadenza": 1,
-                "saldo_finale": 1,
-                "pagato": 1,
-                "contribuente": 1
-            }
-        ).sort("data_scadenza", -1).to_list(100)
+        # Query dalla collezione unificata f24_commercialista
+        f24s_raw = await db[F24_COLLECTION].find(
+            {"status": {"$ne": "eliminato"}},  # Escludi eliminati
+            {"_id": 0}
+        ).sort("created_at", -1).to_list(100)
+        
+        # Trasforma nel formato atteso dal frontend
+        f24s = []
+        for f in f24s_raw:
+            totali = f.get("totali", {})
+            dati = f.get("dati_generali", {})
+            f24s.append({
+                "id": f.get("id"),
+                "tipo_modello": "F24",
+                "data_scadenza": dati.get("data_scadenza"),
+                "saldo_finale": totali.get("saldo_netto", 0),
+                "pagato": f.get("status") == "pagato",
+                "contribuente": dati.get("ragione_sociale", dati.get("codice_fiscale", "")),
+                "file_name": f.get("file_name"),
+                "status": f.get("status")
+            })
         
         logger.info(f"F24 models query took {time.time() - t_start:.2f}s for {len(f24s)} items")
     except Exception as e:
