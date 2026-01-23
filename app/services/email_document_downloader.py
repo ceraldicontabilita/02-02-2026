@@ -501,27 +501,15 @@ class EmailDocumentDownloader:
                         safe_filename = re.sub(r'[^\w\-_\.]', '_', filename)
                         unique_filename = f"{timestamp}_{safe_filename}"
                         
-                        # Salva file nella cartella della categoria
-                        category_folder_name = CATEGORIES.get(category, category.replace("_", " ").title())
-                        category_dir = DOCUMENTS_DIR / category_folder_name
-                        category_dir.mkdir(exist_ok=True)
-                        file_path = category_dir / unique_filename
-                        
-                        # Evita sovrascrittura
-                        counter = 1
-                        while file_path.exists():
-                            name, ext = os.path.splitext(unique_filename)
-                            file_path = category_dir / f"{name}_{counter}{ext}"
-                            counter += 1
-                        
-                        with open(file_path, 'wb') as f:
-                            f.write(content)
+                        # IMPORTANTE: Salva contenuto PDF come base64 in MongoDB
+                        # NO FILESYSTEM - TUTTO SU MONGODB ATLAS
+                        pdf_base64 = base64.b64encode(content).decode('utf-8')
                         
                         documents.append({
                             "id": str(uuid.uuid4()),
                             "filename": filename,
-                            "filename_saved": file_path.name,
-                            "filepath": str(file_path),
+                            "filename_saved": unique_filename,
+                            "pdf_data": pdf_base64,  # Contenuto PDF in MongoDB!
                             "category": category,
                             "category_label": CATEGORIES.get(category, category.replace("_", " ").title()),
                             "size_bytes": len(content),
@@ -541,7 +529,7 @@ class EmailDocumentDownloader:
                             "processed_to": None  # dove è stato caricato
                         })
                         
-                        logger.info(f"Scaricato: {filename} -> {category}")
+                        logger.info(f"Salvato su MongoDB: {filename} -> {category}")
             
         except Exception as e:
             logger.error(f"Errore download allegati: {e}")
