@@ -380,6 +380,7 @@ async def get_f24_pdf(f24_id: str):
     # Cerca PDF nei dati o nel file_path
     pdf_data = f24.get("pdf_data")
     file_path = f24.get("file_path")
+    filename = f24.get("file_name", f24.get("filename", f"F24_{f24_id}.pdf"))
     
     if pdf_data:
         pdf_bytes = base64.b64decode(pdf_data)
@@ -389,11 +390,49 @@ async def get_f24_pdf(f24_id: str):
             with open(file_path, "rb") as f:
                 pdf_bytes = f.read()
         else:
-            raise HTTPException(status_code=404, detail="File PDF non trovato")
+            # Cerca il PDF in documents_inbox tramite filename
+            inbox_doc = await db["documents_inbox"].find_one(
+                {"filename": filename},
+                {"content": 1, "content_base64": 1}
+            )
+            if inbox_doc:
+                content = inbox_doc.get("content") or inbox_doc.get("content_base64")
+                if content:
+                    if isinstance(content, bytes):
+                        pdf_bytes = content
+                    else:
+                        pdf_bytes = base64.b64decode(content)
+                    # Salva pdf_data per le prossime volte
+                    await db[F24_COLLECTION].update_one(
+                        {"id": f24_id},
+                        {"$set": {"pdf_data": base64.b64encode(pdf_bytes).decode('utf-8')}}
+                    )
+                else:
+                    raise HTTPException(status_code=404, detail="File PDF non trovato")
+            else:
+                raise HTTPException(status_code=404, detail="File PDF non trovato")
     else:
-        raise HTTPException(status_code=404, detail="PDF non disponibile per questo F24")
-    
-    filename = f24.get("file_name", f24.get("filename", f"F24_{f24_id}.pdf"))
+        # Prova a recuperare da documents_inbox o f24_commercialista
+        inbox_doc = await db["documents_inbox"].find_one(
+            {"filename": filename},
+            {"content": 1, "content_base64": 1}
+        )
+        if inbox_doc:
+            content = inbox_doc.get("content") or inbox_doc.get("content_base64")
+            if content:
+                if isinstance(content, bytes):
+                    pdf_bytes = content
+                else:
+                    pdf_bytes = base64.b64decode(content)
+                # Salva pdf_data per le prossime volte
+                await db[F24_COLLECTION].update_one(
+                    {"id": f24_id},
+                    {"$set": {"pdf_data": base64.b64encode(pdf_bytes).decode('utf-8')}}
+                )
+            else:
+                raise HTTPException(status_code=404, detail="PDF non disponibile per questo F24")
+        else:
+            raise HTTPException(status_code=404, detail="PDF non disponibile per questo F24")
     
     return Response(
         content=pdf_bytes,
