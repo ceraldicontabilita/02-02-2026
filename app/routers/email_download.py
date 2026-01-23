@@ -18,6 +18,7 @@ from app.services.email_full_download import (
     get_documents_inbox_stats,
     sync_filesystem_pdfs_to_db,
     associate_f24_from_filesystem,
+    process_cedolini_to_prima_nota,
     CATEGORY_COLLECTIONS
 )
 
