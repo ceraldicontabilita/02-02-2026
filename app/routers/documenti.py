@@ -1049,22 +1049,23 @@ async def sync_estratti_conto() -> Dict[str, Any]:
         }
     
     from app.parsers.estratto_conto_nexi_parser import EstrattoContoNexiParser
+    import base64 as b64
     
     processati = []
     errori = []
     
     for doc in docs:
-        filepath = doc.get("filepath")
         filename = doc.get("filename", "")
         
-        if not filepath or not os.path.exists(filepath):
-            errori.append({"file": filename, "errore": "File non trovato"})
+        # Architettura MongoDB-first: usa pdf_data
+        pdf_data = doc.get("pdf_data")
+        if not pdf_data:
+            errori.append({"file": filename, "errore": "PDF non disponibile in MongoDB"})
             continue
         
         try:
-            # Leggi contenuto PDF
-            with open(filepath, 'rb') as f:
-                pdf_content = f.read()
+            # Decodifica PDF da base64
+            pdf_content = b64.b64decode(pdf_data)
             
             # Prova parser Nexi
             parser = EstrattoContoNexiParser()
@@ -1082,7 +1083,7 @@ async def sync_estratti_conto() -> Dict[str, Any]:
                     estratto_record = {
                         "id": estratto_id,
                         "filename": filename,
-                        "filepath": filepath,
+                        "pdf_data": pdf_data,  # Architettura MongoDB-first
                         "tipo": "nexi_carta",
                         "metadata": metadata,
                         "totale_transazioni": len(transazioni),
