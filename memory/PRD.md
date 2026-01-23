@@ -338,6 +338,11 @@ POST /api/email-download/associa-documento                   # Associazione manu
 ## 7. BACKLOG E PRIORITÀ
 
 ### 7.1 🔴 P0 - Alta Priorità
+✅ **RISOLTO (23/01/2026 - Sessione 18)**: Associazione PDF F24 dal Filesystem
+- Script di associazione intelligente che abbina F24 per nome file
+- **40/46 F24** ora hanno il PDF associato (87%)
+- Funzione `smart_f24_association()` con pattern matching fuzzy
+
 ✅ **RISOLTO (23/01/2026)**: Bug Endpoint `/api/f24-riconciliazione/movimenti-f24-banca`
 - L'endpoint leggeva dalla collezione vuota `movimenti_f24_banca` invece che da `estratto_conto_movimenti`
 - Corretto per cercare pattern F24 (I24 AGENZIA, AGENZIA ENTRATE, ecc.) nella collezione corretta
@@ -354,6 +359,11 @@ POST /api/email-download/associa-documento                   # Associazione manu
 - Router `magazzino_avanzato.py` aggiornato per usare nuovo schema
 
 ### 7.2 🟡 P1 - Media Priorità
+✅ **RISOLTO (23/01/2026 - Sessione 18)**: Bug Rendering PDF nel Modal Frontend
+- Migliorato viewer PDF con bottoni fallback (Scarica, Apri in nuova tab)
+- URL costruito correttamente con `window.location.origin`
+- Iframe con stile migliorato e bordo visibile
+
 ✅ **RISOLTO (23/01/2026)**: Pulizia UI Duplicata
 - Eliminata `LearningMachineDashboard.jsx` - funzionalità duplicate in CentriCosto, Magazzino, Ricette
 - Route `/learning-machine` ora redirect a `/centri-costo`
@@ -381,6 +391,9 @@ POST /api/email-download/associa-documento                   # Associazione manu
 - `anagrafica_dipendenti` → rinominata `_deprecated_anagrafica_dipendenti` (backup)
 - Router `bonifici_stipendi.py` aggiornato per usare solo `employees`
 - `db_collections.py` aggiornato con documentazione
+
+🔄 **IN CORSO**: Incoerenza Dati per Learning Machine
+- Collezione `documenti_classificati` vuota - da popolare per abilitare feedback loop
 
 ### 7.4 🔵 P3 - Backlog
 1. ✅ **COMPLETATO (23/01/2026)**: Refactoring `suppliers.py` → modulo `suppliers_module/`
@@ -414,13 +427,11 @@ POST /api/email-download/associa-documento                   # Associazione manu
    - `documenti.py` (2354 righe)
    - `riconciliazione_intelligente.py` (2107 righe - servizio)
    - `dipendenti.py` (2104 righe)
-5. Test automatici con pytest
 
-### 7.3 🟠 P2 - Bassa Priorità
-5. UI Feedback Loop per correzione classificazioni automatiche
-6. Automazione completa certificati medici
-7. Riconciliazione email in background (asincrona)
-8. Test automatici E2E con Playwright
+### 7.5 🟠 Issue Pendenti
+- ~450 documenti in `documents_inbox` ancora da associare manualmente (nuovo: 242, processato: 221)
+- 6 F24 senza PDF (file non presenti sul filesystem)
+- UI Feedback Loop per correzione classificazioni automatiche
 
 ---
 
