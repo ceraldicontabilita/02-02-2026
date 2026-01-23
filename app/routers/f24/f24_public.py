@@ -372,19 +372,28 @@ async def get_f24_pdf(f24_id: str):
     """Restituisce il PDF originale dell'F24."""
     db = Database.get_db()
     
-    f24 = await db["f24_models"].find_one({"id": f24_id})
+    f24 = await db[F24_COLLECTION].find_one({"id": f24_id})
     
     if not f24:
         raise HTTPException(status_code=404, detail="F24 non trovato")
     
+    # Cerca PDF nei dati o nel file_path
     pdf_data = f24.get("pdf_data")
-    if not pdf_data:
+    file_path = f24.get("file_path")
+    
+    if pdf_data:
+        pdf_bytes = base64.b64decode(pdf_data)
+    elif file_path:
+        import os
+        if os.path.exists(file_path):
+            with open(file_path, "rb") as f:
+                pdf_bytes = f.read()
+        else:
+            raise HTTPException(status_code=404, detail="File PDF non trovato")
+    else:
         raise HTTPException(status_code=404, detail="PDF non disponibile per questo F24")
     
-    # Decode base64 to bytes
-    pdf_bytes = base64.b64decode(pdf_data)
-    
-    filename = f24.get("filename", f"F24_{f24_id}.pdf")
+    filename = f24.get("file_name", f24.get("filename", f"F24_{f24_id}.pdf"))
     
     return Response(
         content=pdf_bytes,
@@ -400,9 +409,9 @@ async def mark_f24_pagato(f24_id: str) -> Dict[str, str]:
     """Segna un F24 come pagato."""
     db = Database.get_db()
     
-    result = await db["f24_models"].update_one(
+    result = await db[F24_COLLECTION].update_one(
         {"id": f24_id},
-        {"$set": {"pagato": True, "data_pagamento": datetime.utcnow().isoformat()}}
+        {"$set": {"status": "pagato", "updated_at": datetime.utcnow().isoformat()}}
     )
     
     if result.matched_count == 0:
@@ -418,17 +427,19 @@ async def update_f24_model(f24_id: str, data: Dict[str, Any] = Body(...)) -> Dic
     
     update_data = {"updated_at": datetime.utcnow().isoformat()}
     
-    # Campi modificabili
-    allowed_fields = [
-        "data_scadenza", "scadenza_display", "contribuente", 
-        "banca", "pagato", "note", "saldo_finale"
-    ]
+    # Campi modificabili (mappo al nuovo schema)
+    if "data_scadenza" in data:
+        update_data["dati_generali.data_scadenza"] = data["data_scadenza"]
+    if "contribuente" in data:
+        update_data["dati_generali.ragione_sociale"] = data["contribuente"]
+    if "pagato" in data:
+        update_data["status"] = "pagato" if data["pagato"] else "da_pagare"
+    if "note" in data:
+        update_data["note"] = data["note"]
+    if "saldo_finale" in data:
+        update_data["totali.saldo_netto"] = data["saldo_finale"]
     
-    for field in allowed_fields:
-        if field in data:
-            update_data[field] = data[field]
-    
-    result = await db["f24_models"].update_one(
+    result = await db[F24_COLLECTION].update_one(
         {"id": f24_id},
         {"$set": update_data}
     )
@@ -441,10 +452,14 @@ async def update_f24_model(f24_id: str, data: Dict[str, Any] = Body(...)) -> Dic
 
 @router.delete("/models/{f24_id}")
 async def delete_f24_model(f24_id: str) -> Dict[str, str]:
-    """Elimina un modello F24."""
+    """Elimina un modello F24 (soft delete)."""
     db = Database.get_db()
     
-    result = await db["f24_models"].delete_one({"id": f24_id})
+    # Soft delete invece di hard delete
+    result = await db[F24_COLLECTION].update_one(
+        {"id": f24_id},
+        {"$set": {"status": "eliminato", "eliminato_at": datetime.utcnow().isoformat()}}
+    )
     
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="F24 non trovato")
