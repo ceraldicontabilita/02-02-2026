@@ -287,7 +287,7 @@ app.include_router(analytics.router, prefix="/api/analytics", tags=["Analytics"]
 app.include_router(dashboard.router, prefix="/api/dashboard", tags=["Dashboard"])
 
 # --- Core Routers ---
-app.include_router(suppliers.router, prefix="/api/suppliers", tags=["Suppliers"])
+app.include_router(suppliers_router, prefix="/api/suppliers", tags=["Suppliers"])
 app.include_router(cash.router, prefix="/api/cash", tags=["Cash Register"])
 app.include_router(chart_of_accounts.router, prefix="/api/chart-of-accounts", tags=["Chart of Accounts"])
 app.include_router(notifications.router, prefix="/api/notifications", tags=["Notifications"])
