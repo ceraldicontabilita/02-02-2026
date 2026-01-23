@@ -5,7 +5,8 @@ import { formatEuro, formatDateIT } from '../lib/utils';
 import api from '../api';
 import { 
   Banknote, Building2, Users, FileText, ArrowLeft,
-  Plus, Check, CreditCard, Wallet, Save, ChevronRight
+  Plus, Check, CreditCard, Wallet, Save, ChevronRight,
+  Clock, History
 } from 'lucide-react';
 
 // Stili inline per massima semplicità mobile
