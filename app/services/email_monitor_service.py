@@ -199,23 +199,25 @@ async def processa_nuovi_documenti(db) -> Dict[str, Any]:
     except Exception as e:
         results["errori"].append(f"Errore buste paga: {e}")
     
-    # 2. Processa estratti conto Nexi
+    # 2. Processa estratti conto Nexi (MongoDB-only)
     try:
         from app.parsers.estratto_conto_nexi_parser import parse_estratto_conto_nexi
         import uuid
+        import base64
         
         docs = await db["documents_inbox"].find(
             {
                 "category": "estratto_conto",
                 "processed": {"$ne": True},
-                "filename": {"$regex": "Estratto_conto|Nexi", "$options": "i"}
+                "filename": {"$regex": "Estratto_conto|Nexi", "$options": "i"},
+                "pdf_data": {"$exists": True, "$ne": None, "$ne": ""}
             },
             {"_id": 0}
         ).to_list(100)
         
         for doc in docs:
-            filepath = doc.get("filepath")
-            if not filepath or not os.path.exists(filepath):
+            pdf_data = doc.get("pdf_data")
+            if not pdf_data:
                 continue
             
             # Salta se è BNL
@@ -223,8 +225,8 @@ async def processa_nuovi_documenti(db) -> Dict[str, Any]:
                 continue
             
             try:
-                with open(filepath, 'rb') as f:
-                    result = parse_estratto_conto_nexi(f.read())
+                pdf_content = base64.b64decode(pdf_data)
+                result = parse_estratto_conto_nexi(pdf_content)
                 
                 if result.get("success"):
                     transactions = result.get("transactions", [])
