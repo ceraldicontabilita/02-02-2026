@@ -183,9 +183,13 @@ class EmailFullDownloader:
     def connect(self) -> bool:
         """Connette al server IMAP."""
         try:
+            email_user, email_password = get_email_credentials()
+            if not email_user or not email_password:
+                raise Exception("Credenziali email non configurate")
+            
             self.connection = imaplib.IMAP4_SSL(IMAP_SERVER)
-            self.connection.login(EMAIL_USER, EMAIL_PASSWORD)
-            logger.info(f"Connesso a {IMAP_SERVER} come {EMAIL_USER}")
+            self.connection.login(email_user, email_password)
+            logger.info(f"Connesso a {IMAP_SERVER} come {email_user}")
             return True
         except Exception as e:
             logger.error(f"Errore connessione IMAP: {e}")
