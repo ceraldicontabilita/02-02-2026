@@ -85,19 +85,22 @@ async def carico_da_fattura(fattura_id: str) -> Dict[str, Any]:
             if dati_prodotto["quantita"] <= 0:
                 continue
             
-            # Genera codice articolo se non presente
-            codice_prodotto = linea.get("codice_prodotto") or linea.get("codice_articolo")
-            if not codice_prodotto:
-                # Genera codice da descrizione normalizzata
-                codice_prodotto = f"{dati_prodotto['categoria_codice']}_{dati_prodotto['descrizione_normalizzata'][:20]}".replace(" ", "_")
+            # Genera identificativo articolo dalla descrizione normalizzata
+            nome_normalizzato = dati_prodotto['descrizione_normalizzata'].upper().strip()
             
-            # Cerca o crea articolo in magazzino
-            articolo = await db[COLL_WAREHOUSE].find_one({"codice": codice_prodotto})
+            # Cerca articolo in warehouse_inventory usando nome_normalizzato
+            articolo = await db[COLL_WAREHOUSE].find_one({
+                "$or": [
+                    {"nome_normalizzato": nome_normalizzato},
+                    {"nome": {"$regex": nome_normalizzato[:30], "$options": "i"}}
+                ]
+            })
             
             if articolo:
                 # Aggiorna giacenza e prezzo medio ponderato
                 giacenza_attuale = articolo.get("giacenza", 0)
-                prezzo_attuale = articolo.get("prezzo_acquisto", 0)
+                prezzi = articolo.get("prezzi", {})
+                prezzo_attuale = prezzi.get("ultimo", prezzi.get("medio", 0))
                 
                 nuova_giacenza = giacenza_attuale + dati_prodotto["quantita"]
                 
@@ -111,38 +114,39 @@ async def carico_da_fattura(fattura_id: str) -> Dict[str, Any]:
                     nuovo_prezzo = dati_prodotto["prezzo_unitario"]
                 
                 await db[COLL_WAREHOUSE].update_one(
-                    {"_id": articolo["_id"]},
+                    {"id": articolo["id"]},
                     {"$set": {
                         "giacenza": nuova_giacenza,
-                        "prezzo_acquisto": round(nuovo_prezzo, 4),
-                        "ultimo_carico": datetime.utcnow().isoformat(),
+                        "prezzi.ultimo": round(nuovo_prezzo, 4),
+                        "prezzi.medio": round(nuovo_prezzo, 4),
+                        "ultimo_acquisto": datetime.utcnow().isoformat(),
                         "ultimo_fornitore": fornitore,
                         "categoria": dati_prodotto["categoria_nome"],
-                        "categoria_id": dati_prodotto["categoria_id"],
-                        "centro_costo": dati_prodotto["centro_costo"]
+                        "updated_at": datetime.utcnow().isoformat()
                     }}
                 )
             else:
-                # Crea nuovo articolo
+                # Crea nuovo articolo nel formato warehouse_inventory
                 nuovo_articolo = {
                     "id": str(uuid.uuid4()),
-                    "codice": codice_prodotto,
-                    "descrizione": dati_prodotto["descrizione_originale"],
-                    "descrizione_normalizzata": dati_prodotto["descrizione_normalizzata"],
-                    "fornitore_principale": fornitore,
+                    "nome": dati_prodotto["descrizione_originale"],
+                    "nome_normalizzato": nome_normalizzato,
+                    "categoria": dati_prodotto["categoria_nome"],
                     "unita_misura": dati_prodotto["unita_misura"],
-                    "prezzo_acquisto": dati_prodotto["prezzo_unitario"],
                     "giacenza": dati_prodotto["quantita"],
                     "giacenza_minima": 0,
-                    "categoria": dati_prodotto["categoria_nome"],
-                    "categoria_id": dati_prodotto["categoria_id"],
-                    "categoria_codice": dati_prodotto["categoria_codice"],
-                    "centro_costo": dati_prodotto["centro_costo"],
-                    "aliquota_iva": dati_prodotto["aliquota_iva"],
-                    "classificazione_confidence": dati_prodotto["classificazione_confidence"],
+                    "prezzi": {
+                        "ultimo": dati_prodotto["prezzo_unitario"],
+                        "medio": dati_prodotto["prezzo_unitario"],
+                        "min": dati_prodotto["prezzo_unitario"],
+                        "max": dati_prodotto["prezzo_unitario"]
+                    },
+                    "fornitori": [fornitore],
+                    "ultimo_acquisto": datetime.utcnow().isoformat(),
+                    "ultimo_fornitore": fornitore,
+                    "history": [],
                     "created_at": datetime.utcnow().isoformat(),
-                    "ultimo_carico": datetime.utcnow().isoformat(),
-                    "ultimo_fornitore": fornitore
+                    "updated_at": datetime.utcnow().isoformat()
                 }
                 await db[COLL_WAREHOUSE].insert_one(nuovo_articolo)
             
