@@ -135,7 +135,7 @@ Il sistema classifica **automaticamente** ogni fattura leggendo:
 
 📄 **Documentazione:** `/app/app/REGOLE_CONTABILI.md`
 
-### 3.6 ✅ Gestione Magazzino Avanzata (NUOVO - 22/01/2026)
+### 3.6 ✅ Gestione Magazzino Avanzata (AGGIORNATO 23/01/2026)
 
 Sistema completo di gestione magazzino per bar/pasticceria integrato con il ciclo della Learning Machine:
 
@@ -156,8 +156,11 @@ Sistema completo di gestione magazzino per bar/pasticceria integrato con il cicl
 - `GET /api/magazzino/lotti-produzione` - Registro lotti produzione
 - `GET /api/magazzino/categorie-merceologiche` - Lista 26 categorie
 
-#### Collezioni Database Magazzino
-- `warehouse_stocks` - Giacenze articoli
+#### Collezioni Database Magazzino (CONSOLIDATE 23/01/2026)
+- `warehouse_inventory` - **COLLEZIONE PRINCIPALE** (5372 articoli) - Usata da tutti i router
+- `warehouse_movements` - Movimenti magazzino (3670 movimenti)
+- `acquisti_prodotti` - Log acquisti da fatture
+- `warehouse_stocks` - **DEPRECATA** (dati non validi)
 - `movimenti_magazzino` - Storico movimenti
 - `lotti_produzione` - Registro lotti
 - `acquisti_prodotti` - Log prodotti caricati
