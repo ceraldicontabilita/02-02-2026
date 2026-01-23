@@ -34,8 +34,11 @@ COLL_BONIFICI_STIPENDI = "bonifici_stipendi"
 COLL_GIUSTIFICATIVI = "giustificativi"
 
 # Magazzino
-COLL_WAREHOUSE_STOCKS = "warehouse_stocks"
-COLL_MOVIMENTI_MAGAZZINO = "movimenti_magazzino"
+# NOTA: warehouse_inventory è la collezione UNICA per i prodotti
+# warehouse_stocks è DEPRECATA (contiene dati errati)
+COLL_WAREHOUSE = "warehouse_inventory"  # Collezione principale (5372 prodotti)
+COLL_WAREHOUSE_MOVEMENTS = "warehouse_movements"  # Movimenti magazzino (3670 movimenti)
+COLL_ACQUISTI_PRODOTTI = "acquisti_prodotti"  # Log acquisti da fatture (15065 record)
 COLL_RICETTE = "ricette"
 COLL_LOTTI_PRODUZIONE = "lotti_produzione"
 
