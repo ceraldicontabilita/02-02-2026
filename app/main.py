@@ -145,7 +145,7 @@ from app.routers.reports import (
 
 # --- Core Routers (non modulari) ---
 from app.routers import (
-    auth, suppliers, cash, chart_of_accounts, notifications,
+    auth, cash, chart_of_accounts, notifications,
     cash_register, failed_invoices, settings as settings_router,
     config, search, incasso_reale, ocr_assegni, cart, portal, orders,
     portal_extended, cash_register_extended, finanziaria, public_api,
@@ -158,6 +158,7 @@ from app.routers import (
     gestione_iva_speciale, configurazioni, alerts, import_templates,
     dizionario_prodotti, inventario
 )
+from app.routers.suppliers_module import router as suppliers_router
 from app.routers import cedolini_riconciliazione
 from app.routers import parlant_api
 from app.routers import pagopa  # PagoPA - Associazione ricevute
