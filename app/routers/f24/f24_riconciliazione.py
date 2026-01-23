@@ -4,6 +4,7 @@ Gestisce il flusso completo: F24 commercialista → Quietanza → Banca
 Con supporto per ravvedimento e F24 duplicati
 """
 from fastapi import APIRouter, HTTPException, UploadFile, File, Query, Body
+from fastapi.responses import Response
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
 from app.database import Database
@@ -11,11 +12,13 @@ from app.services.parser_f24 import parse_f24_commercialista, confronta_codici_t
 from app.services.f24_parser import parse_quietanza_f24
 import os
 import uuid
+import base64
 import logging
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
+# DEPRECATED: Directory per compatibilità legacy
 UPLOAD_DIR = "/app/uploads/f24_commercialista"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
