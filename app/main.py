@@ -109,9 +109,11 @@ from app.routers import todo
 # --- Bank Module ---
 from app.routers.bank import (
     bank_main, bank_reconciliation, bank_statement_import,
-    bank_statement_parser, estratto_conto, archivio_bonifici, assegni, pos_accredito,
+    bank_statement_parser, estratto_conto, assegni, pos_accredito,
     bank_statement_bulk_import
 )
+# Archivio Bonifici modularizzato
+from app.routers.bonifici_module import router as archivio_bonifici_router
 from app.routers.bank import riconciliazione_f24_banca
 
 # --- Warehouse Module ---
