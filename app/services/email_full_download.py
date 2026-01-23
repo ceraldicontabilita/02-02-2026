@@ -968,3 +968,214 @@ async def get_documents_inbox_stats(db: AsyncIOMotorDatabase) -> Dict[str, Any]:
         stats["by_status"][status] = stats["by_status"].get(status, 0) + count
     
     return stats
+
+
+async def sync_filesystem_pdfs_to_db(db: AsyncIOMotorDatabase, base_dir: str = "/app/documents") -> Dict[str, Any]:
+    """
+    Scansiona i PDF sul filesystem e li sincronizza con documents_inbox.
+    Per ogni file:
+    1. Calcola hash per deduplicazione
+    2. Se nuovo, lo aggiunge a documents_inbox
+    3. Aggiorna il filepath se il file esiste ma il path è cambiato
+    """
+    stats = {
+        "files_scanned": 0,
+        "new_added": 0,
+        "paths_updated": 0,
+        "duplicates_skipped": 0,
+        "errors": []
+    }
+    
+    # Mapping directory -> categoria
+    DIR_TO_CATEGORY = {
+        "F24": "f24",
+        "Fatture": "fattura",
+        "Buste Paga": "busta_paga",
+        "Estratti Conto": "estratto_conto",
+        "Quietanze": "quietanza",
+        "Bonifici": "bonifico",
+        "Verbali": "verbale",
+        "Certificati Medici": "certificato_medico",
+        "Cartelle Esattoriali": "cartella_esattoriale",
+        "Altri": "altro"
+    }
+    
+    for dir_name, category in DIR_TO_CATEGORY.items():
+        dir_path = os.path.join(base_dir, dir_name)
+        if not os.path.exists(dir_path):
+            continue
+        
+        for filename in os.listdir(dir_path):
+            if not filename.lower().endswith('.pdf'):
+                continue
+            
+            filepath = os.path.join(dir_path, filename)
+            stats["files_scanned"] += 1
+            
+            try:
+                # Leggi e calcola hash
+                with open(filepath, "rb") as f:
+                    content = f.read()
+                
+                file_hash = calculate_pdf_hash(content)
+                
+                # Controlla se esiste già per hash
+                existing = await db["documents_inbox"].find_one({"file_hash": file_hash})
+                
+                if existing:
+                    # Aggiorna il filepath se diverso
+                    if existing.get("filepath") != filepath:
+                        await db["documents_inbox"].update_one(
+                            {"id": existing["id"]},
+                            {"$set": {"filepath": filepath, "file_exists": True}}
+                        )
+                        stats["paths_updated"] += 1
+                    else:
+                        stats["duplicates_skipped"] += 1
+                    continue
+                
+                # Nuovo documento - aggiungi
+                doc_id = str(uuid.uuid4())
+                new_doc = {
+                    "id": doc_id,
+                    "filename": filename,
+                    "filepath": filepath,
+                    "category": category,
+                    "category_label": dir_name,
+                    "size_bytes": len(content),
+                    "file_hash": file_hash,
+                    "status": "nuovo",
+                    "processed": False,
+                    "file_exists": True,
+                    "source": "filesystem_sync",
+                    "synced_at": datetime.now(timezone.utc).isoformat()
+                }
+                
+                await db["documents_inbox"].insert_one(new_doc)
+                stats["new_added"] += 1
+                
+            except Exception as e:
+                logger.error(f"Errore sync file {filepath}: {e}")
+                stats["errors"].append(f"{filename}: {str(e)}")
+    
+    return stats
+
+
+async def associate_f24_from_filesystem(db: AsyncIOMotorDatabase) -> Dict[str, int]:
+    """
+    Associa i PDF F24 dal filesystem ai record f24_commercialista.
+    Usa pattern matching su periodo e tipo tributo.
+    """
+    stats = {"associated": 0, "skipped": 0, "errors": 0}
+    
+    mesi_it = {
+        "gennaio": 1, "febbraio": 2, "marzo": 3, "aprile": 4,
+        "maggio": 5, "giugno": 6, "luglio": 7, "agosto": 8,
+        "settembre": 9, "ottobre": 10, "novembre": 11, "dicembre": 12
+    }
+    
+    # Trova tutti gli F24 in documents_inbox con file esistente
+    cursor = db["documents_inbox"].find({
+        "category": "f24",
+        "file_exists": True,
+        "status": {"$ne": "associato"}
+    })
+    
+    async for doc in cursor:
+        try:
+            filename = doc.get("filename", "")
+            filepath = doc.get("filepath", "")
+            
+            if not filepath or not os.path.exists(filepath):
+                stats["skipped"] += 1
+                continue
+            
+            # Estrai info dal filename
+            # Pattern comuni: F24_IVA_09_2025, F24_ravv_II_acc_Ires_2023
+            
+            mese = None
+            anno = None
+            tributo_pattern = None
+            
+            # Pattern 1: mese numerico/anno (IVA_09_2025, IVA_11.25)
+            match = re.search(r'(\d{1,2})[._](\d{2,4})', filename)
+            if match:
+                m = int(match.group(1))
+                a = match.group(2)
+                if len(a) == 2:
+                    a = f"20{a}"
+                anno = int(a)
+                if 1 <= m <= 12:
+                    mese = m
+            
+            # Pattern 2: anno esplicito
+            if not anno:
+                match = re.search(r'20(2[0-9])', filename)
+                if match:
+                    anno = int(f"20{match.group(1)}")
+            
+            # Identifica tipo tributo
+            filename_lower = filename.lower()
+            if "iva" in filename_lower:
+                tributo_pattern = "iva"
+            elif "ires" in filename_lower or "irpef" in filename_lower:
+                tributo_pattern = "imposte_reddito"
+            elif "inps" in filename_lower:
+                tributo_pattern = "contributi"
+            elif "imu" in filename_lower or "tasi" in filename_lower:
+                tributo_pattern = "tributi_locali"
+            elif "1040" in filename_lower or "ritenute" in filename_lower:
+                tributo_pattern = "ritenute"
+            
+            # Cerca F24 corrispondente
+            query = {"$or": [
+                {"pdf_data": None},
+                {"pdf_data": ""},
+                {"pdf_data": {"$exists": False}}
+            ]}
+            
+            if mese and anno:
+                query["mese"] = mese
+                query["anno"] = anno
+            elif anno:
+                query["anno"] = anno
+            
+            f24 = await db["f24_commercialista"].find_one(query)
+            
+            if f24:
+                # Leggi PDF e associa
+                with open(filepath, "rb") as f:
+                    pdf_content = f.read()
+                
+                pdf_base64 = base64.b64encode(pdf_content).decode('utf-8')
+                
+                await db["f24_commercialista"].update_one(
+                    {"id": f24["id"]},
+                    {"$set": {
+                        "pdf_data": pdf_base64,
+                        "pdf_hash": calculate_pdf_hash(pdf_content),
+                        "pdf_filepath": filepath,
+                        "pdf_filename": filename
+                    }}
+                )
+                
+                await db["documents_inbox"].update_one(
+                    {"id": doc["id"]},
+                    {"$set": {
+                        "status": "associato",
+                        "associated_to": f24["id"],
+                        "associated_collection": "f24_commercialista",
+                        "associated_at": datetime.now(timezone.utc).isoformat()
+                    }}
+                )
+                
+                stats["associated"] += 1
+                logger.info(f"F24 associato: {filename} -> {f24['id']}")
+            else:
+                stats["skipped"] += 1
+                
+        except Exception as e:
+            logger.error(f"Errore associazione F24: {e}")
+            stats["errors"] += 1
+    
+    return stats
