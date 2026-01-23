@@ -222,12 +222,19 @@ export default function InserimentoRapido() {
   // Carica fatture da pagare
   useEffect(() => {
     if (activeSection === 'fatture') {
-      api.get('/api/fatture-ricevute').then(res => {
-        const data = res.data?.items || res.data || [];
-        const nonPagate = data.filter(f => !f.pagata && !f.metodo_pagamento);
-        setFatture(nonPagate.slice(0, 50));
+      // Le fatture sono nella collezione "invoices"
+      api.get('/api/invoices?limit=100').then(res => {
+        const data = res.data?.items || res.data?.invoices || res.data || [];
+        // Filtra quelle senza metodo pagamento assegnato
+        const daPagare = data.filter(f => !f.metodo_pagamento || f.metodo_pagamento === '');
+        setFatture(daPagare.slice(0, 30));
       }).catch(() => {
-        setFatture([]);
+        // Fallback fatture-ricevute
+        api.get('/api/fatture-ricevute').then(res => {
+          const data = res.data?.items || res.data || [];
+          const nonPagate = data.filter(f => !f.pagata && !f.metodo_pagamento);
+          setFatture(nonPagate.slice(0, 30));
+        }).catch(() => setFatture([]));
       });
     }
   }, [activeSection]);
