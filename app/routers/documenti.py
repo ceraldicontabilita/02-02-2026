@@ -4,7 +4,7 @@ API per scaricare, visualizzare e processare documenti dalle email.
 """
 
 from fastapi import APIRouter, Query, HTTPException, BackgroundTasks
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from typing import Dict, Any, Optional, List
 from datetime import datetime, timezone
 from pathlib import Path
