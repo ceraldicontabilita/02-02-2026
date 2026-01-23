@@ -358,6 +358,9 @@ app.include_router(verbali_riconciliazione.router, prefix="/api/verbali-riconcil
 # --- Email Scanner Completo - Tutta la posta ---
 app.include_router(email_scanner.router, tags=["Email Scanner"])
 
+# --- Download Completo Email con Salvataggio DB ---
+app.include_router(email_download.router, prefix="/api", tags=["Email Download"])
+
 # --- Bonifici Stipendi da Email ---
 app.include_router(bonifici_stipendi.router, tags=["Bonifici Stipendi"])
 
