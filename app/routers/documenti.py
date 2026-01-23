@@ -498,30 +498,21 @@ async def elimina_documento(doc_id: str) -> Dict[str, Any]:
 
 @router.post("/elimina-processati")
 async def elimina_documenti_processati() -> Dict[str, Any]:
-    """Elimina tutti i documenti già processati."""
+    """
+    Elimina tutti i documenti già processati.
+    Architettura MongoDB-only: elimina solo dal database.
+    """
     db = Database.get_db()
     
-    # Trova tutti i processati
-    processati = await db["documents_inbox"].find(
-        {"processed": True},
-        {"_id": 0, "id": 1, "filepath": 1}
-    ).to_list(10000)
+    # Conta documenti da eliminare
+    count_to_delete = await db["documents_inbox"].count_documents({"processed": True})
     
-    deleted_count = 0
-    for doc in processati:
-        filepath = doc.get("filepath")
-        if filepath and os.path.exists(filepath):
-            try:
-                os.remove(filepath)
-            except OSError:
-                pass
-        deleted_count += 1
-    
+    # Elimina dal database (architettura MongoDB-only)
     await db["documents_inbox"].delete_many({"processed": True})
     
     return {
         "success": True,
-        "deleted_count": deleted_count
+        "deleted_count": count_to_delete
     }
 
 
