@@ -802,23 +802,72 @@ export default function InserimentoRapido() {
 
       {/* Menu principale o form attivo */}
       {!activeSection ? (
-        <div style={styles.grid}>
-          {MENU_ITEMS.map(item => (
-            <div
-              key={item.id}
-              style={styles.card}
-              onClick={() => {
-                setActiveSection(item.id);
-                resetForm();
-              }}
-            >
-              <div style={{...styles.cardIcon, background: item.bg}}>
-                <item.icon size={22} color={item.color} />
+        <>
+          <div style={styles.grid}>
+            {MENU_ITEMS.map(item => (
+              <div
+                key={item.id}
+                style={styles.card}
+                onClick={() => {
+                  setActiveSection(item.id);
+                  resetForm();
+                }}
+              >
+                <div style={{...styles.cardIcon, background: item.bg}}>
+                  <item.icon size={22} color={item.color} />
+                </div>
+                <span style={styles.cardLabel}>{item.label}</span>
               </div>
-              <span style={styles.cardLabel}>{item.label}</span>
+            ))}
+          </div>
+
+          {/* Ultimi Inserimenti */}
+          {ultimiInserimenti.length > 0 && (
+            <div style={{...styles.form, marginTop: '8px'}}>
+              <h3 style={{...styles.formTitle, fontSize: '14px', marginBottom: '12px'}}>
+                <History size={16} color="#64748b" />
+                Ultimi Inserimenti
+              </h3>
+              <div style={{display: 'flex', flexDirection: 'column', gap: '8px'}}>
+                {ultimiInserimenti.map((ins, idx) => (
+                  <div key={idx} style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '10px 12px',
+                    background: '#f8fafc',
+                    borderRadius: '8px',
+                    borderLeft: `3px solid ${
+                      ins.tipo === 'corrispettivo' ? '#22c55e' :
+                      ins.tipo === 'versamento' ? '#2563eb' :
+                      ins.tipo === 'acconto' ? '#ec4899' :
+                      ins.tipo === 'presenza' ? '#06b6d4' : '#64748b'
+                    }`
+                  }}>
+                    <div>
+                      <div style={{fontSize: '13px', fontWeight: '500', color: '#1e293b'}}>
+                        {ins.descrizione}
+                      </div>
+                      <div style={{fontSize: '11px', color: '#64748b'}}>
+                        {ins.data}
+                      </div>
+                    </div>
+                    {ins.importo && (
+                      <span style={{fontSize: '14px', fontWeight: '600', color: '#1e293b'}}>
+                        {formatEuro(ins.importo)}
+                      </span>
+                    )}
+                    {ins.ore && (
+                      <span style={{fontSize: '13px', color: '#64748b'}}>
+                        {ins.ore}h
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       ) : (
         <>
           {/* Back button */}
