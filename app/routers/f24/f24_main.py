@@ -12,6 +12,7 @@ import os
 
 from app.database import Database
 from app.utils.dependencies import get_current_user
+from app.db_collections import COLL_F24
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
