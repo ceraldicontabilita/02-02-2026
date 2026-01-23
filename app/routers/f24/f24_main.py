@@ -1007,14 +1007,7 @@ async def delete_quietanza_f24(f24_id: str) -> Dict[str, Any]:
         raise HTTPException(status_code=404, detail="Quietanza non trovata")
     
     # Elimina file fisico
-    file_path = quietanza.get("file_path")
-    if file_path and os.path.exists(file_path):
-        try:
-            os.remove(file_path)
-        except Exception as e:
-            logger.warning(f"Impossibile eliminare file {file_path}: {e}")
-    
-    # Elimina da database
+    # Architettura MongoDB-only: elimina solo da database
     await db["quietanze_f24"].delete_one({"id": f24_id})
     
     return {
