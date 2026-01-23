@@ -1245,10 +1245,13 @@ async def process_cedolini_to_prima_nota(db: AsyncIOMotorDatabase) -> Dict[str, 
             parsed_data = {}
             
             # Nome dipendente - pattern specifico per cedolini italiani
-            # Pattern: "31/12/2019 VESPA VINCENZO" o dopo data
+            # La riga tipica è: "31/12/2019 VESPA VINCENZO  26/12/1967 VSPVCN67T26F839P"
+            # Cerchiamo data + NOME COGNOME + data_nascita + codice_fiscale
             nome_patterns = [
-                r'\d{2}/\d{2}/\d{4}\s+([A-Z][A-Z]+\s+[A-Z][A-Z]+)',  # DATA NOME COGNOME
-                r'(?:Dipendente|Cognome e Nome|Lavoratore)[:\s]+([A-Z][A-Za-z]+\s+[A-Z][A-Za-z]+)',
+                # Pattern completo con CF: DATA NOME DATA_NASCITA CF
+                r'\d{2}/\d{2}/\d{4}\s+([A-Z][A-Z]+\s+[A-Z][A-Z]+)\s+\d{2}/\d{2}/\d{4}\s+[A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]',
+                # Pattern senza data nascita ma con CF
+                r'([A-Z][A-Z]+\s+[A-Z][A-Z]+)\s+\d{2}/\d{2}/\d{4}\s+[A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]',
             ]
             for pattern in nome_patterns:
                 match = re.search(pattern, text)
