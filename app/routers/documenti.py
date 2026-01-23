@@ -1960,6 +1960,9 @@ async def reimporta_documenti_da_filesystem(
     
     db = Database.get_db()
     
+    # DEPRECATO: Questo endpoint è per migrazione legacy.
+    # Architettura MongoDB-only: legge file da disco e li salva come Base64 in MongoDB.
+    
     # Categorie e sottocartelle
     category_dirs = {
         "Buste Paga": "busta_paga",
@@ -1991,10 +1994,12 @@ async def reimporta_documenti_da_filesystem(
             filename = file_path.name
             filepath = str(file_path)
             
-            # Calcola hash per controllo duplicati
+            # Architettura MongoDB-only: leggi file e codifica in Base64
             try:
                 with open(filepath, 'rb') as f:
-                    file_hash = hashlib.md5(f.read()).hexdigest()
+                    file_content = f.read()
+                    file_hash = hashlib.md5(file_content).hexdigest()
+                    pdf_base64 = base64.b64encode(file_content).decode('utf-8')
             except Exception as e:
                 errori.append({"file": filename, "errore": f"Impossibile leggere file: {e}"})
                 continue
@@ -2002,7 +2007,7 @@ async def reimporta_documenti_da_filesystem(
             # Controlla se già esiste nel DB
             existing = await db["documents_inbox"].find_one({
                 "$or": [
-                    {"filepath": filepath},
+                    {"filename": filename, "file_hash": file_hash},
                     {"file_hash": file_hash}
                 ]
             })
@@ -2026,11 +2031,11 @@ async def reimporta_documenti_da_filesystem(
             elif "f24" in filename_lower:
                 final_category = "f24"
             
-            # Crea record documento
+            # Crea record documento con pdf_data (MongoDB-only)
             doc_record = {
                 "id": str(uuid.uuid4()),
                 "filename": filename,
-                "filepath": filepath,
+                "pdf_data": pdf_base64,  # Architettura MongoDB-only
                 "category": final_category,
                 "category_label": {
                     "estratto_conto": "Estratti Conto",
@@ -2042,9 +2047,9 @@ async def reimporta_documenti_da_filesystem(
                 "status": "nuovo",
                 "processed": False,
                 "file_hash": file_hash,
-                "file_size": file_path.stat().st_size,
+                "file_size": len(file_content),
                 "downloaded_at": datetime.now(timezone.utc).isoformat(),
-                "source": "filesystem_import"
+                "source": "filesystem_import_migrated"
             }
             
             try:
