@@ -259,8 +259,16 @@ async def get_stato_riconciliazione():
     f24_da_pagare = await db["f24_commercialista"].count_documents({"stato_pagamento": "DA_PAGARE"})
     f24_totali = await db["f24_commercialista"].count_documents({})
     
-    # Conta movimenti F24 in banca
-    movimenti_f24 = await db["movimenti_f24_banca"].count_documents({})
+    # Conta movimenti F24 in banca (dalla collezione corretta estratto_conto_movimenti)
+    query_f24_banca = {
+        "$or": [
+            {"descrizione_originale": {"$regex": "I24.*AGENZIA", "$options": "i"}},
+            {"descrizione_originale": {"$regex": "AGENZIA.*ENTRATE", "$options": "i"}},
+            {"descrizione_originale": {"$regex": "F24", "$options": "i"}},
+            {"categoria": {"$regex": "Tasse|Imposte|Tributi|F24", "$options": "i"}}
+        ]
+    }
+    movimenti_f24 = await db["estratto_conto_movimenti"].count_documents(query_f24_banca)
     
     # Somma importi
     pipeline_f24 = [
@@ -271,14 +279,16 @@ async def get_stato_riconciliazione():
     ]
     totali_per_stato = {doc["_id"]: doc["totale"] async for doc in db["f24_commercialista"].aggregate(pipeline_f24)}
     
+    # Totale movimenti F24 in banca
     pipeline_banca = [
+        {"$match": query_f24_banca},
         {"$group": {
             "_id": None,
             "totale": {"$sum": {"$abs": "$importo"}}
         }}
     ]
     totale_banca = 0
-    async for doc in db["movimenti_f24_banca"].aggregate(pipeline_banca):
+    async for doc in db["estratto_conto_movimenti"].aggregate(pipeline_banca):
         totale_banca = doc.get("totale", 0)
     
     return {
