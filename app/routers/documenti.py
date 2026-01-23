@@ -661,21 +661,26 @@ async def sync_f24_automatico(
         f24_docs = [d for d in new_documents if d.get("category") == "f24"]
         quietanze_docs = [d for d in new_documents if d.get("category") == "quietanza"]
         
-        # Processa automaticamente gli F24
+        # Processa automaticamente gli F24 (architettura MongoDB-first)
         f24_caricati = []
         f24_errori = []
         
         for doc in f24_docs:
             try:
-                filepath = doc.get("filepath")
-                if not filepath or not os.path.exists(filepath):
-                    f24_errori.append({"file": doc["filename"], "errore": "File non trovato"})
+                # Architettura MongoDB-first: usa pdf_data
+                pdf_data = doc.get("pdf_data")
+                if not pdf_data:
+                    f24_errori.append({"file": doc["filename"], "errore": "PDF non disponibile in MongoDB"})
                     continue
                 
-                # Chiama il parser F24 con il filepath
+                # Decodifica PDF da base64
+                import base64
+                pdf_content = base64.b64decode(pdf_data)
+                
+                # Chiama il parser F24 con pdf_content (architettura MongoDB-first)
                 from app.services.parser_f24 import parse_f24_commercialista
                 
-                parsed = parse_f24_commercialista(filepath)
+                parsed = parse_f24_commercialista(pdf_content=pdf_content)
                 
                 # Il parser restituisce direttamente il risultato (non un wrapper con 'success')
                 # Verifica che non ci sia un errore e che ci siano dati
