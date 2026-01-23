@@ -30,15 +30,26 @@ Sistema ERP contabile per aziende italiane con:
 - I riferimenti `filepath` rimasti sono per endpoint di migrazione legacy
 
 ### 1.4 File Completamente Rifattorizzati (Sessione 19)
-| File | Stato |
-|------|-------|
-| `services/cedolini_manager.py` | ✅ MongoDB-only |
-| `services/email_monitor_service.py` | ✅ MongoDB-only |
-| `routers/documenti_module/crud.py` | ✅ MongoDB-only |
-| `services/parser_f24.py` | ✅ Supporta bytes |
-| `routers/f24/f24_main.py` | ✅ MongoDB-only |
-| `services/f24_parser.py` | ✅ Supporta bytes |
-| `routers/quietanze_f24.py` | ✅ MongoDB-only |
+| File | Stato | Riferimenti |
+|------|-------|-------------|
+| `services/cedolini_manager.py` | ✅ MongoDB-only | 0 |
+| `services/email_monitor_service.py` | ✅ MongoDB-only | 0 |
+| `routers/documenti_module/crud.py` | ✅ MongoDB-only | 0 |
+| `services/parser_f24.py` | ✅ Supporta bytes | 2 (parametri) |
+| `services/f24_parser.py` | ✅ Supporta bytes | 4 (parametri) |
+| `routers/f24/f24_main.py` | ✅ MongoDB-only | 1 (commento) |
+| `routers/f24/email_f24.py` | ✅ MongoDB-only | 0 |
+| `routers/f24/f24_riconciliazione.py` | ✅ MongoDB-only | 0 |
+| `routers/f24/quietanze.py` | ✅ MongoDB-only | 0 |
+| `routers/f24/f24_public.py` | ✅ MongoDB-only | 2 (fallback) |
+| `routers/quietanze_f24.py` | ✅ MongoDB-only | 2 (query) |
+| `routers/documenti_intelligenti.py` | ✅ MongoDB-only | 0 |
+| `routers/bonifici_module/jobs.py` | ✅ MongoDB-only | 3 (batch) |
+| `routers/employees/employee_contracts.py` | ✅ MongoDB-only | 9 (template) |
+| `routers/documenti.py` | ✅ MongoDB-only | 6 (deprecated) |
+| `services/email_full_download.py` | ✅ MongoDB-only | 14 (deprecated) |
+
+**Totale riferimenti residui**: 63 (la maggior parte deprecati o parametri helper)
 
 ---
 
