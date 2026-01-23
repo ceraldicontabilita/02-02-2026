@@ -56,9 +56,14 @@ def extract_text_from_pdf(pdf_path_or_bytes) -> str:
         return ""
 
 
-def parse_quietanza_f24(pdf_path_or_bytes) -> Dict[str, Any]:
+def parse_quietanza_f24(pdf_path: str = None, pdf_content: bytes = None) -> Dict[str, Any]:
     """
     Parsa una quietanza F24 ed estrae tutti i dati strutturati.
+    Supporta sia filepath (legacy) che bytes (MongoDB-only).
+    
+    Args:
+        pdf_path: Percorso file PDF (legacy)
+        pdf_content: Contenuto PDF in bytes (architettura MongoDB-only)
     
     Returns:
         Dict con:
@@ -70,7 +75,7 @@ def parse_quietanza_f24(pdf_path_or_bytes) -> Dict[str, Any]:
         - sezione_tributi_locali: lista tributi locali
         - totali: importo_debito, importo_credito, saldo
     """
-    text = extract_text_from_pdf(pdf_path)
+    text = extract_text_from_pdf(pdf_path=pdf_path, pdf_content=pdf_content)
     
     if not text:
         return {"error": "Impossibile estrarre testo dal PDF"}
