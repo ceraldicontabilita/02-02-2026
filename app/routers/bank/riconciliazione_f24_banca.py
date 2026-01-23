@@ -161,23 +161,14 @@ async def riconcilia_f24_con_banca():
     
     try:
         # Recupera F24 commercialista
-        f24_list = await db["f24_commercialista"].find(
+        f24_list = await db[COLL_F24_COMMERCIALISTA].find(
             {},
             {"_id": 0}
         ).to_list(1000)
         
         # Recupera movimenti F24 dalla collezione estratto_conto_movimenti
-        # Cerca movimenti con pattern F24 (I24 AGENZIA, AGENZIA ENTRATE, etc.)
-        query_f24_banca = {
-            "$or": [
-                {"descrizione_originale": {"$regex": "I24.*AGENZIA", "$options": "i"}},
-                {"descrizione_originale": {"$regex": "AGENZIA.*ENTRATE", "$options": "i"}},
-                {"descrizione_originale": {"$regex": "F24", "$options": "i"}},
-                {"categoria": {"$regex": "Tasse|Imposte|Tributi|F24", "$options": "i"}}
-            ]
-        }
-        movimenti_f24 = await db["estratto_conto_movimenti"].find(
-            query_f24_banca,
+        movimenti_f24 = await db[COLL_ESTRATTO_CONTO].find(
+            QUERY_F24_PATTERN,
             {"_id": 0}
         ).to_list(1000)
         
