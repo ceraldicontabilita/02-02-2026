@@ -265,7 +265,64 @@ GET  /api/liquidazione-iva/export/pdf/{anno}/{mese}
 
 ---
 
-## 6. VALIDATORI AUTOMATICI
+## 6. INSERIMENTO RAPIDO MOBILE (NUOVO 23/01/2026)
+
+### 6.1 Pagina `/rapido` - Interfaccia Mobile-First
+Schede grandi tocco-friendly per inserimento dati da smartphone:
+
+| Funzione | Descrizione | Endpoint |
+|----------|-------------|----------|
+| **Corrispettivi** | Incassi giornalieri | `POST /api/rapido/corrispettivo` |
+| **Versamenti Banca** | Trasferimenti cassa→banca | `POST /api/rapido/versamento-banca` |
+| **Apporto Soci** | Versamenti capitale | `POST /api/rapido/apporto-soci` |
+| **Fatture Ricevute** | Lista fatture da pagare con bottoni Cassa/Banca | `GET /api/invoices` + `PATCH` |
+| **Acconti Dipendenti** | Anticipi stipendio | `POST /api/rapido/acconto-dipendente` |
+| **Presenze** | Registrazione presente/ferie/malattia/permesso | `POST /api/rapido/presenza` |
+
+### 6.2 Caratteristiche UI
+- Form a pagina intera (no popup)
+- Input grandi con padding 14px
+- Bottoni colorati per azioni rapide
+- Navigazione semplice "Torna al menu"
+- Griglia 2 colonne responsive
+
+---
+
+## 7. DOWNLOAD EMAIL E ALLEGATI (NUOVO 23/01/2026)
+
+### 7.1 Sistema Download Completo
+Scarica TUTTI i PDF dalla posta elettronica e li salva nel database:
+
+```
+POST /api/email-download/start-full-download?days_back=365  # Avvia download
+GET  /api/email-download/status                              # Stato download
+GET  /api/email-download/statistiche                         # Statistiche per categoria
+GET  /api/email-download/documenti-non-associati            # PDF da associare
+POST /api/email-download/auto-associa                        # Auto-associazione intelligente
+POST /api/email-download/associa-documento                   # Associazione manuale
+```
+
+### 7.2 Categorizzazione Automatica
+| Categoria | Pattern | Collezione |
+|-----------|---------|------------|
+| F24 | f24, tribut, agenzia entrate | `f24_email_attachments` |
+| Fattura | fattur, invoice, imponibile | `fatture_email_attachments` |
+| Busta Paga | cedolino, libro unico, stipendio | `cedolini_email_attachments` |
+| Estratto Conto | estratto, movimenti, saldo | `estratti_email_attachments` |
+| Quietanza | quietanza, ricevuta pagamento | `quietanze_email_attachments` |
+| Bonifico | bonifico, cro, trn | `bonifici_email_attachments` |
+| Verbale | verbale, multa, sanzione | `verbali_email_attachments` |
+| Certificato Medico | certificato medico, inps malattia | `certificati_email_attachments` |
+| Altro | (non classificato) | `documenti_non_associati` |
+
+### 7.3 Risultati Download (23/01/2026)
+- **652 PDF** scaricati totali
+- **202 PDF** auto-associati a documenti esistenti
+- Deduplicazione tramite hash MD5
+
+---
+
+## 8. VALIDATORI AUTOMATICI
 
 ### 6.1 P0 – Bloccanti
 | Validatore | Endpoint | Status |
