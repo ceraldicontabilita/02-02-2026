@@ -1697,12 +1697,13 @@ async def sync_estratti_bnl() -> Dict[str, Any]:
         }
     
     from app.parsers.estratto_conto_bnl_parser import parse_estratto_conto_bnl
+    import base64
     
     processati = []
     errori = []
     
     for doc in docs:
-        filepath = doc.get("filepath")
+        pdf_data = doc.get("pdf_data")
         filename = doc.get("filename", "")
         
         # Salta se non è un file BNL
@@ -1710,14 +1711,13 @@ async def sync_estratti_bnl() -> Dict[str, Any]:
             # Potrebbe essere Nexi o altro, salta
             continue
         
-        if not filepath or not os.path.exists(filepath):
-            errori.append({"file": filename, "errore": "File non trovato"})
+        if not pdf_data:
+            errori.append({"file": filename, "errore": "PDF non disponibile in MongoDB"})
             continue
         
         try:
-            # Leggi contenuto PDF
-            with open(filepath, 'rb') as f:
-                pdf_content = f.read()
+            # Architettura MongoDB-only: decodifica da Base64
+            pdf_content = base64.b64decode(pdf_data)
             
             # Usa parser BNL
             result = parse_estratto_conto_bnl(pdf_content)
@@ -1736,7 +1736,7 @@ async def sync_estratti_bnl() -> Dict[str, Any]:
                 estratto_record = {
                     "id": estratto_id,
                     "filename": filename,
-                    "filepath": filepath,
+                    "pdf_data": pdf_data,  # Architettura MongoDB-only
                     "tipo": tipo_doc,
                     "banca": "BNL",
                     "metadata": metadata,
