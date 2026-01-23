@@ -1386,35 +1386,3 @@ async def process_cedolini_to_prima_nota(db: AsyncIOMotorDatabase) -> Dict[str, 
             stats["errors"].append(f"{cedolino.get('filename')}: {str(e)}")
     
     return stats
-                pdf_base64 = base64.b64encode(pdf_content).decode('utf-8')
-                
-                await db["f24_commercialista"].update_one(
-                    {"id": f24["id"]},
-                    {"$set": {
-                        "pdf_data": pdf_base64,
-                        "pdf_hash": calculate_pdf_hash(pdf_content),
-                        "pdf_filepath": filepath,
-                        "pdf_filename": filename
-                    }}
-                )
-                
-                await db["documents_inbox"].update_one(
-                    {"id": doc["id"]},
-                    {"$set": {
-                        "status": "associato",
-                        "associated_to": f24["id"],
-                        "associated_collection": "f24_commercialista",
-                        "associated_at": datetime.now(timezone.utc).isoformat()
-                    }}
-                )
-                
-                stats["associated"] += 1
-                logger.info(f"F24 associato: {filename} -> {f24['id']}")
-            else:
-                stats["skipped"] += 1
-                
-        except Exception as e:
-            logger.error(f"Errore associazione F24: {e}")
-            stats["errors"] += 1
-    
-    return stats
