@@ -356,19 +356,26 @@ async def get_employee_contracts(employee_id: str) -> List[Dict[str, Any]]:
 
 @router.delete("/{contract_id}")
 async def delete_contract(contract_id: str) -> Dict[str, Any]:
-    """Delete a generated contract."""
+    """
+    Delete a generated contract.
+    Architettura MongoDB-first: elimina dal database.
+    """
     db = Database.get_db()
     contract = await db["employee_contracts"].find_one({"id": contract_id}, {"_id": 0})
     
     if not contract:
         raise HTTPException(status_code=404, detail="Contratto non trovato")
     
-    # Delete file
-    filepath = contract.get("filepath")
-    if filepath and os.path.exists(filepath):
-        os.remove(filepath)
-    
-    # Delete record
+    # Delete record from MongoDB (architettura MongoDB-first)
     await db["employee_contracts"].delete_one({"id": contract_id})
+    
+    # Cleanup opzionale: tenta eliminazione file locale se esiste (per retrocompatibilità)
+    filepath = contract.get("filepath")
+    if filepath:
+        try:
+            if os.path.exists(filepath):
+                os.remove(filepath)
+        except Exception:
+            pass  # Ignora errori filesystem, il dato importante è su MongoDB
     
     return {"success": True, "message": "Contratto eliminato"}
