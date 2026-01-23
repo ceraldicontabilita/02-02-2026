@@ -32,10 +32,19 @@ def parse_periodo(mese: str, anno: str) -> str:
     return f"{mese}/{anno}" if anno else mese
 
 
-def extract_text_from_pdf(pdf_path: str) -> str:
-    """Estrae tutto il testo da un PDF."""
+def extract_text_from_pdf(pdf_path: str = None, pdf_content: bytes = None) -> str:
+    """
+    Estrae tutto il testo da un PDF.
+    Supporta sia filepath che bytes (architettura MongoDB-first).
+    """
     try:
-        doc = fitz.open(pdf_path)
+        if pdf_content:
+            doc = fitz.open(stream=pdf_content, filetype="pdf")
+        elif pdf_path:
+            doc = fitz.open(pdf_path)
+        else:
+            return ""
+        
         all_text = []
         for page in doc:
             all_text.append(page.get_text())
@@ -46,9 +55,14 @@ def extract_text_from_pdf(pdf_path: str) -> str:
         return ""
 
 
-def parse_f24_commercialista(pdf_path: str) -> Dict[str, Any]:
+def parse_f24_commercialista(pdf_path: str = None, pdf_content: bytes = None) -> Dict[str, Any]:
     """
     Parsa un F24 PDF della commercialista ed estrae tutti i dati.
+    Supporta sia filepath che bytes (architettura MongoDB-first).
+    
+    Args:
+        pdf_path: Percorso file PDF (legacy)
+        pdf_content: Contenuto PDF in bytes (MongoDB-first)
     
     Layout F24 standard:
     - Colonna DEBITO: X ~357-389 (euro + centesimi)
@@ -70,12 +84,17 @@ def parse_f24_commercialista(pdf_path: str) -> Dict[str, Any]:
     CODICI_RAVVEDIMENTO = ['8901', '8902', '8903', '8904', '8906', '8907', '8911', '8913', '8918', '8926', '8929', '1990', '1991', '1993', '1994']
     
     try:
-        doc = fitz.open(pdf_path)
+        if pdf_content:
+            doc = fitz.open(stream=pdf_content, filetype="pdf")
+        elif pdf_path:
+            doc = fitz.open(pdf_path)
+        else:
+            return {"error": "Nessun PDF fornito"}
     except Exception as e:
         logger.error(f"Errore apertura PDF: {e}")
         return {"error": f"Impossibile aprire il PDF: {e}"}
     
-    text = extract_text_from_pdf(pdf_path)
+    text = extract_text_from_pdf(pdf_path=pdf_path, pdf_content=pdf_content)
     if not text:
         doc.close()
         return {"error": "Impossibile estrarre testo dal PDF"}
