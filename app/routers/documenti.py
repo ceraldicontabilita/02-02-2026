@@ -2200,18 +2200,14 @@ async def upload_documento_automatico(
         
         doc_id = f"upload_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_{file_hash[:8]}"
         
-        # Crea cartella se non esiste
-        upload_dir = Path("/tmp/documents_upload")
-        upload_dir.mkdir(parents=True, exist_ok=True)
-        
-        filepath = upload_dir / f"{doc_id}_{filename}"
-        with open(filepath, 'wb') as f:
-            f.write(content)
+        # SALVA SU MONGODB - NIENTE FILESYSTEM
+        import base64
+        pdf_base64 = base64.b64encode(content).decode('utf-8')
         
         doc_record = {
             "id": doc_id,
             "filename": filename,
-            "filepath": str(filepath),
+            "pdf_data": pdf_base64,  # Contenuto in MongoDB!
             "category": "altro",
             "category_label": "Da classificare",
             "status": "nuovo",
