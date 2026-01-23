@@ -2262,14 +2262,17 @@ async def upload_documento_automatico(
         elif tipo_rilevato == 'f24':
             # Import F24 PDF
             from app.services.parser_f24 import parse_f24_pdf_bytes
+            import base64 as b64
             
             parsed = await parse_f24_pdf_bytes(content, filename)
             
             if parsed and parsed.get("tributi"):
-                # Salva in f24_models
+                # Salva in f24_models con pdf_data
                 f24_doc = {
                     "id": f"f24_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}",
                     "filename": filename,
+                    "pdf_data": b64.b64encode(content).decode('utf-8'),  # Salva il PDF!
+                    "source": "pdf_upload",
                     **parsed,
                     "created_at": datetime.now(timezone.utc).isoformat()
                 }
