@@ -21,8 +21,16 @@ logger = logging.getLogger(__name__)
 
 # Configurazione IMAP - Usa variabili d'ambiente
 IMAP_SERVER = os.environ.get("IMAP_SERVER", "imap.gmail.com")
-EMAIL_USER = os.environ.get("EMAIL_USER", os.environ.get("GMAIL_EMAIL", ""))
-EMAIL_PASSWORD = os.environ.get("EMAIL_PASSWORD", os.environ.get("EMAIL_APP_PASSWORD", ""))
+# Configurazione IMAP
+IMAP_SERVER = "imap.gmail.com"
+
+
+def get_email_credentials():
+    """Ottieni credenziali email da settings."""
+    from app.config import settings
+    email_user = settings.EMAIL_USER or settings.GMAIL_EMAIL or settings.EMAIL_ADDRESS or ""
+    email_password = settings.EMAIL_PASSWORD or settings.EMAIL_APP_PASSWORD or settings.GMAIL_APP_PASSWORD or ""
+    return email_user, email_password
 
 # Mapping categoria -> collezione MongoDB
 CATEGORY_COLLECTIONS = {
