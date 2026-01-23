@@ -733,41 +733,15 @@ async def smart_auto_associate_v2(db: AsyncIOMotorDatabase) -> Dict[str, Any]:
         "errors": []
     }
     
-    # ========== 1. AGGIORNA PAYSLIPS CON PDF_DATA ==========
-    # I payslips hanno filepath ma non pdf_data - leggo dal disco
-    cursor = db["payslips"].find({
-        "filepath": {"$exists": True, "$ne": None},
-        "$or": [
-            {"pdf_data": None},
-            {"pdf_data": ""},
-            {"pdf_data": {"$exists": False}}
-        ]
-    })
+    # ========== ARCHITETTURA MONGODB-ONLY ==========
+    # Questa funzione è DEPRECATA per la migrazione legacy.
+    # Tutti i nuovi flussi devono usare pdf_data già presente in MongoDB.
+    # Le funzioni sottostanti sono mantenute per retrocompatibilità con dati esistenti.
     
-    async for payslip in cursor:
-        try:
-            filepath = payslip.get("filepath", "")
-            if filepath and os.path.exists(filepath):
-                with open(filepath, "rb") as f:
-                    pdf_content = f.read()
-                
-                pdf_base64 = base64.b64encode(pdf_content).decode('utf-8')
-                pdf_hash = calculate_pdf_hash(pdf_content)
-                
-                await db["payslips"].update_one(
-                    {"id": payslip["id"]},
-                    {"$set": {
-                        "pdf_data": pdf_base64,
-                        "pdf_hash": pdf_hash,
-                        "pdf_size": len(pdf_content)
-                    }}
-                )
-                stats["payslips_updated"] += 1
-                logger.info(f"Payslip aggiornato con PDF: {payslip.get('dipendente_nome')} {payslip.get('mese')}/{payslip.get('anno')}")
-            
-        except Exception as e:
-            logger.error(f"Errore aggiornamento payslip: {e}")
-            stats["errors"].append(f"Payslip {payslip.get('id')}: {str(e)}")
+    # ========== 1. SKIP AGGIORNAMENTO DA FILESYSTEM ==========
+    # I nuovi documenti devono già avere pdf_data
+    # Questo blocco è deprecato ma mantenuto per riferimento
+    logger.info("Migrazione payslips da filesystem deprecata - usa pdf_data direttamente")
     
     # ========== 2. PROCESSA DOCUMENTS_INBOX ==========
     # Marca i documenti processati e li collega dove possibile
@@ -778,16 +752,17 @@ async def smart_auto_associate_v2(db: AsyncIOMotorDatabase) -> Dict[str, Any]:
         "settembre": 9, "ottobre": 10, "novembre": 11, "dicembre": 12
     }
     
-    # 2a. Processa F24 da documents_inbox
+    # 2a. Processa F24 da documents_inbox (MongoDB-only)
     cursor = db["documents_inbox"].find({
         "category": "f24",
-        "status": {"$ne": "associato"}
+        "status": {"$ne": "associato"},
+        "pdf_data": {"$exists": True, "$nin": [None, ""]}
     })
     
     async for doc in cursor:
         try:
             filename = doc.get("filename", "")
-            filepath = doc.get("filepath", "")
+            pdf_data = doc.get("pdf_data", "")
             
             # Estrai periodo dal filename (es: F24_IVA_09_2025, F24_dicembre_2025)
             period_match = re.search(r'(\d{2})_(\d{4})|(\w+)_(\d{4})', filename)
