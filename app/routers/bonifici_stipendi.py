@@ -299,12 +299,8 @@ async def associa_bonifici_a_dipendenti() -> Dict[str, Any]:
     
     risultati["bonifici_analizzati"] = len(bonifici)
     
-    # Carica dipendenti da employees
+    # Carica dipendenti da employees (collezione principale)
     dipendenti = await db.employees.find({}, {"_id": 0}).to_list(1000)
-    
-    # Se vuota, carica da anagrafica_dipendenti
-    if not dipendenti:
-        dipendenti = await db.anagrafica_dipendenti.find({}, {"_id": 0}).to_list(1000)
     
     # Crea indice dipendenti per nome normalizzato
     dip_idx = {}
