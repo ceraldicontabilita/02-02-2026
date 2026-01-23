@@ -44,7 +44,7 @@ PAYMENT_TERMS = [
 ]
 
 
-@router.get("/list")
+@router.get("")
 async def list_suppliers(
     skip: int = Query(0, ge=0),
     limit: int = Query(500, ge=1, le=1000),
