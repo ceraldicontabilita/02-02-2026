@@ -329,10 +329,16 @@ GET  /api/liquidazione-iva/export/pdf/{anno}/{mese}
    - File monolitico di 2346 righe suddiviso in 7 file modulari (2013 righe totali, -14%)
    - Struttura: `base.py`, `bulk.py`, `common.py`, `iban.py`, `import_export.py`, `validation.py`
    - Tutti gli endpoint funzionanti e testati
-2. **Pulizia inconsistenze cedolini** - campi `netto` vs `netto_mese`
+2. ✅ **COMPLETATO (23/01/2026)**: Pulizia inconsistenze cedolini
+   - Migrato campo `netto_mese` → `netto` nella collezione `payslips` (170 documenti)
+   - Collezione `cedolini` già standardizzata
 3. ✅ **RISOLTO (23/01/2026)**: Report PDF annuale ferie/permessi per TUTTI i dipendenti
-4. Test automatici con pytest
-5. Refactoring `prima_nota_automatica.py` (100KB)
+4. ✅ **COMPLETATO (23/01/2026)**: Refactoring `prima_nota.py` → modulo `prima_nota_module/`
+   - File monolitico di 2843 righe suddiviso in 8 file modulari (1971 righe totali, -30.7%)
+   - Struttura: `common.py`, `cassa.py`, `banca.py`, `salari.py`, `stats.py`, `sync.py`, `manutenzione.py`
+   - Rimossi endpoint duplicati, codice riorganizzato per funzionalità
+   - Tutti gli endpoint funzionanti e testati
+5. Test automatici con pytest
 
 ### 7.3 🟠 P2 - Bassa Priorità
 5. UI Feedback Loop per correzione classificazioni automatiche
