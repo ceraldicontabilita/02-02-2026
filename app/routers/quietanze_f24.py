@@ -307,7 +307,7 @@ async def get_quietanza_f24(f24_id: str) -> Dict[str, Any]:
     """Dettaglio completo di una quietanza F24."""
     db = Database.get_db()
     
-    quietanza = await db["quietanze_f24"].find_one({"id": f24_id}, {"_id": 0})
+    quietanza = await db["quietanze_f24"].find_one({"id": f24_id}, {"_id": 0, "pdf_data": 0, "pdf_base64": 0})
     if not quietanza:
         raise HTTPException(status_code=404, detail="Quietanza non trovata")
     
@@ -315,6 +315,58 @@ async def get_quietanza_f24(f24_id: str) -> Dict[str, Any]:
     quietanza["summary"] = generate_f24_summary(quietanza)
     
     return quietanza
+
+
+@router.get("/{f24_id}/pdf")
+async def get_quietanza_pdf(f24_id: str):
+    """Recupera il PDF di una quietanza F24."""
+    from fastapi.responses import Response
+    import base64
+    
+    db = Database.get_db()
+    
+    quietanza = await db["quietanze_f24"].find_one(
+        {"id": f24_id}, 
+        {"pdf_data": 1, "pdf_base64": 1, "file_path": 1, "file_name": 1}
+    )
+    
+    if not quietanza:
+        raise HTTPException(status_code=404, detail="Quietanza non trovata")
+    
+    pdf_data = quietanza.get("pdf_data") or quietanza.get("pdf_base64")
+    filename = quietanza.get("file_name", f"quietanza_{f24_id}.pdf")
+    
+    # Fallback: leggi da file se esiste
+    if not pdf_data:
+        file_path = quietanza.get("file_path")
+        if file_path and os.path.exists(file_path):
+            with open(file_path, "rb") as f:
+                pdf_bytes = f.read()
+            # Salva nel database per le prossime volte
+            pdf_base64 = base64.b64encode(pdf_bytes).decode('utf-8')
+            await db["quietanze_f24"].update_one(
+                {"id": f24_id},
+                {"$set": {"pdf_data": pdf_base64, "pdf_base64": pdf_base64}}
+            )
+        else:
+            # Cerca in quietanze_email_attachments
+            attachment = await db["quietanze_email_attachments"].find_one(
+                {"associato": False},
+                {"pdf_data": 1, "filename": 1}
+            )
+            if attachment and attachment.get("pdf_data"):
+                pdf_bytes = base64.b64decode(attachment["pdf_data"])
+                filename = attachment.get("filename", filename)
+            else:
+                raise HTTPException(status_code=404, detail="PDF non disponibile")
+    else:
+        pdf_bytes = base64.b64decode(pdf_data)
+    
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'inline; filename="{filename}"'}
+    )
 
 
 @router.delete("/{f24_id}")
