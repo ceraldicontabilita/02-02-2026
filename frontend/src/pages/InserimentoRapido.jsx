@@ -335,7 +335,7 @@ export default function InserimentoRapido() {
     }
     setLoading(true);
     try {
-      await api.post('/api/dipendenti/acconto', {
+      await api.post('/api/rapido/acconto-dipendente', {
         dipendente_id: formData.dipendente_id,
         importo: parseFloat(formData.importo),
         data: formData.data || new Date().toISOString().split('T')[0],
