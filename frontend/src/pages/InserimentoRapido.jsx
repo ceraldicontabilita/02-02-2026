@@ -262,6 +262,10 @@ export default function InserimentoRapido() {
   const showMessage = (text, type = 'success') => {
     setMessage({ text, type });
     setTimeout(() => setMessage(null), 3000);
+    // Ricarica ultimi inserimenti dopo salvataggio
+    if (type === 'success') {
+      setTimeout(() => loadUltimiInserimenti(), 500);
+    }
   };
 
   const resetForm = () => {
