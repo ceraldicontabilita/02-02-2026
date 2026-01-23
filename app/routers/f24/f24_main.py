@@ -234,7 +234,6 @@ async def upload_f24_multiple(
                 "file_hash": file_hash,
                 "file_size": len(pdf_content),
                 "status": "pending",
-                "user_id": current_user.get("user_id"),
                 "created_at": datetime.now(timezone.utc).isoformat()
             }
             
