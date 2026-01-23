@@ -307,22 +307,39 @@ async def generate_contract(employee_id: str, data: Dict[str, Any] = Body(...)) 
 
 @router.get("/download/{contract_id}")
 async def download_contract(contract_id: str):
-    """Download a generated contract."""
+    """
+    Download a generated contract.
+    Architettura MongoDB-first: priorità a file_data da MongoDB.
+    """
+    import base64
+    from fastapi.responses import Response
+    
     db = Database.get_db()
     contract = await db["employee_contracts"].find_one({"id": contract_id}, {"_id": 0})
     
     if not contract:
         raise HTTPException(status_code=404, detail="Contratto non trovato")
     
-    filepath = contract.get("filepath")
-    if not filepath or not os.path.exists(filepath):
-        raise HTTPException(status_code=404, detail="File contratto non trovato")
+    # Priorità: file_data da MongoDB (architettura MongoDB-first)
+    file_data = contract.get("file_data")
+    if file_data:
+        content = base64.b64decode(file_data)
+        return Response(
+            content=content,
+            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            headers={"Content-Disposition": f'attachment; filename="{contract.get("filename", "contratto.docx")}"'}
+        )
     
-    return FileResponse(
-        filepath,
-        filename=contract.get("filename"),
-        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-    )
+    # Fallback per contratti legacy con solo filepath
+    filepath = contract.get("filepath")
+    if filepath and os.path.exists(filepath):
+        return FileResponse(
+            filepath,
+            filename=contract.get("filename"),
+            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        )
+    
+    raise HTTPException(status_code=404, detail="File contratto non trovato")
 
 
 @router.get("/employee/{employee_id}")
