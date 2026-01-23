@@ -132,7 +132,6 @@ async def upload_f24_zip(
                 "file_size": len(pdf_content),
                 "status": "pending",  # pending, processed, error
                 "imported_from_zip": file.filename,
-                "user_id": current_user.get("user_id"),
                 "created_at": datetime.now(timezone.utc).isoformat()
             }
             
