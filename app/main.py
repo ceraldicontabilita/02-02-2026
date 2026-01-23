@@ -180,6 +180,7 @@ from app.routers import documenti_intelligenti  # Sistema classificazione email 
 from app.routers import document_ai  # Document AI - Estrazione dati con OCR + LLM
 from app.routers import email_reconciliation  # Riconciliazione Email ↔ Gestionale
 from app.routers import email_scanner  # Scanner Email Completo - Tutta la posta
+from app.routers import email_download  # Download Completo Email con Salvataggio DB
 from app.routers import codici_tributari  # Gestione Codici Tributari F24 - Riconciliazione 3 vie
 from app.routers import learning_machine  # Learning Machine - Classificazione documenti intelligente
 from app.routers import learning_machine_cdc  # Learning Machine CDC - Classificazione per Centro di Costo
