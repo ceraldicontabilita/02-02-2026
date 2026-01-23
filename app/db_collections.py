@@ -98,3 +98,4 @@ QUERY_ASSEGNI_PATTERN = {
 # - "movimenti_f24_banca" -> vuota, usare COLL_ESTRATTO_CONTO con QUERY_F24_PATTERN
 # - "estratto_conto" -> vecchia versione, usare COLL_ESTRATTO_CONTO (estratto_conto_movimenti)
 # - "warehouse_stocks" -> DEPRECATA, contiene dati errati, usare COLL_WAREHOUSE (warehouse_inventory)
+# - "anagrafica_dipendenti" -> DEPRECATA, tutti i dati sono in COLL_EMPLOYEES (employees)
