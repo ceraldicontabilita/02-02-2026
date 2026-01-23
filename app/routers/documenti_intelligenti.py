@@ -451,47 +451,38 @@ async def view_document_pdf(document_id: str):
     if not doc:
         raise HTTPException(status_code=404, detail="Documento non trovato")
     
-    file_path = doc.get("file_path")
+    # Architettura MongoDB-only: usa pdf_data
+    pdf_data = doc.get("pdf_data") or doc.get("file_data")
+    filename = doc.get("filename", "document.pdf")
     
-    if not file_path or not os.path.exists(file_path):
-        # Prova path alternativo
-        filename = doc.get("filename", "")
-        alt_paths = [
-            f"/app/uploads/email_attachments/{filename}",
-            f"/app/uploads/documents/{filename}",
-            f"/tmp/email_attachments/{filename}"
-        ]
+    if pdf_data:
+        import base64
+        content = base64.b64decode(pdf_data)
         
-        for alt in alt_paths:
-            if os.path.exists(alt):
-                file_path = alt
-                break
+        # Determina content type
+        if filename.lower().endswith('.pdf'):
+            media_type = "application/pdf"
+        elif filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+            media_type = "image/png" if filename.lower().endswith('.png') else "image/jpeg"
+        elif filename.lower().endswith('.xml'):
+            media_type = "application/xml"
+        else:
+            media_type = "application/octet-stream"
+        
+        return Response(
+            content=content,
+            media_type=media_type,
+            headers={"Content-Disposition": f'inline; filename="{filename}"'}
+        )
     
-    if not file_path or not os.path.exists(file_path):
-        raise HTTPException(status_code=404, detail=f"File non trovato: {doc.get('filename', 'N/D')}")
-    
-    # Determina content type
-    filename = os.path.basename(file_path)
-    if filename.lower().endswith('.pdf'):
-        media_type = "application/pdf"
-    elif filename.lower().endswith(('.png', '.jpg', '.jpeg')):
-        media_type = "image/png" if filename.lower().endswith('.png') else "image/jpeg"
-    elif filename.lower().endswith('.xml'):
-        media_type = "application/xml"
-    else:
-        media_type = "application/octet-stream"
-    
-    return FileResponse(
-        file_path,
-        media_type=media_type,
-        filename=filename
-    )
+    raise HTTPException(status_code=404, detail=f"File non disponibile in MongoDB: {filename}")
 
 
 @router.get("/download/{document_id}")
 async def download_document(document_id: str):
     """
     Scarica un documento classificato.
+    Architettura MongoDB-only: usa pdf_data.
     """
     db = Database.get_db()
     
@@ -504,16 +495,18 @@ async def download_document(document_id: str):
     if not doc:
         raise HTTPException(status_code=404, detail="Documento non trovato")
     
-    file_path = doc.get("file_path")
+    pdf_data = doc.get("pdf_data") or doc.get("file_data")
     filename = doc.get("filename", "document")
     
-    if not file_path or not os.path.exists(file_path):
-        raise HTTPException(status_code=404, detail="File non trovato")
+    if not pdf_data:
+        raise HTTPException(status_code=404, detail="File non disponibile in MongoDB")
     
-    return FileResponse(
-        file_path,
+    import base64
+    content = base64.b64decode(pdf_data)
+    
+    return Response(
+        content=content,
         media_type="application/octet-stream",
-        filename=filename,
-        headers={"Content-Disposition": f"attachment; filename={filename}"}
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'}
     )
 
