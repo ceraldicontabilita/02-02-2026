@@ -27,11 +27,12 @@ COLL_QUIETANZE_F24 = "quietanze_f24"  # Quietanze di pagamento (303 docs)
 COLL_F24_ALERTS = "f24_riconciliazione_alerts"
 
 # Dipendenti e Cedolini
-COLL_EMPLOYEES = "employees"
-COLL_ANAGRAFICA_DIPENDENTI = "anagrafica_dipendenti"
-COLL_CEDOLINI = "cedolini"
-COLL_BONIFICI_STIPENDI = "bonifici_stipendi"
-COLL_GIUSTIFICATIVI = "giustificativi"
+# NOTA: employees è la collezione UNICA per i dipendenti
+# anagrafica_dipendenti è DEPRECATA (tutti i dati sono già in employees)
+COLL_EMPLOYEES = "employees"  # Collezione principale dipendenti (34 dipendenti)
+COLL_CEDOLINI = "cedolini"  # Buste paga (1873 cedolini)
+COLL_BONIFICI_STIPENDI = "bonifici_stipendi"  # Bonifici stipendi (736 bonifici)
+COLL_GIUSTIFICATIVI = "giustificativi"  # Permessi/ferie (25 giustificativi)
 
 # Magazzino
 # NOTA: warehouse_inventory è la collezione UNICA per i prodotti
