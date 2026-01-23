@@ -798,12 +798,12 @@ async def smart_auto_associate_v2(db: AsyncIOMotorDatabase) -> Dict[str, Any]:
                 
                 pdf_base64 = base64.b64encode(pdf_content).decode('utf-8')
                 
+                # Architettura MongoDB-only: usa pdf_data già presente
                 await db["f24_commercialista"].update_one(
                     {"id": f24["id"]},
                     {"$set": {
-                        "pdf_data": pdf_base64,
-                        "pdf_hash": calculate_pdf_hash(pdf_content),
-                        "pdf_filepath": filepath
+                        "pdf_data": pdf_data,  # MongoDB-only
+                        "pdf_hash": calculate_pdf_hash(base64.b64decode(pdf_data)) if pdf_data else None
                     }}
                 )
                 
@@ -824,16 +824,17 @@ async def smart_auto_associate_v2(db: AsyncIOMotorDatabase) -> Dict[str, Any]:
             logger.error(f"Errore associazione F24: {e}")
             stats["errors"].append(f"F24 {doc.get('id')}: {str(e)}")
     
-    # 2b. Processa Fatture da documents_inbox
+    # 2b. Processa Fatture da documents_inbox (MongoDB-only)
     cursor = db["documents_inbox"].find({
         "category": "fattura",
-        "status": {"$ne": "associato"}
+        "status": {"$ne": "associato"},
+        "pdf_data": {"$exists": True, "$nin": [None, ""]}
     })
     
     async for doc in cursor:
         try:
             filename = doc.get("filename", "")
-            filepath = doc.get("filepath", "")
+            pdf_data = doc.get("pdf_data", "")
             email_subject = doc.get("email_subject", "")
             
             # Estrai numero fattura dal filename o subject
@@ -847,7 +848,7 @@ async def smart_auto_associate_v2(db: AsyncIOMotorDatabase) -> Dict[str, Any]:
                     "invoice_number": {"$regex": num, "$options": "i"}
                 })
             
-            if invoice and filepath and os.path.exists(filepath):
+            if invoice and pdf_data:
                 with open(filepath, "rb") as f:
                     pdf_content = f.read()
                 
