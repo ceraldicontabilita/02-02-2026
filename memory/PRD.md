@@ -1,6 +1,6 @@
 # PRD – TechRecon Accounting System
 ## Product Requirements Document
-### Ultimo aggiornamento: 23 Gennaio 2026 (Sessione 15)
+### Ultimo aggiornamento: 23 Gennaio 2026 (Sessione 16 - Refactoring prima_nota)
 
 ---
 
