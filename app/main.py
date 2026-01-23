@@ -197,11 +197,14 @@ app.include_router(parlant_api.router, prefix="/api/parlant", tags=["Parlant AI"
 # --- F24 Module ---
 app.include_router(f24_main.router, prefix="/api/f24", tags=["F24"])
 app.include_router(f24_riconciliazione.router, prefix="/api/f24-riconciliazione", tags=["F24 Riconciliazione"])
-app.include_router(f24_tributi.router, prefix="/api/f24", tags=["F24 Tributi"])
+# DISABILITATO: f24_tributi - endpoint duplicati con f24_main
+# app.include_router(f24_tributi.router, prefix="/api/f24", tags=["F24 Tributi"])
 app.include_router(f24_public.router, prefix="/api/f24-public", tags=["F24 Public"])
 app.include_router(quietanze.router, prefix="/api/quietanze-f24", tags=["Quietanze F24"])
-app.include_router(email_f24.router, prefix="/api/email-f24", tags=["Email F24"])
-app.include_router(f24_gestione_avanzata.router, prefix="/api/f24-avanzato", tags=["F24 Gestione Avanzata"])
+# DISABILITATO: email_f24 - non usato dal frontend
+# app.include_router(email_f24.router, prefix="/api/email-f24", tags=["Email F24"])
+# DISABILITATO: f24_gestione_avanzata - non usato dal frontend
+# app.include_router(f24_gestione_avanzata.router, prefix="/api/f24-avanzato", tags=["F24 Gestione Avanzata"])
 app.include_router(codici_tributari.router, prefix="/api/codici-tributari", tags=["Codici Tributari"])
 
 # --- Accounting Module ---
