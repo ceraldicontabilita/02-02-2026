@@ -370,34 +370,25 @@ async def get_documento(doc_id: str) -> Dict[str, Any]:
 
 @router.get("/documento/{doc_id}/download")
 async def download_documento(doc_id: str):
-    """Scarica il file del documento."""
+    """Scarica il file del documento da MongoDB (architettura MongoDB-only)."""
     db = Database.get_db()
     
     doc = await db["documents_inbox"].find_one({"id": doc_id}, {"_id": 0})
     if not doc:
         raise HTTPException(status_code=404, detail="Documento non trovato")
     
-    # Prima prova pdf_data (MongoDB), poi filepath come fallback
+    # Architettura MongoDB-only: usa solo pdf_data
     pdf_data = doc.get("pdf_data")
-    if pdf_data:
-        import base64
-        content = base64.b64decode(pdf_data)
-        return Response(
-            content=content,
-            media_type="application/pdf",
-            headers={"Content-Disposition": f'attachment; filename="{doc.get("filename", "documento.pdf")}"'}
-        )
+    if not pdf_data:
+        raise HTTPException(status_code=404, detail="PDF non disponibile in MongoDB. Eseguire migrazione dati.")
     
-    # Fallback per vecchi documenti con filepath
-    filepath = doc.get("filepath")
-    if filepath and os.path.exists(filepath):
-        return FileResponse(
-            path=filepath,
-            filename=doc.get("filename", "documento"),
-            media_type="application/octet-stream"
-        )
-    
-    raise HTTPException(status_code=404, detail="PDF non disponibile")
+    import base64
+    content = base64.b64decode(pdf_data)
+    return Response(
+        content=content,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{doc.get("filename", "documento.pdf")}"'}
+    )
 
 
 @router.post("/documento/{doc_id}/processa")
@@ -407,6 +398,7 @@ async def processa_documento(
 ) -> Dict[str, Any]:
     """
     Processa un documento e lo carica nella sezione appropriata.
+    Architettura MongoDB-only: usa solo pdf_data da MongoDB.
     """
     db = Database.get_db()
     
@@ -414,17 +406,10 @@ async def processa_documento(
     if not doc:
         raise HTTPException(status_code=404, detail="Documento non trovato")
     
-    # Usa pdf_data da MongoDB
+    # Architettura MongoDB-only: usa solo pdf_data
     pdf_data = doc.get("pdf_data")
     if not pdf_data:
-        # Fallback filepath
-        filepath = doc.get("filepath")
-        if filepath and os.path.exists(filepath):
-            with open(filepath, 'rb') as f:
-                import base64
-                pdf_data = base64.b64encode(f.read()).decode('utf-8')
-        else:
-            raise HTTPException(status_code=404, detail="PDF non disponibile")
+        raise HTTPException(status_code=404, detail="PDF non disponibile in MongoDB. Eseguire migrazione dati.")
     
     # Mappa destinazioni agli endpoint
     destination_map = {
@@ -452,7 +437,7 @@ async def processa_documento(
     return {
         "success": True,
         "message": f"Documento pronto per caricamento in {destinazione}",
-        "filepath": filepath,
+        "pdf_data_available": True,
         "destinazione": destinazione,
         "nota": "Usa l'endpoint di upload specifico per completare il caricamento"
     }
@@ -463,7 +448,10 @@ async def cambia_categoria_documento(
     doc_id: str,
     nuova_categoria: str = Query(..., description="Nuova categoria")
 ) -> Dict[str, Any]:
-    """Cambia la categoria di un documento."""
+    """
+    Cambia la categoria di un documento.
+    Architettura MongoDB-only: aggiorna solo i metadati nel database.
+    """
     db = Database.get_db()
     
     if nuova_categoria not in CATEGORIES:
@@ -473,22 +461,12 @@ async def cambia_categoria_documento(
     if not doc:
         raise HTTPException(status_code=404, detail="Documento non trovato")
     
-    old_filepath = doc.get("filepath")
-    if old_filepath and os.path.exists(old_filepath):
-        # Sposta file nella nuova cartella
-        new_dir = DOCUMENTS_DIR / CATEGORIES[nuova_categoria]
-        new_filepath = new_dir / Path(old_filepath).name
-        shutil.move(old_filepath, new_filepath)
-        filepath_update = str(new_filepath)
-    else:
-        filepath_update = doc.get("filepath")
-    
+    # Architettura MongoDB-only: aggiorna solo metadati, nessuna operazione su filesystem
     await db["documents_inbox"].update_one(
         {"id": doc_id},
         {"$set": {
             "category": nuova_categoria,
             "category_label": CATEGORIES[nuova_categoria],
-            "filepath": filepath_update,
             "updated_at": datetime.now(timezone.utc).isoformat()
         }}
     )
@@ -502,22 +480,17 @@ async def cambia_categoria_documento(
 
 @router.delete("/documento/{doc_id}")
 async def elimina_documento(doc_id: str) -> Dict[str, Any]:
-    """Elimina un documento."""
+    """
+    Elimina un documento.
+    Architettura MongoDB-only: elimina solo dal database.
+    """
     db = Database.get_db()
     
     doc = await db["documents_inbox"].find_one({"id": doc_id}, {"_id": 0})
     if not doc:
         raise HTTPException(status_code=404, detail="Documento non trovato")
     
-    # Elimina file da disco
-    filepath = doc.get("filepath")
-    if filepath and os.path.exists(filepath):
-        try:
-            os.remove(filepath)
-        except Exception as e:
-            logger.error(f"Errore eliminazione file: {e}")
-    
-    # Elimina da database
+    # Architettura MongoDB-only: elimina solo dal database
     await db["documents_inbox"].delete_one({"id": doc_id})
     
     return {"success": True, "deleted": doc_id}
