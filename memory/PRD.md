@@ -341,7 +341,11 @@ GET  /api/liquidazione-iva/export/pdf/{anno}/{mese}
    - File monolitico di 2469 righe suddiviso in 6 file modulari (1275 righe totali, **-48.4%**)
    - Struttura: `common.py`, `helpers.py`, `import_xml.py`, `crud.py`, `pagamento.py`
    - File deprecated eliminato
-6. Test automatici con pytest
+6. ✅ **COMPLETATO (23/01/2026)**: Test automatici con pytest
+   - Creata suite di 47 test per i moduli refactorizzati
+   - Test files: `test_prima_nota.py`, `test_fatture_ricevute.py`, `test_suppliers_dipendenti.py`, `test_core.py`
+   - Coverage: Prima Nota (13 test), Fatture Ricevute (14 test), Suppliers/Dipendenti (11 test), Core (9 test)
+   - Tutti i test passano
 7. **CANDIDATI FUTURI REFACTORING** (file >2000 righe):
    - `archivio_bonifici.py` (2438 righe)
    - `operazioni_da_confermare.py` (2378 righe)
