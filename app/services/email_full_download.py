@@ -791,13 +791,7 @@ async def smart_auto_associate_v2(db: AsyncIOMotorDatabase) -> Dict[str, Any]:
             
             f24 = await db["f24_commercialista"].find_one(query)
             
-            if f24 and filepath and os.path.exists(filepath):
-                # Leggi PDF e associa
-                with open(filepath, "rb") as f:
-                    pdf_content = f.read()
-                
-                pdf_base64 = base64.b64encode(pdf_content).decode('utf-8')
-                
+            if f24 and pdf_data:
                 # Architettura MongoDB-only: usa pdf_data già presente
                 await db["f24_commercialista"].update_one(
                     {"id": f24["id"]},
