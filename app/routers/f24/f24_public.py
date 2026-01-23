@@ -461,7 +461,7 @@ async def delete_f24_model(f24_id: str) -> Dict[str, str]:
         {"$set": {"status": "eliminato", "eliminato_at": datetime.utcnow().isoformat()}}
     )
     
-    if result.deleted_count == 0:
+    if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="F24 non trovato")
     
     return {"message": "F24 eliminato", "id": f24_id}
