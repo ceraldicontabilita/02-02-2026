@@ -25,24 +25,24 @@ async def upload_quietanza_f24(
     """
     Upload e parsing di una quietanza F24 PDF.
     Estrae automaticamente tutti i dati e li salva nel database.
+    Architettura MongoDB-only: salva PDF come Base64.
     """
     if not file.filename.lower().endswith('.pdf'):
         raise HTTPException(status_code=400, detail="Il file deve essere un PDF")
     
-    # Salva il file
+    # Architettura MongoDB-only: leggi e codifica in Base64
     file_id = str(uuid.uuid4())
-    file_path = os.path.join(UPLOAD_DIR, f"{file_id}_{file.filename}")
     
     try:
-        with open(file_path, "wb") as buffer:
-            content = await file.read()
-            buffer.write(content)
+        content = await file.read()
+        import base64
+        pdf_base64 = base64.b64encode(content).decode('utf-8')
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Errore salvataggio file: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Errore lettura file: {str(e)}")
     
-    # Parsing del PDF
+    # Parsing del PDF con bytes
     try:
-        parsed_data = parse_quietanza_f24(file_path)
+        parsed_data = parse_quietanza_f24(pdf_content=content)
     except Exception as e:
         logger.error(f"Errore parsing F24: {e}")
         raise HTTPException(status_code=500, detail=f"Errore parsing PDF: {str(e)}")
@@ -67,12 +67,12 @@ async def upload_quietanza_f24(
             "data_pagamento": existing.get("dati_generali", {}).get("data_pagamento")
         }
     
-    # Salva nel database
+    # Salva nel database con pdf_data (architettura MongoDB-only)
     documento = {
         "id": file_id,
         "f24_key": f24_key,
         "file_name": file.filename,
-        "file_path": file_path,
+        "pdf_data": pdf_base64,  # Architettura MongoDB-only
         "dati_generali": parsed_data.get("dati_generali", {}),
         "sezione_erario": parsed_data.get("sezione_erario", []),
         "sezione_inps": parsed_data.get("sezione_inps", []),
