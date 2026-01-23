@@ -198,22 +198,29 @@ async def get_documento(doc_id: str) -> Dict[str, Any]:
     return doc
 
 
-async def download_documento(doc_id: str) -> FileResponse:
-    """Download file documento."""
+async def download_documento(doc_id: str):
+    """
+    Download file documento da MongoDB (architettura MongoDB-only).
+    Restituisce il contenuto PDF decodificato da Base64.
+    """
+    from fastapi.responses import Response
+    import base64
+    
     db = Database.get_db()
     
     doc = await db[COL_DOCUMENTS].find_one({"id": doc_id})
     if not doc:
         raise HTTPException(status_code=404, detail="Documento non trovato")
     
-    filepath = doc.get("filepath")
-    if not filepath or not os.path.exists(filepath):
-        raise HTTPException(status_code=404, detail="File non trovato sul disco")
+    pdf_data = doc.get("pdf_data")
+    if not pdf_data:
+        raise HTTPException(status_code=404, detail="PDF non disponibile in MongoDB")
     
-    return FileResponse(
-        filepath,
-        filename=doc.get("filename", "documento"),
-        media_type="application/octet-stream"
+    content = base64.b64decode(pdf_data)
+    return Response(
+        content=content,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{doc.get("filename", "documento.pdf")}"'}
     )
 
 
@@ -269,40 +276,30 @@ async def cambia_categoria_documento(
 
 
 async def elimina_documento(doc_id: str) -> Dict[str, Any]:
-    """Elimina un documento."""
+    """
+    Elimina un documento.
+    Architettura MongoDB-only: elimina solo dal database.
+    """
     db = Database.get_db()
     
     doc = await db[COL_DOCUMENTS].find_one({"id": doc_id})
     if not doc:
         raise HTTPException(status_code=404, detail="Documento non trovato")
     
-    filepath = doc.get("filepath")
-    if filepath and os.path.exists(filepath):
-        try:
-            os.remove(filepath)
-        except Exception as e:
-            logger.warning(f"Errore eliminazione file {filepath}: {e}")
-    
+    # Architettura MongoDB-only: elimina solo dal database
     await db[COL_DOCUMENTS].delete_one({"id": doc_id})
     
     return {"success": True, "deleted": doc_id}
 
 
 async def elimina_documenti_processati() -> Dict[str, Any]:
-    """Elimina tutti i documenti processati."""
+    """
+    Elimina tutti i documenti processati.
+    Architettura MongoDB-only: elimina solo dal database.
+    """
     db = Database.get_db()
     
-    docs = await db[COL_DOCUMENTS].find({"status": "processed"}, {"filepath": 1}).to_list(10000)
-    
-    files_deleted = 0
-    for doc in docs:
-        filepath = doc.get("filepath")
-        if filepath and os.path.exists(filepath):
-            try:
-                os.remove(filepath)
-                files_deleted += 1
-            except Exception:
-                pass
+    count_before = await db[COL_DOCUMENTS].count_documents({"status": "processed"})
     
     result = await db[COL_DOCUMENTS].delete_many({"status": "processed"})
     
