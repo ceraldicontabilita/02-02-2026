@@ -326,8 +326,8 @@ export default function InserimentoRapido() {
       const id = fattura.id || fattura._id;
       const importo = fattura.total_amount || fattura.importo || 0;
       
-      // Usa l'endpoint payment che registra il pagamento
-      await api.post(`/api/invoices/${id}/payment?amount=${importo}&payment_method=${metodo}`);
+      // Usa l'endpoint rapido
+      await api.post(`/api/rapido/paga-fattura?invoice_id=${id}&metodo_pagamento=${metodo}&importo=${importo}`);
       
       showMessage(`Fattura pagata in ${metodo}!`);
       setFatture(prev => prev.filter(f => (f.id || f._id) !== id));
