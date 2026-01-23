@@ -292,6 +292,7 @@ const router = createBrowserRouter([
       { path: "verifica-coerenza", element: <LazyPage><VerificaCoerenza /></LazyPage> },
       { path: "commercialista", element: <LazyPage><Commercialista /></LazyPage> },
       { path: "pianificazione", element: <LazyPage><Pianificazione /></LazyPage> },
+      { path: "email-download", element: <LazyPage><EmailDownloadManager /></LazyPage> },
       
       // === ADMIN ===
       { path: "admin", element: <LazyPage><Admin /></LazyPage> },
