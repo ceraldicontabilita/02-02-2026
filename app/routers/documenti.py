@@ -720,14 +720,8 @@ async def sync_f24_automatico(
                     await db["f24_commercialista"].insert_one(f24_data.copy())
                     
                     # Salva anche in f24_models per la visualizzazione frontend
-                    # Leggi il PDF per salvarlo base64
-                    import base64
-                    try:
-                        with open(filepath, 'rb') as pdf_file:
-                            pdf_bytes = pdf_file.read()
-                            pdf_base64 = base64.b64encode(pdf_bytes).decode('utf-8')
-                    except:
-                        pdf_base64 = None
+                    # Usa pdf_data già disponibile da MongoDB (architettura MongoDB-first)
+                    pdf_base64 = pdf_data  # Già in base64
                     
                     # Converti formato tributi per f24_models
                     tributi_erario = []
