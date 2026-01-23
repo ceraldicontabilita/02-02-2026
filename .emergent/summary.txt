@@ -1,134 +1,146 @@
-<analysis>**original_problem_statement:**
-L'utente ha richiesto la creazione di un sistema di contabilità e gestione del magazzino completamente automatizzato per la sua attività di bar/pasticceria. I requisiti principali includevano:
-1.  Aderenza rigorosa ai principi contabili italiani.
-2.  Classificazione automatica dei costi in centri di costo.
-3.  Riconciliazione automatica delle quietanze F24 con i movimenti dell'estratto conto bancario.
-4.  Gestione avanzata del magazzino.
-5.  Una Learning Machine per correggere gli errori.
+<analysis>Here is the summary of the previous session:
 
-Successivamente, l'utente ha dato istruzioni molto chiare di smettere di creare nuove funzionalità e di concentrarsi sulla **ristrutturazione, pulizia e unificazione** del vasto codebase esistente, procedendo pagina per pagina e di completare tutte le correzioni necessarie senza fermarsi per chiedere conferma.
+**original_problem_statement:**
+L'utente, frustrato dalla perdita di dati tra i fork e dalla mancanza di progressi concreti, ha ridefinito radicalmente le priorità. Le richieste principali sono:
+
+1.  **Architettura Dati Stabile (Bloccante)**: Divieto assoluto di salvare qualsiasi file o dato sul filesystem locale. Tutta la persistenza dei dati, inclusi i file PDF (come Base64), deve avvenire esclusivamente su MongoDB Atlas per garantire la continuità tra le sessioni. Questa logica deve essere applicata retroattivamente e sistematicamente a tutta l'applicazione.
+2.  **Automazione Contabile (Learning Machine)**: L'obiettivo primario dell'app è diventare un sistema di automazione contabile. Deve scaricare documenti (es. cedolini, fatture), leggerne il contenuto (parsing), estrarre i dati rilevanti e creare automaticamente le scritture contabili corrispondenti (es. in ).
+3.  **Gestione Documenti Non Associati**: Creare un'interfaccia utente per gestire i documenti che il sistema non riesce ad associare automaticamente. Questa UI deve fornire proposte intelligenti (es. anno, entità) e permettere all'utente di associare manualmente i file a record esistenti o di crearne di nuovi.
+4.  **Standardizzazione UI/UX**: Eliminare codice e pagine con la vecchia grafica. Tutte le nuove interfacce devono seguire lo stile moderno e mobile-first della pagina .
+5.  **Ottimizzazione Sync Email**: Dopo il download massivo iniziale, il sistema deve essere configurato per sincronizzare solo le email dell'ultimo giorno per rendere le operazioni future più veloci.
 
 **User's preferred language**: Italiano
 
 **what currently exists?**
-Un'applicazione full-stack complessa con backend FastAPI e frontend React. L'agente precedente ha continuato il mandato di ristrutturazione e pulizia del codice, ottenendo risultati significativi. Le collezioni del database per F24, Magazzino e Dipendenti sono state consolidate. Recentemente, il P0 bug relativo alla generazione di un report PDF è stato risolto, e il monolitico router  (93KB) è stato completamente smantellato e refattorizzato in una struttura modulare e più manutenibile.
+Un'applicazione full-stack (FastAPI + React) il cui core è stato rifattorizzato per aderire alla nuova architettura MongoDB-first.
+- **Servizio di Ingestione Email su MongoDB**: Il servizio di download email è stato modificato per salvare il contenuto dei PDF come stringhe Base64 direttamente in varie collezioni su MongoDB (, , etc.), eliminando la dipendenza dal filesystem locale.
+- **Automazione Contabile per Cedolini**: È stata implementata e affinata una funzionalità che processa i cedolini PDF scaricati, ne estrae i dati (dipendente, periodo, netto, codice fiscale) tramite parsing del testo, e crea automaticamente **152 registrazioni** nella collezione .
+- **UI per Gestione Documenti Non Associati**: È stata creata una nuova pagina () che permette all'utente di visualizzare i documenti non associati e di collegarli manualmente. L'interfaccia include un pannello di proposta intelligente che suggerisce associazioni basate sui dati estratti dal file.
+- **Standard di Design**: La grafica della nuova pagina  è stata allineata a quella di . È stato creato un file  per documentare lo stile.
+- **Sync Email Incrementale**: Il servizio di download è stato modificato per default a sincronizzare solo le email dell'ultimo giorno.
 
 **Last working item**:
--   **Last item agent was working**: L'agente stava iniziando a risolvere un'incoerenza nei dati della collezione  (buste paga), dove coesistono i campi  e  per indicare lo stipendio netto. L'obiettivo era standardizzare questi campi in uno solo. Questo compito è in linea con l'istruzione dell'utente di fare tutte le correzioni.
--   **Status**: NOT STARTED
+-   **Last item agent was working**: L'agente stava eseguendo un audit sistematico del codebase per applicare la logica MongoDB-only a tutti gli endpoint rimanenti, come richiesto esplicitamente dall'utente. Aveva identificato una lista di file critici (, , ) che ancora utilizzavano  e il filesystem locale e aveva iniziato la rifattorizzazione di .
+-   **Status**: IN PROGRESS
 -   **Agent Testing Done**: N
--   **Which testing method agent to use?**: backend testing agent. L'agente dovrebbe creare uno script di migrazione (eseguibile tramite  con ) per unificare i dati nella collezione  e poi verificare che i dati siano stati corretti e che gli endpoint che leggono i cedolini funzionino come previsto.
+-   **Which testing method agent to use?**: backend testing agent. Una volta completata la rifattorizzazione di tutti i file del backend, è necessario un test di regressione completo per assicurarsi che nessuna funzionalità sia stata interrotta.
 -   **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
--   **Issue 1: Standardizzazione Dati Cedolini (P0)**
-    -   **Description**: La collezione  contiene record con il campo  e altri con  per rappresentare lo stipendio netto. Questa incoerenza deve essere risolta per garantire l'affidabilità dei calcoli e dei report.
-    -   **Attempted fixes**: Nessuno. Il problema è stato appena identificato.
+-   **Issue 1: Audit e Refactoring Completo per Architettura MongoDB (P0)**
+    -   **Description**: Diversi file nel backend contengono ancora logiche che leggono o scrivono sul filesystem locale (), contravvenendo alla richiesta critica dell'utente. Questa è la principale causa di instabilità e perdita di dati.
+    -   **Attempted fixes**: Gli endpoint di ingestione email, upload quietanze () e una parte di  sono già stati rifattorizzati.
     -   **Next debug checklist**:
-        1.  Scrivere uno script Python per connettersi a MongoDB.
-        2.  Iterare su tutti i documenti della collezione .
-        3.  Per ogni documento, verificare se esiste il campo . In caso affermativo, rinominarlo in .
-        4.  Assicurarsi che tutti i documenti abbiano solo il campo .
-        5.  Eseguire lo script.
-        6.  Verificare che gli endpoint che utilizzano i dati dei cedolini (es. ) continuino a funzionare correttamente dopo la modifica.
-    -   **Why fix this issue and what will be achieved with the fix?**: Standardizza il modello dei dati, previene errori di calcolo futuri e semplifica la logica del codice che elabora le buste paga.
-    -   **Status**: NOT STARTED
-    -   **Is recurring issue?**: N
+        1.  Completare la rifattorizzazione di .
+        2.  Rifattorizzare  per usare  da MongoDB.
+        3.  Rifattorizzare  per generare e restituire i PDF in memoria, senza salvarli su file.
+        4.  Eseguire una ricerca globale per , ,  per identificare e correggere ogni istanza rimanente di accesso al filesystem.
+    -   **Why fix this issue and what will be achieved with the fix?**: Risolverà la richiesta più critica dell'utente, garantendo la persistenza dei dati e la stabilità dell'applicazione tra i fork.
+    -   **Status**: IN PROGRESS
+    -   **Is recurring issue?**: Y
     -   **Should Test frontend/backend/both after fix?**: backend
     -   **Blocked on other issue**: None
 
 **In progress Task List**:
--   **Task 1: Ristrutturazione Sistematica del Codice (P1)**
-    -   **Where to resume**: Dopo il successo del refactoring di , il prossimo candidato è il file più grande rimasto:  (2843 righe). L'approccio dovrebbe essere lo stesso: analizzare il file, identificare raggruppamenti logici di endpoint e suddividerlo in moduli più piccoli e gestibili.
-    -   **What will be achieved with this?**: Continua la riduzione del debito tecnico, migliora la manutenibilità e rende il sistema più coerente, seguendo la direttiva principale dell'utente.
+-   **Task 1: Completare il Refactoring Sistematico (P0)**
+    -   **Where to resume**: Continuare il refactoring del file , assicurandosi che tutti gli endpoint di lettura e scrittura di documenti operino su MongoDB. Successivamente, procedere con gli altri file identificati nella checklist dell'Issue 1.
+    -   **What will be achieved with this?**: L'intera applicazione aderirà al principio MongoDB-only, rendendola robusta e stateful.
     -   **Status**: IN PROGRESS
     -   **Should Test frontend/backend/both after fix?**: backend
     -   **Blocked on something**: None
 
 **Upcoming and Future Tasks**
 -   **Upcoming Tasks**:
-    -   **(P1) Test E2E del Feedback Loop per la Classificazione**: La logica di feedback per la classificazione dei costi è stata implementata, ma manca un test completo end-to-end che simuli l'interazione dell'utente dalla UI () per correggere una classificazione e verificare che il feedback venga salvato correttamente.
-    -   **(P2) Refactoring di Altri Router Monolitici**: Il file  (48KB) è un altro candidato per un futuro refactoring modulare.
+    -   **(P1) Migliorare Associazione Intelligente**:
+        -   **Associazione Anno F24**: La logica di associazione degli F24 non popola correttamente il campo . È necessario migliorare il parser per estrarre l'anno dal nome del file o dal contenuto.
+        -   **Estensione Learning Machine**: Estendere la logica di parsing e creazione automatica di scritture contabili anche alle fatture e agli F24, non solo ai cedolini.
+    -   **(P1) Pulizia UI e Codice**: L'utente ha chiesto di *eliminare* le vecchie pagine complesse, non solo di nasconderle. Bisogna identificare le sezioni dell'UI rese obsolete dalle nuove interfacce e rimuoverle completamente dal codice (componenti React, route, endpoint API non più usati).
 -   **Future Tasks**:
-    -   **(P2) Pulizia e Standardizzazione Dati**: Investigare la collezione  per determinare se può essere deprecata in favore della più recente .
+    -   **(P2) Riprendere il Refactoring Strutturale**: Una volta stabilizzata l'architettura dati, riprendere il task originale di suddividere i router monolitici (come ) in file più piccoli e manutenibili.
 
 **Completed work in this session**
--   **Risoluzione Bug Report PDF Dipendenti (P0)**: Corretto l'ordine delle rotte in , risolvendo il bug 404 sull'endpoint .
--   **Refactoring completo di **: Il file monolitico di 93KB e 2429 righe è stato smantellato in una directory modulare  contenente 7 file, con una riduzione del codice del 14%.
--   **Pulizia Codice **: Rimosso un endpoint duplicato () prima del refactoring.
--   **Test di Regressione**: Verificato con successo il funzionamento degli endpoint principali dei dipendenti e dei fornitori dopo le modifiche.
--   **Aggiornamento Documentazione**: Il file  è stato aggiornato per riflettere i progressi fatti.
-
-**Earlier issues found/mentioned but not fixed**
--   Il debito tecnico generale del codebase è ancora significativo. Anche se sono stati fatti grandi passi avanti, file come  richiedono ancora un massiccio lavoro di refactoring.
-
-**Known issue recurrence from previous fork**
--   Nessuna.
+-   **Architettura MongoDB-First Implementata**: Il servizio di ingestione email è stato completamente riscritto per salvare i PDF come dati Base64 su MongoDB Atlas, eliminando la scrittura su filesystem.
+-   **Migrazione Dati Esistenti**: Creato ed eseguito uno script per migrare 63 PDF esistenti dal filesystem a MongoDB.
+-   **Automazione Contabile Cedolini**: Implementata una pipeline che analizza i PDF dei cedolini, ne estrae i dati chiave e crea automaticamente **152 scritture contabili** in .
+-   **Fix Credenziali per Task in Background**: Risolto un bug critico che impediva ai task in background (es. download email) di accedere alle credenziali, garantendone l'esecuzione affidabile.
+-   **Creazione UI Gestione Documenti**: Sviluppata la pagina  per la gestione manuale dei file non associati, completa di proposte intelligenti per assistere l'utente.
+-   **Standardizzazione e Documentazione UI**: La nuova pagina è stata allineata graficamente al resto dell'app e le linee guida di design sono state salvate in .
+-   **Configurazione Sync Email Incrementale**: Il download email ora processa solo l'ultimo giorno di default, per ottimizzare le performance.
+-   **Refactoring Parziale del Codice Legacy**: Diversi endpoint (es. ) sono già stati aggiornati per non dipendere più dal filesystem.
 
 **Code Architecture**
-suppliers_module
+
 
 **Key Technical Concepts**
--   **Refactoring Sistematico**: L'approccio principale è analizzare i file monolitici, suddividerli in moduli logici per funzionalità e aggiornare l'applicazione principale per utilizzarli.
--   **Modular Router Design (FastAPI)**: Creazione di una directory per un router complesso (), con un  che aggrega le rotte definite nei vari file del modulo.
--   **Standardizzazione dei Dati**: La necessità di eseguire migrazioni di dati una tantum per risolvere incoerenze nei modelli di dati (es.  vs ).
--   **Ordine delle Rotte in FastAPI**: Le rotte statiche (es. ) devono essere definite *prima* delle rotte dinamiche (es. ) per garantire il corretto matching.
+-   **MongoDB as Primary Storage**: Architettura basata sul salvataggio di dati binari (PDF come Base64) in MongoDB per garantire la persistenza.
+-   **PDF Parsing (PyMuPDF)**: Estrazione di testo da documenti PDF per automatizzare l'inserimento dati.
+-   **Data Extraction with Regex**: Utilizzo intensivo di espressioni regolari per identificare e estrarre dati specifici (nomi, date, importi) da testo non strutturato.
+-   **Systemic Code Refactoring**: Applicazione di un cambiamento architetturale (rimozione del filesystem) in modo sistematico attraverso l'intera codebase.
 
 **key DB schema**
--   ****: Contiene i dati delle buste paga. **INCONSISTENTE**: alcuni documenti usano , altri .
--   ****: Collezione principale per i movimenti bancari.
--   ****: Collezione master per tutti i dati F24.
--   ****: Collezione master per i prodotti in magazzino.
--   ****: Collezione master per i dati dei dipendenti.
+-   ****: Collezione per i documenti scaricati in attesa di associazione manuale. Contiene il campo .
+-   ****: Collezione per i cedolini scaricati. Contiene  e  dopo l'elaborazione.
+-   ****: Collezione delle scritture contabili, ora popolata automaticamente dal servizio di parsing con un campo .
+-   ****: Collezione delle fatture, confermata come destinazione per l'importazione di file XML.
 
 **All files of reference**
--    (Prossimo candidato al refactoring)
--    (Contiene la logica che dovrà essere verificata dopo la standardizzazione dei dati)
--    (Directory contenente l'esempio di refactoring riuscito)
--    (File di riferimento per la registrazione dei router)
--    (Documento di prodotto da aggiornare)
+-    (Core per download email su MongoDB)
+-    (Core per parsing e logiche di associazione)
+-    (Nuova UI di riferimento)
+-    (Guida di stile)
+-    (File critico in fase di refactoring)
 
 **Areas that need refactoring**:
--   ****: Router monolitico di ~2800 righe, necessita urgentemente di essere suddiviso.
--   ****: Altro file di grandi dimensioni candidato a futuri refactoring.
--   **Modello Dati **: Deve essere standardizzato per utilizzare un solo campo per lo stipendio netto.
+-   
+-   
+-   
+-   Qualsiasi altro file che contenga riferimenti a  o operazioni di scrittura su disco.
 
 **key api endpoints**
--   : **(FIXED)** Endpoint per il report PDF di tutti i dipendenti.
--   : **(REFACTORED)** Endpoint principale per la lista dei fornitori.
--   : **(REFACTORED)** Uno dei tanti endpoint spostati nel nuovo modulo.
--   : Endpoint che mostra i dati delle buste paga, da verificare dopo la standardizzazione.
+-   : Avvia la sincronizzazione delle email.
+-   : Restituisce la lista dei documenti da associare.
+-   : Esegue l'associazione manuale di un documento.
+-   : Avvia l'elaborazione dei cedolini per la creazione automatica delle scritture contabili.
 
 **Critical Info for New Agent**
--   **La direttiva utente è cambiata**: Non fermarti per chiedere conferma. Procedi con tutte le correzioni e i refactoring necessari (Completa tutto senza fermarti e chiedere fai tutte le correzioni). Non implementare nuove pagine statistiche o dashboard.
--   **Priorità**: Prima risolvi le incoerenze dei dati (Issue P0: Cedolini), poi continua con il refactoring dei file monolitici (Task P1: ).
--   **Segui il pattern di refactoring**: Usa l'approccio applicato con successo a  come modello per i futuri refactoring.
+-   **Priorità Assoluta: MongoDB Atlas per TUTTO**. Non salvare mai nulla sul filesystem locale. È il requisito fondamentale dell'utente per garantire la persistenza dei dati. Applica questa regola a tutto il codice, sia nuovo che esistente.
+-   **L'Obiettivo è l'Automazione (Learning Machine)**: Il valore principale dell'app per l'utente è la sua capacità di automatizzare la contabilità. Il lavoro fatto sui cedolini è il modello da replicare per fatture, F24 e altri documenti.
+-   **Segui le Linee Guida di Design**: Tutte le nuove pagine frontend devono aderire allo stile di , documentato in . Il vecchio stile grafico è deprecato.
+-   **Approccio Sistematico**: L'utente si aspetta che le correzioni e le nuove logiche siano applicate in modo coerente a tutta l'applicazione. Esegui audit e ricerche globali per garantire uniformità.
+-   **L'utente è frustrato ma ha dato una direzione chiara**: Segui le ultime istruzioni con precisione. La priorità è completare il refactoring architetturale e potenziare le capacità di automazione.
 
 **documents and test reports created in this job**
--    (diversi file)
--    (aggiornato)
+-   
+-   
+-   
+-    (creato ma poi superato da altre logiche)
+-    (creato ma poi superato da altre logiche)
 
 **Last 10 User Messages and any pending HUMAN messages**
--   : Completa tutto senza fermarti e chiedere fai tutte le correzioni non implementare pagine statistiche e dashboard - **Istruzione critica che definisce il nuovo modo operativo: procedere autonomamente con le correzioni e il refactoring.** (IN PROGRESS)
--   : Procedi - Approvazione a continuare con il refactoring di . (COMPLETED)
--   : Continua - Approvazione a iniziare il lavoro dopo la pianificazione iniziale. (COMPLETED)
+-   : Procedi - Approvazione per continuare con il refactoring sistematico.
+-   : **Richiesta chiave:** Applica la logica MongoDB a TUTTO il resto dell'app, imposta il sync email a 1 giorno, e rifai la grafica della pagina Documenti non associati usando lo stile nuovo, registrandolo da qualche parte.
+-   : Riepilogo di conferma per l'utente, mostrando la nuova pagina e le funzionalità di associazione intelligente.
+-   : Chiede conferma che l'associazione intelligente funzioni per anno e per tutti i tipi di documento (F24, cartelle) e che l'upload di XML segua la stessa logica di salvataggio su MongoDB. Fornisce specifiche dettagliate per la UI di associazione manuale.
+-   : Riepilogo finale del lavoro svolto.
+-   : **Punto di svolta:** Esprime grande frustrazione. Vieta esplicitamente l'uso del filesystem e ordina che tutto venga salvato su MongoDB Atlas. Definisce l'obiettivo dell'app: essere una learning machine che automatizza la contabilità partendo dai PDF.
+-   : L'agente chiede scusa e chiede chiarimenti.
+-   : Critica il lavoro fatto, la spesa, e la mancanza di risultati concreti. Ordina di eliminare le pagine complesse e di riorganizzare la UI in modo logico. Ribadisce il problema della perdita di dati tra i fork.
 
 **Project Health Check:**
--   **Broken**: Nessuna funzionalità critica è interrotta.
+-   **Broken**: Diverse parti dell'applicazione (es. in ) si basano ancora sull'accesso al filesystem locale, un'architettura che l'utente ha esplicitamente vietato e che causa la perdita di dati.
 -   **Mocked**: Nessuno.
--   **Known Issues**: Incoerenza dei dati nella collezione  ( vs ), che richiede una migrazione dei dati.
 
 **3rd Party Integrations**
--   **reportlab**: Utilizzata per la generazione di file PDF.
+-   Nessuna.
 
 **Testing status**
 -   **Testing agent used after significant changes**: NO
 -   **Troubleshoot agent used after agent stuck in loop**: NO
--   **Test files created**: []
--   **Known regressions**: None. I test  manuali dopo il bug fix e il refactoring hanno avuto successo.
+-   **Test files created**: Nessuno
+-   **Known regressions**: Nessuna nota, ma il refactoring in corso è ad alto rischio di regressione se non testato a fondo.
 
 **Credentials to test flow:**
-Le credenziali per MongoDB si trovano in .
+Le credenziali per MongoDB e Gmail si trovano nei file  del backend.
 
 **What agent forgot to execute**
-Niente. L'agente ha seguito le istruzioni dell'utente, ha corretto il bug P0, ha completato con successo un complesso task di refactoring e stava per affrontare il successivo problema logico (l'incoerenza dei dati) quando la sessione si è conclusa.</analysis>
+L'agente non ha dimenticato compiti, ma ha dovuto correggere la propria rotta più volte in base al feedback sempre più specifico e frustrato dell'utente. Il compito principale dimenticato inizialmente era il requisito fondamentale di non usare il filesystem, che è ora il focus principale del lavoro.</analysis>
