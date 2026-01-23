@@ -315,13 +315,21 @@ async def riconcilia_stipendio_automatico(
         return False
 
 
-async def processa_tutti_cedolini_pdf(db, filepath: str, filename: str) -> Dict[str, Any]:
+async def processa_tutti_cedolini_pdf(db, pdf_data: str, filename: str) -> Dict[str, Any]:
     """
     Processa un file PDF di cedolini con flusso completo.
     Gestisce PDF multi-pagina con più dipendenti.
     
+    Architettura MongoDB-only: accetta pdf_data in Base64.
     Usa Document AI come prima scelta (più accurato), con fallback al parser regex.
+    
+    Args:
+        db: Database MongoDB
+        pdf_data: Contenuto PDF in Base64
+        filename: Nome del file PDF
     """
+    import base64
+    
     results = {
         "success": True,
         "cedolini_processati": 0,
@@ -332,15 +340,19 @@ async def processa_tutti_cedolini_pdf(db, filepath: str, filename: str) -> Dict[
         "metodo": "document_ai"  # Traccia quale metodo è stato usato
     }
     
+    # Decodifica PDF da Base64
+    try:
+        file_content = base64.b64decode(pdf_data)
+    except Exception as e:
+        results["success"] = False
+        results["errori"].append(f"Errore decodifica Base64: {str(e)}")
+        return results
+    
     cedolini = []
     
     # PRIMA SCELTA: Document AI (più accurato)
     try:
         from app.services.document_ai_extractor import extract_document_data
-        import base64
-        
-        with open(filepath, 'rb') as f:
-            file_content = f.read()
         
         ai_result = await extract_document_data(
             file_content=file_content,
@@ -367,11 +379,12 @@ async def processa_tutti_cedolini_pdf(db, filepath: str, filename: str) -> Dict[
         logger.warning(f"Document AI fallito per {filename}: {e}, uso fallback regex")
         results["metodo"] = "regex_fallback"
     
-    # FALLBACK: Parser regex legacy
+    # FALLBACK: Parser regex legacy - usa pdf_content in memoria
     if not cedolini:
         try:
             from app.parsers.payslip_parser_v2 import parse_payslip_pdf
-            cedolini = parse_payslip_pdf(pdf_path=filepath)
+            # Il parser accetta pdf_content bytes
+            cedolini = parse_payslip_pdf(pdf_content=file_content)
             results["metodo"] = "regex_fallback"
         except Exception as e:
             results["success"] = False
@@ -384,7 +397,7 @@ async def processa_tutti_cedolini_pdf(db, filepath: str, filename: str) -> Dict[
             db=db,
             cedolino_data=ced,
             filename=filename,
-            filepath=filepath
+            pdf_data=pdf_data  # Architettura MongoDB-only
         )
         
         if res.get("success"):
