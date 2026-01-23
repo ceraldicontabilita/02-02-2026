@@ -212,13 +212,29 @@ export default function InserimentoRapido() {
   const [formData, setFormData] = useState({});
   const [dipendenti, setDipendenti] = useState([]);
   const [fatture, setFatture] = useState([]);
+  const [ultimiInserimenti, setUltimiInserimenti] = useState([]);
 
   // Carica dipendenti
   useEffect(() => {
-    api.get('/api/dipendenti').then(res => {
-      setDipendenti((res.data || []).filter(d => d.in_carico !== false));
+    api.get('/api/rapido/dipendenti-attivi').then(res => {
+      setDipendenti(res.data?.dipendenti || []);
+    }).catch(() => {
+      api.get('/api/dipendenti').then(res => {
+        setDipendenti((res.data || []).filter(d => d.in_carico !== false));
+      }).catch(() => {});
+    });
+  }, []);
+
+  // Carica ultimi inserimenti
+  const loadUltimiInserimenti = useCallback(() => {
+    api.get('/api/rapido/ultimi-inserimenti?limit=5').then(res => {
+      setUltimiInserimenti(res.data?.inserimenti || []);
     }).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    loadUltimiInserimenti();
+  }, [loadUltimiInserimenti]);
 
   // Carica fatture da pagare
   useEffect(() => {
