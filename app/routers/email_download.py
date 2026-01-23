@@ -161,6 +161,51 @@ async def auto_associa_documenti() -> Dict[str, Any]:
     }
 
 
+@router.post("/auto-associa-v2")
+async def auto_associa_documenti_v2() -> Dict[str, Any]:
+    """
+    Versione migliorata dell'auto-associazione che:
+    1. Popola pdf_data nei payslips dal filesystem
+    2. Associa documenti di documents_inbox
+    3. Gestisce fatture, F24 e buste paga
+    """
+    db = Database.get_db()
+    stats = await smart_auto_associate_v2(db)
+    
+    return {
+        "success": True,
+        "message": "Auto-associazione v2 completata",
+        "stats": stats
+    }
+
+
+@router.post("/popola-pdf-payslips")
+async def popola_pdf_payslips() -> Dict[str, Any]:
+    """
+    Popola il campo pdf_data in tutti i payslips che hanno filepath
+    ma non hanno ancora pdf_data.
+    """
+    db = Database.get_db()
+    stats = await populate_payslips_pdf_data(db)
+    
+    return {
+        "success": True,
+        "message": "Popolazione PDF payslips completata",
+        "stats": stats
+    }
+
+
+@router.get("/documents-inbox-stats")
+async def get_inbox_stats() -> Dict[str, Any]:
+    """
+    Statistiche dettagliate sulla collezione documents_inbox.
+    """
+    db = Database.get_db()
+    stats = await get_documents_inbox_stats(db)
+    
+    return stats
+
+
 @router.get("/statistiche")
 async def get_statistiche_allegati() -> Dict[str, Any]:
     """
