@@ -240,6 +240,22 @@ async def associa_f24_filesystem() -> Dict[str, Any]:
     }
 
 
+@router.post("/processa-cedolini")
+async def processa_cedolini() -> Dict[str, Any]:
+    """
+    Processa i cedolini scaricati ed estrae i dati per prima_nota_salari.
+    Legge i PDF, estrae nomi dipendenti, importi netti/lordi, e crea record automaticamente.
+    """
+    db = Database.get_db()
+    stats = await process_cedolini_to_prima_nota(db)
+    
+    return {
+        "success": True,
+        "message": "Processamento cedolini completato",
+        "stats": stats
+    }
+
+
 @router.get("/statistiche")
 async def get_statistiche_allegati() -> Dict[str, Any]:
     """
