@@ -1,0 +1,328 @@
+"""
+Router per gestione documenti non associati.
+Permette di visualizzare e associare manualmente i documenti.
+"""
+
+from fastapi import APIRouter, HTTPException, Query, Body
+from typing import Dict, Any, List, Optional
+from datetime import datetime, timezone
+import uuid
+import re
+import logging
+
+from app.database import Database
+
+logger = logging.getLogger(__name__)
+router = APIRouter(prefix="/documenti-non-associati", tags=["Documenti Non Associati"])
+
+
+# Collezioni target per associazione
+TARGET_COLLECTIONS = {
+    "fatture": {"collection": "invoices", "label": "Fatture Ricevute"},
+    "f24": {"collection": "f24_commercialista", "label": "F24"},
+    "cedolini": {"collection": "payslips", "label": "Cedolini/Buste Paga"},
+    "verbali": {"collection": "verbali_multe", "label": "Verbali e Multe"},
+    "cartelle": {"collection": "cartelle_esattoriali", "label": "Cartelle Esattoriali"},
+    "estratti": {"collection": "estratto_conto_movimenti", "label": "Estratti Conto"},
+    "bonifici": {"collection": "bonifici", "label": "Bonifici"},
+    "quietanze": {"collection": "quietanze", "label": "Quietanze"},
+    "contratti": {"collection": "contratti", "label": "Contratti"},
+    "certificati": {"collection": "certificati_medici", "label": "Certificati Medici"},
+}
+
+
+@router.get("/lista")
+async def lista_documenti_non_associati(
+    limit: int = Query(default=50, le=200),
+    skip: int = Query(default=0),
+    categoria: str = Query(default=None),
+    search: str = Query(default=None)
+) -> Dict[str, Any]:
+    """
+    Lista tutti i documenti non associati con proposta intelligente.
+    """
+    db = Database.get_db()
+    
+    query = {}
+    if categoria:
+        query["category"] = categoria
+    if search:
+        query["$or"] = [
+            {"filename": {"$regex": search, "$options": "i"}},
+            {"email_subject": {"$regex": search, "$options": "i"}}
+        ]
+    
+    # Conta totali
+    total = await db["documenti_non_associati"].count_documents(query)
+    
+    # Recupera documenti
+    cursor = db["documenti_non_associati"].find(
+        query,
+        {"_id": 0, "pdf_data": 0}  # Escludi PDF pesante
+    ).sort("downloaded_at", -1).skip(skip).limit(limit)
+    
+    documenti = []
+    async for doc in cursor:
+        # Proposta intelligente
+        proposta = await genera_proposta_associazione(db, doc)
+        doc["proposta"] = proposta
+        documenti.append(doc)
+    
+    return {
+        "total": total,
+        "skip": skip,
+        "limit": limit,
+        "documenti": documenti
+    }
+
+
+async def genera_proposta_associazione(db, doc: Dict) -> Dict[str, Any]:
+    """
+    Genera una proposta intelligente per l'associazione del documento.
+    Analizza filename, subject email e contenuto per suggerire dove associare.
+    """
+    filename = doc.get("filename", "").lower()
+    subject = doc.get("email_subject", "").lower()
+    text = f"{filename} {subject}"
+    
+    proposta = {
+        "tipo_suggerito": None,
+        "collezione_suggerita": None,
+        "anno_suggerito": None,
+        "mese_suggerito": None,
+        "entita_suggerita": None,  # Nome azienda, dipendente, etc.
+        "match_esistenti": [],  # Record esistenti che potrebbero corrispondere
+        "campi_proposti": {}
+    }
+    
+    # Estrai anno dal testo
+    anno_match = re.search(r'20(1[5-9]|2[0-9])', text)
+    if anno_match:
+        proposta["anno_suggerito"] = int(f"20{anno_match.group(1)}")
+    
+    # Estrai mese
+    mesi = {
+        "gennaio": 1, "febbraio": 2, "marzo": 3, "aprile": 4,
+        "maggio": 5, "giugno": 6, "luglio": 7, "agosto": 8,
+        "settembre": 9, "ottobre": 10, "novembre": 11, "dicembre": 12
+    }
+    for mese_nome, mese_num in mesi.items():
+        if mese_nome in text:
+            proposta["mese_suggerito"] = mese_num
+            break
+    
+    # Pattern per tipo documento
+    if any(p in text for p in ["verbale", "multa", "sanzione", "infrazione", "polizia"]):
+        proposta["tipo_suggerito"] = "verbali"
+        proposta["collezione_suggerita"] = "verbali_multe"
+        
+        # Cerca targa auto
+        targa_match = re.search(r'([A-Z]{2}\s*\d{3}\s*[A-Z]{2})', text.upper())
+        if targa_match:
+            proposta["campi_proposti"]["targa"] = targa_match.group(1).replace(" ", "")
+        
+        # Cerca importo
+        importo_match = re.search(r'(?:€|euro)\s*(\d+[.,]\d{2})', text)
+        if importo_match:
+            proposta["campi_proposti"]["importo"] = float(importo_match.group(1).replace(",", "."))
+    
+    elif any(p in text for p in ["cartella", "esattoriale", "riscossione", "ader", "equitalia"]):
+        proposta["tipo_suggerito"] = "cartelle"
+        proposta["collezione_suggerita"] = "cartelle_esattoriali"
+    
+    elif any(p in text for p in ["f24", "tribut", "agenzia entrate", "iva", "ires", "irpef"]):
+        proposta["tipo_suggerito"] = "f24"
+        proposta["collezione_suggerita"] = "f24_commercialista"
+    
+    elif any(p in text for p in ["busta paga", "cedolino", "stipendio", "retribuzione"]):
+        proposta["tipo_suggerito"] = "cedolini"
+        proposta["collezione_suggerita"] = "payslips"
+    
+    elif any(p in text for p in ["fattura", "invoice", "ft_", "ft-"]):
+        proposta["tipo_suggerito"] = "fatture"
+        proposta["collezione_suggerita"] = "invoices"
+    
+    # Cerca entità (nome azienda, persona)
+    # Pattern per nomi di aziende comuni
+    azienda_patterns = [
+        r'(ceraldi\s*group)', r'(s\.r\.l\.)', r'(s\.p\.a\.)',
+        r'([A-Z][a-z]+\s+[A-Z][a-z]+)',  # Nome Cognome
+    ]
+    for pattern in azienda_patterns:
+        match = re.search(pattern, text, re.IGNORECASE)
+        if match:
+            proposta["entita_suggerita"] = match.group(1).strip().title()
+            break
+    
+    # Cerca match esistenti nel database
+    if proposta["tipo_suggerito"]:
+        coll = proposta["collezione_suggerita"]
+        query = {}
+        
+        if proposta["anno_suggerito"]:
+            query["anno"] = proposta["anno_suggerito"]
+        
+        if coll and query:
+            try:
+                matches = await db[coll].find(query, {"_id": 0, "id": 1, "anno": 1, "mese": 1}).limit(5).to_list(5)
+                proposta["match_esistenti"] = matches
+            except:
+                pass
+    
+    return proposta
+
+
+@router.post("/associa")
+async def associa_documento(
+    documento_id: str = Body(...),
+    collezione_target: str = Body(...),
+    campi_associazione: Dict[str, Any] = Body(default={}),
+    crea_nuovo: bool = Body(default=False),
+    record_esistente_id: str = Body(default=None)
+) -> Dict[str, Any]:
+    """
+    Associa un documento non associato a una collezione target.
+    
+    Se crea_nuovo=True, crea un nuovo record nella collezione target.
+    Se record_esistente_id è fornito, aggiunge il PDF al record esistente.
+    """
+    db = Database.get_db()
+    
+    # Recupera documento
+    doc = await db["documenti_non_associati"].find_one({"id": documento_id})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Documento non trovato")
+    
+    pdf_data = doc.get("pdf_data")
+    if not pdf_data:
+        raise HTTPException(status_code=400, detail="Documento senza PDF")
+    
+    # Verifica collezione target
+    if collezione_target not in [t["collection"] for t in TARGET_COLLECTIONS.values()]:
+        # Crea nuova collezione se richiesto
+        logger.info(f"Creazione nuova collezione: {collezione_target}")
+    
+    if crea_nuovo:
+        # Crea nuovo record
+        nuovo_id = str(uuid.uuid4())
+        nuovo_record = {
+            "id": nuovo_id,
+            "pdf_data": pdf_data,
+            "pdf_filename": doc.get("filename"),
+            "pdf_hash": doc.get("file_hash"),
+            "source": "associazione_manuale",
+            "documento_originale_id": documento_id,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            **campi_associazione
+        }
+        
+        await db[collezione_target].insert_one(nuovo_record)
+        
+        # Marca documento come associato
+        await db["documenti_non_associati"].update_one(
+            {"id": documento_id},
+            {"$set": {
+                "associato": True,
+                "associato_a": collezione_target,
+                "associato_id": nuovo_id,
+                "associato_at": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+        
+        return {
+            "success": True,
+            "azione": "creato_nuovo",
+            "collezione": collezione_target,
+            "record_id": nuovo_id
+        }
+    
+    elif record_esistente_id:
+        # Aggiunge PDF a record esistente
+        result = await db[collezione_target].update_one(
+            {"id": record_esistente_id},
+            {"$set": {
+                "pdf_data": pdf_data,
+                "pdf_filename": doc.get("filename"),
+                "pdf_hash": doc.get("file_hash"),
+                "pdf_updated_at": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+        
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Record target non trovato")
+        
+        # Marca documento come associato
+        await db["documenti_non_associati"].update_one(
+            {"id": documento_id},
+            {"$set": {
+                "associato": True,
+                "associato_a": collezione_target,
+                "associato_id": record_esistente_id,
+                "associato_at": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+        
+        return {
+            "success": True,
+            "azione": "aggiunto_a_esistente",
+            "collezione": collezione_target,
+            "record_id": record_esistente_id
+        }
+    
+    else:
+        raise HTTPException(status_code=400, detail="Specificare crea_nuovo=True o record_esistente_id")
+
+
+@router.get("/statistiche")
+async def statistiche_non_associati() -> Dict[str, Any]:
+    """
+    Statistiche sui documenti non associati.
+    """
+    db = Database.get_db()
+    
+    pipeline = [
+        {"$group": {
+            "_id": "$category",
+            "count": {"$sum": 1},
+            "associati": {"$sum": {"$cond": ["$associato", 1, 0]}}
+        }},
+        {"$sort": {"count": -1}}
+    ]
+    
+    stats = {"totale": 0, "associati": 0, "per_categoria": {}}
+    
+    async for doc in db["documenti_non_associati"].aggregate(pipeline):
+        cat = doc["_id"] or "altro"
+        stats["per_categoria"][cat] = {
+            "totale": doc["count"],
+            "associati": doc["associati"],
+            "da_associare": doc["count"] - doc["associati"]
+        }
+        stats["totale"] += doc["count"]
+        stats["associati"] += doc["associati"]
+    
+    stats["da_associare"] = stats["totale"] - stats["associati"]
+    
+    return stats
+
+
+@router.get("/collezioni-disponibili")
+async def lista_collezioni_disponibili() -> List[Dict[str, str]]:
+    """Lista collezioni disponibili per l'associazione."""
+    return [
+        {"value": info["collection"], "label": info["label"]}
+        for key, info in TARGET_COLLECTIONS.items()
+    ]
+
+
+@router.delete("/{documento_id}")
+async def elimina_documento(documento_id: str) -> Dict[str, Any]:
+    """Elimina un documento non associato."""
+    db = Database.get_db()
+    
+    result = await db["documenti_non_associati"].delete_one({"id": documento_id})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Documento non trovato")
+    
+    return {"success": True, "deleted": True}
