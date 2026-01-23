@@ -346,6 +346,21 @@ POST /api/email-download/associa-documento                   # Associazione manu
 ## 7. BACKLOG E PRIORITÀ
 
 ### 7.1 🔴 P0 - Alta Priorità
+
+✅ **COMPLETATO (Dicembre 2025 - Sessione 19)**: Architettura MongoDB-Only
+- **File completamente rifattorizzati** (0 riferimenti `filepath`):
+  - `/app/app/services/cedolini_manager.py` - usa `pdf_data` Base64
+  - `/app/app/services/email_monitor_service.py` - usa `pdf_data` per elaborazione
+  - `/app/app/routers/documenti_module/crud.py` - download/elimina solo da MongoDB
+  - `/app/app/routers/employees/employee_contracts.py` - salva `file_data` in MongoDB
+- **Endpoint principali aggiornati**:
+  - `GET /documenti/{id}/download` - legge da `pdf_data`, 404 se mancante
+  - `POST /documento/{id}/cambia-categoria` - solo update MongoDB
+  - `DELETE /documento/{id}` - solo delete da MongoDB
+  - `POST /upload-documenti` - salva in MongoDB come Base64
+- **Parser aggiornato**: `services/parser_f24.py` ora supporta `pdf_content` bytes
+- **Test passati**: 20/20 (100%) - File test: `/app/backend/tests/test_documenti_mongodb_only.py`
+
 ✅ **RISOLTO (23/01/2026 - Sessione 18)**: Associazione PDF F24 dal Filesystem
 - Script di associazione intelligente che abbina F24 per nome file
 - **40/46 F24** ora hanno il PDF associato (87%)
