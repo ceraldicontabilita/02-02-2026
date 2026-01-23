@@ -344,7 +344,7 @@ async def scarico_per_produzione(
                         "note": note,
                         "created_at": datetime.utcnow().isoformat()
                     }
-                    await db["movimenti_magazzino"].insert_one(movimento)
+                    await db[COLL_WAREHOUSE_MOVEMENTS].insert_one(movimento)
                     
                     risultato["scarichi_effettuati"].append({
                         "ingrediente": ingrediente,
