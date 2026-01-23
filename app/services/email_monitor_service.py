@@ -210,7 +210,7 @@ async def processa_nuovi_documenti(db) -> Dict[str, Any]:
                 "category": "estratto_conto",
                 "processed": {"$ne": True},
                 "filename": {"$regex": "Estratto_conto|Nexi", "$options": "i"},
-                "pdf_data": {"$exists": True, "$ne": None, "$ne": ""}
+                "pdf_data": {"$exists": True, "$nin": [None, ""]}
             },
             {"_id": 0}
         ).to_list(100)
