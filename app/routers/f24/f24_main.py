@@ -294,14 +294,7 @@ async def delete_f24_document(
     if not doc:
         raise HTTPException(status_code=404, detail="Documento non trovato")
     
-    # Elimina il file fisico
-    if doc.get("file_path") and os.path.exists(doc["file_path"]):
-        try:
-            os.remove(doc["file_path"])
-        except Exception as e:
-            logger.warning(f"Impossibile eliminare file: {e}")
-    
-    # Elimina dal database
+    # Architettura MongoDB-only: elimina solo dal database
     await db["f24_documents"].delete_one({"id": doc_id})
     
     return {"success": True, "message": "Documento eliminato"}
