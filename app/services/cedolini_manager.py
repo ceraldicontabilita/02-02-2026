@@ -25,7 +25,7 @@ async def processa_cedolino_completo(
     db,
     cedolino_data: Dict[str, Any],
     filename: str,
-    filepath: str = None
+    pdf_data: str = None
 ) -> Dict[str, Any]:
     """
     Processa un singolo cedolino con flusso completo:
@@ -38,7 +38,7 @@ async def processa_cedolino_completo(
         db: Database MongoDB
         cedolino_data: Dati estratti dal parser
         filename: Nome file PDF
-        filepath: Percorso file
+        pdf_data: Contenuto PDF in Base64 (architettura MongoDB-only)
         
     Returns:
         Risultato del processamento
@@ -150,7 +150,7 @@ async def processa_cedolino_completo(
             "ore_lavorate": cedolino_data.get("ore_lavorate", 0),
             "iban": cedolino_data.get("iban"),
             "filename": filename,
-            "filepath": filepath,
+            "pdf_data": pdf_data,  # Architettura MongoDB-only
             "formato": cedolino_data.get("formato_rilevato"),
             "updated_at": datetime.now(timezone.utc).isoformat()
         }
