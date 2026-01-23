@@ -1,0 +1,244 @@
+"""
+Router Inserimento Rapido - Endpoint semplificati per mobile
+"""
+
+from fastapi import APIRouter, HTTPException
+from typing import Dict, Any, Optional
+from datetime import datetime, timezone
+from pydantic import BaseModel
+import uuid
+
+from app.database import Database
+
+router = APIRouter(prefix="/rapido", tags=["Inserimento Rapido"])
+
+
+class CorrispettivoInput(BaseModel):
+    data: str
+    importo: float
+    descrizione: Optional[str] = "Corrispettivo giornaliero"
+    tipo: Optional[str] = "CONTANTI"
+
+
+class MovimentoInput(BaseModel):
+    data: str
+    importo: float
+    descrizione: Optional[str] = ""
+    tipo: str
+    conto_dare: str
+    conto_avere: str
+
+
+class AccontoInput(BaseModel):
+    dipendente_id: str
+    importo: float
+    data: str
+    note: Optional[str] = ""
+
+
+class PresenzaInput(BaseModel):
+    dipendente_id: str
+    data: str
+    tipo: str  # PRESENTE, FERIE, MALATTIA, PERMESSO
+    ore: Optional[float] = None
+    note: Optional[str] = ""
+
+
+@router.post("/corrispettivo")
+async def salva_corrispettivo(data: CorrispettivoInput) -> Dict[str, Any]:
+    """Salva un corrispettivo manuale."""
+    db = Database.get_db()
+    
+    doc = {
+        "id": str(uuid.uuid4()),
+        "data": data.data,
+        "importo": data.importo,
+        "descrizione": data.descrizione,
+        "tipo": data.tipo,
+        "source": "inserimento_rapido",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db["corrispettivi_manuali"].insert_one(doc)
+    
+    # Registra anche in prima nota cassa
+    prima_nota = {
+        "id": str(uuid.uuid4()),
+        "data": data.data,
+        "descrizione": data.descrizione,
+        "importo": data.importo,
+        "tipo": "CORRISPETTIVO",
+        "conto_dare": "CASSA",
+        "conto_avere": "RICAVI_VENDITE",
+        "source": "inserimento_rapido",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db["prima_nota_cassa"].insert_one(prima_nota)
+    
+    return {"success": True, "id": doc["id"], "message": "Corrispettivo salvato"}
+
+
+@router.post("/versamento-banca")
+async def salva_versamento_banca(data: MovimentoInput) -> Dict[str, Any]:
+    """Salva un versamento dalla cassa alla banca."""
+    db = Database.get_db()
+    
+    doc = {
+        "id": str(uuid.uuid4()),
+        "data": data.data,
+        "importo": data.importo,
+        "descrizione": data.descrizione or "Versamento in banca",
+        "tipo": "VERSAMENTO_BANCA",
+        "conto_dare": "BANCA",
+        "conto_avere": "CASSA",
+        "source": "inserimento_rapido",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    # Movimento negativo in cassa
+    await db["prima_nota_cassa"].insert_one({
+        **doc,
+        "id": str(uuid.uuid4()),
+        "importo": -data.importo,  # Uscita dalla cassa
+        "tipo": "VERSAMENTO_USCITA"
+    })
+    
+    # Movimento positivo in banca
+    await db["prima_nota_banca"].insert_one({
+        **doc,
+        "tipo": "VERSAMENTO_ENTRATA"
+    })
+    
+    return {"success": True, "id": doc["id"], "message": "Versamento salvato"}
+
+
+@router.post("/apporto-soci")
+async def salva_apporto_soci(data: MovimentoInput) -> Dict[str, Any]:
+    """Salva un apporto soci."""
+    db = Database.get_db()
+    
+    destinazione = "BANCA" if data.conto_dare == "BANCA" else "CASSA"
+    collection = "prima_nota_banca" if destinazione == "BANCA" else "prima_nota_cassa"
+    
+    doc = {
+        "id": str(uuid.uuid4()),
+        "data": data.data,
+        "importo": data.importo,
+        "descrizione": data.descrizione or "Apporto soci",
+        "tipo": "APPORTO_SOCI",
+        "conto_dare": destinazione,
+        "conto_avere": "CAPITALE_SOCIALE",
+        "source": "inserimento_rapido",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db[collection].insert_one(doc)
+    
+    return {"success": True, "id": doc["id"], "message": "Apporto salvato"}
+
+
+@router.post("/acconto-dipendente")
+async def salva_acconto_dipendente(data: AccontoInput) -> Dict[str, Any]:
+    """Salva un acconto a un dipendente."""
+    db = Database.get_db()
+    
+    # Verifica dipendente
+    dipendente = await db["dipendenti"].find_one({"id": data.dipendente_id})
+    if not dipendente:
+        raise HTTPException(status_code=404, detail="Dipendente non trovato")
+    
+    doc = {
+        "id": str(uuid.uuid4()),
+        "dipendente_id": data.dipendente_id,
+        "dipendente_nome": f"{dipendente.get('cognome', '')} {dipendente.get('nome', '')}",
+        "data": data.data,
+        "importo": data.importo,
+        "note": data.note,
+        "tipo": "ACCONTO",
+        "source": "inserimento_rapido",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db["acconti_dipendenti"].insert_one(doc)
+    
+    # Aggiorna totale acconti del dipendente
+    await db["dipendenti"].update_one(
+        {"id": data.dipendente_id},
+        {"$inc": {"totale_acconti": data.importo}}
+    )
+    
+    return {"success": True, "id": doc["id"], "message": "Acconto salvato"}
+
+
+@router.post("/presenza")
+async def salva_presenza(data: PresenzaInput) -> Dict[str, Any]:
+    """Salva una presenza o assenza."""
+    db = Database.get_db()
+    
+    # Verifica dipendente
+    dipendente = await db["dipendenti"].find_one({"id": data.dipendente_id})
+    if not dipendente:
+        raise HTTPException(status_code=404, detail="Dipendente non trovato")
+    
+    # Mappa tipo a giustificativo
+    tipo_map = {
+        "PRESENTE": {"codice": "ORD", "descrizione": "Ordinario"},
+        "FERIE": {"codice": "FER", "descrizione": "Ferie"},
+        "MALATTIA": {"codice": "MAL", "descrizione": "Malattia"},
+        "PERMESSO": {"codice": "PER", "descrizione": "Permesso"}
+    }
+    
+    giustificativo = tipo_map.get(data.tipo, {"codice": "ORD", "descrizione": data.tipo})
+    
+    # Calcola ore
+    ore = data.ore if data.ore else (8 if data.tipo == "PRESENTE" else 0)
+    
+    doc = {
+        "id": str(uuid.uuid4()),
+        "dipendente_id": data.dipendente_id,
+        "dipendente_nome": f"{dipendente.get('cognome', '')} {dipendente.get('nome', '')}",
+        "data": data.data,
+        "tipo": data.tipo,
+        "giustificativo_codice": giustificativo["codice"],
+        "giustificativo_descrizione": giustificativo["descrizione"],
+        "ore": ore,
+        "note": data.note,
+        "source": "inserimento_rapido",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    # Verifica se esiste già una presenza per questo giorno
+    existing = await db["presenze"].find_one({
+        "dipendente_id": data.dipendente_id,
+        "data": data.data
+    })
+    
+    if existing:
+        # Aggiorna
+        await db["presenze"].update_one(
+            {"id": existing["id"]},
+            {"$set": doc}
+        )
+        doc["id"] = existing["id"]
+    else:
+        # Inserisci
+        await db["presenze"].insert_one(doc)
+    
+    return {"success": True, "id": doc["id"], "message": "Presenza salvata"}
+
+
+@router.get("/dipendenti-attivi")
+async def get_dipendenti_attivi() -> Dict[str, Any]:
+    """Lista dipendenti attivi per selezione rapida."""
+    db = Database.get_db()
+    
+    cursor = db["dipendenti"].find(
+        {"$or": [{"in_carico": True}, {"in_carico": {"$exists": False}}]},
+        {"_id": 0, "id": 1, "nome": 1, "cognome": 1}
+    ).sort("cognome", 1)
+    
+    dipendenti = []
+    async for d in cursor:
+        dipendenti.append(d)
+    
+    return {"dipendenti": dipendenti}
