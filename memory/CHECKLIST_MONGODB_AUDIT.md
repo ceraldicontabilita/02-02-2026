@@ -15,6 +15,9 @@
 | `/app/app/services/email_monitor_service.py` | ✅ COMPLETATO | Usa `pdf_data` per elaborazione documenti |
 | `/app/app/routers/documenti_module/crud.py` | ✅ COMPLETATO | Download/elimina solo da MongoDB |
 | `/app/app/services/parser_f24.py` | ✅ COMPLETATO | Supporta sia `pdf_path` che `pdf_content` bytes |
+| `/app/app/routers/f24/f24_main.py` | ✅ COMPLETATO | Upload/download usa `pdf_data`, eliminazione solo MongoDB |
+| `/app/app/services/f24_parser.py` | ✅ COMPLETATO | Parser con supporto bytes |
+| `/app/app/routers/quietanze_f24.py` | ✅ COMPLETATO | Download/elimina solo MongoDB |
 
 ### 🔶 FILE PARZIALMENTE RIFATTORIZZATI
 
