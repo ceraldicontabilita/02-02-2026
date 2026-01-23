@@ -95,11 +95,13 @@ from app.routers.f24 import (
 from app.routers.accounting import (
     accounting_main, accounting_extended, accounting_f24,
     accounting_engine_api,
-    prima_nota, prima_nota_automation, prima_nota_salari,
+    prima_nota_automation,
     piano_conti, bilancio, centri_costo, contabilita_avanzata,
     regole_categorizzazione, iva_calcolo, liquidazione_iva,
     riconciliazione_automatica
 )
+# Prima Nota modularizzato
+from app.routers.prima_nota_module import router as prima_nota_router
 
 # --- To-Do Module ---
 from app.routers import todo
