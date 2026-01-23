@@ -16,7 +16,7 @@ import requests
 import os
 import time
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://italian-accounting.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://pastryman.preview.emergentagent.com')
 
 class TestGiustificativiPerformance:
     """Test giustificativi endpoint performance - should respond in <5s"""
