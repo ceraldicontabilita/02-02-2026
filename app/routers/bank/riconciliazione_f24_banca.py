@@ -119,15 +119,8 @@ async def get_movimenti_f24_banca(
     """
     db = Database.get_db()
     
-    # Query per identificare i pagamenti F24 dalla descrizione_originale
-    query = {
-        "$or": [
-            {"descrizione_originale": {"$regex": "I24.*AGENZIA", "$options": "i"}},
-            {"descrizione_originale": {"$regex": "AGENZIA.*ENTRATE", "$options": "i"}},
-            {"descrizione_originale": {"$regex": "F24", "$options": "i"}},
-            {"categoria": {"$regex": "Tasse|Imposte|Tributi|F24", "$options": "i"}}
-        ]
-    }
+    # Usa query pattern centralizzata
+    query = QUERY_F24_PATTERN.copy()
     
     # Filtri opzionali per data
     if data_da or data_a:
@@ -138,7 +131,7 @@ async def get_movimenti_f24_banca(
             date_filter["$lte"] = data_a
         query["data"] = date_filter
     
-    movimenti = await db["estratto_conto_movimenti"].find(
+    movimenti = await db[COLL_ESTRATTO_CONTO].find(
         query,
         {"_id": 0}
     ).sort("data", -1).limit(limit).to_list(limit)
