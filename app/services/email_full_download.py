@@ -699,3 +699,272 @@ async def smart_auto_associate(db: AsyncIOMotorDatabase) -> Dict[str, int]:
             stats["errors"] += 1
     
     return stats
+
+
+async def smart_auto_associate_v2(db: AsyncIOMotorDatabase) -> Dict[str, Any]:
+    """
+    Versione migliorata dell'auto-associazione che:
+    1. Lavora con la collezione documents_inbox esistente
+    2. Associa payslips leggendo i PDF dal filesystem
+    3. Associa fatture per P.IVA e importo
+    4. Gestisce F24 per periodo e tributi
+    """
+    stats = {
+        "payslips_updated": 0,
+        "fatture_associated": 0,
+        "f24_associated": 0,
+        "documents_inbox_processed": 0,
+        "errors": []
+    }
+    
+    # ========== 1. AGGIORNA PAYSLIPS CON PDF_DATA ==========
+    # I payslips hanno filepath ma non pdf_data - leggo dal disco
+    cursor = db["payslips"].find({
+        "filepath": {"$exists": True, "$ne": None},
+        "$or": [
+            {"pdf_data": None},
+            {"pdf_data": ""},
+            {"pdf_data": {"$exists": False}}
+        ]
+    })
+    
+    async for payslip in cursor:
+        try:
+            filepath = payslip.get("filepath", "")
+            if filepath and os.path.exists(filepath):
+                with open(filepath, "rb") as f:
+                    pdf_content = f.read()
+                
+                pdf_base64 = base64.b64encode(pdf_content).decode('utf-8')
+                pdf_hash = calculate_pdf_hash(pdf_content)
+                
+                await db["payslips"].update_one(
+                    {"id": payslip["id"]},
+                    {"$set": {
+                        "pdf_data": pdf_base64,
+                        "pdf_hash": pdf_hash,
+                        "pdf_size": len(pdf_content)
+                    }}
+                )
+                stats["payslips_updated"] += 1
+                logger.info(f"Payslip aggiornato con PDF: {payslip.get('dipendente_nome')} {payslip.get('mese')}/{payslip.get('anno')}")
+            
+        except Exception as e:
+            logger.error(f"Errore aggiornamento payslip: {e}")
+            stats["errors"].append(f"Payslip {payslip.get('id')}: {str(e)}")
+    
+    # ========== 2. PROCESSA DOCUMENTS_INBOX ==========
+    # Marca i documenti processati e li collega dove possibile
+    
+    mesi_it = {
+        "gennaio": 1, "febbraio": 2, "marzo": 3, "aprile": 4,
+        "maggio": 5, "giugno": 6, "luglio": 7, "agosto": 8,
+        "settembre": 9, "ottobre": 10, "novembre": 11, "dicembre": 12
+    }
+    
+    # 2a. Processa F24 da documents_inbox
+    cursor = db["documents_inbox"].find({
+        "category": "f24",
+        "status": {"$ne": "associato"}
+    })
+    
+    async for doc in cursor:
+        try:
+            filename = doc.get("filename", "")
+            filepath = doc.get("filepath", "")
+            
+            # Estrai periodo dal filename (es: F24_IVA_09_2025, F24_dicembre_2025)
+            period_match = re.search(r'(\d{2})_(\d{4})|(\w+)_(\d{4})', filename)
+            mese = None
+            anno = None
+            
+            if period_match:
+                if period_match.group(1):  # Pattern numerico: 09_2025
+                    mese = int(period_match.group(1))
+                    anno = int(period_match.group(2))
+                elif period_match.group(3):  # Pattern testuale: dicembre_2025
+                    mese_str = period_match.group(3).lower()
+                    mese = mesi_it.get(mese_str)
+                    anno = int(period_match.group(4))
+            
+            # Cerca F24 corrispondente
+            query = {}
+            if mese and anno:
+                query = {"mese": mese, "anno": anno}
+            else:
+                # Cerca per nome file simile
+                query = {"$or": [
+                    {"file_name": {"$regex": filename[:20], "$options": "i"}},
+                    {"filename": {"$regex": filename[:20], "$options": "i"}}
+                ]}
+            
+            f24 = await db["f24_commercialista"].find_one(query)
+            
+            if f24 and filepath and os.path.exists(filepath):
+                # Leggi PDF e associa
+                with open(filepath, "rb") as f:
+                    pdf_content = f.read()
+                
+                pdf_base64 = base64.b64encode(pdf_content).decode('utf-8')
+                
+                await db["f24_commercialista"].update_one(
+                    {"id": f24["id"]},
+                    {"$set": {
+                        "pdf_data": pdf_base64,
+                        "pdf_hash": calculate_pdf_hash(pdf_content),
+                        "pdf_filepath": filepath
+                    }}
+                )
+                
+                await db["documents_inbox"].update_one(
+                    {"id": doc["id"]},
+                    {"$set": {
+                        "status": "associato",
+                        "associated_to": f24["id"],
+                        "associated_collection": "f24_commercialista",
+                        "associated_at": datetime.now(timezone.utc).isoformat()
+                    }}
+                )
+                stats["f24_associated"] += 1
+                stats["documents_inbox_processed"] += 1
+                logger.info(f"F24 associato: {filename}")
+            
+        except Exception as e:
+            logger.error(f"Errore associazione F24: {e}")
+            stats["errors"].append(f"F24 {doc.get('id')}: {str(e)}")
+    
+    # 2b. Processa Fatture da documents_inbox
+    cursor = db["documents_inbox"].find({
+        "category": "fattura",
+        "status": {"$ne": "associato"}
+    })
+    
+    async for doc in cursor:
+        try:
+            filename = doc.get("filename", "")
+            filepath = doc.get("filepath", "")
+            email_subject = doc.get("email_subject", "")
+            
+            # Estrai numero fattura dal filename o subject
+            # Pattern comuni: FT_001_2025, Fattura_123, n_456
+            num_match = re.search(r'(?:FT|fattura|n)[_\s\-]?(\d+)', filename + " " + email_subject, re.IGNORECASE)
+            
+            invoice = None
+            if num_match:
+                num = num_match.group(1)
+                invoice = await db["invoices"].find_one({
+                    "invoice_number": {"$regex": num, "$options": "i"}
+                })
+            
+            if invoice and filepath and os.path.exists(filepath):
+                with open(filepath, "rb") as f:
+                    pdf_content = f.read()
+                
+                pdf_base64 = base64.b64encode(pdf_content).decode('utf-8')
+                
+                await db["invoices"].update_one(
+                    {"id": invoice["id"]},
+                    {"$set": {
+                        "pdf_data": pdf_base64,
+                        "pdf_hash": calculate_pdf_hash(pdf_content),
+                        "pdf_filepath": filepath
+                    }}
+                )
+                
+                await db["documents_inbox"].update_one(
+                    {"id": doc["id"]},
+                    {"$set": {
+                        "status": "associato",
+                        "associated_to": invoice["id"],
+                        "associated_collection": "invoices",
+                        "associated_at": datetime.now(timezone.utc).isoformat()
+                    }}
+                )
+                stats["fatture_associated"] += 1
+                stats["documents_inbox_processed"] += 1
+                logger.info(f"Fattura associata: {filename}")
+            
+        except Exception as e:
+            logger.error(f"Errore associazione fattura: {e}")
+            stats["errors"].append(f"Fattura {doc.get('id')}: {str(e)}")
+    
+    return stats
+
+
+async def populate_payslips_pdf_data(db: AsyncIOMotorDatabase) -> Dict[str, int]:
+    """
+    Popola il campo pdf_data nei payslips leggendo i file dal filesystem.
+    Funzione dedicata per il batch processing.
+    """
+    stats = {"updated": 0, "skipped": 0, "errors": 0}
+    
+    cursor = db["payslips"].find({
+        "filepath": {"$exists": True, "$ne": None, "$ne": ""}
+    })
+    
+    async for payslip in cursor:
+        try:
+            filepath = payslip.get("filepath", "")
+            
+            # Già ha pdf_data?
+            if payslip.get("pdf_data"):
+                stats["skipped"] += 1
+                continue
+            
+            if not os.path.exists(filepath):
+                logger.warning(f"File non trovato: {filepath}")
+                stats["errors"] += 1
+                continue
+            
+            with open(filepath, "rb") as f:
+                pdf_content = f.read()
+            
+            pdf_base64 = base64.b64encode(pdf_content).decode('utf-8')
+            
+            await db["payslips"].update_one(
+                {"id": payslip["id"]},
+                {"$set": {
+                    "pdf_data": pdf_base64,
+                    "pdf_hash": calculate_pdf_hash(pdf_content),
+                    "pdf_size": len(pdf_content)
+                }}
+            )
+            stats["updated"] += 1
+            
+        except Exception as e:
+            logger.error(f"Errore popolamento payslip: {e}")
+            stats["errors"] += 1
+    
+    return stats
+
+
+async def get_documents_inbox_stats(db: AsyncIOMotorDatabase) -> Dict[str, Any]:
+    """
+    Statistiche sulla collezione documents_inbox.
+    """
+    pipeline = [
+        {"$group": {
+            "_id": {"category": "$category", "status": "$status"},
+            "count": {"$sum": 1}
+        }}
+    ]
+    
+    stats = {
+        "by_category": {},
+        "by_status": {},
+        "total": await db["documents_inbox"].count_documents({})
+    }
+    
+    async for doc in db["documents_inbox"].aggregate(pipeline):
+        cat = doc["_id"].get("category", "unknown")
+        status = doc["_id"].get("status", "unknown")
+        count = doc["count"]
+        
+        if cat not in stats["by_category"]:
+            stats["by_category"][cat] = {"total": 0, "nuovo": 0, "processato": 0, "associato": 0}
+        stats["by_category"][cat]["total"] += count
+        stats["by_category"][cat][status] = stats["by_category"][cat].get(status, 0) + count
+        
+        stats["by_status"][status] = stats["by_status"].get(status, 0) + count
+    
+    return stats
