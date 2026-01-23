@@ -1244,40 +1244,38 @@ async def process_cedolini_to_prima_nota(db: AsyncIOMotorDatabase) -> Dict[str, 
             # Estrai dati dal testo
             parsed_data = {}
             
-            # Nome dipendente (pattern comuni)
+            # Nome dipendente - pattern specifico per cedolini italiani
+            # Pattern: "31/12/2019 VESPA VINCENZO" o dopo data
             nome_patterns = [
-                r'(?:Dipendente|Cognome e Nome|Lavoratore|Nome)[:\s]+([A-Z][A-Za-z]+\s+[A-Z][A-Za-z]+)',
-                r'(?:Sig\.|Sig\.ra|Dott\.|Dott\.ssa)\s+([A-Z][A-Za-z]+\s+[A-Z][A-Za-z]+)',
+                r'\d{2}/\d{2}/\d{4}\s+([A-Z][A-Z]+\s+[A-Z][A-Z]+)',  # DATA NOME COGNOME
+                r'(?:Dipendente|Cognome e Nome|Lavoratore)[:\s]+([A-Z][A-Za-z]+\s+[A-Z][A-Za-z]+)',
             ]
             for pattern in nome_patterns:
                 match = re.search(pattern, text)
                 if match:
-                    parsed_data['dipendente_nome'] = match.group(1).strip()
+                    parsed_data['dipendente_nome'] = match.group(1).strip().title()
                     break
             
             # Se non trovato nel testo, usa il filename
             if not parsed_data.get('dipendente_nome'):
                 filename = cedolino.get("filename", "")
-                # Pattern: "Busta paga - Nome Cognome - ..."
-                match = re.search(r'(?:Busta paga|Cedolino)[^\w]*([A-Za-z]+\s+[A-Za-z]+)', filename, re.IGNORECASE)
+                match = re.search(r'(?:Busta paga|Cedolino)[^\w-]*-?\s*([A-Za-z]+\s+[A-Za-z]+)', filename, re.IGNORECASE)
                 if match:
-                    parsed_data['dipendente_nome'] = match.group(1).title()
+                    parsed_data['dipendente_nome'] = match.group(1).strip().title()
             
             # Codice Fiscale
             cf_match = re.search(r'([A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z])', text)
             if cf_match:
                 parsed_data['codice_fiscale'] = cf_match.group(1)
             
-            # Periodo (mese/anno)
-            periodo_patterns = [
-                r'(?:Periodo|Mese|Competenza)[:\s]+(\w+)[/\-\s]+(\d{4})',
-                r'(\w+)\s+(\d{4})',  # "Dicembre 2025"
-                r'(\d{1,2})[/\-](\d{4})',  # "12/2025"
-            ]
-            for pattern in periodo_patterns:
-                match = re.search(pattern, text, re.IGNORECASE)
-                if match:
-                    mese_str = match.group(1).lower()
+            # Periodo (mese/anno) - pattern specifico per cedolini
+            # Pattern: "DICEMBRE  2019" o "NOVEMBRE 2024"
+            mese_pattern = r'(GENNAIO|FEBBRAIO|MARZO|APRILE|MAGGIO|GIUGNO|LUGLIO|AGOSTO|SETTEMBRE|OTTOBRE|NOVEMBRE|DICEMBRE)\s+(\d{4})'
+            match = re.search(mese_pattern, text, re.IGNORECASE)
+            if match:
+                mese_nome = match.group(1).lower()
+                parsed_data['mese'] = mesi_it.get(mese_nome[:3])
+                parsed_data['anno'] = int(match.group(2))
                     if mese_str.isdigit():
                         parsed_data['mese'] = int(mese_str)
                     else:
