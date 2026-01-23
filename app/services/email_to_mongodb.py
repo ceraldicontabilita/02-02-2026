@@ -142,7 +142,10 @@ async def download_and_save_emails(
         "errors": []
     }
     
-    if not EMAIL_USER or not EMAIL_PASSWORD:
+    # Ottieni credenziali email
+    email_user, email_password = get_email_credentials()
+    
+    if not email_user or not email_password:
         return {"error": "Credenziali email non configurate", "stats": stats}
     
     try:
