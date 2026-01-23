@@ -166,10 +166,11 @@ class TestDocumentiDownload:
                 assert download_response.status_code == 404, \
                     f"Expected 404 for document without pdf_data, got {download_response.status_code}"
                 
-                # Verify error message mentions MongoDB
-                error_detail = download_response.json().get("detail", "")
-                assert "MongoDB" in error_detail or "PDF non disponibile" in error_detail, \
-                    f"Error should mention MongoDB/PDF not available: {error_detail}"
+                # Verify error message mentions MongoDB/PDF not available
+                error_data = download_response.json()
+                error_msg = error_data.get("detail", "") or error_data.get("message", "")
+                assert "MongoDB" in error_msg or "PDF non disponibile" in error_msg, \
+                    f"Error should mention MongoDB/PDF not available: {error_msg}"
 
 
 class TestDocumentiCambiaCategoria:
