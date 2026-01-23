@@ -509,10 +509,12 @@ async def upload_f24_pdf_overwrite(
     data_scadenza = parsed.get("dati_generali", {}).get("data_versamento")
     totali = parsed.get("totali", {})
     
-    # Check for existing
-    existing = await db["f24_models"].find_one({
-        "data_scadenza": data_scadenza,
-        "saldo_finale": totali.get("saldo_finale", 0)
+    # Check for existing nella collezione unificata
+    existing = await db[F24_COLLECTION].find_one({
+        "$or": [
+            {"dati_generali.data_scadenza": data_scadenza, "totali.saldo_netto": totali.get("saldo_finale", 0)},
+            {"file_name": file.filename}
+        ]
     })
     
     if existing and not overwrite:
