@@ -1285,43 +1285,50 @@ async def process_cedolini_to_prima_nota(db: AsyncIOMotorDatabase) -> Dict[str, 
                         break
             
             # Importi
-            # Netto
+            # Netto - pattern per cedolini italiani: cerca dopo "TOTALE NETTO" o simili
+            # Il formato può essere "1.035,00+" o "1035,00"
             netto_patterns = [
-                r'(?:Netto|Netto a pagare|Netto in busta|Totale netto)[:\s]*[€]?\s*([\d.,]+)',
-                r'NETTO[:\s]*[€]?\s*([\d.,]+)',
+                r'TOTALE\s+NETTO\s*([\d.,]+)',
+                r'(?:Netto|Netto a pagare|Netto in busta)[:\s]*[€]?\s*([\d.,]+)',
+                r'(\d{1,3}(?:\.\d{3})*,\d{2})\+?\s*$',  # Pattern numerico con + alla fine
             ]
             for pattern in netto_patterns:
-                match = re.search(pattern, text, re.IGNORECASE)
-                if match:
-                    val = match.group(1).replace('.', '').replace(',', '.')
+                matches = re.findall(pattern, text, re.IGNORECASE | re.MULTILINE)
+                for match_val in matches:
+                    val = match_val if isinstance(match_val, str) else match_val[0]
+                    val = val.replace('.', '').replace(',', '.').replace('+', '')
                     try:
-                        parsed_data['netto'] = float(val)
-                        break
+                        num = float(val)
+                        if 100 < num < 10000:  # Range ragionevole per uno stipendio netto
+                            parsed_data['netto'] = num
+                            break
                     except:
                         pass
+                if parsed_data.get('netto'):
+                    break
             
-            # Lordo
-            lordo_match = re.search(r'(?:Lordo|Retribuzione lorda|Totale competenze)[:\s]*[€]?\s*([\d.,]+)', text, re.IGNORECASE)
+            # Lordo / Totale Competenze
+            lordo_match = re.search(r'TOTALE\s+COMPETENZE\s*([\d.,]+)', text, re.IGNORECASE)
             if lordo_match:
-                val = lordo_match.group(1).replace('.', '').replace(',', '.')
+                val = lordo_match.group(1).replace('.', '').replace(',', '.').replace('+', '')
                 try:
                     parsed_data['lordo'] = float(val)
                 except:
                     pass
             
-            # INPS
-            inps_match = re.search(r'(?:INPS|Contributi INPS|Contr\. INPS)[:\s]*[€]?\s*([\d.,]+)', text, re.IGNORECASE)
+            # INPS (Ritenute Previdenziali)
+            inps_match = re.search(r'RITENUTE\s+PREVIDENZIALI\s*([\d.,]+)', text, re.IGNORECASE)
             if inps_match:
-                val = inps_match.group(1).replace('.', '').replace(',', '.')
+                val = inps_match.group(1).replace('.', '').replace(',', '.').replace('-', '')
                 try:
                     parsed_data['inps'] = float(val)
                 except:
                     pass
             
-            # IRPEF
-            irpef_match = re.search(r'(?:IRPEF|Ritenute IRPEF|Imposta)[:\s]*[€]?\s*([\d.,]+)', text, re.IGNORECASE)
+            # IRPEF (Ritenute Fiscali)
+            irpef_match = re.search(r'RITENUTE\s+FISCALI\s*([\d.,]+)', text, re.IGNORECASE)
             if irpef_match:
-                val = irpef_match.group(1).replace('.', '').replace(',', '.')
+                val = irpef_match.group(1).replace('.', '').replace(',', '.').replace('-', '')
                 try:
                     parsed_data['irpef'] = float(val)
                 except:
