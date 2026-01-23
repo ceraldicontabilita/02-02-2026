@@ -142,15 +142,24 @@ async def salva_acconto_dipendente(data: AccontoInput) -> Dict[str, Any]:
     """Salva un acconto a un dipendente."""
     db = Database.get_db()
     
-    # Verifica dipendente
-    dipendente = await db["dipendenti"].find_one({"id": data.dipendente_id})
+    # Cerca dipendente in più collezioni
+    dipendente = None
+    for coll in ["employees", "dipendenti", "anagrafica_dipendenti"]:
+        dipendente = await db[coll].find_one({"id": data.dipendente_id})
+        if dipendente:
+            break
+    
     if not dipendente:
         raise HTTPException(status_code=404, detail="Dipendente non trovato")
+    
+    # Estrai nome/cognome
+    nome = dipendente.get("nome") or dipendente.get("name", "")
+    cognome = dipendente.get("cognome") or dipendente.get("surname", "")
     
     doc = {
         "id": str(uuid.uuid4()),
         "dipendente_id": data.dipendente_id,
-        "dipendente_nome": f"{dipendente.get('cognome', '')} {dipendente.get('nome', '')}",
+        "dipendente_nome": f"{cognome} {nome}".strip(),
         "data": data.data,
         "importo": data.importo,
         "note": data.note,
@@ -160,12 +169,6 @@ async def salva_acconto_dipendente(data: AccontoInput) -> Dict[str, Any]:
     }
     
     await db["acconti_dipendenti"].insert_one(doc)
-    
-    # Aggiorna totale acconti del dipendente
-    await db["dipendenti"].update_one(
-        {"id": data.dipendente_id},
-        {"$inc": {"totale_acconti": data.importo}}
-    )
     
     return {"success": True, "id": doc["id"], "message": "Acconto salvato"}
 
