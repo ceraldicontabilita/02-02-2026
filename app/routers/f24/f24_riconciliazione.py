@@ -382,19 +382,12 @@ async def get_f24_pdf(f24_id: str):
     filename = f24.get("file_name", f24.get("filename", "F24.pdf"))
     pdf_bytes = None
     
-    # 1. Cerca pdf_data nella collezione
+    # Architettura MongoDB-only: cerca pdf_data
     pdf_data = f24.get("pdf_data")
     if pdf_data:
         pdf_bytes = base64.b64decode(pdf_data)
     
-    # 2. Cerca file_path
-    if not pdf_bytes:
-        file_path = f24.get("file_path")
-        if file_path and os.path.exists(file_path):
-            with open(file_path, "rb") as fl:
-                pdf_bytes = fl.read()
-    
-    # 3. Cerca in f24_models (collezione legacy)
+    # Fallback: cerca in f24_models (collezione legacy)
     if not pdf_bytes and filename:
         models_doc = await db["f24_models"].find_one(
             {"filename": filename},
@@ -409,7 +402,7 @@ async def get_f24_pdf(f24_id: str):
             )
     
     if not pdf_bytes:
-        raise HTTPException(status_code=404, detail="PDF non trovato")
+        raise HTTPException(status_code=404, detail="PDF non disponibile in MongoDB")
     
     return Response(
         content=pdf_bytes,
