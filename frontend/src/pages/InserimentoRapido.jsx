@@ -225,8 +225,11 @@ export default function InserimentoRapido() {
       // Le fatture sono nella collezione "invoices"
       api.get('/api/invoices?limit=100').then(res => {
         const data = res.data?.items || res.data?.invoices || res.data || [];
-        // Filtra quelle senza metodo pagamento assegnato
-        const daPagare = data.filter(f => !f.metodo_pagamento || f.metodo_pagamento === '');
+        // Filtra quelle senza metodo pagamento assegnato (stringa vuota, null, undefined, "None")
+        const daPagare = data.filter(f => {
+          const m = f.metodo_pagamento;
+          return !m || m === '' || m === 'None' || m === 'null';
+        });
         setFatture(daPagare.slice(0, 30));
       }).catch(() => {
         // Fallback fatture-ricevute
