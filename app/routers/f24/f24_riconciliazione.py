@@ -41,26 +41,27 @@ async def upload_f24_commercialista(
     
     - use_ai=False (default): Usa parser PyMuPDF (veloce e accurato)
     - use_ai=True: Usa AI per parsing (più lento, richiede crediti)
+    
+    Architettura MongoDB-only: salva PDF come Base64.
     """
     if not file.filename.lower().endswith('.pdf'):
         raise HTTPException(status_code=400, detail="Il file deve essere un PDF")
     
     db = Database.get_db()
     file_id = str(uuid.uuid4())
-    file_path = os.path.join(UPLOAD_DIR, f"{file_id}_{file.filename}")
     
-    # Salva file
+    # Architettura MongoDB-only: leggi contenuto e codifica in Base64
     try:
         content = await file.read()
-        with open(file_path, "wb") as f:
-            f.write(content)
+        import base64
+        pdf_base64 = base64.b64encode(content).decode('utf-8')
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Errore salvataggio: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Errore lettura file: {str(e)}")
     
-    # Parsing con PyMuPDF (parser principale, molto migliorato)
+    # Parsing con PyMuPDF (parser principale, usa bytes)
     parser_used = "pymupdf"
     try:
-        parsed = parse_f24_commercialista(file_path)
+        parsed = parse_f24_commercialista(pdf_content=content)
         
         # Se AI è richiesto e PyMuPDF trova pochi tributi, prova con AI
         if use_ai:
@@ -99,8 +100,6 @@ async def upload_f24_commercialista(
     })
     
     if existing_key:
-        # Rimuovi file temporaneo
-        os.remove(file_path)
         return {
             "success": False,
             "error": "F24 già presente nel sistema",
