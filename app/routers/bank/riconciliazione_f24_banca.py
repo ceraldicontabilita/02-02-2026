@@ -165,9 +165,18 @@ async def riconcilia_f24_con_banca():
             {"_id": 0}
         ).to_list(1000)
         
-        # Recupera movimenti F24 dalla banca
-        movimenti_f24 = await db["movimenti_f24_banca"].find(
-            {},
+        # Recupera movimenti F24 dalla collezione estratto_conto_movimenti
+        # Cerca movimenti con pattern F24 (I24 AGENZIA, AGENZIA ENTRATE, etc.)
+        query_f24_banca = {
+            "$or": [
+                {"descrizione_originale": {"$regex": "I24.*AGENZIA", "$options": "i"}},
+                {"descrizione_originale": {"$regex": "AGENZIA.*ENTRATE", "$options": "i"}},
+                {"descrizione_originale": {"$regex": "F24", "$options": "i"}},
+                {"categoria": {"$regex": "Tasse|Imposte|Tributi|F24", "$options": "i"}}
+            ]
+        }
+        movimenti_f24 = await db["estratto_conto_movimenti"].find(
+            query_f24_banca,
             {"_id": 0}
         ).to_list(1000)
         
@@ -181,8 +190,8 @@ async def riconcilia_f24_con_banca():
         if not movimenti_f24:
             return {
                 "success": False,
-                "message": "Nessun movimento F24 trovato nell'estratto conto",
-                "suggerimento": "Carica prima l'estratto conto Banco BPM tramite /api/f24-riconciliazione/upload-estratto-bpm"
+                "message": "Nessun movimento F24 trovato nell'estratto conto bancario",
+                "suggerimento": "L'estratto conto non contiene movimenti con pattern 'I24 AGENZIA ENTRATE'"
             }
         
         # Esegui riconciliazione
