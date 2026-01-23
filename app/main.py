@@ -323,7 +323,7 @@ app.include_router(pianificazione.router, prefix="/api/pianificazione", tags=["P
 app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
 app.include_router(verifica_coerenza.router, prefix="/api/verifica-coerenza", tags=["Verifica Coerenza Dati"])
 app.include_router(documenti.router, prefix="/api/documenti", tags=["Gestione Documenti Email"])
-app.include_router(operazioni_da_confermare.router, prefix="/api/operazioni-da-confermare", tags=["Operazioni da Confermare"])
+app.include_router(operazioni_router, prefix="/api/operazioni-da-confermare", tags=["Operazioni da Confermare"])
 app.include_router(previsioni_acquisti.router, prefix="/api/previsioni-acquisti", tags=["Previsioni Acquisti"])
 app.include_router(cedolini.router, prefix="/api/cedolini", tags=["Cedolini Paga"])
 app.include_router(cedolini_riconciliazione.router, prefix="/api/cedolini", tags=["Cedolini Riconciliazione"])
