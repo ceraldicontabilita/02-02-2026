@@ -305,8 +305,7 @@ async def elimina_documenti_processati() -> Dict[str, Any]:
     
     return {
         "success": True,
-        "documenti_eliminati": result.deleted_count,
-        "files_eliminati": files_deleted
+        "documenti_eliminati": result.deleted_count
     }
 
 
