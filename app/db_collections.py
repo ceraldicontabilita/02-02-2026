@@ -92,6 +92,8 @@ QUERY_ASSEGNI_PATTERN = {
 # COLLEZIONI DEPRECATE (non usare)
 # ===========================================
 # Le seguenti collezioni sono state sostituite o sono vuote:
-# - "f24" -> usare COLL_F24_COMMERCIALISTA o COLL_F24_MODELS
+# - "f24" -> DEPRECATA, usare COLL_F24 (f24_commercialista)
+# - "f24_models" -> DEPRECATA, usare COLL_F24 (f24_commercialista)
 # - "movimenti_f24_banca" -> vuota, usare COLL_ESTRATTO_CONTO con QUERY_F24_PATTERN
-# - "estratto_conto" -> vecchia versione, usare COLL_ESTRATTO_CONTO
+# - "estratto_conto" -> vecchia versione, usare COLL_ESTRATTO_CONTO (estratto_conto_movimenti)
+# - "warehouse_stocks" -> DEPRECATA, contiene dati errati, usare COLL_WAREHOUSE (warehouse_inventory)
