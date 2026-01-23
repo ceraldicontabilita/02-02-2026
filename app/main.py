@@ -362,6 +362,9 @@ app.include_router(email_scanner.router, tags=["Email Scanner"])
 # --- Download Completo Email con Salvataggio DB ---
 app.include_router(email_download.router, prefix="/api", tags=["Email Download"])
 
+# --- Inserimento Rapido Mobile ---
+app.include_router(inserimento_rapido.router, prefix="/api", tags=["Inserimento Rapido"])
+
 # --- Bonifici Stipendi da Email ---
 app.include_router(bonifici_stipendi.router, tags=["Bonifici Stipendi"])
 
