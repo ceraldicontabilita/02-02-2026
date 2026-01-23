@@ -702,27 +702,63 @@ export default function F24() {
               alignItems: 'center' 
             }}>
               <h3 style={{ margin: 0 }}>📄 {viewingPdf.name}</h3>
-              <button
-                onClick={() => setViewingPdf(null)}
-                style={{
-                  padding: '8px',
-                  background: '#f5f5f5',
-                  border: 'none',
-                  borderRadius: 4,
-                  cursor: 'pointer'
-                }}
-              >
-                <X size={20} />
-              </button>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <a
+                  href={viewingPdf.url}
+                  download={viewingPdf.name}
+                  style={{
+                    padding: '8px 16px',
+                    background: '#1976d2',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: 4,
+                    cursor: 'pointer',
+                    textDecoration: 'none',
+                    fontSize: 14
+                  }}
+                >
+                  ⬇️ Scarica
+                </a>
+                <a
+                  href={viewingPdf.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    padding: '8px 16px',
+                    background: '#388e3c',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: 4,
+                    cursor: 'pointer',
+                    textDecoration: 'none',
+                    fontSize: 14
+                  }}
+                >
+                  🔗 Apri in nuova tab
+                </a>
+                <button
+                  onClick={() => setViewingPdf(null)}
+                  style={{
+                    padding: '8px',
+                    background: '#f5f5f5',
+                    border: 'none',
+                    borderRadius: 4,
+                    cursor: 'pointer'
+                  }}
+                >
+                  <X size={20} />
+                </button>
+              </div>
             </div>
-            <div style={{ flex: 1, padding: 10 }}>
+            <div style={{ flex: 1, padding: 10, position: 'relative' }}>
               <iframe 
                 src={viewingPdf.url}
                 style={{ 
                   width: '100%', 
                   height: '100%', 
-                  border: 'none',
-                  borderRadius: 4
+                  border: '1px solid #ddd',
+                  borderRadius: 4,
+                  background: '#f5f5f5'
                 }}
                 title="PDF Viewer"
               />
