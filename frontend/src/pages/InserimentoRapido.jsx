@@ -356,7 +356,7 @@ export default function InserimentoRapido() {
     }
     setLoading(true);
     try {
-      await api.post('/api/attendance/presenza-rapida', {
+      await api.post('/api/rapido/presenza', {
         dipendente_id: formData.dipendente_id,
         data: formData.data || new Date().toISOString().split('T')[0],
         tipo: formData.tipo_presenza,
