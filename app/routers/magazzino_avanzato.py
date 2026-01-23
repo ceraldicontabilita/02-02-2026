@@ -306,11 +306,11 @@ async def scarico_per_produzione(
         unita = scarico["unita_misura"]
         
         try:
-            # Cerca articolo in magazzino (match fuzzy sul nome)
+            # Cerca articolo in warehouse_inventory (match fuzzy sul nome)
             articolo = await db[COLL_WAREHOUSE].find_one({
                 "$or": [
-                    {"descrizione": {"$regex": ingrediente, "$options": "i"}},
-                    {"descrizione_normalizzata": {"$regex": ingrediente.upper()[:10]}}
+                    {"nome": {"$regex": ingrediente, "$options": "i"}},
+                    {"nome_normalizzato": {"$regex": ingrediente.upper()[:10]}}
                 ]
             })
             
@@ -321,10 +321,10 @@ async def scarico_per_produzione(
                     # Scarica
                     nuova_giacenza = giacenza - qta_necessaria
                     await db[COLL_WAREHOUSE].update_one(
-                        {"_id": articolo["_id"]},
+                        {"id": articolo["id"]},
                         {"$set": {
                             "giacenza": nuova_giacenza,
-                            "ultimo_scarico": datetime.utcnow().isoformat()
+                            "updated_at": datetime.utcnow().isoformat()
                         }}
                     )
                     
@@ -333,8 +333,8 @@ async def scarico_per_produzione(
                         "id": str(uuid.uuid4()),
                         "tipo": "scarico_produzione",
                         "data": data_prod,
-                        "codice_articolo": articolo.get("codice"),
-                        "descrizione_articolo": articolo.get("descrizione"),
+                        "prodotto_id": articolo.get("id"),
+                        "prodotto_descrizione": articolo.get("nome"),
                         "quantita": -qta_necessaria,
                         "unita_misura": unita,
                         "ricetta_id": ricetta_id,
