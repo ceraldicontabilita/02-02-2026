@@ -1408,33 +1408,32 @@ async def genera_riepilogo_cedolini(
     db = Database.get_db()
     
     from app.parsers.payslip_parser_v2 import parse_payslip_pdf
+    import base64
     
-    # Se riprocessa, elabora tutti i PDF delle buste paga
-    if riprocessa:
-        # Cerca tutti i file buste paga su disco
-        import glob
-        pdf_files = glob.glob("/app/documents/Buste Paga/*.pdf")
-    else:
-        # Processa solo quelli non ancora nel riepilogo
-        docs = await db["documents_inbox"].find(
-            {"category": "busta_paga"},
-            {"_id": 0, "filepath": 1, "filename": 1}
-        ).to_list(5000)
-        pdf_files = [d.get("filepath") for d in docs if d.get("filepath")]
+    # Architettura MongoDB-only: elabora documenti da MongoDB
+    docs = await db["documents_inbox"].find(
+        {
+            "category": "busta_paga",
+            "pdf_data": {"$exists": True, "$nin": [None, ""]}
+        },
+        {"_id": 0, "pdf_data": 1, "filename": 1}
+    ).to_list(5000)
     
     nuovi = 0
     aggiornati = 0
     errori = []
     
-    for filepath in pdf_files:
-        if not filepath or not os.path.exists(filepath):
+    for doc in docs:
+        pdf_data = doc.get("pdf_data")
+        filename = doc.get("filename", "unknown.pdf")
+        
+        if not pdf_data:
             continue
         
-        filename = os.path.basename(filepath)
-        
         try:
-            # Usa nuovo parser migliorato
-            cedolini = parse_payslip_pdf(pdf_path=filepath)
+            # Decodifica PDF e usa parser con bytes
+            pdf_content = base64.b64decode(pdf_data)
+            cedolini = parse_payslip_pdf(pdf_content=pdf_content)
             
             for ced in cedolini:
                 cf = ced.get("codice_fiscale")
@@ -1449,7 +1448,7 @@ async def genera_riepilogo_cedolini(
                 if netto == 0:
                     continue
                 
-                # Record per riepilogo
+                # Record per riepilogo (MongoDB-only)
                 record = {
                     "nome_dipendente": ced.get("nome_dipendente"),
                     "codice_fiscale": cf,
@@ -1465,7 +1464,7 @@ async def genera_riepilogo_cedolini(
                     "ore_lavorate": ced.get("ore_lavorate", 0),
                     "iban": ced.get("iban"),
                     "filename": filename,
-                    "filepath": filepath,
+                    "pdf_data": pdf_data,  # Architettura MongoDB-only
                     "formato": ced.get("formato_rilevato"),
                     "updated_at": datetime.now(timezone.utc).isoformat()
                 }
