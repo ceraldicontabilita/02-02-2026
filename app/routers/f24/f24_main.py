@@ -358,32 +358,112 @@ async def create_f24(
 
 
 @router.post(
+    "/upload-pdf",
+    status_code=status.HTTP_201_CREATED,
+    summary="Upload PDF F24 e parsing automatico"
+)
+async def upload_f24_pdf(
+    file: UploadFile = File(...)
+) -> Dict[str, Any]:
+    """
+    Upload PDF F24 con parsing automatico.
+    Usa il parser basato su coordinate PyMuPDF.
+    Salva nella collezione unificata f24_commercialista.
+    """
+    import tempfile
+    import base64
+    from app.services.parser_f24 import parse_f24_commercialista
+    from app.db_collections import COLL_F24
+    
+    if not file.filename.lower().endswith('.pdf'):
+        raise HTTPException(status_code=400, detail="Solo file PDF supportati")
+    
+    db = Database.get_db()
+    pdf_bytes = await file.read()
+    
+    # Salva temporaneamente il PDF per il parser
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
+        tmp_file.write(pdf_bytes)
+        tmp_path = tmp_file.name
+    
+    try:
+        parsed = parse_f24_commercialista(tmp_path)
+    finally:
+        os.unlink(tmp_path)
+    
+    if "error" in parsed and parsed["error"]:
+        return {
+            "success": False,
+            "error": parsed["error"],
+            "filename": file.filename
+        }
+    
+    totali = parsed.get("totali", {})
+    dati = parsed.get("dati_generali", {})
+    data_scadenza = dati.get("data_versamento")
+    
+    # Check duplicati
+    existing = await db[COLL_F24].find_one({
+        "$or": [
+            {"dati_generali.data_scadenza": data_scadenza, "totali.saldo_netto": totali.get("saldo_finale", 0)},
+            {"file_name": file.filename}
+        ]
+    })
+    
+    if existing:
+        return {
+            "success": False,
+            "error": "F24 già presente nel sistema",
+            "existing_id": existing.get("id"),
+            "filename": file.filename
+        }
+    
+    # Crea documento nel formato f24_commercialista
+    f24_id = str(uuid4())
+    f24_doc = {
+        "id": f24_id,
+        "f24_key": f"{dati.get('codice_fiscale', '')}_{data_scadenza}",
+        "file_name": file.filename,
+        "file_path": None,
+        "dati_generali": dati,
+        "sezione_erario": parsed.get("sezione_erario", []),
+        "sezione_inps": parsed.get("sezione_inps", []),
+        "sezione_regioni": parsed.get("sezione_regioni", []),
+        "sezione_tributi_locali": parsed.get("sezione_tributi_locali", []),
+        "sezione_inail": parsed.get("sezione_inail", []),
+        "totali": totali,
+        "has_ravvedimento": parsed.get("has_ravvedimento", False),
+        "status": "da_pagare",
+        "riconciliato": False,
+        "pdf_data": base64.b64encode(pdf_bytes).decode('utf-8'),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db[COLL_F24].insert_one(f24_doc.copy())
+    
+    logger.info(f"F24 importato: {f24_id} - €{totali.get('saldo_netto', totali.get('saldo_finale', 0)):.2f}")
+    
+    return {
+        "success": True,
+        "id": f24_id,
+        "scadenza": data_scadenza,
+        "contribuente": dati.get("ragione_sociale"),
+        "saldo_finale": totali.get("saldo_netto", totali.get("saldo_finale", 0)),
+        "filename": file.filename
+    }
+
+
+@router.post(
     "/upload",
     status_code=status.HTTP_201_CREATED,
-    summary="Upload F24 form"
+    summary="Upload F24 form (legacy)"
 )
 async def upload_f24(
     file: UploadFile = File(...)
 ) -> Dict[str, Any]:
-    """Upload F24 form file."""
-    db = Database.get_db()
-    contents = await file.read()
-    
-    doc = {
-        "id": str(uuid4()),
-        "filename": file.filename,
-        "content_type": file.content_type,
-        "size": len(contents),
-        "status": "pending",
-        "created_at": datetime.now(timezone.utc).isoformat()
-    }
-    await db["f24"].insert_one(doc.copy())
-    
-    return {
-        "message": "F24 uploaded successfully",
-        "id": doc["id"],
-        "filename": file.filename
-    }
+    """Upload F24 form file - reindirizza a upload-pdf."""
+    return await upload_f24_pdf(file)
 
 
 @router.get(
