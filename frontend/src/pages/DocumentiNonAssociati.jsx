@@ -1,11 +1,227 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import api from '../api';
 import { 
   FileText, Search, CheckCircle, XCircle, ChevronRight, 
-  Calendar, Building, User, Car, Euro, Folder, Plus
+  Calendar, Building, User, Car, Euro, Folder, Plus,
+  ArrowLeft, Trash2, Eye, Download
 } from 'lucide-react';
-import api from '../api';
+
+// Stili inline coerenti con InserimentoRapido
+const styles = {
+  container: {
+    minHeight: '100vh',
+    background: 'var(--bg-primary, #f8fafc)',
+    padding: '12px',
+    paddingBottom: '80px'
+  },
+  header: {
+    background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
+    borderRadius: '12px',
+    padding: '16px',
+    marginBottom: '16px',
+    color: 'white'
+  },
+  headerTitle: {
+    fontSize: '18px',
+    fontWeight: '600',
+    margin: 0
+  },
+  headerSub: {
+    fontSize: '13px',
+    opacity: 0.9,
+    marginTop: '4px'
+  },
+  statsGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(3, 1fr)',
+    gap: '8px',
+    marginTop: '12px'
+  },
+  statBox: {
+    background: 'rgba(255,255,255,0.15)',
+    borderRadius: '8px',
+    padding: '10px',
+    textAlign: 'center'
+  },
+  statValue: {
+    fontSize: '20px',
+    fontWeight: '700'
+  },
+  statLabel: {
+    fontSize: '11px',
+    opacity: 0.9
+  },
+  card: {
+    background: 'white',
+    borderRadius: '12px',
+    padding: '16px',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    marginBottom: '12px'
+  },
+  cardTitle: {
+    fontSize: '16px',
+    fontWeight: '600',
+    marginBottom: '12px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    color: '#1e293b'
+  },
+  searchRow: {
+    display: 'flex',
+    gap: '8px',
+    marginBottom: '12px'
+  },
+  input: {
+    flex: 1,
+    padding: '12px',
+    fontSize: '14px',
+    border: '1px solid #e2e8f0',
+    borderRadius: '8px',
+    outline: 'none'
+  },
+  btn: {
+    padding: '12px 16px',
+    fontSize: '14px',
+    fontWeight: '500',
+    borderRadius: '8px',
+    border: 'none',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '6px',
+    transition: 'all 0.2s'
+  },
+  btnPrimary: {
+    background: '#2563eb',
+    color: 'white'
+  },
+  btnSuccess: {
+    background: '#22c55e',
+    color: 'white'
+  },
+  btnDanger: {
+    background: '#ef4444',
+    color: 'white'
+  },
+  btnOutline: {
+    background: 'white',
+    color: '#475569',
+    border: '1px solid #e2e8f0'
+  },
+  docItem: {
+    padding: '12px',
+    borderRadius: '8px',
+    border: '1px solid #e2e8f0',
+    marginBottom: '8px',
+    cursor: 'pointer',
+    transition: 'all 0.2s'
+  },
+  docItemActive: {
+    borderColor: '#2563eb',
+    background: '#eff6ff'
+  },
+  docName: {
+    fontSize: '14px',
+    fontWeight: '500',
+    color: '#1e293b',
+    marginBottom: '4px',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap'
+  },
+  docMeta: {
+    fontSize: '12px',
+    color: '#64748b',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap'
+  },
+  badge: {
+    display: 'inline-block',
+    padding: '2px 8px',
+    fontSize: '11px',
+    fontWeight: '500',
+    borderRadius: '4px',
+    marginRight: '4px'
+  },
+  badgeBlue: {
+    background: '#dbeafe',
+    color: '#1d4ed8'
+  },
+  badgeGreen: {
+    background: '#dcfce7',
+    color: '#15803d'
+  },
+  badgeOrange: {
+    background: '#fed7aa',
+    color: '#c2410c'
+  },
+  label: {
+    display: 'block',
+    fontSize: '13px',
+    fontWeight: '500',
+    marginBottom: '6px',
+    color: '#475569'
+  },
+  select: {
+    width: '100%',
+    padding: '12px',
+    fontSize: '14px',
+    border: '1px solid #e2e8f0',
+    borderRadius: '8px',
+    outline: 'none',
+    marginBottom: '12px'
+  },
+  infoBox: {
+    background: '#eff6ff',
+    border: '1px solid #bfdbfe',
+    borderRadius: '8px',
+    padding: '12px',
+    marginBottom: '12px'
+  },
+  infoTitle: {
+    fontSize: '13px',
+    fontWeight: '600',
+    color: '#1d4ed8',
+    marginBottom: '8px'
+  },
+  infoItem: {
+    fontSize: '12px',
+    color: '#475569',
+    marginBottom: '4px'
+  },
+  textarea: {
+    width: '100%',
+    padding: '12px',
+    fontSize: '13px',
+    fontFamily: 'monospace',
+    border: '1px solid #e2e8f0',
+    borderRadius: '8px',
+    outline: 'none',
+    resize: 'vertical',
+    minHeight: '80px'
+  },
+  btnRow: {
+    display: 'flex',
+    gap: '8px',
+    marginTop: '12px'
+  },
+  emptyState: {
+    padding: '40px',
+    textAlign: 'center',
+    color: '#94a3b8'
+  },
+  listContainer: {
+    maxHeight: '400px',
+    overflowY: 'auto'
+  }
+};
 
 const DocumentiNonAssociati = () => {
+  const navigate = useNavigate();
   const [documenti, setDocumenti] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -14,10 +230,10 @@ const DocumentiNonAssociati = () => {
   const [collezioniDisponibili, setCollezioniDisponibili] = useState([]);
   const [associazioneForm, setAssociazioneForm] = useState({
     collezione: '',
-    creaNuovo: true,
-    campi: {}
+    campiJson: ''
   });
   const [nuovaCollezione, setNuovaCollezione] = useState('');
+  const [message, setMessage] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -36,6 +252,7 @@ const DocumentiNonAssociati = () => {
       setCollezioniDisponibili(collRes.data || []);
     } catch (err) {
       console.error('Errore caricamento:', err);
+      setMessage({ type: 'error', text: 'Errore caricamento dati' });
     }
     setLoading(false);
   };
@@ -43,7 +260,7 @@ const DocumentiNonAssociati = () => {
   const handleSearch = async () => {
     setLoading(true);
     try {
-      const res = await api.get(`/api/documenti-non-associati/lista?search=${search}&limit=100`);
+      const res = await api.get(`/api/documenti-non-associati/lista?search=${encodeURIComponent(search)}&limit=100`);
       setDocumenti(res.data.documenti || []);
     } catch (err) {
       console.error('Errore ricerca:', err);
@@ -54,20 +271,44 @@ const DocumentiNonAssociati = () => {
   const handleAssocia = async () => {
     if (!selectedDoc) return;
     
+    const collezione = nuovaCollezione || associazioneForm.collezione;
+    if (!collezione) {
+      setMessage({ type: 'error', text: 'Seleziona una collezione' });
+      return;
+    }
+    
     try {
+      let campi = {};
+      if (associazioneForm.campiJson) {
+        try {
+          campi = JSON.parse(associazioneForm.campiJson);
+        } catch {
+          setMessage({ type: 'error', text: 'JSON campi non valido' });
+          return;
+        }
+      }
+      
+      // Aggiungi campi dalla proposta se presenti
+      if (selectedDoc.proposta) {
+        if (selectedDoc.proposta.anno_suggerito) campi.anno = selectedDoc.proposta.anno_suggerito;
+        if (selectedDoc.proposta.mese_suggerito) campi.mese = selectedDoc.proposta.mese_suggerito;
+      }
+      
       const payload = {
         documento_id: selectedDoc.id,
-        collezione_target: nuovaCollezione || associazioneForm.collezione,
-        crea_nuovo: associazioneForm.creaNuovo,
-        campi_associazione: associazioneForm.campi
+        collezione_target: collezione,
+        crea_nuovo: true,
+        campi_associazione: campi
       };
       
       await api.post('/api/documenti-non-associati/associa', payload);
-      alert('Documento associato con successo!');
+      setMessage({ type: 'success', text: 'Documento associato!' });
       setSelectedDoc(null);
+      setNuovaCollezione('');
+      setAssociazioneForm({ collezione: '', campiJson: '' });
       loadData();
     } catch (err) {
-      alert('Errore: ' + (err.response?.data?.detail || err.message));
+      setMessage({ type: 'error', text: err.response?.data?.detail || 'Errore associazione' });
     }
   };
 
@@ -76,305 +317,241 @@ const DocumentiNonAssociati = () => {
     
     try {
       await api.delete(`/api/documenti-non-associati/${docId}`);
+      setMessage({ type: 'success', text: 'Documento eliminato' });
+      setSelectedDoc(null);
       loadData();
     } catch (err) {
-      alert('Errore eliminazione');
+      setMessage({ type: 'error', text: 'Errore eliminazione' });
     }
   };
 
-  const getCategoryIcon = (category) => {
+  const getCategoryColor = (category) => {
     switch (category) {
-      case 'fattura': return <FileText size={20} className="text-blue-500" />;
-      case 'f24': return <Calendar size={20} className="text-red-500" />;
-      case 'busta_paga': return <User size={20} className="text-green-500" />;
-      case 'verbale': return <Car size={20} className="text-orange-500" />;
-      case 'cartella': return <Building size={20} className="text-purple-500" />;
-      default: return <Folder size={20} className="text-gray-500" />;
+      case 'fattura': return '#3b82f6';
+      case 'f24': return '#ef4444';
+      case 'busta_paga': return '#22c55e';
+      case 'verbale': return '#f97316';
+      case 'cartella': return '#8b5cf6';
+      default: return '#64748b';
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">
-            📂 Documenti Non Associati
-          </h1>
-          <p className="text-gray-600">
-            Gestisci i documenti scaricati dalle email che non sono ancora stati associati
-          </p>
+    <div style={styles.container}>
+      {/* Header */}
+      <div style={styles.header}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <button 
+            onClick={() => navigate(-1)}
+            style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', padding: '4px' }}
+          >
+            <ArrowLeft size={20} />
+          </button>
+          <div>
+            <h1 style={styles.headerTitle}>Documenti Non Associati</h1>
+            <p style={styles.headerSub}>Gestisci e associa i documenti scaricati</p>
+          </div>
+        </div>
+        
+        {stats && (
+          <div style={styles.statsGrid}>
+            <div style={styles.statBox}>
+              <div style={styles.statValue}>{stats.totale}</div>
+              <div style={styles.statLabel}>Totali</div>
+            </div>
+            <div style={styles.statBox}>
+              <div style={styles.statValue}>{stats.associati}</div>
+              <div style={styles.statLabel}>Associati</div>
+            </div>
+            <div style={styles.statBox}>
+              <div style={styles.statValue}>{stats.da_associare}</div>
+              <div style={styles.statLabel}>Da fare</div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Message */}
+      {message && (
+        <div style={{
+          ...styles.card,
+          background: message.type === 'success' ? '#dcfce7' : '#fee2e2',
+          borderLeft: `4px solid ${message.type === 'success' ? '#22c55e' : '#ef4444'}`
+        }}>
+          <span style={{ color: message.type === 'success' ? '#15803d' : '#dc2626' }}>
+            {message.text}
+          </span>
+        </div>
+      )}
+
+      {/* Search */}
+      <div style={styles.card}>
+        <div style={styles.searchRow}>
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Cerca per nome file..."
+            style={styles.input}
+            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+          />
+          <button onClick={handleSearch} style={{ ...styles.btn, ...styles.btnPrimary }}>
+            <Search size={18} />
+          </button>
+        </div>
+      </div>
+
+      {/* Main Content - Two Column Layout */}
+      <div style={{ display: 'grid', gridTemplateColumns: selectedDoc ? '1fr 1fr' : '1fr', gap: '12px' }}>
+        {/* Document List */}
+        <div style={styles.card}>
+          <div style={styles.cardTitle}>
+            <FileText size={18} />
+            Documenti ({documenti.length})
+          </div>
           
-          {/* Stats */}
-          {stats && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-              <div className="bg-blue-50 rounded-lg p-4">
-                <div className="text-2xl font-bold text-blue-600">{stats.totale}</div>
-                <div className="text-sm text-gray-600">Totali</div>
-              </div>
-              <div className="bg-green-50 rounded-lg p-4">
-                <div className="text-2xl font-bold text-green-600">{stats.associati}</div>
-                <div className="text-sm text-gray-600">Associati</div>
-              </div>
-              <div className="bg-orange-50 rounded-lg p-4">
-                <div className="text-2xl font-bold text-orange-600">{stats.da_associare}</div>
-                <div className="text-sm text-gray-600">Da Associare</div>
-              </div>
-              <div className="bg-purple-50 rounded-lg p-4">
-                <div className="text-2xl font-bold text-purple-600">
-                  {Object.keys(stats.per_categoria || {}).length}
-                </div>
-                <div className="text-sm text-gray-600">Categorie</div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Search */}
-        <div className="bg-white rounded-xl shadow-sm p-4 mb-6">
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Cerca per nome file o oggetto email..."
-              className="flex-1 border rounded-lg px-4 py-2"
-              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-            />
-            <button
-              onClick={handleSearch}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"
-            >
-              <Search size={20} /> Cerca
-            </button>
-          </div>
-        </div>
-
-        {/* Documents List */}
-        <div className="grid md:grid-cols-2 gap-4">
-          {/* Left: Document List */}
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-            <div className="p-4 border-b bg-gray-50">
-              <h2 className="font-semibold">Documenti ({documenti.length})</h2>
-            </div>
-            <div className="max-h-[600px] overflow-y-auto">
-              {loading ? (
-                <div className="p-8 text-center text-gray-500">Caricamento...</div>
-              ) : documenti.length === 0 ? (
-                <div className="p-8 text-center text-gray-500">Nessun documento</div>
-              ) : (
-                documenti.map((doc) => (
-                  <div
-                    key={doc.id}
-                    onClick={() => setSelectedDoc(doc)}
-                    className={`p-4 border-b cursor-pointer hover:bg-gray-50 ${
-                      selectedDoc?.id === doc.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
-                    }`}
-                  >
-                    <div className="flex items-start gap-3">
-                      {getCategoryIcon(doc.category)}
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium text-gray-800 truncate">
-                          {doc.filename}
-                        </div>
-                        <div className="text-sm text-gray-500 truncate">
-                          {doc.email_subject}
-                        </div>
-                        <div className="flex gap-2 mt-1">
-                          <span className="text-xs bg-gray-100 px-2 py-0.5 rounded">
-                            {doc.category || 'altro'}
-                          </span>
-                          {doc.proposta?.anno_suggerito && (
-                            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
-                              Anno: {doc.proposta.anno_suggerito}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <ChevronRight size={20} className="text-gray-400" />
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* Right: Detail & Association */}
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-            {selectedDoc ? (
-              <div className="p-4">
-                <h2 className="font-semibold mb-4">Dettaglio Documento</h2>
-                
-                {/* Document Info */}
-                <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div><span className="text-gray-500">File:</span></div>
-                    <div className="font-medium truncate">{selectedDoc.filename}</div>
-                    
-                    <div><span className="text-gray-500">Categoria:</span></div>
-                    <div className="font-medium">{selectedDoc.category || 'Non classificato'}</div>
-                    
-                    <div><span className="text-gray-500">Data email:</span></div>
-                    <div className="font-medium">{selectedDoc.email_date?.split('T')[0] || 'N/D'}</div>
-                    
-                    <div><span className="text-gray-500">Dimensione:</span></div>
-                    <div className="font-medium">{Math.round((selectedDoc.size_bytes || 0) / 1024)} KB</div>
-                  </div>
-                </div>
-
-                {/* AI Suggestion */}
-                {selectedDoc.proposta && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                    <h3 className="font-medium text-blue-800 mb-2">💡 Proposta Intelligente</h3>
-                    <div className="text-sm space-y-1">
-                      {selectedDoc.proposta.tipo_suggerito && (
-                        <div>
-                          <span className="text-gray-600">Tipo suggerito:</span>{' '}
-                          <span className="font-medium">{selectedDoc.proposta.tipo_suggerito}</span>
-                        </div>
-                      )}
-                      {selectedDoc.proposta.anno_suggerito && (
-                        <div>
-                          <span className="text-gray-600">Anno:</span>{' '}
-                          <span className="font-medium">{selectedDoc.proposta.anno_suggerito}</span>
-                        </div>
-                      )}
-                      {selectedDoc.proposta.mese_suggerito && (
-                        <div>
-                          <span className="text-gray-600">Mese:</span>{' '}
-                          <span className="font-medium">{selectedDoc.proposta.mese_suggerito}</span>
-                        </div>
-                      )}
-                      {selectedDoc.proposta.entita_suggerita && (
-                        <div>
-                          <span className="text-gray-600">Entità:</span>{' '}
-                          <span className="font-medium">{selectedDoc.proposta.entita_suggerita}</span>
-                        </div>
-                      )}
-                      {selectedDoc.proposta.campi_proposti?.targa && (
-                        <div>
-                          <span className="text-gray-600">Targa:</span>{' '}
-                          <span className="font-medium">{selectedDoc.proposta.campi_proposti.targa}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Association Form */}
-                <div className="space-y-4">
-                  <h3 className="font-medium">Associa a:</h3>
-                  
-                  <div>
-                    <label className="block text-sm text-gray-600 mb-1">Collezione</label>
-                    <select
-                      value={associazioneForm.collezione}
-                      onChange={(e) => setAssociazioneForm({...associazioneForm, collezione: e.target.value})}
-                      className="w-full border rounded-lg px-3 py-2"
-                    >
-                      <option value="">-- Seleziona --</option>
-                      {collezioniDisponibili.map((c) => (
-                        <option key={c.value} value={c.value}>{c.label}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm text-gray-600 mb-1">
-                      Oppure crea nuova collezione:
-                    </label>
-                    <input
-                      type="text"
-                      value={nuovaCollezione}
-                      onChange={(e) => setNuovaCollezione(e.target.value)}
-                      placeholder="nome_collezione"
-                      className="w-full border rounded-lg px-3 py-2"
-                    />
-                  </div>
-
-                  {/* Dynamic Fields based on suggestion */}
-                  {selectedDoc.proposta?.tipo_suggerito === 'verbali' && (
-                    <div className="bg-orange-50 rounded-lg p-3 space-y-2">
-                      <div className="text-sm font-medium text-orange-800">Campi Verbale</div>
-                      <input
-                        placeholder="Targa veicolo (es: AB123CD)"
-                        value={associazioneForm.campi.targa || selectedDoc.proposta?.campi_proposti?.targa || ''}
-                        onChange={(e) => setAssociazioneForm({
-                          ...associazioneForm,
-                          campi: {...associazioneForm.campi, targa: e.target.value}
-                        })}
-                        className="w-full border rounded px-2 py-1 text-sm"
-                      />
-                      <input
-                        placeholder="Anno (es: 2024)"
-                        type="number"
-                        value={associazioneForm.campi.anno || selectedDoc.proposta?.anno_suggerito || ''}
-                        onChange={(e) => setAssociazioneForm({
-                          ...associazioneForm,
-                          campi: {...associazioneForm.campi, anno: parseInt(e.target.value)}
-                        })}
-                        className="w-full border rounded px-2 py-1 text-sm"
-                      />
-                      <input
-                        placeholder="Importo (es: 150.00)"
-                        type="number"
-                        step="0.01"
-                        value={associazioneForm.campi.importo || ''}
-                        onChange={(e) => setAssociazioneForm({
-                          ...associazioneForm,
-                          campi: {...associazioneForm.campi, importo: parseFloat(e.target.value)}
-                        })}
-                        className="w-full border rounded px-2 py-1 text-sm"
-                      />
-                    </div>
-                  )}
-
-                  {/* Custom Fields */}
-                  <div>
-                    <label className="block text-sm text-gray-600 mb-1">
-                      Campi personalizzati (JSON):
-                    </label>
-                    <textarea
-                      placeholder='{"anno": 2024, "descrizione": "..."}'
-                      className="w-full border rounded-lg px-3 py-2 text-sm font-mono"
-                      rows={3}
-                      onChange={(e) => {
-                        try {
-                          const json = JSON.parse(e.target.value);
-                          setAssociazioneForm({
-                            ...associazioneForm,
-                            campi: {...associazioneForm.campi, ...json}
-                          });
-                        } catch {}
-                      }}
-                    />
-                  </div>
-
-                  <div className="flex gap-2">
-                    <button
-                      onClick={handleAssocia}
-                      disabled={!associazioneForm.collezione && !nuovaCollezione}
-                      className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 disabled:opacity-50"
-                    >
-                      <CheckCircle size={20} /> Associa
-                    </button>
-                    <button
-                      onClick={() => handleDelete(selectedDoc.id)}
-                      className="bg-red-600 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2"
-                    >
-                      <XCircle size={20} /> Elimina
-                    </button>
-                  </div>
-                </div>
+          <div style={styles.listContainer}>
+            {loading ? (
+              <div style={styles.emptyState}>Caricamento...</div>
+            ) : documenti.length === 0 ? (
+              <div style={styles.emptyState}>
+                <Folder size={40} style={{ marginBottom: '8px', opacity: 0.5 }} />
+                <div>Nessun documento</div>
               </div>
             ) : (
-              <div className="p-8 text-center text-gray-500">
-                <FileText size={48} className="mx-auto mb-4 opacity-50" />
-                <p>Seleziona un documento dalla lista per vedere i dettagli e associarlo</p>
-              </div>
+              documenti.map((doc) => (
+                <div
+                  key={doc.id}
+                  onClick={() => setSelectedDoc(doc)}
+                  style={{
+                    ...styles.docItem,
+                    ...(selectedDoc?.id === doc.id ? styles.docItemActive : {})
+                  }}
+                >
+                  <div style={styles.docName}>{doc.filename}</div>
+                  <div style={styles.docMeta}>{doc.email_subject}</div>
+                  <div style={{ marginTop: '6px' }}>
+                    <span style={{
+                      ...styles.badge,
+                      background: getCategoryColor(doc.category) + '20',
+                      color: getCategoryColor(doc.category)
+                    }}>
+                      {doc.category || 'altro'}
+                    </span>
+                    {doc.proposta?.anno_suggerito && (
+                      <span style={{ ...styles.badge, ...styles.badgeBlue }}>
+                        {doc.proposta.anno_suggerito}
+                      </span>
+                    )}
+                    {doc.proposta?.mese_suggerito && (
+                      <span style={{ ...styles.badge, ...styles.badgeGreen }}>
+                        Mese {doc.proposta.mese_suggerito}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))
             )}
           </div>
         </div>
+
+        {/* Detail Panel */}
+        {selectedDoc && (
+          <div style={styles.card}>
+            <div style={styles.cardTitle}>
+              <Eye size={18} />
+              Dettaglio
+            </div>
+            
+            {/* File Info */}
+            <div style={{ marginBottom: '12px' }}>
+              <div style={styles.label}>File</div>
+              <div style={{ fontSize: '14px', fontWeight: '500', wordBreak: 'break-all' }}>
+                {selectedDoc.filename}
+              </div>
+            </div>
+            
+            <div style={{ marginBottom: '12px' }}>
+              <div style={styles.label}>Categoria rilevata</div>
+              <div style={{ fontSize: '14px' }}>{selectedDoc.category || 'Non classificato'}</div>
+            </div>
+            
+            <div style={{ marginBottom: '12px' }}>
+              <div style={styles.label}>Dimensione</div>
+              <div style={{ fontSize: '14px' }}>{Math.round((selectedDoc.size_bytes || 0) / 1024)} KB</div>
+            </div>
+
+            {/* AI Suggestion */}
+            {selectedDoc.proposta && (selectedDoc.proposta.anno_suggerito || selectedDoc.proposta.tipo_suggerito) && (
+              <div style={styles.infoBox}>
+                <div style={styles.infoTitle}>💡 Proposta Intelligente</div>
+                {selectedDoc.proposta.tipo_suggerito && (
+                  <div style={styles.infoItem}>Tipo: <strong>{selectedDoc.proposta.tipo_suggerito}</strong></div>
+                )}
+                {selectedDoc.proposta.anno_suggerito && (
+                  <div style={styles.infoItem}>Anno: <strong>{selectedDoc.proposta.anno_suggerito}</strong></div>
+                )}
+                {selectedDoc.proposta.mese_suggerito && (
+                  <div style={styles.infoItem}>Mese: <strong>{selectedDoc.proposta.mese_suggerito}</strong></div>
+                )}
+                {selectedDoc.proposta.entita_suggerita && (
+                  <div style={styles.infoItem}>Entità: <strong>{selectedDoc.proposta.entita_suggerita}</strong></div>
+                )}
+              </div>
+            )}
+
+            {/* Association Form */}
+            <div style={styles.label}>Associa a collezione</div>
+            <select
+              value={associazioneForm.collezione}
+              onChange={(e) => setAssociazioneForm({...associazioneForm, collezione: e.target.value})}
+              style={styles.select}
+            >
+              <option value="">-- Seleziona --</option>
+              {collezioniDisponibili.map((c) => (
+                <option key={c.value} value={c.value}>{c.label}</option>
+              ))}
+            </select>
+
+            <div style={styles.label}>Oppure crea nuova collezione</div>
+            <input
+              type="text"
+              value={nuovaCollezione}
+              onChange={(e) => setNuovaCollezione(e.target.value)}
+              placeholder="nome_collezione"
+              style={{ ...styles.input, marginBottom: '12px' }}
+            />
+
+            <div style={styles.label}>Campi aggiuntivi (JSON)</div>
+            <textarea
+              value={associazioneForm.campiJson}
+              onChange={(e) => setAssociazioneForm({...associazioneForm, campiJson: e.target.value})}
+              placeholder='{"anno": 2024, "importo": 150.00}'
+              style={styles.textarea}
+            />
+
+            <div style={styles.btnRow}>
+              <button
+                onClick={handleAssocia}
+                disabled={!associazioneForm.collezione && !nuovaCollezione}
+                style={{ 
+                  ...styles.btn, 
+                  ...styles.btnSuccess, 
+                  flex: 1,
+                  opacity: (!associazioneForm.collezione && !nuovaCollezione) ? 0.5 : 1
+                }}
+              >
+                <CheckCircle size={18} /> Associa
+              </button>
+              <button
+                onClick={() => handleDelete(selectedDoc.id)}
+                style={{ ...styles.btn, ...styles.btnDanger }}
+              >
+                <Trash2 size={18} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
