@@ -1,6 +1,9 @@
 """
 Router per Riconciliazione F24 con Estratto Conto Bancario
 Supporta formato Banco BPM
+
+NOTA: Questo router è registrato con prefix /api/f24-riconciliazione
+insieme a f24_riconciliazione.py per gli endpoint banca-specifici.
 """
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from typing import List, Optional
@@ -8,6 +11,11 @@ from datetime import datetime
 import logging
 
 from app.database import Database
+from app.db_collections import (
+    COLL_ESTRATTO_CONTO,
+    COLL_F24_COMMERCIALISTA,
+    QUERY_F24_PATTERN
+)
 from app.services.estratto_conto_bpm_parser import (
     parse_estratto_conto_bpm,
     riconcilia_f24_con_estratto,
