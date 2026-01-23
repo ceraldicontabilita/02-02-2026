@@ -353,8 +353,6 @@ GET  /api/liquidazione-iva/export/pdf/{anno}/{mese}
    - File monolitico di 2378 righe suddiviso in 5 file modulari (790 righe totali, **-66.8%**)
    - Struttura: `common.py`, `base.py`, `smart.py`, `carta.py`
 9. **CANDIDATI FUTURI REFACTORING** (file >2000 righe):
-   - `archivio_bonifici.py` (2438 righe)
-   - `operazioni_da_confermare.py` (2378 righe)
    - `documenti.py` (2354 righe)
    - `riconciliazione_intelligente.py` (2107 righe - servizio)
    - `dipendenti.py` (2104 righe)
