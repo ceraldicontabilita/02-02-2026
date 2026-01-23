@@ -337,7 +337,16 @@ GET  /api/liquidazione-iva/export/pdf/{anno}/{mese}
    - File monolitico di 2843 righe suddiviso in 8 file modulari (1971 righe totali, -30.7%)
    - Struttura: `common.py`, `cassa.py`, `banca.py`, `salari.py`, `stats.py`, `sync.py`, `manutenzione.py`
    - Rimossi endpoint duplicati, codice riorganizzato per funzionalità
+   - File deprecated eliminato
    - Tutti gli endpoint funzionanti e testati
+5. Test automatici con pytest
+6. **CANDIDATI FUTURI REFACTORING** (file >2000 righe):
+   - `fatture_ricevute.py` (2469 righe)
+   - `archivio_bonifici.py` (2438 righe)
+   - `operazioni_da_confermare.py` (2378 righe)
+   - `documenti.py` (2354 righe)
+   - `riconciliazione_intelligente.py` (2107 righe - servizio)
+   - `dipendenti.py` (2104 righe)
 5. Test automatici con pytest
 
 ### 7.3 🟠 P2 - Bassa Priorità
