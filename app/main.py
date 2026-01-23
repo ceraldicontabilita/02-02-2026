@@ -157,12 +157,14 @@ from app.routers import (
     comparatore, gestione_riservata, commercialista, scadenze,
     riconciliazione_fornitori, ordini_fornitori, payroll, documents,
     pianificazione, admin, verifica_coerenza, documenti,
-    operazioni_da_confermare, previsioni_acquisti,
+    previsioni_acquisti,
     cedolini, tfr, cespiti, scadenzario_fornitori,
     controllo_gestione, indici_bilancio, chiusura_esercizio,
     gestione_iva_speciale, configurazioni, alerts, import_templates,
     dizionario_prodotti, inventario
 )
+# Operazioni da Confermare modularizzato
+from app.routers.operazioni_module import router as operazioni_router
 from app.routers.suppliers_module import router as suppliers_router
 from app.routers import cedolini_riconciliazione
 from app.routers import parlant_api
