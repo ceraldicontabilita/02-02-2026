@@ -16,6 +16,8 @@ from app.services.email_full_download import (
     smart_auto_associate_v2,
     populate_payslips_pdf_data,
     get_documents_inbox_stats,
+    sync_filesystem_pdfs_to_db,
+    associate_f24_from_filesystem,
     CATEGORY_COLLECTIONS
 )
 
