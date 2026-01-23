@@ -11,6 +11,7 @@ import { UploadProvider } from "./contexts/UploadContext";
 import { UploadStatusBar } from "./components/UploadStatusBar";
 
 const NAV_ITEMS = [
+  { to: "/rapido", label: "📱 Inserimento Rapido", icon: "📱", short: "Rapido", isNew: true, highlight: true },
   { to: "/", label: "Dashboard", icon: "📊", short: "Home" },
   { to: "/analytics", label: "Analytics", icon: "📈", short: "Analytics", isNew: true },
   
