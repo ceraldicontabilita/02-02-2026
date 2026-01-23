@@ -1800,3 +1800,302 @@ async def import_busta_paga_to_dipendente(dipendente_id: str) -> Dict[str, Any]:
         "progressivi_importati": update_data,
         "fonte": progressivi.get('fonte')
     }
+
+
+
+# ============== REPORT PDF FERIE/PERMESSI ==============
+
+@router.get("/{dipendente_id}/report-ferie-permessi")
+async def genera_report_ferie_permessi(
+    dipendente_id: str,
+    anno: int = Query(None, description="Anno di riferimento (default: anno corrente)")
+) -> Dict[str, Any]:
+    """
+    Genera report PDF annuale ferie e permessi per un dipendente.
+    Include: progressivi, storico mensile, riepilogo annuale.
+    """
+    from fastapi.responses import Response
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import cm
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
+    from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+    import io
+    
+    db = Database.get_db()
+    
+    if not anno:
+        anno = datetime.now().year
+    
+    # Trova dipendente
+    dipendente = await db[Collections.EMPLOYEES].find_one(
+        {"$or": [{"id": dipendente_id}, {"codice_fiscale": dipendente_id}]},
+        {"_id": 0}
+    )
+    
+    if not dipendente:
+        raise HTTPException(status_code=404, detail="Dipendente non trovato")
+    
+    nome = dipendente.get("nome_completo") or dipendente.get("name") or f"{dipendente.get('cognome', '')} {dipendente.get('nome', '')}"
+    cf = dipendente.get("codice_fiscale", "N/A")
+    progressivi = dipendente.get("progressivi", {})
+    
+    # Recupera cedolini dell'anno per storico mensile
+    cedolini = await db["cedolini"].find({
+        "$or": [
+            {"dipendente_id": dipendente_id},
+            {"codice_fiscale": cf}
+        ],
+        "anno": anno
+    }, {"_id": 0}).sort("mese", 1).to_list(12)
+    
+    # Prepara dati
+    ferie_maturate = progressivi.get("ferie_maturate", 0)
+    ferie_godute = progressivi.get("ferie_godute", 0)
+    ferie_residue = progressivi.get("ferie_residue", 0)
+    permessi_maturati = progressivi.get("permessi_maturati", 0)
+    permessi_goduti = progressivi.get("permessi_goduti", 0)
+    permessi_residui = progressivi.get("permessi_residui", 0)
+    rol_maturati = progressivi.get("rol_maturati", 0)
+    rol_goduti = progressivi.get("rol_goduti", 0)
+    rol_residui = progressivi.get("rol_residui", 0)
+    
+    # Genera PDF
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=1.5*cm, bottomMargin=1.5*cm)
+    
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle('Title', parent=styles['Heading1'], fontSize=18, alignment=TA_CENTER, spaceAfter=20)
+    subtitle_style = ParagraphStyle('Subtitle', parent=styles['Heading2'], fontSize=14, alignment=TA_CENTER, spaceAfter=10)
+    normal_style = ParagraphStyle('Normal', parent=styles['Normal'], fontSize=10)
+    header_style = ParagraphStyle('Header', parent=styles['Normal'], fontSize=10, fontName='Helvetica-Bold')
+    
+    elements = []
+    
+    # Intestazione
+    elements.append(Paragraph(f"REPORT FERIE E PERMESSI {anno}", title_style))
+    elements.append(Paragraph(f"{nome}", subtitle_style))
+    elements.append(Paragraph(f"Codice Fiscale: {cf}", normal_style))
+    elements.append(Paragraph(f"Data generazione: {datetime.now().strftime('%d/%m/%Y %H:%M')}", normal_style))
+    elements.append(Spacer(1, 20))
+    
+    # Tabella Riepilogo
+    elements.append(Paragraph("RIEPILOGO PROGRESSIVI", header_style))
+    elements.append(Spacer(1, 10))
+    
+    data_riepilogo = [
+        ["Voce", "Maturate", "Godute", "Residue"],
+        ["Ferie (giorni)", f"{ferie_maturate:.1f}", f"{ferie_godute:.1f}", f"{ferie_residue:.2f}"],
+        ["Permessi (ore)", f"{permessi_maturati:.2f}", f"{permessi_goduti:.2f}", f"{permessi_residui:.2f}"],
+        ["ROL (ore)", f"{rol_maturati:.2f}", f"{rol_goduti:.2f}", f"{rol_residui:.2f}"],
+    ]
+    
+    table_riepilogo = Table(data_riepilogo, colWidths=[6*cm, 3*cm, 3*cm, 3*cm])
+    table_riepilogo.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1e3a5f')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#f8f9fa')),
+        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#dee2e6')),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f8f9fa')]),
+    ]))
+    elements.append(table_riepilogo)
+    elements.append(Spacer(1, 30))
+    
+    # Tabella Storico Mensile (se ci sono cedolini)
+    if cedolini:
+        elements.append(Paragraph("DETTAGLIO MENSILE", header_style))
+        elements.append(Spacer(1, 10))
+        
+        mesi_nomi = ["Gen", "Feb", "Mar", "Apr", "Mag", "Giu", "Lug", "Ago", "Set", "Ott", "Nov", "Dic"]
+        
+        data_mensile = [["Mese", "Ferie Godute", "Permessi Goduti", "Netto Busta"]]
+        
+        for ced in cedolini:
+            mese_num = ced.get("mese", 0)
+            mese_nome = mesi_nomi[mese_num - 1] if 1 <= mese_num <= 12 else str(mese_num)
+            ferie_g = ced.get("ferie_godute", 0) or 0
+            perm_g = ced.get("permessi_goduti", ced.get("ore_permesso", 0)) or 0
+            netto = ced.get("netto", ced.get("netto_mese", 0)) or 0
+            
+            data_mensile.append([
+                f"{mese_nome} {anno}",
+                f"{ferie_g:.1f}" if ferie_g else "-",
+                f"{perm_g:.1f}" if perm_g else "-",
+                f"€ {netto:,.2f}"
+            ])
+        
+        table_mensile = Table(data_mensile, colWidths=[4*cm, 4*cm, 4*cm, 4*cm])
+        table_mensile.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1e3a5f')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 9),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#dee2e6')),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f8f9fa')]),
+        ]))
+        elements.append(table_mensile)
+        elements.append(Spacer(1, 20))
+    
+    # Note finali
+    elements.append(Spacer(1, 20))
+    elements.append(Paragraph("NOTE", header_style))
+    elements.append(Paragraph(f"• Anno di riferimento progressivi: {progressivi.get('anno_riferimento', anno)}", normal_style))
+    elements.append(Paragraph(f"• Mese di riferimento: {progressivi.get('mese_riferimento', 'N/A')}", normal_style))
+    if progressivi.get('fonte_busta_paga'):
+        elements.append(Paragraph(f"• Fonte dati: {progressivi.get('fonte_busta_paga')}", normal_style))
+    
+    # Footer
+    elements.append(Spacer(1, 40))
+    elements.append(Paragraph("_" * 50, normal_style))
+    elements.append(Paragraph("Documento generato automaticamente dal sistema ERP", 
+                              ParagraphStyle('Footer', parent=normal_style, fontSize=8, textColor=colors.gray)))
+    
+    # Build PDF
+    doc.build(elements)
+    
+    pdf_bytes = buffer.getvalue()
+    buffer.close()
+    
+    filename = f"Report_Ferie_Permessi_{nome.replace(' ', '_')}_{anno}.pdf"
+    
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+    )
+
+
+@router.get("/report-ferie-permessi-tutti")
+async def genera_report_ferie_permessi_tutti(
+    anno: int = Query(None, description="Anno di riferimento")
+) -> Dict[str, Any]:
+    """
+    Genera report riepilogativo ferie/permessi per TUTTI i dipendenti.
+    Restituisce un PDF con tabella riassuntiva.
+    """
+    from fastapi.responses import Response
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4, landscape
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import cm
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+    from reportlab.lib.enums import TA_CENTER
+    import io
+    
+    db = Database.get_db()
+    
+    if not anno:
+        anno = datetime.now().year
+    
+    # Recupera tutti i dipendenti con progressivi
+    dipendenti = await db[Collections.EMPLOYEES].find(
+        {"progressivi": {"$exists": True}},
+        {"_id": 0, "nome_completo": 1, "name": 1, "cognome": 1, "nome": 1, "codice_fiscale": 1, "progressivi": 1, "attivo": 1}
+    ).sort("nome_completo", 1).to_list(100)
+    
+    if not dipendenti:
+        raise HTTPException(status_code=404, detail="Nessun dipendente con progressivi trovato")
+    
+    # Genera PDF landscape
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=landscape(A4), topMargin=1*cm, bottomMargin=1*cm)
+    
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle('Title', parent=styles['Heading1'], fontSize=16, alignment=TA_CENTER, spaceAfter=15)
+    
+    elements = []
+    
+    # Intestazione
+    elements.append(Paragraph(f"RIEPILOGO FERIE E PERMESSI - ANNO {anno}", title_style))
+    elements.append(Paragraph(f"Data: {datetime.now().strftime('%d/%m/%Y')}", 
+                              ParagraphStyle('Date', parent=styles['Normal'], alignment=TA_CENTER)))
+    elements.append(Spacer(1, 15))
+    
+    # Tabella
+    data = [["Dipendente", "CF", "Ferie Mat.", "Ferie God.", "Ferie Res.", "Perm. Mat.", "Perm. God.", "Perm. Res.", "Stato"]]
+    
+    totali = {"ferie_mat": 0, "ferie_god": 0, "ferie_res": 0, "perm_mat": 0, "perm_god": 0, "perm_res": 0}
+    
+    for dip in dipendenti:
+        nome = dip.get("nome_completo") or dip.get("name") or f"{dip.get('cognome', '')} {dip.get('nome', '')}"
+        cf = dip.get("codice_fiscale", "")[:6] + "..." if dip.get("codice_fiscale") else ""
+        prog = dip.get("progressivi", {})
+        
+        ferie_mat = prog.get("ferie_maturate", 0) or 0
+        ferie_god = prog.get("ferie_godute", 0) or 0
+        ferie_res = prog.get("ferie_residue", 0) or 0
+        perm_mat = prog.get("permessi_maturati", 0) or 0
+        perm_god = prog.get("permessi_goduti", 0) or 0
+        perm_res = prog.get("permessi_residui", 0) or 0
+        stato = "Attivo" if dip.get("attivo", True) else "Inattivo"
+        
+        totali["ferie_mat"] += ferie_mat
+        totali["ferie_god"] += ferie_god
+        totali["ferie_res"] += ferie_res
+        totali["perm_mat"] += perm_mat
+        totali["perm_god"] += perm_god
+        totali["perm_res"] += perm_res
+        
+        data.append([
+            nome[:25],
+            cf,
+            f"{ferie_mat:.1f}",
+            f"{ferie_god:.1f}",
+            f"{ferie_res:.1f}",
+            f"{perm_mat:.0f}",
+            f"{perm_god:.0f}",
+            f"{perm_res:.0f}",
+            stato
+        ])
+    
+    # Riga totali
+    data.append([
+        "TOTALE",
+        "",
+        f"{totali['ferie_mat']:.1f}",
+        f"{totali['ferie_god']:.1f}",
+        f"{totali['ferie_res']:.1f}",
+        f"{totali['perm_mat']:.0f}",
+        f"{totali['perm_god']:.0f}",
+        f"{totali['perm_res']:.0f}",
+        f"{len(dipendenti)} dip."
+    ])
+    
+    col_widths = [5*cm, 2.5*cm, 2*cm, 2*cm, 2*cm, 2*cm, 2*cm, 2*cm, 2*cm]
+    table = Table(data, colWidths=col_widths)
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1e3a5f')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#e9ecef')),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('ALIGN', (0, 1), (0, -1), 'LEFT'),
+        ('FONTSIZE', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#dee2e6')),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -2), [colors.white, colors.HexColor('#f8f9fa')]),
+    ]))
+    elements.append(table)
+    
+    # Build PDF
+    doc.build(elements)
+    
+    pdf_bytes = buffer.getvalue()
+    buffer.close()
+    
+    filename = f"Riepilogo_Ferie_Permessi_{anno}.pdf"
+    
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+    )
+
