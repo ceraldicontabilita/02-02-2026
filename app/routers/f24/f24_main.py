@@ -321,7 +321,7 @@ async def get_f24_forms(
 ) -> List[Dict[str, Any]]:
     """Get list of F24 forms."""
     db = Database.get_db()
-    forms = await db["f24"].find({}, {"_id": 0}).sort("scadenza", 1).skip(skip).limit(limit).to_list(limit)
+    forms = await db[COLL_F24].find({}, {"_id": 0}).sort("scadenza", 1).skip(skip).limit(limit).to_list(limit)
     return forms
 
 
@@ -352,7 +352,7 @@ async def create_f24(
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     
-    await db["f24"].insert_one(f24.copy())
+    await db[COLL_F24].insert_one(f24.copy())
     f24.pop("_id", None)
     
     return f24
@@ -477,7 +477,7 @@ async def get_f24(
 ) -> Dict[str, Any]:
     """Get single F24 form."""
     db = Database.get_db()
-    f24 = await db["f24"].find_one({"id": f24_id}, {"_id": 0})
+    f24 = await db[COLL_F24].find_one({"id": f24_id}, {"_id": 0})
     if not f24:
         return {"error": "F24 non trovato"}
     return f24
@@ -498,7 +498,7 @@ async def update_f24(
     update_data = {k: v for k, v in data.items() if k not in ["id", "_id"]}
     update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
     
-    await db["f24"].update_one({"id": f24_id}, {"$set": update_data})
+    await db[COLL_F24].update_one({"id": f24_id}, {"$set": update_data})
     
     return await get_f24(f24_id, current_user)
 
@@ -513,7 +513,7 @@ async def delete_f24(
 ) -> Dict[str, str]:
     """Delete an F24 form."""
     db = Database.get_db()
-    await db["f24"].delete_one({"id": f24_id})
+    await db[COLL_F24].delete_one({"id": f24_id})
     return {"message": "F24 deleted", "id": f24_id}
 
 
@@ -534,7 +534,7 @@ async def get_alerts_scadenze(
     today = datetime.now(timezone.utc).date()
     
     # Get unpaid F24s
-    f24_list = await db["f24"].find({"status": {"$ne": "paid"}}, {"_id": 0}).to_list(1000)
+    f24_list = await db[COLL_F24].find({"status": {"$ne": "paid"}}, {"_id": 0}).to_list(1000)
     
     for f24 in f24_list:
         try:
@@ -611,7 +611,7 @@ async def get_f24_dashboard(
     """
     db = Database.get_db()
     
-    all_f24 = await db["f24"].find({}, {"_id": 0}).to_list(10000)
+    all_f24 = await db[COLL_F24].find({}, {"_id": 0}).to_list(10000)
     
     pagati = [f for f in all_f24 if f.get("status") == "paid"]
     non_pagati = [f for f in all_f24 if f.get("status") != "paid"]
@@ -689,7 +689,7 @@ async def riconcilia_f24(
     """Manual reconciliation of F24 with bank movement."""
     db = Database.get_db()
     
-    f24 = await db["f24"].find_one({"id": f24_id}, {"_id": 0})
+    f24 = await db[COLL_F24].find_one({"id": f24_id}, {"_id": 0})
     if not f24:
         return {"success": False, "error": "F24 non trovato"}
     
@@ -709,7 +709,7 @@ async def riconcilia_f24(
     
     now = datetime.now(timezone.utc).isoformat()
     
-    await db["f24"].update_one(
+    await db[COLL_F24].update_one(
         {"id": f24_id},
         {"$set": {
             "status": "paid",
@@ -751,7 +751,7 @@ async def mark_f24_paid(
     
     now = datetime.now(timezone.utc).isoformat()
     
-    result = await db["f24"].update_one(
+    result = await db[COLL_F24].update_one(
         {"id": f24_id},
         {"$set": {
             "status": "paid",
