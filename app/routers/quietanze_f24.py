@@ -62,7 +62,7 @@ async def upload_quietanza_f24(
             "data_pagamento": existing.get("dati_generali", {}).get("data_pagamento")
         }
     
-    # Salva nel database - INCLUDI IL PDF!
+    # Salva nel database - TUTTO SU MONGODB, NIENTE FILESYSTEM!
     import base64
     pdf_base64 = base64.b64encode(content).decode('utf-8')
     
@@ -70,8 +70,8 @@ async def upload_quietanza_f24(
         "id": file_id,
         "f24_key": f24_key,
         "file_name": file.filename,
-        "file_path": file_path,
-        "pdf_data": pdf_base64,  # Salva il PDF!
+        # NIENTE file_path - tutto in MongoDB
+        "pdf_data": pdf_base64,  # Salva il PDF in MongoDB!
         "pdf_base64": pdf_base64,  # Duplicato per compatibilità
         "dati_generali": parsed_data.get("dati_generali", {}),
         "sezione_erario": parsed_data.get("sezione_erario", []),
