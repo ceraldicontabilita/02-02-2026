@@ -262,7 +262,11 @@ class EmailFullDownloader:
         collection_name = CATEGORY_COLLECTIONS.get(category, "documenti_non_associati")
         
         # Salva nel database
-        await self.db[collection_name].insert_one(document)
+        result = await self.db[collection_name].insert_one(document)
+        
+        if not result.inserted_id:
+            logger.error(f"Inserimento fallito per {filename} in {collection_name}")
+            return None
         
         self.stats["pdfs_downloaded"] += 1
         self.stats["pdfs_by_category"][category] = self.stats["pdfs_by_category"].get(category, 0) + 1
