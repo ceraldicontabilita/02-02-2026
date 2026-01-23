@@ -370,6 +370,9 @@ app.include_router(inserimento_rapido.router, prefix="/api", tags=["Inserimento 
 # --- Email to MongoDB (tutto su Atlas, niente filesystem) ---
 app.include_router(email_mongodb.router, prefix="/api", tags=["Email MongoDB"])
 
+# --- Documenti Non Associati (gestione manuale) ---
+app.include_router(documenti_non_associati.router, prefix="/api", tags=["Documenti Non Associati"])
+
 # --- Bonifici Stipendi da Email ---
 app.include_router(bonifici_stipendi.router, tags=["Bonifici Stipendi"])
 
