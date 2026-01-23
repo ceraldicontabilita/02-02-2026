@@ -173,6 +173,7 @@ const RegoleCategorizzazione = lazy(() => import("./pages/RegoleCategorizzazione
 const VerificaCoerenza = lazy(() => import("./pages/VerificaCoerenza.jsx"));
 const Commercialista = lazy(() => import("./pages/Commercialista.jsx"));
 const Pianificazione = lazy(() => import("./pages/Pianificazione.jsx"));
+const EmailDownloadManager = lazy(() => import("./pages/EmailDownloadManager.jsx"));
 
 // === ADMIN ===
 const Admin = lazy(() => import("./pages/Admin.jsx"));
