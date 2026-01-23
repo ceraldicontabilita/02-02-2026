@@ -3,9 +3,9 @@ from . import accounting_main
 from . import accounting_extended
 from . import accounting_f24
 from . import accounting_engine_api
-from . import prima_nota
+# NOTA: prima_nota è stato modularizzato in /app/app/routers/prima_nota_module/
 from . import prima_nota_automation
-from . import prima_nota_salari
+# NOTA: prima_nota_salari integrato in prima_nota_module
 from . import piano_conti
 from . import bilancio
 from . import centri_costo
@@ -13,20 +13,20 @@ from . import contabilita_avanzata
 from . import regole_categorizzazione
 from . import iva_calcolo
 from . import liquidazione_iva
+from . import riconciliazione_automatica
 
 __all__ = [
     'accounting_main',
     'accounting_extended',
     'accounting_f24',
     'accounting_engine_api',
-    'prima_nota',
     'prima_nota_automation',
-    'prima_nota_salari',
     'piano_conti',
     'bilancio',
     'centri_costo',
     'contabilita_avanzata',
     'regole_categorizzazione',
     'iva_calcolo',
-    'liquidazione_iva'
+    'liquidazione_iva',
+    'riconciliazione_automatica'
 ]
