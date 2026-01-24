@@ -193,6 +193,81 @@ async def scarica_fatture_aruba(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.get("/fatture-provvisorie")
+async def lista_fatture_provvisorie(
+    stato: Optional[str] = Query(default=None, description="Filtra: pagata_banca, probabile_cassa, completata"),
+    xml_associato: Optional[bool] = Query(default=None, description="Filtra per XML associato"),
+    limit: int = Query(default=50, le=200)
+) -> Dict[str, Any]:
+    """
+    Lista fatture provvisorie (da email Aruba, in attesa di XML).
+    """
+    from app.services.aruba_automation import get_fatture_provvisorie_stats, COLL_FATTURE_PROVVISORIE
+    
+    db = Database.get_db()
+    
+    query = {}
+    if stato:
+        query["stato"] = stato
+    if xml_associato is not None:
+        query["xml_associato"] = xml_associato
+    
+    fatture = await db[COLL_FATTURE_PROVVISORIE].find(
+        query, {"_id": 0}
+    ).sort("created_at", -1).limit(limit).to_list(limit)
+    
+    stats = await get_fatture_provvisorie_stats(db)
+    
+    return {
+        "count": len(fatture),
+        "stats": stats,
+        "fatture": fatture
+    }
+
+
+@router.get("/fatture-provvisorie/{fattura_id}")
+async def get_fattura_provvisoria(fattura_id: str) -> Dict[str, Any]:
+    """Dettaglio singola fattura provvisoria."""
+    from app.services.aruba_automation import COLL_FATTURE_PROVVISORIE
+    
+    db = Database.get_db()
+    
+    fattura = await db[COLL_FATTURE_PROVVISORIE].find_one(
+        {"id": fattura_id}, {"_id": 0}
+    )
+    
+    if not fattura:
+        raise HTTPException(status_code=404, detail="Fattura provvisoria non trovata")
+    
+    return fattura
+
+
+@router.delete("/fatture-provvisorie/{fattura_id}")
+async def elimina_fattura_provvisoria(
+    fattura_id: str,
+    motivo: Optional[str] = Query(default=None)
+) -> Dict[str, Any]:
+    """Elimina una fattura provvisoria (es. se duplicata o errata)."""
+    from app.services.aruba_automation import COLL_FATTURE_PROVVISORIE
+    
+    db = Database.get_db()
+    
+    # Trova e marca come eliminata
+    result = await db[COLL_FATTURE_PROVVISORIE].update_one(
+        {"id": fattura_id},
+        {"$set": {
+            "stato": "eliminata",
+            "motivo_eliminazione": motivo,
+            "eliminata_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Fattura non trovata")
+    
+    return {"success": True, "message": "Fattura provvisoria eliminata"}
+
+
 @router.get("/operazioni-da-confermare")
 async def lista_operazioni_da_confermare(
     stato: Optional[str] = Query(default=None, description="Filtra per stato: da_confermare, da_verificare, confermata"),
