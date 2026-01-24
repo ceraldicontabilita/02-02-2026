@@ -1,0 +1,498 @@
+"""
+Parser AI Universale per Documenti
+Usa Gemini per estrarre dati strutturati da PDF, immagini e documenti scansionati.
+Supporta: Fatture, F24, Buste Paga
+"""
+import os
+import json
+import base64
+import logging
+import tempfile
+from typing import Dict, Any, Optional, List
+from datetime import datetime
+
+from dotenv import load_dotenv
+load_dotenv()
+
+logger = logging.getLogger(__name__)
+
+# Prompts specifici per ogni tipo di documento
+PROMPT_FATTURA = """Analizza questa fattura e estrai TUTTI i dati in formato JSON strutturato.
+
+Estrai:
+{
+  "tipo_documento": "fattura" | "nota_credito" | "nota_debito",
+  "numero_fattura": "string",
+  "data_fattura": "YYYY-MM-DD",
+  "fornitore": {
+    "denominazione": "string",
+    "partita_iva": "string (solo numeri, 11 cifre)",
+    "codice_fiscale": "string",
+    "indirizzo": "string",
+    "cap": "string",
+    "citta": "string",
+    "provincia": "string"
+  },
+  "cliente": {
+    "denominazione": "string",
+    "partita_iva": "string",
+    "codice_fiscale": "string"
+  },
+  "righe": [
+    {
+      "descrizione": "string (descrizione prodotto/servizio)",
+      "quantita": numero,
+      "unita_misura": "string",
+      "prezzo_unitario": numero,
+      "prezzo_totale": numero,
+      "aliquota_iva": numero (es: 22, 10, 4, 0),
+      "codice_articolo": "string se presente"
+    }
+  ],
+  "totali": {
+    "imponibile": numero,
+    "iva": numero,
+    "totale_fattura": numero
+  },
+  "pagamento": {
+    "modalita": "string (bonifico, contanti, etc)",
+    "scadenza": "YYYY-MM-DD",
+    "iban": "string se presente"
+  },
+  "note": "string (eventuali note o causali)"
+}
+
+IMPORTANTE:
+- Estrai TUTTE le righe prodotto/servizio presenti
+- I numeri devono essere in formato decimale (es: 1234.56, non 1.234,56)
+- Le date in formato YYYY-MM-DD
+- Se un campo non è presente, usa null
+- Rispondi SOLO con il JSON, senza altro testo"""
+
+PROMPT_F24 = """Analizza questo documento F24/quietanza F24 e estrai TUTTI i dati in formato JSON strutturato.
+
+Estrai:
+{
+  "tipo_documento": "f24" | "quietanza_f24",
+  "data_pagamento": "YYYY-MM-DD",
+  "codice_fiscale": "string (11 cifre per società, 16 caratteri per persone)",
+  "ragione_sociale": "string",
+  "protocollo_telematico": "string se presente",
+  "banca": {
+    "nome": "string",
+    "abi": "string",
+    "cab": "string"
+  },
+  "sezione_erario": [
+    {
+      "codice_tributo": "string (4 cifre)",
+      "rateazione": "string",
+      "periodo_riferimento": "MM/YYYY o YYYY",
+      "importo_debito": numero,
+      "importo_credito": numero,
+      "descrizione": "string (es: Ritenute lavoro dipendente)"
+    }
+  ],
+  "sezione_inps": [
+    {
+      "codice_sede": "string",
+      "causale": "string (DM10, CXX, etc)",
+      "matricola": "string",
+      "periodo_riferimento": "MM/YYYY",
+      "importo_debito": numero,
+      "importo_credito": numero
+    }
+  ],
+  "sezione_regioni": [
+    {
+      "codice_regione": "string",
+      "codice_tributo": "string",
+      "periodo_riferimento": "string",
+      "importo_debito": numero,
+      "importo_credito": numero
+    }
+  ],
+  "sezione_imu": [
+    {
+      "codice_comune": "string",
+      "codice_tributo": "string",
+      "anno_riferimento": "YYYY",
+      "importo_debito": numero,
+      "importo_credito": numero
+    }
+  ],
+  "totali": {
+    "totale_debito": numero,
+    "totale_credito": numero,
+    "saldo_finale": numero
+  }
+}
+
+IMPORTANTE:
+- Estrai TUTTI i tributi presenti in ogni sezione
+- I codici tributo sono di 4 cifre (es: 1001, 3802, 6001)
+- I numeri devono essere in formato decimale
+- Se un campo non è presente, usa null o array vuoto []
+- Rispondi SOLO con il JSON, senza altro testo"""
+
+PROMPT_BUSTA_PAGA = """Analizza questa busta paga/cedolino e estrai TUTTI i dati in formato JSON strutturato.
+
+Estrai:
+{
+  "tipo_documento": "busta_paga",
+  "periodo": {
+    "mese": numero (1-12),
+    "anno": numero (YYYY),
+    "descrizione": "string (es: Dicembre 2024, Tredicesima 2024)"
+  },
+  "dipendente": {
+    "nome": "string",
+    "cognome": "string",
+    "codice_fiscale": "string",
+    "matricola": "string se presente",
+    "qualifica": "string",
+    "livello": "string"
+  },
+  "azienda": {
+    "denominazione": "string",
+    "partita_iva": "string",
+    "codice_fiscale": "string"
+  },
+  "retribuzione": {
+    "paga_base": numero,
+    "contingenza": numero,
+    "scatti_anzianita": numero,
+    "superminimo": numero,
+    "altri_elementi": numero,
+    "ore_ordinarie": numero,
+    "ore_straordinario": numero,
+    "straordinario_importo": numero,
+    "festivita": numero,
+    "indennita_varie": numero,
+    "lordo_totale": numero
+  },
+  "trattenute": {
+    "inps_dipendente": numero,
+    "irpef": numero,
+    "addizionale_regionale": numero,
+    "addizionale_comunale": numero,
+    "altre_trattenute": numero,
+    "totale_trattenute": numero
+  },
+  "netto": {
+    "netto_mese": numero,
+    "arrotondamento": numero,
+    "netto_pagato": numero
+  },
+  "progressivi": {
+    "ferie_maturate": numero (ore o giorni),
+    "ferie_godute": numero,
+    "ferie_residue": numero,
+    "permessi_maturati": numero (ore),
+    "permessi_goduti": numero,
+    "permessi_residui": numero,
+    "rol_maturati": numero (ore),
+    "rol_goduti": numero,
+    "rol_residui": numero,
+    "ex_festivita_maturate": numero,
+    "ex_festivita_godute": numero,
+    "ex_festivita_residue": numero
+  },
+  "tfr": {
+    "quota_mese": numero,
+    "fondo_accantonato": numero,
+    "rivalutazione": numero
+  },
+  "contributi_azienda": {
+    "inps_azienda": numero,
+    "inail": numero,
+    "totale": numero
+  }
+}
+
+IMPORTANTE:
+- Estrai TUTTI i valori presenti nella busta paga
+- Presta particolare attenzione a ferie, permessi, ROL e TFR
+- I numeri devono essere in formato decimale
+- Se un campo non è presente, usa 0 o null
+- Rispondi SOLO con il JSON, senza altro testo"""
+
+
+async def parse_document_with_ai(
+    file_path: str = None,
+    file_bytes: bytes = None,
+    document_type: str = "auto",
+    mime_type: str = "application/pdf"
+) -> Dict[str, Any]:
+    """
+    Analizza un documento usando AI (Gemini) e restituisce dati strutturati.
+    
+    Args:
+        file_path: Percorso al file PDF/immagine
+        file_bytes: Contenuto del file in bytes
+        document_type: "fattura", "f24", "busta_paga" o "auto" per rilevamento automatico
+        mime_type: Tipo MIME del file
+        
+    Returns:
+        Dict con i dati estratti strutturati
+    """
+    from emergentintegrations.llm.chat import LlmChat, UserMessage, FileContentWithMimeType
+    
+    api_key = os.environ.get("EMERGENT_LLM_KEY")
+    if not api_key:
+        return {"error": "EMERGENT_LLM_KEY non configurata", "success": False}
+    
+    try:
+        # Se abbiamo bytes, salva in file temporaneo
+        temp_file = None
+        if file_bytes and not file_path:
+            suffix = ".pdf" if "pdf" in mime_type else ".png"
+            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
+            temp_file.write(file_bytes)
+            temp_file.close()
+            file_path = temp_file.name
+        
+        if not file_path or not os.path.exists(file_path):
+            return {"error": "File non trovato", "success": False}
+        
+        # Seleziona il prompt appropriato
+        if document_type == "auto":
+            # Prima passa per identificare il tipo
+            prompt = """Identifica il tipo di questo documento. Rispondi SOLO con una di queste opzioni:
+- fattura (se è una fattura, nota di credito, nota di debito)
+- f24 (se è un modello F24 o quietanza F24)
+- busta_paga (se è un cedolino, busta paga)
+- altro (se non rientra nelle categorie precedenti)
+
+Rispondi con UNA SOLA PAROLA."""
+        elif document_type == "fattura":
+            prompt = PROMPT_FATTURA
+        elif document_type == "f24":
+            prompt = PROMPT_F24
+        elif document_type == "busta_paga":
+            prompt = PROMPT_BUSTA_PAGA
+        else:
+            prompt = PROMPT_FATTURA  # Default
+        
+        # Inizializza chat con Gemini (supporta file attachment)
+        chat = LlmChat(
+            api_key=api_key,
+            session_id=f"doc_parser_{datetime.now().timestamp()}",
+            system_message="Sei un esperto parser di documenti contabili italiani. Estrai dati precisi e strutturati."
+        ).with_model("gemini", "gemini-2.5-flash")
+        
+        # Crea file content
+        file_content = FileContentWithMimeType(
+            file_path=file_path,
+            mime_type=mime_type
+        )
+        
+        # Invia messaggio con file
+        user_message = UserMessage(
+            text=prompt,
+            file_contents=[file_content]
+        )
+        
+        response = await chat.send_message(user_message)
+        
+        # Se era auto-detection, fai una seconda chiamata con il prompt specifico
+        if document_type == "auto":
+            detected_type = response.strip().lower()
+            logger.info(f"Tipo documento rilevato: {detected_type}")
+            
+            if detected_type in ["fattura", "f24", "busta_paga"]:
+                # Richiama con il prompt specifico
+                result = await parse_document_with_ai(
+                    file_path=file_path,
+                    document_type=detected_type,
+                    mime_type=mime_type
+                )
+                result["detected_type"] = detected_type
+                return result
+            else:
+                return {
+                    "error": f"Tipo documento non supportato: {detected_type}",
+                    "detected_type": detected_type,
+                    "success": False
+                }
+        
+        # Pulisci file temporaneo
+        if temp_file:
+            try:
+                os.unlink(temp_file.name)
+            except:
+                pass
+        
+        # Parse JSON dalla risposta
+        try:
+            # Rimuovi eventuali markdown code blocks
+            json_str = response.strip()
+            if json_str.startswith("```json"):
+                json_str = json_str[7:]
+            if json_str.startswith("```"):
+                json_str = json_str[3:]
+            if json_str.endswith("```"):
+                json_str = json_str[:-3]
+            
+            parsed_data = json.loads(json_str.strip())
+            parsed_data["success"] = True
+            parsed_data["parsed_at"] = datetime.now().isoformat()
+            parsed_data["parser"] = "ai_gemini"
+            
+            return parsed_data
+            
+        except json.JSONDecodeError as e:
+            logger.error(f"Errore parsing JSON risposta AI: {e}")
+            logger.debug(f"Risposta raw: {response[:500]}")
+            return {
+                "error": f"Errore parsing risposta AI: {str(e)}",
+                "raw_response": response[:1000],
+                "success": False
+            }
+            
+    except Exception as e:
+        logger.error(f"Errore parse_document_with_ai: {e}")
+        return {
+            "error": str(e),
+            "success": False
+        }
+
+
+async def parse_fattura_ai(file_path: str = None, file_bytes: bytes = None) -> Dict[str, Any]:
+    """Wrapper per parsing fatture."""
+    return await parse_document_with_ai(
+        file_path=file_path,
+        file_bytes=file_bytes,
+        document_type="fattura"
+    )
+
+
+async def parse_f24_ai(file_path: str = None, file_bytes: bytes = None) -> Dict[str, Any]:
+    """Wrapper per parsing F24."""
+    return await parse_document_with_ai(
+        file_path=file_path,
+        file_bytes=file_bytes,
+        document_type="f24"
+    )
+
+
+async def parse_busta_paga_ai(file_path: str = None, file_bytes: bytes = None) -> Dict[str, Any]:
+    """Wrapper per parsing buste paga."""
+    return await parse_document_with_ai(
+        file_path=file_path,
+        file_bytes=file_bytes,
+        document_type="busta_paga"
+    )
+
+
+async def batch_parse_documents(
+    file_paths: List[str],
+    document_type: str = "auto"
+) -> List[Dict[str, Any]]:
+    """
+    Parsing batch di documenti.
+    
+    Args:
+        file_paths: Lista di percorsi file
+        document_type: Tipo documento o "auto"
+        
+    Returns:
+        Lista di risultati parsing
+    """
+    results = []
+    for path in file_paths:
+        try:
+            result = await parse_document_with_ai(
+                file_path=path,
+                document_type=document_type
+            )
+            result["file_path"] = path
+            result["file_name"] = os.path.basename(path)
+            results.append(result)
+        except Exception as e:
+            results.append({
+                "file_path": path,
+                "file_name": os.path.basename(path),
+                "error": str(e),
+                "success": False
+            })
+    return results
+
+
+def convert_ai_fattura_to_db_format(ai_data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Converte i dati estratti dall'AI nel formato database esistente.
+    """
+    if not ai_data.get("success"):
+        return ai_data
+    
+    return {
+        "numero_fattura": ai_data.get("numero_fattura"),
+        "data_fattura": ai_data.get("data_fattura"),
+        "tipo_documento": ai_data.get("tipo_documento", "fattura"),
+        "fornitore": ai_data.get("fornitore", {}).get("denominazione"),
+        "fornitore_piva": ai_data.get("fornitore", {}).get("partita_iva"),
+        "fornitore_cf": ai_data.get("fornitore", {}).get("codice_fiscale"),
+        "fornitore_indirizzo": ai_data.get("fornitore", {}).get("indirizzo"),
+        "cliente": ai_data.get("cliente", {}).get("denominazione"),
+        "cliente_piva": ai_data.get("cliente", {}).get("partita_iva"),
+        "imponibile": ai_data.get("totali", {}).get("imponibile", 0),
+        "iva": ai_data.get("totali", {}).get("iva", 0),
+        "totale": ai_data.get("totali", {}).get("totale_fattura", 0),
+        "righe": ai_data.get("righe", []),
+        "scadenza_pagamento": ai_data.get("pagamento", {}).get("scadenza"),
+        "modalita_pagamento": ai_data.get("pagamento", {}).get("modalita"),
+        "iban": ai_data.get("pagamento", {}).get("iban"),
+        "note": ai_data.get("note"),
+        "parsed_by": "ai_gemini",
+        "parsed_at": ai_data.get("parsed_at")
+    }
+
+
+def convert_ai_busta_paga_to_dipendente_update(ai_data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Converte i dati estratti dalla busta paga in aggiornamento per scheda dipendente.
+    """
+    if not ai_data.get("success"):
+        return ai_data
+    
+    progressivi = ai_data.get("progressivi", {})
+    tfr = ai_data.get("tfr", {})
+    periodo = ai_data.get("periodo", {})
+    
+    return {
+        "ultimo_cedolino": {
+            "mese": periodo.get("mese"),
+            "anno": periodo.get("anno"),
+            "netto": ai_data.get("netto", {}).get("netto_pagato", 0),
+            "lordo": ai_data.get("retribuzione", {}).get("lordo_totale", 0)
+        },
+        "progressivi": {
+            "ferie_maturate": progressivi.get("ferie_maturate", 0),
+            "ferie_godute": progressivi.get("ferie_godute", 0),
+            "ferie_residue": progressivi.get("ferie_residue", 0),
+            "permessi_maturati": progressivi.get("permessi_maturati", 0),
+            "permessi_goduti": progressivi.get("permessi_goduti", 0),
+            "permessi_residui": progressivi.get("permessi_residui", 0),
+            "rol_maturati": progressivi.get("rol_maturati", 0),
+            "rol_goduti": progressivi.get("rol_goduti", 0),
+            "rol_residui": progressivi.get("rol_residui", 0),
+            "ex_festivita_maturate": progressivi.get("ex_festivita_maturate", 0),
+            "ex_festivita_godute": progressivi.get("ex_festivita_godute", 0),
+            "ex_festivita_residue": progressivi.get("ex_festivita_residue", 0)
+        },
+        "tfr": {
+            "quota_mese": tfr.get("quota_mese", 0),
+            "fondo_accantonato": tfr.get("fondo_accantonato", 0),
+            "rivalutazione": tfr.get("rivalutazione", 0)
+        },
+        "retribuzione": {
+            "paga_base": ai_data.get("retribuzione", {}).get("paga_base", 0),
+            "contingenza": ai_data.get("retribuzione", {}).get("contingenza", 0),
+            "superminimo": ai_data.get("retribuzione", {}).get("superminimo", 0)
+        },
+        "parsed_by": "ai_gemini",
+        "parsed_at": ai_data.get("parsed_at"),
+        "anno_riferimento": periodo.get("anno"),
+        "mese_riferimento": periodo.get("mese")
+    }
