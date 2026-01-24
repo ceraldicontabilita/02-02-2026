@@ -72,8 +72,8 @@ async def get_learning_stats() -> Dict[str, Any]:
     })
     
     # Conta F24
-    totale_f24 = await db["f24"].count_documents({})
-    f24_classificati = await db["f24"].count_documents({
+    totale_f24 = await db["f24_unificato"].count_documents({})
+    f24_classificati = await db["f24_unificato"].count_documents({
         "centro_costo_id": {"$exists": True, "$ne": None, "$ne": ""}
     })
     
