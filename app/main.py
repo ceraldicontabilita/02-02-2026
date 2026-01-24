@@ -394,6 +394,9 @@ app.include_router(document_ai.router, prefix="/api/document-ai", tags=["Documen
 # --- AI Parser (Lettura intelligente documenti con Gemini) ---
 app.include_router(ai_parser.router, prefix="/api/ai-parser", tags=["AI Parser"])
 
+# --- Upload AI (Parsing automatico su upload diretto) ---
+app.include_router(upload_ai.router, prefix="/api/upload-ai", tags=["Upload AI"])
+
 # --- Riconciliazione Email ↔ Gestionale ---
 app.include_router(email_reconciliation.router, tags=["Riconciliazione Email"])
 
