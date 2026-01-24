@@ -1226,9 +1226,8 @@ export default function Fornitori() {
     
     setLearningSaving(true);
     try {
-      await api.put(`/api/invoices/${selectedFattura.id}/classifica`, {
-        centro_costo_id: nuovoCentroCosto,
-        classificazione_manuale: true
+      await api.put(`/api/fatture/${selectedFattura.id}/classifica`, {
+        centro_costo_id: nuovoCentroCosto
       });
       setLearningMessage({ type: 'success', text: 'Fattura classificata!' });
       setSelectedFattura(null);
