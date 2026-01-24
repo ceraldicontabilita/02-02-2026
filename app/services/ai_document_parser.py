@@ -1,9 +1,9 @@
 """
 Parser AI Universale per Documenti
-Usa OpenAI GPT-5.2 (vision) per estrarre dati strutturati da PDF, immagini e documenti scansionati.
+Usa emergentintegrations con OpenAI GPT (vision) per estrarre dati strutturati da PDF.
 Supporta: Fatture, F24, Buste Paga
 
-Converte PDF in immagini e le invia a OpenAI per l'analisi.
+Converte PDF in immagini e le invia a OpenAI per l'analisi usando emergentintegrations.
 """
 import os
 import json
@@ -15,8 +15,8 @@ from typing import Dict, Any, Optional, List
 from datetime import datetime
 
 from dotenv import load_dotenv
-# Carica da backend/.env (path relativo al container)
-load_dotenv('/app/backend/.env')
+# Carica da backend/.env
+load_dotenv('/app/backend/.env', override=True)
 
 logger = logging.getLogger(__name__)
 
@@ -267,7 +267,7 @@ async def parse_document_with_ai(
     mime_type: str = "application/pdf"
 ) -> Dict[str, Any]:
     """
-    Analizza un documento usando AI (OpenAI GPT con vision) e restituisce dati strutturati.
+    Analizza un documento usando AI (emergentintegrations con OpenAI) e restituisce dati strutturati.
     
     Args:
         file_path: Percorso al file PDF/immagine
@@ -278,19 +278,14 @@ async def parse_document_with_ai(
     Returns:
         Dict con i dati estratti strutturati
     """
-    from openai import OpenAI
+    from emergentintegrations.llm.chat import LlmChat, UserMessage, ImageContent
     
-    # Forza rilettura delle variabili d'ambiente dal file
-    load_dotenv('/app/backend/.env', override=True)
-    
-    api_key = os.environ.get("OPENAI_API_KEY")
-    logger.info(f"Using OPENAI_API_KEY: {api_key[:20] if api_key else 'NOT SET'}...")
+    # Usa EMERGENT_LLM_KEY per emergentintegrations
+    api_key = os.environ.get("EMERGENT_LLM_KEY")
+    logger.info(f"Using EMERGENT_LLM_KEY: {api_key[:20] if api_key else 'NOT SET'}...")
     
     if not api_key:
-        api_key = os.environ.get("EMERGENT_LLM_KEY")
-        logger.info(f"Fallback to EMERGENT_LLM_KEY: {api_key[:20] if api_key else 'NOT SET'}...")
-    if not api_key:
-        return {"error": "OPENAI_API_KEY o EMERGENT_LLM_KEY non configurata", "success": False}
+        return {"error": "EMERGENT_LLM_KEY non configurata", "success": False}
     
     try:
         # Leggi il file se abbiamo solo il path
@@ -301,7 +296,7 @@ async def parse_document_with_ai(
         if not file_bytes:
             return {"error": "Nessun contenuto file fornito", "success": False}
         
-        # Prepara le immagini per OpenAI
+        # Prepara le immagini
         images_b64 = []
         
         if "pdf" in mime_type.lower():
@@ -334,40 +329,24 @@ Rispondi con UNA SOLA PAROLA senza punteggiatura."""
         else:
             prompt = PROMPT_FATTURA  # Default
         
-        # Inizializza client OpenAI
-        client = OpenAI(api_key=api_key)
+        # Inizializza chat con emergentintegrations - usa OpenAI con vision
+        chat = LlmChat(
+            api_key=api_key,
+            session_id=f"doc_parser_{datetime.now().timestamp()}",
+            system_message="Sei un esperto parser di documenti contabili italiani. Estrai dati precisi e strutturati in formato JSON."
+        ).with_model("openai", "gpt-4o")  # gpt-4o supporta vision
         
-        # Prepara i contenuti del messaggio
-        content = [{"type": "text", "text": prompt}]
+        # Crea ImageContent per ogni immagine
+        image_contents = [ImageContent(image_base64=img_b64) for img_b64 in images_b64]
         
-        # Aggiungi tutte le immagini
-        for img_b64 in images_b64:
-            content.append({
-                "type": "image_url",
-                "image_url": {
-                    "url": f"data:image/png;base64,{img_b64}",
-                    "detail": "high"
-                }
-            })
-        
-        # Chiama OpenAI
-        response = client.chat.completions.create(
-            model="gpt-4o",  # Modello con vision
-            messages=[
-                {
-                    "role": "system",
-                    "content": "Sei un esperto parser di documenti contabili italiani. Estrai dati precisi e strutturati in formato JSON."
-                },
-                {
-                    "role": "user",
-                    "content": content
-                }
-            ],
-            max_tokens=4000,
-            temperature=0.1
+        # Invia messaggio con immagini
+        user_message = UserMessage(
+            text=prompt,
+            image_contents=image_contents
         )
         
-        response_text = response.choices[0].message.content.strip()
+        response = await chat.send_message(user_message)
+        response_text = response.strip() if isinstance(response, str) else str(response)
         
         # Se era auto-detection, fai una seconda chiamata con il prompt specifico
         if document_type == "auto":
@@ -404,7 +383,7 @@ Rispondi con UNA SOLA PAROLA senza punteggiatura."""
             parsed_data = json.loads(json_str.strip())
             parsed_data["success"] = True
             parsed_data["parsed_at"] = datetime.now().isoformat()
-            parsed_data["parser"] = "ai_openai_vision"
+            parsed_data["parser"] = "ai_emergent_openai"
             parsed_data["pages_analyzed"] = len(images_b64)
             
             return parsed_data
@@ -420,8 +399,10 @@ Rispondi con UNA SOLA PAROLA senza punteggiatura."""
             
     except Exception as e:
         logger.error(f"Errore parse_document_with_ai: {e}")
+        import traceback
         return {
             "error": str(e),
+            "traceback": traceback.format_exc()[:500],
             "success": False
         }
 
@@ -512,7 +493,7 @@ def convert_ai_fattura_to_db_format(ai_data: Dict[str, Any]) -> Dict[str, Any]:
         "modalita_pagamento": ai_data.get("pagamento", {}).get("modalita"),
         "iban": ai_data.get("pagamento", {}).get("iban"),
         "note": ai_data.get("note"),
-        "parsed_by": "ai_openai_vision",
+        "parsed_by": "ai_emergent_openai",
         "parsed_at": ai_data.get("parsed_at")
     }
 
@@ -559,7 +540,7 @@ def convert_ai_busta_paga_to_dipendente_update(ai_data: Dict[str, Any]) -> Dict[
             "contingenza": ai_data.get("retribuzione", {}).get("contingenza", 0),
             "superminimo": ai_data.get("retribuzione", {}).get("superminimo", 0)
         },
-        "parsed_by": "ai_openai_vision",
+        "parsed_by": "ai_emergent_openai",
         "parsed_at": ai_data.get("parsed_at"),
         "anno_riferimento": periodo.get("anno"),
         "mese_riferimento": periodo.get("mese")
