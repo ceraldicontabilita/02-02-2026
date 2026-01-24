@@ -679,7 +679,9 @@ async def upload_fattura_xml(file: UploadFile = File(...)) -> Dict[str, Any]:
                 "ricette_aggiornate": automazioni_result.get("ricette", {}).get("ricette_aggiornate", 0) if automazioni_result else 0,
                 "operazione_completata": automazioni_result.get("operazione", {}).get("operazione_completata", False) if automazioni_result else False
             },
-            "prima_nota": prima_nota_result
+            "prima_nota": prima_nota_result,
+            "pdf_associato": pdf_association_result.get("pdf_associated", False) if pdf_association_result else False,
+            "pdf_filename": pdf_association_result.get("pdf_filename") if pdf_association_result else None
         }
         
     except HTTPException:
