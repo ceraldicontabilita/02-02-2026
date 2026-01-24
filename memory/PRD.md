@@ -144,16 +144,18 @@ Il sistema classifica **automaticamente** documenti leggendo:
 
 ### 5.1 ✅ COMPLETATO (Sessione 21 - 24/01/2026) - Unificazione UI + Task P1
 - **Unificazione Fornitori + Learning Machine**: Tab "Learning Machine" integrato nella pagina Fornitori
-- **Unificazione Riconciliazione**: Una sola voce "Riconciliazione" nel menu (rimossa "Riconciliazione Intelligente")
+- **Unificazione Riconciliazione**: Una sola voce "Riconciliazione" nel menu
 - **Pulizia Menu**: Rimossa voce "Fornitori Learning" dal menu Acquisti
-- **Redirects implementati**: 
-  - `/fornitori-learning` → `/fornitori?tab=learning`
-  - `/riconciliazione-intelligente` → `/riconciliazione`
-- **Configurazione 120 Fornitori**: Learning Machine configurata con 120 fornitori tramite ricerca web
-- **Riclassificazione Fatture**: 944+ fatture riclassificate automaticamente (676+268)
-- **UI Fatture Non Classificate**: Nuova sezione nel tab Learning per classificare manualmente le 66 fatture "Altri costi"
+- **Redirects implementati**: `/fornitori-learning` → `/fornitori?tab=learning`, `/riconciliazione-intelligente` → `/riconciliazione`
+- **Configurazione 149 Fornitori**: Learning Machine configurata con 149 fornitori tramite ricerca web
+- **Riclassificazione Massiva Fatture**: 
+  - 1200+ fatture riclassificate automaticamente
+  - Da ~780 fatture in "Altri costi" a ~37 (riduzione del 95%)
+  - Top classificazioni: Materie prime (30%), Prodotti confezionati (16.4%), Bevande (10.4%)
+- **UI Classificazione Manuale**: Sezione nel tab Learning per classificare le fatture residue
 - **Endpoint Classificazione Manuale**: PUT /api/fatture/{id}/classifica
-- **Test 100% passati**: 7/7 test backend + frontend (iteration_35.json)
+- **Fix Codici Centro di Costo**: Corretta logica riclassificazione per usare codici corretti (B7.5.3 etc.)
+- **Test passati**: 7/7 backend + frontend
 
 ### 5.2 ✅ COMPLETATO (Sessione 20 - 24/01/2026)
 1. **Fix Associazione F24 - Campo Anno**
