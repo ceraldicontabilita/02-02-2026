@@ -880,6 +880,7 @@ function SupplierCard({ supplier, onEdit, onDelete, onViewInvoices, onChangeMeto
 export default function Fornitori() {
   const { anno: selectedYear } = useAnnoGlobale();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -888,6 +889,29 @@ export default function Fornitori() {
   const [modalOpen, setModalOpen] = useState(false);
   const [currentSupplier, setCurrentSupplier] = useState(null);
   const [saving, setSaving] = useState(false);
+  
+  // === TAB MANAGEMENT ===
+  const activeTab = searchParams.get('tab') || 'anagrafica';
+  const setActiveTab = (tab) => {
+    if (tab === 'anagrafica') {
+      setSearchParams({});
+    } else {
+      setSearchParams({ tab });
+    }
+  };
+  
+  // === LEARNING TAB STATE ===
+  const [fornitoriNonClassificati, setFornitoriNonClassificati] = useState([]);
+  const [fornitoriConfigurati, setFornitoriConfigurati] = useState([]);
+  const [centriCosto, setCentriCosto] = useState([]);
+  const [learningLoading, setLearningLoading] = useState(false);
+  const [learningSaving, setLearningSaving] = useState(false);
+  const [learningMessage, setLearningMessage] = useState(null);
+  const [selectedFornitore, setSelectedFornitore] = useState(null);
+  const [keywords, setKeywords] = useState('');
+  const [centroCostoSuggerito, setCentroCostoSuggerito] = useState('');
+  const [note, setNote] = useState('');
+  const [keywordsSuggerite, setKeywordsSuggerite] = useState([]);
   
   // Debounce search per evitare troppe chiamate API
   const debouncedSearch = useDebounce(search, 500);
