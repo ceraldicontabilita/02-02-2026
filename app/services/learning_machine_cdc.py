@@ -82,7 +82,9 @@ CENTRI_COSTO = {
         "deducibilita_irap": 1.0,
         "detraibilita_iva": 1.0,
         "keywords": ["snack", "patatine", "caramelle", "chewing gum", "cioccolatini",
-                    "biscotti", "crackers", "grissini", "panino confezionato"]
+                    "biscotti", "crackers", "grissini", "panino confezionato"],
+        "fornitori": ["san carlo", "perfetti van melle", "langellotti", "gb food", 
+                     "nasti group", "naturissime", "olive miraglia", "saima"]
     },
     
     # 2. UTENZE
@@ -94,7 +96,8 @@ CENTRI_COSTO = {
         "deducibilita_irap": 1.0,
         "detraibilita_iva": 1.0,
         "keywords": ["enel", "edison", "a2a", "eni gas e luce", "sorgenia", "hera",
-                    "energia elettrica", "fornitura elettrica", "kwh"]
+                    "energia elettrica", "fornitura elettrica", "kwh"],
+        "fornitori": ["enel energia", "edison", "a2a", "sorgenia", "hera"]
     },
     "2.2_GAS": {
         "codice": "B7.2.2",
