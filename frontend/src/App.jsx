@@ -157,6 +157,7 @@ const NAV_ITEMS = [
     short: "Tools",
     isSubmenu: true,
     children: [
+      { to: "/ai-parser", label: "🧠 Lettura Documenti AI", icon: "🧠", isNew: true, highlight: true },
       { to: "/import-unificato", label: "Import Documenti", icon: "📥", isNew: true },
       { to: "/documenti", label: "Documenti Email", icon: "📨" },
       { to: "/regole-categorizzazione", label: "Regole Categorie", icon: "⚙️" },
