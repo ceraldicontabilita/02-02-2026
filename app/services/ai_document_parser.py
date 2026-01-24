@@ -325,11 +325,9 @@ Rispondi con UNA SOLA PAROLA senza punteggiatura."""
         else:
             prompt = PROMPT_FATTURA  # Default
         
-        # Inizializza client OpenAI
-        client = OpenAI(
-            api_key=api_key,
-            base_url="https://emergentintegrations.vercel.app/api/llm/openai"
-        )
+        # Inizializza client OpenAI - usa chiave diretta se disponibile
+        openai_key = os.environ.get("OPENAI_API_KEY") or api_key
+        client = OpenAI(api_key=openai_key)
         
         # Prepara i contenuti del messaggio
         content = [{"type": "text", "text": prompt}]
