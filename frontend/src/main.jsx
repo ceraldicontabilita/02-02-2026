@@ -186,6 +186,9 @@ const GestionePagoPA = lazy(() => import("./pages/GestionePagoPA.jsx"));
 const GestioneInvoiceTronic = lazy(() => import("./pages/GestioneInvoiceTronic.jsx"));
 const ClassificazioneDocumenti = lazy(() => import("./pages/ClassificazioneDocumenti.jsx"));
 
+// === AI TOOLS ===
+const AIParserPage = lazy(() => import("./pages/AIParserPage.jsx"));
+
 // Wrapper component with Suspense
 const LazyPage = ({ children }) => (
   <Suspense fallback={<PageLoader />}>
