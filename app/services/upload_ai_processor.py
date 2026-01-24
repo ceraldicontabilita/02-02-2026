@@ -89,7 +89,7 @@ async def process_upload_f24(
         codice_fiscale = parsed.get("codice_fiscale")
         totale_debito = parsed.get("totali", {}).get("totale_debito", 0)
         
-        # Estrai primo tributo per identificazione
+        # Estrai primo tributo per identificazione più precisa
         primo_tributo = None
         for sezione in ["sezione_erario", "sezione_inps", "sezione_regioni", "sezione_imu"]:
             tributi = parsed.get(sezione, [])
@@ -97,12 +97,19 @@ async def process_upload_f24(
                 primo_tributo = tributi[0].get("codice_tributo") or tributi[0].get("causale")
                 break
         
-        # Cerca duplicato
+        # Cerca duplicato - include primo_tributo se disponibile
         if data_pagamento and codice_fiscale:
             duplicate_query = {
-                "parsed_data.data_pagamento": data_pagamento,
-                "parsed_data.codice_fiscale": codice_fiscale
+                "data_pagamento": data_pagamento,
+                "codice_fiscale": codice_fiscale
             }
+            
+            # Aggiungi primo_tributo alla query se disponibile per match più preciso
+            if primo_tributo:
+                duplicate_query["$or"] = [
+                    {"parsed_data.sezione_erario.0.codice_tributo": primo_tributo},
+                    {"parsed_data.sezione_inps.0.causale": primo_tributo}
+                ]
             
             # Se abbiamo anche totale, aggiungi alla query con tolleranza
             if totale_debito and totale_debito > 0:
