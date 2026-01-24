@@ -476,6 +476,7 @@ TRIBUTI_F24_MAPPING = {
     "3812": "8.7_IRAP",  # Acconto IRAP 1° rata
     "3813": "8.7_IRAP",  # Acconto IRAP 2° rata
     "3802": "8.7_IRAP",  # Addizionale regionale IRAP
+    "3805": "8.7_IRAP",  # Interessi IRAP
     
     # === IMU ===
     "3918": "8.2_IMU",  # IMU fabbricati
