@@ -393,3 +393,159 @@ async def test_ai_parser() -> Dict[str, Any]:
             "POST /api/ai-parser/batch-parse"
         ]
     }
+
+
+
+# === SEZIONE DA RIVEDERE - Documenti che richiedono revisione manuale ===
+
+@router.get("/da-rivedere")
+async def get_documents_da_rivedere(
+    limit: int = Query(default=50, le=200),
+    tipo: Optional[str] = Query(default=None, description="Filtra per tipo: fattura, f24, busta_paga")
+) -> Dict[str, Any]:
+    """
+    Ottiene documenti che richiedono revisione manuale:
+    - Non classificati automaticamente
+    - Parsing con errori
+    - Fornitore sconosciuto
+    """
+    from app.services.ai_integration_service import get_documents_for_review
+    
+    db = Database.get_db()
+    
+    query = {
+        "$or": [
+            {"needs_review": True},
+            {"classificazione_automatica": False, "ai_parsed": True},
+            {"ai_confidence": "low"},
+            {"ai_parsing_error": {"$exists": True}}
+        ]
+    }
+    
+    if tipo:
+        query["ai_parsed_type"] = tipo
+    
+    docs = await db["documents_inbox"].find(
+        query,
+        {"_id": 0, "pdf_data": 0}
+    ).sort("ai_parsed_at", -1).limit(limit).to_list(limit)
+    
+    # Conta per tipo
+    stats = {}
+    for doc in docs:
+        t = doc.get("ai_parsed_type", "altro")
+        stats[t] = stats.get(t, 0) + 1
+    
+    return {
+        "count": len(docs),
+        "by_type": stats,
+        "documents": docs
+    }
+
+
+@router.put("/da-rivedere/{document_id}/classifica")
+async def classifica_documento_revisione(
+    document_id: str,
+    centro_costo_id: str = Form(...),
+    centro_costo_nome: str = Form(default=None),
+    notes: str = Form(default=None)
+) -> Dict[str, Any]:
+    """
+    Classifica manualmente un documento dalla sezione Da Rivedere.
+    """
+    from app.services.ai_integration_service import mark_document_reviewed
+    
+    db = Database.get_db()
+    
+    # Se non fornito il nome, cercalo dal centro di costo
+    if not centro_costo_nome and centro_costo_id:
+        cdc = await db["centri_costo"].find_one({"codice": centro_costo_id})
+        centro_costo_nome = cdc.get("nome", centro_costo_id) if cdc else centro_costo_id
+    
+    result = await mark_document_reviewed(
+        db=db,
+        document_id=document_id,
+        centro_costo_id=centro_costo_id,
+        centro_costo_nome=centro_costo_nome,
+        notes=notes
+    )
+    
+    return result
+
+
+@router.post("/process-email-batch")
+async def process_email_documents(
+    limit: int = Query(default=20, le=100)
+) -> Dict[str, Any]:
+    """
+    Processa batch di documenti scaricati da email con AI parser.
+    Esegue parsing automatico su documenti non ancora processati.
+    """
+    from app.services.ai_integration_service import process_email_documents_batch
+    
+    db = Database.get_db()
+    
+    result = await process_email_documents_batch(db, limit=limit)
+    
+    return {
+        "success": True,
+        "message": f"Processati {result['processed']} documenti",
+        **result
+    }
+
+
+@router.get("/statistiche")
+async def get_ai_parsing_stats() -> Dict[str, Any]:
+    """
+    Statistiche sul parsing AI dei documenti.
+    """
+    db = Database.get_db()
+    
+    # Documenti parsati con AI
+    total_parsed = await db["documents_inbox"].count_documents({"ai_parsed": True})
+    
+    # Da rivedere
+    needs_review = await db["documents_inbox"].count_documents({
+        "$or": [
+            {"needs_review": True},
+            {"classificazione_automatica": False, "ai_parsed": True}
+        ]
+    })
+    
+    # Per tipo
+    pipeline = [
+        {"$match": {"ai_parsed": True}},
+        {"$group": {
+            "_id": "$ai_parsed_type",
+            "count": {"$sum": 1}
+        }}
+    ]
+    by_type = await db["documents_inbox"].aggregate(pipeline).to_list(20)
+    by_type_dict = {x["_id"]: x["count"] for x in by_type if x["_id"]}
+    
+    # Classificati automaticamente
+    auto_classified = await db["documents_inbox"].count_documents({
+        "ai_parsed": True,
+        "classificazione_automatica": True
+    })
+    
+    # Errori di parsing
+    parsing_errors = await db["documents_inbox"].count_documents({
+        "ai_parsing_error": {"$exists": True}
+    })
+    
+    # Non ancora processati
+    pending = await db["documents_inbox"].count_documents({
+        "ai_parsed": {"$ne": True},
+        "pdf_data": {"$exists": True}
+    })
+    
+    return {
+        "total_parsed": total_parsed,
+        "needs_review": needs_review,
+        "auto_classified": auto_classified,
+        "parsing_errors": parsing_errors,
+        "pending_processing": pending,
+        "by_type": by_type_dict,
+        "classification_rate": round(auto_classified / max(total_parsed, 1) * 100, 1)
+    }
