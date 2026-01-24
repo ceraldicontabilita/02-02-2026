@@ -573,6 +573,24 @@ async def upload_fattura_xml(file: UploadFile = File(...)) -> Dict[str, Any]:
         await db[Collections.INVOICES].insert_one(invoice.copy())
         invoice.pop("_id", None)
         
+        # === ASSOCIAZIONE AUTOMATICA PDF ARCHIVIATO ===
+        # Cerca se esiste un PDF in archivio da associare a questo XML
+        pdf_association_result = None
+        try:
+            from app.services.upload_ai_processor import associate_pdf_to_xml_on_upload
+            pdf_association_result = await associate_pdf_to_xml_on_upload(
+                db=db,
+                invoice_id=invoice["id"],
+                supplier_vat=supplier_vat,
+                invoice_number=parsed.get("invoice_number", ""),
+                invoice_date=parsed.get("invoice_date", ""),
+                total_amount=parsed.get("total_amount", 0)
+            )
+            if pdf_association_result and pdf_association_result.get("pdf_associated"):
+                logger.info(f"📎 PDF associato automaticamente: {pdf_association_result.get('pdf_filename')}")
+        except Exception as e:
+            logger.debug(f"Associazione PDF non disponibile: {e}")
+        
         warehouse_result = await auto_populate_warehouse_from_invoice(db, parsed, invoice["id"])
         
         # === AUTOMAZIONI COMPLETE: Ricette + Operazioni da confermare ===
