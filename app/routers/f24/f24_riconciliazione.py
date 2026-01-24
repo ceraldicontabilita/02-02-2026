@@ -126,6 +126,34 @@ async def upload_f24_commercialista(
             is_ravvedimento_update = True
             f24_precedente = existing
     
+    # Estrai anno dalla data di versamento o dai tributi
+    anno = None
+    
+    # 1. Prova ad estrarre dalla data di versamento (formato YYYY-MM-DD)
+    if data_vers and len(data_vers) >= 4:
+        anno = data_vers[:4]
+    
+    # 2. Se non c'è anno, prova ad estrarlo dai tributi (periodo_riferimento)
+    if not anno:
+        for sezione in ["sezione_erario", "sezione_inps", "sezione_regioni", "sezione_tributi_locali"]:
+            for tributo in parsed.get(sezione, []):
+                # Cerca anno nel campo "anno" diretto
+                if tributo.get("anno"):
+                    anno = tributo.get("anno")
+                    break
+                # Oppure nel periodo_riferimento (es. "12/2024" o "2024")
+                periodo = tributo.get("periodo_riferimento", "")
+                if "/" in periodo:
+                    parts = periodo.split("/")
+                    for p in parts:
+                        if len(p) == 4 and p.isdigit():
+                            anno = p
+                            break
+                elif len(periodo) == 4 and periodo.isdigit():
+                    anno = periodo
+            if anno:
+                break
+    
     # Salva nel database con pdf_data (architettura MongoDB-only)
     documento = {
         "id": file_id,
@@ -133,6 +161,9 @@ async def upload_f24_commercialista(
         "file_name": file.filename,
         "pdf_data": pdf_base64,  # Architettura MongoDB-only
         "parser_used": parser_used,  # Traccia quale parser è stato usato
+        "anno": anno,  # Campo anno estratto per filtri rapidi
+        "data_scadenza": data_vers,  # Alias per compatibilità frontend
+        "data_versamento": data_vers,  # Data originale
         "dati_generali": parsed.get("dati_generali", {}),
         "sezione_erario": parsed.get("sezione_erario", []),
         "sezione_inps": parsed.get("sezione_inps", []),
