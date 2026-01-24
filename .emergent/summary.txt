@@ -1,133 +1,121 @@
 <analysis>**original_problem_statement:**
-L'utente ha richiesto una serie di unificazioni e pulizie per migliorare la coerenza e la manutenibilità dell'applicazione, criticando la creazione di pagine duplicate. Le richieste sono:
-1.  **Unificare le Pagine di Riconciliazione (P0)**: Fondere le funzionalità di Riconciliazione Intelligente e Riconciliazione Automatica/Smart in un'unica pagina e un unico flusso di lavoro per l'utente, eliminando la confusione.
-2.  **Integrare Fornitori Learning (P0)**: Integrare la pagina e le funzionalità di Fornitori Learning (creata in questa sessione) direttamente all'interno della pagina Fornitori esistente. Non devono esistere due pagine separate per la gestione dei fornitori.
-3.  **Eliminare le Icone Doppie (P1)**: Rimuovere le icone duplicate che appaiono nelle card dell'interfaccia utente, come indicato dall'utente.
-4.  **Continuare la Configurazione dei Fornitori**: Proseguire con la scansione web dei fornitori non classificati per arricchire il sistema di Learning Machine.
-
-L'utente ha fornito 3 screenshot per illustrare i problemi di UI e le pagine da unificare.
+L'utente ha richiesto una serie di unificazioni e pulizie per migliorare la coerenza e la manutenibilità dell'applicazione, criticando la creazione di pagine duplicate. Le richieste principali erano:
+1.  **Unificare le Pagine di Riconciliazione (P0)**: Fondere le funzionalità di Riconciliazione Intelligente e Riconciliazione Automatica/Smart in un'unica pagina e un unico flusso di lavoro.
+2.  **Integrare Fornitori Learning (P0)**: Integrare la pagina e le funzionalità di Fornitori Learning direttamente all'interno della pagina Fornitori esistente.
+3.  **Eliminare Icone Doppie e Voci di Menu (P1)**: Rimuovere le voci di menu duplicate per Riconciliazione e Fornitori Learning.
+4.  **Completare Classificazione Automatica (P1)**: Configurare tutti i fornitori rimanenti per portare al 100% la classificazione automatica delle fatture.
+5.  **Estendere Learning Machine a F24 (P1)**: Applicare la logica di classificazione automatica anche ai documenti F24.
+6.  **Creare UI per Documenti Non Associati (P1)**: Aggiungere un'interfaccia per gestire manualmente le fatture non classificate.
 
 **User's preferred language**: Italiano
 
 **what currently exists?**
-- Un'applicazione full-stack (FastAPI + React) con architettura MongoDB-Only stabile e testata.
-- La **Learning Machine** per le fatture è funzionante: classifica automaticamente oltre il 75% delle fatture in 38 centri di costo, grazie a una logica di classificazione basata su keyword e fornitori noti.
-- È stato creato un nuovo sistema di **Fornitori Learning** per permettere all'utente di gestire le associazioni fornitore-keyword:
-    - **Backend**: Un nuovo router () gestisce le operazioni CRUD sulla nuova collezione.
-    - **Database**: Una collezione  in MongoDB persiste le configurazioni (attualmente con 44 fornitori configurati).
-    - **Frontend**: Una nuova pagina () è stata creata e stilizzata per gestire queste regole. È stata anche aggiunta una voce di menu dedicata.
-    - **Logica**: Il sistema usa le keyword per riclassificare le fatture e per categorizzare i prodotti nel magazzino.
-- Esistono diversi router di **riconciliazione** (, , etc.) che l'agente precedente ha verificato non essere duplicati funzionali, ma che l'utente vuole unificare a livello di UI.
+Un'applicazione full-stack (FastAPI + React) con un sistema di classificazione automatica (Learning Machine) pienamente operativo e testato.
+- **Pagine Unificate**: Le funzionalità di Fornitori Learning sono state integrate come un tab nella pagina Fornitori. Le voci di menu per la riconciliazione sono state unificate. I vecchi URL reindirizzano correttamente alle nuove pagine unificate.
+- **Classificazione al 100%**: Il sistema classifica automaticamente il 100% delle fatture (1000/1000) e il 100% degli F24 (43/43) in base alle regole definite.
+- **Gestione Fornitori Completa**: Tutti i 214 fornitori sono stati configurati nel sistema di learning.
+- **UI di Classificazione Manuale**: È stata aggiunta una sezione nel tab Learning Machine della pagina Fornitori per visualizzare e riclassificare manualmente le fatture.
+- **Backend Robusto**: La logica di classificazione è stata resa più robusta per gestire variazioni nei nomi dei fornitori e codici di centro di costo corretti. Sono stati aggiunti nuovi endpoint per la classificazione manuale di fatture e la classificazione automatica degli F24.
 
 **Last working item**:
--   **Last item agent was working**: Analisi della richiesta dell'utente di unificare le pagine di Riconciliazione e Fornitori. L'agente ha appena ricevuto la richiesta e gli screenshot di riferimento.
--   **Status**: NOT STARTED
+-   **Last item agent was working**: Aggiunta di un widget statistico alla Dashboard principale () per mostrare le performance della Learning Machine (es. % fatture classificate, % F24 classificati). L'agente ha implementato la logica di stato e di data fetching, ma non ha ancora aggiunto il componente JSX per visualizzare i dati.
+-   **Status**: IN PROGRESS
 -   **Agent Testing Done**: N
--   **Which testing method agent to use?**: Frontend testing agent per validare le modifiche all'interfaccia dopo la fusione delle pagine, e  per testare gli endpoint backend eventualmente modificati.
+-   **Which testing method agent to use?**: screenshot tool per verificare visivamente il nuovo widget sulla dashboard.
 -   **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
--   **Issue 1: Unificare le pagine e i flussi di Riconciliazione (P0)**
-    -   **Description**: L'utente vuole un'unica interfaccia per le diverse funzionalità di riconciliazione. Attualmente,  e  (e le loro UI) sono separate. Devono essere fuse.
-    -   **Attempted fixes**: Nessuno.
-    -   **Next debug checklist**:
-        1.  Analizzare attentamente i 3 screenshot forniti dall'utente per capire esattamente quali pagine/UI vuole unificare.
-        2.  Esaminare il codice dei componenti frontend che usano i router  e .
-        3.  Progettare una nuova pagina/componente unificato che presenti entrambe le funzionalità in modo coerente (es. tramite tabs o sezioni diverse).
-        4.  Se possibile, unificare anche i router backend in un unico file per semplificare la logica.
-        5.  Eliminare i vecchi file (router e componenti) e le voci di menu duplicate.
-    -   **Why fix this issue and what will be achieved with the fix?**: Per soddisfare la richiesta esplicita dell'utente, semplificare la navigazione e ridurre la ridondanza nell'applicazione.
-    -   **Status**: NOT STARTED
-    -   **Is recurring issue?**: Y (L'utente ha più volte criticato la creazione di pagine duplicate).
-    -   **Should Test frontend/backend/both after fix?**: Both
-
--   **Issue 2: Integrare Fornitori Learning nella pagina Fornitori (P0)**
-    -   **Description**: La nuova funzionalità Fornitori Learning deve essere spostata dalla sua pagina () alla pagina principale dei fornitori ().
-    -   **Next debug checklist**:
-        1.  Spostare la logica e la UI da  dentro , probabilmente come un nuovo tab o una modale.
-        2.  Unificare il router  con il router principale dei fornitori, se ne esiste uno, o rinominarlo per renderlo più coerente.
-        3.  Eliminare il file .
-        4.  Rimuovere la voce di menu Fornitori Learning da .
-    -   **Why fix this issue and what will be achieved with the fix?**: Per creare un flusso di lavoro unico per la gestione dei fornitori e rispettare la direttiva dell'utente.
-    -   **Status**: NOT STARTED
-    -   **Is recurring issue?**: Y
-    -   **Should Test frontend/backend/both after fix?**: Both
-
--   **Issue 3: Rimuovere icone doppie dalle card (P1)**
-    -   **Description**: L'utente ha segnalato la presenza di doppie icone nelle card dell'applicazione.
-    -   **Next debug checklist**:
-        1.  Ispezionare gli screenshot forniti dall'utente per localizzare esattamente il problema.
-        2.  Controllare il codice dei componenti riutilizzabili (es. ) e le pagine dove vengono usati (, , etc.).
-        3.  Correggere il CSS o la struttura JSX per rimuovere l'icona ridondante.
-    -   **Why fix this issue and what will be achieved with the fix?**: Pulizia dell'interfaccia utente come richiesto.
-    -   **Status**: NOT STARTED
-    -   **Is recurring issue?**: N
-    -   **Should Test frontend/backend/both after fix?**: frontend
+Nessuno.
 
 **In progress Task List**:
-Nessuno.
+-   **Task 1: Completare il widget delle statistiche della Learning Machine sulla Dashboard (P1)**
+    -   **Where to resume**: Nel file . La logica per caricare i dati () e lo stato () sono già presenti. È necessario aggiungere il codice JSX all'interno della funzione  per visualizzare queste statistiche (es. in una nuova  o un componente simile).
+    -   **What will be achieved with this?**: Fornire all'utente una visione immediata dell'efficacia del sistema di classificazione direttamente sulla pagina principale.
+    -   **Status**: IN PROGRESS
+    -   **Should Test frontend/backend/both after fix?**: frontend
+    -   **Blocked on something**: No
 
 **Upcoming and Future Tasks**
 -   **Upcoming Tasks**:
-    -   **(P1) Continuare la Configurazione dei Fornitori**: Dopo aver unificato le pagine, continuare a usare il  per ricercare i fornitori rimanenti nella categoria Altri costi e configurarli nel sistema di learning.
-    -   **(P2) Estendere Learning Machine a F24**: Applicare la logica di parsing e classificazione automatica anche ai documenti F24.
+    -   **(P2) Pulizia Codice**: Eliminare i file delle vecchie pagine che ora sono orfani, come  e , per mantenere il codebase pulito.
 
 -   **Future Tasks**:
-    -   **(P2) Refactoring Strutturale**: Suddividere router monolitici come  per migliorare la manutenibilità.
-    -   **(P3) Migliorare il Feedback della Learning Machine**: Creare una UI per visualizzare l'accuratezza della classificazione e permettere all'utente di correggere gli errori, migliorando il sistema nel tempo.
+    -   **(P2) Aggiungere una sezione Da Rivedere**: Creare un'area per le fatture classificate automaticamente ma con bassa confidenza, per una revisione manuale.
+    -   **(P2) Suggerimento Automatico di Regole**: Quando si classifica una fattura manualmente, suggerire la creazione di una nuova regola di learning se più fatture dello stesso fornitore vengono classificate allo stesso modo.
+    -   **(P3) Refactoring Strutturale Backend**: Suddividere router monolitici (es. , ) per migliorare la manutenibilità a lungo termine.
 
 **Completed work in this session**
--   **Fix Critico Classificazione Fatture**: Risolto un grave bug nella Learning Machine che classificava erroneamente centinaia di fatture come Carburante. La logica è stata riscritta per dare priorità ai nomi dei fornitori noti e usare keyword più specifiche, riducendo i falsi positivi del 95%.
--   **Creazione Sistema Fornitori Learning**:
-    -   Sviluppato un sistema completo (backend, DB, frontend) per consentire all'utente di associare manualmente fornitori a centri di costo tramite keyword.
-    -   Popolati 44 fornitori nel sistema tramite ricerca web, migliorando significativamente l'accuratezza della classificazione automatica.
-    -   Collegata la classificazione dei fornitori al magazzino, aggiornando automaticamente le categorie dei prodotti.
--   **Fix Bug Campo  F24**: Corretto il processo di upload degli F24 per estrarre e salvare correttamente il campo  ed eseguito uno script di migrazione per aggiornare 43 documenti esistenti.
--   **Refactoring UI Fornitori Learning**: La pagina  è stata completamente riscritta per adottare lo stile grafico della Dashboard principale.
+-   **Unificazione Pagine e UI (DONE)**: Unificate le pagine Fornitori Learning e Riconciliazione, rimosse le voci di menu duplicate e aggiunti redirect per i vecchi URL. Testato con successo dal testing agent.
+-   **Classificazione 100% Fatture (DONE)**: Configurato il 100% dei fornitori (214 in totale) e debuggata la logica di backend, portando alla classificazione automatica di tutte le 1000 fatture nel sistema.
+-   **Estensione Learning Machine a F24 (DONE)**: Creata una logica di mappatura per i codici tributo e un nuovo endpoint per classificare automaticamente tutti i 43 documenti F24.
+-   **Creazione UI per Classificazione Manuale (DONE)**: Aggiunta una sezione nella pagina Fornitori per visualizzare e riclassificare le fatture Altri costi, con un nuovo endpoint di supporto.
+-   **Aggiornamento PRD.md (DONE)**: Il documento di prodotto è stato costantemente aggiornato per riflettere i progressi e le funzionalità completate.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **Iterative Debugging**: L'agente ha risolto bug complessi (classificazione Carburante, F24 ) attraverso un ciclo di test, analisi del database, modifica del codice e verifica.
--   **Web Scraping for Data Enrichment**: Utilizzo del  per raccogliere informazioni reali sui fornitori e costruire un sistema di classificazione più accurato.
--   **Data Migration & Batch Processing**: Creazione di script/endpoint per correggere dati esistenti in blocco (fix F24, riclassificazione fatture).
--   **UI/UX Refactoring**: Riscrittura di componenti React per allineare lo stile a quello della dashboard, migliorando la coerenza visiva.
+-   **UI/UX Unification**: Fusione di componenti React separati in un'unica interfaccia a tab () per semplificare il flusso di lavoro dell'utente.
+-   **Routing & Redirects**: Utilizzo di React Router per gestire i reindirizzamenti da URL deprecati alle nuove pagine unificate.
+-   **State Management con URL**: Uso di  per controllare il tab attivo, rendendo lo stato dell'interfaccia condivisibile tramite link.
+-   **Data Classification Iterativa**: Processo in più fasi per identificare dati non classificati (fatture, F24), arricchire la conoscenza del sistema (configurazione fornitori, mappatura codici tributo) ed eseguire job di riclassificazione batch.
+-   **Debugging Backend Logic**: Tracciamento del flusso di dati dall'endpoint API alla query sul database per identificare e correggere bug nella logica di classificazione (es. match di nomi, codici centro di costo errati).
 
 **key DB schema**
--   ** (Nuova)**: 
--   ****: Aggiunti campi , , .
--   ****: Aggiunto campo .
--   ****: I campi  e  vengono ora aggiornati in base alla classificazione del fornitore.
+-   ****: . Usata intensamente e aggiornata con i codici corretti per .
+-   ****: I campi , ,  sono stati aggiornati dagli script di classificazione.
+-   ****: I campi  e  sono stati aggiunti e popolati.
 
 **All files of reference**
--   Screenshot forniti dall'utente per la richiesta di unificazione (cruciali per il prossimo agente).
+-    (in corso di modifica)
 -   
 -   
 -   
 -   
--   
+
+**Areas that need refactoring**
+-   I file dei vecchi componenti (, ) sono inutilizzati e andrebbero eliminati per pulire il codebase.
+-   Il router  è cresciuto notevolmente e potrebbe essere suddiviso in file più specifici per migliorare la manutenibilità.
+
+**key api endpoints**
+-   : Esegue la riclassificazione batch delle fatture.
+-   : Classifica manualmente una singola fattura (nuovo).
+-   : Esegue la classificazione batch di tutti i documenti F24 (nuovo).
+-   : Ottiene le fatture non classificate.
 
 **Critical Info for New Agent**
--   **La priorità assoluta è l'unificazione delle pagine come richiesto dall'utente.** Analizza i 3 screenshot forniti per capire esattamente cosa vuole l'utente. Non procedere con altre attività finché questo non è completato.
--   L'utente è molto attento alla coerenza dell'interfaccia e alla non-duplicazione delle funzionalità. Evita di creare nuove pagine se una funzionalità può essere integrata in una esistente.
--   I dati del sistema Fornitori Learning sono correttamente salvati nella collezione  in MongoDB e sono persistenti. Il precedente agente ha avuto difficoltà a verificarlo ma il problema era nel suo script di test, non nel codice dell'applicazione.
+-   La richiesta principale dell'utente di unificare le pagine è stata completata e verificata. La classificazione automatica per fatture e F24 è ora al 100% secondo le regole attuali.
+-   **Il task immediato è completare il widget sulla Dashboard.** La logica è pronta in , manca solo il rendering (JSX).
+-   L'utente è molto sensibile alla coerenza dell'interfaccia. Qualsiasi nuova funzionalità deve essere integrata in pagine esistenti e pertinenti, evitando di crearne di nuove.
+-   Il testing agent è stato utilizzato con successo due volte, dimostrandosi efficace anche nel trovare e correggere bug nel codice.
+
+**documents and test reports created in this job**
+-   
+-   
+-   
 
 **Last 10 User Messages and any pending HUMAN messages**
--    - **(NOT STARTED)**: Questa è la richiesta principale e il punto di partenza per il prossimo agente.
--    - **(COMPLETED)**: L'utente ha suggerito di usare la ricerca web e di creare una tabella fornitori per il learning, cosa che è stata fatta.
--    - **(COMPLETED)**: L'utente ha correttamente identificato un grave bug di classificazione, che è stato risolto.
--    - **(PARTIALLY COMPLETED)**: L'utente ha criticato l'implementazione iniziale. La grafica è stata corretta e più fornitori sono stati scansionati, ma ora la pagina deve essere unificata.
+-   : (Multipli) Approvazione dei piani proposti dall'agente.
+-   : Approvazione del piano per configurare i fornitori e aggiungere la UI per i documenti non associati.
+-   : Istruzione a completare tutti i task rimanenti.
+-   : Approvazione per l'inizio del lavoro sulla dashboard e i task finali.
 
 **Project Health Check:**
--   **Broken**: La UI presenta un'architettura informativa confusa con pagine duplicate, come segnalato dall'utente. Potrebbero esserci doppie icone su alcune card. La funzionalità di tab sulla pagina  non funzionava correttamente (ma la pagina verrà eliminata).
+-   **Broken**: Nessuno. Lo stato precedente di UI confusa e pagine duplicate è stato risolto.
 -   **Mocked**: Nessuno.
 
+**3rd Party Integrations**
+Nessuna.
+
 **Testing status**
--   **Testing agent used after significant changes**: NO (in questa sessione)
+-   **Testing agent used after significant changes**: YES. Utilizzato con successo per validare l'unificazione della UI e la nuova funzionalità di classificazione manuale. Ha anche individuato e corretto un bug critico nel backend.
 -   **Troubleshoot agent used after agent stuck in loop**: NO
--   **Test files created**: Nessuno.
--   **Known regressions**: Nessuna.
+-   **Test files created**: Nessuno
+-   **Known regressions**: Nessuna
+
+**Credentials to test flow:**
+Nessuna credenziale speciale richiesta. Le funzionalità sono accessibili tramite l'interfaccia utente.
 
 **What agent forgot to execute**
--   L'agente non ha rispettato la preferenza dell'utente di evitare pagine duplicate, creando  come pagina separata invece di integrarla subito in , scatenando l'ultima richiesta di pulizia da parte dell'utente.</analysis>
+-   L'agente non ha ancora aggiunto il codice JSX per renderizzare il widget delle statistiche sulla Dashboard in .
+-   L'agente non ha eliminato i file dei componenti React resi obsoleti (, etc.) dopo l'unificazione, lasciandoli come file orfani nel codebase.</analysis>
