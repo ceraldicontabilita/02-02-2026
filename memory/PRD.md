@@ -290,6 +290,17 @@ GET  /api/quietanze-f24
 GET  /api/ricerca-globale?q={query}
 ```
 
+### 6.5 Upload AI (Parsing Automatico)
+```
+POST /api/upload-ai/upload-f24              # Upload F24 con parsing AI
+POST /api/upload-ai/upload-cedolino         # Upload cedolino con aggiornamento progressivi
+POST /api/upload-ai/upload-fattura-pdf      # Upload fattura PDF (archivio)
+POST /api/upload-ai/upload-documento        # Upload generico auto-detect
+POST /api/upload-ai/upload-batch            # Upload multiplo
+GET  /api/upload-ai/archivio-pdf            # Lista PDF in attesa XML
+POST /api/upload-ai/archivio-pdf/{id}/associa  # Associazione manuale PDF→XML
+```
+
 ---
 
 ## 7. FILE DI RIFERIMENTO
