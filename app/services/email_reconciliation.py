@@ -302,7 +302,7 @@ async def costruisci_indice_documenti() -> Dict[str, Any]:
     risultato["per_tipo"]["costi_noleggio"] = len(costi)
     
     # 5. Indicizza F24
-    f24 = await db["f24"].find({}).to_list(5000)
+    f24 = await db["f24_unificato"].find({}).to_list(5000)
     for f in f24:
         chiavi = []
         if f.get("numero"):
