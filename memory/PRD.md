@@ -147,11 +147,17 @@ Il sistema classifica **automaticamente** documenti leggendo:
 - **Conferma architettura MongoDB-Only**: 0 riferimenti filesystem
 - **Servizi attivi**: Backend, Frontend, MongoDB tutti funzionanti
 
-### 5.2 🟠 P1 - In Attesa
-1. **Estendere Learning Machine**
-   - Replicare parsing automatico per **fatture** (attualmente solo cedolini)
-   - Replicare parsing automatico per **F24**
-   - Migliorare associazione F24 (campo `anno` non popolato)
+### 5.2 ✅ COMPLETATO (Sessione 20 - 24/01/2026)
+1. **Fix Associazione F24 - Campo Anno**
+   - Modificato endpoint upload per estrarre automaticamente campo `anno`
+   - Aggiunto endpoint `/api/f24-riconciliazione/fix-campo-anno` per correzione retroattiva
+   - Aggiornato endpoint `/api/f24-public/models` per restituire `anno`, `data_versamento`
+   - 43/46 F24 ora hanno il campo `anno` correttamente popolato
+
+### 5.3 🟠 P1 - In Attesa
+1. **Estendere Learning Machine per Fatture**
+   - Il sistema di classificazione per Centro di Costo è già implementato (38 CDC)
+   - Da testare con nuovi upload di fatture
 
 ### 5.3 🟡 P2 - Backlog
 1. **Refactoring Router Monolitici**
