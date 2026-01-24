@@ -38,6 +38,9 @@ export default function Dashboard() {
   
   // Stato per auto-riparazione
   const [autoRepairStatus, setAutoRepairStatus] = useState(null);
+  
+  // Stato per Learning Machine
+  const [learningStats, setLearningStats] = useState(null);
 
   /**
    * LOGICA INTELLIGENTE: Esegue auto-riparazione dei dati.
