@@ -339,10 +339,10 @@ Rispondi con UNA SOLA PAROLA senza punteggiatura."""
         # Crea ImageContent per ogni immagine
         image_contents = [ImageContent(image_base64=img_b64) for img_b64 in images_b64]
         
-        # Invia messaggio con immagini
+        # Invia messaggio con immagini - usa file_contents come da playbook
         user_message = UserMessage(
             text=prompt,
-            image_contents=image_contents
+            file_contents=image_contents
         )
         
         response = await chat.send_message(user_message)
