@@ -163,7 +163,8 @@ async def salva_fornitore_keywords(data: FornitoreKeywordsCreate) -> Dict[str, A
     
     # Upsert
     existing = await db[COLL_FORNITORI_KEYWORDS].find_one(
-        {"fornitore_nome_normalizzato": nome_norm}
+        {"fornitore_nome_normalizzato": nome_norm},
+        {"_id": 0}
     )
     
     if existing:
