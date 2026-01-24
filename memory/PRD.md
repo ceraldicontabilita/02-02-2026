@@ -154,10 +154,20 @@ Il sistema classifica **automaticamente** documenti leggendo:
    - Aggiornato endpoint `/api/f24-public/models` per restituire `anno`, `data_versamento`
    - 43/46 F24 ora hanno il campo `anno` correttamente popolato
 
+2. **Learning Machine per Fatture - COMPLETATA**
+   - 3.642 fatture classificate automaticamente su 38 centri di costo
+   - Riepilogo fiscale 2025: €524.867 imponibile, €452.701 deducibile IRES
+   - Distribuzione: 33.6% Altri costi, 21% Materie prime, 10% Bevande, 9% Carburante
+   - Endpoint `/api/learning-machine/riepilogo-centri-costo/{anno}` funzionante
+
 ### 5.3 🟠 P1 - In Attesa
-1. **Estendere Learning Machine per Fatture**
-   - Il sistema di classificazione per Centro di Costo è già implementato (38 CDC)
-   - Da testare con nuovi upload di fatture
+1. **UI Gestione Documenti Non Associati**
+   - ~450 documenti da associare
+   - Implementare "proposte intelligenti" basate su Learning Machine
+
+2. **Migliorare Classificazione Automatica**
+   - 33.6% delle fatture finisce in "Altri costi non classificati"
+   - Analizzare fornitori frequenti per creare nuove regole
 
 ### 5.3 🟡 P2 - Backlog
 1. **Refactoring Router Monolitici**
