@@ -72,7 +72,7 @@ async def lista_fornitori_keywords() -> Dict[str, Any]:
 async def fornitori_non_classificati(limit: int = 50) -> Dict[str, Any]:
     """
     Lista i fornitori in 'Altri costi non classificati' che non hanno keywords configurate.
-    Utile per identificare quali fornitori necessitano di configurazione.
+    Mostra i totali REALI del fornitore (tutte le fatture), non solo quelle non classificate.
     """
     db = Database.get_db()
     
@@ -87,21 +87,33 @@ async def fornitori_non_classificati(limit: int = 50) -> Dict[str, Any]:
         }},
         {"$group": {
             "_id": "$supplier_name",
-            "count": {"$sum": 1},
-            "totale": {"$sum": "$total_amount"},
+            "count_non_class": {"$sum": 1},
             "esempio_linee": {"$first": "$linee"}
         }},
-        {"$sort": {"count": -1}},
+        {"$sort": {"count_non_class": -1}},
         {"$limit": limit}
     ]
     
     fornitori_raw = await db["invoices"].aggregate(pipeline).to_list(limit)
     
-    # Filtra quelli già configurati
+    # Per ogni fornitore, calcola i totali REALI (tutte le fatture)
     fornitori = []
     for f in fornitori_raw:
         nome_norm = normalizza_nome_fornitore(f["_id"])
         if nome_norm not in configurati:
+            # Calcola totali REALI (tutte le fatture del fornitore)
+            totali = await db["invoices"].aggregate([
+                {"$match": {"supplier_name": f["_id"]}},
+                {"$group": {
+                    "_id": None,
+                    "count": {"$sum": 1},
+                    "totale": {"$sum": "$total_amount"}
+                }}
+            ]).to_list(1)
+            
+            count_reale = totali[0]["count"] if totali else f["count_non_class"]
+            totale_reale = totali[0]["totale"] if totali else 0
+            
             # Estrai prime descrizioni linee per aiutare l'utente
             descrizioni = []
             if f.get("esempio_linee"):
@@ -114,10 +126,14 @@ async def fornitori_non_classificati(limit: int = 50) -> Dict[str, Any]:
             fornitori.append({
                 "fornitore_nome": f["_id"],
                 "fornitore_nome_normalizzato": nome_norm,
-                "fatture_count": f["count"],
-                "totale_fatture": round(f["totale"], 2),
+                "fatture_count": count_reale,  # Totale REALE
+                "fatture_non_classificate": f["count_non_class"],
+                "totale_fatture": round(totale_reale, 2),  # Totale REALE
                 "esempio_descrizioni": descrizioni
             })
+    
+    # Ordina per numero fatture reali
+    fornitori.sort(key=lambda x: x["fatture_count"], reverse=True)
     
     return {
         "totale": len(fornitori),
