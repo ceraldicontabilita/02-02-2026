@@ -1201,6 +1201,46 @@ export default function Fornitori() {
     setLearningLoading(false);
   };
 
+  // Carica fatture "Altri costi non classificati"
+  const caricaFattureAltriCosti = async () => {
+    setFattureLoading(true);
+    try {
+      const res = await api.get('/api/invoices?limit=500');
+      const fatture = res.data.filter(f => 
+        f.centro_costo_nome === 'Altri costi non classificati' || 
+        !f.centro_costo_id
+      );
+      setFattureAltriCosti(fatture);
+    } catch (error) {
+      console.error('Errore caricamento fatture:', error);
+    }
+    setFattureLoading(false);
+  };
+
+  // Classifica singola fattura
+  const classificaFattura = async () => {
+    if (!selectedFattura || !nuovoCentroCosto) {
+      setLearningMessage({ type: 'error', text: 'Seleziona fattura e centro di costo' });
+      return;
+    }
+    
+    setLearningSaving(true);
+    try {
+      await api.put(`/api/invoices/${selectedFattura.id}/classifica`, {
+        centro_costo_id: nuovoCentroCosto,
+        classificazione_manuale: true
+      });
+      setLearningMessage({ type: 'success', text: 'Fattura classificata!' });
+      setSelectedFattura(null);
+      setNuovoCentroCosto('');
+      caricaFattureAltriCosti();
+    } catch (error) {
+      console.error('Errore classificazione:', error);
+      setLearningMessage({ type: 'error', text: 'Errore nella classificazione' });
+    }
+    setLearningSaving(false);
+  };
+
   // Carica dati learning quando si cambia tab
   useEffect(() => {
     if (activeTab === 'learning') {
