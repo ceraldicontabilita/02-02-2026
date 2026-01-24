@@ -244,14 +244,16 @@ async def riclassifica_con_keywords_personalizzate() -> Dict[str, Any]:
             continue
         
         # Trova fatture di questo fornitore in "Altri costi" o non classificate
-        # Usa $or per cercare in entrambi i campi supplier_name e fornitore_nome
+        # Usa regex per match parziale e case-insensitive
+        # Escape caratteri speciali nel nome per regex
+        import re
+        nome_escaped = re.escape(fornitore_nome)
+        
         fatture = await db["invoices"].find({
             "$and": [
                 {"$or": [
-                    {"supplier_name": {"$regex": f"^{fornitore_nome}$", "$options": "i"}},
-                    {"fornitore_nome": {"$regex": f"^{fornitore_nome}$", "$options": "i"}},
-                    {"supplier_name": fornitore_nome},
-                    {"fornitore_nome": fornitore_nome}
+                    {"supplier_name": {"$regex": nome_escaped, "$options": "i"}},
+                    {"fornitore_nome": {"$regex": nome_escaped, "$options": "i"}}
                 ]},
                 {"$or": [
                     {"centro_costo_nome": "Altri costi non classificati"},
