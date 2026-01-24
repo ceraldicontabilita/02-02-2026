@@ -191,7 +191,9 @@ async def salva_fornitore_keywords(data: FornitoreKeywordsCreate) -> Dict[str, A
         return {"success": True, "message": "Fornitore aggiornato", "fornitore": doc}
     else:
         doc["created_at"] = datetime.now(timezone.utc).isoformat()
-        await db[COLL_FORNITORI_KEYWORDS].insert_one(doc)
+        # Copia del doc per evitare che insert_one aggiunga _id all'originale
+        doc_to_insert = doc.copy()
+        await db[COLL_FORNITORI_KEYWORDS].insert_one(doc_to_insert)
         return {"success": True, "message": "Fornitore creato", "fornitore": doc}
 
 
