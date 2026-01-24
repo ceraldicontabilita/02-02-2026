@@ -347,16 +347,33 @@ async def process_aruba_emails(
                 )
                 
                 # 5. Determina metodo pagamento
+                # REGOLA: Il metodo di pagamento del FORNITORE ha la priorità!
+                metodo_fornitore = invoice_data.get("metodo_pagamento_abituale", "").lower()
+                
                 if bank_match:
+                    # Trovato in estratto conto → sicuramente banca, riconciliato
                     metodo_pagamento = "banca"
                     stato = "pagata_banca"
                     stats["riconciliate_banca"] += 1
                     logger.info(f"✅ Riconciliata BANCA: {invoice_data['fornitore'][:30]} | €{invoice_data['totale']}")
+                elif metodo_fornitore in ["banca", "bonifico", "rid", "sepa"]:
+                    # Fornitore paga sempre in banca → banca in attesa di riconciliazione
+                    metodo_pagamento = "banca"
+                    stato = "attesa_riconciliazione_banca"
+                    stats["riconciliate_banca"] += 1  # Conta come banca
+                    logger.info(f"🏦 BANCA (da fornitore): {invoice_data['fornitore'][:30]} | €{invoice_data['totale']} - attesa riconciliazione")
+                elif metodo_fornitore in ["cassa", "contanti"]:
+                    # Fornitore paga sempre in cassa
+                    metodo_pagamento = "cassa"
+                    stato = "pagata_cassa"
+                    stats["inserite_cassa"] += 1
+                    logger.info(f"💵 CASSA (da fornitore): {invoice_data['fornitore'][:30]} | €{invoice_data['totale']}")
                 else:
+                    # Metodo non definito e non trovato in banca → probabile cassa
                     metodo_pagamento = "cassa"
                     stato = "probabile_cassa"
                     stats["inserite_cassa"] += 1
-                    logger.info(f"💵 Probabile CASSA: {invoice_data['fornitore'][:30]} | €{invoice_data['totale']}")
+                    logger.info(f"❓ Probabile CASSA: {invoice_data['fornitore'][:30]} | €{invoice_data['totale']}")
                 
                 # 6. Crea fattura provvisoria
                 fattura_provvisoria = {
