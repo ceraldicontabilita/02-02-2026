@@ -1551,6 +1551,333 @@ export default function Fornitori() {
             ))}
           </div>
         )}
+          </>
+        )}
+
+        {/* TAB LEARNING */}
+        {activeTab === 'learning' && (
+          <div data-testid="learning-tab-content">
+            {/* Header Learning */}
+            <div style={{
+              background: 'white',
+              borderRadius: 12,
+              padding: 20,
+              marginBottom: 16,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+              border: '1px solid #e5e7eb'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+                <div>
+                  <h2 style={{ margin: 0, fontSize: 18, fontWeight: 'bold', color: '#1e3a5f', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <Lightbulb size={20} /> Learning Machine - Classificazione Fornitori
+                  </h2>
+                  <p style={{ color: '#6b7280', fontSize: 13, margin: '4px 0 0 0' }}>
+                    Configura keywords per classificare automaticamente i fornitori nei centri di costo
+                  </p>
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button 
+                    onClick={caricaDatiLearning} 
+                    disabled={learningLoading}
+                    style={{ 
+                      display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px',
+                      background: 'white', color: '#374151', border: '1px solid #d1d5db',
+                      borderRadius: 6, cursor: learningLoading ? 'wait' : 'pointer', fontWeight: 500, fontSize: 13 
+                    }}
+                  >
+                    <RefreshCw size={16} className={learningLoading ? 'animate-spin' : ''} />
+                    Aggiorna
+                  </button>
+                  <button 
+                    onClick={riclassificaFatture} 
+                    disabled={learningLoading || fornitoriConfigurati.length === 0}
+                    style={{ 
+                      display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px',
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      color: 'white', border: 'none', borderRadius: 6, 
+                      cursor: learningLoading ? 'not-allowed' : 'pointer', fontWeight: 500, fontSize: 13,
+                      boxShadow: '0 2px 4px rgba(102,126,234,0.3)',
+                      opacity: fornitoriConfigurati.length === 0 ? 0.5 : 1
+                    }}
+                  >
+                    <CheckCircle size={16} />
+                    Riclassifica Fatture
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Messaggio */}
+            {learningMessage && (
+              <div style={{
+                background: learningMessage.type === 'success' ? '#dcfce7' : '#fee2e2',
+                border: `1px solid ${learningMessage.type === 'success' ? '#86efac' : '#fecaca'}`,
+                borderRadius: 12, padding: 12, marginBottom: 16,
+                display: 'flex', alignItems: 'center', gap: 8
+              }}>
+                {learningMessage.type === 'success' ? 
+                  <CheckCircle size={18} color="#16a34a" /> : 
+                  <AlertCircle size={18} color="#dc2626" />
+                }
+                <span style={{ color: learningMessage.type === 'success' ? '#166534' : '#991b1b', fontWeight: 500 }}>
+                  {learningMessage.text}
+                </span>
+                <button 
+                  onClick={() => setLearningMessage(null)} 
+                  style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', fontSize: 18 }}
+                >
+                  ×
+                </button>
+              </div>
+            )}
+
+            {/* Stats Learning */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 24 }}>
+              <div style={{ background: 'linear-gradient(135deg, #fef3c715, #fef3c708)', borderRadius: 12, padding: 20, border: '1px solid #fef3c730' }}>
+                <div style={{ fontSize: 32, fontWeight: 'bold', color: '#f59e0b' }}>{fornitoriNonClassificati.length}</div>
+                <div style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>Da Classificare</div>
+              </div>
+              <div style={{ background: 'linear-gradient(135deg, #dcfce715, #dcfce708)', borderRadius: 12, padding: 20, border: '1px solid #dcfce730' }}>
+                <div style={{ fontSize: 32, fontWeight: 'bold', color: '#16a34a' }}>{fornitoriConfigurati.length}</div>
+                <div style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>Configurati</div>
+              </div>
+              <div style={{ background: 'linear-gradient(135deg, #dbeafe15, #dbeafe08)', borderRadius: 12, padding: 20, border: '1px solid #dbeafe30' }}>
+                <div style={{ fontSize: 32, fontWeight: 'bold', color: '#2563eb' }}>{centriCosto.length}</div>
+                <div style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>Centri di Costo</div>
+              </div>
+            </div>
+
+            {learningLoading && fornitoriNonClassificati.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: 60, color: '#6b7280' }}>
+                ⏳ Caricamento in corso...
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                {/* Colonna sinistra - Fornitori non classificati */}
+                <div style={{ background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', border: '1px solid #e5e7eb' }}>
+                  <h3 style={{ margin: '0 0 16px 0', fontSize: 16, fontWeight: 600, color: '#1e3a5f', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <AlertCircle size={18} color="#f59e0b" /> Fornitori da Classificare ({fornitoriNonClassificati.length})
+                  </h3>
+                  
+                  <div style={{ maxHeight: 400, overflowY: 'auto' }}>
+                    {fornitoriNonClassificati.length === 0 ? (
+                      <div style={{ textAlign: 'center', padding: 40, color: '#6b7280' }}>
+                        <CheckCircle size={48} color="#16a34a" style={{ marginBottom: 12 }} />
+                        <p style={{ margin: 0 }}>Tutti i fornitori sono classificati!</p>
+                      </div>
+                    ) : (
+                      fornitoriNonClassificati.map((f, idx) => (
+                        <div 
+                          key={idx}
+                          onClick={() => selezionaFornitore(f)}
+                          style={{
+                            padding: 12,
+                            borderRadius: 8,
+                            marginBottom: 8,
+                            cursor: 'pointer',
+                            background: selectedFornitore?.fornitore_nome === f.fornitore_nome ? '#e0e7ff' : '#f9fafb',
+                            border: selectedFornitore?.fornitore_nome === f.fornitore_nome ? '2px solid #4f46e5' : '1px solid #e5e7eb',
+                            transition: 'all 0.2s'
+                          }}
+                          data-testid={`fornitore-non-classificato-${idx}`}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div>
+                              <p style={{ fontWeight: 600, color: '#1f2937', margin: 0, fontSize: 14 }}>{f.fornitore_nome}</p>
+                              <p style={{ color: '#6b7280', fontSize: 12, margin: '4px 0 0 0' }}>
+                                {f.fatture_count} fatture • €{(f.totale_fatture || 0).toLocaleString('it-IT')}
+                              </p>
+                            </div>
+                            <ChevronRight size={16} color="#9ca3af" />
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                {/* Colonna destra - Form configurazione */}
+                <div style={{ background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', border: '1px solid #e5e7eb' }}>
+                  <h3 style={{ margin: '0 0 16px 0', fontSize: 16, fontWeight: 600, color: '#1e3a5f', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <Tag size={18} color="#667eea" /> Configura Keywords
+                  </h3>
+
+                  {selectedFornitore ? (
+                    <div>
+                      {/* Header fornitore selezionato */}
+                      <div style={{ background: '#f0f9ff', borderRadius: 8, padding: 12, marginBottom: 16, border: '1px solid #bae6fd' }}>
+                        <p style={{ fontWeight: 600, color: '#0369a1', margin: 0 }}>{selectedFornitore.fornitore_nome}</p>
+                        <p style={{ color: '#0284c7', fontSize: 12, margin: '4px 0 0 0' }}>
+                          {selectedFornitore.fatture_count} fatture • €{(selectedFornitore.totale_fatture || 0).toLocaleString('it-IT')}
+                        </p>
+                      </div>
+
+                      {/* Keywords suggerite */}
+                      {keywordsSuggerite.length > 0 && (
+                        <div style={{ marginBottom: 16 }}>
+                          <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 6 }}>
+                            Keywords suggerite (clicca per aggiungere):
+                          </label>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                            {keywordsSuggerite.map((kw, idx) => (
+                              <span
+                                key={idx}
+                                onClick={() => aggiungiKeywordSuggerita(kw)}
+                                style={{
+                                  padding: '4px 10px', background: '#e0e7ff', color: '#4338ca',
+                                  borderRadius: 20, fontSize: 12, cursor: 'pointer', fontWeight: 500
+                                }}
+                              >
+                                + {kw}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Keywords input */}
+                      <div style={{ marginBottom: 16 }}>
+                        <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 6 }}>
+                          Keywords (separate da virgola)
+                        </label>
+                        <input 
+                          value={keywords}
+                          onChange={(e) => setKeywords(e.target.value)}
+                          placeholder="es: caffè, cappuccino, espresso"
+                          style={{
+                            width: '100%', padding: '10px 12px', border: '1px solid #d1d5db',
+                            borderRadius: 6, fontSize: 14, boxSizing: 'border-box'
+                          }}
+                          data-testid="keywords-input"
+                        />
+                      </div>
+
+                      {/* Centro di costo */}
+                      <div style={{ marginBottom: 16 }}>
+                        <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 6 }}>
+                          Centro di Costo
+                        </label>
+                        <select 
+                          value={centroCostoSuggerito}
+                          onChange={(e) => setCentroCostoSuggerito(e.target.value)}
+                          style={{
+                            width: '100%', padding: '10px 12px', border: '1px solid #d1d5db',
+                            borderRadius: 6, fontSize: 14, background: 'white', boxSizing: 'border-box'
+                          }}
+                          data-testid="centro-costo-select"
+                        >
+                          <option value="">-- Classificazione automatica --</option>
+                          {centriCosto.map((cdc) => (
+                            <option key={cdc.id} value={cdc.id}>
+                              {cdc.codice} - {cdc.nome}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Note */}
+                      <div style={{ marginBottom: 16 }}>
+                        <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 6 }}>
+                          Note (opzionale)
+                        </label>
+                        <input 
+                          value={note}
+                          onChange={(e) => setNote(e.target.value)}
+                          placeholder="Es: Fornitore principale caffè"
+                          style={{
+                            width: '100%', padding: '10px 12px', border: '1px solid #d1d5db',
+                            borderRadius: 6, fontSize: 14, boxSizing: 'border-box'
+                          }}
+                        />
+                      </div>
+
+                      {/* Pulsanti */}
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button 
+                          onClick={salvaFornitore} 
+                          disabled={learningSaving} 
+                          style={{ 
+                            flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                            padding: '10px 16px', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                            color: 'white', border: 'none', borderRadius: 6, 
+                            cursor: learningSaving ? 'not-allowed' : 'pointer', fontWeight: 500, fontSize: 13,
+                            boxShadow: '0 2px 4px rgba(102,126,234,0.3)'
+                          }}
+                          data-testid="salva-keywords-btn"
+                        >
+                          <Save size={16} />
+                          {learningSaving ? 'Salvataggio...' : 'Salva Keywords'}
+                        </button>
+                        <button 
+                          onClick={() => setSelectedFornitore(null)} 
+                          style={{
+                            padding: '10px 16px', background: 'white', color: '#374151',
+                            border: '1px solid #d1d5db', borderRadius: 6, cursor: 'pointer', fontWeight: 500, fontSize: 13
+                          }}
+                        >
+                          Annulla
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ background: '#f9fafb', padding: 40, borderRadius: 8, textAlign: 'center', border: '2px dashed #d1d5db' }}>
+                      <Building2 size={48} color="#9ca3af" style={{ marginBottom: 12 }} />
+                      <p style={{ color: '#6b7280', margin: 0 }}>Seleziona un fornitore dalla lista</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Fornitori Configurati */}
+            {fornitoriConfigurati.length > 0 && (
+              <div style={{ background: 'white', borderRadius: 12, padding: 20, marginTop: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', border: '1px solid #e5e7eb' }}>
+                <h3 style={{ margin: '0 0 16px 0', fontSize: 16, fontWeight: 600, color: '#1e3a5f', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <CheckCircle size={18} color="#16a34a" /> Fornitori Configurati ({fornitoriConfigurati.length})
+                </h3>
+                <div style={{ display: 'grid', gap: 12 }}>
+                  {fornitoriConfigurati.map((f, idx) => (
+                    <div key={idx} style={{
+                      padding: 16, background: '#f9fafb', borderRadius: 8, border: '1px solid #e5e7eb'
+                    }} data-testid={`fornitore-configurato-${idx}`}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                        <div style={{ flex: 1 }}>
+                          <p style={{ fontWeight: 600, color: '#1f2937', margin: 0, fontSize: 15 }}>{f.fornitore_nome}</p>
+                          <p style={{ color: '#6b7280', fontSize: 13, margin: '4px 0 8px 0' }}>
+                            {f.fatture_count} fatture • €{(f.totale_fatture || 0).toLocaleString('it-IT')}
+                          </p>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                            {f.keywords?.map((kw, kidx) => (
+                              <span key={kidx} style={{
+                                padding: '3px 10px', background: '#dbeafe', color: '#1e40af',
+                                borderRadius: 20, fontSize: 12, fontWeight: 500
+                              }}>
+                                {kw}
+                              </span>
+                            ))}
+                          </div>
+                          {f.centro_costo_suggerito && (
+                            <p style={{ color: '#059669', fontSize: 12, margin: '8px 0 0 0', fontWeight: 500 }}>
+                              → {f.centro_costo_suggerito}
+                            </p>
+                          )}
+                        </div>
+                        <button 
+                          onClick={() => eliminaFornitoreKeywords(f.id)}
+                          style={{
+                            background: 'none', border: 'none', cursor: 'pointer', padding: 8, borderRadius: 6
+                          }}
+                        >
+                          <Trash2 size={18} color="#ef4444" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <SupplierModal
