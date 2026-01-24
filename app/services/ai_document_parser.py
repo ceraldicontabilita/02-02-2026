@@ -1,13 +1,16 @@
 """
 Parser AI Universale per Documenti
-Usa Gemini per estrarre dati strutturati da PDF, immagini e documenti scansionati.
+Usa OpenAI GPT-5.2 (vision) per estrarre dati strutturati da PDF, immagini e documenti scansionati.
 Supporta: Fatture, F24, Buste Paga
+
+Converte PDF in immagini e le invia a OpenAI per l'analisi.
 """
 import os
 import json
 import base64
 import logging
 import tempfile
+import io
 from typing import Dict, Any, Optional, List
 from datetime import datetime
 
@@ -218,6 +221,44 @@ IMPORTANTE:
 - Rispondi SOLO con il JSON, senza altro testo"""
 
 
+def pdf_to_images(pdf_bytes: bytes, max_pages: int = 5, dpi: int = 150) -> List[bytes]:
+    """
+    Converte un PDF in lista di immagini PNG.
+    Usa PyMuPDF (fitz) per la conversione.
+    
+    Args:
+        pdf_bytes: Contenuto PDF in bytes
+        max_pages: Numero massimo di pagine da convertire
+        dpi: Risoluzione immagini
+        
+    Returns:
+        Lista di immagini PNG in bytes
+    """
+    import fitz  # PyMuPDF
+    
+    images = []
+    try:
+        doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+        
+        for page_num in range(min(len(doc), max_pages)):
+            page = doc[page_num]
+            # Scala per DPI desiderato (default fitz è 72 DPI)
+            zoom = dpi / 72
+            mat = fitz.Matrix(zoom, zoom)
+            pix = page.get_pixmap(matrix=mat)
+            
+            # Converti in PNG bytes
+            img_bytes = pix.tobytes("png")
+            images.append(img_bytes)
+        
+        doc.close()
+        
+    except Exception as e:
+        logger.error(f"Errore conversione PDF in immagini: {e}")
+    
+    return images
+
+
 async def parse_document_with_ai(
     file_path: str = None,
     file_bytes: bytes = None,
@@ -225,7 +266,7 @@ async def parse_document_with_ai(
     mime_type: str = "application/pdf"
 ) -> Dict[str, Any]:
     """
-    Analizza un documento usando AI (Gemini) e restituisce dati strutturati.
+    Analizza un documento usando AI (OpenAI GPT con vision) e restituisce dati strutturati.
     
     Args:
         file_path: Percorso al file PDF/immagine
@@ -236,35 +277,45 @@ async def parse_document_with_ai(
     Returns:
         Dict con i dati estratti strutturati
     """
-    from emergentintegrations.llm.chat import LlmChat, UserMessage, FileContentWithMimeType
+    from openai import OpenAI
     
     api_key = os.environ.get("EMERGENT_LLM_KEY")
     if not api_key:
         return {"error": "EMERGENT_LLM_KEY non configurata", "success": False}
     
     try:
-        # Se abbiamo bytes, salva in file temporaneo
-        temp_file = None
-        if file_bytes and not file_path:
-            suffix = ".pdf" if "pdf" in mime_type else ".png"
-            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
-            temp_file.write(file_bytes)
-            temp_file.close()
-            file_path = temp_file.name
+        # Leggi il file se abbiamo solo il path
+        if file_path and not file_bytes:
+            with open(file_path, "rb") as f:
+                file_bytes = f.read()
         
-        if not file_path or not os.path.exists(file_path):
-            return {"error": "File non trovato", "success": False}
+        if not file_bytes:
+            return {"error": "Nessun contenuto file fornito", "success": False}
+        
+        # Prepara le immagini per OpenAI
+        images_b64 = []
+        
+        if "pdf" in mime_type.lower():
+            # Converti PDF in immagini
+            images = pdf_to_images(file_bytes, max_pages=3, dpi=150)
+            if not images:
+                return {"error": "Impossibile convertire PDF in immagini", "success": False}
+            
+            for img in images:
+                images_b64.append(base64.b64encode(img).decode())
+        else:
+            # È già un'immagine
+            images_b64.append(base64.b64encode(file_bytes).decode())
         
         # Seleziona il prompt appropriato
         if document_type == "auto":
-            # Prima passa per identificare il tipo
-            prompt = """Identifica il tipo di questo documento. Rispondi SOLO con una di queste opzioni:
-- fattura (se è una fattura, nota di credito, nota di debito)
-- f24 (se è un modello F24 o quietanza F24)
-- busta_paga (se è un cedolino, busta paga)
-- altro (se non rientra nelle categorie precedenti)
+            prompt = """Identifica il tipo di questo documento italiano. Rispondi SOLO con una di queste opzioni esatte:
+fattura
+f24
+busta_paga
+altro
 
-Rispondi con UNA SOLA PAROLA."""
+Rispondi con UNA SOLA PAROLA senza punteggiatura."""
         elif document_type == "fattura":
             prompt = PROMPT_FATTURA
         elif document_type == "f24":
@@ -274,36 +325,53 @@ Rispondi con UNA SOLA PAROLA."""
         else:
             prompt = PROMPT_FATTURA  # Default
         
-        # Inizializza chat con Gemini (supporta file attachment)
-        chat = LlmChat(
+        # Inizializza client OpenAI
+        client = OpenAI(
             api_key=api_key,
-            session_id=f"doc_parser_{datetime.now().timestamp()}",
-            system_message="Sei un esperto parser di documenti contabili italiani. Estrai dati precisi e strutturati."
-        ).with_model("gemini", "gemini-2.5-flash")
-        
-        # Crea file content
-        file_content = FileContentWithMimeType(
-            file_path=file_path,
-            mime_type=mime_type
+            base_url="https://emergentintegrations.vercel.app/api/llm/openai"
         )
         
-        # Invia messaggio con file
-        user_message = UserMessage(
-            text=prompt,
-            file_contents=[file_content]
+        # Prepara i contenuti del messaggio
+        content = [{"type": "text", "text": prompt}]
+        
+        # Aggiungi tutte le immagini
+        for img_b64 in images_b64:
+            content.append({
+                "type": "image_url",
+                "image_url": {
+                    "url": f"data:image/png;base64,{img_b64}",
+                    "detail": "high"
+                }
+            })
+        
+        # Chiama OpenAI
+        response = client.chat.completions.create(
+            model="gpt-4o",  # Modello con vision
+            messages=[
+                {
+                    "role": "system",
+                    "content": "Sei un esperto parser di documenti contabili italiani. Estrai dati precisi e strutturati in formato JSON."
+                },
+                {
+                    "role": "user",
+                    "content": content
+                }
+            ],
+            max_tokens=4000,
+            temperature=0.1
         )
         
-        response = await chat.send_message(user_message)
+        response_text = response.choices[0].message.content.strip()
         
         # Se era auto-detection, fai una seconda chiamata con il prompt specifico
         if document_type == "auto":
-            detected_type = response.strip().lower()
+            detected_type = response_text.lower().strip()
             logger.info(f"Tipo documento rilevato: {detected_type}")
             
             if detected_type in ["fattura", "f24", "busta_paga"]:
                 # Richiama con il prompt specifico
                 result = await parse_document_with_ai(
-                    file_path=file_path,
+                    file_bytes=file_bytes,
                     document_type=detected_type,
                     mime_type=mime_type
                 )
@@ -316,17 +384,10 @@ Rispondi con UNA SOLA PAROLA."""
                     "success": False
                 }
         
-        # Pulisci file temporaneo
-        if temp_file:
-            try:
-                os.unlink(temp_file.name)
-            except:
-                pass
-        
         # Parse JSON dalla risposta
         try:
             # Rimuovi eventuali markdown code blocks
-            json_str = response.strip()
+            json_str = response_text
             if json_str.startswith("```json"):
                 json_str = json_str[7:]
             if json_str.startswith("```"):
@@ -337,16 +398,17 @@ Rispondi con UNA SOLA PAROLA."""
             parsed_data = json.loads(json_str.strip())
             parsed_data["success"] = True
             parsed_data["parsed_at"] = datetime.now().isoformat()
-            parsed_data["parser"] = "ai_gemini"
+            parsed_data["parser"] = "ai_openai_vision"
+            parsed_data["pages_analyzed"] = len(images_b64)
             
             return parsed_data
             
         except json.JSONDecodeError as e:
             logger.error(f"Errore parsing JSON risposta AI: {e}")
-            logger.debug(f"Risposta raw: {response[:500]}")
+            logger.debug(f"Risposta raw: {response_text[:500]}")
             return {
                 "error": f"Errore parsing risposta AI: {str(e)}",
-                "raw_response": response[:1000],
+                "raw_response": response_text[:1000],
                 "success": False
             }
             
@@ -444,7 +506,7 @@ def convert_ai_fattura_to_db_format(ai_data: Dict[str, Any]) -> Dict[str, Any]:
         "modalita_pagamento": ai_data.get("pagamento", {}).get("modalita"),
         "iban": ai_data.get("pagamento", {}).get("iban"),
         "note": ai_data.get("note"),
-        "parsed_by": "ai_gemini",
+        "parsed_by": "ai_openai_vision",
         "parsed_at": ai_data.get("parsed_at")
     }
 
@@ -491,7 +553,7 @@ def convert_ai_busta_paga_to_dipendente_update(ai_data: Dict[str, Any]) -> Dict[
             "contingenza": ai_data.get("retribuzione", {}).get("contingenza", 0),
             "superminimo": ai_data.get("retribuzione", {}).get("superminimo", 0)
         },
-        "parsed_by": "ai_gemini",
+        "parsed_by": "ai_openai_vision",
         "parsed_at": ai_data.get("parsed_at"),
         "anno_riferimento": periodo.get("anno"),
         "mese_riferimento": periodo.get("mese")
