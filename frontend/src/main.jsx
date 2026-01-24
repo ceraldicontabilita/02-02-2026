@@ -109,7 +109,6 @@ const PrevisioniAcquisti = lazy(() => import("./pages/PrevisioniAcquisti.jsx"));
 // === BANCA & PAGAMENTI ===
 const PrimaNota = lazy(() => import("./pages/PrimaNota.jsx"));
 const RiconciliazioneUnificata = lazy(() => import("./pages/RiconciliazioneUnificata.jsx"));
-const RiconciliazioneIntelligente = lazy(() => import("./pages/RiconciliazioneIntelligente.jsx"));
 const GestioneAssegni = lazy(() => import("./pages/GestioneAssegni.jsx"));
 const ArchivioBonifici = lazy(() => import("./pages/ArchivioBonifici.jsx"));
 
@@ -186,7 +185,6 @@ const RegoleContabili = lazy(() => import("./pages/RegoleContabili.jsx"));
 const GestionePagoPA = lazy(() => import("./pages/GestionePagoPA.jsx"));
 const GestioneInvoiceTronic = lazy(() => import("./pages/GestioneInvoiceTronic.jsx"));
 const ClassificazioneDocumenti = lazy(() => import("./pages/ClassificazioneDocumenti.jsx"));
-const FornitoriLearning = lazy(() => import("./pages/FornitoriLearning.jsx"));
 
 // Wrapper component with Suspense
 const LazyPage = ({ children }) => (
