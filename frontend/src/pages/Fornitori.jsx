@@ -1245,6 +1245,7 @@ export default function Fornitori() {
   useEffect(() => {
     if (activeTab === 'learning') {
       caricaDatiLearning();
+      caricaFattureAltriCosti();
     }
   }, [activeTab]);
 
