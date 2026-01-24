@@ -279,9 +279,11 @@ async def parse_document_with_ai(
     """
     from openai import OpenAI
     
-    api_key = os.environ.get("EMERGENT_LLM_KEY")
+    api_key = os.environ.get("OPENAI_API_KEY")
     if not api_key:
-        return {"error": "EMERGENT_LLM_KEY non configurata", "success": False}
+        api_key = os.environ.get("EMERGENT_LLM_KEY")
+    if not api_key:
+        return {"error": "OPENAI_API_KEY o EMERGENT_LLM_KEY non configurata", "success": False}
     
     try:
         # Leggi il file se abbiamo solo il path
