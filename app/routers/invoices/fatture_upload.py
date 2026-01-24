@@ -1108,14 +1108,16 @@ async def get_fattura(invoice_id: str) -> Dict[str, Any]:
 async def update_fattura(invoice_id: str, data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """
     Aggiorna una fattura.
-    Campi aggiornabili: metodo_pagamento, pagato, status, data_pagamento, numeri_assegni, note
+    Campi aggiornabili: metodo_pagamento, pagato, status, data_pagamento, numeri_assegni, note,
+                        centro_costo_id, centro_costo_nome, classificazione_manuale
     """
     db = Database.get_db()
     
     # Campi aggiornabili
     allowed_fields = [
         "metodo_pagamento", "pagato", "paid", "status", "data_pagamento",
-        "numeri_assegni", "note", "in_banca", "categoria_contabile", "centro_costo"
+        "numeri_assegni", "note", "in_banca", "categoria_contabile", "centro_costo",
+        "centro_costo_id", "centro_costo_nome", "classificazione_manuale"
     ]
     
     update_data = {k: v for k, v in data.items() if k in allowed_fields}
@@ -1140,6 +1142,44 @@ async def update_fattura(invoice_id: str, data: Dict[str, Any] = Body(...)) -> D
         raise HTTPException(status_code=404, detail="Fattura non trovata")
     
     return {"success": True, "message": "Fattura aggiornata", "updated_fields": list(update_data.keys())}
+
+
+@router.put("/{invoice_id}/classifica")
+async def classifica_fattura_manuale(invoice_id: str, data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
+    """
+    Classifica manualmente una fattura assegnandola a un centro di costo.
+    """
+    db = Database.get_db()
+    
+    centro_costo_id = data.get("centro_costo_id")
+    if not centro_costo_id:
+        raise HTTPException(status_code=400, detail="centro_costo_id richiesto")
+    
+    # Recupera il nome del centro di costo
+    cdc = await db[Collections.CENTRI_COSTO].find_one({"codice": centro_costo_id})
+    centro_costo_nome = cdc.get("nome", centro_costo_id) if cdc else centro_costo_id
+    
+    update_data = {
+        "centro_costo_id": centro_costo_id,
+        "centro_costo_nome": centro_costo_nome,
+        "classificazione_manuale": True,
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    result = await db[Collections.INVOICES].update_one(
+        {"id": invoice_id},
+        {"$set": update_data}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Fattura non trovata")
+    
+    return {
+        "success": True, 
+        "message": f"Fattura classificata come '{centro_costo_nome}'",
+        "centro_costo_id": centro_costo_id,
+        "centro_costo_nome": centro_costo_nome
+    }
 
 
 @router.put("/{invoice_id}/metodo-pagamento")
