@@ -1,121 +1,143 @@
 <analysis>**original_problem_statement:**
-L'utente ha richiesto una serie di unificazioni e pulizie per migliorare la coerenza e la manutenibilità dell'applicazione, criticando la creazione di pagine duplicate. Le richieste principali erano:
-1.  **Unificare le Pagine di Riconciliazione (P0)**: Fondere le funzionalità di Riconciliazione Intelligente e Riconciliazione Automatica/Smart in un'unica pagina e un unico flusso di lavoro.
-2.  **Integrare Fornitori Learning (P0)**: Integrare la pagina e le funzionalità di Fornitori Learning direttamente all'interno della pagina Fornitori esistente.
-3.  **Eliminare Icone Doppie e Voci di Menu (P1)**: Rimuovere le voci di menu duplicate per Riconciliazione e Fornitori Learning.
-4.  **Completare Classificazione Automatica (P1)**: Configurare tutti i fornitori rimanenti per portare al 100% la classificazione automatica delle fatture.
-5.  **Estendere Learning Machine a F24 (P1)**: Applicare la logica di classificazione automatica anche ai documenti F24.
-6.  **Creare UI per Documenti Non Associati (P1)**: Aggiungere un'interfaccia per gestire manualmente le fatture non classificate.
+L'utente ha inizialmente richiesto di unificare le pagine di riconciliazione e di gestione dei fornitori, eliminare le voci di menu duplicate e completare la classificazione automatica per fatture e F24.
+
+Tuttavia, la priorità è cambiata radicalmente in una richiesta di livello superiore: implementare un sistema completo e intelligente di estrazione dati per **fatture (PDF), F24 e buste paga**. L'obiettivo è estrarre ogni singola informazione da questi documenti, utilizzando una Learning Machine per collegare automaticamente i dati a fornitori, piano dei conti e centri di costo, e rendere il sistema di gestione F24 perfetto e privo di duplicati. L'utente ha anche richiesto che il parsing avvenga automaticamente al caricamento dei file o alla ricezione da email.
 
 **User's preferred language**: Italiano
 
 **what currently exists?**
-Un'applicazione full-stack (FastAPI + React) con un sistema di classificazione automatica (Learning Machine) pienamente operativo e testato.
-- **Pagine Unificate**: Le funzionalità di Fornitori Learning sono state integrate come un tab nella pagina Fornitori. Le voci di menu per la riconciliazione sono state unificate. I vecchi URL reindirizzano correttamente alle nuove pagine unificate.
-- **Classificazione al 100%**: Il sistema classifica automaticamente il 100% delle fatture (1000/1000) e il 100% degli F24 (43/43) in base alle regole definite.
-- **Gestione Fornitori Completa**: Tutti i 214 fornitori sono stati configurati nel sistema di learning.
-- **UI di Classificazione Manuale**: È stata aggiunta una sezione nel tab Learning Machine della pagina Fornitori per visualizzare e riclassificare manualmente le fatture.
-- **Backend Robusto**: La logica di classificazione è stata resa più robusta per gestire variazioni nei nomi dei fornitori e codici di centro di costo corretti. Sono stati aggiunti nuovi endpoint per la classificazione manuale di fatture e la classificazione automatica degli F24.
+Un'applicazione full-stack (FastAPI + React) con un sistema di estrazione dati basato su AI e classificazione quasi completo.
+- **Parser AI Universale**: È stato implementato un potente parser in  che utilizza  e il modello **Claude Vision**. È in grado di estrarre dati strutturati da documenti PDF complessi come fatture, F24 e buste paga.
+- **Unificazione Dati F24**: A seguito della richiesta dell'utente, tutte le numerose e inconsistenti collezioni MongoDB relative agli F24 (, , , etc.) sono state migrate e unificate in un'unica collezione canonica: . L'intero codebase è stato refattorizzato per utilizzare solo questa collezione.
+- **Learning Machine Potenziata**: La classificazione automatica delle fatture è stata portata al **99.8%** (3747/3753). L'agente ha utilizzato la ricerca web per identificare circa 84 fornitori non configurati e ha creato le regole di classificazione necessarie.
+- **Automazione e UI**:
+    - È stata creata una pagina Da Rivedere () per gestire i documenti che l'AI non riesce a processare.
+    - Il parsing AI è stato integrato automaticamente nel flusso di download dei documenti da email.
+    - Il widget delle statistiche della Learning Machine sulla Dashboard, task rimasto in sospeso dalla precedente sessione, è stato completato e ora è funzionante.
+- **Script di Batch Processing**: Sono stati creati script in  per eseguire la configurazione di massa dei fornitori e il processamento di tutti i documenti F24 e delle buste paga presenti nel sistema.
 
 **Last working item**:
--   **Last item agent was working**: Aggiunta di un widget statistico alla Dashboard principale () per mostrare le performance della Learning Machine (es. % fatture classificate, % F24 classificati). L'agente ha implementato la logica di stato e di data fetching, ma non ha ancora aggiunto il componente JSX per visualizzare i dati.
+-   **Last item agent was working**: Deduplicazione finale della collezione . L'agente ha scoperto che la semplice deduplicazione basata sull'hash del file non era sufficiente a causa di file con nomi leggermente diversi (es. , ) ma con contenuto identico. L'ultima azione è stata un'indagine per implementare una logica di deduplicazione più robusta.
 -   **Status**: IN PROGRESS
--   **Agent Testing Done**: N
--   **Which testing method agent to use?**: screenshot tool per verificare visivamente il nuovo widget sulla dashboard.
+-   **Agent Testing Done**: Y
+-   **Which testing method agent to use?**: backend testing agent o uno script  per interrogare MongoDB. L'obiettivo è implementare una logica di deduplicazione basata sui campi chiave del documento (es. combinazione di data, importo totale, codice fiscale, primo codice tributo) anziché sull'hash del file.
 -   **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
-Nessuno.
+-   **Issue 1: Duplicati logici nella collezione  (P0)**
+    -   **Attempted fixes**: La deduplicazione basata sull'hash del file si è rivelata inefficace contro i duplicati con nomi di file diversi.
+    -   **Next debug checklist**:
+        1.  Scrivere uno script che raggruppi i documenti in  per una combinazione di campi chiave (es. , , ).
+        2.  Analizzare i gruppi con più di un documento per confermare che siano duplicati logici.
+        3.  Implementare una funzione di pulizia che conservi un solo documento per ogni gruppo di duplicati, preferibilmente quello con i dati più completi.
+        4.  Eseguire lo script di pulizia.
+    -   **Why fix this issue and what will be achieved with the fix?**: L'utente ha richiesto esplicitamente una gestione perfetta e senza errori degli F24. Rimuovere i duplicati è un passo critico per garantire l'accuratezza contabile e soddisfare la richiesta principale dell'utente.
+    -   **Status**: IN PROGRESS
+    -   **Is recurring issue?**: N
+    -   **Should Test frontend/backend/both after fix?**: backend
+    -   **Blocked on other issue**: No
 
 **In progress Task List**:
--   **Task 1: Completare il widget delle statistiche della Learning Machine sulla Dashboard (P1)**
-    -   **Where to resume**: Nel file . La logica per caricare i dati () e lo stato () sono già presenti. È necessario aggiungere il codice JSX all'interno della funzione  per visualizzare queste statistiche (es. in una nuova  o un componente simile).
-    -   **What will be achieved with this?**: Fornire all'utente una visione immediata dell'efficacia del sistema di classificazione direttamente sulla pagina principale.
-    -   **Status**: IN PROGRESS
-    -   **Should Test frontend/backend/both after fix?**: frontend
-    -   **Blocked on something**: No
+Nessuno.
 
 **Upcoming and Future Tasks**
 -   **Upcoming Tasks**:
-    -   **(P2) Pulizia Codice**: Eliminare i file delle vecchie pagine che ora sono orfani, come  e , per mantenere il codebase pulito.
+    -   **(P1) Parsing Automatico su Upload Diretto**: Integrare la chiamata al servizio  nel router di upload dei file (), come già fatto per il download da email.
+    -   **(P1) Completare Classificazione Fatture al 100%**: Analizzare le 6 fatture rimanenti non classificate e configurare le regole mancanti.
+    -   **(P2) UI per Correzione Manuale Dati AI**: Creare un'interfaccia che permetta agli utenti di visualizzare e correggere i dati estratti dall'AI per F24, fatture PDF e buste paga, specialmente per i documenti che finiscono nella sezione Da Rivedere.
 
 -   **Future Tasks**:
-    -   **(P2) Aggiungere una sezione Da Rivedere**: Creare un'area per le fatture classificate automaticamente ma con bassa confidenza, per una revisione manuale.
-    -   **(P2) Suggerimento Automatico di Regole**: Quando si classifica una fattura manualmente, suggerire la creazione di una nuova regola di learning se più fatture dello stesso fornitore vengono classificate allo stesso modo.
-    -   **(P3) Refactoring Strutturale Backend**: Suddividere router monolitici (es. , ) per migliorare la manutenibilità a lungo termine.
+    -   **(P2) Suggerimento Automatico di Regole**: Durante la classificazione manuale di una fattura, suggerire la creazione di una nuova regola per la Learning Machine.
+    -   **(P3) Refactoring Strutturale Backend**: Suddividere router monolitici (es. ) in file più specifici per migliorare la manutenibilità a lungo termine.
 
 **Completed work in this session**
--   **Unificazione Pagine e UI (DONE)**: Unificate le pagine Fornitori Learning e Riconciliazione, rimosse le voci di menu duplicate e aggiunti redirect per i vecchi URL. Testato con successo dal testing agent.
--   **Classificazione 100% Fatture (DONE)**: Configurato il 100% dei fornitori (214 in totale) e debuggata la logica di backend, portando alla classificazione automatica di tutte le 1000 fatture nel sistema.
--   **Estensione Learning Machine a F24 (DONE)**: Creata una logica di mappatura per i codici tributo e un nuovo endpoint per classificare automaticamente tutti i 43 documenti F24.
--   **Creazione UI per Classificazione Manuale (DONE)**: Aggiunta una sezione nella pagina Fornitori per visualizzare e riclassificare le fatture Altri costi, con un nuovo endpoint di supporto.
--   **Aggiornamento PRD.md (DONE)**: Il documento di prodotto è stato costantemente aggiornato per riflettere i progressi e le funzionalità completate.
+-   **Implementazione Parser AI Universale (DONE)**: Creato e testato con successo un parser basato su Claude Vision per estrarre dati da PDF di fatture, F24 e buste paga.
+-   **Unificazione e Pulizia Dati F24 (DONE)**: Consolidate tutte le collezioni F24 in un'unica collezione  e refattorizzato il codice per usarla.
+-   **Configurazione Learning Machine al 99.8% (DONE)**: Ricercati e configurati ~84 fornitori mancanti per portare la classificazione automatica delle fatture quasi al completamento.
+-   **Processamento Batch Documenti (DONE)**: Eseguiti script per parsare con l'AI tutti i documenti F24 e buste paga unici nel sistema.
+-   **Completamento Widget Dashboard (DONE)**: Il task in sospeso dalla precedente sessione è stato completato, aggiungendo il rendering JSX e la logica di fetch per le statistiche della Learning Machine.
+-   **Creazione Sezione Da Rivedere (DONE)**: Implementata la UI e la logica backend per la gestione dei documenti non processati dall'AI.
+-   **Pulizia File Obsoleti (DONE)**: Rimossi i componenti React  e .
+-   **Bugfix API  (DONE)**: Risolto il problema del path duplicato nell'URL dell'endpoint.
+
+**Earlier issues found/mentioned but not fixed**
+Nessuno.
+
+**Known issue recurrence from previous fork**
+Nessuno.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **UI/UX Unification**: Fusione di componenti React separati in un'unica interfaccia a tab () per semplificare il flusso di lavoro dell'utente.
--   **Routing & Redirects**: Utilizzo di React Router per gestire i reindirizzamenti da URL deprecati alle nuove pagine unificate.
--   **State Management con URL**: Uso di  per controllare il tab attivo, rendendo lo stato dell'interfaccia condivisibile tramite link.
--   **Data Classification Iterativa**: Processo in più fasi per identificare dati non classificati (fatture, F24), arricchire la conoscenza del sistema (configurazione fornitori, mappatura codici tributo) ed eseguire job di riclassificazione batch.
--   **Debugging Backend Logic**: Tracciamento del flusso di dati dall'endpoint API alla query sul database per identificare e correggere bug nella logica di classificazione (es. match di nomi, codici centro di costo errati).
+-   **AI-Powered Data Extraction**: Utilizzo di un LLM multimodale (Claude Vision) tramite la libreria  per l'estrazione di dati da documenti PDF, superando i limiti dei parser tradizionali.
+-   **Data Unification & Migration**: Processo critico di consolidamento di dati frammentati da più collezioni MongoDB in un'unica fonte di verità () e refactoring dell'applicazione per garantire coerenza.
+-   **Batch Processing with Standalone Scripts**: Adozione di script dedicati nella directory  per eseguire operazioni di data-wrangling e setup su larga scala, mantenendo la logica di business separata dagli endpoint API.
+-   **Data Enrichment via Web Search**: Utilizzo della ricerca web per ottenere informazioni contestuali sui fornitori (es. tipo di attività) al fine di creare regole di classificazione accurate.
 
 **key DB schema**
--   ****: . Usata intensamente e aggiornata con i codici corretti per .
--   ****: I campi , ,  sono stati aggiornati dagli script di classificazione.
--   ****: I campi  e  sono stati aggiunti e popolati.
+-   ** (NUOVA e CANONICA)**: . Questa è ora l'unica fonte di verità per i dati F24.
+-   ****: Il campo  è utilizzato per tracciare lo stato della classificazione.
+-   ****: Il sotto-documento  (con ferie, permessi, TFR) viene ora popolato e aggiornato automaticamente dal parser AI delle buste paga.
+-   ****: La collezione è stata arricchita con circa 84 nuovi fornitori per raggiungere una copertura di classificazione quasi totale.
+-   **Collezioni eliminate**: , , , , , .
 
 **All files of reference**
--    (in corso di modifica)
+-   
+-   
+-   
 -   
 -   
 -   
 -   
 
-**Areas that need refactoring**
--   I file dei vecchi componenti (, ) sono inutilizzati e andrebbero eliminati per pulire il codebase.
--   Il router  è cresciuto notevolmente e potrebbe essere suddiviso in file più specifici per migliorare la manutenibilità.
+**Areas that need refactoring**:
+-   Il router  è cresciuto e potrebbe essere suddiviso per responsabilità (es. stats, configurazione, classificazione).
 
 **key api endpoints**
--   : Esegue la riclassificazione batch delle fatture.
--   : Classifica manualmente una singola fattura (nuovo).
--   : Esegue la classificazione batch di tutti i documenti F24 (nuovo).
--   : Ottiene le fatture non classificate.
+-   : Endpoint per il parsing di un singolo documento.
+-   : Ottiene i documenti che hanno fallito il parsing AI.
+-   : Avvia il processing dei documenti scaricati da email.
+-   : Ottiene le statistiche della Learning Machine per la dashboard.
 
 **Critical Info for New Agent**
--   La richiesta principale dell'utente di unificare le pagine è stata completata e verificata. La classificazione automatica per fatture e F24 è ora al 100% secondo le regole attuali.
--   **Il task immediato è completare il widget sulla Dashboard.** La logica è pronta in , manca solo il rendering (JSX).
--   L'utente è molto sensibile alla coerenza dell'interfaccia. Qualsiasi nuova funzionalità deve essere integrata in pagine esistenti e pertinenti, evitando di crearne di nuove.
--   Il testing agent è stato utilizzato con successo due volte, dimostrandosi efficace anche nel trovare e correggere bug nel codice.
+-   La priorità assoluta dell'utente è la **qualità e l'affidabilità dei dati**. Qualsiasi lavoro deve mirare alla perfezione, specialmente per quanto riguarda gli F24. Non tollera duplicati o dati incompleti.
+-   La logica di estrazione dati è ora centralizzata nel servizio , che si affida a  con Claude Vision. Non tentare di utilizzare altri modelli o approcci senza una ragione valida, poiché l'agente precedente ha già debuggato e risolto problemi con Gemini e OpenAI.
+-   L'intera gestione degli F24 è stata migrata alla collezione . Qualsiasi interazione con i dati F24 deve passare da questa collezione, utilizzando le costanti definite in .
+-   Il task immediato e più critico è risolvere il problema dei duplicati logici nella collezione .
 
 **documents and test reports created in this job**
--   
--   
--   
+-    (Aggiornato con tutte le nuove funzionalità di parsing AI e stabilizzazione)
+-   Diversi script monouso in  per la migrazione e il setup.
 
 **Last 10 User Messages and any pending HUMAN messages**
--   : (Multipli) Approvazione dei piani proposti dall'agente.
--   : Approvazione del piano per configurare i fornitori e aggiungere la UI per i documenti non associati.
--   : Istruzione a completare tutti i task rimanenti.
--   : Approvazione per l'inizio del lavoro sulla dashboard e i task finali.
+Una sintesi delle recenti direttive dell'utente:
+1.  **Non mi fido di questi F24**: Richiesta esplicita di un controllo meticoloso, codice tributo per codice tributo.
+2.  **Elimina tutte le collezioni e lasciane una sola**: Ordine diretto che ha portato all'unificazione della collezione .
+3.  **Fai un lavoro chiaro-definitivo**: Istruzione di analizzare a fondo i dati, usare l'intelligenza per configurare i fornitori mancanti e garantire la correttezza contabile.
+4.  **Critica sui duplicati**: Frustrazione espressa riguardo al numero elevato di file F24, che si sono rivelati essere duplicati con nomi diversi.
+5.  **Non implementare nulla di nuovo, rendi stabile il codice**: La priorità è sulla robustezza e il completamento delle funzionalità esistenti, non sull'aggiunta di nuove.
+6.  **Frustrazione sulla perdita di dati post-fork**: L'utente ha espresso preoccupazione per lo stato del progetto dopo il fork, spingendo l'agente a una verifica approfondita che ha confermato che lo stato corrispondeva all'handoff.
+7.  Approvazione per procedere con la pulizia dei file e la creazione della sezione Da Rivedere.
+8.  Approvazione generale per l'implementazione del parser AI.
+9.  La richiesta originale, che ha dato il via a tutto, di migliorare la lettura di fatture, F24 e buste paga.
+10. L'utente ha approvato il piano di stabilizzazione proposto dall'agente.
 
 **Project Health Check:**
--   **Broken**: Nessuno. Lo stato precedente di UI confusa e pagine duplicate è stato risolto.
+-   **Broken**: La gestione degli F24 era frammentata e inconsistente, ma è stata in gran parte risolta con l'unificazione in . Il problema rimanente dei duplicati logici la mantiene in uno stato di rischio.
 -   **Mocked**: Nessuno.
 
 **3rd Party Integrations**
-Nessuna.
+-   **Claude Vision** (via ): Utilizzato per l'estrazione dati da documenti PDF. Usa la .
 
 **Testing status**
--   **Testing agent used after significant changes**: YES. Utilizzato con successo per validare l'unificazione della UI e la nuova funzionalità di classificazione manuale. Ha anche individuato e corretto un bug critico nel backend.
+-   **Testing agent used after significant changes**: NO, l'agente ha eseguito test manuali estesi tramite script e comandi  per verificare la migrazione dei dati F24, il funzionamento del parser AI e la correzione dei bug.
 -   **Troubleshoot agent used after agent stuck in loop**: NO
 -   **Test files created**: Nessuno
 -   **Known regressions**: Nessuna
 
 **Credentials to test flow:**
-Nessuna credenziale speciale richiesta. Le funzionalità sono accessibili tramite l'interfaccia utente.
+Nessuna credenziale speciale richiesta. L'applicazione utilizza la  già presente nell'ambiente.
 
 **What agent forgot to execute**
--   L'agente non ha ancora aggiunto il codice JSX per renderizzare il widget delle statistiche sulla Dashboard in .
--   L'agente non ha eliminato i file dei componenti React resi obsoleti (, etc.) dopo l'unificazione, lasciandoli come file orfani nel codebase.</analysis>
+-   L'agente non ha ancora integrato il parsing AI automatico nel flusso di **upload diretto** dei file (), ma solo in quello di download da email. Questo era parte della richiesta originale dell'utente per l'automazione.</analysis>

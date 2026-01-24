@@ -12,7 +12,7 @@ import requests
 import time
 import os
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://cleanerapp-1.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://smart-doc-extract-1.preview.emergentagent.com')
 
 class TestCorrispettiviAPI:
     """Test corrispettivi API with year filter"""
