@@ -142,26 +142,20 @@ Il sistema classifica **automaticamente** documenti leggendo:
 
 ## 5. BACKLOG E PRIORITÀ
 
-### 5.1 ✅ COMPLETATO (Sessione 21 - 24/01/2026) - Unificazione UI + Task P1 + F24 Learning
-- **Unificazione Fornitori + Learning Machine**: Tab "Learning Machine" integrato nella pagina Fornitori
-- **Unificazione Riconciliazione**: Una sola voce "Riconciliazione" nel menu
-- **Pulizia Menu**: Rimossa voce "Fornitori Learning" dal menu Acquisti
-- **Redirects implementati**: `/fornitori-learning` → `/fornitori?tab=learning`, `/riconciliazione-intelligente` → `/riconciliazione`
-- **Configurazione 149 Fornitori**: Learning Machine configurata con 149 fornitori tramite ricerca web
-- **Riclassificazione Massiva Fatture**: 
-  - 1200+ fatture riclassificate automaticamente
-  - Da ~780 fatture in "Altri costi" a ~37 (riduzione del 95%)
-  - Top classificazioni: Materie prime (30%), Prodotti confezionati (16.4%), Bevande (10.4%)
-- **UI Classificazione Manuale**: Sezione nel tab Learning per classificare le fatture residue
-- **Endpoint Classificazione Manuale**: PUT /api/fatture/{id}/classifica
-- **Fix Codici Centro di Costo**: Corretta logica riclassificazione per usare codici corretti (B7.5.3 etc.)
-- **Learning Machine F24 COMPLETATA**:
-  - Nuova funzione `classifica_f24_per_centro_costo()` in learning_machine_cdc.py
-  - Mappatura completa codici tributo F24 → centri di costo (IVA, IRES, IRAP, IMU, ritenute)
-  - **43/43 F24 classificati automaticamente**
-  - Distribuzione: IRES (12), Commercialista (10), IVA (9), Personale (3), IMU (1)
-  - Endpoint `/api/fornitori-learning/classifica-f24` e `/api/fornitori-learning/f24-statistiche`
-- **Test passati**: 7/7 backend + frontend
+### 5.1 ✅ COMPLETATO (Sessione 21 - 24/01/2026) - Learning Machine COMPLETA
+- **Unificazione UI**: Tab "Learning Machine" in Fornitori, menu pulito senza duplicati
+- **170 Fornitori configurati** con keywords e centri di costo
+- **FATTURE: 1000/1000 classificate (100%)**
+  - Riduzione "Altri costi" da ~780 a 0 (100% improvement)
+  - Top centri: Materie prime (30%), Prodotti confezionati (16.4%), Bevande (10.4%)
+- **F24: 43/43 classificati (100%)**
+  - Mappatura codici tributo: IVA, IRES, IRAP, IMU, ritenute, INPS
+  - Distribuzione: IRES (13), Commercialista (10), IVA (9), IRAP (4), Personale (3)
+- **Endpoint Learning Machine**:
+  - POST `/api/fornitori-learning/riclassifica-con-keywords`
+  - POST `/api/fornitori-learning/classifica-f24`
+  - GET `/api/fornitori-learning/f24-statistiche`
+  - PUT `/api/fatture/{id}/classifica` (manuale)
 
 ### 5.2 ✅ COMPLETATO (Sessione 20 - 24/01/2026)
 1. **Fix Associazione F24 - Campo Anno**
