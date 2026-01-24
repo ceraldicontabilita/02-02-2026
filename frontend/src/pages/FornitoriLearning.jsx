@@ -1,12 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Badge } from '../components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { 
   Search, Plus, Save, Trash2, RefreshCw, Lightbulb, 
-  Building2, Tag, FileText, Euro, CheckCircle, AlertCircle
+  Building2, Tag, FileText, CheckCircle, AlertCircle, ChevronRight
 } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || '';
@@ -16,7 +11,7 @@ export default function FornitoriLearning() {
   const [fornitoriNonClassificati, setFornitoriNonClassificati] = useState([]);
   const [fornitoriConfigurati, setFornitoriConfigurati] = useState([]);
   const [centriCosto, setCentriCosto] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);
   
@@ -56,7 +51,6 @@ export default function FornitoriLearning() {
     setCentroCostoSuggerito('');
     setNote('');
     
-    // Carica suggerimenti keywords
     try {
       const res = await fetch(
         `${API_URL}/api/fornitori-learning/suggerisci-keywords/${encodeURIComponent(fornitore.fornitore_nome)}`
@@ -89,12 +83,10 @@ export default function FornitoriLearning() {
       
       const data = await res.json();
       if (data.success) {
-        setMessage({ type: 'success', text: 'Fornitore salvato con successo!' });
+        setMessage({ type: 'success', text: 'Fornitore salvato!' });
         setSelectedFornitore(null);
         setKeywords('');
         caricaDati();
-      } else {
-        setMessage({ type: 'error', text: data.message || 'Errore nel salvataggio' });
       }
     } catch (error) {
       setMessage({ type: 'error', text: 'Errore nel salvataggio' });
@@ -106,10 +98,8 @@ export default function FornitoriLearning() {
     if (!window.confirm('Eliminare questa configurazione?')) return;
     
     try {
-      await fetch(`${API_URL}/api/fornitori-learning/${fornitoreId}`, {
-        method: 'DELETE'
-      });
-      setMessage({ type: 'success', text: 'Fornitore eliminato' });
+      await fetch(`${API_URL}/api/fornitori-learning/${fornitoreId}`, { method: 'DELETE' });
+      setMessage({ type: 'success', text: 'Eliminato' });
       caricaDati();
     } catch (error) {
       setMessage({ type: 'error', text: 'Errore eliminazione' });
@@ -119,15 +109,10 @@ export default function FornitoriLearning() {
   const riclassifica = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/api/fornitori-learning/riclassifica-con-keywords`, {
-        method: 'POST'
-      });
+      const res = await fetch(`${API_URL}/api/fornitori-learning/riclassifica-con-keywords`, { method: 'POST' });
       const data = await res.json();
       if (data.success) {
-        setMessage({ 
-          type: 'success', 
-          text: `Riclassificate ${data.totale_riclassificate} fatture!` 
-        });
+        setMessage({ type: 'success', text: `Riclassificate ${data.totale_riclassificate} fatture!` });
         caricaDati();
       }
     } catch (error) {
@@ -143,289 +128,443 @@ export default function FornitoriLearning() {
     }
   };
 
+  // Stile Dashboard
+  const cardStyle = {
+    background: 'white',
+    borderRadius: 12,
+    padding: 20,
+    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+    border: '1px solid #e5e7eb'
+  };
+
+  const headerStyle = {
+    margin: 0,
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#1e3a5f'
+  };
+
+  const btnPrimary = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 6,
+    padding: '8px 16px',
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    color: 'white',
+    border: 'none',
+    borderRadius: 6,
+    cursor: 'pointer',
+    fontWeight: 500,
+    fontSize: 13,
+    boxShadow: '0 2px 4px rgba(102,126,234,0.3)'
+  };
+
+  const btnOutline = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 6,
+    padding: '8px 16px',
+    background: 'white',
+    color: '#374151',
+    border: '1px solid #d1d5db',
+    borderRadius: 6,
+    cursor: 'pointer',
+    fontWeight: 500,
+    fontSize: 13
+  };
+
+  if (loading && fornitoriNonClassificati.length === 0) {
+    return (
+      <div style={cardStyle}>
+        <h1 style={headerStyle}>Fornitori Learning</h1>
+        <p style={{ color: '#6b7280', marginTop: 16 }}>⏳ Caricamento in corso...</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Fornitori Learning</h1>
-          <p className="text-gray-500">Configura le keywords per classificare automaticamente i fornitori</p>
-        </div>
-        <div className="flex gap-2">
-          <Button onClick={caricaDati} variant="outline" disabled={loading}>
-            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            Aggiorna
-          </Button>
-          <Button onClick={riclassifica} disabled={loading || fornitoriConfigurati.length === 0}>
-            <CheckCircle className="w-4 h-4 mr-2" />
-            Riclassifica Fatture
-          </Button>
+      <div style={cardStyle}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h1 style={headerStyle}>Fornitori Learning</h1>
+            <p style={{ color: '#6b7280', fontSize: 13, margin: '4px 0 0 0' }}>
+              Configura keywords per classificare automaticamente i fornitori
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={caricaDati} style={btnOutline} disabled={loading}>
+              <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+              Aggiorna
+            </button>
+            <button onClick={riclassifica} style={btnPrimary} disabled={loading || fornitoriConfigurati.length === 0}>
+              <CheckCircle size={16} />
+              Riclassifica Fatture
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Messaggio */}
       {message && (
-        <div className={`p-4 rounded-lg flex items-center gap-2 ${
-          message.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-        }`}>
-          {message.type === 'success' ? <CheckCircle className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
-          {message.text}
-          <button onClick={() => setMessage(null)} className="ml-auto">&times;</button>
+        <div style={{
+          ...cardStyle,
+          padding: 12,
+          background: message.type === 'success' ? '#dcfce7' : '#fee2e2',
+          border: `1px solid ${message.type === 'success' ? '#86efac' : '#fecaca'}`,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8
+        }}>
+          {message.type === 'success' ? 
+            <CheckCircle size={18} color="#16a34a" /> : 
+            <AlertCircle size={18} color="#dc2626" />
+          }
+          <span style={{ color: message.type === 'success' ? '#166534' : '#991b1b', fontWeight: 500 }}>
+            {message.text}
+          </span>
+          <button 
+            onClick={() => setMessage(null)} 
+            style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', fontSize: 18 }}
+          >
+            ×
+          </button>
         </div>
       )}
 
       {/* Statistiche */}
-      <div className="grid grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-orange-100 rounded-lg">
-                <AlertCircle className="w-6 h-6 text-orange-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{fornitoriNonClassificati.length}</p>
-                <p className="text-sm text-gray-500">Da configurare</p>
-              </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+        <div style={{ ...cardStyle, background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ background: 'rgba(245,158,11,0.2)', padding: 12, borderRadius: 10 }}>
+              <AlertCircle size={24} color="#d97706" />
             </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-green-100 rounded-lg">
-                <CheckCircle className="w-6 h-6 text-green-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{fornitoriConfigurati.length}</p>
-                <p className="text-sm text-gray-500">Configurati</p>
-              </div>
+            <div>
+              <p style={{ fontSize: 28, fontWeight: 'bold', margin: 0, color: '#92400e' }}>
+                {fornitoriNonClassificati.length}
+              </p>
+              <p style={{ fontSize: 13, color: '#a16207', margin: 0 }}>Da configurare</p>
             </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-blue-100 rounded-lg">
-                <Tag className="w-6 h-6 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{centriCosto.length}</p>
-                <p className="text-sm text-gray-500">Centri di Costo</p>
-              </div>
+          </div>
+        </div>
+        
+        <div style={{ ...cardStyle, background: 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ background: 'rgba(16,185,129,0.2)', padding: 12, borderRadius: 10 }}>
+              <CheckCircle size={24} color="#059669" />
             </div>
-          </CardContent>
-        </Card>
+            <div>
+              <p style={{ fontSize: 28, fontWeight: 'bold', margin: 0, color: '#065f46' }}>
+                {fornitoriConfigurati.length}
+              </p>
+              <p style={{ fontSize: 13, color: '#047857', margin: 0 }}>Configurati</p>
+            </div>
+          </div>
+        </div>
+        
+        <div style={{ ...cardStyle, background: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ background: 'rgba(59,130,246,0.2)', padding: 12, borderRadius: 10 }}>
+              <Tag size={24} color="#2563eb" />
+            </div>
+            <div>
+              <p style={{ fontSize: 28, fontWeight: 'bold', margin: 0, color: '#1e40af' }}>
+                {centriCosto.length}
+              </p>
+              <p style={{ fontSize: 13, color: '#1d4ed8', margin: 0 }}>Centri di Costo</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="non-classificati">
+      <div style={cardStyle}>
+        <div style={{ display: 'flex', gap: 4, marginBottom: 16, borderBottom: '2px solid #e5e7eb', paddingBottom: 8 }}>
+          <button
+            onClick={() => setActiveTab('non-classificati')}
+            style={{
+              padding: '10px 20px',
+              background: activeTab === 'non-classificati' ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'transparent',
+              color: activeTab === 'non-classificati' ? 'white' : '#6b7280',
+              border: 'none',
+              borderRadius: 6,
+              cursor: 'pointer',
+              fontWeight: 600,
+              fontSize: 14
+            }}
+          >
             Da Configurare ({fornitoriNonClassificati.length})
-          </TabsTrigger>
-          <TabsTrigger value="configurati">
+          </button>
+          <button
+            onClick={() => setActiveTab('configurati')}
+            style={{
+              padding: '10px 20px',
+              background: activeTab === 'configurati' ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'transparent',
+              color: activeTab === 'configurati' ? 'white' : '#6b7280',
+              border: 'none',
+              borderRadius: 6,
+              cursor: 'pointer',
+              fontWeight: 600,
+              fontSize: 14
+            }}
+          >
             Configurati ({fornitoriConfigurati.length})
-          </TabsTrigger>
-        </TabsList>
+          </button>
+        </div>
 
         {/* Tab Non Classificati */}
-        <TabsContent value="non-classificati" className="space-y-4">
-          <div className="grid grid-cols-2 gap-6">
+        {activeTab === 'non-classificati' && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
             {/* Lista fornitori */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Fornitori da Configurare</CardTitle>
-                <CardDescription>
-                  Seleziona un fornitore per aggiungere le keywords
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="max-h-[500px] overflow-y-auto">
+            <div>
+              <h3 style={{ fontSize: 16, fontWeight: 600, color: '#1e3a5f', marginBottom: 12 }}>
+                Seleziona Fornitore
+              </h3>
+              <div style={{ maxHeight: 450, overflowY: 'auto', border: '1px solid #e5e7eb', borderRadius: 8 }}>
                 {fornitoriNonClassificati.map((f, idx) => (
                   <div 
                     key={idx}
                     onClick={() => selezionaFornitore(f)}
-                    className={`p-3 border-b cursor-pointer hover:bg-gray-50 transition-colors ${
-                      selectedFornitore?.fornitore_nome === f.fornitore_nome ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
-                    }`}
+                    style={{
+                      padding: 12,
+                      borderBottom: '1px solid #f3f4f6',
+                      cursor: 'pointer',
+                      background: selectedFornitore?.fornitore_nome === f.fornitore_nome ? '#eff6ff' : 'white',
+                      borderLeft: selectedFornitore?.fornitore_nome === f.fornitore_nome ? '4px solid #3b82f6' : '4px solid transparent',
+                      transition: 'all 0.15s ease'
+                    }}
                   >
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <p className="font-medium text-gray-900">{f.fornitore_nome}</p>
-                        <p className="text-sm text-gray-500">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                      <div style={{ flex: 1 }}>
+                        <p style={{ fontWeight: 600, color: '#1f2937', margin: 0, fontSize: 14 }}>
+                          {f.fornitore_nome}
+                        </p>
+                        <p style={{ color: '#6b7280', fontSize: 12, margin: '4px 0 0 0' }}>
                           {f.fatture_count} fatture • €{f.totale_fatture?.toLocaleString('it-IT', {minimumFractionDigits: 2})}
                         </p>
-                        {f.esempio_descrizioni?.length > 0 && (
-                          <p className="text-xs text-gray-400 mt-1 truncate">
-                            Es: {f.esempio_descrizioni[0]}
+                        {f.esempio_descrizioni?.[0] && (
+                          <p style={{ color: '#9ca3af', fontSize: 11, margin: '4px 0 0 0', fontStyle: 'italic' }}>
+                            {f.esempio_descrizioni[0].substring(0, 60)}...
                           </p>
                         )}
                       </div>
-                      <Badge variant="outline">{f.fatture_count}</Badge>
+                      <ChevronRight size={16} color="#9ca3af" />
                     </div>
                   </div>
                 ))}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
             {/* Form configurazione */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">
-                  {selectedFornitore ? 'Configura Keywords' : 'Seleziona un Fornitore'}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {selectedFornitore ? (
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Fornitore</label>
-                      <div className="p-3 bg-gray-100 rounded-lg">
-                        <p className="font-medium">{selectedFornitore.fornitore_nome}</p>
-                        <p className="text-sm text-gray-500">
-                          {selectedFornitore.fatture_count} fatture • €{selectedFornitore.totale_fatture?.toLocaleString('it-IT')}
-                        </p>
-                      </div>
-                    </div>
+            <div>
+              <h3 style={{ fontSize: 16, fontWeight: 600, color: '#1e3a5f', marginBottom: 12 }}>
+                {selectedFornitore ? 'Configura Keywords' : 'Seleziona un Fornitore'}
+              </h3>
+              
+              {selectedFornitore ? (
+                <div style={{ background: '#f9fafb', padding: 16, borderRadius: 8, border: '1px solid #e5e7eb' }}>
+                  {/* Fornitore selezionato */}
+                  <div style={{ background: 'white', padding: 12, borderRadius: 6, marginBottom: 16, border: '1px solid #e5e7eb' }}>
+                    <p style={{ fontWeight: 600, color: '#1f2937', margin: 0 }}>{selectedFornitore.fornitore_nome}</p>
+                    <p style={{ color: '#6b7280', fontSize: 13, margin: '4px 0 0 0' }}>
+                      {selectedFornitore.fatture_count} fatture • €{selectedFornitore.totale_fatture?.toLocaleString('it-IT')}
+                    </p>
+                  </div>
 
-                    {/* Keywords suggerite */}
-                    {keywordsSuggerite.length > 0 && (
-                      <div>
-                        <label className="block text-sm font-medium mb-1">
-                          <Lightbulb className="w-4 h-4 inline mr-1 text-yellow-500" />
-                          Keywords Suggerite (clicca per aggiungere)
-                        </label>
-                        <div className="flex flex-wrap gap-1">
-                          {keywordsSuggerite.map((kw, idx) => (
-                            <Badge 
-                              key={idx} 
-                              variant="secondary"
-                              className="cursor-pointer hover:bg-blue-100"
-                              onClick={() => aggiungiKeywordSuggerita(kw)}
-                            >
-                              + {kw}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Keywords (separate da virgola)
+                  {/* Keywords suggerite */}
+                  {keywordsSuggerite.length > 0 && (
+                    <div style={{ marginBottom: 16 }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 8 }}>
+                        <Lightbulb size={16} color="#eab308" />
+                        Suggerimenti (clicca per aggiungere)
                       </label>
-                      <Input 
-                        value={keywords}
-                        onChange={(e) => setKeywords(e.target.value)}
-                        placeholder="es: caffè, cappuccino, espresso"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        Inserisci parole chiave che identificano questo fornitore
-                      </p>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Centro di Costo (opzionale)
-                      </label>
-                      <select 
-                        value={centroCostoSuggerito}
-                        onChange={(e) => setCentroCostoSuggerito(e.target.value)}
-                        className="w-full p-2 border rounded-lg"
-                      >
-                        <option value="">-- Classificazione automatica --</option>
-                        {centriCosto.map((cdc) => (
-                          <option key={cdc.id} value={cdc.id}>
-                            {cdc.codice} - {cdc.nome}
-                          </option>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                        {keywordsSuggerite.slice(0, 10).map((kw, idx) => (
+                          <span 
+                            key={idx}
+                            onClick={() => aggiungiKeywordSuggerita(kw)}
+                            style={{
+                              padding: '4px 10px',
+                              background: '#e0e7ff',
+                              color: '#4338ca',
+                              borderRadius: 20,
+                              fontSize: 12,
+                              cursor: 'pointer',
+                              fontWeight: 500
+                            }}
+                          >
+                            + {kw}
+                          </span>
                         ))}
-                      </select>
+                      </div>
                     </div>
+                  )}
 
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Note</label>
-                      <Input 
-                        value={note}
-                        onChange={(e) => setNote(e.target.value)}
-                        placeholder="Note opzionali..."
-                      />
-                    </div>
+                  {/* Keywords input */}
+                  <div style={{ marginBottom: 16 }}>
+                    <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 6 }}>
+                      Keywords (separate da virgola)
+                    </label>
+                    <input 
+                      value={keywords}
+                      onChange={(e) => setKeywords(e.target.value)}
+                      placeholder="es: caffè, cappuccino, espresso"
+                      style={{
+                        width: '100%',
+                        padding: '10px 12px',
+                        border: '1px solid #d1d5db',
+                        borderRadius: 6,
+                        fontSize: 14,
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
 
-                    <div className="flex gap-2 pt-4">
-                      <Button onClick={salvaFornitore} disabled={saving} className="flex-1">
-                        <Save className="w-4 h-4 mr-2" />
-                        {saving ? 'Salvataggio...' : 'Salva Keywords'}
-                      </Button>
-                      <Button variant="outline" onClick={() => setSelectedFornitore(null)}>
-                        Annulla
-                      </Button>
-                    </div>
+                  {/* Centro di costo */}
+                  <div style={{ marginBottom: 16 }}>
+                    <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 6 }}>
+                      Centro di Costo
+                    </label>
+                    <select 
+                      value={centroCostoSuggerito}
+                      onChange={(e) => setCentroCostoSuggerito(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '10px 12px',
+                        border: '1px solid #d1d5db',
+                        borderRadius: 6,
+                        fontSize: 14,
+                        background: 'white',
+                        boxSizing: 'border-box'
+                      }}
+                    >
+                      <option value="">-- Classificazione automatica --</option>
+                      {centriCosto.map((cdc) => (
+                        <option key={cdc.id} value={cdc.id}>
+                          {cdc.codice} - {cdc.nome}
+                        </option>
+                      ))}
+                    </select>
                   </div>
-                ) : (
-                  <div className="text-center py-12 text-gray-500">
-                    <Building2 className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>Seleziona un fornitore dalla lista per configurare le keywords</p>
+
+                  {/* Note */}
+                  <div style={{ marginBottom: 16 }}>
+                    <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 6 }}>
+                      Note (opzionale)
+                    </label>
+                    <input 
+                      value={note}
+                      onChange={(e) => setNote(e.target.value)}
+                      placeholder="Es: Fornitore principale caffè"
+                      style={{
+                        width: '100%',
+                        padding: '10px 12px',
+                        border: '1px solid #d1d5db',
+                        borderRadius: 6,
+                        fontSize: 14,
+                        boxSizing: 'border-box'
+                      }}
+                    />
                   </div>
-                )}
-              </CardContent>
-            </Card>
+
+                  {/* Pulsanti */}
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button onClick={salvaFornitore} disabled={saving} style={{ ...btnPrimary, flex: 1, justifyContent: 'center' }}>
+                      <Save size={16} />
+                      {saving ? 'Salvataggio...' : 'Salva Keywords'}
+                    </button>
+                    <button onClick={() => setSelectedFornitore(null)} style={btnOutline}>
+                      Annulla
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ 
+                  background: '#f9fafb', 
+                  padding: 40, 
+                  borderRadius: 8, 
+                  textAlign: 'center',
+                  border: '2px dashed #d1d5db'
+                }}>
+                  <Building2 size={48} color="#9ca3af" style={{ marginBottom: 12 }} />
+                  <p style={{ color: '#6b7280', margin: 0 }}>Seleziona un fornitore dalla lista</p>
+                </div>
+              )}
+            </div>
           </div>
-        </TabsContent>
+        )}
 
         {/* Tab Configurati */}
-        <TabsContent value="configurati">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Fornitori Configurati</CardTitle>
-              <CardDescription>
-                Keywords già salvate per la classificazione automatica
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
+        {activeTab === 'configurati' && (
+          <div>
+            {fornitoriConfigurati.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: 40 }}>
+                <Tag size={48} color="#9ca3af" style={{ marginBottom: 12 }} />
+                <p style={{ color: '#6b7280' }}>Nessun fornitore configurato</p>
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gap: 12 }}>
                 {fornitoriConfigurati.map((f, idx) => (
-                  <div key={idx} className="p-4 border rounded-lg hover:bg-gray-50">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <p className="font-medium text-gray-900">{f.fornitore_nome}</p>
-                        <p className="text-sm text-gray-500 mb-2">
+                  <div key={idx} style={{
+                    padding: 16,
+                    background: '#f9fafb',
+                    borderRadius: 8,
+                    border: '1px solid #e5e7eb'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                      <div style={{ flex: 1 }}>
+                        <p style={{ fontWeight: 600, color: '#1f2937', margin: 0, fontSize: 15 }}>
+                          {f.fornitore_nome}
+                        </p>
+                        <p style={{ color: '#6b7280', fontSize: 13, margin: '4px 0 8px 0' }}>
                           {f.fatture_count} fatture • €{f.totale_fatture?.toLocaleString('it-IT')}
                         </p>
-                        <div className="flex flex-wrap gap-1">
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                           {f.keywords?.map((kw, kidx) => (
-                            <Badge key={kidx} variant="secondary">{kw}</Badge>
+                            <span key={kidx} style={{
+                              padding: '3px 10px',
+                              background: '#dbeafe',
+                              color: '#1e40af',
+                              borderRadius: 20,
+                              fontSize: 12,
+                              fontWeight: 500
+                            }}>
+                              {kw}
+                            </span>
                           ))}
                         </div>
                         {f.centro_costo_suggerito && (
-                          <p className="text-xs text-blue-600 mt-2">
+                          <p style={{ color: '#059669', fontSize: 12, margin: '8px 0 0 0', fontWeight: 500 }}>
                             → {f.centro_costo_suggerito}
                           </p>
                         )}
                         {f.note && (
-                          <p className="text-xs text-gray-400 mt-1">Note: {f.note}</p>
+                          <p style={{ color: '#9ca3af', fontSize: 12, margin: '4px 0 0 0', fontStyle: 'italic' }}>
+                            {f.note}
+                          </p>
                         )}
                       </div>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
+                      <button 
                         onClick={() => eliminaFornitore(f.id)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          padding: 8,
+                          borderRadius: 6
+                        }}
                       >
-                        <Trash2 className="w-4 h-4 text-red-500" />
-                      </Button>
+                        <Trash2 size={18} color="#ef4444" />
+                      </button>
                     </div>
                   </div>
                 ))}
-                {fornitoriConfigurati.length === 0 && (
-                  <div className="text-center py-12 text-gray-500">
-                    <Tag className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>Nessun fornitore configurato</p>
-                    <p className="text-sm">Vai su "Da Configurare" per aggiungere le keywords</p>
-                  </div>
-                )}
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
