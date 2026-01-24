@@ -1944,7 +1944,7 @@ export default function Fornitori() {
                   gap: 8 
                 }}>
                   <AlertCircle size={18} color="#f59e0b" /> 
-                  Fatture "Altri Costi" da Classificare ({fattureAltriCosti.length})
+                  Fatture Altri Costi da Classificare ({fattureAltriCosti.length})
                 </h3>
                 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
