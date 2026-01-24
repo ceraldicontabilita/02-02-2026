@@ -398,6 +398,9 @@ app.include_router(ai_parser.router, prefix="/api/ai-parser", tags=["AI Parser"]
 # --- Upload AI (Parsing automatico su upload diretto) ---
 app.include_router(upload_ai.router, prefix="/api/upload-ai", tags=["Upload AI"])
 
+# --- Chat Intelligente (Interrogazione dati in linguaggio naturale) ---
+app.include_router(chat_router.router, prefix="/api/chat", tags=["Chat Intelligente"])
+
 # --- Riconciliazione Email ↔ Gestionale ---
 app.include_router(email_reconciliation.router, tags=["Riconciliazione Email"])
 
