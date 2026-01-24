@@ -142,6 +142,27 @@ Il sistema classifica **automaticamente** documenti leggendo:
 
 ## 5. BACKLOG E PRIORITÀ
 
+### 5.0 ✅ COMPLETATO (Sessione 22 - 24/01/2026) - Parser AI Documenti
+- **🧠 NUOVO: Lettura Intelligente Documenti con AI (Claude Vision)**
+- Estrazione automatica dati strutturati da PDF/immagini
+- **Tipi documento supportati:**
+  - **Fatture PDF**: Fornitore, P.IVA, righe prodotto, totali, pagamento
+  - **F24**: Codici tributo, importi, sezioni erario/INPS/regioni
+  - **Buste Paga**: Dipendente, retribuzione, trattenute, ferie/permessi, TFR
+- **Aggiornamento automatico schede dipendenti** da cedolino
+  - Ferie maturate/godute/residue
+  - Permessi e ROL
+  - TFR accantonato
+  - Ultimo cedolino
+- **Endpoint AI Parser:**
+  - POST `/api/ai-parser/parse` - Rilevamento automatico tipo
+  - POST `/api/ai-parser/parse-fattura` - Parsing fattura con Learning Machine
+  - POST `/api/ai-parser/parse-f24` - Parsing F24
+  - POST `/api/ai-parser/parse-busta-paga` - Parsing busta paga + aggiornamento dipendente
+  - POST `/api/ai-parser/batch-parse` - Parsing multiplo
+  - GET `/api/ai-parser/test` - Test configurazione AI
+- **UI: Pagina "Lettura Documenti AI"** in Strumenti (/ai-parser)
+
 ### 5.1 ✅ COMPLETATO (Sessione 21 - 24/01/2026) - Learning Machine COMPLETA
 - **Unificazione UI**: Tab "Learning Machine" in Fornitori, menu pulito senza duplicati
 - **170 Fornitori configurati** con keywords e centri di costo
