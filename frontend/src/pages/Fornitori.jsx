@@ -1367,6 +1367,63 @@ export default function Fornitori() {
           <StatCard icon={CreditCard} label="Pagamento Contanti" value={stats.cash} color="#8b5cf6" bgColor="#ede9fe" />
         </div>
 
+        {/* Tabs */}
+        <div style={{ 
+          display: 'flex', 
+          gap: '4px', 
+          marginBottom: '24px',
+          background: '#f1f5f9',
+          padding: '4px',
+          borderRadius: '10px',
+          width: 'fit-content'
+        }} data-testid="fornitori-tabs">
+          <button
+            onClick={() => setActiveTab('anagrafica')}
+            style={{
+              padding: '10px 20px',
+              borderRadius: '8px',
+              border: 'none',
+              cursor: 'pointer',
+              fontWeight: '500',
+              fontSize: '14px',
+              transition: 'all 0.2s',
+              background: activeTab === 'anagrafica' ? 'white' : 'transparent',
+              color: activeTab === 'anagrafica' ? '#1e293b' : '#64748b',
+              boxShadow: activeTab === 'anagrafica' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+            data-testid="tab-anagrafica"
+          >
+            <Building2 size={16} /> Anagrafica Fornitori
+          </button>
+          <button
+            onClick={() => setActiveTab('learning')}
+            style={{
+              padding: '10px 20px',
+              borderRadius: '8px',
+              border: 'none',
+              cursor: 'pointer',
+              fontWeight: '500',
+              fontSize: '14px',
+              transition: 'all 0.2s',
+              background: activeTab === 'learning' ? 'white' : 'transparent',
+              color: activeTab === 'learning' ? '#1e293b' : '#64748b',
+              boxShadow: activeTab === 'learning' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+            data-testid="tab-learning"
+          >
+            <Brain size={16} /> Learning Machine
+          </button>
+        </div>
+
+        {/* TAB ANAGRAFICA */}
+        {activeTab === 'anagrafica' && (
+          <>
         {/* Search & Filters */}
         <div style={{ 
           backgroundColor: 'white', 
