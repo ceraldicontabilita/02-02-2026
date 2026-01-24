@@ -309,10 +309,13 @@ POST /api/upload-ai/archivio-pdf/{id}/associa  # Associazione manuale PDF→XML
 ```
 /app/app/main.py                              # Entry point
 /app/app/routers/documenti.py                 # Documenti (MongoDB-only)
+/app/app/routers/upload_ai.py                 # Upload AI con parsing automatico (NUOVO)
 /app/app/routers/f24/                         # Modulo F24 completo
 /app/app/routers/prima_nota_module/           # Prima Nota modularizzato
 /app/app/routers/suppliers_module/            # Fornitori modularizzato
-/app/app/services/                            # Servizi business logic
+/app/app/services/upload_ai_processor.py      # Servizio processing upload AI (NUOVO)
+/app/app/services/ai_document_parser.py       # Parser AI documenti (Claude Vision)
+/app/app/services/                            # Altri servizi business logic
 ```
 
 ### 7.2 Frontend
