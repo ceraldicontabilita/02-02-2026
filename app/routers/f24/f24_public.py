@@ -50,7 +50,9 @@ async def list_f24_models() -> Dict[str, Any]:
             f24s.append({
                 "id": f.get("id"),
                 "tipo_modello": "F24",
-                "data_scadenza": dati.get("data_scadenza"),
+                "anno": f.get("anno"),  # Campo anno estratto
+                "data_scadenza": f.get("data_scadenza") or f.get("data_versamento") or dati.get("data_versamento"),
+                "data_versamento": f.get("data_versamento") or dati.get("data_versamento"),
                 "saldo_finale": totali.get("saldo_netto", 0),
                 "pagato": f.get("status") == "pagato",
                 "contribuente": dati.get("ragione_sociale", dati.get("codice_fiscale", "")),
