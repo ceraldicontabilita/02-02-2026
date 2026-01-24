@@ -142,7 +142,36 @@ Il sistema classifica **automaticamente** documenti leggendo:
 
 ## 5. BACKLOG E PRIORITÀ
 
-### 5.0 ✅ COMPLETATO (Sessione 22 - 24/01/2026) - Stabilizzazione + Parser AI
+### 5.0 ✅ COMPLETATO (Sessione 23 - 24/01/2026) - Upload AI Automatico + Deduplicazione F24
+
+**Parsing AI Automatico su Upload Diretto:**
+- Nuovo servizio `/app/app/services/upload_ai_processor.py` per processing automatico
+- Nuovo router `/api/upload-ai/` con endpoint:
+  - `POST /upload-f24` - Upload F24 con parsing AI + deduplicazione
+  - `POST /upload-cedolino` - Upload cedolino con parsing + aggiornamento progressivi dipendente
+  - `POST /upload-fattura-pdf` - Upload fattura PDF con archivio in attesa di XML
+  - `POST /upload-documento` - Upload generico con auto-detection tipo
+  - `POST /upload-batch` - Upload multiplo
+  - `GET /archivio-pdf` - Lista fatture PDF in attesa di associazione XML
+  - `POST /archivio-pdf/{id}/associa` - Associazione manuale PDF a XML
+
+**Logica Fatture PDF:**
+- Le fatture PDF vengono parsate e archiviate in `fatture_pdf_archivio`
+- Quando arriva un XML corrispondente, il PDF viene associato automaticamente
+- Matching per: P.IVA + numero fattura OPPURE P.IVA + data + importo (con tolleranza)
+- Evita duplicati: le fatture XML restano la "fonte di verità"
+
+**Deduplicazione F24 Unificato (P0 RISOLTO):**
+- Eliminati 250 duplicati (75% di riduzione)
+- Da 333 a 83 documenti unici
+- Deduplicazione basata su hash file
+- Zero duplicati rimanenti verificato
+
+**Integrazione con Upload XML:**
+- Modificato `/app/app/routers/invoices/fatture_upload.py`
+- Quando si carica un XML, il sistema cerca automaticamente PDF in archivio da associare
+
+### 5.1 ✅ COMPLETATO (Sessione 22 - 24/01/2026) - Stabilizzazione + Parser AI
 
 **Stabilizzazione:**
 - Fix path duplicato `/api/centri-costo`
