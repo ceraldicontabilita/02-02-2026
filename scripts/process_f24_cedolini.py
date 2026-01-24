@@ -83,7 +83,7 @@ async def process_unique_f24(limit=50):
                     "created_at": datetime.now(timezone.utc).isoformat()
                 }
                 
-                await db["f24"].insert_one(doc)
+                await db["f24_unificato"].insert_one(doc)
                 success += 1
                 totale = result.get('totali', {}).get('totale_debito', 0)
                 print(f"✅ €{totale:,.2f}")
