@@ -1344,3 +1344,101 @@ async def riconcilia_tutto() -> Dict[str, Any]:
         "warning": risultati["warning"][:10]
     }
 
+
+
+
+# ============================================
+# FIX CAMPO ANNO MANCANTE
+# ============================================
+
+@router.post("/fix-campo-anno")
+async def fix_campo_anno() -> Dict[str, Any]:
+    """
+    Corregge i documenti F24 esistenti che non hanno il campo 'anno' popolato.
+    Estrae l'anno dalla data di versamento o dai tributi.
+    """
+    db = Database.get_db()
+    
+    # Trova F24 senza campo anno
+    f24_senza_anno = await db[COLL_F24_COMMERCIALISTA].find({
+        "$or": [
+            {"anno": {"$exists": False}},
+            {"anno": None},
+            {"anno": ""}
+        ]
+    }, {"_id": 0}).to_list(None)
+    
+    risultati = {
+        "totale_senza_anno": len(f24_senza_anno),
+        "corretti": 0,
+        "non_corretti": 0,
+        "dettaglio": []
+    }
+    
+    for f24 in f24_senza_anno:
+        anno = None
+        
+        # 1. Prova dalla data di versamento nei dati_generali
+        dg = f24.get("dati_generali", {})
+        data_vers = dg.get("data_versamento", "")
+        if data_vers and len(data_vers) >= 4:
+            anno = data_vers[:4]
+        
+        # 2. Se non c'è, prova dalla data_scadenza root
+        if not anno:
+            data_scad = f24.get("data_scadenza", "")
+            if data_scad and len(data_scad) >= 4:
+                anno = data_scad[:4]
+        
+        # 3. Se ancora non c'è, cerca nei tributi
+        if not anno:
+            for sezione in ["sezione_erario", "sezione_inps", "sezione_regioni", "sezione_tributi_locali"]:
+                for tributo in f24.get(sezione, []):
+                    # Campo anno diretto
+                    if tributo.get("anno"):
+                        anno = tributo.get("anno")
+                        break
+                    # Periodo riferimento (es. "12/2024")
+                    periodo = tributo.get("periodo_riferimento", "")
+                    if "/" in periodo:
+                        parts = periodo.split("/")
+                        for p in parts:
+                            if len(p) == 4 and p.isdigit():
+                                anno = p
+                                break
+                    elif len(periodo) == 4 and periodo.isdigit():
+                        anno = periodo
+                if anno:
+                    break
+        
+        if anno:
+            # Aggiorna documento
+            await db[COLL_F24_COMMERCIALISTA].update_one(
+                {"id": f24["id"]},
+                {"$set": {
+                    "anno": anno,
+                    "data_versamento": data_vers or dg.get("data_versamento"),
+                    "updated_at": datetime.now(timezone.utc).isoformat()
+                }}
+            )
+            risultati["corretti"] += 1
+            risultati["dettaglio"].append({
+                "id": f24["id"],
+                "filename": f24.get("file_name"),
+                "anno_estratto": anno,
+                "fonte": "data_versamento" if data_vers else "tributi"
+            })
+        else:
+            risultati["non_corretti"] += 1
+            risultati["dettaglio"].append({
+                "id": f24["id"],
+                "filename": f24.get("file_name"),
+                "errore": "Impossibile estrarre anno"
+            })
+    
+    return {
+        "success": True,
+        "messaggio": f"Corretti {risultati['corretti']} F24 su {risultati['totale_senza_anno']}",
+        **risultati
+    }
+
