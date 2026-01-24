@@ -169,14 +169,21 @@ Il sistema classifica **automaticamente** documenti leggendo:
    - Caffè: 198
    - Carburante: 14 ✅
 
-### 5.3 🟠 P1 - In Attesa
-1. **UI Gestione Documenti Non Associati**
-   - ~450 documenti da associare
-   - Implementare "proposte intelligenti" basate su Learning Machine
+3. **Sistema Fornitori Learning - COMPLETATO**
+   - Backend `/api/fornitori-learning` con 7 endpoint
+   - Frontend `/fornitori-learning` con UI Tab configurazione
+   - 8 fornitori configurati con ricerca web (DISTILLERIE CAMEL, RONDINELLA MARKET, EDENRED, etc.)
+   - 132 fatture riclassificate con keywords personalizzate
+   - Endpoint suggerimenti automatici keywords dalle descrizioni fatture
 
-2. **Migliorare Classificazione Automatica**
-   - 33.6% delle fatture finisce in "Altri costi non classificati"
-   - Analizzare fornitori frequenti per creare nuove regole
+### 5.3 🟠 P1 - In Attesa
+1. **Configurare altri fornitori**
+   - 100 fornitori ancora in "Da Configurare"
+   - Usare tab Fornitori Learning per aggiungere keywords
+
+2. **UI Gestione Documenti Non Associati**
+   - ~780 fatture in "Altri costi non classificati" (dopo riclassificazione)
+   - Implementare "proposte intelligenti" basate su Learning Machine
 
 ### 5.3 🟡 P2 - Backlog
 1. **Refactoring Router Monolitici**
