@@ -44,7 +44,7 @@ async def process_unique_f24(limit=50):
     print(f"📄 File F24 unici: {len(unique_files)}")
     
     # Verifica quali sono già nel DB
-    existing_hashes = await db["f24"].distinct("file_hash")
+    existing_hashes = await db["f24_unificato"].distinct("file_hash")
     existing_set = set(existing_hashes)
     
     to_process = [(h, p) for h, p in unique_files.items() if h not in existing_set][:limit]
