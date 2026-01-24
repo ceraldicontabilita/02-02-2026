@@ -19,11 +19,11 @@ COLL_FORNITORI = "fornitori"  # Alias italiano
 COLL_ESTRATTO_CONTO = "estratto_conto_movimenti"  # Collezione principale con tutti i movimenti
 
 # F24 e Tributi
-# NOTA: Usiamo f24_commercialista come collezione UNICA per tutti gli F24
-# Le collezioni f24 e f24_models sono DEPRECATE e verranno migrate
-COLL_F24 = "f24_commercialista"  # Collezione principale F24 (schema completo)
-COLL_F24_COMMERCIALISTA = "f24_commercialista"  # Alias per retrocompatibilità
-COLL_QUIETANZE_F24 = "quietanze_f24"  # Quietanze di pagamento (303 docs)
+# NOTA: Usiamo f24_unificato come collezione UNICA per tutti gli F24
+# Tutte le altre collezioni F24 sono state migrate e eliminate
+COLL_F24 = "f24_unificato"  # Collezione principale F24 (361 documenti unificati)
+COLL_F24_COMMERCIALISTA = "f24_unificato"  # Alias per retrocompatibilità
+COLL_QUIETANZE_F24 = "quietanze_f24"  # Quietanze di pagamento (303 docs) - REFERENCE ONLY
 COLL_F24_ALERTS = "f24_riconciliazione_alerts"
 
 # Dipendenti e Cedolini
