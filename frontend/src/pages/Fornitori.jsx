@@ -1923,6 +1923,151 @@ export default function Fornitori() {
                 </div>
               </div>
             )}
+
+            {/* Fatture Non Classificate */}
+            {fattureAltriCosti.length > 0 && (
+              <div style={{ 
+                background: 'white', 
+                borderRadius: 12, 
+                padding: 20, 
+                marginTop: 24, 
+                boxShadow: '0 2px 8px rgba(0,0,0,0.08)', 
+                border: '1px solid #e5e7eb' 
+              }} data-testid="fatture-non-classificate-section">
+                <h3 style={{ 
+                  margin: '0 0 16px 0', 
+                  fontSize: 16, 
+                  fontWeight: 600, 
+                  color: '#1e3a5f', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 8 
+                }}>
+                  <AlertCircle size={18} color="#f59e0b" /> 
+                  Fatture "Altri Costi" da Classificare ({fattureAltriCosti.length})
+                </h3>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                  {/* Lista fatture */}
+                  <div style={{ maxHeight: 400, overflowY: 'auto' }}>
+                    {fattureAltriCosti.slice(0, 50).map((f, idx) => (
+                      <div 
+                        key={f.id || idx}
+                        onClick={() => setSelectedFattura(f)}
+                        style={{
+                          padding: 12,
+                          borderRadius: 8,
+                          marginBottom: 8,
+                          cursor: 'pointer',
+                          background: selectedFattura?.id === f.id ? '#fef3c7' : '#f9fafb',
+                          border: selectedFattura?.id === f.id ? '2px solid #f59e0b' : '1px solid #e5e7eb',
+                          transition: 'all 0.2s'
+                        }}
+                        data-testid={`fattura-da-classificare-${idx}`}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                          <div style={{ flex: 1 }}>
+                            <p style={{ fontWeight: 600, color: '#1f2937', margin: 0, fontSize: 13 }}>
+                              {f.fornitore_nome || f.supplier_name || 'N/A'}
+                            </p>
+                            <p style={{ color: '#6b7280', fontSize: 11, margin: '2px 0 0 0' }}>
+                              {f.invoice_number || 'N/D'} • {f.invoice_date ? new Date(f.invoice_date).toLocaleDateString('it-IT') : 'N/D'}
+                            </p>
+                          </div>
+                          <span style={{ fontWeight: 600, color: '#059669', fontSize: 13 }}>
+                            €{(f.total_amount || f.totale || 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                    {fattureAltriCosti.length > 50 && (
+                      <p style={{ textAlign: 'center', color: '#6b7280', fontSize: 12, marginTop: 8 }}>
+                        + altre {fattureAltriCosti.length - 50} fatture...
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Form classificazione */}
+                  <div style={{ background: '#fafafa', borderRadius: 8, padding: 16, border: '1px solid #e5e7eb' }}>
+                    {selectedFattura ? (
+                      <div>
+                        <div style={{ background: '#fef3c7', borderRadius: 8, padding: 12, marginBottom: 16, border: '1px solid #fcd34d' }}>
+                          <p style={{ fontWeight: 600, color: '#92400e', margin: 0 }}>
+                            {selectedFattura.fornitore_nome || selectedFattura.supplier_name}
+                          </p>
+                          <p style={{ color: '#a16207', fontSize: 12, margin: '4px 0 0 0' }}>
+                            Fattura {selectedFattura.invoice_number} • 
+                            €{(selectedFattura.total_amount || selectedFattura.totale || 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+                          </p>
+                          {selectedFattura.descrizione_linee && (
+                            <p style={{ color: '#78716c', fontSize: 11, margin: '6px 0 0 0', fontStyle: 'italic' }}>
+                              {selectedFattura.descrizione_linee.substring(0, 100)}...
+                            </p>
+                          )}
+                        </div>
+
+                        <div style={{ marginBottom: 16 }}>
+                          <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 6 }}>
+                            Assegna a Centro di Costo
+                          </label>
+                          <select 
+                            value={nuovoCentroCosto}
+                            onChange={(e) => setNuovoCentroCosto(e.target.value)}
+                            style={{
+                              width: '100%', padding: '10px 12px', border: '1px solid #d1d5db',
+                              borderRadius: 6, fontSize: 14, background: 'white', boxSizing: 'border-box'
+                            }}
+                            data-testid="nuovo-centro-costo-select"
+                          >
+                            <option value="">-- Seleziona centro di costo --</option>
+                            {centriCosto.map((cdc) => (
+                              <option key={cdc.id} value={cdc.codice}>
+                                {cdc.codice} - {cdc.nome}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <button 
+                            onClick={classificaFattura} 
+                            disabled={learningSaving || !nuovoCentroCosto}
+                            style={{ 
+                              flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                              padding: '10px 16px', background: nuovoCentroCosto ? '#f59e0b' : '#d1d5db',
+                              color: 'white', border: 'none', borderRadius: 6, 
+                              cursor: learningSaving || !nuovoCentroCosto ? 'not-allowed' : 'pointer', 
+                              fontWeight: 500, fontSize: 13
+                            }}
+                            data-testid="classifica-fattura-btn"
+                          >
+                            <CheckCircle size={16} />
+                            {learningSaving ? 'Classificazione...' : 'Classifica Fattura'}
+                          </button>
+                          <button 
+                            onClick={() => { setSelectedFattura(null); setNuovoCentroCosto(''); }} 
+                            style={{
+                              padding: '10px 16px', background: 'white', color: '#374151',
+                              border: '1px solid #d1d5db', borderRadius: 6, cursor: 'pointer', 
+                              fontWeight: 500, fontSize: 13
+                            }}
+                          >
+                            Annulla
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div style={{ textAlign: 'center', padding: 30 }}>
+                        <FileText size={40} color="#d1d5db" style={{ marginBottom: 8 }} />
+                        <p style={{ color: '#6b7280', margin: 0, fontSize: 13 }}>
+                          Seleziona una fattura dalla lista per classificarla
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
