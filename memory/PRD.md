@@ -142,51 +142,45 @@ Il sistema classifica **automaticamente** documenti leggendo:
 
 ## 5. BACKLOG E PRIORITÀ
 
-### 5.0 ✅ COMPLETATO (Sessione 23 - 24/01/2026) - Upload AI + Chat Intelligente + Refactoring
+### 5.0 ✅ COMPLETATO (Sessione 23 - 24/01/2026) - Automazione Completa + Chat + Refactoring
+
+**AUTOMAZIONE FATTURE ARUBA (FLUSSO COMPLETO):**
+- Nuovo servizio `/app/app/services/aruba_automation.py`
+- Legge il CORPO delle email (non solo allegati)
+- Estrae: fornitore, numero fattura, data, importo
+- Crea "fattura_provvisoria" in collezione `fatture_provvisorie`
+- Riconciliazione automatica con estratto conto:
+  - Se trova match → `pagata_banca` → Prima Nota Banca
+  - Se non trova → `probabile_cassa` → Prima Nota Cassa
+- Quando arriva XML → associa automaticamente e chiude il cerchio
+- Endpoint: `POST /api/documenti/scarica-fatture-aruba`
+- Endpoint: `GET /api/documenti/fatture-provvisorie`
+- **Risultato test: 27 fatture processate, 20 riconciliate banca, 7 cassa, €36.247,24**
 
 **Parsing AI Automatico su Upload Diretto:**
-- Nuovo servizio `/app/app/services/upload_ai_processor.py` per processing automatico
-- Nuovo router `/api/upload-ai/` con 7 endpoint per F24, cedolini e fatture PDF
-- F24: parsing + deduplicazione basata su data/CF/importo + salvataggio in `f24_unificato`
-- Cedolini: parsing + identificazione dipendente + aggiornamento automatico progressivi (ferie, permessi, TFR)
-- Fatture PDF: parsing + archivio temporaneo in `fatture_pdf_archivio` in attesa dell'XML corrispondente
-
-**Logica Fatture PDF:**
-- Le fatture PDF vengono parsate e archiviate in `fatture_pdf_archivio`
-- Quando arriva un XML corrispondente, il PDF viene associato automaticamente
-- Matching per: P.IVA + numero fattura OPPURE P.IVA + data + importo (con tolleranza)
-- Evita duplicati: le fatture XML restano la "fonte di verità"
-
-**Deduplicazione F24 Unificato (P0 RISOLTO):**
-- Eliminati 250 duplicati (75% di riduzione)
-- Da 333 a 83 documenti unici
-- Zero duplicati rimanenti verificato
+- Servizio `/app/app/services/upload_ai_processor.py`
+- Router `/api/upload-ai/` con 7 endpoint
+- F24: parsing + deduplicazione + salvataggio
+- Cedolini: parsing + aggiornamento progressivi dipendente
+- Fatture PDF: parsing + archivio in attesa XML
 
 **Chat Intelligente (Learning Machine):**
-- Nuovo servizio `/app/app/services/chat_intelligence.py`
-- Nuovo router `/api/chat/` per interrogazione dati in linguaggio naturale
-- Supporta domande su: fatture, F24, cedolini, dipendenti, fornitori, estratti conto, bilancio
-- Interpreta automaticamente la domanda ed estrae parametri (anno, mese, fornitore)
-- Endpoint: `POST /api/chat/ask`, `GET /api/chat/stats`, `GET /api/chat/help`
+- Servizio `/app/app/services/chat_intelligence.py`
+- Router `/api/chat/` per interrogazione dati in linguaggio naturale
+- Supporta: fatture, F24, cedolini, dipendenti, fornitori, estratti conto, bilancio
 
 **P1 Completato - Classificazione Fatture 100%:**
-- Classificate le ultime 6 fatture non classificate
-- Totale: 3753/3753 fatture classificate (100%)
+- 3753/3753 fatture classificate (100%)
 
 **P2 Completato - UI Correzione Dati AI:**
-- Nuova pagina `/correzione-ai` per revisione documenti processati dall'AI
-- Visualizzazione dati estratti, modifica manuale, assegnazione centro costo
-- Filtri per tipo documento e ricerca
+- Nuova pagina `/correzione-ai`
+
+**Deduplicazione F24:**
+- Da 333 a 83 documenti unici
 
 **Refactoring Sicuro:**
-- Rimosso file obsoleto `PrimaNotaUnificata.jsx` (non referenziato)
-- Pulizia cache Python e log vecchi
-- Fix lint su nuovi file
-- Verificato che tutti i file _v2 sono effettivamente utilizzati
-
-**Integrazione con Upload XML:**
-- Modificato `/app/app/routers/invoices/fatture_upload.py`
-- Quando si carica un XML, il sistema cerca automaticamente PDF in archivio da associare
+- Rimosso file obsoleto `PrimaNotaUnificata.jsx`
+- Pulizia cache e log
 
 ### 5.1 ✅ COMPLETATO (Sessione 22 - 24/01/2026) - Stabilizzazione + Parser AI
 
