@@ -307,6 +307,7 @@ const router = createBrowserRouter([
       { path: "pagopa", element: <LazyPage><GestionePagoPA /></LazyPage> },
       { path: "invoicetronic", element: <LazyPage><GestioneInvoiceTronic /></LazyPage> },
       { path: "classificazione-email", element: <LazyPage><ClassificazioneDocumenti /></LazyPage> },
+      { path: "fornitori-learning", element: <LazyPage><FornitoriLearning /></LazyPage> },
     ]
   }
 ]);
