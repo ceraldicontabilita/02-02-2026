@@ -132,30 +132,31 @@ async def telegram_test() -> Dict[str, Any]:
 
 @router.post("/scarica-fatture-aruba")
 async def scarica_fatture_aruba(
-    since_days: int = Query(default=7, ge=1, le=90, description="Giorni indietro da controllare")
+    since_days: int = Query(default=7, ge=1, le=90, description="Giorni indietro da controllare"),
+    auto_insert: bool = Query(default=True, description="Inserisci automaticamente in Prima Nota")
 ) -> Dict[str, Any]:
     """
-    Scarica le notifiche fatture da Aruba Fatturazione Elettronica.
+    AUTOMAZIONE COMPLETA FATTURE ARUBA
+    ==================================
     
-    Legge il CORPO delle email (non solo allegati) ed estrae:
-    - Fornitore
-    - Numero fattura
-    - Data documento
-    - Importo totale
-    - Netto a pagare
+    Scarica le notifiche fatture da Aruba e le processa automaticamente:
     
-    Le fatture vengono salvate in 'operazioni_da_confermare' per:
-    - Verifica manuale
-    - Riconciliazione con estratto conto
-    - Inserimento in Prima Nota
+    1. Legge il CORPO delle email (non allegati)
+    2. Estrae: fornitore, numero fattura, data, importo
+    3. Crea "fattura_provvisoria" in attesa dell'XML
+    4. Cerca riconciliazione con estratto conto:
+       - Se trova match → pagata_banca → inserisce in Prima Nota Banca
+       - Se non trova → probabile_cassa → inserisce in Prima Nota Cassa
+    5. Quando arriva l'XML → associa automaticamente e chiude il cerchio
     
     Args:
         since_days: Quanti giorni indietro controllare (default: 7)
+        auto_insert: Se True, inserisce automaticamente in Prima Nota
         
     Returns:
-        Statistiche sul download e lista fatture trovate
+        Statistiche e lista fatture processate
     """
-    from app.services.aruba_invoice_parser import fetch_aruba_invoices
+    from app.services.aruba_automation import process_aruba_emails, get_fatture_provvisorie_stats
     
     db = Database.get_db()
     
@@ -169,24 +170,22 @@ async def scarica_fatture_aruba(
         )
     
     try:
-        result = await fetch_aruba_invoices(
+        result = await process_aruba_emails(
             db=db,
             email_user=email_user,
             email_password=email_password,
-            since_days=since_days
+            since_days=since_days,
+            auto_insert_prima_nota=auto_insert
         )
         
-        # Aggiungi lista operazioni da confermare
-        operazioni = await db["operazioni_da_confermare"].find(
-            {"fonte": "aruba_email", "stato": {"$in": ["da_confermare", "da_verificare"]}},
-            {"_id": 0}
-        ).sort("created_at", -1).limit(50).to_list(50)
+        # Aggiungi statistiche provvisorie
+        stats_provvisorie = await get_fatture_provvisorie_stats(db)
         
         return {
             "success": result.get("success", False),
             "stats": result.get("stats", {}),
-            "operazioni_in_attesa": len(operazioni),
-            "operazioni": operazioni
+            "fatture_processate": result.get("fatture", []),
+            "provvisorie": stats_provvisorie
         }
         
     except Exception as e:
