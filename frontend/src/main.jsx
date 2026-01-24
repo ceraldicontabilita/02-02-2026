@@ -186,6 +186,7 @@ const RegoleContabili = lazy(() => import("./pages/RegoleContabili.jsx"));
 const GestionePagoPA = lazy(() => import("./pages/GestionePagoPA.jsx"));
 const GestioneInvoiceTronic = lazy(() => import("./pages/GestioneInvoiceTronic.jsx"));
 const ClassificazioneDocumenti = lazy(() => import("./pages/ClassificazioneDocumenti.jsx"));
+const FornitoriLearning = lazy(() => import("./pages/FornitoriLearning.jsx"));
 
 // Wrapper component with Suspense
 const LazyPage = ({ children }) => (
