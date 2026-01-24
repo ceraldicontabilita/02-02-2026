@@ -384,7 +384,7 @@ Rispondi con UNA SOLA PAROLA senza punteggiatura."""
             parsed_data = json.loads(json_str.strip())
             parsed_data["success"] = True
             parsed_data["parsed_at"] = datetime.now().isoformat()
-            parsed_data["parser"] = "ai_emergent_openai"
+            parsed_data["parser"] = "ai_emergent_claude"
             parsed_data["pages_analyzed"] = len(images_b64)
             
             return parsed_data
