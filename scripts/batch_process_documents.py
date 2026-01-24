@@ -234,7 +234,7 @@ async def main():
     print("=" * 60)
     
     # Connetti al database
-    await Database.connect()
+    await Database.connect_db()
     
     print("\n" + "=" * 60)
     print("   FASE 1: RICLASSIFICA FATTURE")
