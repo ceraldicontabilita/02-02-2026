@@ -493,11 +493,13 @@ TRIBUTI_F24_MAPPING = {
     "PXX": "7.1_COMMERCIALISTA",  # INPS gestione separata
     
     # === RAVVEDIMENTO OPEROSO ===
-    "8904": "99_ALTRI_COSTI",  # Sanzioni
-    "8907": "99_ALTRI_COSTI",  # Interessi ravvedimento
-    "8918": "99_ALTRI_COSTI",  # Sanzioni IMU
-    "1993": "99_ALTRI_COSTI",  # Interessi
+    "8904": "8.7_IRAP",  # Sanzioni IRAP
+    "8907": "8.7_IRAP",  # Interessi ravvedimento IRAP
+    "8918": "8.2_IMU",   # Sanzioni IMU
+    "1993": "8.7_IRAP",  # Interessi IRAP
+    "1990": "8.6_IRES",  # Interessi ravvedimento IRES
     "1631": "8.6_IRES",  # Credito IRES da utilizzare
+    "1668": "8.6_IRES",  # Acconto cedolare secca
 }
 
 # Centri di costo aggiuntivi per IRES e IRAP
