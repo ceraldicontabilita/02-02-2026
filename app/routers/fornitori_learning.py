@@ -517,3 +517,161 @@ async def giacenze_fornitore(fornitore_nome: str) -> Dict[str, Any]:
         "valore_stimato": round(totale_valore, 2),
         "per_categoria": stats
     }
+
+
+
+# ============================================
+# CLASSIFICAZIONE F24 (Learning Machine)
+# ============================================
+
+@router.post("/classifica-f24")
+async def classifica_f24_automatica() -> Dict[str, Any]:
+    """
+    Classifica automaticamente i documenti F24 nei centri di costo appropriati,
+    basandosi sui codici tributo presenti in ciascun documento.
+    
+    Es:
+    - Codici 60xx (IVA) → Centro costo "IVA periodica"
+    - Codici 10xx (ritenute dipendenti) → "Costo del personale"
+    - Codici 391x (IMU) → "IMU"
+    - ecc.
+    """
+    db = Database.get_db()
+    
+    import app.services.learning_machine_cdc as lm
+    import importlib
+    importlib.reload(lm)
+    
+    # Trova tutti i documenti F24 non ancora classificati
+    f24s = await db["f24_commercialista"].find(
+        {
+            "status": {"$ne": "eliminato"},
+            "$or": [
+                {"centro_costo_id": {"$exists": False}},
+                {"centro_costo_id": None},
+                {"centro_costo_id": ""}
+            ]
+        }
+    ).to_list(None)
+    
+    if not f24s:
+        return {
+            "success": True,
+            "message": "Tutti gli F24 sono già classificati",
+            "classificati": 0
+        }
+    
+    classificati = 0
+    dettaglio = []
+    
+    for f24 in f24s:
+        # Classifica usando la nuova funzione
+        cdc_id, cdc_config, tipo_tributo = lm.classifica_f24_per_centro_costo(f24)
+        
+        # Aggiorna il documento
+        await db["f24_commercialista"].update_one(
+            {"_id": f24["_id"]},
+            {"$set": {
+                "centro_costo_id": cdc_id,
+                "centro_costo_nome": cdc_config["nome"],
+                "centro_costo_codice": cdc_config["codice"],
+                "tipo_tributo_principale": tipo_tributo,
+                "classificazione_fonte": "learning_machine"
+            }}
+        )
+        classificati += 1
+        
+        dettaglio.append({
+            "id": str(f24.get("id", f24.get("_id"))),
+            "anno": f24.get("anno"),
+            "tipo_tributo": tipo_tributo,
+            "centro_costo": cdc_config["nome"]
+        })
+    
+    return {
+        "success": True,
+        "classificati": classificati,
+        "dettaglio": dettaglio[:20]  # Primi 20 per brevità
+    }
+
+
+@router.get("/f24-statistiche")
+async def f24_statistiche() -> Dict[str, Any]:
+    """
+    Statistiche sulla classificazione degli F24.
+    """
+    db = Database.get_db()
+    
+    # Conta totali
+    totale = await db["f24_commercialista"].count_documents({"status": {"$ne": "eliminato"}})
+    classificati = await db["f24_commercialista"].count_documents({
+        "status": {"$ne": "eliminato"},
+        "centro_costo_id": {"$exists": True, "$ne": None, "$ne": ""}
+    })
+    
+    # Aggregazione per centro di costo
+    pipeline = [
+        {"$match": {"status": {"$ne": "eliminato"}, "centro_costo_nome": {"$exists": True}}},
+        {"$group": {
+            "_id": "$centro_costo_nome",
+            "count": {"$sum": 1},
+            "totale_importo": {"$sum": "$saldo_finale"}
+        }},
+        {"$sort": {"count": -1}}
+    ]
+    
+    per_cdc = await db["f24_commercialista"].aggregate(pipeline).to_list(None)
+    
+    return {
+        "totale_f24": totale,
+        "classificati": classificati,
+        "non_classificati": totale - classificati,
+        "per_centro_costo": per_cdc
+    }
+
+
+@router.post("/riclassifica-f24/{f24_id}")
+async def riclassifica_singolo_f24(f24_id: str, data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
+    """
+    Riclassifica manualmente un singolo F24.
+    
+    Body:
+        - centro_costo_id: ID del centro di costo da assegnare
+    """
+    db = Database.get_db()
+    
+    import app.services.learning_machine_cdc as lm
+    
+    centro_costo_id = data.get("centro_costo_id")
+    if not centro_costo_id:
+        raise HTTPException(status_code=400, detail="centro_costo_id richiesto")
+    
+    # Verifica che il centro di costo esista
+    if centro_costo_id not in lm.CENTRI_COSTO:
+        # Prova a cercarlo per codice
+        for key, cfg in lm.CENTRI_COSTO.items():
+            if cfg.get("codice") == centro_costo_id:
+                centro_costo_id = key
+                break
+        else:
+            raise HTTPException(status_code=400, detail=f"Centro di costo '{centro_costo_id}' non trovato")
+    
+    cdc_config = lm.CENTRI_COSTO[centro_costo_id]
+    
+    result = await db["f24_commercialista"].update_one(
+        {"id": f24_id},
+        {"$set": {
+            "centro_costo_id": centro_costo_id,
+            "centro_costo_nome": cdc_config["nome"],
+            "centro_costo_codice": cdc_config["codice"],
+            "classificazione_fonte": "manuale"
+        }}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="F24 non trovato")
+    
+    return {
+        "success": True,
+        "message": f"F24 classificato come '{cdc_config['nome']}'"
+    }
