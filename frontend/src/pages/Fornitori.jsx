@@ -1175,6 +1175,109 @@ export default function Fornitori() {
     }
   };
 
+  // === LEARNING TAB FUNCTIONS ===
+  const caricaDatiLearning = async () => {
+    setLearningLoading(true);
+    try {
+      const [nonClass, config, cdc] = await Promise.all([
+        api.get('/api/fornitori-learning/non-classificati?limit=100'),
+        api.get('/api/fornitori-learning/lista'),
+        api.get('/api/fornitori-learning/centri-costo-disponibili')
+      ]);
+      
+      setFornitoriNonClassificati(nonClass.data.fornitori || []);
+      setFornitoriConfigurati(config.data.fornitori || []);
+      setCentriCosto(cdc.data || []);
+    } catch (error) {
+      console.error('Errore caricamento learning:', error);
+      setLearningMessage({ type: 'error', text: 'Errore nel caricamento dei dati' });
+    }
+    setLearningLoading(false);
+  };
+
+  // Carica dati learning quando si cambia tab
+  useEffect(() => {
+    if (activeTab === 'learning') {
+      caricaDatiLearning();
+    }
+  }, [activeTab]);
+
+  const selezionaFornitore = async (fornitore) => {
+    setSelectedFornitore(fornitore);
+    setKeywords('');
+    setCentroCostoSuggerito('');
+    setNote('');
+    
+    try {
+      const res = await api.get(
+        `/api/fornitori-learning/suggerisci-keywords/${encodeURIComponent(fornitore.fornitore_nome)}`
+      );
+      setKeywordsSuggerite(res.data.keywords_suggerite || []);
+    } catch (error) {
+      console.error('Errore suggerimenti:', error);
+    }
+  };
+
+  const salvaFornitore = async () => {
+    if (!selectedFornitore || !keywords.trim()) {
+      setLearningMessage({ type: 'error', text: 'Inserisci almeno una keyword' });
+      return;
+    }
+
+    setLearningSaving(true);
+    try {
+      const res = await api.post('/api/fornitori-learning/salva', {
+        fornitore_nome: selectedFornitore.fornitore_nome,
+        keywords: keywords.split(',').map(k => k.trim()).filter(k => k),
+        centro_costo_suggerito: centroCostoSuggerito || null,
+        note: note || null
+      });
+      
+      if (res.data.success) {
+        setLearningMessage({ type: 'success', text: 'Fornitore salvato!' });
+        setSelectedFornitore(null);
+        setKeywords('');
+        caricaDatiLearning();
+      }
+    } catch (error) {
+      setLearningMessage({ type: 'error', text: 'Errore nel salvataggio' });
+    }
+    setLearningSaving(false);
+  };
+
+  const eliminaFornitoreKeywords = async (fornitoreId) => {
+    if (!window.confirm('Eliminare questa configurazione?')) return;
+    
+    try {
+      await api.delete(`/api/fornitori-learning/${fornitoreId}`);
+      setLearningMessage({ type: 'success', text: 'Eliminato' });
+      caricaDatiLearning();
+    } catch (error) {
+      setLearningMessage({ type: 'error', text: 'Errore eliminazione' });
+    }
+  };
+
+  const riclassificaFatture = async () => {
+    setLearningLoading(true);
+    try {
+      const res = await api.post('/api/fornitori-learning/riclassifica-con-keywords');
+      if (res.data.success) {
+        setLearningMessage({ type: 'success', text: `Riclassificate ${res.data.totale_riclassificate} fatture!` });
+        caricaDatiLearning();
+      }
+    } catch (error) {
+      setLearningMessage({ type: 'error', text: 'Errore riclassificazione' });
+    }
+    setLearningLoading(false);
+  };
+
+  const aggiungiKeywordSuggerita = (keyword) => {
+    const current = keywords ? keywords.split(',').map(k => k.trim()) : [];
+    if (!current.includes(keyword)) {
+      setKeywords([...current, keyword].join(', '));
+    }
+  };
+
   const stats = {
     total: suppliers.length,
     withInvoices: suppliers.filter(s => (s.fatture_count || 0) > 0).length,
