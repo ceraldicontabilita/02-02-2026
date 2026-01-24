@@ -243,10 +243,23 @@ async def riclassifica_con_keywords_personalizzate() -> Dict[str, Any]:
         if not keywords:
             continue
         
-        # Trova fatture di questo fornitore in "Altri costi"
+        # Trova fatture di questo fornitore in "Altri costi" o non classificate
+        # Usa $or per cercare in entrambi i campi supplier_name e fornitore_nome
         fatture = await db["invoices"].find({
-            "supplier_name": {"$regex": fornitore_nome, "$options": "i"},
-            "centro_costo_nome": "Altri costi non classificati"
+            "$and": [
+                {"$or": [
+                    {"supplier_name": {"$regex": f"^{fornitore_nome}$", "$options": "i"}},
+                    {"fornitore_nome": {"$regex": f"^{fornitore_nome}$", "$options": "i"}},
+                    {"supplier_name": fornitore_nome},
+                    {"fornitore_nome": fornitore_nome}
+                ]},
+                {"$or": [
+                    {"centro_costo_nome": "Altri costi non classificati"},
+                    {"centro_costo_id": {"$exists": False}},
+                    {"centro_costo_id": None},
+                    {"centro_costo_id": ""}
+                ]}
+            ]
         }).to_list(None)
         
         for fatt in fatture:
