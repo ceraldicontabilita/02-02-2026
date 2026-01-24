@@ -913,6 +913,12 @@ export default function Fornitori() {
   const [note, setNote] = useState('');
   const [keywordsSuggerite, setKeywordsSuggerite] = useState([]);
   
+  // === FATTURE NON CLASSIFICATE STATE ===
+  const [fattureAltriCosti, setFattureAltriCosti] = useState([]);
+  const [fattureLoading, setFattureLoading] = useState(false);
+  const [selectedFattura, setSelectedFattura] = useState(null);
+  const [nuovoCentroCosto, setNuovoCentroCosto] = useState('');
+  
   // Debounce search per evitare troppe chiamate API
   const debouncedSearch = useDebounce(search, 500);
   
