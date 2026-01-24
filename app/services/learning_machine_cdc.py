@@ -364,7 +364,8 @@ CENTRI_COSTO = {
         "deducibilita_irap": 0.80,
         "detraibilita_iva": 0.50,
         "keywords": ["tim", "vodafone", "wind", "tre", "fastweb", "iliad",
-                    "telefono", "cellulare", "internet", "fibra", "adsl"]
+                    "telefono", "cellulare", "internet", "fibra", "adsl"],
+        "fornitori": ["tim s.p.a", "vodafone", "wind tre", "fastweb", "iliad"]
     },
     
     # 11. ONERI FINANZIARI
