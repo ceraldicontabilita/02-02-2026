@@ -142,32 +142,24 @@ Il sistema classifica **automaticamente** documenti leggendo:
 
 ## 5. BACKLOG E PRIORITÀ
 
-### 5.0 ✅ COMPLETATO (Sessione 22 - 24/01/2026) - Parser AI Documenti
-- **🧠 NUOVO: Lettura Intelligente Documenti con AI (Claude Vision)**
-- Estrazione automatica dati strutturati da PDF/immagini
-- **Tipi documento supportati:**
-  - **Fatture PDF**: Fornitore, P.IVA, righe prodotto, totali, pagamento
-  - **F24**: Codici tributo, importi, sezioni erario/INPS/regioni
-  - **Buste Paga**: Dipendente, retribuzione, trattenute, ferie/permessi, TFR
-- **Aggiornamento automatico schede dipendenti** da cedolino
-  - Ferie maturate/godute/residue
-  - Permessi e ROL
-  - TFR accantonato
-  - Ultimo cedolino
-- **Endpoint AI Parser:**
-  - POST `/api/ai-parser/parse` - Rilevamento automatico tipo
-  - POST `/api/ai-parser/parse-fattura` - Parsing fattura con Learning Machine
-  - POST `/api/ai-parser/parse-f24` - Parsing F24
-  - POST `/api/ai-parser/parse-busta-paga` - Parsing busta paga + aggiornamento dipendente
-  - POST `/api/ai-parser/batch-parse` - Parsing multiplo
-  - GET `/api/ai-parser/statistiche` - Statistiche parsing
-  - GET `/api/ai-parser/da-rivedere` - Documenti da revisione manuale
-  - PUT `/api/ai-parser/da-rivedere/{id}/classifica` - Classificazione manuale
-  - POST `/api/ai-parser/process-email-batch` - Processing batch documenti email
-- **UI: Pagina "Lettura Documenti AI"** in Strumenti (/ai-parser)
-- **UI: Pagina "Da Rivedere"** in Strumenti (/da-rivedere)
-- **INTEGRAZIONE AUTOMATICA:** Parsing AI attivato automaticamente al download email
-- **File Puliti:** Eliminati FornitoriLearning.jsx, RiconciliazioneIntelligente.jsx
+### 5.0 ✅ COMPLETATO (Sessione 22 - 24/01/2026) - Stabilizzazione + Parser AI
+
+**Stabilizzazione:**
+- Fix path duplicato `/api/centri-costo`
+- Creato endpoint `/api/fornitori-learning/stats` per statistiche complete
+- Completato widget Dashboard Learning Machine (fetch + JSX)
+- Rimossi file obsoleti (FornitoriLearning.jsx, RiconciliazioneIntelligente.jsx)
+
+**Parser AI Documenti (Claude Vision):**
+- Estrazione automatica dati da Fatture PDF, F24, Buste Paga
+- Aggiornamento automatico schede dipendenti da cedolino
+- Integrazione automatica nel flusso download email
+- Pagine UI: `/ai-parser`, `/da-rivedere`
+
+**Stato Learning Machine:**
+- Fornitori configurati: 214/322 (66.5%)
+- Fatture classificate: 3309/3753 (88.2%)
+- F24 classificati: 0/1 (0%)
 
 ### 5.1 ✅ COMPLETATO (Sessione 21 - 24/01/2026) - Learning Machine COMPLETA
 - **Unificazione UI**: Tab "Learning Machine" in Fornitori, menu pulito senza duplicati
