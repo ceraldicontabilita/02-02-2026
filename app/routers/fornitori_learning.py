@@ -345,3 +345,147 @@ async def centri_costo_disponibili() -> List[Dict[str, str]]:
         {"id": cdc_id, "nome": config["nome"], "codice": config["codice"]}
         for cdc_id, config in lm.CENTRI_COSTO.items()
     ]
+
+
+
+# ============================================
+# ASSOCIAZIONE FORNITORI → MAGAZZINO
+# ============================================
+
+# Mappa centri di costo → categorie magazzino
+CDC_TO_MAGAZZINO_CATEGORIA = {
+    "1.1_CAFFE_BEVANDE_CALDE": "caffe",
+    "1.2_BEVANDE_FREDDE_ALCOLICI": "bevande",
+    "1.3_MATERIE_PRIME_PASTICCERIA": "dolci",
+    "1.4_LATTE_LATTICINI": "latticini",
+    "1.5_PANE_PRODOTTI_FORNO": "pane",
+    "1.6_PRODOTTI_CONFEZIONATI": "snack",
+    "1.7_SALUMI_FORMAGGI": "salumi",
+    "2.1_ENERGIA_ELETTRICA": "utenze",
+    "5.3_PICCOLE_ATTREZZATURE": "attrezzature",
+    "7.3_PULIZIA_IGIENE": "pulizia"
+}
+
+
+@router.post("/associa-magazzino")
+async def associa_fornitori_magazzino() -> Dict[str, Any]:
+    """
+    Associa i prodotti nel magazzino ai fornitori configurati.
+    Aggiorna la categoria dei prodotti basandosi sulle keywords del fornitore.
+    Questo permette di:
+    - Sapere da chi compri la Coca Cola
+    - Categorizzare correttamente i prodotti
+    - Calcolare le giacenze per fornitore
+    """
+    db = Database.get_db()
+    
+    # Carica fornitori configurati
+    fornitori_config = await db[COLL_FORNITORI_KEYWORDS].find({}).to_list(None)
+    
+    if not fornitori_config:
+        return {"success": False, "message": "Nessun fornitore configurato"}
+    
+    aggiornati = 0
+    dettaglio = []
+    
+    for config in fornitori_config:
+        fornitore_nome = config["fornitore_nome"]
+        keywords = config.get("keywords", [])
+        centro_costo = config.get("centro_costo_suggerito")
+        
+        # Determina categoria magazzino dal centro di costo
+        categoria_magazzino = CDC_TO_MAGAZZINO_CATEGORIA.get(centro_costo, "altro")
+        
+        # Trova prodotti di questo fornitore nel magazzino
+        prodotti = await db["warehouse_inventory"].find({
+            "fornitori": {"$regex": fornitore_nome, "$options": "i"}
+        }).to_list(None)
+        
+        for prod in prodotti:
+            # Aggiorna categoria se non è già specificata
+            if prod.get("categoria") == "altro" or not prod.get("categoria"):
+                await db["warehouse_inventory"].update_one(
+                    {"_id": prod["_id"]},
+                    {"$set": {
+                        "categoria": categoria_magazzino,
+                        "fornitore_principale": fornitore_nome,
+                        "keywords_fornitore": keywords,
+                        "centro_costo_fornitore": centro_costo
+                    }}
+                )
+                aggiornati += 1
+        
+        if prodotti:
+            dettaglio.append({
+                "fornitore": fornitore_nome,
+                "prodotti_trovati": len(prodotti),
+                "categoria_assegnata": categoria_magazzino
+            })
+    
+    return {
+        "success": True,
+        "prodotti_aggiornati": aggiornati,
+        "dettaglio": dettaglio
+    }
+
+
+@router.get("/prodotti-per-fornitore/{fornitore_nome}")
+async def prodotti_per_fornitore(fornitore_nome: str) -> Dict[str, Any]:
+    """
+    Lista tutti i prodotti associati a un fornitore nel magazzino.
+    Utile per verificare cosa compri da ciascun fornitore.
+    """
+    db = Database.get_db()
+    
+    prodotti = await db["warehouse_inventory"].find(
+        {"fornitori": {"$regex": fornitore_nome, "$options": "i"}},
+        {"_id": 0, "nome": 1, "categoria": 1, "giacenza": 1, "unita_misura": 1, "prezzi": 1}
+    ).sort("nome", 1).to_list(100)
+    
+    # Raggruppa per categoria
+    per_categoria = {}
+    for p in prodotti:
+        cat = p.get("categoria", "altro")
+        if cat not in per_categoria:
+            per_categoria[cat] = []
+        per_categoria[cat].append(p)
+    
+    return {
+        "fornitore": fornitore_nome,
+        "totale_prodotti": len(prodotti),
+        "per_categoria": per_categoria,
+        "prodotti": prodotti[:50]  # Primi 50
+    }
+
+
+@router.get("/giacenze-fornitore/{fornitore_nome}")
+async def giacenze_fornitore(fornitore_nome: str) -> Dict[str, Any]:
+    """
+    Calcola giacenze totali per un fornitore.
+    Es: "Quante Coca Cola ho in magazzino?"
+    """
+    db = Database.get_db()
+    
+    # Aggregazione per calcolare giacenze
+    pipeline = [
+        {"$match": {"fornitori": {"$regex": fornitore_nome, "$options": "i"}}},
+        {"$group": {
+            "_id": "$categoria",
+            "totale_prodotti": {"$sum": 1},
+            "giacenza_totale": {"$sum": "$giacenza"},
+            "valore_stimato": {"$sum": {"$multiply": ["$giacenza", {"$ifNull": [{"$avg": ["$prezzi.min", "$prezzi.max"]}, 0]}]}}
+        }},
+        {"$sort": {"totale_prodotti": -1}}
+    ]
+    
+    stats = await db["warehouse_inventory"].aggregate(pipeline).to_list(None)
+    
+    totale_giacenza = sum(s.get("giacenza_totale", 0) for s in stats)
+    totale_valore = sum(s.get("valore_stimato", 0) for s in stats)
+    
+    return {
+        "fornitore": fornitore_nome,
+        "giacenza_totale": totale_giacenza,
+        "valore_stimato": round(totale_valore, 2),
+        "per_categoria": stats
+    }
