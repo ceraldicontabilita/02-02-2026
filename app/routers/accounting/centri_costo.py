@@ -111,7 +111,7 @@ FORNITORE_TO_CDC = {
 }
 
 
-@router.get("/centri-costo")
+@router.get("")
 async def list_centri_costo() -> List[Dict[str, Any]]:
     """Lista tutti i centri di costo con statistiche."""
     db = Database.get_db()
