@@ -25,7 +25,6 @@ const NAV_ITEMS = [
     children: [
       { to: "/fatture-ricevute", label: "Ciclo Passivo", icon: "📋", isNew: true },
       { to: "/fornitori", label: "Fornitori", icon: "📦" },
-      { to: "/fornitori-learning", label: "🧠 Fornitori Learning", icon: "🎓", isNew: true },
       { to: "/ordini-fornitori", label: "Ordini Fornitori", icon: "📝" },
       { to: "/previsioni-acquisti", label: "Previsioni", icon: "📊" },
     ]
@@ -42,8 +41,7 @@ const NAV_ITEMS = [
     isSubmenu: true,
     children: [
       { to: "/prima-nota", label: "📒 Prima Nota Unificata", icon: "📒", isNew: true },
-      { to: "/riconciliazione-intelligente", label: "🧠 Riconciliazione Intelligente", icon: "🧠", isNew: true },
-      { to: "/riconciliazione", label: "⚡ Riconciliazione Smart", icon: "⚡" },
+      { to: "/riconciliazione", label: "🔄 Riconciliazione", icon: "🔄", isNew: true },
       { to: "/gestione-assegni", label: "Gestione Assegni", icon: "📝" },
       { to: "/archivio-bonifici", label: "Archivio Bonifici", icon: "📂" },
     ]
