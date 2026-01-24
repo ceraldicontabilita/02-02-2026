@@ -1,6 +1,6 @@
 # PRD – TechRecon Accounting System
 ## Product Requirements Document
-### Ultimo aggiornamento: 24 Gennaio 2026 (Sessione 22 - Parser AI Documenti)
+### Ultimo aggiornamento: 24 Gennaio 2026 (Sessione 23 - Upload AI Automatico)
 
 ---
 
