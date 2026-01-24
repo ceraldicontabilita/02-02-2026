@@ -1183,13 +1183,21 @@ export default function Fornitori() {
 
   // === LEARNING TAB FUNCTIONS ===
   const caricaDatiLearning = async () => {
+    console.log('caricaDatiLearning START');
     setLearningLoading(true);
     try {
+      console.log('Making API calls...');
       const [nonClass, config, cdc] = await Promise.all([
         api.get('/api/fornitori-learning/non-classificati?limit=100'),
         api.get('/api/fornitori-learning/lista'),
         api.get('/api/fornitori-learning/centri-costo-disponibili')
       ]);
+      
+      console.log('API results:', {
+        nonClass: nonClass?.data?.fornitori?.length || 0,
+        config: config?.data?.fornitori?.length || 0,
+        cdc: cdc?.data?.length || 0
+      });
       
       setFornitoriNonClassificati(nonClass.data.fornitori || []);
       setFornitoriConfigurati(config.data.fornitori || []);
@@ -1199,6 +1207,7 @@ export default function Fornitori() {
       setLearningMessage({ type: 'error', text: 'Errore nel caricamento dei dati' });
     }
     setLearningLoading(false);
+    console.log('caricaDatiLearning END');
   };
 
   // Carica fatture "Altri costi non classificati"
