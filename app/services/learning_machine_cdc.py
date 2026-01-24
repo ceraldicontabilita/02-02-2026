@@ -458,14 +458,23 @@ def classifica_fattura_per_centro_costo(
 ) -> Tuple[str, Dict[str, Any], float]:
     """
     Classifica una fattura nel centro di costo corretto leggendo:
-    1. Nome fornitore
+    1. Nome fornitore (priorità massima se match esatto)
     2. Descrizione generale
     3. Descrizione delle singole linee fattura
     
     Returns:
         Tuple[centro_costo_id, config_centro, confidence_score]
     """
-    # Costruisci il testo da analizzare
+    supplier_lower = (supplier_name or "").lower()
+    
+    # FASE 1: Match su fornitori noti (priorità alta)
+    for cdc_id, config in CENTRI_COSTO.items():
+        fornitori_noti = config.get("fornitori", [])
+        for fornitore in fornitori_noti:
+            if fornitore.lower() in supplier_lower:
+                return cdc_id, config, 0.9  # Alta confidence per match fornitore
+    
+    # FASE 2: Costruisci il testo da analizzare
     testo_completo = f"{supplier_name or ''} {descrizione or ''}"
     
     # Aggiungi descrizioni delle linee fattura
