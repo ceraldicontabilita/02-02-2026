@@ -51,6 +51,48 @@ def normalizza_nome_fornitore(nome: str) -> str:
     return nome.strip()
 
 
+@router.get("/stats")
+async def get_learning_stats() -> Dict[str, Any]:
+    """
+    Statistiche complete della Learning Machine.
+    """
+    db = Database.get_db()
+    
+    # Conta fornitori configurati
+    fornitori_con_keywords = await db[COLL_FORNITORI_KEYWORDS].count_documents({})
+    
+    # Conta fornitori totali (da fatture)
+    fornitori_unici = await db["invoices"].distinct("supplier_name")
+    totale_fornitori = len([f for f in fornitori_unici if f])
+    
+    # Conta fatture
+    totale_fatture = await db["invoices"].count_documents({})
+    fatture_classificate = await db["invoices"].count_documents({
+        "centro_costo_id": {"$exists": True, "$ne": None, "$ne": ""}
+    })
+    
+    # Conta F24
+    totale_f24 = await db["f24"].count_documents({})
+    f24_classificati = await db["f24"].count_documents({
+        "centro_costo_id": {"$exists": True, "$ne": None, "$ne": ""}
+    })
+    
+    perc_fatture = round(fatture_classificate / max(totale_fatture, 1) * 100, 1)
+    perc_f24 = round(f24_classificati / max(totale_f24, 1) * 100, 1)
+    
+    return {
+        "fornitori_con_keywords": fornitori_con_keywords,
+        "totale_fornitori": totale_fornitori,
+        "copertura_fornitori": round(fornitori_con_keywords / max(totale_fornitori, 1) * 100, 1),
+        "totale_fatture": totale_fatture,
+        "fatture_classificate": fatture_classificate,
+        "percentuale_fatture": perc_fatture,
+        "totale_f24": totale_f24,
+        "f24_classificati": f24_classificati,
+        "percentuale_f24": perc_f24
+    }
+
+
 @router.get("/lista")
 async def lista_fornitori_keywords() -> Dict[str, Any]:
     """
