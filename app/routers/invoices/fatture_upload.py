@@ -1156,7 +1156,7 @@ async def classifica_fattura_manuale(invoice_id: str, data: Dict[str, Any] = Bod
         raise HTTPException(status_code=400, detail="centro_costo_id richiesto")
     
     # Recupera il nome del centro di costo
-    cdc = await db[Collections.CENTRI_COSTO].find_one({"codice": centro_costo_id})
+    cdc = await db["centri_costo"].find_one({"codice": centro_costo_id})
     centro_costo_nome = cdc.get("nome", centro_costo_id) if cdc else centro_costo_id
     
     update_data = {
