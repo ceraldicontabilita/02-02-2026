@@ -686,6 +686,55 @@ async def download_documents_from_email(
         stats["period_duplicates"] = period_duplicates
         stats["search_keywords"] = search_keywords
         
+        # === PARSING AUTOMATICO CON AI ===
+        # Processa automaticamente i nuovi documenti con il parser AI
+        ai_parsed = 0
+        ai_errors = 0
+        
+        try:
+            from app.services.ai_integration_service import process_document_with_ai
+            import base64
+            
+            for doc in new_documents:
+                try:
+                    # Determina tipo documento dalla categoria email
+                    category = doc.get("category", "altro")
+                    doc_type = "auto"
+                    if category == "fattura":
+                        doc_type = "fattura"
+                    elif category == "f24" or category == "quietanza":
+                        doc_type = "f24"
+                    elif category == "busta_paga":
+                        doc_type = "busta_paga"
+                    
+                    # Decodifica PDF
+                    pdf_data = base64.b64decode(doc.get("pdf_data", ""))
+                    
+                    if pdf_data:
+                        result = await process_document_with_ai(
+                            db=db,
+                            document_id=doc["id"],
+                            pdf_data=pdf_data,
+                            document_type=doc_type,
+                            collection="documents_inbox"
+                        )
+                        
+                        if result.get("success"):
+                            ai_parsed += 1
+                            logger.info(f"🧠 AI parsed: {doc['filename']} -> {result.get('detected_type')}")
+                        else:
+                            ai_errors += 1
+                            
+                except Exception as e:
+                    ai_errors += 1
+                    logger.warning(f"AI parsing error for {doc.get('filename')}: {e}")
+                    
+        except ImportError as e:
+            logger.warning(f"AI parser non disponibile: {e}")
+        
+        stats["ai_parsed"] = ai_parsed
+        stats["ai_errors"] = ai_errors
+        
         return {
             "success": True,
             "documents": new_documents,
