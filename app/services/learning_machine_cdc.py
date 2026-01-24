@@ -441,25 +441,160 @@ CENTRI_COSTO = {
 
 # Mapping tributi F24 -> Centro di costo
 TRIBUTI_F24_MAPPING = {
-    # IVA mensile
+    # === IVA ===
     "6001": "8.1_IVA_PERIODICA", "6002": "8.1_IVA_PERIODICA", "6003": "8.1_IVA_PERIODICA",
     "6004": "8.1_IVA_PERIODICA", "6005": "8.1_IVA_PERIODICA", "6006": "8.1_IVA_PERIODICA",
     "6007": "8.1_IVA_PERIODICA", "6008": "8.1_IVA_PERIODICA", "6009": "8.1_IVA_PERIODICA",
     "6010": "8.1_IVA_PERIODICA", "6011": "8.1_IVA_PERIODICA", "6012": "8.1_IVA_PERIODICA",
     "6099": "8.1_IVA_PERIODICA",  # IVA annuale
-    # Ritenute dipendenti
+    "6031": "8.1_IVA_PERIODICA", "6032": "8.1_IVA_PERIODICA", "6033": "8.1_IVA_PERIODICA",  # IVA trimestrale
+    "6034": "8.1_IVA_PERIODICA",  # IVA trimestrale 4° trim
+    
+    # === RITENUTE LAVORO DIPENDENTE (Personale) ===
     "1001": "4.0_PERSONALE",  # Ritenute lavoro dipendente
-    "1002": "4.0_PERSONALE",  # Ritenute lavoro dipendente TFR
+    "1002": "4.0_PERSONALE",  # Ritenute su TFR
     "1012": "4.0_PERSONALE",  # Ritenute su indennità
-    "1040": "7.1_COMMERCIALISTA",  # Ritenute lavoro autonomo
-    # INPS
+    "1701": "4.0_PERSONALE",  # Addizionale regionale IRPEF dip.
+    "1704": "4.0_PERSONALE",  # Addizionale comunale IRPEF dip.
+    "1712": "4.0_PERSONALE",  # Acconto add. comunale dip.
+    "1713": "4.0_PERSONALE",  # Saldo add. comunale dip.
     "DM10": "4.0_PERSONALE",  # INPS dipendenti
-    # IMU
-    "3918": "8.2_IMU",
-    "3930": "8.2_IMU",
-    # TARI
+    
+    # === RITENUTE LAVORO AUTONOMO (Consulenze) ===
+    "1040": "7.1_COMMERCIALISTA",  # Ritenute lavoro autonomo
+    "1038": "7.1_COMMERCIALISTA",  # Ritenute su provvigioni
+    
+    # === IRES (Imposte società) ===
+    "2001": "8.6_IRES",  # Acconto IRES 1° rata
+    "2002": "8.6_IRES",  # Acconto IRES 2° rata  
+    "2003": "8.6_IRES",  # Saldo IRES
+    "1990": "8.6_IRES",  # Interessi ravvedimento
+    "1991": "8.6_IRES",  # Sanzioni ravvedimento IRES
+    
+    # === IRAP ===
+    "3800": "8.7_IRAP",  # Saldo IRAP
+    "3812": "8.7_IRAP",  # Acconto IRAP 1° rata
+    "3813": "8.7_IRAP",  # Acconto IRAP 2° rata
+    "3802": "8.7_IRAP",  # Addizionale regionale IRAP
+    
+    # === IMU ===
+    "3918": "8.2_IMU",  # IMU fabbricati
+    "3930": "8.2_IMU",  # IMU aree fabbricabili
+    "3916": "8.2_IMU",  # IMU terreni
+    "3847": "8.2_IMU",  # TASI (se ancora presente)
+    "3848": "8.2_IMU",  # TASI fabbricati
+    "3797": "8.2_IMU",  # IMU quota stato
+    
+    # === TARI ===
     "3944": "8.3_TARI",
+    
+    # === INPS gestione separata ===
+    "PXX": "7.1_COMMERCIALISTA",  # INPS gestione separata
+    
+    # === RAVVEDIMENTO OPEROSO ===
+    "8904": "99_ALTRI_COSTI",  # Sanzioni
+    "8907": "99_ALTRI_COSTI",  # Interessi ravvedimento
+    "8918": "99_ALTRI_COSTI",  # Sanzioni IMU
+    "1993": "99_ALTRI_COSTI",  # Interessi
+    "1631": "8.6_IRES",  # Credito IRES da utilizzare
 }
+
+# Centri di costo aggiuntivi per IRES e IRAP
+CENTRI_COSTO["8.6_IRES"] = {
+    "codice": "B14.8.6",
+    "nome": "IRES",
+    "categoria_bilancio": "B14",
+    "deducibilita_ires": 0.0,
+    "deducibilita_irap": 0.0,
+    "detraibilita_iva": None,
+    "keywords": ["ires", "imposta reddito società"],
+    "tributi_f24": ["2001", "2002", "2003", "1990", "1991"]
+}
+
+CENTRI_COSTO["8.7_IRAP"] = {
+    "codice": "B14.8.7",
+    "nome": "IRAP",
+    "categoria_bilancio": "B14",
+    "deducibilita_ires": 0.0,
+    "deducibilita_irap": 0.0,
+    "detraibilita_iva": None,
+    "keywords": ["irap", "imposta regionale attività produttive"],
+    "tributi_f24": ["3800", "3812", "3813", "3802"]
+}
+
+
+def classifica_f24_per_centro_costo(f24_data: Dict[str, Any]) -> Tuple[str, Dict[str, Any], str]:
+    """
+    Classifica un documento F24 nel centro di costo corretto basandosi sui codici tributo.
+    
+    Args:
+        f24_data: Documento F24 con sezioni erario, inps, regioni, tributi_locali
+    
+    Returns:
+        Tuple[centro_costo_id, config_centro, tipo_tributo_principale]
+    """
+    # Raccogli tutti i codici tributo con i relativi importi
+    tributi_presenti = []
+    
+    # Sezione Erario (IVA, IRES, ritenute)
+    for item in f24_data.get("sezione_erario", []):
+        codice = item.get("codice_tributo", "")
+        importo = float(item.get("importo_a_debito", 0) or 0)
+        tributi_presenti.append({"codice": codice, "importo": importo, "sezione": "erario"})
+    
+    # Sezione INPS (contributi)
+    for item in f24_data.get("sezione_inps", []):
+        codice = item.get("codice", "") or "DM10"  # Default INPS
+        importo = float(item.get("importo_a_debito", 0) or 0)
+        tributi_presenti.append({"codice": codice, "importo": importo, "sezione": "inps"})
+    
+    # Sezione Regioni (addizionali regionali)
+    for item in f24_data.get("sezione_regioni", []):
+        codice = item.get("codice_tributo", "")
+        importo = float(item.get("importo_a_debito", 0) or 0)
+        tributi_presenti.append({"codice": codice, "importo": importo, "sezione": "regioni"})
+    
+    # Sezione Tributi Locali (IMU, TASI, TARI)
+    for item in f24_data.get("sezione_tributi_locali", []):
+        codice = item.get("codice_tributo", "")
+        importo = float(item.get("importo_a_debito", 0) or 0)
+        tributi_presenti.append({"codice": codice, "importo": importo, "sezione": "locali"})
+    
+    if not tributi_presenti:
+        # Nessun tributo, classifica come Altri costi
+        return "99_ALTRI_COSTI", CENTRI_COSTO["99_ALTRI_COSTI"], "NON_DETERMINATO"
+    
+    # Trova il tributo principale (quello con importo maggiore)
+    tributo_principale = max(tributi_presenti, key=lambda x: x["importo"])
+    codice_principale = tributo_principale["codice"]
+    
+    # Cerca nella mappatura
+    if codice_principale in TRIBUTI_F24_MAPPING:
+        cdc_id = TRIBUTI_F24_MAPPING[codice_principale]
+        return cdc_id, CENTRI_COSTO.get(cdc_id, CENTRI_COSTO["99_ALTRI_COSTI"]), codice_principale
+    
+    # Prova a determinare il tipo basandosi sul prefisso del codice
+    if codice_principale.startswith("60"):  # IVA
+        return "8.1_IVA_PERIODICA", CENTRI_COSTO["8.1_IVA_PERIODICA"], "IVA"
+    elif codice_principale.startswith("10"):  # Ritenute
+        if codice_principale in ["1040", "1038"]:
+            return "7.1_COMMERCIALISTA", CENTRI_COSTO["7.1_COMMERCIALISTA"], "RITENUTE_AUTONOMO"
+        return "4.0_PERSONALE", CENTRI_COSTO["4.0_PERSONALE"], "RITENUTE_DIPENDENTE"
+    elif codice_principale.startswith("17"):  # Addizionali
+        return "4.0_PERSONALE", CENTRI_COSTO["4.0_PERSONALE"], "ADDIZIONALE"
+    elif codice_principale.startswith("20"):  # IRES
+        return "8.6_IRES", CENTRI_COSTO["8.6_IRES"], "IRES"
+    elif codice_principale.startswith("38"):  # IRAP/IMU
+        if codice_principale.startswith("391") or codice_principale.startswith("393"):
+            return "8.2_IMU", CENTRI_COSTO["8.2_IMU"], "IMU"
+        return "8.7_IRAP", CENTRI_COSTO["8.7_IRAP"], "IRAP"
+    elif tributo_principale["sezione"] == "inps":
+        return "4.0_PERSONALE", CENTRI_COSTO["4.0_PERSONALE"], "INPS"
+    elif tributo_principale["sezione"] == "locali":
+        return "8.2_IMU", CENTRI_COSTO["8.2_IMU"], "TRIBUTI_LOCALI"
+    
+    # Default
+    return "99_ALTRI_COSTI", CENTRI_COSTO["99_ALTRI_COSTI"], codice_principale
 
 
 def classifica_fattura_per_centro_costo(
