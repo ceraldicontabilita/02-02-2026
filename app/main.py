@@ -190,6 +190,7 @@ from app.routers import email_mongodb  # Email to MongoDB - Download email su At
 from app.routers import documenti_non_associati  # Gestione documenti non associati
 from app.routers import fornitori_learning  # Fornitori Learning - Associazione keywords
 from app.routers import ai_parser  # AI Parser - Estrazione intelligente documenti
+from app.routers import upload_ai  # Upload AI - Parsing automatico su upload diretto
 
 
 # =============================================================================
