@@ -160,8 +160,14 @@ Il sistema classifica **automaticamente** documenti leggendo:
   - POST `/api/ai-parser/parse-f24` - Parsing F24
   - POST `/api/ai-parser/parse-busta-paga` - Parsing busta paga + aggiornamento dipendente
   - POST `/api/ai-parser/batch-parse` - Parsing multiplo
-  - GET `/api/ai-parser/test` - Test configurazione AI
+  - GET `/api/ai-parser/statistiche` - Statistiche parsing
+  - GET `/api/ai-parser/da-rivedere` - Documenti da revisione manuale
+  - PUT `/api/ai-parser/da-rivedere/{id}/classifica` - Classificazione manuale
+  - POST `/api/ai-parser/process-email-batch` - Processing batch documenti email
 - **UI: Pagina "Lettura Documenti AI"** in Strumenti (/ai-parser)
+- **UI: Pagina "Da Rivedere"** in Strumenti (/da-rivedere)
+- **INTEGRAZIONE AUTOMATICA:** Parsing AI attivato automaticamente al download email
+- **File Puliti:** Eliminati FornitoriLearning.jsx, RiconciliazioneIntelligente.jsx
 
 ### 5.1 ✅ COMPLETATO (Sessione 21 - 24/01/2026) - Learning Machine COMPLETA
 - **Unificazione UI**: Tab "Learning Machine" in Fornitori, menu pulito senza duplicati
