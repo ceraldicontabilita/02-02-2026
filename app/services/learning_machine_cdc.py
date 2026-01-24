@@ -206,11 +206,14 @@ CENTRI_COSTO = {
         "deducibilita_irap": 0.20,
         "detraibilita_iva": 0.40,
         # Keywords più specifiche per evitare falsi positivi
-        # Rimosso: "ip" (troppo generico), "total" (troppo generico), "q8" (troppo corto)
-        "keywords": ["carburante", "benzina", "gasolio", "diesel", "rifornimento",
-                    "distributore benzina", "stazione servizio", "petroleum",
-                    "esso stazione", "tamoil", "eni station", "shell carburante",
-                    "kuwait petroleum", "api ip", "q8 petroleum", "totalerg"]
+        # Match solo su fornitori specifici o contesti chiari di rifornimento
+        "keywords": ["rifornimento carburante", "stazione servizio benzina",
+                    "kuwait petroleum", "api ip carburante", "q8 petroleum", "totalerg",
+                    "esso carburante", "tamoil carburante", "eni station carburante",
+                    "f.s.fuel", "petrol palmieri", "f.d.petroli"],
+        # Fornitori noti (match esatto sul nome, priorità alta)
+        "fornitori": ["kuwait petroleum", "esso", "tamoil", "totalerg", 
+                     "f.s.fuel", "petrol palmieri", "f.d.petroli", "agip", "ip distribuzione"]
     },
     "6.3_ASSICURAZIONE_AUTO": {
         "codice": "B7.6.3",
