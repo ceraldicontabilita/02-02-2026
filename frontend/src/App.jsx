@@ -158,6 +158,7 @@ const NAV_ITEMS = [
     isSubmenu: true,
     children: [
       { to: "/ai-parser", label: "🧠 Lettura Documenti AI", icon: "🧠", isNew: true, highlight: true },
+      { to: "/correzione-ai", label: "✏️ Correzione Dati AI", icon: "✏️" },
       { to: "/da-rivedere", label: "⚠️ Da Rivedere", icon: "⚠️" },
       { to: "/import-unificato", label: "Import Documenti", icon: "📥", isNew: true },
       { to: "/documenti", label: "Documenti Email", icon: "📨" },
