@@ -280,9 +280,15 @@ async def parse_document_with_ai(
     """
     from openai import OpenAI
     
+    # Forza rilettura delle variabili d'ambiente dal file
+    load_dotenv('/app/backend/.env', override=True)
+    
     api_key = os.environ.get("OPENAI_API_KEY")
+    logger.info(f"Using OPENAI_API_KEY: {api_key[:20] if api_key else 'NOT SET'}...")
+    
     if not api_key:
         api_key = os.environ.get("EMERGENT_LLM_KEY")
+        logger.info(f"Fallback to EMERGENT_LLM_KEY: {api_key[:20] if api_key else 'NOT SET'}...")
     if not api_key:
         return {"error": "OPENAI_API_KEY o EMERGENT_LLM_KEY non configurata", "success": False}
     
