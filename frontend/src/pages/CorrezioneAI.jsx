@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -6,7 +6,7 @@ import { Badge } from '../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { 
   FileText, AlertCircle, CheckCircle, Edit, Save, X, 
-  RefreshCw, Search, Filter, Eye, Download
+  RefreshCw, Search
 } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || process.env.REACT_APP_BACKEND_URL || '';
@@ -21,12 +21,7 @@ export default function CorrezioneAI() {
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
 
-  useEffect(() => {
-    loadDocuments();
-    loadStats();
-  }, [filter]);
-
-  const loadDocuments = async () => {
+  const loadDocuments = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -40,9 +35,9 @@ export default function CorrezioneAI() {
       console.error('Errore caricamento documenti:', error);
     }
     setLoading(false);
-  };
+  }, [filter]);
 
-  const loadStats = async () => {
+  const loadStats = useCallback(async () => {
     try {
       const response = await fetch(`${API_URL}/api/ai-parser/statistiche`);
       const data = await response.json();
@@ -50,7 +45,12 @@ export default function CorrezioneAI() {
     } catch (error) {
       console.error('Errore caricamento statistiche:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadDocuments();
+    loadStats();
+  }, [loadDocuments, loadStats]);
 
   const handleSelectDocument = (doc) => {
     setSelectedDoc(doc);
