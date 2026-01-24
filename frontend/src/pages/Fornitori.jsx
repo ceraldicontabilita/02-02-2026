@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import ReactDOM from 'react-dom';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../api';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
 import Portal from '../components/Portal';
@@ -9,7 +9,7 @@ import { formatEuro, formatDateIT } from '../lib/utils';
 import { 
   Search, Edit2, Trash2, Plus, FileText, Building2, 
   Phone, Mail, MapPin, CreditCard, AlertCircle, Check,
-  Users, X, TrendingUp
+  Users, X, TrendingUp, Lightbulb, Tag, RefreshCw, Save, CheckCircle, ChevronRight, Brain
 } from 'lucide-react';
 
 // Hook per debounce
