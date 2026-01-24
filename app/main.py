@@ -191,6 +191,7 @@ from app.routers import documenti_non_associati  # Gestione documenti non associ
 from app.routers import fornitori_learning  # Fornitori Learning - Associazione keywords
 from app.routers import ai_parser  # AI Parser - Estrazione intelligente documenti
 from app.routers import upload_ai  # Upload AI - Parsing automatico su upload diretto
+from app.routers import chat_router  # Chat Intelligente - Interrogazione dati in linguaggio naturale
 
 
 # =============================================================================
