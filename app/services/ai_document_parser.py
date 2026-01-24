@@ -494,7 +494,7 @@ def convert_ai_fattura_to_db_format(ai_data: Dict[str, Any]) -> Dict[str, Any]:
         "modalita_pagamento": ai_data.get("pagamento", {}).get("modalita"),
         "iban": ai_data.get("pagamento", {}).get("iban"),
         "note": ai_data.get("note"),
-        "parsed_by": "ai_emergent_openai",
+        "parsed_by": "ai_emergent_claude",
         "parsed_at": ai_data.get("parsed_at")
     }
 
@@ -541,7 +541,7 @@ def convert_ai_busta_paga_to_dipendente_update(ai_data: Dict[str, Any]) -> Dict[
             "contingenza": ai_data.get("retribuzione", {}).get("contingenza", 0),
             "superminimo": ai_data.get("retribuzione", {}).get("superminimo", 0)
         },
-        "parsed_by": "ai_emergent_openai",
+        "parsed_by": "ai_emergent_claude",
         "parsed_at": ai_data.get("parsed_at"),
         "anno_riferimento": periodo.get("anno"),
         "mese_riferimento": periodo.get("mese")
