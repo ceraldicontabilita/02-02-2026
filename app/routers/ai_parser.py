@@ -87,10 +87,10 @@ async def parse_document(
                 result["pdf_data"] = base64.b64encode(content).decode()
                 result["created_at"] = datetime.now(timezone.utc).isoformat()
                 
-                # Salva in collezione f24
-                insert_result = await db["f24"].insert_one(result.copy())
+                # Salva in collezione f24_unificato
+                insert_result = await db["f24_unificato"].insert_one(result.copy())
                 result["saved_id"] = str(insert_result.inserted_id)
-                result["collection"] = "f24"
+                result["collection"] = "f24_unificato"
                 
             elif detected_type == "busta_paga":
                 result["filename"] = file.filename
