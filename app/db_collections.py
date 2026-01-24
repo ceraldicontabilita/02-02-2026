@@ -51,6 +51,7 @@ COLL_CORRISPETTIVI = "corrispettivi"
 # Documenti
 COLL_DOCUMENTI_EMAIL = "documenti_email"
 COLL_DOCUMENTI_CLASSIFICATI = "documenti_classificati"  # Documenti classificati dalla Learning Machine
+COLL_FATTURE_PDF_ARCHIVIO = "fatture_pdf_archivio"  # Fatture PDF in attesa di associazione XML
 
 # Learning Machine
 COLL_LEARNING_FEEDBACK = "learning_feedback"  # Feedback utente per correzioni classificazione
