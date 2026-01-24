@@ -52,7 +52,7 @@ CENTRI_COSTO = {
                     "cioccolato", "vaniglia", "marmellata", "confettura", "crema",
                     "panna", "mascarpone", "ricotta", "mandorle", "nocciole",
                     "pistacchio", "canditi", "uvetta"],
-        "fornificatori": ["dolciaria acquaviva", "siro s.r.l", "f.lli fiorentino", "i cozzolino",
+        "fornitori": ["dolciaria acquaviva", "siro s.r.l", "f.lli fiorentino", "i cozzolino",
                    "master frost", "eurouova", "big food", "sud ingrosso"]
     },
     "1.4_PRODOTTI_SEMIFINITI": {
