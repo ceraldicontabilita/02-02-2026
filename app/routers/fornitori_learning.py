@@ -1,0 +1,328 @@
+"""
+Router Fornitori Learning - Gestione associazioni fornitore-keywords
+Permette di memorizzare e apprendere le categorie dei fornitori
+"""
+from fastapi import APIRouter, HTTPException
+from typing import Dict, Any, List, Optional
+from datetime import datetime, timezone
+from pydantic import BaseModel
+
+from app.database import Database
+
+router = APIRouter(prefix="/fornitori-learning", tags=["Fornitori Learning"])
+
+# Collezione MongoDB
+COLL_FORNITORI_KEYWORDS = "fornitori_keywords"
+
+
+class FornitoreKeywordsCreate(BaseModel):
+    """Schema per creare/aggiornare associazione fornitore"""
+    fornitore_nome: str
+    keywords: List[str]
+    centro_costo_suggerito: Optional[str] = None
+    note: Optional[str] = None
+
+
+class FornitoreKeywordsResponse(BaseModel):
+    """Schema risposta fornitore"""
+    id: str
+    fornitore_nome: str
+    fornitore_nome_normalizzato: str
+    keywords: List[str]
+    centro_costo_suggerito: Optional[str]
+    note: Optional[str]
+    fatture_count: int
+    totale_fatture: float
+    created_at: str
+    updated_at: str
+
+
+def normalizza_nome_fornitore(nome: str) -> str:
+    """Normalizza il nome del fornitore per match fuzzy"""
+    if not nome:
+        return ""
+    # Rimuovi caratteri speciali e normalizza
+    nome = nome.lower().strip()
+    # Rimuovi suffissi comuni
+    for suffix in [" s.r.l.", " srl", " s.p.a.", " spa", " s.a.s.", " sas", 
+                   " s.n.c.", " snc", " srls", " s.r.l.s.", " unipersonale",
+                   " di ", " soc. coop.", " coop.", " onlus"]:
+        nome = nome.replace(suffix, "")
+    return nome.strip()
+
+
+@router.get("/lista")
+async def lista_fornitori_keywords() -> Dict[str, Any]:
+    """
+    Lista tutti i fornitori con keywords configurate
+    """
+    db = Database.get_db()
+    
+    fornitori = await db[COLL_FORNITORI_KEYWORDS].find(
+        {}, {"_id": 0}
+    ).sort("fatture_count", -1).to_list(None)
+    
+    return {
+        "totale": len(fornitori),
+        "fornitori": fornitori
+    }
+
+
+@router.get("/non-classificati")
+async def fornitori_non_classificati(limit: int = 50) -> Dict[str, Any]:
+    """
+    Lista i fornitori in 'Altri costi non classificati' che non hanno keywords configurate.
+    Utile per identificare quali fornitori necessitano di configurazione.
+    """
+    db = Database.get_db()
+    
+    # Trova fornitori già configurati
+    configurati = await db[COLL_FORNITORI_KEYWORDS].distinct("fornitore_nome_normalizzato")
+    
+    # Aggrega fornitori non classificati
+    pipeline = [
+        {"$match": {
+            "centro_costo_nome": "Altri costi non classificati",
+            "supplier_name": {"$ne": None, "$ne": ""}
+        }},
+        {"$group": {
+            "_id": "$supplier_name",
+            "count": {"$sum": 1},
+            "totale": {"$sum": "$total_amount"},
+            "esempio_linee": {"$first": "$linee"}
+        }},
+        {"$sort": {"count": -1}},
+        {"$limit": limit}
+    ]
+    
+    fornitori_raw = await db["invoices"].aggregate(pipeline).to_list(limit)
+    
+    # Filtra quelli già configurati
+    fornitori = []
+    for f in fornitori_raw:
+        nome_norm = normalizza_nome_fornitore(f["_id"])
+        if nome_norm not in configurati:
+            # Estrai prime descrizioni linee per aiutare l'utente
+            descrizioni = []
+            if f.get("esempio_linee"):
+                for linea in f["esempio_linee"][:3]:
+                    if isinstance(linea, dict):
+                        desc = linea.get("descrizione") or linea.get("description", "")
+                        if desc:
+                            descrizioni.append(desc[:100])
+            
+            fornitori.append({
+                "fornitore_nome": f["_id"],
+                "fornitore_nome_normalizzato": nome_norm,
+                "fatture_count": f["count"],
+                "totale_fatture": round(f["totale"], 2),
+                "esempio_descrizioni": descrizioni
+            })
+    
+    return {
+        "totale": len(fornitori),
+        "fornitori": fornitori
+    }
+
+
+@router.post("/salva")
+async def salva_fornitore_keywords(data: FornitoreKeywordsCreate) -> Dict[str, Any]:
+    """
+    Salva o aggiorna le keywords associate a un fornitore.
+    Questo permette alla Learning Machine di classificare correttamente le fatture future.
+    """
+    db = Database.get_db()
+    
+    nome_norm = normalizza_nome_fornitore(data.fornitore_nome)
+    
+    # Conta fatture per questo fornitore
+    fatture_count = await db["invoices"].count_documents({
+        "supplier_name": {"$regex": data.fornitore_nome, "$options": "i"}
+    })
+    totale = 0
+    pipeline = [
+        {"$match": {"supplier_name": {"$regex": data.fornitore_nome, "$options": "i"}}},
+        {"$group": {"_id": None, "tot": {"$sum": "$total_amount"}}}
+    ]
+    agg = await db["invoices"].aggregate(pipeline).to_list(1)
+    if agg:
+        totale = agg[0].get("tot", 0)
+    
+    # Documento da salvare
+    doc = {
+        "id": f"fk_{nome_norm.replace(' ', '_')}",
+        "fornitore_nome": data.fornitore_nome,
+        "fornitore_nome_normalizzato": nome_norm,
+        "keywords": [k.lower().strip() for k in data.keywords if k.strip()],
+        "centro_costo_suggerito": data.centro_costo_suggerito,
+        "note": data.note,
+        "fatture_count": fatture_count,
+        "totale_fatture": round(totale, 2),
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    # Upsert
+    existing = await db[COLL_FORNITORI_KEYWORDS].find_one(
+        {"fornitore_nome_normalizzato": nome_norm}
+    )
+    
+    if existing:
+        await db[COLL_FORNITORI_KEYWORDS].update_one(
+            {"fornitore_nome_normalizzato": nome_norm},
+            {"$set": doc}
+        )
+        return {"success": True, "message": "Fornitore aggiornato", "fornitore": doc}
+    else:
+        doc["created_at"] = datetime.now(timezone.utc).isoformat()
+        await db[COLL_FORNITORI_KEYWORDS].insert_one(doc)
+        return {"success": True, "message": "Fornitore creato", "fornitore": doc}
+
+
+@router.delete("/{fornitore_id}")
+async def elimina_fornitore_keywords(fornitore_id: str) -> Dict[str, Any]:
+    """Elimina le keywords di un fornitore"""
+    db = Database.get_db()
+    
+    result = await db[COLL_FORNITORI_KEYWORDS].delete_one({"id": fornitore_id})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Fornitore non trovato")
+    
+    return {"success": True, "message": "Fornitore eliminato"}
+
+
+@router.post("/riclassifica-con-keywords")
+async def riclassifica_con_keywords_personalizzate() -> Dict[str, Any]:
+    """
+    Riclassifica le fatture usando le keywords personalizzate dei fornitori.
+    Applica le associazioni memorizzate per migliorare la classificazione automatica.
+    """
+    db = Database.get_db()
+    
+    # Carica tutte le keywords configurate
+    keywords_config = await db[COLL_FORNITORI_KEYWORDS].find({}).to_list(None)
+    
+    if not keywords_config:
+        return {
+            "success": False,
+            "message": "Nessun fornitore configurato. Aggiungi prima le keywords ai fornitori."
+        }
+    
+    # Import classificatore
+    import importlib
+    import app.services.learning_machine_cdc as lm
+    importlib.reload(lm)
+    
+    riclassificate = 0
+    dettaglio = []
+    
+    for config in keywords_config:
+        fornitore_nome = config["fornitore_nome"]
+        keywords = config.get("keywords", [])
+        centro_suggerito = config.get("centro_costo_suggerito")
+        
+        if not keywords:
+            continue
+        
+        # Trova fatture di questo fornitore in "Altri costi"
+        fatture = await db["invoices"].find({
+            "supplier_name": {"$regex": fornitore_nome, "$options": "i"},
+            "centro_costo_nome": "Altri costi non classificati"
+        }).to_list(None)
+        
+        for fatt in fatture:
+            # Usa le keywords per determinare il centro di costo
+            # Prima prova con il centro suggerito
+            if centro_suggerito and centro_suggerito in lm.CENTRI_COSTO:
+                cdc_id = centro_suggerito
+                cdc_config = lm.CENTRI_COSTO[cdc_id]
+            else:
+                # Altrimenti usa la classificazione standard con le keywords
+                testo = " ".join(keywords)
+                cdc_id, cdc_config, _ = lm.classifica_fattura_per_centro_costo(
+                    fornitore_nome, testo, []
+                )
+            
+            # Aggiorna fattura
+            await db["invoices"].update_one(
+                {"_id": fatt["_id"]},
+                {"$set": {
+                    "centro_costo_id": cdc_id,
+                    "centro_costo_nome": cdc_config["nome"],
+                    "classificazione_fonte": "keywords_personalizzate"
+                }}
+            )
+            riclassificate += 1
+        
+        if fatture:
+            dettaglio.append({
+                "fornitore": fornitore_nome,
+                "fatture_riclassificate": len(fatture),
+                "nuovo_centro_costo": cdc_config["nome"] if fatture else None
+            })
+    
+    return {
+        "success": True,
+        "totale_riclassificate": riclassificate,
+        "dettaglio": dettaglio
+    }
+
+
+@router.get("/suggerisci-keywords/{fornitore_nome}")
+async def suggerisci_keywords(fornitore_nome: str) -> Dict[str, Any]:
+    """
+    Suggerisce keywords basandosi sulle descrizioni delle linee fattura del fornitore.
+    Aiuta l'utente a configurare rapidamente le keywords.
+    """
+    db = Database.get_db()
+    
+    # Trova fatture del fornitore
+    fatture = await db["invoices"].find(
+        {"supplier_name": {"$regex": fornitore_nome, "$options": "i"}},
+        {"_id": 0, "linee": 1, "descrizione": 1}
+    ).limit(20).to_list(20)
+    
+    # Estrai parole frequenti dalle descrizioni
+    parole = {}
+    stop_words = {"di", "da", "per", "con", "il", "la", "i", "le", "un", "una", "e", "o", 
+                  "in", "su", "del", "della", "dei", "delle", "al", "alla", "ai", "alle",
+                  "n.", "nr.", "art.", "pz.", "kg.", "lt.", "ml.", "cm.", "mm."}
+    
+    for fatt in fatture:
+        # Descrizione generale
+        if fatt.get("descrizione"):
+            for parola in fatt["descrizione"].lower().split():
+                parola = parola.strip(".,;:!?()[]{}\"'")
+                if len(parola) > 3 and parola not in stop_words:
+                    parole[parola] = parole.get(parola, 0) + 1
+        
+        # Linee fattura
+        for linea in fatt.get("linee", []):
+            if isinstance(linea, dict):
+                desc = linea.get("descrizione") or linea.get("description", "")
+                for parola in desc.lower().split():
+                    parola = parola.strip(".,;:!?()[]{}\"'")
+                    if len(parola) > 3 and parola not in stop_words:
+                        parole[parola] = parole.get(parola, 0) + 1
+    
+    # Ordina per frequenza e prendi le top 15
+    keywords_suggerite = sorted(parole.items(), key=lambda x: x[1], reverse=True)[:15]
+    
+    return {
+        "fornitore": fornitore_nome,
+        "keywords_suggerite": [k for k, _ in keywords_suggerite],
+        "frequenze": {k: v for k, v in keywords_suggerite}
+    }
+
+
+@router.get("/centri-costo-disponibili")
+async def centri_costo_disponibili() -> List[Dict[str, str]]:
+    """
+    Lista i centri di costo disponibili per la selezione
+    """
+    import app.services.learning_machine_cdc as lm
+    
+    return [
+        {"id": cdc_id, "nome": config["nome"], "codice": config["codice"]}
+        for cdc_id, config in lm.CENTRI_COSTO.items()
+    ]
