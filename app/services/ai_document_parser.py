@@ -329,12 +329,13 @@ Rispondi con UNA SOLA PAROLA senza punteggiatura."""
         else:
             prompt = PROMPT_FATTURA  # Default
         
-        # Inizializza chat con emergentintegrations - usa OpenAI con vision
+        # Inizializza chat con emergentintegrations - usa Claude con vision
+        # (L'Emergent LLM Key ha accesso solo a modelli Claude)
         chat = LlmChat(
             api_key=api_key,
             session_id=f"doc_parser_{datetime.now().timestamp()}",
             system_message="Sei un esperto parser di documenti contabili italiani. Estrai dati precisi e strutturati in formato JSON."
-        ).with_model("openai", "gpt-4o")  # gpt-4o supporta vision
+        ).with_model("anthropic", "claude-sonnet-4-20250514")  # Claude supporta vision
         
         # Crea ImageContent per ogni immagine
         image_contents = [ImageContent(image_base64=img_b64) for img_b64 in images_b64]
