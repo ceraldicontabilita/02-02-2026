@@ -309,6 +309,10 @@ const router = createBrowserRouter([
       { path: "invoicetronic", element: <LazyPage><GestioneInvoiceTronic /></LazyPage> },
       { path: "classificazione-email", element: <LazyPage><ClassificazioneDocumenti /></LazyPage> },
       { path: "fornitori-learning", element: <Navigate to="/fornitori?tab=learning" replace /> },
+      
+      // === AI TOOLS ===
+      { path: "ai-parser", element: <LazyPage><AIParserPage /></LazyPage> },
+      { path: "lettura-documenti", element: <LazyPage><AIParserPage /></LazyPage> },
     ]
   }
 ]);
