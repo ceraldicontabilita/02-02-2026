@@ -202,7 +202,8 @@ CENTRI_COSTO = {
         "detraibilita_iva": 0.40,
         "limite_annuo": 3615.20,
         "keywords": ["noleggio auto", "arval", "leasys", "ald automotive", "leaseplan",
-                    "alphabet", "locauto", "rent"]
+                    "alphabet", "locauto", "rent"],
+        "fornitori": ["leasys", "arval", "ald automotive", "leaseplan", "alphabet", "locauto"]
     },
     "6.2_CARBURANTE": {
         "codice": "B7.6.2",
