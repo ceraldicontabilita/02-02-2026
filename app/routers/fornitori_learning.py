@@ -267,10 +267,23 @@ async def riclassifica_con_keywords_personalizzate() -> Dict[str, Any]:
         for fatt in fatture:
             # Usa le keywords per determinare il centro di costo
             # Prima prova con il centro suggerito
-            if centro_suggerito and centro_suggerito in lm.CENTRI_COSTO:
-                cdc_id = centro_suggerito
-                cdc_config = lm.CENTRI_COSTO[cdc_id]
-            else:
+            cdc_id = None
+            cdc_config = None
+            
+            if centro_suggerito:
+                # Cerca il centro di costo per chiave interna o per codice
+                if centro_suggerito in lm.CENTRI_COSTO:
+                    cdc_id = centro_suggerito
+                    cdc_config = lm.CENTRI_COSTO[cdc_id]
+                else:
+                    # Cerca per codice (es. B7.5.3)
+                    for key, cfg in lm.CENTRI_COSTO.items():
+                        if cfg.get("codice") == centro_suggerito:
+                            cdc_id = key
+                            cdc_config = cfg
+                            break
+            
+            if not cdc_config:
                 # Altrimenti usa la classificazione standard con le keywords
                 testo = " ".join(keywords)
                 cdc_id, cdc_config, _ = lm.classifica_fattura_per_centro_costo(
