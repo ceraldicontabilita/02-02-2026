@@ -390,6 +390,9 @@ app.include_router(documenti_intelligenti.router, prefix="/api/documenti-smart",
 # --- Document AI (OCR + LLM Extraction) ---
 app.include_router(document_ai.router, prefix="/api/document-ai", tags=["Document AI"])
 
+# --- AI Parser (Lettura intelligente documenti con Gemini) ---
+app.include_router(ai_parser.router, prefix="/api/ai-parser", tags=["AI Parser"])
+
 # --- Riconciliazione Email ↔ Gestionale ---
 app.include_router(email_reconciliation.router, tags=["Riconciliazione Email"])
 
