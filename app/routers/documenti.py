@@ -126,6 +126,235 @@ async def telegram_test() -> Dict[str, Any]:
     return result
 
 
+# ============================================================
+# ENDPOINT FATTURE ARUBA (Email -> Operazioni da Confermare)
+# ============================================================
+
+@router.post("/scarica-fatture-aruba")
+async def scarica_fatture_aruba(
+    since_days: int = Query(default=7, ge=1, le=90, description="Giorni indietro da controllare")
+) -> Dict[str, Any]:
+    """
+    Scarica le notifiche fatture da Aruba Fatturazione Elettronica.
+    
+    Legge il CORPO delle email (non solo allegati) ed estrae:
+    - Fornitore
+    - Numero fattura
+    - Data documento
+    - Importo totale
+    - Netto a pagare
+    
+    Le fatture vengono salvate in 'operazioni_da_confermare' per:
+    - Verifica manuale
+    - Riconciliazione con estratto conto
+    - Inserimento in Prima Nota
+    
+    Args:
+        since_days: Quanti giorni indietro controllare (default: 7)
+        
+    Returns:
+        Statistiche sul download e lista fatture trovate
+    """
+    from app.services.aruba_invoice_parser import fetch_aruba_invoices
+    
+    db = Database.get_db()
+    
+    email_user = os.environ.get('EMAIL_USER')
+    email_password = os.environ.get('EMAIL_PASSWORD')
+    
+    if not email_user or not email_password:
+        raise HTTPException(
+            status_code=400,
+            detail="Credenziali email non configurate. Imposta EMAIL_USER e EMAIL_PASSWORD in .env"
+        )
+    
+    try:
+        result = await fetch_aruba_invoices(
+            db=db,
+            email_user=email_user,
+            email_password=email_password,
+            since_days=since_days
+        )
+        
+        # Aggiungi lista operazioni da confermare
+        operazioni = await db["operazioni_da_confermare"].find(
+            {"fonte": "aruba_email", "stato": {"$in": ["da_confermare", "da_verificare"]}},
+            {"_id": 0}
+        ).sort("created_at", -1).limit(50).to_list(50)
+        
+        return {
+            "success": result.get("success", False),
+            "stats": result.get("stats", {}),
+            "operazioni_in_attesa": len(operazioni),
+            "operazioni": operazioni
+        }
+        
+    except Exception as e:
+        logger.error(f"Errore scarica_fatture_aruba: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/operazioni-da-confermare")
+async def lista_operazioni_da_confermare(
+    stato: Optional[str] = Query(default=None, description="Filtra per stato: da_confermare, da_verificare, confermata"),
+    fonte: Optional[str] = Query(default=None, description="Filtra per fonte: aruba_email, manuale"),
+    limit: int = Query(default=50, le=200)
+) -> Dict[str, Any]:
+    """
+    Lista operazioni in attesa di conferma (da email Aruba o inserimento manuale).
+    """
+    db = Database.get_db()
+    
+    query = {}
+    if stato:
+        query["stato"] = stato
+    if fonte:
+        query["fonte"] = fonte
+    
+    operazioni = await db["operazioni_da_confermare"].find(
+        query, {"_id": 0}
+    ).sort("created_at", -1).limit(limit).to_list(limit)
+    
+    # Statistiche
+    stats = {
+        "da_confermare": await db["operazioni_da_confermare"].count_documents({"stato": "da_confermare"}),
+        "da_verificare": await db["operazioni_da_confermare"].count_documents({"stato": "da_verificare"}),
+        "confermate": await db["operazioni_da_confermare"].count_documents({"stato": "confermata"}),
+        "totale": await db["operazioni_da_confermare"].count_documents({})
+    }
+    
+    return {
+        "count": len(operazioni),
+        "stats": stats,
+        "operazioni": operazioni
+    }
+
+
+@router.post("/operazioni-da-confermare/{operazione_id}/conferma")
+async def conferma_operazione(
+    operazione_id: str,
+    metodo_pagamento: str = Query(..., description="cassa, banca, assegno"),
+    numero_assegno: Optional[str] = Query(default=None),
+    note: Optional[str] = Query(default=None)
+) -> Dict[str, Any]:
+    """
+    Conferma un'operazione e la inserisce in Prima Nota.
+    
+    Args:
+        operazione_id: ID dell'operazione da confermare
+        metodo_pagamento: cassa, banca, assegno
+        numero_assegno: Numero assegno (obbligatorio se metodo=assegno)
+    """
+    db = Database.get_db()
+    
+    # Trova operazione
+    operazione = await db["operazioni_da_confermare"].find_one(
+        {"id": operazione_id},
+        {"_id": 0}
+    )
+    
+    if not operazione:
+        raise HTTPException(status_code=404, detail="Operazione non trovata")
+    
+    if operazione.get("stato") == "confermata":
+        raise HTTPException(status_code=400, detail="Operazione già confermata")
+    
+    # Determina collezione Prima Nota
+    if metodo_pagamento == "cassa":
+        collection = "prima_nota_cassa"
+    elif metodo_pagamento in ["banca", "assegno"]:
+        collection = "prima_nota_banca"
+    else:
+        raise HTTPException(status_code=400, detail="Metodo pagamento non valido")
+    
+    # Crea movimento Prima Nota
+    prima_nota_id = str(uuid.uuid4())
+    movimento = {
+        "id": prima_nota_id,
+        "data": operazione.get("data_documento") or datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+        "tipo": "uscita",
+        "causale": f"Fattura {operazione.get('numero_fattura')} - {operazione.get('fornitore', '')[:50]}",
+        "fornitore": operazione.get("fornitore"),
+        "fornitore_id": operazione.get("fornitore_id"),
+        "numero_fattura": operazione.get("numero_fattura"),
+        "importo": operazione.get("importo"),
+        "metodo_pagamento": metodo_pagamento,
+        "numero_assegno": numero_assegno if metodo_pagamento == "assegno" else None,
+        "note": note,
+        "fonte": "aruba_email",
+        "operazione_id": operazione_id,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db[collection].insert_one(movimento.copy())
+    
+    # Aggiorna stato operazione
+    await db["operazioni_da_confermare"].update_one(
+        {"id": operazione_id},
+        {"$set": {
+            "stato": "confermata",
+            "metodo_pagamento_confermato": metodo_pagamento,
+            "numero_assegno": numero_assegno,
+            "prima_nota_id": prima_nota_id,
+            "prima_nota_collection": collection,
+            "confirmed_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    # Salva anche nel dizionario elaborazioni per tracciamento
+    await db["aruba_elaborazioni"].update_one(
+        {"numero_fattura": operazione.get("numero_fattura"), "fornitore": operazione.get("fornitore")},
+        {"$set": {
+            "stato": f"inserita_{metodo_pagamento}",
+            "prima_nota_id": prima_nota_id,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }},
+        upsert=True
+    )
+    
+    return {
+        "success": True,
+        "message": f"Operazione confermata e inserita in Prima Nota {metodo_pagamento.upper()}",
+        "prima_nota_id": prima_nota_id,
+        "collection": collection,
+        "movimento": movimento
+    }
+
+
+@router.delete("/operazioni-da-confermare/{operazione_id}")
+async def elimina_operazione(
+    operazione_id: str,
+    motivo: Optional[str] = Query(default=None)
+) -> Dict[str, Any]:
+    """
+    Elimina/scarta un'operazione (es. se è un duplicato o errore).
+    """
+    db = Database.get_db()
+    
+    operazione = await db["operazioni_da_confermare"].find_one({"id": operazione_id})
+    if not operazione:
+        raise HTTPException(status_code=404, detail="Operazione non trovata")
+    
+    # Marca come scartata invece di eliminare (per tracciamento)
+    await db["operazioni_da_confermare"].update_one(
+        {"id": operazione_id},
+        {"$set": {
+            "stato": "scartata",
+            "motivo_scarto": motivo,
+            "scartata_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    # Aggiorna anche il dizionario
+    await db["aruba_elaborazioni"].update_one(
+        {"numero_fattura": operazione.get("numero_fattura")},
+        {"$set": {"stato": "scartata", "motivo": motivo}},
+        upsert=True
+    )
+    
+    return {"success": True, "message": "Operazione scartata"}
+
+
 @router.get("/lista")
 async def lista_documenti(
     categoria: Optional[str] = Query(None, description="Filtra per categoria"),
