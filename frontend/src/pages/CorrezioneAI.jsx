@@ -121,7 +121,7 @@ export default function CorrezioneAI() {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Correzione Dati AI</h1>
-        <p className="text-gray-600">Revisione e correzione documenti processati dall'AI</p>
+        <p className="text-gray-600">Revisione e correzione documenti processati dalla AI</p>
       </div>
 
       {/* Statistiche */}
