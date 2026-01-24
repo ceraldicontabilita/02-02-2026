@@ -25,6 +25,7 @@ const NAV_ITEMS = [
     children: [
       { to: "/fatture-ricevute", label: "Ciclo Passivo", icon: "📋", isNew: true },
       { to: "/fornitori", label: "Fornitori", icon: "📦" },
+      { to: "/fornitori-learning", label: "🧠 Fornitori Learning", icon: "🎓", isNew: true },
       { to: "/ordini-fornitori", label: "Ordini Fornitori", icon: "📝" },
       { to: "/previsioni-acquisti", label: "Previsioni", icon: "📊" },
     ]
