@@ -1,6 +1,6 @@
 # PRD – TechRecon Accounting System
 ## Product Requirements Document
-### Ultimo aggiornamento: 24 Gennaio 2026 (Sessione 20 - Verifica Post-Refactoring)
+### Ultimo aggiornamento: 24 Gennaio 2026 (Sessione 21 - Unificazione Pagine UI)
 
 ---
 
@@ -142,10 +142,14 @@ Il sistema classifica **automaticamente** documenti leggendo:
 
 ## 5. BACKLOG E PRIORITÀ
 
-### 5.1 ✅ COMPLETATO (Sessione 20 - 24/01/2026)
-- **Verifica post-refactoring**: Analizzato report test iteration_33
-- **Conferma architettura MongoDB-Only**: 0 riferimenti filesystem
-- **Servizi attivi**: Backend, Frontend, MongoDB tutti funzionanti
+### 5.1 ✅ COMPLETATO (Sessione 21 - 24/01/2026) - Unificazione UI
+- **Unificazione Fornitori + Learning Machine**: Tab "Learning Machine" integrato nella pagina Fornitori
+- **Unificazione Riconciliazione**: Una sola voce "Riconciliazione" nel menu (rimossa "Riconciliazione Intelligente")
+- **Pulizia Menu**: Rimossa voce "Fornitori Learning" dal menu Acquisti
+- **Redirects implementati**: 
+  - `/fornitori-learning` → `/fornitori?tab=learning`
+  - `/riconciliazione-intelligente` → `/riconciliazione`
+- **Test 100% passati**: 7/7 test frontend (iteration_34.json)
 
 ### 5.2 ✅ COMPLETATO (Sessione 20 - 24/01/2026)
 1. **Fix Associazione F24 - Campo Anno**
@@ -171,8 +175,8 @@ Il sistema classifica **automaticamente** documenti leggendo:
 
 3. **Sistema Fornitori Learning - COMPLETATO**
    - Backend `/api/fornitori-learning` con 7 endpoint
-   - Frontend `/fornitori-learning` con UI Tab configurazione
-   - 8 fornitori configurati con ricerca web (DISTILLERIE CAMEL, RONDINELLA MARKET, EDENRED, etc.)
+   - ~~Frontend `/fornitori-learning`~~ → **Integrato in `/fornitori?tab=learning`**
+   - 44 fornitori configurati con ricerca web
    - 132 fatture riclassificate con keywords personalizzate
    - Endpoint suggerimenti automatici keywords dalle descrizioni fatture
 
@@ -273,4 +277,4 @@ Questo PRD è vincolante. Ogni sviluppo futuro deve:
 
 ---
 
-*Documento aggiornato il 24 Gennaio 2026 - Sessione 20*
+*Documento aggiornato il 24 Gennaio 2026 - Sessione 21*
