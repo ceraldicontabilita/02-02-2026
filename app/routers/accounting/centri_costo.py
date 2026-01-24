@@ -157,7 +157,7 @@ async def list_centri_costo() -> List[Dict[str, Any]]:
     return centri
 
 
-@router.post("/centri-costo")
+@router.post("")
 async def create_centro_costo(data: Dict[str, Any] = Body(...)) -> Dict[str, str]:
     """Crea nuovo centro di costo."""
     db = Database.get_db()
