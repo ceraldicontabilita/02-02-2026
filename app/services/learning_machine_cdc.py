@@ -26,7 +26,8 @@ CENTRI_COSTO = {
         "detraibilita_iva": 1.0,
         "keywords": ["caffè", "caffe", "coffee", "kimbo", "lavazza", "illy", "borbone", 
                     "cialde", "capsule", "tè", "the", "tisana", "orzo", "ginseng",
-                    "cioccolata calda", "latte"]
+                    "cioccolata calda", "latte"],
+        "fornitori": ["kimbo", "lavazza", "illy", "borbone", "nespresso"]
     },
     "1.2_BEVANDE_FREDDE_ALCOLICI": {
         "codice": "B6.1.2",
@@ -37,7 +38,8 @@ CENTRI_COSTO = {
         "detraibilita_iva": 1.0,
         "keywords": ["acqua minerale", "coca cola", "pepsi", "fanta", "sprite", 
                     "succo", "aranciata", "chinotto", "birra", "vino", "amaro",
-                    "liquore", "grappa", "limoncello", "aperol", "campari", "spritz"]
+                    "liquore", "grappa", "limoncello", "aperol", "campari", "spritz"],
+        "fornitori": ["sunrise srl", "top spina", "drink up", "san benedetto", "ferrarelle"]
     },
     "1.3_MATERIE_PRIME_PASTICCERIA": {
         "codice": "B6.1.3",
@@ -49,7 +51,9 @@ CENTRI_COSTO = {
         "keywords": ["farina", "zucchero", "uova", "burro", "lievito", "cacao",
                     "cioccolato", "vaniglia", "marmellata", "confettura", "crema",
                     "panna", "mascarpone", "ricotta", "mandorle", "nocciole",
-                    "pistacchio", "canditi", "uvetta"]
+                    "pistacchio", "canditi", "uvetta"],
+        "fornificatori": ["dolciaria acquaviva", "siro s.r.l", "f.lli fiorentino", "i cozzolino",
+                   "master frost", "eurouova", "big food", "sud ingrosso"]
     },
     "1.4_PRODOTTI_SEMIFINITI": {
         "codice": "B6.1.4",
