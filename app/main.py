@@ -408,6 +408,7 @@ app.include_router(haccp.router, tags=["HACCP"])
 app.include_router(haccp.haccp_completo_router, tags=["HACCP Completo"])
 app.include_router(learning_machine.router, prefix="/api/learning-machine", tags=["Learning Machine"])
 app.include_router(learning_machine_cdc.router, prefix="/api", tags=["Learning Machine CDC"])
+app.include_router(fornitori_learning.router, prefix="/api", tags=["Fornitori Learning"])
 app.include_router(magazzino_avanzato.router, prefix="/api", tags=["Magazzino Avanzato"])
 
 
