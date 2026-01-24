@@ -15,7 +15,8 @@ from typing import Dict, Any, Optional, List
 from datetime import datetime
 
 from dotenv import load_dotenv
-load_dotenv()
+# Carica da backend/.env (path relativo al container)
+load_dotenv('/app/backend/.env')
 
 logger = logging.getLogger(__name__)
 
