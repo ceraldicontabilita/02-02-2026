@@ -142,14 +142,18 @@ Il sistema classifica **automaticamente** documenti leggendo:
 
 ## 5. BACKLOG E PRIORITÀ
 
-### 5.1 ✅ COMPLETATO (Sessione 21 - 24/01/2026) - Unificazione UI
+### 5.1 ✅ COMPLETATO (Sessione 21 - 24/01/2026) - Unificazione UI + Task P1
 - **Unificazione Fornitori + Learning Machine**: Tab "Learning Machine" integrato nella pagina Fornitori
 - **Unificazione Riconciliazione**: Una sola voce "Riconciliazione" nel menu (rimossa "Riconciliazione Intelligente")
 - **Pulizia Menu**: Rimossa voce "Fornitori Learning" dal menu Acquisti
 - **Redirects implementati**: 
   - `/fornitori-learning` → `/fornitori?tab=learning`
   - `/riconciliazione-intelligente` → `/riconciliazione`
-- **Test 100% passati**: 7/7 test frontend (iteration_34.json)
+- **Configurazione 120 Fornitori**: Learning Machine configurata con 120 fornitori tramite ricerca web
+- **Riclassificazione Fatture**: 944+ fatture riclassificate automaticamente (676+268)
+- **UI Fatture Non Classificate**: Nuova sezione nel tab Learning per classificare manualmente le 66 fatture "Altri costi"
+- **Endpoint Classificazione Manuale**: PUT /api/fatture/{id}/classifica
+- **Test 100% passati**: 7/7 test backend + frontend (iteration_35.json)
 
 ### 5.2 ✅ COMPLETATO (Sessione 20 - 24/01/2026)
 1. **Fix Associazione F24 - Campo Anno**
