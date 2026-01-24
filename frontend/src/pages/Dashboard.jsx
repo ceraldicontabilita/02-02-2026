@@ -900,6 +900,83 @@ export default function Dashboard() {
             </Link>
           </div>
         )}
+
+        {/* Widget Learning Machine */}
+        {learningStats && (
+          <div style={{ 
+            background: 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)', 
+            borderRadius: 12, 
+            padding: 20, 
+            boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+            border: '1px solid #86efac'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 15 }}>
+              <h3 style={{ fontSize: 16, margin: 0, fontWeight: 'bold', color: '#166534' }}>
+                🧠 Learning Machine
+              </h3>
+              <span style={{ 
+                background: '#16a34a', 
+                color: 'white', 
+                padding: '4px 10px', 
+                borderRadius: 20, 
+                fontSize: 11, 
+                fontWeight: 'bold' 
+              }}>
+                ATTIVA
+              </span>
+            </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+              {/* Fornitori */}
+              <div style={{ background: 'white', borderRadius: 10, padding: 12, textAlign: 'center' }}>
+                <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>Fornitori</div>
+                <div style={{ fontSize: 22, fontWeight: 'bold', color: '#166534' }}>
+                  {learningStats.fornitori_con_keywords || 0}
+                </div>
+                <div style={{ fontSize: 10, color: '#16a34a' }}>
+                  {learningStats.copertura_fornitori || 0}% copertura
+                </div>
+              </div>
+              
+              {/* Fatture */}
+              <div style={{ background: 'white', borderRadius: 10, padding: 12, textAlign: 'center' }}>
+                <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>Fatture</div>
+                <div style={{ fontSize: 22, fontWeight: 'bold', color: '#166534' }}>
+                  {learningStats.percentuale_fatture || 0}%
+                </div>
+                <div style={{ fontSize: 10, color: '#16a34a' }}>
+                  {learningStats.fatture_classificate || 0}/{learningStats.totale_fatture || 0}
+                </div>
+              </div>
+              
+              {/* F24 */}
+              <div style={{ background: 'white', borderRadius: 10, padding: 12, textAlign: 'center' }}>
+                <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>F24</div>
+                <div style={{ fontSize: 22, fontWeight: 'bold', color: '#166534' }}>
+                  {learningStats.percentuale_f24 || 0}%
+                </div>
+                <div style={{ fontSize: 10, color: '#16a34a' }}>
+                  {learningStats.f24_classificati || 0}/{learningStats.totale_f24 || 0}
+                </div>
+              </div>
+            </div>
+            
+            <Link to="/fornitori?tab=learning" style={{
+              display: 'block',
+              marginTop: 12,
+              padding: '8px 14px',
+              background: '#16a34a',
+              color: 'white',
+              borderRadius: 8,
+              textAlign: 'center',
+              textDecoration: 'none',
+              fontWeight: 'bold',
+              fontSize: 12
+            }}>
+              Gestisci Learning Machine →
+            </Link>
+          </div>
+        )}
       </div>
 
       {/* Confronto Anno Precedente */}
