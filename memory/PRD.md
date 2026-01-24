@@ -155,10 +155,19 @@ Il sistema classifica **automaticamente** documenti leggendo:
    - 43/46 F24 ora hanno il campo `anno` correttamente popolato
 
 2. **Learning Machine per Fatture - COMPLETATA**
-   - 3.642 fatture classificate automaticamente su 38 centri di costo
+   - 3.643 fatture classificate automaticamente su 38 centri di costo
    - Riepilogo fiscale 2025: €524.867 imponibile, €452.701 deducibile IRES
-   - Distribuzione: 33.6% Altri costi, 21% Materie prime, 10% Bevande, 9% Carburante
-   - Endpoint `/api/learning-machine/riepilogo-centri-costo/{anno}` funzionante
+   - Fix classificazione carburante: da 331 a **14 fatture** (solo fornitori reali)
+   - Sistema fornitori noti per match prioritario su nome fornitore
+
+**Distribuzione finale:**
+   - Materie prime pasticceria: 936 (25.7%)
+   - Altri costi non classificati: 914 (25.1%)
+   - Prodotti confezionati: 698 (19.2%)
+   - Noleggio auto: 228
+   - Bevande: 221
+   - Caffè: 198
+   - Carburante: 14 ✅
 
 ### 5.3 🟠 P1 - In Attesa
 1. **UI Gestione Documenti Non Associati**
