@@ -143,7 +143,7 @@ async def find_bank_match(db, importo: float, data_documento: str, fornitore: st
 
 
 async def find_supplier(db, fornitore_nome: str) -> Optional[Dict[str, Any]]:
-    """Cerca il fornitore nel database."""
+    """Cerca il fornitore nel database. Se non esiste, lo crea."""
     if not fornitore_nome:
         return None
     
@@ -158,6 +158,29 @@ async def find_supplier(db, fornitore_nome: str) -> Optional[Dict[str, Any]]:
                 ]},
                 {"_id": 0, "id": 1, "ragione_sociale": 1, "metodo_pagamento": 1}
             )
+            if supplier:
+                return supplier
+    
+    # NON TROVATO: Crea automaticamente il fornitore
+    nuovo_fornitore = {
+        "id": str(uuid.uuid4()),
+        "ragione_sociale": fornitore_nome,
+        "denominazione": fornitore_nome,
+        "metodo_pagamento": "bonifico",  # Default: bonifico (la maggior parte paga così)
+        "tipo": "fornitore",
+        "attivo": True,
+        "fonte": "aruba_email_auto",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db["suppliers"].insert_one(nuovo_fornitore.copy())
+    logger.info(f"🆕 Fornitore creato automaticamente: {fornitore_nome}")
+    
+    return {
+        "id": nuovo_fornitore["id"],
+        "ragione_sociale": fornitore_nome,
+        "metodo_pagamento": "bonifico"
+    }
             if supplier:
                 return supplier
     
