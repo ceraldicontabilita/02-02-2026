@@ -316,6 +316,7 @@ const router = createBrowserRouter([
       { path: "ai-parser", element: <LazyPage><AIParserPage /></LazyPage> },
       { path: "lettura-documenti", element: <LazyPage><AIParserPage /></LazyPage> },
       { path: "da-rivedere", element: <LazyPage><DocumentiDaRivedere /></LazyPage> },
+      { path: "correzione-ai", element: <LazyPage><CorrezioneAI /></LazyPage> },
     ]
   }
 ]);
