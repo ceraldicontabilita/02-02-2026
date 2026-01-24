@@ -1243,7 +1243,9 @@ export default function Fornitori() {
 
   // Carica dati learning quando si cambia tab
   useEffect(() => {
+    console.log('useEffect triggered, activeTab:', activeTab);
     if (activeTab === 'learning') {
+      console.log('Loading learning data...');
       caricaDatiLearning();
       caricaFattureAltriCosti();
     }
