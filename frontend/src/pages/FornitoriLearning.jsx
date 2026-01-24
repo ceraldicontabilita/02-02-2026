@@ -9,7 +9,7 @@ import {
   Building2, Tag, FileText, Euro, CheckCircle, AlertCircle
 } from 'lucide-react';
 
-const API_URL = import.meta.env.VITE_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL || '';
+const API_URL = import.meta.env.VITE_BACKEND_URL || '';
 
 export default function FornitoriLearning() {
   const [activeTab, setActiveTab] = useState('non-classificati');
