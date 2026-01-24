@@ -219,9 +219,11 @@ CENTRI_COSTO = {
                     "kuwait petroleum", "api ip carburante", "q8 petroleum", "totalerg",
                     "esso carburante", "tamoil carburante", "eni station carburante",
                     "f.s.fuel", "petrol palmieri", "f.d.petroli"],
-        # Fornitori noti (match esatto sul nome, priorità alta)
-        "fornitori": ["kuwait petroleum", "esso", "tamoil", "totalerg", 
-                     "f.s.fuel", "petrol palmieri", "f.d.petroli", "agip", "ip distribuzione"]
+        # Fornitori noti (match più specifici per evitare falsi positivi)
+        # Rimosso "esso" (troppo generico, matcha "nalesso")
+        "fornitori": ["kuwait petroleum", "tamoil", "totalerg", 
+                     "f.s.fuel", "petrol palmieri", "f.d.petroli", "agip eni", "ip distribuzione",
+                     "esso italiana", "esso station"]
     },
     "6.3_ASSICURAZIONE_AUTO": {
         "codice": "B7.6.3",
