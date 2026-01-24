@@ -1379,7 +1379,7 @@ async def sync_fatture_pagate_to_prima_nota(anno: int = Query(...)) -> Dict[str,
             totale_banca += totale
     
     return {
-        "message": f"Sincronizzazione completata",
+        "message": "Sincronizzazione completata",
         "importati_cassa": importati_cassa,
         "importati_banca": importati_banca,
         "totale_cassa": round(totale_cassa, 2),
@@ -1420,7 +1420,6 @@ async def import_prima_nota_cassa_csv(file: UploadFile = File(...)) -> Dict[str,
     - Tipo: entrata/uscita
     - Importo: 1500.00 (punto decimale)
     """
-    import csv
     
     db = Database.get_db()
     
@@ -1537,7 +1536,6 @@ async def import_prima_nota_banca_csv(file: UploadFile = File(...)) -> Dict[str,
     Importa movimenti nella Prima Nota Banca da file CSV.
     Stesso formato di Prima Nota Cassa.
     """
-    import csv
     
     db = Database.get_db()
     

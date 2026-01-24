@@ -1,8 +1,8 @@
 """
 Sistema Alert F24 - Gestione scadenze e riconciliazione bancaria.
 """
-from datetime import datetime, timedelta, timezone
-from typing import Dict, Any, List, Optional
+from datetime import datetime, timezone
+from typing import Dict, Any, List
 import logging
 
 logger = logging.getLogger(__name__)
@@ -164,7 +164,7 @@ async def riconcilia_f24_con_banca(
         
         return {
             "success": True,
-            "message": f"F24 riconciliato con movimento bancario",
+            "message": "F24 riconciliato con movimento bancario",
             "f24_id": f24_id,
             "movimento_id": movimento_bancario_id,
             "importo": importo_f24

@@ -12,13 +12,12 @@ Funzionalità:
 import imaplib
 import email
 from email.header import decode_header
-import os
 import re
 import uuid
 import hashlib
 import base64
 from datetime import datetime, timezone
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any
 import logging
 from motor.motor_asyncio import AsyncIOMotorDatabase
 

@@ -2,7 +2,7 @@
 Router Comparatore Prezzi - Confronto prezzi fornitori.
 Parsing fatture, normalizzazione prodotti, carrello acquisti.
 """
-from fastapi import APIRouter, HTTPException, UploadFile, File, Body
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ConfigDict
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta, timezone

@@ -2,16 +2,15 @@
 Router Email F24
 Gestisce il download automatico email, parsing allegati e inserimento nel sistema
 """
-from fastapi import APIRouter, HTTPException, Query, Body, BackgroundTasks
-from typing import Dict, Any, List, Optional
+from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
+from typing import Dict, Any, Optional
 from datetime import datetime, timezone
 from app.database import Database
 from app.services.email_downloader import download_and_process_emails, get_mittenti_configurati
 from app.services.parser_f24 import parse_f24_commercialista
 from app.services.f24_parser import parse_quietanza_f24
-from app.services.codici_tributo_db import get_info_codice_tributo, classifica_f24_per_mittente
+from app.services.codici_tributo_db import get_info_codice_tributo
 import os
-import base64
 import logging
 
 router = APIRouter()

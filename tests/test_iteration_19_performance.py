@@ -12,7 +12,7 @@ import requests
 import time
 import os
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://docuflow-64.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://cloudledger-2.preview.emergentagent.com').rstrip('/')
 
 
 class TestAPIPerformance:
@@ -70,7 +70,7 @@ class TestDashboardAPIs:
         data = response.json()
         # Check for expected fields
         assert "ricavi" in data or "bilancio" in data, "Expected bilancio data"
-        print(f"✅ /api/dashboard/bilancio-istantaneo: OK")
+        print("✅ /api/dashboard/bilancio-istantaneo: OK")
     
     def test_calcolo_imposte_api(self):
         """Test /api/contabilita/calcolo-imposte endpoint"""
@@ -81,7 +81,7 @@ class TestDashboardAPIs:
         data = response.json()
         # Check for expected fields
         assert "ires" in data or "irap" in data or "totale_imposte" in data, "Expected imposte data"
-        print(f"✅ /api/contabilita/calcolo-imposte: OK")
+        print("✅ /api/contabilita/calcolo-imposte: OK")
     
     def test_scadenze_f24_api(self):
         """Test /api/f24/scadenze-prossime endpoint"""
@@ -92,7 +92,7 @@ class TestDashboardAPIs:
         data = response.json()
         # Check for expected fields
         assert "scadenze" in data or isinstance(data, list), "Expected scadenze data"
-        print(f"✅ /api/f24/scadenze-prossime: OK")
+        print("✅ /api/f24/scadenze-prossime: OK")
 
 
 class TestFattureRicevuteEndpoints:
@@ -107,7 +107,7 @@ class TestFattureRicevuteEndpoints:
         data = response.json()
         # Check for expected fields
         assert "statistiche" in data or "scadenze_aperte" in data, "Expected dashboard data"
-        print(f"✅ /api/ciclo-passivo/dashboard-riconciliazione: OK")
+        print("✅ /api/ciclo-passivo/dashboard-riconciliazione: OK")
     
     def test_fatture_statistiche(self):
         """Test /api/fatture-ricevute/statistiche endpoint"""
@@ -118,7 +118,7 @@ class TestFattureRicevuteEndpoints:
         data = response.json()
         # Check for expected fields
         assert "totale_fatture" in data or "totale_importo" in data, "Expected statistiche data"
-        print(f"✅ /api/fatture-ricevute/statistiche: OK")
+        print("✅ /api/fatture-ricevute/statistiche: OK")
 
 
 class TestHealthEndpoints:
@@ -129,14 +129,14 @@ class TestHealthEndpoints:
         response = requests.get(f"{BASE_URL}/api/health", timeout=10)
         
         assert response.status_code == 200, f"Expected 200, got {response.status_code}"
-        print(f"✅ /api/health: OK")
+        print("✅ /api/health: OK")
     
     def test_dashboard_summary(self):
         """Test /api/dashboard/summary endpoint"""
         response = requests.get(f"{BASE_URL}/api/dashboard/summary?anno=2026", timeout=10)
         
         assert response.status_code == 200, f"Expected 200, got {response.status_code}"
-        print(f"✅ /api/dashboard/summary: OK")
+        print("✅ /api/dashboard/summary: OK")
 
 
 if __name__ == "__main__":

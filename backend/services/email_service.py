@@ -8,7 +8,7 @@ import logging
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from typing import Dict, Any, List, Optional, Iterator
+from typing import Dict, Any, Optional, Iterator
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 

@@ -1,13 +1,12 @@
 """
 Operazioni Module - Gestione transazioni carta e supervisione.
 """
-from fastapi import HTTPException, Query
+from fastapi import HTTPException
 from typing import Dict, Any, Optional
 from datetime import datetime, timezone
-import logging
 
 from app.database import Database
-from .common import RiconciliaCartaRequest, logger
+from .common import RiconciliaCartaRequest
 
 
 async def lista_transazioni_carta(

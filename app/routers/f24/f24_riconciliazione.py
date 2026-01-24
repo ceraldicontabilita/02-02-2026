@@ -3,7 +3,7 @@ Sistema Riconciliazione F24
 Gestisce il flusso completo: F24 commercialista → Quietanza → Banca
 Con supporto per ravvedimento e F24 duplicati
 """
-from fastapi import APIRouter, HTTPException, UploadFile, File, Query, Body
+from fastapi import APIRouter, HTTPException, UploadFile, File, Query
 from fastapi.responses import Response
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
@@ -75,7 +75,7 @@ async def upload_f24_commercialista(
                 len(parsed.get("sezione_tributi_locali", []))
             )
             if total_tributi == 0:
-                logger.warning(f"PyMuPDF non ha trovato tributi, AI non disponibile")
+                logger.warning("PyMuPDF non ha trovato tributi, AI non disponibile")
                 # TODO: Implementare fallback AI quando disponibile
                 
     except Exception as e:
@@ -374,8 +374,6 @@ async def mark_f24_pagato(f24_id: str) -> Dict[str, Any]:
 @router.get("/commercialista/{f24_id}/pdf")
 async def get_f24_pdf(f24_id: str):
     """Restituisce il PDF di un F24 commercialista."""
-    from fastapi.responses import Response
-    import base64
     
     db = Database.get_db()
     f24 = await db[COLL_F24_COMMERCIALISTA].find_one({"id": f24_id})

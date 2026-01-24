@@ -914,7 +914,6 @@ async def import_corrispettivi_csv(file: UploadFile = File(...)) -> Dict[str, An
     - Data: DD/MM/YYYY HH:MM:SS
     - Colonne: Id invio;Matricola;Data rilevazione;Data trasmissione;Totale;Imponibile;IVA
     """
-    import csv
     import re
     
     db = Database.get_db()

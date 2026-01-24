@@ -381,7 +381,7 @@ async def get_conto_economico_dettagliato(
     - B9: Costi del personale (stipendi, contributi, TFR)
     - C17: Interessi passivi (mutui, commissioni bancarie)
     """
-    from app.services.classificazione_costi import classifica_fornitore, calcola_deducibilita, CATEGORIE_CONTO_ECONOMICO
+    from app.services.classificazione_costi import classifica_fornitore
     
     db = Database.get_db()
     

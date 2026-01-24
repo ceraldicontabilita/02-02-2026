@@ -14,7 +14,6 @@ Data: 21 Gennaio 2026
 """
 
 import pandas as pd
-import numpy as np
 from datetime import datetime, timezone
 from typing import Dict, List, Optional, Tuple, Any
 from enum import Enum

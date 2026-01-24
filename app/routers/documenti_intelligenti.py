@@ -9,7 +9,7 @@ Endpoint principali:
 - /cleanup: Pulizia email non rilevanti
 """
 
-from fastapi import APIRouter, Query, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Query, HTTPException
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
 from pydantic import BaseModel
@@ -431,8 +431,6 @@ async def associa_tutti_documenti() -> Dict[str, Any]:
 # ENDPOINT VISUALIZZAZIONE PDF
 # ============================================================
 
-from fastapi.responses import FileResponse, StreamingResponse, RedirectResponse
-import os
 
 @router.get("/view/{document_id}")
 async def view_document_pdf(document_id: str):

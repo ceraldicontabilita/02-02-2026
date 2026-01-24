@@ -1,8 +1,8 @@
 """
 Router Scanner Email Completo - Scansiona tutta la posta.
 """
-from fastapi import APIRouter, HTTPException, BackgroundTasks
-from typing import Dict, Any, List, Optional
+from fastapi import APIRouter, HTTPException
+from typing import Dict, Any, List
 import logging
 
 from app.services.email_scanner_completo import (

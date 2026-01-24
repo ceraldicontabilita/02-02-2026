@@ -7,7 +7,7 @@ Implementa la logica di business per:
 """
 import logging
 from datetime import datetime, timezone
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 from app.database import Database
 
 logger = logging.getLogger(__name__)

@@ -5,7 +5,7 @@ Gestione calendario presenze, assenze, ferie, permessi.
 """
 
 from fastapi import APIRouter, HTTPException, Query
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any
 from datetime import datetime, timezone, timedelta
 import uuid
 import logging
@@ -251,7 +251,7 @@ async def crea_richiesta_assenza(payload: Dict[str, Any]) -> Dict[str, Any]:
     })
     
     if sovrapposizione:
-        raise HTTPException(400, f"Esiste già una richiesta per il periodo")
+        raise HTTPException(400, "Esiste già una richiesta per il periodo")
     
     # Crea richiesta
     richiesta_id = str(uuid.uuid4())

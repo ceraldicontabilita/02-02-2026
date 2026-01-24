@@ -9,8 +9,7 @@ import uuid
 
 from app.database import Database
 from .common import (
-    COLLECTION_PRIMA_NOTA_BANCA, TIPO_MOVIMENTO, CATEGORIE_BANCA,
-    clean_mongo_doc, calcola_saldo_anni_precedenti, logger
+    COLLECTION_PRIMA_NOTA_BANCA, TIPO_MOVIMENTO, calcola_saldo_anni_precedenti
 )
 
 

@@ -10,14 +10,13 @@ Servizio unificato per la gestione fatture con:
 """
 
 from typing import Dict, Any, List, Optional
-from datetime import datetime, date, timezone
+from datetime import datetime, timezone
 import hashlib
 import logging
 
 from app.database import Database
 from app.services.business_rules import (
     BusinessRules, 
-    ValidationResult, 
     InvoiceStatus, 
     PaymentStatus,
     EntityStatus

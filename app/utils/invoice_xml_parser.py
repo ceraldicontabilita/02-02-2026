@@ -2,7 +2,7 @@
 XML Parser for Italian Electronic Invoices (FatturaPA).
 Handles standard FatturaPA format (1.2.1/1.2.2).
 """
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, Optional
 from datetime import datetime
 import logging
 from lxml import etree

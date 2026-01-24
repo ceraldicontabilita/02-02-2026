@@ -15,12 +15,11 @@ Endpoints:
 """
 
 from fastapi import APIRouter, HTTPException, Query
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any
 from datetime import datetime, timezone
 
 from app.database import Database
 from app.services.riconciliazione_intelligente import (
-    RiconciliazioneIntelligente,
     get_riconciliazione_service,
     StatoRiconciliazione
 )
@@ -488,7 +487,7 @@ async def lock_manuale(payload: Dict[str, Any]) -> Dict[str, Any]:
     
     return {
         "success": True,
-        "message": f"Fattura bloccata. Non verrà più verificata automaticamente.",
+        "message": "Fattura bloccata. Non verrà più verificata automaticamente.",
         "motivo": motivo
     }
 

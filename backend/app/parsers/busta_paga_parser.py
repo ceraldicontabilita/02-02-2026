@@ -4,8 +4,7 @@ Estrae dati dalle buste paga PDF generate da software Zucchetti
 Versione migliorata con estrazione completa di tutte le voci
 """
 import re
-from datetime import datetime
-from typing import Dict, List, Optional, Any
+from typing import Dict, Any
 import fitz  # PyMuPDF
 
 

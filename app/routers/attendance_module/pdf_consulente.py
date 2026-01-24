@@ -5,7 +5,7 @@ Generazione PDF presenze per consulente del lavoro.
 Gestione note presenze (protocolli malattia).
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from typing import Dict, Any
 from datetime import datetime, timezone

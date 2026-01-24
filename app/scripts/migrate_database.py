@@ -29,7 +29,7 @@ async def migrate_estratto_conto():
     old_count = await old_coll.count_documents({})
     new_count = await new_coll.count_documents({})
     
-    print(f"📊 Stato attuale:")
+    print("📊 Stato attuale:")
     print(f"   estratto_conto (vecchio): {old_count} documenti")
     print(f"   estratto_conto_movimenti (nuovo): {new_count} documenti")
     
@@ -82,7 +82,7 @@ async def migrate_estratto_conto():
         await new_coll.insert_one(normalized.copy())
         migrated += 1
     
-    print(f"\n✅ Migrazione completata:")
+    print("\n✅ Migrazione completata:")
     print(f"   Migrati: {migrated}")
     print(f"   Saltati (duplicati): {skipped}")
     

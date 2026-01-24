@@ -7,20 +7,16 @@ Test Suite per Riconciliazione Intelligente
 
 import pytest
 import asyncio
-from datetime import datetime, timezone, timedelta
-from unittest.mock import MagicMock, AsyncMock, patch
+from unittest.mock import MagicMock
 import uuid
 import sys
-import os
 
 # Add the backend path
 sys.path.insert(0, '/app')
 
 from app.services.riconciliazione_intelligente import (
     RiconciliazioneIntelligente,
-    StatoRiconciliazione,
-    TipoMatch,
-    ConfidenzaMatch
+    StatoRiconciliazione
 )
 
 

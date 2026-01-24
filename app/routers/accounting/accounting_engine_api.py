@@ -6,13 +6,12 @@ Espone le funzionalità di accounting_engine.py via REST API.
 """
 
 from fastapi import APIRouter, HTTPException, Query
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any
 from datetime import datetime, timezone
 
 from app.database import Database
 from app.services.accounting_engine import (
     AccountingEngine, 
-    get_accounting_engine,
     valida_operazione_prima_nota,
     PIANO_DEI_CONTI,
     REGOLE_CONTABILI

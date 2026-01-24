@@ -4,8 +4,8 @@ Gestione giacenze teoriche vs reali con classificazione differenze
 """
 from fastapi import APIRouter, HTTPException, Query, Body
 from typing import Dict, Any, List, Optional
-from datetime import datetime, date
-from app.database import Database, Collections
+from datetime import datetime
+from app.database import Database
 import uuid
 
 router = APIRouter()

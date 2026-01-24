@@ -16,7 +16,7 @@ Stati del Verbale:
 """
 
 from fastapi import APIRouter, HTTPException, Query
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, Optional
 from datetime import datetime, timezone
 from bson import ObjectId
 import re

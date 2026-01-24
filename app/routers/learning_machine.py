@@ -14,14 +14,12 @@ Funzionalità:
 """
 
 from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 from datetime import datetime, timezone, timedelta
 from pydantic import BaseModel
 import imaplib
 import email
 from email.header import decode_header
-import re
-import json
 import logging
 import os
 

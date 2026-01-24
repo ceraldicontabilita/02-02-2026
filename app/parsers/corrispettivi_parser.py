@@ -4,7 +4,7 @@ Formato COR10 dell'Agenzia delle Entrate.
 Estrae: dati trasmissione, riepilogo IVA, pagamento contanti e elettronico.
 """
 import xml.etree.ElementTree as ET
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any
 from datetime import datetime
 import logging
 import re

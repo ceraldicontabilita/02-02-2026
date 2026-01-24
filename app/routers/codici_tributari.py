@@ -10,8 +10,7 @@ Permette di rispondere a domande tipo: "Ho pagato il codice 1001 per l'anno 2020
 """
 
 from fastapi import APIRouter, HTTPException, Query
-from typing import Dict, Any, List, Optional
-from datetime import datetime
+from typing import Dict, Any, Optional
 import logging
 
 from app.database import Database

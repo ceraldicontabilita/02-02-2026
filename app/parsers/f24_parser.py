@@ -3,7 +3,7 @@ F24 PDF Parser - Extract tax payment data from F24 PDF forms
 """
 import re
 import logging
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 from datetime import datetime
 
 logger = logging.getLogger(__name__)

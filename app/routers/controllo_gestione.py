@@ -2,9 +2,9 @@
 Router Controllo di Gestione e Budget
 Analisi costi/ricavi, centri di costo, budget e confronti
 """
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter
 from pydantic import BaseModel
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, Optional
 from datetime import datetime, timezone
 from uuid import uuid4
 import logging

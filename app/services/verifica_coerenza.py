@@ -10,8 +10,8 @@ Verifiche implementate:
 5. F24: Tributi registrati vs Pagamenti effettivi
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime, date
+from typing import Dict, Any, List
+from datetime import datetime
 from app.database import Database, Collections
 import logging
 
@@ -187,7 +187,7 @@ class VerificaCoerenza:
             self._aggiungi_discrepanza(
                 categoria="Versamenti",
                 sottocategoria="Cassa vs Banca",
-                descrizione=f"Versamenti registrati in cassa non corrispondono a quelli in banca",
+                descrizione="Versamenti registrati in cassa non corrispondono a quelli in banca",
                 valore_atteso=versamenti_banca,
                 valore_trovato=versamenti_manuali,
                 periodo=periodo,
@@ -242,7 +242,7 @@ class VerificaCoerenza:
             self._aggiungi_discrepanza(
                 categoria="Saldi",
                 sottocategoria="Prima Nota vs Estratto Conto",
-                descrizione=f"Il saldo della Prima Nota Banca non corrisponde all'Estratto Conto",
+                descrizione="Il saldo della Prima Nota Banca non corrisponde all'Estratto Conto",
                 valore_atteso=saldo_estratto,
                 valore_trovato=saldo_prima_nota,
                 periodo=f"Anno {anno}",
@@ -299,7 +299,7 @@ class VerificaCoerenza:
             self._aggiungi_discrepanza(
                 categoria="F24",
                 sottocategoria="Registrati vs Pagati in Banca",
-                descrizione=f"Gli F24 segnati come pagati non corrispondono ai pagamenti bancari",
+                descrizione="Gli F24 segnati come pagati non corrispondono ai pagamenti bancari",
                 valore_atteso=pagamenti_banca,
                 valore_trovato=f24_pagati,
                 periodo=f"Anno {anno}",

@@ -3,8 +3,8 @@ Sistema Contabile Avanzato Completo - Basato su Ricerche Approfondite 2025
 Include: Patrimonio Netto, TFR, Ratei/Risconti, Rimanenze, Ammortamenti, Chiusura
 """
 
-from typing import Dict, List, Optional
-from datetime import datetime, date
+from typing import Dict, List
+from datetime import date
 from enum import Enum
 
 # ============================================================================

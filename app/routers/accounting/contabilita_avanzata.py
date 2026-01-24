@@ -9,7 +9,7 @@ Endpoint per:
 """
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import StreamingResponse
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any
 from datetime import datetime
 import uuid
 import logging
@@ -19,8 +19,7 @@ from app.database import Database
 from app.services.categorizzazione_contabile import (
     get_categorizzatore,
     categorizza_fattura_completa,
-    PIANO_CONTI_ESTESO,
-    CategoriaFiscale
+    PIANO_CONTI_ESTESO
 )
 from app.services.calcolo_imposte import CalcolatoreImposte, ALIQUOTE_IRAP
 
@@ -30,7 +29,7 @@ from reportlab.lib.units import cm
 from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.enums import TA_CENTER, TA_RIGHT, TA_LEFT
+from reportlab.lib.enums import TA_CENTER, TA_RIGHT
 
 logger = logging.getLogger(__name__)
 router = APIRouter()

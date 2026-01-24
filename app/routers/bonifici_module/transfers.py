@@ -1,7 +1,7 @@
 """
 Bonifici Module - CRUD operazioni sui bonifici.
 """
-from fastapi import HTTPException, Query
+from fastapi import HTTPException
 from fastapi.responses import StreamingResponse
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timezone
@@ -10,7 +10,7 @@ import io
 import csv
 
 from app.database import Database
-from .common import UPLOAD_DIR, COL_TRANSFERS, logger
+from .common import UPLOAD_DIR
 
 
 async def list_transfers(

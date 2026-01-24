@@ -1,10 +1,9 @@
 """
 Bonifici Module - PDF extraction e parsing.
 """
-from typing import List, Optional, Dict, Any
+from typing import List, Dict, Any
 from pathlib import Path
 import re
-import logging
 
 from pdfminer.high_level import extract_text
 try:
@@ -12,7 +11,7 @@ try:
 except Exception:
     fitz = None
 
-from .common import parse_date, parse_amount, normalize_str, IBAN_RE, logger
+from .common import parse_date, normalize_str, IBAN_RE, logger
 
 
 def read_pdf_text(pdf_path: Path) -> str:

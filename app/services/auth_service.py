@@ -16,7 +16,7 @@ from app.exceptions import (
     DuplicateError,
     NotFoundError
 )
-from app.models import UserRegister, UserLogin, TokenResponse, UserInDB
+from app.models import UserRegister, UserLogin, TokenResponse
 
 logger = logging.getLogger(__name__)
 

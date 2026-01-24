@@ -1,8 +1,7 @@
 """
 Validatori per il modulo Fornitori.
 """
-from typing import Dict, Any, List, Optional
-from bson import ObjectId
+from typing import Dict, Any, List
 
 from .constants import CAMPI_OBBLIGATORI_P0, CAMPI_CONSIGLIATI
 

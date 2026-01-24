@@ -3,8 +3,8 @@ HACCP models.
 Temperature monitoring and equipment management for food safety compliance.
 """
 from pydantic import BaseModel, Field, ConfigDict
-from typing import Optional, List
-from datetime import datetime, date as date_type, time
+from typing import Optional
+from datetime import datetime, date as date_type
 
 
 class Temperature(BaseModel):

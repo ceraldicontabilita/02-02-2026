@@ -1,21 +1,18 @@
 """
 Documenti Module - CRUD documenti e download email.
 """
-from fastapi import HTTPException, Query, BackgroundTasks
-from fastapi.responses import FileResponse
+from fastapi import HTTPException, BackgroundTasks
 from typing import Dict, Any, Optional, List
 from datetime import datetime, timezone
-from pathlib import Path
 import os
 import uuid
 import asyncio
-import logging
 
 from app.database import Database
 from app.services.email_document_downloader import (
-    download_documents_from_email, get_document_content
+    download_documents_from_email
 )
-from .common import DOCUMENTS_DIR, COL_DOCUMENTS, CATEGORIES, logger
+from .common import COL_DOCUMENTS, CATEGORIES, logger
 
 # Store per task download
 _download_tasks: Dict[str, Dict] = {}

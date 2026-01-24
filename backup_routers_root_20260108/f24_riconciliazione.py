@@ -3,12 +3,11 @@ Sistema Riconciliazione F24
 Gestisce il flusso completo: F24 commercialista → Quietanza → Banca
 Con supporto per ravvedimento e F24 duplicati
 """
-from fastapi import APIRouter, HTTPException, UploadFile, File, Query, Body
-from typing import Dict, Any, List, Optional
+from fastapi import APIRouter, HTTPException, UploadFile, File, Query
+from typing import Dict, Any, Optional
 from datetime import datetime, timezone
 from app.database import Database
 from app.services.f24_commercialista_parser import parse_f24_commercialista, confronta_codici_tributo
-from app.services.f24_parser import parse_quietanza_f24
 import os
 import uuid
 import logging

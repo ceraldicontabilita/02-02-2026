@@ -4,12 +4,11 @@ Servizio sincronizzazione fornitori dalle fatture.
 import uuid
 import logging
 from datetime import datetime, timezone
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, Optional
 
-from app.database import Database
 
 from .constants import Collections
-from .validators import normalizza_piva, estrai_denominazione
+from .validators import normalizza_piva
 
 logger = logging.getLogger(__name__)
 

@@ -3,11 +3,10 @@ HACCP service.
 Business logic for temperature monitoring and food safety compliance.
 """
 from typing import List, Dict, Any, Optional
-from datetime import datetime, date, timedelta
+from datetime import datetime, date
 import calendar
 import random
 import logging
-from io import BytesIO
 
 from app.repositories.temperature_repository import (
     TemperatureRepository,
@@ -15,13 +14,11 @@ from app.repositories.temperature_repository import (
 )
 from app.exceptions import (
     NotFoundError,
-    ValidationError,
-    BusinessLogicError
+    ValidationError
 )
 from app.models.haccp import (
     TemperatureCreate,
-    TemperatureUpdate,
-    GenerateMonthlyRequest
+    TemperatureUpdate
 )
 
 logger = logging.getLogger(__name__)

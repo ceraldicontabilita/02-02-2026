@@ -18,12 +18,11 @@ import pytest
 import requests
 import os
 import uuid
-from datetime import datetime
 
 # Get BASE_URL from environment
 BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
 if not BASE_URL:
-    BASE_URL = "https://docuflow-64.preview.emergentagent.com"
+    BASE_URL = "https://cloudledger-2.preview.emergentagent.com"
 
 
 class TestHealthCheck:
@@ -51,7 +50,7 @@ class TestSuppliersEndpoint:
         suppliers = data if isinstance(data, list) else data.get("items", data.get("suppliers", []))
         
         for s in suppliers:
-            assert "_id" not in s, f"ObjectId '_id' found in supplier"
+            assert "_id" not in s, "ObjectId '_id' found in supplier"
         
         print(f"✅ /api/suppliers: {len(suppliers)} suppliers without ObjectId")
     
@@ -68,7 +67,7 @@ class TestSuppliersEndpoint:
             # Check for common fields
             assert "id" in supplier or "partita_iva" in supplier, "Supplier should have id or partita_iva"
         
-        print(f"✅ /api/suppliers: Response structure valid")
+        print("✅ /api/suppliers: Response structure valid")
 
 
 class TestPrimaNotaCassaEndpoint:
@@ -83,7 +82,7 @@ class TestPrimaNotaCassaEndpoint:
         items = data if isinstance(data, list) else data.get("items", data.get("movimenti", []))
         
         for item in items:
-            assert "_id" not in item, f"ObjectId '_id' found in movimento cassa"
+            assert "_id" not in item, "ObjectId '_id' found in movimento cassa"
         
         print(f"✅ /api/prima-nota/cassa: {len(items)} movimenti without ObjectId")
 
@@ -100,7 +99,7 @@ class TestPrimaNotaBancaEndpoint:
         items = data if isinstance(data, list) else data.get("items", data.get("movimenti", []))
         
         for item in items:
-            assert "_id" not in item, f"ObjectId '_id' found in movimento banca"
+            assert "_id" not in item, "ObjectId '_id' found in movimento banca"
         
         print(f"✅ /api/prima-nota/banca: {len(items)} movimenti without ObjectId")
 
@@ -117,7 +116,7 @@ class TestEmployeesEndpoint:
         dipendenti = data.get("dipendenti", data) if isinstance(data, dict) else data
         
         for d in dipendenti:
-            assert "_id" not in d, f"ObjectId '_id' found in dipendente"
+            assert "_id" not in d, "ObjectId '_id' found in dipendente"
         
         print(f"✅ /api/dipendenti: {len(dipendenti)} dipendenti without ObjectId")
     
@@ -133,7 +132,7 @@ class TestEmployeesEndpoint:
             d = dipendenti[0]
             assert "id" in d, "Dipendente should have 'id' field"
         
-        print(f"✅ /api/dipendenti: Required fields present")
+        print("✅ /api/dipendenti: Required fields present")
 
 
 class TestNoleggioVeicoliEndpoint:
@@ -149,7 +148,7 @@ class TestNoleggioVeicoliEndpoint:
         assert "statistiche" in data, "Response should contain 'statistiche' key"
         
         for veicolo in data.get("veicoli", []):
-            assert "_id" not in veicolo, f"ObjectId '_id' found in veicolo"
+            assert "_id" not in veicolo, "ObjectId '_id' found in veicolo"
         
         print(f"✅ /api/noleggio/veicoli: {data.get('count', 0)} veicoli without ObjectId")
     
@@ -186,7 +185,7 @@ class TestNoleggioVeicoliEndpoint:
         error_msg = data.get("detail", "") or data.get("message", "")
         assert "non trovato" in error_msg.lower() or "not found" in error_msg.lower()
         
-        print(f"✅ Driver validation: Correctly rejects invalid driver_id")
+        print("✅ Driver validation: Correctly rejects invalid driver_id")
 
 
 class TestWarehouseProductsEndpoint:
@@ -201,7 +200,7 @@ class TestWarehouseProductsEndpoint:
         items = data if isinstance(data, list) else data.get("items", data.get("products", []))
         
         for item in items:
-            assert "_id" not in item, f"ObjectId '_id' found in product"
+            assert "_id" not in item, "ObjectId '_id' found in product"
         
         print(f"✅ /api/warehouse/products: {len(items)} products without ObjectId")
 
@@ -217,7 +216,7 @@ class TestCicloPassivoIntegrato:
         data = response.json()
         assert "statistiche" in data, "Response should contain 'statistiche' key"
         
-        print(f"✅ /api/ciclo-passivo/dashboard-riconciliazione: Working")
+        print("✅ /api/ciclo-passivo/dashboard-riconciliazione: Working")
     
     def test_lotti_no_objectid(self):
         """Test /api/ciclo-passivo/lotti returns valid data"""
@@ -228,7 +227,7 @@ class TestCicloPassivoIntegrato:
         items = data.get("items", [])
         
         for item in items:
-            assert "_id" not in item, f"ObjectId '_id' found in lotto"
+            assert "_id" not in item, "ObjectId '_id' found in lotto"
         
         print(f"✅ /api/ciclo-passivo/lotti: {len(items)} lotti without ObjectId")
 
@@ -245,7 +244,7 @@ class TestOperazioniDaConfermare:
         assert "operazioni" in data, "Response should contain 'operazioni' key"
         
         for op in data.get("operazioni", []):
-            assert "_id" not in op, f"ObjectId '_id' found in operazione"
+            assert "_id" not in op, "ObjectId '_id' found in operazione"
         
         print(f"✅ /api/operazioni-da-confermare/lista: {len(data.get('operazioni', []))} operazioni without ObjectId")
     
@@ -278,9 +277,9 @@ class TestOperazioniDaConfermare:
         )
         
         # Should not return 500 (ObjectId error)
-        assert response2.status_code != 500, f"Got 500 error on duplicate confirmation"
+        assert response2.status_code != 500, "Got 500 error on duplicate confirmation"
         
-        print(f"✅ Duplicate prevention: No 500 error on duplicate confirmation")
+        print("✅ Duplicate prevention: No 500 error on duplicate confirmation")
 
 
 class TestInvoicesEndpoint:
@@ -295,7 +294,7 @@ class TestInvoicesEndpoint:
         invoices = data if isinstance(data, list) else data.get("items", data.get("invoices", []))
         
         for inv in invoices:
-            assert "_id" not in inv, f"ObjectId '_id' found in invoice"
+            assert "_id" not in inv, "ObjectId '_id' found in invoice"
         
         print(f"✅ /api/invoices: {len(invoices)} invoices without ObjectId")
 

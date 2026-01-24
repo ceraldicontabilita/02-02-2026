@@ -6,8 +6,8 @@ Router Gestione Avanzata F24
 - Alert Scadenze
 """
 from fastapi import APIRouter, HTTPException, Query
-from typing import List, Optional
-from datetime import datetime, timedelta
+from typing import Optional
+from datetime import datetime
 import logging
 
 from app.database import Database

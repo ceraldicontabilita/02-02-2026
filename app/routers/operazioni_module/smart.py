@@ -1,13 +1,12 @@
 """
 Operazioni Module - Riconciliazione Smart (banca veloce, analisi, associazioni).
 """
-from fastapi import HTTPException, Query
-from typing import Dict, Any, Optional, List
+from fastapi import HTTPException
+from typing import Dict, Any, Optional
 from datetime import datetime, timezone
-import logging
 
 from app.database import Database
-from .common import COL_ESTRATTO_CONTO, COL_PRIMA_NOTA_BANCA, RiconciliaManuale, logger
+from .common import RiconciliaManuale, logger
 
 
 async def banca_veloce(

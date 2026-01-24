@@ -12,14 +12,12 @@ from app.repositories.cash_repository import (
 )
 from app.exceptions import (
     NotFoundError,
-    ValidationError,
     DuplicateError
 )
 from app.models.cash import (
     CashMovementCreate,
     CashMovementUpdate,
-    CorrissettivoCreate,
-    CorrissettivoUpdate
+    CorrissettivoCreate
 )
 
 logger = logging.getLogger(__name__)

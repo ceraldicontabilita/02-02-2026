@@ -5,7 +5,6 @@ Gestisce connessioni WebSocket per aggiornamenti live della dashboard.
 from fastapi import WebSocket
 from typing import Dict, List, Set
 import asyncio
-import json
 from datetime import datetime, timezone
 from app.utils.logger import get_logger
 

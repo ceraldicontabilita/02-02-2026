@@ -2,13 +2,12 @@
 Suppliers IBAN management endpoints.
 Ricerca e sincronizzazione IBAN da fatture.
 """
-from fastapi import APIRouter, HTTPException, Body
+from fastapi import APIRouter, HTTPException
 from typing import Dict, Any
 from datetime import datetime, timezone
 import re
 import asyncio
 import httpx
-import logging
 
 from app.database import Database, Collections
 from app.middleware.performance import cache

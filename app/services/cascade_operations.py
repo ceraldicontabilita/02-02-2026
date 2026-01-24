@@ -27,7 +27,7 @@ ASSEGNO (assegni)
 """
 
 import logging
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any
 from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)

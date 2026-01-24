@@ -583,7 +583,7 @@ async def upload_fattura_xml(file: UploadFile = File(...)) -> Dict[str, Any]:
             if automazioni_result.get("ricette", {}).get("ricette_aggiornate", 0) > 0:
                 logger.info(f"🍳 Ricette aggiornate: {automazioni_result['ricette']['ricette_aggiornate']}")
             if automazioni_result.get("operazione", {}).get("operazione_completata"):
-                logger.info(f"✅ Operazione completata con fattura XML")
+                logger.info("✅ Operazione completata con fattura XML")
         except Exception as e:
             logger.warning(f"Errore automazioni: {e}")
         
@@ -1234,9 +1234,8 @@ async def delete_invoice(
     - Annulla movimenti magazzino
     - Sgancia assegni collegati
     """
-    from app.services.business_rules import BusinessRules, EntityStatus
+    from app.services.business_rules import BusinessRules
     from app.services.cascade_operations import CascadeOperations
-    from datetime import datetime, timezone
     
     db = Database.get_db()
     

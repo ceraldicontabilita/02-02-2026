@@ -9,9 +9,7 @@ Formato supportato:
 import fitz  # PyMuPDF
 import re
 import logging
-from typing import Dict, Any, List, Optional, Tuple
-from datetime import datetime
-from io import BytesIO
+from typing import Dict, Any, List
 
 logger = logging.getLogger(__name__)
 

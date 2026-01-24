@@ -2,8 +2,6 @@
 Test Fatture Ricevute Module endpoints.
 Tests for the refactored fatture_module.
 """
-import pytest
-import httpx
 
 
 class TestFattureRicevuteModule:

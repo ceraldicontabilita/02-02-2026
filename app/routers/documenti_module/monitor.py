@@ -1,16 +1,13 @@
 """
 Documenti Module - Monitor email e sync.
 """
-from fastapi import HTTPException, Query
+from fastapi import Query
 from typing import Dict, Any
-from datetime import datetime, timezone
-import logging
 
 from app.database import Database
 from app.services.email_monitor_service import (
     start_monitor, stop_monitor, get_monitor_status, run_full_sync
 )
-from .common import logger
 
 
 async def avvia_monitor(

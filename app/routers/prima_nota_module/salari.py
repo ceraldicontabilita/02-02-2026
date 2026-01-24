@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 import uuid
 
 from app.database import Database
-from .common import COLLECTION_PRIMA_NOTA_SALARI, COLLECTION_PRIMA_NOTA_BANCA, logger
+from .common import COLLECTION_PRIMA_NOTA_SALARI, logger
 
 
 async def get_prima_nota_salari(

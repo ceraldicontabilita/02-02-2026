@@ -6,9 +6,7 @@ Questo modulo implementa la classificazione intelligente delle fatture
 leggendo la DESCRIZIONE delle linee fattura per assegnare il centro di costo corretto.
 """
 
-from typing import Dict, Any, List, Optional, Tuple
-from datetime import datetime
-import re
+from typing import Dict, Any, List, Tuple
 import logging
 
 logger = logging.getLogger(__name__)

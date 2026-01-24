@@ -2,7 +2,7 @@
 Supplier service with referential integrity.
 Enhanced version with cascade updates and delete prevention.
 """
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any
 from datetime import datetime
 import logging
 

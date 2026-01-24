@@ -4,9 +4,8 @@ Solo fatture con scadenza, senza gestione effettiva pagamenti
 """
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, Optional
 from datetime import datetime, timezone, timedelta
-from uuid import uuid4
 import logging
 
 from app.database import Database

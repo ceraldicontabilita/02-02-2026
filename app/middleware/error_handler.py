@@ -7,7 +7,6 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 import logging
-from typing import Union
 
 try:
     # Try relative import (when used as package)
@@ -29,19 +28,7 @@ try:
 except ImportError:
     # Fallback to absolute import (when main.py is entry point)
     from exceptions import (
-        AppError,
-        ValidationError,
-        AuthenticationError,
-        AuthorizationError,
-        NotFoundError,
-        DuplicateError,
-        DatabaseError,
-        FileProcessingError,
-        ExternalServiceError,
-        BusinessLogicError,
-        TransactionError,
-        RateLimitError,
-        ConfigurationError
+        AppError
     )
 
 logger = logging.getLogger(__name__)

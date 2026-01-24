@@ -8,8 +8,7 @@ Questo modulo implementa:
 4. Gestione lotti e tracciabilità
 """
 
-from typing import Dict, Any, List, Optional, Tuple
-from datetime import datetime
+from typing import Dict, Any, List, Tuple
 import re
 import logging
 

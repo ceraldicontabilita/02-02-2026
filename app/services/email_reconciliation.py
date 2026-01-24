@@ -14,14 +14,13 @@ ai file originali presenti nella posta elettronica.
 """
 import os
 import re
-import uuid
 import hashlib
 import logging
 import imaplib
 import email
 from email.header import decode_header
 from datetime import datetime, timezone
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Dict, Any, List
 import base64
 
 from app.database import Database

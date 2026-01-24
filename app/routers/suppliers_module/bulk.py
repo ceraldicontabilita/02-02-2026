@@ -2,14 +2,13 @@
 Suppliers bulk operations endpoints.
 Operazioni massive su fornitori.
 """
-from fastapi import APIRouter, HTTPException, Body
+from fastapi import APIRouter, Body
 from typing import Dict, Any
 from datetime import datetime, timezone
 import uuid
 import httpx
 import re
 import asyncio
-import logging
 
 from app.database import Database, Collections
 from app.middleware.performance import cache

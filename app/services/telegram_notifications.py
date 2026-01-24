@@ -16,7 +16,7 @@ Configurazione in .env:
 import os
 import logging
 import httpx
-from typing import Optional, Dict, Any, List
+from typing import Dict, Any
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
@@ -69,7 +69,7 @@ async def send_notification(
             result = response.json()
             
             if result.get("ok"):
-                logger.info(f"📱 Notifica Telegram inviata")
+                logger.info("📱 Notifica Telegram inviata")
                 return {"success": True, "message_id": result.get("result", {}).get("message_id")}
             else:
                 logger.error(f"Errore Telegram: {result.get('description')}")
@@ -189,11 +189,11 @@ async def notifica_fattura_xml_caricata(
         op = automazioni.get("operazione", {})
         
         if mag.get("products_updated", 0) > 0:
-            message += f"\n📦 Magazzino aggiornato"
+            message += "\n📦 Magazzino aggiornato"
         if ric.get("ricette_aggiornate", 0) > 0:
             message += f"\n🍳 {ric['ricette_aggiornate']} ricette aggiornate"
         if op.get("operazione_completata"):
-            message += f"\n✅ Operazione completata automaticamente"
+            message += "\n✅ Operazione completata automaticamente"
     
     return await send_notification(message, disable_notification=True)
 
@@ -243,7 +243,7 @@ async def notifica_sync_completato(results: Dict[str, Any]) -> Dict[str, Any]:
     
     if nuove_aruba > 0:
         message += f"🧾 {nuove_aruba} nuove fatture Aruba\n"
-        message += f"👉 <i>Da confermare Cassa/Banca</i>"
+        message += "👉 <i>Da confermare Cassa/Banca</i>"
     
     return await send_notification(message)
 

@@ -1,22 +1,20 @@
 """
 Fatture Module - Import XML singoli e multipli.
 """
-from fastapi import HTTPException, UploadFile, File, Query
+from fastapi import HTTPException, UploadFile, File
 from typing import Dict, Any, List
 from datetime import datetime, timezone
 import uuid
 import zipfile
 import io
-import logging
 
 from app.database import Database
 from app.parsers.fattura_elettronica_parser import parse_fattura_xml
 from app.routers.ciclo_passivo_integrato import (
-    genera_scrittura_prima_nota, crea_scadenza_pagamento,
-    cerca_match_bancario, esegui_riconciliazione, processa_carico_magazzino,
-    COL_SCADENZIARIO, COL_PRIMA_NOTA_BANCA
+    crea_scadenza_pagamento,
+    processa_carico_magazzino
 )
-from .common import COL_FORNITORI, COL_FATTURE_RICEVUTE, COL_DETTAGLIO_RIGHE, COL_ALLEGATI, logger
+from .common import COL_FORNITORI, COL_FATTURE_RICEVUTE
 from .helpers import get_or_create_fornitore, check_duplicato, salva_dettaglio_righe, salva_allegato_pdf
 
 

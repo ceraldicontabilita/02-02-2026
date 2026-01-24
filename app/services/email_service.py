@@ -2,8 +2,8 @@
 Email Notification Service.
 Send email notifications for important events.
 """
-from typing import List, Dict, Any, Optional
-from datetime import date, datetime, timedelta
+from typing import List, Dict, Any
+from datetime import date
 import logging
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart

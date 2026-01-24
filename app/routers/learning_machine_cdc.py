@@ -8,20 +8,17 @@ Questo router gestisce:
 4. Calcolo automatico costo del personale da cedolini + F24
 """
 
-from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
-from typing import Dict, Any, List, Optional
+from fastapi import APIRouter, Query
+from typing import Dict, Any, List
 from datetime import datetime
 import logging
-import re
 
 from app.database import Database, Collections
 from app.services.learning_machine_cdc import (
     classifica_fattura_per_centro_costo,
     classifica_f24_per_tributo,
     calcola_importi_fiscali,
-    get_tutti_centri_costo,
-    CENTRI_COSTO,
-    TRIBUTI_F24_MAPPING
+    get_tutti_centri_costo
 )
 
 logger = logging.getLogger(__name__)

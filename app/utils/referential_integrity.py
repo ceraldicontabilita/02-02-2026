@@ -3,7 +3,7 @@ Referential Integrity Manager.
 Manages database relationships and ensures data consistency.
 Implements cascade updates and delete prevention.
 """
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any
 from datetime import datetime
 import logging
 from bson import ObjectId

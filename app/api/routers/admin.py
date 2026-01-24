@@ -2,8 +2,7 @@
 Admin router - Administrative operations and system management
 """
 
-from fastapi import APIRouter, HTTPException, Depends, Request
-from datetime import datetime
+from fastapi import APIRouter, HTTPException, Request
 import logging
 
 logger = logging.getLogger(__name__)

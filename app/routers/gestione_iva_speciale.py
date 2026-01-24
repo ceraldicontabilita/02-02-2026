@@ -5,7 +5,7 @@ Router Gestione IVA Speciale
 """
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, Optional
 from datetime import datetime, timezone
 from uuid import uuid4
 import logging
@@ -284,7 +284,7 @@ async def contabilizza_nota_credito(nota_id: str) -> Dict[str, Any]:
     
     return {
         "success": True,
-        "messaggio": f"Nota credito contabilizzata",
+        "messaggio": "Nota credito contabilizzata",
         "movimento_id": movimento["id"]
     }
 

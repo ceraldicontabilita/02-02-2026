@@ -220,7 +220,6 @@ async def calcola_iva_debito_corretto(db, anno: int, mese: int) -> Dict[str, Any
     Returns:
         Dict con IVA da corrispettivi, fatture emesse (escl. duplicati), totale
     """
-    from datetime import date
     
     # Range date del mese
     primo_giorno = f"{anno}-{str(mese).zfill(2)}-01"

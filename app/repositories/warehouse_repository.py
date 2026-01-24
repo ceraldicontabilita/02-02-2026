@@ -2,7 +2,7 @@
 Warehouse repository for inventory and stock management.
 """
 from typing import Optional, List, Dict, Any
-from datetime import datetime, date
+from datetime import datetime
 import logging
 
 from .base_repository import BaseRepository

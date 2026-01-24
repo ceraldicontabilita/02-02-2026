@@ -3,7 +3,7 @@ Sistema Alert F24 con Riconciliazione Bancaria
 Gestisce notifiche scadenze e riconciliazione pagamenti
 """
 from datetime import datetime, timedelta, timezone
-from typing import List, Dict, Optional
+from typing import List, Dict
 import logging
 
 logger = logging.getLogger(__name__)

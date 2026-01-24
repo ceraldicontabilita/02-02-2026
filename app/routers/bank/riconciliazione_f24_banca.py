@@ -6,7 +6,7 @@ NOTA: Questo router è registrato con prefix /api/f24-riconciliazione
 insieme a f24_riconciliazione.py per gli endpoint banca-specifici.
 """
 from fastapi import APIRouter, UploadFile, File, HTTPException
-from typing import List, Optional
+from typing import Optional
 from datetime import datetime
 import logging
 

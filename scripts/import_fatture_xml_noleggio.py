@@ -279,7 +279,7 @@ async def main():
     print("\n1. Importazione fatture XML...")
     risultati_import = await import_fatture_to_db(fatture_dir, db)
     
-    print(f"\n--- RISULTATI IMPORTAZIONE ---")
+    print("\n--- RISULTATI IMPORTAZIONE ---")
     print(f"File processati: {risultati_import['file_processati']}")
     print(f"Fatture importate: {risultati_import['fatture_importate']}")
     print(f"Fatture duplicate: {risultati_import['fatture_duplicate']}")
@@ -295,7 +295,7 @@ async def main():
     print("\n2. Associazione ai veicoli noleggio...")
     risultati_assoc = await associa_a_veicoli_noleggio(db)
     
-    print(f"\n--- RISULTATI ASSOCIAZIONE ---")
+    print("\n--- RISULTATI ASSOCIAZIONE ---")
     print(f"Fatture processate: {risultati_assoc['fatture_processate']}")
     print(f"Verbali associati: {risultati_assoc['verbali_associati']}")
     print(f"Bolli associati: {risultati_assoc['bolli_associati']}")

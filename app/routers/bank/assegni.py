@@ -1031,7 +1031,6 @@ async def associa_beneficiari_robusto() -> Dict[str, Any]:
     4. Se trovati più match, cerca di distinguere per fornitore già pagato con altri assegni
     5. Gestisce pagamenti multipli (una fattura pagata con più assegni)
     """
-    import re
     db = Database.get_db()
     
     risultati = {

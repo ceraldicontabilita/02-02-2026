@@ -1,6 +1,5 @@
 """F24 router - F24 tax form management with alerts and reconciliation."""
 from fastapi import APIRouter, Depends, Path, status, UploadFile, File, Body, HTTPException
-from fastapi.responses import JSONResponse
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
 from uuid import uuid4
@@ -727,7 +726,6 @@ async def get_codice_info(
 
 # ============== PARSING QUIETANZE F24 ==============
 from app.services.f24_parser import parse_quietanza_f24, generate_f24_summary
-import shutil
 
 
 @router.post(

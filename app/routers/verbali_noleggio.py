@@ -4,7 +4,7 @@ Router Verbali Noleggio - Scarica verbali dalla posta e li associa alle fatture.
 Cerca nelle cartelle email i verbali (pattern Bxxxxxxxxxx) e li associa
 alle righe corrispondenti nelle fatture noleggio.
 """
-from fastapi import APIRouter, HTTPException, BackgroundTasks
+from fastapi import APIRouter, HTTPException
 from typing import Dict, Any, List
 from datetime import datetime, timezone
 import imaplib

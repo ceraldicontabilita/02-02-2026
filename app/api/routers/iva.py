@@ -5,13 +5,12 @@ Provides monthly, annual, F24, and comparison endpoints for VAT management
 
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import FileResponse
-from typing import Dict, Any
 from pathlib import Path
 import logging
 import os
 
 # Import services (relative to backend/)
-from services.iva import IVACalculator, IVAPDFGenerator, IVAReportService
+from services.iva import IVACalculator, IVAReportService
 
 logger = logging.getLogger(__name__)
 

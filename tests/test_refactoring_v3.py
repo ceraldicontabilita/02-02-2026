@@ -9,7 +9,7 @@ import pytest
 import requests
 import os
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://docuflow-64.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://cloudledger-2.preview.emergentagent.com')
 
 class TestHealthCheck:
     """Basic health check tests"""
@@ -28,7 +28,7 @@ class TestHealthCheck:
         assert response.status_code == 200
         data = response.json()
         assert data.get("pong") == True
-        print(f"✅ Ping check passed")
+        print("✅ Ping check passed")
 
 
 class TestDipendentiAPI:
@@ -52,7 +52,7 @@ class TestDipendentiAPI:
         
         # Check if we have approximately 27 employees (allow some tolerance)
         if employee_count == 27:
-            print(f"✅ Exactly 27 dipendenti found as expected")
+            print("✅ Exactly 27 dipendenti found as expected")
         else:
             print(f"⚠️ Found {employee_count} dipendenti (expected 27)")
         
@@ -114,7 +114,7 @@ class TestDocumentiAPI:
         
         # Should have documents array
         assert 'documents' in data or isinstance(data, list), "Expected documents in response"
-        print(f"✅ Documenti lista endpoint works")
+        print("✅ Documenti lista endpoint works")
         
         return data
     
@@ -221,19 +221,19 @@ class TestImportUnificatoEndpoints:
         response = requests.options(f"{BASE_URL}/api/estratto-conto-movimenti/import")
         # OPTIONS should return 200 or 405 (method not allowed but endpoint exists)
         assert response.status_code in [200, 204, 405], f"Endpoint may not exist: {response.status_code}"
-        print(f"✅ Estratto conto import endpoint exists")
+        print("✅ Estratto conto import endpoint exists")
     
     def test_f24_upload_endpoint(self):
         """Test F24 upload endpoint exists"""
         response = requests.options(f"{BASE_URL}/api/f24/upload-pdf")
         assert response.status_code in [200, 204, 405, 422], f"Endpoint may not exist: {response.status_code}"
-        print(f"✅ F24 upload endpoint exists")
+        print("✅ F24 upload endpoint exists")
     
     def test_fatture_upload_xml_endpoint(self):
         """Test fatture XML upload endpoint exists"""
         response = requests.options(f"{BASE_URL}/api/fatture/upload-xml")
         assert response.status_code in [200, 204, 405, 422], f"Endpoint may not exist: {response.status_code}"
-        print(f"✅ Fatture XML upload endpoint exists")
+        print("✅ Fatture XML upload endpoint exists")
 
 
 class TestCedoliniAPI:

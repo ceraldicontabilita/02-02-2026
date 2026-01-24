@@ -3,7 +3,7 @@ Employee models.
 Employee management, payslips, and health booklets for HORECA businesses.
 """
 from pydantic import BaseModel, Field, ConfigDict, field_validator
-from typing import Optional, List
+from typing import Optional
 from datetime import datetime, date as date_type
 
 

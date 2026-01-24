@@ -11,7 +11,7 @@ FLUSSI IMPLEMENTATI:
 4. Movimento Eliminato → Aggiornamento Entità Collegate
 """
 
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, Optional
 from datetime import datetime, timezone
 import logging
 import uuid

@@ -10,8 +10,8 @@ from datetime import datetime
 import logging
 
 from app.config import settings
-from app.database import Database, get_database
-from app.exceptions import AuthenticationError, AuthorizationError
+from app.database import get_database
+from app.exceptions import AuthenticationError
 
 logger = logging.getLogger(__name__)
 

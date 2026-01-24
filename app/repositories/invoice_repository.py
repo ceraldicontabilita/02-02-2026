@@ -6,7 +6,7 @@ from datetime import datetime, date
 import logging
 
 from .base_repository import BaseRepository
-from app.exceptions import NotFoundError, DuplicateError
+from app.exceptions import NotFoundError
 
 logger = logging.getLogger(__name__)
 

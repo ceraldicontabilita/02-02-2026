@@ -5,11 +5,10 @@ Abbina movimenti bancari a scadenze fornitori.
 import uuid
 import logging
 from datetime import datetime, timezone, timedelta
-from typing import Dict, Any, List, Optional
+from typing import Dict, Optional
 
 from .constants import (
     SCADENZIARIO_COLLECTION,
-    BANK_TRANSACTIONS_COLLECTION,
     RICONCILIAZIONI_COLLECTION
 )
 

@@ -4,7 +4,7 @@ Permette download/upload Excel delle regole e gestione via UI.
 """
 from fastapi import APIRouter, HTTPException, UploadFile, File
 from fastapi.responses import StreamingResponse
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 from datetime import datetime
 import io
 import uuid
@@ -102,7 +102,7 @@ async def download_regole_excel():
     - Foglio 4: Piano dei Conti (codice → nome)
     """
     from openpyxl import Workbook
-    from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
+    from openpyxl.styles import Font, PatternFill, Border, Side
     from openpyxl.utils import get_column_letter
     
     db = Database.get_db()
@@ -407,7 +407,7 @@ async def upload_regole_excel(file: UploadFile = File(...)):
         
         return {
             "success": True,
-            "message": f"Regole caricate con successo",
+            "message": "Regole caricate con successo",
             **stats
         }
         

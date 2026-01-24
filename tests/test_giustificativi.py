@@ -17,10 +17,9 @@ Data: 22 Gennaio 2026
 import pytest
 import requests
 import os
-from datetime import datetime
 
 # Base URL from environment
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://docuflow-64.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://cloudledger-2.preview.emergentagent.com').rstrip('/')
 
 
 class TestGiustificativiInit:

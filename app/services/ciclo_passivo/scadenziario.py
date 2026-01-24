@@ -5,7 +5,7 @@ Gestisce scadenze pagamento fornitori.
 import uuid
 import logging
 from datetime import datetime, timezone, timedelta
-from typing import Dict, Any, Optional
+from typing import Dict, Optional
 
 from .constants import (
     SCADENZIARIO_COLLECTION,

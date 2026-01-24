@@ -2,8 +2,6 @@
 Test Core API endpoints.
 Tests for health, F24, and other core functionality.
 """
-import pytest
-import httpx
 
 
 class TestHealthEndpoints:

@@ -7,7 +7,7 @@ import os
 import json
 import asyncio
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from pathlib import Path
 from dotenv import load_dotenv
 

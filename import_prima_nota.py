@@ -19,7 +19,7 @@ import os
 from datetime import datetime
 from io import BytesIO
 
-API_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://docuflow-64.preview.emergentagent.com')
+API_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://cloudledger-2.preview.emergentagent.com')
 
 def download_excel(url):
     """Download Excel file from URL"""
@@ -54,7 +54,7 @@ def parse_corrispettivi(url):
                     "data": data_str,
                     "tipo": "entrata",  # DARE
                     "importo": round(float(ammontare_vendite), 2),
-                    "descrizione": f"Corrispettivo giornaliero",
+                    "descrizione": "Corrispettivo giornaliero",
                     "categoria": "Corrispettivi",
                     "source": "excel_corrispettivi"
                 })
@@ -91,7 +91,7 @@ def parse_pos(url):
                     "data": data_str,
                     "tipo": "uscita",  # AVERE - escono dalla cassa
                     "importo": round(float(importo), 2),
-                    "descrizione": f"POS giornaliero - accredito banca",
+                    "descrizione": "POS giornaliero - accredito banca",
                     "categoria": "POS",
                     "source": "excel_pos"
                 })
@@ -101,7 +101,7 @@ def parse_pos(url):
                     "data": data_str,
                     "tipo": "entrata",  # DARE - entrano in banca
                     "importo": round(float(importo), 2),
-                    "descrizione": f"Accredito POS giornaliero",
+                    "descrizione": "Accredito POS giornaliero",
                     "categoria": "POS",
                     "source": "excel_pos"
                 })
@@ -139,7 +139,7 @@ def parse_versamenti(url):
                     "data": data_str,
                     "tipo": "uscita",  # AVERE
                     "importo": round(float(importo), 2),
-                    "descrizione": f"Versamento in banca",
+                    "descrizione": "Versamento in banca",
                     "categoria": "Versamento",
                     "source": "excel_versamento"
                 })
@@ -149,7 +149,7 @@ def parse_versamenti(url):
                     "data": data_str,
                     "tipo": "entrata",  # DARE
                     "importo": round(float(importo), 2),
-                    "descrizione": f"Versamento da cassa",
+                    "descrizione": "Versamento da cassa",
                     "categoria": "Versamento",
                     "source": "excel_versamento"
                 })
@@ -246,7 +246,7 @@ def main():
     entrate_banca = sum(m['importo'] for m in all_banca if m['tipo'] == 'entrata')
     uscite_banca = sum(m['importo'] for m in all_banca if m['tipo'] == 'uscita')
     
-    print(f"\n=== RIEPILOGO ===")
+    print("\n=== RIEPILOGO ===")
     print(f"Totale movimenti CASSA: {len(all_cassa)}")
     print(f"  - Entrate (DARE): €{entrate_cassa:,.2f}")
     print(f"  - Uscite (AVERE): €{uscite_cassa:,.2f}")

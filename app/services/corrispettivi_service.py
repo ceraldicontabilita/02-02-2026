@@ -9,7 +9,7 @@ Servizio unificato per la gestione corrispettivi con:
 """
 
 from typing import Dict, Any, List, Optional
-from datetime import datetime, date, timezone
+from datetime import datetime, timezone
 import hashlib
 import logging
 import xml.etree.ElementTree as ET
@@ -17,7 +17,6 @@ import xml.etree.ElementTree as ET
 from app.database import Database
 from app.services.business_rules import (
     BusinessRules, 
-    ValidationResult, 
     CorrispettivoStatus,
     EntityStatus
 )

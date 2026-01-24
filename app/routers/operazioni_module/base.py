@@ -1,17 +1,15 @@
 """
 Operazioni Module - CRUD base e conferma operazioni.
 """
-from fastapi import HTTPException, Query
-from typing import Dict, Any, Optional, List
+from fastapi import HTTPException
+from typing import Dict, Any, Optional
 from datetime import datetime, timezone
-import os
 import uuid
-import logging
 
 from app.database import Database
 from .common import (
-    COL_FATTURE, COL_FORNITORI, COL_EMAIL_DOCS, 
-    COL_PRIMA_NOTA_BANCA, COL_PRIMA_NOTA_CASSA, logger
+    COL_EMAIL_DOCS, 
+    COL_PRIMA_NOTA_BANCA, COL_PRIMA_NOTA_CASSA
 )
 
 

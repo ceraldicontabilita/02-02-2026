@@ -15,10 +15,9 @@ Testa le funzionalità critiche:
 import pytest
 import requests
 import os
-import uuid
 from datetime import datetime
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://docuflow-64.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://cloudledger-2.preview.emergentagent.com').rstrip('/')
 
 
 class TestHealthAndBasics:
@@ -76,7 +75,7 @@ class TestRiconciliazioneSmartAnalisi:
             # I movimenti restituiti non dovrebbero essere già riconciliati
             assert mov.get("riconciliato") != True, f"Movimento {mov.get('movimento_id')} già riconciliato ma presente nei risultati"
         
-        print(f"✅ Filtro movimenti già riconciliati funziona correttamente")
+        print("✅ Filtro movimenti già riconciliati funziona correttamente")
 
 
 class TestRiconciliazioneManuale:
@@ -318,7 +317,7 @@ class TestPrimaNotaCassa:
         assert "totale_entrate" in data
         assert "totale_uscite" in data
         
-        print(f"✅ Prima Nota Cassa:")
+        print("✅ Prima Nota Cassa:")
         print(f"   - Saldo: €{data.get('saldo', 0):,.2f}")
         print(f"   - Entrate: €{data.get('totale_entrate', 0):,.2f}")
         print(f"   - Uscite: €{data.get('totale_uscite', 0):,.2f}")

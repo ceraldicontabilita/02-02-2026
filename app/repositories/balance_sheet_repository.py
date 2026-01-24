@@ -5,10 +5,8 @@ Repository per generazione bilanci e report contabili
 from typing import List, Dict, Any, Optional
 from datetime import datetime, date
 import logging
-from bson import ObjectId
 
 from .base_repository import BaseRepository
-from app.exceptions import NotFoundError, ValidationError
 
 logger = logging.getLogger(__name__)
 

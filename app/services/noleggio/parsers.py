@@ -7,12 +7,7 @@ from typing import Optional, Tuple, Dict, Any
 
 from .constants import (
     FORNITORI_NOLEGGIO,
-    MARCA_PATTERNS,
-    KEYWORDS_VERBALI,
-    KEYWORDS_BOLLO,
-    KEYWORDS_PEDAGGIO,
-    KEYWORDS_RIPARAZIONI,
-    KEYWORDS_COSTI_EXTRA
+    MARCA_PATTERNS
 )
 
 

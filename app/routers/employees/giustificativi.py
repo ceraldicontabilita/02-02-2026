@@ -13,9 +13,8 @@ Data: 22 Gennaio 2026
 """
 
 from fastapi import APIRouter, HTTPException, Query
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any
 from datetime import datetime, timezone
-from enum import Enum
 import uuid
 
 from app.database import Database

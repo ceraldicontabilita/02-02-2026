@@ -3,7 +3,6 @@ Excel Exporter.
 Export data to Excel with professional formatting.
 """
 from typing import List, Dict, Any
-from datetime import datetime
 from io import BytesIO
 import logging
 

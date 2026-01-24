@@ -2,9 +2,8 @@
 Balance Sheet Service
 Business logic per bilanci e report contabili
 """
-from typing import List, Dict, Any, Optional
+from typing import Dict, Any
 from datetime import datetime, date
-from calendar import monthrange
 import logging
 from io import BytesIO
 
@@ -14,7 +13,7 @@ from app.repositories.balance_sheet_repository import (
     AccountBalanceRepository
 )
 from app.repositories.chart_repository import ChartOfAccountsRepository
-from app.exceptions import NotFoundError, ValidationError
+from app.exceptions import ValidationError
 
 logger = logging.getLogger(__name__)
 

@@ -8,7 +8,6 @@ import logging
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
 
-from app.database import Database
 
 from .constants import Collections
 

@@ -10,9 +10,8 @@ Riferimenti normativi:
 - TUIR (DPR 917/1986) per IRES
 - D.Lgs. 446/1997 per IRAP
 """
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 from dataclasses import dataclass
-from datetime import datetime
 import logging
 
 logger = logging.getLogger(__name__)

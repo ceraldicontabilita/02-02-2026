@@ -3,7 +3,7 @@ Prima Nota Module - Manutenzione e Fix.
 Funzioni di fix, cleanup, recalculate per manutenzione dati.
 """
 from fastapi import HTTPException, Query
-from typing import Dict, Any, Optional
+from typing import Dict, Optional
 from datetime import datetime, timezone
 import uuid
 

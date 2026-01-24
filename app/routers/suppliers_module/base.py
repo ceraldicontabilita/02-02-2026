@@ -4,17 +4,16 @@ List, get, update, delete suppliers.
 """
 from fastapi import APIRouter, HTTPException, Query, Body
 from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 import uuid
 import httpx
 import re
-import logging
 
 from app.database import Database, Collections
 from app.middleware.performance import cache
 from .common import (
     PAYMENT_METHODS, PAYMENT_TERMS, SUPPLIERS_CACHE_KEY, SUPPLIERS_CACHE_TTL,
-    clean_mongo_doc, logger
+    logger
 )
 
 router = APIRouter()
@@ -309,7 +308,7 @@ async def update_supplier(supplier_id: str, data: Dict[str, Any] = Body(...)) ->
     metodo_configurato = False
     if "metodo_pagamento" in data:
         if data["metodo_pagamento"] not in PAYMENT_METHODS:
-            raise HTTPException(status_code=400, detail=f"Metodo pagamento non valido")
+            raise HTTPException(status_code=400, detail="Metodo pagamento non valido")
         metodo_configurato = data["metodo_pagamento"] is not None and data["metodo_pagamento"] != ""
     
     if "termini_pagamento" in data:

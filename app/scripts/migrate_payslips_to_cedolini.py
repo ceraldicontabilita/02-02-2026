@@ -34,7 +34,7 @@ async def migrate_payslips_to_cedolini():
     payslips_count = await db["payslips"].count_documents({})
     cedolini_count = await db["cedolini"].count_documents({})
     
-    print(f"\n📊 Stato attuale:")
+    print("\n📊 Stato attuale:")
     print(f"   - payslips: {payslips_count} record")
     print(f"   - cedolini: {cedolini_count} record")
     
@@ -49,7 +49,7 @@ async def migrate_payslips_to_cedolini():
     skipped = 0
     errors = 0
     
-    print(f"\n🔄 Migrazione in corso...")
+    print("\n🔄 Migrazione in corso...")
     
     for ps in payslips:
         try:
@@ -124,7 +124,7 @@ async def migrate_payslips_to_cedolini():
             logger.error(f"Errore migrazione record: {e}")
             errors += 1
     
-    print(f"\n✅ Migrazione completata:")
+    print("\n✅ Migrazione completata:")
     print(f"   - Migrati: {migrated}")
     print(f"   - Saltati (duplicati): {skipped}")
     print(f"   - Errori: {errors}")

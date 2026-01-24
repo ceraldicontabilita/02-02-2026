@@ -2,8 +2,6 @@
 Test Suppliers Module endpoints.
 Tests for the refactored suppliers_module.
 """
-import pytest
-import httpx
 
 
 class TestSuppliersModule:

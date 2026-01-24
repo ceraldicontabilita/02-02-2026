@@ -6,8 +6,7 @@ secondo le categorie del Conto Economico italiano (schema civilistico art. 2425 
 con le relative regole di deducibilità e detraibilità IVA.
 """
 
-from typing import Dict, Any, Optional, List
-from decimal import Decimal
+from typing import Dict, Any, List
 import re
 
 # ============================================================================

@@ -3,7 +3,7 @@ Cedolini Riconciliazione Router
 Gestisce la riconciliazione pagamenti cedolini con bonifici/assegni.
 """
 from fastapi import APIRouter, HTTPException, UploadFile, File, Body, Query
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, Optional
 from datetime import datetime
 import uuid
 import logging

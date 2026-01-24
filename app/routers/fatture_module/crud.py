@@ -9,7 +9,7 @@ import base64
 import calendar
 
 from app.database import Database
-from .common import COL_FORNITORI, COL_FATTURE_RICEVUTE, COL_DETTAGLIO_RIGHE, COL_ALLEGATI, logger
+from .common import COL_FORNITORI, COL_FATTURE_RICEVUTE, COL_DETTAGLIO_RIGHE, COL_ALLEGATI
 from .helpers import generate_invoice_html
 
 

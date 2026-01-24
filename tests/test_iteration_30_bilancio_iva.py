@@ -10,7 +10,7 @@ import pytest
 import requests
 import os
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://docuflow-64.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://cloudledger-2.preview.emergentagent.com')
 
 class TestHealthCheck:
     """Basic health check"""
@@ -72,7 +72,7 @@ class TestContoEconomico:
         utile_calcolato = ricavi["totale_ricavi"] - costi["totale_costi"]
         assert abs(risultato["utile_perdita"] - utile_calcolato) < 1, f"Utile mismatch: {risultato['utile_perdita']} vs {utile_calcolato}"
         
-        print(f"✅ Conto Economico 2025:")
+        print("✅ Conto Economico 2025:")
         print(f"   Corrispettivi: €{ricavi['corrispettivi']:,.2f}")
         print(f"   Altri Ricavi: €{ricavi['altri_ricavi']:,.2f}")
         print(f"   Totale Ricavi: €{ricavi['totale_ricavi']:,.2f}")
@@ -163,17 +163,17 @@ class TestStatoPatrimoniale:
         assert abs(attivo["totale_attivo"] - passivo["totale_passivo"]) < 1, \
             f"Bilancio non bilanciato: Attivo {attivo['totale_attivo']} != Passivo {passivo['totale_passivo']}"
         
-        print(f"✅ Stato Patrimoniale 2025:")
-        print(f"   ATTIVO:")
+        print("✅ Stato Patrimoniale 2025:")
+        print("   ATTIVO:")
         print(f"     Cassa: €{attivo['disponibilita_liquide']['cassa']:,.2f}")
         print(f"     Banca: €{attivo['disponibilita_liquide']['banca']:,.2f}")
         print(f"     Crediti vs Clienti: €{attivo['crediti']['crediti_vs_clienti']:,.2f}")
         print(f"     TOTALE ATTIVO: €{attivo['totale_attivo']:,.2f}")
-        print(f"   PASSIVO:")
+        print("   PASSIVO:")
         print(f"     Debiti vs Fornitori: €{passivo['debiti']['debiti_vs_fornitori']:,.2f}")
         print(f"     Patrimonio Netto: €{passivo['patrimonio_netto']:,.2f}")
         print(f"     TOTALE PASSIVO: €{passivo['totale_passivo']:,.2f}")
-        print(f"   ✅ Bilancio bilanciato!")
+        print("   ✅ Bilancio bilanciato!")
 
 
 class TestConfrontoAnnuale:
@@ -217,7 +217,7 @@ class TestConfrontoAnnuale:
         assert "crescita_ricavi_pct" in kpi
         assert "crescita_costi_pct" in kpi
         
-        print(f"✅ Confronto Annuale 2025 vs 2024:")
+        print("✅ Confronto Annuale 2025 vs 2024:")
         print(f"   Ricavi: €{ce['ricavi']['totale_ricavi']['attuale']:,.2f} vs €{ce['ricavi']['totale_ricavi']['precedente']:,.2f} ({ce['ricavi']['totale_ricavi']['variazione_pct']:+.1f}%)")
         print(f"   Costi: €{ce['costi']['totale_costi']['attuale']:,.2f} vs €{ce['costi']['totale_costi']['precedente']:,.2f} ({ce['costi']['totale_costi']['variazione_pct']:+.1f}%)")
         print(f"   Utile Netto: €{ce['risultato']['utile_netto']['attuale']:,.2f} vs €{ce['risultato']['utile_netto']['precedente']:,.2f}")
@@ -251,7 +251,7 @@ class TestLiquidazioneIVA:
             assert data["iva_da_versare"] == 0
             assert data["credito_da_riportare"] == round(abs(saldo), 2) or abs(data["credito_da_riportare"] - abs(saldo)) < 1
         
-        print(f"✅ Liquidazione IVA Gennaio 2025:")
+        print("✅ Liquidazione IVA Gennaio 2025:")
         print(f"   IVA Debito (da corrispettivi): €{data['iva_debito']:,.2f}")
         print(f"   IVA Credito (da fatture): €{data['iva_credito']:,.2f}")
         print(f"   IVA da Versare: €{data['iva_da_versare']:,.2f}")
@@ -279,7 +279,7 @@ class TestLiquidazioneIVA:
         assert "note_credito" in stats
         assert "corrispettivi_count" in stats
         
-        print(f"✅ Dettaglio per Aliquota:")
+        print("✅ Dettaglio per Aliquota:")
         print(f"   Sales (IVA Debito): {sales}")
         print(f"   Purchases (IVA Credito): {purchases}")
         print(f"   Statistiche: {stats['corrispettivi_count']} corrispettivi, {stats['fatture_incluse']} fatture, {stats['note_credito']} note credito")
@@ -291,7 +291,7 @@ class TestLiquidazioneIVA:
         data = response.json()
         
         assert data["credito_precedente"] == 1000.0
-        print(f"✅ Liquidazione IVA Febbraio 2025 con credito precedente €1000:")
+        print("✅ Liquidazione IVA Febbraio 2025 con credito precedente €1000:")
         print(f"   IVA Debito: €{data['iva_debito']:,.2f}")
         print(f"   IVA Credito: €{data['iva_credito']:,.2f}")
         print(f"   Credito Precedente: €{data['credito_precedente']:,.2f}")
@@ -323,7 +323,7 @@ class TestLiquidazioneIVA:
             assert "iva_debito" in m
             assert "iva_credito" in m
         
-        print(f"✅ Riepilogo Annuale IVA 2025:")
+        print("✅ Riepilogo Annuale IVA 2025:")
         print(f"   Totale IVA Debito: €{data['totali']['iva_debito_totale']:,.2f}")
         print(f"   Totale IVA Credito: €{data['totali']['iva_credito_totale']:,.2f}")
 
@@ -341,7 +341,7 @@ class TestRiepilogoBilancio:
         assert "stato_patrimoniale" in data
         assert "conto_economico" in data
         
-        print(f"✅ Riepilogo Bilancio 2025 includes both Stato Patrimoniale and Conto Economico")
+        print("✅ Riepilogo Bilancio 2025 includes both Stato Patrimoniale and Conto Economico")
 
 
 if __name__ == "__main__":

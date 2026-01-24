@@ -8,11 +8,10 @@ from pathlib import Path
 import uuid
 import zipfile
 import shutil
-import logging
 
 from app.database import Database
 from .common import (
-    UPLOAD_DIR, COL_JOBS, COL_TRANSFERS, safe_filename, build_dedup_key,
+    UPLOAD_DIR, safe_filename, build_dedup_key,
     parse_filename_data, logger
 )
 from .pdf_parser import read_pdf_text, extract_transfers_from_text

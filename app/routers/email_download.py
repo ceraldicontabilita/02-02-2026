@@ -3,8 +3,8 @@ Router per Download Completo Email e Gestione Documenti Non Associati
 """
 
 from fastapi import APIRouter, HTTPException, BackgroundTasks, Query
-from typing import Dict, Any, List, Optional
-from datetime import datetime, timezone, timedelta
+from typing import Dict, Any, Optional
+from datetime import datetime, timezone
 import logging
 
 from app.database import Database

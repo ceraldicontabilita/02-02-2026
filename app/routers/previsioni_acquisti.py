@@ -4,9 +4,8 @@ Memorizza quantità prodotti da fatture XML e calcola statistiche per previsioni
 """
 
 from fastapi import APIRouter, Query, HTTPException
-from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
-from collections import defaultdict
+from typing import Dict, Any, Optional
+from datetime import datetime
 import logging
 
 from app.database import Database

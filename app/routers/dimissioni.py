@@ -10,9 +10,8 @@ import imaplib
 import email
 from email.header import decode_header
 from datetime import datetime
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 from fastapi import APIRouter, HTTPException, Query
-from pydantic import BaseModel
 
 from app.database import Database
 

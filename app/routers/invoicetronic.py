@@ -11,7 +11,7 @@ API Key: Configurata in .env come INVOICETRONIC_API_KEY
 Documentazione: https://invoicetronic.com/docs/
 """
 from fastapi import APIRouter, HTTPException, Request, BackgroundTasks
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 from datetime import datetime, timezone
 import uuid
 import logging

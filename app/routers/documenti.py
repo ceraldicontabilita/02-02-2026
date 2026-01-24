@@ -4,12 +4,11 @@ API per scaricare, visualizzare e processare documenti dalle email.
 """
 
 from fastapi import APIRouter, Query, HTTPException, BackgroundTasks
-from fastapi.responses import FileResponse, Response
+from fastapi.responses import Response
 from typing import Dict, Any, Optional, List
 from datetime import datetime, timezone
 from pathlib import Path
 import os
-import shutil
 import base64
 import hashlib
 import uuid
@@ -18,8 +17,7 @@ from app.database import Database
 from app.services.email_document_downloader import (
     download_documents_from_email,
     DOCUMENTS_DIR,
-    CATEGORIES,
-    get_document_content
+    CATEGORIES
 )
 from app.services.email_monitor_service import (
     start_monitor, stop_monitor, get_monitor_status, run_full_sync
@@ -173,7 +171,6 @@ async def lista_documenti(
 
 
 # Store per tracciare task in background
-import uuid
 import asyncio
 
 # Stato dei task in memoria (in produzione usare Redis)
@@ -1958,7 +1955,6 @@ async def reimporta_documenti_da_filesystem(
     Scansiona la cartella /app/documents e reimporta tutti i documenti nel database.
     Utile quando il database è stato resettato ma i file sono ancora su disco.
     """
-    import hashlib
     import uuid
     
     db = Database.get_db()
@@ -2094,7 +2090,6 @@ async def reimporta_documenti_da_filesystem(
 # ============================================================
 
 from fastapi import UploadFile, File
-import tempfile
 
 def detect_document_type(filename: str, file_content: bytes) -> str:
     """
@@ -2178,8 +2173,6 @@ async def upload_documento_automatico(
     
     Se non riconosciuto, salva in documents_inbox per processamento manuale.
     """
-    from httpx import AsyncClient
-    import os
     
     filename = file.filename
     content = await file.read()
@@ -2222,7 +2215,7 @@ async def upload_documento_automatico(
         return {
             "success": True,
             "tipo_rilevato": "non_riconosciuto",
-            "message": f"Documento salvato in inbox per classificazione manuale",
+            "message": "Documento salvato in inbox per classificazione manuale",
             "doc_id": doc_id,
             "filename": filename,
             "azione_richiesta": "Classifica manualmente il documento da Strumenti > Documenti Email"
@@ -2292,7 +2285,7 @@ async def upload_documento_automatico(
                     "created_at": datetime.now(timezone.utc).isoformat()
                 }
                 await db["quietanze_f24"].insert_one(dict(quietanza_doc).copy())
-                result["message"] = f"Quietanza F24 importata"
+                result["message"] = "Quietanza F24 importata"
                 result["imported"] = 1
             else:
                 result["success"] = False

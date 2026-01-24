@@ -9,7 +9,7 @@ Usa LLM per:
 import os
 import logging
 import json
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 from dotenv import load_dotenv
 
 load_dotenv('/app/backend/.env')

@@ -12,7 +12,6 @@ import io
 import logging
 import re
 from typing import Any, Dict, List, Optional, Tuple
-from datetime import datetime
 
 logger = logging.getLogger(__name__)
 

@@ -2,8 +2,6 @@
 Test Prima Nota Module endpoints.
 Tests for the refactored prima_nota_module.
 """
-import pytest
-import httpx
 
 
 class TestPrimaNotaModule:

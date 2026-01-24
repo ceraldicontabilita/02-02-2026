@@ -3,13 +3,11 @@ Supplier service.
 Handles supplier management and business logic.
 """
 from typing import Dict, Any, List, Optional
-from datetime import datetime
 import logging
 
 from app.repositories import SupplierRepository, InvoiceRepository
 from app.exceptions import (
     NotFoundError,
-    DuplicateError,
     ValidationError
 )
 from app.models import SupplierCreate, SupplierUpdate

@@ -40,7 +40,7 @@ async def main():
         with open("/tmp/parlant_agent_id.txt", "w") as f:
             f.write(agent.id)
         
-        print(f"🌐 Server attivo su http://localhost:8800")
+        print("🌐 Server attivo su http://localhost:8800")
 
 if __name__ == "__main__":
     try:

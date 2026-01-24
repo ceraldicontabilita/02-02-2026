@@ -16,8 +16,8 @@ Data: 22 Gennaio 2026
 
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import StreamingResponse
-from typing import Dict, Any, List, Optional
-from datetime import datetime, timezone, timedelta, date
+from typing import Dict, Any
+from datetime import datetime, timezone, timedelta
 from enum import Enum
 import uuid
 import io

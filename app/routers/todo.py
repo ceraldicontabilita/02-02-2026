@@ -11,7 +11,7 @@ Funzionalità:
 """
 
 from fastapi import APIRouter, HTTPException, Query
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, Optional
 from datetime import datetime, timezone, timedelta
 from pydantic import BaseModel
 import uuid

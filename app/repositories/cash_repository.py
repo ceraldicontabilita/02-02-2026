@@ -3,11 +3,10 @@ Cash repository.
 Data access layer for cash register operations.
 """
 from typing import List, Dict, Any, Optional
-from datetime import date, datetime
+from datetime import date
 import logging
 
 from .base_repository import BaseRepository
-from app.exceptions import NotFoundError
 
 logger = logging.getLogger(__name__)
 

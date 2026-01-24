@@ -1,11 +1,10 @@
 """
 Fatture Module - Operazioni di pagamento e riconciliazione.
 """
-from fastapi import HTTPException, Query
-from typing import Dict, Any, Optional
+from fastapi import HTTPException
+from typing import Dict, Any
 from datetime import datetime, timezone
 import uuid
-import logging
 
 from app.database import Database
 from app.routers.ciclo_passivo_integrato import COL_SCADENZIARIO
@@ -38,7 +37,7 @@ async def paga_fattura_manuale(payload: Dict[str, Any]) -> Dict[str, Any]:
             "id": movimento_id,
             "data": data_pagamento,
             "descrizione": f"Pagamento Fatt. {numero_fattura} - {fornitore}",
-            "causale": f"Pagamento fattura fornitore",
+            "causale": "Pagamento fattura fornitore",
             "importo": importo,
             "tipo": "uscita",
             "categoria": "fornitori",

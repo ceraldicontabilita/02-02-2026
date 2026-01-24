@@ -8,7 +8,7 @@ Script di pulizia dati:
 import asyncio
 import logging
 from datetime import datetime, timezone
-from typing import Dict, Any, List
+from typing import Dict, Any
 from app.database import Database
 
 logger = logging.getLogger(__name__)
@@ -86,7 +86,7 @@ async def elimina_record_vuoti() -> Dict[str, Any]:
     
     ⚠️ USA PROTEZIONI DATABASE: backup automatico prima di eliminare.
     """
-    from app.services.protezioni_database import safe_delete_many, backup_prima_di_delete
+    from app.services.protezioni_database import backup_prima_di_delete
     
     db = Database.get_db()
     

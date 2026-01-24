@@ -2,10 +2,9 @@
 Scheduler per task automatici HACCP.
 Auto-popolamento schede HACCP alle 00:01 ogni giorno.
 """
-import asyncio
 import logging
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 import random

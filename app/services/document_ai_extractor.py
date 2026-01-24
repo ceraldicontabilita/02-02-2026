@@ -18,7 +18,7 @@ from PIL import Image
 import io
 import base64
 from datetime import datetime, timezone
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any
 import logging
 from dotenv import load_dotenv
 

@@ -3,11 +3,11 @@ Employee repository.
 Data access layer for employee operations.
 """
 from typing import List, Dict, Any, Optional
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 import logging
 
 from .base_repository import BaseRepository
-from app.exceptions import NotFoundError, DuplicateError
+from app.exceptions import DuplicateError
 
 logger = logging.getLogger(__name__)
 

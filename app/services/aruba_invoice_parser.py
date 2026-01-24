@@ -7,10 +7,9 @@ Include riconciliazione automatica con estratto conto bancario
 import imaplib
 import email
 import re
-import os
 import hashlib
 from datetime import datetime, timezone, timedelta
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Dict, Any, Optional, Tuple
 from bs4 import BeautifulSoup
 import logging
 

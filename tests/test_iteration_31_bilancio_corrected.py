@@ -15,7 +15,7 @@ import pytest
 import requests
 import os
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://docuflow-64.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://cloudledger-2.preview.emergentagent.com')
 
 
 class TestHealthCheck:
@@ -58,7 +58,7 @@ class TestContoEconomico:
         assert "totale_costi" in costi, "Missing totale_costi in costi"
         assert "altri_costi" not in costi, "altri_costi should NOT exist"
         
-        print(f"✅ Conto Economico structure correct: NO altri_ricavi, NO altri_costi")
+        print("✅ Conto Economico structure correct: NO altri_ricavi, NO altri_costi")
     
     def test_conto_economico_values_2025(self):
         """Test Conto Economico returns expected values for 2025"""
@@ -93,7 +93,7 @@ class TestContoEconomico:
         costi_netti_calc = costi["acquisti"] - costi["note_credito"]
         assert abs(costi["totale_costi"] - costi_netti_calc) < 1, f"Costi netti calculation error: {costi['totale_costi']} vs {costi_netti_calc}"
         
-        print(f"✅ Conto Economico 2025 values correct:")
+        print("✅ Conto Economico 2025 values correct:")
         print(f"   Corrispettivi: €{ricavi['corrispettivi']:,.2f}")
         print(f"   Totale Ricavi: €{ricavi['totale_ricavi']:,.2f}")
         print(f"   Acquisti: €{costi['acquisti']:,.2f}")
@@ -136,7 +136,7 @@ class TestStatoPatrimoniale:
         assert abs(attivo["totale_attivo"] - passivo["totale_passivo"]) < 1, \
             f"Bilancio non bilanciato: Attivo {attivo['totale_attivo']} != Passivo {passivo['totale_passivo']}"
         
-        print(f"✅ Stato Patrimoniale 2025 BILANCIATO:")
+        print("✅ Stato Patrimoniale 2025 BILANCIATO:")
         print(f"   Totale Attivo: €{attivo['totale_attivo']:,.2f}")
         print(f"   Totale Passivo: €{passivo['totale_passivo']:,.2f}")
 
@@ -159,7 +159,7 @@ class TestRiepilogoBilancio:
         assert "corrispettivi" in ce["ricavi"]
         assert "totale" in ce["ricavi"]
         
-        print(f"✅ Riepilogo Bilancio 2025 includes both Stato Patrimoniale and Conto Economico")
+        print("✅ Riepilogo Bilancio 2025 includes both Stato Patrimoniale and Conto Economico")
 
 
 class TestConfrontoAnnuale:
@@ -187,7 +187,7 @@ class TestConfrontoAnnuale:
         assert "totale_costi" in ce["costi"]
         assert "costi_operativi" not in ce["costi"], "costi_operativi should NOT exist"
         
-        print(f"✅ Confronto Annuale structure correct: NO altri_ricavi, NO costi_operativi")
+        print("✅ Confronto Annuale structure correct: NO altri_ricavi, NO costi_operativi")
         print(f"   Ricavi 2025: €{ce['ricavi']['totale_ricavi']['attuale']:,.2f}")
         print(f"   Ricavi 2024: €{ce['ricavi']['totale_ricavi']['precedente']:,.2f}")
         print(f"   Variazione: {ce['ricavi']['totale_ricavi']['variazione_pct']:+.1f}%")
@@ -209,7 +209,7 @@ class TestLiquidazioneIVA:
         assert "sales_detail" in data  # IVA debito per aliquota (da corrispettivi)
         assert "purchase_detail" in data  # IVA credito per aliquota (da fatture)
         
-        print(f"✅ Liquidazione IVA Gennaio 2025:")
+        print("✅ Liquidazione IVA Gennaio 2025:")
         print(f"   IVA Debito (da corrispettivi): €{data['iva_debito']:,.2f}")
         print(f"   IVA Credito (da fatture): €{data['iva_credito']:,.2f}")
         print(f"   Stato: {data['stato']}")
@@ -230,7 +230,7 @@ class TestLiquidazioneIVA:
         assert "mensile" in data
         assert len(data["mensile"]) == 12
         
-        print(f"✅ Riepilogo Annuale IVA 2025: 12 mesi")
+        print("✅ Riepilogo Annuale IVA 2025: 12 mesi")
 
 
 class TestPDFExport:

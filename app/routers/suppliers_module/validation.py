@@ -2,10 +2,9 @@
 Suppliers validation endpoints.
 Validazione P0, dizionario metodi pagamento.
 """
-from fastapi import APIRouter, HTTPException, Body
+from fastapi import APIRouter, HTTPException
 from typing import Dict, Any, List
 from datetime import datetime, timezone
-import logging
 
 from app.database import Database, Collections
 from .common import PAYMENT_METHODS, PAYMENT_TERMS, METODI_BANCARI, logger

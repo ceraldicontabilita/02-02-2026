@@ -12,7 +12,7 @@ import requests
 import time
 import os
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://docuflow-64.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://cloudledger-2.preview.emergentagent.com')
 
 class TestCorrispettiviAPI:
     """Test corrispettivi API with year filter"""
@@ -74,7 +74,7 @@ class TestRiconciliazioneAPI:
         if 'movimenti' in data:
             assert len(data['movimenti']) <= 10
         
-        print(f"✅ Limit parameter working correctly")
+        print("✅ Limit parameter working correctly")
 
 
 class TestFornitoriAPI:
@@ -103,7 +103,7 @@ class TestFornitoriAPI:
             assert 'partita_iva' in first_supplier or 'id' in first_supplier
             assert 'ragione_sociale' in first_supplier or 'denominazione' in first_supplier
         
-        print(f"✅ Fornitori data structure valid")
+        print("✅ Fornitori data structure valid")
 
 
 class TestWebSocketAPI:
@@ -128,7 +128,7 @@ class TestWebSocketAPI:
         data = response.json()
         assert 'connections' in data
         
-        print(f"✅ WebSocket connections info present")
+        print("✅ WebSocket connections info present")
 
 
 class TestDipendentiAPI:
@@ -157,7 +157,7 @@ class TestDipendentiAPI:
             has_name = 'nome_completo' in first_employee or 'nome' in first_employee or 'cognome' in first_employee
             assert has_name, "Employee should have name field"
         
-        print(f"✅ Dipendenti data structure valid")
+        print("✅ Dipendenti data structure valid")
 
 
 class TestHealthAPI:
@@ -172,14 +172,14 @@ class TestHealthAPI:
         assert data.get('status') == 'healthy'
         assert data.get('database') == 'connected'
         
-        print(f"✅ Health check passed")
+        print("✅ Health check passed")
     
     def test_root_api(self):
         """GET /api should return API info"""
         response = requests.get(f"{BASE_URL}/api")
         assert response.status_code == 200
         
-        print(f"✅ Root API accessible")
+        print("✅ Root API accessible")
 
 
 class TestPrimaNotaAPI:
@@ -190,14 +190,14 @@ class TestPrimaNotaAPI:
         response = requests.get(f"{BASE_URL}/api/prima-nota/cassa")
         assert response.status_code == 200
         
-        print(f"✅ Prima Nota Cassa API working")
+        print("✅ Prima Nota Cassa API working")
     
     def test_prima_nota_banca(self):
         """GET /api/prima-nota/banca should work"""
         response = requests.get(f"{BASE_URL}/api/prima-nota/banca")
         assert response.status_code == 200
         
-        print(f"✅ Prima Nota Banca API working")
+        print("✅ Prima Nota Banca API working")
 
 
 if __name__ == "__main__":

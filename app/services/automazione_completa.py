@@ -25,12 +25,9 @@ IMPORTANTE:
 - I duplicati vengono SEMPRE saltati
 """
 
-import asyncio
 import logging
-import hashlib
-import re
-from datetime import datetime, timezone, timedelta
-from typing import Dict, Any, Optional, List
+from datetime import datetime, timezone
+from typing import Dict, Any, List
 import os
 
 logger = logging.getLogger(__name__)
@@ -357,7 +354,7 @@ async def sync_completo_automatico(db) -> Dict[str, Any]:
         if mag_result.get("buste_paga", 0) > 0 or mag_result.get("estratti_nexi", 0) > 0:
             results["ricette_aggiornate"] = await aggiorna_prezzi_ricette(db)
         
-        logger.info(f"✅ Sync completo automatico completato")
+        logger.info("✅ Sync completo automatico completato")
         
     except Exception as e:
         logger.error(f"Errore sync completo: {e}")

@@ -20,7 +20,6 @@ from email.header import decode_header
 import os
 import re
 import base64
-import asyncio
 from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, List, Optional, Tuple
 import logging

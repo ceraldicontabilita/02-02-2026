@@ -3,7 +3,7 @@ WebSocket Router per Dashboard Real-time.
 Fornisce endpoint WebSocket per aggiornamenti live.
 """
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query
-from app.services.websocket_manager import ws_manager, notify_kpi_update
+from app.services.websocket_manager import ws_manager
 from app.database import Database, Collections
 from app.utils.logger import get_logger
 import asyncio

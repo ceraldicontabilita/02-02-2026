@@ -5,7 +5,7 @@ Include proxy per permettere al frontend di comunicare con Parlant.
 """
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 import os
 import logging
 import httpx
@@ -57,7 +57,7 @@ async def get_status() -> Dict[str, Any]:
                     "agents": len(agents),
                     "server_url": "http://localhost:8800"
                 }
-    except Exception as e:
+    except Exception:
         pass
     
     return {

@@ -11,7 +11,7 @@ import pdfplumber
 import re
 import os
 from datetime import datetime
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Any
 
 # Mapping mesi italiano -> numero
 MESI_MAP = {
@@ -581,7 +581,6 @@ def scan_all_dipendenti(base_path: str = "/app/documents/buste_paga") -> Dict[st
 
 if __name__ == "__main__":
     # Test
-    import json
     
     test_files = [
         "/app/documents/buste_paga/Vincenzo_Vespa/Busta paga - Vespa Vincenzo - Dicembre 2017.pdf",

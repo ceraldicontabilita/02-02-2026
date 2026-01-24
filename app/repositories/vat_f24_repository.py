@@ -8,7 +8,7 @@ import logging
 from bson import ObjectId
 
 from .base_repository import BaseRepository
-from app.exceptions import NotFoundError, ValidationError
+from app.exceptions import NotFoundError
 
 logger = logging.getLogger(__name__)
 

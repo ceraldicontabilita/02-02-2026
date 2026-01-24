@@ -9,7 +9,7 @@ Questo modulo implementa la logica di liquidazione IVA secondo le norme italiane
 """
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import StreamingResponse
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from datetime import date
 import logging
 import io

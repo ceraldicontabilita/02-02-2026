@@ -2,7 +2,7 @@
 Bank repository.
 Data access layer for bank statements and checks.
 """
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 from datetime import date
 import logging
 

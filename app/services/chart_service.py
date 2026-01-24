@@ -6,7 +6,7 @@ from datetime import datetime
 import logging
 
 from app.repositories.chart_repository import ChartOfAccountsRepository
-from app.exceptions import NotFoundError, DuplicateError
+from app.exceptions import DuplicateError
 from app.models.accounting_extended import (
     ChartOfAccountCreate,
     ChartOfAccountUpdate

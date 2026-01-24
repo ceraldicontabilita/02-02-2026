@@ -16,7 +16,6 @@ from app.exceptions import (
     ValidationError,
     BusinessLogicError
 )
-from app.models import WarehouseProduct, WarehouseMovement
 
 logger = logging.getLogger(__name__)
 

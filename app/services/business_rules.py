@@ -27,8 +27,8 @@ REGOLE DI SICUREZZA:
 """
 
 from enum import Enum
-from typing import Dict, Any, Optional, List, Tuple
-from datetime import datetime, date
+from typing import Dict, Any, List
+from datetime import date
 from dataclasses import dataclass
 import logging
 

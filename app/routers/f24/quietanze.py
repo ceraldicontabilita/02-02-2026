@@ -2,15 +2,13 @@
 Router per Gestione Quietanze F24
 Upload, parsing e gestione delle quietanze F24 Agenzia delle Entrate
 """
-from fastapi import APIRouter, HTTPException, UploadFile, File, Query, Body
-from fastapi.responses import Response
-from typing import Dict, Any, List, Optional
+from fastapi import APIRouter, HTTPException, UploadFile, File, Query
+from typing import Dict, Any, Optional
 from datetime import datetime, timezone
 from app.database import Database
 from app.services.f24_parser import parse_quietanza_f24, generate_f24_summary
 import os
 import uuid
-import base64
 import logging
 
 router = APIRouter()

@@ -12,8 +12,7 @@ Usa pdfplumber per un'estrazione più accurata delle tabelle.
 import pdfplumber
 import re
 import logging
-from typing import Dict, Any, List, Optional, Tuple
-from datetime import datetime
+from typing import Dict, Any, List, Optional
 from io import BytesIO
 
 logger = logging.getLogger(__name__)

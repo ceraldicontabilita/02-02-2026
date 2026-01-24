@@ -4,7 +4,7 @@ Permette di creare inventari con importo target e lista prodotti.
 """
 
 from fastapi import APIRouter, Body, HTTPException
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, Optional
 from datetime import datetime, timezone
 import uuid
 

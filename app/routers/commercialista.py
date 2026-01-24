@@ -1045,7 +1045,7 @@ async def schedula_export_mensile(data: Dict[str, Any] = Body(...)) -> Dict[str,
         try:
             import io
             from openpyxl import Workbook
-            from openpyxl.styles import Font, Border, Side, Alignment, PatternFill
+            from openpyxl.styles import Font
             from datetime import timezone
             
             # Genera il report Excel

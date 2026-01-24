@@ -15,12 +15,11 @@ import pytest
 import requests
 import os
 import uuid
-from datetime import datetime
 
 # Get BASE_URL from environment
 BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
 if not BASE_URL:
-    BASE_URL = "https://docuflow-64.preview.emergentagent.com"
+    BASE_URL = "https://cloudledger-2.preview.emergentagent.com"
 
 
 class TestObjectIdSerialization:
@@ -51,7 +50,7 @@ class TestObjectIdSerialization:
         
         # Verify no _id field in operazioni
         for op in data.get("operazioni", []):
-            assert "_id" not in op, f"ObjectId '_id' found in operazione"
+            assert "_id" not in op, "ObjectId '_id' found in operazione"
         
         print(f"✅ /api/operazioni-da-confermare/lista: {len(data.get('operazioni', []))} operazioni without ObjectId")
     
@@ -64,7 +63,7 @@ class TestObjectIdSerialization:
         dipendenti = data.get("dipendenti", data) if isinstance(data, dict) else data
         
         for d in dipendenti:
-            assert "_id" not in d, f"ObjectId '_id' found in dipendente"
+            assert "_id" not in d, "ObjectId '_id' found in dipendente"
         
         print(f"✅ /api/dipendenti: {len(dipendenti)} dipendenti without ObjectId")
     
@@ -77,7 +76,7 @@ class TestObjectIdSerialization:
         suppliers = data if isinstance(data, list) else data.get("items", data.get("suppliers", []))
         
         for s in suppliers:
-            assert "_id" not in s, f"ObjectId '_id' found in supplier"
+            assert "_id" not in s, "ObjectId '_id' found in supplier"
         
         print(f"✅ /api/suppliers: {len(suppliers)} suppliers without ObjectId")
     
@@ -90,7 +89,7 @@ class TestObjectIdSerialization:
         invoices = data if isinstance(data, list) else data.get("items", data.get("invoices", []))
         
         for inv in invoices:
-            assert "_id" not in inv, f"ObjectId '_id' found in invoice"
+            assert "_id" not in inv, "ObjectId '_id' found in invoice"
         
         print(f"✅ /api/invoices: {len(invoices)} invoices without ObjectId")
 
@@ -214,7 +213,7 @@ class TestDuplicatePrevention:
             error_msg = data2.get("detail", "") or data2.get("message", "")
             assert "già confermata" in error_msg.lower() or "already" in error_msg.lower() or "già" in error_msg.lower(), \
                 f"Expected 'already confirmed' message: {data2}"
-            print(f"✅ Duplicate prevention working: Operation already confirmed")
+            print("✅ Duplicate prevention working: Operation already confirmed")
         else:
             print(f"Response: {response2.status_code} - {response2.text}")
 
@@ -230,7 +229,7 @@ class TestCicloPassivoIntegration:
         data = response.json()
         items = data.get("items", [])
         for item in items:
-            assert "_id" not in item, f"ObjectId '_id' found in lotto"
+            assert "_id" not in item, "ObjectId '_id' found in lotto"
         
         print(f"✅ /api/ciclo-passivo/lotti: {len(items)} lotti without ObjectId")
     
@@ -242,7 +241,7 @@ class TestCicloPassivoIntegration:
         data = response.json()
         assert "statistiche" in data, "Response should contain 'statistiche' key"
         
-        print(f"✅ /api/ciclo-passivo/dashboard-riconciliazione: Loaded successfully")
+        print("✅ /api/ciclo-passivo/dashboard-riconciliazione: Loaded successfully")
 
 
 class TestNoleggioDriversEndpoint:
@@ -258,7 +257,7 @@ class TestNoleggioDriversEndpoint:
         
         drivers = data.get("drivers", [])
         for d in drivers:
-            assert "_id" not in d, f"ObjectId '_id' found in driver"
+            assert "_id" not in d, "ObjectId '_id' found in driver"
             assert "id" in d, "Driver should have 'id' field"
             assert "nome_completo" in d, "Driver should have 'nome_completo' field"
         
@@ -272,7 +271,7 @@ class TestHealthAndBasicEndpoints:
         """Test /api/health endpoint"""
         response = requests.get(f"{BASE_URL}/api/health")
         assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
-        print(f"✅ /api/health: OK")
+        print("✅ /api/health: OK")
     
     def test_noleggio_fornitori(self):
         """Test /api/noleggio/fornitori endpoint"""
@@ -295,7 +294,7 @@ class TestPrimaNotaEndpoints:
         data = response.json()
         items = data if isinstance(data, list) else data.get("items", data.get("movimenti", []))
         for item in items:
-            assert "_id" not in item, f"ObjectId '_id' found in movimento"
+            assert "_id" not in item, "ObjectId '_id' found in movimento"
         
         print(f"✅ /api/prima-nota/banca: {len(items)} movimenti without ObjectId")
     
@@ -307,7 +306,7 @@ class TestPrimaNotaEndpoints:
         data = response.json()
         items = data if isinstance(data, list) else data.get("items", data.get("movimenti", []))
         for item in items:
-            assert "_id" not in item, f"ObjectId '_id' found in movimento"
+            assert "_id" not in item, "ObjectId '_id' found in movimento"
         
         print(f"✅ /api/prima-nota/cassa: {len(items)} movimenti without ObjectId")
 
@@ -323,7 +322,7 @@ class TestWarehouseEndpoints:
         data = response.json()
         items = data if isinstance(data, list) else data.get("items", data.get("products", []))
         for item in items:
-            assert "_id" not in item, f"ObjectId '_id' found in product"
+            assert "_id" not in item, "ObjectId '_id' found in product"
         
         print(f"✅ /api/warehouse/products: {len(items)} products without ObjectId")
 

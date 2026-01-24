@@ -1,7 +1,7 @@
 """
 Router HACCP - Gestione sicurezza alimentare
 """
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from typing import Dict, Any, List
 from app.database import Database
 
@@ -58,7 +58,6 @@ async def get_lotti_haccp() -> List[Dict[str, Any]]:
 
 # Router aggiuntivo per /api/haccp-completo (compatibilità frontend)
 from fastapi import Query
-from typing import Optional
 
 haccp_completo_router = APIRouter(prefix="/api/haccp-completo", tags=["HACCP Completo"])
 

@@ -4,8 +4,6 @@ Fatture Module - Helper functions per import e gestione fatture.
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
 import uuid
-import logging
-import re
 
 from .common import COL_FORNITORI, COL_FATTURE_RICEVUTE, COL_DETTAGLIO_RIGHE, COL_ALLEGATI, logger
 

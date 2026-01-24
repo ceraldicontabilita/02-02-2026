@@ -8,8 +8,8 @@ REGOLE FONDAMENTALI:
 4. Match ESATTO per importo (±0.05€) o match parziale (pagamento rate)
 5. Fuzzy matching per nome fornitore
 """
-from fastapi import APIRouter, HTTPException, Path
-from typing import Dict, Any, List, Optional
+from fastapi import APIRouter, HTTPException
+from typing import Dict, Any, Optional
 from datetime import datetime, timedelta
 import uuid
 import logging

@@ -5,7 +5,7 @@ Gestione timbrature dipendenti (entrata/uscita/pause).
 """
 
 from fastapi import APIRouter, HTTPException, Query
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any
 from datetime import datetime, timezone
 import uuid
 import logging

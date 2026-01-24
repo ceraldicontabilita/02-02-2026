@@ -23,8 +23,6 @@ Endpoints tested:
 import pytest
 import requests
 import os
-import uuid
-from datetime import datetime
 
 # Get BASE_URL from environment
 BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
@@ -112,7 +110,7 @@ class TestF24PublicEndpoints:
         response = requests.get(f"{BASE_URL}/api/f24-public/scadenze-prossime")
         assert response.status_code == 200, f"Expected 200, got {response.status_code}"
         
-        print(f"✅ F24 Scadenze Prossime: OK")
+        print("✅ F24 Scadenze Prossime: OK")
 
 
 class TestQuietanzeF24Endpoints:
@@ -213,7 +211,7 @@ class TestInvoicesEndpoint:
         """GET /api/invoices?anno=2024 - should filter by year"""
         response = requests.get(f"{BASE_URL}/api/invoices?anno=2024")
         assert response.status_code == 200, f"Expected 200, got {response.status_code}"
-        print(f"✅ Invoices filter by anno: OK")
+        print("✅ Invoices filter by anno: OK")
 
 
 class TestSuppliersEndpoint:
@@ -292,14 +290,14 @@ class TestPrimaNotaEndpoint:
         response = requests.get(f"{BASE_URL}/api/prima-nota/banca")
         assert response.status_code == 200, f"Expected 200, got {response.status_code}"
         
-        print(f"✅ Prima Nota Banca: OK")
+        print("✅ Prima Nota Banca: OK")
     
     def test_prima_nota_stats_returns_200(self):
         """GET /api/prima-nota/stats - deve restituire statistiche"""
         response = requests.get(f"{BASE_URL}/api/prima-nota/stats")
         assert response.status_code == 200, f"Expected 200, got {response.status_code}"
         
-        print(f"✅ Prima Nota Stats: OK")
+        print("✅ Prima Nota Stats: OK")
 
 
 class TestCedoliniEndpoint:
@@ -311,7 +309,7 @@ class TestCedoliniEndpoint:
         assert response.status_code == 200, f"Expected 200, got {response.status_code}"
         
         data = response.json()
-        print(f"✅ Cedolini Lista: Response received")
+        print("✅ Cedolini Lista: Response received")
     
     def test_cedolini_riepilogo_mensile_returns_200(self):
         """GET /api/cedolini/riepilogo-mensile/{anno}/{mese} - deve restituire riepilogo"""
@@ -362,7 +360,7 @@ class TestNoMongoDBObjectIdInResponses:
         
         items = data if isinstance(data, list) else data.get("items", [])
         for item in items[:5]:
-            assert "_id" not in item, f"Invoice contains _id"
+            assert "_id" not in item, "Invoice contains _id"
         
         print("✅ Invoices: No _id in responses")
     
@@ -373,7 +371,7 @@ class TestNoMongoDBObjectIdInResponses:
         
         items = data if isinstance(data, list) else data.get("items", [])
         for item in items[:5]:
-            assert "_id" not in item, f"Supplier contains _id"
+            assert "_id" not in item, "Supplier contains _id"
         
         print("✅ Suppliers: No _id in responses")
 

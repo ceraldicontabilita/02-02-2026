@@ -18,7 +18,7 @@ import pytest
 import requests
 import os
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://docuflow-64.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://cloudledger-2.preview.emergentagent.com')
 
 
 class TestHealthAndDashboard:
@@ -48,7 +48,7 @@ class TestHealthAndDashboard:
         assert response.status_code == 200
         data = response.json()
         assert "trend_mensile" in data or "totali" in data
-        print(f"✅ Trend mensile loaded")
+        print("✅ Trend mensile loaded")
     
     def test_dashboard_bilancio_istantaneo(self):
         """Test instant balance endpoint"""
@@ -56,7 +56,7 @@ class TestHealthAndDashboard:
         assert response.status_code == 200
         data = response.json()
         assert "ricavi" in data or "costi" in data or "bilancio" in data
-        print(f"✅ Bilancio istantaneo loaded")
+        print("✅ Bilancio istantaneo loaded")
 
 
 class TestAttendanceModule:
@@ -100,7 +100,7 @@ class TestAttendanceModule:
         data = response.json()
         assert data["success"] == True
         assert "note" in data
-        print(f"✅ Note presenze loaded")
+        print("✅ Note presenze loaded")
 
 
 class TestDipendentiModule:
@@ -112,7 +112,7 @@ class TestDipendentiModule:
         assert response.status_code == 200
         data = response.json()
         assert isinstance(data, list) or "employees" in data
-        print(f"✅ Employees loaded")
+        print("✅ Employees loaded")
     
     def test_giustificativi_endpoint(self):
         """Test giustificativi endpoint"""
@@ -125,7 +125,7 @@ class TestDipendentiModule:
                 if emp_id:
                     response = requests.get(f"{BASE_URL}/api/giustificativi/dipendente/{emp_id}/giustificativi?anno=2026")
                     assert response.status_code == 200
-                    print(f"✅ Giustificativi endpoint working")
+                    print("✅ Giustificativi endpoint working")
                     return
         print("⚠️ Skipped giustificativi test - no employees found")
 
@@ -145,7 +145,7 @@ class TestFattureRicevute:
         response = requests.get(f"{BASE_URL}/api/fatture-ricevute/stats?anno=2026")
         # May return 200 or 404 depending on implementation
         assert response.status_code in [200, 404]
-        print(f"✅ Fatture stats endpoint checked")
+        print("✅ Fatture stats endpoint checked")
 
 
 class TestPrimaNota:
@@ -185,14 +185,14 @@ class TestF24Module:
         assert response.status_code == 200
         data = response.json()
         assert "scadenze" in data or isinstance(data, list)
-        print(f"✅ F24 scadenze prossime loaded")
+        print("✅ F24 scadenze prossime loaded")
     
     def test_f24_riconciliazione_dashboard(self):
         """Test F24 reconciliation dashboard"""
         response = requests.get(f"{BASE_URL}/api/f24-riconciliazione/dashboard")
         assert response.status_code == 200
         data = response.json()
-        print(f"✅ F24 riconciliazione dashboard loaded")
+        print("✅ F24 riconciliazione dashboard loaded")
 
 
 class TestClassificazioneEmail:
@@ -203,7 +203,7 @@ class TestClassificazioneEmail:
         response = requests.get(f"{BASE_URL}/api/documenti-smart/stats")
         assert response.status_code == 200
         data = response.json()
-        print(f"✅ Documenti smart stats loaded")
+        print("✅ Documenti smart stats loaded")
     
     def test_documenti_smart_rules(self):
         """Test classification rules"""
@@ -218,7 +218,7 @@ class TestClassificazioneEmail:
         response = requests.get(f"{BASE_URL}/api/documenti-smart/categories")
         assert response.status_code == 200
         data = response.json()
-        print(f"✅ Document categories loaded")
+        print("✅ Document categories loaded")
 
 
 class TestDocumentiModule:
@@ -229,7 +229,7 @@ class TestDocumentiModule:
         response = requests.get(f"{BASE_URL}/api/documenti-smart/stats")
         assert response.status_code == 200
         data = response.json()
-        print(f"✅ Classified documents stats loaded")
+        print("✅ Classified documents stats loaded")
     
     def test_classified_documents_list(self):
         """Test classified documents list via documenti-smart"""
@@ -275,14 +275,14 @@ class TestContabilitaModule:
         response = requests.get(f"{BASE_URL}/api/contabilita/calcolo-imposte?regione=campania&anno=2026")
         assert response.status_code == 200
         data = response.json()
-        print(f"✅ Calcolo imposte loaded")
+        print("✅ Calcolo imposte loaded")
     
     def test_scadenze_prossime(self):
         """Test upcoming deadlines"""
         response = requests.get(f"{BASE_URL}/api/scadenze/prossime?giorni=30&limit=8")
         assert response.status_code == 200
         data = response.json()
-        print(f"✅ Scadenze prossime loaded")
+        print("✅ Scadenze prossime loaded")
 
 
 if __name__ == "__main__":

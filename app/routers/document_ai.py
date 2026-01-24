@@ -4,7 +4,6 @@ API per estrarre dati strutturati da documenti (F24, buste paga, estratti conto)
 """
 
 from fastapi import APIRouter, UploadFile, File, HTTPException, Form
-from fastapi.responses import JSONResponse
 from typing import Optional
 import base64
 from datetime import datetime, timezone

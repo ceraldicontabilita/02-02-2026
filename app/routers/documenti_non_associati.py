@@ -4,7 +4,7 @@ Permette di visualizzare e associare manualmente i documenti.
 """
 
 from fastapi import APIRouter, HTTPException, Query, Body
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 from datetime import datetime, timezone
 import uuid
 import re

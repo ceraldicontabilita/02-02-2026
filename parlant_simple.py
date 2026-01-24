@@ -55,7 +55,7 @@ Rispondi sempre in italiano."""
         with open("/tmp/parlant_agent_id.txt", "w") as f:
             f.write(agent.id)
         
-        print(f"\n🌐 Server: http://localhost:8800")
+        print("\n🌐 Server: http://localhost:8800")
         print(f"📋 Agent ID: {agent.id}")
         
         # Keep alive

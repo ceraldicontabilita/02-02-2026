@@ -15,7 +15,7 @@ REGOLE FONDAMENTALI:
 4. Entrate Cassa = Corrispettivi (imponibile + IVA = totale lordo)
 """
 from fastapi import APIRouter, HTTPException, Body
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any
 from datetime import datetime, timezone
 import uuid
 import logging

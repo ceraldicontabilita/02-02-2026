@@ -3,7 +3,7 @@ Router per gestione Alert di sistema.
 Include alert per fornitori senza metodo pagamento, scadenze, etc.
 """
 from fastapi import APIRouter, Query, HTTPException
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional
 from datetime import datetime, timezone
 import logging
 

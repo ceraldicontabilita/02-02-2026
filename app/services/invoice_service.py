@@ -6,7 +6,6 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime, date
 import hashlib
 import logging
-import base64
 
 from app.repositories import InvoiceRepository, SupplierRepository
 from app.exceptions import (
@@ -15,7 +14,7 @@ from app.exceptions import (
     ValidationError,
     FileProcessingError
 )
-from app.models import Invoice, InvoiceCreate, InvoiceUpdate, InvoiceStats
+from app.models import InvoiceCreate, InvoiceUpdate
 from app.utils.invoice_xml_parser import InvoiceXMLParser
 
 logger = logging.getLogger(__name__)

@@ -10,7 +10,7 @@ Analizza descrizioni prodotti e fornitori per:
 Basato sulla normativa fiscale italiana vigente.
 """
 import re
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Dict, Any, List, Optional
 from dataclasses import dataclass
 from enum import Enum
 import logging

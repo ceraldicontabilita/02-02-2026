@@ -6,10 +6,9 @@ import uuid
 import hashlib
 import logging
 from datetime import datetime, timezone
-from typing import Dict, Any, List, Optional
+from typing import Dict, List
 
 from .constants import (
-    MAGAZZINO_COLLECTION,
     LOTTI_COLLECTION,
     MOVIMENTI_MAG_COLLECTION
 )

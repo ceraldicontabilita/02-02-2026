@@ -15,10 +15,10 @@ import os
 import smtplib
 import time
 from contextlib import contextmanager
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from typing import Dict, Iterator, Optional
+from typing import Iterator, Optional
 
 from utils.parsing import ExternalServiceError
 

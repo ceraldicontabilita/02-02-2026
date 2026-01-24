@@ -11,7 +11,7 @@ NOTA: Usa warehouse_inventory come collezione principale
 """
 
 from fastapi import APIRouter, HTTPException, Query
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 from datetime import datetime
 import logging
 import uuid
@@ -20,11 +20,8 @@ from app.database import Database, Collections
 from app.db_collections import COLL_WAREHOUSE, COLL_WAREHOUSE_MOVEMENTS
 from app.services.magazzino_categorie import (
     parse_linea_fattura,
-    classifica_prodotto,
-    estrai_quantita,
     calcola_scarico_ricetta,
-    get_tutte_categorie,
-    CATEGORIE_MERCEOLOGICHE
+    get_tutte_categorie
 )
 
 logger = logging.getLogger(__name__)

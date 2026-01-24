@@ -9,7 +9,6 @@ Gestisce:
 
 NON duplica: verifica sempre se il documento esiste già nel DB.
 """
-import asyncio
 import imaplib
 import email
 from email.header import decode_header
@@ -19,7 +18,7 @@ import uuid
 import base64
 import logging
 from datetime import datetime, timezone
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Dict, Any, List
 
 from app.database import Database
 
@@ -183,7 +182,7 @@ async def scarica_documenti_cartella(
         # Seleziona cartella
         status, _ = mail.select(f'"{cartella}"', readonly=True)
         if status != 'OK':
-            risultato["errori"].append(f"Impossibile selezionare cartella")
+            risultato["errori"].append("Impossibile selezionare cartella")
             mail.logout()
             return risultato
         

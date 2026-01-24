@@ -10,8 +10,7 @@ import io
 
 from app.database import Database
 from .common import (
-    COLLECTION_PRIMA_NOTA_CASSA, COLLECTION_PRIMA_NOTA_BANCA,
-    calcola_saldo_anni_precedenti, logger
+    COLLECTION_PRIMA_NOTA_CASSA, COLLECTION_PRIMA_NOTA_BANCA
 )
 
 

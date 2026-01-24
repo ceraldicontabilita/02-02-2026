@@ -8,7 +8,7 @@ La business logic è in /app/services/noleggio/
 import uuid
 import logging
 from datetime import datetime, timezone
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, Optional
 
 from fastapi import APIRouter, Query, Body, HTTPException
 
@@ -24,8 +24,6 @@ from app.services.noleggio import (
 
 # Import servizio persistenza dati
 from app.services.noleggio.data_persistence import (
-    salva_costo_noleggio,
-    salva_veicolo,
     persisti_dati_da_fatture,
     recupera_costi_veicolo,
     migra_dati_esistenti,

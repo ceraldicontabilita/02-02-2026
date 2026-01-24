@@ -6,7 +6,7 @@ API per controllare la consistenza dei dati tra le varie sezioni del gestionale.
 from fastapi import APIRouter, Query, HTTPException
 from typing import Dict, Any, Optional
 from datetime import datetime
-from app.database import Database, Collections
+from app.database import Database
 from app.services.verifica_coerenza import (
     VerificaCoerenza, 
     esegui_verifica_completa,

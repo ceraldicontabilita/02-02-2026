@@ -14,15 +14,13 @@ from app.repositories.employee_repository import (
 from app.exceptions import (
     NotFoundError,
     ValidationError,
-    DuplicateError,
-    BusinessLogicError
+    DuplicateError
 )
 from app.models.employee import (
     EmployeeCreate,
     EmployeeUpdate,
     PayslipCreate,
-    LibrettoSanitarioCreate,
-    LibrettoSanitarioUpdate
+    LibrettoSanitarioCreate
 )
 
 logger = logging.getLogger(__name__)

@@ -7,7 +7,7 @@ from datetime import datetime, date
 import logging
 
 from app.repositories.bank_repository import BankRepository
-from app.exceptions import NotFoundError, DuplicateError
+from app.exceptions import NotFoundError
 from app.models.bank import BankStatementCreate, BankStatementUpdate
 
 logger = logging.getLogger(__name__)

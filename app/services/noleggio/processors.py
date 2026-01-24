@@ -342,7 +342,6 @@ async def scan_fatture_noleggio(anno: Optional[int] = None) -> Tuple[Dict[str, A
     
     Returns: (veicoli_dict, fatture_senza_targa)
     """
-    from datetime import datetime as dt
     
     db = Database.get_db()
     

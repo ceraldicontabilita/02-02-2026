@@ -2,16 +2,14 @@
 Prima Nota Module - Sincronizzazione e Import.
 Sync corrispettivi, fatture, import CSV/batch.
 """
-from fastapi import HTTPException, Query, Body, UploadFile, File
-from fastapi.responses import Response
-from typing import Dict, Any
+from fastapi import HTTPException, Query, Body
+from typing import Dict
 from datetime import datetime, timezone
 import uuid
 
 from app.database import Database, Collections
 from .common import (
-    COLLECTION_PRIMA_NOTA_CASSA, COLLECTION_PRIMA_NOTA_BANCA,
-    TIPO_MOVIMENTO, logger
+    COLLECTION_PRIMA_NOTA_CASSA, COLLECTION_PRIMA_NOTA_BANCA
 )
 
 

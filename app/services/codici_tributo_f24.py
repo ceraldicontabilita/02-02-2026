@@ -9,7 +9,7 @@ LOGICA CORRETTA:
   * + (positivo) = DEBITO da versare
   * - (negativo) = CREDITO che riduce il totale
 """
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, List
 
 CODICI_TRIBUTO_F24 = {
     # ==================== ERARIO - IRPEF ====================

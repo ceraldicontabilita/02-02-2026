@@ -87,14 +87,12 @@ add_exception_handlers(app)
 
 # --- F24 Module ---
 from app.routers.f24 import (
-    f24_main, f24_riconciliazione, f24_tributi, f24_public, quietanze, email_f24,
-    f24_gestione_avanzata
+    f24_main, f24_riconciliazione, f24_public, quietanze
 )
 
 # --- Accounting Module ---
 from app.routers.accounting import (
-    accounting_main, accounting_extended, accounting_f24,
-    accounting_engine_api,
+    accounting_main, accounting_extended, accounting_engine_api,
     prima_nota_automation,
     piano_conti, bilancio, centri_costo, contabilita_avanzata,
     regole_categorizzazione, iva_calcolo, liquidazione_iva,
@@ -187,7 +185,6 @@ from app.routers import learning_machine_cdc  # Learning Machine CDC - Classific
 from app.routers import magazzino_avanzato  # Magazzino Avanzato - Categorie merceologiche e lotti
 from app.routers import riconciliazione_intelligente_api  # Riconciliazione Intelligente - Conferma Pagamenti
 from app.routers import attendance  # Gestione Presenze Dipendenti (legacy)
-from app.routers.attendance_module import router as attendance_router_new  # Modulo refactored
 from app.routers import inserimento_rapido  # Inserimento Rapido - Mobile
 from app.routers import email_mongodb  # Email to MongoDB - Download email su Atlas
 from app.routers import documenti_non_associati  # Gestione documenti non associati

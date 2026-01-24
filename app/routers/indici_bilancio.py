@@ -2,9 +2,8 @@
 Router Indici di Bilancio - Versione Semplificata
 ROI, ROE, Liquidità e altri indici principali
 """
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Query
 from typing import Dict, Any
-from datetime import datetime
 import logging
 
 from app.database import Database

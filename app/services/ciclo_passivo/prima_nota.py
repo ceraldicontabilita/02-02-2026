@@ -5,7 +5,7 @@ Genera scritture contabili automatiche.
 import uuid
 import logging
 from datetime import datetime, timezone
-from typing import Dict, Any, Optional
+from typing import Dict
 
 from .constants import (
     PRIMA_NOTA_COLLECTION,

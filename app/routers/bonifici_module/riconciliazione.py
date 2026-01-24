@@ -1,15 +1,13 @@
 """
 Bonifici Module - Riconciliazione con estratto conto.
 """
-from fastapi import HTTPException, Query, BackgroundTasks
-from typing import Dict, Any, Optional
+from fastapi import HTTPException
+from typing import Dict, Any
 from datetime import datetime, timezone
 import uuid
 import asyncio
-import logging
 
 from app.database import Database
-from .common import COL_TRANSFERS, logger
 
 # Cache per task di riconciliazione
 _riconciliazione_task: Dict[str, Dict[str, Any]] = {}

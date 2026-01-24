@@ -30,7 +30,7 @@ class TestHealthAndBasicEndpoints:
         # Test suppliers endpoint (used by dashboard)
         response = requests.get(f"{BASE_URL}/api/suppliers?limit=1")
         assert response.status_code == 200
-        print(f"✅ Suppliers API works")
+        print("✅ Suppliers API works")
     
     def test_fatture_ricevute_archivio(self):
         """Test fatture ricevute archivio endpoint"""
@@ -54,7 +54,7 @@ class TestAggiornaMetodiPagamentoEndpoint:
         data = response.json()
         assert "success" in data
         assert data["success"] == True
-        print(f"✅ Aggiorna metodi pagamento endpoint works")
+        print("✅ Aggiorna metodi pagamento endpoint works")
         print(f"   - Fatture aggiornate: {data.get('fatture_aggiornate', 0)}")
         print(f"   - Senza fornitore/metodo: {data.get('senza_fornitore_o_metodo', 0)}")
         print(f"   - Fornitori con metodo: {data.get('fornitori_con_metodo', 0)}")
@@ -80,7 +80,7 @@ class TestAggiornaMetodiPagamentoEndpoint:
         assert isinstance(data["errori"], int)
         assert isinstance(data["fornitori_con_metodo"], int)
         
-        print(f"✅ Response structure is correct")
+        print("✅ Response structure is correct")
 
 
 class TestOrdiniFornitori:
@@ -100,7 +100,7 @@ class TestOrdiniFornitori:
         assert response.status_code == 200
         data = response.json()
         assert "by_supplier" in data or "total_items" in data
-        print(f"✅ Comparatore cart works")
+        print("✅ Comparatore cart works")
 
 
 class TestCicloPassivo:
@@ -112,7 +112,7 @@ class TestCicloPassivo:
         assert response.status_code == 200
         data = response.json()
         assert "statistiche" in data or "scadenze_aperte" in data
-        print(f"✅ Dashboard riconciliazione works")
+        print("✅ Dashboard riconciliazione works")
 
 
 class TestAdminEndpoints:
@@ -123,7 +123,7 @@ class TestAdminEndpoints:
         response = requests.get(f"{BASE_URL}/api/admin/stats")
         # May return 200 or 404 depending on implementation
         if response.status_code == 200:
-            print(f"✅ Admin stats endpoint works")
+            print("✅ Admin stats endpoint works")
         else:
             print(f"⚠️ Admin stats endpoint returned {response.status_code}")
     

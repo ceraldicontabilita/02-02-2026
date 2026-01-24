@@ -4,7 +4,7 @@ IVA Debito: da Corrispettivi (vendite)
 IVA Credito: da Fatture (acquisti)
 """
 from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
+from datetime import datetime
 import logging
 import calendar
 

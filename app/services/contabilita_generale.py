@@ -26,9 +26,9 @@ INDICE:
 """
 
 import logging
-from datetime import datetime, timezone, date
-from decimal import Decimal, ROUND_HALF_UP
-from typing import Dict, Any, List, Optional, Tuple
+from datetime import datetime, timezone
+from decimal import Decimal
+from typing import Dict, Any, List, Optional
 from uuid import uuid4
 from enum import Enum
 

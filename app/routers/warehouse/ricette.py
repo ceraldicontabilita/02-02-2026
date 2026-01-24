@@ -6,7 +6,7 @@ Include generazione LOTTI di produzione e registro lotti.
 from fastapi import APIRouter, HTTPException, Query, Body, UploadFile, File
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
-from app.database import Database, Collections
+from app.database import Database
 import uuid
 import json
 import re

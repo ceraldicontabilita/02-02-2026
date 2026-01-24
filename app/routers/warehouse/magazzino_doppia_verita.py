@@ -4,7 +4,7 @@ Gestione giacenze teoriche vs reali con classificazione differenze
 """
 from fastapi import APIRouter, HTTPException, Query, Body
 from typing import Dict, Any, List, Optional
-from datetime import datetime, date
+from datetime import datetime
 from app.database import Database, Collections
 import uuid
 

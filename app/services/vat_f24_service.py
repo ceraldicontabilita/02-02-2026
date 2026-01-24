@@ -3,7 +3,7 @@ VAT and F24 Service
 Business logic per liquidazioni IVA e modelli F24
 """
 from typing import List, Dict, Any, Optional
-from datetime import datetime, date
+from datetime import date
 import logging
 from io import BytesIO
 from calendar import monthrange

@@ -642,7 +642,7 @@ async def consolida_record() -> Dict[str, Any]:
     await ricalcola_progressivi_tutti(db)
     
     return {
-        "message": f"Consolidamento completato",
+        "message": "Consolidamento completato",
         "record_originali": len(all_records),
         "record_consolidati": created,
         "duplicati_risolti": duplicates

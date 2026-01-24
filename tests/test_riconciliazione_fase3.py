@@ -17,7 +17,6 @@ import pytest
 import requests
 import os
 import uuid
-from datetime import datetime
 
 BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
 
@@ -277,7 +276,7 @@ class TestRiconciliazioneFase3:
         assert "count" in data
         assert "totale_residuo" in data
         
-        print(f"✅ Lista pagamenti anticipati:")
+        print("✅ Lista pagamenti anticipati:")
         print(f"   Count: {data.get('count')}")
         print(f"   Totale residuo: €{data.get('totale_residuo', 0):.2f}")
         
@@ -315,7 +314,7 @@ class TestRiconciliazioneFase3:
             else:
                 # Oppure ritorna lista vuota
                 assert data.get("pagamenti_trovati") == []
-                print(f"✅ Cerca pagamenti per fattura non esistente: ritorna lista vuota")
+                print("✅ Cerca pagamenti per fattura non esistente: ritorna lista vuota")
         else:
             assert response.status_code == 400
             error_msg = get_error_message(data)
@@ -434,7 +433,7 @@ class TestRiconciliazioneFase3Statistiche:
         assert data.get("success") == True
         assert "conteggi" in data
         
-        print(f"✅ Dashboard riconciliazione:")
+        print("✅ Dashboard riconciliazione:")
         print(f"   Totale da verificare: {data.get('totale_da_verificare', 0)}")
         
         conteggi = data.get("conteggi", {})
@@ -454,7 +453,7 @@ class TestRiconciliazioneFase3Statistiche:
         assert data.get("success") == True
         assert "conteggi_per_stato" in data
         
-        print(f"✅ Statistiche riconciliazione:")
+        print("✅ Statistiche riconciliazione:")
         print(f"   Totale fatture: {data.get('totale_fatture', 0)}")
         print(f"   Gestite dal sistema: {data.get('totale_gestite_sistema', 0)}")
 
@@ -538,7 +537,7 @@ class TestVerificaCollections:
                     if data.get("arrotondamento"):
                         print(f"✅ Collection 'abbuoni_arrotondamenti' verificata - arrotondamento €{data['arrotondamento'].get('importo', 0):.2f}")
                     else:
-                        print(f"✅ Arrotondamento applicato (diff minima, no abbuono registrato)")
+                        print("✅ Arrotondamento applicato (diff minima, no abbuono registrato)")
                 else:
                     print(f"⚠️ Impossibile verificare collection abbuoni: {response.status_code}")
             else:

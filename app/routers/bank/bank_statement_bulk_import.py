@@ -3,7 +3,7 @@ Bank Statement Bulk Import Router
 Endpoint per l'importazione massiva di estratti conto bancari in PDF.
 Supporta upload multipli e anteprima dati prima del salvataggio.
 """
-from fastapi import APIRouter, UploadFile, File, HTTPException, Query, BackgroundTasks
+from fastapi import APIRouter, UploadFile, File, HTTPException, Query
 from typing import Dict, Any, List, Optional
 import logging
 import uuid
@@ -369,7 +369,7 @@ async def import_direct(
                     await db[collection].insert_one(record)
                     file_imported += 1
                     
-                except Exception as e:
+                except Exception:
                     file_skipped += 1
             
             total_imported += file_imported

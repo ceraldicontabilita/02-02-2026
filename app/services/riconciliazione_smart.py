@@ -785,7 +785,6 @@ async def analizza_estratto_conto_batch(limit: int = 100, solo_non_riconciliati:
     assegni_map = {a.get("numero", ""): a for a in assegni}
     
     # Pre-carica fatture recenti (ultimi 3 mesi - OTTIMIZZATO per velocità)
-    from datetime import datetime, timedelta
     data_limite = (datetime.now() - timedelta(days=90)).strftime("%Y-%m-%d")
     fatture = await db.invoices.find(
         {"invoice_date": {"$gte": data_limite}},

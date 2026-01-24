@@ -7,8 +7,8 @@ LOGICA CONTABILE CORRETTA (Contabilità Italiana):
 Il sistema NON è multi-utente, le collezioni non hanno user_id.
 """
 from fastapi import APIRouter, Depends, Query
-from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
+from typing import Dict, Any, Optional
+from datetime import datetime
 import calendar
 
 import logging

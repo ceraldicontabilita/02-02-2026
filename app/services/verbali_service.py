@@ -12,7 +12,7 @@ import re
 import uuid
 import logging
 from datetime import datetime, timezone
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Dict, Any, List, Optional
 
 from app.database import Database
 

@@ -3,8 +3,7 @@ Regole Avanzate di Contabilità - Sistema Intelligente
 Basato su ricerche web approfondite 2025 per standard italiani
 """
 
-from typing import Dict, List, Optional, Tuple
-from datetime import datetime
+from typing import Dict, List, Tuple
 
 # ============================================================================
 # CODICI TRIBUTO F24 - ERARIO

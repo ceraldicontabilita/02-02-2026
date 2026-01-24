@@ -1660,8 +1660,7 @@ async def import_buste_paga_to_dipendenti(
     - match_mode: "cf" per codice fiscale, "nome" per nome completo
     - dry_run: se True, mostra solo le corrispondenze trovate senza aggiornare
     """
-    import os
-    from app.utils.busta_paga_parser import scan_all_dipendenti, get_latest_progressivi
+    from app.utils.busta_paga_parser import scan_all_dipendenti
     
     db = Database.get_db()
     base_path = "/app/documents/buste_paga"
@@ -1946,8 +1945,8 @@ async def genera_report_ferie_permessi(
     from reportlab.lib.pagesizes import A4
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.units import cm
-    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
-    from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+    from reportlab.lib.enums import TA_CENTER
     import io
     
     db = Database.get_db()

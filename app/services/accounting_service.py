@@ -2,12 +2,11 @@
 Accounting service.
 Handles accounting entries and financial operations.
 """
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, Optional
 from datetime import datetime, date
 import logging
 
 from app.repositories import InvoiceRepository
-from app.exceptions import NotFoundError, ValidationError
 
 logger = logging.getLogger(__name__)
 

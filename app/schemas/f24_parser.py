@@ -6,8 +6,8 @@ Genera scritture contabili splittate per ogni codice tributo
 """
 
 import xml.etree.ElementTree as ET
-from typing import Dict, List, Optional, Tuple
-from datetime import datetime, date, timedelta
+from typing import Dict, List, Optional
+from datetime import datetime, date
 import re
 
 from schemas.accounting_rules import F24_ERARIO_CODES, F24_INPS_CODES

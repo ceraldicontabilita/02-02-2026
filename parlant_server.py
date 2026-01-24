@@ -335,9 +335,9 @@ Rispondi sempre in italiano."""
         with open("/tmp/parlant_agent_id.txt", "w") as f:
             f.write(agent.id)
         
-        print(f"\n🌐 Server Parlant attivo su http://localhost:8800")
+        print("\n🌐 Server Parlant attivo su http://localhost:8800")
         print(f"📋 Agent ID: {agent.id}")
-        print(f"🎮 Test playground: http://localhost:8800")
+        print("🎮 Test playground: http://localhost:8800")
 
 
 if __name__ == "__main__":

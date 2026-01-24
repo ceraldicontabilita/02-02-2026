@@ -33,7 +33,7 @@ Se negativo = credito da riportare al mese successivo
 """
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import StreamingResponse
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from datetime import date
 import logging
 import io

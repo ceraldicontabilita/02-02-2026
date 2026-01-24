@@ -4,11 +4,9 @@ Estrae dati da PDF F24 compilati dalla commercialista
 Distingue correttamente debiti da crediti basandosi sulle coordinate X
 Distingue le sezioni basandosi sulle coordinate Y
 """
-import os
 import re
 import fitz  # PyMuPDF
-from datetime import datetime
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any
 import logging
 
 logger = logging.getLogger(__name__)
