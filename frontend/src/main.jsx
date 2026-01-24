@@ -227,7 +227,7 @@ const router = createBrowserRouter([
       { path: "prima-nota/:tipo", element: <LazyPage><PrimaNota /></LazyPage> },
       { path: "riconciliazione", element: <LazyPage><RiconciliazioneUnificata /></LazyPage> },
       { path: "riconciliazione/:tab", element: <LazyPage><RiconciliazioneUnificata /></LazyPage> },
-      { path: "riconciliazione-intelligente", element: <LazyPage><RiconciliazioneIntelligente /></LazyPage> },
+      { path: "riconciliazione-intelligente", element: <Navigate to="/riconciliazione" replace /> },
       { path: "gestione-assegni", element: <LazyPage><GestioneAssegni /></LazyPage> },
       { path: "archivio-bonifici", element: <LazyPage><ArchivioBonifici /></LazyPage> },
       
@@ -307,7 +307,7 @@ const router = createBrowserRouter([
       { path: "pagopa", element: <LazyPage><GestionePagoPA /></LazyPage> },
       { path: "invoicetronic", element: <LazyPage><GestioneInvoiceTronic /></LazyPage> },
       { path: "classificazione-email", element: <LazyPage><ClassificazioneDocumenti /></LazyPage> },
-      { path: "fornitori-learning", element: <LazyPage><FornitoriLearning /></LazyPage> },
+      { path: "fornitori-learning", element: <Navigate to="/fornitori?tab=learning" replace /> },
     ]
   }
 ]);
