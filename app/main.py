@@ -188,6 +188,7 @@ from app.routers import attendance  # Gestione Presenze Dipendenti (legacy)
 from app.routers import inserimento_rapido  # Inserimento Rapido - Mobile
 from app.routers import email_mongodb  # Email to MongoDB - Download email su Atlas
 from app.routers import documenti_non_associati  # Gestione documenti non associati
+from app.routers import fornitori_learning  # Fornitori Learning - Associazione keywords
 
 
 # =============================================================================
