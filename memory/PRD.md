@@ -142,18 +142,14 @@ Il sistema classifica **automaticamente** documenti leggendo:
 
 ## 5. BACKLOG E PRIORITÀ
 
-### 5.0 ✅ COMPLETATO (Sessione 23 - 24/01/2026) - Upload AI Automatico + Deduplicazione F24
+### 5.0 ✅ COMPLETATO (Sessione 23 - 24/01/2026) - Upload AI + Chat Intelligente + Refactoring
 
 **Parsing AI Automatico su Upload Diretto:**
 - Nuovo servizio `/app/app/services/upload_ai_processor.py` per processing automatico
-- Nuovo router `/api/upload-ai/` con endpoint:
-  - `POST /upload-f24` - Upload F24 con parsing AI + deduplicazione
-  - `POST /upload-cedolino` - Upload cedolino con parsing + aggiornamento progressivi dipendente
-  - `POST /upload-fattura-pdf` - Upload fattura PDF con archivio in attesa di XML
-  - `POST /upload-documento` - Upload generico con auto-detection tipo
-  - `POST /upload-batch` - Upload multiplo
-  - `GET /archivio-pdf` - Lista fatture PDF in attesa di associazione XML
-  - `POST /archivio-pdf/{id}/associa` - Associazione manuale PDF a XML
+- Nuovo router `/api/upload-ai/` con 7 endpoint per F24, cedolini e fatture PDF
+- F24: parsing + deduplicazione basata su data/CF/importo + salvataggio in `f24_unificato`
+- Cedolini: parsing + identificazione dipendente + aggiornamento automatico progressivi (ferie, permessi, TFR)
+- Fatture PDF: parsing + archivio temporaneo in `fatture_pdf_archivio` in attesa dell'XML corrispondente
 
 **Logica Fatture PDF:**
 - Le fatture PDF vengono parsate e archiviate in `fatture_pdf_archivio`
@@ -164,8 +160,29 @@ Il sistema classifica **automaticamente** documenti leggendo:
 **Deduplicazione F24 Unificato (P0 RISOLTO):**
 - Eliminati 250 duplicati (75% di riduzione)
 - Da 333 a 83 documenti unici
-- Deduplicazione basata su hash file
 - Zero duplicati rimanenti verificato
+
+**Chat Intelligente (Learning Machine):**
+- Nuovo servizio `/app/app/services/chat_intelligence.py`
+- Nuovo router `/api/chat/` per interrogazione dati in linguaggio naturale
+- Supporta domande su: fatture, F24, cedolini, dipendenti, fornitori, estratti conto, bilancio
+- Interpreta automaticamente la domanda ed estrae parametri (anno, mese, fornitore)
+- Endpoint: `POST /api/chat/ask`, `GET /api/chat/stats`, `GET /api/chat/help`
+
+**P1 Completato - Classificazione Fatture 100%:**
+- Classificate le ultime 6 fatture non classificate
+- Totale: 3753/3753 fatture classificate (100%)
+
+**P2 Completato - UI Correzione Dati AI:**
+- Nuova pagina `/correzione-ai` per revisione documenti processati dall'AI
+- Visualizzazione dati estratti, modifica manuale, assegnazione centro costo
+- Filtri per tipo documento e ricerca
+
+**Refactoring Sicuro:**
+- Rimosso file obsoleto `PrimaNotaUnificata.jsx` (non referenziato)
+- Pulizia cache Python e log vecchi
+- Fix lint su nuovi file
+- Verificato che tutti i file _v2 sono effettivamente utilizzati
 
 **Integrazione con Upload XML:**
 - Modificato `/app/app/routers/invoices/fatture_upload.py`
