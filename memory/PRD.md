@@ -142,7 +142,7 @@ Il sistema classifica **automaticamente** documenti leggendo:
 
 ## 5. BACKLOG E PRIORITÀ
 
-### 5.1 ✅ COMPLETATO (Sessione 21 - 24/01/2026) - Unificazione UI + Task P1
+### 5.1 ✅ COMPLETATO (Sessione 21 - 24/01/2026) - Unificazione UI + Task P1 + F24 Learning
 - **Unificazione Fornitori + Learning Machine**: Tab "Learning Machine" integrato nella pagina Fornitori
 - **Unificazione Riconciliazione**: Una sola voce "Riconciliazione" nel menu
 - **Pulizia Menu**: Rimossa voce "Fornitori Learning" dal menu Acquisti
@@ -155,6 +155,12 @@ Il sistema classifica **automaticamente** documenti leggendo:
 - **UI Classificazione Manuale**: Sezione nel tab Learning per classificare le fatture residue
 - **Endpoint Classificazione Manuale**: PUT /api/fatture/{id}/classifica
 - **Fix Codici Centro di Costo**: Corretta logica riclassificazione per usare codici corretti (B7.5.3 etc.)
+- **Learning Machine F24 COMPLETATA**:
+  - Nuova funzione `classifica_f24_per_centro_costo()` in learning_machine_cdc.py
+  - Mappatura completa codici tributo F24 → centri di costo (IVA, IRES, IRAP, IMU, ritenute)
+  - **43/43 F24 classificati automaticamente**
+  - Distribuzione: IRES (12), Commercialista (10), IVA (9), Personale (3), IMU (1)
+  - Endpoint `/api/fornitori-learning/classifica-f24` e `/api/fornitori-learning/f24-statistiche`
 - **Test passati**: 7/7 backend + frontend
 
 ### 5.2 ✅ COMPLETATO (Sessione 20 - 24/01/2026)
