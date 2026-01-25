@@ -333,20 +333,16 @@ class EmailFullDownloader:
         return pdfs
     
     async def process_email(self, email_uid: bytes, msg: email.message.Message) -> int:
-        """Processa una singola email ed estrae i PDF."""
+        """
+        Processa una singola email ed estrae i PDF.
+        FILTRA: scarica solo email con parole chiave AMMINISTRATIVE.
+        """
         pdfs_saved = 0
         
         # Estrai info email
         subject = decode_mime_header(msg.get("Subject", ""))
         from_addr = decode_mime_header(msg.get("From", ""))
         date_str = msg.get("Date", "")
-        
-        email_info = {
-            "uid": email_uid.decode() if isinstance(email_uid, bytes) else str(email_uid),
-            "subject": subject,
-            "from": from_addr,
-            "date": date_str
-        }
         
         # Estrai body per categorizzazione
         body = ""
@@ -363,6 +359,63 @@ class EmailFullDownloader:
                 body = msg.get_payload(decode=True).decode('utf-8', errors='replace')
             except:
                 pass
+        
+        # ============================================================
+        # FILTRO PAROLE CHIAVE AMMINISTRATIVE
+        # Scarica SOLO email che contengono parole chiave rilevanti
+        # ============================================================
+        ADMIN_KEYWORDS = [
+            # Fatture
+            "fattura", "fatture", "invoice", "ft", "fatt",
+            # F24 / Tributi
+            "f24", "f-24", "tribut", "agenzia entrate", "irpef", "iva", "inps", "imu",
+            # Buste paga / Cedolini
+            "cedolino", "cedolini", "busta paga", "lul", "libro unico", "stipendio",
+            # Estratti conto
+            "estratto conto", "movimenti", "saldo", "conto corrente",
+            # Verbali / Multe
+            "verbale", "multa", "sanzione", "infrazione",
+            # ADR / Cartelle
+            "cartella esattoriale", "rottamazione", "riscossione", "ader",
+            # Certificati
+            "certificato medico", "malattia",
+            # INPS / Dilazioni  
+            "dilazione", "fonsi", "cassa integrazione",
+            # Bonifici stipendi
+            "bonifico", "disposizione pagamento",
+            # Quietanze
+            "quietanza", "ricevuta pagamento",
+            # Generico contabile
+            "scadenza", "pagamento", "importo", "totale"
+        ]
+        
+        # Combina testo ricercabile: oggetto + corpo
+        search_text = f"{subject} {body}".lower()
+        
+        # Estrai anche i nomi degli allegati
+        attachment_names = []
+        if msg.is_multipart():
+            for part in msg.walk():
+                filename = part.get_filename()
+                if filename:
+                    attachment_names.append(decode_mime_header(filename).lower())
+        
+        search_text += " " + " ".join(attachment_names)
+        
+        # Verifica se contiene almeno UNA parola chiave amministrativa
+        has_admin_keyword = any(kw in search_text for kw in ADMIN_KEYWORDS)
+        
+        if not has_admin_keyword:
+            # Email non amministrativa - SALTA
+            logger.debug(f"Email saltata (no keyword): {subject[:50]}")
+            return 0
+        
+        email_info = {
+            "uid": email_uid.decode() if isinstance(email_uid, bytes) else str(email_uid),
+            "subject": subject,
+            "from": from_addr,
+            "date": date_str
+        }
         
         # Estrai tutti i PDF
         pdfs = self.extract_pdfs_from_email(msg)
