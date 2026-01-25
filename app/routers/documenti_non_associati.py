@@ -330,6 +330,50 @@ async def lista_collezioni_disponibili() -> List[Dict[str, str]]:
     ]
 
 
+@router.get("/pdf/{documento_id}")
+async def visualizza_pdf_documento(documento_id: str):
+    """
+    Restituisce il PDF del documento per la visualizzazione.
+    Permette di vedere di che file si tratta prima di associarlo.
+    """
+    from fastapi.responses import Response
+    import base64
+    
+    db = Database.get_db()
+    
+    doc = await db["documenti_non_associati"].find_one(
+        {"id": documento_id},
+        {"_id": 0, "pdf_data": 1, "filename": 1}
+    )
+    
+    if not doc:
+        raise HTTPException(status_code=404, detail="Documento non trovato")
+    
+    pdf_data = doc.get("pdf_data")
+    if not pdf_data:
+        raise HTTPException(status_code=404, detail="PDF non disponibile")
+    
+    # Decodifica se base64
+    if isinstance(pdf_data, str):
+        try:
+            pdf_bytes = base64.b64decode(pdf_data)
+        except:
+            pdf_bytes = pdf_data.encode()
+    else:
+        pdf_bytes = pdf_data
+    
+    filename = doc.get("filename", "documento.pdf")
+    
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'inline; filename="{filename}"',
+            "Cache-Control": "no-cache"
+        }
+    )
+
+
 @router.delete("/{documento_id}")
 async def elimina_documento(documento_id: str) -> Dict[str, Any]:
     """Elimina un documento non associato."""
