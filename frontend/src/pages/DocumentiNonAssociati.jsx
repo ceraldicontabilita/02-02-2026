@@ -463,6 +463,26 @@ const DocumentiNonAssociati = () => {
               Dettaglio
             </div>
             
+            {/* PULSANTE VISUALIZZA PDF - IMPORTANTE */}
+            <div style={{ marginBottom: '16px' }}>
+              <button
+                onClick={() => {
+                  const url = `${process.env.REACT_APP_BACKEND_URL}/api/documenti-non-associati/pdf/${selectedDoc.id}`;
+                  window.open(url, '_blank');
+                }}
+                style={{ 
+                  ...styles.btn, 
+                  ...styles.btnPrimary, 
+                  width: '100%',
+                  padding: '14px',
+                  fontSize: '15px'
+                }}
+                data-testid="view-pdf-btn"
+              >
+                <Eye size={20} /> Apri PDF per vedere il contenuto
+              </button>
+            </div>
+            
             {/* File Info */}
             <div style={{ marginBottom: '12px' }}>
               <div style={styles.label}>File</div>
@@ -478,7 +498,7 @@ const DocumentiNonAssociati = () => {
             
             <div style={{ marginBottom: '12px' }}>
               <div style={styles.label}>Dimensione</div>
-              <div style={{ fontSize: '14px' }}>{Math.round((selectedDoc.size_bytes || 0) / 1024)} KB</div>
+              <div style={{ fontSize: '14px' }}>{Math.round((selectedDoc.size_bytes || selectedDoc.pdf_size || 0) / 1024)} KB</div>
             </div>
 
             {/* AI Suggestion */}
