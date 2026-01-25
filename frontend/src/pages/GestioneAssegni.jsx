@@ -1629,10 +1629,13 @@ export default function GestioneAssegni() {
                         </td>
                       </tr>
                     ))}
-                    </React.Fragment>
                   ))}
-
-                    {/* Assegni del carnet - Layout compatto su singola riga */}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        </>
+      )}
                     {carnetAssegni.map((assegno, idx) => (
                       <tr 
                         key={assegno.id} 
