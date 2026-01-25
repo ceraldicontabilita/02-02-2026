@@ -1630,6 +1630,7 @@ export default function GestioneAssegni() {
                         </td>
                       </tr>
                     ))}
+                    </React.Fragment>
                   ))}
               </tbody>
             </table>
