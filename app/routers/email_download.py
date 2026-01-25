@@ -214,6 +214,130 @@ async def auto_associa_documenti_v2() -> Dict[str, Any]:
     }
 
 
+@router.post("/processa-fatture-email")
+async def processa_fatture_email_ai(
+    limit: int = Query(default=10, le=50, description="Numero massimo di fatture da processare"),
+    background_tasks: BackgroundTasks = None
+) -> Dict[str, Any]:
+    """
+    Processa le fatture ricevute via email usando AI per estrarre i dati
+    e le inserisce automaticamente in invoices.
+    
+    Flusso:
+    1. Prende PDF da fatture_email_attachments non ancora processati
+    2. Usa AI per estrarre dati (fornitore, numero, importo, data)
+    3. Inserisce in invoices
+    4. Marca come processato
+    """
+    import base64
+    import uuid
+    from app.services.ai_document_parser import parse_fattura_ai, convert_ai_fattura_to_db_format
+    
+    db = Database.get_db()
+    stats = {
+        "processate": 0,
+        "errori": 0,
+        "già_esistenti": 0,
+        "fatture_inserite": []
+    }
+    
+    # Trova fatture non ancora processate
+    cursor = db["fatture_email_attachments"].find({
+        "$or": [
+            {"processed": {"$exists": False}},
+            {"processed": False}
+        ],
+        "pdf_data": {"$exists": True, "$ne": None}
+    }).limit(limit)
+    
+    async for doc in cursor:
+        try:
+            pdf_data = doc.get("pdf_data")
+            filename = doc.get("filename", "fattura.pdf")
+            
+            # Decodifica PDF
+            if isinstance(pdf_data, str):
+                try:
+                    pdf_bytes = base64.b64decode(pdf_data)
+                except:
+                    pdf_bytes = pdf_data.encode()
+            else:
+                pdf_bytes = pdf_data
+            
+            # Estrai dati con AI
+            ai_result = await parse_fattura_ai(file_bytes=pdf_bytes)
+            
+            if not ai_result.get("success"):
+                stats["errori"] += 1
+                logger.warning(f"AI parsing fallito per {filename}: {ai_result.get('error')}")
+                continue
+            
+            # Converti in formato DB
+            invoice_data = convert_ai_fattura_to_db_format(ai_result.get("data", {}))
+            
+            # Verifica duplicati
+            numero_fattura = invoice_data.get("numero_fattura") or invoice_data.get("invoice_number")
+            if numero_fattura:
+                existing = await db["invoices"].find_one({
+                    "$or": [
+                        {"invoice_number": numero_fattura},
+                        {"numero_fattura": numero_fattura}
+                    ]
+                })
+                if existing:
+                    stats["già_esistenti"] += 1
+                    # Marca come processato comunque
+                    await db["fatture_email_attachments"].update_one(
+                        {"id": doc["id"]},
+                        {"$set": {"processed": True, "existing_invoice_id": existing.get("id")}}
+                    )
+                    continue
+            
+            # Inserisci nuova fattura
+            new_invoice = {
+                "id": str(uuid.uuid4()),
+                **invoice_data,
+                "pdf_data": pdf_data,
+                "pdf_filename": filename,
+                "source": "email_attachment",
+                "email_attachment_id": doc.get("id"),
+                "email_subject": doc.get("email_subject"),
+                "email_from": doc.get("email_from"),
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+            
+            await db["invoices"].insert_one(new_invoice.copy())
+            
+            # Marca come processato
+            await db["fatture_email_attachments"].update_one(
+                {"id": doc["id"]},
+                {"$set": {
+                    "processed": True,
+                    "invoice_id": new_invoice["id"],
+                    "processed_at": datetime.now(timezone.utc).isoformat()
+                }}
+            )
+            
+            stats["processate"] += 1
+            stats["fatture_inserite"].append({
+                "filename": filename,
+                "fornitore": invoice_data.get("supplier_name") or invoice_data.get("fornitore"),
+                "numero": numero_fattura,
+                "totale": invoice_data.get("total_amount") or invoice_data.get("totale")
+            })
+            
+            logger.info(f"Fattura inserita: {filename} -> {new_invoice['id']}")
+            
+        except Exception as e:
+            logger.error(f"Errore processing fattura {doc.get('filename')}: {e}")
+            stats["errori"] += 1
+    
+    return {
+        "success": True,
+        "stats": stats
+    }
+
+
 @router.post("/popola-pdf-payslips")
 async def popola_pdf_payslips() -> Dict[str, Any]:
     """
