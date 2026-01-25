@@ -229,6 +229,16 @@ export default function GestioneAssegni() {
     if (exists) {
       setSelectedFatture(selectedFatture.filter(f => f.id !== fattura.id));
     } else if (selectedFatture.length < 4) {
+      // REGOLA CONTABILE: Un assegno può pagare solo fatture dello STESSO fornitore
+      const fornitoreNuovo = fattura.supplier_name || fattura.cedente_denominazione;
+      const fornitoreEsistente = selectedFatture[0]?.fornitore;
+      
+      if (fornitoreEsistente && fornitoreNuovo && 
+          fornitoreNuovo.toLowerCase() !== fornitoreEsistente.toLowerCase()) {
+        alert('⚠️ Non puoi collegare fatture di fornitori diversi allo stesso assegno!\n\nFornitore selezionato: ' + fornitoreEsistente + '\nStai cercando di aggiungere: ' + fornitoreNuovo);
+        return;
+      }
+      
       setSelectedFatture([...selectedFatture, {
         id: fattura.id,
         numero: fattura.invoice_number || fattura.numero_fattura,
