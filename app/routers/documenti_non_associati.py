@@ -404,6 +404,32 @@ async def visualizza_pdf_documento(documento_id: str):
     
     filename = doc.get("filename", "documento.pdf")
     
+    # Se è un file P7S/P7M firmato, estrai il PDF interno
+    if filename.lower().endswith(('.p7s', '.p7m', '.p7c')):
+        extracted_pdf = extract_pdf_from_p7s(pdf_bytes)
+        if extracted_pdf:
+            pdf_bytes = extracted_pdf
+            filename = filename.rsplit('.', 1)[0]  # Rimuovi estensione .p7s
+            if not filename.lower().endswith('.pdf'):
+                filename += '.pdf'
+        else:
+            raise HTTPException(
+                status_code=422, 
+                detail="Impossibile estrarre il PDF dal file firmato digitalmente. Il file potrebbe essere corrotto o non contenere un PDF."
+            )
+    
+    # Verifica che sia effettivamente un PDF
+    if pdf_bytes[:4] != b'%PDF':
+        # Potrebbe essere un file firmato non riconosciuto
+        extracted = extract_pdf_from_p7s(pdf_bytes)
+        if extracted:
+            pdf_bytes = extracted
+        else:
+            raise HTTPException(
+                status_code=422,
+                detail="Il file non è un PDF valido"
+            )
+    
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
