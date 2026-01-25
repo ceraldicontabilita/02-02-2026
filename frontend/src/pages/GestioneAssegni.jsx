@@ -1469,7 +1469,7 @@ export default function GestioneAssegni() {
                     <React.Fragment key={carnetId}>
                       {/* Assegni del carnet - tutte righe bianche, pulsanti nella riga */}
                       {carnetAssegni.map((assegno, idx) => (
-                      <tr 
+                        <tr 
                         key={assegno.id} 
                         style={{ 
                           borderBottom: '1px solid #eee',
