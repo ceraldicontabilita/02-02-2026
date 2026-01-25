@@ -1924,3 +1924,38 @@ async def get_dati_etichetta(lotto_id: str):
             "qr_data": fattura_url
         }
     }
+
+
+
+# ==================== GESTIONE PRIMA NOTA BANCA ====================
+
+@router.delete("/prima-nota-banca/{movimento_id}")
+async def elimina_movimento_banca(movimento_id: str):
+    """
+    Elimina un movimento dalla prima nota banca.
+    Usato per rimuovere operazioni di test o errate.
+    """
+    db = Database.get_db()
+    
+    result = await db[COL_PRIMA_NOTA_BANCA].delete_one({"id": movimento_id})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Movimento non trovato")
+    
+    return {"success": True, "message": "Movimento eliminato"}
+
+
+@router.delete("/prima-nota-banca/elimina-multipli")
+async def elimina_multipli_banca(ids: List[str]):
+    """
+    Elimina più movimenti dalla prima nota banca.
+    """
+    db = Database.get_db()
+    
+    result = await db[COL_PRIMA_NOTA_BANCA].delete_many({"id": {"$in": ids}})
+    
+    return {
+        "success": True,
+        "eliminati": result.deleted_count,
+        "message": f"Eliminati {result.deleted_count} movimenti"
+    }
