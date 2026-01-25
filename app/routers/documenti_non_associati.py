@@ -4,16 +4,56 @@ Permette di visualizzare e associare manualmente i documenti.
 """
 
 from fastapi import APIRouter, HTTPException, Query, Body
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
 import uuid
 import re
 import logging
+import base64
 
 from app.database import Database
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/documenti-non-associati", tags=["Documenti Non Associati"])
+
+
+def extract_pdf_from_p7s(p7s_data: bytes) -> Optional[bytes]:
+    """
+    Estrae il PDF contenuto in un file P7S/P7M firmato digitalmente.
+    Cerca i marker PDF nel contenuto binario.
+    """
+    try:
+        # Cerca marker PDF start e end
+        pdf_start = p7s_data.find(b'%PDF-')
+        if pdf_start == -1:
+            return None
+        
+        # Cerca l'ultimo %%EOF
+        pdf_end = p7s_data.rfind(b'%%EOF')
+        if pdf_end == -1:
+            # Prova con altri marker di fine
+            pdf_end = p7s_data.rfind(b'endstream')
+            if pdf_end == -1:
+                pdf_end = len(p7s_data)
+            else:
+                # Trova la fine corretta dopo endstream
+                pdf_end = p7s_data.find(b'%%EOF', pdf_end)
+                if pdf_end == -1:
+                    pdf_end = len(p7s_data)
+        else:
+            pdf_end += 5  # Includi %%EOF
+        
+        # Estrai il PDF
+        pdf_content = p7s_data[pdf_start:pdf_end]
+        
+        # Verifica che sia un PDF valido
+        if pdf_content[:4] == b'%PDF':
+            return pdf_content
+        
+        return None
+    except Exception as e:
+        logger.error(f"Errore estrazione PDF da P7S: {e}")
+        return None
 
 
 # Collezioni target per associazione
