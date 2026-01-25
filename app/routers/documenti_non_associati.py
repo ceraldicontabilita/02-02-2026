@@ -43,14 +43,20 @@ async def lista_documenti_non_associati(
     """
     db = Database.get_db()
     
-    query = {}
+    # IMPORTANTE: Escludere documenti già associati
+    query = {"$or": [{"associato": {"$exists": False}}, {"associato": False}]}
+    
     if categoria:
         query["category"] = categoria
     if search:
-        query["$or"] = [
-            {"filename": {"$regex": search, "$options": "i"}},
-            {"email_subject": {"$regex": search, "$options": "i"}}
+        query["$and"] = [
+            {"$or": [{"associato": {"$exists": False}}, {"associato": False}]},
+            {"$or": [
+                {"filename": {"$regex": search, "$options": "i"}},
+                {"email_subject": {"$regex": search, "$options": "i"}}
+            ]}
         ]
+        del query["$or"]
     
     # Conta totali
     total = await db["documenti_non_associati"].count_documents(query)
