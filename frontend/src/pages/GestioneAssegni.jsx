@@ -1788,9 +1788,9 @@ export default function GestioneAssegni() {
                           )}
                         </td>
                       </tr>
-                    ))}
-                  </React.Fragment>
-                ))}
+                      ))}
+                    </React.Fragment>
+                  ))}
               </tbody>
             </table>
           </div>
