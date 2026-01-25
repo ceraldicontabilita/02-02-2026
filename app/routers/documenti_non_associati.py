@@ -40,35 +40,44 @@ async def lista_documenti_non_associati(
 ) -> Dict[str, Any]:
     """
     Lista tutti i documenti non associati con proposta intelligente.
+    IMPORTANTE: Esclude automaticamente i documenti già associati.
     """
     db = Database.get_db()
     
-    # IMPORTANTE: Escludere documenti già associati
-    query = {"$or": [{"associato": {"$exists": False}}, {"associato": False}]}
+    # Base query: escludere documenti già associati
+    base_filter = {"$or": [{"associato": {"$exists": False}}, {"associato": False}]}
+    
+    # Costruisci query con filtri aggiuntivi
+    conditions = [base_filter]
     
     if categoria:
-        query["category"] = categoria
+        conditions.append({"category": categoria})
+    
     if search:
-        query["$and"] = [
-            {"$or": [{"associato": {"$exists": False}}, {"associato": False}]},
-            {"$or": [
+        conditions.append({
+            "$or": [
                 {"filename": {"$regex": search, "$options": "i"}},
                 {"email_subject": {"$regex": search, "$options": "i"}}
-            ]}
-        ]
-        del query["$or"]
+            ]
+        })
+    
+    # Se ci sono più condizioni, usa $and
+    query = {"$and": conditions} if len(conditions) > 1 else base_filter
     
     # Conta totali
     total = await db["documenti_non_associati"].count_documents(query)
     
-    # Recupera documenti
-    cursor = db["documenti_non_associati"].find(
-        query,
-        {"_id": 0, "pdf_data": 0}  # Escludi PDF pesante
-    ).sort("downloaded_at", -1).skip(skip).limit(limit)
+    # Recupera documenti - usa aggregation per allow_disk_use
+    pipeline = [
+        {"$match": query},
+        {"$project": {"_id": 0, "pdf_data": 0}},
+        {"$sort": {"downloaded_at": -1}},
+        {"$skip": skip},
+        {"$limit": limit}
+    ]
     
     documenti = []
-    async for doc in cursor:
+    async for doc in db["documenti_non_associati"].aggregate(pipeline, allowDiskUse=True):
         # Proposta intelligente
         proposta = await genera_proposta_associazione(db, doc)
         doc["proposta"] = proposta
