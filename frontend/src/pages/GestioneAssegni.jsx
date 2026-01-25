@@ -1467,8 +1467,8 @@ export default function GestioneAssegni() {
                 <tbody>
                   {Object.entries(carnets).map(([carnetId, carnetAssegni], carnetIdx) => (
                     <React.Fragment key={carnetId}>
-                    {/* Assegni del carnet - tutte righe bianche, pulsanti nella riga */}
-                    {carnetAssegni.map((assegno, idx) => (
+                      {/* Assegni del carnet - tutte righe bianche, pulsanti nella riga */}
+                      {carnetAssegni.map((assegno, idx) => (
                       <tr 
                         key={assegno.id} 
                         style={{ 
