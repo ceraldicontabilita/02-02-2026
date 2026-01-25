@@ -1467,47 +1467,172 @@ export default function GestioneAssegni() {
                 <tbody>
                   {Object.entries(carnets).map(([carnetId, carnetAssegni], carnetIdx) => (
                     <React.Fragment key={carnetId}>
-                      {/* Carnet Header with Print Button */}
-                      <tr style={{ background: '#f0f9ff' }}>
-                        <td colSpan={4} style={{ padding: '8px 12px' }}>
-                          <strong>Carnet {carnetIdx + 1}</strong>
-                          <span style={{ color: '#666', marginLeft: 10, fontSize: 13 }}>
-                            (Assegni {carnetAssegni.length} - Totale: {formatEuro(carnetAssegni.reduce((s, a) => s + (parseFloat(a.importo) || 0), 0))})
+                    {/* Assegni del carnet - tutte righe bianche, pulsanti nella riga */}
+                    {carnetAssegni.map((assegno, idx) => (
+                      <tr 
+                        key={assegno.id} 
+                        style={{ 
+                          borderBottom: '1px solid #eee',
+                          background: selectedAssegni.has(assegno.id) ? '#e8f5e9' : 'white'
+                        }}
+                      >
+                        {/* Checkbox selezione */}
+                        <td style={{ padding: '8px', textAlign: 'center' }}>
+                          <input
+                            type="checkbox"
+                            checked={selectedAssegni.has(assegno.id)}
+                            onChange={() => toggleSelectAssegno(assegno.id)}
+                            data-testid={`select-${assegno.id}`}
+                            style={{ width: 18, height: 18, cursor: 'pointer' }}
+                          />
+                        </td>
+
+                        {/* Numero Assegno */}
+                        <td style={{ padding: '8px 12px' }}>
+                          <span style={{ fontFamily: 'monospace', fontWeight: 'bold', color: '#1a365d', fontSize: 13 }}>
+                            {assegno.numero}
                           </span>
                         </td>
-                        <td colSpan={3} style={{ padding: '8px 12px', textAlign: 'right' }}>
-                          <button
-                            onClick={() => handleStampaCarnet(carnetId, carnetAssegni)}
-                            data-testid={`stampa-carnet-${carnetIdx}`}
-                            style={{
-                              padding: '5px 12px',
-                              background: '#2196f3',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: 6,
-                              cursor: 'pointer',
-                              fontSize: 11,
-                              fontWeight: 'bold',
-                              marginRight: 8
-                            }}
-                          >
-                            🖨️ Stampa
-                          </button>
-                          <button
-                            onClick={() => handleDeleteCarnet(carnetId, carnetAssegni)}
-                            data-testid={`delete-carnet-${carnetIdx}`}
-                            style={{
-                              padding: '5px 12px',
-                              background: '#dc2626',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: 6,
-                              cursor: 'pointer',
-                              fontSize: 11,
-                              fontWeight: 'bold'
-                            }}
-                          >
-                            🗑️ Elimina
+
+                        {/* Stato */}
+                        <td style={{ padding: '8px 6px', textAlign: 'center' }}>
+                          <span style={{
+                            padding: '3px 8px',
+                            borderRadius: 10,
+                            fontSize: 10,
+                            fontWeight: 'bold',
+                            background: STATI_ASSEGNO[assegno.stato]?.color || '#9e9e9e',
+                            color: 'white',
+                            whiteSpace: 'nowrap'
+                          }}>
+                            {STATI_ASSEGNO[assegno.stato]?.label || assegno.stato}
+                          </span>
+                        </td>
+
+                        {/* Beneficiario + Note in colonna unica */}
+                        <td style={{ padding: '8px 12px', maxWidth: 250 }}>
+                          {editingId === assegno.id ? (
+                            <input
+                              type="text"
+                              value={editForm.beneficiario}
+                              onChange={(e) => setEditForm({ ...editForm, beneficiario: e.target.value })}
+                              placeholder="Beneficiario"
+                              style={{ padding: 6, borderRadius: 4, border: '1px solid #ddd', width: '100%', fontSize: 12 }}
+                            />
+                          ) : (
+                            <div>
+                              <div style={{ fontWeight: 500, fontSize: 13 }}>{assegno.beneficiario || '-'}</div>
+                              {assegno.note && <div style={{ fontSize: 11, color: '#666', marginTop: 2 }}>{assegno.note}</div>}
+                            </div>
+                          )}
+                        </td>
+
+                        {/* Importo */}
+                        <td style={{ padding: '8px 12px', textAlign: 'right' }}>
+                          {editingId === assegno.id ? (
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={editForm.importo}
+                              onChange={(e) => setEditForm({ ...editForm, importo: parseFloat(e.target.value) || '' })}
+                              placeholder="0.00"
+                              style={{ padding: 6, borderRadius: 4, border: '1px solid #ddd', width: 80, textAlign: 'right', fontSize: 12 }}
+                            />
+                          ) : (
+                            <span style={{ fontWeight: 'bold', fontSize: 13 }}>
+                              {formatEuro(assegno.importo)}
+                            </span>
+                          )}
+                        </td>
+
+                        {/* Data + N.Fattura combinati */}
+                        <td style={{ padding: '8px 12px' }}>
+                          {editingId === assegno.id ? (
+                            <div style={{ display: 'flex', gap: 4 }}>
+                              <input
+                                type="date"
+                                value={editForm.data_fattura}
+                                onChange={(e) => setEditForm({ ...editForm, data_fattura: e.target.value })}
+                                style={{ padding: 4, borderRadius: 4, border: '1px solid #ddd', fontSize: 11, width: 110 }}
+                              />
+                              <input
+                                type="text"
+                                value={editForm.numero_fattura}
+                                onChange={(e) => setEditForm({ ...editForm, numero_fattura: e.target.value })}
+                                placeholder="N.Fatt"
+                                style={{ padding: 4, borderRadius: 4, border: '1px solid #ddd', fontSize: 11, width: 80 }}
+                              />
+                            </div>
+                          ) : (
+                            <div style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+                              {/* Pulsante per visualizzare fattura */}
+                              {(assegno.fattura_collegata || assegno.fatture_collegate?.[0]?.fattura_id) && (
+                                <a
+                                  href={`/api/fatture-ricevute/fattura/${assegno.fattura_collegata || assegno.fatture_collegate?.[0]?.fattura_id}/view-assoinvoice`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  style={{
+                                    padding: '3px 8px',
+                                    background: '#4caf50',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: 4,
+                                    cursor: 'pointer',
+                                    fontSize: 11,
+                                    fontWeight: 'bold',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: 3,
+                                    textDecoration: 'none'
+                                  }}
+                                  title="Visualizza Fattura"
+                                  data-testid={`view-fattura-${assegno.id}`}
+                                >
+                                  📄 Vedi
+                                </a>
+                              )}
+                              {/* Info fattura */}
+                              <div>
+                                {assegno.numero_fattura && <div style={{ color: '#2196f3' }}>Fatt. {assegno.numero_fattura}</div>}
+                                {assegno.data_fattura && <div style={{ color: '#666', fontSize: 11 }}>{formatDateIT(assegno.data_fattura)}</div>}
+                              </div>
+                            </div>
+                          )}
+                        </td>
+
+                        {/* Azioni - STAMPA ed ELIMINA nella stessa riga */}
+                        <td style={{ padding: '6px', textAlign: 'center' }}>
+                          <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
+                            {editingId === assegno.id ? (
+                              <>
+                                <button onClick={handleSaveEdit} style={{ padding: '4px 8px', cursor: 'pointer', background: '#4caf50', color: 'white', border: 'none', borderRadius: 4, fontSize: 11 }}>✓</button>
+                                <button onClick={cancelEdit} style={{ padding: '4px 8px', cursor: 'pointer', background: '#f44336', color: 'white', border: 'none', borderRadius: 4, fontSize: 11 }}>✕</button>
+                              </>
+                            ) : (
+                              <>
+                                <button onClick={() => startEdit(assegno)} data-testid={`edit-${assegno.id}`} style={{ padding: '4px 6px', cursor: 'pointer', background: '#f5f5f5', border: 'none', borderRadius: 4 }} title="Modifica">✏️</button>
+                                <button onClick={() => openFattureModal(assegno)} data-testid={`fatture-${assegno.id}`} style={{ padding: '4px 6px', cursor: 'pointer', background: '#f5f5f5', border: 'none', borderRadius: 4 }} title="Collega Fatture">📄</button>
+                                {/* STAMPA singolo assegno */}
+                                <button 
+                                  onClick={() => {
+                                    const doc = generateCarnetPDF(carnetId, [assegno]);
+                                    doc.save(`Assegno_${assegno.numero}.pdf`);
+                                  }} 
+                                  data-testid={`print-${assegno.id}`} 
+                                  style={{ padding: '4px 6px', cursor: 'pointer', background: '#2196f3', color: 'white', border: 'none', borderRadius: 4 }} 
+                                  title="Stampa"
+                                >🖨️</button>
+                                {/* ELIMINA */}
+                                <button onClick={() => handleDelete(assegno)} data-testid={`delete-${assegno.id}`} style={{ padding: '4px 6px', cursor: 'pointer', background: '#ffebee', border: 'none', borderRadius: 4, color: '#c62828' }} title="Elimina">🗑️</button>
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    </React.Fragment>
+                  ))}
                           </button>
                         </td>
                       </tr>
