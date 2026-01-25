@@ -238,8 +238,12 @@ async def processa_fatture_email_ai(
         "processate": 0,
         "errori": 0,
         "già_esistenti": 0,
+        "non_pdf_saltati": 0,
         "fatture_inserite": []
     }
+    
+    # Estensioni da escludere (non sono PDF validi)
+    EXCLUDED_EXTENSIONS = {'.p7s', '.p7m', '.p7c', '.sig', '.xml', '.txt', '.html'}
     
     # Trova fatture non ancora processate
     cursor = db["fatture_email_attachments"].find({
@@ -248,14 +252,29 @@ async def processa_fatture_email_ai(
             {"processed": False}
         ],
         "pdf_data": {"$exists": True, "$ne": None}
-    }).limit(limit)
+    }).limit(limit * 2)  # Prendiamo di più per compensare i saltati
     
+    processed_count = 0
     async for doc in cursor:
+        if processed_count >= limit:
+            break
+            
         try:
-            pdf_data = doc.get("pdf_data")
             filename = doc.get("filename", "fattura.pdf")
             
-            # Decodifica PDF
+            # Salta file non PDF
+            ext = filename.lower().split('.')[-1] if '.' in filename else ''
+            if f'.{ext}' in EXCLUDED_EXTENSIONS or ext in ['p7s', 'p7m', 'xml', 'txt', 'html']:
+                stats["non_pdf_saltati"] += 1
+                # Marca come processato per non riprocessarlo
+                await db["fatture_email_attachments"].update_one(
+                    {"id": doc["id"]},
+                    {"$set": {"processed": True, "skip_reason": "non_pdf_file"}}
+                )
+                continue
+            
+            # Verifica che sia effettivamente un PDF
+            pdf_data = doc.get("pdf_data")
             if isinstance(pdf_data, str):
                 try:
                     pdf_bytes = base64.b64decode(pdf_data)
@@ -263,6 +282,15 @@ async def processa_fatture_email_ai(
                     pdf_bytes = pdf_data.encode()
             else:
                 pdf_bytes = pdf_data
+            
+            # Verifica magic bytes PDF
+            if not pdf_bytes[:4] == b'%PDF':
+                stats["non_pdf_saltati"] += 1
+                await db["fatture_email_attachments"].update_one(
+                    {"id": doc["id"]},
+                    {"$set": {"processed": True, "skip_reason": "not_pdf_format"}}
+                )
+                continue
             
             # Estrai dati con AI
             ai_result = await parse_fattura_ai(file_bytes=pdf_bytes)
@@ -291,6 +319,7 @@ async def processa_fatture_email_ai(
                         {"id": doc["id"]},
                         {"$set": {"processed": True, "existing_invoice_id": existing.get("id")}}
                     )
+                    processed_count += 1
                     continue
             
             # Inserisci nuova fattura
@@ -319,6 +348,7 @@ async def processa_fatture_email_ai(
             )
             
             stats["processate"] += 1
+            processed_count += 1
             stats["fatture_inserite"].append({
                 "filename": filename,
                 "fornitore": invoice_data.get("supplier_name") or invoice_data.get("fornitore"),
