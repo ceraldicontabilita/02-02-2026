@@ -102,19 +102,20 @@ export default function GestioneAssegni() {
     }
   };
 
-  // Carica fatture non pagate per collegamento (esclude pagamenti in contanti)
+  // Carica fatture non pagate per collegamento - SOLO dello stesso fornitore
   const loadFatture = async (beneficiario = '') => {
     setLoadingFatture(true);
     try {
       const params = new URLSearchParams();
       params.append('status', 'imported');
+      // IMPORTANTE: se c'è un beneficiario, filtra SOLO quelle del beneficiario
       if (beneficiario) {
         params.append('fornitore', beneficiario);
       }
       const res = await api.get(`/api/invoices?${params}&limit=200`);
       const items = res.data.items || res.data || [];
       // Escludi fatture già pagate E fornitori pagati per contanti
-      const filtered = items.filter(f => {
+      let filtered = items.filter(f => {
         if (f.status === 'paid') return false;
         // Escludi se il metodo di pagamento è contanti
         const paymentMethod = (f.payment_method || f.metodo_pagamento || '').toLowerCase();
@@ -123,6 +124,20 @@ export default function GestioneAssegni() {
         }
         return true;
       });
+      
+      // FILTRO AGGIUNTIVO: Se c'è un beneficiario, mostra SOLO fatture di quel fornitore
+      // Questo perché non si può pagare con un assegno fatture di fornitori diversi
+      if (beneficiario) {
+        const benefLower = beneficiario.toLowerCase();
+        filtered = filtered.filter(f => {
+          const fornitore = (f.supplier_name || f.cedente_denominazione || '').toLowerCase();
+          // Match fuzzy: il beneficiario deve contenere parte del nome fornitore o viceversa
+          return fornitore.includes(benefLower.substring(0, 5)) || 
+                 benefLower.includes(fornitore.substring(0, 5)) ||
+                 fornitore.split(' ').some(word => benefLower.includes(word) && word.length > 3);
+        });
+      }
+      
       setFatture(filtered);
     } catch (error) {
       console.error('Error loading fatture:', error);
