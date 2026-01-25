@@ -1465,7 +1465,7 @@ export default function GestioneAssegni() {
                   </tr>
                 </thead>
                 <tbody>
-                  {Object.entries(carnets).map(([carnetId, carnetAssegni], carnetIdx) => 
+                  {Object.entries(carnets).map(([carnetId, carnetAssegni], carnetIdx) => (
                     carnetAssegni.map((assegno, idx) => (
                         <tr 
                         key={assegno.id} 
