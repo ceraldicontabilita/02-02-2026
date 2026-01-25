@@ -1633,9 +1633,6 @@ export default function GestioneAssegni() {
                     ))}
                     </React.Fragment>
                   ))}
-                          </button>
-                        </td>
-                      </tr>
 
                     {/* Assegni del carnet - Layout compatto su singola riga */}
                     {carnetAssegni.map((assegno, idx) => (
