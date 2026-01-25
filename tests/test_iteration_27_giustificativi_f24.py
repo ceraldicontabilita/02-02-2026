@@ -16,7 +16,7 @@ import requests
 import os
 import time
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://smart-doc-extract-1.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://autoparsing.preview.emergentagent.com')
 
 class TestGiustificativiPerformance:
     """Test giustificativi endpoint performance - should respond in <5s"""

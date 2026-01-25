@@ -33,12 +33,12 @@
     "test_5_redirect_fornitori_learning": {
       "status": "PASS",
       "description": "/fornitori-learning redirect correttamente a /fornitori?tab=learning",
-      "url_finale": "https://smart-doc-extract-1.preview.emergentagent.com/fornitori?tab=learning"
+      "url_finale": "https://autoparsing.preview.emergentagent.com/fornitori?tab=learning"
     },
     "test_6_redirect_riconciliazione_intelligente": {
       "status": "PASS",
       "description": "/riconciliazione-intelligente redirect correttamente a /riconciliazione",
-      "url_finale": "https://smart-doc-extract-1.preview.emergentagent.com/riconciliazione"
+      "url_finale": "https://autoparsing.preview.emergentagent.com/riconciliazione"
     },
     "test_7_riconciliazione_tabs": {
       "status": "PASS",
