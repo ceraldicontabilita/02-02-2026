@@ -275,11 +275,23 @@ class EmailFullDownloader:
         return doc_id
     
     def extract_pdfs_from_email(self, msg: email.message.Message) -> List[Tuple[str, bytes]]:
-        """Estrae tutti i PDF da un'email."""
+        """
+        Estrae SOLO i PDF da un'email.
+        ESCLUDE: PNG, JPG, immagini, firme digitali, XML.
+        """
         pdfs = []
         
-        # Estensioni da escludere (firme, certificati, non PDF)
-        EXCLUDED_EXTENSIONS = {'.p7s', '.p7m', '.p7c', '.sig', '.asc', '.gpg', '.pgp', '.xml', '.txt'}
+        # Estensioni da ESCLUDERE completamente
+        EXCLUDED_EXTENSIONS = {
+            # Firme digitali
+            '.p7s', '.p7m', '.p7c', '.sig', '.asc', '.gpg', '.pgp',
+            # Testo / XML
+            '.xml', '.txt', '.html', '.htm',
+            # IMMAGINI - NON AMMINISTRATIVE
+            '.png', '.jpg', '.jpeg', '.gif', '.bmp', '.tiff', '.tif', '.webp', '.ico', '.svg',
+            # Altri
+            '.zip', '.rar', '.7z', '.exe', '.dll'
+        }
         
         if msg.is_multipart():
             for part in msg.walk():
@@ -294,22 +306,16 @@ class EmailFullDownloader:
                     # Salta file esclusi
                     ext = os.path.splitext(filename.lower())[1]
                     if ext in EXCLUDED_EXTENSIONS:
+                        logger.debug(f"File escluso (estensione): {filename}")
                         continue
                 
-                # Solo PDF veri
+                # SOLO PDF veri - niente immagini
                 is_pdf = (
                     content_type == "application/pdf" or
                     (filename and filename.lower().endswith(".pdf"))
                 )
                 
-                # Oppure allegati che sembrano documenti
-                is_document = (
-                    "attachment" in content_disposition.lower() and
-                    filename and
-                    any(filename.lower().endswith(ext) for ext in ['.pdf', '.png', '.jpg', '.jpeg'])
-                )
-                
-                if is_pdf or is_document:
+                if is_pdf:
                     try:
                         content = part.get_payload(decode=True)
                         if content and len(content) > 500:  # File valido (>500 bytes)
