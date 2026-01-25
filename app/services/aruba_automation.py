@@ -147,10 +147,23 @@ async def find_supplier(db, fornitore_nome: str) -> Optional[Dict[str, Any]]:
     if not fornitore_nome:
         return None
     
-    # Cerca per nome simile
+    # Cerca per nome simile in fornitori_dizionario (collezione principale)
     fornitore_words = fornitore_nome.split()[:2]
     for word in fornitore_words:
         if len(word) > 3:
+            # Prima cerca in fornitori_dizionario
+            supplier = await db["fornitori_dizionario"].find_one(
+                {"$or": [
+                    {"ragione_sociale": {"$regex": word, "$options": "i"}},
+                    {"denominazione": {"$regex": word, "$options": "i"}},
+                    {"nome": {"$regex": word, "$options": "i"}}
+                ]},
+                {"_id": 0, "id": 1, "ragione_sociale": 1, "metodo_pagamento": 1}
+            )
+            if supplier:
+                return supplier
+            
+            # Fallback su suppliers
             supplier = await db["suppliers"].find_one(
                 {"$or": [
                     {"ragione_sociale": {"$regex": word, "$options": "i"}},
@@ -173,7 +186,8 @@ async def find_supplier(db, fornitore_nome: str) -> Optional[Dict[str, Any]]:
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     
-    await db["suppliers"].insert_one(nuovo_fornitore.copy())
+    # Inserisci in fornitori_dizionario
+    await db["fornitori_dizionario"].insert_one(nuovo_fornitore.copy())
     logger.info(f"🆕 Fornitore creato automaticamente: {fornitore_nome}")
     
     return {
@@ -181,10 +195,6 @@ async def find_supplier(db, fornitore_nome: str) -> Optional[Dict[str, Any]]:
         "ragione_sociale": fornitore_nome,
         "metodo_pagamento": "bonifico"
     }
-            if supplier:
-                return supplier
-    
-    return None
 
 
 async def check_xml_exists(db, numero_fattura: str, fornitore: str) -> Optional[Dict[str, Any]]:
