@@ -368,6 +368,206 @@ async def processa_fatture_email_ai(
     }
 
 
+# === PROCESSO BATCH FATTURE EMAIL (evita timeout) ===
+# Stato globale per tracciare il progresso
+_batch_processing_status = {
+    "running": False,
+    "progress": 0,
+    "total": 0,
+    "processate": 0,
+    "errori": 0,
+    "started_at": None,
+    "completed_at": None,
+    "last_error": None
+}
+
+@router.get("/processa-fatture-email/status")
+async def get_batch_status() -> Dict[str, Any]:
+    """Restituisce lo stato corrente del processo batch."""
+    return _batch_processing_status
+
+
+@router.post("/processa-fatture-email/batch")
+async def processa_fatture_email_batch(
+    background_tasks: BackgroundTasks,
+    batch_size: int = Query(default=10, le=20, description="Dimensione batch"),
+    total_limit: int = Query(default=50, le=200, description="Limite totale fatture")
+) -> Dict[str, Any]:
+    """
+    Avvia il processo di fatture email in background con batch.
+    Controlla lo stato con GET /processa-fatture-email/status
+    """
+    global _batch_processing_status
+    
+    if _batch_processing_status["running"]:
+        return {
+            "success": False,
+            "message": "Processo già in esecuzione",
+            "status": _batch_processing_status
+        }
+    
+    # Reset status
+    _batch_processing_status = {
+        "running": True,
+        "progress": 0,
+        "total": total_limit,
+        "processate": 0,
+        "errori": 0,
+        "started_at": datetime.now(timezone.utc).isoformat(),
+        "completed_at": None,
+        "last_error": None
+    }
+    
+    # Avvia in background
+    background_tasks.add_task(_run_batch_processing, batch_size, total_limit)
+    
+    return {
+        "success": True,
+        "message": f"Processo avviato in background. Elaborazione di {total_limit} fatture in batch da {batch_size}.",
+        "status": _batch_processing_status
+    }
+
+
+async def _run_batch_processing(batch_size: int, total_limit: int):
+    """Task background per elaborazione batch."""
+    global _batch_processing_status
+    import base64
+    import uuid
+    from app.services.ai_document_parser import parse_fattura_ai, convert_ai_fattura_to_db_format
+    
+    db = Database.get_db()
+    processed_total = 0
+    
+    try:
+        # Estensioni da escludere
+        EXCLUDED_EXTENSIONS = {'.p7s', '.p7m', '.p7c', '.sig', '.xml', '.txt', '.html'}
+        
+        # Conta totale da processare
+        total_pending = await db["fatture_email_attachments"].count_documents({
+            "$or": [{"processed": {"$exists": False}}, {"processed": False}],
+            "pdf_data": {"$exists": True, "$ne": None}
+        })
+        
+        _batch_processing_status["total"] = min(total_pending, total_limit)
+        
+        while processed_total < total_limit:
+            # Prendi un batch
+            cursor = db["fatture_email_attachments"].find({
+                "$or": [{"processed": {"$exists": False}}, {"processed": False}],
+                "pdf_data": {"$exists": True, "$ne": None}
+            }).limit(batch_size)
+            
+            batch_count = 0
+            async for doc in cursor:
+                try:
+                    filename = doc.get("filename", "fattura.pdf")
+                    ext = filename.lower().split('.')[-1] if '.' in filename else ''
+                    
+                    if f'.{ext}' in EXCLUDED_EXTENSIONS:
+                        await db["fatture_email_attachments"].update_one(
+                            {"id": doc["id"]},
+                            {"$set": {"processed": True, "skip_reason": "non_pdf_file"}}
+                        )
+                        batch_count += 1
+                        processed_total += 1
+                        continue
+                    
+                    pdf_data = doc.get("pdf_data")
+                    if isinstance(pdf_data, str):
+                        try:
+                            pdf_bytes = base64.b64decode(pdf_data)
+                        except:
+                            pdf_bytes = pdf_data.encode()
+                    else:
+                        pdf_bytes = pdf_data
+                    
+                    if not pdf_bytes[:4] == b'%PDF':
+                        await db["fatture_email_attachments"].update_one(
+                            {"id": doc["id"]},
+                            {"$set": {"processed": True, "skip_reason": "not_pdf_format"}}
+                        )
+                        batch_count += 1
+                        processed_total += 1
+                        continue
+                    
+                    # Parsing AI
+                    ai_result = await parse_fattura_ai(file_bytes=pdf_bytes)
+                    
+                    if not ai_result.get("success"):
+                        _batch_processing_status["errori"] += 1
+                        await db["fatture_email_attachments"].update_one(
+                            {"id": doc["id"]},
+                            {"$set": {"processed": True, "error": str(ai_result.get('error'))}}
+                        )
+                        batch_count += 1
+                        processed_total += 1
+                        continue
+                    
+                    invoice_data = convert_ai_fattura_to_db_format(ai_result.get("data", {}))
+                    numero_fattura = invoice_data.get("numero_fattura") or invoice_data.get("invoice_number")
+                    
+                    # Check duplicati
+                    if numero_fattura:
+                        existing = await db["invoices"].find_one({
+                            "$or": [{"invoice_number": numero_fattura}, {"numero_fattura": numero_fattura}]
+                        })
+                        if existing:
+                            await db["fatture_email_attachments"].update_one(
+                                {"id": doc["id"]},
+                                {"$set": {"processed": True, "existing_invoice_id": existing.get("id")}}
+                            )
+                            batch_count += 1
+                            processed_total += 1
+                            continue
+                    
+                    # Inserisci fattura
+                    new_invoice = {
+                        "id": str(uuid.uuid4()),
+                        **invoice_data,
+                        "pdf_data": pdf_data,
+                        "pdf_filename": filename,
+                        "source": "email_attachment",
+                        "created_at": datetime.now(timezone.utc).isoformat()
+                    }
+                    
+                    await db["invoices"].insert_one(new_invoice.copy())
+                    await db["fatture_email_attachments"].update_one(
+                        {"id": doc["id"]},
+                        {"$set": {"processed": True, "invoice_id": new_invoice["id"]}}
+                    )
+                    
+                    _batch_processing_status["processate"] += 1
+                    batch_count += 1
+                    processed_total += 1
+                    
+                except Exception as e:
+                    _batch_processing_status["errori"] += 1
+                    _batch_processing_status["last_error"] = str(e)
+                    batch_count += 1
+                    processed_total += 1
+            
+            # Aggiorna progresso
+            _batch_processing_status["progress"] = processed_total
+            
+            # Se non abbiamo processato nulla nel batch, interrompi
+            if batch_count == 0:
+                break
+            
+            # Pausa tra batch per non sovraccaricare
+            await asyncio.sleep(0.5)
+        
+    except Exception as e:
+        _batch_processing_status["last_error"] = str(e)
+        logger.error(f"Errore batch processing: {e}")
+    
+    finally:
+        _batch_processing_status["running"] = False
+        _batch_processing_status["completed_at"] = datetime.now(timezone.utc).isoformat()
+
+
+import asyncio
+
+
 @router.post("/popola-pdf-payslips")
 async def popola_pdf_payslips() -> Dict[str, Any]:
     """
