@@ -866,7 +866,7 @@ export default function Cedolini() {
                       <FileText style={{ width: 20, height: 20, color: '#ef4444' }} />
                       <div>
                         <div style={{ fontSize: 13, fontWeight: 500 }}>
-                          Busta paga - {cedolinoSelezionato.employee_nome} - {MESI.find(m => m.key === cedolinoSelezionato.mese)?.label} {cedolinoSelezionato.anno}.pdf
+                          Busta paga - {cedolinoSelezionato.employee_nome} - {MESI.find(m => m.num === cedolinoSelezionato.mese)?.label || `Mese ${cedolinoSelezionato.mese}`} {cedolinoSelezionato.anno}.pdf
                         </div>
                         <div style={{ fontSize: 11, color: '#9ca3af' }}>
                           Caricato il {formatDate(cedolinoSelezionato.created_at)}
