@@ -821,6 +821,7 @@ export default function RiconciliazioneUnificata() {
             movimenti={movimentiBancaFiltrati} 
             onConferma={handleConferma}
             onIgnora={handleIgnora}
+            onElimina={handleElimina}
             processing={processing}
             title="Movimenti Bancari"
             emptyText="Tutti i movimenti sono stati riconciliati"
