@@ -137,7 +137,7 @@ async def lista_cedolini(
     anno: Optional[int] = None,
     mese: Optional[int] = None,
     dipendente_id: Optional[str] = None,
-    limit: int = 100
+    limit: int = 500
 ) -> Dict[str, Any]:
     """
     Lista tutti i cedolini con filtri opzionali.
@@ -155,7 +155,7 @@ async def lista_cedolini(
     cedolini = await db["cedolini"].find(
         query,
         {"_id": 0, "pdf_data": 0}
-    ).sort([("anno", -1), ("mese", -1)]).limit(limit).to_list(limit)
+    ).sort([("anno", -1), ("mese", 1)]).limit(limit).to_list(limit)
     
     total = await db["cedolini"].count_documents(query)
     
