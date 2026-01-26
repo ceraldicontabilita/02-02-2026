@@ -101,6 +101,8 @@ export default function RiconciliazioneUnificata() {
   const [f24Pendenti, setF24Pendenti] = useState([]);
   const [fattureAruba, setFattureAruba] = useState([]);
   const [stipendiPendenti, setStipendiPendenti] = useState([]);
+  const [documentiNonAssociati, setDocumentiNonAssociati] = useState([]);
+  const [documentiStats, setDocumentiStats] = useState(null);
   
   // Paginazione
   const [currentLimit, setCurrentLimit] = useState(25);
