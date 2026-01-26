@@ -169,18 +169,18 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div style={{ background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', border: '1px solid #e5e7eb' }}>
-        <h1 style={{ margin: '0 0 16px 0', fontSize: 22, fontWeight: 'bold', color: '#1e3a5f' }}>Dashboard</h1>
-        <p style={{ color: '#6b7280' }}>⏳ Caricamento in corso...</p>
+      <div style={STYLES.card}>
+        <h1 style={{ margin: '0 0 16px 0', fontSize: 22, fontWeight: 'bold', color: COLORS.primary }}>Dashboard</h1>
+        <p style={{ color: COLORS.gray }}>⏳ Caricamento in corso...</p>
       </div>
     );
   }
 
   return (
     <>
-      <div style={{ background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', border: '1px solid #e5e7eb', marginBottom: 12 }}>
+      <div style={{ ...STYLES.card, marginBottom: 12 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 'bold', color: '#1e3a5f' }}>Dashboard {anno}</h1>
+          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 'bold', color: COLORS.primary }}>Dashboard {anno}</h1>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             {/* Pulsante Auto-Riparazione */}
             <button
@@ -209,21 +209,14 @@ export default function Dashboard() {
               )}
             </button>
             {autoRepairStatus && autoRepairStatus !== 'running' && autoRepairStatus.totale > 0 && (
-              <span style={{ 
-                padding: '4px 8px', 
-                background: '#dcfce7', 
-                color: '#16a34a', 
-                borderRadius: 4, 
-                fontSize: 11,
-                fontWeight: 600
-              }}>
+              <span style={badge('success')}>
                 ✓ {autoRepairStatus.totale} correzioni
               </span>
             )}
             {err ? (
-              <span style={{ color: "#dc2626", fontSize: 14 }}>{err}</span>
+              <span style={{ color: COLORS.danger, fontSize: 14 }}>{err}</span>
             ) : (
-              <span style={{ padding: '4px 10px', background: '#dcfce7', color: '#16a34a', borderRadius: 6, fontSize: 12, fontWeight: '600' }}>
+              <span style={badge('success')}>
                 ✓ Backend connesso
               </span>
             )}
