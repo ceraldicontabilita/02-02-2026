@@ -365,36 +365,19 @@ function PrimaNotaDesktop() {
   }, null);
 
   // eslint-disable-next-line no-unused-vars
-  const inputStyle = {
-    padding: '10px 12px',
-    borderRadius: 8,
-    border: '2px solid #e5e7eb',
-    fontSize: 14,
-    width: '100%',
-    boxSizing: 'border-box'
-  };
+  const inputStyle = STYLES.input;
 
   const inputStyleCompact = {
     padding: '6px 8px',
     borderRadius: 6,
-    border: '1px solid #e5e7eb',
+    border: `1px solid ${COLORS.grayLight}`,
     fontSize: 12,
     width: '100%',
     boxSizing: 'border-box'
   };
 
   // eslint-disable-next-line no-unused-vars
-  const buttonStyle = (color, disabled) => ({
-    padding: '12px 20px',
-    background: disabled ? '#ccc' : color,
-    color: 'white',
-    border: 'none',
-    borderRadius: 8,
-    cursor: disabled ? 'not-allowed' : 'pointer',
-    fontWeight: 'bold',
-    fontSize: 14,
-    width: '100%'
-  });
+  const buttonStyle = (color, disabled) => button(color === COLORS.success ? 'primary' : 'secondary', disabled);
 
   const buttonStyleCompact = (color, disabled) => ({
     padding: '6px 12px',
@@ -409,19 +392,10 @@ function PrimaNotaDesktop() {
   });
 
   return (
-    <div style={{ padding: 20, maxWidth: 1400, margin: '0 auto' }}>
+    <div style={STYLES.page}>
       
       {/* HEADER CON SELETTORE ANNO */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        marginBottom: 20,
-        padding: '15px 20px',
-        background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
-        borderRadius: 12,
-        color: 'white'
-      }}>
+      <div style={STYLES.header}>
         <div>
           <h1 style={{ margin: 0, fontSize: 22, fontWeight: 'bold' }}>📒 Prima Nota</h1>
           <p style={{ margin: '4px 0 0 0', fontSize: 13, opacity: 0.9 }}>
@@ -436,7 +410,7 @@ function PrimaNotaDesktop() {
             fontWeight: 'bold',
             borderRadius: 8,
             background: 'rgba(255,255,255,0.9)',
-            color: '#1e3a5f',
+            color: COLORS.primary,
           }}>
             📅 Anno: {selectedYear}
           </span>
