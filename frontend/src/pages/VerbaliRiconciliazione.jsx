@@ -25,6 +25,13 @@ export default function VerbaliRiconciliazione() {
   const [collegandoDriver, setCollegandoDriver] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  
+  // Nuovi state per associazione manuale
+  const [dipendenti, setDipendenti] = useState([]);
+  const [showAssociaModal, setShowAssociaModal] = useState(false);
+  const [selectedTargaForAssoc, setSelectedTargaForAssoc] = useState('');
+  const [selectedDriverId, setSelectedDriverId] = useState('');
+  const [associating, setAssociating] = useState(false);
 
   const loadDashboard = useCallback(async () => {
     try {
