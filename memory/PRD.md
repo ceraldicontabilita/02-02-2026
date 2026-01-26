@@ -377,13 +377,72 @@ POST /api/upload-ai/archivio-pdf/{id}/associa  # Associazione manuale PDF→XML
 - ✅ **Auto: ON/OFF** - Toggle funzionante con timer 30 min
 - ✅ **Filtri** - Pannello filtri funzionante (Data Da/A, Importo Min/Max, Cerca, Reset)
 
-### 8.5 File Modificati
+### 8.5 ✅ Chat Intelligente (sostituisce Parlant)
+- Eliminato tutto il codice Parlant (ParlantChat.jsx, parlant_api.py)
+- Creato nuovo componente `/app/frontend/src/components/ChatIntelligente.jsx`
+- Widget chat con icona 🤖 in basso a destra
+- Usa endpoint `/api/chat/ask` con AI Claude per risposte in linguaggio naturale
+- Supporta domande su fatture, F24, cedolini, dipendenti, fornitori, bilanci, estratti conto
+- Toggle per attivare/disattivare risposte AI
+
+### 8.6 ✅ Ordinamento Prima Nota Cassa
+- Modificato ordinamento in `/app/app/routers/commercialista.py`:
+  - Prima per data
+  - Poi per categoria (Corrispettivi prima di POS)
+- Applicato a tutti gli endpoint di lista Prima Nota Cassa
+
+### 8.7 ✅ Sistema Schede Tecniche Prodotti
+- Nuovo servizio `/app/app/services/schede_tecniche_service.py`
+- Nuovo router `/app/app/routers/schede_tecniche.py`
+- Riconoscimento automatico "scheda tecnica" negli allegati email
+- Estrazione dati prodotto (nome, codice, ingredienti, allergeni)
+- Associazione automatica a fornitori e prodotti esistenti
+- Endpoint API:
+  - `GET /api/schede-tecniche/lista`
+  - `GET /api/schede-tecniche/fornitore/{id}`
+  - `GET /api/schede-tecniche/prodotto/{id}`
+  - `GET /api/schede-tecniche/pdf/{id}`
+  - `POST /api/schede-tecniche/associa-prodotto`
+  - `DELETE /api/schede-tecniche/{id}`
+  - `GET /api/schede-tecniche/statistiche/riepilogo`
+
+### 8.8 ✅ Fix Visualizzazione File Non-PDF
+- Endpoint `/api/documenti-non-associati/pdf/{id}` ora supporta:
+  - PDF
+  - PNG, JPG, JPEG, GIF, WEBP, BMP
+  - SVG, XML, TXT, CSV, HTML
+  - File P7S/P7M firmati digitalmente
+- Rilevamento automatico formato tramite magic number
+- Sanitizzazione filename per evitare errori header
+
+### 8.9 ✅ Pulizia Codice
+- Eliminata pagina `/documenti-non-associati` (integrata in Riconciliazione)
+- Rimosso file `DocumentiNonAssociati.jsx`
+- Rimossi riferimenti dal menu laterale e dal router
+
+### 8.10 File Modificati
 - `/app/app/routers/bank/estratto_conto.py` - Aggiunto endpoint DELETE singolo
+- `/app/app/routers/documenti_non_associati.py` - Supporto multi-formato e sanitizzazione filename
+- `/app/app/routers/commercialista.py` - Ordinamento Prima Nota Cassa
+- `/app/app/main.py` - Rimosso Parlant, aggiunto schede_tecniche
+- `/app/app/services/email_full_download.py` - Pattern per schede tecniche
 - `/app/frontend/src/pages/RiconciliazioneUnificata.jsx` - Tab Documenti + icona cestino
+- `/app/frontend/src/components/ChatIntelligente.jsx` - NUOVO
+- `/app/frontend/src/App.jsx` - Rimosso Parlant, aggiunto ChatIntelligente
+- `/app/frontend/src/main.jsx` - Rimossa route documenti-non-associati
+- `/app/app/routers/schede_tecniche.py` - NUOVO
+- `/app/app/services/schede_tecniche_service.py` - NUOVO
 
 ---
 
-## 9. CLAUSOLA FINALE
+## 9. Test Report Iteration 36
+- **Backend**: 100% (10/10 tests passed)
+- **Frontend**: 100% (tutti i features funzionanti)
+- **Bug Fix Applicato**: Sanitizzazione filename per header Content-Disposition
+
+---
+
+## 10. CLAUSOLA FINALE
 
 Questo PRD è vincolante. Ogni sviluppo futuro deve:
 - Rispettare i validatori
