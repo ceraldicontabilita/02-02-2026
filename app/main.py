@@ -398,6 +398,9 @@ app.include_router(upload_ai.router, prefix="/api/upload-ai", tags=["Upload AI"]
 # --- Chat Intelligente (Interrogazione dati in linguaggio naturale) ---
 app.include_router(chat_router.router, prefix="/api/chat", tags=["Chat Intelligente"])
 
+# --- Schede Tecniche Prodotti ---
+app.include_router(schede_tecniche.router, prefix="/api", tags=["Schede Tecniche Prodotti"])
+
 # --- Riconciliazione Email ↔ Gestionale ---
 app.include_router(email_reconciliation.router, tags=["Riconciliazione Email"])
 
