@@ -300,7 +300,7 @@ export default function CedoliniRiconciliazione() {
         </div>
       </div>
 
-      {/* Tabs Mesi con Stats */}
+      {/* Tabs Mesi con Stats - LAYOUT GRIGLIA FISSO */}
       <div style={{ 
         background: 'white', 
         borderRadius: 12, 
@@ -309,10 +309,10 @@ export default function CedoliniRiconciliazione() {
         overflow: 'hidden'
       }}>
         <div style={{ 
-          display: 'flex', 
-          overflowX: 'auto',
-          borderBottom: '1px solid #e5e7eb',
-          padding: '0 8px'
+          display: 'grid',
+          gridTemplateColumns: 'repeat(14, 1fr)',
+          borderBottom: '2px solid #e5e7eb',
+          background: '#f9fafb'
         }}>
           {MESI.map(mese => {
             const meseStats = stats[mese.key] || { count: 0, totale: 0 };
@@ -323,42 +323,42 @@ export default function CedoliniRiconciliazione() {
                 key={mese.key}
                 onClick={() => setMeseSelezionato(mese.key)}
                 style={{
-                  padding: '12px 16px',
-                  background: 'transparent',
+                  padding: '12px 4px',
+                  background: isActive ? COLORS.primary : 'transparent',
                   border: 'none',
-                  borderBottom: isActive ? '3px solid #3b82f6' : '3px solid transparent',
+                  borderBottom: isActive ? `3px solid ${COLORS.success}` : '3px solid transparent',
                   cursor: 'pointer',
-                  minWidth: 75,
                   textAlign: 'center',
                   transition: 'all 0.2s'
                 }}
                 data-testid={`tab-mese-${mese.key}`}
               >
                 <div style={{ 
-                  fontSize: 13, 
-                  fontWeight: isActive ? 600 : 400,
-                  color: isActive ? '#3b82f6' : '#6b7280'
+                  fontSize: 11, 
+                  fontWeight: 700,
+                  color: isActive ? 'white' : COLORS.primary,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px'
                 }}>
-                  {mese.label}
+                  {mese.short}
                 </div>
-                {meseStats.count > 0 && (
-                  <>
-                    <div style={{ 
-                      fontSize: 11, 
-                      color: '#9ca3af',
-                      marginTop: 2
-                    }}>
-                      {meseStats.count} buste
-                    </div>
-                    <div style={{ 
-                      fontSize: 12, 
-                      fontWeight: 600,
-                      color: isActive ? '#3b82f6' : '#1f2937',
-                      marginTop: 2
-                    }}>
-                      {formatEuroShort(meseStats.totale)}
-                    </div>
-                  </>
+                {meseStats.count > 0 ? (
+                  <div style={{ 
+                    fontSize: 10, 
+                    color: isActive ? 'rgba(255,255,255,0.9)' : COLORS.gray,
+                    marginTop: 4,
+                    fontWeight: 600
+                  }}>
+                    {meseStats.count} • {formatEuroShort(meseStats.totale)}
+                  </div>
+                ) : (
+                  <div style={{ 
+                    fontSize: 10, 
+                    color: isActive ? 'rgba(255,255,255,0.5)' : '#d1d5db',
+                    marginTop: 4
+                  }}>
+                    -
+                  </div>
                 )}
               </button>
             );
