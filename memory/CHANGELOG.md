@@ -25,24 +25,60 @@
 - Mostra "Da associare" in giallo se non collegato
 - API include campo `driver` e normalizza `driver_nome`
 
-### ✅ Design System TypeScript
+### ✅ Design System TypeScript COMPLETO
 - Creato `/app/frontend/src/design/ceraldiDesignSystem.ts`
-- COLORS, SPACING, TEXT, STYLES tipizzati
-- Funzioni `button()`, `badge()` con tipi
+- Aggiornato `/app/frontend/src/lib/utils.js` con COLORS, SPACING, STYLES, button(), badge()
+- **58 pagine aggiornate** con import centralizzato del design system
+- Funzioni `button()`, `badge()` con tipi per stili consistenti
 - Formatter italiani: `formatDateIT()`, `formatEuro()`, `formatPercent()`
 
-### ✅ Documentazione Unificata
-- Uniti `ragioneria-applicata.md` e `ragioneria_applicata.md` in `RAGIONERIA_APPLICATA.md`
-- Aggiornato `ROADMAP.md` con task completati e prossimi
-- Statistiche coerenza dati aggiornate
+### ✅ Fix Tab Mesi Cedolini
+- Risolto problema sovrapposizione tab dei mesi
+- Nuovo layout a griglia (14 colonne) invece di flex
+- Mesi abbreviati (Gen, Feb, Mar...) con stats compatte
+- Tab attivo evidenziato con colore primario
+
+### ✅ Numeri Verbali Corretti (UNKNOWN → Reali)
+- Script per estrarre numeri verbale dalla descrizione
+- 22 verbali corretti: `UNKNOWN_xxx` → `S/5766`, `S/1709`, etc.
+- Pattern regex per "Verbale Nr: XXX"
+
+### ✅ UI Schede Tecniche per Fornitori
+- Nuovo pulsante "📋 Schede" nelle card dei fornitori
+- Modal dedicato per visualizzare le schede tecniche
+- Endpoint `/api/schede-tecniche/fornitore/:id`
+- Layout con icona, nome prodotto, codice articolo, data caricamento
+
+### ✅ Processo Batch Fatture Email (evita timeout)
+- Nuovo endpoint `POST /api/email-download/processa-fatture-email/batch`
+- Elaborazione in background con batch configurabili (default 10, max 20)
+- Stato tracciabile via `GET /api/email-download/processa-fatture-email/status`
+- Pause automatiche tra batch per evitare sovraccarico
+
+### ✅ Fix Endpoint view-assoinvoice
+- Ora cerca fattura sia per `id` UUID che per `_id` ObjectId MongoDB
+- Risolto errore "Fattura non trovata" per link con ObjectId
+
+### ✅ Pulizia Cedolini Vuoti
+- Eliminati 81 cedolini "fantasma" (senza dipendente, lordo, netto)
+- Rimanenti 116 cedolini tutti con dati completi
+
+### ✅ URL Descrittivi Estesi
+- `/verbali-riconciliazione/:verbaleId`
+- `/f24/:anno/:mese`
+- `/scadenze/:anno/:mese`
 
 ### File Modificati
 - `/app/app/routers/auto_repair.py` - Sincronizzazione verbali_completi
 - `/app/app/routers/verbali_riconciliazione.py` - Campo driver in proiezione
+- `/app/app/routers/email_download.py` - Processo batch email
+- `/app/app/routers/fatture_module/crud.py` - Fix view-assoinvoice
+- `/app/frontend/src/pages/Cedolini.jsx` - Fix tab mesi
+- `/app/frontend/src/pages/Fornitori.jsx` - UI schede tecniche
 - `/app/frontend/src/pages/VerbaliRiconciliazione.jsx` - Colonna Driver + Modal
-- `/app/frontend/src/design/ceraldiDesignSystem.ts` - NUOVO
-- `/app/memory/RAGIONERIA_APPLICATA.md` - UNIFICATO
-- `/app/memory/ROADMAP.md` - AGGIORNATO
+- `/app/frontend/src/lib/utils.js` - Design System centralizzato
+- `/app/frontend/src/main.jsx` - Route URL descrittivi
+- **58 pagine JSX aggiornate** con import design system
 
 ---
 
