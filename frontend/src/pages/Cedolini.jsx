@@ -77,6 +77,8 @@ const getMeseKey = (meseNum) => {
 };
 
 export default function Cedolini() {
+  const navigate = useNavigate();
+  const params = useParams();
   const [loading, setLoading] = useState(true);
   const [cedolini, setCedolini] = useState([]);
   const [employees, setEmployees] = useState([]);
@@ -87,6 +89,11 @@ export default function Cedolini() {
   const [meseSelezionato, setMeseSelezionato] = useState('gennaio');
   const [filtroEmployee, setFiltroEmployee] = useState('');
   const [searchText, setSearchText] = useState('');
+  
+  // Aggiorna title pagina
+  useEffect(() => {
+    updatePageTitle('Buste Paga', 'Dipendenti');
+  }, []);
   
   // Dettaglio cedolino
   const [showDettaglio, setShowDettaglio] = useState(false);
