@@ -12,7 +12,7 @@ import requests
 import time
 import os
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://autoparsing.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://erpsys-assist.preview.emergentagent.com').rstrip('/')
 
 
 class TestAPIPerformance:

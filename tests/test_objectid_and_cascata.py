@@ -19,7 +19,7 @@ import uuid
 # Get BASE_URL from environment
 BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
 if not BASE_URL:
-    BASE_URL = "https://autoparsing.preview.emergentagent.com"
+    BASE_URL = "https://erpsys-assist.preview.emergentagent.com"
 
 
 class TestObjectIdSerialization:
