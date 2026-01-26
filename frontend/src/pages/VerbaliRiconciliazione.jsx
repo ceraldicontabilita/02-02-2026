@@ -1,16 +1,16 @@
 import React, { useState, useEffect, useCallback } from "react";
 import api from "../api";
-import { formatEuro, formatDateIT } from "../lib/utils";
+import { formatEuro, formatDateIT, STYLES, COLORS, button, badge } from "../lib/utils";
 
-const cardStyle = { background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', border: '1px solid #e5e7eb' };
+const cardStyle = STYLES.card;
 
 const STATI_VERBALE = {
-  'da_scaricare': { label: 'Da Scaricare', color: '#f59e0b', bg: '#fef3c7', icon: '📧' },
+  'da_scaricare': { label: 'Da Scaricare', color: COLORS.warning, bg: '#fef3c7', icon: '📧' },
   'salvato': { label: 'Salvato', color: '#6366f1', bg: '#e0e7ff', icon: '💾' },
-  'fattura_ricevuta': { label: 'Fattura Ricevuta', color: '#3b82f6', bg: '#dbeafe', icon: '📄' },
+  'fattura_ricevuta': { label: 'Fattura Ricevuta', color: COLORS.info, bg: '#dbeafe', icon: '📄' },
   'pagato': { label: 'Pagato', color: '#10b981', bg: '#d1fae5', icon: '💳' },
-  'riconciliato': { label: 'Riconciliato', color: '#059669', bg: '#a7f3d0', icon: '✅' },
-  'sconosciuto': { label: 'Sconosciuto', color: '#6b7280', bg: '#f3f4f6', icon: '❓' }
+  'riconciliato': { label: 'Riconciliato', color: COLORS.success, bg: '#a7f3d0', icon: '✅' },
+  'sconosciuto': { label: 'Sconosciuto', color: COLORS.gray, bg: '#f3f4f6', icon: '❓' }
 };
 
 export default function VerbaliRiconciliazione() {
