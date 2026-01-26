@@ -246,6 +246,7 @@ export default function RiconciliazioneUnificata() {
         f24: 0,  // Caricato dopo
         aruba: aruba.length,
         stipendi: stipendi.length,
+        documenti: 0, // Caricato dopo
         fatture_da_pagare: bancaRes.data?.stats?.fatture_da_pagare || 0
       });
       
@@ -265,6 +266,20 @@ export default function RiconciliazioneUnificata() {
       }).catch(() => {
         console.warn('F24 non caricati');
       });
+      
+      // Carica Documenti Non Associati in background
+      api.get('/api/documenti-non-associati/lista?limit=100').then(docsRes => {
+        const docs = docsRes.data?.documenti || [];
+        setDocumentiNonAssociati(docs);
+        setStats(prev => ({ ...prev, documenti: docs.length }));
+      }).catch(() => {
+        console.warn('Documenti non caricati');
+      });
+      
+      // Carica statistiche documenti
+      api.get('/api/documenti-non-associati/statistiche').then(statsRes => {
+        setDocumentiStats(statsRes.data);
+      }).catch(() => {});
 
     } catch (e) {
       console.error('Errore caricamento:', e);
