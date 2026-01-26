@@ -788,6 +788,9 @@ export default function App() {
           }
         }
       `}</style>
+      
+      {/* Chat Intelligente AI */}
+      <ChatIntelligente />
     </div>
     </UploadProvider>
   );
