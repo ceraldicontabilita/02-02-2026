@@ -1184,6 +1184,19 @@ export default function Fornitori() {
     }
   };
 
+  // === SCHEDE TECNICHE FUNCTIONS ===
+  const handleViewSchedeTecniche = async (supplier) => {
+    setSchedeTecnicheModal({ open: true, fornitore: supplier, schede: [], loading: true });
+    
+    try {
+      const res = await api.get(`/api/schede-tecniche/fornitore/${supplier.id}`);
+      setSchedeTecnicheModal(prev => ({ ...prev, schede: res.data.schede || [], loading: false }));
+    } catch (error) {
+      console.error('Errore caricamento schede tecniche:', error);
+      setSchedeTecnicheModal(prev => ({ ...prev, loading: false }));
+    }
+  };
+
   // === LEARNING TAB FUNCTIONS ===
   const caricaDatiLearning = async () => {
     setLearningLoading(true);
