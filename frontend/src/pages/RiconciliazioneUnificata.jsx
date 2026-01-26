@@ -938,7 +938,7 @@ function DashboardTab({ stats, autoMatchStats }) {
   );
 }
 
-function MovimentiTab({ movimenti, onConferma, onIgnora, processing, title, emptyText, showFattura }) {
+function MovimentiTab({ movimenti, onConferma, onIgnora, onElimina, processing, title, emptyText, showFattura }) {
   if (movimenti.length === 0) {
     return (
       <div style={{ padding: 60, textAlign: 'center', color: '#94a3b8' }}>
@@ -956,11 +956,12 @@ function MovimentiTab({ movimenti, onConferma, onIgnora, processing, title, empt
       <div style={{ maxHeight: 800, overflow: 'auto' }}>
         {movimenti.map((m, idx) => (
           <MovimentoCard 
-            key={m.movimento_id || idx}
+            key={m.movimento_id || m.id || idx}
             movimento={m}
             onConferma={onConferma}
             onIgnora={onIgnora}
-            processing={processing === m.movimento_id}
+            onElimina={onElimina}
+            processing={processing === m.movimento_id || processing === m.id}
             showFattura={showFattura}
           />
         ))}
