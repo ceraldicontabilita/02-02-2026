@@ -16,6 +16,7 @@ import {
   Users, Clock, FileText, History, Settings, Check, X, FileDown
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { STYLES, COLORS, button, badge, formatEuro, formatDateIT } from '../lib/utils';
 
 // Stati presenza con colori
 const STATI_PRESENZA = {

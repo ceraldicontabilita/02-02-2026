@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api';
-import { formatDateIT, formatEuro } from '../lib/utils';
+import { formatDateIT, formatEuro, STYLES, COLORS, button, badge } from '../lib/utils';
 import { Package, Search, Filter, ChevronDown, ChevronUp, Eye, Calendar, Factory, Layers, RefreshCw, Copy, Printer, ArrowLeft } from 'lucide-react';
 
 const STATO_CONFIG = {

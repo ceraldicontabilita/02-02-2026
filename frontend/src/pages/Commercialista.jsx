@@ -3,7 +3,7 @@ import api from '../api';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
-import { formatEuro } from '../lib/utils';
+import { formatEuro, STYLES, COLORS, button, badge } from '../lib/utils';
 
 // Funzione per formattare valuta come stringa pura (per PDF)
 const formatEuroStr = (val) => {

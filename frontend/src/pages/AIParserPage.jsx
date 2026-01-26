@@ -5,6 +5,7 @@ import {
   RefreshCw, Eye, Download, Loader2, FileType
 } from 'lucide-react';
 import api from '../api';
+import { STYLES, COLORS, button, badge, formatEuro, formatDateIT } from '../lib/utils';
 
 // Componente per mostrare i dati estratti
 function ParsedDataViewer({ data, type }) {

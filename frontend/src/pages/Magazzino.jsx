@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import api from "../api";
-import { formatDateIT } from "../lib/utils";
+import { formatDateIT, STYLES, COLORS, button, badge } from '../lib/utils';
 
 export default function Magazzino() {
   const [products, setProducts] = useState([]);

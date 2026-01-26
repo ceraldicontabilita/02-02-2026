@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import api from '../api';
-import { formatEuro } from '../lib/utils';
+import { formatEuro, STYLES, COLORS, button, badge } from '../lib/utils';
 import { CheckCircle, AlertTriangle, XCircle, ChevronRight, RefreshCw, FileText, Calendar, TrendingUp, TrendingDown, Lock, Unlock } from 'lucide-react';
 
 export default function ChiusuraEsercizio() {

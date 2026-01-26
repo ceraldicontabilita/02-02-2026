@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Badge } from '../components/ui/badge';
 import { Download, RefreshCw, FileText, Mail, Search, Play, CheckCircle, XCircle, Loader2, Eye } from 'lucide-react';
 import api from '../api';
+import { STYLES, COLORS, button, badge, formatEuro, formatDateIT } from '../lib/utils';
 
 const CATEGORIES = {
   f24: { label: 'F24', color: 'bg-blue-500' },
