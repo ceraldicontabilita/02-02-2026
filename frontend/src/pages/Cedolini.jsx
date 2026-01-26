@@ -341,7 +341,8 @@ export default function Cedolini() {
           display: 'flex', 
           overflowX: 'auto',
           borderBottom: '1px solid #e5e7eb',
-          padding: '0 8px'
+          padding: '0 4px',
+          gap: 2
         }}>
           {MESI.map(mese => {
             const meseStats = stats[mese.key] || { count: 0, totale: 0 };
@@ -352,12 +353,13 @@ export default function Cedolini() {
                 key={mese.key}
                 onClick={() => setMeseSelezionato(mese.key)}
                 style={{
-                  padding: '14px 12px',
+                  padding: '10px 8px',
                   background: isActive ? '#3b82f6' : 'transparent',
                   border: 'none',
                   borderRadius: isActive ? '8px 8px 0 0' : 0,
                   cursor: 'pointer',
-                  minWidth: 90,
+                  minWidth: 70,
+                  flex: '0 0 auto',
                   textAlign: 'center',
                   transition: 'all 0.2s',
                   marginBottom: isActive ? -1 : 0
@@ -365,27 +367,27 @@ export default function Cedolini() {
                 data-testid={`tab-${mese.key}`}
               >
                 <div style={{ 
-                  fontSize: 14, 
+                  fontSize: 12, 
                   fontWeight: 600,
                   color: isActive ? 'white' : '#374151',
-                  textTransform: 'capitalize'
+                  whiteSpace: 'nowrap'
                 }}>
-                  {mese.label}
+                  {mese.label.substring(0, 3)}
                 </div>
                 {meseStats.count > 0 && (
                   <>
                     <div style={{ 
-                      fontSize: 11, 
+                      fontSize: 10, 
                       color: isActive ? 'rgba(255,255,255,0.8)' : '#6b7280',
-                      marginTop: 3
+                      marginTop: 2
                     }}>
-                      {meseStats.count} buste
+                      {meseStats.count}
                     </div>
                     <div style={{ 
-                      fontSize: 13, 
+                      fontSize: 11, 
                       fontWeight: 700,
                       color: isActive ? 'white' : '#1f2937',
-                      marginTop: 2
+                      marginTop: 1
                     }}>
                       {formatEuroShort(meseStats.totale)}
                     </div>
