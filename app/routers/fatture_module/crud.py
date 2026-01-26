@@ -132,13 +132,29 @@ async def get_archivio_fatture(
 
 async def view_fattura_assoinvoice(fattura_id: str) -> HTMLResponse:
     """Visualizza fattura in stile AssoInvoice."""
+    from bson import ObjectId
     db = Database.get_db()
     
+    # Cerca prima per id (UUID), poi per _id (ObjectId)
     fattura = await db[COL_FATTURE_RICEVUTE].find_one({"id": fattura_id}, {"_id": 0})
+    if not fattura:
+        # Prova con ObjectId
+        try:
+            fattura = await db[COL_FATTURE_RICEVUTE].find_one({"_id": ObjectId(fattura_id)})
+            if fattura:
+                fattura_id = fattura.get("id", fattura_id)
+                fattura.pop("_id", None)
+        except:
+            pass
+    
     if not fattura:
         raise HTTPException(status_code=404, detail="Fattura non trovata")
     
     righe = await db[COL_DETTAGLIO_RIGHE].find({"fattura_id": fattura_id}, {"_id": 0}).to_list(1000)
+    
+    # Se non ci sono righe in dettaglio_righe, usa le linee dalla fattura stessa
+    if not righe and fattura.get("linee"):
+        righe = fattura.get("linee", [])
     
     html = generate_invoice_html(fattura, righe)
     return HTMLResponse(content=html)
