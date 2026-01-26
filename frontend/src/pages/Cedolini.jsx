@@ -592,7 +592,7 @@ export default function Cedolini() {
                       </div>
                     </td>
                     <td style={{ padding: '12px 16px', color: '#6b7280' }}>
-                      {MESI.find(m => m.key === cedolino.mese)?.label || cedolino.mese} {cedolino.anno}
+                      {MESI.find(m => m.num === cedolino.mese)?.label || `Mese ${cedolino.mese}`} {cedolino.anno}
                     </td>
                     <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 500 }}>
                       {formatEuro(cedolino.netto)}
