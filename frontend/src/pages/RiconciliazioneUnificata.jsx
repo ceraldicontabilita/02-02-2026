@@ -1771,3 +1771,332 @@ const metodoBtn = (bg, color, isPreferred = false) => ({
   fontSize: 13,
   boxShadow: isPreferred ? '0 0 0 2px rgba(16, 185, 129, 0.2)' : 'none'
 });
+
+// ============================================
+// TAB DOCUMENTI NON ASSOCIATI
+// ============================================
+
+function DocumentiTab({ documenti, stats, onRefresh, processing }) {
+  const [selectedDoc, setSelectedDoc] = useState(null);
+  const [collezioni, setCollezioni] = useState([]);
+  const [associazioneForm, setAssociazioneForm] = useState({ collezione: '', campiJson: '' });
+  const [message, setMessage] = useState(null);
+  const [loadingCollezioni, setLoadingCollezioni] = useState(false);
+  
+  // Carica collezioni disponibili
+  useEffect(() => {
+    const loadCollezioni = async () => {
+      setLoadingCollezioni(true);
+      try {
+        const res = await api.get('/api/documenti-non-associati/collezioni-disponibili');
+        setCollezioni(res.data || []);
+      } catch (e) {
+        console.warn('Errore caricamento collezioni:', e);
+      }
+      setLoadingCollezioni(false);
+    };
+    loadCollezioni();
+  }, []);
+  
+  const handleViewPdf = (doc) => {
+    const url = `${process.env.REACT_APP_BACKEND_URL}/api/documenti-non-associati/pdf/${doc.id}`;
+    window.open(url, '_blank');
+  };
+  
+  const handleAssocia = async () => {
+    if (!selectedDoc || !associazioneForm.collezione) {
+      setMessage({ type: 'error', text: 'Seleziona una collezione' });
+      return;
+    }
+    
+    try {
+      let campi = {};
+      if (associazioneForm.campiJson) {
+        try {
+          campi = JSON.parse(associazioneForm.campiJson);
+        } catch {
+          setMessage({ type: 'error', text: 'JSON campi non valido' });
+          return;
+        }
+      }
+      
+      // Aggiungi campi dalla proposta
+      if (selectedDoc.proposta) {
+        if (selectedDoc.proposta.anno_suggerito) campi.anno = selectedDoc.proposta.anno_suggerito;
+        if (selectedDoc.proposta.mese_suggerito) campi.mese = selectedDoc.proposta.mese_suggerito;
+      }
+      
+      await api.post('/api/documenti-non-associati/associa', {
+        documento_id: selectedDoc.id,
+        collezione_target: associazioneForm.collezione,
+        crea_nuovo: true,
+        campi_associazione: campi
+      });
+      
+      setMessage({ type: 'success', text: 'Documento associato!' });
+      setSelectedDoc(null);
+      setAssociazioneForm({ collezione: '', campiJson: '' });
+      if (onRefresh) onRefresh();
+    } catch (e) {
+      setMessage({ type: 'error', text: e.response?.data?.detail || 'Errore associazione' });
+    }
+  };
+  
+  const handleDelete = async (docId) => {
+    if (!window.confirm('Eliminare questo documento?')) return;
+    
+    try {
+      await api.delete(`/api/documenti-non-associati/${docId}`);
+      setMessage({ type: 'success', text: 'Documento eliminato' });
+      setSelectedDoc(null);
+      if (onRefresh) onRefresh();
+    } catch (e) {
+      setMessage({ type: 'error', text: 'Errore eliminazione' });
+    }
+  };
+  
+  const getCategoryColor = (category) => {
+    const colors = {
+      'fattura': '#3b82f6',
+      'f24': '#ef4444',
+      'busta_paga': '#22c55e',
+      'verbale': '#f97316',
+      'cartella': '#8b5cf6'
+    };
+    return colors[category] || '#64748b';
+  };
+  
+  if (documenti.length === 0) {
+    return (
+      <div style={{ padding: 60, textAlign: 'center', color: '#94a3b8' }}>
+        <div style={{ fontSize: 48, marginBottom: 12, opacity: 0.5 }}>📎</div>
+        <div>Nessun documento da associare</div>
+        <div style={{ fontSize: 12, marginTop: 8 }}>Tutti i documenti scaricati sono stati associati</div>
+      </div>
+    );
+  }
+  
+  return (
+    <div>
+      {/* Header con stats */}
+      <div style={{ padding: 16, background: '#fdf4ff', borderBottom: '1px solid #f5d0fe' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+          <h3 style={{ margin: 0, fontSize: 16, color: '#a21caf' }}>📎 Documenti Non Associati ({documenti.length})</h3>
+          {stats && (
+            <div style={{ display: 'flex', gap: 16, fontSize: 13 }}>
+              <span style={{ color: '#64748b' }}>Totali: <strong>{stats.totale || 0}</strong></span>
+              <span style={{ color: '#16a34a' }}>Associati: <strong>{stats.associati || 0}</strong></span>
+              <span style={{ color: '#dc2626' }}>Da fare: <strong>{stats.da_associare || 0}</strong></span>
+            </div>
+          )}
+        </div>
+      </div>
+      
+      {/* Message */}
+      {message && (
+        <div style={{
+          padding: 12,
+          margin: 12,
+          borderRadius: 8,
+          background: message.type === 'success' ? '#dcfce7' : '#fee2e2',
+          color: message.type === 'success' ? '#15803d' : '#dc2626',
+          fontSize: 13
+        }}>
+          {message.text}
+        </div>
+      )}
+      
+      {/* Layout a due colonne */}
+      <div style={{ display: 'grid', gridTemplateColumns: selectedDoc ? '1fr 1fr' : '1fr', gap: 0 }}>
+        {/* Lista documenti */}
+        <div style={{ maxHeight: 600, overflow: 'auto', borderRight: selectedDoc ? '1px solid #e5e7eb' : 'none' }}>
+          {documenti.map((doc) => (
+            <div
+              key={doc.id}
+              onClick={() => setSelectedDoc(doc)}
+              style={{
+                padding: 14,
+                borderBottom: '1px solid #f1f5f9',
+                cursor: 'pointer',
+                background: selectedDoc?.id === doc.id ? '#fdf4ff' : 'white',
+                borderLeft: selectedDoc?.id === doc.id ? '3px solid #a21caf' : '3px solid transparent'
+              }}
+            >
+              <div style={{ 
+                fontSize: 14, 
+                fontWeight: 500, 
+                color: '#1e293b',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                marginBottom: 4
+              }}>
+                {doc.filename}
+              </div>
+              <div style={{ fontSize: 12, color: '#64748b', marginBottom: 6 }}>
+                {doc.email_subject?.substring(0, 60) || 'Nessun oggetto'}
+              </div>
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                <span style={{
+                  padding: '2px 8px',
+                  fontSize: 11,
+                  borderRadius: 4,
+                  background: getCategoryColor(doc.category) + '20',
+                  color: getCategoryColor(doc.category)
+                }}>
+                  {doc.category || 'altro'}
+                </span>
+                {doc.proposta?.anno_suggerito && (
+                  <span style={{ padding: '2px 8px', fontSize: 11, borderRadius: 4, background: '#dbeafe', color: '#1d4ed8' }}>
+                    {doc.proposta.anno_suggerito}
+                  </span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+        
+        {/* Pannello dettaglio */}
+        {selectedDoc && (
+          <div style={{ padding: 16, background: '#fafafa' }}>
+            <div style={{ marginBottom: 16 }}>
+              <button
+                onClick={() => handleViewPdf(selectedDoc)}
+                data-testid="documenti-tab-view-pdf"
+                style={{
+                  width: '100%',
+                  padding: 14,
+                  background: '#a21caf',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 8,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  fontSize: 14,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8
+                }}
+              >
+                👁️ Apri PDF
+              </button>
+            </div>
+            
+            {/* Info file */}
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 12, color: '#64748b', marginBottom: 2 }}>File</div>
+              <div style={{ fontSize: 14, fontWeight: 500, wordBreak: 'break-all' }}>{selectedDoc.filename}</div>
+            </div>
+            
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 12, color: '#64748b', marginBottom: 2 }}>Categoria</div>
+              <div style={{ fontSize: 14 }}>{selectedDoc.category || 'Non classificato'}</div>
+            </div>
+            
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 12, color: '#64748b', marginBottom: 2 }}>Dimensione</div>
+              <div style={{ fontSize: 14 }}>{Math.round((selectedDoc.size_bytes || selectedDoc.pdf_size || 0) / 1024)} KB</div>
+            </div>
+            
+            {/* Proposta AI */}
+            {selectedDoc.proposta && (selectedDoc.proposta.anno_suggerito || selectedDoc.proposta.tipo_suggerito) && (
+              <div style={{ 
+                background: '#eff6ff', 
+                border: '1px solid #bfdbfe', 
+                borderRadius: 8, 
+                padding: 12, 
+                marginBottom: 16 
+              }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#1d4ed8', marginBottom: 8 }}>💡 Proposta Intelligente</div>
+                {selectedDoc.proposta.tipo_suggerito && (
+                  <div style={{ fontSize: 12, color: '#475569', marginBottom: 4 }}>Tipo: <strong>{selectedDoc.proposta.tipo_suggerito}</strong></div>
+                )}
+                {selectedDoc.proposta.anno_suggerito && (
+                  <div style={{ fontSize: 12, color: '#475569', marginBottom: 4 }}>Anno: <strong>{selectedDoc.proposta.anno_suggerito}</strong></div>
+                )}
+                {selectedDoc.proposta.mese_suggerito && (
+                  <div style={{ fontSize: 12, color: '#475569' }}>Mese: <strong>{selectedDoc.proposta.mese_suggerito}</strong></div>
+                )}
+              </div>
+            )}
+            
+            {/* Form associazione */}
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 12, color: '#64748b', marginBottom: 4 }}>Associa a collezione</div>
+              <select
+                value={associazioneForm.collezione}
+                onChange={(e) => setAssociazioneForm({...associazioneForm, collezione: e.target.value})}
+                style={{ 
+                  width: '100%', 
+                  padding: 10, 
+                  fontSize: 14, 
+                  border: '1px solid #e2e8f0', 
+                  borderRadius: 6,
+                  marginBottom: 12
+                }}
+              >
+                <option value="">-- Seleziona --</option>
+                {collezioni.map((c) => (
+                  <option key={c.value} value={c.value}>{c.label}</option>
+                ))}
+              </select>
+              
+              <div style={{ fontSize: 12, color: '#64748b', marginBottom: 4 }}>Campi aggiuntivi (JSON)</div>
+              <textarea
+                value={associazioneForm.campiJson}
+                onChange={(e) => setAssociazioneForm({...associazioneForm, campiJson: e.target.value})}
+                placeholder='{"anno": 2024, "importo": 150.00}'
+                style={{ 
+                  width: '100%', 
+                  padding: 10, 
+                  fontSize: 13, 
+                  fontFamily: 'monospace',
+                  border: '1px solid #e2e8f0', 
+                  borderRadius: 6,
+                  minHeight: 60,
+                  resize: 'vertical'
+                }}
+              />
+            </div>
+            
+            {/* Bottoni azione */}
+            <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+              <button
+                onClick={handleAssocia}
+                disabled={!associazioneForm.collezione}
+                style={{
+                  flex: 1,
+                  padding: 12,
+                  background: associazioneForm.collezione ? '#22c55e' : '#94a3b8',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 6,
+                  fontWeight: 600,
+                  cursor: associazioneForm.collezione ? 'pointer' : 'not-allowed',
+                  fontSize: 13
+                }}
+              >
+                ✓ Associa
+              </button>
+              <button
+                onClick={() => handleDelete(selectedDoc.id)}
+                style={{
+                  padding: '12px 16px',
+                  background: '#fee2e2',
+                  color: '#dc2626',
+                  border: 'none',
+                  borderRadius: 6,
+                  cursor: 'pointer',
+                  fontSize: 13
+                }}
+              >
+                🗑️
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
