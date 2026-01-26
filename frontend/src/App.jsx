@@ -5,14 +5,12 @@ import GlobalSearch from "./components/GlobalSearch";
 import { AnnoSelector } from "./contexts/AnnoContext";
 import F24EmailSync from "./components/F24EmailSync";
 import NotificationBell from "./components/NotificationBell";
-import ParlantChat from "./components/ParlantChat";
 import { NotificheScadenze } from "./components/NotificheScadenze";
 import { UploadProvider } from "./contexts/UploadContext";
 import { UploadStatusBar } from "./components/UploadStatusBar";
 
 const NAV_ITEMS = [
   { to: "/rapido", label: "📱 Inserimento Rapido", icon: "📱", short: "Rapido", isNew: true, highlight: true },
-  { to: "/documenti-non-associati", label: "📂 Documenti Non Associati", icon: "📂", short: "Non Assoc.", isNew: true },
   { to: "/", label: "Dashboard", icon: "📊", short: "Home" },
   { to: "/analytics", label: "Analytics", icon: "📈", short: "Analytics", isNew: true },
   
