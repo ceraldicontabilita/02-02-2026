@@ -777,7 +777,7 @@ export default function Cedolini() {
                     background: '#f9fafb', 
                     borderRadius: 6
                   }}>
-                    {MESI.find(m => m.key === cedolinoSelezionato.mese)?.label}
+                    {MESI.find(m => m.num === cedolinoSelezionato.mese)?.label || `Mese ${cedolinoSelezionato.mese}`}
                   </div>
                 </div>
                 <div>
