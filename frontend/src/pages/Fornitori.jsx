@@ -751,6 +751,29 @@ function SupplierCard({ supplier, onEdit, onDelete, onViewInvoices, onChangeMeto
             <Search size={15} /> {searching ? 'Ricerca...' : 'Cerca P.IVA'}
           </button>
         )}
+        {/* Pulsante Schede Tecniche */}
+        <button onClick={() => onShowSchedeTecniche && onShowSchedeTecniche(supplier)} style={{
+          flex: 1,
+          padding: '12px',
+          border: 'none',
+          borderLeft: hasPiva ? '1px solid #e5e7eb' : 'none',
+          backgroundColor: 'transparent',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '6px',
+          fontSize: '13px',
+          color: '#8b5cf6',
+          transition: 'all 0.2s'
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#f3e8ff'; }}
+        onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+        title="Visualizza schede tecniche prodotti"
+        data-testid={`btn-schede-tecniche-${supplier.id}`}
+        >
+          📋 Schede
+        </button>
         <button onClick={() => onViewInvoices(supplier)} style={{
           flex: 1,
           padding: '12px',
