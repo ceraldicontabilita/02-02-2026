@@ -695,14 +695,14 @@ export default function Cedolini() {
             }}>
               <div>
                 <h2 style={{ margin: 0, fontSize: 20, color: '#1e3a5f' }}>
-                  {MESI.find(m => m.key === cedolinoSelezionato.mese)?.label} {cedolinoSelezionato.anno}
+                  {MESI.find(m => m.num === cedolinoSelezionato.mese)?.label || `Mese ${cedolinoSelezionato.mese}`} {cedolinoSelezionato.anno}
                 </h2>
                 <p style={{ margin: '4px 0 0 0', color: '#6b7280' }}>
                   {cedolinoSelezionato.employee_nome}
                 </p>
               </div>
               <button
-                onClick={() => setShowDettaglio(false)}
+                onClick={closeDettaglio}
                 style={{
                   padding: 8,
                   background: 'transparent',
