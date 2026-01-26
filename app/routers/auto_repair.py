@@ -277,11 +277,18 @@ async def verifica_relazioni() -> Dict[str, Any]:
     # Verbali
     verbali_tot = await db.verbali_noleggio.count_documents({})
     verbali_con_driver = await db.verbali_noleggio.count_documents({"driver_id": {"$exists": True, "$ne": None}})
-    verbali_con_targa = await db.verbali_noleggio.count_documents({"targa": {"$exists": True, "$ne": None}})
+    verbali_con_targa = await db.verbali_noleggio.count_documents({"targa": {"$exists": True, "$ne": None, "$ne": ""}})
+    
+    # Verbali Completi (fonte dati targhe)
+    verbali_completi_tot = await db.verbali_noleggio_completi.count_documents({})
     
     # Cedolini
     cedolini_tot = await db.cedolini.count_documents({})
     cedolini_con_dip = await db.cedolini.count_documents({"dipendente_id": {"$exists": True, "$ne": None}})
+    
+    # Payslips (altra collezione cedolini)
+    payslips_tot = await db.payslips.count_documents({})
+    payslips_con_dip = await db.payslips.count_documents({"employee_id": {"$exists": True, "$ne": None}})
     
     # Fatture
     fatture_tot = await db.invoices.count_documents({})
@@ -297,13 +304,23 @@ async def verifica_relazioni() -> Dict[str, Any]:
             "con_driver": verbali_con_driver,
             "senza_driver": verbali_tot - verbali_con_driver,
             "con_targa": verbali_con_targa,
+            "senza_targa": verbali_tot - verbali_con_targa,
             "percentuale_collegati": round(verbali_con_driver / verbali_tot * 100, 1) if verbali_tot > 0 else 0
+        },
+        "verbali_completi": {
+            "totale": verbali_completi_tot,
+            "nota": "Fonte dati targhe - da sincronizzare con verbali_noleggio"
         },
         "cedolini": {
             "totale": cedolini_tot,
             "con_dipendente": cedolini_con_dip,
             "senza_dipendente": cedolini_tot - cedolini_con_dip,
             "percentuale_collegati": round(cedolini_con_dip / cedolini_tot * 100, 1) if cedolini_tot > 0 else 0
+        },
+        "payslips": {
+            "totale": payslips_tot,
+            "con_employee": payslips_con_dip,
+            "percentuale_collegati": round(payslips_con_dip / payslips_tot * 100, 1) if payslips_tot > 0 else 0
         },
         "fatture": {
             "totale": fatture_tot,
