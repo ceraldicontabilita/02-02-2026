@@ -6,6 +6,7 @@ from fastapi import APIRouter, HTTPException, BackgroundTasks, Query
 from typing import Dict, Any, Optional
 from datetime import datetime, timezone
 import logging
+import asyncio
 
 from app.database import Database
 from app.services.email_full_download import (
