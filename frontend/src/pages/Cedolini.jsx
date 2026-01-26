@@ -6,9 +6,11 @@
  * - Visualizzazione cedolini per mese
  * - Caricamento PDF buste paga
  * - Dettaglio cedolino con visualizzatore PDF
+ * - URL descrittivi per ogni cedolino
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import api from '../api';
 import { 
   ChevronLeft, ChevronRight, RefreshCw, Upload, Download,
@@ -16,6 +18,8 @@ import {
   User, Euro, Check
 } from 'lucide-react';
 import { toast } from 'sonner';
+import Breadcrumb from '../components/Breadcrumb';
+import { toSlug, updatePageTitle } from '../utils/urlHelpers';
 
 // Mesi
 const MESI = [
