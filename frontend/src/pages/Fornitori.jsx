@@ -2548,6 +2548,119 @@ export default function Fornitori() {
         </div>
         </Portal>
       )}
+
+      {/* MODALE SCHEDE TECNICHE */}
+      {schedeTecnicheModal.open && (
+        <Portal>
+          <div style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 9999
+          }}>
+            <div style={{
+              background: 'white', borderRadius: 16, width: '90%', maxWidth: 800,
+              maxHeight: '85vh', overflow: 'hidden', display: 'flex', flexDirection: 'column',
+              boxShadow: '0 25px 50px rgba(0,0,0,0.25)'
+            }}>
+              {/* Header */}
+              <div style={{
+                padding: '20px 24px', borderBottom: '1px solid #e5e7eb',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: 'white'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <h2 style={{ margin: 0, fontSize: 18, fontWeight: 'bold' }}>
+                      📋 Schede Tecniche Prodotti
+                    </h2>
+                    <p style={{ margin: '4px 0 0 0', fontSize: 13, opacity: 0.9 }}>
+                      {schedeTecnicheModal.fornitore?.ragione_sociale || schedeTecnicheModal.fornitore?.name}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setSchedeTecnicheModal({ open: false, fornitore: null, schede: [], loading: false })}
+                    style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: '50%', width: 32, height: 32, cursor: 'pointer', color: 'white', fontSize: 18 }}
+                  >×</button>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div style={{ flex: 1, overflow: 'auto', padding: 24 }}>
+                {schedeTecnicheModal.loading ? (
+                  <div style={{ textAlign: 'center', padding: 60, color: '#6b7280' }}>
+                    ⏳ Caricamento schede tecniche...
+                  </div>
+                ) : schedeTecnicheModal.schede.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: 60 }}>
+                    <div style={{ fontSize: 48, marginBottom: 16 }}>📄</div>
+                    <h3 style={{ color: '#374151', margin: '0 0 8px 0' }}>Nessuna scheda tecnica</h3>
+                    <p style={{ color: '#6b7280', margin: 0 }}>
+                      Questo fornitore non ha ancora schede tecniche associate.
+                    </p>
+                    <p style={{ color: '#9ca3af', fontSize: 13, marginTop: 12 }}>
+                      Le schede tecniche vengono importate automaticamente dalle email del fornitore.
+                    </p>
+                  </div>
+                ) : (
+                  <div style={{ display: 'grid', gap: 12 }}>
+                    {schedeTecnicheModal.schede.map((scheda, idx) => (
+                      <div key={scheda.id || idx} style={{
+                        background: '#f9fafb', borderRadius: 12, padding: 16,
+                        border: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', gap: 16
+                      }}>
+                        <div style={{
+                          width: 48, height: 48, borderRadius: 8, background: '#e0e7ff',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24
+                        }}>
+                          📋
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <h4 style={{ margin: '0 0 4px 0', fontSize: 14, fontWeight: 600, color: '#1e3a5f' }}>
+                            {scheda.nome_prodotto || scheda.nome || 'Scheda Tecnica'}
+                          </h4>
+                          <p style={{ margin: 0, fontSize: 12, color: '#6b7280' }}>
+                            {scheda.codice_articolo && `Cod. ${scheda.codice_articolo} • `}
+                            Caricata: {scheda.created_at ? new Date(scheda.created_at).toLocaleDateString('it-IT') : '-'}
+                          </p>
+                        </div>
+                        {scheda.file_url && (
+                          <a
+                            href={scheda.file_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                              padding: '8px 16px', background: '#3b82f6', color: 'white',
+                              borderRadius: 6, textDecoration: 'none', fontSize: 13, fontWeight: 500
+                            }}
+                          >
+                            📥 Scarica
+                          </a>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div style={{
+                padding: '16px 24px', borderTop: '1px solid #e5e7eb', background: '#f8fafc',
+                display: 'flex', justifyContent: 'flex-end'
+              }}>
+                <button
+                  onClick={() => setSchedeTecnicheModal({ open: false, fornitore: null, schede: [], loading: false })}
+                  style={{
+                    padding: '10px 20px', background: '#1e3a5f', color: 'white',
+                    border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600
+                  }}
+                >
+                  Chiudi
+                </button>
+              </div>
+            </div>
+          </div>
+        </Portal>
+      )}
     </div>
   );
 }
