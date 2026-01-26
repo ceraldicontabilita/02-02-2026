@@ -210,119 +210,177 @@ const router = createBrowserRouter([
       // === CORE ===
       { index: true, element: <LazyPage><Dashboard /></LazyPage> },
       { path: "dashboard", element: <LazyPage><Dashboard /></LazyPage> },
+      { path: "dashboard/:anno", element: <LazyPage><Dashboard /></LazyPage> },
       { path: "analytics", element: <LazyPage><DashboardAnalytics /></LazyPage> },
+      { path: "analytics/:periodo", element: <LazyPage><DashboardAnalytics /></LazyPage> },
       { path: "rapido", element: <LazyPage><InserimentoRapido /></LazyPage> },
       
       // === FATTURE & ACQUISTI ===
-      // ciclo-passivo ora reindirizza a fatture-ricevute con tab import
       { path: "ciclo-passivo", element: <LazyPage><ArchivioFattureRicevute /></LazyPage> },
       { path: "fatture-ricevute", element: <LazyPage><ArchivioFattureRicevute /></LazyPage> },
+      { path: "fatture-ricevute/:fornitore", element: <LazyPage><ArchivioFattureRicevute /></LazyPage> },
       { path: "fatture-ricevute/:fornitore/:fattura", element: <LazyPage><ArchivioFattureRicevute /></LazyPage> },
       { path: "archivio-fatture-ricevute", element: <LazyPage><ArchivioFattureRicevute /></LazyPage> },
       { path: "corrispettivi", element: <LazyPage><Corrispettivi /></LazyPage> },
+      { path: "corrispettivi/:anno/:mese", element: <LazyPage><Corrispettivi /></LazyPage> },
       { path: "fornitori", element: <LazyPage><Fornitori /></LazyPage> },
       { path: "fornitori/:nome", element: <LazyPage><Fornitori /></LazyPage> },
+      { path: "fornitori/:nome/:tab", element: <LazyPage><Fornitori /></LazyPage> },
       { path: "ordini-fornitori", element: <LazyPage><OrdiniFornitori /></LazyPage> },
+      { path: "ordini-fornitori/:fornitore", element: <LazyPage><OrdiniFornitori /></LazyPage> },
       { path: "previsioni-acquisti", element: <LazyPage><PrevisioniAcquisti /></LazyPage> },
+      { path: "previsioni-acquisti/:categoria", element: <LazyPage><PrevisioniAcquisti /></LazyPage> },
       
       // === BANCA & PAGAMENTI ===
       { path: "prima-nota", element: <LazyPage><PrimaNota /></LazyPage> },
       { path: "prima-nota/:tipo", element: <LazyPage><PrimaNota /></LazyPage> },
+      { path: "prima-nota/:tipo/:anno/:mese", element: <LazyPage><PrimaNota /></LazyPage> },
       { path: "riconciliazione", element: <LazyPage><RiconciliazioneUnificata /></LazyPage> },
       { path: "riconciliazione/:tab", element: <LazyPage><RiconciliazioneUnificata /></LazyPage> },
+      { path: "riconciliazione/:tab/:id", element: <LazyPage><RiconciliazioneUnificata /></LazyPage> },
       { path: "riconciliazione-intelligente", element: <Navigate to="/riconciliazione" replace /> },
       { path: "gestione-assegni", element: <LazyPage><GestioneAssegni /></LazyPage> },
+      { path: "gestione-assegni/:stato", element: <LazyPage><GestioneAssegni /></LazyPage> },
       { path: "archivio-bonifici", element: <LazyPage><ArchivioBonifici /></LazyPage> },
+      { path: "archivio-bonifici/:anno/:mese", element: <LazyPage><ArchivioBonifici /></LazyPage> },
       
       // === DIPENDENTI ===
       { path: "dipendenti", element: <LazyPage><GestioneDipendentiUnificata /></LazyPage> },
       { path: "dipendenti/:tab", element: <LazyPage><GestioneDipendentiUnificata /></LazyPage> },
-      { path: "dipendenti/:nome/*", element: <LazyPage><GestioneDipendentiUnificata /></LazyPage> },
+      { path: "dipendenti/:nome/:tab", element: <LazyPage><GestioneDipendentiUnificata /></LazyPage> },
       { path: "cedolini", element: <LazyPage><CedoliniRiconciliazione /></LazyPage> },
+      { path: "cedolini/:anno", element: <LazyPage><CedoliniRiconciliazione /></LazyPage> },
+      { path: "cedolini/:anno/:mese", element: <LazyPage><CedoliniRiconciliazione /></LazyPage> },
       { path: "cedolini/:nome/:dettaglio", element: <LazyPage><CedoliniRiconciliazione /></LazyPage> },
       { path: "cedolini-calcolo", element: <LazyPage><Cedolini /></LazyPage> },
       { path: "cedolini-calcolo/:nome/:dettaglio", element: <LazyPage><Cedolini /></LazyPage> },
       { path: "prima-nota-salari", element: <LazyPage><PrimaNotaSalari /></LazyPage> },
+      { path: "prima-nota-salari/:anno/:mese", element: <LazyPage><PrimaNotaSalari /></LazyPage> },
       { path: "tfr", element: <LazyPage><TFR /></LazyPage> },
+      { path: "tfr/:dipendente", element: <LazyPage><TFR /></LazyPage> },
       { path: "noleggio-auto", element: <LazyPage><NoleggioAuto /></LazyPage> },
+      { path: "noleggio-auto/:targa", element: <LazyPage><NoleggioAuto /></LazyPage> },
       { path: "verbali-noleggio/:numeroVerbale", element: <LazyPage><DettaglioVerbale /></LazyPage> },
       { path: "verbali-riconciliazione", element: <LazyPage><VerbaliRiconciliazione /></LazyPage> },
       { path: "verbali-riconciliazione/:verbaleId", element: <LazyPage><VerbaliRiconciliazione /></LazyPage> },
       
       // === FISCO & TRIBUTI ===
       { path: "iva", element: <LazyPage><IVA /></LazyPage> },
+      { path: "iva/:anno/:trimestre", element: <LazyPage><IVA /></LazyPage> },
       { path: "liquidazione-iva", element: <LazyPage><LiquidazioneIVA /></LazyPage> },
+      { path: "liquidazione-iva/:anno/:mese", element: <LazyPage><LiquidazioneIVA /></LazyPage> },
       { path: "f24", element: <LazyPage><F24 /></LazyPage> },
+      { path: "f24/:anno", element: <LazyPage><F24 /></LazyPage> },
       { path: "f24/:anno/:mese", element: <LazyPage><F24 /></LazyPage> },
       { path: "riconciliazione-f24", element: <LazyPage><RiconciliazioneF24 /></LazyPage> },
+      { path: "riconciliazione-f24/:anno", element: <LazyPage><RiconciliazioneF24 /></LazyPage> },
       { path: "codici-tributari", element: <LazyPage><CodiciTributari /></LazyPage> },
+      { path: "codici-tributari/:codice", element: <LazyPage><CodiciTributari /></LazyPage> },
       { path: "contabilita", element: <LazyPage><ContabilitaAvanzata /></LazyPage> },
+      { path: "contabilita/:sezione", element: <LazyPage><ContabilitaAvanzata /></LazyPage> },
       { path: "scadenze", element: <LazyPage><Scadenze /></LazyPage> },
+      { path: "scadenze/:anno", element: <LazyPage><Scadenze /></LazyPage> },
       { path: "scadenze/:anno/:mese", element: <LazyPage><Scadenze /></LazyPage> },
       
       // === TO-DO ===
       { path: "todo", element: <LazyPage><ToDo /></LazyPage> },
+      { path: "todo/:stato", element: <LazyPage><ToDo /></LazyPage> },
       
       // === ATTENDANCE ===
       { path: "attendance", element: <LazyPage><Attendance /></LazyPage> },
+      { path: "attendance/:dipendente", element: <LazyPage><Attendance /></LazyPage> },
+      { path: "attendance/:dipendente/:mese", element: <LazyPage><Attendance /></LazyPage> },
       
       // === MAGAZZINO ===
       { path: "magazzino", element: <LazyPage><Magazzino /></LazyPage> },
+      { path: "magazzino/:categoria", element: <LazyPage><Magazzino /></LazyPage> },
       { path: "inventario", element: <LazyPage><Inventario /></LazyPage> },
+      { path: "inventario/:data", element: <LazyPage><Inventario /></LazyPage> },
       { path: "ricerca-prodotti", element: <LazyPage><RicercaProdotti /></LazyPage> },
+      { path: "ricerca-prodotti/:query", element: <LazyPage><RicercaProdotti /></LazyPage> },
       { path: "dizionario-articoli", element: <LazyPage><DizionarioArticoli /></LazyPage> },
+      { path: "dizionario-articoli/:articolo", element: <LazyPage><DizionarioArticoli /></LazyPage> },
       { path: "magazzino-dv", element: <LazyPage><MagazzinoDoppiaVerita /></LazyPage> },
       
       // === HACCP ===
       { path: "haccp-temperature", element: <LazyPage><HACCPTemperature /></LazyPage> },
+      { path: "haccp-temperature/:data", element: <LazyPage><HACCPTemperature /></LazyPage> },
       { path: "haccp-sanificazioni", element: <LazyPage><HACCPSanificazioni /></LazyPage> },
+      { path: "haccp-sanificazioni/:data", element: <LazyPage><HACCPSanificazioni /></LazyPage> },
       { path: "haccp-lotti", element: <LazyPage><HACCPLotti /></LazyPage> },
+      { path: "haccp-lotti/:lotto", element: <LazyPage><HACCPLotti /></LazyPage> },
       { path: "haccp-ricezione", element: <LazyPage><HACCPRicezione /></LazyPage> },
+      { path: "haccp-ricezione/:fornitore", element: <LazyPage><HACCPRicezione /></LazyPage> },
       { path: "haccp-scadenze", element: <LazyPage><HACCPScadenze /></LazyPage> },
+      { path: "haccp-scadenze/:stato", element: <LazyPage><HACCPScadenze /></LazyPage> },
       { path: "registro-lotti", element: <LazyPage><RegistroLotti /></LazyPage> },
+      { path: "registro-lotti/:lotto", element: <LazyPage><RegistroLotti /></LazyPage> },
       
       // === CUCINA & PRODUZIONE ===
       { path: "ricette", element: <LazyPage><Ricette /></LazyPage> },
+      { path: "ricette/:nome", element: <LazyPage><Ricette /></LazyPage> },
       { path: "dizionario-prodotti", element: <LazyPage><DizionarioProdotti /></LazyPage> },
+      { path: "dizionario-prodotti/:prodotto", element: <LazyPage><DizionarioProdotti /></LazyPage> },
       { path: "centri-costo", element: <LazyPage><CentriCosto /></LazyPage> },
+      { path: "centri-costo/:centro", element: <LazyPage><CentriCosto /></LazyPage> },
       { path: "utile-obiettivo", element: <LazyPage><UtileObiettivo /></LazyPage> },
-      // learning-machine RIMOSSA - redirect a centri-costo
+      { path: "utile-obiettivo/:anno", element: <LazyPage><UtileObiettivo /></LazyPage> },
       { path: "learning-machine", element: <Navigate to="/centri-costo" replace /> },
       
       // === CONTABILITÀ & BILANCIO ===
       { path: "bilancio", element: <LazyPage><Bilancio /></LazyPage> },
+      { path: "bilancio/:anno", element: <LazyPage><Bilancio /></LazyPage> },
       { path: "controllo-mensile", element: <LazyPage><ControlloMensile /></LazyPage> },
+      { path: "controllo-mensile/:anno/:mese", element: <LazyPage><ControlloMensile /></LazyPage> },
       { path: "piano-dei-conti", element: <LazyPage><PianoDeiConti /></LazyPage> },
+      { path: "piano-dei-conti/:conto", element: <LazyPage><PianoDeiConti /></LazyPage> },
       { path: "cespiti", element: <LazyPage><GestioneCespiti /></LazyPage> },
+      { path: "cespiti/:cespite", element: <LazyPage><GestioneCespiti /></LazyPage> },
       { path: "finanziaria", element: <LazyPage><Finanziaria /></LazyPage> },
+      { path: "finanziaria/:anno", element: <LazyPage><Finanziaria /></LazyPage> },
       { path: "chiusura-esercizio", element: <LazyPage><ChiusuraEsercizio /></LazyPage> },
+      { path: "chiusura-esercizio/:anno", element: <LazyPage><ChiusuraEsercizio /></LazyPage> },
       
       // === STRUMENTI ===
       { path: "documenti", element: <LazyPage><Documenti /></LazyPage> },
+      { path: "documenti/:tipo", element: <LazyPage><Documenti /></LazyPage> },
       { path: "documenti-email", element: <Navigate to="/classificazione-email?tab=documenti" replace /> },
       { path: "import-unificato", element: <LazyPage><ImportUnificato /></LazyPage> },
-      { path: "import-export", element: <LazyPage><ImportUnificato /></LazyPage> }, /* Redirect legacy route */
+      { path: "import-unificato/:tipo", element: <LazyPage><ImportUnificato /></LazyPage> },
+      { path: "import-export", element: <LazyPage><ImportUnificato /></LazyPage> },
       { path: "regole-categorizzazione", element: <Navigate to="/classificazione-email?tab=regole" replace /> },
       { path: "verifica-coerenza", element: <LazyPage><VerificaCoerenza /></LazyPage> },
+      { path: "verifica-coerenza/:entita", element: <LazyPage><VerificaCoerenza /></LazyPage> },
       { path: "commercialista", element: <LazyPage><Commercialista /></LazyPage> },
+      { path: "commercialista/:anno/:mese", element: <LazyPage><Commercialista /></LazyPage> },
       { path: "pianificazione", element: <LazyPage><Pianificazione /></LazyPage> },
+      { path: "pianificazione/:anno", element: <LazyPage><Pianificazione /></LazyPage> },
       { path: "email-download", element: <LazyPage><EmailDownloadManager /></LazyPage> },
+      { path: "email-download/:casella", element: <LazyPage><EmailDownloadManager /></LazyPage> },
       
       // === ADMIN ===
       { path: "admin", element: <LazyPage><Admin /></LazyPage> },
+      { path: "admin/:sezione", element: <LazyPage><Admin /></LazyPage> },
       { path: "regole-contabili", element: <LazyPage><RegoleContabili /></LazyPage> },
+      { path: "regole-contabili/:regola", element: <LazyPage><RegoleContabili /></LazyPage> },
       
       // === INTEGRAZIONI ===
       { path: "pagopa", element: <LazyPage><GestionePagoPA /></LazyPage> },
+      { path: "pagopa/:pratica", element: <LazyPage><GestionePagoPA /></LazyPage> },
       { path: "invoicetronic", element: <LazyPage><GestioneInvoiceTronic /></LazyPage> },
+      { path: "invoicetronic/:fattura", element: <LazyPage><GestioneInvoiceTronic /></LazyPage> },
       { path: "classificazione-email", element: <LazyPage><ClassificazioneDocumenti /></LazyPage> },
+      { path: "classificazione-email/:tab", element: <LazyPage><ClassificazioneDocumenti /></LazyPage> },
       { path: "fornitori-learning", element: <Navigate to="/fornitori?tab=learning" replace /> },
       
       // === AI TOOLS ===
       { path: "ai-parser", element: <LazyPage><AIParserPage /></LazyPage> },
+      { path: "ai-parser/:tipo", element: <LazyPage><AIParserPage /></LazyPage> },
       { path: "lettura-documenti", element: <LazyPage><AIParserPage /></LazyPage> },
       { path: "da-rivedere", element: <LazyPage><DocumentiDaRivedere /></LazyPage> },
+      { path: "da-rivedere/:stato", element: <LazyPage><DocumentiDaRivedere /></LazyPage> },
       { path: "correzione-ai", element: <LazyPage><CorrezioneAI /></LazyPage> },
+      { path: "correzione-ai/:documento", element: <LazyPage><CorrezioneAI /></LazyPage> },
     ]
   }
 ]);
