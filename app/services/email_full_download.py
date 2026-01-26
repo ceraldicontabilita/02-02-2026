@@ -43,6 +43,7 @@ CATEGORY_COLLECTIONS = {
     "verbale": "verbali_email_attachments",
     "certificato_medico": "certificati_email_attachments",
     "cartella_esattoriale": "cartelle_email_attachments",
+    "scheda_tecnica": "schede_tecniche_prodotti",  # Schede tecniche prodotti
     "altro": "documenti_non_associati"  # Documenti da associare manualmente
 }
 
@@ -83,6 +84,10 @@ DOCUMENT_PATTERNS = {
     "cartella_esattoriale": [
         r"cartella.*esattorial", r"riscossione", r"equitalia",
         r"ader.*riscossione", r"intimazione"
+    ],
+    "scheda_tecnica": [
+        r"scheda\s*tecnica", r"technical\s*sheet", r"data\s*sheet",
+        r"specifica.*tecnic", r"caratteristiche.*prodotto"
     ]
 }
 
