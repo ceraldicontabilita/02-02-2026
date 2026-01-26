@@ -346,7 +346,7 @@ class EmailFullDownloader:
     async def process_email(self, email_uid: bytes, msg: email.message.Message) -> int:
         """
         Processa una singola email ed estrae i PDF.
-        FILTRA: scarica solo email con parole chiave AMMINISTRATIVE.
+        FILTRA: scarica solo email con parole chiave AMMINISTRATIVE dal database.
         """
         pdfs_saved = 0
         
@@ -372,33 +372,10 @@ class EmailFullDownloader:
                 pass
         
         # ============================================================
-        # FILTRO PAROLE CHIAVE AMMINISTRATIVE
-        # Scarica SOLO email che contengono parole chiave rilevanti
+        # FILTRO PAROLE CHIAVE AMMINISTRATIVE DA DATABASE
+        # Carica le parole chiave configurate dall'utente in /admin
         # ============================================================
-        ADMIN_KEYWORDS = [
-            # Fatture
-            "fattura", "fatture", "invoice", "ft", "fatt",
-            # F24 / Tributi
-            "f24", "f-24", "tribut", "agenzia entrate", "irpef", "iva", "inps", "imu",
-            # Buste paga / Cedolini
-            "cedolino", "cedolini", "busta paga", "lul", "libro unico", "stipendio",
-            # Estratti conto
-            "estratto conto", "movimenti", "saldo", "conto corrente",
-            # Verbali / Multe
-            "verbale", "multa", "sanzione", "infrazione",
-            # ADR / Cartelle
-            "cartella esattoriale", "rottamazione", "riscossione", "ader",
-            # Certificati
-            "certificato medico", "malattia",
-            # INPS / Dilazioni  
-            "dilazione", "fonsi", "cassa integrazione",
-            # Bonifici stipendi
-            "bonifico", "disposizione pagamento",
-            # Quietanze
-            "quietanza", "ricevuta pagamento",
-            # Generico contabile
-            "scadenza", "pagamento", "importo", "totale"
-        ]
+        admin_keywords = await self._load_admin_keywords()
         
         # Combina testo ricercabile: oggetto + corpo
         search_text = f"{subject} {body}".lower()
@@ -414,7 +391,7 @@ class EmailFullDownloader:
         search_text += " " + " ".join(attachment_names)
         
         # Verifica se contiene almeno UNA parola chiave amministrativa
-        has_admin_keyword = any(kw in search_text for kw in ADMIN_KEYWORDS)
+        has_admin_keyword = any(kw.lower() in search_text for kw in admin_keywords)
         
         if not has_admin_keyword:
             # Email non amministrativa - SALTA
