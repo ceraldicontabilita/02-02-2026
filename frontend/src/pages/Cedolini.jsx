@@ -183,7 +183,7 @@ export default function Cedolini() {
     // Genera URL descrittivo
     const nome = toSlug(cedolino.employee_nome || cedolino.nome_dipendente || 'dipendente');
     const mese = getMeseKey(cedolino.mese);
-    navigate(`/cedolini/${nome}/cedolino-${mese}-${cedolino.anno || anno}`, { replace: true });
+    navigate(`/cedolini-calcolo/${nome}/cedolino-${mese}-${cedolino.anno || anno}`, { replace: true });
     
     // Aggiorna title
     updatePageTitle(
@@ -196,7 +196,7 @@ export default function Cedolini() {
   const closeDettaglio = () => {
     setCedolinoSelezionato(null);
     setShowDettaglio(false);
-    navigate('/cedolini', { replace: true });
+    navigate('/cedolini-calcolo', { replace: true });
     updatePageTitle('Buste Paga', 'Dipendenti');
   };
 
