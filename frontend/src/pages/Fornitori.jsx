@@ -919,6 +919,9 @@ export default function Fornitori() {
   const [selectedFattura, setSelectedFattura] = useState(null);
   const [nuovoCentroCosto, setNuovoCentroCosto] = useState('');
   
+  // === SCHEDE TECNICHE STATE ===
+  const [schedeTecnicheModal, setSchedeTecnicheModal] = useState({ open: false, fornitore: null, schede: [], loading: false });
+  
   // Debounce search per evitare troppe chiamate API
   const debouncedSearch = useDebounce(search, 500);
   
