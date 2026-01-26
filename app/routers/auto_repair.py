@@ -24,6 +24,7 @@ async def auto_riparazione_globale() -> Dict[str, Any]:
     db = Database.get_db()
     
     results = {
+        "verbali_sincronizzati": 0,
         "verbali_collegati_driver": 0,
         "cedolini_collegati_dipendenti": 0,
         "fatture_collegate_fornitori": 0,
@@ -34,6 +35,9 @@ async def auto_riparazione_globale() -> Dict[str, Any]:
     }
     
     try:
+        # 0. SINCRONIZZA VERBALI da verbali_noleggio_completi (che hanno le targhe)
+        results["verbali_sincronizzati"] = await _sincronizza_verbali_completi(db)
+        
         # 1. COLLEGA VERBALI A DRIVER tramite TARGA
         results["verbali_collegati_driver"] = await _collega_verbali_driver(db)
         
@@ -51,6 +55,65 @@ async def auto_riparazione_globale() -> Dict[str, Any]:
         logger.error(f"Errore auto-riparazione: {e}")
     
     return {"success": True, "results": results}
+
+
+async def _sincronizza_verbali_completi(db) -> int:
+    """
+    Sincronizza i dati da verbali_noleggio_completi a verbali_noleggio.
+    La collezione 'completi' contiene le targhe e altri dati estratti dai PDF.
+    """
+    sincronizzati = 0
+    
+    # Prendi tutti i verbali completi (hanno targa, importo, etc)
+    completi = await db.verbali_noleggio_completi.find({}).to_list(500)
+    
+    for vc in completi:
+        numero = vc.get("numero_verbale")
+        targa = vc.get("targa")
+        
+        if not numero or not targa:
+            continue
+        
+        # Cerca il verbale corrispondente in verbali_noleggio
+        verbale = await db.verbali_noleggio.find_one({"numero_verbale": numero})
+        
+        update_data = {
+            "targa": targa,
+            "importo": vc.get("importo"),
+            "stato_pagamento": vc.get("stato_pagamento"),
+            "anno": vc.get("anno"),
+            "descrizione": vc.get("descrizione"),
+            "updated_at": datetime.now(timezone.utc)
+        }
+        # Rimuovi campi None
+        update_data = {k: v for k, v in update_data.items() if v is not None}
+        
+        if verbale:
+            # Aggiorna il verbale esistente con i dati completi
+            await db.verbali_noleggio.update_one(
+                {"_id": verbale["_id"]},
+                {"$set": update_data}
+            )
+            sincronizzati += 1
+        else:
+            # Crea nuovo verbale dalla collezione completi
+            nuovo_verbale = {
+                "id": vc.get("id", f"verb_{numero}"),
+                "numero_verbale": numero,
+                "targa": targa,
+                "importo": vc.get("importo"),
+                "stato_pagamento": vc.get("stato_pagamento"),
+                "anno": vc.get("anno"),
+                "descrizione": vc.get("descrizione"),
+                "fattura_id": vc.get("fattura_id"),
+                "source": "verbali_noleggio_completi",
+                "created_at": datetime.now(timezone.utc)
+            }
+            nuovo_verbale = {k: v for k, v in nuovo_verbale.items() if v is not None}
+            await db.verbali_noleggio.insert_one(nuovo_verbale)
+            sincronizzati += 1
+    
+    return sincronizzati
 
 
 async def _collega_verbali_driver(db) -> int:
