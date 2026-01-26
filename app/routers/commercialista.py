@@ -866,9 +866,10 @@ async def export_excel_commercialista(anno: int, mese: int):
     # === FOGLIO 3: PRIMA NOTA CASSA ===
     ws_pn = wb.create_sheet("Prima Nota Cassa")
     
+    # Ordinamento: prima per data, poi per categoria (Corrispettivi prima di POS)
     prima_nota = await db["prima_nota_cassa"].find({
         "data": {"$regex": f"^{mese_str}"}
-    }, {"_id": 0}).sort("data", 1).to_list(10000)
+    }, {"_id": 0}).sort([("data", 1), ("categoria", 1)]).to_list(10000)
     
     headers_pn = ['Data', 'Descrizione', 'Categoria', 'Tipo', 'Importo']
     
