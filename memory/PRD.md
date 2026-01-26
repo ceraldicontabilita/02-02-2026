@@ -509,4 +509,4 @@ Questo PRD è vincolante. Ogni sviluppo futuro deve:
 
 ---
 
-*Documento aggiornato il 26 Gennaio 2026 - Sessione 25*
+*Documento aggiornato il 26 Gennaio 2026 - Sessione 26*
