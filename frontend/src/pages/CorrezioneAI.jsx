@@ -8,8 +8,9 @@ import {
   FileText, AlertCircle, CheckCircle, Edit, Save, X, 
   RefreshCw, Search
 } from 'lucide-react';
+import api from '../api';
 
-const API_URL = import.meta.env.VITE_API_URL || process.env.REACT_APP_BACKEND_URL || '';
+const API_URL = import.meta.env.VITE_API_URL || '';
 
 export default function CorrezioneAI() {
   const [documents, setDocuments] = useState([]);
