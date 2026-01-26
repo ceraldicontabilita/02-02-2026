@@ -402,6 +402,9 @@ app.include_router(chat_router.router, prefix="/api/chat", tags=["Chat Intellige
 # --- Schede Tecniche Prodotti ---
 app.include_router(schede_tecniche.router, prefix="/api", tags=["Schede Tecniche Prodotti"])
 
+# --- Auto-Riparazione Globale ---
+app.include_router(auto_repair.router, prefix="/api", tags=["Auto Riparazione"])
+
 # --- Riconciliazione Email ↔ Gestionale ---
 app.include_router(email_reconciliation.router, tags=["Riconciliazione Email"])
 
