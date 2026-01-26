@@ -970,7 +970,7 @@ function MovimentiTab({ movimenti, onConferma, onIgnora, onElimina, processing, 
   );
 }
 
-function MovimentoCard({ movimento, onConferma, onIgnora, processing, showFattura }) {
+function MovimentoCard({ movimento, onConferma, onIgnora, onElimina, processing, showFattura }) {
   const suggerimento = movimento.suggerimenti?.[0];
   const hasMatch = movimento.associazione_automatica && suggerimento;
   
