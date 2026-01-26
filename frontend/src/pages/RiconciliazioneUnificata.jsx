@@ -7,16 +7,6 @@ import { ExportButton } from '../components/ExportButton';
 import { PageInfoCard } from '../components/PageInfoCard';
 
 /**
- * RiconciliazioneUnificata - Usa formatDateIT da lib/utils
- */
-    const year = String(d.getFullYear()).slice(-2);
-    return `${day}/${month}/${year}`;
-  } catch {
-    return dateStr;
-  }
-};
-
-/**
  * RICONCILIAZIONE UNIFICATA
  * 
  * Una sola pagina smart con:
