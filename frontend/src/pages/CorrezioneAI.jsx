@@ -29,9 +29,8 @@ export default function CorrezioneAI() {
       if (filter !== 'all') params.append('tipo', filter);
       params.append('limit', '100');
       
-      const response = await fetch(`${API_URL}/api/ai-parser/da-rivedere?${params}`);
-      const data = await response.json();
-      setDocuments(data.documents || []);
+      const response = await api.get(`/api/ai-parser/da-rivedere?${params}`);
+      setDocuments(response.data.documents || []);
     } catch (error) {
       console.error('Errore caricamento documenti:', error);
     }
@@ -40,9 +39,8 @@ export default function CorrezioneAI() {
 
   const loadStats = useCallback(async () => {
     try {
-      const response = await fetch(`${API_URL}/api/ai-parser/statistiche`);
-      const data = await response.json();
-      setStats(data);
+      const response = await api.get('/api/ai-parser/statistiche');
+      setStats(response.data);
     } catch (error) {
       console.error('Errore caricamento statistiche:', error);
     }
