@@ -322,21 +322,23 @@ export default function Cedolini() {
                 key={mese.key}
                 onClick={() => setMeseSelezionato(mese.key)}
                 style={{
-                  padding: '12px 16px',
-                  background: 'transparent',
+                  padding: '14px 12px',
+                  background: isActive ? '#3b82f6' : 'transparent',
                   border: 'none',
-                  borderBottom: isActive ? '3px solid #3b82f6' : '3px solid transparent',
+                  borderRadius: isActive ? '8px 8px 0 0' : 0,
                   cursor: 'pointer',
-                  minWidth: 80,
+                  minWidth: 90,
                   textAlign: 'center',
-                  transition: 'all 0.2s'
+                  transition: 'all 0.2s',
+                  marginBottom: isActive ? -1 : 0
                 }}
                 data-testid={`tab-${mese.key}`}
               >
                 <div style={{ 
-                  fontSize: 13, 
-                  fontWeight: isActive ? 600 : 400,
-                  color: isActive ? '#3b82f6' : '#6b7280'
+                  fontSize: 14, 
+                  fontWeight: 600,
+                  color: isActive ? 'white' : '#374151',
+                  textTransform: 'capitalize'
                 }}>
                   {mese.label}
                 </div>
@@ -344,15 +346,15 @@ export default function Cedolini() {
                   <>
                     <div style={{ 
                       fontSize: 11, 
-                      color: '#9ca3af',
-                      marginTop: 2
+                      color: isActive ? 'rgba(255,255,255,0.8)' : '#6b7280',
+                      marginTop: 3
                     }}>
                       {meseStats.count} buste
                     </div>
                     <div style={{ 
-                      fontSize: 12, 
-                      fontWeight: 600,
-                      color: isActive ? '#3b82f6' : '#1f2937',
+                      fontSize: 13, 
+                      fontWeight: 700,
+                      color: isActive ? 'white' : '#1f2937',
                       marginTop: 2
                     }}>
                       {formatEuroShort(meseStats.totale)}
