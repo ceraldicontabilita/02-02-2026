@@ -247,15 +247,18 @@ const router = createBrowserRouter([
       { path: "noleggio-auto", element: <LazyPage><NoleggioAuto /></LazyPage> },
       { path: "verbali-noleggio/:numeroVerbale", element: <LazyPage><DettaglioVerbale /></LazyPage> },
       { path: "verbali-riconciliazione", element: <LazyPage><VerbaliRiconciliazione /></LazyPage> },
+      { path: "verbali-riconciliazione/:verbaleId", element: <LazyPage><VerbaliRiconciliazione /></LazyPage> },
       
       // === FISCO & TRIBUTI ===
       { path: "iva", element: <LazyPage><IVA /></LazyPage> },
       { path: "liquidazione-iva", element: <LazyPage><LiquidazioneIVA /></LazyPage> },
       { path: "f24", element: <LazyPage><F24 /></LazyPage> },
+      { path: "f24/:anno/:mese", element: <LazyPage><F24 /></LazyPage> },
       { path: "riconciliazione-f24", element: <LazyPage><RiconciliazioneF24 /></LazyPage> },
       { path: "codici-tributari", element: <LazyPage><CodiciTributari /></LazyPage> },
       { path: "contabilita", element: <LazyPage><ContabilitaAvanzata /></LazyPage> },
       { path: "scadenze", element: <LazyPage><Scadenze /></LazyPage> },
+      { path: "scadenze/:anno/:mese", element: <LazyPage><Scadenze /></LazyPage> },
       
       // === TO-DO ===
       { path: "todo", element: <LazyPage><ToDo /></LazyPage> },
