@@ -542,6 +542,24 @@ async def clear_estratto_conto(anno: Optional[int] = Query(None)) -> Dict[str, A
     return {"message": f"Eliminati {result.deleted_count} movimenti"}
 
 
+@router.delete("/{movimento_id}")
+async def elimina_singolo_movimento(movimento_id: str) -> Dict[str, Any]:
+    """Elimina un singolo movimento dall'estratto conto."""
+    db = Database.get_db()
+    
+    # Verifica che esista
+    movimento = await db["estratto_conto_movimenti"].find_one({"id": movimento_id})
+    if not movimento:
+        raise HTTPException(status_code=404, detail="Movimento non trovato")
+    
+    result = await db["estratto_conto_movimenti"].delete_one({"id": movimento_id})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=500, detail="Errore durante l'eliminazione")
+    
+    return {"success": True, "message": "Movimento eliminato", "deleted_id": movimento_id}
+
+
 @router.get("/export-excel")
 async def export_estratto_conto_excel(
     anno: Optional[int] = Query(None),
