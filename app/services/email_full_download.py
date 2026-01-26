@@ -184,6 +184,46 @@ class EmailFullDownloader:
             "pdfs_by_category": {},
             "errors": []
         }
+        self._cached_keywords = None  # Cache per le parole chiave
+    
+    async def _load_admin_keywords(self) -> list:
+        """
+        Carica le parole chiave amministrative dal database.
+        Le parole chiave sono configurate nella pagina Admin.
+        """
+        # Usa cache se disponibile
+        if self._cached_keywords is not None:
+            return self._cached_keywords
+        
+        try:
+            config = await self.db["config"].find_one({"tipo": "parole_chiave"})
+            if config:
+                keywords = []
+                # Combina tutte le categorie di parole chiave
+                for key in ["generale", "fatture", "f24", "buste_paga", "estratti_conto", "verbali", "altro"]:
+                    if key in config and isinstance(config[key], list):
+                        keywords.extend(config[key])
+                
+                # Rimuovi duplicati e valori vuoti
+                keywords = list(set(kw.strip() for kw in keywords if kw and kw.strip()))
+                
+                if keywords:
+                    self._cached_keywords = keywords
+                    logger.info(f"Caricate {len(keywords)} parole chiave da Admin")
+                    return keywords
+        except Exception as e:
+            logger.warning(f"Errore caricamento parole chiave da DB: {e}")
+        
+        # Fallback: parole chiave di default se non configurate
+        default_keywords = [
+            "fattura", "fatture", "invoice", "f24", "tribut",
+            "cedolino", "busta paga", "stipendio", "estratto conto",
+            "verbale", "multa", "bonifico", "pagamento", "quietanza",
+            "scadenza", "importo", "scheda tecnica"
+        ]
+        self._cached_keywords = default_keywords
+        logger.info(f"Usando {len(default_keywords)} parole chiave di default")
+        return default_keywords
     
     def connect(self) -> bool:
         """Connette al server IMAP."""
