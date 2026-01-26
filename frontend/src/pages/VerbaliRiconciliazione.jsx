@@ -222,8 +222,146 @@ export default function VerbaliRiconciliazione() {
         >
           {collegandoDriver ? '⏳ Collegando...' : '👤 Associa Driver'}
         </button>
+        <button
+          onClick={() => setShowAssociaModal(true)}
+          style={{
+            padding: '12px 24px',
+            background: '#16a34a',
+            color: 'white',
+            border: 'none',
+            borderRadius: 8,
+            cursor: 'pointer',
+            fontWeight: 'bold',
+            fontSize: 14,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8
+          }}
+          data-testid="btn-associa-manuale"
+        >
+          🔗 Associazione Manuale
+        </button>
         </div>
       </div>
+
+      {/* Modal Associazione Manuale */}
+      {showAssociaModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: 16,
+            padding: 24,
+            width: '90%',
+            maxWidth: 500,
+            boxShadow: '0 25px 50px rgba(0,0,0,0.25)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <h2 style={{ margin: 0, fontSize: 20, fontWeight: 'bold', color: '#1e3a5f' }}>
+                🔗 Associa Targa a Driver
+              </h2>
+              <button
+                onClick={() => setShowAssociaModal(false)}
+                style={{ background: 'none', border: 'none', fontSize: 24, cursor: 'pointer', color: '#6b7280' }}
+              >×</button>
+            </div>
+            
+            <p style={{ fontSize: 14, color: '#6b7280', marginBottom: 20 }}>
+              Seleziona una targa e un driver per creare l'associazione. Tutti i verbali con questa targa verranno automaticamente collegati al driver.
+            </p>
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 6 }}>
+                Targa Veicolo
+              </label>
+              <select
+                value={selectedTargaForAssoc}
+                onChange={(e) => setSelectedTargaForAssoc(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '12px 14px',
+                  borderRadius: 8,
+                  border: '2px solid #e5e7eb',
+                  fontSize: 14
+                }}
+                data-testid="select-targa-assoc"
+              >
+                <option value="">-- Seleziona Targa --</option>
+                {getTargheSenzaDriver().map(t => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+            </div>
+
+            <div style={{ marginBottom: 24 }}>
+              <label style={{ display: 'block', fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 6 }}>
+                Driver (Dipendente)
+              </label>
+              <select
+                value={selectedDriverId}
+                onChange={(e) => setSelectedDriverId(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '12px 14px',
+                  borderRadius: 8,
+                  border: '2px solid #e5e7eb',
+                  fontSize: 14
+                }}
+                data-testid="select-driver-assoc"
+              >
+                <option value="">-- Seleziona Driver --</option>
+                {dipendenti.map(d => (
+                  <option key={d.id} value={d.id}>
+                    {d.name || `${d.nome || ''} ${d.cognome || ''}`.trim()}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button
+                onClick={() => setShowAssociaModal(false)}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  background: '#f3f4f6',
+                  color: '#374151',
+                  border: 'none',
+                  borderRadius: 8,
+                  cursor: 'pointer',
+                  fontWeight: '600'
+                }}
+              >
+                Annulla
+              </button>
+              <button
+                onClick={handleAssociaTargaDriver}
+                disabled={associating || !selectedTargaForAssoc || !selectedDriverId}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  background: (!selectedTargaForAssoc || !selectedDriverId) ? '#e5e7eb' : '#16a34a',
+                  color: (!selectedTargaForAssoc || !selectedDriverId) ? '#9ca3af' : 'white',
+                  border: 'none',
+                  borderRadius: 8,
+                  cursor: (!selectedTargaForAssoc || !selectedDriverId) ? 'default' : 'pointer',
+                  fontWeight: '600'
+                }}
+                data-testid="btn-conferma-associazione"
+              >
+                {associating ? '⏳ Associando...' : '✅ Associa'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Messaggi */}
       {error && (
