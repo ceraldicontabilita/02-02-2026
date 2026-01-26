@@ -442,7 +442,63 @@ POST /api/upload-ai/archivio-pdf/{id}/associa  # Associazione manuale PDF→XML
 
 ---
 
-## 10. CLAUSOLA FINALE
+## 10. AGGIORNAMENTI SESSIONE 26 GENNAIO 2026 (PARTE 2)
+
+### 10.1 ✅ Eliminata Funzione "Imposta Fatture a Bonifico"
+- Rimosso endpoint `POST /api/fatture-to-banca` da sync_relazionale.py
+- Funzione pericolosa che impostava TUTTE le fatture senza metodo a "Bonifico"
+- Sostituita con commento di warning
+
+### 10.2 ✅ Download Email con Parole Chiave da Database
+- Modificato `/app/app/services/email_full_download.py`
+- Nuovo metodo `_load_admin_keywords()` che carica parole chiave dalla collection `config`
+- Le parole chiave sono configurabili dalla pagina Admin
+- Fallback a 17 keywords di default se non configurate
+
+### 10.3 ✅ Fix Pagina CorrezioneAI
+- Errore `ReferenceError: process is not defined` risolto
+- Sostituito `process.env.REACT_APP_BACKEND_URL` con `import api`
+- Tutte le chiamate API ora usano il modulo `api` condiviso
+
+### 10.4 ✅ Fix Pagina Cedolini
+- Migliorata grafica dei tab mesi (più leggibili, con sfondo colorato per mese attivo)
+- Anno di default impostato a 2025 (dove ci sono più dati)
+- Aumentato limit API da 100 a 500 cedolini
+- Corretto ordinamento mesi (crescente invece che decrescente)
+- Visibili tutti i 14 mesi (Gennaio-Dicembre + 13esima + 14esima)
+
+### 10.5 ✅ URL Descrittivi per Tutte le Pagine
+- Nuovo file `/app/frontend/src/utils/urlHelpers.js` con utility:
+  - `toSlug()` - converte testo in slug URL-friendly
+  - `cedolinoUrl()`, `fatturaUrl()`, `fornitoreUrl()`, `dipendenteUrl()`, `f24Url()`
+  - `generateBreadcrumb()` - genera breadcrumb da pathname
+  - `updatePageTitle()` - aggiorna document.title per SEO
+- Nuovo componente `/app/frontend/src/components/Breadcrumb.jsx`
+- Route aggiornate in main.jsx:
+  - `/cedolini/:nome/:dettaglio`
+  - `/cedolini-calcolo/:nome/:dettaglio`
+  - `/fatture-ricevute/:fornitore/:fattura`
+  - `/fornitori/:nome`
+  - `/dipendenti/:nome/*`
+
+### 10.6 File Modificati in Questa Parte
+- `/app/app/routers/sync_relazionale.py` - Rimosso endpoint fatture-to-banca
+- `/app/app/services/email_full_download.py` - _load_admin_keywords()
+- `/app/frontend/src/pages/CorrezioneAI.jsx` - Fix process.env
+- `/app/frontend/src/pages/Cedolini.jsx` - Grafica mesi + URL descrittivi
+- `/app/app/routers/cedolini.py` - Limit 500, ordinamento corretto
+- `/app/frontend/src/main.jsx` - Route URL descrittivi
+
+---
+
+## 11. Test Report Iteration 37
+- **Backend**: 100% (11/11 tests passed)
+- **Frontend**: 100% (tutti i features funzionanti)
+- **Verifiche**: CorrezioneAI funziona, Cedolini mostra tutti i mesi, endpoint bonifico rimosso (404), parole chiave caricate da DB
+
+---
+
+## 12. CLAUSOLA FINALE
 
 Questo PRD è vincolante. Ogni sviluppo futuro deve:
 - Rispettare i validatori
