@@ -175,10 +175,29 @@ export default function Cedolini() {
     return true;
   });
 
-  // Apri dettaglio
+  // Apri dettaglio con URL descrittivo
   const openDettaglio = (cedolino) => {
     setCedolinoSelezionato(cedolino);
     setShowDettaglio(true);
+    
+    // Genera URL descrittivo
+    const nome = toSlug(cedolino.employee_nome || cedolino.nome_dipendente || 'dipendente');
+    const mese = getMeseKey(cedolino.mese);
+    navigate(`/cedolini/${nome}/cedolino-${mese}-${cedolino.anno || anno}`, { replace: true });
+    
+    // Aggiorna title
+    updatePageTitle(
+      `Cedolino ${cedolino.employee_nome || 'Dipendente'} - ${mese} ${cedolino.anno || anno}`,
+      'Buste Paga'
+    );
+  };
+  
+  // Chiudi dettaglio
+  const closeDettaglio = () => {
+    setCedolinoSelezionato(null);
+    setShowDettaglio(false);
+    navigate('/cedolini', { replace: true });
+    updatePageTitle('Buste Paga', 'Dipendenti');
   };
 
   // Upload cedolino
