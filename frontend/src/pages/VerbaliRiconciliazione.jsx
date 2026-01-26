@@ -123,6 +123,41 @@ export default function VerbaliRiconciliazione() {
     }
   };
 
+  // Funzione per associare manualmente targa a driver
+  const handleAssociaTargaDriver = async () => {
+    if (!selectedTargaForAssoc || !selectedDriverId) {
+      setError('Seleziona sia la targa che il driver');
+      return;
+    }
+    
+    setAssociating(true);
+    setError('');
+    try {
+      const res = await api.post(`/api/auto-repair/collega-targa-driver?targa=${selectedTargaForAssoc}&driver_id=${selectedDriverId}`);
+      setSuccessMsg(`Targa ${selectedTargaForAssoc} associata a ${res.data.driver}. ${res.data.verbali_aggiornati} verbali aggiornati.`);
+      setShowAssociaModal(false);
+      setSelectedTargaForAssoc('');
+      setSelectedDriverId('');
+      loadDashboard();
+      loadVerbali();
+    } catch (e) {
+      setError(`Errore associazione: ${e.response?.data?.detail || e.message}`);
+    } finally {
+      setAssociating(false);
+    }
+  };
+
+  // Ottieni targhe uniche senza driver dai verbali
+  const getTargheSenzaDriver = () => {
+    const targheSet = new Set();
+    verbali.forEach(v => {
+      if (v.targa && !v.driver_id) {
+        targheSet.add(v.targa);
+      }
+    });
+    return Array.from(targheSet).sort();
+  };
+
   const getStatoInfo = (stato) => STATI_VERBALE[stato] || STATI_VERBALE['sconosciuto'];
 
   return (
