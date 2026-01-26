@@ -1631,6 +1631,7 @@ export default function Fornitori() {
                 onChangeMetodo={handleChangeMetodo}
                 onSearchPiva={handleSearchPiva}
                 onShowFatturato={handleShowFatturato}
+                onShowSchedeTecniche={handleViewSchedeTecniche}
                 selectedYear={selectedYear}
               />
             ))}
