@@ -151,18 +151,30 @@ async def salva_allegato_pdf(db, fattura_id: str, allegato: Dict) -> Optional[st
 
 def generate_invoice_html(fattura: Dict, righe_fattura: List[Dict] = None) -> str:
     """Genera HTML preview della fattura stile AssoInvoice."""
-    fornitore = fattura.get("fornitore_ragione_sociale", fattura.get("cedente_denominazione", "N/A"))
-    piva = fattura.get("fornitore_partita_iva", fattura.get("cedente_piva", "N/A"))
-    numero = fattura.get("numero_documento", fattura.get("numero", "N/A"))
-    data = fattura.get("data_documento", fattura.get("data", "N/A"))
-    importo = fattura.get("importo_totale", fattura.get("total_amount", 0))
-    imponibile = fattura.get("imponibile", 0)
-    iva = fattura.get("imposta", 0)
-    stato = fattura.get("stato_pagamento", "non_pagata")
-    metodo = fattura.get("metodo_pagamento", "N/A")
+    # Supporta entrambi i formati di campi (XML import e legacy)
+    fornitore = (fattura.get("fornitore_ragione_sociale") or 
+                 fattura.get("supplier_name") or 
+                 fattura.get("cedente_denominazione") or 
+                 fattura.get("fornitore", {}).get("denominazione") or "N/A")
+    piva = (fattura.get("fornitore_partita_iva") or 
+            fattura.get("supplier_vat") or 
+            fattura.get("cedente_piva") or 
+            fattura.get("fornitore", {}).get("partita_iva") or "N/A")
+    numero = fattura.get("numero_documento") or fattura.get("invoice_number") or fattura.get("numero") or "N/A"
+    data = fattura.get("data_documento") or fattura.get("invoice_date") or fattura.get("data") or "N/A"
+    importo = fattura.get("importo_totale") or fattura.get("total_amount") or 0
+    imponibile = fattura.get("imponibile") or 0
+    iva = fattura.get("imposta") or fattura.get("iva") or 0
+    stato = fattura.get("stato_pagamento") or fattura.get("stato") or "non_pagata"
+    metodo = fattura.get("metodo_pagamento") or "N/A"
+    
+    # Se le righe sono nel documento stesso, usale
+    if not righe_fattura and fattura.get("linee"):
+        righe_fattura = fattura.get("linee", [])
     
     stato_badge = {
         "pagata": '<span style="background:#22c55e;color:white;padding:4px 12px;border-radius:4px;">PAGATA</span>',
+        "pagato": '<span style="background:#22c55e;color:white;padding:4px 12px;border-radius:4px;">PAGATA</span>',
         "non_pagata": '<span style="background:#ef4444;color:white;padding:4px 12px;border-radius:4px;">NON PAGATA</span>',
         "parziale": '<span style="background:#f59e0b;color:white;padding:4px 12px;border-radius:4px;">PARZIALE</span>'
     }.get(stato, f'<span style="background:#6b7280;color:white;padding:4px 12px;border-radius:4px;">{stato.upper()}</span>')
