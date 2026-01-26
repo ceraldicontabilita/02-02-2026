@@ -249,28 +249,7 @@ async def match_fatture_con_prima_nota_cassa(db) -> Dict[str, Any]:
     return results
 
 
-async def set_fatture_non_cassa_to_banca(db) -> Dict[str, Any]:
-    """
-    Le fatture senza metodo_pagamento o non in cassa → default Bonifico (banca)
-    """
-    result = await db["invoices"].update_many(
-        {
-            "$or": [
-                {"metodo_pagamento": {"$exists": False}},
-                {"metodo_pagamento": None},
-                {"metodo_pagamento": ""}
-            ]
-        },
-        {"$set": {
-            "metodo_pagamento": "Bonifico",
-            "updated_at": datetime.now(timezone.utc).isoformat()
-        }}
-    )
-    
-    return {
-        "updated": result.modified_count,
-        "message": f"{result.modified_count} fatture impostate a Bonifico (banca)"
-    }
+# ELIMINATA: funzione set_fatture_non_cassa_to_banca - Pericolosa, impostava tutte le fatture a Bonifico
 
 
 async def match_fatture_con_estratto_conto(db) -> Dict[str, Any]:
