@@ -10,8 +10,6 @@ import {
 } from 'lucide-react';
 import api from '../api';
 
-const API_URL = import.meta.env.VITE_API_URL || '';
-
 export default function CorrezioneAI() {
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
