@@ -403,6 +403,10 @@ async def visualizza_pdf_documento(documento_id: str):
         file_bytes = pdf_data
     
     filename = doc.get("filename", "documento.pdf")
+    # Sanitize filename - remove newlines and other illegal header characters
+    filename = filename.replace('\r', '').replace('\n', ' ').strip()
+    # Also remove any other control characters
+    filename = ''.join(c for c in filename if ord(c) >= 32 or c in '\t')
     filename_lower = filename.lower()
     
     # Determina il media type in base all'estensione
