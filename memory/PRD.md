@@ -544,7 +544,57 @@ POST /api/upload-ai/archivio-pdf/{id}/associa  # Associazione manuale PDF→XML
 
 ---
 
-## 14. CLAUSOLA FINALE
+## 14. AGGIORNAMENTI SESSIONE 26 GENNAIO 2026 (PARTE 4)
+
+### 14.1 ✅ Fix Associazione Verbali-Driver (P0 RISOLTO)
+- **Problema**: Solo 1 verbale su 52 era collegato a un driver (1.9%)
+- **Causa**: Le targhe nei verbali non venivano sincronizzate da `verbali_noleggio_completi`
+- **Soluzione**:
+  1. Nuova funzione `_sincronizza_verbali_completi()` che copia le targhe da `verbali_noleggio_completi` a `verbali_noleggio`
+  2. Migliorata funzione `_collega_verbali_driver()` per cercare sia `driver_id` esistente che None
+  3. Normalizzazione targhe a UPPERCASE per matching corretto
+- **Risultato**: Da 1 a 30 verbali collegati (57.7%)
+
+### 14.2 ✅ UI Associazione Manuale Targa-Driver
+- Nuovo pulsante verde "🔗 Associazione Manuale" nell'header della pagina VerbaliRiconciliazione
+- Modal con:
+  - Dropdown targhe (filtra solo targhe senza driver)
+  - Dropdown driver (lista dipendenti con nome)
+  - Pulsante conferma associazione
+- API `POST /api/auto-repair/collega-targa-driver?targa=XX&driver_id=YY`
+- Aggiorna automaticamente sia il veicolo che tutti i verbali con quella targa
+
+### 14.3 ✅ Colonna Driver nella Tabella Verbali
+- Aggiunta nuova colonna "Driver" nella tabella VerbaliRiconciliazione
+- Mostra nome driver con icona 👤 in verde se associato
+- Mostra "Da associare" in giallo se non collegato
+- API `/api/verbali-riconciliazione/lista` ora include campo `driver` e normalizza `driver_nome`
+
+### 14.4 ✅ Migliorata Verifica Auto-Repair
+- Endpoint `/api/auto-repair/verifica` ora include:
+  - Statistiche `verbali_completi` (fonte dati targhe)
+  - Statistiche `payslips` oltre a `cedolini`
+  - Campo `senza_targa` per verbali
+
+### 14.5 File Modificati
+- `/app/app/routers/auto_repair.py` - Nuova sincronizzazione verbali_completi + miglioramenti
+- `/app/app/routers/verbali_riconciliazione.py` - Aggiunto campo driver nella proiezione
+- `/app/frontend/src/pages/VerbaliRiconciliazione.jsx` - Colonna Driver + Modal associazione
+
+---
+
+## 15. Test Report Iteration 39
+- **Backend**: 100% (12/12 tests passed)
+- **Frontend**: 100% (tutti i features funzionanti)
+- **Auto-Repair Verbali**: Da 1.9% a 57.7% collegati (29 verbali in più)
+- **Statistiche Attuali**:
+  - Fatture → Fornitori: 95.1%
+  - Cedolini → Dipendenti: 93.4%
+  - Verbali → Driver: 57.7% (migliorato da 1.9%)
+
+---
+
+## 16. CLAUSOLA FINALE
 
 Questo PRD è vincolante. Ogni sviluppo futuro deve:
 - Rispettare i validatori
