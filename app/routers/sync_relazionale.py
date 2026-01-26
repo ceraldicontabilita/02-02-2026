@@ -381,14 +381,8 @@ async def api_match_fatture_banca() -> Dict[str, Any]:
     return result
 
 
-@router.post("/fatture-to-banca")
-async def api_fatture_to_banca() -> Dict[str, Any]:
-    """
-    Imposta le fatture senza metodo pagamento a Bonifico (banca).
-    """
-    db = Database.get_db()
-    result = await set_fatture_non_cassa_to_banca(db)
-    return result
+# ELIMINATO: endpoint /fatture-to-banca - Funzione pericolosa che impostava tutte le fatture a Bonifico
+# Se necessario, usare l'endpoint specifico per singola fattura
 
 
 @router.get("/fatture-cassa-dettaglio")
