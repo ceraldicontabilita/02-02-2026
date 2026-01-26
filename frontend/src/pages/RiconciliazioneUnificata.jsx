@@ -857,6 +857,7 @@ export default function RiconciliazioneUnificata() {
             movimenti={stipendiFiltrati} 
             onConferma={handleConferma}
             onIgnora={handleIgnora}
+            onElimina={handleElimina}
             processing={processing}
             title="Stipendi"
             emptyText="Nessuno stipendio da riconciliare"
