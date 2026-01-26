@@ -127,23 +127,26 @@ async def _collega_verbali_driver(db) -> int:
     ).to_list(100)
     
     # Crea mappa targa -> driver
-    targa_driver = {v["targa"]: {"driver": v.get("driver"), "driver_id": v.get("driver_id")} for v in veicoli}
+    targa_driver = {v["targa"].upper(): {"driver": v.get("driver"), "driver_id": v.get("driver_id")} for v in veicoli if v.get("targa")}
     
-    # Aggiorna verbali senza driver
+    # Aggiorna verbali senza driver (con targa presente)
     verbali = await db.verbali_noleggio.find(
-        {"targa": {"$exists": True}, "driver_id": {"$exists": False}},
-        {"_id": 1, "targa": 1}
+        {"targa": {"$exists": True, "$ne": None, "$ne": ""}},
+        {"_id": 1, "targa": 1, "driver_id": 1}
     ).to_list(1000)
     
     for verbale in verbali:
-        targa = verbale.get("targa")
-        if targa and targa in targa_driver:
+        targa = (verbale.get("targa") or "").upper()
+        driver_id_esistente = verbale.get("driver_id")
+        
+        if targa and targa in targa_driver and not driver_id_esistente:
             driver_info = targa_driver[targa]
             await db.verbali_noleggio.update_one(
                 {"_id": verbale["_id"]},
                 {"$set": {
                     "driver": driver_info["driver"],
                     "driver_id": driver_info["driver_id"],
+                    "driver_nome": driver_info["driver"],
                     "updated_at": datetime.now(timezone.utc)
                 }}
             )
