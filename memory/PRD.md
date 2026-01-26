@@ -498,7 +498,53 @@ POST /api/upload-ai/archivio-pdf/{id}/associa  # Associazione manuale PDF→XML
 
 ---
 
-## 12. CLAUSOLA FINALE
+## 12. AGGIORNAMENTI SESSIONE 26 GENNAIO 2026 (PARTE 3)
+
+### 12.1 ✅ Fix Tab Mesi Cedolini Sovrapposti
+- Ridotto minWidth da 90px a 70px
+- Mesi abbreviati a 3 lettere (Gen, Feb, Mar, Apr...)
+- Aggiunto overflow-x: auto per scroll orizzontale
+- Tutti i 14 mesi ora visibili: Gen → Dic + 13e + 14e
+
+### 12.2 ✅ Fix Dettaglio Cedolino Non Si Apre
+- Corretto bug: usava `m.key` invece di `m.num` per trovare il mese
+- Ora MESI.find(m => m.num === cedolino.mese) mappa correttamente il mese numerico
+
+### 12.3 ✅ Fix Fattura view-assoinvoice Dati Mancanti
+- Aggiunta funzione `safe_float()` per evitare errori di formattazione
+- Supportati entrambi i formati di campo (XML import e legacy)
+- Campi mappati: supplier_name, supplier_vat, invoice_number, total_amount
+
+### 12.4 ✅ Sistema Auto-Riparazione Globale
+- Nuovo router `/app/app/routers/auto_repair.py`
+- Endpoint `/api/auto-repair/verifica` - statistiche relazioni
+- Endpoint `/api/auto-repair/globale` - esegue collegamento dati
+- Endpoint `/api/auto-repair/collega-targa-driver` - collegamento manuale
+- Statistiche dopo esecuzione:
+  - **Fatture → Fornitori**: 95.1% collegati (3605/3791)
+  - **Cedolini → Dipendenti**: 93.4% collegati (184/197)
+  - **Verbali → Driver**: 1.9% collegati (richiede collegamento manuale targhe)
+
+### 12.5 ✅ Rimozione Duplicati Cedolini
+- Rimossi 1677 cedolini duplicati
+- Da 1000+ a 197 cedolini unici
+
+### 12.6 File Modificati
+- `/app/frontend/src/pages/Cedolini.jsx` - Tab mesi con abbreviazioni e fix m.num
+- `/app/app/routers/fatture_module/helpers.py` - safe_float() e mapping campi
+- `/app/app/routers/auto_repair.py` - NUOVO
+- `/app/app/main.py` - Registrato auto_repair router
+
+---
+
+## 13. Test Report Iteration 38
+- **Backend**: 100% (8/8 tests passed)
+- **Frontend**: 100% (tutti i features funzionanti)
+- **Auto-Repair**: Fatture 95.1%, Cedolini 93.4%, Verbali 1.9%
+
+---
+
+## 14. CLAUSOLA FINALE
 
 Questo PRD è vincolante. Ogni sviluppo futuro deve:
 - Rispettare i validatori
