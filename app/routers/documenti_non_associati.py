@@ -373,8 +373,8 @@ async def lista_collezioni_disponibili() -> List[Dict[str, str]]:
 @router.get("/pdf/{documento_id}")
 async def visualizza_pdf_documento(documento_id: str):
     """
-    Restituisce il PDF del documento per la visualizzazione.
-    Permette di vedere di che file si tratta prima di associarlo.
+    Restituisce il file del documento per la visualizzazione.
+    Supporta PDF, immagini (PNG, JPG, etc.), e file P7S firmati.
     """
     from fastapi.responses import Response
     import base64
@@ -391,48 +391,89 @@ async def visualizza_pdf_documento(documento_id: str):
     
     pdf_data = doc.get("pdf_data")
     if not pdf_data:
-        raise HTTPException(status_code=404, detail="PDF non disponibile")
+        raise HTTPException(status_code=404, detail="File non disponibile")
     
     # Decodifica se base64
     if isinstance(pdf_data, str):
         try:
-            pdf_bytes = base64.b64decode(pdf_data)
+            file_bytes = base64.b64decode(pdf_data)
         except:
-            pdf_bytes = pdf_data.encode()
+            file_bytes = pdf_data.encode()
     else:
-        pdf_bytes = pdf_data
+        file_bytes = pdf_data
     
     filename = doc.get("filename", "documento.pdf")
+    filename_lower = filename.lower()
+    
+    # Determina il media type in base all'estensione
+    media_type_map = {
+        '.pdf': 'application/pdf',
+        '.png': 'image/png',
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.gif': 'image/gif',
+        '.webp': 'image/webp',
+        '.bmp': 'image/bmp',
+        '.svg': 'image/svg+xml',
+        '.xml': 'application/xml',
+        '.txt': 'text/plain',
+        '.csv': 'text/csv',
+        '.html': 'text/html',
+    }
+    
+    # Trova l'estensione
+    ext = ''
+    for e in media_type_map.keys():
+        if filename_lower.endswith(e):
+            ext = e
+            break
     
     # Se è un file P7S/P7M firmato, estrai il PDF interno
-    if filename.lower().endswith(('.p7s', '.p7m', '.p7c')):
-        extracted_pdf = extract_pdf_from_p7s(pdf_bytes)
+    if filename_lower.endswith(('.p7s', '.p7m', '.p7c')):
+        extracted_pdf = extract_pdf_from_p7s(file_bytes)
         if extracted_pdf:
-            pdf_bytes = extracted_pdf
-            filename = filename.rsplit('.', 1)[0]  # Rimuovi estensione .p7s
+            file_bytes = extracted_pdf
+            filename = filename.rsplit('.', 1)[0]
             if not filename.lower().endswith('.pdf'):
                 filename += '.pdf'
+            ext = '.pdf'
         else:
             raise HTTPException(
                 status_code=422, 
-                detail="Impossibile estrarre il PDF dal file firmato digitalmente. Il file potrebbe essere corrotto o non contenere un PDF."
+                detail="Impossibile estrarre il PDF dal file firmato digitalmente."
             )
     
-    # Verifica che sia effettivamente un PDF
-    if pdf_bytes[:4] != b'%PDF':
-        # Potrebbe essere un file firmato non riconosciuto
-        extracted = extract_pdf_from_p7s(pdf_bytes)
-        if extracted:
-            pdf_bytes = extracted
+    # Se è un PDF, verifica che sia valido
+    if ext == '.pdf' or filename_lower.endswith('.pdf'):
+        if file_bytes[:4] != b'%PDF':
+            # Potrebbe essere un file firmato non riconosciuto
+            extracted = extract_pdf_from_p7s(file_bytes)
+            if extracted:
+                file_bytes = extracted
+            else:
+                raise HTTPException(
+                    status_code=422,
+                    detail="Il file non è un PDF valido"
+                )
+        media_type = 'application/pdf'
+    elif ext:
+        media_type = media_type_map[ext]
+    else:
+        # Rileva dal magic number
+        if file_bytes[:4] == b'%PDF':
+            media_type = 'application/pdf'
+        elif file_bytes[:8] == b'\x89PNG\r\n\x1a\n':
+            media_type = 'image/png'
+        elif file_bytes[:2] == b'\xff\xd8':
+            media_type = 'image/jpeg'
+        elif file_bytes[:6] in (b'GIF87a', b'GIF89a'):
+            media_type = 'image/gif'
         else:
-            raise HTTPException(
-                status_code=422,
-                detail="Il file non è un PDF valido"
-            )
+            media_type = 'application/octet-stream'
     
     return Response(
-        content=pdf_bytes,
-        media_type="application/pdf",
+        content=file_bytes,
+        media_type=media_type,
         headers={
             "Content-Disposition": f'inline; filename="{filename}"',
             "Cache-Control": "no-cache"
