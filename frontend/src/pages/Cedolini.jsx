@@ -78,8 +78,8 @@ export default function Cedolini() {
   const [employees, setEmployees] = useState([]);
   const [stats, setStats] = useState({});
   
-  // Filtri
-  const [anno, setAnno] = useState(new Date().getFullYear());
+  // Filtri - default anno 2025 che ha più dati
+  const [anno, setAnno] = useState(2025);
   const [meseSelezionato, setMeseSelezionato] = useState('gennaio');
   const [filtroEmployee, setFiltroEmployee] = useState('');
   const [searchText, setSearchText] = useState('');
