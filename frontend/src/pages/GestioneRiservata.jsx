@@ -8,10 +8,6 @@ import { STYLES, COLORS, button, badge, formatEuro, formatDateIT } from '../lib/
   AlertTriangle, CheckCircle
 } from "lucide-react";
 
-const formatEuro = (val) => {
-  const num = parseFloat(val) || 0;
-  return num.toLocaleString('it-IT', { style: 'currency', currency: 'EUR' });
-};
 
 // Login Component
 function LoginGestioneRiservata({ onLogin }) {

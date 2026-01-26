@@ -39,10 +39,6 @@ const MESI = [
 ];
 
 // Formatta importo
-const formatEuro = (value) => {
-  if (!value && value !== 0) return '-';
-  return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(value);
-};
 
 // Formatta importo breve (es. €17k)
 const formatEuroShort = (value) => {
