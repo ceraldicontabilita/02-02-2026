@@ -472,6 +472,7 @@ export default function VerbaliRiconciliazione() {
                   <tr style={{ background: '#f8fafc' }}>
                     <th style={{ padding: '12px 14px', textAlign: 'left', fontWeight: '600', color: '#475569' }}>Verbale</th>
                     <th style={{ padding: '12px 14px', textAlign: 'left', fontWeight: '600', color: '#475569' }}>Targa</th>
+                    <th style={{ padding: '12px 14px', textAlign: 'left', fontWeight: '600', color: '#475569' }}>Driver</th>
                     <th style={{ padding: '12px 14px', textAlign: 'left', fontWeight: '600', color: '#475569' }}>Fattura</th>
                     <th style={{ padding: '12px 14px', textAlign: 'right', fontWeight: '600', color: '#475569' }}>Importo</th>
                     <th style={{ padding: '12px 14px', textAlign: 'center', fontWeight: '600', color: '#475569' }}>Stato</th>
