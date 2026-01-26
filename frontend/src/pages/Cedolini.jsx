@@ -12,6 +12,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../api';
+import { formatEuro, STYLES, COLORS, button, badge } from '../lib/utils';
 import { 
   ChevronLeft, ChevronRight, RefreshCw, Upload, Download,
   Search, FileText, Eye, MoreHorizontal, X, Calendar,
@@ -38,12 +39,6 @@ const MESI = [
   { key: '13esima', label: '13esima', num: 13 },
   { key: '14esima', label: '14esima', num: 14 },
 ];
-
-// Formatta importo
-const formatEuro = (value) => {
-  if (!value && value !== 0) return '-';
-  return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(value);
-};
 
 // Formatta importo breve (es. €17k)
 const formatEuroShort = (value) => {
