@@ -191,6 +191,7 @@ async def get_lista_verbali(
             "stato": 1,
             "data_violazione": 1,
             "scadenza_pagamento": 1,
+            "driver": 1,
             "driver_nome": 1,
             "driver_id": 1,
             "veicolo_id": 1,
@@ -206,6 +207,11 @@ async def get_lista_verbali(
         }
         
         verbali = await db["verbali_noleggio"].find(query, projection).sort("created_at", -1).to_list(500)
+        
+        # Normalizza driver_nome usando driver se mancante
+        for v in verbali:
+            if not v.get("driver_nome") and v.get("driver"):
+                v["driver_nome"] = v["driver"]
         
         return {
             "success": True,
