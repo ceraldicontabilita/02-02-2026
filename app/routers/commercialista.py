@@ -144,9 +144,10 @@ async def get_prima_nota_cassa_mensile(anno: int, mese: int) -> Dict[str, Any]:
     movements = []
     
     # Try prima_nota_cassa collection (usata dal router prima_nota.py)
+    # Ordinamento: prima per data, poi per categoria (Corrispettivi prima di POS)
     cursor = db["prima_nota_cassa"].find({
         "data": {"$regex": f"^{month_prefix}"}
-    }, {"_id": 0})
+    }, {"_id": 0}).sort([("data", 1), ("categoria", 1)])
     movements = await cursor.to_list(5000)
     
     # If empty, try prima_nota collection with tipo_conto = cassa
@@ -157,7 +158,7 @@ async def get_prima_nota_cassa_mensile(anno: int, mese: int) -> Dict[str, Any]:
                 {"data": {"$regex": f"^{month_prefix}"}},
                 {"date": {"$regex": f"^{month_prefix}"}}
             ]
-        }, {"_id": 0})
+        }, {"_id": 0}).sort([("data", 1), ("categoria", 1)])
         movements = await cursor.to_list(5000)
     
     # If still empty, try cash collection
@@ -167,7 +168,7 @@ async def get_prima_nota_cassa_mensile(anno: int, mese: int) -> Dict[str, Any]:
                 {"data": {"$regex": f"^{month_prefix}"}},
                 {"date": {"$regex": f"^{month_prefix}"}}
             ]
-        }, {"_id": 0})
+        }, {"_id": 0}).sort([("data", 1), ("categoria", 1)])
         movements = await cursor.to_list(5000)
     
     # Calculate totals
