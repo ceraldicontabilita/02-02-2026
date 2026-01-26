@@ -61,22 +61,18 @@ export default function CorrezioneAI() {
     if (!selectedDoc) return;
     
     try {
-      const response = await fetch(`${API_URL}/api/ai-parser/da-rivedere/${selectedDoc.id}/classifica`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
+      await api.put(`/api/ai-parser/da-rivedere/${selectedDoc.id}/classifica`, null, {
+        params: {
           centro_costo_id: editedData.centro_costo_id || 'CDC_ALTRO',
           centro_costo_nome: editedData.centro_costo_nome || 'Altri Costi',
           notes: 'Corretto manualmente'
-        })
+        }
       });
       
-      if (response.ok) {
-        alert('Documento aggiornato con successo!');
-        loadDocuments();
-        setSelectedDoc(null);
-        setEditMode(false);
-      }
+      alert('Documento aggiornato con successo!');
+      loadDocuments();
+      setSelectedDoc(null);
+      setEditMode(false);
     } catch (error) {
       console.error('Errore salvataggio:', error);
       alert('Errore durante il salvataggio');
