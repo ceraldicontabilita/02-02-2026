@@ -324,7 +324,7 @@ export default function Cedolini() {
         </button>
       </div>
 
-      {/* Tabs Mesi con Stats */}
+      {/* Tabs Mesi con Stats - Layout Migliorato */}
       <div style={{ 
         background: 'white', 
         borderRadius: 12, 
@@ -332,12 +332,13 @@ export default function Cedolini() {
         marginBottom: 20,
         overflow: 'hidden'
       }}>
+        {/* Grid di mesi - layout fisso a griglia */}
         <div style={{ 
-          display: 'flex', 
-          overflowX: 'auto',
-          borderBottom: '1px solid #e5e7eb',
-          padding: '0 4px',
-          gap: 2
+          display: 'grid',
+          gridTemplateColumns: 'repeat(14, 1fr)',
+          gap: 0,
+          borderBottom: '2px solid #e5e7eb',
+          background: '#f9fafb'
         }}>
           {MESI.map(mese => {
             const meseStats = stats[mese.key] || { count: 0, totale: 0 };
@@ -348,45 +349,42 @@ export default function Cedolini() {
                 key={mese.key}
                 onClick={() => setMeseSelezionato(mese.key)}
                 style={{
-                  padding: '10px 8px',
-                  background: isActive ? '#3b82f6' : 'transparent',
+                  padding: '12px 4px',
+                  background: isActive ? COLORS.primary : 'transparent',
                   border: 'none',
-                  borderRadius: isActive ? '8px 8px 0 0' : 0,
+                  borderBottom: isActive ? `3px solid ${COLORS.success}` : '3px solid transparent',
                   cursor: 'pointer',
-                  minWidth: 70,
-                  flex: '0 0 auto',
                   textAlign: 'center',
-                  transition: 'all 0.2s',
-                  marginBottom: isActive ? -1 : 0
+                  transition: 'all 0.2s'
                 }}
                 data-testid={`tab-${mese.key}`}
               >
                 <div style={{ 
-                  fontSize: 12, 
-                  fontWeight: 600,
-                  color: isActive ? 'white' : '#374151',
-                  whiteSpace: 'nowrap'
+                  fontSize: 11, 
+                  fontWeight: 700,
+                  color: isActive ? 'white' : COLORS.primary,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px'
                 }}>
                   {mese.label.substring(0, 3)}
                 </div>
-                {meseStats.count > 0 && (
-                  <>
-                    <div style={{ 
-                      fontSize: 10, 
-                      color: isActive ? 'rgba(255,255,255,0.8)' : '#6b7280',
-                      marginTop: 2
-                    }}>
-                      {meseStats.count}
-                    </div>
-                    <div style={{ 
-                      fontSize: 11, 
-                      fontWeight: 700,
-                      color: isActive ? 'white' : '#1f2937',
-                      marginTop: 1
-                    }}>
-                      {formatEuroShort(meseStats.totale)}
-                    </div>
-                  </>
+                {meseStats.count > 0 ? (
+                  <div style={{ 
+                    fontSize: 10, 
+                    color: isActive ? 'rgba(255,255,255,0.9)' : COLORS.gray,
+                    marginTop: 4,
+                    fontWeight: 600
+                  }}>
+                    {meseStats.count} • {formatEuroShort(meseStats.totale)}
+                  </div>
+                ) : (
+                  <div style={{ 
+                    fontSize: 10, 
+                    color: isActive ? 'rgba(255,255,255,0.5)' : '#d1d5db',
+                    marginTop: 4
+                  }}>
+                    -
+                  </div>
                 )}
               </button>
             );
