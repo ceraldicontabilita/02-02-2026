@@ -191,6 +191,7 @@ from app.routers import fornitori_learning  # Fornitori Learning - Associazione 
 from app.routers import ai_parser  # AI Parser - Estrazione intelligente documenti
 from app.routers import upload_ai  # Upload AI - Parsing automatico su upload diretto
 from app.routers import chat_router  # Chat Intelligente - Interrogazione dati in linguaggio naturale
+from app.routers import schede_tecniche  # Schede Tecniche Prodotti
 
 
 # =============================================================================
