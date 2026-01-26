@@ -53,6 +53,7 @@ const TABS = [
   { id: 'f24', label: '📄 F24', color: '#ef4444' },
   { id: 'aruba', label: '🧾 Fatture Aruba', color: '#8b5cf6' },
   { id: 'stipendi', label: '👤 Stipendi', color: '#06b6d4' },
+  { id: 'documenti', label: '📎 Documenti', color: '#ec4899' },
 ];
 
 export default function RiconciliazioneUnificata() {
