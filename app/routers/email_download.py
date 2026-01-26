@@ -566,7 +566,6 @@ async def _run_batch_processing(batch_size: int, total_limit: int):
         _batch_processing_status["completed_at"] = datetime.now(timezone.utc).isoformat()
 
 
-import asyncio
 
 
 @router.post("/popola-pdf-payslips")
