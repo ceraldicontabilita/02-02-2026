@@ -501,6 +501,21 @@ export default function VerbaliRiconciliazione() {
                           <span style={{ fontWeight: '600', color: '#1e3a5f' }}>{v.targa || '-'}</span>
                         </td>
                         <td style={{ padding: '14px' }}>
+                          {v.driver_nome || v.driver ? (
+                            <span style={{ 
+                              fontWeight: '500', 
+                              color: '#059669',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 4
+                            }}>
+                              👤 {v.driver_nome || v.driver}
+                            </span>
+                          ) : (
+                            <span style={{ color: '#f59e0b', fontStyle: 'italic', fontSize: 12 }}>Da associare</span>
+                          )}
+                        </td>
+                        <td style={{ padding: '14px' }}>
                           {v.fattura_numero ? (
                             <div>
                               <div style={{ fontWeight: '500' }}>{v.fattura_numero}</div>
