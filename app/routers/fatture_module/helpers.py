@@ -201,10 +201,10 @@ def generate_invoice_html(fattura: Dict, righe_fattura: List[Dict] = None) -> st
             <tr>
                 <td style="padding:8px;border-bottom:1px solid #e5e7eb;">{r.get('numero_linea', '')}</td>
                 <td style="padding:8px;border-bottom:1px solid #e5e7eb;">{r.get('descrizione', '')[:80]}</td>
-                <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right;">{r.get('quantita', 0)}</td>
-                <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right;">€{r.get('prezzo_unitario', 0):.2f}</td>
-                <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right;">{r.get('aliquota_iva', 0):.0f}%</td>
-                <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right;">€{r.get('prezzo_totale', 0):.2f}</td>
+                <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right;">{qta:.0f}</td>
+                <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right;">€{prezzo_unit:.2f}</td>
+                <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right;">{aliq:.0f}%</td>
+                <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right;">€{prezzo_tot:.2f}</td>
             </tr>"""
     
     html = f"""
