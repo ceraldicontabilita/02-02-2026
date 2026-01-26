@@ -8,6 +8,7 @@ import NotificationBell from "./components/NotificationBell";
 import { NotificheScadenze } from "./components/NotificheScadenze";
 import { UploadProvider } from "./contexts/UploadContext";
 import { UploadStatusBar } from "./components/UploadStatusBar";
+import ChatIntelligente from "./components/ChatIntelligente";
 
 const NAV_ITEMS = [
   { to: "/rapido", label: "📱 Inserimento Rapido", icon: "📱", short: "Rapido", isNew: true, highlight: true },
