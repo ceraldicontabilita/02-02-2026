@@ -881,6 +881,14 @@ export default function RiconciliazioneUnificata() {
             emptyText="Nessuno stipendio da riconciliare"
           />
         )}
+        {activeTab === 'documenti' && (
+          <DocumentiTab 
+            documenti={documentiNonAssociati}
+            stats={documentiStats}
+            onRefresh={loadAllData}
+            processing={processing}
+          />
+        )}
       </div>
 
       {/* Bottone Carica Altri */}
