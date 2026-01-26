@@ -345,7 +345,45 @@ POST /api/upload-ai/archivio-pdf/{id}/associa  # Associazione manuale PDF→XML
 
 ---
 
-## 8. CLAUSOLA FINALE
+## 8. AGGIORNAMENTI SESSIONE 26 GENNAIO 2026
+
+### 8.1 ✅ P0 - Funzionalità Eliminazione in Riconciliazione
+- Aggiunto endpoint `DELETE /api/estratto-conto-movimenti/{movimento_id}` in `/app/app/routers/bank/estratto_conto.py`
+- Aggiunta icona cestino (🗑️) in ogni riga della pagina Riconciliazione
+- Funzione `handleElimina` implementata nel frontend per eliminare movimenti
+
+### 8.2 ✅ P2 - Unificazione Pagine Riconciliazione + Documenti Non Associati  
+- Aggiunto nuovo tab **"📎 Documenti"** nella pagina Riconciliazione Unificata
+- Il tab mostra:
+  - Lista documenti non associati con categoria e anno suggerito
+  - Statistiche (Totali, Associati, Da fare)
+  - Pannello dettaglio con:
+    - Pulsante "Apri PDF" per visualizzare il contenuto
+    - Info file (nome, categoria, dimensione)
+    - Proposta intelligente AI (tipo, anno, mese suggeriti)
+    - Form associazione a collezione con campi JSON
+    - Pulsante elimina documento
+
+### 8.3 🔄 P1 - Processamento Fatture Email (In corso)
+- L'endpoint `POST /api/email-download/processa-fatture-email` funziona correttamente
+- Processate 10 fatture nella sessione corrente
+- Rimangono ~158 fatture da processare (l'utente può eseguire l'endpoint più volte)
+
+### 8.4 Verifica Pulsanti Toolbar Riconciliazione
+- ✅ **Auto-Ripara** - Funzionante
+- ✅ **Carica F24** - Funzionante  
+- ✅ **Auto-Riconcilia** - Funzionante
+- ✅ **Aggiorna** - Funzionante
+- ✅ **Auto: ON/OFF** - Toggle funzionante con timer 30 min
+- ✅ **Filtri** - Pannello filtri funzionante (Data Da/A, Importo Min/Max, Cerca, Reset)
+
+### 8.5 File Modificati
+- `/app/app/routers/bank/estratto_conto.py` - Aggiunto endpoint DELETE singolo
+- `/app/frontend/src/pages/RiconciliazioneUnificata.jsx` - Tab Documenti + icona cestino
+
+---
+
+## 9. CLAUSOLA FINALE
 
 Questo PRD è vincolante. Ogni sviluppo futuro deve:
 - Rispettare i validatori
@@ -356,4 +394,4 @@ Questo PRD è vincolante. Ogni sviluppo futuro deve:
 
 ---
 
-*Documento aggiornato il 24 Gennaio 2026 - Sessione 21*
+*Documento aggiornato il 26 Gennaio 2026 - Sessione 24*
