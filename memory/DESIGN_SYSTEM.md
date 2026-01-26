@@ -1,5 +1,17 @@
 # Design System - Ceraldi ERP
 
+## ⚠️ IMPORTANTE: MIGRAZIONE A TYPESCRIPT
+
+**A partire dal 26 Gennaio 2026, utilizzare il nuovo Design System TypeScript:**
+
+```typescript
+import { STYLES, button, badge, formatEuro, formatDateIT } from '@/design/ceraldiDesignSystem';
+```
+
+**File**: `/app/frontend/src/design/ceraldiDesignSystem.ts`
+
+---
+
 ## REGOLA FONDAMENTALE
 
 **USARE SEMPRE STILI INLINE JAVASCRIPT**, mai Tailwind CSS.
