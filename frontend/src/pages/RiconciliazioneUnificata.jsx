@@ -397,6 +397,29 @@ export default function RiconciliazioneUnificata() {
     }
   };
 
+  // Elimina movimento (rimuove completamente dal database)
+  const handleElimina = async (movimento) => {
+    const movId = movimento.id || movimento.movimento_id;
+    if (!movId) {
+      alert('ID movimento non trovato');
+      return;
+    }
+    
+    if (!window.confirm('Eliminare definitivamente questo movimento?')) {
+      return;
+    }
+    
+    setProcessing(movId);
+    try {
+      await api.delete(`/api/estratto-conto-movimenti/${movId}`);
+      loadAllData();
+    } catch (e) {
+      alert('Errore eliminazione: ' + (e.response?.data?.detail || e.message));
+    } finally {
+      setProcessing(null);
+    }
+  };
+
   // Incassa assegno (segna come incassato e crea movimento in Prima Nota Banca)
   const handleIncassaAssegno = async (assegno) => {
     setProcessing(assegno.id);
