@@ -42,6 +42,17 @@ export default function VerbaliRiconciliazione() {
     }
   }, []);
 
+  const loadDipendenti = useCallback(async () => {
+    try {
+      const res = await api.get('/api/dipendenti');
+      // Filtra solo dipendenti con nome valido
+      const filtered = (res.data || []).filter(d => d.name || d.nome);
+      setDipendenti(filtered);
+    } catch (e) {
+      console.error('Error loading dipendenti:', e);
+    }
+  }, []);
+
   const loadVerbali = useCallback(async () => {
     setLoading(true);
     try {
