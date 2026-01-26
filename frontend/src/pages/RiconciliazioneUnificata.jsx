@@ -832,6 +832,7 @@ export default function RiconciliazioneUnificata() {
             movimenti={assegniFiltrati} 
             onConferma={handleIncassaAssegno}
             onIgnora={handleIgnora}
+            onElimina={handleElimina}
             processing={processing}
             title="Prelievi Assegno"
             emptyText="Nessun assegno da riconciliare"
