@@ -787,9 +787,6 @@ export default function App() {
           }
         }
       `}</style>
-      
-      {/* Parlant AI Chat - Assistente contabile */}
-      <ParlantChat />
     </div>
     </UploadProvider>
   );
