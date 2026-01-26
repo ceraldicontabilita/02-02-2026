@@ -162,9 +162,19 @@ def generate_invoice_html(fattura: Dict, righe_fattura: List[Dict] = None) -> st
             fattura.get("fornitore", {}).get("partita_iva") or "N/A")
     numero = fattura.get("numero_documento") or fattura.get("invoice_number") or fattura.get("numero") or "N/A"
     data = fattura.get("data_documento") or fattura.get("invoice_date") or fattura.get("data") or "N/A"
-    importo = fattura.get("importo_totale") or fattura.get("total_amount") or 0
-    imponibile = fattura.get("imponibile") or 0
-    iva = fattura.get("imposta") or fattura.get("iva") or 0
+    
+    # Converti sempre in float per evitare errori di formattazione
+    def safe_float(val):
+        if val is None:
+            return 0.0
+        try:
+            return float(val)
+        except (ValueError, TypeError):
+            return 0.0
+    
+    importo = safe_float(fattura.get("importo_totale") or fattura.get("total_amount"))
+    imponibile = safe_float(fattura.get("imponibile"))
+    iva = safe_float(fattura.get("imposta") or fattura.get("iva"))
     stato = fattura.get("stato_pagamento") or fattura.get("stato") or "non_pagata"
     metodo = fattura.get("metodo_pagamento") or "N/A"
     
@@ -177,11 +187,16 @@ def generate_invoice_html(fattura: Dict, righe_fattura: List[Dict] = None) -> st
         "pagato": '<span style="background:#22c55e;color:white;padding:4px 12px;border-radius:4px;">PAGATA</span>',
         "non_pagata": '<span style="background:#ef4444;color:white;padding:4px 12px;border-radius:4px;">NON PAGATA</span>',
         "parziale": '<span style="background:#f59e0b;color:white;padding:4px 12px;border-radius:4px;">PARZIALE</span>'
-    }.get(stato, f'<span style="background:#6b7280;color:white;padding:4px 12px;border-radius:4px;">{stato.upper()}</span>')
+    }.get(stato, f'<span style="background:#6b7280;color:white;padding:4px 12px;border-radius:4px;">{str(stato).upper()}</span>')
     
     righe_html = ""
     if righe_fattura:
         for r in righe_fattura:
+            # Safe conversions per le righe
+            prezzo_unit = safe_float(r.get('prezzo_unitario', 0))
+            prezzo_tot = safe_float(r.get('prezzo_totale', 0))
+            qta = safe_float(r.get('quantita', 1))
+            aliq = safe_float(r.get('aliquota_iva', 22))
             righe_html += f"""
             <tr>
                 <td style="padding:8px;border-bottom:1px solid #e5e7eb;">{r.get('numero_linea', '')}</td>
