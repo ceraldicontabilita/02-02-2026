@@ -74,7 +74,8 @@ export default function VerbaliRiconciliazione() {
   useEffect(() => {
     loadDashboard();
     loadVerbali();
-  }, [loadDashboard, loadVerbali]);
+    loadDipendenti();
+  }, [loadDashboard, loadVerbali, loadDipendenti]);
 
   const handleScanFatture = async () => {
     setScanning(true);
