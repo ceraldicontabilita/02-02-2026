@@ -3,6 +3,49 @@
 
 ---
 
+## 26 Gennaio 2026 - Sessione 24 (Parte 4)
+
+### ✅ Fix Associazione Verbali-Driver (P0 RISOLTO)
+**Problema**: Solo 1 verbale su 52 era collegato a un driver (1.9%)
+**Causa**: Le targhe nei verbali non venivano sincronizzate da `verbali_noleggio_completi`
+**Soluzione**:
+- Nuova funzione `_sincronizza_verbali_completi()` in `auto_repair.py`
+- Migliorata `_collega_verbali_driver()` con normalizzazione targhe UPPERCASE
+- **Risultato**: Da 1 a 30 verbali collegati (57.7%)
+
+### ✅ UI Associazione Manuale Targa-Driver
+- Pulsante verde "🔗 Associazione Manuale" nell'header VerbaliRiconciliazione
+- Modal con dropdown targhe (filtra solo senza driver) e dropdown driver (dipendenti)
+- API `POST /api/auto-repair/collega-targa-driver?targa=XX&driver_id=YY`
+- Aggiorna automaticamente veicolo e tutti i verbali con quella targa
+
+### ✅ Colonna Driver nella Tabella Verbali
+- Nuova colonna "Driver" in VerbaliRiconciliazione
+- Mostra nome driver con icona 👤 in verde se associato
+- Mostra "Da associare" in giallo se non collegato
+- API include campo `driver` e normalizza `driver_nome`
+
+### ✅ Design System TypeScript
+- Creato `/app/frontend/src/design/ceraldiDesignSystem.ts`
+- COLORS, SPACING, TEXT, STYLES tipizzati
+- Funzioni `button()`, `badge()` con tipi
+- Formatter italiani: `formatDateIT()`, `formatEuro()`, `formatPercent()`
+
+### ✅ Documentazione Unificata
+- Uniti `ragioneria-applicata.md` e `ragioneria_applicata.md` in `RAGIONERIA_APPLICATA.md`
+- Aggiornato `ROADMAP.md` con task completati e prossimi
+- Statistiche coerenza dati aggiornate
+
+### File Modificati
+- `/app/app/routers/auto_repair.py` - Sincronizzazione verbali_completi
+- `/app/app/routers/verbali_riconciliazione.py` - Campo driver in proiezione
+- `/app/frontend/src/pages/VerbaliRiconciliazione.jsx` - Colonna Driver + Modal
+- `/app/frontend/src/design/ceraldiDesignSystem.ts` - NUOVO
+- `/app/memory/RAGIONERIA_APPLICATA.md` - UNIFICATO
+- `/app/memory/ROADMAP.md` - AGGIORNATO
+
+---
+
 ## 22 Gennaio 2026 - Sessione 12 (Learning Machine & Gestione Magazzino)
 
 ### ✅ Learning Machine - Classificazione Automatica Costi (CDC)
