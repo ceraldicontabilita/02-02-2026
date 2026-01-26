@@ -1191,6 +1191,25 @@ function MovimentoCard({ movimento, onConferma, onIgnora, onElimina, processing,
           >
             ✕
           </button>
+          {onElimina && (
+            <button
+              onClick={() => onElimina(movimento)}
+              disabled={processing}
+              data-testid="btn-elimina-movimento"
+              title="Elimina definitivamente"
+              style={{
+                padding: '8px 12px',
+                background: '#fee2e2',
+                color: '#dc2626',
+                border: 'none',
+                borderRadius: 6,
+                cursor: 'pointer',
+                fontSize: 12
+              }}
+            >
+              🗑️
+            </button>
+          )}
         </div>
       </div>
     </div>
