@@ -165,7 +165,6 @@ from app.routers import (
 from app.routers.operazioni_module import router as operazioni_router
 from app.routers.suppliers_module import router as suppliers_router
 from app.routers import cedolini_riconciliazione
-from app.routers import parlant_api
 from app.routers import pagopa  # PagoPA - Associazione ricevute
 from app.routers import invoicetronic  # InvoiceTronic - Fatturazione Elettronica SDI
 from app.routers import verbali_noleggio  # Verbali Noleggio da Email
@@ -203,9 +202,6 @@ app.include_router(public_api.router, prefix="/api", tags=["Public API"])
 
 # --- Authentication ---
 app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
-
-# --- Parlant AI Agent ---
-app.include_router(parlant_api.router, prefix="/api/parlant", tags=["Parlant AI"])
 
 # --- F24 Module ---
 app.include_router(f24_main.router, prefix="/api/f24", tags=["F24"])
