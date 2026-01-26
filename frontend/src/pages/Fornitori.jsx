@@ -470,7 +470,7 @@ function StatCard({ icon: Icon, label, value, color, bgColor }) {
 }
 
 // Supplier Card con cambio rapido metodo
-function SupplierCard({ supplier, onEdit, onDelete, onViewInvoices, onChangeMetodo, onSearchPiva, onShowFatturato, selectedYear }) {
+function SupplierCard({ supplier, onEdit, onDelete, onViewInvoices, onChangeMetodo, onSearchPiva, onShowFatturato, onShowSchedeTecniche, selectedYear }) {
   const nome = supplier.ragione_sociale || supplier.denominazione || 'Senza nome';
   const hasIncomplete = !supplier.partita_iva || !supplier.email;
   const hasPiva = !!supplier.partita_iva;
