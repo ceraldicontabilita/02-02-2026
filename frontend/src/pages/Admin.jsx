@@ -1105,7 +1105,7 @@ export default function Admin() {
                   onClick={async () => {
                     
                     try {
-                      const r = await api.post('/api/corrispettivi/auto-ricostruisci-dati');
+                      const r = await api.post('/api/manutenzione/ricostruisci-corrispettivi');
                       alert(`✅ Completato:\n• IVA ricalcolata: ${r.data.iva_ricalcolata || 0}\n• Duplicati rimossi: ${r.data.duplicati_rimossi || 0}`);
                     } catch (e) {
                       alert('Errore: ' + (e.response?.data?.detail || e.message));
