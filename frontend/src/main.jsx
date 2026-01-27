@@ -333,12 +333,15 @@ const router = createBrowserRouter([
       
       // === CONTABILITÀ & BILANCIO ===
       { path: "bilancio", element: <LazyPage><Bilancio /></LazyPage> },
+      { path: "bilancio/:tab", element: <LazyPage><Bilancio /></LazyPage> },
       { path: "bilancio/:anno", element: <LazyPage><Bilancio /></LazyPage> },
       { path: "controllo-mensile", element: <LazyPage><ControlloMensile /></LazyPage> },
       { path: "controllo-mensile/:anno/:mese", element: <LazyPage><ControlloMensile /></LazyPage> },
       { path: "piano-dei-conti", element: <LazyPage><PianoDeiConti /></LazyPage> },
+      { path: "piano-dei-conti/:tab", element: <LazyPage><PianoDeiConti /></LazyPage> },
       { path: "piano-dei-conti/:conto", element: <LazyPage><PianoDeiConti /></LazyPage> },
       { path: "cespiti", element: <LazyPage><GestioneCespiti /></LazyPage> },
+      { path: "cespiti/:tab", element: <LazyPage><GestioneCespiti /></LazyPage> },
       { path: "cespiti/:cespite", element: <LazyPage><GestioneCespiti /></LazyPage> },
       { path: "finanziaria", element: <LazyPage><Finanziaria /></LazyPage> },
       { path: "finanziaria/:anno", element: <LazyPage><Finanziaria /></LazyPage> },
