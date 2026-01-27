@@ -1,6 +1,6 @@
 # Application ERP/Accounting - PRD
 
-## Stato Aggiornato: 27 Gennaio 2026
+## Stato Aggiornato: 27 Gennaio 2026 - Sessione 2
 
 ---
 
@@ -15,42 +15,47 @@ Applicazione di contabilità per ristorante/azienda con molteplici richieste:
 - Frontend motore contabile
 - Normalizzazione collezioni MongoDB
 
-## Architettura
+## Architettura Attuale
 
 ```
 /app
 ├── backend/
-│   └── .env                         # Credenziali MongoDB, Odoo, API keys
+│   └── .env                              # Credenziali MongoDB, Odoo, API keys
 ├── app/
-│   ├── database.py                   # Connessione MongoDB e classe Collections
-│   ├── db_collections.py            # ✨ NORMALIZZATO: 300+ costanti per collezioni
+│   ├── database.py                       # Connessione MongoDB e classe Collections
+│   ├── db_collections.py                 # ✅ NORMALIZZATO: 300+ costanti
 │   ├── routers/
-│   │   ├── accounting_engine.py     # Motore partita doppia base
-│   │   ├── contabilita_italiana.py  # Cespiti, ammortamenti, bilanci CEE
-│   │   ├── fiscalita_italiana.py    # ✨ Agevolazioni fiscali + Calendario scadenze
-│   │   ├── odoo_integration.py      # Integrazione Odoo XML-RPC
+│   │   ├── accounting_engine.py          # Motore partita doppia
+│   │   ├── contabilita_italiana.py       # Cespiti, ammortamenti, bilanci CEE
+│   │   ├── fiscalita_italiana.py         # ✅ Agevolazioni + Calendario scadenze
+│   │   ├── odoo_integration.py           # Integrazione Odoo XML-RPC
+│   │   ├── cedolini.py                   # ✅ Bug fix riepilogo mensile
 │   │   └── employees/
-│   │       └── giustificativi.py    # ✨ Saldi finali ferie/ROL progressivi
+│   │       └── giustificativi.py         # ✅ Saldi finali progressivi
 │   └── parsers/
-│       └── payslip_giustificativi_parser.py  # Parser PDF Libro Unico
+│       └── payslip_giustificativi_parser.py
 ├── frontend/
 │   └── src/
 │       ├── components/
-│       │   └── PageLayout.jsx       # Layout standard (da applicare)
+│       │   └── PageLayout.jsx            # Layout standard
 │       ├── pages/
-│       │   ├── MotoreContabile.jsx  # ✨ NUOVO: Bilancio, SP, CE, Cespiti
-│       │   ├── ImportUnificato.jsx  # Link a AI Parser
-│       │   ├── AIParserPage.jsx     # Link a Import Unificato
-│       │   └── Finanziaria.jsx      # Avviso per anni senza dati
-│       └── App.jsx                  # Menu aggiornato
+│       │   ├── MotoreContabile.jsx       # ✅ Bilancio, SP, CE, Cespiti
+│       │   ├── CalendarioFiscale.jsx     # ✅ NUOVO: Dashboard scadenze fiscali
+│       │   ├── SaldiFeriePermessi.jsx    # ✅ NUOVO: Gestione ferie/ROL
+│       │   ├── ImportUnificato.jsx       # ✅ Link a AI Parser
+│       │   ├── AIParserPage.jsx          # ✅ Link a Import Unificato
+│       │   └── Finanziaria.jsx           # ✅ Avviso anni senza dati
+│       ├── App.jsx                       # ✅ Menu aggiornato
+│       └── main.jsx                      # ✅ Routes aggiunte
 └── test_reports/
-    └── iteration_2.json             # 100% test passati
+    ├── iteration_2.json                  # 100% test passati
+    └── iteration_3.json                  # 100% test passati
 ```
 
 ## Funzionalità Implementate (Sessione Corrente)
 
 ### 1. ✅ Normalizzazione Collezioni MongoDB
-- File `/app/app/db_collections.py` con 300+ costanti
+- File `db_collections.py` con 300+ costanti
 - Documentazione collezioni deprecate
 - Helper function `get_collection_by_entity()`
 
@@ -60,7 +65,7 @@ Applicazione di contabilità per ristorante/azienda con molteplici richieste:
 - Indicazione "dati_parziali" nella risposta
 
 ### 3. ✅ Sistema Fiscale Completo
-- **13 agevolazioni fiscali** per SRL (crediti imposta, ACE, Patent Box, etc.)
+- **13 agevolazioni fiscali** per SRL (crediti imposta, ACE, Patent Box)
 - **74 scadenze fiscali** per anno (IVA, F24, IMU, dichiarazioni)
 - Endpoint: `/api/fiscalita/agevolazioni`, `/api/fiscalita/calendario/{anno}`
 
@@ -75,45 +80,94 @@ Applicazione di contabilità per ristorante/azienda con molteplici richieste:
   - Stato Patrimoniale (schema CEE)
   - Conto Economico
   - Registro Cespiti
-- Aggiunto al menu sotto "Contabilità"
 
-### 6. ✅ Unificazione Pagine Import
-- Link "Elabora con AI" in Import Unificato
-- Link "Vai a Import Unificato" in AI Parser
+### 6. ✅ Frontend Calendario Fiscale (NUOVO)
+- Nuova pagina `/calendario-fiscale`:
+  - KPI: Scadenze totali, Completate, Da completare, Prossime 7gg
+  - Sezione "Scadenze Imminenti" con alert
+  - Filtri per mese e stato
+  - Tabella completa con azioni "Completa"
+  - Codice colore per tipo scadenza (IVA, F24, IMU, etc.)
 
-### 7. ✅ Fix UX Finanziaria
+### 7. ✅ Frontend Saldi Ferie/Permessi (NUOVO)
+- Nuova pagina `/saldi-ferie-permessi`:
+  - KPI: Dipendenti, Con saldi, Senza saldi, Da Libro Unico
+  - Tabella con colonne: Ferie, ROL, Ex-Fest, Permessi, Periodo
+  - Pulsante "Dettagli" per storico progressivo
+  - Modale "Modifica" per inserimento manuale saldi
+  - Ricerca per nome dipendente
+
+### 8. ✅ Link Bidirezionale Import
+- ImportUnificato → AIParser (pulsante "Elabora con AI")
+- AIParser → ImportUnificato (pulsante "Vai a Import Unificato")
+
+### 9. ✅ Fix UX Finanziaria
 - Avviso se nessun movimento per anno selezionato
 - Suggerisce anno con più dati (2025)
+
+## Menu Aggiornato
+
+```
+- Dashboard
+- Inserimento Rapido
+- Analytics
+- Acquisti ▸
+- Corrispettivi
+- Banca & Pagamenti ▸
+- Dipendenti ▸
+- Fisco & Tributi ▸
+- Magazzino ▸
+- HACCP ▸
+- Cucina ▸
+- Contabilità ▸
+    - Bilancio
+    - Motore Contabile ⭐ NEW
+    - Controllo Mensile
+    - Piano dei Conti
+    - Cespiti
+    - Finanziaria
+    - Chiusura Esercizio
+    - Calendario Fiscale ⭐ NEW
+- Scadenze
+- To-Do
+- Presenze
+- Saldi Ferie/ROL ⭐ NEW
+- Strumenti ▸
+- Integrazioni ▸
+```
 
 ## Backlog Prioritizzato
 
 ### P0 - Alta Priorità
-- [ ] Applicare PageLayout.jsx a tutte le pagine (refactoring incrementale)
-- [ ] Test integrazione con dati reali buste paga
+- [x] ~~Normalizzazione collezioni MongoDB~~
+- [x] ~~Bug fix cedolini~~
+- [x] ~~Sistema fiscale~~
+- [x] ~~Frontend motore contabile~~
+- [x] ~~Frontend calendario fiscale~~
+- [x] ~~Frontend saldi ferie/permessi~~
 
 ### P1 - Media Priorità
-- [ ] Frontend per saldi finali giustificativi
-- [ ] Dashboard calendario scadenze fiscali
-- [ ] Normalizzazione fisica collezioni MongoDB (rinomina)
+- [ ] Applicare PageLayout.jsx a pagine esistenti (Dashboard, GestioneAssegni, etc.)
+- [ ] Export bilanci in formato XBRL
+- [ ] Integrazione automatica F24 ↔ calendario scadenze
 
 ### P2 - Bassa Priorità
-- [ ] Unificare completamente ImportUnificato + AIParser
-- [ ] Export bilanci in formato XBRL
-- [ ] Integrazione F24 con calendario scadenze
+- [ ] Unificare completamente ImportUnificato + AIParser in una sola pagina
+- [ ] Normalizzazione fisica collezioni MongoDB (rinomina effettiva)
 
 ## Integrazioni Attive
 
 | Servizio | Stato | Note |
 |----------|-------|------|
-| MongoDB | ✅ | Collection normalizzate |
+| MongoDB | ✅ | Collection normalizzate (costanti) |
 | Odoo | ✅ | Piano conti + IVA importati |
 | OpenAPI.it | ✅ | Sandbox mode |
 | Claude Sonnet | ✅ | AI Parser via EMERGENT_LLM_KEY |
 
 ## Test Status
-- Backend: 100% (16/16 test passati)
-- Frontend: 100% (tutte le pagine funzionanti)
-- Report: `/app/test_reports/iteration_2.json`
+- Iteration 2 Backend: 100% (16/16 test passati)
+- Iteration 3 Frontend: 100% (tutte le nuove pagine funzionanti)
+- Report: `/app/test_reports/iteration_3.json`
 
 ## Note Tecniche Importanti
 
@@ -124,7 +178,7 @@ await db["collection"].find({}, {"_id": 0})
 ```
 
 ### Route Order in FastAPI
-Le rotte parametriche devono venire DOPO le rotte specifiche:
+Le rotte specifiche PRIMA delle parametriche:
 ```python
 @router.get("/calendario/scadenze-imminenti")  # PRIMA
 @router.get("/calendario/{anno}")              # DOPO
@@ -137,5 +191,11 @@ import api from '../api';
 const res = await api.get('/api/endpoint');
 ```
 
+### Endpoint Dipendenti
+L'endpoint è `/api/dipendenti` (non `/api/employees`):
+```javascript
+const res = await api.get('/api/dipendenti');
+```
+
 ---
-*Documento aggiornato il 27 Gennaio 2026*
+*Documento aggiornato il 27 Gennaio 2026 - Sessione 2*
