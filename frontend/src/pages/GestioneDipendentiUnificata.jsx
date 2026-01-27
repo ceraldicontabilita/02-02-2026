@@ -383,6 +383,8 @@ export default function GestioneDipendentiUnificata() {
                       <TabGiustificativi 
                         dipendente={selectedDip}
                         anno={anno}
+                        selectedCategoria={activeSubtab}
+                        onCategoriaChange={handleSubtabChange}
                       />
                     )}
                     {activeTab === 'contratti' && (
