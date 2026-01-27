@@ -642,7 +642,7 @@ export default function ImportUnificato() {
           <div style={{ fontWeight: 600, marginBottom: 12, color: '#374151', fontSize: 14 }}>
             ⚙️ Opzioni Avanzate
           </div>
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
             <input
               type="file"
               ref={zipInputRef}
@@ -672,8 +672,27 @@ export default function ImportUnificato() {
             >
               📦 Carica ZIP Massivo
             </button>
+            <Link
+              to="/ai-parser"
+              style={{
+                padding: '10px 16px',
+                background: '#8b5cf6',
+                color: 'white',
+                border: 'none',
+                borderRadius: 8,
+                fontWeight: 600,
+                fontSize: 13,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                textDecoration: 'none'
+              }}
+              data-testid="ai-parser-link"
+            >
+              🧠 Elabora con AI
+            </Link>
             <div style={{ fontSize: 12, color: '#64748b', display: 'flex', alignItems: 'center' }}>
-              Supporta ZIP annidati • Estrazione automatica
+              Supporta ZIP annidati • Estrazione automatica • Elaborazione AI opzionale
             </div>
           </div>
         </div>
