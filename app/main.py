@@ -159,7 +159,7 @@ from app.routers import (
     cedolini, tfr, cespiti, scadenzario_fornitori,
     controllo_gestione, indici_bilancio, chiusura_esercizio,
     gestione_iva_speciale, configurazioni, alerts, import_templates,
-    dizionario_prodotti, inventario
+    dizionario_prodotti, inventario, manutenzione
 )
 # Operazioni da Confermare modularizzato
 from app.routers.operazioni_module import router as operazioni_router
