@@ -33,7 +33,7 @@ export default function GestioneDipendentiUnificata() {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Ottieni tab dall'URL
+  // Ottieni tab e subtab dall'URL
   const getTabFromPath = () => {
     const path = location.pathname;
     const match = path.match(/\/dipendenti\/(\w+)/);
@@ -43,10 +43,17 @@ export default function GestioneDipendentiUnificata() {
     return 'anagrafica';
   };
   
+  const getSubtabFromPath = () => {
+    const path = location.pathname;
+    const match = path.match(/\/dipendenti\/giustificativi\/(\w+)/);
+    return match ? match[1] : 'tutti';
+  };
+  
   const [dipendenti, setDipendenti] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedDip, setSelectedDip] = useState(null);
   const [activeTab, setActiveTab] = useState(getTabFromPath());
+  const [activeSubtab, setActiveSubtab] = useState(getSubtabFromPath());
   const [search, setSearch] = useState('');
   
   // Aggiorna URL quando cambia tab
@@ -54,16 +61,28 @@ export default function GestioneDipendentiUnificata() {
     setActiveTab(tabId);
     if (tabId === 'anagrafica') {
       navigate('/dipendenti');
+    } else if (tabId === 'giustificativi') {
+      navigate(`/dipendenti/giustificativi/${activeSubtab}`);
     } else {
       navigate(`/dipendenti/${tabId}`);
     }
   };
   
+  // Aggiorna URL quando cambia subtab (categoria giustificativi)
+  const handleSubtabChange = (subtabId) => {
+    setActiveSubtab(subtabId);
+    navigate(`/dipendenti/giustificativi/${subtabId}`);
+  };
+  
   // Sincronizza tab con URL
   useEffect(() => {
     const tab = getTabFromPath();
+    const subtab = getSubtabFromPath();
     if (tab !== activeTab) {
       setActiveTab(tab);
+    }
+    if (subtab !== activeSubtab) {
+      setActiveSubtab(subtab);
     }
   }, [location.pathname]);
   
