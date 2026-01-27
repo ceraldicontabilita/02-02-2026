@@ -842,6 +842,140 @@ async def completa_scadenza(scadenza_id: str, note: str = Query(None)) -> Dict[s
     return {"success": True, "message": "Scadenza completata"}
 
 
+@router.get("/calendario/notifiche-imminenti")
+async def get_notifiche_scadenze_imminenti(
+    giorni: int = Query(7, ge=1, le=30),
+    anno: int = Query(None)
+) -> Dict[str, Any]:
+    """
+    Recupera le scadenze imminenti per notifiche.
+    Utile per sistemi di alert e dashboard.
+    """
+    db = Database.get_db()
+    
+    if not anno:
+        anno = datetime.now().year
+    
+    oggi = datetime.now().strftime("%Y-%m-%d")
+    data_limite = (datetime.now() + timedelta(days=giorni)).strftime("%Y-%m-%d")
+    
+    scadenze = await db["calendario_fiscale"].find(
+        {
+            "anno": anno,
+            "completato": {"$ne": True},
+            "data": {"$gte": oggi, "$lte": data_limite}
+        },
+        {"_id": 0}
+    ).sort("data", 1).to_list(50)
+    
+    # Raggruppa per urgenza
+    urgenti = []  # entro 3 giorni
+    prossime = []  # 4-7 giorni
+    pianificabili = []  # oltre 7 giorni
+    
+    oggi_dt = datetime.now()
+    for s in scadenze:
+        data_scad = datetime.strptime(s.get("data", ""), "%Y-%m-%d") if s.get("data") else None
+        if data_scad:
+            diff = (data_scad - oggi_dt).days
+            if diff <= 3:
+                s["urgenza"] = "critica"
+                urgenti.append(s)
+            elif diff <= 7:
+                s["urgenza"] = "alta"
+                prossime.append(s)
+            else:
+                s["urgenza"] = "normale"
+                pianificabili.append(s)
+    
+    return {
+        "success": True,
+        "anno": anno,
+        "giorni_analizzati": giorni,
+        "data_riferimento": oggi,
+        "totale_imminenti": len(scadenze),
+        "urgenti": urgenti,
+        "prossime": prossime,
+        "pianificabili": pianificabili,
+        "riepilogo": {
+            "critiche": len(urgenti),
+            "alta_priorita": len(prossime),
+            "normali": len(pianificabili)
+        }
+    }
+
+
+@router.post("/calendario/invia-notifica")
+async def invia_notifica_scadenza(
+    scadenza_id: str = Query(...),
+    tipo_notifica: str = Query("dashboard", enum=["dashboard", "email"])
+) -> Dict[str, Any]:
+    """
+    Crea una notifica per una scadenza specifica.
+    
+    Tipi:
+    - dashboard: Notifica visibile in app
+    - email: Prepara email (richiede integrazione email)
+    """
+    db = Database.get_db()
+    
+    # Recupera scadenza
+    scadenza = await db["calendario_fiscale"].find_one({"id": scadenza_id}, {"_id": 0})
+    if not scadenza:
+        raise HTTPException(status_code=404, detail="Scadenza non trovata")
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    if tipo_notifica == "dashboard":
+        # Crea notifica in app
+        notifica = {
+            "id": str(uuid.uuid4()),
+            "tipo": "scadenza_fiscale",
+            "titolo": f"Scadenza: {scadenza.get('descrizione', 'N/A')}",
+            "messaggio": f"Scadenza il {scadenza.get('data', 'N/A')} - {scadenza.get('tipo', '').upper()}",
+            "data": scadenza.get("data"),
+            "scadenza_id": scadenza_id,
+            "letta": False,
+            "created_at": now
+        }
+        await db["notifications"].insert_one(notifica)
+        
+        return {
+            "success": True,
+            "tipo": "dashboard",
+            "notifica_id": notifica["id"],
+            "message": "Notifica creata in dashboard"
+        }
+    
+    elif tipo_notifica == "email":
+        # Prepara template email (non invia, serve integrazione)
+        email_data = {
+            "oggetto": f"[SCADENZA FISCALE] {scadenza.get('descrizione', '')}",
+            "corpo": f"""
+Promemoria scadenza fiscale:
+
+Descrizione: {scadenza.get('descrizione', 'N/A')}
+Data scadenza: {scadenza.get('data', 'N/A')}
+Tipo: {scadenza.get('tipo', 'N/A').upper()}
+Note: {scadenza.get('note', '-')}
+
+---
+Questo promemoria è stato generato automaticamente dal sistema.
+            """.strip(),
+            "scadenza": scadenza,
+            "prepared_at": now
+        }
+        
+        return {
+            "success": True,
+            "tipo": "email",
+            "email_data": email_data,
+            "message": "Email preparata (richiede integrazione email per invio)"
+        }
+    
+    return {"success": False, "error": "Tipo notifica non valido"}
+
+
 # ============================================
 # ENDPOINTS F24
 # ============================================
