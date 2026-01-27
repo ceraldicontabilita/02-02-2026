@@ -40,10 +40,19 @@ def get_headers():
 def get_base_url():
     return OPENAPI_BASE_URL if OPENAPI_ENV == "sandbox" else OPENAPI_BASE_URL_PROD
 
+def get_visure_url():
+    return VISURE_BASE_URL if OPENAPI_ENV == "sandbox" else VISURE_BASE_URL_PROD
+
 
 # ============================================================
 # MODELLI PYDANTIC
 # ============================================================
+
+class BilancioXBRLRequest(BaseModel):
+    """Richiesta bilancio XBRL"""
+    partita_iva: str
+    anno_chiusura: Optional[int] = None  # Se None, prende l'ultimo disponibile
+
 
 class InvoiceCreate(BaseModel):
     """Modello per creazione fattura elettronica"""
