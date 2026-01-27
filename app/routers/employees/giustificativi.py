@@ -1146,10 +1146,60 @@ async def upload_libro_unico_pdf(file: UploadFile = File(...)) -> Dict[str, Any]
                         
                         results["giustificativi_aggiornati"] += 1
                     
+                    # NUOVO: Salva saldi finali nella collection dedicata
+                    # Filtra solo i saldi residui (FER, ROL, EXF, PER)
+                    saldi_finali = {k: v for k, v in giustificativi.items() 
+                                   if k in ['FER', 'ROL', 'EXF', 'PER'] and v > 0}
+                    
+                    if saldi_finali:
+                        periodo = f"{anno}-{mese:02d}"
+                        now = datetime.now(timezone.utc).isoformat()
+                        
+                        # Verifica se esiste già un record per questo anno
+                        existing_saldo = await db["giustificativi_saldi_finali"].find_one(
+                            {"employee_id": employee_id, "anno": anno}
+                        )
+                        
+                        # Aggiorna solo se il nuovo periodo è >= al periodo esistente
+                        should_update = True
+                        if existing_saldo:
+                            existing_periodo = existing_saldo.get("periodo", "")
+                            if periodo < existing_periodo:
+                                should_update = False
+                        
+                        if should_update:
+                            await db["giustificativi_saldi_finali"].update_one(
+                                {"employee_id": employee_id, "anno": anno},
+                                {
+                                    "$set": {
+                                        "employee_id": employee_id,
+                                        "anno": anno,
+                                        "periodo": periodo,
+                                        "saldi": saldi_finali,
+                                        "source": "libro_unico_pdf",
+                                        "updated_at": now
+                                    },
+                                    "$setOnInsert": {
+                                        "id": str(uuid.uuid4()),
+                                        "created_at": now
+                                    },
+                                    "$push": {
+                                        "storico": {
+                                            "periodo": periodo,
+                                            "saldi": saldi_finali,
+                                            "source": "libro_unico_pdf",
+                                            "data": now
+                                        }
+                                    }
+                                },
+                                upsert=True
+                            )
+                    
                     results["success"].append({
                         "nome": nome,
                         "periodo": f"{mese:02d}/{anno}",
-                        "giustificativi": giustificativi
+                        "giustificativi": giustificativi,
+                        "saldi_finali_salvati": bool(saldi_finali)
                     })
             
             except Exception as e:
