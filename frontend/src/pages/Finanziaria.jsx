@@ -50,6 +50,31 @@ export default function Finanziaria() {
         </div>
       ) : (
         <>
+          {/* Avviso se nessun dato per l'anno selezionato */}
+          {(summary?.total_income === 0 && summary?.total_expenses === 0) && (
+            <div style={{ 
+              background: "#fff3cd", 
+              borderRadius: 12, 
+              padding: 16, 
+              marginBottom: 20, 
+              border: "1px solid #ffc107",
+              display: "flex",
+              alignItems: "center",
+              gap: 12
+            }}>
+              <span style={{ fontSize: 24 }}>⚠️</span>
+              <div>
+                <div style={{ fontWeight: 600, color: "#856404" }}>
+                  Nessun movimento registrato per {selectedYear}
+                </div>
+                <div style={{ fontSize: 13, color: "#856404", marginTop: 4 }}>
+                  Se hai dati per altri anni, seleziona un anno diverso dalla barra laterale. 
+                  Anno con più dati disponibili: <strong>2025</strong>
+                </div>
+              </div>
+            </div>
+          )}
+          
           {/* KPI Principali */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16 }}>
             <div style={{ background: "#e8f5e9", borderRadius: 12, padding: 20, marginBottom: 20, boxShadow: "0 2px 8px rgba(0,0,0,0.08)", border: "1px solid #e5e7eb" }}>
