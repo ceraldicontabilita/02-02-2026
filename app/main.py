@@ -440,6 +440,7 @@ app.include_router(fornitori_learning.router, prefix="/api", tags=["Fornitori Le
 app.include_router(magazzino_avanzato.router, prefix="/api", tags=["Magazzino Avanzato"])
 app.include_router(odoo_integration.router, prefix="/api/odoo", tags=["Odoo Integration"])
 app.include_router(accounting_engine.router, prefix="/api/accounting", tags=["Accounting Engine"])
+app.include_router(contabilita_italiana.router, prefix="/api/contabilita", tags=["Contabilità Italiana"])
 
 
 # =============================================================================
