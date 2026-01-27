@@ -1,201 +1,120 @@
 # Application ERP/Accounting - PRD
 
-## Stato Aggiornato: 27 Gennaio 2026 - Sessione 2
+## Stato Aggiornato: 27 Gennaio 2026 - Sessione 3 (Audit Completo)
 
 ---
 
 ## Problema Originale
-Applicazione di contabilità per ristorante/azienda con molteplici richieste:
+Applicazione di contabilità per ristorante/azienda con richieste di:
+- Audit completo delle pagine con verifica endpoint, collezioni e calcoli
 - Correzione dati giustificativi da PDF Libro Unico
-- Bug parsing LIRE/EURO
-- Logica progressiva per caricamenti buste paga
-- Integrazione Odoo
-- Implementazione contabilità italiana completa (cespiti, ammortamenti, bilanci CEE)
-- Database detrazioni fiscali e calendario scadenze
-- Frontend motore contabile
-- Normalizzazione collezioni MongoDB
+- Integrazione Odoo e implementazione contabilità italiana completa
+- Database detrazioni fiscali e calendario scadenze con notifiche
+
+## Audit Completo Eseguito
+
+### Pagine Verificate: 11/11 ✅
+
+| Pagina | Endpoint | Collezioni | Calcoli |
+|--------|----------|------------|---------|
+| Dashboard | 11/11 ✅ | 5/5 ✅ | margine=ricavi-costi ✅ |
+| GestioneAssegni | 4/4 ✅ | assegni (210) ✅ | - |
+| GestioneDipendenti | 3/3 ✅ | employees (37) ✅ | - |
+| ChiusuraEsercizio | 4/4 ✅ | - | bilancino ✅ |
+| Finanziaria | 1/1 ✅ | - | balance=income-expenses ✅ |
+| CalendarioFiscale | 2/2 ✅ | calendario_fiscale (74) ✅ | - |
+| SaldiFeriePermessi | 2/2 ✅ | giustificativi_saldi_finali ✅ | - |
+| Magazzino | 2/2 ✅ | warehouse_inventory (5372) ✅ | - |
+| Corrispettivi | 1/1 ✅ | corrispettivi (1051) ✅ | totale=imp+iva ✅ |
+| ArchivioFatture | 3/3 ✅ | invoices (3856) ✅ | statistiche ✅ |
+| PrimaNota | 3/3 ✅ | prima_nota_cassa (1428) ✅ | saldo=ent-usc ✅ |
+
+### Collezioni MongoDB Verificate
+
+| Collezione | Documenti | Stato |
+|------------|-----------|-------|
+| invoices | 3,856 | ✅ |
+| fornitori | 268 | ✅ |
+| assegni | 210 | ✅ |
+| employees | 37 | ✅ |
+| cedolini | 916 | ✅ |
+| corrispettivi | 1,051 | ✅ |
+| prima_nota_cassa | 1,428 | ✅ |
+| estratto_conto_movimenti | 4,261 | ✅ |
+| warehouse_inventory | 5,372 | ✅ |
+| calendario_fiscale | 74 | ✅ |
+| agevolazioni_fiscali | 13 | ✅ |
+
+## Nuove Funzionalità Implementate
+
+### Sistema Notifiche Scadenze Fiscali ✅ NEW
+
+**Endpoint:**
+- `GET /api/fiscalita/notifiche-scadenze?anno=YYYY&giorni=N`
+  - Restituisce scadenze imminenti con livelli di urgenza:
+    - **Critica** (≤3 giorni)
+    - **Alta** (4-7 giorni)
+    - **Normale** (>7 giorni)
+
+- `POST /api/fiscalita/notifiche-scadenze/invia?scadenza_id=X&tipo_notifica=Y`
+  - Tipi: `dashboard` (notifica in-app), `email` (prepara email)
+
+**Frontend:**
+- Alert visivo rosso per scadenze critiche in CalendarioFiscale
+- Pulsante "Notifica" per ogni scadenza urgente
+- Toast notifications con sonner
 
 ## Architettura Attuale
 
 ```
 /app
-├── backend/
-│   └── .env                              # Credenziali MongoDB, Odoo, API keys
 ├── app/
-│   ├── database.py                       # Connessione MongoDB e classe Collections
-│   ├── db_collections.py                 # ✅ NORMALIZZATO: 300+ costanti
+│   ├── db_collections.py           # ✅ 300+ costanti normalizzate
 │   ├── routers/
-│   │   ├── accounting_engine.py          # Motore partita doppia
-│   │   ├── contabilita_italiana.py       # Cespiti, ammortamenti, bilanci CEE
-│   │   ├── fiscalita_italiana.py         # ✅ Agevolazioni + Calendario scadenze
-│   │   ├── odoo_integration.py           # Integrazione Odoo XML-RPC
-│   │   ├── cedolini.py                   # ✅ Bug fix riepilogo mensile
+│   │   ├── fiscalita_italiana.py   # ✅ + Notifiche scadenze
+│   │   ├── accounting_engine.py    # Partita doppia
+│   │   ├── contabilita_italiana.py # Bilanci CEE
 │   │   └── employees/
-│   │       └── giustificativi.py         # ✅ Saldi finali progressivi
-│   └── parsers/
-│       └── payslip_giustificativi_parser.py
-├── frontend/
-│   └── src/
-│       ├── components/
-│       │   └── PageLayout.jsx            # Layout standard
-│       ├── pages/
-│       │   ├── MotoreContabile.jsx       # ✅ Bilancio, SP, CE, Cespiti
-│       │   ├── CalendarioFiscale.jsx     # ✅ NUOVO: Dashboard scadenze fiscali
-│       │   ├── SaldiFeriePermessi.jsx    # ✅ NUOVO: Gestione ferie/ROL
-│       │   ├── ImportUnificato.jsx       # ✅ Link a AI Parser
-│       │   ├── AIParserPage.jsx          # ✅ Link a Import Unificato
-│       │   └── Finanziaria.jsx           # ✅ Avviso anni senza dati
-│       ├── App.jsx                       # ✅ Menu aggiornato
-│       └── main.jsx                      # ✅ Routes aggiunte
+│   │       └── giustificativi.py   # Saldi finali progressivi
+├── frontend/src/pages/
+│   ├── CalendarioFiscale.jsx       # ✅ + Alert scadenze critiche
+│   ├── SaldiFeriePermessi.jsx      # Gestione ferie/ROL
+│   ├── MotoreContabile.jsx         # Bilancio, SP, CE, Cespiti
+│   └── Dashboard.jsx               # KPI principali
 └── test_reports/
-    ├── iteration_2.json                  # 100% test passati
-    └── iteration_3.json                  # 100% test passati
+    ├── iteration_4.json            # 100% test passati
+    └── audit_pagine.md             # Report audit completo
 ```
-
-## Funzionalità Implementate (Sessione Corrente)
-
-### 1. ✅ Normalizzazione Collezioni MongoDB
-- File `db_collections.py` con 300+ costanti
-- Documentazione collezioni deprecate
-- Helper function `get_collection_by_entity()`
-
-### 2. ✅ Bug Fix Cedolini (P0)
-- Endpoint `/api/cedolini/riepilogo-mensile` corretto
-- Fallback `$ifNull` per cedolini con solo campo `netto`
-- Indicazione "dati_parziali" nella risposta
-
-### 3. ✅ Sistema Fiscale Completo
-- **13 agevolazioni fiscali** per SRL (crediti imposta, ACE, Patent Box)
-- **74 scadenze fiscali** per anno (IVA, F24, IMU, dichiarazioni)
-- Endpoint: `/api/fiscalita/agevolazioni`, `/api/fiscalita/calendario/{anno}`
-
-### 4. ✅ Logica Foglio Dati Progressivo Giustificativi
-- Collection `giustificativi_saldi_finali` per saldi separati
-- Logica: usa sempre l'ultimo periodo letto come riferimento
-- Endpoint: `/api/giustificativi/saldi-finali/{employee_id}`
-
-### 5. ✅ Frontend Motore Contabile
-- Nuova pagina `/motore-contabile` con 4 tab:
-  - Bilancio di Verifica
-  - Stato Patrimoniale (schema CEE)
-  - Conto Economico
-  - Registro Cespiti
-
-### 6. ✅ Frontend Calendario Fiscale (NUOVO)
-- Nuova pagina `/calendario-fiscale`:
-  - KPI: Scadenze totali, Completate, Da completare, Prossime 7gg
-  - Sezione "Scadenze Imminenti" con alert
-  - Filtri per mese e stato
-  - Tabella completa con azioni "Completa"
-  - Codice colore per tipo scadenza (IVA, F24, IMU, etc.)
-
-### 7. ✅ Frontend Saldi Ferie/Permessi (NUOVO)
-- Nuova pagina `/saldi-ferie-permessi`:
-  - KPI: Dipendenti, Con saldi, Senza saldi, Da Libro Unico
-  - Tabella con colonne: Ferie, ROL, Ex-Fest, Permessi, Periodo
-  - Pulsante "Dettagli" per storico progressivo
-  - Modale "Modifica" per inserimento manuale saldi
-  - Ricerca per nome dipendente
-
-### 8. ✅ Link Bidirezionale Import
-- ImportUnificato → AIParser (pulsante "Elabora con AI")
-- AIParser → ImportUnificato (pulsante "Vai a Import Unificato")
-
-### 9. ✅ Fix UX Finanziaria
-- Avviso se nessun movimento per anno selezionato
-- Suggerisce anno con più dati (2025)
-
-## Menu Aggiornato
-
-```
-- Dashboard
-- Inserimento Rapido
-- Analytics
-- Acquisti ▸
-- Corrispettivi
-- Banca & Pagamenti ▸
-- Dipendenti ▸
-- Fisco & Tributi ▸
-- Magazzino ▸
-- HACCP ▸
-- Cucina ▸
-- Contabilità ▸
-    - Bilancio
-    - Motore Contabile ⭐ NEW
-    - Controllo Mensile
-    - Piano dei Conti
-    - Cespiti
-    - Finanziaria
-    - Chiusura Esercizio
-    - Calendario Fiscale ⭐ NEW
-- Scadenze
-- To-Do
-- Presenze
-- Saldi Ferie/ROL ⭐ NEW
-- Strumenti ▸
-- Integrazioni ▸
-```
-
-## Backlog Prioritizzato
-
-### P0 - Alta Priorità
-- [x] ~~Normalizzazione collezioni MongoDB~~
-- [x] ~~Bug fix cedolini~~
-- [x] ~~Sistema fiscale~~
-- [x] ~~Frontend motore contabile~~
-- [x] ~~Frontend calendario fiscale~~
-- [x] ~~Frontend saldi ferie/permessi~~
-
-### P1 - Media Priorità
-- [ ] Applicare PageLayout.jsx a pagine esistenti (Dashboard, GestioneAssegni, etc.)
-- [ ] Export bilanci in formato XBRL
-- [ ] Integrazione automatica F24 ↔ calendario scadenze
-
-### P2 - Bassa Priorità
-- [ ] Unificare completamente ImportUnificato + AIParser in una sola pagina
-- [ ] Normalizzazione fisica collezioni MongoDB (rinomina effettiva)
-
-## Integrazioni Attive
-
-| Servizio | Stato | Note |
-|----------|-------|------|
-| MongoDB | ✅ | Collection normalizzate (costanti) |
-| Odoo | ✅ | Piano conti + IVA importati |
-| OpenAPI.it | ✅ | Sandbox mode |
-| Claude Sonnet | ✅ | AI Parser via EMERGENT_LLM_KEY |
 
 ## Test Status
-- Iteration 2 Backend: 100% (16/16 test passati)
-- Iteration 3 Frontend: 100% (tutte le nuove pagine funzionanti)
-- Report: `/app/test_reports/iteration_3.json`
 
-## Note Tecniche Importanti
+- **Iteration 4**: 100% (14/14 backend, frontend OK)
+- **Bug trovati**: 0 critici
+- **Calcoli verificati**: Tutti corretti
 
-### MongoDB ObjectId
-Sempre escludere `_id` nelle proiezioni:
-```python
-await db["collection"].find({}, {"_id": 0})
-```
+## Backlog
 
-### Route Order in FastAPI
-Le rotte specifiche PRIMA delle parametriche:
-```python
-@router.get("/calendario/scadenze-imminenti")  # PRIMA
-@router.get("/calendario/{anno}")              # DOPO
-```
+### Completati ✅
+- [x] Audit completo pagine
+- [x] Sistema notifiche scadenze
+- [x] Verifica calcoli matematici
+- [x] Verifica collezioni MongoDB
 
-### React API Calls
-Usare sempre `api` da `../api`:
-```javascript
-import api from '../api';
-const res = await api.get('/api/endpoint');
-```
+### P1 - Media Priorità
+- [ ] Integrazione email reale per notifiche (richiede SMTP)
+- [ ] Applicare PageLayout a Dashboard, GestioneAssegni
 
-### Endpoint Dipendenti
-L'endpoint è `/api/dipendenti` (non `/api/employees`):
-```javascript
-const res = await api.get('/api/dipendenti');
-```
+### P2 - Bassa Priorità
+- [ ] Unificare ImportUnificato + AIParser
+- [ ] Rinomina fisica collezioni MongoDB
+
+## Integrazioni
+
+| Servizio | Stato |
+|----------|-------|
+| MongoDB Atlas | ✅ Connesso |
+| Odoo | ✅ Piano conti importato |
+| Claude Sonnet | ✅ AI Parser |
 
 ---
-*Documento aggiornato il 27 Gennaio 2026 - Sessione 2*
+*Aggiornato: 27 Gennaio 2026 - Post Audit Completo*
