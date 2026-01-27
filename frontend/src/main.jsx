@@ -377,6 +377,8 @@ const router = createBrowserRouter([
       { path: "regole-contabili/:regola", element: <LazyPage><RegoleContabili /></LazyPage> },
       
       // === INTEGRAZIONI ===
+      { path: "integrazioni-openapi", element: <LazyPage><IntegrazioniOpenAPI /></LazyPage> },
+      { path: "integrazioni-openapi/:tab", element: <LazyPage><IntegrazioniOpenAPI /></LazyPage> },
       { path: "pagopa", element: <LazyPage><GestionePagoPA /></LazyPage> },
       { path: "pagopa/:pratica", element: <LazyPage><GestionePagoPA /></LazyPage> },
       { path: "invoicetronic", element: <LazyPage><GestioneInvoiceTronic /></LazyPage> },
