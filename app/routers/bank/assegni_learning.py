@@ -351,12 +351,8 @@ async def associa_intelligente(
     if not assegni_da_associare:
         return {**risultati, "message": "Nessun assegno da associare"}
     
-    # 2. Carica fatture non pagate
+    # 2. Carica TUTTE le fatture (rimuovo filtro status per massimizzare associazioni)
     fatture = await db.invoices.find({
-        "$or": [
-            {"status": {"$nin": ["paid", "pagata"]}},
-            {"pagato": {"$ne": True}}
-        ],
         "total_amount": {"$gt": 0}
     }, {"_id": 0}).to_list(10000)
     
