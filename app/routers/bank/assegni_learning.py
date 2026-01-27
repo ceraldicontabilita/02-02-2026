@@ -449,8 +449,13 @@ async def associa_intelligente(
         
         # Applica match se trovato
         if match_trovato:
-            fornitore = match_trovato.get("supplier_name") or match_trovato.get("fornitore") or ""
+            fornitore_raw = match_trovato.get("supplier_name") or match_trovato.get("fornitore") or ""
+            if isinstance(fornitore_raw, dict):
+                fornitore_raw = fornitore_raw.get("name", "") or str(fornitore_raw)
+            fornitore = str(fornitore_raw)
             numero_fatt = match_trovato.get("invoice_number") or match_trovato.get("numero_fattura") or ""
+            if isinstance(numero_fatt, dict):
+                numero_fatt = str(numero_fatt)
             
             try:
                 await db[COLLECTION_ASSEGNI].update_one(
