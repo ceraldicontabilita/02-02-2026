@@ -65,6 +65,47 @@ export default function IntegrazioniOpenAPI() {
       setRicezioneLoading(false);
     }
   };
+  
+  // XBRL Functions
+  const richiediXbrl = async () => {
+    if (!xbrlPiva) {
+      alert('Inserisci la Partita IVA');
+      return;
+    }
+    setXbrlLoading(true);
+    setXbrlResult(null);
+    try {
+      const payload = { partita_iva: xbrlPiva };
+      if (xbrlAnno) payload.anno_chiusura = parseInt(xbrlAnno);
+      const res = await api.post('/api/openapi/xbrl/richiedi-bilancio', payload);
+      setXbrlResult(res.data);
+      // Refresh lista richieste
+      loadXbrlRequests();
+    } catch (e) {
+      alert('Errore: ' + (e.response?.data?.detail || e.message));
+    } finally {
+      setXbrlLoading(false);
+    }
+  };
+  
+  const loadXbrlRequests = async () => {
+    try {
+      const res = await api.get('/api/openapi/xbrl/richieste');
+      setXbrlRequests(res.data.richieste || []);
+    } catch (e) {
+      console.error('Errore load richieste XBRL:', e);
+    }
+  };
+  
+  const checkXbrlStatus = async (requestId) => {
+    try {
+      const res = await api.get(`/api/openapi/xbrl/bilancio/${requestId}`);
+      alert(`Stato: ${res.data.status}\n${res.data.message || ''}`);
+      loadXbrlRequests();
+    } catch (e) {
+      alert('Errore: ' + (e.response?.data?.detail || e.message));
+    }
+  };
 
   const cardStyle = {
     background: '#fff',
