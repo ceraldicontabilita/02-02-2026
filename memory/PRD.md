@@ -197,6 +197,27 @@ Il sistema classifica **automaticamente** documenti leggendo:
 - Integrazione automatica nel flusso download email
 - Pagine UI: `/ai-parser`, `/da-rivedere`
 
+### 5.0 ✅ COMPLETATO (Sessione 25b - 27/01/2026) - Odoo API + Bug Fix LIRE + Foglio Progressivo
+
+**Integrazione Odoo External API:**
+- Creato `/app/app/routers/odoo_integration.py` con client XML-RPC completo
+- Supporta tutti i modelli: res.partner, account.move, product.product, hr.employee, hr.payslip
+- Metodi CRUD: search, read, create, write, unlink, search_read, fields_get
+- Pagina frontend `/odoo` per configurazione e sincronizzazione
+- Endpoint: `/api/odoo/status`, `/api/odoo/configure`, `/api/odoo/partners`, `/api/odoo/invoices`, etc.
+
+**Bug Fix Parser LIRE vs EURO:**
+- Corretto `/app/app/parsers/payslip_parser_simple.py`
+- Esclude linee contenenti "LIRE" dal parsing importi
+- Range importi ridotto a 100-15.000€ (esclusi valori in milioni/LIRE)
+- Pattern specifico per cercare "EURO" + importo
+
+**Foglio Dati Progressivo Giustificativi:**
+- Endpoint `GET /api/giustificativi/riepilogo-progressivo/{employee_id}` 
+- Tiene traccia dell'ULTIMO periodo letto come riferimento saldi
+- Storico letture per mese
+- Endpoint `POST /api/giustificativi/aggiorna-riepilogo` per modifiche manuali
+
 ### 5.0 ✅ COMPLETATO (Sessione 25 - 27/01/2026) - Giustificativi PDF + XBRL + AI Batch
 
 **Parser PDF Libro Unico per Giustificativi:**
