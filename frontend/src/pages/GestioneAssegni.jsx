@@ -310,6 +310,13 @@ export default function GestioneAssegni() {
   const [autoAssociating, setAutoAssociating] = useState(false);
   const [autoAssocResult, setAutoAssocResult] = useState(null);
   
+  // Learning Machine - nuovi stati
+  const [learningLoading, setLearningLoading] = useState(false);
+  const [learningResult, setLearningResult] = useState(null);
+  const [puliziaLoading, setPuliziaLoading] = useState(false);
+  const [puliziaResult, setPuliziaResult] = useState(null);
+  const [statsAvanzate, setStatsAvanzate] = useState(null);
+  
   // Associazione combinata (più assegni = 1 fattura)
   const [combinazioneLoading, setCombinazioneLoading] = useState(false);
   const [combinazioneResult, setCombinazioneResult] = useState(null);
