@@ -169,6 +169,7 @@ const PianoDeiConti = lazy(() => import("./pages/PianoDeiConti.jsx"));
 const GestioneCespiti = lazy(() => import("./pages/GestioneCespiti.jsx"));
 const Finanziaria = lazy(() => import("./pages/Finanziaria.jsx"));
 const ChiusuraEsercizio = lazy(() => import("./pages/ChiusuraEsercizio.jsx"));
+const MotoreContabile = lazy(() => import("./pages/MotoreContabile.jsx"));
 
 // === STRUMENTI ===
 const Documenti = lazy(() => import("./pages/Documenti.jsx"));
