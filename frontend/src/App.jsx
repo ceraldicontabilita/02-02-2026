@@ -138,6 +138,7 @@ const NAV_ITEMS = [
       { to: "/cespiti", label: "Cespiti", icon: "🏢" },
       { to: "/finanziaria", label: "Finanziaria", icon: "💹" },
       { to: "/chiusura-esercizio", label: "Chiusura Esercizio", icon: "📅", isNew: true },
+      { to: "/calendario-fiscale", label: "Calendario Fiscale", icon: "📆", isNew: true },
     ]
   },
   
@@ -149,6 +150,9 @@ const NAV_ITEMS = [
   
   // === ATTENDANCE ===
   { to: "/attendance", label: "Presenze", icon: "⏰", short: "Pres.", isNew: true },
+  
+  // === DIPENDENTI - SALDI ===
+  { to: "/saldi-ferie-permessi", label: "Saldi Ferie/ROL", icon: "🏖️", short: "Saldi", isNew: true },
   
   // === STRUMENTI ===
   { 
