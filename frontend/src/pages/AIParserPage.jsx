@@ -683,7 +683,7 @@ export default function AIParserPage() {
               Powered by Claude AI
             </p>
             <p style={{ margin: '0.5rem 0 0 0' }}>
-              L'AI analizza il documento ed estrae automaticamente tutti i dati strutturati.
+              La AI analizza il documento ed estrae automaticamente tutti i dati strutturati.
             </p>
           </div>
         </div>
