@@ -984,7 +984,9 @@ async def get_riepilogo_limiti(anno: int = Query(None)) -> Dict[str, Any]:
         "totale_critical": len(critical),
         "totale_warning": len(warning),
         "per_giustificativo": list(per_giustificativo.values()),
-        "top_critical": critical[:5],  # Top 5 più critici
+        "top_critical": critical[:5],
+        "top_warning": warning[:5]
+    }
 
 
 # =============================================================================
