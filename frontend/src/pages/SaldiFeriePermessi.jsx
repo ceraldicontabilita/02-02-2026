@@ -27,8 +27,8 @@ export default function SaldiFeriePermessi() {
     setError(null);
     try {
       // Carica dipendenti
-      const dipRes = await api.get('/api/employees/');
-      const employees = dipRes.data?.employees || dipRes.data || [];
+      const dipRes = await api.get('/api/dipendenti');
+      const employees = dipRes.data || [];
       setDipendenti(employees);
       
       // Carica saldi finali
