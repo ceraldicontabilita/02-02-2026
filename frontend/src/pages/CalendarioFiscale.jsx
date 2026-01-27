@@ -169,6 +169,46 @@ export default function CalendarioFiscale() {
         <PageError message={error} onRetry={loadCalendario} />
       ) : (
         <>
+          {/* Alert Scadenze Critiche */}
+          {notifiche?.riepilogo?.critiche > 0 && (
+            <div style={{
+              background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
+              borderRadius: 12,
+              padding: 16,
+              marginBottom: 20,
+              color: 'white',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <AlertTriangle size={32} />
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 18 }}>
+                    {notifiche.riepilogo.critiche} Scadenze Critiche
+                  </div>
+                  <div style={{ fontSize: 14, opacity: 0.9 }}>
+                    Scadenze entro 3 giorni che richiedono attenzione immediata
+                  </div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {notifiche.urgenti?.slice(0, 1).map((s, idx) => (
+                  <Button
+                    key={idx}
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => inviaNotifica(s.id, 'dashboard')}
+                    disabled={inviandoNotifica === s.id}
+                  >
+                    <Bell size={14} style={{ marginRight: 4 }} />
+                    Notifica
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
+          
           {/* KPI Cards */}
           <PageGrid cols={4} gap={16}>
             <Card>
