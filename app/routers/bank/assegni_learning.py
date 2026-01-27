@@ -428,7 +428,11 @@ async def associa_intelligente(
         if not match_trovato:
             keywords = estrai_keywords([descrizione])
             for f in fatture:
-                nome_forn = (f.get("supplier_name") or f.get("fornitore") or "").upper()
+                nome_forn_raw = f.get("supplier_name") or f.get("fornitore") or ""
+                # Ensure it's a string
+                if isinstance(nome_forn_raw, dict):
+                    nome_forn_raw = nome_forn_raw.get("name", "") or str(nome_forn_raw)
+                nome_forn = str(nome_forn_raw).upper()
                 nome_forn_keywords = set(nome_forn.split())
                 
                 # Se c'è overlap significativo nelle keywords
