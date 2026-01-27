@@ -188,6 +188,29 @@ export default function EmailDownloadManager() {
               <CheckCircle className="w-4 h-4 mr-2" />
               Auto-Associa PDF
             </Button>
+            <Button 
+              variant="outline" 
+              onClick={async () => {
+                setLoading(true);
+                try {
+                  const res = await api.post('/api/ai-parser/process-email-batch?limit=50');
+                  const d = res.data;
+                  alert(`Processamento AI completato!\n\nDocumenti processati: ${d.processed || 0}\nFatture create: ${d.fatture_create || 0}\nF24 creati: ${d.f24_creati || 0}\nErrori: ${d.errors?.length || 0}`);
+                  fetchStats();
+                  fetchDocuments();
+                } catch (err) {
+                  console.error('Errore processo batch:', err);
+                  alert('Errore processamento: ' + (err.response?.data?.detail || err.message));
+                } finally {
+                  setLoading(false);
+                }
+              }} 
+              disabled={loading}
+              data-testid="process-email-batch-btn"
+            >
+              <Play className="w-4 h-4 mr-2" />
+              Processa con AI
+            </Button>
           </div>
 
           {/* Download Progress */}
