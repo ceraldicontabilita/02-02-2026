@@ -303,11 +303,11 @@ export default function IntegrazioniOpenAPI() {
               <div style={{ ...cardStyle, background: '#fffbeb', border: '1px solid #fcd34d' }}>
                 <h4 style={{ margin: '0 0 12px', color: '#92400e' }}>⚠️ Autorizzazione PSD2 Richiesta</h4>
                 <p style={{ fontSize: 13, color: '#78350f', marginBottom: 16 }}>
-                  Per utilizzare l'AISP (Open Banking) è necessario:
+                  Per utilizzare l&apos;AISP (Open Banking) è necessario:
                 </p>
                 <ol style={{ fontSize: 13, color: '#78350f', paddingLeft: 20 }}>
                   <li>Accedere a <a href="https://console.openapi.com/it/dashboard" target="_blank" rel="noreferrer">console.openapi.com</a></li>
-                  <li>Richiedere l'attivazione del servizio AISP</li>
+                  <li>Richiedere l&apos;attivazione del servizio AISP</li>
                   <li>Completare la procedura di autorizzazione PSD2</li>
                   <li>Collegare i conti bancari da monitorare</li>
                 </ol>
