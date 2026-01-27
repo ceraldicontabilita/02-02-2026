@@ -130,6 +130,9 @@ const ContabilitaAvanzata = lazy(() => import("./pages/ContabilitaAvanzata.jsx")
 const Scadenze = lazy(() => import("./pages/Scadenze.jsx"));
 const CodiciTributari = lazy(() => import("./pages/CodiciTributari.jsx"));
 
+// === INTEGRAZIONI ===
+const IntegrazioniOpenAPI = lazy(() => import("./pages/IntegrazioniOpenAPI.jsx"));
+
 // === TO-DO ===
 const ToDo = lazy(() => import("./pages/ToDo.jsx"));
 
