@@ -189,7 +189,7 @@ export default function GestioneDipendentiUnificata() {
   const handleSaveAnagrafica = async () => {
     setSaving(true);
     try {
-      await api.put(`/api/employees/${selectedDip.id}`, formData);
+      await api.put(`/api/dipendenti/${selectedDip.id}`, formData);
       await loadDipendenti();
       setSelectedDip(prev => ({ ...prev, ...formData }));
       setEditMode(false);
