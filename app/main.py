@@ -369,6 +369,9 @@ app.include_router(email_download.router, prefix="/api", tags=["Email Download"]
 # --- Manutenzione Dati ---
 app.include_router(manutenzione.router, prefix="/api/manutenzione", tags=["Manutenzione Dati"])
 
+# --- OpenAPI.it Integration (SDI, AISP) ---
+app.include_router(openapi_it.router, prefix="/api/openapi", tags=["OpenAPI.it SDI/AISP"])
+
 # --- Inserimento Rapido Mobile ---
 app.include_router(inserimento_rapido.router, prefix="/api", tags=["Inserimento Rapido"])
 
