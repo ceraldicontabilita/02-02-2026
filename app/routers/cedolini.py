@@ -549,22 +549,31 @@ async def download_cedolino_pdf(cedolino_id: str):
 
 @router.get("/riepilogo-mensile/{anno}/{mese}")
 async def riepilogo_mensile(anno: int, mese: int) -> Dict[str, Any]:
-    """Riepilogo costi del personale per mese"""
+    """Riepilogo costi del personale per mese.
+    
+    Gestisce cedolini con dati completi (da parser PDF) e cedolini
+    con solo importo netto (da import Excel paghe/bonifici).
+    """
     db = Database.get_db()
     
+    # Usa $ifNull per gestire campi mancanti nei cedolini importati da Excel
+    # Se lordo non esiste, usa netto come approssimazione
     pipeline = [
         {"$match": {"anno": anno, "mese": mese}},
         {"$group": {
             "_id": None,
-            "totale_lordo": {"$sum": "$lordo"},
-            "totale_netto": {"$sum": "$netto"},
-            "totale_inps_dipendente": {"$sum": "$inps_dipendente"},
-            "totale_irpef": {"$sum": "$irpef"},
-            "totale_inps_azienda": {"$sum": "$inps_azienda"},
-            "totale_inail": {"$sum": "$inail"},
-            "totale_tfr": {"$sum": "$tfr"},
-            "totale_costo_azienda": {"$sum": "$costo_azienda"},
-            "num_cedolini": {"$sum": 1}
+            "totale_lordo": {"$sum": {"$ifNull": ["$lordo", {"$ifNull": ["$netto", 0]}]}},
+            "totale_netto": {"$sum": {"$ifNull": ["$netto", {"$ifNull": ["$netto_mese", 0]}]}},
+            "totale_inps_dipendente": {"$sum": {"$ifNull": ["$inps_dipendente", 0]}},
+            "totale_irpef": {"$sum": {"$ifNull": ["$irpef", 0]}},
+            "totale_inps_azienda": {"$sum": {"$ifNull": ["$inps_azienda", 0]}},
+            "totale_inail": {"$sum": {"$ifNull": ["$inail", 0]}},
+            "totale_tfr": {"$sum": {"$ifNull": ["$tfr", 0]}},
+            "totale_costo_azienda": {"$sum": {"$ifNull": ["$costo_azienda", {"$ifNull": ["$netto", 0]}]}},
+            "num_cedolini": {"$sum": 1},
+            # Conta cedolini con dati completi vs parziali
+            "cedolini_completi": {"$sum": {"$cond": [{"$ifNull": ["$lordo", False]}, 1, 0]}},
+            "cedolini_parziali": {"$sum": {"$cond": [{"$ifNull": ["$lordo", False]}, 0, 1]}}
         }}
     ]
     
@@ -573,11 +582,22 @@ async def riepilogo_mensile(anno: int, mese: int) -> Dict[str, Any]:
     if result:
         data = result[0]
         del data["_id"]
-        return {
+        
+        # Aggiungi nota se ci sono cedolini con dati parziali
+        cedolini_parziali = data.pop("cedolini_parziali", 0)
+        cedolini_completi = data.pop("cedolini_completi", 0)
+        
+        response = {
             "anno": anno,
             "mese": mese,
             **data
         }
+        
+        if cedolini_parziali > 0:
+            response["nota"] = f"{cedolini_parziali} cedolini con dati parziali (solo netto)"
+            response["dati_parziali"] = True
+        
+        return response
     
     return {
         "anno": anno,
