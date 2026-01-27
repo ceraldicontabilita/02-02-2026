@@ -733,7 +733,8 @@ async def get_odoo_chart_of_accounts(limit: int = Query(500)) -> Dict[str, Any]:
     """Lista piano dei conti da Odoo"""
     client = get_odoo_client()
     
-    fields = ['code', 'name', 'account_type', 'reconcile', 'deprecated']
+    # Campi compatibili con Odoo 19.1
+    fields = ['code', 'name', 'account_type', 'reconcile']
     accounts = client.search_read('account.account', [], fields, limit=limit, order='code')
     
     return {
@@ -749,7 +750,8 @@ async def sync_chart_of_accounts_to_local() -> Dict[str, Any]:
     client = get_odoo_client()
     db = Database.get_db()
     
-    fields = ['code', 'name', 'account_type', 'reconcile', 'deprecated']
+    # Campi compatibili con Odoo 19.1
+    fields = ['code', 'name', 'account_type', 'reconcile']
     accounts = client.search_read('account.account', [], fields, limit=500, order='code')
     
     created = 0
