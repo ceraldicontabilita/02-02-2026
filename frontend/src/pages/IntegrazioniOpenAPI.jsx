@@ -29,12 +29,14 @@ export default function IntegrazioniOpenAPI() {
   const loadStatus = async () => {
     setLoading(true);
     try {
-      const [sdi, aisp] = await Promise.all([
+      const [sdi, aisp, xbrl] = await Promise.all([
         api.get('/api/openapi/sdi/status').catch(() => ({ data: { status: 'error' } })),
-        api.get('/api/openapi/aisp/status').catch(() => ({ data: { status: 'error' } }))
+        api.get('/api/openapi/aisp/status').catch(() => ({ data: { status: 'error' } })),
+        api.get('/api/openapi/xbrl/status').catch(() => ({ data: { status: 'error' } }))
       ]);
       setSdiStatus(sdi.data);
       setAispStatus(aisp.data);
+      setXbrlStatus(xbrl.data);
     } catch (e) {
       console.error(e);
     } finally {
