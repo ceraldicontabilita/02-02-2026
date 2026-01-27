@@ -172,7 +172,7 @@ export default function Riconciliazione() {
   
   const getTabFromPath = () => {
     const path = location.pathname;
-    const match = path.match(/\/riconciliazione\/([\\w-]+)/);
+    const match = path.match(/\/riconciliazione\/([\w-]+)/);
     return match ? match[1] : 'automatica';
   };
   

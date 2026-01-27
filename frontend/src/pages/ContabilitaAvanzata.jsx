@@ -69,7 +69,7 @@ export default function ContabilitaAvanzata() {
   
   const getTabFromPath = () => {
     const path = location.pathname;
-    const match = path.match(/\/contabilita-avanzata\/([\\w-]+)/);
+    const match = path.match(/\/contabilita-avanzata\/([\w-]+)/);
     return match ? match[1] : 'imposte';
   };
   

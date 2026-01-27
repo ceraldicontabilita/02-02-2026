@@ -16,7 +16,7 @@ export default function Admin() {
   
   const getTabFromPath = () => {
     const path = location.pathname;
-    const match = path.match(/\/admin\/([\\w-]+)/);
+    const match = path.match(/\/admin\/([\w-]+)/);
     return match ? match[1] : 'email';
   };
   

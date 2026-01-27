@@ -14,7 +14,7 @@ export default function TFR() {
   
   const getTabFromPath = () => {
     const path = location.pathname;
-    const match = path.match(/\/tfr\/([\\w-]+)/);
+    const match = path.match(/\/tfr\/([\w-]+)/);
     return match ? match[1] : 'riepilogo';
   };
   

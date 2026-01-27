@@ -15,7 +15,7 @@ export default function Magazzino() {
   
   const getTabFromPath = () => {
     const path = location.pathname;
-    const match = path.match(/\/magazzino\/([\\w-]+)/);
+    const match = path.match(/\/magazzino\/([\w-]+)/);
     return match ? match[1] : 'catalogo';
   };
   

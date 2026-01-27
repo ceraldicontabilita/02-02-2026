@@ -49,7 +49,7 @@ export default function GestioneCespiti() {
   
   const getTabFromPath = () => {
     const path = location.pathname;
-    const match = path.match(/\/cespiti\/([\\w-]+)/);
+    const match = path.match(/\/cespiti\/([\w-]+)/);
     return match ? match[1] : 'cespiti';
   };
   

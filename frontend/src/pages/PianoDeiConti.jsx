@@ -23,7 +23,7 @@ export default function PianoDeiConti() {
   
   const getTabFromPath = () => {
     const path = location.pathname;
-    const match = path.match(/\/piano-dei-conti\/([\\w-]+)/);
+    const match = path.match(/\/piano-dei-conti\/([\w-]+)/);
     return match ? match[1] : 'conti';
   };
   

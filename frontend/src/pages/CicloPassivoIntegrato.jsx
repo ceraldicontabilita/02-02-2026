@@ -263,7 +263,7 @@ export default function CicloPassivoIntegrato() {
   
   const getTabFromPath = () => {
     const path = location.pathname;
-    const match = path.match(/\/ciclo-passivo\/([\\w-]+)/);
+    const match = path.match(/\/ciclo-passivo\/([\w-]+)/);
     return match ? match[1] : 'import';
   };
   

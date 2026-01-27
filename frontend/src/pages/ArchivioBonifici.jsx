@@ -34,7 +34,7 @@ export default function ArchivioBonifici() {
   
   const getTabFromPath = () => {
     const path = location.pathname;
-    const match = path.match(/\/archivio-bonifici\/([\\w-]+)/);
+    const match = path.match(/\/archivio-bonifici\/([\w-]+)/);
     return match ? match[1] : 'da_associare';
   };
   

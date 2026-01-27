@@ -13,7 +13,7 @@ export default function VerificaCoerenza() {
   
   const getTabFromPath = () => {
     const path = location.pathname;
-    const match = path.match(/\/verifica-coerenza\/([\\w-]+)/);
+    const match = path.match(/\/verifica-coerenza\/([\w-]+)/);
     return match ? match[1] : 'riepilogo';
   };
   
