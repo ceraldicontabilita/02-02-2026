@@ -296,6 +296,7 @@ const router = createBrowserRouter([
       
       // === MAGAZZINO ===
       { path: "magazzino", element: <LazyPage><Magazzino /></LazyPage> },
+      { path: "magazzino/:tab", element: <LazyPage><Magazzino /></LazyPage> },
       { path: "magazzino/:categoria", element: <LazyPage><Magazzino /></LazyPage> },
       { path: "inventario", element: <LazyPage><Inventario /></LazyPage> },
       { path: "inventario/:data", element: <LazyPage><Inventario /></LazyPage> },
