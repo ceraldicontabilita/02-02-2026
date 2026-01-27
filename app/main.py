@@ -436,6 +436,7 @@ app.include_router(learning_machine.router, prefix="/api/learning-machine", tags
 app.include_router(learning_machine_cdc.router, prefix="/api", tags=["Learning Machine CDC"])
 app.include_router(fornitori_learning.router, prefix="/api", tags=["Fornitori Learning"])
 app.include_router(magazzino_avanzato.router, prefix="/api", tags=["Magazzino Avanzato"])
+app.include_router(odoo_integration.router, prefix="/api/odoo", tags=["Odoo Integration"])
 
 
 # =============================================================================
