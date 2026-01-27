@@ -170,6 +170,10 @@ const GestioneCespiti = lazy(() => import("./pages/GestioneCespiti.jsx"));
 const Finanziaria = lazy(() => import("./pages/Finanziaria.jsx"));
 const ChiusuraEsercizio = lazy(() => import("./pages/ChiusuraEsercizio.jsx"));
 const MotoreContabile = lazy(() => import("./pages/MotoreContabile.jsx"));
+const CalendarioFiscale = lazy(() => import("./pages/CalendarioFiscale.jsx"));
+
+// === DIPENDENTI ===
+const SaldiFeriePermessi = lazy(() => import("./pages/SaldiFeriePermessi.jsx"));
 
 // === STRUMENTI ===
 const Documenti = lazy(() => import("./pages/Documenti.jsx"));
