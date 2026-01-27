@@ -438,6 +438,7 @@ app.include_router(learning_machine_cdc.router, prefix="/api", tags=["Learning M
 app.include_router(fornitori_learning.router, prefix="/api", tags=["Fornitori Learning"])
 app.include_router(magazzino_avanzato.router, prefix="/api", tags=["Magazzino Avanzato"])
 app.include_router(odoo_integration.router, prefix="/api/odoo", tags=["Odoo Integration"])
+app.include_router(accounting_engine.router, prefix="/api/accounting", tags=["Accounting Engine"])
 
 
 # =============================================================================
