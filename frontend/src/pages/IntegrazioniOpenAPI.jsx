@@ -5,6 +5,7 @@ import { STYLES, COLORS, formatEuro, button, badge } from '../lib/utils';
 export default function IntegrazioniOpenAPI() {
   const [sdiStatus, setSdiStatus] = useState(null);
   const [aispStatus, setAispStatus] = useState(null);
+  const [xbrlStatus, setXbrlStatus] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('sdi');
   
@@ -13,6 +14,13 @@ export default function IntegrazioniOpenAPI() {
   const [invioLoading, setInvioLoading] = useState(false);
   const [ricezioneLoading, setRicezioneLoading] = useState(false);
   const [ricezioneResult, setRicezioneResult] = useState(null);
+  
+  // XBRL State
+  const [xbrlPiva, setXbrlPiva] = useState('');
+  const [xbrlAnno, setXbrlAnno] = useState('');
+  const [xbrlLoading, setXbrlLoading] = useState(false);
+  const [xbrlResult, setXbrlResult] = useState(null);
+  const [xbrlRequests, setXbrlRequests] = useState([]);
 
   useEffect(() => {
     loadStatus();
