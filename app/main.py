@@ -356,6 +356,7 @@ app.include_router(invoicetronic.router, tags=["InvoiceTronic SDI"])
 
 # --- Verbali Noleggio da Email ---
 app.include_router(verbali_noleggio.router, tags=["Verbali Noleggio"])
+app.include_router(verbali_noleggio_api.router, prefix="/api/verbali-noleggio", tags=["Verbali Noleggio API"])
 app.include_router(verbali_riconciliazione.router, prefix="/api/verbali-riconciliazione", tags=["Verbali Riconciliazione"])
 
 # --- Email Scanner Completo - Tutta la posta ---
