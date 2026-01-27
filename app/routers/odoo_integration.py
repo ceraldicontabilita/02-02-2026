@@ -780,9 +780,6 @@ async def sync_chart_of_accounts_to_local() -> Dict[str, Any]:
     }
     
     for acc in accounts:
-        if acc.get('deprecated'):
-            continue
-            
         existing = await db["piano_conti"].find_one({"codice": acc['code']})
         
         doc = {
