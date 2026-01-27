@@ -175,6 +175,8 @@ const NAV_ITEMS = [
     short: "Integr.",
     isSubmenu: true,
     children: [
+      { to: "/integrazioni-openapi", label: "🌐 OpenAPI.it (SDI/XBRL)", icon: "🌐", isNew: true },
+      { to: "/odoo", label: "🔗 Odoo ERP", icon: "🔗", isNew: true },
       { to: "/invoicetronic", label: "InvoiceTronic (SDI)", icon: "📧", isNew: true },
       { to: "/pagopa", label: "PagoPA", icon: "💳", isNew: true },
       { to: "/classificazione-email", label: "Classificazione Email AI", icon: "🧠", isNew: true },
