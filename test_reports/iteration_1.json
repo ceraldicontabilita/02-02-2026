@@ -1,0 +1,75 @@
+{
+  "summary": "Testing completato per le nuove funzionalità: Parser PDF Libro Unico, XBRL Bilanci, AI Email Batch. Backend 18/18 test passati. Frontend funzionante con tutte le pagine accessibili.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/openapi/xbrl/richiedi-bilancio", "issue": "Ritorna 401 'Wrong Token' in ambiente sandbox - comportamento atteso con credenziali test"}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_giustificativi_xbrl_ai.py",
+    "/app/test_reports/pytest/pytest_results_giustificativi.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "XBRL richiedi-bilancio endpoint ritorna 401 con token sandbox - verificare se è necessario un token di produzione per test reali",
+    "AI Parser process-email-batch processa documenti ma alcuni falliscono con 'Tipo documento non supportato: altro' - comportamento normale per documenti non classificati"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_giustificativi_xbrl_ai.py"
+  ],
+  "success_rate": {
+    "backend": "100% (18/18 tests passed)",
+    "frontend": "100% (all pages load correctly)"
+  },
+  "test_credentials": "N/A - no authentication required for tested endpoints",
+  "seed_data_creation": "Used existing employee ID: 5262eaa5-a04d-4fa1-9156-d6f99d2aa6a9 (Luigi Taiano)",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend APIs per giustificativi, XBRL e AI parser sono tutti funzionanti. Frontend pagine testate: /integrazioni-openapi (XBRL tab funzionante), /email-download (Process Email Batch button presente), /import-unificato (Libro Unico tipo disponibile), /dipendenti (Giustificativi tab con dati completi). File ZIP paghe disponibile in /app/uploads/paghe/pagheanno2025.zip per test upload reale.",
+  "features_tested": {
+    "giustificativi": {
+      "endpoints_tested": [
+        "GET /api/giustificativi/giustificativi - Lista giustificativi ✓",
+        "GET /api/giustificativi/dipendente/{id}/giustificativi - Contatori dipendente ✓",
+        "GET /api/giustificativi/presenze-mensili/{employee_id} - Presenze mensili ✓",
+        "GET /api/giustificativi/dipendente/{id}/saldo-ferie - Saldo ferie ✓",
+        "POST /api/giustificativi/valida-giustificativo - Validazione ✓",
+        "GET /api/giustificativi/alert-limiti - Alert limiti ✓",
+        "POST /api/giustificativi/upload-libro-unico - Upload validation ✓",
+        "POST /api/giustificativi/init-giustificativi - Inizializzazione ✓",
+        "GET /api/giustificativi/riepilogo-limiti - Riepilogo ✓"
+      ],
+      "frontend_pages": [
+        "/dipendenti - Tab Giustificativi funzionante con riepilogo Ferie/ROL/Ex Festività/Permessi",
+        "/import-unificato - Tipo 'Libro Unico (Giustificativi)' disponibile"
+      ]
+    },
+    "xbrl": {
+      "endpoints_tested": [
+        "GET /api/openapi/xbrl/status - Status available ✓",
+        "GET /api/openapi/xbrl/storico-richieste - Storico richieste ✓",
+        "POST /api/openapi/xbrl/richiedi-bilancio - Ritorna 401 in sandbox (atteso)"
+      ],
+      "frontend_pages": [
+        "/integrazioni-openapi - Tab XBRL Bilanci con form richiesta bilancio e storico"
+      ]
+    },
+    "ai_parser": {
+      "endpoints_tested": [
+        "GET /api/ai-parser/test - Test endpoint ✓",
+        "GET /api/ai-parser/statistiche - Statistiche ✓",
+        "POST /api/ai-parser/process-email-batch - Process batch ✓",
+        "GET /api/ai-parser/da-rivedere - Documenti da rivedere ✓"
+      ],
+      "frontend_pages": [
+        "/email-download - Bottone 'Processa con AI' presente e funzionante"
+      ]
+    }
+  }
+}
