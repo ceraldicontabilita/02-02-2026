@@ -194,6 +194,7 @@ from app.routers import upload_ai  # Upload AI - Parsing automatico su upload di
 from app.routers import chat_router  # Chat Intelligente - Interrogazione dati in linguaggio naturale
 from app.routers import schede_tecniche  # Schede Tecniche Prodotti
 from app.routers import auto_repair  # Auto-Riparazione Globale delle relazioni
+from app.routers import odoo_integration  # Integrazione Odoo External API
 
 
 # =============================================================================
