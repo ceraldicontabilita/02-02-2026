@@ -253,6 +253,7 @@ app.include_router(bank_statement_bulk_import.router, prefix="/api/bank-statemen
 app.include_router(estratto_conto.router, prefix="/api/estratto-conto-movimenti", tags=["Estratto Conto Movimenti"])
 app.include_router(archivio_bonifici_router, prefix="/api/archivio-bonifici", tags=["Archivio Bonifici"])
 app.include_router(assegni.router, prefix="/api/assegni", tags=["Assegni"])
+app.include_router(assegni_learning.router, prefix="/api/assegni/learning", tags=["Assegni Learning Machine"])
 app.include_router(pos_accredito.router, prefix="/api/pos-accredito", tags=["POS Accredito"])
 app.include_router(riconciliazione_f24_banca.router, prefix="/api/f24-riconciliazione", tags=["Riconciliazione F24 Banca"])
 
