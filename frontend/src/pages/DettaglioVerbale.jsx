@@ -42,7 +42,7 @@ export default function DettaglioVerbale() {
     return (
       <div style={{ padding: 40, textAlign: 'center' }}>
         <div style={{ fontSize: 48, marginBottom: 16 }}>⏳</div>
-        <div>Caricamento verbale {numeroVerbale}...</div>
+        <div>Caricamento verbale {verbaleId}...</div>
       </div>
     );
   }
