@@ -112,9 +112,10 @@ async def get_database() -> AsyncIOMotorDatabase:
     return Database.get_db()
 
 
-# Collection name constants
+# Collection name constants - IMPORTARE DA db_collections.py per nuovi sviluppi
+# Questa classe è mantenuta per retrocompatibilità
 class Collections:
-    """MongoDB collection names - STANDARDIZED."""
+    """MongoDB collection names - LEGACY. Usare db_collections.py per nuovi sviluppi."""
     # Core
     USERS = "users"
     
@@ -135,24 +136,24 @@ class Collections:
     
     # Employees
     EMPLOYEES = "employees"
-    PAYSLIPS = "payslips"
+    PAYSLIPS = "cedolini"  # Cambiato a collezione principale
     
     # HACCP
     HACCP_TEMPERATURES = "haccp_temperatures"
     LIBRETTI_SANITARI = "libretti_sanitari"
     
-    # Cash & Bank - USE prima_nota_cassa/prima_nota_banca as canonical names
-    CASH_MOVEMENTS = "prima_nota_cassa"  # Changed from cash_movements
-    BANK_STATEMENTS = "bank_statements"
+    # Cash & Bank
+    CASH_MOVEMENTS = "prima_nota_cassa"
+    BANK_STATEMENTS = "estratto_conto_movimenti"  # Collezione principale
     
     # Accounting
-    CHART_OF_ACCOUNTS = "chart_of_accounts"
+    CHART_OF_ACCOUNTS = "piano_conti"  # Collezione italiana
     ACCOUNTING_ENTRIES = "accounting_entries"
     VAT_LIQUIDATIONS = "vat_liquidations"
     VAT_REGISTRY = "vat_registry"
-    F24_MODELS = "f24_models"
+    F24_MODELS = "f24_unificato"  # Collezione unificata
     BALANCE_SHEETS = "balance_sheets"
-    YEAR_END_CLOSURES = "year_end_closures"
+    YEAR_END_CLOSURES = "chiusure_esercizio"
     
     # Settings
     WAREHOUSE_SETTINGS = "warehouse_settings"
