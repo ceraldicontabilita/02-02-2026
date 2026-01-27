@@ -957,7 +957,210 @@ export default function GestioneAssegni() {
         >
           Svuota
         </button>
+        
+        {/* === LEARNING MACHINE BUTTONS === */}
+        <div style={{ 
+          display: 'flex', 
+          gap: 6, 
+          marginLeft: 'auto', 
+          padding: '4px 8px', 
+          background: 'linear-gradient(135deg, #1a365d 0%, #2563eb 100%)',
+          borderRadius: 8
+        }}>
+          <button
+            onClick={handleLearn}
+            disabled={learningLoading}
+            data-testid="learn-btn"
+            title="Apprende dai dati esistenti per migliorare le associazioni future"
+            style={{
+              padding: '8px 12px',
+              background: learningLoading ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.15)',
+              color: 'white',
+              border: 'none',
+              borderRadius: 6,
+              cursor: learningLoading ? 'not-allowed' : 'pointer',
+              fontSize: 12,
+              fontWeight: 600
+            }}
+          >
+            {learningLoading ? '⏳' : '🧠'} Learn
+          </button>
+          
+          <button
+            onClick={handleAssociaIntelligente}
+            disabled={autoAssociating}
+            data-testid="associa-intelligente-btn"
+            title="Usa i pattern appresi per associazioni più accurate"
+            style={{
+              padding: '8px 12px',
+              background: autoAssociating ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.15)',
+              color: 'white',
+              border: 'none',
+              borderRadius: 6,
+              cursor: autoAssociating ? 'not-allowed' : 'pointer',
+              fontSize: 12,
+              fontWeight: 600
+            }}
+          >
+            {autoAssociating ? '⏳' : '🤖'} Smart
+          </button>
+          
+          <button
+            onClick={() => handlePuliziaDuplicati(true)}
+            disabled={puliziaLoading}
+            data-testid="pulizia-duplicati-btn"
+            title="Identifica e rimuove duplicati"
+            style={{
+              padding: '8px 12px',
+              background: puliziaLoading ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.15)',
+              color: 'white',
+              border: 'none',
+              borderRadius: 6,
+              cursor: puliziaLoading ? 'not-allowed' : 'pointer',
+              fontSize: 12,
+              fontWeight: 600
+            }}
+          >
+            {puliziaLoading ? '⏳' : '🧹'} Pulizia
+          </button>
+        </div>
       </div>
+      
+      {/* STATS AVANZATE BADGE */}
+      {statsAvanzate && (
+        <div style={{ 
+          display: 'flex', 
+          gap: 16, 
+          marginBottom: 16, 
+          padding: 12, 
+          background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)',
+          borderRadius: 10,
+          border: '1px solid #bae6fd',
+          flexWrap: 'wrap'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontSize: 20 }}>📊</span>
+            <div>
+              <div style={{ fontSize: 11, color: '#64748b' }}>Health Score</div>
+              <div style={{ 
+                fontSize: 16, 
+                fontWeight: 700, 
+                color: statsAvanzate.health_score >= 90 ? '#16a34a' : statsAvanzate.health_score >= 70 ? '#ca8a04' : '#dc2626'
+              }}>
+                {statsAvanzate.health_score}%
+              </div>
+            </div>
+          </div>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontSize: 20 }}>✅</span>
+            <div>
+              <div style={{ fontSize: 11, color: '#64748b' }}>Con Beneficiario</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: '#1e293b' }}>{statsAvanzate.con_beneficiario}/{statsAvanzate.totale_assegni}</div>
+            </div>
+          </div>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontSize: 20 }}>📄</span>
+            <div>
+              <div style={{ fontSize: 11, color: '#64748b' }}>Con Fattura</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: '#1e293b' }}>{statsAvanzate.con_fattura}/{statsAvanzate.totale_assegni}</div>
+            </div>
+          </div>
+          
+          {statsAvanzate.duplicati > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontSize: 20 }}>⚠️</span>
+              <div>
+                <div style={{ fontSize: 11, color: '#dc2626' }}>Duplicati</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: '#dc2626' }}>{statsAvanzate.duplicati}</div>
+              </div>
+            </div>
+          )}
+          
+          {statsAvanzate.senza_beneficiario > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontSize: 20 }}>❓</span>
+              <div>
+                <div style={{ fontSize: 11, color: '#ca8a04' }}>Da Associare</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: '#ca8a04' }}>{statsAvanzate.senza_beneficiario}</div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* RISULTATO LEARNING */}
+      {learningResult && (
+        <div style={{ 
+          marginBottom: 16, 
+          padding: 15, 
+          background: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)',
+          borderRadius: 8,
+          border: '1px solid #6ee7b7'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div>
+              <strong style={{ color: '#059669', fontSize: 14 }}>
+                🧠 Learning Completato: {learningResult.pattern_appresi} pattern appresi da {learningResult.assegni_analizzati} assegni
+              </strong>
+              {learningResult.dettagli && learningResult.dettagli.length > 0 && (
+                <div style={{ marginTop: 8, fontSize: 12 }}>
+                  <strong>Top fornitori riconosciuti:</strong>
+                  <ul style={{ margin: '4px 0', paddingLeft: 20 }}>
+                    {learningResult.dettagli.slice(0, 5).map((d, i) => (
+                      <li key={i}>{d.fornitore} ({d.assegni} assegni, {d.range_importi})</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+            <button onClick={() => setLearningResult(null)} style={{ padding: '4px 8px', background: 'transparent', border: 'none', cursor: 'pointer' }}>✕</button>
+          </div>
+        </div>
+      )}
+
+      {/* RISULTATO PULIZIA */}
+      {puliziaResult && (
+        <div style={{ 
+          marginBottom: 16, 
+          padding: 15, 
+          background: puliziaResult.dry_run ? '#fffbeb' : '#fef2f2',
+          borderRadius: 8,
+          border: `1px solid ${puliziaResult.dry_run ? '#fcd34d' : '#fca5a5'}`
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div>
+              <strong style={{ color: puliziaResult.dry_run ? '#b45309' : '#dc2626', fontSize: 14 }}>
+                🧹 {puliziaResult.dry_run ? 'PREVIEW Pulizia' : 'Pulizia Completata'}: {puliziaResult.totale_da_eliminare} record da eliminare
+              </strong>
+              <div style={{ marginTop: 8, fontSize: 13 }}>
+                <div>• Record vuoti: {puliziaResult.record_vuoti?.length || 0}</div>
+                <div>• Duplicati numero: {puliziaResult.duplicati_numero?.length || 0}</div>
+                {!puliziaResult.dry_run && <div>• Record eliminati: {puliziaResult.record_eliminati}</div>}
+              </div>
+              {puliziaResult.dry_run && puliziaResult.totale_da_eliminare > 0 && (
+                <button
+                  onClick={() => handlePuliziaDuplicati(false)}
+                  style={{
+                    marginTop: 10,
+                    padding: '8px 16px',
+                    background: '#dc2626',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: 6,
+                    cursor: 'pointer',
+                    fontWeight: 600
+                  }}
+                >
+                  ⚠️ Conferma Eliminazione
+                </button>
+              )}
+            </div>
+            <button onClick={() => setPuliziaResult(null)} style={{ padding: '4px 8px', background: 'transparent', border: 'none', cursor: 'pointer' }}>✕</button>
+          </div>
+        </div>
+      )}
 
       {/* PANNELLO FILTRI - FIXED quando aperto */}
       {showFilters && (
