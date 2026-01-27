@@ -1300,6 +1300,3 @@ async def get_presenze_mensili_dipendente(
         "presenze": presenze,
         "riepilogo_per_mese": per_mese
     }
-
-        "top_warning": warning[:5]     # Top 5 warning
-    }
