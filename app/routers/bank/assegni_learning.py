@@ -530,12 +530,8 @@ async def associa_combinazioni_avanzato(
     if len(assegni) < 2:
         return {**risultati, "message": "Serve almeno 2 assegni per cercare combinazioni"}
     
-    # 2. Carica fatture non pagate
+    # 2. Carica TUTTE le fatture (rimuovo filtro status per massimizzare associazioni)
     fatture = await db.invoices.find({
-        "$or": [
-            {"status": {"$nin": ["paid", "pagata"]}},
-            {"pagato": {"$ne": True}}
-        ],
         "total_amount": {"$gt": 0}
     }, {"_id": 0}).to_list(10000)
     
