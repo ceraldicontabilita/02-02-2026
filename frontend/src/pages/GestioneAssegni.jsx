@@ -378,6 +378,69 @@ export default function GestioneAssegni() {
     }
   };
 
+  // LEARNING MACHINE: Apprende dalle associazioni esistenti
+  const handleLearn = async () => {
+    setLearningLoading(true);
+    setLearningResult(null);
+    try {
+      const res = await api.post('/api/assegni/learning/learn');
+      setLearningResult(res.data);
+      // Carica anche le stats aggiornate
+      loadStatsAvanzate();
+    } catch (error) {
+      alert('Errore Learning: ' + (error.response?.data?.detail || error.message));
+    } finally {
+      setLearningLoading(false);
+    }
+  };
+
+  // LEARNING MACHINE: Associazione Intelligente
+  const handleAssociaIntelligente = async () => {
+    setAutoAssociating(true);
+    setAutoAssocResult(null);
+    try {
+      const res = await api.post('/api/assegni/learning/associa-intelligente');
+      setAutoAssocResult(res.data);
+      loadData();
+    } catch (error) {
+      alert('Errore: ' + (error.response?.data?.detail || error.message));
+    } finally {
+      setAutoAssociating(false);
+    }
+  };
+
+  // PULIZIA DUPLICATI
+  const handlePuliziaDuplicati = async (dryRun = true) => {
+    setPuliziaLoading(true);
+    setPuliziaResult(null);
+    try {
+      const res = await api.post(`/api/assegni/learning/pulizia-duplicati?dry_run=${dryRun}`);
+      setPuliziaResult(res.data);
+      if (!dryRun && res.data.record_eliminati > 0) {
+        loadData();
+      }
+    } catch (error) {
+      alert('Errore: ' + (error.response?.data?.detail || error.message));
+    } finally {
+      setPuliziaLoading(false);
+    }
+  };
+
+  // STATS AVANZATE
+  const loadStatsAvanzate = async () => {
+    try {
+      const res = await api.get('/api/assegni/learning/stats-avanzate');
+      setStatsAvanzate(res.data);
+    } catch (error) {
+      console.error('Errore caricamento stats:', error);
+    }
+  };
+
+  // Carica stats all'avvio
+  useEffect(() => {
+    loadStatsAvanzate();
+  }, []);
+
   // Nuova funzione: Associazione combinata (somma di più assegni = importo fattura)
   const handleAssociaCombinazioni = async () => {
     
