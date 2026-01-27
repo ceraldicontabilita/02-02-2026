@@ -132,6 +132,7 @@ const NAV_ITEMS = [
     isSubmenu: true,
     children: [
       { to: "/bilancio", label: "Bilancio", icon: "📊" },
+      { to: "/motore-contabile", label: "Motore Contabile", icon: "⚙️", isNew: true },
       { to: "/controllo-mensile", label: "Controllo Mensile", icon: "📈" },
       { to: "/piano-dei-conti", label: "Piano dei Conti", icon: "📒" },
       { to: "/cespiti", label: "Cespiti", icon: "🏢" },
