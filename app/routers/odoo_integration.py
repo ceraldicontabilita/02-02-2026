@@ -724,6 +724,166 @@ async def get_odoo_purchase_orders(
 
 
 # ============================================
+# PIANO DEI CONTI E ALIQUOTE IVA
+# ============================================
+
+@router.get("/chart-of-accounts")
+async def get_odoo_chart_of_accounts(limit: int = Query(500)) -> Dict[str, Any]:
+    """Lista piano dei conti da Odoo"""
+    client = get_odoo_client()
+    
+    fields = ['code', 'name', 'account_type', 'reconcile', 'deprecated']
+    accounts = client.search_read('account.account', [], fields, limit=limit, order='code')
+    
+    return {
+        "success": True,
+        "total": len(accounts),
+        "accounts": accounts
+    }
+
+
+@router.post("/chart-of-accounts/sync-to-local")
+async def sync_chart_of_accounts_to_local() -> Dict[str, Any]:
+    """Sincronizza piano dei conti Odoo → Database locale"""
+    client = get_odoo_client()
+    db = Database.get_db()
+    
+    fields = ['code', 'name', 'account_type', 'reconcile', 'deprecated']
+    accounts = client.search_read('account.account', [], fields, limit=500, order='code')
+    
+    created = 0
+    updated = 0
+    
+    # Mappa account_type Odoo → tipo italiano
+    TYPE_MAP = {
+        'asset_receivable': 'attivo_crediti',
+        'asset_cash': 'attivo_liquidita',
+        'asset_current': 'attivo_corrente',
+        'asset_non_current': 'attivo_immobilizzato',
+        'asset_prepayments': 'attivo_ratei',
+        'asset_fixed': 'attivo_immobilizzato',
+        'liability_payable': 'passivo_debiti',
+        'liability_credit_card': 'passivo_debiti',
+        'liability_current': 'passivo_corrente',
+        'liability_non_current': 'passivo_lungo_termine',
+        'equity': 'patrimonio_netto',
+        'equity_unaffected': 'patrimonio_netto',
+        'income': 'ricavo',
+        'income_other': 'ricavo_altro',
+        'expense': 'costo',
+        'expense_depreciation': 'costo_ammortamento',
+        'expense_direct_cost': 'costo_diretto',
+        'off_balance': 'conti_ordine',
+    }
+    
+    for acc in accounts:
+        if acc.get('deprecated'):
+            continue
+            
+        existing = await db["piano_conti"].find_one({"codice": acc['code']})
+        
+        doc = {
+            "odoo_id": acc['id'],
+            "codice": acc['code'],
+            "descrizione": acc['name'],
+            "tipo_odoo": acc.get('account_type'),
+            "tipo": TYPE_MAP.get(acc.get('account_type'), 'altro'),
+            "riconciliabile": acc.get('reconcile', False),
+            "sync_odoo": datetime.now(timezone.utc).isoformat()
+        }
+        
+        if existing:
+            await db["piano_conti"].update_one({"_id": existing["_id"]}, {"$set": doc})
+            updated += 1
+        else:
+            doc["id"] = f"odoo_{acc['id']}"
+            doc["created_at"] = datetime.now(timezone.utc).isoformat()
+            await db["piano_conti"].insert_one(doc)
+            created += 1
+    
+    return {
+        "success": True,
+        "conti_letti": len(accounts),
+        "creati": created,
+        "aggiornati": updated
+    }
+
+
+@router.get("/taxes")
+async def get_odoo_taxes(limit: int = Query(100)) -> Dict[str, Any]:
+    """Lista aliquote IVA da Odoo"""
+    client = get_odoo_client()
+    
+    fields = ['name', 'amount', 'type_tax_use', 'active', 'description']
+    taxes = client.search_read('account.tax', [['active', '=', True]], fields, limit=limit)
+    
+    return {
+        "success": True,
+        "total": len(taxes),
+        "taxes": taxes
+    }
+
+
+@router.post("/taxes/sync-to-local")
+async def sync_taxes_to_local() -> Dict[str, Any]:
+    """Sincronizza aliquote IVA Odoo → Database locale"""
+    client = get_odoo_client()
+    db = Database.get_db()
+    
+    fields = ['name', 'amount', 'type_tax_use', 'active', 'description']
+    taxes = client.search_read('account.tax', [['active', '=', True]], fields, limit=100)
+    
+    created = 0
+    updated = 0
+    
+    for tax in taxes:
+        existing = await db["aliquote_iva"].find_one({"odoo_id": tax['id']})
+        
+        doc = {
+            "odoo_id": tax['id'],
+            "codice": tax['name'][:20].replace(' ', '_').upper(),
+            "descrizione": tax['name'],
+            "aliquota": abs(tax.get('amount', 0)),
+            "tipo_uso": tax.get('type_tax_use'),  # sale, purchase, none
+            "is_ritenuta": tax.get('amount', 0) < 0,
+            "sync_odoo": datetime.now(timezone.utc).isoformat()
+        }
+        
+        if existing:
+            await db["aliquote_iva"].update_one({"_id": existing["_id"]}, {"$set": doc})
+            updated += 1
+        else:
+            doc["id"] = f"odoo_{tax['id']}"
+            doc["created_at"] = datetime.now(timezone.utc).isoformat()
+            await db["aliquote_iva"].insert_one(doc)
+            created += 1
+    
+    return {
+        "success": True,
+        "aliquote_lette": len(taxes),
+        "create": created,
+        "aggiornate": updated
+    }
+
+
+@router.get("/journals")
+async def get_odoo_journals() -> Dict[str, Any]:
+    """Lista giornali contabili da Odoo"""
+    client = get_odoo_client()
+    
+    fields = ['name', 'code', 'type', 'default_account_id']
+    journals = client.search_read('account.journal', [], fields)
+    
+    return {
+        "success": True,
+        "total": len(journals),
+        "journals": journals
+    }
+
+
+
+
+# ============================================
 # METODI GENERICI
 # ============================================
 
