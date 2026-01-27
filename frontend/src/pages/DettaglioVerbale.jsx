@@ -4,24 +4,27 @@ import api from "../api";
 import { formatEuro, formatDateIT, STYLES, COLORS, button, badge } from '../lib/utils';
 
 export default function DettaglioVerbale() {
-  const { numeroVerbale } = useParams();
+  const { numeroVerbale, prefisso, numero } = useParams();
   const navigate = useNavigate();
   const [verbale, setVerbale] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // Costruisci il numero verbale completo
+  const verbaleId = prefisso && numero ? `${prefisso}/${numero}` : numeroVerbale;
+
   const fetchVerbale = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
-      const res = await api.get(`/api/verbali-noleggio/dettaglio/${numeroVerbale}`);
+      const res = await api.get(`/api/verbali-noleggio/dettaglio/${verbaleId}`);
       setVerbale(res.data);
     } catch (e) {
       setError(e.response?.data?.detail || e.message || "Errore caricamento verbale");
     } finally {
       setLoading(false);
     }
-  }, [numeroVerbale]);
+  }, [verbaleId]);
 
   useEffect(() => {
     fetchVerbale();
