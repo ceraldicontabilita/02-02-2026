@@ -3,7 +3,8 @@ OpenAPI.it Integration Module
 Integrazione con le API di OpenAPI.it per:
 - SDI (Fatturazione Elettronica)
 - AISP (Open Banking - Riconciliazione Bancaria)
-- Invoice (Configurazioni Fatture)
+- XBRL (Bilanci Camera di Commercio)
+- Visure Camerali
 
 Documentazione: https://console.openapi.com/it/apis/sdi/documentation
 """
@@ -21,8 +22,10 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 # Configurazione
-OPENAPI_BASE_URL = "https://sdi.openapi.it"  # Sandbox
-OPENAPI_BASE_URL_PROD = "https://sdi.openapi.com"  # Produzione
+OPENAPI_BASE_URL = "https://sdi.openapi.it"  # Sandbox SDI
+OPENAPI_BASE_URL_PROD = "https://sdi.openapi.com"  # Produzione SDI
+VISURE_BASE_URL = "https://test.visurecamerali.openapi.it"  # Sandbox Visure
+VISURE_BASE_URL_PROD = "https://visurecamerali.openapi.it"  # Produzione Visure
 OPENAPI_KEY = os.environ.get("OPENAPI_IT_KEY", "")
 OPENAPI_ENV = os.environ.get("OPENAPI_IT_ENV", "sandbox")
 
