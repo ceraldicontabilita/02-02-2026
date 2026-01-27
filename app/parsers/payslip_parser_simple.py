@@ -135,36 +135,62 @@ def extract_netto(text: str) -> float:
     - "NETTO A PAGARE" seguito da importo
     - "TOTALE NETTO" seguito da importo
     - Importo con "+" finale (formato Smart Forms)
+    
+    IMPORTANTE: Esclude valori in LIRE (vecchia valuta italiana)
     """
     lines = text.split('\n')
+    text_upper = text.upper()
     
     # Pattern 1: NETTO DEL MESE / NETTO A PAGARE / TOTALE NETTO
     for i, line in enumerate(lines):
         line_upper = line.upper()
         if 'NETTO' in line_upper and any(kw in line_upper for kw in ['MESE', 'PAGARE', 'TOTALE', 'DEL']):
+            # SKIP se è la riga delle LIRE (vecchia valuta)
+            if 'LIRE' in line_upper or 'LIT' in line_upper:
+                continue
             # Cerca importo nella stessa riga o nelle righe successive
             for j in range(i, min(i + 5, len(lines))):
+                # SKIP linee che contengono "LIRE"
+                if 'LIRE' in lines[j].upper() or 'LIT' in lines[j].upper():
+                    continue
                 # Cerca importi nel formato italiano (1.234,56 o 1234,56)
                 amounts = re.findall(r'(\d{1,3}(?:[.,]\d{3})*[.,]\d{2})', lines[j])
                 for amt in amounts:
                     val = parse_importo(amt)
-                    if 100 <= val <= 50000:  # Range ragionevole per stipendio
+                    # Range ragionevole per stipendio EURO (non LIRE)
+                    # Stipendi italiani tipicamente tra 500€ e 10.000€ netti
+                    if 100 <= val <= 15000:
                         return val
     
-    # Pattern 2: Importo con "+" finale (Smart Forms)
+    # Pattern 2: Importo con "+" finale (Smart Forms) - ma NON in LIRE
     for line in reversed(lines):
+        # SKIP linee con LIRE
+        if 'LIRE' in line.upper() or 'LIT' in line.upper():
+            continue
         match = re.search(r'(\d{1,3}(?:[.,]\d{3})*[.,]\d{2})\+', line)
         if match:
             val = parse_importo(match.group(1))
-            if 100 <= val <= 50000:
+            # Range realistico per Euro
+            if 100 <= val <= 15000:
                 return val
     
-    # Pattern 3: Ultima riga con importo significativo
+    # Pattern 3: Cerca "EURO" + importo esplicito
+    for i, line in enumerate(lines):
+        if 'EURO' in line.upper() or '€' in line:
+            amounts = re.findall(r'(\d{1,3}(?:[.,]\d{3})*[.,]\d{2})', line)
+            for amt in amounts:
+                val = parse_importo(amt)
+                if 100 <= val <= 15000:
+                    return val
+    
+    # Pattern 4: Ultima riga con importo significativo (fallback)
     for line in reversed(lines):
+        if 'LIRE' in line.upper():
+            continue
         amounts = re.findall(r'(\d{1,3}(?:[.,]\d{3})*[.,]\d{2})', line)
         for amt in reversed(amounts):
             val = parse_importo(amt)
-            if 500 <= val <= 10000:  # Range più ristretto per fallback
+            if 500 <= val <= 8000:  # Range ristretto per fallback
                 return val
     
     return 0.0
