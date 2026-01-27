@@ -1300,3 +1300,176 @@ async def get_presenze_mensili_dipendente(
         "presenze": presenze,
         "riepilogo_per_mese": per_mese
     }
+
+
+
+# =============================================================================
+# FOGLIO DATI PROGRESSIVO - RIEPILOGO FINALE GIUSTIFICATIVI
+# =============================================================================
+# Logica: quando si caricano buste paga, il sistema:
+# 1. Salva i dati estratti in "presenze_mensili" per ogni mese
+# 2. Aggiorna il "riepilogo_giustificativi" con l'ultimo periodo letto
+# 3. Il riepilogo tiene traccia solo del dato più recente per il calcolo saldi
+# =============================================================================
+
+@router.get("/riepilogo-progressivo/{employee_id}")
+async def get_riepilogo_progressivo(
+    employee_id: str,
+    anno: int = Query(None)
+) -> Dict[str, Any]:
+    """
+    Ritorna il riepilogo progressivo dei giustificativi per un dipendente.
+    
+    Questo "foglio dati" mostra:
+    - Ultimo periodo letto (es. 12/2025)
+    - Saldi finali basati sull'ultimo parsing
+    - Storico delle letture per mese
+    
+    LOGICA: Se carichi busta 12/2025, poi 01/2021, il sistema usa
+    12/2025 come riferimento per i saldi attuali (è il dato più recente).
+    """
+    db = Database.get_db()
+    
+    if not anno:
+        anno = datetime.now().year
+    
+    # Verifica dipendente
+    employee = await db["employees"].find_one(
+        {"id": employee_id},
+        {"_id": 0, "id": 1, "nome_completo": 1, "nome": 1, "cognome": 1}
+    )
+    if not employee:
+        raise HTTPException(status_code=404, detail="Dipendente non trovato")
+    
+    # Recupera tutte le presenze mensili per l'anno
+    presenze = await db["presenze_mensili"].find(
+        {
+            "employee_id": employee_id,
+            "data": {"$regex": f"^{anno}"}
+        },
+        {"_id": 0}
+    ).sort("data", -1).to_list(500)
+    
+    # Trova l'ultimo mese con dati (periodo più recente letto)
+    ultimo_periodo = None
+    ultimo_periodo_date = None
+    
+    for p in presenze:
+        data_str = p.get("data", "")[:7]  # YYYY-MM
+        if not ultimo_periodo or data_str > ultimo_periodo:
+            ultimo_periodo = data_str
+            ultimo_periodo_date = p.get("data")
+    
+    # Calcola saldi basati sull'ultimo periodo
+    saldi_ultimo_periodo = {}
+    for p in presenze:
+        data_str = p.get("data", "")[:7]
+        if data_str == ultimo_periodo:
+            codice = p.get("stato", "")
+            ore = p.get("ore", 0)
+            saldi_ultimo_periodo[codice] = saldi_ultimo_periodo.get(codice, 0) + ore
+    
+    # Raggruppa storico per mese
+    storico_mesi = {}
+    for p in presenze:
+        data_str = p.get("data", "")[:7]
+        if data_str not in storico_mesi:
+            storico_mesi[data_str] = {
+                "mese": data_str,
+                "giustificativi": {},
+                "data_parsing": p.get("created_at"),
+                "source": p.get("source")
+            }
+        
+        codice = p.get("stato", "")
+        ore = p.get("ore", 0)
+        storico_mesi[data_str]["giustificativi"][codice] = ore
+    
+    # Ordina storico per mese (descending)
+    storico_ordinato = sorted(
+        storico_mesi.values(),
+        key=lambda x: x["mese"],
+        reverse=True
+    )
+    
+    # Calcola totali annuali (somma tutti i mesi)
+    totali_anno = {}
+    for mese_data in storico_mesi.values():
+        for codice, ore in mese_data["giustificativi"].items():
+            totali_anno[codice] = totali_anno.get(codice, 0) + ore
+    
+    return {
+        "success": True,
+        "employee_id": employee_id,
+        "employee_nome": employee.get("nome_completo") or f"{employee.get('cognome', '')} {employee.get('nome', '')}",
+        "anno": anno,
+        "ultimo_periodo_letto": ultimo_periodo,
+        "saldi_ultimo_periodo": saldi_ultimo_periodo,
+        "totali_anno": totali_anno,
+        "storico_mesi": storico_ordinato,
+        "note": "I saldi mostrati sono basati sull'ultimo periodo letto. Per i totali annuali, viene sommato ogni mese."
+    }
+
+
+@router.post("/aggiorna-riepilogo")
+async def aggiorna_riepilogo_dipendente(
+    employee_id: str = Query(...),
+    mese: int = Query(...),
+    anno: int = Query(...),
+    ferie_residue: float = Query(None),
+    rol_residui: float = Query(None),
+    permessi_residui: float = Query(None),
+    note: str = Query(None)
+) -> Dict[str, Any]:
+    """
+    Aggiorna manualmente il riepilogo giustificativi per un dipendente.
+    
+    Usare quando i dati estratti dal PDF non sono corretti
+    o per inserire saldi iniziali.
+    """
+    db = Database.get_db()
+    
+    periodo = f"{anno}-{mese:02d}"
+    
+    updates = {}
+    if ferie_residue is not None:
+        updates["FER"] = ferie_residue
+    if rol_residui is not None:
+        updates["ROL"] = rol_residui
+    if permessi_residui is not None:
+        updates["PER"] = permessi_residui
+    
+    aggiornati = 0
+    for codice, ore in updates.items():
+        await db["presenze_mensili"].update_one(
+            {
+                "employee_id": employee_id,
+                "stato": codice,
+                "data": {"$regex": f"^{periodo}"}
+            },
+            {
+                "$set": {
+                    "ore": ore,
+                    "updated_at": datetime.now(timezone.utc).isoformat(),
+                    "source": "manual_update",
+                    "note": note
+                },
+                "$setOnInsert": {
+                    "id": str(uuid.uuid4()),
+                    "employee_id": employee_id,
+                    "data": f"{periodo}-01",
+                    "stato": codice,
+                    "created_at": datetime.now(timezone.utc).isoformat()
+                }
+            },
+            upsert=True
+        )
+        aggiornati += 1
+    
+    return {
+        "success": True,
+        "employee_id": employee_id,
+        "periodo": periodo,
+        "aggiornati": aggiornati,
+        "valori": updates
+    }
