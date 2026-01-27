@@ -143,7 +143,7 @@ export default function IntegrazioniOpenAPI() {
               🔌 Integrazioni OpenAPI.it
             </h1>
             <p style={{ margin: '4px 0 0', fontSize: 13, color: '#64748b' }}>
-              SDI (Fatturazione Elettronica) & AISP (Open Banking)
+              SDI (Fatturazione Elettronica), XBRL (Bilanci) & AISP (Open Banking)
             </p>
           </div>
           <button onClick={loadStatus} style={button('#3b82f6')}>
