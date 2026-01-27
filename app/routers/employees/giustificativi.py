@@ -985,5 +985,319 @@ async def get_riepilogo_limiti(anno: int = Query(None)) -> Dict[str, Any]:
         "totale_warning": len(warning),
         "per_giustificativo": list(per_giustificativo.values()),
         "top_critical": critical[:5],  # Top 5 più critici
+
+
+# =============================================================================
+# UPLOAD E PARSING PDF BUSTE PAGA PER GIUSTIFICATIVI
+# =============================================================================
+
+@router.post("/upload-libro-unico")
+async def upload_libro_unico_pdf(file: UploadFile = File(...)) -> Dict[str, Any]:
+    """
+    Upload PDF del Libro Unico del Lavoro per estrarre e aggiornare i giustificativi.
+    
+    Supporta:
+    - PDF singolo (Libro Unico)
+    - ZIP con multipli PDF
+    
+    Estrae per ogni dipendente:
+    - Ore ferie godute (FE -> FER)
+    - Ore ROL utilizzate (RL -> ROL)
+    - Ore malattia (MA -> MAL)
+    - Ore permesso (PE -> PER)
+    - Altri giustificativi
+    
+    I dati vengono salvati nella collection `presenze_mensili` per essere
+    visualizzati correttamente nel tab Giustificativi.
+    """
+    from app.parsers.payslip_giustificativi_parser import parse_libro_unico_pdf
+    
+    filename = (file.filename or "").lower()
+    if not (filename.endswith('.pdf') or filename.endswith('.zip')):
+        raise HTTPException(status_code=400, detail="Il file deve essere PDF o ZIP")
+    
+    try:
+        content = await file.read()
+        if not content:
+            raise HTTPException(status_code=400, detail="File vuoto")
+        
+        pdf_files = []
+        tmp_dir = None
+        
+        if filename.endswith('.pdf'):
+            pdf_files = [(content, file.filename or "libro_unico.pdf")]
+        else:
+            # Estrai da ZIP
+            import zipfile
+            tmp_dir = tempfile.TemporaryDirectory()
+            archive_path = os.path.join(tmp_dir.name, file.filename or 'archivio.zip')
+            with open(archive_path, 'wb') as f:
+                f.write(content)
+            
+            with zipfile.ZipFile(archive_path) as zf:
+                for name in zf.namelist():
+                    if name.lower().endswith('.pdf') and 'libro unico' in name.lower():
+                        pdf_data = zf.read(name)
+                        pdf_files.append((pdf_data, name))
+        
+        if not pdf_files:
+            raise HTTPException(status_code=400, detail="Nessun PDF 'Libro Unico' trovato")
+        
+        db = Database.get_db()
+        results = {
+            "success": [],
+            "errors": [],
+            "total_pdf": len(pdf_files),
+            "dipendenti_processati": 0,
+            "giustificativi_aggiornati": 0
+        }
+        
+        for pdf_bytes, pdf_filename in pdf_files:
+            try:
+                dipendenti = parse_libro_unico_pdf(pdf_bytes)
+                
+                for dip in dipendenti:
+                    if dip.get("error"):
+                        results["errors"].append({"file": pdf_filename, "error": dip["error"]})
+                        continue
+                    
+                    cf = dip.get("codice_fiscale")
+                    nome = dip.get("nome_completo")
+                    mese = dip.get("mese")
+                    anno = dip.get("anno")
+                    giustificativi = dip.get("giustificativi", {})
+                    
+                    if not (nome or cf) or not mese or not anno:
+                        continue
+                    
+                    # Trova dipendente nel database
+                    employee = None
+                    if cf:
+                        employee = await db["employees"].find_one(
+                            {"codice_fiscale": cf},
+                            {"_id": 0, "id": 1, "nome_completo": 1}
+                        )
+                    
+                    if not employee and nome:
+                        # Cerca per nome
+                        nome_upper = nome.upper().strip()
+                        all_emps = await db["employees"].find({}, {"_id": 0, "id": 1, "nome_completo": 1, "cognome": 1, "nome": 1}).to_list(500)
+                        for emp in all_emps:
+                            emp_nome = (emp.get("nome_completo") or f"{emp.get('cognome', '')} {emp.get('nome', '')}").upper().strip()
+                            if emp_nome == nome_upper or nome_upper in emp_nome:
+                                employee = emp
+                                break
+                    
+                    if not employee:
+                        results["errors"].append({
+                            "file": pdf_filename,
+                            "nome": nome,
+                            "error": "Dipendente non trovato in anagrafica"
+                        })
+                        continue
+                    
+                    employee_id = employee.get("id")
+                    results["dipendenti_processati"] += 1
+                    
+                    # Salva giustificativi in presenze_mensili
+                    for codice, ore in giustificativi.items():
+                        if codice == 'ORE_ORDINARIE' or ore <= 0:
+                            continue
+                        
+                        # Calcola giorni approssimativi (8 ore = 1 giorno)
+                        giorni = ore / 8
+                        
+                        # Crea/aggiorna record in presenze_mensili
+                        # Un record per ogni giorno del mese con quel giustificativo
+                        data_base = f"{anno}-{mese:02d}"
+                        
+                        # Cerca se esiste già un record aggregato per questo mese
+                        existing = await db["presenze_mensili"].find_one({
+                            "employee_id": employee_id,
+                            "stato": codice,
+                            "data": {"$regex": f"^{data_base}"}
+                        })
+                        
+                        if existing:
+                            # Aggiorna ore totali
+                            await db["presenze_mensili"].update_one(
+                                {"_id": existing["_id"]},
+                                {"$set": {
+                                    "ore": ore,
+                                    "updated_at": datetime.now(timezone.utc).isoformat(),
+                                    "source": "libro_unico_pdf"
+                                }}
+                            )
+                        else:
+                            # Crea nuovo record aggregato
+                            await db["presenze_mensili"].insert_one({
+                                "id": str(uuid.uuid4()),
+                                "employee_id": employee_id,
+                                "data": f"{data_base}-01",  # Primo del mese come riferimento
+                                "stato": codice,
+                                "ore": ore,
+                                "giorni": round(giorni, 1),
+                                "note": f"Importato da {pdf_filename}",
+                                "source": "libro_unico_pdf",
+                                "created_at": datetime.now(timezone.utc).isoformat()
+                            })
+                        
+                        results["giustificativi_aggiornati"] += 1
+                    
+                    results["success"].append({
+                        "nome": nome,
+                        "periodo": f"{mese:02d}/{anno}",
+                        "giustificativi": giustificativi
+                    })
+            
+            except Exception as e:
+                logger.error(f"Errore parsing {pdf_filename}: {e}")
+                results["errors"].append({"file": pdf_filename, "error": str(e)})
+        
+        if tmp_dir:
+            try:
+                tmp_dir.cleanup()
+            except Exception:
+                pass
+        
+        return {
+            "success": True,
+            **results
+        }
+    
+    except Exception as e:
+        logger.error(f"Errore upload Libro Unico: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/sync-giustificativi-da-cedolini")
+async def sync_giustificativi_da_cedolini(
+    anno: int = Query(None),
+    mese: int = Query(None)
+) -> Dict[str, Any]:
+    """
+    Sincronizza i giustificativi dai cedolini già presenti nel database.
+    
+    Cerca nei cedolini salvati eventuali dati sui giustificativi
+    e li copia nella collection presenze_mensili.
+    """
+    db = Database.get_db()
+    
+    query = {}
+    if anno:
+        query["anno"] = anno
+    if mese:
+        query["mese"] = mese
+    
+    cedolini = await db["cedolini"].find(query, {"_id": 0}).to_list(10000)
+    
+    risultato = {
+        "cedolini_analizzati": len(cedolini),
+        "giustificativi_trovati": 0,
+        "aggiornati": 0
+    }
+    
+    for ced in cedolini:
+        # Verifica se il cedolino ha giustificativi
+        giust = ced.get("giustificativi", {})
+        if not giust:
+            continue
+        
+        employee_id = ced.get("dipendente_id")
+        mese_ced = ced.get("mese")
+        anno_ced = ced.get("anno")
+        
+        if not employee_id or not mese_ced or not anno_ced:
+            continue
+        
+        data_base = f"{anno_ced}-{mese_ced:02d}"
+        
+        for codice, ore in giust.items():
+            if ore <= 0:
+                continue
+            
+            risultato["giustificativi_trovati"] += 1
+            
+            # Upsert in presenze_mensili
+            await db["presenze_mensili"].update_one(
+                {
+                    "employee_id": employee_id,
+                    "stato": codice,
+                    "data": {"$regex": f"^{data_base}"}
+                },
+                {
+                    "$set": {
+                        "ore": ore,
+                        "updated_at": datetime.now(timezone.utc).isoformat(),
+                        "source": "cedolino_sync"
+                    },
+                    "$setOnInsert": {
+                        "id": str(uuid.uuid4()),
+                        "employee_id": employee_id,
+                        "data": f"{data_base}-01",
+                        "stato": codice,
+                        "created_at": datetime.now(timezone.utc).isoformat()
+                    }
+                },
+                upsert=True
+            )
+            risultato["aggiornati"] += 1
+    
+    return {
+        "success": True,
+        **risultato
+    }
+
+
+@router.get("/presenze-mensili/{employee_id}")
+async def get_presenze_mensili_dipendente(
+    employee_id: str,
+    anno: int = Query(None),
+    mese: int = Query(None)
+) -> Dict[str, Any]:
+    """
+    Ritorna le presenze mensili (giustificativi) per un dipendente.
+    Utile per debugging e verifica dati.
+    """
+    db = Database.get_db()
+    
+    if not anno:
+        anno = datetime.now().year
+    
+    query = {"employee_id": employee_id}
+    
+    if mese:
+        data_pattern = f"{anno}-{mese:02d}"
+        query["data"] = {"$regex": f"^{data_pattern}"}
+    else:
+        query["data"] = {"$regex": f"^{anno}"}
+    
+    presenze = await db["presenze_mensili"].find(
+        query,
+        {"_id": 0}
+    ).sort("data", 1).to_list(500)
+    
+    # Raggruppa per mese e stato
+    per_mese = {}
+    for p in presenze:
+        data = p.get("data", "")[:7]  # YYYY-MM
+        stato = p.get("stato", "")
+        ore = p.get("ore", 0)
+        
+        if data not in per_mese:
+            per_mese[data] = {}
+        
+        per_mese[data][stato] = per_mese[data].get(stato, 0) + ore
+    
+    return {
+        "success": True,
+        "employee_id": employee_id,
+        "anno": anno,
+        "mese": mese,
+        "totale_record": len(presenze),
+        "presenze": presenze,
+        "riepilogo_per_mese": per_mese
+    }
+
         "top_warning": warning[:5]     # Top 5 warning
     }
