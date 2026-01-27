@@ -407,14 +407,17 @@ async def associa_intelligente(
         # STRATEGIA 2: Match per pattern appresi (fornitore noto)
         if not match_trovato and usa_learning:
             # Cerca fornitore nella descrizione
-            descrizione_upper = descrizione.upper()
+            descrizione_upper = descrizione.upper() if isinstance(descrizione, str) else str(descrizione).upper()
             for fornitore_norm, pattern_data in patterns.items():
                 if fornitore_norm[:10] in descrizione_upper:
                     # Verifica se l'importo è nel range
                     if pattern_data.get("importo_min", 0) <= importo <= pattern_data.get("importo_max", float('inf')):
                         # Cerca fattura di questo fornitore
                         for f in fatture:
-                            nome_forn = (f.get("supplier_name") or f.get("fornitore") or "").upper()
+                            nome_forn_raw = f.get("supplier_name") or f.get("fornitore") or ""
+                            if isinstance(nome_forn_raw, dict):
+                                nome_forn_raw = nome_forn_raw.get("name", "") or str(nome_forn_raw)
+                            nome_forn = str(nome_forn_raw).upper()
                             if fornitore_norm[:10] in nome_forn:
                                 imp_fatt = float(f.get("total_amount") or 0)
                                 if abs(imp_fatt - importo) <= tolleranza_importo * 2:
