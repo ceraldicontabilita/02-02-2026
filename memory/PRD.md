@@ -197,6 +197,32 @@ Il sistema classifica **automaticamente** documenti leggendo:
 - Integrazione automatica nel flusso download email
 - Pagine UI: `/ai-parser`, `/da-rivedere`
 
+### 5.0 ✅ COMPLETATO (Sessione 25 - 27/01/2026) - Giustificativi PDF + XBRL + AI Batch
+
+**Parser PDF Libro Unico per Giustificativi:**
+- Creato `/app/app/parsers/payslip_giustificativi_parser.py`
+- Estrae automaticamente: Ferie (FER), ROL, Malattia (MAL), Assenza Ingiustificata (AI)
+- Endpoint: `POST /api/giustificativi/upload-libro-unico` (supporta PDF singolo e ZIP)
+- Testato con successo: 108 dipendenti, 211 giustificativi estratti da pagheanno2025.zip
+- Dati salvati in `presenze_mensili` e visibili nel tab Giustificativi
+
+**Integrazione XBRL OpenAPI.it:**
+- Completata UI nella pagina `/integrazioni-openapi` con tab dedicato "XBRL Bilanci"
+- Form per richiedere bilanci per Partita IVA e Anno
+- Storico richieste con stati (pending/completed/error)
+- Endpoint: GET `/api/openapi/xbrl/status`, POST `/api/openapi/xbrl/richiedi-bilancio`, GET `/api/openapi/xbrl/storico-richieste`
+
+**UI Process Email Batch AI:**
+- Aggiunto bottone "Processa con AI" nella pagina `/email-download`
+- Chiama endpoint `POST /api/ai-parser/process-email-batch`
+- Classifica e processa automaticamente documenti scaricati da email
+
+**Import Libro Unico:**
+- Aggiunto tipo "Libro Unico (Giustificativi)" in `/import-unificato`
+- Estrae automaticamente ferie, ROL, malattia dai PDF delle paghe
+
+**Test Report:** 100% backend (18/18), 100% frontend
+
 **Stato Learning Machine:**
 - Fornitori configurati: 214/322 (66.5%)
 - Fatture classificate: 3309/3753 (88.2%)
