@@ -242,6 +242,7 @@ const router = createBrowserRouter([
       { path: "gestione-assegni", element: <LazyPage><GestioneAssegni /></LazyPage> },
       { path: "gestione-assegni/:stato", element: <LazyPage><GestioneAssegni /></LazyPage> },
       { path: "archivio-bonifici", element: <LazyPage><ArchivioBonifici /></LazyPage> },
+      { path: "archivio-bonifici/:tab", element: <LazyPage><ArchivioBonifici /></LazyPage> },
       { path: "archivio-bonifici/:anno/:mese", element: <LazyPage><ArchivioBonifici /></LazyPage> },
       
       // === DIPENDENTI ===
