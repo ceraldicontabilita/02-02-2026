@@ -188,6 +188,9 @@ export default function IntegrazioniOpenAPI() {
             <button style={tabStyle(activeTab === 'sdi')} onClick={() => setActiveTab('sdi')}>
               📄 SDI
             </button>
+            <button style={tabStyle(activeTab === 'xbrl')} onClick={() => { setActiveTab('xbrl'); loadXbrlRequests(); }}>
+              📊 XBRL Bilanci
+            </button>
             <button style={tabStyle(activeTab === 'aisp')} onClick={() => setActiveTab('aisp')}>
               🏦 AISP
             </button>
