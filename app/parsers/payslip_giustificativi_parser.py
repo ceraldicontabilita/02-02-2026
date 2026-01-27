@@ -135,8 +135,16 @@ def extract_giustificativi_riepilogo(text: str) -> Dict[str, float]:
     
     matches = re.findall(pattern, text)
     
+    # Codici da escludere (parole che matchano per errore)
+    ESCLUDI = {'DICE', 'ARIE', 'ARIO', 'DINA', 'ORDI'}
+    
     for code, desc, qty in matches:
         code = code.strip().upper()
+        
+        # Skip codici invalidi
+        if code in ESCLUDI:
+            continue
+        
         ore = parse_importo(qty)
         
         # Mappa al codice standard se esiste
