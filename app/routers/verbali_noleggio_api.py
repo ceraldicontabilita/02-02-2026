@@ -14,21 +14,25 @@ router = APIRouter()
 COLLECTION = "verbali_noleggio"
 
 
-@router.get("/dettaglio/{numero_verbale}")
+@router.get("/dettaglio/{numero_verbale:path}")
 async def get_verbale_dettaglio(numero_verbale: str) -> Dict[str, Any]:
     """
     Ottiene il dettaglio completo di un verbale.
     Cerca per numero_verbale in vari formati.
+    Supporta numeri con slash come S/2259.
     """
     db = Database.get_db()
+    
+    # Normalizza il numero verbale
+    numero_clean = numero_verbale.strip()
     
     # Cerca in vari modi
     verbale = await db[COLLECTION].find_one({
         "$or": [
-            {"numero_verbale": numero_verbale},
-            {"numero_verbale": numero_verbale.upper()},
-            {"id": numero_verbale},
-            {"numero_verbale": {"$regex": numero_verbale, "$options": "i"}}
+            {"numero_verbale": numero_clean},
+            {"numero_verbale": numero_clean.upper()},
+            {"id": numero_clean},
+            {"numero_verbale": {"$regex": f"^{numero_clean}$", "$options": "i"}}
         ]
     })
     
