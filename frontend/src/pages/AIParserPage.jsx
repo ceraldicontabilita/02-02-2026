@@ -517,6 +517,35 @@ export default function AIParserPage() {
         title="Lettura Documenti AI"
         description="Carica fatture, F24 o buste paga per estrarre automaticamente tutti i dati usando l'intelligenza artificiale."
       />
+      
+      {/* Link a Import Unificato */}
+      <div style={{ 
+        background: '#f1f5f9', 
+        borderRadius: 12, 
+        padding: 12, 
+        marginTop: 16,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between'
+      }}>
+        <span style={{ fontSize: 14, color: '#64748b' }}>
+          📁 Per upload massivi o formati specifici (XML, Excel, CSV)
+        </span>
+        <Link
+          to="/import-unificato"
+          style={{
+            padding: '8px 16px',
+            background: '#3b82f6',
+            color: 'white',
+            borderRadius: 8,
+            fontWeight: 600,
+            fontSize: 13,
+            textDecoration: 'none'
+          }}
+        >
+          Vai a Import Unificato →
+        </Link>
+      </div>
 
       <div style={{ 
         display: 'grid', 
