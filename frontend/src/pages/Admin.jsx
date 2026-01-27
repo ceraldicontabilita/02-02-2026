@@ -1127,8 +1127,8 @@ export default function Admin() {
                   onClick={async () => {
                     
                     try {
-                      const r = await api.post('/api/prima-nota/salari/auto-ricostruisci-dati');
-                      alert(`✅ Completato:\n• Righe pulite: ${r.data.righe_pulite || 0}\n• Correzioni: ${r.data.correzioni || 0}`);
+                      const r = await api.post('/api/manutenzione/ricostruisci-salari');
+                      alert(`✅ Completato:\n• Dipendenti associati: ${r.data.dipendenti_associati || 0}\n• Netti corretti: ${r.data.netti_corretti || 0}`);
                     } catch (e) {
                       alert('Errore: ' + (e.response?.data?.detail || e.message));
                     }
@@ -1143,21 +1143,26 @@ export default function Admin() {
               <div style={{ background: '#f8fafc', padding: 16, borderRadius: 8, border: '1px solid #e2e8f0' }}>
                 <h4 style={{ margin: '0 0 8px', color: '#1e293b', fontSize: 14 }}>📊 Analytics</h4>
                 <p style={{ fontSize: 12, color: '#64748b', marginBottom: 12 }}>
-                  Verifica discrepanze e corregge dati analytics.
+                  Visualizza stato delle collezioni database.
                 </p>
                 <button 
                   onClick={async () => {
                     
                     try {
-                      const r = await api.post('/api/analytics/auto-ricostruisci-dati');
-                      alert(`✅ Completato:\n• Correzioni applicate: ${r.data.correzioni_applicate || 0}\n• Discrepanze trovate: ${r.data.discrepanze_trovate?.length || 0}`);
+                      const r = await api.get('/api/manutenzione/stato-collezioni');
+                      const cols = r.data.collezioni || {};
+                      let msg = '📊 Stato Collezioni:\n\n';
+                      for (const [nome, info] of Object.entries(cols)) {
+                        msg += `• ${nome}: ${info.documenti || 0} documenti\n`;
+                      }
+                      alert(msg);
                     } catch (e) {
                       alert('Errore: ' + (e.response?.data?.detail || e.message));
                     }
                   }}
                   style={{ ...buttonStyle('#06b6d4'), width: '100%' }}
                 >
-                  🔄 Verifica Analytics
+                  📊 Verifica Stato Collezioni
                 </button>
               </div>
             </div>
@@ -1173,11 +1178,11 @@ export default function Admin() {
                   
                   try {
                     const results = [];
-                    results.push(await api.post('/api/assegni/ricostruisci-dati').catch(e => ({ data: { error: e.message } })));
-                    results.push(await api.post('/api/operazioni-da-confermare/auto-ricostruisci-dati').catch(e => ({ data: { error: e.message } })));
-                    results.push(await api.post('/api/fatture-ricevute/auto-ricostruisci-dati').catch(e => ({ data: { error: e.message } })));
-                    results.push(await api.post('/api/corrispettivi/auto-ricostruisci-dati').catch(e => ({ data: { error: e.message } })));
-                    results.push(await api.post('/api/prima-nota/salari/auto-ricostruisci-dati').catch(e => ({ data: { error: e.message } })));
+                    results.push(await api.post('/api/manutenzione/ricostruisci-assegni').catch(e => ({ data: { error: e.message } })));
+                    results.push(await api.post('/api/manutenzione/ricostruisci-f24').catch(e => ({ data: { error: e.message } })));
+                    results.push(await api.post('/api/manutenzione/ricostruisci-fatture').catch(e => ({ data: { error: e.message } })));
+                    results.push(await api.post('/api/manutenzione/ricostruisci-corrispettivi').catch(e => ({ data: { error: e.message } })));
+                    results.push(await api.post('/api/manutenzione/ricostruisci-salari').catch(e => ({ data: { error: e.message } })));
                     
                     alert('✅ Tutte le manutenzioni completate!\n\nRicarica la pagina per vedere i risultati.');
                   } catch (e) {
