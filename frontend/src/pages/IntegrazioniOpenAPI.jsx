@@ -153,7 +153,7 @@ export default function IntegrazioniOpenAPI() {
 
         <div style={STYLES.pageContent}>
           {/* Status Cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16, marginBottom: 24 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 24 }}>
             {/* SDI Status */}
             <div style={cardStyle}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
@@ -165,6 +165,20 @@ export default function IntegrazioniOpenAPI() {
               <div style={{ fontSize: 13, color: '#64748b' }}>
                 <div>Ambiente: <strong>{sdiStatus?.environment || 'N/A'}</strong></div>
                 <div>Base URL: <code style={{ fontSize: 11 }}>{sdiStatus?.base_url}</code></div>
+              </div>
+            </div>
+
+            {/* XBRL Status */}
+            <div style={cardStyle}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <h3 style={{ margin: 0, fontSize: 16 }}>📊 XBRL - Bilanci</h3>
+                <span style={badge(xbrlStatus?.api_key_configured ? 'success' : 'error')}>
+                  {xbrlStatus?.api_key_configured ? '✓ Configurato' : '✗ Non configurato'}
+                </span>
+              </div>
+              <div style={{ fontSize: 13, color: '#64748b' }}>
+                <div>Stato: <strong>{xbrlStatus?.status || 'N/A'}</strong></div>
+                <div>Bilanci aziendali in formato XBRL</div>
               </div>
             </div>
 
