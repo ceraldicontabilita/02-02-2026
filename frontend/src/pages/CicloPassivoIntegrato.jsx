@@ -256,7 +256,27 @@ const styles = {
 };
 
 export default function CicloPassivoIntegrato() {
-  const [activeTab, setActiveTab] = useState('import');
+  // URL Tab Support
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  const getTabFromPath = () => {
+    const path = location.pathname;
+    const match = path.match(/\/ciclo-passivo\/([\\w-]+)/);
+    return match ? match[1] : 'import';
+  };
+  
+  const [activeTab, setActiveTab] = useState(getTabFromPath());
+  
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    navigate(`/ciclo-passivo/${tabId}`);
+  };
+  
+  useEffect(() => {
+    const tab = getTabFromPath();
+    if (tab !== activeTab) setActiveTab(tab);
+  }, [location.pathname]);
   const [dashboard, setDashboard] = useState(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -480,28 +500,28 @@ export default function CicloPassivoIntegrato() {
       <div style={styles.tabs}>
         <button 
           style={styles.tab(activeTab === 'import')}
-          onClick={() => setActiveTab('import')}
+          onClick={() => handleTabChange('import')}
           data-testid="tab-import"
         >
           📤 Import XML
         </button>
         <button 
           style={styles.tab(activeTab === 'scadenze')}
-          onClick={() => setActiveTab('scadenze')}
+          onClick={() => handleTabChange('scadenze')}
           data-testid="tab-scadenze"
         >
           📅 Scadenze Aperte
         </button>
         <button 
           style={styles.tab(activeTab === 'riconciliazione')}
-          onClick={() => setActiveTab('riconciliazione')}
+          onClick={() => handleTabChange('riconciliazione')}
           data-testid="tab-riconciliazione"
         >
           🔄 Riconciliazione
         </button>
         <button 
           style={styles.tab(activeTab === 'storico')}
-          onClick={() => setActiveTab('storico')}
+          onClick={() => handleTabChange('storico')}
           data-testid="tab-storico"
         >
           ✅ Storico Pagamenti

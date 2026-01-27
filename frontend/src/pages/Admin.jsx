@@ -9,7 +9,27 @@ export default function Admin() {
   const [loading, setLoading] = useState(true);
   const [dbStatus, setDbStatus] = useState(null);
   const [schedulerStatus, setSchedulerStatus] = useState(null);
-  const [activeTab, setActiveTab] = useState('email');
+  // URL Tab Support
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  const getTabFromPath = () => {
+    const path = location.pathname;
+    const match = path.match(/\/admin\/([\\w-]+)/);
+    return match ? match[1] : 'email';
+  };
+  
+  const [activeTab, setActiveTab] = useState(getTabFromPath());
+  
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    navigate(`/admin/${tabId}`);
+  };
+  
+  useEffect(() => {
+    const tab = getTabFromPath();
+    if (tab !== activeTab) setActiveTab(tab);
+  }, [location.pathname]);
   const [triggerLoading, setTriggerLoading] = useState(false);
   
   // Email accounts
@@ -375,13 +395,13 @@ export default function Admin() {
 
       {/* Tabs */}
       <div style={{ marginBottom: 16, background: '#f1f5f9', padding: 4, borderRadius: 12, display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-        <button onClick={() => setActiveTab('email')} style={tabStyle(activeTab === 'email')}>📧 Email</button>
-        <button onClick={() => setActiveTab('keywords')} style={tabStyle(activeTab === 'keywords')}>🔑 Parole Chiave</button>
-        <button onClick={() => setActiveTab('fatture')} style={tabStyle(activeTab === 'fatture')}>📄 Fatture</button>
-        <button onClick={() => setActiveTab('system')} style={tabStyle(activeTab === 'system')}>🗄️ Sistema</button>
-        <button onClick={() => setActiveTab('sync')} style={tabStyle(activeTab === 'sync')}>🔄 Sincronizzazione</button>
-        <button onClick={() => setActiveTab('manutenzione')} style={tabStyle(activeTab === 'manutenzione')}>🔧 Manutenzione</button>
-        <button onClick={() => setActiveTab('export')} style={tabStyle(activeTab === 'export')}>📥 Esportazioni</button>
+        <button onClick={() => handleTabChange('email')} style={tabStyle(activeTab === 'email')}>📧 Email</button>
+        <button onClick={() => handleTabChange('keywords')} style={tabStyle(activeTab === 'keywords')}>🔑 Parole Chiave</button>
+        <button onClick={() => handleTabChange('fatture')} style={tabStyle(activeTab === 'fatture')}>📄 Fatture</button>
+        <button onClick={() => handleTabChange('system')} style={tabStyle(activeTab === 'system')}>🗄️ Sistema</button>
+        <button onClick={() => handleTabChange('sync')} style={tabStyle(activeTab === 'sync')}>🔄 Sincronizzazione</button>
+        <button onClick={() => handleTabChange('manutenzione')} style={tabStyle(activeTab === 'manutenzione')}>🔧 Manutenzione</button>
+        <button onClick={() => handleTabChange('export')} style={tabStyle(activeTab === 'export')}>📥 Esportazioni</button>
       </div>
 
       {/* TAB EMAIL */}

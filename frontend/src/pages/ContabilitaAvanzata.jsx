@@ -62,7 +62,27 @@ export default function ContabilitaAvanzata() {
   const [aliquoteIrap, setAliquoteIrap] = useState({});
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
-  const [activeTab, setActiveTab] = useState('imposte');
+  // URL Tab Support
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  const getTabFromPath = () => {
+    const path = location.pathname;
+    const match = path.match(/\/contabilita-avanzata\/([\\w-]+)/);
+    return match ? match[1] : 'imposte';
+  };
+  
+  const [activeTab, setActiveTab] = useState(getTabFromPath());
+  
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    navigate(`/contabilita-avanzata/${tabId}`);
+  };
+  
+  useEffect(() => {
+    const tab = getTabFromPath();
+    if (tab !== activeTab) setActiveTab(tab);
+  }, [location.pathname]);
   const [message, setMessage] = useState(null);
 
   const fetchData = async () => {

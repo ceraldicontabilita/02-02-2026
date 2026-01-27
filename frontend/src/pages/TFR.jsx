@@ -7,7 +7,27 @@ export default function TFR() {
   const [selectedDipendente, setSelectedDipendente] = useState(null);
   const [situazioneTFR, setSituazioneTFR] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('riepilogo');
+  // URL Tab Support
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  const getTabFromPath = () => {
+    const path = location.pathname;
+    const match = path.match(/\/tfr\/([\\w-]+)/);
+    return match ? match[1] : 'riepilogo';
+  };
+  
+  const [activeTab, setActiveTab] = useState(getTabFromPath());
+  
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    navigate(`/tfr/${tabId}`);
+  };
+  
+  useEffect(() => {
+    const tab = getTabFromPath();
+    if (tab !== activeTab) setActiveTab(tab);
+  }, [location.pathname]);
   const [anno, setAnno] = useState(new Date().getFullYear());
   
   // Carica dipendenti

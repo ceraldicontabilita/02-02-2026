@@ -8,7 +8,27 @@ export default function Magazzino() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [err, setErr] = useState("");
-  const [activeTab, setActiveTab] = useState("catalogo");
+  // URL Tab Support
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  const getTabFromPath = () => {
+    const path = location.pathname;
+    const match = path.match(/\/magazzino\/([\\w-]+)/);
+    return match ? match[1] : 'catalogo';
+  };
+  
+  const [activeTab, setActiveTab] = useState(getTabFromPath());
+  
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    navigate(`/magazzino/${tabId}`);
+  };
+  
+  useEffect(() => {
+    const tab = getTabFromPath();
+    if (tab !== activeTab) setActiveTab(tab);
+  }, [location.pathname]);
   
   // Filtri
   const [searchQuery, setSearchQuery] = useState("");
@@ -294,7 +314,7 @@ export default function Magazzino() {
       <div style={{ ...cardStyle, padding: 0 }}>
         <div style={{ display: 'flex', borderBottom: '2px solid #e2e8f0' }}>
           <button
-            onClick={() => setActiveTab('catalogo')}
+            onClick={() => handleTabChange('catalogo')}
             style={{
               flex: 1,
               padding: '14px 20px',
@@ -308,7 +328,7 @@ export default function Magazzino() {
             📦 Catalogo Prodotti ({filteredProducts.length}{filteredProducts.length !== catalogProducts.length ? ` / ${catalogProducts.length}` : ''})
           </button>
           <button
-            onClick={() => setActiveTab('manuale')}
+            onClick={() => handleTabChange('manuale')}
             style={{
               flex: 1,
               padding: '14px 20px',

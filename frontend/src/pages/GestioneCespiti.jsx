@@ -42,7 +42,27 @@ const styles = {
 
 export default function GestioneCespiti() {
   const { anno } = useAnnoGlobale();
-  const [activeTab, setActiveTab] = useState('cespiti');
+  // URL Tab Support
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  const getTabFromPath = () => {
+    const path = location.pathname;
+    const match = path.match(/\/cespiti\/([\\w-]+)/);
+    return match ? match[1] : 'cespiti';
+  };
+  
+  const [activeTab, setActiveTab] = useState(getTabFromPath());
+  
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    navigate(`/cespiti/${tabId}`);
+  };
+  
+  useEffect(() => {
+    const tab = getTabFromPath();
+    if (tab !== activeTab) setActiveTab(tab);
+  }, [location.pathname]);
   const [loading, setLoading] = useState(false);
   const [cespiti, setCespiti] = useState([]);
   const [riepilogoCespiti, setRiepilogoCespiti] = useState(null);

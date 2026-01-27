@@ -16,7 +16,27 @@ export default function PianoDeiConti() {
   const [regole, setRegole] = useState([]);
   const [bilancio, setBilancio] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('conti');
+  // URL Tab Support
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  const getTabFromPath = () => {
+    const path = location.pathname;
+    const match = path.match(/\/piano-dei-conti\/([\\w-]+)/);
+    return match ? match[1] : 'conti';
+  };
+  
+  const [activeTab, setActiveTab] = useState(getTabFromPath());
+  
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    navigate(`/piano-dei-conti/${tabId}`);
+  };
+  
+  useEffect(() => {
+    const tab = getTabFromPath();
+    if (tab !== activeTab) setActiveTab(tab);
+  }, [location.pathname]);
   const [expandedCategories, setExpandedCategories] = useState(['attivo', 'passivo', 'costi']);
   
   // Modal nuovo conto

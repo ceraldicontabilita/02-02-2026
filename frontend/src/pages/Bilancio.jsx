@@ -9,7 +9,27 @@ export default function Bilancio() {
   const [statoPatrimoniale, setStatoPatrimoniale] = useState(null);
   const [contoEconomico, setContoEconomico] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('patrimoniale');
+  // URL Tab Support
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  const getTabFromPath = () => {
+    const path = location.pathname;
+    const match = path.match(/\/bilancio\/([\\w-]+)/);
+    return match ? match[1] : 'patrimoniale';
+  };
+  
+  const [activeTab, setActiveTab] = useState(getTabFromPath());
+  
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    navigate(`/bilancio/${tabId}`);
+  };
+  
+  useEffect(() => {
+    const tab = getTabFromPath();
+    if (tab !== activeTab) setActiveTab(tab);
+  }, [location.pathname]);
 
   const mesi = [
     { value: null, label: 'Anno Intero' },
@@ -376,7 +396,7 @@ export default function Bilancio() {
         borderBottom: '2px solid #e2e8f0'
       }}>
         <button
-          onClick={() => setActiveTab('patrimoniale')}
+          onClick={() => handleTabChange('patrimoniale')}
           style={{
             padding: '14px 28px',
             border: 'none',
@@ -393,7 +413,7 @@ export default function Bilancio() {
           Stato Patrimoniale
         </button>
         <button
-          onClick={() => setActiveTab('economico')}
+          onClick={() => handleTabChange('economico')}
           style={{
             padding: '14px 28px',
             border: 'none',

@@ -6,7 +6,27 @@ import { formatEuro, STYLES, COLORS, button, badge } from '../lib/utils';
 export default function VerificaCoerenza() {
   const { anno } = useAnnoGlobale();
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('riepilogo');
+  // URL Tab Support
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  const getTabFromPath = () => {
+    const path = location.pathname;
+    const match = path.match(/\/verifica-coerenza\/([\\w-]+)/);
+    return match ? match[1] : 'riepilogo';
+  };
+  
+  const [activeTab, setActiveTab] = useState(getTabFromPath());
+  
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    navigate(`/verifica-coerenza/${tabId}`);
+  };
+  
+  useEffect(() => {
+    const tab = getTabFromPath();
+    if (tab !== activeTab) setActiveTab(tab);
+  }, [location.pathname]);
   const [verificaCompleta, setVerificaCompleta] = useState(null);
   const [confrontoIva, setConfrontoIva] = useState(null);
   const [bonifici, setBonifici] = useState(null);
@@ -194,13 +214,13 @@ export default function VerificaCoerenza() {
 
       {/* Tabs */}
       <div style={{ marginBottom: 16, background: '#f1f5f9', padding: 4, borderRadius: 12, display: 'flex', gap: 4 }}>
-        <button onClick={() => setActiveTab('riepilogo')} style={tabStyle(activeTab === 'riepilogo')}>
+        <button onClick={() => handleTabChange('riepilogo')} style={tabStyle(activeTab === 'riepilogo')}>
           📋 Riepilogo
         </button>
-        <button onClick={() => setActiveTab('iva')} style={tabStyle(activeTab === 'iva')}>
+        <button onClick={() => handleTabChange('iva')} style={tabStyle(activeTab === 'iva')}>
           📈 IVA Mensile
         </button>
-        <button onClick={() => setActiveTab('discrepanze')} style={tabStyle(activeTab === 'discrepanze')}>
+        <button onClick={() => handleTabChange('discrepanze')} style={tabStyle(activeTab === 'discrepanze')}>
           ⚠️ Discrepanze
         </button>
       </div>

@@ -165,7 +165,27 @@ const pageStyle = {
 export default function Riconciliazione() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("automatica");
+  // URL Tab Support
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  const getTabFromPath = () => {
+    const path = location.pathname;
+    const match = path.match(/\/riconciliazione\/([\\w-]+)/);
+    return match ? match[1] : 'automatica';
+  };
+  
+  const [activeTab, setActiveTab] = useState(getTabFromPath());
+  
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    navigate(`/riconciliazione/${tabId}`);
+  };
+  
+  useEffect(() => {
+    const tab = getTabFromPath();
+    if (tab !== activeTab) setActiveTab(tab);
+  }, [location.pathname]);
   const [processing, setProcessing] = useState(false);
   
   // Dati per riconciliazione manuale
@@ -342,13 +362,13 @@ export default function Riconciliazione() {
       <div style={pageStyle.tabs}>
         <button 
           style={pageStyle.tab(activeTab === 'automatica')}
-          onClick={() => setActiveTab('automatica')}
+          onClick={() => handleTabChange('automatica')}
         >
           ⚡ Automatica
         </button>
         <button 
           style={pageStyle.tab(activeTab === 'manuale')}
-          onClick={() => setActiveTab('manuale')}
+          onClick={() => handleTabChange('manuale')}
         >
           ✋ Manuale
         </button>

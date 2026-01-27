@@ -27,7 +27,27 @@ export default function ArchivioBonifici() {
   const [associaFatturaDropdown, setAssociaFatturaDropdown] = useState(null);
   const [loadingFatture, setLoadingFatture] = useState(false);
   const [dipendenteIbanMatch, setDipendenteIbanMatch] = useState(null);
-  const [activeTab, setActiveTab] = useState('da_associare'); // 'da_associare' | 'associati'
+  // URL Tab Support
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  const getTabFromPath = () => {
+    const path = location.pathname;
+    const match = path.match(/\/archivio-bonifici\/([\\w-]+)/);
+    return match ? match[1] : 'da_associare';
+  };
+  
+  const [activeTab, setActiveTab] = useState(getTabFromPath());
+  
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    navigate(`/archivio-bonifici/${tabId}`);
+  };
+  
+  useEffect(() => {
+    const tab = getTabFromPath();
+    if (tab !== activeTab) setActiveTab(tab);
+  }, [location.pathname]); // 'da_associare' | 'associati'
   const initialized = useRef(false);
   const dropdownRef = useRef(null);
 
@@ -618,7 +638,7 @@ export default function ArchivioBonifici() {
       {/* TABS */}
       <div style={{ display: 'flex', gap: 0, marginBottom: 0 }}>
         <button
-          onClick={() => setActiveTab('da_associare')}
+          onClick={() => handleTabChange('da_associare')}
           style={{
             padding: '12px 24px',
             background: activeTab === 'da_associare' ? '#1e3a5f' : '#f1f5f9',
@@ -645,7 +665,7 @@ export default function ArchivioBonifici() {
           </span>
         </button>
         <button
-          onClick={() => setActiveTab('associati')}
+          onClick={() => handleTabChange('associati')}
           style={{
             padding: '12px 24px',
             background: activeTab === 'associati' ? '#16a34a' : '#f1f5f9',
