@@ -219,7 +219,7 @@ async def learn_associazioni() -> Dict[str, Any]:
             "importo_max": max(importi) if importi else 0,
             "importo_medio": sum(importi) / len(importi) if importi else 0,
             "importi_frequenti": list(Counter([round(i, 2) for i in importi]).most_common(5)),
-            "keywords": estrai_keywords(data["descrizioni"]),
+            "keywords": list(estrai_keywords(data["descrizioni"])),  # Convert set to list
             "updated_at": datetime.now(timezone.utc).isoformat()
         }
         
