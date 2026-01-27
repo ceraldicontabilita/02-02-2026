@@ -69,11 +69,32 @@ export default function CalendarioFiscale() {
     setCompletando(scadenzaId);
     try {
       await api.post(`/api/fiscalita/calendario/completa/${scadenzaId}`);
+      toast.success('Scadenza completata');
       await loadCalendario();
     } catch (err) {
       console.error('Errore completamento:', err);
+      toast.error('Errore nel completamento');
     } finally {
       setCompletando(null);
+    }
+  };
+  
+  const inviaNotifica = async (scadenzaId, tipo = 'dashboard') => {
+    setInviandoNotifica(scadenzaId);
+    try {
+      const res = await api.post(`/api/fiscalita/notifiche-scadenze/invia?scadenza_id=${scadenzaId}&tipo_notifica=${tipo}`);
+      if (res.data?.success) {
+        if (tipo === 'dashboard') {
+          toast.success('Notifica creata in dashboard');
+        } else {
+          toast.success('Email preparata');
+        }
+      }
+    } catch (err) {
+      console.error('Errore invio notifica:', err);
+      toast.error('Errore invio notifica');
+    } finally {
+      setInviandoNotifica(null);
     }
   };
   
