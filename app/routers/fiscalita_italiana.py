@@ -728,6 +728,49 @@ async def simula_agevolazione(
 # ENDPOINTS CALENDARIO FISCALE
 # ============================================
 
+@router.get("/calendario/scadenze-imminenti")
+async def scadenze_imminenti(giorni: int = Query(30)) -> Dict[str, Any]:
+    """Scadenze nei prossimi N giorni"""
+    db = Database.get_db()
+    
+    oggi = datetime.now()
+    limite = (oggi + timedelta(days=giorni)).strftime("%Y-%m-%d")
+    oggi_str = oggi.strftime("%Y-%m-%d")
+    
+    scadenze = await db["calendario_fiscale"].find(
+        {
+            "data": {"$gte": oggi_str, "$lte": limite},
+            "completato": False
+        },
+        {"_id": 0}
+    ).sort("data", 1).to_list(100)
+    
+    # Raggruppa per urgenza
+    urgenti = []  # Entro 7 giorni
+    prossime = []  # 8-14 giorni
+    future = []  # 15+ giorni
+    
+    for s in scadenze:
+        data_scad = datetime.strptime(s["data"], "%Y-%m-%d")
+        diff = (data_scad - oggi).days
+        
+        if diff <= 7:
+            urgenti.append(s)
+        elif diff <= 14:
+            prossime.append(s)
+        else:
+            future.append(s)
+    
+    return {
+        "success": True,
+        "periodo": f"{oggi_str} - {limite}",
+        "urgenti_7_giorni": urgenti,
+        "prossime_8_14_giorni": prossime,
+        "future_15_plus": future,
+        "totale": len(scadenze)
+    }
+
+
 @router.get("/calendario/{anno}")
 async def calendario_fiscale(anno: int) -> Dict[str, Any]:
     """Genera calendario fiscale completo per l'anno"""
