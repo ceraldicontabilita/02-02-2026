@@ -1308,8 +1308,8 @@ async def get_presenze_mensili_dipendente(
 # =============================================================================
 # Logica: quando si caricano buste paga, il sistema:
 # 1. Salva i dati estratti in "presenze_mensili" per ogni mese
-# 2. Aggiorna il "riepilogo_giustificativi" con l'ultimo periodo letto
-# 3. Il riepilogo tiene traccia solo del dato più recente per il calcolo saldi
+# 2. Aggiorna "giustificativi_saldi_finali" con l'ultimo periodo letto
+# 3. Il riepilogo usa sempre i saldi finali dell'ultimo periodo per il calcolo
 # =============================================================================
 
 @router.get("/riepilogo-progressivo/{employee_id}")
@@ -1341,7 +1341,27 @@ async def get_riepilogo_progressivo(
     if not employee:
         raise HTTPException(status_code=404, detail="Dipendente non trovato")
     
-    # Recupera tutte le presenze mensili per l'anno
+    # PRIORITÀ 1: Cerca saldi finali salvati nella collection dedicata
+    saldo_finale = await db["giustificativi_saldi_finali"].find_one(
+        {"employee_id": employee_id, "anno": anno},
+        {"_id": 0}
+    )
+    
+    if saldo_finale:
+        # Usa i saldi finali salvati (più affidabili)
+        return {
+            "success": True,
+            "employee_id": employee_id,
+            "employee_nome": employee.get("nome_completo") or f"{employee.get('cognome', '')} {employee.get('nome', '')}",
+            "anno": anno,
+            "ultimo_periodo_letto": saldo_finale.get("periodo"),
+            "saldi_ultimo_periodo": saldo_finale.get("saldi", {}),
+            "data_aggiornamento": saldo_finale.get("updated_at"),
+            "source": saldo_finale.get("source", "libro_unico"),
+            "note": "Saldi da collection giustificativi_saldi_finali (dato più recente importato)"
+        }
+    
+    # PRIORITÀ 2: Calcola da presenze_mensili (fallback)
     presenze = await db["presenze_mensili"].find(
         {
             "employee_id": employee_id,
@@ -1352,13 +1372,11 @@ async def get_riepilogo_progressivo(
     
     # Trova l'ultimo mese con dati (periodo più recente letto)
     ultimo_periodo = None
-    ultimo_periodo_date = None
     
     for p in presenze:
         data_str = p.get("data", "")[:7]  # YYYY-MM
         if not ultimo_periodo or data_str > ultimo_periodo:
             ultimo_periodo = data_str
-            ultimo_periodo_date = p.get("data")
     
     # Calcola saldi basati sull'ultimo periodo
     saldi_ultimo_periodo = {}
@@ -1407,7 +1425,219 @@ async def get_riepilogo_progressivo(
         "saldi_ultimo_periodo": saldi_ultimo_periodo,
         "totali_anno": totali_anno,
         "storico_mesi": storico_ordinato,
-        "note": "I saldi mostrati sono basati sull'ultimo periodo letto. Per i totali annuali, viene sommato ogni mese."
+        "note": "Saldi calcolati da presenze_mensili (ultimo periodo disponibile)"
+    }
+
+
+@router.post("/salva-saldi-finali")
+async def salva_saldi_finali(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Salva i saldi finali di ferie/permessi per un dipendente.
+    
+    Questa è la collection di riferimento per i saldi correnti.
+    Viene aggiornata automaticamente quando si carica un Libro Unico,
+    o manualmente dall'utente.
+    
+    Payload:
+    {
+        "employee_id": "uuid",
+        "anno": 2025,
+        "periodo": "2025-12",  // Mese a cui si riferiscono i saldi
+        "saldi": {
+            "FER": 120,      // Ore ferie residue
+            "ROL": 40,       // Ore ROL residue
+            "EXF": 16,       // Ore ex-festività residue
+            "PER": 8         // Ore permessi residui
+        },
+        "source": "libro_unico" | "manual" | "cedolino"
+    }
+    """
+    db = Database.get_db()
+    
+    employee_id = payload.get("employee_id")
+    anno = payload.get("anno", datetime.now().year)
+    periodo = payload.get("periodo", f"{anno}-{datetime.now().month:02d}")
+    saldi = payload.get("saldi", {})
+    source = payload.get("source", "manual")
+    
+    if not employee_id:
+        raise HTTPException(status_code=400, detail="employee_id obbligatorio")
+    
+    # Verifica dipendente
+    employee = await db["employees"].find_one({"id": employee_id}, {"_id": 0, "id": 1})
+    if not employee:
+        raise HTTPException(status_code=404, detail="Dipendente non trovato")
+    
+    # Verifica se esiste già un record per questo anno
+    existing = await db["giustificativi_saldi_finali"].find_one(
+        {"employee_id": employee_id, "anno": anno}
+    )
+    
+    # Determina se aggiornare in base al periodo
+    # Aggiorna solo se il nuovo periodo è >= al periodo esistente
+    should_update = True
+    if existing:
+        existing_periodo = existing.get("periodo", "")
+        if periodo < existing_periodo:
+            # Il nuovo periodo è più vecchio, non aggiornare i saldi principali
+            # ma salva nello storico
+            should_update = False
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    if should_update:
+        # Upsert del saldo principale
+        await db["giustificativi_saldi_finali"].update_one(
+            {"employee_id": employee_id, "anno": anno},
+            {
+                "$set": {
+                    "employee_id": employee_id,
+                    "anno": anno,
+                    "periodo": periodo,
+                    "saldi": saldi,
+                    "source": source,
+                    "updated_at": now
+                },
+                "$setOnInsert": {
+                    "id": str(uuid.uuid4()),
+                    "created_at": now
+                },
+                "$push": {
+                    "storico": {
+                        "periodo": periodo,
+                        "saldi": saldi,
+                        "source": source,
+                        "data": now
+                    }
+                }
+            },
+            upsert=True
+        )
+    else:
+        # Aggiungi solo allo storico
+        await db["giustificativi_saldi_finali"].update_one(
+            {"employee_id": employee_id, "anno": anno},
+            {
+                "$push": {
+                    "storico": {
+                        "periodo": periodo,
+                        "saldi": saldi,
+                        "source": source,
+                        "data": now,
+                        "note": "Periodo precedente, non usato per saldi attuali"
+                    }
+                }
+            }
+        )
+    
+    return {
+        "success": True,
+        "employee_id": employee_id,
+        "anno": anno,
+        "periodo": periodo,
+        "saldi_salvati": saldi,
+        "aggiornato_principale": should_update,
+        "message": "Saldi finali salvati" if should_update else f"Saldi aggiunti allo storico (periodo {periodo} precedente a {existing.get('periodo', 'N/A')})"
+    }
+
+
+@router.get("/saldi-finali/{employee_id}")
+async def get_saldi_finali(
+    employee_id: str,
+    anno: int = Query(None)
+) -> Dict[str, Any]:
+    """
+    Recupera i saldi finali salvati per un dipendente.
+    
+    Restituisce:
+    - Saldi attuali (ultimo periodo)
+    - Storico di tutte le letture effettuate
+    """
+    db = Database.get_db()
+    
+    if not anno:
+        anno = datetime.now().year
+    
+    # Verifica dipendente
+    employee = await db["employees"].find_one(
+        {"id": employee_id},
+        {"_id": 0, "id": 1, "nome_completo": 1, "nome": 1, "cognome": 1}
+    )
+    if not employee:
+        raise HTTPException(status_code=404, detail="Dipendente non trovato")
+    
+    saldo = await db["giustificativi_saldi_finali"].find_one(
+        {"employee_id": employee_id, "anno": anno},
+        {"_id": 0}
+    )
+    
+    if not saldo:
+        return {
+            "success": True,
+            "employee_id": employee_id,
+            "employee_nome": employee.get("nome_completo") or f"{employee.get('cognome', '')} {employee.get('nome', '')}",
+            "anno": anno,
+            "saldi": None,
+            "message": "Nessun saldo finale salvato per questo anno. Caricare un Libro Unico o inserire manualmente."
+        }
+    
+    return {
+        "success": True,
+        "employee_id": employee_id,
+        "employee_nome": employee.get("nome_completo") or f"{employee.get('cognome', '')} {employee.get('nome', '')}",
+        "anno": anno,
+        "periodo": saldo.get("periodo"),
+        "saldi": saldo.get("saldi", {}),
+        "source": saldo.get("source"),
+        "updated_at": saldo.get("updated_at"),
+        "storico": saldo.get("storico", [])
+    }
+
+
+@router.get("/saldi-finali-tutti")
+async def get_saldi_finali_tutti(
+    anno: int = Query(None)
+) -> Dict[str, Any]:
+    """
+    Recupera i saldi finali per tutti i dipendenti.
+    Utile per report e dashboard.
+    """
+    db = Database.get_db()
+    
+    if not anno:
+        anno = datetime.now().year
+    
+    saldi = await db["giustificativi_saldi_finali"].find(
+        {"anno": anno},
+        {"_id": 0, "storico": 0}  # Escludi storico per performance
+    ).to_list(500)
+    
+    # Arricchisci con nomi dipendenti
+    risultato = []
+    for s in saldi:
+        emp_id = s.get("employee_id")
+        employee = await db["employees"].find_one(
+            {"id": emp_id},
+            {"_id": 0, "nome_completo": 1, "nome": 1, "cognome": 1}
+        )
+        
+        nome = ""
+        if employee:
+            nome = employee.get("nome_completo") or f"{employee.get('cognome', '')} {employee.get('nome', '')}"
+        
+        risultato.append({
+            **s,
+            "employee_nome": nome
+        })
+    
+    # Ordina per nome
+    risultato.sort(key=lambda x: x.get("employee_nome", ""))
+    
+    return {
+        "success": True,
+        "anno": anno,
+        "totale_dipendenti": len(risultato),
+        "saldi": risultato
     }
 
 
