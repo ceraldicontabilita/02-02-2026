@@ -1127,7 +1127,8 @@ function TabGiustificativi({ dipendente, anno, selectedCategoria = 'tutti', onCa
         {categorie.map(cat => (
           <button
             key={cat}
-            onClick={() => setSelectedCategoria(cat)}
+            onClick={() => handleCategoriaClick(cat)}
+            data-testid={`categoria-${cat}`}
             style={{
               padding: '6px 14px',
               borderRadius: 20,
