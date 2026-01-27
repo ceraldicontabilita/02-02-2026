@@ -905,7 +905,7 @@ async def get_notifiche_scadenze_imminenti(
     }
 
 
-@router.post("/calendario/invia-notifica")
+@router.post("/notifiche-scadenze/invia")
 async def invia_notifica_scadenza(
     scadenza_id: str = Query(...),
     tipo_notifica: str = Query("dashboard", enum=["dashboard", "email"])
