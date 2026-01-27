@@ -655,7 +655,7 @@ export default function MotoreContabile() {
                     <Building2 style={{ width: 48, height: 48, margin: '0 auto 16px', opacity: 0.3 }} />
                     <p>Nessun cespite registrato</p>
                     <p style={{ fontSize: 13, marginTop: 8 }}>
-                      Registra cespiti tramite l'API /api/contabilita/cespiti
+                      Registra cespiti tramite API /api/contabilita/cespiti
                     </p>
                   </div>
                 )}
