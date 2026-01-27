@@ -533,7 +533,7 @@ export default function MotoreContabile() {
               <CardContent style={{ padding: 24 }}>
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: 14, color: '#64748b', marginBottom: 8 }}>
-                    RISULTATO D'ESERCIZIO
+                    RISULTATO DI ESERCIZIO
                   </div>
                   <div style={{ 
                     fontSize: 36, 
