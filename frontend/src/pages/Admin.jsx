@@ -1069,7 +1069,7 @@ export default function Admin() {
                   onClick={async () => {
                     
                     try {
-                      const r = await api.post('/api/fatture-ricevute/auto-ricostruisci-dati');
+                      const r = await api.post('/api/manutenzione/ricostruisci-fatture');
                       alert(`✅ Completato:\n• Campi corretti: ${r.data.campi_corretti || 0}\n• Fornitori associati: ${r.data.fornitori_associati || 0}\n• Duplicati rimossi: ${r.data.duplicati_rimossi || 0}`);
                     } catch (e) {
                       alert('Errore: ' + (e.response?.data?.detail || e.message));
