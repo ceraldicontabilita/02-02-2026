@@ -45,12 +45,12 @@ export default function CalendarioFiscale() {
       
       if (calRes.data?.success) {
         setCalendario(calRes.data);
-      }
-      if (notRes.data?.success) {
-        setNotifiche(notRes.data);
-      }
       } else {
         setError('Impossibile caricare il calendario');
+      }
+      
+      if (notRes.data?.success) {
+        setNotifiche(notRes.data);
       }
     } catch (err) {
       console.error('Errore caricamento calendario:', err);
