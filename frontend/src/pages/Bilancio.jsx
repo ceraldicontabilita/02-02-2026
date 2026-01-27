@@ -2,14 +2,23 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../api';
 import { formatEuro, STYLES, COLORS, button, badge } from '../lib/utils';
+import { useAnnoGlobale } from '../contexts/AnnoContext';
 
 export default function Bilancio() {
-  const currentYear = new Date().getFullYear();
-  const [anno, setAnno] = useState(currentYear);
+  const { anno: annoGlobale } = useAnnoGlobale();
+  const [anno, setAnno] = useState(annoGlobale || new Date().getFullYear());
   const [mese, setMese] = useState(null);
   const [statoPatrimoniale, setStatoPatrimoniale] = useState(null);
   const [contoEconomico, setContoEconomico] = useState(null);
   const [loading, setLoading] = useState(true);
+  
+  // Sincronizza con anno globale
+  useEffect(() => {
+    if (annoGlobale && annoGlobale !== anno) {
+      setAnno(annoGlobale);
+    }
+  }, [annoGlobale]);
+  
   // URL Tab Support
   const navigate = useNavigate();
   const location = useLocation();
