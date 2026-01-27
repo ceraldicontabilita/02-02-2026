@@ -12,10 +12,13 @@ Autore: Sistema Gestionale
 Data: 22 Gennaio 2026
 """
 
-from fastapi import APIRouter, HTTPException, Query
-from typing import Dict, Any
+from fastapi import APIRouter, HTTPException, Query, UploadFile, File
+from typing import Dict, Any, List
 from datetime import datetime, timezone
 import uuid
+import tempfile
+import os
+import base64
 
 from app.database import Database
 
