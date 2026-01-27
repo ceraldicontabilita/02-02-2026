@@ -259,6 +259,7 @@ const router = createBrowserRouter([
       { path: "prima-nota-salari", element: <LazyPage><PrimaNotaSalari /></LazyPage> },
       { path: "prima-nota-salari/:anno/:mese", element: <LazyPage><PrimaNotaSalari /></LazyPage> },
       { path: "tfr", element: <LazyPage><TFR /></LazyPage> },
+      { path: "tfr/:tab", element: <LazyPage><TFR /></LazyPage> },
       { path: "tfr/:dipendente", element: <LazyPage><TFR /></LazyPage> },
       { path: "noleggio-auto", element: <LazyPage><NoleggioAuto /></LazyPage> },
       { path: "noleggio-auto/:targa", element: <LazyPage><NoleggioAuto /></LazyPage> },
