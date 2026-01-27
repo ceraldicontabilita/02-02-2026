@@ -507,7 +507,7 @@ export default function IntegrazioniOpenAPI() {
               <div style={{ ...cardStyle, background: '#f0f9ff', border: '1px solid #bae6fd' }}>
                 <h4 style={{ margin: '0 0 12px', color: '#0369a1' }}>📘 Passare a Produzione</h4>
                 <p style={{ fontSize: 13, color: '#0c4a6e', marginBottom: 12 }}>
-                  Per passare dall'ambiente Sandbox a Produzione:
+                  Per passare dall&apos;ambiente Sandbox a Produzione:
                 </p>
                 <ol style={{ fontSize: 13, color: '#0c4a6e', paddingLeft: 20 }}>
                   <li>Genera una nuova API Key di produzione su OpenAPI.it</li>
