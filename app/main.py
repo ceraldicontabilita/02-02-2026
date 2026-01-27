@@ -196,6 +196,7 @@ from app.routers import schede_tecniche  # Schede Tecniche Prodotti
 from app.routers import auto_repair  # Auto-Riparazione Globale delle relazioni
 from app.routers import odoo_integration  # Integrazione Odoo External API
 from app.routers import accounting_engine  # Motore Contabile Odoo-style
+from app.routers import contabilita_italiana  # Contabilità Italiana Completa
 
 
 # =============================================================================
