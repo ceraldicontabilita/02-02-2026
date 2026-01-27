@@ -221,6 +221,7 @@ async def ricostruisci_dati_fatture() -> Dict[str, Any]:
     Ricostruisce dati fatture:
     - Corregge campi mancanti (date, importi)
     - Associa fornitori da P.IVA o nome
+    - Imposta metodo pagamento a "Bonifico" se mancante
     - Rimuove duplicati
     """
     db = Database.get_db()
@@ -229,11 +230,35 @@ async def ricostruisci_dati_fatture() -> Dict[str, Any]:
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "campi_corretti": 0,
         "fornitori_associati": 0,
+        "metodo_pagamento_impostato": 0,
         "duplicati_rimossi": 0,
         "errori": []
     }
     
     try:
+        # 0. Imposta metodo pagamento = "Bonifico" per fatture senza metodo
+        fatture_senza_metodo = await db.invoices.find({
+            "$or": [
+                {"metodo_pagamento": None},
+                {"metodo_pagamento": ""},
+                {"metodo_pagamento": {"$exists": False}},
+                {"payment_method": None},
+                {"payment_method": ""},
+                {"payment_method": {"$exists": False}}
+            ]
+        }).to_list(10000)
+        
+        for f in fatture_senza_metodo:
+            await db.invoices.update_one(
+                {"id": f.get("id")},
+                {"$set": {
+                    "metodo_pagamento": "Bonifico",
+                    "payment_method": "bank_transfer",
+                    "updated_at": datetime.now(timezone.utc).isoformat()
+                }}
+            )
+            risultato["metodo_pagamento_impostato"] += 1
+        
         # 1. Correggi campi mancanti
         fatture = await db.invoices.find({
             "$or": [
