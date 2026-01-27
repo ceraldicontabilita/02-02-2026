@@ -90,7 +90,7 @@ export default function IntegrazioniOpenAPI() {
   
   const loadXbrlRequests = async () => {
     try {
-      const res = await api.get('/api/openapi/xbrl/richieste');
+      const res = await api.get('/api/openapi/xbrl/storico-richieste?limit=20');
       setXbrlRequests(res.data.richieste || []);
     } catch (e) {
       console.error('Errore load richieste XBRL:', e);
