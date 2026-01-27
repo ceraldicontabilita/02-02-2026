@@ -989,12 +989,18 @@ const getMeseName = (mese) => {
 // TAB GIUSTIFICATIVI
 // ============================================
 
-function TabGiustificativi({ dipendente, anno }) {
+function TabGiustificativi({ dipendente, anno, selectedCategoria = 'tutti', onCategoriaChange }) {
   const [giustificativi, setGiustificativi] = useState([]);
   const [saldoFerie, setSaldoFerie] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedCategoria, setSelectedCategoria] = useState('tutti');
+  
+  // Handler per cambio categoria - usa la prop se fornita
+  const handleCategoriaClick = (cat) => {
+    if (onCategoriaChange) {
+      onCategoriaChange(cat);
+    }
+  };
   
   // Carica dati al mount e quando cambia dipendente
   useEffect(() => {
