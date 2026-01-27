@@ -312,6 +312,150 @@ export default function IntegrazioniOpenAPI() {
             </div>
           )}
 
+          {activeTab === 'xbrl' && (
+            <div>
+              <div style={cardStyle}>
+                <h4 style={{ margin: '0 0 16px' }}>📊 Richiedi Bilancio XBRL</h4>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 12, alignItems: 'end' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>
+                      Partita IVA *
+                    </label>
+                    <input
+                      type="text"
+                      value={xbrlPiva}
+                      onChange={(e) => setXbrlPiva(e.target.value)}
+                      placeholder="es. 12345678901"
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px',
+                        border: '1px solid #d1d5db',
+                        borderRadius: 6,
+                        fontSize: 14
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>
+                      Anno Chiusura (opzionale)
+                    </label>
+                    <input
+                      type="number"
+                      value={xbrlAnno}
+                      onChange={(e) => setXbrlAnno(e.target.value)}
+                      placeholder="es. 2023"
+                      min="2010"
+                      max="2030"
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px',
+                        border: '1px solid #d1d5db',
+                        borderRadius: 6,
+                        fontSize: 14
+                      }}
+                    />
+                  </div>
+                  <button
+                    onClick={richiediXbrl}
+                    disabled={xbrlLoading || !xbrlPiva}
+                    style={{
+                      ...button('#10b981'),
+                      minWidth: 120,
+                      height: 40
+                    }}
+                  >
+                    {xbrlLoading ? '⏳' : '📊 Richiedi'}
+                  </button>
+                </div>
+                
+                {xbrlResult && (
+                  <div style={{ 
+                    marginTop: 16, 
+                    padding: 12, 
+                    background: xbrlResult.success ? '#f0fdf4' : '#fef2f2', 
+                    borderRadius: 6, 
+                    fontSize: 13 
+                  }}>
+                    {xbrlResult.success ? '✅' : '❌'} {xbrlResult.message}
+                    {xbrlResult.request_id && (
+                      <div style={{ marginTop: 8, fontSize: 12, color: '#64748b' }}>
+                        ID Richiesta: <code>{xbrlResult.request_id}</code>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Lista Richieste XBRL */}
+              {xbrlRequests.length > 0 && (
+                <div style={cardStyle}>
+                  <h4 style={{ margin: '0 0 16px' }}>📋 Richieste XBRL</h4>
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                      <thead>
+                        <tr style={{ background: '#f8fafc' }}>
+                          <th style={{ padding: 10, textAlign: 'left', borderBottom: '1px solid #e2e8f0' }}>ID</th>
+                          <th style={{ padding: 10, textAlign: 'left', borderBottom: '1px solid #e2e8f0' }}>P.IVA</th>
+                          <th style={{ padding: 10, textAlign: 'left', borderBottom: '1px solid #e2e8f0' }}>Anno</th>
+                          <th style={{ padding: 10, textAlign: 'left', borderBottom: '1px solid #e2e8f0' }}>Stato</th>
+                          <th style={{ padding: 10, textAlign: 'left', borderBottom: '1px solid #e2e8f0' }}>Data</th>
+                          <th style={{ padding: 10, textAlign: 'center', borderBottom: '1px solid #e2e8f0' }}>Azioni</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {xbrlRequests.map((req, i) => (
+                          <tr key={i} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                            <td style={{ padding: 10 }}>
+                              <code style={{ fontSize: 11 }}>{req.id}</code>
+                            </td>
+                            <td style={{ padding: 10 }}>{req.partita_iva}</td>
+                            <td style={{ padding: 10 }}>{req.anno_chiusura || '-'}</td>
+                            <td style={{ padding: 10 }}>
+                              <span style={badge(
+                                req.status === 'completed' ? 'success' : 
+                                req.status === 'failed' ? 'error' : 'warning'
+                              )}>
+                                {req.status}
+                              </span>
+                            </td>
+                            <td style={{ padding: 10 }}>
+                              {req.created_at ? new Date(req.created_at).toLocaleDateString('it-IT') : '-'}
+                            </td>
+                            <td style={{ padding: 10, textAlign: 'center' }}>
+                              <button
+                                onClick={() => checkXbrlStatus(req.id)}
+                                style={{
+                                  ...button('#3b82f6'),
+                                  fontSize: 11,
+                                  padding: '4px 8px'
+                                }}
+                              >
+                                🔍 Verifica
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              <div style={{ ...cardStyle, background: '#f0f9ff', border: '1px solid #bae6fd' }}>
+                <h4 style={{ margin: '0 0 12px', color: '#0369a1' }}>ℹ️ Informazioni XBRL</h4>
+                <p style={{ fontSize: 13, color: '#0c4a6e', marginBottom: 12 }}>
+                  Il servizio XBRL permette di ottenere i bilanci delle aziende italiane in formato strutturato.
+                </p>
+                <ul style={{ fontSize: 13, color: '#0c4a6e', paddingLeft: 20, margin: 0 }}>
+                  <li>Inserisci la Partita IVA dell'azienda di cui vuoi il bilancio</li>
+                  <li>Opzionalmente specifica l'anno di chiusura del bilancio</li>
+                  <li>La richiesta viene elaborata in modo asincrono</li>
+                  <li>Usa il pulsante "Verifica" per controllare lo stato della richiesta</li>
+                </ul>
+              </div>
+            </div>
+          )}
+
           {activeTab === 'config' && (
             <div>
               <div style={cardStyle}>
