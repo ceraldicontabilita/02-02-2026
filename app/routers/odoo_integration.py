@@ -541,8 +541,9 @@ async def get_odoo_employees(
     if active is not None:
         domain.append(['active', '=', active])
     
+    # Campi compatibili con Odoo 19.1 (senza address_home_id)
     fields = ['name', 'work_email', 'work_phone', 'job_title', 'department_id',
-              'identification_id', 'birthday', 'address_home_id', 'contract_id']
+              'identification_id', 'birthday', 'contract_id']
     
     employees = client.search_read('hr.employee', domain, fields, offset, limit)
     total = client.search_count('hr.employee', domain)
