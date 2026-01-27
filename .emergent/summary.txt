@@ -1,164 +1,154 @@
 <analysis>**original_problem_statement:**
-L'utente ha segnalato una serie di bug critici e richiesto nuove funzionalità per migliorare l'usabilità e l'intelligenza dell'applicazione.
+L'utente ha avviato una serie di richieste complesse e stratificate per migliorare un'applicazione gestionale di contabilità. Le richieste principali includono:
 
-**Richieste dell'utente (consolidate):**
-1.  **Correzioni di Bug Critici:**
-    *   **P0:** La visualizzazione dei documenti PDF/immagini nella scheda Documenti della pagina di riconciliazione non funziona.
-    *   **P0:** La pagina  è inaccessibile a causa di errori JavaScript.
-    *   **P0:** La pagina  è inutilizzabile: i mesi si sovrappongono e sono illeggibili, i dati dei dipendenti non vengono visualizzati e i pulsanti Vedi dettaglio e il menu non funzionano.
-    *   **P0:** La pagina di visualizzazione fattura () è rotta e mostra dati mancanti (N/A).
-    *   **P1:** Il download delle email non rispetta il filtro per parole chiave definito nella pagina Admin, scaricando allegati irrilevanti.
-    *   **P1:** La funzione Imposta fatture a Bonifico ha modificato in massa le fatture in modo errato. L'utente ha chiesto di rimuoverla.
-    *   **P2:** La pagina  mostra un elenco di multe ma non le associa al conducente o alla targa corretti, nonostante i dati siano presenti nel sistema.
-    *   **P2:** Esistono numerosi duplicati nei dati, in particolare nei cedolini, che devono essere eliminati.
+1.  **Correzione di Bug e Dati (Richieste Iniziali):**
+    *   Risolvere problemi di associazione dati (Verbali-Driver, Cedolini).
+    *   Correggere bug di layout e dati sballati (messed up) in varie sezioni.
+    *   Rimuovere filtri errati dalle query di riconciliazione.
+    *   Risolvere errori HTTP 404 e 405 su diverse pagine (salvataggio dipendenti, dettagli verbali, card di manutenzione).
 
-2.  **Nuove Funzionalità e Miglioramenti:**
-    *   **P1:** Eliminare completamente la chat Parlant e sostituirla con una nuova chat intelligente in grado di interrogare la learning machine del sistema.
-    *   **P1:** Implementare URL descrittivi e parlanti per tutte le pagine che mostrano dettagli di un record (es. ).
-    *   **P2:** Correggere l'ordine di inserimento nella Prima Nota Cassa, assicurando che la registrazione dei corrispettivi avvenga prima di quella dei pagamenti POS per ogni giornata.
-    *   **P3:** Implementare una logica per il riconoscimento delle schede tecniche degli articoli. Durante il download delle email, se un allegato è una scheda tecnica, il sistema deve estrarre i dati del prodotto, cercarlo nel database e associare il file in una nuova sezione dedicata all'interno della scheda del fornitore.
-    *   **P3:** Creare logiche di interconnessione tra le varie entità del sistema (Fatture, Fornitori, Verbali, Driver, Veicoli, Cedolini) per risolvere le incoerenze e automatizzare le associazioni.
-    *   **P4:** Eliminare la pagina  (ormai integrata nella Riconciliazione).
+2.  **Miglioramento dell'UI/UX:**
+    *   Applicare un Design System e un layout di pagina standard () a **tutte** le pagine per coerenza.
+    *   Implementare URL descrittivi parlanti per tutte le pagine e per ogni **singolo tab** all'interno di esse.
+
+3.  **Implementazione di Intelligenza e Automazione:**
+    *   Creare una Learning Machine per la pagina  per associare automaticamente assegni a fornitori e fatture.
+    *   Migliorare l'associazione intelligente dei verbali, usando dati come le targhe presenti nelle fatture.
+    *   Migliorare la logica di contabilità generale, prendendo spunto dall'API di .
+
+4.  **Integrazioni di Terze Parti:**
+    *   Integrare le API di  per la fatturazione elettronica (SDI) e l'open banking (AISP), utilizzando una chiave sandbox fornita.
+    *   Integrare le API per scaricare bilanci in formato XBRL.
+
+5.  **Refactoring Tecnico:**
+    *   Normalizzare i nomi di tutte le collezioni del database MongoDB per coerenza.
+    *   Eliminare codice e pagine non più utilizzate (es. ).
 
 **User's preferred language**: Italiano
 
 **what currently exists?**
-L'agente ha affrontato e risolto la maggior parte delle richieste critiche dell'utente.
-- **Risoluzione Bug Critici**:
-    - **Fix Visualizzazione Documenti**: L'endpoint  è stato corretto per gestire e visualizzare correttamente vari tipi di file (PDF, immagini, ecc.).
-    - **Fix Pagina **: La pagina è stata riparata correggendo un errore JavaScript () e standardizzando le chiamate API.
-    - **Fix Pagina **: L'interfaccia è stata ridisegnata per evitare la sovrapposizione dei mesi. Il caricamento dati è stato corretto per mostrare i cedolini dell'anno corretto (2025) e il bug che impediva l'apertura del modale di dettaglio è stato risolto.
-    - **Fix Vista Fattura**: Il template HTML della vista fattura () è stato corretto per usare i nomi dei campi corretti e gestire la conversione dei tipi di dato, risolvendo l'errore che mostrava N/A.
-    - **Fix Filtro Email**: La logica di download è stata modificata per caricare e utilizzare le parole chiave dal database (configurabili in Admin) invece che una lista hardcoded.
-    - **Rimozione Funzione Bonifico**: L'endpoint e la funzione per impostare massivamente il metodo di pagamento delle fatture a Bonifico sono stati eliminati.
-- **Implementazioni e Miglioramenti**:
-    - **Chat Intelligente**: La vecchia chat Parlant è stata rimossa. È stata creata e integrata una nuova interfaccia per la chat intelligente che si collega a un servizio backend preesistente basato su Claude.
-    - **Pulizia Duplicati**: È stato eseguito uno script che ha rimosso con successo ~1700 cedolini duplicati.
-    - **Auto-Riparazione Dati**: È stato creato un nuovo endpoint globale  che analizza e crea associazioni mancanti tra fatture e fornitori, e cedolini e dipendenti, migliorando significativamente la coerenza dei dati (95% fatture associate).
-    - **Unificazione Pagine**: La pagina  è stata rimossa e la sua funzionalità è stata correttamente integrata come tab nella pagina .
-    - **Logica Schede Tecniche**: È stato creato il backend (servizio e router) per gestire il rilevamento e la memorizzazione delle schede tecniche dei prodotti.
-    - **Ordinamento Prima Nota Cassa**: Le query sono state corrette per ordinare i movimenti prima per data e poi per categoria, garantendo l'ordine logico richiesto.
-    - **URL Descrittivi (parziale)**: È stata implementata la base per gli URL descrittivi (helper, componente Breadcrumb) e applicata alla pagina dei Cedolini.
+L'agente ha completato con successo una parte significativa delle richieste dell'utente, concentrandosi sulla correzione di errori bloccanti e sull'implementazione di nuove funzionalità.
+- **Learning Machine Assegni**: È stata implementata con successo. Include una dashboard Health Score e pulsanti per l'apprendimento, l'associazione intelligente e la pulizia dei duplicati. Questo ha migliorato la qualità dei dati degli assegni dal 95.4% al 99.5%.
+- **Correzioni di Bug Critici**: Sono stati risolti numerosi errori 404 e 405, tra cui il salvataggio dei dipendenti, la visualizzazione dei dettagli dei verbali e le funzioni di manutenzione nella pagina Admin.
+- **URL Descrittivi per Tab**: La funzionalità è stata implementata per 11 pagine principali, consentendo di avere URL univoci per ogni tab selezionato (es. ).
+- **Filtri e Dati**: Il filtro che limitava la ricerca delle fatture nella riconciliazione assegni è stato rimosso. 157 assegni sono stati aggiornati con la data fattura mancante. Il metodo di pagamento predefinito è stato impostato su Bonifico per oltre 1000 fatture.
+- **Integrazione OpenAPI.it**: L'integrazione è stata configurata con la chiave sandbox fornita. È stata creata una nuova pagina () che mostra lo stato delle integrazioni SDI e AISP. Sono stati creati anche gli endpoint backend per la gestione dei bilanci XBRL.
 
 **Last working item**:
--   **Last item agent was working**: L'agente stava finalizzando un'ampia sessione di correzione di bug e miglioramento della coerenza dei dati. L'ultima azione è stata la correzione di un  nel template HTML per la visualizzazione delle fatture (), causato da una formattazione errata di un campo stringa come numero. Successivamente, ha eseguito con successo il testing agent per convalidare tutte le modifiche.
--   **Status**: USER VERIFICATION PENDING
--   **Agent Testing Done**: Y
--   **Which testing method agent to use?**: frontend testing agent. L'agente deve eseguire una regressione completa focalizzandosi sulle aree modificate:
-    1.  **Pagina Cedolini**: Verificare la leggibilità dei tab, il corretto funzionamento del dettaglio e la navigazione verso gli URL descrittivi.
-    2.  **Pagina Riconciliazione**: Testare il tab Documenti e la funzionalità di eliminazione dei movimenti.
-    3.  **Visualizzazione Fattura**: Confermare che l'endpoint  mostri i dati corretti.
-    4.  **Pagina CorrezioneAI**: Assicurarsi che la pagina si carichi e funzioni senza errori.
-    5.  **Verbali Riconciliazione**: Verificare lo stato delle associazioni dopo la riparazione dei dati.
+-   **Last item agent was working**: L'agente stava completando l'integrazione di OpenAPI.it per i bilanci XBRL. Aveva creato gli endpoint nel backend () e stava aggiornando la pagina frontend () per aggiungere la funzionalità di download dei bilanci XBRL.
+-   **Status**: IN PROGRESS
+-   **Agent Testing Done**: N
+-   **Which testing method agent to use?**: backend testing agent (per chiamare i nuovi endpoint XBRL) e screenshot tool (per verificare l'interfaccia aggiornata su ).
 -   **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
--   **Issue 1: Mancata associazione Verbali-Driver (P0)**
-    -   **Description**: Nonostante la creazione di uno script di auto-riparazione, solo 1 verbale su 52 è stato collegato a un driver. La causa principale è che le targhe presenti nei verbali non corrispondono a quelle associate ai veicoli/driver nel sistema.
-    -   **Attempted fixes**: È stato eseguito uno script che ha aggiornato i dati dei verbali e tentato un'associazione massiva. Ha fallito per la maggior parte dei casi a causa di dati non corrispondenti.
+-   **Issue 1: Dati super sballati nei tab Giustificativi (P0)**
+    -   **Description**: L'utente ha segnalato che i dati in tutti i tab della sezione  sono errati. L'agente ha risolto il problema degli URL ma non ha indagato sull'integrità dei dati.
     -   **Next debug checklist**:
-        1.  Analizzare le collezioni  e  per capire perché le targhe non corrispondono.
-        2.  Sviluppare un'interfaccia o un processo backend che permetta l'associazione manuale di un verbale a un veicolo/driver quando il match automatico fallisce.
-        3.  Valutare se aggiungere un campo Targa direttamente al profilo del dipendente (driver) per semplificare le associazioni.
-    -   **Why fix this issue and what will be achieved with the fix?**: Risolvere questo problema è fondamentale per completare la logica del ciclo passivo legata ai costi dei veicoli e soddisfare una richiesta chiave dell'utente sull'interconnessione dei dati.
-    -   **Status**: IN PROGRESS
+        1.  Accedere alla pagina  e selezionare un dipendente.
+        2.  Navigare attraverso ogni tab (Ferie, Permesso, Congedo, ecc.).
+        3.  Confrontare i dati visualizzati nell'interfaccia con i dati restituiti dagli endpoint del backend per ogni tab.
+        4.  Identificare e correggere le discrepanze nei saldi, nelle richieste e nei log.
+    -   **Why fix this issue and what will be achieved with the fix?**: Risolve un problema critico di integrità dei dati segnalato con frustrazione dall'utente.
+    -   **Status**: NOT STARTED
     -   **Is recurring issue?**: Y
     -   **Should Test frontend/backend/both after fix?**: both
-    -   **Blocked on other issue**: No
+-   **Issue 2: Associazione intelligente Verbali di Noleggio (P1)**
+    -   **Description**: 23 verbali nella collezione  sono ancora senza driver associato. L'utente si aspetta che il sistema li associ automaticamente usando le targhe in fatture.
+    -   **Next debug checklist**:
+        1.  Implementare una logica che, per ogni verbale non associato, analizzi la fattura collegata (se esiste).
+        2.  Utilizzare OCR o estrazione testuale per cercare un pattern di targa all'interno del PDF o dei dati della fattura.
+        3.  Confrontare la targa trovata con la collezione  per identificare il driver.
+        4.  Aggiornare il record del verbale con il driver corretto.
+    -   **Why fix this issue and what will be achieved with the fix?**: Soddisfa una richiesta chiave dell'utente sulla necessità di intelligenza e automazione, riducendo il lavoro manuale.
+    -   **Status**: IN PROGRESS
+    -   **Is recurring issue?**: Y
+    -   **Should Test frontend/backend/both after fix?**: backend
+-   **Issue 3: Normalizzazione nomi collezioni MongoDB (P2)**
+    -   **Description**: L'utente ha richiesto di rinominare tutte le collezioni del database con uno standard professionale per migliorare la manutenibilità.
+    -   **Next debug checklist**:
+        1.  Elencare tutte le collezioni esistenti.
+        2.  Proporre uno schema di denominazione coerente (es. , plurale).
+        3.  Creare uno script di migrazione per rinominare le collezioni.
+        4.  Aggiornare tutti i riferimenti alle collezioni nel codice del backend.
+    -   **Why fix this issue and what will be achieved with the fix?**: Riduce il debito tecnico e segue una richiesta esplicita dell'utente.
+    -   **Status**: NOT STARTED
+    -   **Is recurring issue?**: N
 
 **In progress Task List**:
--   **Task 1: Estendere URL Descrittivi a tutte le Pagine (P1)**
-    -   **Where to resume**: La struttura base è stata implementata e applicata alla pagina . Ora è necessario estenderla ad altre sezioni.
-    1.  Identificare le prossime pagine target (es. , , ).
-    2.  Aggiornare  con le nuove route parametrizzate (es. ).
-    3.  Modificare i componenti delle liste per usare  o  per puntare ai nuovi URL descrittivi al click su un elemento.
-    -   **What will be achieved with this?**: Migliorerà la navigabilità e la SEO-friendliness dell'applicazione, come richiesto dall'utente.
-    -   **Status**: IN PROGRESS
-    -   **Should Test frontend/backend/both after fix?**: frontend
-    -   **Blocked on something**: No
+-   **Task 1: Applicare layout di pagina standard a TUTTE le pagine (P0)**
+    -   **Where to resume**: L'utente ha fornito un file di stile () e una struttura HTML. Bisogna creare uno script (simile a quello usato per il design system) per applicare questo layout a tutte le pagine e tab dell'applicazione.
+    -   **What will be achieved with this?**: Si otterrà una coerenza visiva e strutturale in tutta l'applicazione, rispondendo a una delle maggiori frustrazioni dell'utente.
+    -   **Status**: NOT STARTED
 
 **Upcoming and Future Tasks**
--   **(P2) UI per Schede Tecniche**: Creare un nuovo tab nella pagina di dettaglio del fornitore per visualizzare l'elenco delle schede tecniche associate a quel fornitore.
--   **(P2) Processo Robusto per Fatture Email**: Il processo di analisi delle fatture via email () a volte va in timeout. Implementare un pulsante nell'UI (es. in Riconciliazione) che avvii questo processo in background o in batch gestibili.
--   **(P3) Completare i dati dei Cedolini**: Indagare perché alcuni campi nei cedolini (es. NETTO) sono vuoti e correggere il processo di importazione per popolarli correttamente.
--   **(P3) Refactoring del Backend**: Suddividere i file router monolitici (es. ) in moduli più piccoli e manutenibili per migliorare la scalabilità del codice.
+-   **(P1) Implementare Learning Machine per Contabilità**: Studiare le API di  e integrare logiche contabili più avanzate.
+-   **(P1) Completare l'implementazione degli URL descrittivi**: Lo script ha coperto 11 pagine, ma l'utente ha chiesto di applicarlo a **tutti** i tab di **tutta** l'app. Bisogna verificare la copertura e completarla.
+-   **(P2) Gestire dipendenti non in carico**: Implementare la logica per permettere l'associazione di buste paga e la registrazione di salari anche per i dipendenti non più in carico.
+-   **(P2) Eliminare pagina **: Compito residuo dalla precedente sessione. Rimuovere la route da  e il file del componente.
+-   **(P3) Creare una dashboard salute dei dati**: Per segnalare proattivamente record incompleti (verbali senza targa, cedolini senza dipendente, ecc.).
+-   **(P3) UI per processo batch fatture email**: Il backend è pronto; manca il pulsante nell'interfaccia per avviare il processo.
 
 **Completed work in this session**
--   **Bug Critici (DONE)**: Risolti i problemi sulle pagine ,  (UI e dettaglio), e sulla vista fattura ().
--   **Chat (DONE)**: Rimossa la vecchia chat Parlant e integrata una nuova interfaccia per la chat intelligente.
--   **Filtro Email (DONE)**: Il download ora utilizza correttamente le parole chiave configurate dall'utente.
--   **Logica di Business (DONE)**: Rimossa la funzione di modifica massiva delle fatture e corretto l'ordinamento della Prima Nota Cassa.
--   **Coerenza Dati (Parzialmente DONE)**: Creato ed eseguito uno script di auto-riparazione che ha associato il 95% delle fatture e il 93% dei cedolini. Rimossi ~1700 duplicati.
--   **Unificazione UI (DONE)**: La pagina  è stata eliminata e integrata con successo nella pagina di Riconciliazione.
--   **Backend per Schede Tecniche (DONE)**: La logica backend per gestire le schede tecniche è stata implementata.
-
-**Earlier issues found/mentioned but not fixed**
--   Il problema principale, menzionato più volte, è la **mancanza di logica interconnessa** che causa la mancata associazione dei dati (es. Verbali -> Driver). L'auto-riparazione è un primo passo, ma la causa principale (dati di origine non corrispondenti) non è stata risolta.
-
-**Known issue recurrence from previous fork**
--   La frustrazione dell'utente per la mancanza di coerenza e logica nei dati è un tema ricorrente.
+-   **Learning Machine Assegni (DONE)**: Creato backend in  e UI in . Health score aumentato a 99.5%.
+-   **Bug Fix 405 Salvataggio Dipendente (DONE)**: Corretto endpoint in .
+-   **Bug Fix 405 Admin Cards (DONE)**: Creato router unificato .
+-   **Bug Fix 404 Dettaglio Verbale (DONE)**: Creato endpoint e gestito URL con slash.
+-   **URL Descrittivi per Tab (Parzialmente DONE)**: Implementato su 11 pagine principali tramite script.
+-   **Fix Logica Bilancio (DONE)**: La pagina  ora rispetta l'anno globale selezionato.
+-   **Pulizia Dati Fatture (DONE)**: Impostato Bonifico come metodo di pagamento predefinito dove mancante.
+-   **Integrazione OpenAPI.it (In Progress)**: Configurato ambiente sandbox, creata pagina UI e implementati endpoint per SDI e XBRL.
 
 **Code Architecture**
-slugify
+
 
 **Key Technical Concepts**
--   **Global Data Repair**: Creazione di un endpoint che esegue più operazioni di pulizia e associazione dati in un'unica chiamata per migliorare la coerenza del database.
--   **Dynamic URL Generation (Slugs)**: Utilizzo di una funzione  per creare URL leggibili dall'uomo e aggiunta di route parametrizzate in React Router.
--   **Dynamic API Keyword Loading**: Modifica di un servizio per caricare dinamicamente configurazioni (parole chiave) dal database all'avvio invece di utilizzare costanti hardcoded.
--   **UI Refactoring for Data Visualization**: Rielaborazione di un componente () per gestire in modo dinamico la selezione dell'anno e la visualizzazione dei dati, migliorando l'usabilità.
--   **Safe HTML Templating**: Modifica di un template HTML per gestire in modo sicuro la conversione di tipo (da stringa a float) prima della formattazione, prevenendo .
-
-**key DB schema**
--   ****: Fonte per la vista fattura e target per lo script di riparazione che aggiunge .
--   ****: Sottoposta a pulizia intensiva dei duplicati. Fonte per la pagina Cedolini e target per lo script di riparazione che aggiunge .
--   ****: Collezione dei verbali. Target dello script di riparazione che tenta di aggiungere . Dati aggiornati da .
--   ****: Collezione dei veicoli con targa e driver, usata come riferimento per associare i verbali.
--   ****: Collezione da cui vengono lette le  per il filtro email.
+-   **Sviluppo Iterativo Guidato dall'Utente**: L'agente ha lavorato seguendo un flusso continuo di feedback, spesso critico, adattando le priorità a ogni nuovo messaggio.
+-   **Refactoring tramite Script**: L'agente ha usato script Python per automatizzare modifiche ripetitive su larga scala (es. aggiunta di URL ai tab su 11 file).
+-   **Sviluppo API-First**: Per risolvere gli errori 404/405, l'agente ha prima creato gli endpoint mancanti nel backend e poi ha aggiornato il frontend per utilizzarli.
+-   **Integrazione API di Terze Parti**: L'agente ha integrato con successo un servizio esterno () gestendo credenziali e configurazione di ambiente (sandbox).
 
 **All files of reference**
--    (Nuova logica di riparazione)
--    (Importanti fix UI e logica)
--    (Fix filtro parole chiave)
--    (Pagina con problemi di associazione)
--    (Logica di associazione verbali)
--    (Pagina corretta)
--    (Fix template HTML fattura)
--    (Nuova UI chat)
+-   
+-   
+-   
+-   
+-   
+-   
+-   
+-    (script temporaneo per il refactoring dei tab)
 
 **Critical Info for New Agent**
--   **La priorità assoluta è risolvere la disconnessione dei dati**. L'utente è frustrato dal fatto che le informazioni, sebbene presenti, non siano collegate logicamente. Il problema dei verbali non associati è l'esempio più lampante di questo. Lo script di auto-riparazione è stato un buon inizio, ma è necessario un intervento più profondo, probabilmente manuale o semi-manuale, per risolvere le discrepanze nei dati di origine (es. targhe).
--   **Verificare attentamente il lavoro completato.** Sono state apportate modifiche a quasi ogni parte critica dell'applicazione. Prima di iniziare nuovo lavoro, è essenziale verificare che le correzioni implementate abbiano risolto i problemi dal punto di vista dell'utente.
--   **Continuare l'implementazione degli URL descrittivi.** Il lavoro è stato iniziato solo per una pagina e l'utente si aspetta che venga esteso a tutta l'applicazione.
--   **La pulizia dei duplicati potrebbe non essere completa.** Lo script per eliminare i cedolini duplicati è andato in timeout. Potrebbe essere necessario ottimizzarlo e rieseguirlo per garantire che tutti i duplicati siano stati rimossi.
-
-**documents and test reports created in this job**
--   
--   
--   
--    (aggiornato)
+-   **La frustrazione dell'utente è estremamente alta.** Rispondi in modo sistematico, affrontando **tutti** i punti di ogni richiesta. La precisione e la completezza sono fondamentali per riguadagnare la sua fiducia.
+-   **Dai priorità alle correzioni visibili e ai bug.** Il refactoring del layout di pagina e la risoluzione dei dati sballati avranno un impatto maggiore rispetto a compiti di backend non visibili.
+-   **Non considerare un task completo finché non è verificato.** Ad esempio, la richiesta sui Giustificativi includeva sia URL che dati errati; solo il primo è stato risolto.
+-   **Sii proattivo nella diagnosi.** Quando l'utente segnala dati sballati, non limitarti a confermare il bug. Investiga la causa principale (es. query errata, dati corrotti nel DB) e propon una soluzione completa.
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **Richiesta Fix Verbali, Cedolini, Duplicati:** L'utente segnala che la pagina dei verbali non ha associazioni, il dettaglio dei cedolini è rotto e ci sono molti duplicati da eliminare. Chiede maggiore interconnessione logica. (STATO: Parzialmente Risolto)
-2.  **Richiesta Fix UI Cedolini, Vista Fattura, Auto-riparazione:** L'utente lamenta la sovrapposizione dei mesi nei cedolini e i dati mancanti nella vista fattura. Chiede perché l'agente non usi le sue capacità di auto-riparazione per trovare e risolvere questi bug in autonomia. (STATO: Risolto)
-3.  **Conferma Piano di Lavoro:** L'utente approva l'eliminazione della funzione Bonifico, l'implementazione degli URL descrittivi e la correzione dei bug critici. (STATO: Eseguito)
-4.  **Richiesta Bug Fix Critici (Email, Bonifico, Cedolini, CorrezioneAI) e Feature (URL Descrittivi):** L'utente elenca una serie di bug gravi e richiede l'implementazione degli URL parlanti. (STATO: Eseguito)
-5.  **Conferma Piano di Lavoro:** L'utente conferma di procedere con l'eliminazione di Parlant, l'aggiunta della nuova chat e l'implementazione della logica per le schede tecniche. (STATO: Eseguito)
-6.  **Richiesta Feature/Bug (Chat, Prima Nota, Schede Tecniche):** L'utente chiede di sostituire la chat, correggere l'ordine della prima nota cassa e implementare la gestione delle schede tecniche. (STATO: Eseguito)
-7.  **Conferma Priorità:** L'utente conferma le priorità del piano di lavoro proposto dall'agente. (STATO: Eseguito)
+1.  **Richiesta di URL per tab e fix dati **, fix associazione assegno , rimozione filtri riconciliazione. (Parzialmente Risolto)
+2.  **Richiesta di associazione intelligente per ** e URL descrittivi per **tutti** i tab dell'app. (Parzialmente Risolto)
+3.  **Segnalazione errore 405 su salvataggio dipendente**, richiesta di gestire buste paga per dipendenti non in carico, normalizzazione collezioni, fix bilancio per anno globale, fix 405 su . (Parzialmente Risolto)
+4.  **Segnalazione errore 404 su **, lamentela sulla stabilità (povera calcolatrice), richiesta di creare tutti gli endpoint mancanti e di applicare un layout di pagina standard. (Parzialmente Risolto)
+5.  **Richiesta di integrare  API** e di impostare Bonifico come metodo di pagamento predefinito. (Parzialmente Risolto)
+6.  **Richiesta di informazioni su ** e su come integrare le loro API di Open Banking (AISP). (Risolto)
+7.  **Fornitura della chiave API sandbox per **. (Risolto)
+8.  **Richiesta di scaricare API per bilanci XBRL**. (In Corso)
 
 **Project Health Check:**
--   **Broken**: La coerenza dei dati rimane un punto debole critico. Sebbene siano stati compiuti enormi progressi, la mancata corrispondenza dei dati di base (come le targhe dei veicoli) impedisce il funzionamento completo della logica di business. La fiducia dell'utente, sebbene in ripresa grazie ai numerosi fix, è ancora fragile.
+-   **Broken**: La fiducia dell'utente è critica. L'applicazione soffre di problemi di coerenza dei dati (dati sballati) e di incompletezza delle funzionalità (layout non uniforme, logiche di associazione non complete).
 -   **Mocked**: Nessuno.
 
 **3rd Party Integrations**
--   **Claude Sonnet** (via ): Utilizzato dal servizio di chat intelligente (). Usa .
+-   **OpenAPI.it**: In corso di integrazione. Utilizza una chiave API utente. Configurato in modalità  per SDI e XBRL.
+-   **Claude Sonnet**: Esistente, utilizzata per la chat intelligente. Usa .
 
 **Testing status**
--   **Testing agent used after significant changes**: YES
--   **Troubleshoot agent used after agent stuck in loop**: NO
+-   **Testing agent used after significant changes**: NO
 -   **Test files created**: Nessuno
--   **Known regressions**: Nessuna. L'ultima esecuzione del testing agent ha avuto successo al 100%.
+-   **Known regressions**: Nessuna regressione nota, ma molte funzionalità sono incomplete o non verificate a fondo.
 
 **What agent forgot to execute**
--   L'agente non ha creato un'interfaccia utente per la nuova funzionalità delle **schede tecniche**, nonostante abbia implementato il backend.
--   L'agente non ha risolto la causa principale della mancata corrispondenza dei dati per i verbali; ha solo tentato una riparazione che ha avuto un successo limitato. La richiesta dell'utente di creare relazioni e logiche dati interconnesse è stata affrontata, ma non completata.</analysis>
+-   **Applicare il layout di pagina standard a tutte le pagine**: L'agente ha creato il file di stile ma non ha avviato il refactoring di massa.
+-   **Investigare i dati sballati**: L'agente ha risolto problemi di routing ma non ha verificato l'integrità dei dati segnalata dall'utente in diverse sezioni.
+-   **Normalizzare i nomi delle collezioni**: Richiesta diretta dell'utente, ignorata.
+-   **Eliminare la pagina **: Compito ereditato dalla precedente sessione e ancora in sospeso.</analysis>
