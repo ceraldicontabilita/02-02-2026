@@ -743,11 +743,13 @@ async def calendario_fiscale(anno: int) -> Dict[str, Any]:
         # Genera e salva
         scadenze = genera_scadenze_anno(anno)
         for s in scadenze:
-            s["anno"] = anno
-            s["completato"] = False
-            s["created_at"] = datetime.now(timezone.utc).isoformat()
-            await db["calendario_fiscale"].insert_one(s)
-        existing = scadenze
+            s_copy = dict(s)  # Copia per evitare mutazione con _id
+            s_copy["anno"] = anno
+            s_copy["completato"] = False
+            s_copy["created_at"] = datetime.now(timezone.utc).isoformat()
+            await db["calendario_fiscale"].insert_one(s_copy)
+        # Ricarica senza _id
+        existing = await db["calendario_fiscale"].find({"anno": anno}, {"_id": 0}).to_list(500)
     
     # Raggruppa per mese
     per_mese = {}
@@ -772,7 +774,8 @@ async def calendario_fiscale(anno: int) -> Dict[str, Any]:
         "totale_scadenze": len(existing),
         "completate": len([s for s in existing if s.get("completato")]),
         "scadenze_per_mese": per_mese,
-        "prossime_5": prossime[:5]
+        "prossime_5": prossime[:5],
+        "scadenze": existing  # Aggiungi lista completa
     }
 
 
