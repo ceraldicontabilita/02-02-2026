@@ -357,6 +357,7 @@ const router = createBrowserRouter([
       { path: "import-export", element: <LazyPage><ImportUnificato /></LazyPage> },
       { path: "regole-categorizzazione", element: <Navigate to="/classificazione-email?tab=regole" replace /> },
       { path: "verifica-coerenza", element: <LazyPage><VerificaCoerenza /></LazyPage> },
+      { path: "verifica-coerenza/:tab", element: <LazyPage><VerificaCoerenza /></LazyPage> },
       { path: "verifica-coerenza/:entita", element: <LazyPage><VerificaCoerenza /></LazyPage> },
       { path: "commercialista", element: <LazyPage><Commercialista /></LazyPage> },
       { path: "commercialista/:anno/:mese", element: <LazyPage><Commercialista /></LazyPage> },
