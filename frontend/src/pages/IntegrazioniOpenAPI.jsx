@@ -461,10 +461,10 @@ export default function IntegrazioniOpenAPI() {
                   Il servizio XBRL permette di ottenere i bilanci delle aziende italiane in formato strutturato.
                 </p>
                 <ul style={{ fontSize: 13, color: '#0c4a6e', paddingLeft: 20, margin: 0 }}>
-                  <li>Inserisci la Partita IVA dell'azienda di cui vuoi il bilancio</li>
-                  <li>Opzionalmente specifica l'anno di chiusura del bilancio</li>
+                  <li>Inserisci la Partita IVA dell&apos;azienda di cui vuoi il bilancio</li>
+                  <li>Opzionalmente specifica l&apos;anno di chiusura del bilancio</li>
                   <li>La richiesta viene elaborata in modo asincrono</li>
-                  <li>Usa il pulsante "Verifica" per controllare lo stato della richiesta</li>
+                  <li>Usa il pulsante &quot;Verifica&quot; per controllare lo stato della richiesta</li>
                 </ul>
               </div>
             </div>
