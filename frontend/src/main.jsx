@@ -358,6 +358,8 @@ const router = createBrowserRouter([
       { path: "chiusura-esercizio", element: <LazyPage><ChiusuraEsercizio /></LazyPage> },
       { path: "chiusura-esercizio/:anno", element: <LazyPage><ChiusuraEsercizio /></LazyPage> },
       { path: "motore-contabile", element: <LazyPage><MotoreContabile /></LazyPage> },
+      { path: "calendario-fiscale", element: <LazyPage><CalendarioFiscale /></LazyPage> },
+      { path: "saldi-ferie-permessi", element: <LazyPage><SaldiFeriePermessi /></LazyPage> },
       
       // === STRUMENTI ===
       { path: "documenti", element: <LazyPage><Documenti /></LazyPage> },
