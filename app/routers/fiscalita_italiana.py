@@ -842,7 +842,7 @@ async def completa_scadenza(scadenza_id: str, note: str = Query(None)) -> Dict[s
     return {"success": True, "message": "Scadenza completata"}
 
 
-@router.get("/calendario/notifiche-imminenti")
+@router.get("/notifiche-scadenze")
 async def get_notifiche_scadenze_imminenti(
     giorni: int = Query(7, ge=1, le=30),
     anno: int = Query(None)
