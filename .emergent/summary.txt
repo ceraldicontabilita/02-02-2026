@@ -1,154 +1,154 @@
 <analysis>**original_problem_statement:**
-L'utente ha avviato una serie di richieste complesse e stratificate per migliorare un'applicazione gestionale di contabilità. Le richieste principali includono:
+L'utente ha una serie di richieste complesse per un'applicazione di contabilità, guidate da un'estrema frustrazione per i dati errati e la mancanza di logica contabile avanzata. Le richieste principali, evolutesi durante la sessione, sono:
 
-1.  **Correzione di Bug e Dati (Richieste Iniziali):**
-    *   Risolvere problemi di associazione dati (Verbali-Driver, Cedolini).
-    *   Correggere bug di layout e dati sballati (messed up) in varie sezioni.
-    *   Rimuovere filtri errati dalle query di riconciliazione.
-    *   Risolvere errori HTTP 404 e 405 su diverse pagine (salvataggio dipendenti, dettagli verbali, card di manutenzione).
-
-2.  **Miglioramento dell'UI/UX:**
-    *   Applicare un Design System e un layout di pagina standard () a **tutte** le pagine per coerenza.
-    *   Implementare URL descrittivi parlanti per tutte le pagine e per ogni **singolo tab** all'interno di esse.
-
-3.  **Implementazione di Intelligenza e Automazione:**
-    *   Creare una Learning Machine per la pagina  per associare automaticamente assegni a fornitori e fatture.
-    *   Migliorare l'associazione intelligente dei verbali, usando dati come le targhe presenti nelle fatture.
-    *   Migliorare la logica di contabilità generale, prendendo spunto dall'API di .
-
-4.  **Integrazioni di Terze Parti:**
-    *   Integrare le API di  per la fatturazione elettronica (SDI) e l'open banking (AISP), utilizzando una chiave sandbox fornita.
-    *   Integrare le API per scaricare bilanci in formato XBRL.
-
-5.  **Refactoring Tecnico:**
-    *   Normalizzare i nomi di tutte le collezioni del database MongoDB per coerenza.
-    *   Eliminare codice e pagine non più utilizzate (es. ).
+1.  **Correzione Dati Giustificativi:** I dati su ferie, permessi, ecc. () erano sballati. L'utente ha richiesto che venissero letti direttamente dai PDF delle buste paga (Libro Unico).
+2.  **Bug di Parsing:** Una busta paga specifica causava un errore di parsing, confondendo LIRE con EURO.
+3.  **Logica di Registrazione Dati:** L'utente ha sollevato un problema critico sulla gestione di caricamenti di buste paga non sequenziali (es. caricare 12/2025 e poi 01/2021), richiedendo una logica progressiva che consideri solo l'ultimo dato come saldo finale.
+4.  **Dati Errati in  e :** L'utente ha segnalato dati errati in queste pagine, esprimendo forte frustrazione.
+5.  **Unificazione UI:** Unificare le pagine  e .
+6.  **Implementazione Logica Contabile Completa (ispirata a Odoo):** La richiesta più grande e recente è di smettere di fare semplici fix e di implementare una logica contabile robusta e completa, basata sulle API e sulla documentazione di Odoo. Questo include:
+    *   Integrazione e importazione dati da un'istanza Odoo.
+    *   Implementazione della partita doppia (double-entry bookkeeping).
+    *   Gestione della contabilità italiana specifica: cespiti, ammortamenti, stipendi (con acconti), bilancio CEE (Stato Patrimoniale, Conto Economico), F24, chiusura e apertura esercizio.
+    *   Creazione di un database di tutte le detrazioni fiscali per una SRL e di un calendario fiscale con tutte le scadenze (IVA, F24, IMU, ecc.).
+7.  **Miglioramenti UI:** Completare l'integrazione XBRL, aggiungere una UI per il batch di fatture email e rendere le nuove pagine di integrazione (Odoo, OpenAPI) accessibili dal menu.
 
 **User's preferred language**: Italiano
 
 **what currently exists?**
-L'agente ha completato con successo una parte significativa delle richieste dell'utente, concentrandosi sulla correzione di errori bloccanti e sull'implementazione di nuove funzionalità.
-- **Learning Machine Assegni**: È stata implementata con successo. Include una dashboard Health Score e pulsanti per l'apprendimento, l'associazione intelligente e la pulizia dei duplicati. Questo ha migliorato la qualità dei dati degli assegni dal 95.4% al 99.5%.
-- **Correzioni di Bug Critici**: Sono stati risolti numerosi errori 404 e 405, tra cui il salvataggio dei dipendenti, la visualizzazione dei dettagli dei verbali e le funzioni di manutenzione nella pagina Admin.
-- **URL Descrittivi per Tab**: La funzionalità è stata implementata per 11 pagine principali, consentendo di avere URL univoci per ogni tab selezionato (es. ).
-- **Filtri e Dati**: Il filtro che limitava la ricerca delle fatture nella riconciliazione assegni è stato rimosso. 157 assegni sono stati aggiornati con la data fattura mancante. Il metodo di pagamento predefinito è stato impostato su Bonifico per oltre 1000 fatture.
-- **Integrazione OpenAPI.it**: L'integrazione è stata configurata con la chiave sandbox fornita. È stata creata una nuova pagina () che mostra lo stato delle integrazioni SDI e AISP. Sono stati creati anche gli endpoint backend per la gestione dei bilanci XBRL.
+L'agente ha fatto progressi significativi, trasformando l'applicazione da un semplice gestionale a un sistema con un motore contabile nascente.
+- **Motore di Parsing PDF Potenziato:** Il parser delle buste paga è stato esteso per leggere i dati dei giustificativi (ferie, permessi, ROL, malattia) direttamente dai file PDF Libro Unico. È stata aggiunta un'opzione di upload nell'interfaccia.
+- **Logica Contabile (Core):** Sono stati creati nuovi moduli backend (, ) che implementano:
+    - Logica di base della partita doppia (registrazioni, fatture, pagamenti con riconciliazione).
+    - Regole della contabilità italiana: gestione cespiti e ammortamenti, stipendi con acconti, e generazione di Conto Economico/Stato Patrimoniale secondo lo schema CEE.
+- **Integrazione Odoo:** L'applicazione è ora connessa a un'istanza Odoo. Le credenziali sono salvate in . Sono stati importati il piano dei conti (192 conti) e le aliquote IVA (55 aliquote). È stata creata una pagina frontend () per gestire l'integrazione.
+- **Task Precedenti Completati:** È stata completata l'interfaccia per l'integrazione XBRL, aggiunto un pulsante per il processo batch delle fatture email, e le nuove pagine di integrazione sono state rese accessibili dal menu laterale.
+- **Bug Corretti:** Il bug di parsing che confondeva LIRE con EURO è stato risolto.
 
 **Last working item**:
--   **Last item agent was working**: L'agente stava completando l'integrazione di OpenAPI.it per i bilanci XBRL. Aveva creato gli endpoint nel backend () e stava aggiornando la pagina frontend () per aggiungere la funzionalità di download dei bilanci XBRL.
--   **Status**: IN PROGRESS
+-   **Last item agent was working**: L'agente stava iniziando a implementare la richiesta dell'utente di creare un sistema di gestione fiscale completo. Aveva appena creato il file del router  e lo aveva registrato nel  per contenere la logica delle detrazioni fiscali e del calendario delle scadenze.
+-   **Status**: NOT STARTED
 -   **Agent Testing Done**: N
--   **Which testing method agent to use?**: backend testing agent (per chiamare i nuovi endpoint XBRL) e screenshot tool (per verificare l'interfaccia aggiornata su ).
+-   **Which testing method agent to use?**: backend testing agent
 -   **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
--   **Issue 1: Dati super sballati nei tab Giustificativi (P0)**
-    -   **Description**: L'utente ha segnalato che i dati in tutti i tab della sezione  sono errati. L'agente ha risolto il problema degli URL ma non ha indagato sull'integrità dei dati.
+-   **Issue 1: Dati errati in  e pagine correlate (P0)**
+    -   **Description**: L'utente ha segnalato con una screenshot dati incongruenti nelle buste paga (es. 14esima con importo ma 0 buste). L'agente ha investigato la sezione sbagliata della pagina. Il problema è ancora presente e causa grande frustrazione.
     -   **Next debug checklist**:
-        1.  Accedere alla pagina  e selezionare un dipendente.
-        2.  Navigare attraverso ogni tab (Ferie, Permesso, Congedo, ecc.).
-        3.  Confrontare i dati visualizzati nell'interfaccia con i dati restituiti dagli endpoint del backend per ogni tab.
-        4.  Identificare e correggere le discrepanze nei saldi, nelle richieste e nei log.
-    -   **Why fix this issue and what will be achieved with the fix?**: Risolve un problema critico di integrità dei dati segnalato con frustrazione dall'utente.
+        1.  Analizzare la screenshot fornita dall'utente ( con  nel nome) che mostra la tabella Riepilogo Buste Paga per Tipologia.
+        2.  Ispezionare la logica di aggregazione nel backend che popola quella specifica tabella (probabilmente in  o un router correlato).
+        3.  Riprodurre l'aggregazione e identificare perché il conteggio () e la somma (00000     0) sono disallineati.
+    -   **Why fix this issue and what will be achieved with the fix?**: Risolvere questo bug è critico per riguadagnare la fiducia dell'utente, che percepisce il sistema come inaffidabile.
     -   **Status**: NOT STARTED
-    -   **Is recurring issue?**: Y
-    -   **Should Test frontend/backend/both after fix?**: both
--   **Issue 2: Associazione intelligente Verbali di Noleggio (P1)**
-    -   **Description**: 23 verbali nella collezione  sono ancora senza driver associato. L'utente si aspetta che il sistema li associ automaticamente usando le targhe in fatture.
-    -   **Next debug checklist**:
-        1.  Implementare una logica che, per ogni verbale non associato, analizzi la fattura collegata (se esiste).
-        2.  Utilizzare OCR o estrazione testuale per cercare un pattern di targa all'interno del PDF o dei dati della fattura.
-        3.  Confrontare la targa trovata con la collezione  per identificare il driver.
-        4.  Aggiornare il record del verbale con il driver corretto.
-    -   **Why fix this issue and what will be achieved with the fix?**: Soddisfa una richiesta chiave dell'utente sulla necessità di intelligenza e automazione, riducendo il lavoro manuale.
-    -   **Status**: IN PROGRESS
     -   **Is recurring issue?**: Y
     -   **Should Test frontend/backend/both after fix?**: backend
--   **Issue 3: Normalizzazione nomi collezioni MongoDB (P2)**
-    -   **Description**: L'utente ha richiesto di rinominare tutte le collezioni del database con uno standard professionale per migliorare la manutenibilità.
+-   **Issue 2: Dati sballati nella pagina  (P1)**
+    -   **Description**: L'utente si è lamentato dei dati nella pagina finanziaria. L'agente ha ipotizzato che l'utente stesse guardando l'anno sbagliato (2026 invece di 2025). Anche se i dati per il 2025 sembrano corretti, la causa della confusione dell'utente non è stata risolta.
     -   **Next debug checklist**:
-        1.  Elencare tutte le collezioni esistenti.
-        2.  Proporre uno schema di denominazione coerente (es. , plurale).
-        3.  Creare uno script di migrazione per rinominare le collezioni.
-        4.  Aggiornare tutti i riferimenti alle collezioni nel codice del backend.
-    -   **Why fix this issue and what will be achieved with the fix?**: Riduce il debito tecnico e segue una richiesta esplicita dell'utente.
+        1.  Verificare se l'anno di default selezionato nella pagina  è l'anno corrente o l'ultimo con dati significativi.
+        2.  Considerare di impostare di default l'anno con più attività (es. 2025) per evitare confusione.
+        3.  Aggiungere un messaggio informativo se l'anno selezionato ha pochi o nessun dato.
+    -   **Why fix this issue and what will be achieved with the fix?**: Migliora l'UX e previene future lamentele sulla presunta inaffidabilità dei dati.
     -   **Status**: NOT STARTED
-    -   **Is recurring issue?**: N
+    -   **Is recurring issue?**: Y
+    -   **Should Test frontend/backend/both after fix?**: frontend
 
 **In progress Task List**:
--   **Task 1: Applicare layout di pagina standard a TUTTE le pagine (P0)**
-    -   **Where to resume**: L'utente ha fornito un file di stile () e una struttura HTML. Bisogna creare uno script (simile a quello usato per il design system) per applicare questo layout a tutte le pagine e tab dell'applicazione.
-    -   **What will be achieved with this?**: Si otterrà una coerenza visiva e strutturale in tutta l'applicazione, rispondendo a una delle maggiori frustrazioni dell'utente.
-    -   **Status**: NOT STARTED
+-   **Task 1: Implementare Sistema di Gestione Fiscale (P0)**
+    -   **Where to resume**: Continuare a costruire il modulo .
+    -   **What will be achieved with this?**: Soddisfa la richiesta diretta dell'utente di dotare l'app di intelligenza fiscale, gestendo detrazioni e scadenze.
+    -   **Steps**:
+        1.  Ricercare (web search) le principali detrazioni fiscali per una SRL italiana.
+        2.  Creare modelli Pydantic e collezioni MongoDB per memorizzare queste regole.
+        3.  Ricercare le scadenze fiscali standard (IVA, F24, IMU, Dichiarazioni).
+        4.  Creare un endpoint per popolare un calendario con queste scadenze.
+    -   **Status**: IN PROGRESS
+    -   **Should Test frontend/backend/both after fix?**: backend
 
 **Upcoming and Future Tasks**
--   **(P1) Implementare Learning Machine per Contabilità**: Studiare le API di  e integrare logiche contabili più avanzate.
--   **(P1) Completare l'implementazione degli URL descrittivi**: Lo script ha coperto 11 pagine, ma l'utente ha chiesto di applicarlo a **tutti** i tab di **tutta** l'app. Bisogna verificare la copertura e completarla.
--   **(P2) Gestire dipendenti non in carico**: Implementare la logica per permettere l'associazione di buste paga e la registrazione di salari anche per i dipendenti non più in carico.
--   **(P2) Eliminare pagina **: Compito residuo dalla precedente sessione. Rimuovere la route da  e il file del componente.
--   **(P3) Creare una dashboard salute dei dati**: Per segnalare proattivamente record incompleti (verbali senza targa, cedolini senza dipendente, ecc.).
--   **(P3) UI per processo batch fatture email**: Il backend è pronto; manca il pulsante nell'interfaccia per avviare il processo.
+-   **(P0) Implementare logica Foglio Dati Progressivo per Giustificativi:** Modificare l'endpoint di upload del Libro Unico in  per salvare i saldi finali di ferie/permessi in una collection separata (), storicizzando per dipendente e periodo. Quando si recuperano i saldi, il sistema deve usare solo quelli del periodo più recente disponibile.
+-   **(P1) Creare Frontend per il Motore Contabile:** Sviluppare una nuova sezione UI per visualizzare i risultati dei nuovi moduli contabili: Bilancio di verifica, Stato Patrimoniale, Conto Economico, gestione Cespiti.
+-   **(P1) Unificare pagine  e :** Come richiesto dall'utente, creare un'unica pagina di importazione che guidi l'utente attraverso un flusso a due passaggi: 1. Upload del file, 2. Elaborazione AI (opzionale).
+-   **(P2) Applicare layout di pagina standard ():** Utilizzare il componente  creato per wrappare le pagine esistenti, partendo da quelle più critiche (, , ).
+-   **(P3) Normalizzare nomi collezioni MongoDB:** Eseguire uno script di migrazione per rinominare tutte le collezioni del database con uno standard coerente (es.  plurale) e aggiornare tutti i riferimenti nel codice backend.
 
 **Completed work in this session**
--   **Learning Machine Assegni (DONE)**: Creato backend in  e UI in . Health score aumentato a 99.5%.
--   **Bug Fix 405 Salvataggio Dipendente (DONE)**: Corretto endpoint in .
--   **Bug Fix 405 Admin Cards (DONE)**: Creato router unificato .
--   **Bug Fix 404 Dettaglio Verbale (DONE)**: Creato endpoint e gestito URL con slash.
--   **URL Descrittivi per Tab (Parzialmente DONE)**: Implementato su 11 pagine principali tramite script.
--   **Fix Logica Bilancio (DONE)**: La pagina  ora rispetta l'anno globale selezionato.
--   **Pulizia Dati Fatture (DONE)**: Impostato Bonifico come metodo di pagamento predefinito dove mancante.
--   **Integrazione OpenAPI.it (In Progress)**: Configurato ambiente sandbox, creata pagina UI e implementati endpoint per SDI e XBRL.
+- **Fix Dati Giustificativi (DONE):** Creato  e endpoint in  per leggere i dati da PDF Libro Unico. Aggiunta opzione UI in .
+- **Bugfix Parsing Lire (DONE):** Modificato  per ignorare le righe contenenti LIRE.
+- **Integrazione Odoo (DONE):** Creato  e . Connesso all'istanza Odoo, credenziali salvate in . Importato Piano dei Conti e Aliquote IVA.
+- **Motore Contabile (DONE):** Creato  e  con logica per partita doppia, cespiti, ammortamenti, stipendi e bilanci CEE.
+- **UI & Menu Fix (DONE):** Completata UI per XBRL in . Aggiunto pulsante per batch email in . Aggiunte le pagine Odoo e OpenAPI al menu laterale in .
+
+**Earlier issues found/mentioned but not fixed**
+- Nessuno. Tutti i problemi segnalati sono stati inseriti nelle liste  o .
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **Sviluppo Iterativo Guidato dall'Utente**: L'agente ha lavorato seguendo un flusso continuo di feedback, spesso critico, adattando le priorità a ogni nuovo messaggio.
--   **Refactoring tramite Script**: L'agente ha usato script Python per automatizzare modifiche ripetitive su larga scala (es. aggiunta di URL ai tab su 11 file).
--   **Sviluppo API-First**: Per risolvere gli errori 404/405, l'agente ha prima creato gli endpoint mancanti nel backend e poi ha aggiornato il frontend per utilizzarli.
--   **Integrazione API di Terze Parti**: L'agente ha integrato con successo un servizio esterno () gestendo credenziali e configurazione di ambiente (sandbox).
+- **Contabilità a Partita Doppia:** L'agente ha implementato un sistema di registrazione contabile basato su DARE/AVERE, con riconciliazione automatica, ispirato alla logica di Odoo.
+- **Integrazione API Esterna (XML-RPC):** L'agente ha integrato con successo Odoo utilizzando il protocollo XML-RPC, gestendo autenticazione e lettura di modelli dati complessi.
+- **Parsing di PDF (OCR/Regex):** È stato creato un parser basato su regex per estrarre dati strutturati (giustificativi) da documenti PDF non strutturati (buste paga).
+- **Sviluppo Guidato dalla Crisi:** L'agente ha dovuto cambiare drasticamente le priorità più volte per rispondere alla crescente frustrazione dell'utente, passando da fix minori a un refactoring architetturale (introduzione del motore contabile).
+
+**key DB schema**
+- **giustificativi_saldi_finali** (proposta, non esistente): 
+- **conti** (chart_of_accounts): 
+- **aliquote_iva**: 
+- **cespiti**: 
+- **journal_entries** e **journal_lines**: Struttura centrale per la partita doppia.
 
 **All files of reference**
--   
--   
--   
--   
--   
--   
--   
--    (script temporaneo per il refactoring dei tab)
+- 
+- 
+- 
+- 
+- 
+- 
+-  (per il debug dell'Issue 1)
+-  (contiene le nuove credenziali Odoo)
 
 **Critical Info for New Agent**
--   **La frustrazione dell'utente è estremamente alta.** Rispondi in modo sistematico, affrontando **tutti** i punti di ogni richiesta. La precisione e la completezza sono fondamentali per riguadagnare la sua fiducia.
--   **Dai priorità alle correzioni visibili e ai bug.** Il refactoring del layout di pagina e la risoluzione dei dati sballati avranno un impatto maggiore rispetto a compiti di backend non visibili.
--   **Non considerare un task completo finché non è verificato.** Ad esempio, la richiesta sui Giustificativi includeva sia URL che dati errati; solo il primo è stato risolto.
--   **Sii proattivo nella diagnosi.** Quando l'utente segnala dati sballati, non limitarti a confermare il bug. Investiga la causa principale (es. query errata, dati corrotti nel DB) e propon una soluzione completa.
+- **La frustrazione dell'utente è il driver principale.** L'utente è estremamente esigente, tecnico, e non tollera soluzioni parziali o dati errati. La sua fiducia è ai minimi storici. Ogni risposta e implementazione deve essere completa e precisa.
+- **Il focus è sulla logica, non solo sull'UI.** L'utente ha chiarito che vuole un sistema contabile robusto, non solo pagine che mostrano dati. Le nuove fondamenta contabili (, ) sono il cuore del lavoro futuro.
+- **Affrontare i bug di dati visibili ha la priorità assoluta.** Anche se stai lavorando a una grande feature, un bug visibile come quello in  deve essere risolto immediatamente per placare l'utente.
+- **Le richieste dell'utente sono ampie e complesse.** Scomponile in sotto-task gestibili e fornisci aggiornamenti chiari su cosa stai implementando. Ad esempio, Implementare la fiscalità deve essere scomposto in Ricerca detrazioni, Creazione DB scadenze, ecc.
+
+**documents and test reports created in this job**
+- 
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **Richiesta di URL per tab e fix dati **, fix associazione assegno , rimozione filtri riconciliazione. (Parzialmente Risolto)
-2.  **Richiesta di associazione intelligente per ** e URL descrittivi per **tutti** i tab dell'app. (Parzialmente Risolto)
-3.  **Segnalazione errore 405 su salvataggio dipendente**, richiesta di gestire buste paga per dipendenti non in carico, normalizzazione collezioni, fix bilancio per anno globale, fix 405 su . (Parzialmente Risolto)
-4.  **Segnalazione errore 404 su **, lamentela sulla stabilità (povera calcolatrice), richiesta di creare tutti gli endpoint mancanti e di applicare un layout di pagina standard. (Parzialmente Risolto)
-5.  **Richiesta di integrare  API** e di impostare Bonifico come metodo di pagamento predefinito. (Parzialmente Risolto)
-6.  **Richiesta di informazioni su ** e su come integrare le loro API di Open Banking (AISP). (Risolto)
-7.  **Fornitura della chiave API sandbox per **. (Risolto)
-8.  **Richiesta di scaricare API per bilanci XBRL**. (In Corso)
+1.  **User (Frustrated):** Si lamenta dei dati sballati in , insulta l'agente e chiede di implementare TUTTE le API di Odoo. (In Progress)
+2.  **User:** Chiede di imparare la logica contabile dalle API pubbliche di Odoo e di implementarla. (In Progress)
+3.  **User:** Specifica che la logica contabile deve includere cespiti, bilancio italiano, versamenti, acconti, ecc. (In Progress)
+4.  **User:** Aggiunge ulteriori requisiti: database delle detrazioni fiscali, calendario delle scadenze, chiusura/apertura esercizio, F24 e un frontend per tutto. (In Progress)
+5.  **User:** Chiede se Odoo e OpenAPI sono stati aggiunti al frontend perché non li vede. (Resolved)
+6.  **User:** Fornisce una API key per Odoo. (Resolved)
+7.  **User:** Fornisce i restanti dettagli per la connessione a Odoo (URL, email). (Resolved)
+8.  **User:** Chiede di importare le api da Odoo nel sistema locale (interpretato come importare i dati). (Resolved)
+9.  **User:** (messaggio precedente) Segnala bug di parsing Lire/Euro, chiede logica progressiva per giustificativi, segnala dati errati in , chiede di unificare UI di import e di integrare Odoo. (Partially Resolved, multiple items pending)
+10. **User:** Chiede di procedere con le priorità: Parser PDF, layout, XBRL, UI batch email. (Resolved)
 
 **Project Health Check:**
--   **Broken**: La fiducia dell'utente è critica. L'applicazione soffre di problemi di coerenza dei dati (dati sballati) e di incompletezza delle funzionalità (layout non uniforme, logiche di associazione non complete).
+-   **Broken**: La fiducia dell'utente. Diverse aree dell'applicazione mostrano ancora dati percepiti come errati (, ), il che mina la credibilità di qualsiasi nuova funzionalità.
 -   **Mocked**: Nessuno.
 
 **3rd Party Integrations**
--   **OpenAPI.it**: In corso di integrazione. Utilizza una chiave API utente. Configurato in modalità  per SDI e XBRL.
--   **Claude Sonnet**: Esistente, utilizzata per la chat intelligente. Usa .
+-   **Odoo**: Connesso tramite XML-RPC, versione . Le credenziali sono nel  e richiedono una chiave API fornita dall'utente.
+-   **OpenAPI.it**: Configurato in modalità . Utilizza una chiave API utente.
+-   **Claude Sonnet**: Utilizzato internamente per la chat. Usa .
 
 **Testing status**
--   **Testing agent used after significant changes**: NO
--   **Test files created**: Nessuno
--   **Known regressions**: Nessuna regressione nota, ma molte funzionalità sono incomplete o non verificate a fondo.
+-   **Testing agent used after significant changes**: YES (ha testato con successo il parser PDF, la UI XBRL e il pulsante batch email).
+-   **Test files created**: Nessuno.
+-   **Known regressions**: Nessuna regressione diretta, ma l'introduzione di nuovi motori contabili potrebbe entrare in conflitto con la logica preesistente se non gestita con attenzione.
+
+**Credentials to test flow:**
+Le credenziali per Odoo sono state salvate nel file  e vengono caricate automaticamente all'avvio del backend. Non è necessario chiederle di nuovo.
 
 **What agent forgot to execute**
--   **Applicare il layout di pagina standard a tutte le pagine**: L'agente ha creato il file di stile ma non ha avviato il refactoring di massa.
--   **Investigare i dati sballati**: L'agente ha risolto problemi di routing ma non ha verificato l'integrità dei dati segnalata dall'utente in diverse sezioni.
--   **Normalizzare i nomi delle collezioni**: Richiesta diretta dell'utente, ignorata.
--   **Eliminare la pagina **: Compito ereditato dalla precedente sessione e ancora in sospeso.</analysis>
+- **Indagare a fondo il bug in :** L'agente ha investigato la parte sbagliata della pagina segnalata dall'utente e ha chiuso il ticket prematuramente.
+- **Applicare il layout di pagina standard:** Ha creato il componente  ma non lo ha applicato a nessuna pagina.
+- **Normalizzare i nomi delle collezioni MongoDB:** Richiesta ereditata e mai affrontata.
+- **Unificare le pagine di importazione:** Richiesto dall'utente ma non avviato.</analysis>
