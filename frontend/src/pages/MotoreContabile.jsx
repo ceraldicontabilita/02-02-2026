@@ -4,11 +4,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Button } from '../components/ui/button';
 import { Loader2, TrendingUp, TrendingDown, Building2, Calculator, FileText, RefreshCw } from 'lucide-react';
-
-const API_URL = process.env.REACT_APP_BACKEND_URL;
+import api from '../api';
 
 export default function MotoreContabile() {
-  const { selectedYear } = useAnnoGlobale();
+  const { anno: selectedYear } = useAnnoGlobale();
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('bilancio');
   
@@ -19,10 +18,9 @@ export default function MotoreContabile() {
   
   const fetchStatoPatrimoniale = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/contabilita/bilancio/stato-patrimoniale?anno=${selectedYear}`);
-      const data = await res.json();
-      if (data.success) {
-        setStatoPatrimoniale(data);
+      const res = await api.get(`/api/contabilita/bilancio/stato-patrimoniale?anno=${selectedYear}`);
+      if (res.data?.success) {
+        setStatoPatrimoniale(res.data);
       }
     } catch (err) {
       console.error('Errore caricamento SP:', err);
@@ -31,10 +29,9 @@ export default function MotoreContabile() {
   
   const fetchContoEconomico = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/contabilita/bilancio/conto-economico?anno=${selectedYear}`);
-      const data = await res.json();
-      if (data.success) {
-        setContoEconomico(data);
+      const res = await api.get(`/api/contabilita/bilancio/conto-economico?anno=${selectedYear}`);
+      if (res.data?.success) {
+        setContoEconomico(res.data);
       }
     } catch (err) {
       console.error('Errore caricamento CE:', err);
@@ -43,10 +40,9 @@ export default function MotoreContabile() {
   
   const fetchCespiti = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/contabilita/cespiti`);
-      const data = await res.json();
-      if (data.success) {
-        setCespiti(data.cespiti || []);
+      const res = await api.get(`/api/contabilita/cespiti`);
+      if (res.data?.success) {
+        setCespiti(res.data.cespiti || []);
       }
     } catch (err) {
       console.error('Errore caricamento cespiti:', err);
@@ -55,10 +51,9 @@ export default function MotoreContabile() {
   
   const fetchBilancioVerifica = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/contabilita/bilancio-verifica?anno=${selectedYear}`);
-      const data = await res.json();
-      if (data.success !== false) {
-        setBilancioVerifica(data);
+      const res = await api.get(`/api/contabilita/bilancio-verifica?anno=${selectedYear}`);
+      if (res.data?.success !== false) {
+        setBilancioVerifica(res.data);
       }
     } catch (err) {
       console.error('Errore caricamento BV:', err);
