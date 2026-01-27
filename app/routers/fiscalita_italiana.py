@@ -644,11 +644,13 @@ async def lista_agevolazioni(
     ).to_list(100)
     
     if not agevolazioni:
-        # Inizializza database
+        # Inizializza database con copie dei dati default
         for ag in AGEVOLAZIONI_FISCALI_SRL:
-            ag["created_at"] = datetime.now(timezone.utc).isoformat()
-            await db["agevolazioni_fiscali"].insert_one(ag)
-        agevolazioni = AGEVOLAZIONI_FISCALI_SRL
+            ag_copy = dict(ag)  # Copia per evitare mutazione con _id
+            ag_copy["created_at"] = datetime.now(timezone.utc).isoformat()
+            await db["agevolazioni_fiscali"].insert_one(ag_copy)
+        # Ricarica dal database senza _id
+        agevolazioni = await db["agevolazioni_fiscali"].find({}, {"_id": 0}).to_list(100)
     
     if categoria:
         agevolazioni = [a for a in agevolazioni if a.get("categoria") == categoria]
