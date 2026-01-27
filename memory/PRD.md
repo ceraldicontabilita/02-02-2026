@@ -1,6 +1,6 @@
 # PRD – TechRecon Accounting System
 ## Product Requirements Document
-### Ultimo aggiornamento: 24 Gennaio 2026 (Sessione 23 - Automazione Completa Fatture)
+### Ultimo aggiornamento: 27 Gennaio 2026 (Sessione 24 - Learning Machine Assegni)
 
 ---
 
@@ -14,6 +14,7 @@ Sistema ERP contabile per aziende italiane con:
 - Scalabilità senza introdurre incoerenze
 - **COMPLETATO**: Architettura MongoDB-Only per persistenza dati (0 riferimenti filesystem)
 - **COMPLETATO**: Ricerca Globale funzionante (fatture, fornitori, prodotti, dipendenti)
+- **COMPLETATO**: Learning Machine per Assegni (apprendimento automatico, pulizia duplicati, associazione intelligente)
 - Interfaccia mobile-first per inserimenti rapidi
 
 ### 1.2 Stack Tecnologico
