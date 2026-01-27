@@ -3,17 +3,20 @@ import { useAnnoGlobale } from '../contexts/AnnoContext';
 import { PageLayout, PageSection, PageGrid, PageEmpty, PageLoading, PageError } from '../components/PageLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
-import { Calendar, CheckCircle, Clock, AlertTriangle, Bell, Filter, RefreshCw } from 'lucide-react';
+import { Calendar, CheckCircle, Clock, AlertTriangle, Bell, Filter, RefreshCw, Mail } from 'lucide-react';
 import api from '../api';
+import { toast } from 'sonner';
 
 export default function CalendarioFiscale() {
   const { anno: selectedYear } = useAnnoGlobale();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [calendario, setCalendario] = useState(null);
+  const [notifiche, setNotifiche] = useState(null);
   const [filtroMese, setFiltroMese] = useState('tutti');
   const [filtroStato, setFiltroStato] = useState('tutti');
   const [completando, setCompletando] = useState(null);
+  const [inviandoNotifica, setInviandoNotifica] = useState(null);
   
   const MESI = [
     { id: 'tutti', label: 'Tutti i mesi' },
@@ -35,9 +38,17 @@ export default function CalendarioFiscale() {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.get(`/api/fiscalita/calendario/${selectedYear}`);
-      if (res.data?.success) {
-        setCalendario(res.data);
+      const [calRes, notRes] = await Promise.all([
+        api.get(`/api/fiscalita/calendario/${selectedYear}`),
+        api.get(`/api/fiscalita/notifiche-scadenze?anno=${selectedYear}&giorni=30`)
+      ]);
+      
+      if (calRes.data?.success) {
+        setCalendario(calRes.data);
+      }
+      if (notRes.data?.success) {
+        setNotifiche(notRes.data);
+      }
       } else {
         setError('Impossibile caricare il calendario');
       }
