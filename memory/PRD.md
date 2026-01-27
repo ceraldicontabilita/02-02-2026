@@ -1,6 +1,6 @@
 # PRD – TechRecon Accounting System
 ## Product Requirements Document
-### Ultimo aggiornamento: 27 Gennaio 2026 (Sessione 24 - Learning Machine Assegni)
+### Ultimo aggiornamento: 27 Gennaio 2026 (Sessione 25 - Giustificativi PDF + XBRL + AI Batch)
 
 ---
 
