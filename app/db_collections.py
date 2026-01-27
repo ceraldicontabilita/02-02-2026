@@ -71,6 +71,7 @@ COLL_ATTENDANCE_TIMBRATURE = "attendance_timbrature"
 COLL_ATTENDANCE_ASSENZE = "attendance_assenze"
 COLL_GIUSTIFICATIVI = "giustificativi"  # Permessi/ferie
 COLL_GIUSTIFICATIVI_DIPENDENTE = "giustificativi_dipendente"
+COLL_GIUSTIFICATIVI_SALDI_FINALI = "giustificativi_saldi_finali"  # NUOVO: Saldi finali per foglio progressivo
 COLL_RICHIESTE_ASSENZA = "richieste_assenza"
 COLL_RIPORTI_FERIE = "riporti_ferie"
 
