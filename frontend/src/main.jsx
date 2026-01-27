@@ -264,6 +264,7 @@ const router = createBrowserRouter([
       { path: "noleggio-auto", element: <LazyPage><NoleggioAuto /></LazyPage> },
       { path: "noleggio-auto/:targa", element: <LazyPage><NoleggioAuto /></LazyPage> },
       { path: "verbali-noleggio/:numeroVerbale", element: <LazyPage><DettaglioVerbale /></LazyPage> },
+      { path: "verbali-noleggio/:prefisso/:numero", element: <LazyPage><DettaglioVerbale /></LazyPage> },
       { path: "verbali-riconciliazione", element: <LazyPage><VerbaliRiconciliazione /></LazyPage> },
       { path: "verbali-riconciliazione/:verbaleId", element: <LazyPage><VerbaliRiconciliazione /></LazyPage> },
       
