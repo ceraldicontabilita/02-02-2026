@@ -512,7 +512,7 @@ export default function IntegrazioniOpenAPI() {
                 <ol style={{ fontSize: 13, color: '#0c4a6e', paddingLeft: 20 }}>
                   <li>Genera una nuova API Key di produzione su OpenAPI.it</li>
                   <li>Aggiorna la variabile <code>OPENAPI_IT_KEY</code> nel file .env</li>
-                  <li>Imposta <code>OPENAPI_IT_ENV="production"</code></li>
+                  <li>Imposta <code>OPENAPI_IT_ENV=&quot;production&quot;</code></li>
                   <li>Riavvia il backend</li>
                 </ol>
               </div>
