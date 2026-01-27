@@ -381,7 +381,10 @@ async def associa_intelligente(
             continue
             
         importo = round(float(ass.get("importo", 0)), 2)
-        descrizione = ass.get("descrizione", "")
+        descrizione = ass.get("descrizione", "") or ""
+        # Ensure descrizione is a string
+        if isinstance(descrizione, dict):
+            descrizione = str(descrizione)
         data_ass = ass.get("data")
         
         match_trovato = None
