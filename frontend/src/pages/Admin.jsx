@@ -1025,8 +1025,8 @@ export default function Admin() {
                   onClick={async () => {
                     
                     try {
-                      const r = await api.post('/api/assegni/ricostruisci-dati');
-                      alert(`✅ Completato:\n• Beneficiari trovati: ${r.data.beneficiari_trovati || 0}\n• Fatture associate: ${r.data.fatture_associate || 0}`);
+                      const r = await api.post('/api/manutenzione/ricostruisci-assegni');
+                      alert(`✅ Completato:\n• Beneficiari trovati: ${r.data.beneficiari_trovati || 0}\n• Fatture associate: ${r.data.fatture_associate || 0}\n• Date aggiornate: ${r.data.date_aggiornate || 0}`);
                     } catch (e) {
                       alert('Errore: ' + (e.response?.data?.detail || e.message));
                     }
@@ -1047,7 +1047,7 @@ export default function Admin() {
                   onClick={async () => {
                     
                     try {
-                      const r = await api.post('/api/operazioni-da-confermare/auto-ricostruisci-dati');
+                      const r = await api.post('/api/manutenzione/ricostruisci-f24');
                       alert(`✅ Completato:\n• F24 corretti: ${r.data.f24_corretti || 0}\n• Riconciliazioni auto: ${r.data.riconciliazioni_auto || 0}`);
                     } catch (e) {
                       alert('Errore: ' + (e.response?.data?.detail || e.message));
