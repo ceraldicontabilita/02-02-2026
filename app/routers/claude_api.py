@@ -280,6 +280,9 @@ async def generate_report(request: ReportRequest):
     
     # Recupera dati per il report
     report_data = {}
+    db = Database.get_db()
+    if not db:
+        raise HTTPException(status_code=500, detail="Database non disponibile")
     
     try:
         if request.report_type == "bilancio":
