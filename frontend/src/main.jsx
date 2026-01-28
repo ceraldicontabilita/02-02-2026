@@ -197,6 +197,7 @@ const ClassificazioneDocumenti = lazy(() => import("./pages/ClassificazioneDocum
 // === AI TOOLS ===
 const DocumentiDaRivedere = lazy(() => import("./pages/DocumentiDaRivedere.jsx"));
 const CorrezioneAI = lazy(() => import("./pages/CorrezioneAI.jsx"));
+const AssistenteAI = lazy(() => import("./pages/AssistenteAI.jsx"));
 
 // Wrapper component with Suspense
 const LazyPage = ({ children }) => (
