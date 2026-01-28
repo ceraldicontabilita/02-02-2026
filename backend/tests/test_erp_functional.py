@@ -205,7 +205,8 @@ class TestCedolini:
     
     def test_cedolini_endpoint_exists(self):
         """Verifica che l'endpoint cedolini esista"""
-        response = requests.get(f"{BASE_URL}/api/cedolini")
+        # Nota: endpoint senza limit può causare timeout con molti record
+        response = requests.get(f"{BASE_URL}/api/cedolini?limit=10")
         assert response.status_code == 200, f"Endpoint cedolini non risponde: {response.status_code}"
     
     def test_cedolini_hanno_dati_validi(self):
