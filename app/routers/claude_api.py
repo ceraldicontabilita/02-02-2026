@@ -50,11 +50,14 @@ class CategorizeRequest(BaseModel):
 # HELPERS - Recupero dati dal database
 # ============================================================
 
-from app.database import db
+from app.database import Database
 
 async def get_context_data(context_type: str, limit: int = 10) -> Dict[str, Any]:
     """Recupera dati contestuali dal database per arricchire le risposte AI"""
     context = {}
+    db = Database.get_db()
+    if not db:
+        return {"error": "Database non disponibile"}
     
     try:
         if context_type in ["general", "bilancio"]:
