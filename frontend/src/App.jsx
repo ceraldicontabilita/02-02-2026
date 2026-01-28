@@ -161,10 +161,9 @@ const NAV_ITEMS = [
     short: "Tools",
     isSubmenu: true,
     children: [
-      { to: "/ai-parser", label: "🧠 Lettura Documenti AI", icon: "🧠", isNew: true, highlight: true },
+      { to: "/import-documenti", label: "📥 Import Documenti", icon: "📥", isNew: true, highlight: true },
       { to: "/correzione-ai", label: "✏️ Correzione Dati AI", icon: "✏️" },
       { to: "/da-rivedere", label: "⚠️ Da Rivedere", icon: "⚠️" },
-      { to: "/import-unificato", label: "Import Documenti", icon: "📥", isNew: true },
       { to: "/documenti", label: "Documenti Email", icon: "📨" },
       { to: "/regole-categorizzazione", label: "Regole Categorie", icon: "⚙️" },
       { to: "/verifica-coerenza", label: "Verifica Coerenza", icon: "✅" },
