@@ -154,6 +154,9 @@ const NAV_ITEMS = [
   // === DIPENDENTI - SALDI ===
   { to: "/saldi-ferie-permessi", label: "Saldi Ferie/ROL", icon: "🏖️", short: "Saldi", isNew: true },
   
+  // === ASSISTENTE AI ===
+  { to: "/assistente-ai", label: "Assistente AI", icon: "🤖", short: "AI", isNew: true, highlight: true },
+  
   // === STRUMENTI ===
   { 
     label: "Strumenti", 
