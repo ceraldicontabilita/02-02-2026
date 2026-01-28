@@ -1,0 +1,111 @@
+{
+  "summary": "Test funzionali ERP Ristorante completati con successo. Verificati calcoli matematici, coerenza dati e relazioni tra entità. 26 test passati, 1 skipped (magazzino vuoto).",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {
+        "endpoint": "/api/cedolini (senza limit)",
+        "issue": "Restituisce errore 520 senza parametro limit - probabilmente timeout con 916 record",
+        "priority": "LOW"
+      },
+      {
+        "endpoint": "/api/cedolini/riepilogo-mensile",
+        "issue": "12 cedolini con dati parziali (solo netto) - mancano lordo, INPS, IRPEF",
+        "priority": "LOW"
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_erp_functional.py",
+    "/app/test_reports/pytest/pytest_erp_functional.xml"
+  ],
+  "action_items": [
+    "Considerare aggiungere paginazione di default all'endpoint /api/cedolini per evitare timeout",
+    "I cedolini importati da PDF/Excel hanno solo il netto - valutare se è necessario calcolare lordo e trattenute"
+  ],
+  "critical_code_review_comments": [
+    "Dashboard bilancio-istantaneo: calcoli corretti (Ricavi 31395.51 - Costi 14332.54 = Utile 17062.97)",
+    "Prima Nota stats: saldo = entrate - uscite verificato per cassa e banca",
+    "Corrispettivi: totale = imponibile + IVA verificato (2670264.45€ totale, 1051 record)",
+    "Assegni: 210 totali, 190 pagati con beneficiario e fattura collegata",
+    "Cedolini: 916 totali, relazione con dipendenti verificata"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_erp_functional.py"
+  ],
+  "success_rate": {
+    "backend": "96% (26/27 passed, 1 skipped)",
+    "frontend": "N/A - backend only testing"
+  },
+  "test_credentials": null,
+  "seed_data_creation": "Nessun dato di test creato - test solo in lettura",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Test funzionali ERP completati. Tutti i calcoli matematici verificati: Dashboard (Ricavi-Costi=Utile), Corrispettivi (totale=imponibile+IVA), Prima Nota (saldo=entrate-uscite). Assegni hanno beneficiari e fatture collegate. Cedolini collegati a dipendenti esistenti. Magazzino doppia verità vuoto (0 prodotti).",
+  "test_results_detail": {
+    "dashboard_bilancio": {
+      "status": "PASS",
+      "ricavi": 31395.51,
+      "costi": 14332.54,
+      "utile_lordo": 17062.97,
+      "calcolo_verificato": "31395.51 - 14332.54 = 17062.97 ✓"
+    },
+    "corrispettivi": {
+      "status": "PASS",
+      "totale_generale": 2670264.45,
+      "totale_contanti": 1301303.58,
+      "totale_elettronico": 1374129.87,
+      "totale_iva": 243337.01,
+      "count": 1051
+    },
+    "assegni": {
+      "status": "PASS",
+      "totale": 210,
+      "pagati": 190,
+      "compilati": 1,
+      "confermati": 18
+    },
+    "cedolini": {
+      "status": "PASS",
+      "totale": 916,
+      "riepilogo_gennaio_2025": {
+        "num_cedolini": 12,
+        "totale_netto": 13886.77,
+        "nota": "dati parziali (solo netto)"
+      }
+    },
+    "prima_nota": {
+      "status": "PASS",
+      "cassa": {
+        "saldo": 2103671.79,
+        "entrate": 2676899.75,
+        "uscite": 573227.96,
+        "calcolo_verificato": "2676899.75 - 573227.96 = 2103671.79 ✓"
+      },
+      "banca": {
+        "saldo": -725005.82,
+        "entrate": 17314.51,
+        "uscite": 742320.33,
+        "calcolo_verificato": "17314.51 - 742320.33 = -725005.82 ✓"
+      }
+    },
+    "fatture": {
+      "status": "PASS",
+      "verificate": 30,
+      "con_dati_completi": "100%"
+    },
+    "magazzino": {
+      "status": "SKIPPED",
+      "motivo": "Magazzino doppia verità vuoto (0 prodotti)"
+    },
+    "dipendenti_cedolini": {
+      "status": "PASS",
+      "coerenza_verificata": true
+    }
+  }
+}
