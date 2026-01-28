@@ -406,6 +406,8 @@ const router = createBrowserRouter([
       { path: "da-rivedere/:stato", element: <LazyPage><DocumentiDaRivedere /></LazyPage> },
       { path: "correzione-ai", element: <LazyPage><CorrezioneAI /></LazyPage> },
       { path: "correzione-ai/:documento", element: <LazyPage><CorrezioneAI /></LazyPage> },
+      { path: "assistente-ai", element: <LazyPage><AssistenteAI /></LazyPage> },
+      { path: "claude", element: <LazyPage><AssistenteAI /></LazyPage> },
     ]
   }
 ]);
