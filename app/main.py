@@ -198,6 +198,7 @@ from app.routers import odoo_integration  # Integrazione Odoo External API
 from app.routers import accounting_engine  # Motore Contabile Odoo-style
 from app.routers import contabilita_italiana  # Contabilità Italiana Completa
 from app.routers import fiscalita_italiana  # Fiscalità e Calendario Scadenze
+from app.routers import claude_api  # API Claude - Assistente AI Contabile
 
 
 # =============================================================================
@@ -443,6 +444,9 @@ app.include_router(magazzino_avanzato.router, prefix="/api", tags=["Magazzino Av
 app.include_router(odoo_integration.router, prefix="/api/odoo", tags=["Odoo Integration"])
 app.include_router(accounting_engine.router, prefix="/api/accounting", tags=["Accounting Engine"])
 app.include_router(contabilita_italiana.router, prefix="/api/contabilita", tags=["Contabilità Italiana"])
+
+# --- Claude AI API (Assistente Contabile Intelligente) ---
+app.include_router(claude_api.router, prefix="/api/claude", tags=["Claude AI"])
 
 
 # =============================================================================
