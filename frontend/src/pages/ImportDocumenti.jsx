@@ -763,7 +763,7 @@ function AIParserTab() {
 }
 
 // ============================================================
-// VIEWER COMPONENTI (da AIParserPage)
+// VIEWER COMPONENTI
 // ============================================================
 
 function ParsedDataViewer({ data, type }) {
