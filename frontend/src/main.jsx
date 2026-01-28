@@ -177,7 +177,7 @@ const SaldiFeriePermessi = lazy(() => import("./pages/SaldiFeriePermessi.jsx"));
 
 // === STRUMENTI ===
 const Documenti = lazy(() => import("./pages/Documenti.jsx"));
-const ImportUnificato = lazy(() => import("./pages/ImportUnificato.jsx"));
+const ImportDocumenti = lazy(() => import("./pages/ImportDocumenti.jsx"));
 const RegoleCategorizzazione = lazy(() => import("./pages/RegoleCategorizzazione.jsx"));
 const VerificaCoerenza = lazy(() => import("./pages/VerificaCoerenza.jsx"));
 const Commercialista = lazy(() => import("./pages/Commercialista.jsx"));
@@ -195,7 +195,6 @@ const GestioneInvoiceTronic = lazy(() => import("./pages/GestioneInvoiceTronic.j
 const ClassificazioneDocumenti = lazy(() => import("./pages/ClassificazioneDocumenti.jsx"));
 
 // === AI TOOLS ===
-const AIParserPage = lazy(() => import("./pages/AIParserPage.jsx"));
 const DocumentiDaRivedere = lazy(() => import("./pages/DocumentiDaRivedere.jsx"));
 const CorrezioneAI = lazy(() => import("./pages/CorrezioneAI.jsx"));
 
@@ -365,9 +364,10 @@ const router = createBrowserRouter([
       { path: "documenti", element: <LazyPage><Documenti /></LazyPage> },
       { path: "documenti/:tipo", element: <LazyPage><Documenti /></LazyPage> },
       { path: "documenti-email", element: <Navigate to="/classificazione-email?tab=documenti" replace /> },
-      { path: "import-unificato", element: <LazyPage><ImportUnificato /></LazyPage> },
-      { path: "import-unificato/:tipo", element: <LazyPage><ImportUnificato /></LazyPage> },
-      { path: "import-export", element: <LazyPage><ImportUnificato /></LazyPage> },
+      { path: "import-unificato", element: <LazyPage><ImportDocumenti /></LazyPage> },
+      { path: "import-unificato/:tipo", element: <LazyPage><ImportDocumenti /></LazyPage> },
+      { path: "import-export", element: <LazyPage><ImportDocumenti /></LazyPage> },
+      { path: "import-documenti", element: <LazyPage><ImportDocumenti /></LazyPage> },
       { path: "regole-categorizzazione", element: <Navigate to="/classificazione-email?tab=regole" replace /> },
       { path: "verifica-coerenza", element: <LazyPage><VerificaCoerenza /></LazyPage> },
       { path: "verifica-coerenza/:tab", element: <LazyPage><VerificaCoerenza /></LazyPage> },
@@ -398,9 +398,9 @@ const router = createBrowserRouter([
       { path: "fornitori-learning", element: <Navigate to="/fornitori?tab=learning" replace /> },
       
       // === AI TOOLS ===
-      { path: "ai-parser", element: <LazyPage><AIParserPage /></LazyPage> },
-      { path: "ai-parser/:tipo", element: <LazyPage><AIParserPage /></LazyPage> },
-      { path: "lettura-documenti", element: <LazyPage><AIParserPage /></LazyPage> },
+      { path: "ai-parser", element: <Navigate to="/import-documenti?tab=ai" replace /> },
+      { path: "ai-parser/:tipo", element: <Navigate to="/import-documenti?tab=ai" replace /> },
+      { path: "lettura-documenti", element: <Navigate to="/import-documenti?tab=ai" replace /> },
       { path: "da-rivedere", element: <LazyPage><DocumentiDaRivedere /></LazyPage> },
       { path: "da-rivedere/:stato", element: <LazyPage><DocumentiDaRivedere /></LazyPage> },
       { path: "correzione-ai", element: <LazyPage><CorrezioneAI /></LazyPage> },
