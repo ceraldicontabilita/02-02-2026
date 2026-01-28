@@ -1,6 +1,6 @@
 # Application ERP/Accounting - PRD
 
-## Stato Aggiornato: 27 Gennaio 2026 - Sessione 3 (Audit Completo)
+## Stato Aggiornato: 28 Gennaio 2026 - Sessione 4 (P1 Completato)
 
 ---
 
@@ -11,7 +11,30 @@ Applicazione di contabilità per ristorante/azienda con richieste di:
 - Integrazione Odoo e implementazione contabilità italiana completa
 - Database detrazioni fiscali e calendario scadenze con notifiche
 
-## Audit Completo Eseguito
+## Lavoro Completato in Questa Sessione
+
+### P1: Unificazione Pagine Import ✅ COMPLETATO
+
+**Problema**: Le pagine `/import-unificato` e `/ai-parser` erano separate, creando duplicazione di funzionalità.
+
+**Soluzione**: Creata nuova pagina unificata `/import-documenti` con sistema a tabs:
+
+| Tab | Funzionalità |
+|-----|--------------|
+| **Import Massivo** | Upload multiplo, drag & drop, estrazione ZIP, 13 tipi documento |
+| **Lettura AI** | Parsing AI con Claude, visualizzatori per Fattura/F24/Busta Paga |
+
+**File modificati**:
+- `frontend/src/pages/ImportDocumenti.jsx` - NUOVO (combina ImportUnificato + AIParserPage)
+- `frontend/src/main.jsx` - Aggiornate rotte e redirect
+- `frontend/src/App.jsx` - Menu aggiornato
+
+**Redirect configurati**:
+- `/ai-parser` → `/import-documenti?tab=ai`
+- `/import-unificato` → `/import-documenti`
+- `/lettura-documenti` → `/import-documenti?tab=ai`
+
+## Audit Precedente (Sessione 3)
 
 ### Pagine Verificate: 11/11 ✅
 
@@ -29,84 +52,50 @@ Applicazione di contabilità per ristorante/azienda con richieste di:
 | ArchivioFatture | 3/3 ✅ | invoices (3856) ✅ | statistiche ✅ |
 | PrimaNota | 3/3 ✅ | prima_nota_cassa (1428) ✅ | saldo=ent-usc ✅ |
 
-### Collezioni MongoDB Verificate
-
-| Collezione | Documenti | Stato |
-|------------|-----------|-------|
-| invoices | 3,856 | ✅ |
-| fornitori | 268 | ✅ |
-| assegni | 210 | ✅ |
-| employees | 37 | ✅ |
-| cedolini | 916 | ✅ |
-| corrispettivi | 1,051 | ✅ |
-| prima_nota_cassa | 1,428 | ✅ |
-| estratto_conto_movimenti | 4,261 | ✅ |
-| warehouse_inventory | 5,372 | ✅ |
-| calendario_fiscale | 74 | ✅ |
-| agevolazioni_fiscali | 13 | ✅ |
-
-## Nuove Funzionalità Implementate
-
-### Sistema Notifiche Scadenze Fiscali ✅ NEW
-
-**Endpoint:**
-- `GET /api/fiscalita/notifiche-scadenze?anno=YYYY&giorni=N`
-  - Restituisce scadenze imminenti con livelli di urgenza:
-    - **Critica** (≤3 giorni)
-    - **Alta** (4-7 giorni)
-    - **Normale** (>7 giorni)
-
-- `POST /api/fiscalita/notifiche-scadenze/invia?scadenza_id=X&tipo_notifica=Y`
-  - Tipi: `dashboard` (notifica in-app), `email` (prepara email)
-
-**Frontend:**
-- Alert visivo rosso per scadenze critiche in CalendarioFiscale
-- Pulsante "Notifica" per ogni scadenza urgente
-- Toast notifications con sonner
-
 ## Architettura Attuale
 
 ```
 /app
 ├── app/
-│   ├── db_collections.py           # ✅ 300+ costanti normalizzate
+│   ├── db_collections.py           # Costanti collezioni MongoDB
 │   ├── routers/
-│   │   ├── fiscalita_italiana.py   # ✅ + Notifiche scadenze
+│   │   ├── fiscalita_italiana.py   # Calendario + Notifiche scadenze
 │   │   ├── accounting_engine.py    # Partita doppia
-│   │   ├── contabilita_italiana.py # Bilanci CEE
-│   │   └── employees/
-│   │       └── giustificativi.py   # Saldi finali progressivi
+│   │   └── contabilita_italiana.py # Bilanci CEE
 ├── frontend/src/pages/
-│   ├── CalendarioFiscale.jsx       # ✅ + Alert scadenze critiche
+│   ├── ImportDocumenti.jsx         # ✅ NUOVO - Import + AI Parser unificati
+│   ├── CalendarioFiscale.jsx       # Scadenze fiscali con alert
 │   ├── SaldiFeriePermessi.jsx      # Gestione ferie/ROL
 │   ├── MotoreContabile.jsx         # Bilancio, SP, CE, Cespiti
 │   └── Dashboard.jsx               # KPI principali
 └── test_reports/
-    ├── iteration_4.json            # 100% test passati
+    ├── iteration_5.json            # 100% test passati (P1)
+    ├── iteration_4.json            # 100% test passati (audit)
     └── audit_pagine.md             # Report audit completo
 ```
 
 ## Test Status
 
-- **Iteration 4**: 100% (14/14 backend, frontend OK)
+- **Iteration 5**: 100% frontend (7/7 features P1)
+- **Iteration 4**: 100% (14/14 backend + frontend)
 - **Bug trovati**: 0 critici
 - **Calcoli verificati**: Tutti corretti
 
 ## Backlog
 
 ### Completati ✅
-- [x] Audit completo pagine
-- [x] Sistema notifiche scadenze
-- [x] Verifica calcoli matematici
-- [x] Verifica collezioni MongoDB
+- [x] Audit completo pagine (Sessione 3)
+- [x] Sistema notifiche scadenze (Sessione 3)
+- [x] Verifica calcoli matematici (Sessione 3)
+- [x] **P1: Unificare ImportUnificato + AIParser** (Sessione 4)
 
-### P1 - Media Priorità
+### P2 - Media Priorità
+- [ ] Applicare PageLayout.jsx a Dashboard, GestioneAssegni, Corrispettivi
+- [ ] Standardizzare UI con design system centralizzato
+
+### P3 - Bassa Priorità
+- [ ] Migrazione fisica nomi collezioni MongoDB (gestito via db_collections.py)
 - [ ] Integrazione email reale per notifiche (richiede SMTP)
-- [ ] Applicare PageLayout a Dashboard, GestioneAssegni
-
-### P2 - Bassa Priorità
-- [ ] Unificare ImportUnificato + AIParser
-- [ ] Rinomina fisica collezioni MongoDB
 
 ## Integrazioni
 
@@ -116,5 +105,9 @@ Applicazione di contabilità per ristorante/azienda con richieste di:
 | Odoo | ✅ Piano conti importato |
 | Claude Sonnet | ✅ AI Parser |
 
+## Esclusioni
+- ❌ Esportazione bilancio XBRL (richiesto dall'utente)
+- ❌ Notifiche email (richiesto dall'utente)
+
 ---
-*Aggiornato: 27 Gennaio 2026 - Post Audit Completo*
+*Aggiornato: 28 Gennaio 2026 - Task P1 Completato*
