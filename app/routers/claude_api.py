@@ -56,7 +56,7 @@ async def get_context_data(context_type: str, limit: int = 10) -> Dict[str, Any]
     """Recupera dati contestuali dal database per arricchire le risposte AI"""
     context = {}
     db = Database.get_db()
-    if not db:
+    if db is None:
         return {"error": "Database non disponibile"}
     
     try:
@@ -281,7 +281,7 @@ async def generate_report(request: ReportRequest):
     # Recupera dati per il report
     report_data = {}
     db = Database.get_db()
-    if not db:
+    if db is None:
         raise HTTPException(status_code=500, detail="Database non disponibile")
     
     try:
