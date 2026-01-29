@@ -1429,6 +1429,6 @@ function FattureAdminTab() {
           </button>
         </div>
       </div>
-    </div>
+    </PageLayout>
   );
 }
