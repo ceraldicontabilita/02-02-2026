@@ -1372,42 +1372,20 @@ export default function Fornitori() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f3f4f6', padding: '24px', position: 'relative' }}>
-      
-      <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+    <PageLayout title="Gestione Fornitori" icon="🏢" subtitle="Anagrafica completa • Metodi di pagamento">
+      <div style={{ position: 'relative' }}>
         
-        {/* Header con Gradiente */}
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center', 
-          marginBottom: 24,
-          padding: '15px 20px',
-          background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
-          borderRadius: 12,
-          color: 'white',
-          flexWrap: 'wrap',
-          gap: 10
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 15 }}>
-            {/* Page Info Card spostata a sinistra nel header */}
+        <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+          
+          {/* Actions */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
             <PageInfoCard pageKey="fornitori" />
-            <div>
-              <h1 style={{ margin: 0, fontSize: 22, fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 10 }}>
-                <Building2 size={24} /> Gestione Fornitori
-              </h1>
-              <p style={{ margin: '4px 0 0 0', fontSize: 13, opacity: 0.9 }}>
-                Anagrafica completa • Metodi di pagamento
-              </p>
-            </div>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <button 
               onClick={reloadData}
               disabled={loading}
               style={{ 
                 padding: '10px 20px',
-                background: 'rgba(255,255,255,0.9)',
+                background: '#f1f5f9',
                 color: '#1e3a5f',
                 border: 'none',
                 borderRadius: 8,
