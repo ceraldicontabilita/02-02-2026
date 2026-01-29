@@ -1106,6 +1106,6 @@ export default function ControlloMensile() {
       
       {/* Modal Versamenti */}
       <VersamentiModal />
-    </div>
+    </PageLayout>
   );
 }
