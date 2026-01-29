@@ -2664,6 +2664,8 @@ export default function Fornitori() {
           </div>
         </Portal>
       )}
-    </div>
+        </div>
+      </div>
+    </PageLayout>
   );
 }
