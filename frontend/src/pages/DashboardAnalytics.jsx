@@ -26,7 +26,6 @@ function BarChart({ data, maxValue, color = '#3b82f6', label = '' }) {
   const max = maxValue || Math.max(...data.map(d => d.value), 1);
   
   return (
-    <PageLayout title="Analytics" icon="📈" subtitle="Analisi">
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       {data.map((item, idx) => (
         <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -530,6 +529,5 @@ export default function DashboardAnalytics() {
         </div>
       </div>
     </div>
-  </PageLayout>
   );
 }
