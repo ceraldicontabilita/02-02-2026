@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../api";
 import { formatEuro, formatDateIT, STYLES, COLORS, button, badge } from '../lib/utils';
+import { PageLayout } from '../components/PageLayout';
 
 export default function DettaglioVerbale() {
   const { numeroVerbale, prefisso, numero } = useParams();

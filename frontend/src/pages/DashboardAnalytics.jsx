@@ -5,6 +5,7 @@ import { useAnnoGlobale } from '../contexts/AnnoContext';
 import { ExportButton } from '../components/ExportButton';
 import { useWebSocketDashboard } from '../hooks/useWebSocket';
 import { PageInfoCard } from '../components/PageInfoCard';
+import { PageLayout } from '../components/PageLayout';
 
 /**
  * DASHBOARD ANALYTICS - Real-time

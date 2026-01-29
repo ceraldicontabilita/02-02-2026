@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import api from '../api';
 import { formatEuro, STYLES, COLORS, button, badge } from '../lib/utils';
 import { CheckCircle, AlertTriangle, XCircle, ChevronRight, RefreshCw, FileText, Calendar, TrendingUp, TrendingDown, Lock, Unlock } from 'lucide-react';
+import { PageLayout } from '../components/PageLayout';
 
 export default function ChiusuraEsercizio() {
   const currentYear = new Date().getFullYear();

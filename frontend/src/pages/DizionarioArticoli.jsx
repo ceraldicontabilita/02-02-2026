@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import api from '../api';
 import { formatEuro, STYLES, COLORS, button, badge } from '../lib/utils';
+import { PageLayout } from '../components/PageLayout';
 
 const CATEGORIE_HACCP_COLORS = {
   carni_fresche: { bg: '#fecaca', text: '#991b1b', label: 'Carni Fresche' },

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import api from "../api";
 import { formatEuro, formatDateIT, STYLES, COLORS, button, badge } from '../lib/utils';
 import { useAnnoGlobale } from "../contexts/AnnoContext";
+import { PageLayout } from '../components/PageLayout';
 
 const cardStyle = { background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', border: '1px solid #e5e7eb' };
 

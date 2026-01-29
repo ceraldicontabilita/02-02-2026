@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../co
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Alert, AlertDescription } from '../components/ui/alert';
+import { PageLayout } from '../components/PageLayout';
 import { 
   FileText, RefreshCw, CheckCircle2, AlertCircle, 
   Download, ExternalLink, Calendar, Building2, Euro

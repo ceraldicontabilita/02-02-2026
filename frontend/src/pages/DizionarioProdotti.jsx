@@ -3,6 +3,7 @@ import { formatEuro, formatDateIT, STYLES, COLORS, button, badge } from '../lib/
 import api from '../api';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
 import { Package, Search, AlertTriangle, Check, RefreshCw, Edit2, Save, X, ChevronDown, Database, Filter } from 'lucide-react';
+import { PageLayout } from '../components/PageLayout';
 
 export default function DizionarioProdotti() {
   const { anno } = useAnnoGlobale();
