@@ -393,16 +393,24 @@ function PrimaNotaDesktop() {
   });
 
   return (
-    <PageLayout title="Prima Nota" icon="📒" subtitle="Registro contabile cassa e banca">
-      <div>
-        {/* HEADER CON SELETTORE ANNO */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+    <div style={STYLES.page}>
+      
+      {/* HEADER CON SELETTORE ANNO */}
+      <div style={STYLES.header}>
+        <div>
+          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 'bold' }}>📒 Prima Nota</h1>
+          <p style={{ margin: '4px 0 0 0', fontSize: 13, opacity: 0.9 }}>
+            Registro contabile cassa e banca
+          </p>
+        </div>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ 
             padding: '10px 20px',
             fontSize: 16,
             fontWeight: 'bold',
             borderRadius: 8,
-            background: '#f1f5f9',
+            background: 'rgba(255,255,255,0.9)',
             color: COLORS.primary,
           }}>
             📅 Anno: {selectedYear}
@@ -1618,8 +1626,7 @@ function EditMovimentoModal({ movimento, tipo, onClose, onSave }) {
           </div>
         </form>
       </div>
-      </div>
-    </PageLayout>
+    </div>
   );
 }
 
