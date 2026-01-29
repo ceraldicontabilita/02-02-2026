@@ -170,7 +170,6 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <PageLayout title="Dashboard" icon="📊" subtitle="Panoramica">
       <div style={STYLES.card}>
         <h1 style={{ margin: '0 0 16px 0', fontSize: 22, fontWeight: 'bold', color: COLORS.primary }}>Dashboard</h1>
         <p style={{ color: COLORS.gray }}>⏳ Caricamento in corso...</p>
@@ -1848,6 +1847,5 @@ function ScadenzeWidget({ scadenze }) {
         </div>
       )}
     </div>
-  </PageLayout>
   );
 }
