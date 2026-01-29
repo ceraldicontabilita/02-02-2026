@@ -162,7 +162,8 @@ export default function VerbaliRiconciliazione() {
   const getStatoInfo = (stato) => STATI_VERBALE[stato] || STATI_VERBALE['sconosciuto'];
 
   return (
-    <div style={{ padding: 20, maxWidth: 1600, margin: '0 auto' }}>
+    <PageLayout title="Riconciliazione Verbali Noleggio" subtitle="Gestione completa: Verbale → Fattura → Veicolo → Driver">
+    <div style={{ maxWidth: 1600, margin: '0 auto' }}>
       {/* Header */}
       <div style={{ 
         display: 'flex', 

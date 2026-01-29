@@ -316,7 +316,8 @@ export default function Riconciliazione() {
   };
 
   return (
-    <div style={pageStyle.container} data-testid="riconciliazione-page">
+    <PageLayout title="Riconciliazione Bancaria" subtitle="Associa i movimenti dell'estratto conto con fatture, POS, versamenti e F24">
+    <div style={{...pageStyle.container, padding: 0}} data-testid="riconciliazione-page">
       {/* Header */}
       <div style={pageStyle.header}>
         <div>

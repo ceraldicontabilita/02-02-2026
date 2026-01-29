@@ -489,7 +489,8 @@ export default function RiconciliazioneUnificata() {
   }
 
   return (
-    <div style={{ padding: 'clamp(12px, 3vw, 20px)', position: 'relative' }}>
+    <PageLayout title="Riconciliazione Unificata" subtitle="Dashboard riepilogo e riconciliazione automatica">
+    <div style={{ position: 'relative' }}>
       {/* Page Info Card */}
       <div style={{ position: 'absolute', top: 0, right: 20, zIndex: 100 }}>
         <PageInfoCard pageKey="riconciliazione" />
