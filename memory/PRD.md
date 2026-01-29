@@ -5,27 +5,26 @@
 ---
 
 ## Stack Tecnologico
-
 | Layer | Tecnologie |
 |-------|------------|
-| Frontend | React 18.3, Vite, Tailwind, Shadcn/UI, Recharts |
+| Frontend | React 18.3, Vite, Tailwind, Shadcn/UI |
 | Backend | FastAPI 0.110, Python, Pydantic 2.12 |
-| Database | MongoDB Atlas (Motor 3.3) |
+| Database | MongoDB Atlas |
 | Integrazioni | Odoo, Claude Sonnet, OpenAPI.it |
 
 ---
 
 ## Completato ✅
 
-### PageLayout (16 pagine)
-AssistenteAI, Bilancio, CalendarioFiscale, CentriCosto, Corrispettivi, DocumentiDaRivedere, Finanziaria, IVA, Inventario, LiquidazioneIVA, Magazzino, Pianificazione, SaldiFeriePermessi, TFR, ToDo, UtileObiettivo
+### PageLayout Wrapper (29 pagine)
+AssistenteAI, Bilancio, CalendarioFiscale, Cedolini, CentriCosto, ChiusuraEsercizio, CodiciTributari, ContabilitaAvanzata, ControlloMensile, Corrispettivi, Dashboard, DocumentiDaRivedere, F24, Finanziaria, GestioneCespiti, HACCPRicezione, HACCPSanificazioni, HACCPScadenze, HACCPTemperature, IVA, Inventario, LiquidazioneIVA, Magazzino, Pianificazione, PrimaNotaSalari, SaldiFeriePermessi, TFR, ToDo, UtileObiettivo
 
-### API Cedolini con Paginazione
-- GET `/api/cedolini?limit=100&skip=0` 
+### API Cedolini Paginazione
+- GET `/api/cedolini?limit=100&skip=0`
 - GET `/api/cedolini/incompleti`
 - POST `/api/cedolini/incompleti/{id}/completa`
 
-### API Claude
+### API Claude AI
 - POST `/api/claude/chat`
 - POST `/api/claude/analyze`
 - POST `/api/claude/report`
@@ -36,22 +35,19 @@ AssistenteAI, Bilancio, CalendarioFiscale, CentriCosto, Corrispettivi, Documenti
 ## Da Completare
 
 ### P0
-- PageLayout su 57 pagine (strutture complesse richiedono modifiche manuali)
-- Completare 911 cedolini incompleti
+- PageLayout su 44 pagine rimanenti
+- 911 cedolini incompleti
 
 ### P1
 - Test E2E
 - Indici MongoDB
-- Documentazione API
 
 ### P2
 - Export Excel/CSV
 - Multi-tenant
-- Notifiche push
 
 ---
 
 ## Test
-- Build: ✅ 7.45s
-- Frontend: ✅ 100%
-- API: ✅ Paginazione OK
+- Build: ✅ 7.21s
+- Frontend: ✅ OK
