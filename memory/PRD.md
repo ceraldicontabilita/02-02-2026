@@ -1,53 +1,47 @@
 # Application ERP/Accounting - PRD
 
-## Stato Aggiornato: 29 Gennaio 2026 - PageLayout Esteso
+## Stato Aggiornato: 29 Gennaio 2026 - PageLayout Massivo
 
 ---
 
 ## Lavoro Completato
 
-### PageLayout Applicato ✅ (8 pagine totali)
+### PageLayout Applicato ✅ (11 pagine totali)
 
-| Pagina | Stato | Descrizione |
-|--------|-------|-------------|
-| CalendarioFiscale | ✅ | Già presente |
-| SaldiFeriePermessi | ✅ | Già presente |
-| Finanziaria | ✅ | KPI cards, IVA, Prima Nota |
-| Corrispettivi | ✅ | KPI, tabella hover |
-| CentriCosto | ✅ | Sezioni raggruppate, CDC cards |
-| **UtileObiettivo** | ✅ NEW | Progress bar, metriche, target |
-| **Pianificazione** | ✅ NEW | Form eventi, lista eventi |
-| **Magazzino** | ✅ NEW | Filtri, tabs, catalogo/manuale |
+| Pagina | Descrizione |
+|--------|-------------|
+| CalendarioFiscale | Scadenze fiscali |
+| SaldiFeriePermessi | Ferie/ROL dipendenti |
+| Finanziaria | KPI, IVA, Prima Nota |
+| Corrispettivi | KPI, tabella corrispettivi |
+| CentriCosto | CDC cards raggruppate |
+| UtileObiettivo | Progress bar, target |
+| Pianificazione | Eventi, form |
+| Magazzino | Filtri, tabs, catalogo |
+| **IVA** | Debito/Credito, viste annuali/trimestrali/mensili |
+| **TFR** | Accantonamenti, liquidazioni, storico |
+| **Bilancio** | Stato Patrimoniale, Conto Economico |
+
+### Pagine Rimanenti (Non Modificate)
+Le seguenti pagine non sono state modificate perché molto complesse (>500 righe) o già ben strutturate:
+- Dashboard (struttura complessa)
+- GestioneAssegni (2000+ righe)
+- Fornitori (2600+ righe)
+- PrimaNota (1800+ righe)
+- ArchivioFattureRicevute (1200+ righe)
+- ChiusuraEsercizio
+- Commercialista
+- VerificaCoerenza
 
 ### API Claude ✅
-- `/api/claude/chat` - Assistente contabile AI
+- `/api/claude/chat` - Assistente AI
 - `/api/claude/analyze` - Analisi documenti
 - `/api/claude/report` - Report narrativi
-- `/api/claude/categorize` - Categorizzazione automatica
-
-## Architettura UI
-
-```jsx
-// Componenti PageLayout
-import { 
-  PageLayout,      // Wrapper con header
-  PageSection,     // Sezioni con titolo
-  PageGrid,        // Grid responsive (cols: 2-4)
-  PageLoading,     // Stato caricamento
-  PageEmpty,       // Stato vuoto
-  PageError        // Gestione errori
-} from '../components/PageLayout';
-```
+- `/api/claude/categorize` - Categorizzazione
 
 ## Test Status
 - **Build**: ✅ Successo
-- **8 pagine** con design coerente
-
-## Pagine Rimanenti Senza PageLayout
-- Dashboard (struttura troppo complessa)
-- GestioneAssegni (usa già Shadcn)
-- PrimaNota (molto complessa)
-- GestioneCespiti (già usa Shadcn)
+- **11 pagine** con design coerente
 
 ## Integrazioni
 | Servizio | Stato |
