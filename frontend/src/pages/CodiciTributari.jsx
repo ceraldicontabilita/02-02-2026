@@ -408,6 +408,6 @@ export default function CodiciTributari() {
           💡 Clicca su un codice per vedere lo storico completo dei pagamenti
         </p>
       </div>
-    </div>
+    </PageLayout>
   );
 }
