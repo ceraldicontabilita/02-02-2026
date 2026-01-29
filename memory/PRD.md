@@ -1,86 +1,60 @@
 # Application ERP/Accounting - PRD
 
-## Stato Aggiornato: 29 Gennaio 2026 - PageLayout Applicato
+## Stato Aggiornato: 29 Gennaio 2026 - PageLayout Esteso
 
 ---
 
-## Lavoro Completato in Questa Sessione
+## Lavoro Completato
 
-### PageLayout Applicato ✅
+### PageLayout Applicato ✅ (8 pagine totali)
 
-Esteso il componente `PageLayout.jsx` a 5 pagine per standardizzare l'UI:
-
-| Pagina | Stato | Note |
-|--------|-------|------|
+| Pagina | Stato | Descrizione |
+|--------|-------|-------------|
 | CalendarioFiscale | ✅ | Già presente |
 | SaldiFeriePermessi | ✅ | Già presente |
-| **Finanziaria** | ✅ AGGIORNATA | KPI cards, sezioni IVA, tabelle |
-| **Corrispettivi** | ✅ AGGIORNATA | KPI cards, tabella con hover |
-| **CentriCosto** | ✅ AGGIORNATA | Grouped sections, CDC cards |
+| Finanziaria | ✅ | KPI cards, IVA, Prima Nota |
+| Corrispettivi | ✅ | KPI, tabella hover |
+| CentriCosto | ✅ | Sezioni raggruppate, CDC cards |
+| **UtileObiettivo** | ✅ NEW | Progress bar, metriche, target |
+| **Pianificazione** | ✅ NEW | Form eventi, lista eventi |
+| **Magazzino** | ✅ NEW | Filtri, tabs, catalogo/manuale |
 
-### API Claude (Sessione precedente) ✅
+### API Claude ✅
+- `/api/claude/chat` - Assistente contabile AI
+- `/api/claude/analyze` - Analisi documenti
+- `/api/claude/report` - Report narrativi
+- `/api/claude/categorize` - Categorizzazione automatica
 
-- **Backend**: `/api/claude/` con 4 endpoint (chat, analyze, report, categorize)
-- **Frontend**: `/assistente-ai` con chat interattiva
-
-## Architettura UI Standardizzata
+## Architettura UI
 
 ```jsx
-// Componenti PageLayout disponibili:
+// Componenti PageLayout
 import { 
-  PageLayout,      // Wrapper principale con header
+  PageLayout,      // Wrapper con header
   PageSection,     // Sezioni con titolo
-  PageGrid,        // Grid responsive
+  PageGrid,        // Grid responsive (cols: 2-4)
   PageLoading,     // Stato caricamento
   PageEmpty,       // Stato vuoto
   PageError        // Gestione errori
 } from '../components/PageLayout';
 ```
 
-## Esclusioni (Richieste dall'Utente)
-- ❌ Integrazione email reale per notifiche
-- ❌ Esportazione bilancio XBRL
-
-## Pagine Principali - Stato UI
-
-| Pagina | PageLayout | Note |
-|--------|------------|------|
-| Dashboard | ❌ | Struttura complessa, skip |
-| GestioneAssegni | ❌ | Già usa Shadcn |
-| Finanziaria | ✅ | Aggiornata |
-| Corrispettivi | ✅ | Aggiornata |
-| CentriCosto | ✅ | Aggiornata |
-| CalendarioFiscale | ✅ | Già presente |
-| SaldiFeriePermessi | ✅ | Già presente |
-| PrimaNota | ❌ | Troppo complessa |
-| GestioneCespiti | ❌ | Già usa Shadcn |
-
 ## Test Status
-
 - **Build**: ✅ Successo
-- **Screenshots**: Verificate 3 pagine aggiornate
-- **Regressioni**: Nessuna
+- **8 pagine** con design coerente
 
-## Backlog
-
-### Completati ✅
-- [x] Audit completo pagine
-- [x] P1: Unificare Import + AI Parser
-- [x] API Claude per assistente contabile
-- [x] **P2: Applicare PageLayout (5 pagine)**
-
-### Opzionale
-- [ ] Estendere PageLayout a Dashboard (richiede refactoring significativo)
-- [ ] Storico conversazioni Claude in MongoDB
+## Pagine Rimanenti Senza PageLayout
+- Dashboard (struttura troppo complessa)
+- GestioneAssegni (usa già Shadcn)
+- PrimaNota (molto complessa)
+- GestioneCespiti (già usa Shadcn)
 
 ## Integrazioni
-
 | Servizio | Stato |
 |----------|-------|
 | MongoDB Atlas | ✅ |
 | Odoo | ✅ |
 | Claude Sonnet | ✅ |
-| OpenAPI.it | ✅ |
 
 ---
-*Aggiornato: 29 Gennaio 2026 - PageLayout completato su 5 pagine*
+*Aggiornato: 29 Gennaio 2026*
