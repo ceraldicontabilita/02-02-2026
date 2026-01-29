@@ -849,6 +849,6 @@ export default function F24() {
           </div>
         </div>
       )}
-    </div>
+    </PageLayout>
   );
 }
