@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { STYLES, COLORS, button, badge, formatEuro, formatDateIT } from '../lib/utils';
+import { PageLayout } from '../components/PageLayout';
 
 // Stati presenza con colori
 const STATI_PRESENZA = {

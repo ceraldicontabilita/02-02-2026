@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import api from "../api";
 import { useAnnoGlobale } from '../contexts/AnnoContext';
 import { STYLES, COLORS, button, badge, formatEuro } from '../lib/utils';
+import { PageLayout } from '../components/PageLayout';
 
 export default function Admin() {
   const { anno } = useAnnoGlobale();
