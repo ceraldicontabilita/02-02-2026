@@ -5,6 +5,7 @@ import { formatEuro, formatDateIT, STYLES, COLORS, button, badge } from '../lib/
 import { useAnnoGlobale } from '../contexts/AnnoContext';
 import { ExportButton } from '../components/ExportButton';
 import { PageInfoCard } from '../components/PageInfoCard';
+import { PageLayout } from '../components/PageLayout';
 
 /**
  * RICONCILIAZIONE UNIFICATA

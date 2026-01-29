@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import api from "../api";
 import { STYLES, COLORS, button, badge, formatEuro, formatDateIT } from '../lib/utils';
+import { PageLayout } from '../components/PageLayout';
 
 export default function RicercaProdotti() {
   const [products, setProducts] = useState([]);

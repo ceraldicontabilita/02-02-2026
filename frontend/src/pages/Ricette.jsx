@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../api';
 import { formatEuro, formatDateIT, STYLES, COLORS, button, badge } from '../lib/utils';
 import { ChefHat, Search, Filter, TrendingUp, TrendingDown, AlertTriangle, Check, Package, Plus, Trash2, Edit2, Factory, Printer, Copy, Calendar, Tag, Clock } from 'lucide-react';
+import { PageLayout } from '../components/PageLayout';
 
 export default function Ricette() {
   const [ricette, setRicette] = useState([]);
