@@ -447,7 +447,8 @@ export default function Attendance() {
   }
 
   return (
-    <div style={{ padding: 20, maxWidth: 1600, margin: '0 auto' }} data-testid="attendance-page">
+    <PageLayout title="Gestione Presenze" subtitle="Calendario presenze e assenze dipendenti">
+    <div style={{ maxWidth: 1600, margin: '0 auto' }} data-testid="attendance-page">
       {/* Header */}
       <div style={{ 
         display: 'flex', 
