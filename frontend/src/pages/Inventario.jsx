@@ -459,6 +459,6 @@ export default function Inventario() {
           </div>
         </div>
       )}
-    </div>
+    </PageLayout>
   );
 }
