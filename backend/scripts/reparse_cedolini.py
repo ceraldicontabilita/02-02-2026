@@ -99,6 +99,7 @@ async def reparse_cedolini():
             # Prepara update
             update_data = {
                 "template_rilevato": template,
+                "num_pages": result.get("num_pages", 1),
                 "reparse_at": datetime.now(timezone.utc).isoformat()
             }
             
@@ -135,6 +136,19 @@ async def reparse_cedolini():
             
             if summary.get("tfr_quota"):
                 update_data["tfr_quota"] = summary["tfr_quota"]
+            
+            # Nuovi campi ferie/permessi
+            if summary.get("ferie_residuo") is not None:
+                update_data["ferie_residuo"] = summary["ferie_residuo"]
+            
+            if summary.get("ferie_godute") is not None:
+                update_data["ferie_godute"] = summary["ferie_godute"]
+            
+            if summary.get("permessi_residuo") is not None:
+                update_data["permessi_residuo"] = summary["permessi_residuo"]
+            
+            if summary.get("permessi_goduti") is not None:
+                update_data["permessi_goduti"] = summary["permessi_goduti"]
             
             # Aggiorna record
             await db["cedolini"].update_one(
