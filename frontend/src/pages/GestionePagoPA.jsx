@@ -107,12 +107,7 @@ export default function GestionePagoPA() {
   });
 
   return (
-    <PageLayout 
-      title="PagoPA" 
-      icon="💳"
-      subtitle="Pagamenti PA"
-    >
-      <div>
+    <div style={{ padding: 20, maxWidth: 1400, margin: '0 auto' }} data-testid="gestione-pagopa">
       {/* Header */}
       <div style={{ 
         display: 'flex', 
@@ -536,6 +531,5 @@ export default function GestionePagoPA() {
         </div>
       </div>
     </div>
-    </PageLayout>
   );
 }

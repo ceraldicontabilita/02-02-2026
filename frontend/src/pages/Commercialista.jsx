@@ -648,12 +648,7 @@ export default function Commercialista() {
   };
 
   return (
-    <PageLayout 
-      title="Area Commercialista" 
-      icon="👔"
-      subtitle="Export dati per commercialista"
-    >
-      <div>
+    <div style={{ padding: 20, maxWidth: 1400, margin: '0 auto' }}>
       <h1 style={{ marginBottom: 5, color: '#1a365d' }}>👩‍💼 Area Commercialista</h1>
       <p style={{ color: '#666', marginBottom: 25 }}>
         Genera e invia documenti PDF al commercialista via email
@@ -1253,6 +1248,5 @@ export default function Commercialista() {
         </div>
       )}
     </div>
-    </PageLayout>
   );
 }

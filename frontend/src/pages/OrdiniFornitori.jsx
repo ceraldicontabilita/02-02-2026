@@ -383,12 +383,7 @@ export default function OrdiniFornitori() {
   };
 
   return (
-    <PageLayout 
-      title="Ordini Fornitori" 
-      icon="📝"
-      subtitle="Gestione ordini acquisto"
-    >
-      <div>
+    <div style={styles.container} data-testid="ordini-fornitori-page">
       {/* Header */}
       <div style={styles.card}>
         <h1 style={{ margin: 0, fontSize: 28, fontWeight: 'bold', color: '#1e293b' }}>
@@ -628,6 +623,5 @@ export default function OrdiniFornitori() {
         </div>
       )}
     </div>
-    </PageLayout>
   );
 }

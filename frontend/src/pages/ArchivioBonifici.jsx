@@ -370,12 +370,7 @@ export default function ArchivioBonifici() {
   const transfersToShow = activeTab === 'da_associare' ? bonificiDaAssociare : bonificiAssociati;
 
   return (
-    <PageLayout 
-      title="Archivio Bonifici" 
-      icon="🏦"
-      subtitle="Storico bonifici bancari"
-    >
-      <div>
+    <div style={{ padding: 24, maxWidth: 1400, margin: '0 auto' }} ref={dropdownRef}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
         <div>
           <h1 style={{ fontSize: 28, fontWeight: 'bold', color: '#1e3a5f', marginBottom: 8 }}>
@@ -1036,6 +1031,5 @@ export default function ArchivioBonifici() {
         )}
       </div>
     </div>
-    </PageLayout>
   );
 }

@@ -147,12 +147,7 @@ export default function ContabilitaAvanzata() {
   }
 
   return (
-    <PageLayout 
-      title="Contabilità Avanzata" 
-      icon="📈"
-      subtitle="Funzioni contabili avanzate"
-    >
-      <div>
+    <div style={styles.page} data-testid="contabilita-avanzata-page">
       {/* Header */}
       <div style={styles.header}>
         <div>
@@ -339,6 +334,5 @@ export default function ContabilitaAvanzata() {
         </div>
       )}
     </div>
-    </PageLayout>
   );
 }

@@ -107,12 +107,7 @@ export default function PrevisioniAcquisti() {
   });
 
   return (
-    <PageLayout 
-      title="Previsioni Acquisti" 
-      icon="📈"
-      subtitle="Pianificazione acquisti"
-    >
-      <div>
+    <div style={{ padding: '16px 12px', maxWidth: 1400, margin: '0 auto' }}>
       {/* Header */}
       <div style={{ marginBottom: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
@@ -381,6 +376,5 @@ export default function PrevisioniAcquisti() {
         🔮 <strong>Previsioni:</strong> Propone quantità da ordinare basate sui consumi storici.
       </div>
     </div>
-    </PageLayout>
   );
 }

@@ -96,12 +96,7 @@ export default function GestioneInvoiceTronic() {
   };
 
   return (
-    <PageLayout 
-      title="InvoiceTronic" 
-      icon="⚡"
-      subtitle="Fatturazione elettronica"
-    >
-      <div>
+    <div style={{ padding: 20, maxWidth: 1400, margin: '0 auto' }} data-testid="gestione-invoicetronic">
       {/* Header */}
       <div style={{ 
         display: 'flex', 
@@ -383,6 +378,5 @@ export default function GestioneInvoiceTronic() {
         </div>
       </div>
     </div>
-    </PageLayout>
   );
 }
