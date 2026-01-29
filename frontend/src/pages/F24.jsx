@@ -298,38 +298,18 @@ export default function F24() {
   };
 
   return (
-    <div style={{ padding: "clamp(12px, 3vw, 20px)", position: 'relative' }}>
-      {/* Page Info Card */}
-      <div style={{ position: 'absolute', top: 0, right: 20, zIndex: 100 }}>
-        <PageInfoCard pageKey="f24" />
-      </div>
-      
-      {/* Header con Gradiente */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        marginBottom: 20,
-        padding: '15px 20px',
-        background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
-        borderRadius: 12,
-        color: 'white',
-        flexWrap: 'wrap',
-        gap: 10
-      }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: "clamp(18px, 4vw, 22px)", fontWeight: 'bold' }}>📋 Modelli F24</h1>
-          <p style={{ margin: "4px 0 0 0", fontSize: 13, opacity: 0.9 }}>
-            Visualizzazione e gestione modelli F24
-          </p>
-        </div>
+    <PageLayout 
+      title="Modelli F24" 
+      icon="📋" 
+      subtitle="Visualizzazione e gestione modelli F24"
+      actions={
         <button 
           onClick={() => { loadF24(); loadAlerts(); loadDashboard(); }}
           data-testid="refresh-f24-btn"
           style={{
             padding: '10px 20px',
-            background: 'rgba(255,255,255,0.9)',
-            color: '#1e3a5f',
+            background: '#1e3a5f',
+            color: 'white',
             border: 'none',
             borderRadius: 8,
             cursor: 'pointer',
@@ -341,6 +321,11 @@ export default function F24() {
         >
           🔄 Aggiorna
         </button>
+      }
+    >
+      {/* Page Info Card */}
+      <div style={{ position: 'absolute', top: 10, right: 20, zIndex: 100 }}>
+        <PageInfoCard pageKey="f24" />
       </div>
 
       {/* Dashboard */}
