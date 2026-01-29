@@ -441,12 +441,16 @@ function SupplierModal({ isOpen, onClose, supplier, onSave, saving }) {
 // Stat Card
 function StatCard({ icon: Icon, label, value, color, bgColor }) {
   return (
-    <PageLayout 
-      title="Fornitori" 
-      icon="🏢"
-      subtitle="Anagrafica fornitori"
-    >
-      <div>
+    <div style={{
+      backgroundColor: 'white',
+      borderRadius: '12px',
+      padding: '20px',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '16px',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+      border: '1px solid #f0f0f0'
+    }}>
       <div style={{
         width: '48px',
         height: '48px',
@@ -463,7 +467,6 @@ function StatCard({ icon: Icon, label, value, color, bgColor }) {
         <div style={{ fontSize: '13px', color: '#6b7280' }}>{label}</div>
       </div>
     </div>
-    </PageLayout>
   );
 }
 
