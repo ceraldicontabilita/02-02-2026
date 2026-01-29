@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { formatEuro, STYLES, COLORS, button, badge } from '../lib/utils';
 import { FileText } from 'lucide-react';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
+import { PageLayout } from '../components/PageLayout';
 
 const API = '';
 

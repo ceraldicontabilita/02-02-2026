@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import api from '../api';
 import { STYLES, COLORS, button, badge, formatEuro, formatDateIT } from '../lib/utils';
+import { PageLayout } from '../components/PageLayout';
 
 export default function CorrezioneAI() {
   const [documents, setDocuments] = useState([]);

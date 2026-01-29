@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import api from '../api';
 import { Send, Bot, User, Loader2, Sparkles, FileText, BarChart3, Tag } from 'lucide-react';
+import { PageLayout } from '../components/PageLayout';
 
 const CONTEXT_TYPES = [
   { id: 'general', label: 'Generale', icon: <Sparkles size={16} />, color: '#3b82f6' },

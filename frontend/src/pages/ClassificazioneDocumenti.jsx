@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import api from '../api';
 import { FileText, Mail, CheckCircle, AlertCircle, Trash2, RefreshCw, Settings, Search, ArrowRight, Zap, Brain, FolderOpen, Eye, Download, Edit2, X } from 'lucide-react';
 import { STYLES, COLORS, button, badge, formatEuro, formatDateIT } from '../lib/utils';
+import { PageLayout } from '../components/PageLayout';
 
 // Mapping categorie -> colori e icone
 const CATEGORY_CONFIG = {

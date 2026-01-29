@@ -13,6 +13,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../api';
 import { formatEuro, STYLES, COLORS, button, badge } from '../lib/utils';
+import { PageLayout } from '../components/PageLayout';
 import { 
   ChevronLeft, ChevronRight, RefreshCw, Upload, Download,
   Search, FileText, Eye, MoreHorizontal, X, Calendar,

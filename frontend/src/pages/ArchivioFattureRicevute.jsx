@@ -4,6 +4,7 @@ import api from '../api';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
 import { PageInfoCard } from '../components/PageInfoCard';
 import { formatEuro, formatDateIT, STYLES, COLORS, button, badge } from '../lib/utils';
+import { PageLayout } from '../components/PageLayout';
 
 const MESI = [
   { value: '', label: 'Tutti i mesi' },
