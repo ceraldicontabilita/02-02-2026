@@ -234,60 +234,41 @@ export default function Cedolini() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
-        <RefreshCw style={{ width: 32, height: 32, animation: 'spin 1s linear infinite', color: '#3b82f6' }} />
-      </div>
+      <PageLayout title="Buste Paga" icon="📄" subtitle="Caricamento...">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '50vh' }}>
+          <RefreshCw style={{ width: 32, height: 32, animation: 'spin 1s linear infinite', color: '#3b82f6' }} />
+        </div>
+      </PageLayout>
     );
   }
 
   return (
-    <div style={{ padding: 20, maxWidth: 1400, margin: '0 auto' }} data-testid="cedolini-page">
-      {/* Header */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        marginBottom: 20,
-        padding: '15px 20px',
-        background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
-        borderRadius: 12,
-        color: 'white',
-        flexWrap: 'wrap',
-        gap: 10
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div>
-            <h1 style={{ margin: 0, fontSize: 22, fontWeight: 'bold' }}>📄 Buste Paga</h1>
-            <p style={{ margin: '4px 0 0 0', fontSize: 13, opacity: 0.9 }}>
-              Gestione cedolini e buste paga dipendenti
-            </p>
-          </div>
-          
-          {/* Navigazione Anno */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 20 }}>
-            <button
-              onClick={() => navigateAnno(-1)}
-              style={{
-                padding: '6px 10px',
-                background: 'rgba(255,255,255,0.2)',
-                border: 'none',
-                borderRadius: 6,
-                cursor: 'pointer',
-                color: 'white'
-              }}
-            >
-              <ChevronLeft style={{ width: 16, height: 16 }} />
-            </button>
-            <span style={{ 
-              padding: '8px 20px', 
-              background: 'rgba(255,255,255,0.95)', 
-              color: '#1e3a5f',
+    <PageLayout title="Buste Paga" icon="📄" subtitle="Gestione cedolini e buste paga dipendenti">
+      <div data-testid="cedolini-page">
+        {/* Navigazione Anno */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
+          <button
+            onClick={() => navigateAnno(-1)}
+            style={{
+              padding: '6px 10px',
+              background: '#f1f5f9',
+              border: 'none',
               borderRadius: 6,
-              fontWeight: 'bold',
-              fontSize: 18
-            }}>
-              {anno}
-            </span>
+              cursor: 'pointer'
+            }}
+          >
+            <ChevronLeft style={{ width: 16, height: 16 }} />
+          </button>
+          <span style={{ 
+            padding: '8px 20px', 
+            background: '#1e3a5f', 
+            color: 'white',
+            borderRadius: 6,
+            fontWeight: 'bold',
+            fontSize: 18
+          }}>
+            {anno}
+          </span>
             <button
               onClick={() => navigateAnno(1)}
               style={{
