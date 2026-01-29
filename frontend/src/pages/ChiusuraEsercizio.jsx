@@ -172,24 +172,11 @@ export default function ChiusuraEsercizio() {
   }
 
   return (
-    <div style={{ padding: '24px 32px', maxWidth: 1200, margin: '0 auto' }} data-testid="chiusura-esercizio-page">
-      {/* Header */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        marginBottom: 32
-      }}>
-        <div>
-          <h1 style={{ fontSize: 28, fontWeight: 700, color: '#1e293b', margin: 0, display: 'flex', alignItems: 'center', gap: 12 }}>
-            <Calendar size={28} />
-            Chiusura Esercizio
-          </h1>
-          <p style={{ color: '#64748b', marginTop: 8 }}>
-            Wizard guidato per la chiusura annuale e apertura nuovo esercizio
-          </p>
-        </div>
-        
+    <PageLayout 
+      title="Chiusura Esercizio" 
+      icon="📅" 
+      subtitle="Wizard guidato per la chiusura annuale"
+      actions={
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <select
             value={anno}
@@ -227,7 +214,9 @@ export default function ChiusuraEsercizio() {
             Aggiorna
           </button>
         </div>
-      </div>
+      }
+    >
+      <div data-testid="chiusura-esercizio-page">
 
       {/* Alerts */}
       {error && (
