@@ -825,6 +825,7 @@ function PrimaNotaDesktop() {
         </section>
       )}
     </div>
+    </PageLayout>
   );
 }
 

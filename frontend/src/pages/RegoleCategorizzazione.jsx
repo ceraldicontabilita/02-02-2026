@@ -609,5 +609,6 @@ export default function RegoleCategorizzazione() {
         </ul>
       </div>
     </div>
+    </PageLayout>
   );
 }

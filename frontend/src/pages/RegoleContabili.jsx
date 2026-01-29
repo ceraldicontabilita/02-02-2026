@@ -629,5 +629,6 @@ export default function RegoleContabili() {
         </div>
       </div>
     </div>
+    </PageLayout>
   );
 }

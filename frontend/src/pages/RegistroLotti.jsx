@@ -612,5 +612,6 @@ export default function RegistroLotti() {
         }
       `}</style>
     </div>
+    </PageLayout>
   );
 }

@@ -377,5 +377,6 @@ export default function PrevisioniAcquisti() {
         🔮 <strong>Previsioni:</strong> Propone quantità da ordinare basate sui consumi storici.
       </div>
     </div>
+    </PageLayout>
   );
 }
