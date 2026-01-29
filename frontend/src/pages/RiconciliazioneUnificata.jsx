@@ -459,12 +459,7 @@ export default function RiconciliazioneUnificata() {
 
   if (loading) {
     return (
-    <PageLayout 
-      title="Riconciliazione Unificata" 
-      icon="🔗"
-      subtitle="Quadratura generale"
-    >
-      <div>
+      <div style={{ padding: 'clamp(12px, 3vw, 20px)' }}>
         {/* Header con Gradiente anche durante il caricamento */}
         <div style={{ 
           marginBottom: 20, 
@@ -891,7 +886,6 @@ export default function RiconciliazioneUnificata() {
         </div>
       )}
     </div>
-    </PageLayout>
   );
 }
 
