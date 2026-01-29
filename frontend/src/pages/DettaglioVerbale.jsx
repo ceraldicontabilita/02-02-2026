@@ -41,12 +41,7 @@ export default function DettaglioVerbale() {
 
   if (loading) {
     return (
-    <PageLayout 
-      title="Dettaglio Verbale" 
-      icon="📝"
-      subtitle="Visualizzazione verbale"
-    >
-      <div>
+      <div style={{ padding: 40, textAlign: 'center' }}>
         <div style={{ fontSize: 48, marginBottom: 16 }}>⏳</div>
         <div>Caricamento verbale {verbaleId}...</div>
       </div>
@@ -447,6 +442,5 @@ export default function DettaglioVerbale() {
         </button>
       </div>
     </div>
-    </PageLayout>
   );
 }
