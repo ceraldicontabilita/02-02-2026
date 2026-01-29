@@ -292,20 +292,29 @@ def parse_template_zucchetti_new(text: str) -> Dict[str, Any]:
     if conting_match:
         result["dipendente"]["contingenza"] = parse_importo(conting_match.group(1))
     
-    # TOTALE COMPETENZE - cerca pattern con ORE
+    # TOTALE COMPETENZE - cerca pattern multilinea per voci Z5xxxx
     competenze = []
-    voci_pattern = re.findall(r'([ZF]\d{5})\s+([A-Za-z\s\.]+?)\s+([\d,]+)\s+([\d,]+)\s*(?:ORE|GG|%)?\s*([\d,]+)?', text)
+    # Pattern: Z5xxxx descrizione \n base \n ore/gg ORE/GG \n importo
+    voci_pattern = re.findall(
+        r'(Z5\d{4})\s+([^\n]+)\n([\d,\.]+)\n([\d,\.]+)\s*(?:ORE|GG)?\n([\d,\.]+)', 
+        text
+    )
     for match in voci_pattern:
         codice, desc, base, rif, importo = match
-        if importo:
-            val = parse_importo(importo)
-        else:
-            val = parse_importo(rif)
-        if codice.startswith('Z5') or codice.startswith('Z0'):  # Competenze
+        val = parse_importo(importo)
+        if val > 0:
             competenze.append(val)
     
+    # Se non trovato con pattern multilinea, cerca inline
+    if not competenze:
+        voci_inline = re.findall(r'Z5\d{4}[^\d]+([\d,\.]+)\s*$', text, re.MULTILINE)
+        for val_str in voci_inline:
+            val = parse_importo(val_str)
+            if val > 0:
+                competenze.append(val)
+    
     if competenze:
-        result["totali"]["competenze"] = sum(competenze)
+        result["totali"]["competenze"] = round(sum(competenze), 2)
         result["totali"]["lordo"] = result["totali"]["competenze"]
     
     # IRPEF e trattenute
