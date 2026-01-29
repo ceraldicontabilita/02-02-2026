@@ -299,6 +299,7 @@ Seleziona un contesto sopra o fai una domanda!`
           to { transform: rotate(360deg); }
         }
       `}</style>
-    </div>
+      </div>
+    </PageLayout>
   );
 }
