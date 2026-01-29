@@ -890,5 +890,6 @@ export default function NoleggioAuto() {
         </div>
       )}
     </div>
+    </PageLayout>
   );
 }

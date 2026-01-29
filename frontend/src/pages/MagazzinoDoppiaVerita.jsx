@@ -621,5 +621,6 @@ function ProdottoDetailModal({ prodotto, onClose }) {
         </div>
       </div>
     </div>
+    </PageLayout>
   );
 }

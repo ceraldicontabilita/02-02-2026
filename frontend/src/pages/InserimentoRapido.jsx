@@ -894,5 +894,6 @@ export default function InserimentoRapido() {
         </>
       )}
     </div>
+    </PageLayout>
   );
 }

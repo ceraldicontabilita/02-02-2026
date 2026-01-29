@@ -668,5 +668,6 @@ export default function MotoreContabile() {
         </Tabs>
       )}
     </div>
+    </PageLayout>
   );
 }

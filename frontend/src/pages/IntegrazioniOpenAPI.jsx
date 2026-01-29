@@ -654,5 +654,6 @@ export default function IntegrazioniOpenAPI() {
         </div>
       </div>
     </div>
+    </PageLayout>
   );
 }

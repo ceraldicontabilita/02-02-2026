@@ -624,5 +624,6 @@ export default function OrdiniFornitori() {
         </div>
       )}
     </div>
+    </PageLayout>
   );
 }
