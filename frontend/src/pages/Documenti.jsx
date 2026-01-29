@@ -1492,6 +1492,6 @@ export default function Documenti() {
           </div>
         </div>
       )}
-    </div>
+    </PageLayout>
   );
 }
