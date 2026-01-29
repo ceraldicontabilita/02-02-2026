@@ -512,5 +512,6 @@ export default function RicercaProdotti() {
         </ul>
       </div>
     </div>
+    </PageLayout>
   );
 }
