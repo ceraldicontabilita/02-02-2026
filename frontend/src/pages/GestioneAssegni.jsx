@@ -3,6 +3,7 @@ import api from '../api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { formatEuro, formatDateIT, STYLES, COLORS, button, badge } from '../lib/utils';
+import { PageLayout } from '../components/PageLayout';
 
 const STATI_ASSEGNO = {
   vuoto: { label: "Valido", color: "#4caf50" },

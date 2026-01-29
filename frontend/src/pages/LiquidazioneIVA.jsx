@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
 import { formatEuro, STYLES, COLORS, button, badge } from '../lib/utils';
+import { PageLayout } from '../components/PageLayout';
 import { 
   Calculator, 
   Download, 

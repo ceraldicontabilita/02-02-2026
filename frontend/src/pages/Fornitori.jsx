@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../api';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
 import Portal from '../components/Portal';
+import { PageLayout } from '../components/PageLayout';
 import { PageInfoCard } from '../components/PageInfoCard';
 import { formatEuro, formatDateIT, STYLES, COLORS, button, badge } from '../lib/utils';
 import { 
