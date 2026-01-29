@@ -434,7 +434,12 @@ export default function CicloPassivoIntegrato() {
   const stats = dashboard?.statistiche || {};
 
   return (
-    <div style={styles.container} data-testid="ciclo-passivo-page">
+    <PageLayout 
+      title="Ciclo Passivo" 
+      icon="📋"
+      subtitle="Gestione acquisti integrata"
+    >
+      <div>
       {/* Header */}
       <div style={styles.header}>
         <div>
@@ -961,5 +966,6 @@ export default function CicloPassivoIntegrato() {
         </div>
       )}
     </div>
+    </PageLayout>
   );
 }

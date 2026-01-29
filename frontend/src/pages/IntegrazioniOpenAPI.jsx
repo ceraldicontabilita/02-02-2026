@@ -129,7 +129,12 @@ export default function IntegrazioniOpenAPI() {
 
   if (loading) {
     return (
-      <div style={{ ...STYLES.pageWrapper, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+    <PageLayout 
+      title="Integrazioni OpenAPI" 
+      icon="🔗"
+      subtitle="Connessioni API esterne"
+    >
+      <div>
         <div style={{ fontSize: 48 }}>⏳</div>
       </div>
     );
@@ -653,5 +658,6 @@ export default function IntegrazioniOpenAPI() {
         </div>
       </div>
     </div>
+    </PageLayout>
   );
 }

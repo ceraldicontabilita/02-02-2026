@@ -316,7 +316,12 @@ export default function Riconciliazione() {
   };
 
   return (
-    <div style={pageStyle.container} data-testid="riconciliazione-page">
+    <PageLayout 
+      title="Riconciliazione" 
+      icon="🔄"
+      subtitle="Quadratura conti"
+    >
+      <div>
       {/* Header */}
       <div style={pageStyle.header}>
         <div>
@@ -553,5 +558,6 @@ export default function Riconciliazione() {
         </p>
       </div>
     </div>
+    </PageLayout>
   );
 }

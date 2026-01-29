@@ -90,7 +90,12 @@ export default function MagazzinoDoppiaVerita() {
   }
 
   return (
-    <div style={{ padding: '24px', maxWidth: '1400px', margin: '0 auto' }}>
+    <PageLayout 
+      title="Magazzino Doppia Verità" 
+      icon="📦"
+      subtitle="Confronto giacenze"
+    >
+      <div>
       {/* Header */}
       <div style={{ marginBottom: '24px' }}>
         <h1 style={{ fontSize: '28px', fontWeight: 700, color: '#1f2937', margin: '0 0 8px 0', display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -533,6 +538,7 @@ export default function MagazzinoDoppiaVerita() {
         />
       )}
     </div>
+    </PageLayout>
   );
 }
 

@@ -175,7 +175,12 @@ export default function RegoleCategorizzazione() {
 
   if (loading) {
     return (
-      <div style={{ padding: 24, textAlign: 'center', paddingTop: 100 }}>
+    <PageLayout 
+      title="Regole Categorizzazione" 
+      icon="🏷️"
+      subtitle="Configurazione categorie"
+    >
+      <div>
         <div style={{ fontSize: 32, marginBottom: 16 }}>⏳</div>
         <div style={{ color: '#6b7280' }}>Caricamento regole...</div>
       </div>
@@ -608,5 +613,6 @@ export default function RegoleCategorizzazione() {
         </ul>
       </div>
     </div>
+    </PageLayout>
   );
 }

@@ -97,7 +97,12 @@ export default function CodiciTributari() {
   });
 
   return (
-    <div style={{ padding: 20, maxWidth: 1400, margin: '0 auto' }}>
+    <PageLayout 
+      title="Codici Tributari" 
+      icon="📊"
+      subtitle="Gestione codici tributo"
+    >
+      <div>
       
       {/* Header */}
       <div style={{ 
@@ -427,5 +432,6 @@ export default function CodiciTributari() {
         </p>
       </div>
     </div>
+    </PageLayout>
   );
 }

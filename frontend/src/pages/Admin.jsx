@@ -375,7 +375,12 @@ export default function Admin() {
   });
 
   return (
-    <div style={{ padding: 'clamp(12px, 3vw, 20px)', maxWidth: 1400, margin: '0 auto' }}>
+    <PageLayout 
+      title="Amministrazione" 
+      icon="⚙️"
+      subtitle="Gestione sistema e configurazioni"
+    >
+      <div>
       {/* Header */}
       <div style={{ 
         display: 'flex', 
@@ -1263,6 +1268,7 @@ export default function Admin() {
         </div>
       )}
     </div>
+    </PageLayout>
   );
 }
 

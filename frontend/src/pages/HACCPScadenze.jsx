@@ -30,7 +30,12 @@ export default function HACCPScadenze() {
   };
 
   return (
-    <div style={{ padding: 20, maxWidth: 1400, margin: '0 auto' }}>
+    <PageLayout 
+      title="HACCP Scadenze" 
+      icon="⏳"
+      subtitle="Scadenze prodotti"
+    >
+      <div>
       <h1 style={{ fontSize: 24, fontWeight: 700, color: '#1a365d', marginBottom: 8 }}>
         ⏰ Scadenziario HACCP
       </h1>
@@ -103,5 +108,6 @@ export default function HACCPScadenze() {
         </div>
       )}
     </div>
+    </PageLayout>
   );
 }

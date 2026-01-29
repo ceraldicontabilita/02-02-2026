@@ -216,7 +216,12 @@ export default function DizionarioArticoli() {
   };
 
   return (
-    <div style={{ padding: 24 }}>
+    <PageLayout 
+      title="Dizionario Articoli" 
+      icon="📚"
+      subtitle="Gestione articoli"
+    >
+      <div>
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ fontSize: 28, fontWeight: 700, color: '#1e3a5f', marginBottom: 8 }}>
@@ -671,6 +676,7 @@ export default function DizionarioArticoli() {
         </div>
       )}
     </div>
+    </PageLayout>
   );
 }
 

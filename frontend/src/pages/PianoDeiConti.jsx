@@ -114,7 +114,12 @@ export default function PianoDeiConti() {
   }
 
   return (
-    <div style={{ padding: 'clamp(12px, 3vw, 20px)', maxWidth: 1400, margin: '0 auto' }}>
+    <PageLayout 
+      title="Piano dei Conti" 
+      icon="📊"
+      subtitle="Struttura contabile"
+    >
+      <div>
       {/* Header */}
       <div style={{ marginBottom: 20 }}>
         <h1 style={{ margin: 0, fontSize: 'clamp(20px, 5vw, 28px)', color: '#1a365d' }}>
@@ -557,5 +562,6 @@ export default function PianoDeiConti() {
         </div>
       )}
     </div>
+    </PageLayout>
   );
 }

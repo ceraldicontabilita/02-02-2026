@@ -440,7 +440,12 @@ export default function Attendance() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+    <PageLayout 
+      title="Presenze" 
+      icon="⏰"
+      subtitle="Gestione presenze dipendenti"
+    >
+      <div>
         <RefreshCw style={{ width: 32, height: 32, animation: 'spin 1s linear infinite', color: '#3b82f6' }} />
       </div>
     );
@@ -1224,6 +1229,7 @@ export default function Attendance() {
         <TabSaldoFerie employees={employees} currentYear={currentYear} />
       )}
     </div>
+    </PageLayout>
   );
 }
 

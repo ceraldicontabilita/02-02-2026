@@ -361,7 +361,12 @@ function ImportMassivoTab() {
   const isEstrattoContoPDF = tipoSelezionato === 'estratto_conto_pdf';
 
   return (
-    <div>
+    <PageLayout 
+      title="Import Documenti" 
+      icon="📤"
+      subtitle="Importazione documenti"
+    >
+      <div>
       {/* Header opzioni */}
       <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
         {!isEstrattoContoPDF && (
@@ -611,6 +616,7 @@ function ImportMassivoTab() {
         </ul>
       </div>
     </div>
+    </PageLayout>
   );
 }
 

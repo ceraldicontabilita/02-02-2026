@@ -71,7 +71,12 @@ export default function RegistroLotti() {
   };
 
   return (
-    <div style={{ padding: '24px', maxWidth: '1400px', margin: '0 auto' }}>
+    <PageLayout 
+      title="Registro Lotti" 
+      icon="📋"
+      subtitle="Tracciabilità produzione"
+    >
+      <div>
       {/* Header */}
       <div style={{ marginBottom: '24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '8px' }}>
@@ -611,5 +616,6 @@ export default function RegistroLotti() {
         }
       `}</style>
     </div>
+    </PageLayout>
   );
 }

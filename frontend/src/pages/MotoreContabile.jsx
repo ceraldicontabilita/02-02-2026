@@ -86,7 +86,12 @@ export default function MotoreContabile() {
   };
 
   return (
-    <div style={{ padding: 24, maxWidth: 1400, margin: '0 auto' }}>
+    <PageLayout 
+      title="Motore Contabile" 
+      icon="⚙️"
+      subtitle="Elaborazioni contabili"
+    >
+      <div>
       {/* Header */}
       <div style={{ 
         display: 'flex', 
@@ -667,5 +672,6 @@ export default function MotoreContabile() {
         </Tabs>
       )}
     </div>
+    </PageLayout>
   );
 }

@@ -424,7 +424,12 @@ export default function Documenti() {
   });
 
   return (
-    <div style={{ padding: 20, maxWidth: 1600, margin: '0 auto' }}>
+    <PageLayout 
+      title="Documenti" 
+      icon="📄"
+      subtitle="Gestione documenti"
+    >
+      <div>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
@@ -1499,5 +1504,6 @@ export default function Documenti() {
         </div>
       )}
     </div>
+    </PageLayout>
   );
 }

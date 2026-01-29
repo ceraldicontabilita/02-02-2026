@@ -28,7 +28,12 @@ export default function HACCPTemperature() {
   }, []);
 
   return (
-    <div style={{ padding: 20, maxWidth: 1400, margin: '0 auto' }}>
+    <PageLayout 
+      title="HACCP Temperature" 
+      icon="🌡️"
+      subtitle="Monitoraggio temperature"
+    >
+      <div>
       <h1 style={{ fontSize: 24, fontWeight: 700, color: '#1a365d', marginBottom: 8 }}>
         🌡️ Registro Temperature HACCP
       </h1>
@@ -107,5 +112,6 @@ export default function HACCPTemperature() {
         </p>
       </div>
     </div>
+    </PageLayout>
   );
 }

@@ -530,7 +530,12 @@ export default function RegoleContabili() {
   });
 
   return (
-    <div style={{ padding: 24, maxWidth: 1000, margin: '0 auto' }}>
+    <PageLayout 
+      title="Regole Contabili" 
+      icon="📖"
+      subtitle="Documentazione regole"
+    >
+      <div>
       {/* Header */}
       <div style={{ marginBottom: 32 }}>
         <h1 style={{ fontSize: 28, fontWeight: 700, color: '#1e3a5f', marginBottom: 8 }}>
@@ -628,5 +633,6 @@ export default function RegoleContabili() {
         </div>
       </div>
     </div>
+    </PageLayout>
   );
 }

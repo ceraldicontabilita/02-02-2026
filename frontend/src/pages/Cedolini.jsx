@@ -234,7 +234,12 @@ export default function Cedolini() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+    <PageLayout 
+      title="Cedolini" 
+      icon="💰"
+      subtitle="Gestione buste paga"
+    >
+      <div>
         <RefreshCw style={{ width: 32, height: 32, animation: 'spin 1s linear infinite', color: '#3b82f6' }} />
       </div>
     );
@@ -1113,5 +1118,6 @@ export default function Cedolini() {
         </div>
       )}
     </div>
+    </PageLayout>
   );
 }

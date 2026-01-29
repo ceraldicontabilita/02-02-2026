@@ -26,7 +26,12 @@ function BarChart({ data, maxValue, color = '#3b82f6', label = '' }) {
   const max = maxValue || Math.max(...data.map(d => d.value), 1);
   
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+    <PageLayout 
+      title="Analytics" 
+      icon="📈"
+      subtitle="Analisi avanzate"
+    >
+      <div>
       {data.map((item, idx) => (
         <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ width: 40, fontSize: 11, color: '#64748b', textAlign: 'right' }}>{item.label}</div>
@@ -48,6 +53,7 @@ function BarChart({ data, maxValue, color = '#3b82f6', label = '' }) {
         </div>
       ))}
     </div>
+    </PageLayout>
   );
 }
 

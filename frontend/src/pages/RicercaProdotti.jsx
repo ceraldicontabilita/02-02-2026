@@ -201,7 +201,12 @@ export default function RicercaProdotti() {
   const btnPrimary = { padding: '10px 18px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: '600' };
 
   return (
-    <div style={{ padding: 20, maxWidth: 1400, margin: '0 auto' }}>
+    <PageLayout 
+      title="Ricerca Prodotti" 
+      icon="🔍"
+      subtitle="Ricerca anagrafica"
+    >
+      <div>
       {/* Header con ricerca */}
       <div style={cardStyle}>
         <div style={h1Style}>Ricerca Prodotti</div>
@@ -511,5 +516,6 @@ export default function RicercaProdotti() {
         </ul>
       </div>
     </div>
+    </PageLayout>
   );
 }

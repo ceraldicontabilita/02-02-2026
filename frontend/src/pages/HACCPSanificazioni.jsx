@@ -22,7 +22,12 @@ export default function HACCPSanificazioni() {
   }, []);
 
   return (
-    <div style={{ padding: 20, maxWidth: 1400, margin: '0 auto' }}>
+    <PageLayout 
+      title="HACCP Sanificazioni" 
+      icon="🧹"
+      subtitle="Registro sanificazioni"
+    >
+      <div>
       <h1 style={{ fontSize: 24, fontWeight: 700, color: '#1a365d', marginBottom: 8 }}>
         🧹 Registro Sanificazioni
       </h1>
@@ -89,5 +94,6 @@ export default function HACCPSanificazioni() {
         </div>
       )}
     </div>
+    </PageLayout>
   );
 }

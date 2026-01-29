@@ -393,7 +393,12 @@ function PrimaNotaDesktop() {
   });
 
   return (
-    <div style={STYLES.page}>
+    <PageLayout 
+      title="Prima Nota" 
+      icon="📒"
+      subtitle="Registrazioni contabili"
+    >
+      <div>
       
       {/* HEADER CON SELETTORE ANNO */}
       <div style={STYLES.header}>
@@ -824,6 +829,7 @@ function PrimaNotaDesktop() {
         </section>
       )}
     </div>
+    </PageLayout>
   );
 }
 

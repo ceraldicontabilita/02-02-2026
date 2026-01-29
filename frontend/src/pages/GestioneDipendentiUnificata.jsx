@@ -208,7 +208,12 @@ export default function GestioneDipendentiUnificata() {
   });
 
   return (
-    <div style={{ padding: 'clamp(12px, 3vw, 20px)', height: '100vh', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+    <PageLayout 
+      title="Dipendenti" 
+      icon="👥"
+      subtitle="Gestione personale"
+    >
+      <div>
       {/* Page Info Card */}
       <div style={{ position: 'absolute', top: 0, right: 20, zIndex: 100 }}>
         <PageInfoCard pageKey="dipendenti" />
@@ -424,6 +429,7 @@ export default function GestioneDipendentiUnificata() {
         </div>
       </div>
     </div>
+    </PageLayout>
   );
 }
 

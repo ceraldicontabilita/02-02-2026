@@ -107,7 +107,12 @@ export default function NoleggioAuto() {
   };
 
   return (
-    <div style={{ padding: 20, maxWidth: 1400, margin: '0 auto' }}>
+    <PageLayout 
+      title="Noleggio Auto" 
+      icon="🚗"
+      subtitle="Gestione flotta aziendale"
+    >
+      <div>
       
       {/* Header */}
       <div style={{ 
@@ -889,5 +894,6 @@ export default function NoleggioAuto() {
         </div>
       )}
     </div>
+    </PageLayout>
   );
 }
