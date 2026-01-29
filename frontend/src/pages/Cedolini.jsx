@@ -1091,6 +1091,7 @@ export default function Cedolini() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </PageLayout>
   );
 }
