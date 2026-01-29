@@ -479,6 +479,6 @@ export default function OdooIntegration() {
           </pre>
         </div>
       )}
-    </div>
+    </PageLayout>
   );
 }
