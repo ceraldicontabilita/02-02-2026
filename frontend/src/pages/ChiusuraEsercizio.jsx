@@ -125,12 +125,13 @@ export default function ChiusuraEsercizio() {
   const ProblemaCard = ({ problema, tipo }) => {
     const isBloccante = tipo === 'bloccante';
     return (
-    <PageLayout 
-      title="Chiusura Esercizio" 
-      icon="📅"
-      subtitle="Chiusura anno contabile"
-    >
-      <div>
+      <div style={{
+        background: isBloccante ? '#fef2f2' : '#fffbeb',
+        border: `1px solid ${isBloccante ? '#fca5a5' : '#fcd34d'}`,
+        borderRadius: 8,
+        padding: 16,
+        marginBottom: 12
+      }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
           {isBloccante ? (
             <XCircle size={20} color="#dc2626" />
@@ -722,6 +723,5 @@ export default function ChiusuraEsercizio() {
         }
       `}</style>
     </div>
-    </PageLayout>
   );
 }

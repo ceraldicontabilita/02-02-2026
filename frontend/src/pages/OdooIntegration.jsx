@@ -154,12 +154,7 @@ export default function OdooIntegration() {
   };
 
   return (
-    <PageLayout 
-      title="Integrazione Odoo" 
-      icon="🔄"
-      subtitle="Sincronizzazione Odoo"
-    >
-      <div>
+    <div style={{ padding: 20 }}>
       {/* Header */}
       <div style={cardStyle}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -491,6 +486,5 @@ export default function OdooIntegration() {
         </div>
       )}
     </div>
-    </PageLayout>
   );
 }
