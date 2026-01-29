@@ -332,6 +332,7 @@ export default function ContabilitaAvanzata() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </PageLayout>
   );
 }
