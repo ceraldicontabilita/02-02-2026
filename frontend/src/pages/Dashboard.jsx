@@ -170,18 +170,18 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div style={STYLES.card}>
-        <h1 style={{ margin: '0 0 16px 0', fontSize: 22, fontWeight: 'bold', color: COLORS.primary }}>Dashboard</h1>
-        <p style={{ color: COLORS.gray }}>⏳ Caricamento in corso...</p>
-      </div>
+      <PageLayout title="Dashboard" icon="📊" subtitle="Panoramica">
+        <div style={STYLES.card}>
+          <p style={{ color: COLORS.gray }}>⏳ Caricamento in corso...</p>
+        </div>
+      </PageLayout>
     );
   }
 
   return (
-    <>
+    <PageLayout title={`Dashboard ${anno}`} icon="📊" subtitle="Panoramica generale">
       <div style={{ ...STYLES.card, marginBottom: 12 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 'bold', color: COLORS.primary }}>Dashboard {anno}</h1>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             {/* Pulsante Auto-Riparazione */}
             <button
