@@ -101,31 +101,14 @@ export default function LiquidazioneIVA() {
   };
 
   return (
-    <div style={{ padding: 20, maxWidth: 1400, margin: '0 auto' }} data-testid="liquidazione-iva-page">
-      {/* Header */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        marginBottom: 20,
-        padding: '15px 20px',
-        background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
-        borderRadius: 12,
-        color: 'white'
-      }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Calculator size={28} />
-            Liquidazione IVA
-          </h1>
-          <p style={{ margin: '4px 0 0 0', fontSize: 13, opacity: 0.9 }}>
-            Calcolo preciso IVA mensile per confronto con commercialista
-          </p>
-        </div>
-      </div>
-
-      {/* Filtri */}
-      <div style={{ background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', border: '1px solid #e5e7eb', marginBottom: 20 }}>
+    <PageLayout 
+      title="Liquidazione IVA" 
+      icon="🧮"
+      subtitle="Calcolo preciso IVA mensile per confronto con commercialista"
+    >
+      <div data-testid="liquidazione-iva-page">
+        {/* Filtri */}
+        <div style={{ background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', border: '1px solid #e5e7eb', marginBottom: 20 }}>
         <h3 style={{ margin: '0 0 16px 0', fontSize: 16, fontWeight: 'bold', color: '#1e3a5f', display: 'flex', alignItems: 'center', gap: 8 }}>
           <Calculator size={18} />
           Parametri Calcolo
