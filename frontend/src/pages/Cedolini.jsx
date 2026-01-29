@@ -112,7 +112,7 @@ export default function Cedolini() {
       setLoading(true);
       
       const [cedRes, empRes] = await Promise.all([
-        api.get(`/api/cedolini?anno=${anno}`),
+        api.get(`/api/cedolini?anno=${anno}&limit=200`),
         api.get('/api/employees?limit=200')
       ]);
       
