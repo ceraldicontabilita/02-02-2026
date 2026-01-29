@@ -458,5 +458,6 @@ export default function CorrezioneAI() {
         </Card>
       </div>
     </div>
+    </PageLayout>
   );
 }

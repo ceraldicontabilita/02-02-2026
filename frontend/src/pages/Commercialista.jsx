@@ -1249,5 +1249,6 @@ export default function Commercialista() {
         </div>
       )}
     </div>
+    </PageLayout>
   );
 }

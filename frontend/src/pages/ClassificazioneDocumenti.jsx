@@ -1086,5 +1086,6 @@ export default function ClassificazioneDocumenti() {
         </div>
       )}
     </div>
+    </PageLayout>
   );
 }

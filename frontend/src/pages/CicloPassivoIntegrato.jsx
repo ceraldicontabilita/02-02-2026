@@ -962,5 +962,6 @@ export default function CicloPassivoIntegrato() {
         </div>
       )}
     </div>
+    </PageLayout>
   );
 }
