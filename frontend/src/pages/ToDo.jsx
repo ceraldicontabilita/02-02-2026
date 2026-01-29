@@ -600,7 +600,7 @@ export default function ToDo() {
           })}
         </div>
       )}
-    </div>
+    </PageLayout>
   );
 }
 
