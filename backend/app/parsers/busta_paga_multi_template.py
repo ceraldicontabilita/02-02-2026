@@ -514,9 +514,12 @@ def extract_summary(parsed_data: Dict[str, Any]) -> Dict[str, Any]:
     totali = parsed_data.get("totali", {})
     dipendente = parsed_data.get("dipendente", {})
     periodo = parsed_data.get("periodo", {})
+    ferie = parsed_data.get("ferie_permessi", {})
+    ore_ferie = parsed_data.get("ore_ferie", {})  # Dati da pagina 2
     
     return {
         "template": parsed_data.get("template", "unknown"),
+        "num_pages": parsed_data.get("num_pages", 1),
         "dipendente_nome": dipendente.get("nome_completo"),
         "codice_fiscale": dipendente.get("codice_fiscale"),
         "livello": dipendente.get("livello"),
@@ -525,9 +528,14 @@ def extract_summary(parsed_data: Dict[str, Any]) -> Dict[str, Any]:
         "lordo": totali.get("lordo") or totali.get("competenze"),
         "trattenute": totali.get("trattenute"),
         "netto": totali.get("netto"),
-        "ore_lavorate": periodo.get("ore_lavorate"),
-        "giorni_lavorati": periodo.get("giorni_lavorati"),
+        "ore_lavorate": periodo.get("ore_lavorate") or ore_ferie.get("ore_lavorate_mese"),
+        "giorni_lavorati": periodo.get("giorni_lavorati") or ore_ferie.get("giorni_lavorati_mese"),
         "inps_dipendente": totali.get("inps_dipendente"),
         "irpef": parsed_data.get("irpef", {}).get("ritenute"),
         "tfr_quota": parsed_data.get("tfr", {}).get("quota_anno"),
+        # Dati ferie/permessi
+        "ferie_residuo": ferie.get("ferie_residuo") or ore_ferie.get("ferie_residuo"),
+        "ferie_godute": ferie.get("ferie_godute") or ore_ferie.get("ferie_godute"),
+        "permessi_residuo": ferie.get("permessi_residuo") or ore_ferie.get("permessi_residuo"),
+        "permessi_goduti": ferie.get("permessi_goduti") or ore_ferie.get("permessi_goduti"),
     }
