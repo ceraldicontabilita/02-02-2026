@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { STYLES, COLORS, button, badge, formatEuro, formatDateIT } from '../lib/utils';
+import { PageLayout } from '../components/PageLayout';
 
 /**
  * DIZIONARIO DELLE REGOLE CONTABILI

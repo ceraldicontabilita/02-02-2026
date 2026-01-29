@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../api';
 import { formatEuro, STYLES, COLORS, button, badge } from '../lib/utils';
+import { PageLayout } from '../components/PageLayout';
 
 const CATEGORIE = {
   attivo: { nome: "ATTIVO", color: "#2196f3", icon: "📊" },

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import api from '../api';
 import { formatDateIT, formatEuro, STYLES, COLORS, button, badge } from '../lib/utils';
 import { Package, Search, Filter, ChevronDown, ChevronUp, Eye, Calendar, Factory, Layers, RefreshCw, Copy, Printer, ArrowLeft } from 'lucide-react';
+import { PageLayout } from '../components/PageLayout';
 
 const STATO_CONFIG = {
   disponibile: { bg: '#dcfce7', text: '#166534', label: 'Disponibile', icon: '✅' },
