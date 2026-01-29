@@ -22,7 +22,6 @@ export default function HACCPRicezione() {
   }, []);
 
   return (
-    <PageLayout title="HACCP Ricezione" icon="📥" subtitle="Merci">
     <div style={{ padding: 20, maxWidth: 1400, margin: '0 auto' }}>
       <h1 style={{ fontSize: 24, fontWeight: 700, color: '#1a365d', marginBottom: 8 }}>
         📥 Ricezione Merci HACCP
@@ -92,6 +91,5 @@ export default function HACCPRicezione() {
         </div>
       )}
     </div>
-  </PageLayout>
   );
 }

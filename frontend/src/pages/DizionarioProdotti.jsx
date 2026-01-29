@@ -130,7 +130,6 @@ export default function DizionarioProdotti() {
   const currentPage = Math.floor(offset / limit) + 1;
 
   return (
-    <PageLayout title="Prodotti" icon="🏷️" subtitle="Anagrafica">
     <div style={{ padding: '24px', maxWidth: '1600px', margin: '0 auto' }}>
       {/* Header */}
       <div style={{ marginBottom: '24px' }}>
@@ -568,6 +567,5 @@ export default function DizionarioProdotti() {
         }
       `}</style>
     </div>
-  </PageLayout>
   );
 }

@@ -441,7 +441,6 @@ function SupplierModal({ isOpen, onClose, supplier, onSave, saving }) {
 // Stat Card
 function StatCard({ icon: Icon, label, value, color, bgColor }) {
   return (
-    <PageLayout title="Fornitori" icon="🏢" subtitle="Anagrafica fornitori">
     <div style={{
       backgroundColor: 'white',
       borderRadius: '12px',
@@ -2688,6 +2687,5 @@ export default function Fornitori() {
         </Portal>
       )}
     </div>
-  </PageLayout>
   );
 }

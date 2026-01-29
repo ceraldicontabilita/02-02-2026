@@ -208,7 +208,6 @@ export default function GestioneDipendentiUnificata() {
   });
 
   return (
-    <PageLayout title="Dipendenti" icon="👥" subtitle="Gestione personale">
     <div style={{ padding: 'clamp(12px, 3vw, 20px)', height: '100vh', display: 'flex', flexDirection: 'column', position: 'relative' }}>
       {/* Page Info Card */}
       <div style={{ position: 'absolute', top: 0, right: 20, zIndex: 100 }}>
@@ -1223,7 +1222,6 @@ function TabGiustificativi({ dipendente, anno, selectedCategoria = 'tutti', onCa
         Se viene superato un limite, il sistema bloccherà l'inserimento di nuovi giustificativi di quel tipo.
       </div>
     </div>
-  </PageLayout>
   );
 }
 

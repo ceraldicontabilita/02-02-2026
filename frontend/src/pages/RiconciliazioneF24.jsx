@@ -397,7 +397,6 @@ export default function RiconciliazioneF24() {
 
   if (loading) {
     return (
-      <PageLayout title="Riconciliazione F24" icon="✅" subtitle="Verifica F24">
       <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)', padding: 24, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: 32, marginBottom: 16 }}>⏳</div>
@@ -919,6 +918,5 @@ export default function RiconciliazioneF24() {
         </div>
       )}
     </div>
-  </PageLayout>
   );
 }

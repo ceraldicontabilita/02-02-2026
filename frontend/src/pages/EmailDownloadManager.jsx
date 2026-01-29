@@ -134,7 +134,6 @@ export default function EmailDownloadManager() {
   });
 
   return (
-    <PageLayout title="Email" icon="📧" subtitle="Gestione allegati">
     <div className="p-6 space-y-6" data-testid="email-download-manager">
       {/* Header */}
       <div className="flex justify-between items-center">
@@ -375,6 +374,5 @@ export default function EmailDownloadManager() {
         </CardContent>
       </Card>
     </div>
-  </PageLayout>
   );
 }

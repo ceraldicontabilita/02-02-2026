@@ -784,7 +784,6 @@ export default function InserimentoRapido() {
   };
 
   return (
-    <PageLayout title="Inserimento" icon="⚡" subtitle="Registrazione veloce">
     <div style={styles.container}>
       {/* Header */}
       <div style={styles.header}>
@@ -894,6 +893,5 @@ export default function InserimentoRapido() {
         </>
       )}
     </div>
-  </PageLayout>
   );
 }

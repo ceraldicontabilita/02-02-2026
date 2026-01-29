@@ -361,7 +361,6 @@ function ImportMassivoTab() {
   const isEstrattoContoPDF = tipoSelezionato === 'estratto_conto_pdf';
 
   return (
-    <PageLayout title="Import" icon="📤" subtitle="Importazione">
     <div>
       {/* Header opzioni */}
       <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
@@ -999,6 +998,5 @@ export default function ImportDocumenti() {
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       `}</style>
     </div>
-  </PageLayout>
   );
 }

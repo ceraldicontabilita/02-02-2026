@@ -90,7 +90,6 @@ export default function MagazzinoDoppiaVerita() {
   }
 
   return (
-    <PageLayout title="Magazzino DV" icon="📦" subtitle="Confronto">
     <div style={{ padding: '24px', maxWidth: '1400px', margin: '0 auto' }}>
       {/* Header */}
       <div style={{ marginBottom: '24px' }}>
@@ -621,6 +620,5 @@ function ProdottoDetailModal({ prodotto, onClose }) {
         </div>
       </div>
     </div>
-  </PageLayout>
   );
 }

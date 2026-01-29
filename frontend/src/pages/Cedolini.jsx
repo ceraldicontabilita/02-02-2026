@@ -112,7 +112,7 @@ export default function Cedolini() {
       setLoading(true);
       
       const [cedRes, empRes] = await Promise.all([
-        api.get(`/api/cedolini?anno=${anno}&limit=200`),
+        api.get(`/api/cedolini?anno=${anno}`),
         api.get('/api/employees?limit=200')
       ]);
       
@@ -234,7 +234,6 @@ export default function Cedolini() {
 
   if (loading) {
     return (
-      <PageLayout title="Cedolini" icon="💰" subtitle="Buste paga">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
         <RefreshCw style={{ width: 32, height: 32, animation: 'spin 1s linear infinite', color: '#3b82f6' }} />
       </div>
@@ -1114,6 +1113,5 @@ export default function Cedolini() {
         </div>
       )}
     </div>
-  </PageLayout>
   );
 }

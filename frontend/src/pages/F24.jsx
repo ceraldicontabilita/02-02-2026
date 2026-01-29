@@ -298,7 +298,6 @@ export default function F24() {
   };
 
   return (
-    <PageLayout title="F24" icon="📋" subtitle="Modelli F24">
     <div style={{ padding: "clamp(12px, 3vw, 20px)", position: 'relative' }}>
       {/* Page Info Card */}
       <div style={{ position: 'absolute', top: 0, right: 20, zIndex: 100 }}>
@@ -866,6 +865,5 @@ export default function F24() {
         </div>
       )}
     </div>
-  </PageLayout>
   );
 }
