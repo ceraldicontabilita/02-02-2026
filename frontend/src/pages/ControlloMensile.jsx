@@ -562,17 +562,11 @@ export default function ControlloMensile() {
   };
 
   return (
-    <div style={{ padding: 'clamp(12px, 3vw, 20px)' }}>
-      {/* Header */}
-      <div style={{ marginBottom: 20 }}>
-        <h1 data-testid="controllo-mensile-title" style={{ margin: 0, fontSize: 'clamp(20px, 5vw, 28px)' }}>
-          📊 Controllo {viewMode === 'anno' ? 'Annuale' : 'Mensile'}
-        </h1>
-        <p style={{ color: '#666', margin: '8px 0 0 0' }}>
-          Confronto dati automatici (XML) vs manuali (Prima Nota/Excel)
-        </p>
-      </div>
-
+    <PageLayout 
+      title={`Controllo ${viewMode === 'anno' ? 'Annuale' : 'Mensile'}`} 
+      icon="📊" 
+      subtitle="Confronto dati automatici (XML) vs manuali (Prima Nota/Excel)"
+    >
       {/* Year Selector & View Toggle */}
       <div style={{ display: 'flex', gap: 15, marginBottom: 20, alignItems: 'center', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -603,7 +597,6 @@ export default function ControlloMensile() {
                   if (meseSelezionato > 1) {
                     setMeseSelezionato(meseSelezionato - 1);
                   }
-                  // Non cambia anno - è globale
                 }}
                 disabled={meseSelezionato <= 1}
                 style={{
