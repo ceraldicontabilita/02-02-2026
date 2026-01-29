@@ -326,39 +326,21 @@ export default function DashboardAnalytics() {
 
   if (loading) {
     return (
-      <div style={{ padding: 20, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
-        <div style={{ fontSize: 18, color: '#64748b' }}>📊 Caricamento analytics...</div>
-      </div>
+      <PageLayout title="Dashboard Analytics" icon="📊" subtitle={`Anno ${anno}`}>
+        <div style={{ padding: 20, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
+          <div style={{ fontSize: 18, color: '#64748b' }}>📊 Caricamento analytics...</div>
+        </div>
+      </PageLayout>
     );
   }
 
   return (
-    <div style={{ padding: 'clamp(12px, 3vw, 20px)', position: 'relative' }}>
-      {/* CSS per animazione pulse */}
-      <style>{`
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.5; }
-        }
-      `}</style>
-      
-      {/* Page Info Card */}
-      <div style={{ position: 'absolute', top: 0, right: 20, zIndex: 100 }}>
-        <PageInfoCard pageKey="analytics" />
-      </div>
-      
-      {/* Header */}
-      <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: 'clamp(20px, 4vw, 28px)', color: '#1e293b' }}>
-            📊 Dashboard Analytics
-          </h1>
-          <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: 14 }}>
-            Panoramica finanziaria e KPI - Anno {anno}
-          </p>
-        </div>
+    <PageLayout 
+      title="Dashboard Analytics" 
+      icon="📊" 
+      subtitle={`Panoramica finanziaria e KPI - Anno ${anno}`}
+      actions={
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          {/* Indicatore connessione WebSocket */}
           <div style={{
             display: 'flex',
             alignItems: 'center',
@@ -373,31 +355,10 @@ export default function DashboardAnalytics() {
               width: 8,
               height: 8,
               borderRadius: '50%',
-              background: wsConnected ? '#16a34a' : '#dc2626',
-              animation: wsConnected ? 'pulse 2s infinite' : 'none'
+              background: wsConnected ? '#16a34a' : '#dc2626'
             }} />
             {wsConnected ? 'Real-time' : 'Offline'}
           </div>
-          
-          {wsLastUpdate && (
-            <span style={{ fontSize: 11, color: '#94a3b8' }}>
-              Agg: {wsLastUpdate.toLocaleTimeString('it-IT')}
-            </span>
-          )}
-          
-          <ExportButton
-            data={stats?.rawData?.movimenti || []}
-            columns={[
-              { key: 'data', label: 'Data' },
-              { key: 'tipo', label: 'Tipo' },
-              { key: 'descrizione', label: 'Descrizione' },
-              { key: 'importo', label: 'Importo' },
-              { key: 'categoria', label: 'Categoria' }
-            ]}
-            filename={`analytics_movimenti_${anno}`}
-            format="excel"
-            variant="primary"
-          />
           <button
             onClick={() => { loadStats(); requestRefresh(); }}
             style={{
@@ -412,6 +373,19 @@ export default function DashboardAnalytics() {
             🔄 Aggiorna
           </button>
         </div>
+      }
+    >
+      {/* CSS per animazione pulse */}
+      <style>{`
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
+        }
+      `}</style>
+      
+      {/* Page Info Card */}
+      <div style={{ position: 'absolute', top: 0, right: 20, zIndex: 100 }}>
+        <PageInfoCard pageKey="analytics" />
       </div>
 
       {/* Alert Scadenze Urgenti - mostrato solo se ci sono scadenze */}
