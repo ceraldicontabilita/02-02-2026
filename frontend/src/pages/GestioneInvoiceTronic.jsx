@@ -96,7 +96,8 @@ export default function GestioneInvoiceTronic() {
   };
 
   return (
-    <div style={{ padding: 20, maxWidth: 1400, margin: '0 auto' }} data-testid="gestione-invoicetronic">
+    <PageLayout title="InvoiceTronic - Fatturazione Elettronica" subtitle="Gestione fatture elettroniche SDI">
+    <div style={{ maxWidth: 1400, margin: '0 auto' }} data-testid="gestione-invoicetronic">
       {/* Header */}
       <div style={{ 
         display: 'flex', 

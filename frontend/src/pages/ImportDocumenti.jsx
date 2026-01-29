@@ -950,7 +950,8 @@ export default function ImportDocumenti() {
   ];
 
   return (
-    <div style={{ padding: 'clamp(12px, 3vw, 20px)', maxWidth: 1400, margin: '0 auto' }}>
+    <PageLayout title="Import Documenti" subtitle="Carica documenti con riconoscimento automatico o usa l'AI per estrarre dati strutturati">
+    <div style={{ maxWidth: 1400, margin: '0 auto' }}>
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ margin: 0, fontSize: 'clamp(20px, 4vw, 26px)', color: '#1e293b', display: 'flex', alignItems: 'center', gap: 10 }}>
