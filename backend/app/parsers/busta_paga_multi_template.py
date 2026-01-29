@@ -369,7 +369,7 @@ def parse_template_zucchetti_new(text: str) -> Dict[str, Any]:
 def parse_busta_paga_multi(pdf_path: str) -> Dict[str, Any]:
     """
     Parser principale che rileva automaticamente il template e applica
-    il parser corretto.
+    il parser corretto. Gestisce anche PDF multi-pagina.
     
     Args:
         pdf_path: Percorso del file PDF
@@ -378,10 +378,20 @@ def parse_busta_paga_multi(pdf_path: str) -> Dict[str, Any]:
         Dizionario con tutti i dati estratti
     """
     doc = fitz.open(pdf_path)
-    text = ""
+    
+    # Estrai testo da tutte le pagine
+    all_text = ""
+    page_texts = []
     for page in doc:
-        text += page.get_text()
+        page_text = page.get_text()
+        page_texts.append(page_text)
+        all_text += page_text + "\n"
+    
+    num_pages = len(doc)
     doc.close()
+    
+    # Usa la prima pagina per rilevare il template
+    text = page_texts[0] if page_texts else ""
     
     # Rileva il template
     template = detect_template(text)
@@ -394,13 +404,78 @@ def parse_busta_paga_multi(pdf_path: str) -> Dict[str, Any]:
     else:
         result = parse_template_zucchetti_classic(text)
     
-    result["raw_text_length"] = len(text)
+    # Se ci sono 2+ pagine, estrai dati aggiuntivi dalla pagina 2
+    if num_pages >= 2 and len(page_texts) >= 2:
+        page2_data = parse_page2_ore_lavorate(page_texts[1])
+        result["ore_ferie"] = page2_data
+        
+        # Aggiorna i totali con i dati della pagina 2
+        if page2_data.get("ferie_residuo"):
+            result.setdefault("ferie_permessi", {})["ferie_residuo"] = page2_data["ferie_residuo"]
+        if page2_data.get("ferie_godute"):
+            result.setdefault("ferie_permessi", {})["ferie_godute"] = page2_data["ferie_godute"]
+        if page2_data.get("permessi_residuo"):
+            result.setdefault("ferie_permessi", {})["permessi_residuo"] = page2_data["permessi_residuo"]
+        if page2_data.get("permessi_goduti"):
+            result.setdefault("ferie_permessi", {})["permessi_goduti"] = page2_data["permessi_goduti"]
+    
+    result["raw_text_length"] = len(all_text)
+    result["num_pages"] = num_pages
     result["parse_success"] = True
     
     # Validazione minima
     if not result.get("totali", {}).get("netto") and not result.get("totali", {}).get("lordo"):
         result["parse_success"] = False
         result["parse_error"] = "Nessun importo estratto"
+    
+    return result
+
+
+def parse_page2_ore_lavorate(text: str) -> Dict[str, Any]:
+    """
+    Estrae i dati di ferie/permessi/ore dalla seconda pagina dei PDF recenti.
+    """
+    result = {}
+    
+    # Pattern per ferie: "Ferie -1,00000 -1,00000 GG."
+    ferie_match = re.search(r'Ferie\s+([-\d,\.]+)\s+([-\d,\.]+)\s*GG', text)
+    if ferie_match:
+        result["ferie_residuo"] = parse_importo(ferie_match.group(1))
+        result["ferie_saldo"] = parse_importo(ferie_match.group(2))
+    
+    # Pattern per permessi: "Permessi 12,00000 12,00000 ORE"
+    permessi_match = re.search(r'Permessi\s+([-\d,\.]+)\s+([-\d,\.]+)\s*ORE', text)
+    if permessi_match:
+        result["permessi_residuo"] = parse_importo(permessi_match.group(1))
+        result["permessi_saldo"] = parse_importo(permessi_match.group(2))
+    
+    # Pattern per "Residuo AP Goduto Saldo Maturato" seguito da valori
+    residuo_match = re.search(r'Residuo AP\s+Goduto\s+Saldo\s+Maturato', text)
+    if residuo_match:
+        # I valori sono nelle righe successive
+        values = re.findall(r'([\d,\.]+)\s+([\d,\.]+)', text[residuo_match.end():residuo_match.end()+200])
+        if values:
+            result["ferie_residuo_ap"] = parse_importo(values[0][0])
+            result["ferie_godute"] = parse_importo(values[0][1])
+    
+    # Imponibili dalla pagina 2
+    imp_inps = re.search(r'Imp\.\s*INPS\s+([\d,\.]+)', text)
+    if imp_inps:
+        result["imponibile_inps"] = parse_importo(imp_inps.group(1))
+    
+    imp_irpef = re.search(r'Imp\.\s*IRPEF\s+([\d,\.]+)', text)
+    if imp_irpef:
+        result["imponibile_irpef"] = parse_importo(imp_irpef.group(1))
+    
+    # Ore lavorate (se presente)
+    ore_lav = re.search(r'ORE\s+LAVORATE\s*([\d,\.]+)', text, re.IGNORECASE)
+    if ore_lav:
+        result["ore_lavorate_mese"] = parse_importo(ore_lav.group(1))
+    
+    # Giorni lavorati
+    giorni_lav = re.search(r'GIORNI\s+LAVORATI\s*([\d]+)', text, re.IGNORECASE)
+    if giorni_lav:
+        result["giorni_lavorati_mese"] = int(giorni_lav.group(1))
     
     return result
 
