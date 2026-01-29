@@ -784,7 +784,8 @@ export default function InserimentoRapido() {
   };
 
   return (
-    <div style={styles.container}>
+    <PageLayout title="Inserimento Rapido" subtitle="Gestione veloce da mobile">
+    <div style={{...styles.container, padding: 0}}>
       {/* Header */}
       <div style={styles.header}>
         <h1 style={styles.headerTitle}>Inserimento Rapido</h1>

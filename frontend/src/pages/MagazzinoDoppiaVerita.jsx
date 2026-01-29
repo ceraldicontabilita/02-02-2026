@@ -90,7 +90,8 @@ export default function MagazzinoDoppiaVerita() {
   }
 
   return (
-    <div style={{ padding: '24px', maxWidth: '1400px', margin: '0 auto' }}>
+    <PageLayout title="Magazzino Doppia Verità" subtitle="Confronto giacenze teoriche vs reali - Tracciamento differenze inventariali">
+    <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
       {/* Header */}
       <div style={{ marginBottom: '24px' }}>
         <h1 style={{ fontSize: '28px', fontWeight: 700, color: '#1f2937', margin: '0 0 8px 0', display: 'flex', alignItems: 'center', gap: '12px' }}>

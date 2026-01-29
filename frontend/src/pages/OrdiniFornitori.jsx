@@ -383,7 +383,8 @@ export default function OrdiniFornitori() {
   };
 
   return (
-    <div style={styles.container} data-testid="ordini-fornitori-page">
+    <PageLayout title="Ordini Fornitori" subtitle="Genera ordini ai fornitori partendo dal carrello comparatore prezzi">
+    <div style={{...styles.container, padding: 0}} data-testid="ordini-fornitori-page">
       {/* Header */}
       <div style={styles.card}>
         <h1 style={{ margin: 0, fontSize: 28, fontWeight: 'bold', color: '#1e293b' }}>

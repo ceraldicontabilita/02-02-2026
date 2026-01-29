@@ -86,7 +86,8 @@ export default function MotoreContabile() {
   };
 
   return (
-    <div style={{ padding: 24, maxWidth: 1400, margin: '0 auto' }}>
+    <PageLayout title="Motore Contabile" subtitle="Bilancio, Stato Patrimoniale, Conto Economico e Cespiti">
+    <div style={{ maxWidth: 1400, margin: '0 auto' }}>
       {/* Header */}
       <div style={{ 
         display: 'flex', 
