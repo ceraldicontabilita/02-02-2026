@@ -424,22 +424,16 @@ export default function Documenti() {
   });
 
   return (
-    <div style={{ padding: 20, maxWidth: 1600, margin: '0 auto' }}>
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: 28, fontWeight: 'bold', color: '#1e293b' }}>
-            📨 Gestione Documenti
-          </h1>
-          <p style={{ margin: '8px 0 0', color: '#64748b' }}>
-            Gestisci documenti email e documenti estratti con AI
-          </p>
-        </div>
+    <PageLayout 
+      title="Gestione Documenti" 
+      icon="📨" 
+      subtitle="Gestisci documenti email e documenti estratti con AI"
+      actions={
         <button onClick={activeTab === 'email' ? loadData : loadAiDocuments} disabled={loading || aiLoading} style={buttonStyle('#e5e7eb', '#374151')}>
           {loading || aiLoading ? '⏳' : '🔄'} Aggiorna
         </button>
-      </div>
-
+      }
+    >
       {/* Tab Navigation */}
       <div style={{ 
         display: 'flex', 
