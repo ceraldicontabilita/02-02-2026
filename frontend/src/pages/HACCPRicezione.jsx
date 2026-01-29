@@ -22,14 +22,7 @@ export default function HACCPRicezione() {
   }, []);
 
   return (
-    <div style={{ padding: 20, maxWidth: 1400, margin: '0 auto' }}>
-      <h1 style={{ fontSize: 24, fontWeight: 700, color: '#1a365d', marginBottom: 8 }}>
-        📥 Ricezione Merci HACCP
-      </h1>
-      <p style={{ color: '#64748b', marginBottom: 24 }}>
-        Registro controlli alla ricezione delle merci
-      </p>
-
+    <PageLayout title="Ricezione Merci HACCP" icon="📥" subtitle="Registro controlli alla ricezione delle merci">
       {loading ? (
         <div style={{ textAlign: 'center', padding: 40 }}>Caricamento...</div>
       ) : ricezioni.length === 0 ? (
@@ -90,6 +83,6 @@ export default function HACCPRicezione() {
           </table>
         </div>
       )}
-    </div>
+    </PageLayout>
   );
 }
