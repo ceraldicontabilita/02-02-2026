@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from 'react-router-dom';
 import api from "../api";
-import { formatDateIT, STYLES, COLORS, button, badge } from '../lib/utils';
+import { formatDateIT, formatEuro } from '../lib/utils';
+import { PageLayout, PageSection, PageGrid, PageLoading, PageEmpty } from '../components/PageLayout';
+import { Package, Plus, RefreshCw, Search, Filter, X, Trash2 } from 'lucide-react';
 
 export default function Magazzino() {
   const [products, setProducts] = useState([]);
@@ -9,13 +11,12 @@ export default function Magazzino() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [err, setErr] = useState("");
-  // URL Tab Support
+  
   const navigate = useNavigate();
   const location = useLocation();
   
   const getTabFromPath = () => {
-    const path = location.pathname;
-    const match = path.match(/\/magazzino\/([\w-]+)/);
+    const match = location.pathname.match(/\/magazzino\/([\w-]+)/);
     return match ? match[1] : 'catalogo';
   };
   
@@ -31,19 +32,13 @@ export default function Magazzino() {
     if (tab !== activeTab) setActiveTab(tab);
   }, [location.pathname]);
   
-  // Filtri
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [supplierFilter, setSupplierFilter] = useState("");
   const [showLowStock, setShowLowStock] = useState(false);
   
   const [newProduct, setNewProduct] = useState({
-    name: "",
-    code: "",
-    quantity: "",
-    unit: "pz",
-    price: "",
-    category: ""
+    name: "", code: "", quantity: "", unit: "pz", price: "", category: ""
   });
 
   useEffect(() => {
@@ -66,7 +61,6 @@ export default function Magazzino() {
     }
   }
 
-  // Estrai liste uniche per filtri
   const categories = useMemo(() => {
     const cats = new Set(catalogProducts.map(p => p.categoria).filter(Boolean));
     return Array.from(cats).sort();
@@ -77,10 +71,8 @@ export default function Magazzino() {
     return Array.from(supps).sort();
   }, [catalogProducts]);
 
-  // Prodotti filtrati
   const filteredProducts = useMemo(() => {
     return catalogProducts.filter(p => {
-      // Ricerca testo
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
         const matches = (p.nome || '').toLowerCase().includes(q) ||
@@ -88,24 +80,17 @@ export default function Magazzino() {
                        (p.categoria || '').toLowerCase().includes(q);
         if (!matches) return false;
       }
-      // Categoria
       if (categoryFilter && p.categoria !== categoryFilter) return false;
-      // Fornitore
       if (supplierFilter && p.ultimo_fornitore !== supplierFilter) return false;
-      // Low stock
       if (showLowStock && (p.giacenza || 0) > (p.giacenza_minima || 0)) return false;
-      
       return true;
     });
   }, [catalogProducts, searchQuery, categoryFilter, supplierFilter, showLowStock]);
 
-  // Statistiche
   const stats = useMemo(() => {
     const total = filteredProducts.length;
     const totalValue = filteredProducts.reduce((sum, p) => {
-      const price = p.prezzi?.avg || 0;
-      const qty = p.giacenza || 0;
-      return sum + (price * qty);
+      return sum + ((p.prezzi?.avg || 0) * (p.giacenza || 0));
     }, 0);
     const lowStock = filteredProducts.filter(p => (p.giacenza || 0) <= (p.giacenza_minima || 0)).length;
     const categorieCounts = {};
@@ -137,7 +122,6 @@ export default function Magazzino() {
   }
 
   async function handleDelete(id) {
-    
     try {
       await api.delete(`/api/warehouse/products/${id}`);
       loadProducts();
@@ -146,73 +130,116 @@ export default function Magazzino() {
     }
   }
 
-  const cardStyle = { background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', border: '1px solid #e5e7eb', marginBottom: 20 };
-  const btnPrimary = { padding: '10px 20px', background: '#4caf50', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 'bold', fontSize: 14 };
-  const btnSecondary = { padding: '10px 20px', background: '#e5e7eb', color: '#374151', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: '600', fontSize: 14 };
-  const inputStyle = { padding: '10px 12px', borderRadius: 8, border: '2px solid #e5e7eb', fontSize: 14 };
+  const resetFilters = () => {
+    setSearchQuery('');
+    setCategoryFilter('');
+    setSupplierFilter('');
+    setShowLowStock(false);
+  };
+
+  const hasFilters = searchQuery || categoryFilter || supplierFilter || showLowStock;
+
+  const inputStyle = {
+    padding: '10px 14px',
+    borderRadius: 8,
+    border: '1px solid #e2e8f0',
+    fontSize: 14
+  };
+
+  const KPICard = ({ label, value, subValue, color, bgColor, borderColor }) => (
+    <div style={{ background: bgColor, padding: 16, borderRadius: 12, border: `1px solid ${borderColor}` }}>
+      <div style={{ fontSize: 12, color, fontWeight: 500 }}>{label}</div>
+      <div style={{ fontSize: 26, fontWeight: 700, color: color.replace('0.8', '1') }}>{value}</div>
+      {subValue && <div style={{ fontSize: 11, color: '#64748b', marginTop: 4 }}>{subValue}</div>}
+    </div>
+  );
 
   return (
-    <div style={{ padding: 20, maxWidth: 1400, margin: '0 auto' }}>
-      {/* Header */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        marginBottom: 20,
-        padding: '15px 20px',
-        background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
-        borderRadius: 12,
-        color: 'white'
-      }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 'bold' }}>📦 Magazzino</h1>
-          <p style={{ margin: '4px 0 0 0', fontSize: 13, opacity: 0.9 }}>Gestione prodotti e inventario</p>
-        </div>
+    <PageLayout
+      title="Magazzino"
+      icon={<Package size={28} />}
+      subtitle="Gestione prodotti e inventario"
+      actions={
         <div style={{ display: 'flex', gap: 10 }}>
-          <button style={btnPrimary} onClick={() => setShowForm(!showForm)}>➕ Nuovo Prodotto</button>
-          <button style={btnSecondary} onClick={loadProducts}>🔄 Aggiorna</button>
+          <button 
+            onClick={() => setShowForm(!showForm)}
+            style={{
+              padding: '10px 16px',
+              background: '#16a34a',
+              color: 'white',
+              border: 'none',
+              borderRadius: 8,
+              cursor: 'pointer',
+              fontWeight: 600,
+              fontSize: 14,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6
+            }}
+          >
+            <Plus size={16} /> Nuovo Prodotto
+          </button>
+          <button 
+            onClick={loadProducts}
+            style={{
+              padding: '10px 16px',
+              background: '#f1f5f9',
+              color: '#475569',
+              border: '1px solid #e2e8f0',
+              borderRadius: 8,
+              cursor: 'pointer',
+              fontWeight: 500,
+              fontSize: 14,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6
+            }}
+          >
+            <RefreshCw size={16} /> Aggiorna
+          </button>
         </div>
-      </div>
-      
-      {err && <div style={{ padding: 16, background: "#fee2e2", border: "1px solid #fecaca", borderRadius: 8, color: "#dc2626", marginBottom: 20 }}>❌ {err}</div>}
+      }
+    >
+      {err && (
+        <div style={{ padding: 16, background: "#fee2e2", border: "1px solid #fecaca", borderRadius: 8, color: "#dc2626", marginBottom: 20 }}>
+          {err}
+        </div>
+      )}
 
       {/* Statistiche */}
       {activeTab === 'catalogo' && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, marginBottom: 16 }}>
-          <div style={{ background: '#f0f9ff', padding: 16, borderRadius: 12, border: '1px solid #bae6fd' }}>
-            <div style={{ fontSize: 12, color: '#0369a1' }}>Prodotti Totali</div>
-            <div style={{ fontSize: 28, fontWeight: 'bold', color: '#0c4a6e' }}>{stats.total}</div>
-          </div>
-          <div style={{ background: '#f0fdf4', padding: 16, borderRadius: 12, border: '1px solid #bbf7d0' }}>
-            <div style={{ fontSize: 12, color: '#16a34a' }}>Valore Stimato</div>
-            <div style={{ fontSize: 20, fontWeight: 'bold', color: '#166534' }}>€ {stats.totalValue.toFixed(2)}</div>
-          </div>
-          <div style={{ background: stats.lowStock > 0 ? '#fef2f2' : '#f8fafc', padding: 16, borderRadius: 12, border: `1px solid ${stats.lowStock > 0 ? '#fecaca' : '#e2e8f0'}` }}>
-            <div style={{ fontSize: 12, color: stats.lowStock > 0 ? '#dc2626' : '#64748b' }}>Scorte Basse</div>
-            <div style={{ fontSize: 28, fontWeight: 'bold', color: stats.lowStock > 0 ? '#b91c1c' : '#475569' }}>{stats.lowStock}</div>
-          </div>
-          <div style={{ background: '#fefce8', padding: 16, borderRadius: 12, border: '1px solid #fef08a' }}>
-            <div style={{ fontSize: 12, color: '#ca8a04' }}>Categorie</div>
-            <div style={{ fontSize: 28, fontWeight: 'bold', color: '#854d0e' }}>{categories.length}</div>
-          </div>
-        </div>
+        <PageGrid cols={4} gap={12}>
+          <KPICard label="Prodotti Totali" value={stats.total} color="#0369a1" bgColor="#f0f9ff" borderColor="#bae6fd" />
+          <KPICard label="Valore Stimato" value={formatEuro(stats.totalValue)} color="#16a34a" bgColor="#f0fdf4" borderColor="#bbf7d0" />
+          <KPICard 
+            label="Scorte Basse" 
+            value={stats.lowStock} 
+            color={stats.lowStock > 0 ? '#dc2626' : '#64748b'} 
+            bgColor={stats.lowStock > 0 ? '#fef2f2' : '#f8fafc'} 
+            borderColor={stats.lowStock > 0 ? '#fecaca' : '#e2e8f0'} 
+          />
+          <KPICard label="Categorie" value={categories.length} color="#ca8a04" bgColor="#fefce8" borderColor="#fef08a" />
+        </PageGrid>
       )}
 
       {/* Filtri */}
       {activeTab === 'catalogo' && (
-        <div style={cardStyle}>
+        <PageSection title="Filtri" icon={<Filter size={16} />} style={{ marginTop: 16 }}>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>
-            <input
-              type="text"
-              placeholder="🔍 Cerca prodotto, fornitore..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{ flex: 2, minWidth: 200, padding: '10px 14px', borderRadius: 8, border: '1px solid #e2e8f0' }}
-            />
+            <div style={{ flex: 2, minWidth: 200, position: 'relative' }}>
+              <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+              <input
+                type="text"
+                placeholder="Cerca prodotto, fornitore..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{ ...inputStyle, width: '100%', paddingLeft: 36 }}
+              />
+            </div>
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
-              style={{ flex: 1, minWidth: 150, padding: '10px 14px', borderRadius: 8, border: '1px solid #e2e8f0' }}
+              style={{ ...inputStyle, flex: 1, minWidth: 150 }}
             >
               <option value="">Tutte le categorie</option>
               {categories.map(cat => (
@@ -222,108 +249,58 @@ export default function Magazzino() {
             <select
               value={supplierFilter}
               onChange={(e) => setSupplierFilter(e.target.value)}
-              style={{ flex: 1, minWidth: 150, padding: '10px 14px', borderRadius: 8, border: '1px solid #e2e8f0' }}
+              style={{ ...inputStyle, flex: 1, minWidth: 150 }}
             >
               <option value="">Tutti i fornitori</option>
-              {suppliers.map(sup => (
-                <option key={sup} value={sup}>{sup}</option>
-              ))}
+              {suppliers.map(sup => (<option key={sup} value={sup}>{sup}</option>))}
             </select>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
-              <input
-                type="checkbox"
-                checked={showLowStock}
-                onChange={(e) => setShowLowStock(e.target.checked)}
-              />
-              <span style={{ fontSize: 13 }}>Solo scorte basse</span>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 13 }}>
+              <input type="checkbox" checked={showLowStock} onChange={(e) => setShowLowStock(e.target.checked)} />
+              Solo scorte basse
             </label>
-            {(searchQuery || categoryFilter || supplierFilter || showLowStock) && (
-              <button
-                onClick={() => {
-                  setSearchQuery('');
-                  setCategoryFilter('');
-                  setSupplierFilter('');
-                  setShowLowStock(false);
-                }}
-                style={{ padding: '8px 16px', borderRadius: 8, background: '#f1f5f9', border: 'none', cursor: 'pointer' }}
-              >
-                ✕ Reset
+            {hasFilters && (
+              <button onClick={resetFilters} style={{ padding: '8px 16px', borderRadius: 8, background: '#fee2e2', color: '#dc2626', border: 'none', cursor: 'pointer', fontWeight: 500, fontSize: 13 }}>
+                <X size={14} style={{ marginRight: 4 }} /> Reset
               </button>
             )}
           </div>
-        </div>
+        </PageSection>
       )}
 
       {/* Form Nuovo Prodotto */}
       {showForm && (
-        <div style={cardStyle}>
-          <h2 style={{ margin: '0 0 16px 0', fontSize: 18, fontWeight: 'bold', color: '#1e3a5f' }}>➕ Nuovo Prodotto</h2>
+        <PageSection title="Nuovo Prodotto" icon={<Plus size={16} />} style={{ marginTop: 16 }}>
           <form onSubmit={handleCreateProduct}>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
-              <input
-                placeholder="Nome Prodotto"
-                value={newProduct.name}
-                onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
-                required
-              />
-              <input
-                placeholder="Codice"
-                value={newProduct.code}
-                onChange={(e) => setNewProduct({ ...newProduct, code: e.target.value })}
-              />
-              <input
-                type="number"
-                placeholder="Quantità"
-                value={newProduct.quantity}
-                onChange={(e) => setNewProduct({ ...newProduct, quantity: e.target.value })}
-                required
-              />
-              <select
-                value={newProduct.unit}
-                onChange={(e) => setNewProduct({ ...newProduct, unit: e.target.value })}
-              >
+              <input style={{ ...inputStyle, flex: 2, minWidth: 200 }} placeholder="Nome Prodotto" value={newProduct.name} onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })} required />
+              <input style={{ ...inputStyle, width: 120 }} placeholder="Codice" value={newProduct.code} onChange={(e) => setNewProduct({ ...newProduct, code: e.target.value })} />
+              <input style={{ ...inputStyle, width: 100 }} type="number" placeholder="Qtà" value={newProduct.quantity} onChange={(e) => setNewProduct({ ...newProduct, quantity: e.target.value })} required />
+              <select style={inputStyle} value={newProduct.unit} onChange={(e) => setNewProduct({ ...newProduct, unit: e.target.value })}>
                 <option value="pz">Pezzi</option>
                 <option value="kg">Kg</option>
                 <option value="lt">Litri</option>
-                <option value="mt">Metri</option>
               </select>
+              <input style={{ ...inputStyle, width: 100 }} type="number" step="0.01" placeholder="€ Prezzo" value={newProduct.price} onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })} />
+              <input style={{ ...inputStyle, width: 150 }} placeholder="Categoria" value={newProduct.category} onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })} />
             </div>
-            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-              <input
-                type="number"
-                step="0.01"
-                placeholder="Prezzo €"
-                value={newProduct.price}
-                onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
-                style={inputStyle}
-              />
-              <input
-                placeholder="Categoria"
-                value={newProduct.category}
-                onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
-                style={inputStyle}
-              />
-              <button type="submit" style={btnPrimary}>✅ Salva</button>
-              <button type="button" style={btnSecondary} onClick={() => setShowForm(false)}>Annulla</button>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button type="submit" style={{ padding: '10px 20px', background: '#16a34a', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}>Salva</button>
+              <button type="button" onClick={() => setShowForm(false)} style={{ padding: '10px 20px', background: '#f1f5f9', color: '#475569', border: '1px solid #e2e8f0', borderRadius: 8, cursor: 'pointer' }}>Annulla</button>
             </div>
           </form>
-        </div>
+        </PageSection>
       )}
 
       {/* Tabs */}
-      {/* Lista Prodotti */}
-      <div style={{ ...cardStyle, padding: 0 }}>
+      <div style={{ marginTop: 20, background: 'white', borderRadius: 12, overflow: 'hidden', border: '1px solid #e5e7eb' }}>
         <div style={{ display: 'flex', borderBottom: '2px solid #e2e8f0' }}>
           <button
             onClick={() => handleTabChange('catalogo')}
             style={{
-              flex: 1,
-              padding: '14px 20px',
+              flex: 1, padding: '14px 20px',
               background: activeTab === 'catalogo' ? '#1e293b' : 'transparent',
               color: activeTab === 'catalogo' ? 'white' : '#64748b',
-              border: 'none',
-              fontWeight: 600,
-              cursor: 'pointer'
+              border: 'none', fontWeight: 600, cursor: 'pointer', fontSize: 14
             }}
           >
             📦 Catalogo Prodotti ({filteredProducts.length}{filteredProducts.length !== catalogProducts.length ? ` / ${catalogProducts.length}` : ''})
@@ -331,13 +308,10 @@ export default function Magazzino() {
           <button
             onClick={() => handleTabChange('manuale')}
             style={{
-              flex: 1,
-              padding: '14px 20px',
+              flex: 1, padding: '14px 20px',
               background: activeTab === 'manuale' ? '#1e293b' : 'transparent',
               color: activeTab === 'manuale' ? 'white' : '#64748b',
-              border: 'none',
-              fontWeight: 600,
-              cursor: 'pointer'
+              border: 'none', fontWeight: 600, cursor: 'pointer', fontSize: 14
             }}
           >
             📋 Inventario Manuale ({products.length})
@@ -346,100 +320,83 @@ export default function Magazzino() {
         
         <div style={{ padding: 20 }}>
           {loading ? (
-            <div style={{ fontSize: 14, color: '#6b7280', padding: 40, textAlign: 'center' }}>⏳ Caricamento...</div>
+            <PageLoading message="Caricamento prodotti..." />
           ) : activeTab === 'catalogo' ? (
-            // Catalogo Prodotti da Fatture
             filteredProducts.length === 0 ? (
-              <div style={{ fontSize: 14, color: '#6b7280', padding: 40, textAlign: 'center' }}>
-                📦 Nessun prodotto trovato<br/>
-                <span style={{ fontSize: 12 }}>{catalogProducts.length === 0 ? 'I prodotti verranno aggiunti automaticamente dalle fatture XML.' : 'Prova a modificare i filtri di ricerca.'}</span>
-              </div>
+              <PageEmpty icon="📦" message={catalogProducts.length === 0 ? "I prodotti verranno aggiunti automaticamente dalle fatture XML" : "Nessun prodotto trovato. Prova a modificare i filtri."} />
             ) : (
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                <thead>
-                  <tr style={{ borderBottom: "2px solid #ddd", textAlign: "left", background: '#f8fafc' }}>
-                    <th style={{ padding: 12 }}>Prodotto</th>
-                    <th style={{ padding: 12 }}>Categoria</th>
-                    <th style={{ padding: 12 }}>Fornitore</th>
-                    <th style={{ padding: 12, textAlign: 'right' }}>Giacenza</th>
-                    <th style={{ padding: 12, textAlign: 'right' }}>Prezzo Min</th>
-                    <th style={{ padding: 12, textAlign: 'right' }}>Prezzo Max</th>
-                    <th style={{ padding: 12 }}>Ultimo Acquisto</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredProducts.slice(0, 200).map((p, i) => (
-                    <tr key={p.id || p.product_id || i} style={{ borderBottom: "1px solid #eee" }}>
-                      <td style={{ padding: 12 }}>
-                        <div style={{ fontWeight: 500 }}>{p.nome || p.description || p.name || '-'}</div>
-                        {p.unita_misura && <span style={{ fontSize: 12, color: '#6b7280' }}>{p.unita_misura}</span>}
-                      </td>
-                      <td style={{ padding: 12 }}>
-                        <span style={{ 
-                          background: '#f1f5f9', 
-                          padding: '2px 8px', 
-                          borderRadius: 4, 
-                          fontSize: 12 
-                        }}>
-                          {p.categoria || 'altro'}
-                        </span>
-                      </td>
-                      <td style={{ padding: 12 }}>{p.ultimo_fornitore || p.supplier_name || '-'}</td>
-                      <td style={{ padding: 12, textAlign: 'right', fontWeight: 500 }}>
-                        {(p.giacenza || 0).toFixed(2)}
-                      </td>
-                      <td style={{ padding: 12, textAlign: 'right', color: '#16a34a' }}>
-                        € {(p.prezzi?.min || p.last_price || 0).toFixed(2)}
-                      </td>
-                      <td style={{ padding: 12, textAlign: 'right', color: '#64748b' }}>
-                        € {(p.prezzi?.max || p.avg_price || 0).toFixed(2)}
-                      </td>
-                      <td style={{ padding: 12, color: '#64748b' }}>
-                        {p.ultimo_acquisto ? formatDateIT(p.ultimo_acquisto) : '-'}
-                      </td>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                  <thead>
+                    <tr style={{ borderBottom: "2px solid #e2e8f0", background: '#f8fafc' }}>
+                      <th style={{ padding: 12, textAlign: 'left', fontWeight: 600 }}>Prodotto</th>
+                      <th style={{ padding: 12, textAlign: 'left', fontWeight: 600 }}>Categoria</th>
+                      <th style={{ padding: 12, textAlign: 'left', fontWeight: 600 }}>Fornitore</th>
+                      <th style={{ padding: 12, textAlign: 'right', fontWeight: 600 }}>Giacenza</th>
+                      <th style={{ padding: 12, textAlign: 'right', fontWeight: 600 }}>Prezzo Min</th>
+                      <th style={{ padding: 12, textAlign: 'right', fontWeight: 600 }}>Prezzo Max</th>
+                      <th style={{ padding: 12, textAlign: 'left', fontWeight: 600 }}>Ultimo Acquisto</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {filteredProducts.slice(0, 200).map((p, i) => (
+                      <tr key={p.id || p.product_id || i} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                        <td style={{ padding: 12 }}>
+                          <div style={{ fontWeight: 500 }}>{p.nome || p.name || '-'}</div>
+                          {p.unita_misura && <span style={{ fontSize: 11, color: '#94a3b8' }}>{p.unita_misura}</span>}
+                        </td>
+                        <td style={{ padding: 12 }}>
+                          <span style={{ background: '#f1f5f9', padding: '3px 8px', borderRadius: 4, fontSize: 11 }}>{p.categoria || 'altro'}</span>
+                        </td>
+                        <td style={{ padding: 12, color: '#64748b' }}>{p.ultimo_fornitore || '-'}</td>
+                        <td style={{ padding: 12, textAlign: 'right', fontWeight: 600 }}>{(p.giacenza || 0).toFixed(2)}</td>
+                        <td style={{ padding: 12, textAlign: 'right', color: '#16a34a' }}>{formatEuro(p.prezzi?.min || 0)}</td>
+                        <td style={{ padding: 12, textAlign: 'right', color: '#64748b' }}>{formatEuro(p.prezzi?.max || 0)}</td>
+                        <td style={{ padding: 12, color: '#64748b' }}>{p.ultimo_acquisto ? formatDateIT(p.ultimo_acquisto) : '-'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )
           ) : (
-            // Inventario Manuale
             products.length === 0 ? (
-              <div style={{ fontSize: 14, color: '#6b7280', padding: 40, textAlign: 'center' }}>
-                📦 Nessun prodotto nel magazzino<br/>
-                <span style={{ fontSize: 12 }}>Clicca "+ Nuovo Prodotto" per aggiungerne uno.</span>
-              </div>
+              <PageEmpty icon="📦" message="Nessun prodotto nel magazzino manuale. Clicca '+ Nuovo Prodotto' per aggiungerne uno." />
             ) : (
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                <thead>
-                  <tr style={{ borderBottom: "2px solid #ddd", textAlign: "left", background: '#f8fafc' }}>
-                    <th style={{ padding: 12 }}>Codice</th>
-                    <th style={{ padding: 12 }}>Nome</th>
-                    <th style={{ padding: 12 }}>Quantità</th>
-                    <th style={{ padding: 12 }}>Prezzo</th>
-                    <th style={{ padding: 12 }}>Categoria</th>
-                    <th style={{ padding: 12 }}>Azioni</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {products.map((p, i) => (
-                    <tr key={p.id || i} style={{ borderBottom: "1px solid #eee" }}>
-                      <td style={{ padding: 12 }}>{p.code || "-"}</td>
-                      <td style={{ padding: 12 }}>{p.name}</td>
-                      <td style={{ padding: 12 }}>{p.quantity} {p.unit}</td>
-                      <td style={{ padding: 12 }}>€ {(p.unit_price || 0).toFixed(2)}</td>
-                      <td style={{ padding: 12 }}>{p.category || "-"}</td>
-                      <td style={{ padding: 12 }}>
-                        <button onClick={() => handleDelete(p.id)} style={{ color: "#c00", background: 'none', border: 'none', cursor: 'pointer' }}>🗑️</button>
-                      </td>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                  <thead>
+                    <tr style={{ borderBottom: "2px solid #e2e8f0", background: '#f8fafc' }}>
+                      <th style={{ padding: 12, textAlign: 'left', fontWeight: 600 }}>Codice</th>
+                      <th style={{ padding: 12, textAlign: 'left', fontWeight: 600 }}>Nome</th>
+                      <th style={{ padding: 12, textAlign: 'right', fontWeight: 600 }}>Quantità</th>
+                      <th style={{ padding: 12, textAlign: 'right', fontWeight: 600 }}>Prezzo</th>
+                      <th style={{ padding: 12, textAlign: 'left', fontWeight: 600 }}>Categoria</th>
+                      <th style={{ padding: 12, textAlign: 'center', fontWeight: 600 }}>Azioni</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {products.map((p, i) => (
+                      <tr key={p.id || i} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                        <td style={{ padding: 12, fontFamily: 'monospace' }}>{p.code || "-"}</td>
+                        <td style={{ padding: 12, fontWeight: 500 }}>{p.name}</td>
+                        <td style={{ padding: 12, textAlign: 'right' }}>{p.quantity} {p.unit}</td>
+                        <td style={{ padding: 12, textAlign: 'right', color: '#16a34a' }}>{formatEuro(p.unit_price || 0)}</td>
+                        <td style={{ padding: 12 }}>{p.category || "-"}</td>
+                        <td style={{ padding: 12, textAlign: 'center' }}>
+                          <button onClick={() => handleDelete(p.id)} style={{ padding: '6px 10px', background: '#fef2f2', color: '#dc2626', border: 'none', borderRadius: 6, cursor: 'pointer' }}>
+                            <Trash2 size={14} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )
           )}
         </div>
       </div>
-    </div>
+    </PageLayout>
   );
 }
