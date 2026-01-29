@@ -130,7 +130,8 @@ export default function DizionarioProdotti() {
   const currentPage = Math.floor(offset / limit) + 1;
 
   return (
-    <div style={{ padding: '24px', maxWidth: '1600px', margin: '0 auto' }}>
+    <PageLayout title="Dizionario Prodotti" subtitle="Tutti i prodotti estratti dalle fatture - Modifica il prezzo/kg per calcoli food cost accurati">
+    <div style={{ maxWidth: '1600px', margin: '0 auto' }}>
       {/* Header */}
       <div style={{ marginBottom: '24px' }}>
         <h1 style={{ fontSize: '28px', fontWeight: 700, color: '#1f2937', margin: '0 0 8px 0', display: 'flex', alignItems: 'center', gap: '12px' }}>

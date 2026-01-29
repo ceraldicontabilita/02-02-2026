@@ -216,7 +216,8 @@ export default function DizionarioArticoli() {
   };
 
   return (
-    <div style={{ padding: 24 }}>
+    <PageLayout title="Dizionario Articoli" subtitle="Mappatura automatica prodotti fatture → Piano dei Conti e Categorie HACCP">
+    <div>
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ fontSize: 28, fontWeight: 700, color: '#1e3a5f', marginBottom: 8 }}>

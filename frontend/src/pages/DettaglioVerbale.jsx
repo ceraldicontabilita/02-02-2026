@@ -83,7 +83,8 @@ export default function DettaglioVerbale() {
   const statoStyle = getStatoColor(verbale?.stato_pagamento);
 
   return (
-    <div style={{ padding: 24, maxWidth: 1200, margin: '0 auto' }}>
+    <PageLayout title="Dettaglio Verbale" subtitle={`Verbale n° ${verbale?.numero_verbale || 'N/A'}`}>
+    <div style={{ maxWidth: 1200, margin: '0 auto' }}>
       {/* Header */}
       <div style={{ 
         background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',

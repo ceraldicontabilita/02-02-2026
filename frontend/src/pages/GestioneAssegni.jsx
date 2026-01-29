@@ -814,7 +814,8 @@ export default function GestioneAssegni() {
   };
 
   return (
-    <div style={{ padding: '16px', maxWidth: 1400, margin: '0 auto' }}>
+    <PageLayout title="Gestione Assegni" subtitle="Genera, collega e controlla i tuoi assegni in un'unica schermata">
+    <div style={{ maxWidth: 1400, margin: '0 auto' }}>
       <h1 style={{ marginBottom: 5, color: '#1a365d', fontSize: 'clamp(1.5rem, 4vw, 2rem)' }}>Gestione Assegni</h1>
       <p style={{ color: '#666', marginBottom: 20, fontSize: 14 }}>
         Genera, collega e controlla i tuoi assegni in un'unica schermata

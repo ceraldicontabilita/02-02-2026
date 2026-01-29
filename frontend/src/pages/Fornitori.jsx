@@ -1372,7 +1372,8 @@ export default function Fornitori() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f3f4f6', padding: '24px', position: 'relative' }}>
+    <PageLayout title="Gestione Fornitori" subtitle="Anagrafica e gestione fornitori">
+    <div style={{ minHeight: '100vh', backgroundColor: '#f3f4f6', position: 'relative' }}>
       
       <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
         

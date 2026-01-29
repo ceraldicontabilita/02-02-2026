@@ -134,7 +134,8 @@ export default function EmailDownloadManager() {
   });
 
   return (
-    <div className="p-6 space-y-6" data-testid="email-download-manager">
+    <PageLayout title="Gestione Email e Allegati" subtitle="Scarica tutti i PDF dalla posta e associali ai documenti">
+    <div className="space-y-6" data-testid="email-download-manager">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
