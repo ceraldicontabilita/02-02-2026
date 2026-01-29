@@ -133,18 +133,11 @@ export default function Scadenze() {
   };
 
   return (
-    <div style={{ padding: 'clamp(12px, 3vw, 20px)', position: 'relative' }}>
-      {/* Page Info Card */}
-      <div style={{ position: 'absolute', top: 0, right: 20, zIndex: 100 }}>
-        <PageInfoCard pageKey="scadenze" />
-      </div>
-      
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 10 }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: 'clamp(20px, 5vw, 28px)' }}>📅 Scadenze e Notifiche</h1>
-          <p style={{ color: '#666', margin: '4px 0 0 0' }}>Gestione scadenze fiscali, pagamenti e promemoria</p>
-        </div>
+    <PageLayout 
+      title="Scadenze e Notifiche" 
+      icon="📅" 
+      subtitle="Gestione scadenze fiscali, pagamenti e promemoria"
+      actions={
         <button
           onClick={() => setShowModal(true)}
           style={{
@@ -159,30 +152,36 @@ export default function Scadenze() {
         >
           ➕ Nuova Scadenza
         </button>
-      </div>
+      }
+    >
+      <div style={{ position: 'relative' }}>
+        {/* Page Info Card */}
+        <div style={{ position: 'absolute', top: 0, right: 0, zIndex: 100 }}>
+          <PageInfoCard pageKey="scadenze" />
+        </div>
 
-      {/* Alert Widget - Notifiche Urgenti */}
-      {alertWidget && alertWidget.totale_alert > 0 && (
-        <div style={{
-          background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
-          borderRadius: 12,
-          padding: 20,
-          marginBottom: 20,
-          color: 'white'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 15 }}>
-            <span style={{ fontSize: 24 }}>⚠️</span>
-            <h3 style={{ margin: 0 }}>{alertWidget.totale_alert} Alert Attivi</h3>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
-            {alertWidget.libretti_sanitari?.scaduti > 0 && (
-              <div 
-                onClick={() => window.location.href = '/dipendenti'}
-                style={{
-                  background: 'rgba(255,255,255,0.15)',
-                  padding: 12,
-                  borderRadius: 8,
-                  cursor: 'pointer',
+        {/* Alert Widget - Notifiche Urgenti */}
+        {alertWidget && alertWidget.totale_alert > 0 && (
+          <div style={{
+            background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
+            borderRadius: 12,
+            padding: 20,
+            marginBottom: 20,
+            color: 'white'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 15 }}>
+              <span style={{ fontSize: 24 }}>⚠️</span>
+              <h3 style={{ margin: 0 }}>{alertWidget.totale_alert} Alert Attivi</h3>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
+              {alertWidget.libretti_sanitari?.scaduti > 0 && (
+                <div 
+                  onClick={() => window.location.href = '/dipendenti'}
+                  style={{
+                    background: 'rgba(255,255,255,0.15)',
+                    padding: 12,
+                    borderRadius: 8,
+                    cursor: 'pointer',
                   transition: 'all 0.2s'
                 }}
                 onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.25)'}
