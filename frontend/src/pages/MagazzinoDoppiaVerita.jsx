@@ -534,6 +534,7 @@ export default function MagazzinoDoppiaVerita() {
         />
       )}
     </div>
+    </PageLayout>
   );
 }
 
@@ -621,6 +622,5 @@ function ProdottoDetailModal({ prodotto, onClose }) {
         </div>
       </div>
     </div>
-    </PageLayout>
   );
 }
