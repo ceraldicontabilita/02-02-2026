@@ -269,55 +269,53 @@ export default function Cedolini() {
           }}>
             {anno}
           </span>
-            <button
-              onClick={() => navigateAnno(1)}
-              style={{
-                padding: '6px 10px',
-                background: 'rgba(255,255,255,0.2)',
-                border: 'none',
-                borderRadius: 6,
-                cursor: 'pointer',
-                color: 'white'
-              }}
-            >
-              <ChevronRight style={{ width: 16, height: 16 }} />
-            </button>
-          </div>
+          <button
+            onClick={() => navigateAnno(1)}
+            style={{
+              padding: '6px 10px',
+              background: '#f1f5f9',
+              border: 'none',
+              borderRadius: 6,
+              cursor: 'pointer'
+            }}
+          >
+            <ChevronRight style={{ width: 16, height: 16 }} />
+          </button>
+          
+          <button 
+            onClick={() => setShowUpload(true)}
+            style={{ 
+              padding: '10px 20px',
+              background: '#10b981',
+              color: 'white',
+              border: 'none',
+              borderRadius: 8,
+              cursor: 'pointer',
+              fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              marginLeft: 'auto'
+            }}
+            data-testid="btn-carica-cedolino"
+          >
+            <Upload style={{ width: 16, height: 16 }} />
+            Carica buste paga
+          </button>
         </div>
-        
-        <button 
-          onClick={() => setShowUpload(true)}
-          style={{ 
-            padding: '10px 20px',
-            background: '#10b981',
-            color: 'white',
-            border: 'none',
-            borderRadius: 8,
-            cursor: 'pointer',
-            fontWeight: '600',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8
-          }}
-          data-testid="btn-carica-cedolino"
-        >
-          <Upload style={{ width: 16, height: 16 }} />
-          Carica buste paga e CU
-        </button>
-      </div>
 
-      {/* Tabs Mesi con Stats - Layout Migliorato */}
-      <div style={{ 
-        background: 'white', 
-        borderRadius: 12, 
-        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-        marginBottom: 20,
-        overflow: 'hidden'
-      }}>
-        {/* Grid di mesi - layout fisso a griglia */}
+        {/* Tabs Mesi con Stats */}
         <div style={{ 
-          display: 'grid',
-          gridTemplateColumns: 'repeat(14, 1fr)',
+          background: 'white', 
+          borderRadius: 12, 
+          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+          marginBottom: 20,
+          overflow: 'hidden'
+        }}>
+          {/* Grid di mesi - layout fisso a griglia */}
+          <div style={{ 
+            display: 'grid',
+            gridTemplateColumns: 'repeat(14, 1fr)',
           gap: 0,
           borderBottom: '2px solid #e5e7eb',
           background: '#f9fafb'
