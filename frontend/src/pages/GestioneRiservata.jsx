@@ -231,7 +231,8 @@ function DashboardGestioneRiservata({ onLogout }) {
                    "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f7fafc", padding: 30 }}>
+    <PageLayout title="Gestione Riservata" subtitle="Incassi e spese non fatturati">
+    <div style={{ minHeight: "100vh", background: "#f7fafc" }}>
       {/* Header */}
       <div style={{ 
         display: "flex", 
@@ -535,6 +536,7 @@ function DashboardGestioneRiservata({ onLogout }) {
         )}
       </div>
     </div>
+    </PageLayout>
   );
 }
 
