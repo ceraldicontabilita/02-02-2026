@@ -502,6 +502,6 @@ export default function DashboardAnalytics() {
           <div style={{ fontSize: 12, color: '#64748b' }}>Fatture Emesse</div>
         </div>
       </div>
-    </div>
+    </PageLayout>
   );
 }
