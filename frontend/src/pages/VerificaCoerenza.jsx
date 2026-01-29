@@ -543,6 +543,6 @@ export default function VerificaCoerenza() {
           </div>
         )
       )}
-    </div>
+    </PageLayout>
   );
 }
