@@ -1224,6 +1224,7 @@ export default function Attendance() {
         <TabSaldoFerie employees={employees} currentYear={currentYear} />
       )}
     </div>
+    </PageLayout>
   );
 }
 

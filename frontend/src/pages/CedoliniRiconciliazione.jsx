@@ -201,7 +201,8 @@ export default function CedoliniRiconciliazione() {
   }
 
   return (
-    <div style={{ padding: 20, maxWidth: 1400, margin: '0 auto' }} data-testid="cedolini-page">
+    <PageLayout title="Buste Paga" subtitle="Gestione cedolini e buste paga dipendenti">
+    <div style={{ maxWidth: 1400, margin: '0 auto' }} data-testid="cedolini-page">
       {/* Header */}
       <div style={{ 
         display: 'flex', 
@@ -751,5 +752,6 @@ export default function CedoliniRiconciliazione() {
         </div>
       )}
     </div>
+    </PageLayout>
   );
 }

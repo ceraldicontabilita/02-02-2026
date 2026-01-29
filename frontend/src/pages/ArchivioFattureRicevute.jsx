@@ -339,7 +339,8 @@ export default function ArchivioFatture() {
   // ==================== RENDER ====================
 
   return (
-    <div style={{ padding: 20, maxWidth: 1600, margin: '0 auto', position: 'relative' }} data-testid="ciclo-passivo-unificato">
+    <PageLayout title="Ciclo Passivo - Fatture Ricevute" subtitle={`Gestione fatture anno ${anno}`}>
+    <div style={{ maxWidth: 1600, margin: '0 auto', position: 'relative' }} data-testid="ciclo-passivo-unificato">
       {/* Page Info Card */}
       <div style={{ position: 'absolute', top: 0, right: 0, zIndex: 100 }}>
         <PageInfoCard pageKey="fatture-ricevute" />
@@ -1112,5 +1113,6 @@ export default function ArchivioFatture() {
         </div>
       )}
     </div>
+    </PageLayout>
   );
 }
