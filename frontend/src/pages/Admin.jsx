@@ -375,26 +375,7 @@ export default function Admin() {
   });
 
   return (
-    <div style={{ padding: 'clamp(12px, 3vw, 20px)', maxWidth: 1400, margin: '0 auto' }}>
-      {/* Header */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        marginBottom: 20,
-        flexWrap: 'wrap',
-        gap: 10
-      }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: 'clamp(20px, 5vw, 28px)', display: 'flex', alignItems: 'center', gap: 8 }}>
-            ⚙️ Amministrazione
-          </h1>
-          <p style={{ color: '#64748b', margin: '4px 0 0 0', fontSize: 'clamp(12px, 3vw, 14px)' }}>
-            Configurazione sistema, email e parametri
-          </p>
-        </div>
-      </div>
-
+    <PageLayout title="Amministrazione" icon="⚙️" subtitle="Configurazione sistema, email e parametri">
       {/* Tabs */}
       <div style={{ marginBottom: 16, background: '#f1f5f9', padding: 4, borderRadius: 12, display: 'flex', flexWrap: 'wrap', gap: 4 }}>
         <button onClick={() => handleTabChange('email')} style={tabStyle(activeTab === 'email')}>📧 Email</button>
