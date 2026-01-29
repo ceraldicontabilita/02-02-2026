@@ -200,6 +200,105 @@ async def lista_cedolini(
     }
 
 
+@router.get("/incompleti")
+async def lista_cedolini_incompleti() -> Dict[str, Any]:
+    """
+    Lista cedolini con dati incompleti (solo campo netto).
+    Utile per identificare record da correggere o completare.
+    """
+    db = Database.get_db()
+    
+    # Query per cedolini che hanno solo netto (senza lordo)
+    query = {
+        "$and": [
+            {"netto": {"$exists": True, "$gt": 0}},
+            {"$or": [
+                {"lordo": {"$exists": False}},
+                {"lordo": None},
+                {"lordo": 0}
+            ]},
+            {"$or": [
+                {"lordo_totale": {"$exists": False}},
+                {"lordo_totale": None},
+                {"lordo_totale": 0}
+            ]}
+        ]
+    }
+    
+    cedolini = await db["cedolini"].find(
+        query,
+        {"_id": 0, "pdf_data": 0}
+    ).sort([("anno", -1), ("mese", -1)]).to_list(100)
+    
+    total = await db["cedolini"].count_documents(query)
+    
+    # Calcola statistiche
+    totale_netto = sum(c.get("netto", 0) for c in cedolini)
+    
+    return {
+        "cedolini_incompleti": cedolini,
+        "total": total,
+        "totale_netto": totale_netto,
+        "nota": "Questi cedolini hanno solo il campo 'netto' popolato. Potrebbero derivare da importazioni PDF parziali.",
+        "suggerimento": "Verificare i PDF originali o completare manualmente i dati mancanti (lordo, trattenute, contributi)"
+    }
+
+
+@router.post("/incompleti/{cedolino_id}/completa")
+async def completa_cedolino_incompleto(
+    cedolino_id: str,
+    lordo: float,
+    inps_dipendente: Optional[float] = None,
+    irpef: Optional[float] = None
+) -> Dict[str, Any]:
+    """
+    Completa un cedolino incompleto con i dati mancanti.
+    Calcola automaticamente le trattenute se non fornite.
+    """
+    db = Database.get_db()
+    
+    cedolino = await db["cedolini"].find_one({"id": cedolino_id})
+    if not cedolino:
+        raise HTTPException(status_code=404, detail="Cedolino non trovato")
+    
+    netto_attuale = cedolino.get("netto", 0)
+    
+    # Calcola trattenute se non fornite (stima)
+    if inps_dipendente is None:
+        inps_dipendente = lordo * (INPS_DIPENDENTE_PERCENT / 100)
+    
+    if irpef is None:
+        # Stima IRPEF dal lordo-inps
+        imponibile = lordo - inps_dipendente
+        irpef = imponibile * 0.23  # Aliquota base semplificata
+    
+    # Calcola netto teorico
+    netto_calcolato = lordo - inps_dipendente - irpef
+    
+    update_data = {
+        "lordo": lordo,
+        "lordo_totale": lordo,
+        "inps_dipendente": inps_dipendente,
+        "irpef": irpef,
+        "netto_calcolato": netto_calcolato,
+        "completato_manualmente": True,
+        "data_completamento": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db["cedolini"].update_one(
+        {"id": cedolino_id},
+        {"$set": update_data}
+    )
+    
+    return {
+        "success": True,
+        "cedolino_id": cedolino_id,
+        "dati_aggiornati": update_data,
+        "differenza_netto": netto_calcolato - netto_attuale if netto_attuale else None
+    }
+
+
+
 @router.post("/stima", response_model=CedolinoStima)
 async def calcola_stima_cedolino(input_data: CedolinoInput) -> CedolinoStima:
     """
