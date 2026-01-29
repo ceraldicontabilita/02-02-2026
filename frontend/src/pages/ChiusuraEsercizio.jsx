@@ -711,6 +711,7 @@ export default function ChiusuraEsercizio() {
           100% { transform: rotate(360deg); }
         }
       `}</style>
-    </div>
+      </div>
+    </PageLayout>
   );
 }
