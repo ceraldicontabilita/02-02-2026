@@ -113,24 +113,11 @@ export default function VerificaCoerenza() {
   });
 
   return (
-    <div style={{ padding: 'clamp(12px, 3vw, 20px)' }}>
-      {/* Header */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        marginBottom: 20,
-        flexWrap: 'wrap',
-        gap: 10
-      }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: 'clamp(20px, 5vw, 28px)' }}>
-            🔍 Verifica Coerenza Dati
-          </h1>
-          <p style={{ color: '#64748b', margin: '4px 0 0 0', fontSize: 'clamp(12px, 3vw, 14px)' }}>
-            Controllo automatico della consistenza dei dati - Anno {anno}
-          </p>
-        </div>
+    <PageLayout 
+      title="Verifica Coerenza Dati" 
+      icon="🔍" 
+      subtitle={`Controllo automatico - Anno ${anno}`}
+      actions={
         <button 
           onClick={loadAll} 
           disabled={loading} 
@@ -151,8 +138,8 @@ export default function VerificaCoerenza() {
         >
           🔄 Ricarica
         </button>
-      </div>
-
+      }
+    >
       {error && (
         <div style={{ 
           padding: 12, 
