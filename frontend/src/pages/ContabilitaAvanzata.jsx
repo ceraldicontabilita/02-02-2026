@@ -143,71 +143,70 @@ export default function ContabilitaAvanzata() {
   };
 
   if (loading) {
-    return <div style={styles.loading}><div style={styles.loadingText}>Caricamento dati contabili...</div></div>;
+    return (
+      <PageLayout title="Contabilità Avanzata" icon="📈" subtitle="Caricamento...">
+        <div style={{ textAlign: 'center', padding: 40, color: '#64748b' }}>Caricamento dati contabili...</div>
+      </PageLayout>
+    );
   }
 
   return (
-    <div style={styles.page} data-testid="contabilita-avanzata-page">
-      {/* Header */}
-      <div style={styles.header}>
-        <div>
-          <h1 style={styles.title}>Contabilità Avanzata - Anno {selectedYear}</h1>
-          <p style={styles.subtitle}>Calcolo IRES/IRAP in tempo reale e categorizzazione intelligente</p>
-        </div>
-        <div style={styles.headerRight}>
+    <PageLayout title={`Contabilità Avanzata - ${selectedYear}`} icon="📈" subtitle="Calcolo IRES/IRAP e categorizzazione intelligente">
+      <div style={{ background: '#0f172a', borderRadius: 12, padding: 20 }} data-testid="contabilita-avanzata-page">
+        {/* Header Actions */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginBottom: 20 }}>
           <div style={styles.badge}>📅 Anno: {selectedYear}</div>
           <button onClick={handleDownloadPDF} style={styles.btnPrimary} data-testid="btn-download-pdf">
-            <FileText style={styles.icon} /> Scarica PDF Dichiarazione
+            <FileText style={styles.icon} /> Scarica PDF
           </button>
         </div>
-      </div>
 
-      {/* Message */}
-      {message && <div style={message.type === 'success' ? styles.messageSuccess : styles.messageError}>{message.text}</div>}
+        {/* Message */}
+        {message && <div style={message.type === 'success' ? styles.messageSuccess : styles.messageError}>{message.text}</div>}
 
-      {/* Tabs */}
-      <div style={styles.tabs}>
-        {['imposte', 'statistiche', 'bilancio'].map((tab) => (
-          <button key={tab} onClick={() => setActiveTab(tab)} style={styles.tab(activeTab === tab)} data-testid={`tab-${tab}`}>
-            {tab === 'imposte' ? '💰 Calcolo Imposte' : tab === 'statistiche' ? '📊 Statistiche' : '📋 Bilancio Dettagliato'}
-          </button>
-        ))}
-      </div>
-
-      {/* Tab: Imposte */}
-      {activeTab === 'imposte' && imposte && (
-        <div style={styles.spaceY}>
-          {/* Selettore Regione */}
-          <div style={{ ...styles.card, ...styles.row }}>
-            <label style={styles.label}>Regione IRAP:</label>
-            <select value={regione} onChange={(e) => setRegione(e.target.value)} style={styles.select} data-testid="select-regione">
-              {Object.keys(aliquoteIrap).sort().map((reg) => (
-                <option key={reg} value={reg}>{reg.charAt(0).toUpperCase() + reg.slice(1).replace(/_/g, ' ')} ({aliquoteIrap[reg]}%)</option>
-              ))}
-            </select>
-            <button onClick={handleRicategorizza} disabled={processing} style={{ ...styles.btnPurple, marginLeft: 'auto', opacity: processing ? 0.5 : 1 }} data-testid="btn-ricategorizza">
-              {processing ? '⏳ Elaborazione...' : '🔄 Ricategorizza Fatture'}
+        {/* Tabs */}
+        <div style={styles.tabs}>
+          {['imposte', 'statistiche', 'bilancio'].map((tab) => (
+            <button key={tab} onClick={() => setActiveTab(tab)} style={styles.tab(activeTab === tab)} data-testid={`tab-${tab}`}>
+              {tab === 'imposte' ? '💰 Calcolo Imposte' : tab === 'statistiche' ? '📊 Statistiche' : '📋 Bilancio Dettagliato'}
             </button>
-          </div>
+          ))}
+        </div>
 
-          {/* Cards Riepilogo */}
-          <div style={styles.grid4}>
-            <div style={styles.cardGradient('#2563eb', '#1e40af')}><p style={styles.statLabel('#bfdbfe')}>Utile Civilistico</p><p style={styles.statValue} data-testid="utile-civilistico">{formatEuro(imposte.utile_civilistico)}</p></div>
-            <div style={styles.cardGradient('#ea580c', '#c2410c')}><p style={styles.statLabel('#fed7aa')}>IRES (24%)</p><p style={styles.statValue} data-testid="ires-dovuta">{formatEuro(imposte.ires.imposta_dovuta)}</p></div>
-            <div style={styles.cardGradient('#9333ea', '#7c3aed')}><p style={styles.statLabel('#e9d5ff')}>IRAP ({imposte.irap.aliquota}%)</p><p style={styles.statValue} data-testid="irap-dovuta">{formatEuro(imposte.irap.imposta_dovuta)}</p></div>
-            <div style={styles.cardGradient('#dc2626', '#b91c1c')}><p style={styles.statLabel('#fecaca')}>Totale Imposte</p><p style={styles.statValue} data-testid="totale-imposte">{formatEuro(imposte.totale_imposte)}</p><p style={{ color: '#fecaca', fontSize: 12, marginTop: 4 }}>Aliquota effettiva: {imposte.aliquota_effettiva}%</p></div>
-          </div>
+        {/* Tab: Imposte */}
+        {activeTab === 'imposte' && imposte && (
+          <div style={styles.spaceY}>
+            {/* Selettore Regione */}
+            <div style={{ ...styles.card, ...styles.row }}>
+              <label style={styles.label}>Regione IRAP:</label>
+              <select value={regione} onChange={(e) => setRegione(e.target.value)} style={styles.select} data-testid="select-regione">
+                {Object.keys(aliquoteIrap).sort().map((reg) => (
+                  <option key={reg} value={reg}>{reg.charAt(0).toUpperCase() + reg.slice(1).replace(/_/g, ' ')} ({aliquoteIrap[reg]}%)</option>
+                ))}
+              </select>
+              <button onClick={handleRicategorizza} disabled={processing} style={{ ...styles.btnPurple, marginLeft: 'auto', opacity: processing ? 0.5 : 1 }} data-testid="btn-ricategorizza">
+                {processing ? '⏳ Elaborazione...' : '🔄 Ricategorizza Fatture'}
+              </button>
+            </div>
 
-          {/* Dettaglio IRES/IRAP */}
-          <div style={styles.grid2}>
-            <div style={styles.card}>
-              <h3 style={styles.sectionTitle}>📊 Calcolo IRES</h3>
-              <table style={styles.table}>
-                <tbody>
-                  <tr><td style={styles.td}>Utile civilistico</td><td style={styles.tdRight}>{formatEuro(imposte.utile_civilistico)}</td></tr>
-                  {imposte.ires.variazioni_aumento.map((v, i) => (<tr key={i}><td style={{ ...styles.td, color: '#fb923c', paddingLeft: 16 }}>+ {v.descrizione}</td><td style={{ ...styles.tdRight, color: '#fb923c' }}>+{formatEuro(v.importo)}</td></tr>))}
-                  {imposte.ires.variazioni_diminuzione.map((v, i) => (<tr key={i}><td style={{ ...styles.td, color: '#4ade80', paddingLeft: 16 }}>- {v.descrizione}</td><td style={{ ...styles.tdRight, color: '#4ade80' }}>-{formatEuro(v.importo)}</td></tr>))}
-                  <tr style={{ borderTop: '2px solid #475569' }}><td style={{ ...styles.td, color: 'white', fontWeight: '500' }}>Reddito imponibile</td><td style={{ ...styles.tdRight, fontWeight: 'bold' }}>{formatEuro(imposte.ires.reddito_imponibile)}</td></tr>
+            {/* Cards Riepilogo */}
+            <div style={styles.grid4}>
+              <div style={styles.cardGradient('#2563eb', '#1e40af')}><p style={styles.statLabel('#bfdbfe')}>Utile Civilistico</p><p style={styles.statValue} data-testid="utile-civilistico">{formatEuro(imposte.utile_civilistico)}</p></div>
+              <div style={styles.cardGradient('#ea580c', '#c2410c')}><p style={styles.statLabel('#fed7aa')}>IRES (24%)</p><p style={styles.statValue} data-testid="ires-dovuta">{formatEuro(imposte.ires.imposta_dovuta)}</p></div>
+              <div style={styles.cardGradient('#9333ea', '#7c3aed')}><p style={styles.statLabel('#e9d5ff')}>IRAP ({imposte.irap.aliquota}%)</p><p style={styles.statValue} data-testid="irap-dovuta">{formatEuro(imposte.irap.imposta_dovuta)}</p></div>
+              <div style={styles.cardGradient('#dc2626', '#b91c1c')}><p style={styles.statLabel('#fecaca')}>Totale Imposte</p><p style={styles.statValue} data-testid="totale-imposte">{formatEuro(imposte.totale_imposte)}</p><p style={{ color: '#fecaca', fontSize: 12, marginTop: 4 }}>Aliquota effettiva: {imposte.aliquota_effettiva}%</p></div>
+            </div>
+
+            {/* Dettaglio IRES/IRAP */}
+            <div style={styles.grid2}>
+              <div style={styles.card}>
+                <h3 style={styles.sectionTitle}>📊 Calcolo IRES</h3>
+                <table style={styles.table}>
+                  <tbody>
+                    <tr><td style={styles.td}>Utile civilistico</td><td style={styles.tdRight}>{formatEuro(imposte.utile_civilistico)}</td></tr>
+                    {imposte.ires.variazioni_aumento.map((v, i) => (<tr key={i}><td style={{ ...styles.td, color: '#fb923c', paddingLeft: 16 }}>+ {v.descrizione}</td><td style={{ ...styles.tdRight, color: '#fb923c' }}>+{formatEuro(v.importo)}</td></tr>))}
+                    {imposte.ires.variazioni_diminuzione.map((v, i) => (<tr key={i}><td style={{ ...styles.td, color: '#4ade80', paddingLeft: 16 }}>- {v.descrizione}</td><td style={{ ...styles.tdRight, color: '#4ade80' }}>-{formatEuro(v.importo)}</td></tr>))}
+                    <tr style={{ borderTop: '2px solid #475569' }}><td style={{ ...styles.td, color: 'white', fontWeight: '500' }}>Reddito imponibile</td><td style={{ ...styles.tdRight, fontWeight: 'bold' }}>{formatEuro(imposte.ires.reddito_imponibile)}</td></tr>
                   <tr style={{ background: 'rgba(51, 65, 85, 0.5)' }}><td style={{ ...styles.td, color: 'white', fontWeight: 'bold', padding: 12 }}>IRES DOVUTA (24%)</td><td style={{ ...styles.tdRight, color: '#fb923c', fontWeight: 'bold', fontSize: 18, padding: 12 }}>{formatEuro(imposte.ires.imposta_dovuta)}</td></tr>
                 </tbody>
               </table>
