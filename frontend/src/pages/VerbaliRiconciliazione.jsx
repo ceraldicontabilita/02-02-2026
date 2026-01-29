@@ -715,5 +715,6 @@ export default function VerbaliRiconciliazione() {
         </div>
       </div>
     </div>
+    </PageLayout>
   );
 }

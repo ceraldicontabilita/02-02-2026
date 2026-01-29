@@ -1876,5 +1876,6 @@ export default function Ricette() {
         </div>
       )}
     </div>
+    </PageLayout>
   );
 }

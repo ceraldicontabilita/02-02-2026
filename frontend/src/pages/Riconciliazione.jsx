@@ -554,5 +554,6 @@ export default function Riconciliazione() {
         </p>
       </div>
     </div>
+    </PageLayout>
   );
 }

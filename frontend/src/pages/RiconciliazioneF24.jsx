@@ -919,5 +919,6 @@ export default function RiconciliazioneF24() {
         </div>
       )}
     </div>
+    </PageLayout>
   );
 }
