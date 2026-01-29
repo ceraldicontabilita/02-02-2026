@@ -425,6 +425,7 @@ export default function GestioneDipendentiUnificata() {
         </div>
       </div>
     </div>
+    </PageLayout>
   );
 }
 

@@ -379,5 +379,6 @@ export default function GestioneInvoiceTronic() {
         </div>
       </div>
     </div>
+    </PageLayout>
   );
 }

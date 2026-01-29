@@ -532,5 +532,6 @@ export default function GestionePagoPA() {
         </div>
       </div>
     </div>
+    </PageLayout>
   );
 }
