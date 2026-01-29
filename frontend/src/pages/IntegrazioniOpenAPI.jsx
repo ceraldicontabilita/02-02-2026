@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
 import { STYLES, COLORS, formatEuro, button, badge } from '../lib/utils';
+import { PageLayout } from '../components/PageLayout';
 
 export default function IntegrazioniOpenAPI() {
   const [sdiStatus, setSdiStatus] = useState(null);

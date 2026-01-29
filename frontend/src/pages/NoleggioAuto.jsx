@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import api from "../api";
 import { formatEuro, formatDateIT, STYLES, COLORS, button, badge } from '../lib/utils';
+import { PageLayout } from '../components/PageLayout';
 
 export default function NoleggioAuto() {
   // Mostra sempre TUTTI gli anni di default (senza filtro anno)

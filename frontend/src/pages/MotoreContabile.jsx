@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Button } from '../components/ui/button';
 import { Loader2, TrendingUp, TrendingDown, Building2, Calculator, FileText, RefreshCw } from 'lucide-react';
 import api from '../api';
+import { PageLayout } from '../components/PageLayout';
 
 export default function MotoreContabile() {
   const { anno: selectedYear } = useAnnoGlobale();
