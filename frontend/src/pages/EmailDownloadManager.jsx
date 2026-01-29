@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { PageLayout } from '../components/PageLayout';
 import { Badge } from '../components/ui/badge';
 import { Download, RefreshCw, FileText, Mail, Search, Play, CheckCircle, XCircle, Loader2, Eye } from 'lucide-react';
 import api from '../api';

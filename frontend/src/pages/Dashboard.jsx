@@ -4,6 +4,7 @@ import api from "../api";
 import { Link } from "react-router-dom";
 import { useAnnoGlobale } from "../contexts/AnnoContext";
 import { formatEuro, STYLES, COLORS, button, badge } from "../lib/utils";
+import { PageLayout } from '../components/PageLayout';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, PieChart, Pie, Cell } from 'recharts';
 import { Eye, EyeOff, TrendingUp, Lock, AlertTriangle, Users } from "lucide-react";
 import WidgetVerificaCoerenza from "../components/WidgetVerificaCoerenza";

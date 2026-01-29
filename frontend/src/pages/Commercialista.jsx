@@ -4,6 +4,7 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
 import { formatEuro, STYLES, COLORS, button, badge } from '../lib/utils';
+import { PageLayout } from '../components/PageLayout';
 
 // Funzione per formattare valuta come stringa pura (per PDF)
 const formatEuroStr = (val) => {

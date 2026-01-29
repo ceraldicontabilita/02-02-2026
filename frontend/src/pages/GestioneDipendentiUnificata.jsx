@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../api';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
 import { formatEuro, formatDateIT, STYLES, COLORS, button, badge } from '../lib/utils';
+import { PageLayout } from '../components/PageLayout';
 import { ExportButton } from '../components/ExportButton';
 import { PageInfoCard } from '../components/PageInfoCard';
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { formatEuro, formatDateIT, STYLES, COLORS, button, badge } from '../lib/utils';
 import api from '../api';
+import { PageLayout } from '../components/PageLayout';
 
 const CATEGORY_COLORS = {
   f24: { bg: '#dbeafe', text: '#1e40af', icon: '📋', label: 'F24' },
