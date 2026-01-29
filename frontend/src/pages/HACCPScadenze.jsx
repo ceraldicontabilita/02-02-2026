@@ -30,14 +30,7 @@ export default function HACCPScadenze() {
   };
 
   return (
-    <div style={{ padding: 20, maxWidth: 1400, margin: '0 auto' }}>
-      <h1 style={{ fontSize: 24, fontWeight: 700, color: '#1a365d', marginBottom: 8 }}>
-        ⏰ Scadenziario HACCP
-      </h1>
-      <p style={{ color: '#64748b', marginBottom: 24 }}>
-        Scadenze documenti, certificazioni e controlli periodici
-      </p>
-
+    <PageLayout title="Scadenziario HACCP" icon="⏰" subtitle="Scadenze documenti, certificazioni e controlli periodici">
       {loading ? (
         <div style={{ textAlign: 'center', padding: 40 }}>Caricamento...</div>
       ) : scadenze.length === 0 ? (
@@ -102,6 +95,6 @@ export default function HACCPScadenze() {
           })}
         </div>
       )}
-    </div>
+    </PageLayout>
   );
 }

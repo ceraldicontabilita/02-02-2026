@@ -28,14 +28,7 @@ export default function HACCPTemperature() {
   }, []);
 
   return (
-    <div style={{ padding: 20, maxWidth: 1400, margin: '0 auto' }}>
-      <h1 style={{ fontSize: 24, fontWeight: 700, color: '#1a365d', marginBottom: 8 }}>
-        🌡️ Registro Temperature HACCP
-      </h1>
-      <p style={{ color: '#64748b', marginBottom: 24 }}>
-        Monitoraggio temperature frigoriferi e congelatori
-      </p>
-
+    <PageLayout title="Registro Temperature HACCP" icon="🌡️" subtitle="Monitoraggio temperature frigoriferi e congelatori">
       {loading ? (
         <div style={{ textAlign: 'center', padding: 40 }}>Caricamento...</div>
       ) : (
@@ -106,6 +99,6 @@ export default function HACCPTemperature() {
           utilizza il pulsante "Nuova Rilevazione" che sarà disponibile nella prossima versione.
         </p>
       </div>
-    </div>
+    </PageLayout>
   );
 }
