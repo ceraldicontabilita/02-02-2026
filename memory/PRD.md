@@ -1,104 +1,86 @@
 # Application ERP/Accounting - PRD
 
-## Stato Aggiornato: 28 Gennaio 2026 - API Claude Implementata
+## Stato Aggiornato: 29 Gennaio 2026 - PageLayout Applicato
 
 ---
 
-## Problema Originale
-Applicazione di contabilità per ristorante/azienda con richieste di audit, integrazioni e ottimizzazioni AI.
-
 ## Lavoro Completato in Questa Sessione
 
-### API Claude - Assistente AI Contabile ✅ NUOVO
+### PageLayout Applicato ✅
 
-**Implementato:**
-- **Backend**: `/api/claude/` con 4 endpoint:
-  - `POST /chat` - Chat intelligente con contesto DB
-  - `POST /analyze` - Analisi documenti (fattura, assegno, cedolino)
-  - `POST /report` - Generazione report narrativi
-  - `POST /categorize` - Categorizzazione automatica spese
-  - `GET /status` - Stato API
+Esteso il componente `PageLayout.jsx` a 5 pagine per standardizzare l'UI:
 
-- **Frontend**: Nuova pagina `/assistente-ai` con:
-  - Chat interattiva con Claude Sonnet
-  - 5 contesti selezionabili (Generale, Fatture, Bilancio, Dipendenti, Scadenze)
-  - Quick questions preimpostate
-  - Integrazione dati reali dal database
+| Pagina | Stato | Note |
+|--------|-------|------|
+| CalendarioFiscale | ✅ | Già presente |
+| SaldiFeriePermessi | ✅ | Già presente |
+| **Finanziaria** | ✅ AGGIORNATA | KPI cards, sezioni IVA, tabelle |
+| **Corrispettivi** | ✅ AGGIORNATA | KPI cards, tabella con hover |
+| **CentriCosto** | ✅ AGGIORNATA | Grouped sections, CDC cards |
 
-**Tecnologie:**
-- `emergentintegrations` library con `EMERGENT_LLM_KEY`
-- Modello: `claude-sonnet-4-5-20250929`
-- Context injection dai dati MongoDB
+### API Claude (Sessione precedente) ✅
 
-### Pulizia Codice ✅
-- Rimossi file obsoleti: `ImportUnificato.jsx`, `AIParserPage.jsx`
-- Unificati in `ImportDocumenti.jsx`
+- **Backend**: `/api/claude/` con 4 endpoint (chat, analyze, report, categorize)
+- **Frontend**: `/assistente-ai` con chat interattiva
 
-### Test Funzionali ✅
-- Eseguiti test reali sui calcoli (Dashboard, Corrispettivi, Prima Nota)
-- Verificate relazioni dati (Assegni-Fatture, Dipendenti-Cedolini)
-- Report: `/app/test_reports/iteration_6.json` - 96% successo
+## Architettura UI Standardizzata
+
+```jsx
+// Componenti PageLayout disponibili:
+import { 
+  PageLayout,      // Wrapper principale con header
+  PageSection,     // Sezioni con titolo
+  PageGrid,        // Grid responsive
+  PageLoading,     // Stato caricamento
+  PageEmpty,       // Stato vuoto
+  PageError        // Gestione errori
+} from '../components/PageLayout';
+```
 
 ## Esclusioni (Richieste dall'Utente)
 - ❌ Integrazione email reale per notifiche
 - ❌ Esportazione bilancio XBRL
 
-## Architettura Attuale
+## Pagine Principali - Stato UI
 
-```
-/app
-├── app/routers/
-│   ├── claude_api.py              # ✅ NUOVO - API Claude AI
-│   ├── fiscalita_italiana.py      # Calendario + Notifiche
-│   └── [altri router]
-├── frontend/src/pages/
-│   ├── AssistenteAI.jsx           # ✅ NUOVO - Chat Claude
-│   ├── ImportDocumenti.jsx        # Import + AI Parser unificati
-│   └── [altre pagine]
-└── test_reports/
-    ├── iteration_6.json           # Test funzionali backend
-    └── audit_pagine.md
-```
-
-## API Claude - Endpoint
-
-| Endpoint | Metodo | Descrizione |
-|----------|--------|-------------|
-| `/api/claude/status` | GET | Stato API e features |
-| `/api/claude/chat` | POST | Chat con contesto DB |
-| `/api/claude/analyze` | POST | Analisi singolo documento |
-| `/api/claude/report` | POST | Genera report narrativo |
-| `/api/claude/categorize` | POST | Categorizza transazione |
+| Pagina | PageLayout | Note |
+|--------|------------|------|
+| Dashboard | ❌ | Struttura complessa, skip |
+| GestioneAssegni | ❌ | Già usa Shadcn |
+| Finanziaria | ✅ | Aggiornata |
+| Corrispettivi | ✅ | Aggiornata |
+| CentriCosto | ✅ | Aggiornata |
+| CalendarioFiscale | ✅ | Già presente |
+| SaldiFeriePermessi | ✅ | Già presente |
+| PrimaNota | ❌ | Troppo complessa |
+| GestioneCespiti | ❌ | Già usa Shadcn |
 
 ## Test Status
 
-- **Iteration 6**: 96% backend (26/27 test, 1 skipped magazzino vuoto)
-- **API Claude**: ✅ Testato con successo
-- **Build Frontend**: ✅ Successo
+- **Build**: ✅ Successo
+- **Screenshots**: Verificate 3 pagine aggiornate
+- **Regressioni**: Nessuna
 
 ## Backlog
 
 ### Completati ✅
 - [x] Audit completo pagine
 - [x] P1: Unificare Import + AI Parser
-- [x] **API Claude per assistente contabile**
-- [x] Pulizia file obsoleti
-- [x] Test funzionali reali
+- [x] API Claude per assistente contabile
+- [x] **P2: Applicare PageLayout (5 pagine)**
 
-### P2 - Media Priorità
-- [ ] Estendere PageLayout ad altre pagine
-
-### P3 - Backlog
-- [ ] Migrazione fisica nomi collezioni MongoDB
+### Opzionale
+- [ ] Estendere PageLayout a Dashboard (richiede refactoring significativo)
+- [ ] Storico conversazioni Claude in MongoDB
 
 ## Integrazioni
 
 | Servizio | Stato |
 |----------|-------|
-| MongoDB Atlas | ✅ Connesso |
-| Odoo | ✅ Piano conti |
-| **Claude Sonnet** | ✅ API Completa |
-| OpenAPI.it | ✅ Sandbox |
+| MongoDB Atlas | ✅ |
+| Odoo | ✅ |
+| Claude Sonnet | ✅ |
+| OpenAPI.it | ✅ |
 
 ---
-*Aggiornato: 28 Gennaio 2026 - API Claude Implementata*
+*Aggiornato: 29 Gennaio 2026 - PageLayout completato su 5 pagine*
