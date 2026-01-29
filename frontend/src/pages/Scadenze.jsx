@@ -900,6 +900,7 @@ export default function Scadenze() {
           }} 
         />
       )}
-    </div>
+      </div>
+    </PageLayout>
   );
 }
