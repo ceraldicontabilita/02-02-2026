@@ -672,6 +672,7 @@ export default function DizionarioArticoli() {
         </div>
       )}
     </div>
+    </PageLayout>
   );
 }
 

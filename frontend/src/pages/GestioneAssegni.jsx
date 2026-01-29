@@ -2189,5 +2189,6 @@ export default function GestioneAssegni() {
         </div>
       )}
     </div>
+    </PageLayout>
   );
 }

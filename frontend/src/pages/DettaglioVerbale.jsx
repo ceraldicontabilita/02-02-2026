@@ -443,5 +443,6 @@ export default function DettaglioVerbale() {
         </button>
       </div>
     </div>
+    </PageLayout>
   );
 }

@@ -375,5 +375,6 @@ export default function EmailDownloadManager() {
         </CardContent>
       </Card>
     </div>
+    </PageLayout>
   );
 }

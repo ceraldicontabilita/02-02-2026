@@ -568,5 +568,6 @@ export default function DizionarioProdotti() {
         }
       `}</style>
     </div>
+    </PageLayout>
   );
 }
