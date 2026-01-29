@@ -12,6 +12,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import api from '../api';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
+import { PageLayout } from '../components/PageLayout';
 import { 
   ChevronLeft, ChevronRight, RefreshCw, Upload, Download,
   Search, FileText, MoreHorizontal, X, Calendar,
