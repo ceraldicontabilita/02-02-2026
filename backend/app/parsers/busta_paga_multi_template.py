@@ -83,6 +83,24 @@ def parse_template_csc_napoli(text: str) -> Dict[str, Any]:
     if livello_match:
         result["dipendente"]["livello"] = livello_match.group(1)
     
+    # GIORNI LAVORATI - nel formato CSC cerca dopo "GG. LAV." i valori numerici
+    # Pattern: cerca sequenza di numeri dopo le intestazioni
+    lines = text.split('\n')
+    for i, line in enumerate(lines):
+        # Cerca righe con solo numeri (potrebbero essere i valori)
+        if re.match(r'^\s*\d{1,2}\s*$', line.strip()):
+            # Potrebbe essere giorni lavorati
+            val = int(line.strip())
+            if 1 <= val <= 31 and "giorni_lavorati" not in result["periodo"]:
+                result["periodo"]["giorni_lavorati"] = val
+    
+    # ORE LAVORATE - cerca pattern come "176,00" vicino a ORE
+    ore_match = re.search(r'(\d{2,3})[,\.]00\s*$', text, re.MULTILINE)
+    if ore_match:
+        ore_val = int(ore_match.group(1))
+        if 100 <= ore_val <= 250:  # Range ragionevole per ore mensili
+            result["periodo"]["ore_lavorate"] = ore_val
+    
     # TOTALE COMPETENZE
     comp_match = re.search(r'TOTALE COMPETENZE\s+([\d.,]+)\+?', text)
     if comp_match:
@@ -93,23 +111,17 @@ def parse_template_csc_napoli(text: str) -> Dict[str, Any]:
     if tratt_match:
         result["totali"]["trattenute"] = parse_importo(tratt_match.group(1))
     
-    # TOTALE NETTO (cerca pattern come "276,00+" o "TOTALE NETTO 276,00")
-    # Pattern 1: dopo arrotondamento
-    netto_match = re.search(r'(\d+[.,]\d+)\s+(\d+[.,]\d+)\s+([\d.,]+)\+?\s*Mat\.', text)
+    # TOTALE NETTO - cerca TOTALE NETTO seguito da importo
+    netto_match = re.search(r'TOTALE NETTO\s+([\d.,]+)', text)
     if netto_match:
-        result["totali"]["netto"] = parse_importo(netto_match.group(3))
+        result["totali"]["netto"] = parse_importo(netto_match.group(1))
     else:
-        # Pattern 2: cerca LIRE con valore
+        # Pattern alternativo: cerca LIRE con valore
         lire_match = re.search(r'LIRE\s*:\s*([\d.,]+)\+', text)
         if lire_match:
             # Converti da lire a euro (approssimativo)
             lire_val = parse_importo(lire_match.group(1))
             result["totali"]["netto"] = round(lire_val / 1936.27, 2)
-    
-    # Estrai ore lavorate
-    ore_match = re.search(r'(\d+[.,]?\d*)\s*ORE\s+', text)
-    if ore_match:
-        result["periodo"]["ore_lavorate"] = parse_importo(ore_match.group(1))
     
     # Retribuzione TFR
     tfr_match = re.search(r'RETRIBUZIONE T\.?F\.?R\.?\s+([\d.,]+)', text)
