@@ -170,7 +170,12 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div style={STYLES.card}>
+    <PageLayout 
+      title="Dashboard" 
+      icon="📊"
+      subtitle="Panoramica generale"
+    >
+      <div>
         <h1 style={{ margin: '0 0 16px 0', fontSize: 22, fontWeight: 'bold', color: COLORS.primary }}>Dashboard</h1>
         <p style={{ color: COLORS.gray }}>⏳ Caricamento in corso...</p>
       </div>
@@ -1328,6 +1333,7 @@ function POSCalendarWidget({ data }) {
         ))}
       </div>
     </div>
+    </PageLayout>
   );
 }
 
