@@ -434,7 +434,8 @@ export default function CicloPassivoIntegrato() {
   const stats = dashboard?.statistiche || {};
 
   return (
-    <div style={styles.container} data-testid="ciclo-passivo-page">
+    <PageLayout title="Ciclo Passivo Integrato" subtitle="Import XML → Magazzino → Prima Nota → Scadenziario → Riconciliazione">
+    <div style={{...styles.container, padding: 0}} data-testid="ciclo-passivo-page">
       {/* Header */}
       <div style={styles.header}>
         <div>

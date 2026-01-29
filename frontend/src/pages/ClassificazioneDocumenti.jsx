@@ -223,7 +223,8 @@ export default function ClassificazioneDocumenti() {
   };
 
   return (
-    <div style={{ padding: 20, maxWidth: 1400, margin: '0 auto' }} data-testid="classificazione-documenti-page">
+    <PageLayout title="Classificazione Documenti" subtitle="Gestione e classificazione automatica documenti">
+    <div style={{ maxWidth: 1400, margin: '0 auto' }} data-testid="classificazione-documenti-page">
       {/* Header */}
       <div style={{ 
         display: 'flex', 
