@@ -502,6 +502,7 @@ export default function LiquidazioneIVA() {
           <li>Regime IVA: <strong>Ordinario per competenza</strong></li>
         </ul>
       </div>
-    </div>
+      </div>
+    </PageLayout>
   );
 }
