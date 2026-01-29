@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import api from "../api";
 import { useAnnoGlobale } from "../contexts/AnnoContext";
-import { formatEuro, STYLES, COLORS, button, badge } from '../lib/utils';
+import { formatEuro } from '../lib/utils';
+import { PageLayout, PageSection, PageGrid, PageLoading, PageEmpty } from '../components/PageLayout';
+import { TrendingUp, TrendingDown, Wallet, Building2, Users, Receipt, AlertCircle, Info } from 'lucide-react';
 
 export default function Finanziaria() {
   const { anno: selectedYear } = useAnnoGlobale();
@@ -10,7 +12,6 @@ export default function Finanziaria() {
 
   useEffect(() => {
     loadSummary();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedYear]);
 
   async function loadSummary() {
@@ -25,269 +26,312 @@ export default function Finanziaria() {
     }
   }
 
+  const KPICard = ({ icon: Icon, label, value, subtext, color, bgColor }) => (
+    <div style={{ 
+      background: bgColor || '#f8fafc', 
+      borderRadius: 12, 
+      padding: 20,
+      border: '1px solid #e2e8f0'
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+        <Icon size={18} color={color || '#64748b'} />
+        <span style={{ fontSize: 13, color: '#64748b' }}>{label}</span>
+      </div>
+      <div style={{ fontSize: 28, fontWeight: 700, color: color || '#1e293b' }}>
+        {value}
+      </div>
+      {subtext && (
+        <div style={{ fontSize: 12, color: '#64748b', marginTop: 6 }}>{subtext}</div>
+      )}
+    </div>
+  );
+
+  if (loading) {
+    return (
+      <PageLayout title="Situazione Finanziaria" icon="📊" subtitle={`Riepilogo finanziario ${selectedYear}`}>
+        <PageLoading message={`Caricamento dati finanziari per ${selectedYear}...`} />
+      </PageLayout>
+    );
+  }
+
+  const hasNoData = summary?.total_income === 0 && summary?.total_expenses === 0;
+
   return (
-    <>
-      {/* Header con Selettore Anno */}
-      <div style={{ background: "white", borderRadius: 12, padding: 20, marginBottom: 20, boxShadow: "0 2px 8px rgba(0,0,0,0.08)", border: "1px solid #e5e7eb" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+    <PageLayout 
+      title="Situazione Finanziaria" 
+      icon="📊"
+      subtitle={`Riepilogo finanziario con IVA da Corrispettivi e Fatture - Anno ${selectedYear}`}
+      actions={
+        <div style={{ 
+          background: '#dbeafe', 
+          padding: '10px 20px', 
+          borderRadius: 8, 
+          color: '#1e40af', 
+          fontWeight: 600,
+          fontSize: 14
+        }}>
+          📅 Anno: {selectedYear}
+        </div>
+      }
+    >
+      {/* Avviso nessun dato */}
+      {hasNoData && (
+        <div style={{ 
+          background: '#fff3cd', 
+          borderRadius: 12, 
+          padding: 16, 
+          marginBottom: 20, 
+          border: '1px solid #ffc107',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12
+        }}>
+          <AlertCircle size={24} color="#856404" />
           <div>
-            <div style={{ fontSize: 24, fontWeight: "bold", color: "#1e293b", marginBottom: 12 }}>📊 Situazione Finanziaria {selectedYear}</div>
-            <div style={{ fontSize: 13, color: "#64748b" }}>Riepilogo finanziario con IVA da Corrispettivi e Fatture</div>
+            <div style={{ fontWeight: 600, color: '#856404' }}>
+              Nessun movimento registrato per {selectedYear}
+            </div>
+            <div style={{ fontSize: 13, color: '#856404', marginTop: 4 }}>
+              Se hai dati per altri anni, seleziona un anno diverso dalla barra laterale.
+            </div>
           </div>
-          
-          <div style={{ background: '#dbeafe', padding: '10px 20px', borderRadius: 8, color: '#1e40af', fontWeight: 'bold' }}>
-            📅 Anno: {selectedYear}
-            <span style={{ fontSize: 11, fontWeight: 'normal', marginLeft: 8, color: '#3b82f6' }}>
-              (cambia dalla barra laterale)
+        </div>
+      )}
+
+      {/* KPI Principali */}
+      <PageGrid cols={3} gap={16}>
+        <KPICard 
+          icon={TrendingUp}
+          label="Entrate Totali"
+          value={formatEuro(summary?.total_income)}
+          subtext={`Cassa: ${formatEuro(summary?.cassa?.entrate)} | Banca: ${formatEuro(summary?.banca?.entrate)}`}
+          color="#16a34a"
+          bgColor="#f0fdf4"
+        />
+        <KPICard 
+          icon={TrendingDown}
+          label="Uscite Totali"
+          value={formatEuro(summary?.total_expenses)}
+          subtext={`Cassa: ${formatEuro(summary?.cassa?.uscite)} | Banca: ${formatEuro(summary?.banca?.uscite)}`}
+          color="#dc2626"
+          bgColor="#fef2f2"
+        />
+        <KPICard 
+          icon={Wallet}
+          label="Saldo"
+          value={formatEuro(summary?.balance)}
+          color={summary?.balance >= 0 ? '#2563eb' : '#ea580c'}
+          bgColor={summary?.balance >= 0 ? '#eff6ff' : '#fff7ed'}
+        />
+      </PageGrid>
+
+      {/* Sezione IVA */}
+      <PageSection title="Riepilogo IVA" icon="🧾" style={{ marginTop: 20 }}>
+        <p style={{ color: '#64748b', fontSize: 13, marginBottom: 16 }}>
+          IVA estratta automaticamente da Corrispettivi XML (vendite) e Fatture XML (acquisti)
+        </p>
+        <PageGrid cols={3} gap={16}>
+          <div style={{ background: '#fff7ed', padding: 16, borderRadius: 8 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: '#c2410c', marginBottom: 4 }}>
+              📤 IVA a DEBITO (Corrispettivi)
+            </div>
+            <div style={{ fontSize: 24, fontWeight: 700, color: '#ea580c' }}>
+              {formatEuro(summary?.vat_debit)}
+            </div>
+            <div style={{ fontSize: 12, color: '#78716c', marginTop: 8 }}>
+              Da {summary?.corrispettivi?.count || 0} corrispettivi
+              <br />
+              Totale vendite: {formatEuro(summary?.corrispettivi?.totale)}
+            </div>
+          </div>
+          <div style={{ background: '#f0fdf4', padding: 16, borderRadius: 8 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: '#15803d', marginBottom: 4 }}>
+              📥 IVA a CREDITO (Fatture)
+            </div>
+            <div style={{ fontSize: 24, fontWeight: 700, color: '#16a34a' }}>
+              {formatEuro(summary?.vat_credit)}
+            </div>
+            <div style={{ fontSize: 12, color: '#78716c', marginTop: 8 }}>
+              Da {summary?.fatture?.count || 0} fatture
+              <br />
+              Totale acquisti: {formatEuro(summary?.fatture?.totale)}
+            </div>
+          </div>
+          <div style={{ 
+            background: summary?.vat_balance > 0 ? '#fef2f2' : '#f0fdf4', 
+            padding: 16, 
+            borderRadius: 8 
+          }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: '#64748b', marginBottom: 4 }}>
+              ⚖️ Saldo IVA
+            </div>
+            <div style={{ 
+              fontSize: 24, 
+              fontWeight: 700, 
+              color: summary?.vat_balance > 0 ? '#dc2626' : '#16a34a' 
+            }}>
+              {formatEuro(summary?.vat_balance)}
+            </div>
+            <div style={{ marginTop: 8 }}>
+              <span style={{ 
+                background: summary?.vat_balance > 0 ? '#dc2626' : '#16a34a',
+                color: 'white',
+                padding: '3px 10px',
+                borderRadius: 12,
+                fontSize: 11,
+                fontWeight: 600
+              }}>
+                {summary?.vat_status || '-'}
+              </span>
+            </div>
+          </div>
+        </PageGrid>
+      </PageSection>
+
+      {/* Dettaglio Prima Nota */}
+      <PageSection title="Dettaglio Prima Nota" icon="📒" style={{ marginTop: 20 }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+          <thead>
+            <tr style={{ borderBottom: '2px solid #e2e8f0' }}>
+              <th style={{ padding: 12, textAlign: 'left', fontWeight: 600 }}>Conto</th>
+              <th style={{ padding: 12, textAlign: 'right', fontWeight: 600 }}>Entrate</th>
+              <th style={{ padding: 12, textAlign: 'right', fontWeight: 600 }}>Uscite</th>
+              <th style={{ padding: 12, textAlign: 'right', fontWeight: 600 }}>Saldo</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
+              <td style={{ padding: 12 }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Wallet size={16} color="#64748b" /> Cassa
+                </span>
+              </td>
+              <td style={{ padding: 12, textAlign: 'right', color: '#16a34a', fontWeight: 500 }}>
+                {formatEuro(summary?.cassa?.entrate)}
+              </td>
+              <td style={{ padding: 12, textAlign: 'right', color: '#dc2626', fontWeight: 500 }}>
+                {formatEuro(summary?.cassa?.uscite)}
+              </td>
+              <td style={{ padding: 12, textAlign: 'right', fontWeight: 600 }}>
+                {formatEuro(summary?.cassa?.saldo)}
+              </td>
+            </tr>
+            <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
+              <td style={{ padding: 12 }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Building2 size={16} color="#64748b" /> Banca
+                </span>
+              </td>
+              <td style={{ padding: 12, textAlign: 'right', color: '#16a34a', fontWeight: 500 }}>
+                {formatEuro(summary?.banca?.entrate)}
+              </td>
+              <td style={{ padding: 12, textAlign: 'right', color: '#dc2626', fontWeight: 500 }}>
+                {formatEuro(summary?.banca?.uscite)}
+              </td>
+              <td style={{ padding: 12, textAlign: 'right', fontWeight: 600 }}>
+                {formatEuro(summary?.banca?.saldo)}
+              </td>
+            </tr>
+            <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
+              <td style={{ padding: 12 }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Users size={16} color="#64748b" /> Salari
+                </span>
+              </td>
+              <td style={{ padding: 12, textAlign: 'right' }}>-</td>
+              <td style={{ padding: 12, textAlign: 'right', color: '#dc2626', fontWeight: 500 }}>
+                {formatEuro(summary?.salari?.totale)}
+              </td>
+              <td style={{ padding: 12, textAlign: 'right', fontWeight: 600, color: '#dc2626' }}>
+                -{formatEuro(summary?.salari?.totale)}
+              </td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr style={{ background: '#f8fafc', fontWeight: 600 }}>
+              <td style={{ padding: 12 }}>TOTALE</td>
+              <td style={{ padding: 12, textAlign: 'right', color: '#16a34a' }}>
+                {formatEuro(summary?.total_income)}
+              </td>
+              <td style={{ padding: 12, textAlign: 'right', color: '#dc2626' }}>
+                {formatEuro(summary?.total_expenses)}
+              </td>
+              <td style={{ 
+                padding: 12, 
+                textAlign: 'right',
+                color: summary?.balance >= 0 ? '#16a34a' : '#dc2626'
+              }}>
+                {formatEuro(summary?.balance)}
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </PageSection>
+
+      {/* Situazione Debiti/Crediti */}
+      <PageSection title="Situazione Debiti/Crediti" icon="📋" style={{ marginTop: 20 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center',
+            padding: 12,
+            background: '#fef2f2',
+            borderRadius: 8
+          }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Receipt size={16} color="#dc2626" />
+              Fatture da pagare (debiti vs fornitori)
+            </span>
+            <span style={{ fontWeight: 700, color: '#dc2626' }}>
+              {formatEuro(summary?.payables)}
+            </span>
+          </div>
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center',
+            padding: 12,
+            background: '#f0fdf4',
+            borderRadius: 8
+          }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Receipt size={16} color="#16a34a" />
+              Fatture da incassare (crediti vs clienti)
+            </span>
+            <span style={{ fontWeight: 700, color: '#16a34a' }}>
+              {formatEuro(summary?.receivables)}
+            </span>
+          </div>
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center',
+            padding: 12,
+            background: summary?.vat_balance > 0 ? '#fef2f2' : '#f0fdf4',
+            borderRadius: 8
+          }}>
+            <span>🧾 IVA {summary?.vat_balance > 0 ? 'da versare' : 'a credito'}</span>
+            <span style={{ 
+              fontWeight: 700,
+              color: summary?.vat_balance > 0 ? '#dc2626' : '#16a34a'
+            }}>
+              {formatEuro(Math.abs(summary?.vat_balance || 0))}
             </span>
           </div>
         </div>
-      </div>
+      </PageSection>
 
-      {loading ? (
-        <div style={{ background: "white", borderRadius: 12, padding: 20, marginBottom: 20, boxShadow: "0 2px 8px rgba(0,0,0,0.08)", border: "1px solid #e5e7eb" }}>
-          <div style={{ fontSize: 13, color: "#64748b" }}>⏳ Caricamento dati finanziari per {selectedYear}...</div>
-        </div>
-      ) : (
-        <>
-          {/* Avviso se nessun dato per l'anno selezionato */}
-          {(summary?.total_income === 0 && summary?.total_expenses === 0) && (
-            <div style={{ 
-              background: "#fff3cd", 
-              borderRadius: 12, 
-              padding: 16, 
-              marginBottom: 20, 
-              border: "1px solid #ffc107",
-              display: "flex",
-              alignItems: "center",
-              gap: 12
-            }}>
-              <span style={{ fontSize: 24 }}>⚠️</span>
-              <div>
-                <div style={{ fontWeight: 600, color: "#856404" }}>
-                  Nessun movimento registrato per {selectedYear}
-                </div>
-                <div style={{ fontSize: 13, color: "#856404", marginTop: 4 }}>
-                  Se hai dati per altri anni, seleziona un anno diverso dalla barra laterale. 
-                  Anno con più dati disponibili: <strong>2025</strong>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {/* KPI Principali */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16 }}>
-            <div style={{ background: "#e8f5e9", borderRadius: 12, padding: 20, marginBottom: 20, boxShadow: "0 2px 8px rgba(0,0,0,0.08)", border: "1px solid #e5e7eb" }}>
-              <div style={{ fontSize: 13, color: "#64748b" }}>💰 Entrate Totali</div>
-              <div style={{ fontSize: 32, fontWeight: "bold", color: "#2e7d32" }}>
-                {formatEuro(summary?.total_income)}
-              </div>
-              <div style={{ fontSize: 13, color: "#64748b", marginTop: 5 }}>
-                Cassa: {formatEuro(summary?.cassa?.entrate)} | Banca: {formatEuro(summary?.banca?.entrate)}
-              </div>
-            </div>
-            <div style={{ background: "#ffebee", borderRadius: 12, padding: 20, marginBottom: 20, boxShadow: "0 2px 8px rgba(0,0,0,0.08)", border: "1px solid #e5e7eb" }}>
-              <div style={{ fontSize: 13, color: "#64748b" }}>💸 Uscite Totali (Cassa + Banca)</div>
-              <div style={{ fontSize: 32, fontWeight: "bold", color: "#c62828" }}>
-                {formatEuro(summary?.total_expenses)}
-              </div>
-              <div style={{ fontSize: 13, color: "#64748b", marginTop: 5, lineHeight: 1.5 }}>
-                <div>🏪 Cassa: <strong>{formatEuro(summary?.cassa?.uscite)}</strong></div>
-                <div>🏦 Banca: {formatEuro(summary?.banca?.uscite)} <span style={{fontSize: 10, color: '#666'}}>(incl. salari e F24)</span></div>
-              </div>
-            </div>
-            <div style={{ background: summary?.balance >= 0 ? "#e3f2fd" : "#fff3e0", borderRadius: 12, padding: 20, marginBottom: 20, boxShadow: "0 2px 8px rgba(0,0,0,0.08)", border: "1px solid #e5e7eb" }}>
-              <div style={{ fontSize: 13, color: "#64748b" }}>📈 Saldo</div>
-              <div style={{ fontSize: 32, fontWeight: "bold", color: summary?.balance >= 0 ? "#1565c0" : "#e65100" }}>
-                {formatEuro(summary?.balance)}
-              </div>
-            </div>
-          </div>
-
-          {/* Sezione IVA - Corrispettivi vs Fatture */}
-          <div style={{ background: "#f5f5f5", borderRadius: 12, padding: 20, marginBottom: 20, boxShadow: "0 2px 8px rgba(0,0,0,0.08)", border: "1px solid #e5e7eb" }}>
-            <div style={{ fontSize: 24, fontWeight: "bold", color: "#1e293b", marginBottom: 12 }}>🧾 Riepilogo IVA {selectedYear}</div>
-            <div style={{ fontSize: 13, color: "#64748b", marginBottom: 15 }}>
-              IVA estratta automaticamente da Corrispettivi XML (vendite) e Fatture XML (acquisti)
-            </div>
-            
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16 }}>
-              {/* IVA Debito (Corrispettivi) */}
-              <div style={{ background: "#fff3e0", padding: 15, borderRadius: 8 }}>
-                <div style={{ fontSize: 13, color: "#64748b", fontWeight: "bold" }}>
-                  📤 IVA a DEBITO (Corrispettivi)
-                </div>
-                <div style={{ fontSize: 28, fontWeight: "bold", color: "#e65100", marginTop: 5 }}>
-                  {formatEuro(summary?.vat_debit)}
-                </div>
-                <div style={{ fontSize: 13, color: "#666", marginTop: 8 }}>
-                  Da {summary?.corrispettivi?.count || 0} corrispettivi
-                  <br />
-                  Totale vendite: {formatEuro(summary?.corrispettivi?.totale)}
-                </div>
-              </div>
-              
-              {/* IVA Credito (Fatture) */}
-              <div style={{ background: "#e8f5e9", padding: 15, borderRadius: 8 }}>
-                <div style={{ fontSize: 13, fontWeight: "bold", color: "#2e7d32" }}>
-                  📥 IVA a CREDITO (Fatture)
-                </div>
-                <div style={{ fontSize: 28, fontWeight: "bold", color: "#2e7d32", marginTop: 5 }}>
-                  {formatEuro(summary?.vat_credit)}
-                </div>
-                <div style={{ fontSize: 13, color: "#666", marginTop: 8 }}>
-                  Da {summary?.fatture?.count || 0} fatture
-                  <br />
-                  Totale acquisti: {formatEuro(summary?.fatture?.totale)}
-                </div>
-              </div>
-              
-              {/* Saldo IVA */}
-              <div style={{ 
-                background: summary?.vat_balance > 0 ? "#ffcdd2" : "#c8e6c9", 
-                padding: 15, 
-                borderRadius: 8 
-              }}>
-                <div style={{ fontSize: 13, color: "#64748b", fontWeight: "bold" }}>
-                  ⚖️ Saldo IVA
-                </div>
-                <div style={{ 
-                  fontSize: 28, 
-                  fontWeight: "bold", 
-                  color: summary?.vat_balance > 0 ? "#c62828" : "#2e7d32",
-                  marginTop: 5 
-                }}>
-                  {formatEuro(summary?.vat_balance)}
-                </div>
-                <div style={{ fontSize: 13, color: "#64748b", marginTop: 8 }}>
-                  <span style={{ 
-                    background: summary?.vat_balance > 0 ? "#c62828" : "#2e7d32",
-                    color: "white",
-                    padding: "3px 10px",
-                    borderRadius: 12,
-                    fontSize: 12
-                  }}>
-                    {summary?.vat_status || "-"}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Dettaglio Prima Nota */}
-          <div style={{ background: "white", borderRadius: 12, padding: 20, marginBottom: 20, boxShadow: "0 2px 8px rgba(0,0,0,0.08)", border: "1px solid #e5e7eb" }}>
-            <div style={{ fontSize: 24, fontWeight: "bold", color: "#1e293b", marginBottom: 12 }}>📒 Dettaglio Prima Nota</div>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead>
-                <tr style={{ borderBottom: "2px solid #ddd" }}>
-                  <th style={{ padding: 10, textAlign: "left" }}>Conto</th>
-                  <th style={{ padding: 10, textAlign: "right" }}>Entrate</th>
-                  <th style={{ padding: 10, textAlign: "right" }}>Uscite</th>
-                  <th style={{ padding: 10, textAlign: "right" }}>Saldo</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr style={{ borderBottom: "1px solid #eee" }}>
-                  <td style={{ padding: 10, fontWeight: "bold" }}>💵 Cassa</td>
-                  <td style={{ padding: 10, textAlign: "right", color: "#2e7d32" }}>
-                    {formatEuro(summary?.cassa?.entrate)}
-                  </td>
-                  <td style={{ padding: 10, textAlign: "right", color: "#c62828" }}>
-                    {formatEuro(summary?.cassa?.uscite)}
-                  </td>
-                  <td style={{ padding: 10, textAlign: "right", fontWeight: "bold" }}>
-                    {formatEuro(summary?.cassa?.saldo)}
-                  </td>
-                </tr>
-                <tr style={{ borderBottom: "1px solid #eee" }}>
-                  <td style={{ padding: 10, fontWeight: "bold" }}>🏦 Banca</td>
-                  <td style={{ padding: 10, textAlign: "right", color: "#2e7d32" }}>
-                    {formatEuro(summary?.banca?.entrate)}
-                  </td>
-                  <td style={{ padding: 10, textAlign: "right", color: "#c62828" }}>
-                    {formatEuro(summary?.banca?.uscite)}
-                  </td>
-                  <td style={{ padding: 10, textAlign: "right", fontWeight: "bold" }}>
-                    {formatEuro(summary?.banca?.saldo)}
-                  </td>
-                </tr>
-                <tr style={{ borderBottom: "1px solid #eee" }}>
-                  <td style={{ padding: 10, fontWeight: "bold" }}>👥 Salari</td>
-                  <td style={{ padding: 10, textAlign: "right" }}>-</td>
-                  <td style={{ padding: 10, textAlign: "right", color: "#c62828" }}>
-                    {formatEuro(summary?.salari?.totale)}
-                  </td>
-                  <td style={{ padding: 10, textAlign: "right", fontWeight: "bold", color: "#c62828" }}>
-                    -{formatEuro(summary?.salari?.totale)}
-                  </td>
-                </tr>
-              </tbody>
-              <tfoot>
-                <tr style={{ background: "#f5f5f5", fontWeight: "bold" }}>
-                  <td style={{ padding: 10 }}>TOTALE</td>
-                  <td style={{ padding: 10, textAlign: "right", color: "#2e7d32" }}>
-                    {formatEuro(summary?.total_income)}
-                  </td>
-                  <td style={{ padding: 10, textAlign: "right", color: "#c62828" }}>
-                    {formatEuro(summary?.total_expenses)}
-                  </td>
-                  <td style={{ 
-                    padding: 10, 
-                    textAlign: "right",
-                    color: summary?.balance >= 0 ? "#2e7d32" : "#c62828"
-                  }}>
-                    {formatEuro(summary?.balance)}
-                  </td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-
-          {/* Situazione Debiti */}
-          <div style={{ background: "white", borderRadius: 12, padding: 20, marginBottom: 20, boxShadow: "0 2px 8px rgba(0,0,0,0.08)", border: "1px solid #e5e7eb" }}>
-            <div style={{ fontSize: 24, fontWeight: "bold", color: "#1e293b", marginBottom: 12 }}>📋 Situazione Debiti/Crediti</div>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <tbody>
-                <tr style={{ borderBottom: "1px solid #eee" }}>
-                  <td style={{ padding: 10 }}>📤 Fatture da pagare (debiti vs fornitori)</td>
-                  <td style={{ padding: 10, textAlign: "right", color: "#c62828", fontWeight: "bold" }}>
-                    {formatEuro(summary?.payables)}
-                  </td>
-                </tr>
-                <tr style={{ borderBottom: "1px solid #eee" }}>
-                  <td style={{ padding: 10 }}>📥 Fatture da incassare (crediti vs clienti)</td>
-                  <td style={{ padding: 10, textAlign: "right", color: "#2e7d32", fontWeight: "bold" }}>
-                    {formatEuro(summary?.receivables)}
-                  </td>
-                </tr>
-                <tr style={{ borderBottom: "1px solid #eee", background: summary?.vat_balance > 0 ? "#ffebee" : "#e8f5e9" }}>
-                  <td style={{ padding: 10 }}>🧾 IVA {summary?.vat_balance > 0 ? "da versare" : "a credito"}</td>
-                  <td style={{ 
-                    padding: 10, 
-                    textAlign: "right", 
-                    fontWeight: "bold",
-                    color: summary?.vat_balance > 0 ? "#c62828" : "#2e7d32"
-                  }}>
-                    {formatEuro(Math.abs(summary?.vat_balance || 0))}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          {/* Info */}
-          <div style={{ background: "#e3f2fd", borderRadius: 12, padding: 20, marginBottom: 20, boxShadow: "0 2px 8px rgba(0,0,0,0.08)", border: "1px solid #e5e7eb" }}>
-            <div style={{ fontSize: 24, fontWeight: "bold", color: "#1e293b", marginBottom: 12 }}>ℹ️ Come vengono calcolati i dati</div>
-            <ul style={{ paddingLeft: 20, lineHeight: 1.8 }}>
-              <li><strong>Entrate/Uscite:</strong> Somma movimenti Prima Nota Cassa + Banca</li>
-              <li><strong>IVA Debito:</strong> Estratta dai file XML dei Corrispettivi giornalieri (vendite)</li>
-              <li><strong>IVA Credito:</strong> Estratta dai file XML delle Fatture (acquisti fornitori)</li>
-              <li><strong>Saldo IVA:</strong> IVA Debito - IVA Credito = importo da versare o a credito</li>
-              <li><strong>Fatture da pagare:</strong> Fatture con stato diverso da &quot;Pagata&quot;</li>
-            </ul>
-          </div>
-        </>
-      )}
-    </>
+      {/* Info */}
+      <PageSection title="Come vengono calcolati i dati" icon={<Info size={18} />} style={{ marginTop: 20 }}>
+        <ul style={{ paddingLeft: 20, lineHeight: 2, margin: 0, color: '#475569', fontSize: 13 }}>
+          <li><strong>Entrate/Uscite:</strong> Somma movimenti Prima Nota Cassa + Banca</li>
+          <li><strong>IVA Debito:</strong> Estratta dai file XML dei Corrispettivi giornalieri (vendite)</li>
+          <li><strong>IVA Credito:</strong> Estratta dai file XML delle Fatture (acquisti fornitori)</li>
+          <li><strong>Saldo IVA:</strong> IVA Debito - IVA Credito = importo da versare o a credito</li>
+          <li><strong>Fatture da pagare:</strong> Fatture con stato diverso da "Pagata"</li>
+        </ul>
+      </PageSection>
+    </PageLayout>
   );
 }
