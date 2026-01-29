@@ -88,57 +88,52 @@ Seleziona un contesto sopra o fai una domanda!`
   ];
 
   return (
-    <div style={{ 
-      height: 'calc(100vh - 100px)', 
-      display: 'flex', 
-      flexDirection: 'column',
-      maxWidth: 900,
-      margin: '0 auto',
-      padding: '20px'
-    }}>
-      {/* Header */}
+    <PageLayout 
+      title="Assistente AI Contabile" 
+      icon="🤖"
+      subtitle="Powered by Claude Sonnet"
+    >
       <div style={{ 
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        borderRadius: '16px 16px 0 0',
-        padding: '20px',
-        color: 'white'
+        height: 'calc(100vh - 200px)', 
+        display: 'flex', 
+        flexDirection: 'column',
+        maxWidth: 900,
+        margin: '0 auto'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <Bot size={32} />
-          <div>
-            <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>Assistente AI Contabile</h1>
-            <p style={{ margin: 0, opacity: 0.9, fontSize: 13 }}>Powered by Claude Sonnet</p>
+        {/* Context selector */}
+        <div style={{ 
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          borderRadius: '16px 16px 0 0',
+          padding: '16px',
+          color: 'white'
+        }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {CONTEXT_TYPES.map(ctx => (
+              <button
+                key={ctx.id}
+                onClick={() => setContextType(ctx.id)}
+                data-testid={`context-${ctx.id}`}
+                style={{
+                  padding: '6px 12px',
+                  background: contextType === ctx.id ? 'white' : 'rgba(255,255,255,0.2)',
+                  color: contextType === ctx.id ? ctx.color : 'white',
+                  border: 'none',
+                  borderRadius: 20,
+                  cursor: 'pointer',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  transition: 'all 0.2s'
+                }}
+              >
+                {ctx.icon}
+                {ctx.label}
+              </button>
+            ))}
           </div>
         </div>
-        
-        {/* Context selector */}
-        <div style={{ display: 'flex', gap: 8, marginTop: 16, flexWrap: 'wrap' }}>
-          {CONTEXT_TYPES.map(ctx => (
-            <button
-              key={ctx.id}
-              onClick={() => setContextType(ctx.id)}
-              data-testid={`context-${ctx.id}`}
-              style={{
-                padding: '6px 12px',
-                background: contextType === ctx.id ? 'white' : 'rgba(255,255,255,0.2)',
-                color: contextType === ctx.id ? ctx.color : 'white',
-                border: 'none',
-                borderRadius: 20,
-                cursor: 'pointer',
-                fontSize: 12,
-                fontWeight: 600,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                transition: 'all 0.2s'
-              }}
-            >
-              {ctx.icon}
-              {ctx.label}
-            </button>
-          ))}
-        </div>
-      </div>
 
       {/* Messages */}
       <div style={{ 
