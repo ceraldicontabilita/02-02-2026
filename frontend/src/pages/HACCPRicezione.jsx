@@ -1,6 +1,7 @@
 import { formatDateIT, STYLES, COLORS, button, badge } from '../lib/utils';
 import React, { useState, useEffect } from 'react';
 import api from '../api';
+import { PageLayout } from '../components/PageLayout';
 
 export default function HACCPRicezione() {
   const [ricezioni, setRicezioni] = useState([]);

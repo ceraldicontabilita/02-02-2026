@@ -1,6 +1,7 @@
 import React from 'react';
 import RegistroLotti from './RegistroLotti';
 import { STYLES, COLORS, button, badge, formatEuro, formatDateIT } from '../lib/utils';
+import { PageLayout } from '../components/PageLayout';
 
 // Redirect a RegistroLotti che già esiste
 export default function HACCPLotti() {

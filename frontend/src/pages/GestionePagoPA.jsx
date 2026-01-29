@@ -5,6 +5,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
 import { Alert, AlertDescription } from '../components/ui/alert';
+import { PageLayout } from '../components/PageLayout';
 import { 
   FileText, RefreshCw, Search, CheckCircle2, AlertCircle, 
   Upload, Link2, Download, Eye, Calendar

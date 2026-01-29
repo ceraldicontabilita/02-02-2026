@@ -4,6 +4,7 @@ import { formatEuro, formatDateIT, STYLES, COLORS, button, badge } from '../lib/
 import api from '../api';
 import { useUpload } from '../contexts/UploadContext';
 import { PageInfoCard } from '../components/PageInfoCard';
+import { PageLayout } from '../components/PageLayout';
 import { 
   Upload, FileText, Brain, CheckCircle, AlertCircle, 
   RefreshCw, Eye, Download, Loader2, FileType, FolderUp, Sparkles

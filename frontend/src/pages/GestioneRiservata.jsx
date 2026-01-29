@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import api from "../api";
 import { useAnnoGlobale } from "../contexts/AnnoContext";
 import { STYLES, COLORS, button, badge, formatEuro, formatDateIT } from '../lib/utils';
+import { PageLayout } from '../components/PageLayout';
 import { 
   Lock, Plus, Trash2, Edit2, Save, X, 
   TrendingUp, TrendingDown, DollarSign, Eye, EyeOff,
