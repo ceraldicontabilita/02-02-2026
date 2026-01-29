@@ -147,25 +147,11 @@ export default function ToDo() {
   };
   
   return (
-    <div style={{ padding: 24, maxWidth: 1400, margin: '0 auto' }}>
-      {/* Header */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        marginBottom: 24,
-        flexWrap: 'wrap',
-        gap: 16
-      }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: 28, fontWeight: 'bold', color: '#1e293b' }}>
-            📝 To-Do
-          </h1>
-          <p style={{ margin: '4px 0 0 0', color: '#64748b' }}>
-            Gestisci task e promemoria
-          </p>
-        </div>
-        
+    <PageLayout 
+      title="To-Do" 
+      icon="📝"
+      subtitle="Gestisci task e promemoria"
+      actions={
         <button
           onClick={() => setShowForm(!showForm)}
           style={{
@@ -184,8 +170,8 @@ export default function ToDo() {
         >
           {showForm ? '✕ Chiudi' : '+ Nuovo Task'}
         </button>
-      </div>
-      
+      }
+    >
       {/* Stats Cards */}
       <div style={{ 
         display: 'grid', 
