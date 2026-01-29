@@ -393,7 +393,8 @@ function PrimaNotaDesktop() {
   });
 
   return (
-    <div style={STYLES.page}>
+    <PageLayout title="Prima Nota" subtitle="Registro contabile cassa e banca">
+    <div style={{...STYLES.page, padding: 0}}>
       
       {/* HEADER CON SELETTORE ANNO */}
       <div style={STYLES.header}>

@@ -530,7 +530,8 @@ export default function RegoleContabili() {
   });
 
   return (
-    <div style={{ padding: 24, maxWidth: 1000, margin: '0 auto' }}>
+    <PageLayout title="Dizionario Regole Contabili" subtitle="Documentazione completa delle logiche di business implementate nel sistema gestionale">
+    <div style={{ maxWidth: 1000, margin: '0 auto' }}>
       {/* Header */}
       <div style={{ marginBottom: 32 }}>
         <h1 style={{ fontSize: 28, fontWeight: 700, color: '#1e3a5f', marginBottom: 8 }}>

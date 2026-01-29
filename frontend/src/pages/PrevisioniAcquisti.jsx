@@ -107,7 +107,8 @@ export default function PrevisioniAcquisti() {
   });
 
   return (
-    <div style={{ padding: '16px 12px', maxWidth: 1400, margin: '0 auto' }}>
+    <PageLayout title="Previsioni Acquisti" subtitle="Analisi consumi e previsioni ordinazioni">
+    <div style={{ maxWidth: 1400, margin: '0 auto' }}>
       {/* Header */}
       <div style={{ marginBottom: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
