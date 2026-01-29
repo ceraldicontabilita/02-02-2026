@@ -154,22 +154,16 @@ export default function OdooIntegration() {
   };
 
   return (
-    <div style={{ padding: 20 }}>
-      {/* Header */}
-      <div style={cardStyle}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <h1 style={{ margin: 0, fontSize: 24, color: '#1e3a5f' }}>🔗 Integrazione Odoo</h1>
-            <p style={{ margin: '8px 0 0', fontSize: 13, color: '#64748b' }}>
-              Sincronizzazione bidirezionale con Odoo ERP via XML-RPC
-            </p>
-          </div>
-          <button onClick={loadStatus} style={button('#3b82f6')}>
-            🔄 Aggiorna Stato
-          </button>
-        </div>
-      </div>
-
+    <PageLayout 
+      title="Integrazione Odoo" 
+      icon="🔗" 
+      subtitle="Sincronizzazione bidirezionale con Odoo ERP via XML-RPC"
+      actions={
+        <button onClick={loadStatus} style={button('#3b82f6')}>
+          🔄 Aggiorna Stato
+        </button>
+      }
+    >
       {/* Status Card */}
       <div style={{
         ...cardStyle,
