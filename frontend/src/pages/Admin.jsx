@@ -375,6 +375,7 @@ export default function Admin() {
   });
 
   return (
+    <PageLayout title="Amministrazione" icon="⚙️" subtitle="Gestione sistema">
     <div style={{ padding: 'clamp(12px, 3vw, 20px)', maxWidth: 1400, margin: '0 auto' }}>
       {/* Header */}
       <div style={{ 
@@ -1449,5 +1450,6 @@ function FattureAdminTab() {
         </div>
       </div>
     </div>
+  </PageLayout>
   );
 }

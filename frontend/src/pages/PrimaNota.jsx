@@ -393,6 +393,7 @@ function PrimaNotaDesktop() {
   });
 
   return (
+    <PageLayout title="Prima Nota" icon="📒" subtitle="Registrazioni">
     <div style={STYLES.page}>
       
       {/* HEADER CON SELETTORE ANNO */}
@@ -1627,6 +1628,7 @@ function EditMovimentoModal({ movimento, tipo, onClose, onSave }) {
         </form>
       </div>
     </div>
+  </PageLayout>
   );
 }
 

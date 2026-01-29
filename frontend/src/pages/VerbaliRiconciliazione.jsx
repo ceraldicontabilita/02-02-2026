@@ -162,6 +162,7 @@ export default function VerbaliRiconciliazione() {
   const getStatoInfo = (stato) => STATI_VERBALE[stato] || STATI_VERBALE['sconosciuto'];
 
   return (
+    <PageLayout title="Verbali" icon="📝" subtitle="Storico">
     <div style={{ padding: 20, maxWidth: 1600, margin: '0 auto' }}>
       {/* Header */}
       <div style={{ 
@@ -714,5 +715,6 @@ export default function VerbaliRiconciliazione() {
         </div>
       </div>
     </div>
+  </PageLayout>
   );
 }

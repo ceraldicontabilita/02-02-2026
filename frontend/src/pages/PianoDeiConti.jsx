@@ -114,6 +114,7 @@ export default function PianoDeiConti() {
   }
 
   return (
+    <PageLayout title="Piano Conti" icon="📊" subtitle="Struttura">
     <div style={{ padding: 'clamp(12px, 3vw, 20px)', maxWidth: 1400, margin: '0 auto' }}>
       {/* Header */}
       <div style={{ marginBottom: 20 }}>
@@ -557,5 +558,6 @@ export default function PianoDeiConti() {
         </div>
       )}
     </div>
+  </PageLayout>
   );
 }

@@ -9,6 +9,7 @@ import { PageLayout } from '../components/PageLayout';
  */
 export default function PrimaNotaSalari() {
   return (
+    <PageLayout title="Prima Nota Salari" icon="💼" subtitle="Stipendi">
     <div style={{ padding: 'clamp(12px, 3vw, 20px)' }}>
       <div style={{ marginBottom: 20 }}>
         <h1 style={{ margin: 0, fontSize: 'clamp(20px, 5vw, 28px)', color: '#1a365d' }}>
@@ -20,5 +21,6 @@ export default function PrimaNotaSalari() {
       </div>
       <PrimaNotaSalariTab />
     </div>
+  </PageLayout>
   );
 }

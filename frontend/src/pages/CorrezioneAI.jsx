@@ -112,6 +112,7 @@ export default function CorrezioneAI() {
   };
 
   return (
+    <PageLayout title="Correzione AI" icon="🤖" subtitle="Correzioni automatiche">
     <div className="p-6 bg-gray-50 min-h-screen">
       {/* Header */}
       <div className="mb-6">
@@ -457,5 +458,6 @@ export default function CorrezioneAI() {
         </Card>
       </div>
     </div>
+  </PageLayout>
   );
 }

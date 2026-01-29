@@ -113,6 +113,7 @@ export default function VerificaCoerenza() {
   });
 
   return (
+    <PageLayout title="Verifica" icon="✔️" subtitle="Controllo dati">
     <div style={{ padding: 'clamp(12px, 3vw, 20px)' }}>
       {/* Header */}
       <div style={{ 
@@ -557,5 +558,6 @@ export default function VerificaCoerenza() {
         )
       )}
     </div>
+  </PageLayout>
   );
 }

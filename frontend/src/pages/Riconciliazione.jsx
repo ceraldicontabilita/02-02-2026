@@ -316,6 +316,7 @@ export default function Riconciliazione() {
   };
 
   return (
+    <PageLayout title="Riconciliazione" icon="🔄" subtitle="Quadratura">
     <div style={pageStyle.container} data-testid="riconciliazione-page">
       {/* Header */}
       <div style={pageStyle.header}>
@@ -553,5 +554,6 @@ export default function Riconciliazione() {
         </p>
       </div>
     </div>
+  </PageLayout>
   );
 }

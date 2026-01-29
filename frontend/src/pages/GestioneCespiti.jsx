@@ -136,6 +136,7 @@ export default function GestioneCespiti() {
   const fmt = (v) => v != null ? new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(v) : '-';
 
   return (
+    <PageLayout title="Cespiti" icon="🏭" subtitle="Ammortamenti">
     <div style={styles.container} data-testid="gestione-cespiti-page">
       <div style={styles.header}>
         <h1 style={styles.title}><Building2 style={{ ...styles.iconLg, color: '#4f46e5' }} /> Cespiti &amp; TFR</h1>
@@ -303,5 +304,6 @@ export default function GestioneCespiti() {
         </TabsContent>
       </Tabs>
     </div>
+  </PageLayout>
   );
 }

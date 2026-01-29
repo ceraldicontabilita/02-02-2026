@@ -459,6 +459,7 @@ export default function RiconciliazioneUnificata() {
 
   if (loading) {
     return (
+      <PageLayout title="Riconciliazione" icon="🔗" subtitle="Quadratura">
       <div style={{ padding: 'clamp(12px, 3vw, 20px)' }}>
         {/* Header con Gradiente anche durante il caricamento */}
         <div style={{ 
@@ -2070,5 +2071,6 @@ function DocumentiTab({ documenti, stats, onRefresh, processing }) {
         )}
       </div>
     </div>
+  </PageLayout>
   );
 }

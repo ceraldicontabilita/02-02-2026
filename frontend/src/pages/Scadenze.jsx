@@ -133,6 +133,7 @@ export default function Scadenze() {
   };
 
   return (
+    <PageLayout title="Scadenze" icon="📅" subtitle="Gestione scadenze">
     <div style={{ padding: 'clamp(12px, 3vw, 20px)', position: 'relative' }}>
       {/* Page Info Card */}
       <div style={{ position: 'absolute', top: 0, right: 20, zIndex: 100 }}>
@@ -902,5 +903,6 @@ export default function Scadenze() {
         />
       )}
     </div>
+  </PageLayout>
   );
 }

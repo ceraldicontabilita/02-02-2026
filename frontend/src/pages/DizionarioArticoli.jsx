@@ -216,6 +216,7 @@ export default function DizionarioArticoli() {
   };
 
   return (
+    <PageLayout title="Articoli" icon="📚" subtitle="Gestione articoli">
     <div style={{ padding: 24 }}>
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
@@ -686,5 +687,6 @@ function StatCard({ label, value, color }) {
       <div style={{ fontSize: 12, color: '#64748b', marginBottom: 4 }}>{label}</div>
       <div style={{ fontSize: 24, fontWeight: 700, color }}>{value?.toLocaleString('it-IT')}</div>
     </div>
+  </PageLayout>
   );
 }
