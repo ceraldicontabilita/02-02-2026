@@ -297,6 +297,6 @@ export default function GestioneCespiti() {
           )}
         </TabsContent>
       </Tabs>
-    </div>
+    </PageLayout>
   );
 }
