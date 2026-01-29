@@ -1618,7 +1618,8 @@ function EditMovimentoModal({ movimento, tipo, onClose, onSave }) {
           </div>
         </form>
       </div>
-    </div>
+      </div>
+    </PageLayout>
   );
 }
 
