@@ -137,12 +137,25 @@ async def lista_cedolini(
     anno: Optional[int] = None,
     mese: Optional[int] = None,
     dipendente_id: Optional[str] = None,
-    limit: int = 500
+    limit: int = 100,
+    skip: int = 0,
+    solo_completi: bool = False
 ) -> Dict[str, Any]:
     """
-    Lista tutti i cedolini con filtri opzionali.
+    Lista tutti i cedolini con filtri opzionali e paginazione.
+    
+    Args:
+        anno: Filtra per anno
+        mese: Filtra per mese (1-12)
+        dipendente_id: Filtra per dipendente
+        limit: Numero massimo di risultati (default 100, max 500)
+        skip: Offset per paginazione
+        solo_completi: Se True, esclude cedolini con dati incompleti (solo netto)
     """
     db = Database.get_db()
+    
+    # Limita il massimo a 500
+    limit = min(limit, 500)
     
     query = {}
     if anno:
@@ -152,17 +165,38 @@ async def lista_cedolini(
     if dipendente_id:
         query["dipendente_id"] = dipendente_id
     
+    # Filtra cedolini incompleti se richiesto
+    if solo_completi:
+        query["$or"] = [
+            {"lordo": {"$exists": True, "$gt": 0}},
+            {"lordo_totale": {"$exists": True, "$gt": 0}}
+        ]
+    
     cedolini = await db["cedolini"].find(
         query,
         {"_id": 0, "pdf_data": 0}
-    ).sort([("anno", -1), ("mese", 1)]).limit(limit).to_list(limit)
+    ).sort([("anno", -1), ("mese", -1)]).skip(skip).limit(limit).to_list(limit)
     
     total = await db["cedolini"].count_documents(query)
+    
+    # Conta cedolini incompleti (solo netto)
+    incompleti_query = {
+        "lordo": {"$exists": False},
+        "lordo_totale": {"$exists": False},
+        "netto": {"$exists": True}
+    }
+    cedolini_incompleti = await db["cedolini"].count_documents(incompleti_query)
     
     return {
         "cedolini": cedolini,
         "total": total,
-        "filters": {"anno": anno, "mese": mese, "dipendente_id": dipendente_id}
+        "cedolini_incompleti": cedolini_incompleti,
+        "pagination": {
+            "skip": skip,
+            "limit": limit,
+            "has_more": (skip + limit) < total
+        },
+        "filters": {"anno": anno, "mese": mese, "dipendente_id": dipendente_id, "solo_completi": solo_completi}
     }
 
 
