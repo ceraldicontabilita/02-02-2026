@@ -97,40 +97,22 @@ export default function CodiciTributari() {
   });
 
   return (
-    <div style={{ padding: 20, maxWidth: 1400, margin: '0 auto' }}>
-      
-      {/* Header */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        marginBottom: 20,
-        padding: '15px 20px',
-        background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
-        borderRadius: 12,
-        color: 'white',
-        flexWrap: 'wrap',
-        gap: 10
-      }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 'bold' }}>💰 Gestione Codici Tributari</h1>
-          <p style={{ margin: '4px 0 0 0', fontSize: 13, opacity: 0.9 }}>
-            Traccia e verifica i pagamenti F24 per codice tributo
-          </p>
-        </div>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          <select 
-            value={anno} 
-            onChange={(e) => setAnno(parseInt(e.target.value))}
-            style={{ padding: '8px 12px', borderRadius: 8, border: 'none', fontSize: 14 }}
-          >
-            {[2026, 2025, 2024, 2023, 2022].map(a => (
-              <option key={a} value={a}>{a}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-
+    <PageLayout 
+      title="Gestione Codici Tributari" 
+      icon="💰" 
+      subtitle="Traccia e verifica i pagamenti F24"
+      actions={
+        <select 
+          value={anno} 
+          onChange={(e) => setAnno(parseInt(e.target.value))}
+          style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 14 }}
+        >
+          {[2026, 2025, 2024, 2023, 2022].map(a => (
+            <option key={a} value={a}>{a}</option>
+          ))}
+        </select>
+      }
+    >
       {err && (
         <div style={{ padding: 16, background: "#fee2e2", border: "1px solid #fecaca", borderRadius: 8, color: "#dc2626", marginBottom: 20 }}>
           ❌ {err}
