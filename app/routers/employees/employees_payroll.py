@@ -414,37 +414,56 @@ async def upload_payslip_pdf(file: UploadFile = File(...)) -> Dict[str, Any]:
 
                 # Importo netto (minimale): prendiamo SOLO il netto finale
                 importo_busta = float(payslip.get("retribuzione_netta") or 0)
+                importo_lordo = float(payslip.get("lordo") or 0)
                 
-                # Allegato PDF: salviamo i byte originali del file caricato (non il singolo PDF estratto)
-                # NB: per upload ZIP/RAR salviamo il nome originale, ma non memorizziamo il PDF per singolo dipendente.
+                # Allegato PDF: salviamo i byte originali del file caricato
                 import base64
                 pdf_b64 = None
-                pdf_filename = None
-                if filename.endswith('.pdf'):
+                pdf_filename = payslip.get("_pdf_filename")
+                pdf_bytes = payslip.get("_pdf_bytes")
+                
+                if pdf_bytes:
+                    pdf_b64 = base64.b64encode(pdf_bytes).decode('utf-8')
+                elif filename.endswith('.pdf'):
                     pdf_b64 = base64.b64encode(content).decode('utf-8')
                     pdf_filename = file.filename
 
-                # Save in cedolini (collection unificata)
+                # Save in cedolini (collection unificata) con tutti i dati estratti
                 cedolino_doc = {
                     "id": payslip_id,
                     "dipendente_id": emp_id,
                     "codice_fiscale": cf,
-                    "nome_dipendente": nome,
+                    "dipendente_nome": nome,
+                    "nome_dipendente": nome,  # Retrocompatibilità
                     "mese": int(mese) if mese else None,
                     "anno": int(anno) if anno else None,
                     "periodo": periodo,
-                    "ore_lavorate": 0.0,
-                    "lordo": 0.0,
-                    # Compatibilità: molti punti UI/API usano "netto"
+                    # Dati estratti dal parser multi-template
+                    "lordo": importo_lordo,
                     "netto": importo_busta,
                     "netto_mese": importo_busta,
+                    "totale_trattenute": float(payslip.get("trattenute") or 0),
+                    "ore_lavorate": float(payslip.get("ore_lavorate") or 0),
+                    "giorni_lavorati": int(payslip.get("giorni_lavorati") or 0) if payslip.get("giorni_lavorati") else None,
+                    "inps_dipendente": float(payslip.get("inps_dipendente") or 0),
+                    "irpef": float(payslip.get("irpef") or 0),
+                    "tfr_quota": float(payslip.get("tfr_quota") or 0),
+                    "ferie_residuo": payslip.get("ferie_residuo"),
+                    "permessi_residuo": payslip.get("permessi_residuo"),
+                    # Metadata
+                    "template_rilevato": payslip.get("template"),
+                    "tipo_cedolino": payslip.get("tipo_cedolino", "mensile"),
+                    "parse_method": payslip.get("_parse_method", "unknown"),
                     "acconto": float(payslip.get("acconto", 0) or 0),
                     "differenza": float(payslip.get("differenza", 0) or 0),
                     "source": "pdf_upload",
-                    "filename": file.filename,
+                    "filename": pdf_filename or file.filename,
                     "pdf_filename": pdf_filename,
                     "pdf_data": pdf_b64,
-                    "created_at": datetime.utcnow().isoformat()
+                    "created_at": datetime.utcnow().isoformat(),
+                    # Flag per cedolini problematici
+                    "parse_success": importo_lordo > 0 or importo_busta != 0,
+                    "needs_review": importo_lordo == 0 and importo_busta == 0
                 }
                 await db["cedolini"].insert_one(cedolino_doc.copy())
                 
