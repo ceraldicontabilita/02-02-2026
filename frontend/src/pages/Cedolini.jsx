@@ -193,6 +193,12 @@ export default function Cedolini() {
 
   // Apri dettaglio con URL descrittivo
   const openDettaglio = async (cedolino) => {
+    // Reset PDF blob URL
+    if (pdfBlobUrl) {
+      URL.revokeObjectURL(pdfBlobUrl);
+      setPdfBlobUrl(null);
+    }
+    
     // Mostra subito il modale con i dati disponibili
     setCedolinoSelezionato(cedolino);
     setShowDettaglio(true);
@@ -218,6 +224,23 @@ export default function Cedolini() {
             ...res.data,
             employee_nome: prev.employee_nome || res.data.dipendente_nome
           }));
+          
+          // Crea blob URL dal pdf_data base64
+          if (res.data.pdf_data) {
+            try {
+              const byteCharacters = atob(res.data.pdf_data);
+              const byteNumbers = new Array(byteCharacters.length);
+              for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+              }
+              const byteArray = new Uint8Array(byteNumbers);
+              const blob = new Blob([byteArray], { type: 'application/pdf' });
+              const blobUrl = URL.createObjectURL(blob);
+              setPdfBlobUrl(blobUrl);
+            } catch (e) {
+              console.error('Errore conversione PDF:', e);
+            }
+          }
         }
       } catch (error) {
         console.error('Errore recupero dettaglio cedolino:', error);
@@ -227,6 +250,11 @@ export default function Cedolini() {
   
   // Chiudi dettaglio
   const closeDettaglio = () => {
+    // Cleanup blob URL
+    if (pdfBlobUrl) {
+      URL.revokeObjectURL(pdfBlobUrl);
+      setPdfBlobUrl(null);
+    }
     setCedolinoSelezionato(null);
     setShowDettaglio(false);
     navigate('/cedolini-calcolo', { replace: true });
