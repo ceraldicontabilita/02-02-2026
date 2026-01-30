@@ -124,24 +124,30 @@ def parse_template_csc_napoli(text: str) -> Dict[str, Any]:
     if livello_match:
         result["dipendente"]["livello"] = livello_match.group(1)
     
-    # DATI PERIODO - Cerca la riga con formato: "GG.LAV  ORE.RETR  GG.RETR  ORE.CONTR  ORE.LAV  GG.ASS"
+    # DATI PERIODO - Cerca la riga con formato: "GG.LAV  ORE.LAV  GG.RETR  ORE.RETR  ORE.CONTR  GG.ASS"
     # Esempio: "18   119,88   24   159,84    172,00  20,00"
-    # Pattern: numeri separati da spazi, dove troviamo GG.LAV (1-31), ORE, GG.RETR, ORE, ORE.LAV (100-250), GG.ASS
+    # Pattern: GG.LAV (1-31), ORE.LAV (decimale), GG.RETR (1-31), ORE.RETR (decimale), ORE.CONTR (intero), GG.ASS
     dati_periodo_match = re.search(
-        r'(\d{1,2})\s+[\d,]+\s+(\d{1,2})\s+[\d,]+\s+(\d{2,3})[,\.]00\s+[\d,]+',
+        r'(\d{1,2})\s+([\d]+[,\.]\d{2})\s+(\d{1,2})\s+([\d]+[,\.]\d{2})\s+(\d{2,3})[,\.]00\s+([\d,\.]+)',
         text
     )
     if dati_periodo_match:
         gg_lav = int(dati_periodo_match.group(1))
-        gg_retr = int(dati_periodo_match.group(2))
-        ore_lav = int(dati_periodo_match.group(3))
+        ore_lav = parse_importo(dati_periodo_match.group(2))  # Ore effettivamente lavorate
+        gg_retr = int(dati_periodo_match.group(3))
+        ore_retr = parse_importo(dati_periodo_match.group(4))  # Ore retribuite
+        ore_contr = int(dati_periodo_match.group(5))  # Ore contrattuali
         
         if 1 <= gg_lav <= 31:
             result["periodo"]["giorni_lavorati"] = gg_lav
         if 1 <= gg_retr <= 31:
             result["periodo"]["giorni_retribuiti"] = gg_retr
-        if 50 <= ore_lav <= 250:
+        if ore_lav > 0:
             result["periodo"]["ore_lavorate"] = ore_lav
+        if ore_retr > 0:
+            result["periodo"]["ore_retribuite"] = ore_retr
+        if 50 <= ore_contr <= 250:
+            result["periodo"]["ore_contrattuali"] = ore_contr
     
     # Controlla se è un mese di SOSPENSIONE (SOS ripetuto)
     sos_count = text.count('SOS')
@@ -165,15 +171,15 @@ def parse_template_csc_napoli(text: str) -> Dict[str, Any]:
     if tratt_match:
         result["totali"]["trattenute"] = parse_importo(tratt_match.group(1))
     
-    # RITENUTE PREVIDENZIALI (INPS dipendente)
-    inps_match = re.search(r'RITENUTE PREVIDENZIALI\s+[\d,]+\s+[\d,]+\+?\s+([\d.,]+)-?', text)
-    if inps_match:
-        result["totali"]["inps_dipendente"] = parse_importo(inps_match.group(1))
+    # RITENUTE PREVIDENZIALI (Ritenute Dipendente)
+    ritenute_match = re.search(r'RITENUTE PREVIDENZIALI\s+[\d,]+\s+[\d,]+\+?\s+([\d.,]+)-?', text)
+    if ritenute_match:
+        result["totali"]["ritenute_dipendente"] = parse_importo(ritenute_match.group(1))
     else:
         # Pattern alternativo: cerca "122,91-" dopo la riga RITENUTE PREVIDENZIALI
-        inps_alt = re.search(r'RITENUTE PREVIDENZIALI.*?([\d]+[,\.]\d{2})-', text, re.DOTALL)
-        if inps_alt:
-            result["totali"]["inps_dipendente"] = parse_importo(inps_alt.group(1))
+        ritenute_alt = re.search(r'RITENUTE PREVIDENZIALI.*?([\d]+[,\.]\d{2})-', text, re.DOTALL)
+        if ritenute_alt:
+            result["totali"]["ritenute_dipendente"] = parse_importo(ritenute_alt.group(1))
     
     # RITENUTE FISCALI (IRPEF)
     irpef_match = re.search(r'RITENUTE FISCALI\s+([\d.,]+)-?', text)
