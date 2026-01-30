@@ -617,69 +617,6 @@ async def cedolini_dipendente(dipendente_id: str, anno: Optional[int] = None) ->
 
 
 
-@router.get("/{cedolino_id}/download")
-async def download_cedolino_pdf(cedolino_id: str):
-    """Download PDF allegato al cedolino."""
-    import base64
-    from fastapi.responses import StreamingResponse
-    import io
-
-    db = Database.get_db()
-    doc = await db["cedolini"].find_one({"id": cedolino_id}, {"_id": 0, "pdf_data": 1, "pdf_filename": 1, "dipendente": 1, "mese": 1, "anno": 1})
-    
-    pdf_data = doc.get("pdf_data") if doc else None
-    filename = doc.get("pdf_filename") if doc else None
-    
-    # Fallback 1: Cerca in cedolini_email_attachments
-    if not pdf_data and doc:
-        dipendente = doc.get("dipendente", "")
-        mese = doc.get("mese")
-        anno = doc.get("anno")
-        
-        # Cerca per dipendente e periodo
-        attachment = await db["cedolini_email_attachments"].find_one({
-            "$or": [
-                {"filename": {"$regex": dipendente, "$options": "i"}},
-                {"$and": [{"mese": mese}, {"anno": anno}]}
-            ],
-            "associato": False
-        })
-        
-        if attachment and attachment.get("pdf_data"):
-            pdf_data = attachment["pdf_data"]
-            filename = attachment.get("filename")
-            # Copia il PDF nel cedolino
-            await db["cedolini"].update_one(
-                {"id": cedolino_id},
-                {"$set": {"pdf_data": pdf_data, "pdf_filename": filename}}
-            )
-            # Marca attachment come associato
-            await db["cedolini_email_attachments"].update_one(
-                {"id": attachment["id"]},
-                {"$set": {"associato": True, "documento_associato_id": cedolino_id}}
-            )
-    
-    # Fallback 2: Cerca in payslips legacy
-    if not pdf_data:
-        payslip = await db["payslips"].find_one({"id": cedolino_id}, {"pdf_data": 1, "filename": 1})
-        if payslip and payslip.get("pdf_data"):
-            pdf_data = payslip["pdf_data"]
-            filename = payslip.get("filename")
-    
-    if not pdf_data:
-        raise HTTPException(status_code=404, detail="PDF non disponibile")
-
-    pdf_bytes = base64.b64decode(pdf_data)
-    if not filename:
-        filename = f"cedolino_{cedolino_id}.pdf"
-
-    return StreamingResponse(
-        io.BytesIO(pdf_bytes),
-        media_type="application/pdf",
-        headers={"Content-Disposition": f"attachment; filename=\"{filename}\""},
-    )
-
-
 @router.get("/riepilogo-mensile/{anno}/{mese}")
 async def riepilogo_mensile(anno: int, mese: int) -> Dict[str, Any]:
     """Riepilogo costi del personale per mese.
