@@ -401,9 +401,9 @@ export default function CedoliniRiconciliazione() {
             }}
             data-testid="filtro-employee"
           >
-            <option value="">Seleziona dipendente</option>
+            <option value="">Tutti i dipendenti</option>
             {employees.map(e => (
-              <option key={e.id} value={e.id}>{e.nome_completo}</option>
+              <option key={e.id || e.nome_completo} value={e.nome_completo}>{e.nome_completo}</option>
             ))}
           </select>
           
