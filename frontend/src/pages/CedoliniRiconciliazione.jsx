@@ -138,8 +138,9 @@ export default function CedoliniRiconciliazione() {
     return cedolini.filter(c => {
       if (c.mese !== meseSelezionato) return false;
       if (filtroEmployee) {
-        const empId = c.dipendente_id || c.employee_id;
-        if (empId !== filtroEmployee) return false;
+        // Filtra per nome dipendente (più affidabile di dipendente_id)
+        const nome = (c.dipendente_nome || c.nome_dipendente || c.employee_nome || '').toUpperCase();
+        if (!nome.includes(filtroEmployee.toUpperCase())) return false;
       }
       if (searchText) {
         const search = searchText.toLowerCase();
