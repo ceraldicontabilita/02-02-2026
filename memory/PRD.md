@@ -1,6 +1,6 @@
 # Application ERP/Accounting - PRD
 
-## Stato: 29 Gennaio 2026
+## Stato: 30 Gennaio 2026
 
 ---
 
@@ -10,7 +10,7 @@
 | Frontend | React 18.3, Vite, Tailwind, Shadcn/UI |
 | Backend | FastAPI 0.110, Python, Pydantic 2.12 |
 | Database | MongoDB Atlas |
-| Integrazioni | Odoo, Claude Sonnet, OpenAPI.it |
+| Integrazioni | Odoo, Claude Sonnet, OpenAPI.it, pypdf |
 
 ---
 
@@ -36,10 +36,25 @@
 - VerificaCoerenza
 - **HACCPLotti**: Redirect a RegistroLotti (non richiede wrapper)
 
-### API Cedolini Paginazione
-- GET `/api/cedolini?limit=100&skip=0`
+### Parser Multi-Template Cedolini - COMPLETATO (30 Gen 2026)
+- **Parser avanzato** (`busta_paga_multi_template.py`) che gestisce 4 formati PDF diversi (CSC Napoli, Zucchetti Classic, Zucchetti New, Teamsystem)
+- Supporto per PDF multi-pagina, acconti, tredicesime, bonus, TFR
+- Ri-elaborazione di 885 cedolini con tasso di successo del 98% (868 su 885)
+- Sezione "Da Rivedere" nella pagina Cedolini con statistiche di parsing
+
+### Bug Fix Visualizzazione PDF Cedolini - COMPLETATO (30 Gen 2026)
+- Risolto il bug che impediva la visualizzazione del PDF nel modale di dettaglio
+- Aggiunto endpoint `GET /api/cedolini/{cedolino_id}` per recuperare i dati completi incluso `pdf_data`
+- Implementata UI con pulsanti "Scarica PDF" e "Apri in nuova scheda" compatibile con tutti i browser
+
+### API Cedolini
+- GET `/api/cedolini?limit=100&skip=0&anno=2025&mese=5`
+- GET `/api/cedolini/{cedolino_id}` - Dettaglio cedolino con pdf_data
+- GET `/api/cedolini/{cedolino_id}/download` - Download PDF
 - GET `/api/cedolini/incompleti`
 - POST `/api/cedolini/incompleti/{id}/completa`
+- GET `/api/employees/cedolini/da-rivedere`
+- GET `/api/employees/cedolini/statistiche-parsing`
 
 ### API Claude AI
 - POST `/api/claude/chat`
@@ -52,9 +67,10 @@
 ## Da Completare
 
 ### P1
-- **911 cedolini incompleti**: Investigare il parser PDF per capire perché i campi non vengono popolati
+- **Verifica utente del flusso cedolini**: Test dell'intero processo upload PDF → parsing → visualizzazione "Da Rivedere"
 
 ### P2
+- ~17 cedolini che ancora falliscono il parsing (analisi PDF corrotti o template aggiuntivi)
 - Test E2E automatizzati
 - Indici MongoDB per performance
 - Export Excel/CSV
