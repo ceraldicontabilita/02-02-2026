@@ -98,16 +98,38 @@ export default function CedoliniRiconciliazione() {
         api.get('/api/employees?limit=200')
       ]);
       
-      setCedolini(cedRes.data.cedolini || cedRes.data || []);
+      const cedoliniData = cedRes.data.cedolini || cedRes.data || [];
+      setCedolini(cedoliniData);
       
-      // Normalizza employees
-      const emps = (empRes.data.employees || empRes.data || [])
-        .filter(e => e.status === 'attivo' || !e.status)
-        .map(e => ({
-          ...e,
-          nome_completo: e.nome_completo || e.name || `${e.nome || ''} ${e.cognome || ''}`.trim()
-        }));
-      setEmployees(emps);
+      // Estrai lista dipendenti dai cedolini stessi (più affidabile)
+      const dipendentiDaCedolini = new Map();
+      cedoliniData.forEach(c => {
+        const nome = c.dipendente_nome || c.nome_dipendente || c.employee_nome;
+        if (nome && !dipendentiDaCedolini.has(nome.toUpperCase())) {
+          dipendentiDaCedolini.set(nome.toUpperCase(), {
+            id: c.dipendente_id || nome,
+            nome_completo: nome
+          });
+        }
+      });
+      
+      // Aggiungi anche dipendenti da API (se non già presenti)
+      const empsFromApi = (empRes.data.employees || empRes.data || [])
+        .filter(e => e.status === 'attivo' || !e.status);
+      empsFromApi.forEach(e => {
+        const nome = e.nome_completo || e.name || `${e.nome || ''} ${e.cognome || ''}`.trim();
+        if (nome && !dipendentiDaCedolini.has(nome.toUpperCase())) {
+          dipendentiDaCedolini.set(nome.toUpperCase(), {
+            id: e.id || nome,
+            nome_completo: nome
+          });
+        }
+      });
+      
+      // Ordina per nome
+      const employeesList = Array.from(dipendentiDaCedolini.values())
+        .sort((a, b) => a.nome_completo.localeCompare(b.nome_completo));
+      setEmployees(employeesList);
       
     } catch (error) {
       console.error('Errore caricamento:', error);
