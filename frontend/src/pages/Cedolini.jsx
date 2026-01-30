@@ -191,7 +191,8 @@ export default function Cedolini() {
   });
 
   // Apri dettaglio con URL descrittivo
-  const openDettaglio = (cedolino) => {
+  const openDettaglio = async (cedolino) => {
+    // Mostra subito il modale con i dati disponibili
     setCedolinoSelezionato(cedolino);
     setShowDettaglio(true);
     
@@ -205,6 +206,22 @@ export default function Cedolini() {
       `Cedolino ${cedolino.employee_nome || 'Dipendente'} - ${mese} ${cedolino.anno || anno}`,
       'Buste Paga'
     );
+    
+    // Recupera i dati completi del cedolino (incluso pdf_data) se ha un id
+    if (cedolino.id) {
+      try {
+        const res = await api.get(`/api/cedolini/${cedolino.id}`);
+        if (res.data) {
+          setCedolinoSelezionato(prev => ({
+            ...prev,
+            ...res.data,
+            employee_nome: prev.employee_nome || res.data.dipendente_nome
+          }));
+        }
+      } catch (error) {
+        console.error('Errore recupero dettaglio cedolino:', error);
+      }
+    }
   };
   
   // Chiudi dettaglio
