@@ -723,12 +723,17 @@ export default function Cedolini() {
             alignItems: 'center', 
             justifyContent: 'center'
           }}>
-            {cedolinoSelezionato.pdf_data ? (
+            {pdfBlobUrl ? (
               <iframe 
-                src={`data:application/pdf;base64,${cedolinoSelezionato.pdf_data}`} 
+                src={pdfBlobUrl} 
                 style={{ width: '100%', height: '100%', border: 'none' }}
                 title="Busta Paga PDF"
               />
+            ) : cedolinoSelezionato.pdf_data ? (
+              <div style={{ textAlign: 'center', color: '#3b82f6' }}>
+                <RefreshCw style={{ width: 32, height: 32, margin: '0 auto 16px', animation: 'spin 1s linear infinite' }} />
+                <p>Caricamento PDF...</p>
+              </div>
             ) : cedolinoSelezionato.pdf_url ? (
               <iframe 
                 src={cedolinoSelezionato.pdf_url} 
