@@ -158,7 +158,10 @@ export default function CedoliniRiconciliazione() {
   // Filtra cedolini
   const cedoliniFiltrati = useMemo(() => {
     return cedolini.filter(c => {
-      if (c.mese !== meseSelezionato) return false;
+      // Se è selezionato un dipendente, mostra TUTTE le sue buste (tutti i mesi)
+      // Altrimenti mostra solo il mese selezionato
+      if (!filtroEmployee && c.mese !== meseSelezionato) return false;
+      
       if (filtroEmployee) {
         // Filtra per nome dipendente (più affidabile di dipendente_id)
         const nome = (c.dipendente_nome || c.nome_dipendente || c.employee_nome || '').toUpperCase();
@@ -170,6 +173,12 @@ export default function CedoliniRiconciliazione() {
         return nome.includes(search);
       }
       return true;
+    }).sort((a, b) => {
+      // Ordina per mese quando si vede un singolo dipendente
+      if (filtroEmployee) {
+        return (a.mese || 0) - (b.mese || 0);
+      }
+      return 0;
     });
   }, [cedolini, meseSelezionato, filtroEmployee, searchText]);
 
