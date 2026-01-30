@@ -193,11 +193,8 @@ export default function Cedolini() {
 
   // Apri dettaglio con URL descrittivo
   const openDettaglio = async (cedolino) => {
-    // Reset PDF blob URL
-    if (pdfBlobUrl) {
-      URL.revokeObjectURL(pdfBlobUrl);
-      setPdfBlobUrl(null);
-    }
+    // Reset PDF blob URL (cleanup precedente)
+    setPdfBlobUrl(null);
     
     // Mostra subito il modale con i dati disponibili
     setCedolinoSelezionato(cedolino);
@@ -219,13 +216,8 @@ export default function Cedolini() {
       try {
         const res = await api.get(`/api/cedolini/${cedolino.id}`);
         if (res.data) {
-          setCedolinoSelezionato(prev => ({
-            ...prev,
-            ...res.data,
-            employee_nome: prev.employee_nome || res.data.dipendente_nome
-          }));
-          
-          // Crea blob URL dal pdf_data base64
+          // Crea blob URL dal pdf_data base64 PRIMA di aggiornare lo stato
+          let newBlobUrl = null;
           if (res.data.pdf_data) {
             try {
               const byteCharacters = atob(res.data.pdf_data);
@@ -235,11 +227,22 @@ export default function Cedolini() {
               }
               const byteArray = new Uint8Array(byteNumbers);
               const blob = new Blob([byteArray], { type: 'application/pdf' });
-              const blobUrl = URL.createObjectURL(blob);
-              setPdfBlobUrl(blobUrl);
+              newBlobUrl = URL.createObjectURL(blob);
             } catch (e) {
               console.error('Errore conversione PDF:', e);
             }
+          }
+          
+          // Aggiorna stato con tutti i dati
+          setCedolinoSelezionato(prev => ({
+            ...prev,
+            ...res.data,
+            employee_nome: prev.employee_nome || res.data.dipendente_nome
+          }));
+          
+          // Imposta il nuovo blob URL
+          if (newBlobUrl) {
+            setPdfBlobUrl(newBlobUrl);
           }
         }
       } catch (error) {
