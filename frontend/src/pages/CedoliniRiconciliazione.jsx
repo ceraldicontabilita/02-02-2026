@@ -44,7 +44,8 @@ const MESI = [
 // Formatta importo in formato italiano (es. € 1.549)
 const formatEuroItaliano = (value) => {
   if (!value || value === 0) return '-';
-  return '€ ' + Math.round(value).toLocaleString('it-IT');
+  const formatted = Math.round(value).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return '€ ' + formatted;
 };
 
 // Formatta data
