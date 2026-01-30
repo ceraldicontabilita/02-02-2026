@@ -552,6 +552,8 @@ def parse_busta_paga_multi(pdf_path: str) -> Dict[str, Any]:
         result = parse_template_csc_napoli(text)
     elif template == "zucchetti_new":
         result = parse_template_zucchetti_new(text)
+    elif template == "teamsystem":
+        result = parse_template_teamsystem(text)
     else:
         result = parse_template_zucchetti_classic(text)
     
