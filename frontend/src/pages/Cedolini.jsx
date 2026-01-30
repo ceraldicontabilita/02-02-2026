@@ -94,6 +94,7 @@ export default function Cedolini() {
   // Dettaglio cedolino
   const [showDettaglio, setShowDettaglio] = useState(false);
   const [cedolinoSelezionato, setCedolinoSelezionato] = useState(null);
+  const [pdfBlobUrl, setPdfBlobUrl] = useState(null);
   
   // Upload
   const [showUpload, setShowUpload] = useState(false);
