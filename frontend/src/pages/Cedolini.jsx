@@ -203,9 +203,6 @@ export default function Cedolini() {
 
   // Apri dettaglio con URL descrittivo
   const openDettaglio = async (cedolino) => {
-    // Reset PDF blob URL (cleanup precedente)
-    setPdfBlobUrl(null);
-    
     // Mostra subito il modale con i dati disponibili
     setCedolinoSelezionato(cedolino);
     setShowDettaglio(true);
@@ -226,34 +223,11 @@ export default function Cedolini() {
       try {
         const res = await api.get(`/api/cedolini/${cedolino.id}`);
         if (res.data) {
-          // Crea blob URL dal pdf_data base64 PRIMA di aggiornare lo stato
-          let newBlobUrl = null;
-          if (res.data.pdf_data) {
-            try {
-              const byteCharacters = atob(res.data.pdf_data);
-              const byteNumbers = new Array(byteCharacters.length);
-              for (let i = 0; i < byteCharacters.length; i++) {
-                byteNumbers[i] = byteCharacters.charCodeAt(i);
-              }
-              const byteArray = new Uint8Array(byteNumbers);
-              const blob = new Blob([byteArray], { type: 'application/pdf' });
-              newBlobUrl = URL.createObjectURL(blob);
-            } catch (e) {
-              console.error('Errore conversione PDF:', e);
-            }
-          }
-          
-          // Aggiorna stato con tutti i dati
           setCedolinoSelezionato(prev => ({
             ...prev,
             ...res.data,
             employee_nome: prev.employee_nome || res.data.dipendente_nome
           }));
-          
-          // Imposta il nuovo blob URL
-          if (newBlobUrl) {
-            setPdfBlobUrl(newBlobUrl);
-          }
         }
       } catch (error) {
         console.error('Errore recupero dettaglio cedolino:', error);
@@ -263,11 +237,6 @@ export default function Cedolini() {
   
   // Chiudi dettaglio
   const closeDettaglio = () => {
-    // Cleanup blob URL
-    if (pdfBlobUrl) {
-      URL.revokeObjectURL(pdfBlobUrl);
-      setPdfBlobUrl(null);
-    }
     setCedolinoSelezionato(null);
     setShowDettaglio(false);
     navigate('/cedolini-calcolo', { replace: true });
