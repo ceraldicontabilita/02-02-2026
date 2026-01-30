@@ -528,3 +528,132 @@ async def upload_payslip_pdf(file: UploadFile = File(...)) -> Dict[str, Any]:
     except Exception as e:
         logger.error(f"Upload error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+
+# ============== CEDOLINI DA RIVEDERE ==============
+
+@router.get("/cedolini/da-rivedere")
+async def get_cedolini_da_rivedere():
+    """
+    Restituisce i cedolini che necessitano revisione manuale:
+    - lordo = 0 e netto = 0 (parsing completamente fallito)
+    - needs_review = True
+    - parse_success = False
+    """
+    db = await Database.get_db()
+    
+    cedolini = await db["cedolini"].find({
+        "$or": [
+            {"needs_review": True},
+            {"parse_success": False},
+            {"$and": [
+                {"lordo": {"$in": [0, None]}},
+                {"netto": {"$in": [0, None]}}
+            ]}
+        ]
+    }, {
+        "_id": 0,
+        "pdf_data": 0  # Escludi PDF per performance
+    }).sort([("anno", -1), ("mese", -1)]).to_list(500)
+    
+    return {
+        "count": len(cedolini),
+        "cedolini": cedolini
+    }
+
+
+@router.get("/cedolini/statistiche-parsing")
+async def get_statistiche_parsing():
+    """
+    Restituisce statistiche sui cedolini parsati:
+    - Per template
+    - Per anno
+    - Con/senza lordo
+    - Con/senza errori
+    """
+    db = await Database.get_db()
+    
+    # Totali
+    totale = await db["cedolini"].count_documents({})
+    con_pdf = await db["cedolini"].count_documents({"pdf_data": {"$exists": True, "$ne": None}})
+    con_lordo = await db["cedolini"].count_documents({"lordo": {"$gt": 0}})
+    con_lordo_zero = await db["cedolini"].count_documents({"lordo": 0})
+    senza_lordo = await db["cedolini"].count_documents({"$or": [{"lordo": None}, {"lordo": {"$exists": False}}]})
+    con_ore = await db["cedolini"].count_documents({"ore_lavorate": {"$gt": 0}})
+    da_rivedere = await db["cedolini"].count_documents({
+        "$or": [
+            {"needs_review": True},
+            {"parse_success": False},
+            {"$and": [{"lordo": {"$in": [0, None]}}, {"netto": {"$in": [0, None]}}]}
+        ]
+    })
+    
+    # Per template
+    pipeline_template = [
+        {"$group": {"_id": "$template_rilevato", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}}
+    ]
+    per_template = await db["cedolini"].aggregate(pipeline_template).to_list(10)
+    
+    # Per anno
+    pipeline_anno = [
+        {"$group": {"_id": "$anno", "count": {"$sum": 1}, "con_lordo": {"$sum": {"$cond": [{"$gt": ["$lordo", 0]}, 1, 0]}}}},
+        {"$sort": {"_id": 1}}
+    ]
+    per_anno = await db["cedolini"].aggregate(pipeline_anno).to_list(20)
+    
+    return {
+        "totale": totale,
+        "con_pdf": con_pdf,
+        "con_lordo": con_lordo,
+        "con_lordo_zero": con_lordo_zero,
+        "senza_lordo": senza_lordo,
+        "con_ore_lavorate": con_ore,
+        "da_rivedere": da_rivedere,
+        "per_template": {r["_id"] or "sconosciuto": r["count"] for r in per_template},
+        "per_anno": {str(r["_id"]): {"totale": r["count"], "con_lordo": r["con_lordo"]} for r in per_anno if r["_id"]}
+    }
+
+
+@router.post("/cedolini/{cedolino_id}/segna-revisionato")
+async def segna_cedolino_revisionato(cedolino_id: str, dati: Dict[str, Any] = Body(...)):
+    """
+    Aggiorna un cedolino dopo revisione manuale.
+    Permette di inserire lordo, netto e altri dati mancanti.
+    """
+    db = await Database.get_db()
+    
+    # Trova il cedolino
+    cedolino = await db["cedolini"].find_one({"id": cedolino_id})
+    if not cedolino:
+        raise HTTPException(status_code=404, detail="Cedolino non trovato")
+    
+    # Prepara update
+    update_data = {
+        "needs_review": False,
+        "parse_success": True,
+        "revised_at": datetime.utcnow().isoformat(),
+        "revised_manually": True
+    }
+    
+    # Aggiorna campi forniti
+    allowed_fields = ["lordo", "netto", "ore_lavorate", "giorni_lavorati", 
+                      "inps_dipendente", "irpef", "tfr_quota", "ferie_residuo", 
+                      "permessi_residuo", "tipo_cedolino", "note"]
+    
+    for field in allowed_fields:
+        if field in dati and dati[field] is not None:
+            update_data[field] = dati[field]
+    
+    result = await db["cedolini"].update_one(
+        {"id": cedolino_id},
+        {"$set": update_data}
+    )
+    
+    return {
+        "success": result.modified_count > 0,
+        "cedolino_id": cedolino_id,
+        "updated_fields": list(update_data.keys())
+    }
+
