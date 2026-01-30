@@ -328,8 +328,9 @@ export default function CedoliniRiconciliazione() {
         <div style={{ 
           display: 'grid',
           gridTemplateColumns: 'repeat(14, 1fr)',
-          borderBottom: '2px solid #e5e7eb',
-          background: '#f9fafb'
+          gap: 4,
+          padding: '12px 12px 0 12px',
+          background: '#f1f5f9'
         }}>
           {MESI.map(mese => {
             const meseStats = stats[mese.key] || { count: 0, totale: 0 };
