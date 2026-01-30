@@ -105,6 +105,25 @@ export default function Cedolini() {
     data_emissione: '',
     note: ''
   });
+  
+  // Cedolini da rivedere
+  const [showDaRivedere, setShowDaRivedere] = useState(false);
+  const [cedoliniDaRivedere, setCedoliniDaRivedere] = useState([]);
+  const [statsParsingData, setStatsParsingData] = useState(null);
+  
+  // Carica cedolini da rivedere
+  const loadDaRivedere = async () => {
+    try {
+      const [daRivedereRes, statsRes] = await Promise.all([
+        api.get('/api/employees/cedolini/da-rivedere'),
+        api.get('/api/employees/cedolini/statistiche-parsing')
+      ]);
+      setCedoliniDaRivedere(daRivedereRes.data.cedolini || []);
+      setStatsParsingData(statsRes.data);
+    } catch (error) {
+      console.error('Errore caricamento cedolini da rivedere:', error);
+    }
+  };
 
   // Carica dati
   const loadData = useCallback(async () => {
