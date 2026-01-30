@@ -216,18 +216,70 @@ async def upload_payslip_pdf(file: UploadFile = File(...)) -> Dict[str, Any]:
                 with open(p, 'rb') as pf:
                     pdf_files.append((pf.read(), os.path.basename(p)))
 
-        # Estrai payslips da tutti i PDF raccolti usando il parser semplificato
+        # Estrai payslips da tutti i PDF raccolti
+        # Prima usa il parser multi-template (più completo), poi fallback al parser semplice
         payslips = []
+        parse_errors = []  # Traccia errori per report
+        
         for pdf_bytes, pdf_filename in pdf_files:
-            extracted = parse_payslip_simple(pdf_bytes)
-            if extracted and len(extracted) == 1 and extracted[0].get('error'):
-                logger.warning(f"Errore parsing {pdf_filename}: {extracted[0].get('error')}")
-                continue
-            # Aggiungi info PDF a ogni cedolino estratto
-            for payslip in (extracted or []):
-                payslip['_pdf_bytes'] = pdf_bytes
-                payslip['_pdf_filename'] = pdf_filename
-            payslips.extend(extracted or [])
+            parsed_data = None
+            parse_method = "unknown"
+            
+            # Prova prima con il parser multi-template
+            if HAS_MULTI_TEMPLATE_PARSER:
+                try:
+                    from app.parsers.busta_paga_multi_template import parse_busta_paga_from_bytes, extract_summary
+                    result = parse_busta_paga_from_bytes(pdf_bytes)
+                    
+                    if result.get("parse_success"):
+                        summary = extract_summary(result)
+                        parsed_data = {
+                            "nome_completo": summary.get("dipendente_nome"),
+                            "codice_fiscale": summary.get("codice_fiscale"),
+                            "mese": summary.get("mese"),
+                            "anno": summary.get("anno"),
+                            "periodo": f"{summary.get('mese', '?')}/{summary.get('anno', '?')}",
+                            "retribuzione_netta": summary.get("netto"),
+                            "lordo": summary.get("lordo"),
+                            "trattenute": summary.get("trattenute"),
+                            "ore_lavorate": summary.get("ore_lavorate"),
+                            "giorni_lavorati": summary.get("giorni_lavorati"),
+                            "inps_dipendente": summary.get("inps_dipendente"),
+                            "irpef": summary.get("irpef"),
+                            "tfr_quota": summary.get("tfr_quota"),
+                            "ferie_residuo": summary.get("ferie_residuo"),
+                            "permessi_residuo": summary.get("permessi_residuo"),
+                            "template": result.get("template"),
+                            "tipo_cedolino": result.get("tipo_cedolino"),
+                            "_pdf_bytes": pdf_bytes,
+                            "_pdf_filename": pdf_filename,
+                            "_parse_method": "multi_template"
+                        }
+                        parse_method = "multi_template"
+                        logger.info(f"Parsed {pdf_filename} con multi-template: {result.get('template')}")
+                except Exception as e:
+                    logger.warning(f"Errore parser multi-template per {pdf_filename}: {e}")
+            
+            # Fallback al parser semplice se multi-template fallisce
+            if not parsed_data:
+                extracted = parse_payslip_simple(pdf_bytes)
+                if extracted and len(extracted) >= 1 and not extracted[0].get('error'):
+                    for payslip in extracted:
+                        payslip['_pdf_bytes'] = pdf_bytes
+                        payslip['_pdf_filename'] = pdf_filename
+                        payslip['_parse_method'] = "simple"
+                    payslips.extend(extracted)
+                    parse_method = "simple"
+                else:
+                    error_msg = extracted[0].get('error') if extracted else "Parse fallito"
+                    parse_errors.append({
+                        "filename": pdf_filename,
+                        "error": error_msg
+                    })
+                    logger.warning(f"Errore parsing {pdf_filename}: {error_msg}")
+                    continue
+            else:
+                payslips.append(parsed_data)
 
         # cleanup temp directory
         if tmp_dir is not None:
@@ -237,7 +289,10 @@ async def upload_payslip_pdf(file: UploadFile = File(...)) -> Dict[str, Any]:
                 pass
         
         if not payslips:
-            raise HTTPException(status_code=400, detail="Nessuna busta paga trovata")
+            error_detail = "Nessuna busta paga trovata"
+            if parse_errors:
+                error_detail += f". Errori: {parse_errors[:5]}"
+            raise HTTPException(status_code=400, detail=error_detail)
         
         if len(payslips) == 1 and payslips[0].get("error"):
             raise HTTPException(status_code=400, detail=payslips[0]["error"])
