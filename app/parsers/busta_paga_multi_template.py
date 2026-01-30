@@ -117,17 +117,22 @@ def parse_template_csc_napoli(text: str) -> Dict[str, Any]:
         if 100 <= ore_val <= 250:
             result["periodo"]["ore_lavorate"] = ore_val
     
-    # LORDO RETRIBUZIONE - cerca "TOTALE :" dopo le voci paga (pattern CSC)
-    lordo_match = re.search(r'TOTALE\s*:\s*([\d.,]+)', text)
-    if lordo_match:
-        lordo_val = parse_importo(lordo_match.group(1))
-        if lordo_val > 500:  # Sanity check - deve essere un valore ragionevole
-            result["totali"]["lordo"] = lordo_val
+    # Controlla se è un mese di SOSPENSIONE (SOS ripetuto)
+    sos_count = text.count('SOS')
+    is_sospensione = sos_count >= 20  # Se ci sono molti SOS, è sospensione
     
-    # TOTALE COMPETENZE
+    # PAGA BASE TEORICA - cerca "TOTALE :" dopo le voci paga (è la paga teorica, non il lordo effettivo)
+    paga_base_match = re.search(r'TOTALE\s*:\s*([\d.,]+)', text)
+    if paga_base_match:
+        paga_base = parse_importo(paga_base_match.group(1))
+        result["totali"]["paga_base_teorica"] = paga_base
+    
+    # TOTALE COMPETENZE - questo è il LORDO EFFETTIVO (quanto ha guadagnato realmente)
     comp_match = re.search(r'TOTALE COMPETENZE\s+([\d.,]+)\+?', text)
     if comp_match:
-        result["totali"]["competenze"] = parse_importo(comp_match.group(1))
+        competenze = parse_importo(comp_match.group(1))
+        result["totali"]["competenze"] = competenze
+        result["totali"]["lordo"] = competenze  # Il lordo effettivo è TOTALE COMPETENZE
     
     # TOTALE TRATTENUTE  
     tratt_match = re.search(r'TOTALE TRATTENUTE\s+([\d.,]+)-?', text)
@@ -140,26 +145,40 @@ def parse_template_csc_napoli(text: str) -> Dict[str, Any]:
         if acconto_match:
             result["totali"]["acconto"] = parse_importo(acconto_match.group(1))
     
-    # TOTALE NETTO - cerca pattern diversi
-    netto_match = re.search(r'TOTALE NETTO\s+([\d.,]+)', text)
-    if netto_match:
-        result["totali"]["netto"] = parse_importo(netto_match.group(1))
-    
-    # Se non trovato TOTALE NETTO, cerca l'importo alla fine dopo LIRE (formato CSC)
-    if "netto" not in result["totali"] or result["totali"].get("netto", 0) == 0:
-        # Cerca l'ultimo importo grande nel documento (pattern: "15785,76+" o simile)
-        netto_patterns = re.findall(r'(\d{3,5}[,\.]\d{2})\+?\s*$', text, re.MULTILINE)
-        for pattern in reversed(netto_patterns):
-            val = parse_importo(pattern)
-            if 100 < val < 10000:  # Range ragionevole per un netto
-                result["totali"]["netto"] = val
-                break
+    # NETTO - cerca LIRE (formato CSC)
+    lire_match = re.search(r'LIRE\s*:\s*([\d.,]+)\+?', text)
+    if lire_match:
+        lire_str = lire_match.group(1).replace('.', '').replace(',', '.')
+        lire_val = float(lire_str) if lire_str else 0
         
-        # Prova anche il pattern con LIRE:0 seguito da importo
-        if "netto" not in result["totali"]:
-            lire_match = re.search(r'LIRE\s*:\s*[\d.]+\+.*?(\d{3,5}[,\.]\d{2})\+', text, re.DOTALL)
-            if lire_match:
-                result["totali"]["netto"] = parse_importo(lire_match.group(1))
+        if lire_val == 0:
+            # LIRE:0 significa netto = 0 (o negativo se ci sono solo trattenute)
+            if is_sospensione or result["totali"].get("competenze", 0) == 0:
+                # Mese di sospensione: netto = -trattenute (il dipendente deve all'azienda)
+                trattenute = result["totali"].get("trattenute", 0)
+                if trattenute > 0:
+                    result["totali"]["netto"] = -trattenute
+                    result["tipo_cedolino"] = "sospensione"
+                else:
+                    result["totali"]["netto"] = 0
+                    result["tipo_cedolino"] = "sospensione"
+        elif lire_val > 1000:
+            # Vecchio formato in lire - converti in euro
+            result["totali"]["netto"] = round(lire_val / 1936.27, 2)
+        else:
+            # Già in euro (raro ma possibile)
+            result["totali"]["netto"] = lire_val
+    
+    # Se non trovato con LIRE, cerca TOTALE NETTO esplicito
+    if "netto" not in result["totali"]:
+        netto_match = re.search(r'TOTALE NETTO\s+([\d.,]+)', text)
+        if netto_match:
+            result["totali"]["netto"] = parse_importo(netto_match.group(1))
+    
+    # Marca come sospensione se rilevato
+    if is_sospensione:
+        result["tipo_cedolino"] = "sospensione"
+        result["note"] = f"Mese di sospensione ({sos_count} giorni SOS)"
     
     # Retribuzione TFR
     tfr_match = re.search(r'RETRIBUZIONE T\.?F\.?R\.?\s+([\d.,]+)', text)
