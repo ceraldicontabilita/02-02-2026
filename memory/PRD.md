@@ -39,8 +39,10 @@
 ### Parser Multi-Template Cedolini - COMPLETATO (30 Gen 2026)
 - **Parser avanzato** (`busta_paga_multi_template.py`) che gestisce 4 formati PDF diversi (CSC Napoli, Zucchetti Classic, Zucchetti New, Teamsystem)
 - Supporto per PDF multi-pagina, acconti, tredicesime, bonus, TFR
-- Ri-elaborazione di 885 cedolini con tasso di successo del 98% (868 su 885)
-- Sezione "Da Rivedere" nella pagina Cedolini con statistiche di parsing
+- **Riconoscimento mesi di SOSPENSIONE** (SOS): lordo=0, netto negativo per trattenute
+- Distinzione tra paga base teorica e lordo effettivo (TOTALE COMPETENZE)
+- Ri-elaborazione di 791 cedolini (2018-2025) con tasso di successo del 100%
+- **NOTA: Cedolini 2017 eliminati** (82 documenti) - formato non compatibile
 
 ### Bug Fix Visualizzazione PDF Cedolini - COMPLETATO (30 Gen 2026)
 - Risolto il bug che impediva la visualizzazione del PDF nel modale di dettaglio
