@@ -41,13 +41,15 @@ const MESI = [
 
 // Formatta importo
 
-// Formatta importo breve (es. €17k)
-const formatEuroShort = (value) => {
-  if (!value) return '€0';
-  if (value >= 1000) {
-    return `€${Math.round(value / 1000)}k`;
-  }
-  return `€${Math.round(value)}`;
+// Formatta importo in formato italiano (es. € 6.000)
+const formatEuroItaliano = (value) => {
+  if (!value || value === 0) return '-';
+  return new Intl.NumberFormat('it-IT', { 
+    style: 'currency', 
+    currency: 'EUR',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(value);
 };
 
 // Formatta data
