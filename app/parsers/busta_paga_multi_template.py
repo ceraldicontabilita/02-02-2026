@@ -117,6 +117,13 @@ def parse_template_csc_napoli(text: str) -> Dict[str, Any]:
         if 100 <= ore_val <= 250:
             result["periodo"]["ore_lavorate"] = ore_val
     
+    # LORDO RETRIBUZIONE - cerca "TOTALE :" dopo le voci paga (pattern CSC)
+    lordo_match = re.search(r'TOTALE\s*:\s*([\d.,]+)', text)
+    if lordo_match:
+        lordo_val = parse_importo(lordo_match.group(1))
+        if lordo_val > 500:  # Sanity check - deve essere un valore ragionevole
+            result["totali"]["lordo"] = lordo_val
+    
     # TOTALE COMPETENZE
     comp_match = re.search(r'TOTALE COMPETENZE\s+([\d.,]+)\+?', text)
     if comp_match:
@@ -138,21 +145,21 @@ def parse_template_csc_napoli(text: str) -> Dict[str, Any]:
     if netto_match:
         result["totali"]["netto"] = parse_importo(netto_match.group(1))
     
-    # Se non trovato TOTALE NETTO, cerca LIRE (formato vecchio)
-    if "netto" not in result["totali"]:
-        lire_match = re.search(r'LIRE\s*:\s*([\d.]+)\+', text)
-        if lire_match:
-            lire_str = lire_match.group(1).replace('.', '')
-            lire_val = float(lire_str)
-            if lire_val > 0:
-                # Converti da lire a euro
-                result["totali"]["netto"] = round(lire_val / 1936.27, 2)
-            else:
-                # LIRE:0 significa cedolino solo trattenute (detrazioni anno precedente)
-                # Il netto è negativo = l'azienda trattiene
-                if "trattenute" in result["totali"] and result["totali"]["trattenute"] > 0:
-                    result["totali"]["netto"] = -result["totali"]["trattenute"]
-                    result["tipo_cedolino"] = "solo_trattenute"
+    # Se non trovato TOTALE NETTO, cerca l'importo alla fine dopo LIRE (formato CSC)
+    if "netto" not in result["totali"] or result["totali"].get("netto", 0) == 0:
+        # Cerca l'ultimo importo grande nel documento (pattern: "15785,76+" o simile)
+        netto_patterns = re.findall(r'(\d{3,5}[,\.]\d{2})\+?\s*$', text, re.MULTILINE)
+        for pattern in reversed(netto_patterns):
+            val = parse_importo(pattern)
+            if 100 < val < 10000:  # Range ragionevole per un netto
+                result["totali"]["netto"] = val
+                break
+        
+        # Prova anche il pattern con LIRE:0 seguito da importo
+        if "netto" not in result["totali"]:
+            lire_match = re.search(r'LIRE\s*:\s*[\d.]+\+.*?(\d{3,5}[,\.]\d{2})\+', text, re.DOTALL)
+            if lire_match:
+                result["totali"]["netto"] = parse_importo(lire_match.group(1))
     
     # Retribuzione TFR
     tfr_match = re.search(r'RETRIBUZIONE T\.?F\.?R\.?\s+([\d.,]+)', text)
