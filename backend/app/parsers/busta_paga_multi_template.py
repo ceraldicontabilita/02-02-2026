@@ -144,8 +144,15 @@ def parse_template_csc_napoli(text: str) -> Dict[str, Any]:
         if lire_match:
             lire_str = lire_match.group(1).replace('.', '')
             lire_val = float(lire_str)
-            # Converti da lire a euro
-            result["totali"]["netto"] = round(lire_val / 1936.27, 2)
+            if lire_val > 0:
+                # Converti da lire a euro
+                result["totali"]["netto"] = round(lire_val / 1936.27, 2)
+            else:
+                # LIRE:0 significa cedolino solo trattenute (detrazioni anno precedente)
+                # Il netto è negativo = l'azienda trattiene
+                if "trattenute" in result["totali"] and result["totali"]["trattenute"] > 0:
+                    result["totali"]["netto"] = -result["totali"]["trattenute"]
+                    result["tipo_cedolino"] = "solo_trattenute"
     
     # Retribuzione TFR
     tfr_match = re.search(r'RETRIBUZIONE T\.?F\.?R\.?\s+([\d.,]+)', text)
@@ -159,14 +166,17 @@ def parse_template_csc_napoli(text: str) -> Dict[str, Any]:
         result["ferie_permessi"]["permessi_maturati"] = parse_importo(ferie_mat_match.group(2))
     
     # Imposta lordo = competenze (o acconto per i cedolini acconto)
-    if "competenze" in result["totali"]:
+    if "competenze" in result["totali"] and result["totali"]["competenze"] > 0:
         result["totali"]["lordo"] = result["totali"]["competenze"]
     elif is_acconto and "acconto" in result["totali"]:
         result["totali"]["lordo"] = result["totali"]["acconto"]
         result["totali"]["netto"] = result["totali"]["acconto"]  # Per acconti, lordo = netto
+    elif result.get("tipo_cedolino") == "solo_trattenute":
+        # Per cedolini solo trattenute, lordo = 0
+        result["totali"]["lordo"] = 0
     
     # Se abbiamo solo il netto (da LIRE), usa quello come lordo approssimativo
-    if "lordo" not in result["totali"] and "netto" in result["totali"]:
+    if "lordo" not in result["totali"] and "netto" in result["totali"] and result["totali"]["netto"] > 0:
         result["totali"]["lordo"] = result["totali"]["netto"]
     
     return result
