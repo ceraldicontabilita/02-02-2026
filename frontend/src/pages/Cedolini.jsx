@@ -321,6 +321,26 @@ export default function Cedolini() {
             <Upload style={{ width: 16, height: 16 }} />
             Carica buste paga
           </button>
+          
+          <button 
+            onClick={() => { loadDaRivedere(); setShowDaRivedere(true); }}
+            style={{ 
+              padding: '10px 20px',
+              background: cedoliniDaRivedere.length > 0 ? '#f59e0b' : '#6b7280',
+              color: 'white',
+              border: 'none',
+              borderRadius: 8,
+              cursor: 'pointer',
+              fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8
+            }}
+            data-testid="btn-cedolini-da-rivedere"
+          >
+            <Eye style={{ width: 16, height: 16 }} />
+            Da rivedere {cedoliniDaRivedere.length > 0 && `(${cedoliniDaRivedere.length})`}
+          </button>
         </div>
 
         {/* Tabs Mesi con Stats */}
