@@ -365,32 +365,14 @@ export default function CedoliniRiconciliazione() {
                 }}>
                   {mese.short}
                 </div>
-                {meseStats.count > 0 ? (
-                  <div style={{ 
-                    fontSize: 12, 
-                    color: isActive ? 'rgba(255,255,255,0.95)' : '#64748b',
-                    marginTop: 6,
-                    fontWeight: 600
-                  }}>
-                    <span style={{ 
-                      background: isActive ? 'rgba(255,255,255,0.2)' : '#e2e8f0',
-                      padding: '2px 6px',
-                      borderRadius: 4,
-                      marginRight: 4
-                    }}>
-                      {meseStats.count}
-                    </span>
-                    {formatEuroShort(meseStats.totale)}
-                  </div>
-                ) : (
-                  <div style={{ 
-                    fontSize: 12, 
-                    color: isActive ? 'rgba(255,255,255,0.5)' : '#cbd5e1',
-                    marginTop: 6
-                  }}>
-                    -
-                  </div>
-                )}
+                <div style={{ 
+                  fontSize: 12, 
+                  color: isActive ? 'rgba(255,255,255,0.95)' : '#64748b',
+                  marginTop: 6,
+                  fontWeight: 600
+                }}>
+                  {formatEuroItaliano(meseStats.totale)}
+                </div>
               </button>
             );
           })}
