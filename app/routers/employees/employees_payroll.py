@@ -541,7 +541,7 @@ async def get_cedolini_da_rivedere():
     - needs_review = True
     - parse_success = False
     """
-    db = await Database.get_db()
+    db = Database.get_db()
     
     cedolini = await db["cedolini"].find({
         "$or": [
@@ -572,7 +572,7 @@ async def get_statistiche_parsing():
     - Con/senza lordo
     - Con/senza errori
     """
-    db = await Database.get_db()
+    db = Database.get_db()
     
     # Totali
     totale = await db["cedolini"].count_documents({})
@@ -622,7 +622,7 @@ async def segna_cedolino_revisionato(cedolino_id: str, dati: Dict[str, Any] = Bo
     Aggiorna un cedolino dopo revisione manuale.
     Permette di inserire lordo, netto e altri dati mancanti.
     """
-    db = await Database.get_db()
+    db = Database.get_db()
     
     # Trova il cedolino
     cedolino = await db["cedolini"].find_one({"id": cedolino_id})
