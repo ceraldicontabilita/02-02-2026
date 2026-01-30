@@ -608,7 +608,13 @@ export default function CedoliniRiconciliazione() {
         }}>
           {/* PDF Viewer */}
           <div style={{ flex: 1, background: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            {cedolinoSelezionato.pdf_url ? (
+            {cedolinoSelezionato.pdf_data ? (
+              <iframe 
+                src={`data:application/pdf;base64,${cedolinoSelezionato.pdf_data}`} 
+                style={{ width: '100%', height: '100%', border: 'none' }} 
+                title="Busta Paga PDF" 
+              />
+            ) : cedolinoSelezionato.pdf_url ? (
               <iframe src={cedolinoSelezionato.pdf_url} style={{ width: '100%', height: '100%', border: 'none' }} title="Busta Paga PDF" />
             ) : (
               <div style={{ textAlign: 'center', color: '#9ca3af' }}>
