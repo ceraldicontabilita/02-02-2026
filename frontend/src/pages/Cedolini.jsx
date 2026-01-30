@@ -871,7 +871,7 @@ export default function Cedolini() {
                   </p>
                 </div>
                 
-                {cedolinoSelezionato.pdf_url && (
+                {(cedolinoSelezionato.pdf_data || cedolinoSelezionato.pdf_url) && (
                   <div style={{ 
                     marginTop: 12, 
                     padding: '10px 12px', 
