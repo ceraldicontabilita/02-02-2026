@@ -47,6 +47,7 @@ def parse_template_csc_napoli(text: str) -> Dict[str, Any]:
     """
     Parser per Template 1: Software CSC - Napoli (fino 2018)
     Formato più vecchio con layout tabellare classico.
+    Gestisce anche ACCONTI e TREDICESIME/QUATTORDICESIME.
     """
     result = {
         "template": "csc_napoli",
@@ -57,7 +58,21 @@ def parse_template_csc_napoli(text: str) -> Dict[str, Any]:
         "ferie_permessi": {}
     }
     
-    # Estrai periodo (es: "DICEMBRE  2017")
+    # Rileva tipo cedolino
+    is_acconto = 'ACCONTO' in text.upper()
+    is_tredicesima = 'TREDICESIMA' in text.upper() or '13MA' in text.upper()
+    is_quattordicesima = 'QUATTORDICESIMA' in text.upper() or '14MA' in text.upper()
+    
+    if is_acconto:
+        result["tipo_cedolino"] = "acconto"
+    elif is_tredicesima:
+        result["tipo_cedolino"] = "tredicesima"
+    elif is_quattordicesima:
+        result["tipo_cedolino"] = "quattordicesima"
+    else:
+        result["tipo_cedolino"] = "mensile"
+    
+    # Estrai periodo (es: "DICEMBRE  2017" o "SETTEMBRE 2019")
     mesi = ['GENNAIO', 'FEBBRAIO', 'MARZO', 'APRILE', 'MAGGIO', 'GIUGNO',
             'LUGLIO', 'AGOSTO', 'SETTEMBRE', 'OTTOBRE', 'NOVEMBRE', 'DICEMBRE']
     for i, mese in enumerate(mesi):
@@ -68,7 +83,7 @@ def parse_template_csc_napoli(text: str) -> Dict[str, Any]:
             result["periodo"]["anno"] = int(match.group(1))
             break
     
-    # Estrai nome dipendente (dopo data: es "31/12/2017 DIAS MAHATHELGE")
+    # Estrai nome dipendente (dopo data: es "31/12/2017 DIAS MAHATHELGE" o "30/09/2019 PARISI ANTONIO")
     nome_match = re.search(r'\d{2}/\d{2}/\d{4}\s+([A-Z][A-Z\'\s]+?)\s+\d{2}/\d{2}/\d{4}', text)
     if nome_match:
         result["dipendente"]["nome_completo"] = nome_match.group(1).strip()
@@ -78,27 +93,24 @@ def parse_template_csc_napoli(text: str) -> Dict[str, Any]:
     if cf_match:
         result["dipendente"]["codice_fiscale"] = cf_match.group(1)
     
-    # Estrai livello
+    # Estrai livello (pattern: "O   5  BARISTA" o simile)
     livello_match = re.search(r'O\s+(\d+)\s+[A-Z]+', text)
     if livello_match:
         result["dipendente"]["livello"] = livello_match.group(1)
     
     # GIORNI LAVORATI - nel formato CSC cerca dopo "GG. LAV." i valori numerici
-    # Pattern: cerca sequenza di numeri dopo le intestazioni
     lines = text.split('\n')
     for i, line in enumerate(lines):
-        # Cerca righe con solo numeri (potrebbero essere i valori)
         if re.match(r'^\s*\d{1,2}\s*$', line.strip()):
-            # Potrebbe essere giorni lavorati
             val = int(line.strip())
             if 1 <= val <= 31 and "giorni_lavorati" not in result["periodo"]:
                 result["periodo"]["giorni_lavorati"] = val
     
-    # ORE LAVORATE - cerca pattern come "176,00" vicino a ORE
+    # ORE LAVORATE - cerca pattern come "176,00" 
     ore_match = re.search(r'(\d{2,3})[,\.]00\s*$', text, re.MULTILINE)
     if ore_match:
         ore_val = int(ore_match.group(1))
-        if 100 <= ore_val <= 250:  # Range ragionevole per ore mensili
+        if 100 <= ore_val <= 250:
             result["periodo"]["ore_lavorate"] = ore_val
     
     # TOTALE COMPETENZE
@@ -111,16 +123,24 @@ def parse_template_csc_napoli(text: str) -> Dict[str, Any]:
     if tratt_match:
         result["totali"]["trattenute"] = parse_importo(tratt_match.group(1))
     
-    # TOTALE NETTO - cerca TOTALE NETTO seguito da importo
+    # Per ACCONTI: cerca "IMPORTI ACCONTI SU TFR" o importo dopo ACCONTO
+    if is_acconto:
+        acconto_match = re.search(r'IMPORTI ACCONTI.*?([\d.,]+)\+', text)
+        if acconto_match:
+            result["totali"]["acconto"] = parse_importo(acconto_match.group(1))
+    
+    # TOTALE NETTO - cerca pattern diversi
     netto_match = re.search(r'TOTALE NETTO\s+([\d.,]+)', text)
     if netto_match:
         result["totali"]["netto"] = parse_importo(netto_match.group(1))
-    else:
-        # Pattern alternativo: cerca LIRE con valore
-        lire_match = re.search(r'LIRE\s*:\s*([\d.,]+)\+', text)
+    
+    # Se non trovato TOTALE NETTO, cerca LIRE (formato vecchio)
+    if "netto" not in result["totali"]:
+        lire_match = re.search(r'LIRE\s*:\s*([\d.]+)\+', text)
         if lire_match:
-            # Converti da lire a euro (approssimativo)
-            lire_val = parse_importo(lire_match.group(1))
+            lire_str = lire_match.group(1).replace('.', '')
+            lire_val = float(lire_str)
+            # Converti da lire a euro
             result["totali"]["netto"] = round(lire_val / 1936.27, 2)
     
     # Retribuzione TFR
@@ -134,14 +154,16 @@ def parse_template_csc_napoli(text: str) -> Dict[str, Any]:
         result["ferie_permessi"]["ferie_maturate"] = parse_importo(ferie_mat_match.group(1))
         result["ferie_permessi"]["permessi_maturati"] = parse_importo(ferie_mat_match.group(2))
     
-    # Calcola lordo se mancante
-    if "competenze" in result["totali"] and "netto" not in result["totali"]:
-        if "trattenute" in result["totali"]:
-            result["totali"]["netto"] = result["totali"]["competenze"] - result["totali"]["trattenute"]
-    
-    # Imposta lordo = competenze
+    # Imposta lordo = competenze (o acconto per i cedolini acconto)
     if "competenze" in result["totali"]:
         result["totali"]["lordo"] = result["totali"]["competenze"]
+    elif is_acconto and "acconto" in result["totali"]:
+        result["totali"]["lordo"] = result["totali"]["acconto"]
+        result["totali"]["netto"] = result["totali"]["acconto"]  # Per acconti, lordo = netto
+    
+    # Se abbiamo solo il netto (da LIRE), usa quello come lordo approssimativo
+    if "lordo" not in result["totali"] and "netto" in result["totali"]:
+        result["totali"]["lordo"] = result["totali"]["netto"]
     
     return result
 
