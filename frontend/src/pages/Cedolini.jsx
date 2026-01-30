@@ -692,14 +692,55 @@ export default function Cedolini() {
             background: '#f3f4f6', 
             display: 'flex', 
             alignItems: 'center', 
-            justifyContent: 'center'
+            justifyContent: 'center',
+            flexDirection: 'column',
+            padding: 20
           }}>
             {cedolinoSelezionato.pdf_data ? (
-              <embed 
-                src={`data:application/pdf;base64,${cedolinoSelezionato.pdf_data}`} 
-                type="application/pdf"
-                style={{ width: '100%', height: '100%' }}
-              />
+              <div style={{ textAlign: 'center' }}>
+                <FileText style={{ width: 64, height: 64, margin: '0 auto 16px', color: '#ef4444' }} />
+                <p style={{ marginBottom: 16, color: '#374151', fontSize: 16 }}>
+                  PDF del cedolino disponibile
+                </p>
+                <a
+                  href={`data:application/pdf;base64,${cedolinoSelezionato.pdf_data}`}
+                  download={`Busta_paga_${cedolinoSelezionato.employee_nome || 'Dipendente'}_${MESI.find(m => m.num === cedolinoSelezionato.mese)?.label || cedolinoSelezionato.mese}_${cedolinoSelezionato.anno}.pdf`}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    padding: '12px 24px',
+                    background: '#3b82f6',
+                    color: 'white',
+                    borderRadius: 8,
+                    textDecoration: 'none',
+                    fontWeight: 600,
+                    marginRight: 12
+                  }}
+                >
+                  <Download style={{ width: 18, height: 18 }} />
+                  Scarica PDF
+                </a>
+                <a
+                  href={`data:application/pdf;base64,${cedolinoSelezionato.pdf_data}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    padding: '12px 24px',
+                    background: '#10b981',
+                    color: 'white',
+                    borderRadius: 8,
+                    textDecoration: 'none',
+                    fontWeight: 600
+                  }}
+                >
+                  <Eye style={{ width: 18, height: 18 }} />
+                  Apri in nuova scheda
+                </a>
+              </div>
             ) : cedolinoSelezionato.pdf_url ? (
               <iframe 
                 src={cedolinoSelezionato.pdf_url} 
