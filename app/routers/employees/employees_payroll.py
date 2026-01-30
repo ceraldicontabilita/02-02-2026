@@ -9,9 +9,20 @@ import uuid
 import tempfile
 import os
 import logging
+import sys
+
+# Aggiungi path per il parser multi-template
+sys.path.insert(0, '/app/backend')
 
 from app.database import Database, Collections
 from app.parsers.payslip_parser_simple import parse_payslip_simple
+
+# Import del nuovo parser multi-template
+try:
+    from app.parsers.busta_paga_multi_template import parse_busta_paga_from_bytes, extract_summary
+    HAS_MULTI_TEMPLATE_PARSER = True
+except ImportError:
+    HAS_MULTI_TEMPLATE_PARSER = False
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
