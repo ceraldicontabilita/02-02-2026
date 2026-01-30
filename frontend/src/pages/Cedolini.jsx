@@ -1130,6 +1130,146 @@ export default function Cedolini() {
           </div>
         </div>
       )}
+      
+      {/* MODAL: Cedolini da Rivedere */}
+      {showDaRivedere && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: 16,
+            padding: 24,
+            width: '90%',
+            maxWidth: 1000,
+            maxHeight: '90vh',
+            overflow: 'auto'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <h2 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>
+                ⚠️ Cedolini da Rivedere
+              </h2>
+              <button 
+                onClick={() => setShowDaRivedere(false)}
+                style={{ background: 'none', border: 'none', fontSize: 24, cursor: 'pointer' }}
+              >✕</button>
+            </div>
+            
+            {/* Statistiche Parsing */}
+            {statsParsingData && (
+              <div style={{ 
+                background: '#f8fafc', 
+                borderRadius: 12, 
+                padding: 16, 
+                marginBottom: 20,
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+                gap: 12
+              }}>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 24, fontWeight: 700, color: '#10b981' }}>{statsParsingData.totale}</div>
+                  <div style={{ fontSize: 12, color: '#64748b' }}>Totale Cedolini</div>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 24, fontWeight: 700, color: '#3b82f6' }}>{statsParsingData.con_lordo}</div>
+                  <div style={{ fontSize: 12, color: '#64748b' }}>Con Lordo</div>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 24, fontWeight: 700, color: '#8b5cf6' }}>{statsParsingData.con_ore_lavorate}</div>
+                  <div style={{ fontSize: 12, color: '#64748b' }}>Con Ore Lavorate</div>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 24, fontWeight: 700, color: '#f59e0b' }}>{statsParsingData.da_rivedere}</div>
+                  <div style={{ fontSize: 12, color: '#64748b' }}>Da Rivedere</div>
+                </div>
+              </div>
+            )}
+            
+            {/* Template riconosciuti */}
+            {statsParsingData?.per_template && (
+              <div style={{ marginBottom: 20 }}>
+                <h4 style={{ margin: '0 0 10px 0', fontSize: 14, color: '#64748b' }}>Template Riconosciuti:</h4>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {Object.entries(statsParsingData.per_template).map(([template, count]) => (
+                    <span key={template} style={{
+                      padding: '4px 12px',
+                      background: template === 'sconosciuto' ? '#fecaca' : '#dcfce7',
+                      borderRadius: 20,
+                      fontSize: 13
+                    }}>
+                      {template}: {count}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {/* Lista cedolini da rivedere */}
+            {cedoliniDaRivedere.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: 40, color: '#10b981' }}>
+                ✅ Tutti i cedolini sono stati elaborati correttamente!
+              </div>
+            ) : (
+              <div style={{ maxHeight: 400, overflow: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ background: '#f1f5f9' }}>
+                      <th style={{ padding: '10px', textAlign: 'left', fontSize: 13 }}>Dipendente</th>
+                      <th style={{ padding: '10px', textAlign: 'center', fontSize: 13 }}>Periodo</th>
+                      <th style={{ padding: '10px', textAlign: 'center', fontSize: 13 }}>Template</th>
+                      <th style={{ padding: '10px', textAlign: 'right', fontSize: 13 }}>Lordo</th>
+                      <th style={{ padding: '10px', textAlign: 'right', fontSize: 13 }}>Netto</th>
+                      <th style={{ padding: '10px', textAlign: 'left', fontSize: 13 }}>File</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {cedoliniDaRivedere.map((c, idx) => (
+                      <tr key={c.id || idx} style={{ borderBottom: '1px solid #e5e7eb' }}>
+                        <td style={{ padding: '10px', fontSize: 13 }}>
+                          {c.dipendente_nome || c.nome_dipendente || 'N/D'}
+                        </td>
+                        <td style={{ padding: '10px', textAlign: 'center', fontSize: 13 }}>
+                          {c.mese}/{c.anno}
+                        </td>
+                        <td style={{ padding: '10px', textAlign: 'center', fontSize: 13 }}>
+                          <span style={{
+                            padding: '2px 8px',
+                            background: c.template_rilevato ? '#e0f2fe' : '#fef3c7',
+                            borderRadius: 4,
+                            fontSize: 11
+                          }}>
+                            {c.template_rilevato || 'non riconosciuto'}
+                          </span>
+                        </td>
+                        <td style={{ padding: '10px', textAlign: 'right', fontSize: 13, color: c.lordo ? '#10b981' : '#ef4444' }}>
+                          {c.lordo ? `€ ${c.lordo.toFixed(2)}` : '—'}
+                        </td>
+                        <td style={{ padding: '10px', textAlign: 'right', fontSize: 13, color: c.netto ? '#10b981' : '#ef4444' }}>
+                          {c.netto ? `€ ${c.netto.toFixed(2)}` : '—'}
+                        </td>
+                        <td style={{ padding: '10px', fontSize: 11, color: '#64748b', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {c.filename || c.pdf_filename || 'N/D'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            
+            <div style={{ marginTop: 20, padding: 16, background: '#fef3c7', borderRadius: 8, fontSize: 13 }}>
+              <strong>💡 Suggerimento:</strong> I cedolini non riconosciuti potrebbero avere un formato PDF diverso. 
+              Puoi inviarmi un esempio del PDF problematico e ti aiuterò ad aggiornare il parser.
+            </div>
+          </div>
+        </div>
+      )}
       </div>
     </PageLayout>
   );
