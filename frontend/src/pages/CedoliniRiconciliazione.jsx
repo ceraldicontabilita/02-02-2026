@@ -41,15 +41,10 @@ const MESI = [
 
 // Formatta importo
 
-// Formatta importo in formato italiano (es. € 6.000)
+// Formatta importo in formato italiano (es. € 1.549)
 const formatEuroItaliano = (value) => {
   if (!value || value === 0) return '-';
-  return new Intl.NumberFormat('it-IT', { 
-    style: 'currency', 
-    currency: 'EUR',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
-  }).format(value);
+  return '€ ' + Math.round(value).toLocaleString('it-IT');
 };
 
 // Formatta data
