@@ -338,8 +338,8 @@ export default function CedoliniRiconciliazione() {
                 key={mese.key}
                 onClick={() => setMeseSelezionato(mese.key)}
                 style={{
-                  padding: '14px 8px',
-                  minWidth: 70,
+                  padding: '12px 6px',
+                  minWidth: 75,
                   background: isActive ? COLORS.primary : '#f8fafc',
                   border: isActive ? 'none' : '1px solid #e2e8f0',
                   borderRadius: isActive ? '8px 8px 0 0' : 8,
@@ -347,24 +347,29 @@ export default function CedoliniRiconciliazione() {
                   cursor: 'pointer',
                   textAlign: 'center',
                   transition: 'all 0.2s',
-                  boxShadow: isActive ? '0 -2px 8px rgba(0,0,0,0.1)' : 'none'
+                  boxShadow: isActive ? '0 -2px 8px rgba(0,0,0,0.1)' : 'none',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center'
                 }}
                 data-testid={`tab-mese-${mese.key}`}
               >
                 <div style={{ 
-                  fontSize: 14, 
+                  fontSize: 13, 
                   fontWeight: 700,
                   color: isActive ? 'white' : COLORS.primary,
                   textTransform: 'uppercase',
-                  letterSpacing: '0.5px'
+                  letterSpacing: '0.5px',
+                  marginBottom: 4
                 }}>
                   {mese.short}
                 </div>
                 <div style={{ 
-                  fontSize: 12, 
+                  fontSize: 11, 
                   color: isActive ? 'rgba(255,255,255,0.95)' : '#64748b',
-                  marginTop: 6,
-                  fontWeight: 600
+                  fontWeight: 600,
+                  whiteSpace: 'nowrap'
                 }}>
                   {formatEuroItaliano(meseStats.totale)}
                 </div>
