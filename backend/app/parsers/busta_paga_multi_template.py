@@ -456,17 +456,27 @@ def parse_template_zucchetti_new(text: str) -> Dict[str, Any]:
     ]
     
     # Cerca NETTO DEL MESE esplicito (più affidabile)
-    netto_match = re.search(r'(\d{1,3}[.,]?\d{0,3}[.,]\d{2})\s*€', text)
+    # Pattern con segno negativo: "-32,85 €"
+    netto_match = re.search(r'(-?\d{1,3}[.,]?\d{0,3}[.,]\d{2})\s*€', text)
     if netto_match:
-        result["totali"]["netto"] = parse_importo(netto_match.group(1))
+        netto_val = parse_importo(netto_match.group(1).replace('-', ''))
+        if '-' in netto_match.group(1):
+            result["totali"]["netto"] = -netto_val
+            result["tipo_cedolino"] = "solo_trattenute"
+        else:
+            result["totali"]["netto"] = netto_val
     
     # Cerca pattern competenze/trattenute dalla struttura del documento
     # Il formato è: trattenute \n competenze (es: 114,71 \n 1.228,13)
     tratt_comp_match = re.search(r'(\d{1,3}[.,]\d{2})\s*\n\s*(\d{1,3}[.,]?\d{0,3}[.,]\d{2})\s*\n', text)
     if tratt_comp_match:
-        result["totali"]["trattenute"] = parse_importo(tratt_comp_match.group(1))
-        result["totali"]["competenze"] = parse_importo(tratt_comp_match.group(2))
-        result["totali"]["lordo"] = result["totali"]["competenze"]
+        tratt_val = parse_importo(tratt_comp_match.group(1))
+        comp_val = parse_importo(tratt_comp_match.group(2))
+        # Solo se competenze > trattenute (altrimenti sono invertiti)
+        if comp_val > tratt_val:
+            result["totali"]["trattenute"] = tratt_val
+            result["totali"]["competenze"] = comp_val
+            result["totali"]["lordo"] = comp_val
     
     # Pattern alternativo: cerca "Z00001 Retribuzione" seguito da importo
     retrib_match = re.search(r'Z00001\s+Retribuzione.*?([\d.,]+)\s*$', text, re.MULTILINE)
