@@ -179,6 +179,16 @@ export default function Cedolini() {
     loadData();
   }, [loadData]);
 
+  // Gestisci creazione/cleanup del blob URL per il PDF
+  useEffect(() => {
+    // Cleanup del vecchio blob URL
+    return () => {
+      if (pdfBlobUrl) {
+        URL.revokeObjectURL(pdfBlobUrl);
+      }
+    };
+  }, [pdfBlobUrl]);
+
   // Filtra cedolini
   const cedoliniFiltrati = cedolini.filter(c => {
     if (c.mese !== meseSelezionato) return false;
