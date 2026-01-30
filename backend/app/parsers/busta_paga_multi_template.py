@@ -534,6 +534,17 @@ def parse_template_zucchetti_new(text: str) -> Dict[str, Any]:
     if "competenze" in result["totali"] and "lordo" not in result["totali"]:
         result["totali"]["lordo"] = result["totali"]["competenze"]
     
+    # Per cedolini solo trattenute (netto negativo o 0), imposta lordo = 0
+    if result.get("tipo_cedolino") == "solo_trattenute":
+        result["totali"]["lordo"] = 0
+    
+    # Se abbiamo netto (anche negativo) ma non lordo, consideriamo comunque valido
+    if "netto" in result["totali"] and "lordo" not in result["totali"]:
+        if result["totali"]["netto"] <= 0:
+            result["totali"]["lordo"] = 0
+        else:
+            result["totali"]["lordo"] = result["totali"]["netto"]
+    
     return result
 
 
