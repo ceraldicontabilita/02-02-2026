@@ -87,12 +87,34 @@ def parse_template_csc_napoli(text: str) -> Dict[str, Any]:
             result["periodo"]["anno"] = int(match.group(1))
             break
     
-    # Estrai nome dipendente (dopo data: es "31/12/2017 DIAS MAHATHELGE" o "30/09/2019 PARISI ANTONIO")
-    nome_match = re.search(r'\d{2}/\d{2}/\d{4}\s+([A-Z][A-Z\'\s]+?)\s+\d{2}/\d{2}/\d{4}', text)
+    # Estrai nome dipendente - pattern: DATA NOME_COGNOME DATA_NASCITA CODICE_FISCALE
+    # Es: "31/01/2017 CERALDI VALERIO                14/06/1988 CRLVLR88H14F839O"
+    nome_match = re.search(r'\d{2}/\d{2}/\d{4}\s+([A-Z][A-Z\'\s]+?)\s+\d{2}/\d{2}/\d{4}\s+([A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z])', text)
     if nome_match:
-        result["dipendente"]["nome_completo"] = nome_match.group(1).strip()
+        nome = nome_match.group(1).strip()
+        # Evita di prendere intestazioni come "BOLLO ISTITUTO"
+        if nome and nome not in ['BOLLO ISTITUTO', 'COGNOME E NOME', 'CENTRO DI COSTO']:
+            result["dipendente"]["nome_completo"] = nome
+            result["dipendente"]["codice_fiscale"] = nome_match.group(2)
     
-    # Estrai codice fiscale
+    # Se non trovato, prova pattern alternativo più permissivo
+    if not result["dipendente"].get("nome_completo"):
+        # Cerca codice fiscale e risali al nome
+        cf_match = re.search(r'([A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z])', text)
+        if cf_match:
+            result["dipendente"]["codice_fiscale"] = cf_match.group(1)
+            # Il nome è tipicamente prima del CF, dopo una data
+            pos = text.find(cf_match.group(1))
+            if pos > 0:
+                # Cerca indietro per trovare il nome
+                before_cf = text[max(0, pos-100):pos]
+                nome_alt = re.search(r'\d{2}/\d{2}/\d{4}\s+([A-Z][A-Z\'\s]{3,40}?)\s*$', before_cf)
+                if nome_alt:
+                    nome = nome_alt.group(1).strip()
+                    if nome and nome not in ['BOLLO ISTITUTO', 'COGNOME E NOME']:
+                        result["dipendente"]["nome_completo"] = nome
+    
+    # Estrai codice fiscale (se non già trovato)
     cf_match = re.search(r'([A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z])', text)
     if cf_match:
         result["dipendente"]["codice_fiscale"] = cf_match.group(1)
