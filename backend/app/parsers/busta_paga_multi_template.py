@@ -1,9 +1,10 @@
 """
 Parser Buste Paga Multi-Template
-Supporta 3 formati diversi usati nel tempo:
+Supporta 4 formati diversi usati nel tempo:
 - Template 1 (fino 2018): Software CSC - Napoli
 - Template 2 (2018-2022): Zucchetti spa (layout classico)
 - Template 3 (dal 2022): Zucchetti nuovo (con separatori 's')
+- Template 4: Teamsystem S.p.A.
 """
 import re
 from typing import Dict, Any, Optional, Tuple
@@ -12,6 +13,9 @@ import fitz  # PyMuPDF
 
 def detect_template(text: str) -> str:
     """Rileva quale template è in uso basandosi sul contenuto del PDF."""
+    # Template 4 (Teamsystem)
+    if "Teamsystem S.p.A" in text or "Teamsystem" in text or "NETTO BUSTA" in text:
+        return "teamsystem"
     # Template 3 (nuovo Zucchetti): ha "s" come separatore di parole
     if "COGNOMEsEsNOME" in text or "PERIODOsDIsRETRIBUZIONE" in text:
         return "zucchetti_new"
