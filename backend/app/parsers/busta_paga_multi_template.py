@@ -172,6 +172,111 @@ def parse_template_csc_napoli(text: str) -> Dict[str, Any]:
     return result
 
 
+
+def parse_template_teamsystem(text: str) -> Dict[str, Any]:
+    """
+    Parser per Template 4: Teamsystem S.p.A.
+    Formato usato in alcuni periodi con layout diverso.
+    """
+    result = {
+        "template": "teamsystem",
+        "dipendente": {},
+        "periodo": {},
+        "totali": {},
+        "tfr": {},
+        "ferie_permessi": {}
+    }
+    
+    # Estrai periodo (es: "SETTEMBRE    2022")
+    mesi = ['GENNAIO', 'FEBBRAIO', 'MARZO', 'APRILE', 'MAGGIO', 'GIUGNO',
+            'LUGLIO', 'AGOSTO', 'SETTEMBRE', 'OTTOBRE', 'NOVEMBRE', 'DICEMBRE']
+    for i, mese in enumerate(mesi):
+        match = re.search(rf'{mese}\s+(\d{{4}})', text)
+        if match:
+            result["periodo"]["mese"] = i + 1
+            result["periodo"]["mese_nome"] = mese.capitalize()
+            result["periodo"]["anno"] = int(match.group(1))
+            break
+    
+    # Nome dipendente (pattern: dopo anno, es "20     1   5124776507 91431211 24       15  ARIANTE MARCELLA")
+    nome_match = re.search(r'\d{4}\s+\d+\s+\d+\s+\d+\s+\d+\s+\d+\s+\d+\s+([A-Z][A-Z\'\s]+)', text)
+    if nome_match:
+        result["dipendente"]["nome_completo"] = nome_match.group(1).strip()
+    
+    # Codice fiscale
+    cf_match = re.search(r'([A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z])', text)
+    if cf_match:
+        result["dipendente"]["codice_fiscale"] = cf_match.group(1)
+    
+    # Livello (es: "6^" o "6")
+    livello_match = re.search(r'(\d)\^?\s*$', text, re.MULTILINE)
+    if livello_match:
+        result["dipendente"]["livello"] = livello_match.group(1)
+    
+    # Ore lavorate (pattern: "26    172,00" dove 172 sono le ore)
+    ore_match = re.search(r'\d{2}\s+(\d{2,3})[,\.]\d{2}\s*$', text, re.MULTILINE)
+    if ore_match:
+        result["periodo"]["ore_lavorate"] = int(ore_match.group(1))
+    
+    # Giorni lavorati
+    giorni_match = re.search(r'GG\.\s*CONTR\.\s*(\d+)', text)
+    if not giorni_match:
+        # Pattern alternativo: cerca numero isolato che potrebbe essere giorni
+        giorni_match = re.search(r'\s(\d{2})\s+\d{2,3}[,\.]\d{2}', text)
+    if giorni_match:
+        result["periodo"]["giorni_lavorati"] = int(giorni_match.group(1))
+    
+    # TOTALE LORDO - cerca pattern con importi affiancati
+    lordo_match = re.search(r'(\d{3,4})[,\.](\d{2})\s+(\d{3,4})[,\.](\d{2})\s+(\d{2,3})[,\.](\d{2})', text)
+    if lordo_match:
+        # Il primo importo grande è il lordo
+        lordo_str = f"{lordo_match.group(1)},{lordo_match.group(2)}"
+        result["totali"]["lordo"] = parse_importo(lordo_str)
+        result["totali"]["competenze"] = result["totali"]["lordo"]
+        
+        # Le trattenute sono il terzo valore
+        tratt_str = f"{lordo_match.group(5)},{lordo_match.group(6)}"
+        result["totali"]["trattenute"] = parse_importo(tratt_str)
+    
+    # NETTO BUSTA - cerca pattern finale
+    # Pattern: cerca numero seguito da "GIORNO DI RIPOSO" o simile
+    netto_match = re.search(r'(\d{2,4})[,\.](\d{2})\s*R?\s*GIORNO', text)
+    if netto_match:
+        netto_str = f"{netto_match.group(1)},{netto_match.group(2)}"
+        result["totali"]["netto"] = parse_importo(netto_str)
+    else:
+        # Pattern alternativo: cerca in fondo al documento
+        lines = text.split('\n')
+        for line in reversed(lines[-20:]):
+            netto_alt = re.search(r'(\d{2,4})[,\.](\d{2})\s*$', line)
+            if netto_alt:
+                val = parse_importo(f"{netto_alt.group(1)},{netto_alt.group(2)}")
+                if 100 < val < 5000:  # Range ragionevole per netto
+                    result["totali"]["netto"] = val
+                    break
+    
+    # Se non abbiamo lordo ma abbiamo netto, usa netto come riferimento
+    if "netto" in result["totali"] and "lordo" not in result["totali"]:
+        result["totali"]["lordo"] = result["totali"]["netto"]
+    
+    # Ferie
+    ferie_match = re.search(r'FERIE RES\.\s*([\d,]+)', text)
+    if ferie_match:
+        result["ferie_permessi"]["ferie_residuo"] = parse_importo(ferie_match.group(1))
+    
+    # Permessi (ROL)
+    rol_match = re.search(r'ROL RES\s*([-\d,]+)', text)
+    if rol_match:
+        result["ferie_permessi"]["permessi_residuo"] = parse_importo(rol_match.group(1))
+    
+    # TFR
+    tfr_match = re.search(r'TFR MESE\s*([\d,]+)', text)
+    if tfr_match:
+        result["tfr"]["quota_mese"] = parse_importo(tfr_match.group(1))
+    
+    return result
+
+
 def parse_template_zucchetti_classic(text: str) -> Dict[str, Any]:
     """
     Parser per Template 2: Zucchetti spa classico (2018-2022)
