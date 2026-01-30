@@ -153,9 +153,24 @@ export default function CedoliniRiconciliazione() {
   }, [cedolini, meseSelezionato, filtroEmployee, searchText]);
 
   // Apri dettaglio
-  const openDettaglio = (cedolino) => {
+  const openDettaglio = async (cedolino) => {
     setCedolinoSelezionato(cedolino);
     setShowDettaglio(true);
+    
+    // Recupera i dati completi del cedolino (incluso pdf_data) se ha un id
+    if (cedolino.id) {
+      try {
+        const res = await api.get(`/api/cedolini/${cedolino.id}`);
+        if (res.data) {
+          setCedolinoSelezionato(prev => ({
+            ...prev,
+            ...res.data
+          }));
+        }
+      } catch (error) {
+        console.error('Errore recupero dettaglio cedolino:', error);
+      }
+    }
   };
 
   // Upload PDF
