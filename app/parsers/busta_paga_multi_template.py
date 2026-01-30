@@ -172,15 +172,16 @@ def parse_template_csc_napoli(text: str) -> Dict[str, Any]:
         result["ferie_permessi"]["ferie_maturate"] = parse_importo(ferie_mat_match.group(1))
         result["ferie_permessi"]["permessi_maturati"] = parse_importo(ferie_mat_match.group(2))
     
-    # Imposta lordo = competenze (o acconto per i cedolini acconto)
-    if "competenze" in result["totali"] and result["totali"]["competenze"] > 0:
-        result["totali"]["lordo"] = result["totali"]["competenze"]
-    elif is_acconto and "acconto" in result["totali"]:
-        result["totali"]["lordo"] = result["totali"]["acconto"]
-        result["totali"]["netto"] = result["totali"]["acconto"]  # Per acconti, lordo = netto
-    elif result.get("tipo_cedolino") == "solo_trattenute":
-        # Per cedolini solo trattenute, lordo = 0
-        result["totali"]["lordo"] = 0
+    # Imposta lordo solo se non già presente (il pattern "TOTALE :" ha priorità)
+    if "lordo" not in result["totali"] or result["totali"].get("lordo", 0) == 0:
+        if "competenze" in result["totali"] and result["totali"]["competenze"] > 0:
+            result["totali"]["lordo"] = result["totali"]["competenze"]
+        elif is_acconto and "acconto" in result["totali"]:
+            result["totali"]["lordo"] = result["totali"]["acconto"]
+            result["totali"]["netto"] = result["totali"]["acconto"]  # Per acconti, lordo = netto
+        elif result.get("tipo_cedolino") == "solo_trattenute":
+            # Per cedolini solo trattenute, lordo = 0
+            result["totali"]["lordo"] = 0
     
     # Se abbiamo solo il netto (da LIRE), usa quello come lordo approssimativo
     if "lordo" not in result["totali"] and "netto" in result["totali"] and result["totali"]["netto"] > 0:
