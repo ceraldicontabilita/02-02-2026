@@ -340,18 +340,21 @@ export default function CedoliniRiconciliazione() {
                 key={mese.key}
                 onClick={() => setMeseSelezionato(mese.key)}
                 style={{
-                  padding: '12px 4px',
-                  background: isActive ? COLORS.primary : 'transparent',
-                  border: 'none',
-                  borderBottom: isActive ? `3px solid ${COLORS.success}` : '3px solid transparent',
+                  padding: '14px 8px',
+                  minWidth: 70,
+                  background: isActive ? COLORS.primary : '#f8fafc',
+                  border: isActive ? 'none' : '1px solid #e2e8f0',
+                  borderRadius: isActive ? '8px 8px 0 0' : 8,
+                  borderBottom: isActive ? `3px solid ${COLORS.success}` : 'none',
                   cursor: 'pointer',
                   textAlign: 'center',
-                  transition: 'all 0.2s'
+                  transition: 'all 0.2s',
+                  boxShadow: isActive ? '0 -2px 8px rgba(0,0,0,0.1)' : 'none'
                 }}
                 data-testid={`tab-mese-${mese.key}`}
               >
                 <div style={{ 
-                  fontSize: 11, 
+                  fontSize: 14, 
                   fontWeight: 700,
                   color: isActive ? 'white' : COLORS.primary,
                   textTransform: 'uppercase',
@@ -361,18 +364,26 @@ export default function CedoliniRiconciliazione() {
                 </div>
                 {meseStats.count > 0 ? (
                   <div style={{ 
-                    fontSize: 10, 
-                    color: isActive ? 'rgba(255,255,255,0.9)' : COLORS.gray,
-                    marginTop: 4,
+                    fontSize: 12, 
+                    color: isActive ? 'rgba(255,255,255,0.95)' : '#64748b',
+                    marginTop: 6,
                     fontWeight: 600
                   }}>
-                    {meseStats.count} • {formatEuroShort(meseStats.totale)}
+                    <span style={{ 
+                      background: isActive ? 'rgba(255,255,255,0.2)' : '#e2e8f0',
+                      padding: '2px 6px',
+                      borderRadius: 4,
+                      marginRight: 4
+                    }}>
+                      {meseStats.count}
+                    </span>
+                    {formatEuroShort(meseStats.totale)}
                   </div>
                 ) : (
                   <div style={{ 
-                    fontSize: 10, 
-                    color: isActive ? 'rgba(255,255,255,0.5)' : '#d1d5db',
-                    marginTop: 4
+                    fontSize: 12, 
+                    color: isActive ? 'rgba(255,255,255,0.5)' : '#cbd5e1',
+                    marginTop: 6
                   }}>
                     -
                   </div>
