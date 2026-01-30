@@ -608,7 +608,13 @@ def parse_busta_paga_multi(pdf_path: str) -> Dict[str, Any]:
     result["parse_success"] = True
     
     # Validazione minima
-    if not result.get("totali", {}).get("netto") and not result.get("totali", {}).get("lordo"):
+    # Accetta anche lordo = 0 per cedolini solo trattenute
+    totali = result.get("totali", {})
+    has_netto = "netto" in totali
+    has_lordo = "lordo" in totali
+    is_solo_trattenute = result.get("tipo_cedolino") == "solo_trattenute"
+    
+    if not has_netto and not has_lordo and not is_solo_trattenute:
         result["parse_success"] = False
         result["parse_error"] = "Nessun importo estratto"
     
