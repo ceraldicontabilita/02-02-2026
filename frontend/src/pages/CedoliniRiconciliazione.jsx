@@ -87,6 +87,7 @@ export default function CedoliniRiconciliazione() {
   const [loading, setLoading] = useState(true);
   const [cedolini, setCedolini] = useState([]);
   const [employees, setEmployees] = useState([]);
+  const isMobile = useIsMobile();
   
   // Filtri
   const [meseSelezionato, setMeseSelezionato] = useState(1);
