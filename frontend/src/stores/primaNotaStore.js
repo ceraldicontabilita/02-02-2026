@@ -49,9 +49,10 @@ export const usePrimaNotaStore = create(
           if (selectedMonth) params.push(`mese=${selectedMonth}`);
           if (filtroDipendente) params.push(`dipendente=${encodeURIComponent(filtroDipendente)}`);
           
-          const url = `/api/prima-nota-salari/salari?${params.join('&')}`;
+          const url = `/api/prima-nota/salari?${params.join('&')}`;
           const res = await api.get(url);
-          set({ salariMovimenti: res.data || [], loading: false, _totalsCache: null });
+          // API returns { movimenti: [], totale: 0, count: 0 }
+          set({ salariMovimenti: res.data?.movimenti || res.data || [], loading: false, _totalsCache: null });
         } catch (error) {
           console.error('Error fetching salari:', error);
           set({ salariMovimenti: [], loading: false });
