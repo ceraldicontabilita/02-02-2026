@@ -21,6 +21,19 @@ import {
 import { toast } from 'sonner';
 import { STYLES, COLORS, button, badge, formatEuro, formatDateIT } from '../lib/utils';
 
+// Hook per rilevare mobile
+const useIsMobile = () => {
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
+  
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  
+  return isMobile;
+};
+
 // Mesi con chiavi
 const MESI = [
   { key: 1, label: 'Gennaio', short: 'Gen' },
