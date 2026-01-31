@@ -194,7 +194,7 @@ class TestAutomazioneFattureXML:
             print(f"Ricerca fatture fallita: {response.status_code}")
 
 
-class TestAutomazione BustePaga:
+class TestAutomazioneBustePaga:
     """Test automazione buste paga -> prima_nota_salari"""
     
     def test_cedolini_endpoint_works(self):
