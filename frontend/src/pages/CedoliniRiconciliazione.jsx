@@ -719,132 +719,171 @@ export default function CedoliniRiconciliazione() {
         )}
       </div>
 
-      {/* Modale Dettaglio */}
+      {/* Modale Dettaglio - RESPONSIVE */}
       {showDettaglio && cedolinoSelezionato && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
           background: 'rgba(0,0,0,0.5)',
-          display: 'flex', justifyContent: 'flex-end', zIndex: 1000
+          display: 'flex', 
+          flexDirection: 'column',
+          zIndex: 1000,
+          overflow: 'auto'
         }}>
-          {/* PDF Viewer */}
-          <div style={{ flex: 1, background: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            {cedolinoSelezionato.pdf_data ? (
-              <iframe 
-                src={`data:application/pdf;base64,${cedolinoSelezionato.pdf_data}`} 
-                style={{ width: '100%', height: '100%', border: 'none' }} 
-                title="Busta Paga PDF" 
-              />
-            ) : cedolinoSelezionato.pdf_url ? (
-              <iframe src={cedolinoSelezionato.pdf_url} style={{ width: '100%', height: '100%', border: 'none' }} title="Busta Paga PDF" />
-            ) : (
-              <div style={{ textAlign: 'center', color: '#9ca3af' }}>
-                <FileText style={{ width: 64, height: 64, margin: '0 auto 16px', opacity: 0.3 }} />
-                <p>Nessun PDF allegato</p>
-              </div>
-            )}
-          </div>
-
-          {/* Pannello Dettaglio */}
-          <div style={{ width: 400, background: 'white', boxShadow: '-4px 0 20px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div>
-                <h2 style={{ margin: 0, fontSize: 20, color: '#1e3a5f' }}>
-                  {cedolinoSelezionato.periodo || `${MESI.find(m => m.key === cedolinoSelezionato.mese)?.label} ${cedolinoSelezionato.anno}`}
-                </h2>
-                <p style={{ margin: '4px 0 0 0', color: '#6b7280' }}>{getNomeDipendente(cedolinoSelezionato)}</p>
-              </div>
-              <button onClick={() => setShowDettaglio(false)} style={{ padding: 8, background: 'transparent', border: 'none', cursor: 'pointer' }}>
-                <X style={{ width: 20, height: 20, color: '#6b7280' }} />
-              </button>
-            </div>
-
-            <div style={{ flex: 1, padding: 20, overflowY: 'auto' }}>
-              <h3 style={{ margin: '0 0 16px 0', fontSize: 14, color: '#374151' }}>Informazioni Generali</h3>
-
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 6 }}>Dipendente</label>
-                <div style={{ padding: '10px 12px', background: '#f9fafb', borderRadius: 6, display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#e0e7ff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 600, color: '#4338ca' }}>
-                    {getNomeDipendente(cedolinoSelezionato).substring(0, 2).toUpperCase()}
-                  </div>
-                  <span>{getNomeDipendente(cedolinoSelezionato)}</span>
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 6 }}>Netto</label>
-                  <div style={{ padding: '10px 12px', background: '#f0fdf4', borderRadius: 6, fontWeight: 600, color: '#166534' }}>
-                    {formatEuro(cedolinoSelezionato.netto || cedolinoSelezionato.netto_mese)}
-                  </div>
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 6 }}>Lordo</label>
-                  <div style={{ padding: '10px 12px', background: '#f9fafb', borderRadius: 6 }}>
-                    {formatEuro(cedolinoSelezionato.lordo)}
-                  </div>
-                </div>
-              </div>
-
-              {cedolinoSelezionato.costo_azienda && (
-                <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 6 }}>Costo Azienda</label>
-                  <div style={{ padding: '10px 12px', background: '#fef2f2', borderRadius: 6, fontWeight: 500, color: '#991b1b' }}>
-                    {formatEuro(cedolinoSelezionato.costo_azienda)}
-                  </div>
+          {/* Mobile: Full screen panel, Desktop: Split view */}
+          <div className="flex flex-col sm:flex-row h-full">
+            {/* PDF Viewer - Nascosto su mobile, visibile su desktop */}
+            <div className="hidden sm:flex flex-1 bg-gray-100 items-center justify-center">
+              {cedolinoSelezionato.pdf_data ? (
+                <iframe 
+                  src={`data:application/pdf;base64,${cedolinoSelezionato.pdf_data}`} 
+                  style={{ width: '100%', height: '100%', border: 'none' }} 
+                  title="Busta Paga PDF" 
+                />
+              ) : cedolinoSelezionato.pdf_url ? (
+                <iframe src={cedolinoSelezionato.pdf_url} style={{ width: '100%', height: '100%', border: 'none' }} title="Busta Paga PDF" />
+              ) : (
+                <div style={{ textAlign: 'center', color: '#9ca3af' }}>
+                  <FileText style={{ width: 64, height: 64, margin: '0 auto 16px', opacity: 0.3 }} />
+                  <p>Nessun PDF allegato</p>
                 </div>
               )}
+            </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+            {/* Pannello Dettaglio - Full width su mobile */}
+            <div className="w-full sm:w-[400px] bg-white shadow-lg flex flex-col max-h-full sm:max-h-none overflow-auto">
+              <div style={{ padding: '16px 20px', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', position: 'sticky', top: 0, background: 'white', zIndex: 10 }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 6 }}>INPS Dipendente</label>
-                  <div style={{ padding: '10px 12px', background: '#f9fafb', borderRadius: 6 }}>
-                    {formatEuro(cedolinoSelezionato.inps_dipendente)}
-                  </div>
+                  <h2 style={{ margin: 0, fontSize: 20, color: '#1e3a5f' }}>
+                    {cedolinoSelezionato.periodo || `${MESI.find(m => m.key === cedolinoSelezionato.mese)?.label} ${cedolinoSelezionato.anno}`}
+                  </h2>
+                  <p style={{ margin: '4px 0 0 0', color: '#6b7280' }}>{getNomeDipendente(cedolinoSelezionato)}</p>
                 </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 6 }}>IRPEF</label>
-                  <div style={{ padding: '10px 12px', background: '#f9fafb', borderRadius: 6 }}>
-                    {formatEuro(cedolinoSelezionato.irpef)}
-                  </div>
-                </div>
+                <button onClick={() => setShowDettaglio(false)} style={{ padding: 8, background: 'transparent', border: 'none', cursor: 'pointer' }}>
+                  <X style={{ width: 20, height: 20, color: '#6b7280' }} />
+                </button>
               </div>
 
-              {cedolinoSelezionato.ore_lavorate && (
+              <div style={{ flex: 1, padding: 20, overflowY: 'auto' }}>
+                {/* PDF Download buttons su mobile */}
+                {cedolinoSelezionato.pdf_data && (
+                  <div className="block sm:hidden" style={{ marginBottom: 16 }}>
+                    <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 6 }}>Documento PDF</label>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <a 
+                        href={`data:application/pdf;base64,${cedolinoSelezionato.pdf_data}`}
+                        download={`cedolino_${getNomeDipendente(cedolinoSelezionato).replace(/\s+/g, '_')}_${cedolinoSelezionato.mese}_${cedolinoSelezionato.anno}.pdf`}
+                        style={{
+                          flex: 1, padding: '12px', background: '#3b82f6', color: 'white',
+                          borderRadius: 8, textAlign: 'center', textDecoration: 'none',
+                          fontWeight: 600, fontSize: 14
+                        }}
+                      >
+                        📥 Scarica PDF
+                      </a>
+                      <button
+                        onClick={() => {
+                          const pdfWindow = window.open('', '_blank');
+                          pdfWindow.document.write(`<iframe width="100%" height="100%" src="data:application/pdf;base64,${cedolinoSelezionato.pdf_data}"></iframe>`);
+                        }}
+                        style={{
+                          flex: 1, padding: '12px', background: '#f1f5f9', color: '#1e3a5f',
+                          borderRadius: 8, border: 'none', cursor: 'pointer',
+                          fontWeight: 600, fontSize: 14
+                        }}
+                      >
+                        👁️ Visualizza
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <h3 style={{ margin: '0 0 16px 0', fontSize: 14, color: '#374151' }}>Informazioni Generali</h3>
+
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 6 }}>Dipendente</label>
+                  <div style={{ padding: '10px 12px', background: '#f9fafb', borderRadius: 6, display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#e0e7ff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 600, color: '#4338ca' }}>
+                      {getNomeDipendente(cedolinoSelezionato).substring(0, 2).toUpperCase()}
+                    </div>
+                    <span>{getNomeDipendente(cedolinoSelezionato)}</span>
+                  </div>
+                </div>
+
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 6 }}>Ore Lavorate</label>
-                    <div style={{ padding: '10px 12px', background: '#f9fafb', borderRadius: 6 }}>
-                      {cedolinoSelezionato.ore_lavorate}h
+                    <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 6 }}>Netto</label>
+                    <div style={{ padding: '10px 12px', background: '#f0fdf4', borderRadius: 6, fontWeight: 600, color: '#166534' }}>
+                      {formatEuro(cedolinoSelezionato.netto || cedolinoSelezionato.netto_mese)}
                     </div>
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 6 }}>Giorni</label>
+                    <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 6 }}>Lordo</label>
                     <div style={{ padding: '10px 12px', background: '#f9fafb', borderRadius: 6 }}>
-                      {cedolinoSelezionato.giorni_lavorati}gg
+                      {formatEuro(cedolinoSelezionato.lordo)}
                     </div>
                   </div>
                 </div>
-              )}
 
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 6 }}>Stato Pagamento</label>
-                <div style={{ padding: '10px 12px', background: '#f9fafb', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span>{cedolinoSelezionato.pagato ? '✓ Pagato' : 'Da pagare'}</span>
-                  {cedolinoSelezionato.metodo_pagamento && (
-                    <span style={{ fontSize: 12, color: '#6b7280' }}>{cedolinoSelezionato.metodo_pagamento}</span>
-                  )}
+                {cedolinoSelezionato.costo_azienda && (
+                  <div style={{ marginBottom: 16 }}>
+                    <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 6 }}>Costo Azienda</label>
+                    <div style={{ padding: '10px 12px', background: '#fef2f2', borderRadius: 6, fontWeight: 500, color: '#991b1b' }}>
+                      {formatEuro(cedolinoSelezionato.costo_azienda)}
+                    </div>
+                  </div>
+                )}
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 6 }}>INPS Dipendente</label>
+                    <div style={{ padding: '10px 12px', background: '#f9fafb', borderRadius: 6 }}>
+                      {formatEuro(cedolinoSelezionato.inps_dipendente)}
+                    </div>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 6 }}>IRPEF</label>
+                    <div style={{ padding: '10px 12px', background: '#f9fafb', borderRadius: 6 }}>
+                      {formatEuro(cedolinoSelezionato.irpef)}
+                    </div>
+                  </div>
+                </div>
+
+                {cedolinoSelezionato.ore_lavorate && (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 6 }}>Ore Lavorate</label>
+                      <div style={{ padding: '10px 12px', background: '#f9fafb', borderRadius: 6 }}>
+                        {cedolinoSelezionato.ore_lavorate}h
+                      </div>
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 6 }}>Giorni</label>
+                      <div style={{ padding: '10px 12px', background: '#f9fafb', borderRadius: 6 }}>
+                        {cedolinoSelezionato.giorni_lavorati}gg
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 6 }}>Stato Pagamento</label>
+                  <div style={{ padding: '10px 12px', background: '#f9fafb', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span>{cedolinoSelezionato.pagato ? '✓ Pagato' : 'Da pagare'}</span>
+                    {cedolinoSelezionato.metodo_pagamento && (
+                      <span style={{ fontSize: 12, color: '#6b7280' }}>{cedolinoSelezionato.metodo_pagamento}</span>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div style={{ padding: '16px 20px', borderTop: '1px solid #e5e7eb', display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
-              <button onClick={() => setShowDettaglio(false)} style={{ padding: '10px 20px', background: 'white', border: '1px solid #e5e7eb', borderRadius: 6, cursor: 'pointer', fontWeight: 500 }}>
-                Chiudi
-              </button>
-              <button style={{ padding: '10px 20px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: 500 }}>
-                Aggiorna dati
-              </button>
+              <div style={{ padding: '16px 20px', borderTop: '1px solid #e5e7eb', display: 'flex', gap: 12, justifyContent: 'flex-end', position: 'sticky', bottom: 0, background: 'white' }}>
+                <button onClick={() => setShowDettaglio(false)} style={{ padding: '12px 20px', background: 'white', border: '1px solid #e5e7eb', borderRadius: 6, cursor: 'pointer', fontWeight: 500, fontSize: 14 }}>
+                  Chiudi
+                </button>
+                <button style={{ padding: '12px 20px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: 500, fontSize: 14 }}>
+                  Aggiorna dati
+                </button>
+              </div>
             </div>
           </div>
         </div>
