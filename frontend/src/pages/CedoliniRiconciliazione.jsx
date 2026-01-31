@@ -758,14 +758,13 @@ export default function CedoliniRiconciliazione() {
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
           background: 'rgba(0,0,0,0.5)',
           display: 'flex', 
-          flexDirection: 'column',
+          flexDirection: isMobile ? 'column' : 'row',
           zIndex: 1000,
           overflow: 'auto'
         }}>
-          {/* Mobile: Full screen panel, Desktop: Split view */}
-          <div className="flex flex-col sm:flex-row h-full">
-            {/* PDF Viewer - Nascosto su mobile, visibile su desktop */}
-            <div className="hidden sm:flex flex-1 bg-gray-100 items-center justify-center">
+          {/* PDF Viewer - Nascosto su mobile */}
+          {!isMobile && (
+            <div style={{ flex: 1, background: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               {cedolinoSelezionato.pdf_data ? (
                 <iframe 
                   src={`data:application/pdf;base64,${cedolinoSelezionato.pdf_data}`} 
@@ -781,43 +780,63 @@ export default function CedoliniRiconciliazione() {
                 </div>
               )}
             </div>
+          )}
 
-            {/* Pannello Dettaglio - Full width su mobile */}
-            <div className="w-full sm:w-[400px] bg-white shadow-lg flex flex-col max-h-full sm:max-h-none overflow-auto">
-              <div style={{ padding: '16px 20px', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', position: 'sticky', top: 0, background: 'white', zIndex: 10 }}>
-                <div>
-                  <h2 style={{ margin: 0, fontSize: 20, color: '#1e3a5f' }}>
-                    {cedolinoSelezionato.periodo || `${MESI.find(m => m.key === cedolinoSelezionato.mese)?.label} ${cedolinoSelezionato.anno}`}
-                  </h2>
-                  <p style={{ margin: '4px 0 0 0', color: '#6b7280' }}>{getNomeDipendente(cedolinoSelezionato)}</p>
-                </div>
-                <button onClick={() => setShowDettaglio(false)} style={{ padding: 8, background: 'transparent', border: 'none', cursor: 'pointer' }}>
-                  <X style={{ width: 20, height: 20, color: '#6b7280' }} />
-                </button>
+          {/* Pannello Dettaglio - Full width su mobile */}
+          <div style={{ 
+            width: isMobile ? '100%' : 400, 
+            background: 'white', 
+            boxShadow: '-4px 0 20px rgba(0,0,0,0.1)', 
+            display: 'flex', 
+            flexDirection: 'column',
+            height: isMobile ? '100%' : 'auto',
+            overflow: 'auto'
+          }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', position: 'sticky', top: 0, background: 'white', zIndex: 10 }}>
+              <div>
+                <h2 style={{ margin: 0, fontSize: 20, color: '#1e3a5f' }}>
+                  {cedolinoSelezionato.periodo || `${MESI.find(m => m.key === cedolinoSelezionato.mese)?.label} ${cedolinoSelezionato.anno}`}
+                </h2>
+                <p style={{ margin: '4px 0 0 0', color: '#6b7280' }}>{getNomeDipendente(cedolinoSelezionato)}</p>
               </div>
+              <button onClick={() => setShowDettaglio(false)} style={{ padding: 8, background: 'transparent', border: 'none', cursor: 'pointer' }}>
+                <X style={{ width: 20, height: 20, color: '#6b7280' }} />
+              </button>
+            </div>
 
-              <div style={{ flex: 1, padding: 20, overflowY: 'auto' }}>
-                {/* PDF Download buttons su mobile */}
-                {cedolinoSelezionato.pdf_data && (
-                  <div className="block sm:hidden" style={{ marginBottom: 16 }}>
-                    <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 6 }}>Documento PDF</label>
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <a 
-                        href={`data:application/pdf;base64,${cedolinoSelezionato.pdf_data}`}
-                        download={`cedolino_${getNomeDipendente(cedolinoSelezionato).replace(/\s+/g, '_')}_${cedolinoSelezionato.mese}_${cedolinoSelezionato.anno}.pdf`}
-                        style={{
-                          flex: 1, padding: '12px', background: '#3b82f6', color: 'white',
-                          borderRadius: 8, textAlign: 'center', textDecoration: 'none',
-                          fontWeight: 600, fontSize: 14
-                        }}
-                      >
-                        📥 Scarica PDF
-                      </a>
-                      <button
-                        onClick={() => {
-                          const pdfWindow = window.open('', '_blank');
-                          pdfWindow.document.write(`<iframe width="100%" height="100%" src="data:application/pdf;base64,${cedolinoSelezionato.pdf_data}"></iframe>`);
-                        }}
+            <div style={{ flex: 1, padding: 20, overflowY: 'auto' }}>
+              {/* PDF Download buttons su mobile */}
+              {isMobile && cedolinoSelezionato.pdf_data && (
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 6 }}>Documento PDF</label>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <a 
+                      href={`data:application/pdf;base64,${cedolinoSelezionato.pdf_data}`}
+                      download={`cedolino_${getNomeDipendente(cedolinoSelezionato).replace(/\s+/g, '_')}_${cedolinoSelezionato.mese}_${cedolinoSelezionato.anno}.pdf`}
+                      style={{
+                        flex: 1, padding: '12px', background: '#3b82f6', color: 'white',
+                        borderRadius: 8, textAlign: 'center', textDecoration: 'none',
+                        fontWeight: 600, fontSize: 14
+                      }}
+                    >
+                      📥 Scarica PDF
+                    </a>
+                    <button
+                      onClick={() => {
+                        const pdfWindow = window.open('', '_blank');
+                        pdfWindow.document.write(`<iframe width="100%" height="100%" src="data:application/pdf;base64,${cedolinoSelezionato.pdf_data}"></iframe>`);
+                      }}
+                      style={{
+                        flex: 1, padding: '12px', background: '#f1f5f9', color: '#1e3a5f',
+                        borderRadius: 8, border: 'none', cursor: 'pointer',
+                        fontWeight: 600, fontSize: 14
+                      }}
+                    >
+                      👁️ Visualizza
+                    </button>
+                  </div>
+                </div>
+              )}
                         style={{
                           flex: 1, padding: '12px', background: '#f1f5f9', color: '#1e3a5f',
                           borderRadius: 8, border: 'none', cursor: 'pointer',
