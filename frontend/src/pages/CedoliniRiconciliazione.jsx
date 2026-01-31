@@ -238,33 +238,32 @@ export default function CedoliniRiconciliazione() {
   return (
     <PageLayout title="Buste Paga" subtitle="Gestione cedolini e buste paga dipendenti">
     <div style={{ maxWidth: 1400, margin: '0 auto' }} data-testid="cedolini-page">
-      {/* Header */}
+      {/* Header - RESPONSIVE */}
       <div style={{ 
         display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
+        flexDirection: 'column',
         marginBottom: 20,
-        padding: '15px 20px',
+        padding: '15px 16px',
         background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
         borderRadius: 12,
         color: 'white',
-        flexWrap: 'wrap',
-        gap: 10
+        gap: 12
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        {/* Titolo e Anno */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
           <div>
-            <h1 style={{ margin: 0, fontSize: 22, fontWeight: 'bold' }}>📄 Buste Paga</h1>
-            <p style={{ margin: '4px 0 0 0', fontSize: 13, opacity: 0.9 }}>
+            <h1 style={{ margin: 0, fontSize: 20, fontWeight: 'bold' }}>📄 Buste Paga</h1>
+            <p className="hidden sm:block" style={{ margin: '4px 0 0 0', fontSize: 13, opacity: 0.9 }}>
               Gestione cedolini e buste paga dipendenti
             </p>
           </div>
           
           {/* Navigazione Anno */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <button
               onClick={() => navigateAnno(-1)}
               style={{
-                padding: '6px 10px',
+                padding: '8px 10px',
                 background: 'rgba(255,255,255,0.2)',
                 border: 'none',
                 borderRadius: 6,
@@ -272,22 +271,22 @@ export default function CedoliniRiconciliazione() {
                 color: 'white'
               }}
             >
-              <ChevronLeft style={{ width: 16, height: 16 }} />
+              <ChevronLeft style={{ width: 18, height: 18 }} />
             </button>
             <span style={{ 
-              padding: '8px 20px', 
+              padding: '8px 16px', 
               background: 'rgba(255,255,255,0.95)', 
               color: '#1e3a5f',
               borderRadius: 6,
               fontWeight: 'bold',
-              fontSize: 18
+              fontSize: 16
             }}>
               {anno}
             </span>
             <button
               onClick={() => navigateAnno(1)}
               style={{
-                padding: '6px 10px',
+                padding: '8px 10px',
                 background: 'rgba(255,255,255,0.2)',
                 border: 'none',
                 borderRadius: 6,
@@ -295,30 +294,37 @@ export default function CedoliniRiconciliazione() {
                 color: 'white'
               }}
             >
-              <ChevronRight style={{ width: 16, height: 16 }} />
+              <ChevronRight style={{ width: 18, height: 18 }} />
             </button>
           </div>
         </div>
         
-        <div style={{ display: 'flex', gap: 10 }}>
+        {/* Bottoni Azioni */}
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <button 
             onClick={loadData}
             style={{ 
-              padding: '10px 20px',
+              padding: '10px 16px',
               background: 'rgba(255,255,255,0.2)',
               color: 'white',
               border: 'none',
               borderRadius: 8,
               cursor: 'pointer',
-              fontWeight: '600'
+              fontWeight: '600',
+              fontSize: 14,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6
             }}
           >
-            🔄 Aggiorna
+            <RefreshCw style={{ width: 16, height: 16 }} />
+            <span className="hidden sm:inline">Aggiorna</span>
           </button>
           <button 
             onClick={() => setShowUpload(true)}
             style={{ 
-              padding: '10px 20px',
+              flex: '1 1 auto',
+              padding: '10px 16px',
               background: '#10b981',
               color: 'white',
               border: 'none',
@@ -327,12 +333,14 @@ export default function CedoliniRiconciliazione() {
               fontWeight: '600',
               display: 'flex',
               alignItems: 'center',
-              gap: 8
+              justifyContent: 'center',
+              gap: 8,
+              fontSize: 14
             }}
             data-testid="btn-carica-cedolino"
           >
             <Upload style={{ width: 16, height: 16 }} />
-            Carica buste paga e CU
+            <span>Carica buste paga</span>
           </button>
         </div>
       </div>
