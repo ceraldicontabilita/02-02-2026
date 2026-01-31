@@ -728,6 +728,7 @@ export default function CedoliniRiconciliazione() {
             </tbody>
           </table>
         </div>
+        )}
 
         {/* Totale - RESPONSIVE */}
         {cedoliniFiltrati.length > 0 && (
