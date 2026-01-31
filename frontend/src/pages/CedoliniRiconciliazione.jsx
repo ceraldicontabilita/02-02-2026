@@ -368,88 +368,93 @@ export default function CedoliniRiconciliazione() {
         overflow: 'hidden'
       }}>
         {/* Mobile: Select dropdown per mesi */}
-        <div className="block sm:hidden" style={{ padding: '12px', background: '#f1f5f9' }}>
-          <select
-            value={meseSelezionato}
-            onChange={(e) => setMeseSelezionato(Number(e.target.value))}
-            style={{
-              width: '100%',
-              padding: '12px 16px',
-              fontSize: '16px',
-              fontWeight: 600,
-              border: '2px solid #1e3a5f',
-              borderRadius: 8,
-              background: 'white',
-              color: '#1e3a5f'
-            }}
-            data-testid="select-mese-mobile"
-          >
-            {MESI.map(mese => {
-              const meseStats = stats[mese.key] || { count: 0, totale: 0 };
-              return (
-                <option key={mese.key} value={mese.key}>
-                  {mese.label} - {formatEuroItaliano(meseStats.totale)}
-                </option>
-              );
-            })}
-          </select>
-        </div>
+        {isMobile && (
+          <div style={{ padding: '12px', background: '#f1f5f9' }}>
+            <select
+              value={meseSelezionato}
+              onChange={(e) => setMeseSelezionato(Number(e.target.value))}
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                fontSize: '16px',
+                fontWeight: 600,
+                border: '2px solid #1e3a5f',
+                borderRadius: 8,
+                background: 'white',
+                color: '#1e3a5f'
+              }}
+              data-testid="select-mese-mobile"
+            >
+              {MESI.map(mese => {
+                const meseStats = stats[mese.key] || { count: 0, totale: 0 };
+                return (
+                  <option key={mese.key} value={mese.key}>
+                    {mese.label} - {formatEuroItaliano(meseStats.totale)}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
+        )}
 
         {/* Desktop/Tablet: Grid tabs */}
-        <div className="hidden sm:grid" style={{ 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(70px, 1fr))',
-          gap: 4,
-          padding: '12px 12px 0 12px',
-          background: '#f1f5f9'
-        }}>
-          {MESI.map(mese => {
-            const meseStats = stats[mese.key] || { count: 0, totale: 0 };
-            const isActive = meseSelezionato === mese.key;
-            
-            return (
-              <button
-                key={mese.key}
-                onClick={() => setMeseSelezionato(mese.key)}
-                style={{
-                  padding: '10px 4px',
-                  minWidth: 0,
-                  background: isActive ? COLORS.primary : '#f8fafc',
-                  border: isActive ? 'none' : '1px solid #e2e8f0',
-                  borderRadius: isActive ? '8px 8px 0 0' : 8,
-                  borderBottom: isActive ? `3px solid ${COLORS.success}` : 'none',
-                  cursor: 'pointer',
-                  textAlign: 'center',
-                  transition: 'all 0.2s',
-                  boxShadow: isActive ? '0 -2px 8px rgba(0,0,0,0.1)' : 'none',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-                data-testid={`tab-mese-${mese.key}`}
-              >
-                <div style={{ 
-                  fontSize: 12, 
-                  fontWeight: 700,
-                  color: isActive ? 'white' : COLORS.primary,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.3px',
-                  marginBottom: 2
-                }}>
-                  {mese.short}
-                </div>
-                <div style={{ 
-                  fontSize: 10, 
-                  color: isActive ? 'rgba(255,255,255,0.95)' : '#64748b',
-                  fontWeight: 600,
-                  whiteSpace: 'nowrap'
-                }}>
-                  {formatEuroItaliano(meseStats.totale)}
-                </div>
-              </button>
-            );
-          })}
-        </div>
+        {!isMobile && (
+          <div style={{ 
+            display: 'grid',
+            gridTemplateColumns: 'repeat(14, 1fr)',
+            gap: 4,
+            padding: '12px 12px 0 12px',
+            background: '#f1f5f9'
+          }}>
+            {MESI.map(mese => {
+              const meseStats = stats[mese.key] || { count: 0, totale: 0 };
+              const isActive = meseSelezionato === mese.key;
+              
+              return (
+                <button
+                  key={mese.key}
+                  onClick={() => setMeseSelezionato(mese.key)}
+                  style={{
+                    padding: '10px 4px',
+                    minWidth: 0,
+                    background: isActive ? COLORS.primary : '#f8fafc',
+                    border: isActive ? 'none' : '1px solid #e2e8f0',
+                    borderRadius: isActive ? '8px 8px 0 0' : 8,
+                    borderBottom: isActive ? `3px solid ${COLORS.success}` : 'none',
+                    cursor: 'pointer',
+                    textAlign: 'center',
+                    transition: 'all 0.2s',
+                    boxShadow: isActive ? '0 -2px 8px rgba(0,0,0,0.1)' : 'none',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                  data-testid={`tab-mese-${mese.key}`}
+                >
+                  <div style={{ 
+                    fontSize: 12, 
+                    fontWeight: 700,
+                    color: isActive ? 'white' : COLORS.primary,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.3px',
+                    marginBottom: 2
+                  }}>
+                    {mese.short}
+                  </div>
+                  <div style={{ 
+                    fontSize: 10, 
+                    color: isActive ? 'rgba(255,255,255,0.95)' : '#64748b',
+                    fontWeight: 600,
+                    whiteSpace: 'nowrap'
+                  }}>
+                    {formatEuroItaliano(meseStats.totale)}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* Filtri - RESPONSIVE */}
         <div style={{ 
