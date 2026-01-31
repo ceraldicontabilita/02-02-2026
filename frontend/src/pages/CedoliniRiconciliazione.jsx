@@ -511,23 +511,25 @@ export default function CedoliniRiconciliazione() {
             />
           </div>
           
-          <button
-            className="hidden sm:flex"
-            style={{
-              padding: '10px 16px',
-              background: 'white',
-              border: '1px solid #e5e7eb',
-              borderRadius: 6,
-              cursor: 'pointer',
-              fontSize: 13,
-              alignItems: 'center',
-              gap: 6,
-              whiteSpace: 'nowrap'
-            }}
-          >
-            <Download style={{ width: 14, height: 14 }} />
-            Esporta
-          </button>
+          {!isMobile && (
+            <button
+              style={{
+                padding: '10px 16px',
+                background: 'white',
+                border: '1px solid #e5e7eb',
+                borderRadius: 6,
+                cursor: 'pointer',
+                fontSize: 13,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                whiteSpace: 'nowrap'
+              }}
+            >
+              <Download style={{ width: 14, height: 14 }} />
+              Esporta
+            </button>
+          )}
         </div>
 
         {/* Vista Mobile - Card Layout */}
