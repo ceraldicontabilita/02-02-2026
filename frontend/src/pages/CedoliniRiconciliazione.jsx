@@ -700,17 +700,19 @@ export default function CedoliniRiconciliazione() {
         {/* Totale - RESPONSIVE */}
         {cedoliniFiltrati.length > 0 && (
           <div style={{ 
-            padding: '12px 16px', 
+            padding: '14px 16px', 
             background: '#f0fdf4', 
             borderTop: '1px solid #e5e7eb',
             display: 'flex',
             justifyContent: 'space-between',
-            alignItems: 'center'
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 8
           }}>
-            <span style={{ fontWeight: 500, color: '#166534' }}>
-              Totale {MESI.find(m => m.key === meseSelezionato)?.label}: {cedoliniFiltrati.length} buste
+            <span style={{ fontWeight: 500, color: '#166534', fontSize: 14 }}>
+              Totale {filtroEmployee ? filtroEmployee : MESI.find(m => m.key === meseSelezionato)?.label}: {cedoliniFiltrati.length} buste
             </span>
-            <span style={{ fontWeight: 700, color: '#166534', fontSize: 18 }}>
+            <span style={{ fontWeight: 700, color: '#166534', fontSize: 20 }}>
               {formatEuro(cedoliniFiltrati.reduce((sum, c) => sum + (c.netto || c.netto_mese || 0), 0))}
             </span>
           </div>
