@@ -467,9 +467,10 @@ async def upload_payslip_pdf(file: UploadFile = File(...)) -> Dict[str, Any]:
                 }
                 await db["cedolini"].insert_one(cedolino_doc.copy())
                 
-                # Non inseriamo automaticamente in prima nota: verrà pagato in cassa/banca a seconda del caso
-                if False and importo_busta > 0 and anno and mese:
-                    # Calcola data fine mese (ultimo giorno del mese)
+                # === AUTOMAZIONE PRIMA NOTA SALARI ===
+                # Crea automaticamente una scrittura in prima_nota_salari per ogni cedolino caricato
+                prima_nota_creata = False
+                if importo_busta != 0 and anno and mese:  # Anche netto negativo (es. SOS)
                     try:
                         import calendar
                         anno_int = int(anno)
@@ -479,41 +480,56 @@ async def upload_payslip_pdf(file: UploadFile = File(...)) -> Dict[str, Any]:
                     except (ValueError, TypeError):
                         data_pagamento = f"{anno}-{str(mese).zfill(2)}-28"
                     
-                    # Riferimento basato su CF + mese + anno
-                    riferimento_cedolino = f"{cf}_{mese}_{anno}"
-                    
                     # Verifica se esiste già un movimento salari per questo dipendente/periodo
                     existing_salario = await db["prima_nota_salari"].find_one({
-                        "codice_fiscale": cf,
-                        "mese": int(mese) if mese else None,
-                        "anno": int(anno) if anno else None,
-                        "source": "cedolino_import"
+                        "$or": [
+                            {"codice_fiscale": cf, "mese": int(mese), "anno": int(anno)},
+                            {"dipendente": nome.upper() if nome else "", "mese": int(mese), "anno": int(anno)}
+                        ]
                     })
                     
-                    if not existing_salario:
+                    if existing_salario:
+                        # Collega il cedolino al movimento esistente
+                        await db["prima_nota_salari"].update_one(
+                            {"id": existing_salario["id"]},
+                            {"$set": {
+                                "cedolino_id": payslip_id,
+                                "importo_busta": importo_busta,
+                                "codice_fiscale": cf,
+                                "updated_at": datetime.utcnow().isoformat()
+                            }}
+                        )
+                        logger.info(f"Prima Nota Salari collegata: {nome} ({periodo})")
+                        prima_nota_creata = True
+                    else:
+                        # Crea nuovo movimento in attesa di riconciliazione
+                        # Segue la struttura esistente della collection prima_nota_salari
+                        mese_nomi = ["", "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", 
+                                    "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", 
+                                    "Novembre", "Dicembre"]
+                        mese_nome = mese_nomi[int(mese)] if mese and int(mese) <= 12 else ""
+                        
                         movimento_salario = {
                             "id": str(uuid.uuid4()),
-                            "data": data_pagamento,
-                            "tipo": "uscita",
-                            "importo": importo_busta,
-                            "descrizione": f"Stipendio {nome} - {periodo}",
-                            "categoria": "Stipendi",
-                            "riferimento": riferimento_cedolino,
-                            "cedolino_id": payslip_id,
-                            "dipendente_id": emp_id,
+                            "dipendente": nome.upper() if nome else "",
                             "codice_fiscale": cf,
-                            "nome_dipendente": nome,
-                            "mese": int(mese) if mese else None,
-                            "anno": int(anno) if anno else None,
-                            "periodo": periodo,
-                            "source": "cedolino_import",
-                            "note": "Importato da busta paga PDF",
-                            "created_at": datetime.utcnow().isoformat()
+                            "cedolino_id": payslip_id,
+                            "anno": int(anno),
+                            "mese": int(mese),
+                            "mese_nome": mese_nome,
+                            "importo_busta": importo_busta,
+                            "importo_bonifico": 0,  # Da riconciliare con pagamento bancario
+                            "saldo": importo_busta,  # Saldo = importo_busta - importo_bonifico
+                            "progressivo": 0,
+                            "riconciliato": False,  # In attesa di riconciliazione
+                            "source": "cedolino_upload",
+                            "imported_at": datetime.utcnow().isoformat()
                         }
                         await db["prima_nota_salari"].insert_one(movimento_salario.copy())
-                        logger.info(f"Prima Nota Salari: €{importo_busta} per {nome} ({periodo})")
+                        logger.info(f"Prima Nota Salari CREATA: €{importo_busta} per {nome} ({periodo})")
+                        prima_nota_creata = True
                 
-                results["success"].append({"nome": nome, "periodo": periodo, "netto": importo_busta, "is_new": is_new, "prima_nota": False})
+                results["success"].append({"nome": nome, "periodo": periodo, "netto": importo_busta, "is_new": is_new, "prima_nota": prima_nota_creata})
                 results["imported"] += 1
                 
             except Exception as e:
