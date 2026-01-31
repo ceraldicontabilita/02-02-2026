@@ -926,7 +926,6 @@ export default function CedoliniRiconciliazione() {
                 </button>
               </div>
             </div>
-          </div>
         </div>
       )}
 
