@@ -837,17 +837,6 @@ export default function CedoliniRiconciliazione() {
                   </div>
                 </div>
               )}
-                        style={{
-                          flex: 1, padding: '12px', background: '#f1f5f9', color: '#1e3a5f',
-                          borderRadius: 8, border: 'none', cursor: 'pointer',
-                          fontWeight: 600, fontSize: 14
-                        }}
-                      >
-                        👁️ Visualizza
-                      </button>
-                    </div>
-                  </div>
-                )}
 
                 <h3 style={{ margin: '0 0 16px 0', fontSize: 14, color: '#374151' }}>Informazioni Generali</h3>
 
