@@ -897,14 +897,15 @@ export default function CedoliniRiconciliazione() {
         </div>
       )}
 
-      {/* Modale Upload */}
+      {/* Modale Upload - RESPONSIVE */}
       {showUpload && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
           background: 'rgba(0,0,0,0.5)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
+          padding: 16
         }}>
-          <div style={{ background: 'white', borderRadius: 12, width: 450, padding: 24 }}>
+          <div style={{ background: 'white', borderRadius: 12, width: '100%', maxWidth: 450, padding: 20 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <h2 style={{ margin: 0, fontSize: 18 }}>Carica Buste Paga</h2>
               <button onClick={() => setShowUpload(false)} style={{ padding: 8, background: 'transparent', border: 'none', cursor: 'pointer' }}>
@@ -913,28 +914,28 @@ export default function CedoliniRiconciliazione() {
             </div>
 
             <div style={{ 
-              padding: 32, background: '#f9fafb', borderRadius: 8,
+              padding: 24, background: '#f9fafb', borderRadius: 8,
               border: '2px dashed #e5e7eb', textAlign: 'center'
             }}>
               <Upload style={{ width: 40, height: 40, margin: '0 auto 16px', color: '#3b82f6' }} />
-              <p style={{ margin: '0 0 8px 0', fontWeight: 500 }}>
-                {uploading ? 'Caricamento in corso...' : 'Trascina qui il PDF delle buste paga'}
+              <p style={{ margin: '0 0 8px 0', fontWeight: 500, fontSize: 15 }}>
+                {uploading ? 'Caricamento in corso...' : 'Carica PDF buste paga'}
               </p>
               <p style={{ margin: '0 0 16px 0', fontSize: 13, color: '#6b7280' }}>
-                oppure
+                PDF singolo o archivio ZIP/RAR
               </p>
               <label style={{
-                display: 'inline-block', padding: '10px 20px',
-                background: '#3b82f6', color: 'white', borderRadius: 6,
-                cursor: 'pointer', fontWeight: 500
+                display: 'inline-block', padding: '12px 24px',
+                background: '#3b82f6', color: 'white', borderRadius: 8,
+                cursor: 'pointer', fontWeight: 600, fontSize: 15
               }}>
                 Seleziona file
-                <input type="file" accept=".pdf,.xlsx,.xls" onChange={handleUploadPDF} style={{ display: 'none' }} />
+                <input type="file" accept=".pdf,.zip,.rar" onChange={handleUploadPDF} style={{ display: 'none' }} />
               </label>
             </div>
 
             <div style={{ marginTop: 16, padding: 12, background: '#eff6ff', borderRadius: 6, fontSize: 13, color: '#1e40af' }}>
-              <strong>Formati supportati:</strong> PDF buste paga, Excel paghe
+              <strong>Formati supportati:</strong> PDF, ZIP, RAR
             </div>
           </div>
         </div>
