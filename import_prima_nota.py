@@ -19,7 +19,7 @@ import os
 from datetime import datetime
 from io import BytesIO
 
-API_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://pdf-view-repair.preview.emergentagent.com')
+API_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://prima-nota-auto.preview.emergentagent.com')
 
 def download_excel(url):
     """Download Excel file from URL"""
