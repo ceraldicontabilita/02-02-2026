@@ -429,11 +429,11 @@ export default function CedoliniRiconciliazione() {
           })}
         </div>
 
-        {/* Filtri */}
+        {/* Filtri - RESPONSIVE */}
         <div style={{ 
           padding: '12px 16px', 
           display: 'flex', 
-          gap: 12, 
+          gap: 8, 
           alignItems: 'center',
           flexWrap: 'wrap',
           borderBottom: '1px solid #e5e7eb'
@@ -442,11 +442,13 @@ export default function CedoliniRiconciliazione() {
             value={filtroEmployee}
             onChange={(e) => setFiltroEmployee(e.target.value)}
             style={{
-              padding: '8px 12px',
+              padding: '10px 12px',
               border: '1px solid #e5e7eb',
               borderRadius: 6,
-              fontSize: 13,
-              minWidth: 200
+              fontSize: 14,
+              flex: '1 1 150px',
+              minWidth: 0,
+              maxWidth: '100%'
             }}
             data-testid="filtro-employee"
           >
@@ -456,9 +458,7 @@ export default function CedoliniRiconciliazione() {
             ))}
           </select>
           
-          <div style={{ flex: 1 }} />
-          
-          <div style={{ position: 'relative' }}>
+          <div style={{ position: 'relative', flex: '1 1 150px', minWidth: 0 }}>
             <Search style={{ 
               position: 'absolute', 
               left: 10, 
@@ -474,27 +474,28 @@ export default function CedoliniRiconciliazione() {
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
               style={{
-                padding: '8px 12px 8px 36px',
+                width: '100%',
+                padding: '10px 12px 10px 36px',
                 border: '1px solid #e5e7eb',
                 borderRadius: 6,
-                fontSize: 13,
-                width: 200
+                fontSize: 14
               }}
               data-testid="search-cedolini"
             />
           </div>
           
           <button
+            className="hidden sm:flex"
             style={{
-              padding: '8px 16px',
+              padding: '10px 16px',
               background: 'white',
               border: '1px solid #e5e7eb',
               borderRadius: 6,
               cursor: 'pointer',
               fontSize: 13,
-              display: 'flex',
               alignItems: 'center',
-              gap: 6
+              gap: 6,
+              whiteSpace: 'nowrap'
             }}
           >
             <Download style={{ width: 14, height: 14 }} />
