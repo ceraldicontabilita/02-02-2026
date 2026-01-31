@@ -533,77 +533,80 @@ export default function CedoliniRiconciliazione() {
         </div>
 
         {/* Vista Mobile - Card Layout */}
-        <div className="block sm:hidden" style={{ padding: '12px' }}>
-          {cedoliniFiltrati.length === 0 ? (
-            <div style={{ padding: 40, textAlign: 'center', color: '#9ca3af' }}>
-              <FileText style={{ width: 48, height: 48, margin: '0 auto 16px', opacity: 0.3 }} />
-              <p style={{ margin: 0 }}>Nessun cedolino per {MESI.find(m => m.key === meseSelezionato)?.label} {anno}</p>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {cedoliniFiltrati.map((cedolino, idx) => {
-                const nome = getNomeDipendente(cedolino);
-                return (
-                  <div 
-                    key={cedolino.id || idx} 
-                    onClick={() => openDettaglio(cedolino)}
-                    style={{ 
-                      background: '#f9fafb', 
-                      borderRadius: 10, 
-                      padding: 16,
-                      border: '1px solid #e5e7eb',
-                      cursor: 'pointer'
-                    }}
-                    data-testid={`card-cedolino-${idx}`}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <div style={{ 
-                          width: 36, height: 36, borderRadius: '50%', 
-                          background: '#e0e7ff', 
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: 13, fontWeight: 600, color: '#4338ca'
-                        }}>
-                          {nome.substring(0, 2).toUpperCase()}
-                        </div>
-                        <div>
-                          <div style={{ fontWeight: 600, color: '#1e3a5f', fontSize: 15 }}>{nome}</div>
-                          <div style={{ fontSize: 12, color: '#6b7280' }}>
-                            {cedolino.periodo || `${MESI.find(m => m.key === cedolino.mese)?.label || ''} ${cedolino.anno}`}
+        {isMobile && (
+          <div style={{ padding: '12px' }}>
+            {cedoliniFiltrati.length === 0 ? (
+              <div style={{ padding: 40, textAlign: 'center', color: '#9ca3af' }}>
+                <FileText style={{ width: 48, height: 48, margin: '0 auto 16px', opacity: 0.3 }} />
+                <p style={{ margin: 0 }}>Nessun cedolino per {MESI.find(m => m.key === meseSelezionato)?.label} {anno}</p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {cedoliniFiltrati.map((cedolino, idx) => {
+                  const nome = getNomeDipendente(cedolino);
+                  return (
+                    <div 
+                      key={cedolino.id || idx} 
+                      onClick={() => openDettaglio(cedolino)}
+                      style={{ 
+                        background: '#f9fafb', 
+                        borderRadius: 10, 
+                        padding: 16,
+                        border: '1px solid #e5e7eb',
+                        cursor: 'pointer'
+                      }}
+                      data-testid={`card-cedolino-${idx}`}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <div style={{ 
+                            width: 36, height: 36, borderRadius: '50%', 
+                            background: '#e0e7ff', 
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: 13, fontWeight: 600, color: '#4338ca'
+                          }}>
+                            {nome.substring(0, 2).toUpperCase()}
+                          </div>
+                          <div>
+                            <div style={{ fontWeight: 600, color: '#1e3a5f', fontSize: 15 }}>{nome}</div>
+                            <div style={{ fontSize: 12, color: '#6b7280' }}>
+                              {cedolino.periodo || `${MESI.find(m => m.key === cedolino.mese)?.label || ''} ${cedolino.anno}`}
+                            </div>
                           </div>
                         </div>
+                        {cedolino.pagato ? (
+                          <span style={{ 
+                            padding: '4px 10px', background: '#dcfce7', color: '#166534', 
+                            borderRadius: 12, fontSize: 11, fontWeight: 600 
+                          }}>
+                            ✓ Pagato
+                          </span>
+                        ) : (
+                          <span style={{ 
+                            padding: '4px 10px', background: '#fef3c7', color: '#92400e', 
+                            borderRadius: 12, fontSize: 11, fontWeight: 600 
+                          }}>
+                            Da pagare
+                          </span>
+                        )}
                       </div>
-                      {cedolino.pagato ? (
-                        <span style={{ 
-                          padding: '4px 10px', background: '#dcfce7', color: '#166534', 
-                          borderRadius: 12, fontSize: 11, fontWeight: 600 
-                        }}>
-                          ✓ Pagato
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: 12, color: '#6b7280' }}>Netto a pagare</span>
+                        <span style={{ fontSize: 20, fontWeight: 700, color: '#166534' }}>
+                          {formatEuro(cedolino.netto || cedolino.netto_mese)}
                         </span>
-                      ) : (
-                        <span style={{ 
-                          padding: '4px 10px', background: '#fef3c7', color: '#92400e', 
-                          borderRadius: 12, fontSize: 11, fontWeight: 600 
-                        }}>
-                          Da pagare
-                        </span>
-                      )}
+                      </div>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: 12, color: '#6b7280' }}>Netto a pagare</span>
-                      <span style={{ fontSize: 20, fontWeight: 700, color: '#166534' }}>
-                        {formatEuro(cedolino.netto || cedolino.netto_mese)}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Vista Desktop - Tabella */}
-        <div className="hidden sm:block" style={{ overflowX: 'auto' }}>
+        {!isMobile && (
+          <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: '#f9fafb' }}>
