@@ -697,7 +697,7 @@ export default function CedoliniRiconciliazione() {
           </table>
         </div>
 
-        {/* Totale */}
+        {/* Totale - RESPONSIVE */}
         {cedoliniFiltrati.length > 0 && (
           <div style={{ 
             padding: '12px 16px', 
