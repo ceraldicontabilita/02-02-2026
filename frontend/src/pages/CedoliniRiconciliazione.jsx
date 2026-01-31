@@ -337,7 +337,7 @@ export default function CedoliniRiconciliazione() {
         </div>
       </div>
 
-      {/* Tabs Mesi con Stats - LAYOUT GRIGLIA FISSO */}
+      {/* Tabs Mesi con Stats - LAYOUT RESPONSIVE */}
       <div style={{ 
         background: 'white', 
         borderRadius: 12, 
@@ -345,9 +345,37 @@ export default function CedoliniRiconciliazione() {
         marginBottom: 20,
         overflow: 'hidden'
       }}>
-        <div style={{ 
-          display: 'grid',
-          gridTemplateColumns: 'repeat(14, 1fr)',
+        {/* Mobile: Select dropdown per mesi */}
+        <div className="block sm:hidden" style={{ padding: '12px', background: '#f1f5f9' }}>
+          <select
+            value={meseSelezionato}
+            onChange={(e) => setMeseSelezionato(Number(e.target.value))}
+            style={{
+              width: '100%',
+              padding: '12px 16px',
+              fontSize: '16px',
+              fontWeight: 600,
+              border: '2px solid #1e3a5f',
+              borderRadius: 8,
+              background: 'white',
+              color: '#1e3a5f'
+            }}
+            data-testid="select-mese-mobile"
+          >
+            {MESI.map(mese => {
+              const meseStats = stats[mese.key] || { count: 0, totale: 0 };
+              return (
+                <option key={mese.key} value={mese.key}>
+                  {mese.label} - {formatEuroItaliano(meseStats.totale)}
+                </option>
+              );
+            })}
+          </select>
+        </div>
+
+        {/* Desktop/Tablet: Grid tabs */}
+        <div className="hidden sm:grid" style={{ 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(70px, 1fr))',
           gap: 4,
           padding: '12px 12px 0 12px',
           background: '#f1f5f9'
@@ -361,8 +389,8 @@ export default function CedoliniRiconciliazione() {
                 key={mese.key}
                 onClick={() => setMeseSelezionato(mese.key)}
                 style={{
-                  padding: '12px 6px',
-                  minWidth: 75,
+                  padding: '10px 4px',
+                  minWidth: 0,
                   background: isActive ? COLORS.primary : '#f8fafc',
                   border: isActive ? 'none' : '1px solid #e2e8f0',
                   borderRadius: isActive ? '8px 8px 0 0' : 8,
@@ -379,17 +407,17 @@ export default function CedoliniRiconciliazione() {
                 data-testid={`tab-mese-${mese.key}`}
               >
                 <div style={{ 
-                  fontSize: 13, 
+                  fontSize: 12, 
                   fontWeight: 700,
                   color: isActive ? 'white' : COLORS.primary,
                   textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                  marginBottom: 4
+                  letterSpacing: '0.3px',
+                  marginBottom: 2
                 }}>
                   {mese.short}
                 </div>
                 <div style={{ 
-                  fontSize: 11, 
+                  fontSize: 10, 
                   color: isActive ? 'rgba(255,255,255,0.95)' : '#64748b',
                   fontWeight: 600,
                   whiteSpace: 'nowrap'
