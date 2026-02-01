@@ -1,6 +1,6 @@
 # Application ERP/Accounting - PRD
 
-## Stato: 1 Febbraio 2026
+## Stato: 1 Febbraio 2026 - Aggiornato
 
 ---
 
@@ -11,10 +11,35 @@
 | Backend | FastAPI 0.110, Python, Pydantic 2.12 |
 | Database | MongoDB Atlas |
 | Integrazioni | Odoo, Claude Sonnet, OpenAPI.it, pypdf |
+| Scheduler | APScheduler (HACCP, Email, Verbali) |
 
 ---
 
 ## Completato ✅
+
+### Scheduler Email Verbali - COMPLETATO (1 Feb 2026)
+Lo scan automatico delle email per verbali è ora schedulato:
+
+- **Frequenza**: Ogni ora (intervallo configurabile)
+- **Logica prioritaria**:
+  1. FASE 1: Cerca documenti per completare verbali SOSPESI (quietanze, PDF)
+  2. FASE 2: Aggiunge nuovi verbali trovati nelle email
+
+**Endpoint per controllo:**
+- `GET /api/verbali-riconciliazione/scheduler-status` - Mostra stato scheduler e prossima esecuzione
+- `POST /api/verbali-riconciliazione/scan-email` - Trigger manuale scan
+
+**File modificati:**
+- `/app/app/scheduler.py` - Aggiunto job `verbali_email_scan`
+- `/app/app/main.py` - Avvio scheduler all'avvio dell'app
+
+### Normalizzazione Endpoint Notifications - COMPLETATO (1 Feb 2026)
+L'endpoint `/api/notifications` era protetto da autenticazione non attiva. Ora funziona:
+
+- `GET /api/notifications` - Lista tutte le notifiche
+- `GET /api/notifications/unread-count` - Conteggio non lette
+- `POST /api/notifications/mark-all-read` - Segna tutte come lette
+- `DELETE /api/notifications/{id}` - Elimina notifica
 
 ### Automazione Verbali da Fatture XML - COMPLETATO (1 Feb 2026)
 Quando una fattura XML di un noleggiatore (ALD, Leasys, Arval, etc.) viene caricata:
