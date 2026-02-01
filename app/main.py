@@ -40,6 +40,14 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"Monitor email non avviato: {e}")
     
+    # Avvia scheduler per task automatici (HACCP, Verbali, Gmail/Aruba)
+    try:
+        from app.scheduler import start_scheduler
+        start_scheduler()
+        logger.info("⏰ Scheduler avviato (HACCP, Verbali, Email)")
+    except Exception as e:
+        logger.warning(f"Scheduler non avviato: {e}")
+    
     logger.info("✅ Application startup complete")
     
     yield
@@ -52,6 +60,14 @@ async def lifespan(app: FastAPI):
         from app.services.email_monitor_service import stop_monitor
         stop_monitor()
         logger.info("📬 Monitor email fermato")
+    except Exception:
+        pass
+    
+    # Ferma scheduler
+    try:
+        from app.scheduler import stop_scheduler
+        stop_scheduler()
+        logger.info("⏰ Scheduler fermato")
     except Exception:
         pass
     
