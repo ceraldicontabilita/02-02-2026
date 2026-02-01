@@ -704,7 +704,13 @@ async def upload_fattura_xml(file: UploadFile = File(...)) -> Dict[str, Any]:
             "prima_nota": prima_nota_result,
             "pdf_associato": pdf_association_result.get("pdf_associated", False) if pdf_association_result else False,
             "pdf_filename": pdf_association_result.get("pdf_filename") if pdf_association_result else None,
-            "provvisoria_associata": provvisoria_associata.get("id") if provvisoria_associata else None
+            "provvisoria_associata": provvisoria_associata.get("id") if provvisoria_associata else None,
+            "verbali": {
+                "trovati": verbali_result.get("verbali_trovati", 0),
+                "creati": verbali_result.get("verbali_creati", 0),
+                "driver_associati": verbali_result.get("driver_associati", 0),
+                "costi_dipendente": verbali_result.get("costi_dipendente_creati", 0)
+            }
         }
         
     except HTTPException:
