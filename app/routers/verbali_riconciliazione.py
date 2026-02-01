@@ -663,3 +663,279 @@ async def get_verbali_per_veicolo(targa: str) -> Dict[str, Any]:
     except Exception as e:
         logger.error(f"Errore verbali per veicolo: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+
+# ===== AUTOMAZIONE VERBALI =====
+
+async def associa_verbale_completo(db, verbale_doc: dict) -> dict:
+    """
+    Funzione di automazione che viene chiamata ogni volta che un verbale viene trovato/creato.
+    
+    Associa automaticamente:
+    1. Driver (da targa -> veicolo -> driver)
+    2. Veicolo (da targa)
+    3. Contratto (da veicolo)
+    4. Cliente/Codice (da veicolo)
+    5. Crea scrittura in Prima Nota se c'è un pagamento
+    
+    Returns: verbale aggiornato con tutte le associazioni
+    """
+    numero_verbale = verbale_doc.get("numero_verbale")
+    if not numero_verbale:
+        return verbale_doc
+    
+    updates = {}
+    log_messages = []
+    
+    # === 1. TROVA TARGA ===
+    targa = verbale_doc.get("targa")
+    
+    if not targa:
+        # Cerca in verbali_noleggio_completi
+        completo = await db["verbali_noleggio_completi"].find_one({"numero_verbale": numero_verbale})
+        if completo and completo.get("targa"):
+            targa = completo["targa"].upper()
+            updates["targa"] = targa
+            log_messages.append(f"Targa trovata da completi: {targa}")
+        
+        # Cerca nella descrizione del verbale stesso
+        if not targa and verbale_doc.get("descrizione"):
+            extracted = extract_targa_from_description(verbale_doc["descrizione"])
+            if extracted:
+                targa = extracted.upper()
+                updates["targa"] = targa
+                log_messages.append(f"Targa estratta da descrizione: {targa}")
+    
+    # === 2. TROVA VEICOLO DA TARGA ===
+    if targa:
+        veicolo = await db["veicoli_noleggio"].find_one({"targa": targa.upper()})
+        
+        if veicolo:
+            updates["veicolo_id"] = veicolo.get("id") or str(veicolo.get("_id"))
+            updates["modello"] = veicolo.get("modello")
+            updates["marca"] = veicolo.get("marca")
+            log_messages.append(f"Veicolo trovato: {veicolo.get('marca')} {veicolo.get('modello')}")
+            
+            # === 3. TROVA CONTRATTO ===
+            if veicolo.get("contratto"):
+                updates["contratto"] = veicolo["contratto"]
+                log_messages.append(f"Contratto: {veicolo['contratto']}")
+            
+            # === 4. TROVA CODICE CLIENTE ===
+            if veicolo.get("codice_cliente"):
+                updates["codice_cliente"] = veicolo["codice_cliente"]
+                log_messages.append(f"Codice cliente: {veicolo['codice_cliente']}")
+            
+            # === 5. TROVA DRIVER ===
+            if veicolo.get("driver_id"):
+                updates["driver_id"] = veicolo["driver_id"]
+                
+                # Trova nome driver da dipendenti o dal veicolo stesso
+                if veicolo.get("driver"):
+                    updates["driver"] = veicolo["driver"]
+                    updates["driver_nome"] = veicolo["driver"]
+                    log_messages.append(f"Driver: {veicolo['driver']}")
+                else:
+                    # Cerca in dipendenti
+                    try:
+                        dipendente = await db["dipendenti"].find_one({"id": veicolo["driver_id"]})
+                        if dipendente:
+                            nome_completo = f"{dipendente.get('nome', '')} {dipendente.get('cognome', '')}".strip()
+                            updates["driver"] = nome_completo
+                            updates["driver_nome"] = nome_completo
+                            log_messages.append(f"Driver da dipendenti: {nome_completo}")
+                    except:
+                        pass
+            elif veicolo.get("driver"):
+                # Driver come stringa nel veicolo
+                updates["driver"] = veicolo["driver"]
+                updates["driver_nome"] = veicolo["driver"]
+                log_messages.append(f"Driver: {veicolo['driver']}")
+    
+    # === 6. CERCA DATI DA FATTURA ASSOCIATA ===
+    if verbale_doc.get("fattura_id") or updates.get("fattura_id"):
+        fattura_id = verbale_doc.get("fattura_id") or updates.get("fattura_id")
+        try:
+            from bson import ObjectId
+            fattura = await db["invoices"].find_one({"_id": ObjectId(fattura_id)})
+            if not fattura:
+                fattura = await db["invoices"].find_one({"id": fattura_id})
+            
+            if fattura:
+                if not updates.get("fornitore") and fattura.get("supplier_name"):
+                    updates["fornitore"] = fattura["supplier_name"]
+                if not updates.get("fornitore_piva") and fattura.get("supplier_vat"):
+                    updates["fornitore_piva"] = fattura["supplier_vat"]
+        except Exception as e:
+            logger.warning(f"Errore recupero fattura {fattura_id}: {e}")
+    
+    # === 7. DETERMINA STATO ===
+    has_fattura = verbale_doc.get("fattura_id") or updates.get("fattura_id")
+    has_pagamento = verbale_doc.get("pagamento_id") or verbale_doc.get("movimento_banca_id")
+    has_driver = verbale_doc.get("driver_id") or updates.get("driver_id")
+    
+    if has_fattura and has_pagamento and has_driver:
+        updates["stato"] = "riconciliato"
+        updates["riconciliato"] = True
+    elif has_fattura and has_pagamento:
+        updates["stato"] = "pagato"
+    elif has_fattura:
+        updates["stato"] = "fattura_ricevuta"
+    elif has_driver or targa:
+        updates["stato"] = "identificato"
+    
+    # === 8. APPLICA UPDATES ===
+    if updates:
+        updates["updated_at"] = datetime.now(timezone.utc)
+        await db["verbali_noleggio"].update_one(
+            {"numero_verbale": numero_verbale},
+            {"$set": updates}
+        )
+        logger.info(f"Verbale {numero_verbale} aggiornato: {', '.join(log_messages)}")
+    
+    # Restituisci verbale aggiornato
+    verbale_aggiornato = await db["verbali_noleggio"].find_one(
+        {"numero_verbale": numero_verbale},
+        {"_id": 0}
+    )
+    
+    return verbale_aggiornato or verbale_doc
+
+
+@router.post("/automazione-completa")
+async def esegui_automazione_completa() -> Dict[str, Any]:
+    """
+    Esegue l'automazione completa su tutti i verbali esistenti.
+    
+    Per ogni verbale:
+    1. Associa targa
+    2. Trova veicolo
+    3. Trova driver
+    4. Trova contratto
+    5. Trova codice cliente
+    6. Aggiorna stato
+    """
+    db = Database.get_db()
+    
+    try:
+        # Prendi tutti i verbali
+        verbali = await db["verbali_noleggio"].find({}).to_list(1000)
+        
+        risultati = {
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "verbali_processati": 0,
+            "driver_associati": 0,
+            "veicoli_associati": 0,
+            "contratti_associati": 0,
+            "riconciliati": 0,
+            "errori": []
+        }
+        
+        for verbale in verbali:
+            try:
+                aveva_driver = bool(verbale.get("driver_id"))
+                aveva_veicolo = bool(verbale.get("veicolo_id"))
+                aveva_contratto = bool(verbale.get("contratto"))
+                era_riconciliato = verbale.get("stato") == "riconciliato"
+                
+                # Esegui automazione
+                aggiornato = await associa_verbale_completo(db, verbale)
+                
+                risultati["verbali_processati"] += 1
+                
+                if not aveva_driver and aggiornato.get("driver_id"):
+                    risultati["driver_associati"] += 1
+                if not aveva_veicolo and aggiornato.get("veicolo_id"):
+                    risultati["veicoli_associati"] += 1
+                if not aveva_contratto and aggiornato.get("contratto"):
+                    risultati["contratti_associati"] += 1
+                if not era_riconciliato and aggiornato.get("stato") == "riconciliato":
+                    risultati["riconciliati"] += 1
+                    
+            except Exception as e:
+                risultati["errori"].append(f"{verbale.get('numero_verbale')}: {str(e)}")
+        
+        return {
+            "success": True,
+            **risultati
+        }
+    except Exception as e:
+        logger.error(f"Errore automazione completa: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/crea-prima-nota-verbale/{numero_verbale}")
+async def crea_prima_nota_verbale(numero_verbale: str) -> Dict[str, Any]:
+    """
+    Crea una scrittura in Prima Nota per un verbale.
+    
+    Se il verbale ha un pagamento associato, crea il movimento in prima_nota_cassa o prima_nota_banca.
+    """
+    db = Database.get_db()
+    
+    try:
+        verbale = await db["verbali_noleggio"].find_one({"numero_verbale": numero_verbale})
+        
+        if not verbale:
+            raise HTTPException(status_code=404, detail="Verbale non trovato")
+        
+        importo = verbale.get("importo") or 0
+        if not importo:
+            return {
+                "success": False,
+                "message": "Verbale senza importo - impossibile creare Prima Nota"
+            }
+        
+        # Verifica se esiste già un movimento
+        if verbale.get("movimento_banca_id") or verbale.get("movimento_cassa_id"):
+            return {
+                "success": False,
+                "message": "Movimento Prima Nota già esistente per questo verbale"
+            }
+        
+        import uuid
+        
+        # Crea movimento in prima_nota_cassa (default per verbali pagati in contanti/carta)
+        movimento = {
+            "id": str(uuid.uuid4()),
+            "data": verbale.get("data_pagamento") or verbale.get("data_verbale") or datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+            "tipo": "uscita",
+            "importo": float(importo),
+            "descrizione": f"Verbale {numero_verbale} - {verbale.get('driver_nome', 'N/D')} - Targa {verbale.get('targa', 'N/D')}",
+            "categoria": "Verbali/Multe",
+            "verbale_id": numero_verbale,
+            "targa": verbale.get("targa"),
+            "driver_id": verbale.get("driver_id"),
+            "driver_nome": verbale.get("driver_nome"),
+            "fornitore": verbale.get("fornitore"),
+            "source": "verbale_automazione",
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+        # Inserisci in prima_nota_cassa
+        await db["prima_nota_cassa"].insert_one(movimento.copy())
+        
+        # Aggiorna verbale con riferimento al movimento
+        await db["verbali_noleggio"].update_one(
+            {"numero_verbale": numero_verbale},
+            {"$set": {
+                "movimento_cassa_id": movimento["id"],
+                "stato": "riconciliato" if verbale.get("fattura_id") else "pagato",
+                "updated_at": datetime.now(timezone.utc)
+            }}
+        )
+        
+        logger.info(f"Prima Nota creata per verbale {numero_verbale}: €{importo}")
+        
+        return {
+            "success": True,
+            "message": f"Movimento Prima Nota creato per verbale {numero_verbale}",
+            "movimento_id": movimento["id"],
+            "importo": importo
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Errore creazione Prima Nota verbale: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
