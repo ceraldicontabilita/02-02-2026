@@ -700,11 +700,20 @@ class VerbaliEmailScanner:
                     risultato["fase1"]["pdf_trovati"] += 1
             
             # ===== FASE 2: AGGIUNGI NUOVI =====
-            logger.info("🔍 FASE 2: Cercando nuovi verbali in tutte le cartelle...")
+            logger.info("🔍 FASE 2: Cercando nuovi verbali...")
             
-            # Scansiona tutte le cartelle disponibili
-            nuovi = await self.scan_nuovi_verbali(days_back=days_back)
-            risultato["fase2"]["verbali_nuovi"] = len(nuovi)
+            # 2a. Scansiona cartelle dedicate ai verbali (A25*, B25*, etc.)
+            logger.info("   📁 Scansione cartelle verbali...")
+            nuovi_da_cartelle = await self.scan_cartelle_verbali()
+            
+            # 2b. Scansiona INBOX e altre cartelle standard
+            logger.info("   📧 Scansione cartelle standard...")
+            nuovi_da_inbox = await self.scan_nuovi_verbali(days_back=days_back)
+            
+            totale_nuovi = len(nuovi_da_cartelle) + len(nuovi_da_inbox)
+            risultato["fase2"]["verbali_nuovi"] = totale_nuovi
+            risultato["fase2"]["da_cartelle_dedicate"] = len(nuovi_da_cartelle)
+            risultato["fase2"]["da_inbox"] = len(nuovi_da_inbox)
             
             risultato["success"] = True
             risultato["stats"] = self.stats
