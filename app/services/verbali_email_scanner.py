@@ -522,9 +522,10 @@ class VerbaliEmailScanner:
                     risultato["fase1"]["pdf_trovati"] += 1
             
             # ===== FASE 2: AGGIUNGI NUOVI =====
-            logger.info("🔍 FASE 2: Cercando nuovi verbali...")
+            logger.info("🔍 FASE 2: Cercando nuovi verbali in tutte le cartelle...")
             
-            nuovi = await self.scan_nuovi_verbali(folder, days_back)
+            # Scansiona tutte le cartelle disponibili
+            nuovi = await self.scan_nuovi_verbali(days_back=days_back)
             risultato["fase2"]["verbali_nuovi"] = len(nuovi)
             
             risultato["success"] = True
