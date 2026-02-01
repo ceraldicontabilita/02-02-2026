@@ -459,14 +459,16 @@ class VerbaliEmailScanner:
                         logger.info(f"🆕 Nuovo verbale trovato in {folder}: {numero_verbale}")
                         
                     except Exception as e:
-                    logger.warning(f"Errore processamento email: {e}")
-                    continue
-            
-            return nuovi_verbali
-        except Exception as e:
-            logger.error(f"Errore scan nuovi verbali: {e}")
-            self.stats["errori"].append(str(e))
-            return nuovi_verbali
+                        logger.warning(f"Errore processamento email in {folder}: {e}")
+                        continue
+                
+            except Exception as e:
+                logger.error(f"Errore scansione cartella {folder}: {e}")
+                self.stats["errori"].append(f"Cartella {folder}: {str(e)}")
+                continue
+        
+        logger.info(f"✅ Scan completato su {len(folders) if folders else 0} cartelle, trovati {len(nuovi_verbali)} nuovi verbali")
+        return nuovi_verbali
     
     async def scan_completo_priorita(self, folder: str = "INBOX", days_back: int = 365) -> Dict[str, Any]:
         """
