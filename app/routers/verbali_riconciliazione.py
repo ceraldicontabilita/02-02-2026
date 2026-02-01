@@ -1221,3 +1221,74 @@ async def registra_quietanza(numero_verbale: str, quietanza_data: Dict[str, Any]
         logger.error(f"Errore registrazione quietanza: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
+
+# ===== SCAN EMAIL VERBALI =====
+
+@router.post("/scan-email")
+async def scan_email_verbali(days_back: int = 365) -> Dict[str, Any]:
+    """
+    Esegue lo scan email per verbali con logica di priorità.
+    
+    LOGICA:
+    1. FASE 1 - Cerca documenti per completare verbali SOSPESI
+       - Quietanze per verbali "da_pagare"
+       - PDF per verbali senza allegato
+       
+    2. FASE 2 - Aggiungi nuovi verbali trovati
+    
+    Args:
+        days_back: Quanti giorni indietro cercare (default 365 = 1 anno)
+    
+    Returns:
+        Risultati dello scan con statistiche
+    """
+    db = Database.get_db()
+    
+    try:
+        from app.services.verbali_email_scanner import esegui_scan_verbali_email
+        
+        logger.info(f"🚀 Avvio scan email verbali (ultimi {days_back} giorni)...")
+        risultato = await esegui_scan_verbali_email(db, days_back)
+        
+        return risultato
+    except ImportError as e:
+        logger.error(f"Modulo scanner non disponibile: {e}")
+        return {
+            "success": False,
+            "error": "Modulo scanner email non disponibile",
+            "detail": str(e)
+        }
+    except Exception as e:
+        logger.error(f"Errore scan email: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/scan-email-storico")
+async def scan_email_storico() -> Dict[str, Any]:
+    """
+    Esegue lo scan email COMPLETO dal 2018 ad oggi.
+    
+    ATTENZIONE: Operazione lunga! Può richiedere diversi minuti.
+    Usare per la prima sincronizzazione o per recuperare tutto lo storico.
+    """
+    db = Database.get_db()
+    
+    try:
+        from app.services.verbali_email_scanner import esegui_scan_verbali_email
+        
+        # Calcola giorni dal 2018
+        from datetime import datetime
+        days_from_2018 = (datetime.now() - datetime(2018, 1, 1)).days
+        
+        logger.info(f"🚀 Avvio scan email STORICO dal 2018 ({days_from_2018} giorni)...")
+        risultato = await esegui_scan_verbali_email(db, days_from_2018)
+        
+        return {
+            **risultato,
+            "note": f"Scan storico dal 2018: {days_from_2018} giorni analizzati"
+        }
+    except Exception as e:
+        logger.error(f"Errore scan storico: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
