@@ -1292,3 +1292,185 @@ async def scan_email_storico() -> Dict[str, Any]:
         logger.error(f"Errore scan storico: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
+
+@router.post("/riconcilia-estratto-conto-paypal")
+async def riconcilia_estratto_conto_paypal(file: UploadFile = File(...)) -> Dict[str, Any]:
+    """
+    Importa estratto conto PayPal e riconcilia i pagamenti con i verbali.
+    
+    Formato file atteso: CSV con colonne Data, Descrizione, Importo
+    Cerca verbali pagati nelle stesse date e li riconcilia.
+    """
+    db = Database.get_db()
+    
+    try:
+        import csv
+        import io
+        
+        content = await file.read()
+        content_str = content.decode('utf-8', errors='replace')
+        
+        reader = csv.DictReader(io.StringIO(content_str))
+        
+        risultato = {
+            "righe_processate": 0,
+            "verbali_riconciliati": 0,
+            "verbali_non_trovati": 0,
+            "dettagli": []
+        }
+        
+        for row in reader:
+            risultato["righe_processate"] += 1
+            
+            # Cerca riferimenti a verbali o comuni
+            descrizione = row.get("Descrizione", "") or row.get("Description", "") or ""
+            data = row.get("Data", "") or row.get("Date", "") or ""
+            importo = row.get("Importo", "") or row.get("Amount", "") or row.get("Netto", "") or ""
+            
+            # Cerca numero verbale nella descrizione
+            import re
+            verbale_match = re.search(r'([ABCDEFGHIJKLMNOPQRSTUVWXYZ]\d{10,12})', descrizione)
+            
+            if verbale_match:
+                numero_verbale = verbale_match.group(1)
+                
+                # Cerca verbale
+                verbale = await db["verbali_noleggio"].find_one({"numero_verbale": numero_verbale})
+                
+                if verbale:
+                    # Riconcilia
+                    await db["verbali_noleggio"].update_one(
+                        {"numero_verbale": numero_verbale},
+                        {"$set": {
+                            "stato": "riconciliato",
+                            "riconciliato": True,
+                            "movimento_paypal": {
+                                "data": data,
+                                "descrizione": descrizione,
+                                "importo": importo
+                            },
+                            "documenti.estratto_conto_riconciliato": True,
+                            "pagamento.riconciliato_estratto_conto": True,
+                            "in_attesa": [],
+                            "updated_at": datetime.now(timezone.utc)
+                        }}
+                    )
+                    risultato["verbali_riconciliati"] += 1
+                    risultato["dettagli"].append({
+                        "verbale": numero_verbale,
+                        "importo": importo,
+                        "stato": "riconciliato"
+                    })
+                else:
+                    risultato["verbali_non_trovati"] += 1
+            else:
+                # Cerca per descrizione (es. "Comune di Napoli")
+                if "comune" in descrizione.lower():
+                    # Cerca verbali pagati in quella data
+                    verbali = await db["verbali_noleggio"].find({
+                        "pagamento.data": {"$regex": data[:10] if data else ""},
+                        "pagamento.riconciliato_estratto_conto": {"$ne": True}
+                    }).to_list(10)
+                    
+                    for v in verbali:
+                        await db["verbali_noleggio"].update_one(
+                            {"numero_verbale": v["numero_verbale"]},
+                            {"$set": {
+                                "stato": "riconciliato" if v.get("fattura_id") else "pagato",
+                                "movimento_paypal": {
+                                    "data": data,
+                                    "descrizione": descrizione,
+                                    "importo": importo
+                                },
+                                "documenti.estratto_conto_riconciliato": True,
+                                "pagamento.riconciliato_estratto_conto": True,
+                                "updated_at": datetime.now(timezone.utc)
+                            }}
+                        )
+                        risultato["verbali_riconciliati"] += 1
+        
+        return {
+            "success": True,
+            **risultato
+        }
+    except Exception as e:
+        logger.error(f"Errore riconciliazione estratto conto: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/dettaglio-completo/{numero_verbale}")
+async def get_dettaglio_completo_verbale(numero_verbale: str) -> Dict[str, Any]:
+    """
+    Restituisce tutti i dettagli e documenti di un verbale.
+    
+    Include:
+    - Dati verbale
+    - PDF verbale (link)
+    - Quietanza pagamento
+    - Fattura ri-notifica
+    - Stato riconciliazione
+    """
+    db = Database.get_db()
+    
+    try:
+        verbale = await db["verbali_noleggio"].find_one(
+            {"numero_verbale": numero_verbale},
+            {"_id": 0}
+        )
+        
+        if not verbale:
+            raise HTTPException(status_code=404, detail="Verbale non trovato")
+        
+        # Costruisci riepilogo documenti
+        documenti = verbale.get("documenti", {})
+        
+        checklist = {
+            "pdf_verbale": bool(verbale.get("pdf_data") or verbale.get("pdf_filename") or documenti.get("pdf_verbale")),
+            "targa_identificata": bool(verbale.get("targa")),
+            "driver_associato": bool(verbale.get("driver_id") or verbale.get("driver")),
+            "veicolo_associato": bool(verbale.get("veicolo_id")),
+            "pagamento_effettuato": verbale.get("stato") not in ["da_scaricare", "salvato", "identificato", "da_pagare"],
+            "quietanza_salvata": bool(verbale.get("quietanza_ricevuta") or documenti.get("quietanza_pagamento")),
+            "fattura_rinotifica": bool(verbale.get("fattura_id") or documenti.get("fattura_rinotifica")),
+            "estratto_conto_riconciliato": bool(documenti.get("estratto_conto_riconciliato") or verbale.get("pagamento", {}).get("riconciliato_estratto_conto"))
+        }
+        
+        completamento = sum(checklist.values()) / len(checklist) * 100
+        
+        # Rimuovi pdf_data dalla risposta (troppo grande)
+        verbale_response = {k: v for k, v in verbale.items() if k != "pdf_data"}
+        verbale_response["has_pdf"] = bool(verbale.get("pdf_data"))
+        
+        return {
+            "verbale": verbale_response,
+            "checklist_riconciliazione": checklist,
+            "percentuale_completamento": round(completamento, 1),
+            "in_attesa": verbale.get("in_attesa", []),
+            "prossimo_passo": _get_prossimo_passo(checklist)
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Errore dettaglio verbale: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+def _get_prossimo_passo(checklist: Dict[str, bool]) -> str:
+    """Determina il prossimo passo per completare il verbale."""
+    if not checklist["pdf_verbale"]:
+        return "Scaricare PDF verbale"
+    if not checklist["targa_identificata"]:
+        return "Identificare targa"
+    if not checklist["driver_associato"]:
+        return "Associare driver"
+    if not checklist["pagamento_effettuato"]:
+        return "Pagare verbale"
+    if not checklist["quietanza_salvata"]:
+        return "Salvare quietanza pagamento"
+    if not checklist["fattura_rinotifica"]:
+        return "Attendere fattura ri-notifica dal noleggiatore"
+    if not checklist["estratto_conto_riconciliato"]:
+        return "Riconciliare con estratto conto PayPal"
+    return "✅ Verbale completamente riconciliato"
+
