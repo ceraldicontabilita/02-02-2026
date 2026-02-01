@@ -133,14 +133,27 @@ SISTEMA AUTOMATICO:
 
 ## Da Completare
 
+### P0 (In Attesa Input Utente)
+- **Riconciliazione PayPal**: Endpoint pronto (`POST /api/verbali-riconciliazione/riconcilia-estratto-conto-paypal`), in attesa del CSV/PDF estratto conto
+
 ### P1 (Prossimo)
-- Gestione quietanza pagamento via email (collegamento automatico)
+- UI Frontend per caricare estratto conto PayPal (pulsante + modale)
 - Dashboard verbali per dipendente con totali
 
 ### P2 (Backlog)
 - ~17 cedolini che falliscono il parsing
 - Test E2E automatizzati
 - Export Excel/CSV verbali per dipendente
+- Ottimizzazione indici MongoDB
+
+---
+
+## Scheduler Automatici
+| Job | Frequenza | Descrizione |
+|-----|-----------|-------------|
+| `haccp_daily_routine` | 00:01 UTC | Auto-popolamento schede HACCP + controllo anomalie |
+| `gmail_aruba_sync` | Ogni 10 min | Sync fatture da Gmail/Aruba |
+| `verbali_email_scan` | Ogni ora | Scan email per verbali e quietanze |
 
 ---
 
@@ -151,3 +164,5 @@ SISTEMA AUTOMATICO:
 - Associazione Driver: ✅ PASS
 - Costo Dipendente: ✅ PASS
 - UI Responsive: ✅ PASS
+- Scheduler Verbali: ✅ PASS
+- Endpoint Notifications: ✅ PASS
