@@ -1474,3 +1474,37 @@ def _get_prossimo_passo(checklist: Dict[str, bool]) -> str:
         return "Riconciliare con estratto conto PayPal"
     return "✅ Verbale completamente riconciliato"
 
+
+@router.get("/scheduler-status")
+async def get_scheduler_status() -> Dict[str, Any]:
+    """
+    Verifica lo stato dello scheduler automatico per lo scan verbali.
+    """
+    try:
+        from app.scheduler import scheduler
+        
+        jobs = []
+        for job in scheduler.get_jobs():
+            jobs.append({
+                "id": job.id,
+                "name": job.name,
+                "next_run": job.next_run_time.isoformat() if job.next_run_time else None,
+                "trigger": str(job.trigger)
+            })
+        
+        # Trova il job dei verbali
+        verbali_job = next((j for j in jobs if "verbali" in j["id"].lower()), None)
+        
+        return {
+            "scheduler_running": scheduler.running,
+            "verbali_scan_job": verbali_job,
+            "all_jobs": jobs,
+            "note": "Lo scan verbali email viene eseguito automaticamente ogni ora"
+        }
+    except Exception as e:
+        return {
+            "scheduler_running": False,
+            "error": str(e),
+            "note": "Scheduler non disponibile"
+        }
+
