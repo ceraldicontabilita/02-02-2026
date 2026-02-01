@@ -15,8 +15,8 @@ Stati del Verbale:
 - riconciliato: Tutto collegato
 """
 
-from fastapi import APIRouter, HTTPException, Query
-from typing import Dict, Any, Optional
+from fastapi import APIRouter, HTTPException, Query, File, UploadFile
+from typing import Dict, Any, Optional, List
 from datetime import datetime, timezone
 from bson import ObjectId
 import re
