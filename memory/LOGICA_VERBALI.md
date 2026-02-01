@@ -43,6 +43,36 @@ Questo evita che verbali restino per sempre sospesi!
 
 ---
 
+## 🖥️ API SCAN EMAIL
+
+### Scan Recente (ultimi N giorni)
+```bash
+POST /api/verbali-riconciliazione/scan-email?days_back=30
+
+Risposta:
+{
+  "success": true,
+  "fase1": {
+    "quietanze_cercate": 30,
+    "quietanze_trovate": 0,
+    "pdf_cercati": 30,
+    "pdf_trovati": 0
+  },
+  "fase2": {
+    "verbali_nuovi": 1
+  }
+}
+```
+
+### Scan Storico (dal 2018)
+```bash
+POST /api/verbali-riconciliazione/scan-email-storico
+
+# ATTENZIONE: Operazione lunga!
+```
+
+---
+
 ## 📊 STATI VERBALE
 
 | Stato | Significato | Cosa Manca |
