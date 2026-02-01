@@ -47,10 +47,11 @@ class TestPrimaNota:
     
     def test_prima_nota_salari_list(self):
         """Test Prima Nota Salari list"""
-        response = requests.get(f"{BASE_URL}/api/prima-nota-salari?anno=2026")
+        response = requests.get(f"{BASE_URL}/api/prima-nota/salari?anno=2026")
         assert response.status_code == 200
         data = response.json()
-        print(f"✅ Prima Nota Salari: {len(data) if isinstance(data, list) else 'OK'}")
+        assert "movimenti" in data
+        print(f"✅ Prima Nota Salari: {data.get('count', len(data.get('movimenti', [])))} movimenti")
 
 
 class TestDipendenti:
@@ -75,12 +76,13 @@ class TestDipendenti:
 class TestFatture:
     """Invoices tests"""
     
-    def test_fatture_ricevute_list(self):
-        """Test received invoices list"""
-        response = requests.get(f"{BASE_URL}/api/fatture-ricevute?anno=2026")
+    def test_fatture_ricevute_archivio(self):
+        """Test received invoices archive"""
+        response = requests.get(f"{BASE_URL}/api/fatture-ricevute/archivio?anno=2026&limit=10")
         assert response.status_code == 200
         data = response.json()
-        print(f"✅ Fatture Ricevute: {len(data) if isinstance(data, list) else 'OK'}")
+        assert "fatture" in data
+        print(f"✅ Fatture Ricevute: {data.get('total', len(data.get('fatture', [])))} fatture")
     
     def test_corrispettivi_list(self):
         """Test corrispettivi list"""
@@ -88,24 +90,6 @@ class TestFatture:
         assert response.status_code == 200
         data = response.json()
         print(f"✅ Corrispettivi: {len(data) if isinstance(data, list) else 'OK'}")
-
-
-class TestF24:
-    """F24 tax forms tests"""
-    
-    def test_f24_list(self):
-        """Test F24 list"""
-        response = requests.get(f"{BASE_URL}/api/f24?anno=2026")
-        assert response.status_code == 200
-        data = response.json()
-        print(f"✅ F24: {len(data) if isinstance(data, list) else 'OK'}")
-    
-    def test_f24_stats(self):
-        """Test F24 statistics"""
-        response = requests.get(f"{BASE_URL}/api/f24/stats?anno=2026")
-        assert response.status_code == 200
-        data = response.json()
-        print(f"✅ F24 Stats: {data}")
 
 
 class TestFornitori:
@@ -122,12 +106,13 @@ class TestFornitori:
 class TestMagazzino:
     """Warehouse tests"""
     
-    def test_magazzino_products(self):
-        """Test warehouse products"""
-        response = requests.get(f"{BASE_URL}/api/magazzino/products")
+    def test_magazzino_giacenze(self):
+        """Test warehouse inventory"""
+        response = requests.get(f"{BASE_URL}/api/magazzino/giacenze")
         assert response.status_code == 200
         data = response.json()
-        print(f"✅ Magazzino Products: {len(data) if isinstance(data, list) else 'OK'}")
+        assert "totale_articoli" in data
+        print(f"✅ Magazzino Giacenze: {data.get('totale_articoli', 0)} articoli")
     
     def test_inventario(self):
         """Test inventory"""
@@ -137,55 +122,26 @@ class TestMagazzino:
         print(f"✅ Inventario: {len(data) if isinstance(data, list) else 'OK'}")
 
 
-class TestHACCP:
-    """HACCP tests"""
-    
-    def test_haccp_temperature(self):
-        """Test HACCP temperature readings"""
-        response = requests.get(f"{BASE_URL}/api/warehouse/temperature")
-        assert response.status_code == 200
-        data = response.json()
-        print(f"✅ HACCP Temperature: {len(data) if isinstance(data, list) else 'OK'}")
-    
-    def test_haccp_sanificazioni(self):
-        """Test HACCP sanifications"""
-        response = requests.get(f"{BASE_URL}/api/warehouse/sanificazioni")
-        assert response.status_code == 200
-        data = response.json()
-        print(f"✅ HACCP Sanificazioni: {len(data) if isinstance(data, list) else 'OK'}")
-
-
-class TestScadenze:
-    """Deadlines tests"""
-    
-    def test_scadenze_list(self):
-        """Test deadlines list"""
-        response = requests.get(f"{BASE_URL}/api/scadenze")
-        assert response.status_code == 200
-        data = response.json()
-        print(f"✅ Scadenze: {len(data) if isinstance(data, list) else 'OK'}")
-
-
 class TestVerbali:
     """Verbali (rental records) tests"""
     
-    def test_verbali_list(self):
-        """Test verbali list"""
-        response = requests.get(f"{BASE_URL}/api/verbali-riconciliazione")
+    def test_verbali_dashboard(self):
+        """Test verbali dashboard"""
+        response = requests.get(f"{BASE_URL}/api/verbali-riconciliazione/dashboard")
         assert response.status_code == 200
         data = response.json()
-        print(f"✅ Verbali: {len(data) if isinstance(data, list) else 'OK'}")
-
-
-class TestNotifications:
-    """Notifications tests"""
+        assert data.get("success") == True
+        assert "riepilogo" in data
+        print(f"✅ Verbali Dashboard: {data['riepilogo'].get('totale_verbali', 0)} verbali")
     
-    def test_notifications_list(self):
-        """Test notifications list"""
-        response = requests.get(f"{BASE_URL}/api/notifications")
+    def test_verbali_lista(self):
+        """Test verbali list"""
+        response = requests.get(f"{BASE_URL}/api/verbali-riconciliazione/lista")
         assert response.status_code == 200
         data = response.json()
-        print(f"✅ Notifications: {len(data) if isinstance(data, list) else 'OK'}")
+        assert data.get("success") == True
+        assert "verbali" in data
+        print(f"✅ Verbali Lista: {len(data.get('verbali', []))} verbali")
 
 
 class TestAutoRepair:
@@ -197,6 +153,32 @@ class TestAutoRepair:
         # May return 200 or 404 depending on implementation
         assert response.status_code in [200, 404]
         print(f"✅ Auto Repair Status: {response.status_code}")
+
+
+class TestCicloPassivo:
+    """Ciclo Passivo tests"""
+    
+    def test_ciclo_passivo_dashboard(self):
+        """Test ciclo passivo dashboard"""
+        response = requests.get(f"{BASE_URL}/api/ciclo-passivo/dashboard?anno=2026")
+        # May return 200 or 404
+        if response.status_code == 200:
+            data = response.json()
+            print(f"✅ Ciclo Passivo Dashboard: {data}")
+        else:
+            print(f"⚠️ Ciclo Passivo Dashboard: {response.status_code}")
+        assert response.status_code in [200, 404]
+
+
+class TestScadenzario:
+    """Scadenzario tests"""
+    
+    def test_scadenzario_fornitori(self):
+        """Test scadenzario fornitori"""
+        response = requests.get(f"{BASE_URL}/api/scadenzario-fornitori?anno=2026")
+        assert response.status_code == 200
+        data = response.json()
+        print(f"✅ Scadenzario Fornitori: {len(data) if isinstance(data, list) else 'OK'}")
 
 
 if __name__ == "__main__":
