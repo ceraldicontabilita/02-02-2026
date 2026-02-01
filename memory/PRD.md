@@ -1,6 +1,6 @@
 # Application ERP/Accounting - PRD
 
-## Stato: 31 Gennaio 2026
+## Stato: 1 Febbraio 2026
 
 ---
 
@@ -16,74 +16,113 @@
 
 ## Completato ✅
 
+### Automazione Verbali da Fatture XML - COMPLETATO (1 Feb 2026)
+Quando una fattura XML di un noleggiatore (ALD, Leasys, Arval, etc.) viene caricata:
+
+1. **Estrae automaticamente** numero verbale e targa dalla descrizione
+2. **Trova il veicolo** associato alla targa
+3. **Trova il driver** associato al veicolo
+4. **Crea record verbale** con tutti i dati collegati
+5. **Crea voce costo dipendente** per addebitare al driver
+
+**Flusso implementato:**
+```
+Vigile → Verbale su auto noleggio
+         ↓
+Noleggiatore → Richiesta info targa → Comunica "Ceraldi Group"
+         ↓
+Noleggiatore → Emette fattura XML ri-notifica
+         ↓
+SISTEMA AUTOMATICO:
+  ├── Estrae: numero verbale, targa, data, importo
+  ├── Trova: veicolo → driver → contratto
+  ├── Crea: record verbale collegato
+  └── Crea: voce costo dipendente
+```
+
+**File creato:** `/app/app/services/verbali_automation.py`
+**File modificato:** `/app/app/routers/invoices/fatture_upload.py`
+
 ### Automazione Prima Nota - COMPLETATO (31 Gen 2026)
-- **Fatture XML**: Upload di una fattura XML crea automaticamente un movimento in `prima_nota_banca` o `prima_nota_cassa`
-- **Buste Paga**: Upload di un cedolino PDF crea/collega automaticamente un movimento in `prima_nota_salari`
-- **File modificati**: 
-  - `fatture_upload.py` (linee 631-659): chiamata a `registra_pagamento_fattura`
-  - `employees_payroll.py` (linee 470-530): logica di creazione/collegamento `prima_nota_salari`
-- **Cedolini esistenti collegati**: 283 movimenti `prima_nota_salari` ora hanno il `cedolino_id` associato
+- **Fatture XML**: Upload crea automaticamente movimento in Prima Nota Banca/Cassa
+- **Buste Paga**: Upload crea/collega movimento in Prima Nota Salari
 
 ### UI Responsive Cedolini - COMPLETATO (31 Gen 2026)
-- **Hook `useIsMobile`**: rileva viewport < 640px
-- **Mobile**: Dropdown per selezione mese, card layout per cedolini, filtri su singola riga
-- **Desktop**: Tab grid 14 colonne, tabella completa con colonne multiple
-- **Modale dettaglio**: Su mobile mostra pulsanti "Scarica PDF" e "Visualizza"
-- **File modificato**: `CedoliniRiconciliazione.jsx`
+- Mobile: Dropdown mesi + card layout
+- Desktop: Tab grid + tabella
 
 ### Pagina Prima Nota Salari - COMPLETATO (31 Gen 2026)
-- **Fix routing API**: Ri-montato modulo `prima_nota_salari` su `/api/prima-nota-salari`
-- **688 records** visualizzati correttamente
-- **Totali calcolati**: €169.950,26 buste, €207.246,79 bonifici
-- **File modificati**: `main.py`, `primaNotaStore.js`
-
-### PageLayout Wrapper (72 pagine su 73) - COMPLETATO
-Tutte le pagine dell'applicazione hanno il componente `PageLayout` applicato.
-
-### Parser Multi-Template Cedolini - COMPLETATO (30 Gen 2026)
-- Parser avanzato che gestisce 4 formati PDF diversi
-- Ri-elaborazione di 791 cedolini (2018-2025)
+- 688 records visualizzati
+- Totali corretti (€169.950 buste, €207.246 bonifici)
 
 ---
 
 ## API Principali
 
+### Verbali
+- `POST /api/verbali-riconciliazione/automazione-completa` - Esegue associazione completa su tutti i verbali
+- `POST /api/verbali-riconciliazione/crea-prima-nota-verbale/{numero}` - Crea scrittura Prima Nota per verbale
+- `GET /api/verbali-riconciliazione/per-driver/{driver_id}` - Lista verbali per driver
+- `GET /api/verbali-riconciliazione/per-veicolo/{targa}` - Lista verbali per targa
+
+### Fatture (con automazione verbali)
+- `POST /api/fatture/upload-xml` - Upload fattura XML (se noleggiatore → estrae verbali automaticamente)
+
 ### Cedolini
-- `GET /api/cedolini?limit=100&skip=0&anno=2025&mese=5`
-- `GET /api/cedolini/{cedolino_id}` - Dettaglio cedolino con pdf_data
-- `POST /api/employees/paghe/upload-pdf` - Upload PDF buste paga (con automazione)
+- `GET /api/cedolini?anno=2025&mese=5`
+- `POST /api/employees/paghe/upload-pdf` - Upload con automazione Prima Nota Salari
 
-### Fatture
-- `POST /api/fatture/upload-xml` - Upload fattura XML (con automazione prima_nota)
-- `POST /api/fatture/upload-xml-bulk` - Upload massivo fatture XML
+---
 
-### Prima Nota
-- `GET /api/prima-nota/cassa` - Movimenti cassa
-- `GET /api/prima-nota/banca` - Movimenti banca
-- `GET /api/prima-nota-salari/salari` - Movimenti salari (688 records)
-- `GET /api/prima-nota-salari/dipendenti-lista` - Lista dipendenti (21)
+## Collections MongoDB
+
+### verbali_noleggio
+```javascript
+{
+  numero_verbale: "T26020100001",
+  targa: "GE911SC",
+  data_verbale: "2026-01-15",
+  veicolo_id: "auto_ge911sc",
+  driver: "CERALDI VALERIO",
+  driver_id: "d92c4d97-...",
+  fattura_id: "...",
+  importo_rinotifica: 40.0,
+  stato: "identificato" // da_scaricare|salvato|fattura_ricevuta|pagato|riconciliato|identificato
+}
+```
+
+### costi_dipendenti
+```javascript
+{
+  dipendente_id: "d92c4d97-...",
+  dipendente_nome: "CERALDI VALERIO",
+  tipo: "verbale",
+  categoria: "Verbali/Multe",
+  importo: 40.0,
+  verbale_id: "T26020100001",
+  targa: "GE911SC"
+}
+```
 
 ---
 
 ## Da Completare
 
 ### P1 (Prossimo)
-- Verifica utente del flusso completo upload cedolino → Prima Nota Salari
+- Gestione quietanza pagamento via email (collegamento automatico)
+- Dashboard verbali per dipendente con totali
 
 ### P2 (Backlog)
-- ~17 cedolini che ancora falliscono il parsing
+- ~17 cedolini che falliscono il parsing
 - Test E2E automatizzati
-- Indici MongoDB per performance
-- Export Excel/CSV
+- Export Excel/CSV verbali per dipendente
 
 ---
 
 ## Test
-- Build: ✅ 7.21s
-- Frontend: ✅ OK
+- Build: ✅ OK
 - Automazione Fatture XML: ✅ PASS
-- Automazione Buste Paga: ✅ PASS
-- UI Responsive Desktop: ✅ PASS
-- UI Responsive Mobile: ✅ PASS
-- Prima Nota Salari: ✅ PASS (688 records, totali corretti)
-- Test Report: `/app/test_reports/iteration_10.json`
+- Automazione Verbali: ✅ PASS (testato con fattura ALD)
+- Associazione Driver: ✅ PASS
+- Costo Dipendente: ✅ PASS
+- UI Responsive: ✅ PASS
