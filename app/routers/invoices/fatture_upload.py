@@ -669,6 +669,17 @@ async def upload_fattura_xml(file: UploadFile = File(...)) -> Dict[str, Any]:
         except Exception as e:
             logger.debug(f"Associazione provvisoria non disponibile: {e}")
         
+        # === AUTOMAZIONE VERBALI DA FATTURE NOLEGGIO ===
+        # Se è una fattura di un noleggiatore (ALD, Leasys, etc.), cerca verbali
+        verbali_result = {"verbali_trovati": 0, "verbali_creati": 0, "driver_associati": 0}
+        try:
+            from app.services.verbali_automation import processa_verbali_da_fattura
+            verbali_result = await processa_verbali_da_fattura(db, parsed, invoice["id"])
+            if verbali_result.get("verbali_trovati", 0) > 0:
+                logger.info(f"🚗 Verbali trovati: {verbali_result['verbali_trovati']}, Driver associati: {verbali_result['driver_associati']}")
+        except Exception as e:
+            logger.warning(f"Errore automazione verbali: {e}")
+        
         return {
             "success": True,
             "message": f"Fattura {parsed.get('invoice_number')} importata",
