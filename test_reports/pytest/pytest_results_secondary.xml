@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="23" skipped="0" tests="36" time="10.416" timestamp="2026-02-01T10:58:20.663343+00:00" hostname="agent-env-fd34854d-66c9-4c60-91bd-2ec3187c430f"><testcase classname="tests.test_secondary_pages_api.TestHealthAndDashboard" name="test_health_endpoint" time="0.682" /><testcase classname="tests.test_secondary_pages_api.TestHealthAndDashboard" name="test_dashboard_stats" time="2.680" /><testcase classname="tests.test_secondary_pages_api.TestAssegniAPI" name="test_get_assegni_list" time="0.860" /><testcase classname="tests.test_secondary_pages_api.TestAssegniAPI" name="test_get_assegni_stats" time="0.264" /><testcase classname="tests.test_secondary_pages_api.TestCorrispettiviAPI" name="test_get_corrispettivi_list" time="0.285" /><testcase classname="tests.test_secondary_pages_api.TestCorrispettiviAPI" name="test_get_corrispettivi_stats" time="0.042"><failure message="assert 405 == 200&#10; +  where 405 = &lt;Response [405]&gt;.status_code">backend/tests/test_secondary_pages_api.py:75: in test_get_corrispettivi_stats
+    assert response.status_code == 200
+E   assert 405 == 200
+E    +  where 405 = &lt;Response [405]&gt;.status_code</failure></testcase><testcase classname="tests.test_secondary_pages_api.TestBonificiAPI" name="test_get_bonifici_list" time="0.044"><failure message="assert 404 == 200&#10; +  where 404 = &lt;Response [404]&gt;.status_code">backend/tests/test_secondary_pages_api.py:86: in test_get_bonifici_list
+    assert response.status_code == 200
+E   assert 404 == 200
+E    +  where 404 = &lt;Response [404]&gt;.status_code</failure></testcase><testcase classname="tests.test_secondary_pages_api.TestBonificiAPI" name="test_get_bonifici_stats" time="0.042"><failure message="assert 404 == 200&#10; +  where 404 = &lt;Response [404]&gt;.status_code">backend/tests/test_secondary_pages_api.py:94: in test_get_bonifici_stats
+    assert response.status_code == 200
+E   assert 404 == 200
+E    +  where 404 = &lt;Response [404]&gt;.status_code</failure></testcase><testcase classname="tests.test_secondary_pages_api.TestVerbaliAPI" name="test_get_verbali_list" time="0.043"><failure message="assert 404 == 200&#10; +  where 404 = &lt;Response [404]&gt;.status_code">backend/tests/test_secondary_pages_api.py:105: in test_get_verbali_list
+    assert response.status_code == 200
+E   assert 404 == 200
+E    +  where 404 = &lt;Response [404]&gt;.status_code</failure></testcase><testcase classname="tests.test_secondary_pages_api.TestVerbaliAPI" name="test_get_verbali_stats" time="0.042"><failure message="assert 404 == 200&#10; +  where 404 = &lt;Response [404]&gt;.status_code">backend/tests/test_secondary_pages_api.py:113: in test_get_verbali_stats
+    assert response.status_code == 200
+E   assert 404 == 200
+E    +  where 404 = &lt;Response [404]&gt;.status_code</failure></testcase><testcase classname="tests.test_secondary_pages_api.TestVeicoliAPI" name="test_get_veicoli_list" time="0.058"><failure message="assert 404 == 200&#10; +  where 404 = &lt;Response [404]&gt;.status_code">backend/tests/test_secondary_pages_api.py:124: in test_get_veicoli_list
+    assert response.status_code == 200
+E   assert 404 == 200
+E    +  where 404 = &lt;Response [404]&gt;.status_code</failure></testcase><testcase classname="tests.test_secondary_pages_api.TestVeicoliAPI" name="test_get_veicoli_costi" time="0.044"><failure message="assert 404 == 200&#10; +  where 404 = &lt;Response [404]&gt;.status_code">backend/tests/test_secondary_pages_api.py:132: in test_get_veicoli_costi
+    assert response.status_code == 200
+E   assert 404 == 200
+E    +  where 404 = &lt;Response [404]&gt;.status_code</failure></testcase><testcase classname="tests.test_secondary_pages_api.TestBilancioAPI" name="test_get_bilancio_2026" time="0.041"><failure message="assert 404 == 200&#10; +  where 404 = &lt;Response [404]&gt;.status_code">backend/tests/test_secondary_pages_api.py:143: in test_get_bilancio_2026
+    assert response.status_code == 200
+E   assert 404 == 200
+E    +  where 404 = &lt;Response [404]&gt;.status_code</failure></testcase><testcase classname="tests.test_secondary_pages_api.TestBilancioAPI" name="test_get_bilancio_stato_patrimoniale" time="0.045"><failure message="assert 404 == 200&#10; +  where 404 = &lt;Response [404]&gt;.status_code">backend/tests/test_secondary_pages_api.py:150: in test_get_bilancio_stato_patrimoniale
+    assert response.status_code == 200
+E   assert 404 == 200
+E    +  where 404 = &lt;Response [404]&gt;.status_code</failure></testcase><testcase classname="tests.test_secondary_pages_api.TestBilancioAPI" name="test_get_bilancio_conto_economico" time="0.039"><failure message="assert 404 == 200&#10; +  where 404 = &lt;Response [404]&gt;.status_code">backend/tests/test_secondary_pages_api.py:157: in test_get_bilancio_conto_economico
+    assert response.status_code == 200
+E   assert 404 == 200
+E    +  where 404 = &lt;Response [404]&gt;.status_code</failure></testcase><testcase classname="tests.test_secondary_pages_api.TestCalendarioFiscaleAPI" name="test_get_scadenze_fiscali" time="0.043"><failure message="assert 404 == 200&#10; +  where 404 = &lt;Response [404]&gt;.status_code">backend/tests/test_secondary_pages_api.py:168: in test_get_scadenze_fiscali
+    assert response.status_code == 200
+E   assert 404 == 200
+E    +  where 404 = &lt;Response [404]&gt;.status_code</failure></testcase><testcase classname="tests.test_secondary_pages_api.TestCalendarioFiscaleAPI" name="test_get_scadenze_stats" time="0.044"><failure message="assert 404 == 200&#10; +  where 404 = &lt;Response [404]&gt;.status_code">backend/tests/test_secondary_pages_api.py:176: in test_get_scadenze_stats
+    assert response.status_code == 200
+E   assert 404 == 200
+E    +  where 404 = &lt;Response [404]&gt;.status_code</failure></testcase><testcase classname="tests.test_secondary_pages_api.TestCentriCostoAPI" name="test_get_centri_costo" time="2.438" /><testcase classname="tests.test_secondary_pages_api.TestCespitiAPI" name="test_get_cespiti_list" time="0.165" /><testcase classname="tests.test_secondary_pages_api.TestCespitiAPI" name="test_get_ammortamenti" time="0.038"><failure message="assert 404 == 200&#10; +  where 404 = &lt;Response [404]&gt;.status_code">backend/tests/test_secondary_pages_api.py:206: in test_get_ammortamenti
+    assert response.status_code == 200
+E   assert 404 == 200
+E    +  where 404 = &lt;Response [404]&gt;.status_code</failure></testcase><testcase classname="tests.test_secondary_pages_api.TestLiquidazioneIVAAPI" name="test_get_liquidazione_iva" time="0.041"><failure message="assert 404 == 200&#10; +  where 404 = &lt;Response [404]&gt;.status_code">backend/tests/test_secondary_pages_api.py:217: in test_get_liquidazione_iva
+    assert response.status_code == 200
+E   assert 404 == 200
+E    +  where 404 = &lt;Response [404]&gt;.status_code</failure></testcase><testcase classname="tests.test_secondary_pages_api.TestLiquidazioneIVAAPI" name="test_calcola_liquidazione_iva" time="0.036"><failure message="assert 404 in [200, 422]&#10; +  where 404 = &lt;Response [404]&gt;.status_code">backend/tests/test_secondary_pages_api.py:229: in test_calcola_liquidazione_iva
+    assert response.status_code in [200, 422]
+E   assert 404 in [200, 422]
+E    +  where 404 = &lt;Response [404]&gt;.status_code</failure></testcase><testcase classname="tests.test_secondary_pages_api.TestTFRAPI" name="test_get_tfr_list" time="0.170"><failure message="assert 404 == 200&#10; +  where 404 = &lt;Response [404]&gt;.status_code">backend/tests/test_secondary_pages_api.py:239: in test_get_tfr_list
+    assert response.status_code == 200
+E   assert 404 == 200
+E    +  where 404 = &lt;Response [404]&gt;.status_code</failure></testcase><testcase classname="tests.test_secondary_pages_api.TestTFRAPI" name="test_get_tfr_dipendente" time="0.042" /><testcase classname="tests.test_secondary_pages_api.TestSaldiFeriePermessiAPI" name="test_get_saldi_ferie" time="0.040"><failure message="assert 404 == 200&#10; +  where 404 = &lt;Response [404]&gt;.status_code">backend/tests/test_secondary_pages_api.py:257: in test_get_saldi_ferie
+    assert response.status_code == 200
+E   assert 404 == 200
+E    +  where 404 = &lt;Response [404]&gt;.status_code</failure></testcase><testcase classname="tests.test_secondary_pages_api.TestChiusuraEsercizioAPI" name="test_get_chiusura_status" time="0.039"><failure message="assert 404 == 200&#10; +  where 404 = &lt;Response [404]&gt;.status_code">backend/tests/test_secondary_pages_api.py:268: in test_get_chiusura_status
+    assert response.status_code == 200
+E   assert 404 == 200
+E    +  where 404 = &lt;Response [404]&gt;.status_code</failure></testcase><testcase classname="tests.test_secondary_pages_api.TestMotoreContabileAPI" name="test_get_bilancio_verifica" time="0.037"><failure message="assert 404 == 200&#10; +  where 404 = &lt;Response [404]&gt;.status_code">backend/tests/test_secondary_pages_api.py:279: in test_get_bilancio_verifica
+    assert response.status_code == 200
+E   assert 404 == 200
+E    +  where 404 = &lt;Response [404]&gt;.status_code</failure></testcase><testcase classname="tests.test_secondary_pages_api.TestRegoleContabiliAPI" name="test_get_regole_contabili" time="0.041"><failure message="assert 404 == 200&#10; +  where 404 = &lt;Response [404]&gt;.status_code">backend/tests/test_secondary_pages_api.py:290: in test_get_regole_contabili
+    assert response.status_code == 200
+E   assert 404 == 200
+E    +  where 404 = &lt;Response [404]&gt;.status_code</failure></testcase><testcase classname="tests.test_secondary_pages_api.TestRiconciliazioneAPI" name="test_get_riconciliazione_stats" time="0.040"><failure message="assert 404 == 200&#10; +  where 404 = &lt;Response [404]&gt;.status_code">backend/tests/test_secondary_pages_api.py:301: in test_get_riconciliazione_stats
+    assert response.status_code == 200
+E   assert 404 == 200
+E    +  where 404 = &lt;Response [404]&gt;.status_code</failure></testcase><testcase classname="tests.test_secondary_pages_api.TestRiconciliazioneAPI" name="test_get_riconciliazione_banca" time="0.046"><failure message="assert 404 == 200&#10; +  where 404 = &lt;Response [404]&gt;.status_code">backend/tests/test_secondary_pages_api.py:308: in test_get_riconciliazione_banca
+    assert response.status_code == 200
+E   assert 404 == 200
+E    +  where 404 = &lt;Response [404]&gt;.status_code</failure></testcase><testcase classname="tests.test_secondary_pages_api.TestF24API" name="test_get_f24_list" time="0.489" /><testcase classname="tests.test_secondary_pages_api.TestF24API" name="test_get_f24_dashboard" time="0.151" /><testcase classname="tests.test_secondary_pages_api.TestF24API" name="test_get_f24_alerts" time="0.830" /><testcase classname="tests.test_secondary_pages_api.TestDipendentiAPI" name="test_get_dipendenti_list" time="0.171" /><testcase classname="tests.test_secondary_pages_api.TestFornitoriAPI" name="test_get_fornitori_list" time="0.042"><failure message="assert 404 == 200&#10; +  where 404 = &lt;Response [404]&gt;.status_code">backend/tests/test_secondary_pages_api.py:356: in test_get_fornitori_list
+    assert response.status_code == 200
+E   assert 404 == 200
+E    +  where 404 = &lt;Response [404]&gt;.status_code</failure></testcase><testcase classname="tests.test_secondary_pages_api.TestFornitoriAPI" name="test_get_fornitori_metodi_pagamento" time="0.040" /></testsuite></testsuites>
