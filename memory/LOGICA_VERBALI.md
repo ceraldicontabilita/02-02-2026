@@ -8,38 +8,91 @@ Ogni volta che il sistema scansiona la posta:
 1. **PRIMA** cerca documenti per completare cose SOSPESE
 2. **POI** aggiunge nuove cose trovate
 
-Questo evita che verbali restino per sempre sospesi!
-
 ---
 
-## 🔄 FLUSSO SCAN EMAIL
+## 🔄 FLUSSO COMPLETO DI UN VERBALE
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    SCAN EMAIL                           │
+│  1. VERBALE SUL PARABREZZA                              │
+│     └── Vigile mette verbale su auto noleggio           │
 ├─────────────────────────────────────────────────────────┤
-│                                                         │
-│  FASE 1: COMPLETA SOSPESI (PRIORITÀ ALTA)              │
-│  ┌─────────────────────────────────────────────────┐   │
-│  │ 31 verbali attendono quietanza → Cerca PayPal,  │   │
-│  │    bonifico, ricevuta con quei numeri verbale   │   │
-│  │                                                 │   │
-│  │ 52 verbali senza PDF → Cerca allegati PDF      │   │
-│  │    con quei numeri verbale                     │   │
-│  │                                                 │   │
-│  │ 22 verbali senza driver → Cerca info targa     │   │
-│  │    per associare al driver                     │   │
-│  └─────────────────────────────────────────────────┘   │
-│                         ↓                               │
-│  FASE 2: AGGIUNGI NUOVI                                │
-│  ┌─────────────────────────────────────────────────┐   │
-│  │ Cerca nuovi verbali                            │   │
-│  │ Cerca nuove quietanze                          │   │
-│  │ Cerca nuove fatture noleggiatori               │   │
-│  └─────────────────────────────────────────────────┘   │
-│                                                         │
+│  2. PAGAMENTO IMMEDIATO                                 │
+│     └── Utente paga subito (PartenoPay/PayPal)          │
+│     └── Riceve QUIETANZA via email                      │
+├─────────────────────────────────────────────────────────┤
+│  3. FATTURA RI-NOTIFICA (arriva DOPO)                   │
+│     └── Noleggiatore (ALD/Leasys) emette fattura XML    │
+│     └── Contiene: costi comunicazione ai vigili         │
+│     └── Sistema associa automaticamente al verbale      │
+├─────────────────────────────────────────────────────────┤
+│  4. RICONCILIAZIONE ESTRATTO CONTO                      │
+│     └── Estratto conto PayPal mensile                   │
+│     └── Sistema riconcilia pagamento con movimento      │
+│     └── Verbale diventa COMPLETAMENTE RICONCILIATO      │
 └─────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## 📊 STATI VERBALE (AGGIORNATI)
+
+| Stato | Significato | Cosa Manca |
+|-------|-------------|------------|
+| `da_scaricare` | Email trovata | PDF da scaricare |
+| `salvato` | PDF scaricato | Identificazione targa/driver |
+| `identificato` | Targa/driver trovati | Pagamento o fattura |
+| `da_pagare` | Tutto identificato | Pagamento |
+| `pagato_attesa_fattura` | Pagato, quietanza OK | Fattura ri-notifica |
+| `pagato` | Pagato con fattura | Riconciliazione estratto conto |
+| `riconciliato` | COMPLETO | ✅ Niente |
+
+---
+
+## 📎 DOCUMENTI DA ASSOCIARE A OGNI VERBALE
+
+Per ogni verbale, il sistema deve raccogliere:
+
+```
+verbale_documento = {
+    "pdf_verbale": "file PDF del verbale originale",
+    "quietanza_pagamento": "ricevuta PayPal/PartenoPay",
+    "fattura_rinotifica": "XML fattura da noleggiatore",
+    "estratto_conto": "riga estratto conto PayPal riconciliata"
+}
+```
+
+### Esempio Verbale A26110181643:
+
+| Documento | Presente | Note |
+|-----------|----------|------|
+| PDF Verbale | ✅ | AvvisoDigitale_302000600008089874.pdf |
+| Quietanza | ✅ | PartenoPay - Pagamento eseguito |
+| Fattura ri-notifica | ❌ | IN ATTESA da ALD/Leasys |
+| Estratto conto | ❌ | DA RICONCILIARE |
+
+---
+
+## 🔍 RICONCILIAZIONE PAGAMENTO
+
+### Come funziona:
+
+1. **PAGAMENTO CON PAYPAL**
+   ```
+   Email ricevuta: "PayPal - Pagamento effettuato"
+   Allegato: ricevuta_paypal.pdf
+   Importo: €XX.XX
+   → Sistema salva quietanza nel verbale
+   ```
+
+2. **ESTRATTO CONTO PAYPAL (mensile)**
+   ```
+   File: estratto_conto_paypal_gennaio_2026.csv
+   Riga: "30/01/2026 | Comune di Napoli | -€XX.XX"
+   → Sistema cerca verbali pagati in quella data
+   → Associa movimento a verbale
+   → Stato diventa "riconciliato"
+   ```
 
 ---
 
@@ -49,27 +102,77 @@ Questo evita che verbali restino per sempre sospesi!
 ```bash
 POST /api/verbali-riconciliazione/scan-email?days_back=30
 
-Risposta:
-{
-  "success": true,
-  "fase1": {
-    "quietanze_cercate": 30,
-    "quietanze_trovate": 0,
-    "pdf_cercati": 30,
-    "pdf_trovati": 0
-  },
-  "fase2": {
-    "verbali_nuovi": 1
-  }
-}
+# Cerca in TUTTE le cartelle:
+# - INBOX
+# - Cartelle dedicate (A25*, B25*, A26*, B26*, verbale*)
 ```
 
 ### Scan Storico (dal 2018)
 ```bash
 POST /api/verbali-riconciliazione/scan-email-storico
-
-# ATTENZIONE: Operazione lunga!
 ```
+
+### Stato Sospesi
+```bash
+GET /api/verbali-riconciliazione/pending-status
+
+# Mostra:
+# - Verbali in attesa quietanza
+# - Verbali in attesa fattura
+# - Verbali da riconciliare con estratto conto
+```
+
+---
+
+## 📁 STRUTTURA DATABASE
+
+### Collection: verbali_noleggio
+```javascript
+{
+  "numero_verbale": "A26110181643",
+  "targa": "HB411GV",
+  "driver": "Vincenzo Ceraldi",
+  "driver_id": "231591db-...",
+  "veicolo_id": "39d7dd2c-...",
+  
+  "stato": "pagato_attesa_fattura",
+  
+  "documenti": {
+    "pdf_verbale": true,
+    "quietanza_pagamento": true,
+    "fattura_rinotifica": false,
+    "estratto_conto_riconciliato": false
+  },
+  
+  "pagamento": {
+    "metodo": "PartenoPay/PagoPA",
+    "data": "2026-01-30",
+    "importo": 10.00,
+    "ricevuta_email": true,
+    "riconciliato_estratto_conto": false
+  },
+  
+  "in_attesa": ["fattura_rinotifica", "riconciliazione_estratto_conto"],
+  
+  "fattura_id": null,  // Verrà popolato quando arriva XML
+  "movimento_paypal_id": null  // Verrà popolato con riconciliazione
+}
+```
+
+---
+
+## ✅ CHECKLIST RICONCILIAZIONE VERBALE
+
+- [ ] PDF verbale presente
+- [ ] Targa identificata
+- [ ] Driver associato
+- [ ] Veicolo associato
+- [ ] Pagamento effettuato
+- [ ] Quietanza salvata (PayPal/PartenoPay)
+- [ ] Fattura ri-notifica ricevuta (XML)
+- [ ] Estratto conto PayPal riconciliato
+
+**Quando TUTTI i checkbox sono ✅ → Stato = "riconciliato"**
 
 ---
 
