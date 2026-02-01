@@ -1,6 +1,8 @@
 """
-Scheduler per task automatici HACCP.
-Auto-popolamento schede HACCP alle 00:01 ogni giorno.
+Scheduler per task automatici.
+- HACCP: Auto-popolamento schede alle 00:01 ogni giorno
+- Email Verbali: Scan automatico ogni ora
+- Gmail/Aruba: Sync ogni 10 minuti
 """
 import logging
 import uuid
@@ -442,6 +444,55 @@ async def sync_gmail_aruba_task():
         logger.error(f"📧 [SCHEDULER] Errore sync Gmail/Aruba: {e}")
 
 
+async def scan_verbali_email_task():
+    """
+    Task eseguito ogni ora.
+    Scansiona le email per trovare nuovi verbali e completare quelli sospesi.
+    """
+    from app.database import Database
+    from app.services.verbali_email_scanner import esegui_scan_verbali_email
+    
+    logger.info("🚗 [SCHEDULER] Avvio scan email verbali...")
+    
+    try:
+        db = Database.get_db()
+        
+        # Esegui scan completo con priorità
+        result = await esegui_scan_verbali_email(db, days_back=30)
+        
+        fase1 = result.get("fase1", {})
+        fase2 = result.get("fase2", {})
+        
+        logger.info(f"🚗 [SCHEDULER] Scan verbali completato:")
+        logger.info(f"   - Quietanze trovate: {fase1.get('quietanze_trovate', 0)}/{fase1.get('quietanze_cercate', 0)}")
+        logger.info(f"   - PDF trovati: {fase1.get('pdf_trovati', 0)}/{fase1.get('pdf_cercati', 0)}")
+        logger.info(f"   - Nuovi verbali: {fase2.get('verbali_nuovi', 0)}")
+        
+        # Se ci sono nuovi verbali, prova a inviarli via Telegram
+        if fase2.get("verbali_nuovi", 0) > 0:
+            try:
+                from app.services.telegram_notifications import is_configured, send_telegram_notification
+                
+                if is_configured():
+                    messaggio = f"""🚗 *Nuovi Verbali Trovati*
+
+{fase2.get('verbali_nuovi', 0)} nuovi verbali da verificare!
+
+📅 {datetime.now().strftime('%d/%m/%Y %H:%M')}
+
+👉 Vai su /verbali-riconciliazione per gestirli"""
+                    
+                    await send_telegram_notification(messaggio)
+                    logger.info("📱 [SCHEDULER] Notifica Telegram verbali inviata")
+            except Exception as e:
+                logger.warning(f"📱 [SCHEDULER] Notifica Telegram non inviata: {e}")
+        
+    except Exception as e:
+        logger.error(f"🚗 [SCHEDULER] Errore scan verbali: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+
+
 def start_scheduler():
     """Avvia lo scheduler con i task programmati."""
     logger.info("🚀 [SCHEDULER] Configurazione scheduler...")
@@ -465,10 +516,21 @@ def start_scheduler():
         replace_existing=True
     )
     
+    # Task Scan Verbali Email ogni ora
+    scheduler.add_job(
+        scan_verbali_email_task,
+        'interval',
+        hours=1,
+        id="verbali_email_scan",
+        name="Scan Email Verbali (ogni ora)",
+        replace_existing=True
+    )
+    
     scheduler.start()
     logger.info("✅ [SCHEDULER] Scheduler avviato")
     logger.info("   - HACCP: 00:01 UTC giornaliero")
     logger.info("   - Gmail/Aruba: ogni 10 minuti")
+    logger.info("   - Verbali Email: ogni ora")
 
 
 def stop_scheduler():
