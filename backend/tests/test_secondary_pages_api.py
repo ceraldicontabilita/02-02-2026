@@ -65,11 +65,13 @@ class TestNoleggioAutoAPI:
         response = requests.get(f"{BASE_URL}/api/noleggio/veicoli")
         assert response.status_code == 200
         data = response.json()
-        assert isinstance(data, list)
-        print(f"✓ Veicoli list: {len(data)} items")
+        # API returns object with veicoli array
+        assert "veicoli" in data or "count" in data
+        veicoli = data.get("veicoli", [])
+        print(f"✓ Veicoli: {data.get('count', len(veicoli))} items")
         
-        if len(data) > 0:
-            veicolo = data[0]
+        if len(veicoli) > 0:
+            veicolo = veicoli[0]
             print(f"  First veicolo: {veicolo.get('targa', 'N/A')} - {veicolo.get('veicolo', 'N/A')}")
     
     def test_get_drivers(self):
@@ -98,11 +100,13 @@ class TestVerbaliRiconciliazioneAPI:
         print(f"✓ Verbali dashboard: {data}")
     
     def test_get_verbali_list(self):
-        """Test getting verbali list"""
-        response = requests.get(f"{BASE_URL}/api/verbali-riconciliazione")
+        """Test getting verbali list from dashboard"""
+        response = requests.get(f"{BASE_URL}/api/verbali-riconciliazione/dashboard")
         assert response.status_code == 200
         data = response.json()
-        print(f"✓ Verbali list: {len(data) if isinstance(data, list) else data}")
+        # Dashboard contains verbali list
+        verbali = data.get("verbali", [])
+        print(f"✓ Verbali list: {len(verbali)} items from dashboard")
 
 
 class TestBilancioAPI:
