@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="10" skipped="0" tests="20" time="6.166" timestamp="2026-02-01T10:24:46.714439+00:00" hostname="agent-env-fd34854d-66c9-4c60-91bd-2ec3187c430f"><testcase classname="tests.test_e2e_comprehensive.TestHealthAndCore" name="test_health_endpoint" time="0.351" /><testcase classname="tests.test_e2e_comprehensive.TestHealthAndCore" name="test_dashboard_stats" time="0.490" /><testcase classname="tests.test_e2e_comprehensive.TestPrimaNota" name="test_prima_nota_cassa_list" time="2.010" /><testcase classname="tests.test_e2e_comprehensive.TestPrimaNota" name="test_prima_nota_banca_list" time="0.693" /><testcase classname="tests.test_e2e_comprehensive.TestPrimaNota" name="test_prima_nota_salari_list" time="0.041"><failure message="assert 404 == 200&#10; +  where 404 = &lt;Response [404]&gt;.status_code">tests/test_e2e_comprehensive.py:51: in test_prima_nota_salari_list
+    assert response.status_code == 200
+E   assert 404 == 200
+E    +  where 404 = &lt;Response [404]&gt;.status_code</failure></testcase><testcase classname="tests.test_e2e_comprehensive.TestDipendenti" name="test_dipendenti_list" time="0.261" /><testcase classname="tests.test_e2e_comprehensive.TestDipendenti" name="test_cedolini_list" time="0.522" /><testcase classname="tests.test_e2e_comprehensive.TestFatture" name="test_fatture_ricevute_list" time="0.035"><failure message="assert 404 == 200&#10; +  where 404 = &lt;Response [404]&gt;.status_code">tests/test_e2e_comprehensive.py:81: in test_fatture_ricevute_list
+    assert response.status_code == 200
+E   assert 404 == 200
+E    +  where 404 = &lt;Response [404]&gt;.status_code</failure></testcase><testcase classname="tests.test_e2e_comprehensive.TestFatture" name="test_corrispettivi_list" time="0.156" /><testcase classname="tests.test_e2e_comprehensive.TestF24" name="test_f24_list" time="0.044"><failure message="assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">tests/test_e2e_comprehensive.py:99: in test_f24_list
+    assert response.status_code == 200
+E   assert 401 == 200
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="tests.test_e2e_comprehensive.TestF24" name="test_f24_stats" time="0.041"><failure message="assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">tests/test_e2e_comprehensive.py:106: in test_f24_stats
+    assert response.status_code == 200
+E   assert 401 == 200
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="tests.test_e2e_comprehensive.TestFornitori" name="test_fornitori_list" time="0.766" /><testcase classname="tests.test_e2e_comprehensive.TestMagazzino" name="test_magazzino_products" time="0.096"><failure message="assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">tests/test_e2e_comprehensive.py:128: in test_magazzino_products
+    assert response.status_code == 200
+E   assert 401 == 200
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="tests.test_e2e_comprehensive.TestMagazzino" name="test_inventario" time="0.153" /><testcase classname="tests.test_e2e_comprehensive.TestHACCP" name="test_haccp_temperature" time="0.041"><failure message="assert 404 == 200&#10; +  where 404 = &lt;Response [404]&gt;.status_code">tests/test_e2e_comprehensive.py:146: in test_haccp_temperature
+    assert response.status_code == 200
+E   assert 404 == 200
+E    +  where 404 = &lt;Response [404]&gt;.status_code</failure></testcase><testcase classname="tests.test_e2e_comprehensive.TestHACCP" name="test_haccp_sanificazioni" time="0.041"><failure message="assert 404 == 200&#10; +  where 404 = &lt;Response [404]&gt;.status_code">tests/test_e2e_comprehensive.py:153: in test_haccp_sanificazioni
+    assert response.status_code == 200
+E   assert 404 == 200
+E    +  where 404 = &lt;Response [404]&gt;.status_code</failure></testcase><testcase classname="tests.test_e2e_comprehensive.TestScadenze" name="test_scadenze_list" time="0.043"><failure message="assert 404 == 200&#10; +  where 404 = &lt;Response [404]&gt;.status_code">tests/test_e2e_comprehensive.py:164: in test_scadenze_list
+    assert response.status_code == 200
+E   assert 404 == 200
+E    +  where 404 = &lt;Response [404]&gt;.status_code</failure></testcase><testcase classname="tests.test_e2e_comprehensive.TestVerbali" name="test_verbali_list" time="0.039"><failure message="assert 404 == 200&#10; +  where 404 = &lt;Response [404]&gt;.status_code">tests/test_e2e_comprehensive.py:175: in test_verbali_list
+    assert response.status_code == 200
+E   assert 404 == 200
+E    +  where 404 = &lt;Response [404]&gt;.status_code</failure></testcase><testcase classname="tests.test_e2e_comprehensive.TestNotifications" name="test_notifications_list" time="0.150"><failure message="assert 404 == 200&#10; +  where 404 = &lt;Response [404]&gt;.status_code">tests/test_e2e_comprehensive.py:186: in test_notifications_list
+    assert response.status_code == 200
+E   assert 404 == 200
+E    +  where 404 = &lt;Response [404]&gt;.status_code</failure></testcase><testcase classname="tests.test_e2e_comprehensive.TestAutoRepair" name="test_auto_repair_status" time="0.040" /></testsuite></testsuites>
