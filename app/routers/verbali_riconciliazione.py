@@ -939,3 +939,285 @@ async def crea_prima_nota_verbale(numero_verbale: str) -> Dict[str, Any]:
     except Exception as e:
         logger.error(f"Errore creazione Prima Nota verbale: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ===== ENDPOINT GESTIONE PENDING E SCAN EMAIL =====
+
+@router.get("/pending-status")
+async def get_pending_status() -> Dict[str, Any]:
+    """
+    Restituisce lo stato delle cose sospese da completare.
+    
+    Utile per capire quanti verbali hanno bisogno di:
+    - Quietanza di pagamento
+    - PDF allegato
+    - Fattura associata
+    """
+    db = Database.get_db()
+    
+    try:
+        # Conta verbali per stato
+        stati = await db["verbali_noleggio"].aggregate([
+            {"$group": {"_id": "$stato", "count": {"$sum": 1}}}
+        ]).to_list(20)
+        
+        stati_dict = {s["_id"]: s["count"] for s in stati if s["_id"]}
+        
+        # Conta senza quietanza (da pagare)
+        senza_quietanza = await db["verbali_noleggio"].count_documents({
+            "stato": {"$in": ["da_pagare", "DA_PAGARE", "identificato", "fattura_ricevuta"]},
+            "$or": [
+                {"quietanza_ricevuta": {"$exists": False}},
+                {"quietanza_ricevuta": False}
+            ]
+        })
+        
+        # Conta senza PDF
+        senza_pdf = await db["verbali_noleggio"].count_documents({
+            "$or": [
+                {"pdf_data": {"$exists": False}},
+                {"pdf_data": None},
+                {"pdf_data": ""}
+            ]
+        })
+        
+        # Conta senza fattura
+        senza_fattura = await db["verbali_noleggio"].count_documents({
+            "$or": [
+                {"fattura_id": {"$exists": False}},
+                {"fattura_id": None}
+            ]
+        })
+        
+        # Conta senza driver
+        senza_driver = await db["verbali_noleggio"].count_documents({
+            "$or": [
+                {"driver_id": {"$exists": False}},
+                {"driver_id": None}
+            ]
+        })
+        
+        return {
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "totale_verbali": sum(stati_dict.values()),
+            "per_stato": stati_dict,
+            "da_completare": {
+                "senza_quietanza": senza_quietanza,
+                "senza_pdf": senza_pdf,
+                "senza_fattura": senza_fattura,
+                "senza_driver": senza_driver
+            },
+            "priorita_scan": [
+                f"{senza_quietanza} verbali attendono quietanza",
+                f"{senza_pdf} verbali senza PDF allegato",
+                f"{senza_driver} verbali senza driver associato"
+            ]
+        }
+    except Exception as e:
+        logger.error(f"Errore get pending status: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/per-dipendente/{driver_id}")
+async def get_verbali_per_dipendente(driver_id: str) -> Dict[str, Any]:
+    """
+    Restituisce tutti i verbali associati a un dipendente.
+    
+    Per ogni verbale include:
+    - Numero verbale
+    - Targa
+    - Data
+    - Importo
+    - Stato (pagato/da pagare/riconciliato)
+    - Link al PDF (se disponibile)
+    """
+    db = Database.get_db()
+    
+    try:
+        # Cerca verbali per driver_id
+        verbali = await db["verbali_noleggio"].find(
+            {"driver_id": driver_id},
+            {"_id": 0, "pdf_data": 0}  # Esclude PDF per performance
+        ).sort("data_verbale", -1).to_list(500)
+        
+        # Se non trova, cerca per nome driver
+        if not verbali:
+            # Trova il nome del driver
+            dipendente = await db["dipendenti"].find_one({"id": driver_id})
+            if dipendente:
+                nome = f"{dipendente.get('nome', '')} {dipendente.get('cognome', '')}".strip().upper()
+                verbali = await db["verbali_noleggio"].find(
+                    {"$or": [
+                        {"driver": nome},
+                        {"driver_nome": nome}
+                    ]},
+                    {"_id": 0, "pdf_data": 0}
+                ).sort("data_verbale", -1).to_list(500)
+        
+        # Calcola totali
+        totale_importo = sum(v.get("importo") or v.get("importo_rinotifica") or 0 for v in verbali)
+        da_pagare = [v for v in verbali if v.get("stato") in ["da_pagare", "DA_PAGARE", "identificato", "fattura_ricevuta"]]
+        pagati = [v for v in verbali if v.get("stato") in ["pagato", "PAGATO", "riconciliato", "RICONCILIATO"]]
+        
+        totale_da_pagare = sum(v.get("importo") or v.get("importo_rinotifica") or 0 for v in da_pagare)
+        totale_pagati = sum(v.get("importo") or v.get("importo_rinotifica") or 0 for v in pagati)
+        
+        # Aggiungi flag has_pdf per ogni verbale
+        for v in verbali:
+            v["has_pdf"] = bool(v.get("pdf_allegati") or v.get("cartella_email"))
+        
+        return {
+            "driver_id": driver_id,
+            "totale_verbali": len(verbali),
+            "totale_importo": totale_importo,
+            "da_pagare": {
+                "count": len(da_pagare),
+                "importo": totale_da_pagare
+            },
+            "pagati": {
+                "count": len(pagati),
+                "importo": totale_pagati
+            },
+            "verbali": verbali
+        }
+    except Exception as e:
+        logger.error(f"Errore get verbali per dipendente: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/per-targa/{targa}")
+async def get_verbali_per_targa(targa: str) -> Dict[str, Any]:
+    """
+    Restituisce tutti i verbali associati a una targa.
+    """
+    db = Database.get_db()
+    
+    try:
+        verbali = await db["verbali_noleggio"].find(
+            {"targa": targa.upper()},
+            {"_id": 0, "pdf_data": 0}
+        ).sort("data_verbale", -1).to_list(500)
+        
+        totale_importo = sum(v.get("importo") or v.get("importo_rinotifica") or 0 for v in verbali)
+        
+        return {
+            "targa": targa.upper(),
+            "totale_verbali": len(verbali),
+            "totale_importo": totale_importo,
+            "verbali": verbali
+        }
+    except Exception as e:
+        logger.error(f"Errore get verbali per targa: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/{numero_verbale}/pdf")
+async def get_verbale_pdf(numero_verbale: str):
+    """
+    Restituisce il PDF di un verbale specifico.
+    """
+    from fastapi.responses import Response
+    import base64
+    
+    db = Database.get_db()
+    
+    try:
+        verbale = await db["verbali_noleggio"].find_one(
+            {"numero_verbale": numero_verbale},
+            {"pdf_data": 1, "pdf_allegati": 1}
+        )
+        
+        if not verbale:
+            raise HTTPException(status_code=404, detail="Verbale non trovato")
+        
+        pdf_data = verbale.get("pdf_data")
+        
+        if not pdf_data:
+            # Prova a cercare in pdf_allegati
+            pdf_allegati = verbale.get("pdf_allegati", [])
+            if pdf_allegati and isinstance(pdf_allegati, list) and len(pdf_allegati) > 0:
+                pdf_data = pdf_allegati[0].get("data")
+        
+        if not pdf_data:
+            raise HTTPException(status_code=404, detail="PDF non disponibile per questo verbale")
+        
+        # Decodifica base64 se necessario
+        if isinstance(pdf_data, str):
+            pdf_bytes = base64.b64decode(pdf_data)
+        else:
+            pdf_bytes = pdf_data
+        
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f"inline; filename=verbale_{numero_verbale}.pdf"
+            }
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Errore get verbale PDF: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/registra-quietanza/{numero_verbale}")
+async def registra_quietanza(numero_verbale: str, quietanza_data: Dict[str, Any] = None) -> Dict[str, Any]:
+    """
+    Registra una quietanza di pagamento per un verbale.
+    
+    Chiamato quando si trova una quietanza (PayPal, bonifico, ricevuta) nelle email.
+    Aggiorna lo stato del verbale a "pagato" o "riconciliato".
+    """
+    db = Database.get_db()
+    
+    try:
+        verbale = await db["verbali_noleggio"].find_one({"numero_verbale": numero_verbale})
+        
+        if not verbale:
+            raise HTTPException(status_code=404, detail="Verbale non trovato")
+        
+        # Prepara update
+        update_data = {
+            "quietanza_ricevuta": True,
+            "data_quietanza": datetime.now(timezone.utc).isoformat(),
+            "stato_pagamento": "pagato",
+            "updated_at": datetime.now(timezone.utc)
+        }
+        
+        # Se ha fattura, è riconciliato
+        if verbale.get("fattura_id"):
+            update_data["stato"] = "riconciliato"
+            update_data["riconciliato"] = True
+        else:
+            update_data["stato"] = "pagato"
+        
+        # Aggiungi dati quietanza se forniti
+        if quietanza_data:
+            if quietanza_data.get("metodo"):
+                update_data["metodo_pagamento"] = quietanza_data["metodo"]  # PayPal, bonifico, etc.
+            if quietanza_data.get("data_pagamento"):
+                update_data["data_pagamento"] = quietanza_data["data_pagamento"]
+            if quietanza_data.get("riferimento"):
+                update_data["riferimento_pagamento"] = quietanza_data["riferimento"]
+            if quietanza_data.get("pdf_data"):
+                update_data["quietanza_pdf"] = quietanza_data["pdf_data"]
+        
+        await db["verbali_noleggio"].update_one(
+            {"numero_verbale": numero_verbale},
+            {"$set": update_data}
+        )
+        
+        logger.info(f"✅ Quietanza registrata per verbale {numero_verbale}")
+        
+        return {
+            "success": True,
+            "message": f"Quietanza registrata per verbale {numero_verbale}",
+            "nuovo_stato": update_data.get("stato")
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Errore registrazione quietanza: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
