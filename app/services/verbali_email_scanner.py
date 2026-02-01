@@ -469,6 +469,184 @@ class VerbaliEmailScanner:
         
         logger.info(f"✅ Scan completato su {len(folders) if folders else 0} cartelle, trovati {len(nuovi_verbali)} nuovi verbali")
         return nuovi_verbali
+
+    def get_verbale_folders(self) -> List[str]:
+        """
+        Ottiene la lista delle cartelle email che contengono verbali.
+        Pattern: A25*, A26*, B25*, B26*, verbale*, etc.
+        """
+        if not self.connection:
+            return []
+        
+        try:
+            import re
+            status, folders = self.connection.list()
+            
+            verbale_folders = []
+            for folder in folders:
+                folder_str = folder.decode()
+                # Cerca cartelle con pattern verbali
+                if any(p in folder_str for p in ['A24', 'A25', 'A26', 'B24', 'B25', 'B26', 'verbale', 'VERBALE']):
+                    # Estrai nome cartella
+                    match = re.search(r'"([^"]+)"$', folder_str)
+                    if match:
+                        verbale_folders.append(match.group(1))
+            
+            logger.info(f"📁 Trovate {len(verbale_folders)} cartelle verbali")
+            return verbale_folders
+        except Exception as e:
+            logger.warning(f"Errore listing cartelle: {e}")
+            return []
+    
+    async def scan_cartelle_verbali(self) -> List[Dict]:
+        """
+        Scansiona TUTTE le cartelle dedicate ai verbali.
+        Queste cartelle hanno nome = numero verbale (es: A26110181643)
+        """
+        nuovi_verbali = []
+        
+        if not self.connection:
+            return nuovi_verbali
+        
+        verbale_folders = self.get_verbale_folders()
+        
+        for folder_name in verbale_folders:
+            try:
+                # Il nome della cartella è spesso il numero verbale stesso
+                numero_verbale = None
+                import re
+                match = re.search(r'^([ABCDEFGHIJKLMNOPQRSTUVWXYZ]\d{10,12})$', folder_name)
+                if match:
+                    numero_verbale = match.group(1)
+                
+                # Verifica se esiste già nel DB
+                if numero_verbale:
+                    existing = await self.db["verbali_noleggio"].find_one({"numero_verbale": numero_verbale})
+                    if existing:
+                        continue
+                
+                # Seleziona cartella
+                status, _ = self.connection.select(f'"{folder_name}"')
+                if status != "OK":
+                    continue
+                
+                # Cerca email
+                status, messages = self.connection.search(None, "ALL")
+                if status != "OK" or not messages[0]:
+                    continue
+                
+                email_ids = messages[0].split()
+                if not email_ids:
+                    continue
+                
+                # Leggi prima email per ottenere info
+                status, msg_data = self.connection.fetch(email_ids[0], "(RFC822)")
+                if status != "OK":
+                    continue
+                
+                msg = email.message_from_bytes(msg_data[0][1])
+                subject = decode_mime_header(msg.get("Subject", ""))
+                from_addr = decode_mime_header(msg.get("From", ""))
+                date_str = msg.get("Date", "")
+                
+                body = ""
+                if msg.is_multipart():
+                    for part in msg.walk():
+                        if part.get_content_type() == "text/plain":
+                            try:
+                                body = part.get_payload(decode=True).decode('utf-8', errors='replace')
+                            except:
+                                pass
+                        elif part.get_content_type() == "text/html" and not body:
+                            try:
+                                body = part.get_payload(decode=True).decode('utf-8', errors='replace')
+                            except:
+                                pass
+                
+                full_text = f"{subject} {body}"
+                
+                # Estrai numero verbale se non lo abbiamo già
+                if not numero_verbale:
+                    numero_verbale = extract_numero_verbale(full_text)
+                
+                if not numero_verbale:
+                    continue
+                
+                # Verifica ancora se esiste
+                existing = await self.db["verbali_noleggio"].find_one({"numero_verbale": numero_verbale})
+                if existing:
+                    continue
+                
+                # Estrai targa
+                targa = extract_targa(full_text)
+                
+                # Verifica se è pagato (cerca "pagamento eseguito" nelle email della cartella)
+                is_pagato = False
+                for eid in email_ids:
+                    try:
+                        status, msg_data = self.connection.fetch(eid, "(RFC822)")
+                        if status == "OK":
+                            m = email.message_from_bytes(msg_data[0][1])
+                            subj = decode_mime_header(m.get("Subject", "")).lower()
+                            if "pagamento eseguito" in subj or "quietanza" in subj:
+                                is_pagato = True
+                                break
+                    except:
+                        pass
+                
+                # Estrai PDF
+                pdfs = self.extract_pdfs_from_email(msg)
+                pdf_data = None
+                pdf_filename = None
+                for filename, content in pdfs:
+                    if "avviso" in filename.lower() or "verbale" in filename.lower():
+                        pdf_data = base64.b64encode(content).decode('utf-8')
+                        pdf_filename = filename
+                        break
+                
+                # Crea verbale
+                nuovo_verbale = {
+                    "id": str(uuid.uuid4()),
+                    "numero_verbale": numero_verbale,
+                    "targa": targa,
+                    "email_subject": subject,
+                    "email_from": from_addr,
+                    "email_date": date_str,
+                    "cartella_email": folder_name,
+                    "pdf_data": pdf_data,
+                    "pdf_filename": pdf_filename,
+                    "stato": "pagato" if is_pagato else ("da_pagare" if pdf_data else "da_scaricare"),
+                    "quietanza_ricevuta": is_pagato,
+                    "source": "email_folder_scan",
+                    "created_at": datetime.now(timezone.utc)
+                }
+                
+                # Trova driver se abbiamo la targa
+                if targa:
+                    veicolo = await self.db["veicoli_noleggio"].find_one({"targa": targa.upper()})
+                    if veicolo:
+                        nuovo_verbale["veicolo_id"] = veicolo.get("id")
+                        nuovo_verbale["driver"] = veicolo.get("driver")
+                        nuovo_verbale["driver_nome"] = veicolo.get("driver")
+                        nuovo_verbale["driver_id"] = veicolo.get("driver_id")
+                        nuovo_verbale["marca"] = veicolo.get("marca")
+                        nuovo_verbale["modello"] = veicolo.get("modello")
+                        nuovo_verbale["contratto"] = veicolo.get("contratto")
+                        if not is_pagato:
+                            nuovo_verbale["stato"] = "identificato"
+                
+                # Salva
+                await self.db["verbali_noleggio"].insert_one(nuovo_verbale.copy())
+                nuovi_verbali.append(nuovo_verbale)
+                self.stats["fase2_verbali_nuovi"] += 1
+                logger.info(f"📁 Verbale da cartella: {numero_verbale} - Targa: {targa} - Stato: {nuovo_verbale['stato']}")
+                
+            except Exception as e:
+                logger.warning(f"Errore scan cartella {folder_name}: {e}")
+                continue
+        
+        return nuovi_verbali
+
     
     async def scan_completo_priorita(self, folder: str = "INBOX", days_back: int = 365) -> Dict[str, Any]:
         """
