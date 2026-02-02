@@ -19,6 +19,7 @@ const TIPI_DOCUMENTO = [
   { id: 'fattura', label: 'Fatture XML', color: '#ec4899', desc: 'Fatture SDI con integrazione Magazzino+Prima Nota+Scadenziario', extension: '.xml,.zip', endpoint: '/api/fatture-ricevute/import-xml', endpointMulti: '/api/fatture-ricevute/import-xml-multipli', endpointZip: '/api/fatture-ricevute/import-zip', hasIntegration: true },
   { id: 'estratto_conto_pdf', label: 'Estratto Conto PDF', color: '#10b981', desc: 'PDF da banca con ANTEPRIMA', extension: '.pdf,.zip', endpoint: '/api/bank-statement-bulk/parse-bulk', hasPreview: true },
   { id: 'estratto_conto', label: 'Estratto Conto Excel/CSV', color: '#059669', desc: 'Excel/CSV da banca', extension: '.xlsx,.xls,.csv,.zip', endpoint: '/api/estratto-conto-movimenti/import' },
+  { id: 'paypal', label: 'Estratto PayPal', color: '#0070ba', desc: 'Estratto conto PayPal CSV/PDF - Riconcilia fatture', extension: '.csv,.pdf,.zip', endpoint: '/api/fatture-ricevute/import-paypal', isNew: true },
   { id: 'f24', label: 'F24', color: '#ef4444', desc: 'Modelli F24 da pagare', extension: '.pdf,.zip', endpoint: '/api/f24/upload-pdf' },
   { id: 'quietanza_f24', label: 'Quietanza F24', color: '#f59e0b', desc: 'Ricevute pagamento F24', extension: '.pdf,.zip', endpoint: '/api/quietanze-f24/upload' },
   { id: 'cedolino', label: 'Buste Paga', color: '#8b5cf6', desc: 'Cedolini e Libro Unico', extension: '.pdf,.zip', endpoint: '/api/employees/paghe/upload-pdf' },
