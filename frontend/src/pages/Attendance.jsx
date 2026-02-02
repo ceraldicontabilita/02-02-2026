@@ -557,6 +557,8 @@ export default function Attendance() {
   const [selectedStato, setSelectedStato] = useState(null); // Stato selezionato per inserimento rapido
   const [multiSelectMode, setMultiSelectMode] = useState(false);
   const [selectedCells, setSelectedCells] = useState(new Set()); // Celle selezionate
+  const [rangeStart, setRangeStart] = useState(null); // Inizio selezione range
+  const [rangeSelectMode, setRangeSelectMode] = useState(false); // Modalità selezione range
   
   // Note presenze (protocolli malattia, etc.)
   const [notePresenze, setNotePresenze] = useState({}); // { "employeeId_YYYY-MM-DD": { protocollo: "xxx", note: "..." } }
