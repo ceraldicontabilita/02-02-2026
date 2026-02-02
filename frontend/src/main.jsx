@@ -108,6 +108,7 @@ const PrevisioniAcquisti = lazy(() => import("./pages/PrevisioniAcquisti.jsx"));
 // === BANCA & PAGAMENTI ===
 const PrimaNota = lazy(() => import("./pages/PrimaNota.jsx"));
 const RiconciliazioneUnificata = lazy(() => import("./pages/RiconciliazioneUnificata.jsx"));
+const RiconciliazionePaypal = lazy(() => import("./pages/RiconciliazionePaypal.jsx"));
 const GestioneAssegni = lazy(() => import("./pages/GestioneAssegni.jsx"));
 const ArchivioBonifici = lazy(() => import("./pages/ArchivioBonifici.jsx"));
 
