@@ -91,6 +91,9 @@ function TurniSection({ employees, currentMonth, currentYear }) {
   const [employeeDetails, setEmployeeDetails] = useState(null);
   const [showAddEmployee, setShowAddEmployee] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [editingOre, setEditingOre] = useState(false);
+  const [tempOreSettimanali, setTempOreSettimanali] = useState(null);
+  const [savingOre, setSavingOre] = useState(false);
 
   // Carica turni salvati
   useEffect(() => {
