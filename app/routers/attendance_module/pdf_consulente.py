@@ -297,7 +297,7 @@ async def genera_pdf_consulente(data: Dict[str, Any]):
     # Legenda
     elements.append(Spacer(1, 10*mm))
     legenda = Paragraph(
-        "<b>Legenda:</b> P=Presente, F=Ferie, M=Malattia, PE=Permesso, R=ROL, SW=Smart Working, T=Trasferta, A=Assente",
+        "<b>Legenda:</b> P=Presente, F=Ferie, M=Malattia, PE=Permesso, R=ROL, CH=Chiuso, RS=Riposo Sett., T=Trasferta, A=Assente, X=Cessato",
         ParagraphStyle("Legenda", fontSize=8, textColor=colors.grey)
     )
     elements.append(legenda)
