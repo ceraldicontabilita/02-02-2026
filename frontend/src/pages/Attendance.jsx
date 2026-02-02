@@ -603,7 +603,8 @@ export default function Attendance() {
     return {
       day: i + 1,
       dayOfWeek: date.getDay(),
-      isWeekend: date.getDay() === 0 || date.getDay() === 6,
+      isWeekend: date.getDay() === 0, // Solo domenica è weekend (sabato lavorativo)
+      isSabato: date.getDay() === 6, // Sabato è lavorativo ma evidenziato
       dateStr: `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(i + 1).padStart(2, '0')}`
     };
   });
