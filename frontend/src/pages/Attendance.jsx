@@ -1253,22 +1253,41 @@ export default function Attendance() {
             ))}
             
             {multiSelectMode && (
-              <button
-                onClick={() => { setSelectedStato(null); setMultiSelectMode(false); }}
-                style={{
-                  padding: '6px 12px',
-                  background: '#ef4444',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: 6,
-                  cursor: 'pointer',
-                  fontWeight: 600,
-                  fontSize: 11,
-                  marginLeft: 'auto'
-                }}
-              >
-                ✕ Disattiva
-              </button>
+              <>
+                <div style={{ 
+                  padding: '6px 12px', 
+                  background: '#fef3c7', 
+                  borderRadius: 6, 
+                  fontSize: 11, 
+                  color: '#92400e',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4
+                }}>
+                  💡 SHIFT+Click per range
+                  {rangeStart && (
+                    <span style={{ fontWeight: 'bold' }}>
+                      (dal giorno {rangeStart.split('-')[2]})
+                    </span>
+                  )}
+                </div>
+                <button
+                  onClick={() => { setSelectedStato(null); setMultiSelectMode(false); setRangeStart(null); }}
+                  style={{
+                    padding: '6px 12px',
+                    background: '#ef4444',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: 6,
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                    fontSize: 11,
+                    marginLeft: 'auto'
+                  }}
+                >
+                  ✕ Disattiva
+                </button>
+              </>
             )}
             
             {/* Pulsante PDF */}
