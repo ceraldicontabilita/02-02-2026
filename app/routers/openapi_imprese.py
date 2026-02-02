@@ -231,7 +231,7 @@ async def cerca_azienda(
     if not api_token:
         raise HTTPException(status_code=400, detail="Token OpenAPI non fornito")
     
-    client = OpenAPIImprese(api_token)
+    client = OpenAPIImprese(api_token, sandbox=OPENAPI_USE_SANDBOX)
     result = await client.search_by_name(query)
     
     if result.get("success"):
