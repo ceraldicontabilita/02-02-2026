@@ -117,10 +117,38 @@ function TurniSection({ employees, currentMonth, currentYear }) {
       setLoading(true);
       const res = await api.get(`/api/employees/${empId}`);
       setEmployeeDetails(res.data);
+      setTempOreSettimanali(res.data.ore_settimanali || res.data.contratto?.ore_settimanali || 40);
+      setEditingOre(false);
     } catch (error) {
       console.error('Errore caricamento dettagli:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Salva ore settimanali
+  const saveOreSettimanali = async () => {
+    if (!selectedEmployee || tempOreSettimanali === null) return;
+    
+    try {
+      setSavingOre(true);
+      await api.put(`/api/employees/${selectedEmployee.id}`, {
+        ore_settimanali: parseInt(tempOreSettimanali)
+      });
+      
+      // Aggiorna i dettagli locali
+      setEmployeeDetails(prev => ({
+        ...prev,
+        ore_settimanali: parseInt(tempOreSettimanali)
+      }));
+      
+      setEditingOre(false);
+      toast.success(`Ore settimanali aggiornate a ${tempOreSettimanali}h`);
+    } catch (error) {
+      console.error('Errore salvataggio ore:', error);
+      toast.error('Errore nel salvataggio delle ore settimanali');
+    } finally {
+      setSavingOre(false);
     }
   };
 
