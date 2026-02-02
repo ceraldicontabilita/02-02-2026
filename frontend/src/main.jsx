@@ -249,6 +249,7 @@ const router = createBrowserRouter([
       { path: "riconciliazione/:tab", element: <LazyPage><RiconciliazioneUnificata /></LazyPage> },
       { path: "riconciliazione/:tab/:id", element: <LazyPage><RiconciliazioneUnificata /></LazyPage> },
       { path: "riconciliazione-intelligente", element: <Navigate to="/riconciliazione" replace /> },
+      { path: "riconciliazione-paypal", element: <LazyPage><RiconciliazionePaypal /></LazyPage> },
       { path: "gestione-assegni", element: <LazyPage><GestioneAssegni /></LazyPage> },
       { path: "gestione-assegni/:stato", element: <LazyPage><GestioneAssegni /></LazyPage> },
       { path: "archivio-bonifici", element: <LazyPage><ArchivioBonifici /></LazyPage> },
