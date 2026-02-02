@@ -1,6 +1,6 @@
 # Application ERP/Accounting - PRD
 
-## Stato: 1 Febbraio 2026 - Aggiornato
+## Stato: 2 Febbraio 2026 - Aggiornato
 
 ---
 
@@ -10,12 +10,40 @@
 | Frontend | React 18.3, Vite, Tailwind, Shadcn/UI |
 | Backend | FastAPI 0.110, Python, Pydantic 2.12 |
 | Database | MongoDB Atlas |
-| Integrazioni | Odoo, Claude Sonnet, OpenAPI.it, pypdf |
+| Integrazioni | Odoo, Claude Sonnet, OpenAPI.it, pypdf, PayPal |
 | Scheduler | APScheduler (HACCP, Email, Verbali) |
 
 ---
 
 ## Completato ✅
+
+### Riconciliazione PayPal - COMPLETATO (2 Feb 2026)
+Implementata riconciliazione automatica tra pagamenti PayPal e fatture ricevute.
+
+**Funzionalità:**
+- Parsing estratti conto PayPal (CSV/PDF)
+- Matching automatico pagamenti ↔ fatture per importo e fornitore
+- Aggiornamento metodo pagamento a "PayPal"
+- Creazione movimenti in Prima Nota Banca
+- UI dedicata: `/riconciliazione-paypal`
+
+**Endpoint:**
+- `POST /api/fatture-ricevute/riconcilia-paypal` - Esegue riconciliazione
+- `GET /api/fatture-ricevute/lista-paypal` - Lista fatture PayPal
+
+**Risultati:**
+- 23 fatture riconciliate
+- €3.492,02 totale pagamenti PayPal
+- 8 servizi senza fattura (Spotify, Adobe, etc.)
+
+### Presenze Default "Presente" - COMPLETATO (2 Feb 2026)
+Aggiunto bottone "Tutti Presenti" nella pagina Attendance.
+
+**Funzionalità:**
+- Un click imposta tutti i giorni lavorativi come "Presente"
+- Salta automaticamente weekend
+- Salta giorni con stato già assegnato
+- Endpoint: `POST /api/attendance/imposta-tutti-presenti`
 
 ### Scheduler Email Verbali - COMPLETATO (1 Feb 2026)
 Lo scan automatico delle email per verbali è ora schedulato:
