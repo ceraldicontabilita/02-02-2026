@@ -620,17 +620,3 @@ async def rimuovi_turno(
     })
     
     return {"message": "Turno rimosso"}
-
-            )
-            count_inseriti += 1
-    
-    return {
-        "success": True,
-        "message": f"Presenze impostate: {count_inseriti} giorni, {count_saltati} saltati",
-        "inseriti": count_inseriti,
-        "saltati": count_saltati,
-        "dipendenti": len(employees),
-        "anno": anno,
-        "mese": mese
-    }
-
