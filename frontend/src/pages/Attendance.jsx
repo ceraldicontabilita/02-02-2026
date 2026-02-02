@@ -629,6 +629,63 @@ export default function Attendance() {
             <span style={{ fontSize: 12, fontWeight: 600, color: '#374151', marginRight: 4 }}>
               ⚡ Selezione Rapida:
             </span>
+            
+            {/* Bottone Tutti Presenti */}
+            <button
+              onClick={async () => {
+                if (!confirm('Vuoi impostare TUTTI i giorni lavorativi come "Presente" per tutti i dipendenti? Potrai poi modificare singolarmente.')) return;
+                
+                toast.info('Impostazione presenze in corso...');
+                let count = 0;
+                
+                for (const emp of employees) {
+                  for (const day of days) {
+                    if (day.isWeekend) continue; // Salta weekend
+                    
+                    const key = `${emp.id}_${day.dateStr}`;
+                    const currentState = presenze[key];
+                    
+                    // Salta se già ha uno stato diverso da vuoto/riposo
+                    if (currentState && currentState !== 'riposo') continue;
+                    
+                    setPresenze(prev => ({ ...prev, [key]: 'presente' }));
+                    count++;
+                  }
+                }
+                
+                // Salva tutto in batch
+                try {
+                  await api.post('/api/attendance/imposta-tutti-presenti', {
+                    anno: currentYear,
+                    mese: currentMonth + 1,
+                    employees: employees.map(e => e.id)
+                  });
+                  toast.success(`✅ ${count} giorni impostati come "Presente"`);
+                } catch (err) {
+                  console.error('Errore batch:', err);
+                  toast.warning('Presenze impostate localmente, alcune potrebbero non essere salvate');
+                }
+              }}
+              style={{
+                padding: '6px 12px',
+                background: '#22c55e',
+                color: 'white',
+                border: 'none',
+                borderRadius: 6,
+                cursor: 'pointer',
+                fontWeight: 600,
+                fontSize: 11,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4
+              }}
+              data-testid="btn-tutti-presenti"
+            >
+              ✓ Tutti Presenti
+            </button>
+            
+            <div style={{ width: 1, height: 24, background: '#d1d5db', margin: '0 4px' }} />
+            
             {Object.entries(STATI_PRESENZA).filter(([key]) => key !== 'riposo').map(([key, config]) => (
               <button
                 key={key}
