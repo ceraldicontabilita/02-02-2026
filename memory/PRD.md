@@ -17,6 +17,29 @@
 
 ## Completato ✅
 
+### Logica Contratti Scaduti - COMPLETATO (2 Feb 2026)
+Implementata la gestione automatica del ciclo di vita dei dipendenti con contratto scaduto.
+
+**Funzionalità:**
+- I dipendenti con `data_fine_contratto` mostrano "X" (Cessato) per i giorni successivi
+- I dipendenti non appaiono più nella lista nei mesi successivi alla scadenza
+- Lo stato "Cessato" non è modificabile (celle disabilitate)
+
+**Funzioni Frontend:**
+- `isDipendenteCessato(employee, dateStr)` - Verifica se cessato in una data
+- `isDipendenteVisibileNelMese(employee, anno, mese)` - Filtra dipendenti per mese
+
+**Testato con:** Emanuele Moscato (contratto 17/01/2026) - ✅ PASS
+
+### Ore Settimanali per Dipendente - COMPLETATO (2 Feb 2026)
+Aggiunta possibilità di modificare le ore settimanali nella sezione Turni.
+
+**Funzionalità:**
+- Sezione "Dettagli Contratto" visibile cliccando su un dipendente nei turni
+- Mostra: Ore Settimanali, Tipo Contratto, Livello, Mansione
+- Modifica inline cliccando su "✏️ modifica"
+- Salvataggio immediato via `PUT /api/dipendenti/{id}`
+
 ### Riconciliazione PayPal - COMPLETATO (2 Feb 2026)
 Implementata riconciliazione automatica tra pagamenti PayPal e fatture ricevute.
 
