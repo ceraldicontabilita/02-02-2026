@@ -1491,6 +1491,43 @@ export default function Fornitori() {
               🔄 {loading ? 'Caricamento...' : 'Aggiorna'}
             </button>
             <button 
+              onClick={async () => {
+                if (!window.confirm('Vuoi aggiornare tutti i fornitori con i dati della Camera di Commercio?')) return;
+                try {
+                  const res = await api.get('/api/openapi-imprese/fornitori-da-aggiornare?limit=50');
+                  if (res.data.count === 0) {
+                    alert('Tutti i fornitori sono già aggiornati!');
+                    return;
+                  }
+                  const partiteIva = res.data.fornitori.map(f => f.partita_iva).filter(Boolean);
+                  if (partiteIva.length === 0) {
+                    alert('Nessun fornitore con P.IVA valida da aggiornare');
+                    return;
+                  }
+                  const bulkRes = await api.post('/api/openapi-imprese/aggiorna-bulk', { partite_iva: partiteIva });
+                  alert(`Aggiornati: ${bulkRes.data.aggiornati}\nCreati: ${bulkRes.data.creati}\nErrori: ${bulkRes.data.errori}`);
+                  loadFornitori();
+                } catch (err) {
+                  alert('Errore: ' + (err.response?.data?.detail || err.message));
+                }
+              }}
+              style={{ 
+                padding: '10px 20px',
+                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: 8,
+                cursor: 'pointer',
+                fontWeight: '600',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6
+              }}
+              data-testid="btn-aggiorna-openapi-bulk"
+            >
+              <RefreshCw size={18} /> Aggiorna da OpenAPI
+            </button>
+            <button 
               onClick={() => { setCurrentSupplier(null); setModalOpen(true); }}
               style={{ 
                 padding: '10px 20px',
