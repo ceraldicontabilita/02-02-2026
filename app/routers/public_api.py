@@ -597,12 +597,27 @@ async def create_order(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
 # ============== ASSEGNI ==============
 
 @router.get("/assegni")
-async def list_assegni(skip: int = 0, limit: int = 10000) -> List[Dict[str, Any]]:
-    """Lista assegni (esclusi soft-deleted)."""
+async def list_assegni(
+    skip: int = 0, 
+    limit: int = 10000,
+    anno: int = None
+) -> List[Dict[str, Any]]:
+    """Lista assegni (esclusi soft-deleted), filtrabili per anno."""
     db = Database.get_db()
     # Filtra assegni eliminati (soft-delete)
     query = {"entity_status": {"$ne": "deleted"}}
-    return await db["assegni"].find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
+    
+    # Filtro per anno basato su data_emissione o created_at
+    if anno:
+        query["$or"] = [
+            {"data_emissione": {"$regex": f"^{anno}"}},
+            {"created_at": {"$regex": f"^{anno}"}},
+            {"data": {"$regex": f"^{anno}"}},
+            # Per assegni senza data, usa il numero (se inizia con prefisso anno)
+            {"numero_assegno": {"$regex": f"^{anno}"}}
+        ]
+    
+    return await db["assegni"].find(query, {"_id": 0}).sort("numero_assegno", -1).skip(skip).limit(limit).to_list(limit)
 
 
 @router.post("/assegni")
