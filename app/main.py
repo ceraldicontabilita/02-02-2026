@@ -162,6 +162,9 @@ from app.routers.reports import (
     report_pdf, exports, simple_exports, analytics, dashboard
 )
 
+# --- OpenAPI Imprese Integration ---
+from app.routers import openapi_imprese
+
 # --- Core Routers (non modulari) ---
 from app.routers import (
     auth, cash, chart_of_accounts, notifications,
