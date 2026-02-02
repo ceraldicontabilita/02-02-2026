@@ -286,7 +286,7 @@ async def chat_with_claude(request: ChatRequest):
     
     try:
         # Recupera contesto dal database
-        context_data = await get_context_data(request.context_type)
+        context_data = await get_context_data(request.context_type, user_query=request.message)
         
         # Prepara il messaggio con contesto
         context_info = ""
