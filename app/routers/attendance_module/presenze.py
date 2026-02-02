@@ -483,3 +483,76 @@ async def get_storico_ore(
         "storico": storico,
         "totale_anno": sum(m["ore_totali"] for m in storico)
     }
+
+
+@router.post("/imposta-tutti-presenti")
+async def imposta_tutti_presenti(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Imposta tutti i giorni lavorativi come 'presente' per tutti i dipendenti.
+    Salta weekend e giorni che hanno già uno stato diverso da vuoto/riposo.
+    """
+    db = Database.get_db()
+    
+    anno = payload.get("anno", datetime.now().year)
+    mese = payload.get("mese", datetime.now().month)
+    employees = payload.get("employees", [])
+    
+    if not employees:
+        # Recupera tutti i dipendenti attivi
+        emps = await db["employees"].find(
+            {"$or": [{"in_carico": True}, {"in_carico": {"$exists": False}}]},
+            {"id": 1}
+        ).to_list(500)
+        employees = [e["id"] for e in emps]
+    
+    # Genera tutti i giorni del mese
+    from calendar import monthrange
+    _, num_giorni = monthrange(anno, mese)
+    
+    count_inseriti = 0
+    count_saltati = 0
+    
+    for emp_id in employees:
+        for giorno in range(1, num_giorni + 1):
+            data_str = f"{anno}-{mese:02d}-{giorno:02d}"
+            
+            # Verifica se è weekend
+            data_obj = datetime(anno, mese, giorno)
+            if data_obj.weekday() >= 5:  # 5=Sabato, 6=Domenica
+                count_saltati += 1
+                continue
+            
+            # Verifica se esiste già una presenza
+            existing = await db["attendance_presenze_calendario"].find_one({
+                "employee_id": emp_id,
+                "data": data_str
+            })
+            
+            if existing and existing.get("stato") not in [None, "", "riposo"]:
+                count_saltati += 1
+                continue
+            
+            # Inserisci/aggiorna come presente
+            await db["attendance_presenze_calendario"].update_one(
+                {"employee_id": emp_id, "data": data_str},
+                {"$set": {
+                    "employee_id": emp_id,
+                    "data": data_str,
+                    "stato": "presente",
+                    "updated_at": datetime.now(timezone.utc),
+                    "auto_inserted": True
+                }},
+                upsert=True
+            )
+            count_inseriti += 1
+    
+    return {
+        "success": True,
+        "message": f"Presenze impostate: {count_inseriti} giorni, {count_saltati} saltati",
+        "inseriti": count_inseriti,
+        "saltati": count_saltati,
+        "dipendenti": len(employees),
+        "anno": anno,
+        "mese": mese
+    }
+
