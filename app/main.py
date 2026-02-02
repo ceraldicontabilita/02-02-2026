@@ -201,6 +201,7 @@ from app.routers import learning_machine_cdc  # Learning Machine CDC - Classific
 from app.routers import magazzino_avanzato  # Magazzino Avanzato - Categorie merceologiche e lotti
 from app.routers import riconciliazione_intelligente_api  # Riconciliazione Intelligente - Conferma Pagamenti
 from app.routers import attendance  # Gestione Presenze Dipendenti (legacy)
+from app.routers.attendance_module import presenze as attendance_presenze  # Presenze calendario
 from app.routers import inserimento_rapido  # Inserimento Rapido - Mobile
 from app.routers import email_mongodb  # Email to MongoDB - Download email su Atlas
 from app.routers import documenti_non_associati  # Gestione documenti non associati
