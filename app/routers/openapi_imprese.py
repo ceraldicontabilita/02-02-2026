@@ -50,20 +50,22 @@ async def check_api_status() -> Dict[str, Any]:
             "message": "Token OpenAPI non configurato. Imposta OPENAPI_IMPRESE_TOKEN in .env"
         }
     
-    # Test con una P.IVA di esempio (OpenAPI stessa)
-    client = OpenAPIImprese(token)
+    # Test con una P.IVA di esempio (OpenAPI stessa) - usa sandbox se configurato
+    client = OpenAPIImprese(token, sandbox=OPENAPI_USE_SANDBOX)
     result = await client.get_base_info("12485671007")
     
     if result.get("success"):
         return {
             "configured": True,
             "status": "OK",
+            "mode": "sandbox" if OPENAPI_USE_SANDBOX else "production",
             "test_result": "Connessione API verificata"
         }
     else:
         return {
             "configured": True,
             "status": "ERROR",
+            "mode": "sandbox" if OPENAPI_USE_SANDBOX else "production",
             "error": result.get("error", "Errore sconosciuto")
         }
 
