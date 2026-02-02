@@ -10,12 +10,37 @@
 | Frontend | React 18.3, Vite, Tailwind, Shadcn/UI |
 | Backend | FastAPI 0.110, Python, Pydantic 2.12 |
 | Database | MongoDB Atlas |
-| Integrazioni | Odoo, Claude Sonnet, OpenAPI.it, pypdf, PayPal |
+| Integrazioni | Odoo, Claude Sonnet, OpenAPI.it, OpenAPI Company, pypdf, PayPal |
 | Scheduler | APScheduler (HACCP, Email, Verbali) |
 
 ---
 
 ## Completato ✅
+
+### OpenAPI Company - Visure Aziendali - COMPLETATO (2 Feb 2026)
+Integrazione completa con l'API OpenAPI.com Company per recuperare dati aziendali.
+
+**Funzionalità:**
+- Ricerca aziende per Partita IVA (dati completi: sede, PEC, SDI, ATECO, fatturato, dipendenti)
+- Pagina dedicata `/visure` con interfaccia intuitiva
+- Bottone "Auto" nella modale fornitore per caricare dati automaticamente
+- Salvataggio diretto in anagrafica fornitori
+
+**Endpoint Backend:**
+- `GET /api/openapi-imprese/status` - Verifica connessione API
+- `GET /api/openapi-imprese/info/{piva}` - Info azienda (start/advanced/full)
+- `GET /api/openapi-imprese/pec/{piva}` - PEC azienda
+- `GET /api/openapi-imprese/sdi/{piva}` - Codice SDI
+- `GET /api/openapi-imprese/cerca` - Ricerca per nome
+- `POST /api/openapi-imprese/aggiorna-fornitore` - Aggiorna/crea fornitore
+- `POST /api/openapi-imprese/aggiorna-bulk` - Aggiornamento massivo
+
+**File:**
+- `/app/app/services/openapi_company.py` - Client API
+- `/app/app/routers/openapi_imprese.py` - Router endpoint
+- `/app/frontend/src/pages/Visure.jsx` - Pagina frontend
+
+**Token configurato:** `OPENAPI_COMPANY_TOKEN` in `.env`
 
 ### Logica Contratti Scaduti - COMPLETATO (2 Feb 2026)
 Implementata la gestione automatica del ciclo di vita dei dipendenti con contratto scaduto.
