@@ -264,6 +264,7 @@ app.include_router(riconciliazione_intelligente_api.router, prefix="/api/riconci
 
 # --- Attendance Module ---
 app.include_router(attendance.router, prefix="/api/attendance", tags=["Attendance"])
+app.include_router(attendance_presenze.router, prefix="/api/attendance", tags=["Attendance Presenze"])
 
 # --- To-Do Module ---
 app.include_router(todo.router, prefix="/api/todo", tags=["To-Do"])
