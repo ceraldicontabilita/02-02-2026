@@ -17,6 +17,22 @@
 
 ## Completato ✅
 
+### Gestione Assegni - Filtro Anno e Ordinamento - COMPLETATO (2 Feb 2026)
+- Ordinamento assegni per numero decrescente (dal più recente al più vecchio)
+- Filtro per anno selezionato (2024-2026)
+- Backend: `GET /api/assegni?anno=2025`
+
+### Assistente AI - Query Specifiche - COMPLETATO (2 Feb 2026)
+- L'assistente ora risponde correttamente a domande specifiche come "Quante fatture mese gennaio 2026?"
+- Recupera dati reali dal database MongoDB
+- Supporta query su: fatture, corrispettivi, dipendenti per periodo
+- Risposta esempio: "Nel mese di gennaio 2026 sono state registrate 35 fatture per €6.623,65"
+
+### Fornitori - Aggiornamento Bulk OpenAPI - COMPLETATO (2 Feb 2026)
+- Nuovo bottone "Aggiorna da OpenAPI" nella toolbar fornitori
+- Aggiorna tutti i fornitori con P.IVA valida in un click
+- Recupera: ragione sociale, indirizzo, PEC, SDI, ATECO
+
 ### OpenAPI Company - Visure Aziendali - COMPLETATO (2 Feb 2026)
 Integrazione completa con l'API OpenAPI.com Company per recuperare dati aziendali.
 
