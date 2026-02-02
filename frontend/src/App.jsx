@@ -166,6 +166,7 @@ const NAV_ITEMS = [
     isSubmenu: true,
     children: [
       { to: "/import-documenti", label: "📥 Import Documenti", icon: "📥", isNew: true, highlight: true },
+      { to: "/visure", label: "🔍 Visure Aziendali", icon: "🔍", isNew: true },
       { to: "/correzione-ai", label: "✏️ Correzione Dati AI", icon: "✏️" },
       { to: "/da-rivedere", label: "⚠️ Da Rivedere", icon: "⚠️" },
       { to: "/documenti", label: "Documenti Email", icon: "📨" },
