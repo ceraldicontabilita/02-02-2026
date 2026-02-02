@@ -410,10 +410,89 @@ function TurniSection({ employees, currentMonth, currentYear }) {
                   
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
                     <div>
-                      <div style={{ fontSize: 12, color: '#6b7280' }}>Ore Settimanali</div>
-                      <div style={{ fontSize: 20, fontWeight: 'bold', color: '#22c55e' }}>
-                        {employeeDetails.ore_settimanali || employeeDetails.contratto?.ore_settimanali || '40'}h
-                      </div>
+                      <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 4 }}>Ore Settimanali</div>
+                      {editingOre ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <input
+                            type="number"
+                            value={tempOreSettimanali}
+                            onChange={(e) => setTempOreSettimanali(e.target.value)}
+                            min="1"
+                            max="60"
+                            style={{
+                              width: 70,
+                              padding: '8px 10px',
+                              border: '2px solid #22c55e',
+                              borderRadius: 8,
+                              fontSize: 18,
+                              fontWeight: 'bold',
+                              textAlign: 'center',
+                              color: '#22c55e'
+                            }}
+                            data-testid="input-ore-settimanali"
+                          />
+                          <button
+                            onClick={saveOreSettimanali}
+                            disabled={savingOre}
+                            style={{
+                              padding: '6px 12px',
+                              background: '#22c55e',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: 6,
+                              cursor: savingOre ? 'wait' : 'pointer',
+                              fontWeight: 600,
+                              fontSize: 12
+                            }}
+                            data-testid="btn-save-ore"
+                          >
+                            {savingOre ? '...' : '✓'}
+                          </button>
+                          <button
+                            onClick={() => {
+                              setEditingOre(false);
+                              setTempOreSettimanali(employeeDetails.ore_settimanali || 40);
+                            }}
+                            style={{
+                              padding: '6px 12px',
+                              background: '#f3f4f6',
+                              color: '#6b7280',
+                              border: '1px solid #d1d5db',
+                              borderRadius: 6,
+                              cursor: 'pointer',
+                              fontWeight: 600,
+                              fontSize: 12
+                            }}
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ) : (
+                        <div 
+                          onClick={() => setEditingOre(true)}
+                          style={{ 
+                            fontSize: 20, 
+                            fontWeight: 'bold', 
+                            color: '#22c55e',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 8
+                          }}
+                          title="Clicca per modificare"
+                          data-testid="display-ore-settimanali"
+                        >
+                          {employeeDetails.ore_settimanali || employeeDetails.contratto?.ore_settimanali || '40'}h
+                          <span style={{ 
+                            fontSize: 12, 
+                            color: '#9ca3af', 
+                            fontWeight: 'normal',
+                            padding: '2px 6px',
+                            background: '#f3f4f6',
+                            borderRadius: 4
+                          }}>✏️ modifica</span>
+                        </div>
+                      )}
                     </div>
                     <div>
                       <div style={{ fontSize: 12, color: '#6b7280' }}>Tipo Contratto</div>
