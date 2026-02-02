@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 # Token da environment o passato direttamente
 OPENAPI_TOKEN = os.environ.get("OPENAPI_IMPRESE_TOKEN", "")
+OPENAPI_USE_SANDBOX = os.environ.get("OPENAPI_IT_ENV", "sandbox") == "sandbox"
 
 
 class UpdateFornitoreRequest(BaseModel):
