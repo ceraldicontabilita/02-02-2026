@@ -106,7 +106,7 @@ async def aggiorna_fornitore(
     })
     
     # Chiama OpenAPI
-    client = OpenAPIImprese(api_token)
+    client = OpenAPIImprese(api_token, sandbox=OPENAPI_USE_SANDBOX)
     result = await client.get_advance_info(piva)
     
     if not result.get("success"):
