@@ -261,7 +261,7 @@ async def get_info_azienda(
         raise HTTPException(status_code=400, detail="Token OpenAPI non fornito")
     
     piva = partita_iva.strip().replace(" ", "")
-    client = OpenAPIImprese(api_token)
+    client = OpenAPIImprese(api_token, sandbox=OPENAPI_USE_SANDBOX)
     
     if tipo == "base":
         result = await client.get_base_info(piva)
