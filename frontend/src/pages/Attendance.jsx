@@ -940,6 +940,15 @@ export default function Attendance() {
         </div>
       )}
 
+      {/* Tab Gestione Turni */}
+      {activeTab === 'turni' && (
+        <TurniSection 
+          employees={employees} 
+          currentMonth={currentMonth}
+          currentYear={currentYear}
+        />
+      )}
+
       {/* Tab Richieste */}
       {activeTab === 'richieste' && (
         <div style={{ 
