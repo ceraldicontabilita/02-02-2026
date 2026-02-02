@@ -23,7 +23,7 @@ from .pagamento import (
     paga_fattura_manuale, cambia_metodo_pagamento_fattura,
     riconcilia_fattura_con_estratto_conto, verifica_incoerenze_estratto_conto,
     aggiorna_metodi_pagamento_da_fornitori, riconcilia_fatture_paypal,
-    auto_ricostruisci_dati, lista_fatture_paypal
+    auto_ricostruisci_dati, lista_fatture_paypal, import_paypal_file
 )
 
 # === ROTTE STATICHE (devono venire PRIMA delle dinamiche) ===
