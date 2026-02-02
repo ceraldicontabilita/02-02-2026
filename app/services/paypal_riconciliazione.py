@@ -230,11 +230,38 @@ async def riconcilia_pagamenti_paypal(
                     {"$set": update_data}
                 )
                 
-                # Se era già pagata con altro metodo, segna come aggiornamento metodo
-                if best_match.get("pagato"):
-                    risultato["aggiornati_metodo"] += 1
-                else:
+                # Crea movimento in Prima Nota Banca se non già pagata
+                if not best_match.get("pagato"):
+                    import uuid
+                    movimento_id = str(uuid.uuid4())
+                    data_mov = data_pag.strftime("%Y-%m-%d") if data_pag else datetime.now(timezone.utc).strftime("%Y-%m-%d")
+                    anno_mov = int(data_mov[:4])
+                    
+                    movimento = {
+                        "id": movimento_id,
+                        "data": data_mov,
+                        "anno": anno_mov,
+                        "descrizione": f"PayPal - {fornitore_nome} - Fatt. {numero_fatt}",
+                        "causale": "Pagamento fattura fornitore via PayPal",
+                        "importo": float(importo),
+                        "tipo": "uscita",
+                        "categoria": "fornitori",
+                        "stato": "confermato",
+                        "fattura_id": fattura_id,
+                        "fattura_collegata": fattura_id,
+                        "fattura_numero": numero_fatt,
+                        "fornitore": fornitore_nome,
+                        "metodo_pagamento": "PayPal",
+                        "paypal_transaction_id": pag.get("codice_transazione", ""),
+                        "riconciliato": True,
+                        "source": "riconciliazione_paypal",
+                        "created_at": datetime.now(timezone.utc).isoformat()
+                    }
+                    
+                    await db["prima_nota_banca"].insert_one(movimento)
                     risultato["riconciliati"] += 1
+                else:
+                    risultato["aggiornati_metodo"] += 1
                     
                 risultato["dettaglio_riconciliazioni"].append({
                     "pagamento_paypal": {
