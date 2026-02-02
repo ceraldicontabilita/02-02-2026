@@ -41,6 +41,7 @@ const NAV_ITEMS = [
     children: [
       { to: "/prima-nota", label: "📒 Prima Nota Unificata", icon: "📒", isNew: true },
       { to: "/riconciliazione", label: "🔄 Riconciliazione", icon: "🔄", isNew: true },
+      { to: "/riconciliazione-paypal", label: "💳 PayPal", icon: "💳", isNew: true },
       { to: "/gestione-assegni", label: "Gestione Assegni", icon: "📝" },
       { to: "/archivio-bonifici", label: "Archivio Bonifici", icon: "📂" },
     ]
