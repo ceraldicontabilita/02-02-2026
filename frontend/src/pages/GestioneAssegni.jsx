@@ -953,6 +953,30 @@ export default function GestioneAssegni() {
           🔍 Filtri {(filterFornitore || filterImportoMin || filterImportoMax || filterNumeroAssegno || filterNumeroFattura) && '●'}
         </button>
         
+        {/* Selettore Anno */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>Anno:</span>
+          <select
+            value={filterAnno}
+            onChange={(e) => setFilterAnno(parseInt(e.target.value))}
+            data-testid="select-anno"
+            style={{
+              padding: '10px 16px',
+              border: '2px solid #1a365d',
+              borderRadius: 8,
+              fontSize: 14,
+              fontWeight: 'bold',
+              color: '#1a365d',
+              background: 'white',
+              cursor: 'pointer'
+            }}
+          >
+            {[2026, 2025, 2024, 2023].map(anno => (
+              <option key={anno} value={anno}>{anno}</option>
+            ))}
+          </select>
+        </div>
+        
         <button
           onClick={handleClearEmpty}
           data-testid="svuota-btn"
