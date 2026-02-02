@@ -492,6 +492,7 @@ export default function Attendance() {
       <div style={{ display: 'flex', gap: 8, borderBottom: '2px solid #e5e7eb', paddingBottom: 8, marginBottom: 20 }}>
         {[
           { id: 'calendario', label: 'Calendario', icon: '📅' },
+          { id: 'turni', label: 'Gestione Turni', icon: '👥' },
           { id: 'richieste', label: `Richieste (${richiestePending.length})`, icon: '📋' },
           { id: 'storico', label: 'Storico Ore', icon: '⏱️' },
           { id: 'saldo-ferie', label: 'Saldo Ferie', icon: '🏖️' },
