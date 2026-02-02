@@ -28,12 +28,12 @@ PAYPAL_TO_FORNITORE_MAP = {
     "register spa": ["register"],
     "hp italy": ["hp", "hewlett"],
     "adobe": ["adobe"],
-    "f.lli casolaro": ["casolaro", "f.lli casolaro"],
+    "f.lli casolaro": ["casolaro", "f.lli casolaro", "casolaro hotellerie"],
     "elmax srl": ["elmax"],
     "erredi forniture": ["erredi"],
     "detertecnica": ["detertecnica"],
     "ristofast": ["ristofast"],
-    "nuova bever-li": ["beverli", "bever-li"],
+    "nuova bever-li": ["beverli", "bever-li", "nuova bever"],
     "erretre": ["erretre", "erre4m"],
     "laspillatura": ["laspillatura", "spillatura"],
     "coltelleria zoppi": ["zoppi", "coltelleria"],
@@ -41,6 +41,13 @@ PAYPAL_TO_FORNITORE_MAP = {
     "timbri.it": ["timbri"],
     "indors": ["indors"],
     "wps group": ["wps"],
+    "van berkel": ["van berkel", "berkel"],
+    "fattura 24": ["fattura24", "fattura 24"],
+    "mooney": ["mooney"],
+    "lab19": ["lab19"],
+    "express checkout": ["express"],  # Generico PayPal
+    "pagamento cellulare": [],  # Non mappabile
+    "pagamento sito web": [],  # Non mappabile
 }
 
 
