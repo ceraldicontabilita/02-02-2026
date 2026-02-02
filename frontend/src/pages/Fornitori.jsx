@@ -209,21 +209,52 @@ function SupplierModal({ isOpen, onClose, supplier, onSave, saving }) {
                 <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '6px' }}>
                   Partita IVA
                 </label>
-                <input
-                  type="text"
-                  value={form.partita_iva || ''}
-                  onChange={(e) => handleChange('partita_iva', e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '10px 14px',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                    fontFamily: 'monospace',
-                    boxSizing: 'border-box'
-                  }}
-                  placeholder="01234567890"
-                />
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input
+                    type="text"
+                    value={form.partita_iva || ''}
+                    onChange={(e) => handleChange('partita_iva', e.target.value)}
+                    style={{
+                      flex: 1,
+                      padding: '10px 14px',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      fontFamily: 'monospace',
+                      boxSizing: 'border-box'
+                    }}
+                    placeholder="01234567890"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleLoadFromOpenAPI}
+                    disabled={loadingOpenAPI || !form.partita_iva}
+                    title="Carica dati da Camera di Commercio"
+                    style={{
+                      padding: '10px 12px',
+                      border: 'none',
+                      borderRadius: '8px',
+                      background: loadingOpenAPI ? '#9ca3af' : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                      color: 'white',
+                      cursor: loadingOpenAPI || !form.partita_iva ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      whiteSpace: 'nowrap'
+                    }}
+                    data-testid="btn-load-openapi"
+                  >
+                    <RefreshCw size={14} className={loadingOpenAPI ? 'animate-spin' : ''} />
+                    {loadingOpenAPI ? '...' : 'Auto'}
+                  </button>
+                </div>
+                {openAPIError && (
+                  <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#dc2626' }}>
+                    {openAPIError}
+                  </p>
+                )}
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '6px' }}>
