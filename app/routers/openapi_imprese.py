@@ -175,7 +175,7 @@ async def aggiorna_fornitori_bulk(
         "dettagli": []
     }
     
-    client = OpenAPIImprese(api_token)
+    client = OpenAPIImprese(api_token, sandbox=OPENAPI_USE_SANDBOX)
     db = Database.get_db()
     
     for piva in request.partite_iva:
