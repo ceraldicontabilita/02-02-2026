@@ -318,3 +318,32 @@ async def auto_ricostruisci_dati() -> Dict[str, Any]:
     except Exception as e:
         logger.error(f"Errore auto-ricostruzione: {e}")
         return {"success": False, "error": str(e)}
+
+
+
+async def lista_fatture_paypal() -> Dict[str, Any]:
+    """
+    Restituisce la lista delle fatture riconciliate via PayPal.
+    """
+    db = Database.get_db()
+    
+    try:
+        # Cerca nelle invoices le fatture con riconciliato_paypal o metodo PayPal
+        fatture = await db["invoices"].find(
+            {"$or": [
+                {"riconciliato_paypal": True},
+                {"metodo_pagamento": "PayPal"}
+            ]},
+            {"_id": 0}
+        ).sort("invoice_date", -1).to_list(500)
+        
+        totale_importo = sum(f.get("total_amount", f.get("importo_totale", 0)) or 0 for f in fatture)
+        
+        return {
+            "fatture": fatture,
+            "totale": len(fatture),
+            "importo_totale": totale_importo
+        }
+    except Exception as e:
+        logger.error(f"Errore lista fatture PayPal: {e}")
+        return {"fatture": [], "totale": 0, "importo_totale": 0}
