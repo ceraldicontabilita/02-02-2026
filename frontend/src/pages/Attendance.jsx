@@ -941,6 +941,38 @@ export default function Attendance() {
   // Rendering cella
   const renderCell = (employee, day) => {
     const key = `${employee.id}_${day.dateStr}`;
+    
+    // Verifica se il dipendente è cessato in questa data
+    const cessato = isDipendenteCessato(employee, day.dateStr);
+    
+    // Se cessato, mostra "X" e non permette modifica
+    if (cessato) {
+      const cessatoConfig = STATI_PRESENZA.cessato;
+      return (
+        <td
+          key={day.day}
+          style={{
+            width: 28,
+            minWidth: 28,
+            height: 28,
+            padding: 0,
+            textAlign: 'center',
+            cursor: 'not-allowed',
+            background: cessatoConfig.bg,
+            borderRight: '1px solid #e5e7eb',
+            borderBottom: '1px solid #e5e7eb',
+            fontSize: 10,
+            fontWeight: 600,
+            color: cessatoConfig.color,
+          }}
+          title={`${employee.nome_completo} - Contratto cessato`}
+          data-testid={`cell-${employee.id}-${day.day}`}
+        >
+          {cessatoConfig.label}
+        </td>
+      );
+    }
+    
     const stato = presenze[key] || (day.isWeekend ? 'riposo' : null);
     const config = stato ? STATI_PRESENZA[stato] : null;
     const nota = notePresenze[key];
