@@ -115,7 +115,7 @@ function TurniSection({ employees, currentMonth, currentYear }) {
   const loadEmployeeDetails = async (empId) => {
     try {
       setLoading(true);
-      const res = await api.get(`/api/employees/${empId}`);
+      const res = await api.get(`/api/dipendenti/${empId}`);
       setEmployeeDetails(res.data);
       setTempOreSettimanali(res.data.ore_settimanali || res.data.contratto?.ore_settimanali || 40);
       setEditingOre(false);
@@ -132,7 +132,7 @@ function TurniSection({ employees, currentMonth, currentYear }) {
     
     try {
       setSavingOre(true);
-      await api.put(`/api/employees/${selectedEmployee.id}`, {
+      await api.put(`/api/dipendenti/${selectedEmployee.id}`, {
         ore_settimanali: parseInt(tempOreSettimanali)
       });
       
