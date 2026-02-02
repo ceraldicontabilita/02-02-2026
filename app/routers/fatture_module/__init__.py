@@ -44,6 +44,8 @@ router.add_api_route("/cambia-metodo-pagamento", cambia_metodo_pagamento_fattura
 router.add_api_route("/riconcilia-con-estratto-conto", riconcilia_fattura_con_estratto_conto, methods=["POST"])
 router.add_api_route("/verifica-incoerenze-estratto-conto", verifica_incoerenze_estratto_conto, methods=["GET"])
 router.add_api_route("/aggiorna-metodi-pagamento", aggiorna_metodi_pagamento_da_fornitori, methods=["POST"])
+router.add_api_route("/riconcilia-paypal", riconcilia_fatture_paypal, methods=["POST"])
+router.add_api_route("/auto-ricostruisci-dati", auto_ricostruisci_dati, methods=["POST"])
 
 # === ROTTE DINAMICHE (devono venire DOPO le statiche) ===
 
