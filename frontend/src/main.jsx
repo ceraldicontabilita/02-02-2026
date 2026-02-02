@@ -241,6 +241,7 @@ const router = createBrowserRouter([
       { path: "ordini-fornitori/:fornitore", element: <LazyPage><OrdiniFornitori /></LazyPage> },
       { path: "previsioni-acquisti", element: <LazyPage><PrevisioniAcquisti /></LazyPage> },
       { path: "previsioni-acquisti/:categoria", element: <LazyPage><PrevisioniAcquisti /></LazyPage> },
+      { path: "visure", element: <LazyPage><Visure /></LazyPage> },
       
       // === BANCA & PAGAMENTI ===
       { path: "prima-nota", element: <LazyPage><PrimaNota /></LazyPage> },
