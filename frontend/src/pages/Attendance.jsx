@@ -1386,11 +1386,11 @@ export default function Attendance() {
                         textAlign: 'center',
                         borderRight: '1px solid #e5e7eb',
                         borderBottom: '2px solid #e5e7eb',
-                        background: d.isWeekend ? '#f3f4f6' : '#f9fafb',
+                        background: d.isWeekend ? '#fef2f2' : (d.isSabato ? '#fefce8' : '#f9fafb'),
                         fontSize: 10
                       }}
                     >
-                      <div style={{ color: d.isWeekend ? '#ef4444' : '#6b7280' }}>
+                      <div style={{ color: d.isWeekend ? '#ef4444' : (d.isSabato ? '#ca8a04' : '#6b7280') }}>
                         {GIORNI_SETTIMANA[d.dayOfWeek]}
                       </div>
                       <div style={{ fontWeight: 700, color: d.isWeekend ? '#ef4444' : '#1f2937' }}>
