@@ -89,13 +89,21 @@ export default function GestioneAssegni() {
       const params = new URLSearchParams();
       if (filterStato) params.append('stato', filterStato);
       if (search) params.append('search', search);
+      if (filterAnno) params.append('anno', filterAnno);
 
       const [assegniRes, statsRes] = await Promise.all([
         api.get(`/api/assegni?${params}`),
         api.get(`/api/assegni/stats`)
       ]);
 
-      setAssegni(assegniRes.data);
+      // Ordina per numero assegno decrescente (dal più recente al più vecchio)
+      const assegniOrdinati = (assegniRes.data || []).sort((a, b) => {
+        const numA = parseInt(a.numero_assegno?.replace(/\D/g, '') || '0');
+        const numB = parseInt(b.numero_assegno?.replace(/\D/g, '') || '0');
+        return numB - numA; // Decrescente
+      });
+
+      setAssegni(assegniOrdinati);
       setStats(statsRes.data);
     } catch (error) {
       console.error('Error loading assegni:', error);
