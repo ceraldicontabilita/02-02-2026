@@ -30,6 +30,7 @@ const STATI_PRESENZA = {
   chiuso: { label: 'CH', color: '#64748b', bg: '#e2e8f0', name: 'Chiuso' },
   riposo_settimanale: { label: 'RS', color: '#6b7280', bg: '#f3f4f6', name: 'Riposo Sett.' },
   trasferta: { label: 'T', color: '#6366f1', bg: '#e0e7ff', name: 'Trasferta' },
+  cessato: { label: 'X', color: '#991b1b', bg: '#fef2f2', name: 'Cessato' },
   riposo: { label: '-', color: '#9ca3af', bg: '#f3f4f6', name: 'Riposo' },
 };
 
@@ -37,6 +38,29 @@ const STATI_PRESENZA = {
 const GIORNI_SETTIMANA = ['D', 'L', 'M', 'M', 'G', 'V', 'S'];
 const MESI = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 
               'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
+
+// Verifica se dipendente è cessato in una data
+const isDipendenteCessato = (employee, dateStr) => {
+  const dataFineContratto = employee.data_fine_contratto || employee.contratto?.data_fine;
+  if (!dataFineContratto) return false;
+  
+  const dataFine = new Date(dataFineContratto);
+  const dataCorrente = new Date(dateStr);
+  
+  return dataCorrente > dataFine;
+};
+
+// Verifica se dipendente deve essere visibile nel mese
+const isDipendenteVisibileNelMese = (employee, anno, mese) => {
+  const dataFineContratto = employee.data_fine_contratto || employee.contratto?.data_fine;
+  if (!dataFineContratto) return true;
+  
+  const dataFine = new Date(dataFineContratto);
+  const inizioMese = new Date(anno, mese, 1);
+  
+  // Se il contratto è scaduto prima dell'inizio del mese, non mostrare
+  return dataFine >= inizioMese;
+};
 
 // Formatta data
 const formatDate = (dateStr) => {
