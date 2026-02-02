@@ -65,6 +65,8 @@ const emptySupplier = {
 // Modale Fornitore
 function SupplierModal({ isOpen, onClose, supplier, onSave, saving }) {
   const [form, setForm] = useState(emptySupplier);
+  const [loadingOpenAPI, setLoadingOpenAPI] = useState(false);
+  const [openAPIError, setOpenAPIError] = useState(null);
   const isNew = !supplier?.id;
   
   useEffect(() => {
@@ -73,10 +75,46 @@ function SupplierModal({ isOpen, onClose, supplier, onSave, saving }) {
     } else if (isOpen) {
       setForm(emptySupplier);
     }
+    setOpenAPIError(null);
   }, [isOpen, supplier]);
   
   const handleChange = (field, value) => {
     setForm(prev => ({ ...prev, [field]: value }));
+  };
+  
+  // Carica dati da OpenAPI.it
+  const handleLoadFromOpenAPI = async () => {
+    const piva = form.partita_iva?.replace(/\s/g, '');
+    if (!piva || piva.length !== 11) {
+      setOpenAPIError('Inserisci una Partita IVA valida (11 cifre)');
+      return;
+    }
+    
+    setLoadingOpenAPI(true);
+    setOpenAPIError(null);
+    
+    try {
+      const res = await api.get(`/api/openapi-imprese/info/${piva}`);
+      if (res.data.success) {
+        const mapped = res.data.campi_mappati;
+        // Aggiorna form con dati OpenAPI
+        setForm(prev => ({
+          ...prev,
+          ragione_sociale: mapped.ragione_sociale || prev.ragione_sociale,
+          codice_fiscale: mapped.codice_fiscale || prev.codice_fiscale,
+          indirizzo: mapped.indirizzo || prev.indirizzo,
+          cap: mapped.cap || prev.cap,
+          comune: mapped.citta || prev.comune,
+          provincia: mapped.provincia || prev.provincia,
+          pec: mapped.pec || prev.pec,
+          codice_sdi: mapped.codice_sdi || prev.codice_sdi
+        }));
+      }
+    } catch (err) {
+      setOpenAPIError(err.response?.data?.detail || 'Errore nel recupero dati');
+    } finally {
+      setLoadingOpenAPI(false);
+    }
   };
   
   const handleSubmit = () => {
