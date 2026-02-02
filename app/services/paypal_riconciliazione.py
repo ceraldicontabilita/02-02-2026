@@ -142,6 +142,9 @@ async def riconcilia_pagamenti_paypal(
         "dettaglio_non_trovati": []
     }
     
+    # Usa la collection corretta (invoices invece di fatture_ricevute)
+    collection_name = "invoices"
+    
     for pag in pagamenti:
         try:
             importo = abs(float(pag.get("importo", 0)))
@@ -156,10 +159,10 @@ async def riconcilia_pagamenti_paypal(
             max_importo = importo * (1 + tolleranza_importo) + 1
             
             query = {
-                "importo_totale": {"$gte": min_importo, "$lte": max_importo}
+                "total_amount": {"$gte": min_importo, "$lte": max_importo}
             }
             
-            fatture_candidate = await db["fatture_ricevute"].find(
+            fatture_candidate = await db[collection_name].find(
                 query,
                 {"_id": 0}
             ).to_list(100)
@@ -177,20 +180,23 @@ async def riconcilia_pagamenti_paypal(
             best_score = 0.0
             
             for fattura in fatture_candidate:
-                fornitore = fattura.get("fornitore_ragione_sociale", "")
+                # Supporta entrambi i formati: supplier_name e fornitore_ragione_sociale
+                fornitore = fattura.get("supplier_name") or fattura.get("fornitore_ragione_sociale", "")
                 score = match_fornitore(beneficiario, fornitore)
                 
                 # Bonus se data è vicina
-                if data_pag and fattura.get("data_documento"):
-                    try:
-                        data_fatt = datetime.strptime(fattura["data_documento"][:10], "%Y-%m-%d")
-                        diff_giorni = abs((data_pag - data_fatt).days)
-                        if diff_giorni <= 7:
-                            score += 0.2
-                        elif diff_giorni <= 30:
-                            score += 0.1
-                    except:
-                        pass
+                if data_pag:
+                    data_fatt_str = fattura.get("invoice_date") or fattura.get("data_documento")
+                    if data_fatt_str:
+                        try:
+                            data_fatt = datetime.strptime(str(data_fatt_str)[:10], "%Y-%m-%d")
+                            diff_giorni = abs((data_pag - data_fatt).days)
+                            if diff_giorni <= 7:
+                                score += 0.2
+                            elif diff_giorni <= 30:
+                                score += 0.1
+                        except:
+                            pass
                 
                 if score > best_score:
                     best_score = score
@@ -198,6 +204,10 @@ async def riconcilia_pagamenti_paypal(
             
             if best_match and best_score >= 0.3:  # Soglia abbassata
                 fattura_id = best_match.get("id")
+                fornitore_nome = best_match.get("supplier_name") or best_match.get("fornitore_ragione_sociale", "?")
+                importo_fatt = best_match.get("total_amount") or best_match.get("importo_totale", 0)
+                numero_fatt = best_match.get("invoice_number") or best_match.get("numero_documento", "?")
+                data_fatt = best_match.get("invoice_date") or best_match.get("data_documento", "?")
                 
                 # Verifica se già pagata via PayPal
                 if best_match.get("riconciliato_paypal"):
@@ -215,7 +225,7 @@ async def riconcilia_pagamenti_paypal(
                     "updated_at": datetime.now(timezone.utc)
                 }
                 
-                await db["fatture_ricevute"].update_one(
+                await db[collection_name].update_one(
                     {"id": fattura_id},
                     {"$set": update_data}
                 )
@@ -235,20 +245,26 @@ async def riconcilia_pagamenti_paypal(
                     },
                     "fattura": {
                         "id": fattura_id,
-                        "fornitore": best_match.get("fornitore_ragione_sociale"),
-                        "importo": best_match.get("importo_totale"),
-                        "numero": best_match.get("numero_documento"),
-                        "data": best_match.get("data_documento")
+                        "fornitore": fornitore_nome,
+                        "importo": importo_fatt,
+                        "numero": numero_fatt,
+                        "data": str(data_fatt)[:10] if data_fatt else "?"
                     },
                     "score_matching": best_score,
                     "azione": "aggiornato_metodo" if best_match.get("pagato") else "riconciliato"
                 })
             else:
                 risultato["non_trovati"] += 1
+                candidati_info = []
+                for f in fatture_candidate[:3]:
+                    fn = f.get("supplier_name") or f.get("fornitore_ragione_sociale", "?")
+                    fa = f.get("total_amount") or f.get("importo_totale", 0)
+                    candidati_info.append(f"{fn}: €{fa:.2f}")
+                
                 risultato["dettaglio_non_trovati"].append({
                     "pagamento": pag,
                     "motivo": f"Nessun fornitore corrispondente a '{beneficiario}' (best score: {best_score:.2f})",
-                    "candidati": [f"{f.get('fornitore_ragione_sociale')}: €{f.get('importo_totale', 0):.2f}" for f in fatture_candidate[:3]]
+                    "candidati": candidati_info
                 })
                 
         except Exception as e:
