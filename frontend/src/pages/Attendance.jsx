@@ -27,7 +27,8 @@ const STATI_PRESENZA = {
   permesso: { label: 'PE', color: '#8b5cf6', bg: '#ede9fe', name: 'Permesso' },
   malattia: { label: 'M', color: '#3b82f6', bg: '#dbeafe', name: 'Malattia' },
   rol: { label: 'R', color: '#06b6d4', bg: '#cffafe', name: 'ROL' },
-  smartworking: { label: 'SW', color: '#10b981', bg: '#d1fae5', name: 'Smart Working' },
+  chiuso: { label: 'CH', color: '#64748b', bg: '#e2e8f0', name: 'Chiuso' },
+  riposo_settimanale: { label: 'RS', color: '#6b7280', bg: '#f3f4f6', name: 'Riposo Sett.' },
   trasferta: { label: 'T', color: '#6366f1', bg: '#e0e7ff', name: 'Trasferta' },
   riposo: { label: '-', color: '#9ca3af', bg: '#f3f4f6', name: 'Riposo' },
 };
