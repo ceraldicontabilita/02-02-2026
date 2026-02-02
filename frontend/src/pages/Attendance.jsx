@@ -925,7 +925,7 @@ export default function Attendance() {
     return (
       <td
         key={day.day}
-        onClick={() => multiSelectMode ? handleMultiSelectClick(employee.id, day.dateStr) : handleCellClick(employee.id, day.dateStr, stato)}
+        onClick={(e) => multiSelectMode ? handleMultiSelectClick(employee.id, day.dateStr, e) : handleCellClick(employee.id, day.dateStr, stato)}
         style={{
           width: 28,
           minWidth: 28,
