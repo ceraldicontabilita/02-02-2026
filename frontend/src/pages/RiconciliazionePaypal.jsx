@@ -41,27 +41,31 @@ export default function RiconciliazionePaypal() {
     try {
       setLoading(true);
       
-      // Carica fatture riconciliate PayPal
-      const res = await api.get('/api/fatture-ricevute/archivio?limit=5000');
-      const fatture = res.data.fatture || [];
-      
-      // Filtra solo quelle riconciliate PayPal
-      const paypalFatture = fatture.filter(f => f.riconciliato_paypal || f.metodo_pagamento === 'PayPal');
+      // Carica fatture riconciliate PayPal direttamente dal DB
+      const res = await api.get('/api/fatture-ricevute/lista-paypal');
+      const paypalFatture = res.data.fatture || res.data || [];
       setFatturePaypal(paypalFatture);
       
       // Calcola statistiche
       const totalePaypal = paypalFatture.reduce((sum, f) => sum + (f.total_amount || f.importo_totale || 0), 0);
       
       setStats({
-        totale_fatture: fatture.length,
+        totale_fatture: res.data.totale || paypalFatture.length,
         fatture_paypal: paypalFatture.length,
         importo_paypal: totalePaypal,
-        percentuale: fatture.length > 0 ? ((paypalFatture.length / fatture.length) * 100).toFixed(1) : 0
+        percentuale: paypalFatture.length > 0 ? 100 : 0
       });
       
     } catch (error) {
       console.error('Errore caricamento:', error);
-      toast.error('Errore caricamento dati');
+      // Fallback: prova endpoint alternativo
+      try {
+        const res2 = await api.get('/api/fatture/lista?riconciliato_paypal=true&limit=500');
+        const fatture = res2.data.fatture || res2.data || [];
+        setFatturePaypal(fatture);
+      } catch (e2) {
+        console.error('Errore fallback:', e2);
+      }
     } finally {
       setLoading(false);
     }
