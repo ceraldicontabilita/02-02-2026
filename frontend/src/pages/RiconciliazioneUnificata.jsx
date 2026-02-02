@@ -491,10 +491,6 @@ export default function RiconciliazioneUnificata() {
   return (
     <PageLayout title="Riconciliazione Unificata" subtitle="Dashboard riepilogo e riconciliazione automatica">
     <div style={{ position: 'relative' }}>
-      {/* Page Info Card */}
-      <div style={{ position: 'absolute', top: 0, right: 20, zIndex: 100 }}>
-        <PageInfoCard pageKey="riconciliazione" />
-      </div>
       
       {/* Header con Gradiente */}
       <div style={{ 
@@ -511,7 +507,7 @@ export default function RiconciliazioneUnificata() {
       }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 'clamp(18px, 4vw, 22px)', fontWeight: 'bold' }}>
-            🔗 Riconciliazione Smart
+            🔗 Riconciliazione Unificata
           </h1>
           <p style={{ margin: '4px 0 0', opacity: 0.9, fontSize: 13 }}>
             Associa movimenti bancari a fatture, F24, stipendi e assegni
