@@ -52,7 +52,7 @@ class CategorizeRequest(BaseModel):
 
 from app.database import Database
 
-async def get_context_data(context_type: str, limit: int = 10) -> Dict[str, Any]:
+async def get_context_data(context_type: str, limit: int = 10, user_query: str = None) -> Dict[str, Any]:
     """Recupera dati contestuali dal database per arricchire le risposte AI"""
     context = {}
     db = Database.get_db()
@@ -60,6 +60,114 @@ async def get_context_data(context_type: str, limit: int = 10) -> Dict[str, Any]
         return {"error": "Database non disponibile"}
     
     try:
+        # ============================================================
+        # ANALISI QUERY UTENTE PER RECUPERO DATI SPECIFICI
+        # ============================================================
+        if user_query:
+            query_lower = user_query.lower()
+            
+            # Estrai mese e anno dalla query se presenti
+            mesi_it = {
+                'gennaio': '01', 'febbraio': '02', 'marzo': '03', 'aprile': '04',
+                'maggio': '05', 'giugno': '06', 'luglio': '07', 'agosto': '08',
+                'settembre': '09', 'ottobre': '10', 'novembre': '11', 'dicembre': '12'
+            }
+            
+            target_mese = None
+            target_anno = None
+            
+            for mese_nome, mese_num in mesi_it.items():
+                if mese_nome in query_lower:
+                    target_mese = mese_num
+                    break
+            
+            # Cerca anno (2024, 2025, 2026)
+            import re
+            anni_trovati = re.findall(r'20[2-3][0-9]', query_lower)
+            if anni_trovati:
+                target_anno = anni_trovati[0]
+            
+            # Se domanda su fatture con periodo specifico
+            if ('fattur' in query_lower or 'invoice' in query_lower) and target_anno:
+                query_fatture = {}
+                
+                if target_mese and target_anno:
+                    # Cerca fatture del mese specifico
+                    prefix_data = f"{target_anno}-{target_mese}"
+                    query_fatture["$or"] = [
+                        {"data": {"$regex": f"^{prefix_data}"}},
+                        {"data_documento": {"$regex": f"^{prefix_data}"}},
+                        {"data_fattura": {"$regex": f"^{prefix_data}"}},
+                        {"document_date": {"$regex": f"^{prefix_data}"}}
+                    ]
+                elif target_anno:
+                    # Cerca fatture dell'anno
+                    query_fatture["$or"] = [
+                        {"data": {"$regex": f"^{target_anno}"}},
+                        {"data_documento": {"$regex": f"^{target_anno}"}},
+                        {"data_fattura": {"$regex": f"^{target_anno}"}},
+                        {"document_date": {"$regex": f"^{target_anno}"}}
+                    ]
+                
+                # Conta fatture
+                count_fatture = await db.invoices.count_documents(query_fatture)
+                
+                # Recupera anche dettagli
+                fatture_periodo = await db.invoices.find(
+                    query_fatture, 
+                    {"_id": 0, "numero_documento": 1, "fornitore": 1, "supplier_name": 1, 
+                     "totale": 1, "total_amount": 1, "data": 1, "data_documento": 1}
+                ).limit(20).to_list(20)
+                
+                # Calcola totale importo
+                totale_importo = sum(
+                    float(f.get("totale") or f.get("total_amount") or 0) 
+                    for f in fatture_periodo
+                )
+                
+                periodo_label = f"{target_mese}/{target_anno}" if target_mese else target_anno
+                context["query_risposta"] = {
+                    "periodo": periodo_label,
+                    "numero_fatture": count_fatture,
+                    "totale_importo": round(totale_importo, 2),
+                    "dettaglio_fatture": fatture_periodo[:10]
+                }
+            
+            # Se domanda su dipendenti
+            if 'dipendent' in query_lower:
+                dipendenti = await db.employees.find(
+                    {}, {"_id": 0, "nome": 1, "cognome": 1, "ruolo": 1, "qualifica": 1}
+                ).to_list(50)
+                count_dipendenti = await db.employees.count_documents({})
+                context["query_risposta"] = {
+                    "numero_dipendenti": count_dipendenti,
+                    "lista_dipendenti": dipendenti
+                }
+            
+            # Se domanda su corrispettivi
+            if 'corrispettiv' in query_lower and target_anno:
+                query_corr = {}
+                if target_mese and target_anno:
+                    query_corr["data"] = {"$regex": f"^{target_anno}-{target_mese}"}
+                elif target_anno:
+                    query_corr["data"] = {"$regex": f"^{target_anno}"}
+                
+                count_corr = await db.corrispettivi.count_documents(query_corr)
+                corr_list = await db.corrispettivi.find(
+                    query_corr, {"_id": 0}
+                ).limit(30).to_list(30)
+                
+                totale_incassi = sum(float(c.get("totale", 0)) for c in corr_list)
+                
+                context["query_risposta"] = {
+                    "periodo": f"{target_mese}/{target_anno}" if target_mese else target_anno,
+                    "numero_corrispettivi": count_corr,
+                    "totale_incassi": round(totale_incassi, 2)
+                }
+        
+        # ============================================================
+        # DATI GENERALI (sempre inclusi)
+        # ============================================================
         if context_type in ["general", "bilancio"]:
             # Statistiche generali
             fatture = await db.invoices.count_documents({})
