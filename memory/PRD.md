@@ -208,11 +208,10 @@ SISTEMA AUTOMATICO:
 
 ## Da Completare
 
-### P0 (In Attesa Input Utente)
-- **Riconciliazione PayPal**: Endpoint pronto (`POST /api/verbali-riconciliazione/riconcilia-estratto-conto-paypal`), in attesa del CSV/PDF estratto conto
-
 ### P1 (Prossimo)
-- UI Frontend per caricare estratto conto PayPal (pulsante + modale)
+- **Report Riconciliazioni PayPal**: Creare report/export nella pagina `/riconciliazione-paypal`
+- **Test Upload PayPal**: Testare l'upload di nuovi estratti conto via UI
+- **Assistente AI via WhatsApp/Telegram**: Integrazione chat per comandi rapidi (richiesta utente)
 - Dashboard verbali per dipendente con totali
 
 ### P2 (Backlog)
