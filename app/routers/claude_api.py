@@ -95,18 +95,16 @@ async def get_context_data(context_type: str, limit: int = 10, user_query: str =
                     # Cerca fatture del mese specifico
                     prefix_data = f"{target_anno}-{target_mese}"
                     query_fatture["$or"] = [
-                        {"data": {"$regex": f"^{prefix_data}"}},
-                        {"data_documento": {"$regex": f"^{prefix_data}"}},
                         {"data_fattura": {"$regex": f"^{prefix_data}"}},
-                        {"document_date": {"$regex": f"^{prefix_data}"}}
+                        {"invoice_date": {"$regex": f"^{prefix_data}"}},
+                        {"data_ricezione": {"$regex": f"^{prefix_data}"}}
                     ]
                 elif target_anno:
                     # Cerca fatture dell'anno
                     query_fatture["$or"] = [
-                        {"data": {"$regex": f"^{target_anno}"}},
-                        {"data_documento": {"$regex": f"^{target_anno}"}},
                         {"data_fattura": {"$regex": f"^{target_anno}"}},
-                        {"document_date": {"$regex": f"^{target_anno}"}}
+                        {"invoice_date": {"$regex": f"^{target_anno}"}},
+                        {"data_ricezione": {"$regex": f"^{target_anno}"}}
                     ]
                 
                 # Conta fatture
@@ -115,18 +113,19 @@ async def get_context_data(context_type: str, limit: int = 10, user_query: str =
                 # Recupera anche dettagli
                 fatture_periodo = await db.invoices.find(
                     query_fatture, 
-                    {"_id": 0, "numero_documento": 1, "fornitore": 1, "supplier_name": 1, 
-                     "totale": 1, "total_amount": 1, "data": 1, "data_documento": 1}
+                    {"_id": 0, "numero_documento": 1, "numero_fattura": 1, "fornitore": 1, "supplier_name": 1, 
+                     "totale_documento": 1, "totale": 1, "total_amount": 1, "data_fattura": 1, "invoice_date": 1}
                 ).limit(20).to_list(20)
                 
                 # Calcola totale importo
                 totale_importo = sum(
-                    float(f.get("totale") or f.get("total_amount") or 0) 
+                    float(f.get("totale_documento") or f.get("totale") or f.get("total_amount") or 0) 
                     for f in fatture_periodo
                 )
                 
                 periodo_label = f"{target_mese}/{target_anno}" if target_mese else target_anno
-                context["query_risposta"] = {
+                context["risposta_query_specifica"] = {
+                    "tipo": "fatture",
                     "periodo": periodo_label,
                     "numero_fatture": count_fatture,
                     "totale_importo": round(totale_importo, 2),
