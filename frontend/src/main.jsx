@@ -104,6 +104,7 @@ const Corrispettivi = lazy(() => import("./pages/Corrispettivi.jsx"));
 const Fornitori = lazy(() => import("./pages/Fornitori.jsx"));
 const OrdiniFornitori = lazy(() => import("./pages/OrdiniFornitori.jsx"));
 const PrevisioniAcquisti = lazy(() => import("./pages/PrevisioniAcquisti.jsx"));
+const Visure = lazy(() => import("./pages/Visure.jsx"));
 
 // === BANCA & PAGAMENTI ===
 const PrimaNota = lazy(() => import("./pages/PrimaNota.jsx"));
