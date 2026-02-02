@@ -43,7 +43,31 @@ Aggiunto bottone "Tutti Presenti" nella pagina Attendance.
 - Un click imposta tutti i giorni lavorativi come "Presente"
 - Salta automaticamente weekend
 - Salta giorni con stato già assegnato
+- Nuovi stati: "Chiuso" (CH), "Riposo Settimanale" (RS)
+- Rimosso: Smart Working
 - Endpoint: `POST /api/attendance/imposta-tutti-presenti`
+
+### Gestione Turni per Mansione - COMPLETATO (2 Feb 2026)
+Nuovo tab "Gestione Turni" nella pagina Presenze.
+
+**Funzionalità:**
+- Lista mansioni: Camerieri, Cucina, Bar, Cassa, Pulizie
+- Assegnazione dipendenti a mansioni
+- Visualizzazione dettagli contratto (ore settimanali, tipo contratto)
+- Modal "Aggiungi Dipendenti" per assegnazione rapida
+
+**Endpoint:**
+- `GET /api/attendance/turni` - Lista turni per mese
+- `POST /api/attendance/turni/assegna` - Assegna dipendente
+- `DELETE /api/attendance/turni/rimuovi` - Rimuovi dal turno
+
+### Import PayPal in Import Documenti - COMPLETATO (2 Feb 2026)
+Aggiunto tipo documento "Estratto PayPal" nella pagina Import Documenti.
+
+**Funzionalità:**
+- Upload CSV o PDF di estratti conto PayPal
+- Riconciliazione automatica con fatture
+- Endpoint: `POST /api/fatture-ricevute/import-paypal`
 
 ### Scheduler Email Verbali - COMPLETATO (1 Feb 2026)
 Lo scan automatico delle email per verbali è ora schedulato:
