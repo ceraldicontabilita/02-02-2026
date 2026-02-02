@@ -400,6 +400,9 @@ app.include_router(manutenzione.router, prefix="/api/manutenzione", tags=["Manut
 # --- OpenAPI.it Integration (SDI, AISP) ---
 app.include_router(openapi_it.router, prefix="/api/openapi", tags=["OpenAPI.it SDI/AISP"])
 
+# --- OpenAPI Imprese (Anagrafica Fornitori) ---
+app.include_router(openapi_imprese.router, prefix="/api", tags=["OpenAPI Imprese"])
+
 # --- Inserimento Rapido Mobile ---
 app.include_router(inserimento_rapido.router, prefix="/api", tags=["Inserimento Rapido"])
 
