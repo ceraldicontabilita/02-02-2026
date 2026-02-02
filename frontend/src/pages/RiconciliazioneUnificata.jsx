@@ -473,7 +473,7 @@ export default function RiconciliazioneUnificata() {
         }}>
           <div>
             <h1 style={{ margin: 0, fontSize: 'clamp(18px, 4vw, 22px)', fontWeight: 'bold' }}>
-              🔗 Riconciliazione Smart
+              🔗 Riconciliazione Unificata
             </h1>
             <p style={{ margin: '4px 0 0', opacity: 0.9, fontSize: 13 }}>
               Associa movimenti bancari a fatture, F24, stipendi e assegni
