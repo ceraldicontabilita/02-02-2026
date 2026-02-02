@@ -543,6 +543,72 @@ async def imposta_tutti_presenti(payload: Dict[str, Any]) -> Dict[str, Any]:
                     "auto_inserted": True
                 }},
                 upsert=True
+
+
+@router.get("/turni")
+async def get_turni(
+    anno: int = Query(datetime.now().year),
+    mese: int = Query(datetime.now().month)
+) -> Dict[str, Any]:
+    """Ottiene i turni assegnati per mese."""
+    db = Database.get_db()
+    
+    turni_list = await db["attendance_turni"].find(
+        {"anno": anno, "mese": mese},
+        {"_id": 0}
+    ).to_list(500)
+    
+    # Converti in dizionario
+    turni_dict = {}
+    for t in turni_list:
+        key = f"{t.get('mansione_id')}_{t.get('employee_id')}"
+        turni_dict[key] = True
+    
+    return {"turni": turni_dict, "anno": anno, "mese": mese}
+
+
+@router.post("/turni/assegna")
+async def assegna_turno(payload: Dict[str, Any]) -> Dict[str, str]:
+    """Assegna un dipendente a un turno/mansione."""
+    db = Database.get_db()
+    
+    doc = {
+        "employee_id": payload.get("employee_id"),
+        "mansione_id": payload.get("mansione_id"),
+        "anno": payload.get("anno", datetime.now().year),
+        "mese": payload.get("mese", datetime.now().month),
+        "created_at": datetime.now(timezone.utc)
+    }
+    
+    await db["attendance_turni"].update_one(
+        {
+            "employee_id": doc["employee_id"],
+            "mansione_id": doc["mansione_id"],
+            "anno": doc["anno"],
+            "mese": doc["mese"]
+        },
+        {"$set": doc},
+        upsert=True
+    )
+    
+    return {"message": "Turno assegnato"}
+
+
+@router.delete("/turni/rimuovi")
+async def rimuovi_turno(
+    employee_id: str = Query(...),
+    mansione_id: str = Query(...)
+) -> Dict[str, str]:
+    """Rimuove un dipendente da un turno/mansione."""
+    db = Database.get_db()
+    
+    await db["attendance_turni"].delete_one({
+        "employee_id": employee_id,
+        "mansione_id": mansione_id
+    })
+    
+    return {"message": "Turno rimosso"}
+
             )
             count_inseriti += 1
     
