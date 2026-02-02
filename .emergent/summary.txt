@@ -1,64 +1,78 @@
 <analysis>**original_problem_statement:**
-L'utente era frustrato dalla mancanza di automazione e da una pessima esperienza utente da smartphone. Le richieste originali erano di automatizzare la creazione di scritture in Prima Nota dal caricamento di fatture XML e buste paga. Successivamente, l'utente ha richiesto di applicare una logica di automazione simile anche per i verbali auto, inclusa una scansione completa e prioritaria delle email e la riconciliazione dei pagamenti.
+L'utente era frustrato dalla mancanza di automazione e da una pessima esperienza utente da smartphone. Le richieste originali erano di automatizzare la creazione di scritture in Prima Nota dal caricamento di fatture XML e buste paga. Successivamente, l'ambito si è esteso a una complessa automazione per i verbali auto (multe), inclusa la scansione di tutte le cartelle email, la riconciliazione dei pagamenti e l'associazione delle multe a conducenti e veicoli. Le richieste più recenti si sono concentrate sull'aggiunta di nuove funzionalità al modulo di gestione delle presenze, sul miglioramento dell'interfaccia utente e sulla riconciliazione dei pagamenti PayPal con le fatture ricevute.
 
 PRODUCT REQUIREMENTS:
-1.  **Automazione Fatture**: Il caricamento di una fattura XML deve creare una scrittura in Prima Nota (Cassa/Banca).
-2.  **Automazione Buste Paga**: Il caricamento di un cedolino PDF deve creare una scrittura in Prima Nota Salari.
-3.  **UI Responsive**: La pagina dei cedolini deve essere utilizzabile da smartphone.
-4.  **Automazione Verbali Auto**:
-    *   Estrarre i dati dei verbali (targa, importo, data) dalle fatture XML di ri-notifica dei noleggiatori.
-    *   Scansionare **tutte** le cartelle email (non solo INBOX) per trovare PDF di verbali e quietanze di pagamento.
-    *   Implementare una logica di scansione prioritaria: prima cercare i documenti mancanti per i verbali esistenti (es. quietanze per verbali Da Pagare), poi cercare nuovi verbali.
-    *   Associare automaticamente ogni verbale a targa, veicolo, driver e contratto.
-    *   Creare una voce di costo per il dipendente a cui è associato il verbale.
-    *   Gestire un flusso di riconciliazione a più stati (es. ).
-    *   Preparare un endpoint per la riconciliazione finale tramite l'importazione di estratti conto (es. PayPal).
+1.  **Automazione Fatture e Buste Paga**: Il caricamento di fatture XML e cedolini PDF deve creare automaticamente le relative scritture contabili.
+2.  **Automazione Verbali Auto**: Estrarre dati da fatture e email, scansionare tutte le cartelle email con una logica prioritaria, associare multe a driver/veicoli e gestire un flusso di riconciliazione.
+3.  **Riconciliazione PayPal**: Riconciliare gli estratti conto PayPal (CSV/PDF) con le fatture ricevute nel sistema, aggiornando lo stato di pagamento e creando i movimenti in Prima Nota Banca.
+4.  **Modulo Presenze Avanzato**:
+    *   Impostare presente come stato predefinito.
+    *   Permettere la modifica di più giorni contemporaneamente, inclusa la selezione di un intervallo (range).
+    *   Gestire i turni di lavoro per mansione.
+    *   Gestire il ciclo di vita dei dipendenti in base alla data di scadenza del contratto (disabilitando i giorni futuri e nascondendo il dipendente nei mesi successivi).
+5.  **UI/UX**: Migliorare la reattività e l'usabilità generale dell'applicazione.
 
 **User's preferred language**: Italiano
 
 **what currently exists?**
-L'applicazione ora dispone di un solido sistema di automazione.
-1.  **Automazione Contabile**: Le fatture XML e le buste paga creano automaticamente le relative scritture in Prima Nota e Prima Nota Salari. I dati storici sono stati collegati.
-2.  **UI/UX**: La pagina principale dei cedolini () è stata resa completamente responsive per dispositivi mobili, utilizzando un layout a card e un selettore a dropdown per i mesi.
-3.  **Automazione Verbali**: È stato implementato un servizio complesso per l'automazione dei verbali auto. Questo servizio estrae i dati sia dalle fatture XML caricate, sia da una scansione approfondita di **tutte** le cartelle del servizio email. La logica di scansione dà priorità al completamento dei dati per i verbali sospesi prima di aggiungerne di nuovi. I verbali vengono associati a veicoli e driver, e viene creato un costo per il dipendente. È stato documentato il flusso completo in .
+L'applicazione è un gestionale ERP completo con un backend FastAPI e un frontend React.
+-   **Automazioni Contabili**: Le automazioni per fatture, buste paga e verbali sono implementate e funzionanti. Uno scheduler in background esegue la scansione delle email per le multe ogni ora.
+-   **Riconciliazione PayPal**: È stato implementato un servizio completo che elabora estratti conto PayPal, li abbina alle fatture esistenti (anche di anni precedenti) tramite una logica flessibile, aggiorna lo stato delle fatture e crea i corrispondenti movimenti nella Prima Nota Banca dell'anno corretto. È stata creata un'interfaccia utente () per visualizzare i risultati.
+-   **Modulo Presenze ()**: Una pagina molto avanzata che include:
+    -   Una griglia a calendario per la gestione delle presenze.
+    -   Stati personalizzati (Chiuso, Riposo Settimanale) e logica per i giorni lavorativi (sabato incluso, solo domenica festivo).
+    -   Funzionalità di modifica massiva: Imposta tutti presenti e selezione di un intervallo di giorni tramite .
+    -   Una sezione Gestione Turni per assegnare dipendenti a mansioni (es. Camerieri).
+    -   Logica implementata per gestire i contratti in scadenza, disabilitando i giorni successivi alla data di fine e nascondendo i dipendenti cessati nei mesi futuri.
+-   **UI/UX**: Diverse pagine sono state migliorate e sono state create nuove interfacce per le funzionalità aggiunte.
 
 **Last working item**:
--   **Last item agent was working**: Implementazione della logica di riconciliazione completa per i verbali, come richiesto dall'utente. Dopo aver capito che un verbale può essere pagato prima di ricevere la fattura di ri-notifica, l'agente ha aggiornato lo stato del verbale per riflettere questa situazione () e ha iniziato a implementare il passo finale: la riconciliazione tramite l'importazione di estratti conto.
+-   **Last item agent was working**: Implementazione della logica per la gestione dei dipendenti con contratto scaduto nella pagina delle presenze, come da richiesta dell'utente. Questo include rendere i giorni successivi alla scadenza non modificabili (mostrando Cessato) e nascondere il dipendente dalla lista nei mesi successivi alla scadenza del contratto.
 -   **Status**: IN PROGRESS
--   **Agent Testing Done**: N (per l'importazione dell'estratto conto)
--   **Which testing method agent to use?**: backend testing agent. L'agente dovrà implementare la logica all'interno dell'endpoint , creare un file CSV di esempio per un estratto conto PayPal e poi testare l'upload per verificare che i verbali corrispondenti vengano aggiornati allo stato finale riconciliato.
+-   **Agent Testing Done**: Y (per le modifiche UI visibili come lo stile dei sabati e la nuova legenda, tramite screenshot). N (per il test funzionale completo del ciclo di vita di un dipendente con contratto scaduto).
+-   **Which testing method agent to use?**: backend testing agent. L'agente dovrà creare uno scenario di test:
+    1.  Identificare o creare un dipendente con una  impostata a metà mese (es. 17/02/2026).
+    2.  Verificare tramite l'API  che i dati per quel dipendente riflettano lo stato Cessato dopo il giorno 17.
+    3.  Verificare che la chiamata API per il mese successivo (marzo 2026) non includa più quel dipendente nella lista.
 -   **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
-Nessuno.
+-   **Issue 1: (P0) Verificare e confermare la logica dei contratti scaduti.**
+    -   **Attempted fixes**: Il codice è stato scritto e implementato in .
+    -   **Next debug checklist**: Eseguire lo scenario di test descritto sopra per confermare che il filtraggio dei dipendenti () e la renderizzazione delle celle () funzionino come previsto. Se non funziona, l'agente dovrà correggere la logica nel frontend.
+    -   **Why fix this issue and what will be achieved with the fix?**: Per completare una richiesta esplicita e importante dell'utente riguardo l'automazione del ciclo di vita dei dipendenti nella UI.
+    -   **Status**: IN PROGRESS
+    -   **Is recurring issue?**: N
+    -   **Should Test frontend/backend/both after fix?**: backend (per testare le API), frontend (per conferma visiva finale)
+    -   **Blocked on other issue**: No.
 
 **In progress Task List**:
--   **Task 1: (P0) Completare la riconciliazione dei verbali tramite estratto conto PayPal.**
-    -   **Where to resume**: Implementare la logica di business all'interno della funzione  nel file .
-    -   **What will be achieved with this?**: Completerà l'intero ciclo di vita di un verbale, permettendo all'utente di riconciliare massivamente i pagamenti registrati su PayPal con i verbali nel sistema.
-    -   **Status**: IN PROGRESS
-    -   **Should Test frontend/backend/both after fix?**: backend
-    -   **Blocked on something**: No.
+Nessuna.
 
 **Upcoming and Future Tasks**
 -   **Upcoming Tasks:**
-    -   **(P1) Schedulare lo scan email in background**: Modificare lo  per essere eseguito periodicamente (es. ogni ora) come un processo in background, in modo da non richiedere un'azione manuale.
-    -   **(P2) UI per la riconciliazione dell'estratto conto**: Creare nel frontend un pulsante e un modale per permettere all'utente di caricare il file CSV dell'estratto conto PayPal.
+    -   **(P0) Configurare le ore settimanali per dipendente nella sezione Turni.** (Richiesto dall'utente in un precedente messaggio, ).
+    -   **(P1) Creare report per le riconciliazioni PayPal.** (Richiesto dall'utente, ).
+    -   **(P2) Testare l'upload di un nuovo estratto conto PayPal tramite l'interfaccia.** (La UI è pronta in ).
 
 -   **Future Tasks:**
-    -   Investigare e risolvere i fallimenti di parsing per i ~19 cedolini rimanenti.
+    -   Risolvere i fallimenti di parsing per circa 19 vecchi cedolini.
     -   Aggiungere Test E2E automatizzati per i flussi di automazione.
-    -   Aggiungere indici alle collezioni MongoDB per migliorare le performance delle query.
+    -   Aggiungere indici alle collezioni MongoDB per migliorare le performance.
     -   Aggiungere funzionalità di export in formato Excel/CSV per le varie sezioni.
 
 **Completed work in this session**
--   **Automazione Fatture XML (FATTO)**: Verificata e resa funzionante la creazione automatica di scritture in Prima Nota.
--   **Automazione Buste Paga (FATTO)**: Implementata l'automazione per creare/collegare scritture in  all'upload di un cedolino. Eseguito uno script per collegare i dati storici.
--   **UI Responsive (FATTO)**: La pagina  è ora completamente funzionale e leggibile su dispositivi mobili.
--   **Bug Fix (FATTO)**: Risolto un grave bug sulla pagina  che non mostrava dati a causa di un routing API errato, ripristinando un vecchio modulo router come soluzione pragmatica.
--   **Automazione Verbali da Fatture XML (FATTO)**: Implementata la logica per estrarre, creare e associare automaticamente i verbali trovati nelle righe delle fatture XML dei noleggiatori.
--   **Automazione Verbali da Email (FATTO)**: Creato uno scanner email avanzato che cerca in **tutte** le cartelle (non solo INBOX), implementando una logica di priorità per completare i dati sospesi prima di aggiungere nuovi verbali.
--   **Documentazione (FATTO)**: Creata e aggiornata la documentazione della logica di automazione dei verbali in .
+-   **Scheduler Email in Background (FATTO)**: Lo scan delle email per le multe ora viene eseguito automaticamente ogni ora.
+-   **Riconciliazione PayPal Completa (FATTO)**: Implementato un servizio robusto che riconcilia i pagamenti PayPal con le fatture, gestendo correttamente anche fatture di anni precedenti e creando i movimenti in Prima Nota Banca.
+-   **Bug Critico Riconciliazione Anno (RISOLTO)**: Corretto un errore grave per cui i movimenti di Prima Nota generati dalla riconciliazione PayPal non rispettavano l'anno contabile corretto.
+-   **Miglioramenti Modulo Presenze (FATTO)**:
+    -   Aggiunti nuovi stati e bottoni (Chiuso, Riposo Settimanale) e rimossi altri.
+    -   I sabati sono ora considerati giorni lavorativi nell'interfaccia.
+    -   Implementata la selezione di un intervallo di giorni con .
+    -   Creata la sezione Gestione Turni e popolata con i primi dipendenti come richiesto.
+    -   Implementata la logica per la gestione dei contratti scaduti.
+-   **UI per Riconciliazione e Import (FATTO)**: Create nuove pagine e componenti per visualizzare le riconciliazioni PayPal e per permettere l'upload degli estratti conto.
+-   **Test E2E Estensivi (FATTO)**: Eseguite 4 sessioni di test approfonditi che hanno verificato la stabilità generale dell'applicazione.
 
 **Earlier issues found/mentioned but not fixed**
 -   Circa 19 cedolini (dal 2018 in poi) che ancora non vengono elaborati correttamente dal parser .
@@ -70,74 +84,77 @@ Nessuno.
 
 
 **Key Technical Concepts**
--   **Pragmatic Refactoring**: Invece di riscrivere tutti gli endpoint mancanti per la , l'agente ha scelto di ri-montare il vecchio modulo router funzionante per ripristinare rapidamente la funzionalità, dimostrando un buon giudizio ingegneristico.
--   **Root Cause Analysis**: L'agente ha correttamente identificato che lo scanner di verbali non trovava il file corretto perché cercava solo in , e ha risolto il problema alla radice modificando lo scanner per iterare su tutte le cartelle IMAP.
--   **Stateful Reconciliation Logic**: L'agente ha implementato una logica di stato complessa per i verbali (es. ), che cattura con precisione il processo di business descritto dall'utente.
--   **Responsive UI with Hooks**: Invece di affidarsi a classi CSS che entravano in conflitto, l'agente ha implementato un hook React  per una gestione robusta del rendering condizionale tra desktop e mobile.
+-   **Scheduler in Background ()**: Utilizzato per automatizzare la scansione delle email.
+-   **Logica di Riconciliazione Flessibile ()**: Il servizio di riconciliazione PayPal abbina transazioni e fatture usando una combinazione di importo (con tolleranza), data e corrispondenza fuzzy del nome del fornitore.
+-   **Gestione Stato Complessa (React)**: Il componente  gestisce uno stato molto complesso per la selezione singola, multipla e di un intervallo, oltre al filtraggio dinamico dei dipendenti in base alla data del contratto.
+-   **Renderizzazione Condizionale Avanzata**: La griglia delle presenze renderizza dinamicamente lo stato Cessato e disabilita le celle per i dipendenti il cui contratto è scaduto in una data specifica.
 
 **key DB schema**
--   ****: 
--   ****: 
+-   **** (in ): Contiene il flag  e .
+-   **** (in ): Utilizza il campo  per la logica di UI.
+-   **** (in ): Qui vengono creati i movimenti bancari con  PayPal - [Nome Fornitore].
+-   **** (in ): Nuova collection per mappare  a .
 
 **changes in tech stack**
 Nessuna.
 
 **All files of reference**
--   : File centrale per la logica dei verbali, dove si sta implementando la riconciliazione con l'estratto conto.
--   : Servizio chiave che implementa la scansione di tutte le cartelle email con logica di priorità.
--   : Punto di ingresso per l'automazione dei verbali provenienti da fatture XML.
--   : Esempio di UI resa completamente responsive.
--   : Documentazione creata dall'agente che descrive il flusso di automazione e riconciliazione dei verbali.
+-   : File principale per le presenze e i turni, necessita di verifica e potenziale refactoring.
+-   : Backend per il modulo presenze.
+-   : Servizio chiave per la logica di riconciliazione PayPal.
+-   : Pagina per la visualizzazione dei risultati della riconciliazione.
+-   : Documento di prodotto aggiornato con le ultime funzionalità.
 
 **Areas that need refactoring**:
--   Il file  sta diventando molto grande. La logica di business potrebbe essere estratta in file di servizio dedicati per migliorare la manutenibilità.
+-   Il file  è diventato monolitico (oltre 1500 righe) e difficile da mantenere. Dovrebbe essere scomposto in componenti più piccoli e specializzati (es. , , , , ).
 
 **key api endpoints**
--   : Esegue la scansione completa delle email.
--   : Esegue il processo di associazione su tutti i verbali esistenti.
--   : Carica una fattura XML, innescando l'automazione per fatture e verbali.
--   : Endpoint in fase di sviluppo per la riconciliazione finale.
+-   : Imposta lo stato di tutti i dipendenti a Presente.
+-   : Recupera le assegnazioni dei turni.
+-   : Esegue il processo di riconciliazione PayPal (ora deprecato in favore dell'upload).
+-   : Nuovo endpoint per caricare un file di estratto conto PayPal ed eseguire la riconciliazione.
+-   : Recupera l'elenco delle fatture già riconciliate.
+-   : Controlla lo stato dello scheduler in background.
 
 **Critical Info for New Agent**
--   **Logica Utente Complessa**: L'utente ha una comprensione molto dettagliata dei suoi flussi di lavoro. È fondamentale ascoltare attentamente le sue spiegazioni e implementare la logica esattamente come descritta. La logica dei verbali è a più fasi e non lineare.
--   **Fiducia Guadagnata**: L'agente attuale ha guadagnato la fiducia dell'utente risolvendo problemi complessi e implementando le sue richieste in modo accurato. Mantieni questo livello di precisione e comunicazione.
--   **Focus su Riconciliazione**: Il task attuale è il tassello finale del processo dei verbali. Completarlo con successo consoliderà il valore dell'automazione costruita finora.
--   **Scanner Email**: Lo scanner ora cerca in tutte le cartelle. Qualsiasi ulteriore modifica o test deve tenere conto di questa capacità per evitare regressioni.
+-   L'utente è molto attento ai dettagli, specialmente per quanto riguarda la logica contabile e le date. Qualsiasi implementazione che coinvolge anni fiscali o date di pagamento deve essere estremamente precisa.
+-   Il componente  è il cuore delle funzionalità HR. A causa della sua complessità, qualsiasi modifica richiede molta cautela. Proporre un refactoring di questo file è una buona idea per il futuro.
+-   Prima di implementare una nuova richiesta, verifica sempre se è correlata a funzionalità esistenti per evitare regressioni o logiche inconsistenti.
+-   La richiesta principale da cui ripartire è la verifica completa della logica dei contratti scaduti.
 
 **documents and test reports created in this job**
 -   
 -   
 -   
+-   
+-    (aggiornato)
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User**: Spiega che il verbale è per una BMW X3, non per lo Stelvio, e che il pagamento è stato fatto prima di ricevere la fattura di ri-notifica. Chiede come avverrà la riconciliazione del pagamento PayPal. (Stato: **IN PROGRESS**)
-2.  **User**: Spiega il flusso completo di un verbale: viene pagato subito dal parabrezza, poi arriva la fattura di ri-notifica, e infine va riconciliato con l'estratto conto PayPal. (Stato: **IN PROGRESS**)
-3.  **User**: Chiede di spiegare e implementare una logica di ricerca email prioritaria: prima completare i dati sospesi, poi aggiungere i nuovi. (Stato: **RISOLTO**)
-4.  **User**: Conferma che il flusso di associazione verbale-driver tramite fattura XML è corretto. (Stato: **RISOLTO**)
-5.  **User**: Spiega in dettaglio il processo di business per la ri-notifica dei verbali da parte delle società di noleggio (es. ALD). (Stato: **RISOLTO**)
-6.  **User**: Chiede di applicare la logica di automazione dei cedolini anche ai verbali auto, associando i dati da email e fatture. (Stato: **RISOLTO**)
-7.  **User**: Chiede informazioni sulla funzionalità multiboot/MoltBot. (Stato: **RISOLTO**, indirizzato al supporto)
-8.  **User**: Chiede di procedere con il test di un upload di cedolino. (Stato: **RISOLTO**)
-9.  **User**: Chiede di procedere con l'implementazione del connettore email Aruba. (Stato: **RISOLTO**)
-10. **User**: Afferma che un verbale recente non è stato trovato e che la ricerca deve avvenire in tutte le cartelle email, non solo INBOX. (Stato: **RISOLTO**)
+1.  **User**: Spiega la logica per la gestione dei contratti scaduti nella pagina presenze e chiede di non colorare di rosso i sabati. (Stato: **IN PROGRESS**)
+2.  **User**: Corregge l'agente: la riconciliazione PayPal deve aggiornare le fatture e la Prima Nota dell'anno corretto, indipendentemente dall'anno selezionato nella UI. (Stato: **RISOLTO**)
+3.  **User**: Richiede di rimuovere delle card informative dalla pagina di riconciliazione e definisce le priorità: inserire dipendenti nei turni e implementare la modifica multipla dei giorni. (Stato: **RISOLTO**)
+4.  **User**: Fornisce un'immagine di esempio e chiede di creare una sezione Turni di lavoro, aggiungere bottoni Chiusi e Riposo, e un'opzione di import per PayPal. (Stato: **RISOLTO**)
+5.  **User**: Chiede di implementare diverse funzionalità sulla pagina presenze e di creare un'interfaccia e report per la riconciliazione PayPal. Segnala un presunto bug sull'importo di un verbale. (Stato: **PARZIALMENTE RISOLTO**, bug investigato e non confermato, resto implementato).
 
 **Project Health Check:**
--   **Broken**: Nulla di critico. La funzionalità principale è stabile.
+-   **Broken**: Nulla di critico.
 -   **Mocked**: No.
 
 **3rd Party Integrations**
--   **IMAP/SMTP**: Utilizzato per la scansione delle email (le credenziali sono in ).
+-   **IMAP/SMTP**: Per la scansione delle email.
 -   : Per l'estrazione di testo da PDF.
+-   : Per l'esecuzione di task in background.
+-   : Per il matching flessibile di stringhe nella riconciliazione.
 
 **Testing status**
--   **Testing agent used after significant changes**: YES. Utilizzato dopo l'implementazione delle automazioni principali e della UI responsive, con successo.
+-   **Testing agent used after significant changes**: YES (a inizio sessione).
 -   **Troubleshoot agent used after agent stuck in loop**: NO.
--   **Test files created**:
-    -   File XML di test per fatture con e senza verbali.
+-   **Test files created**: Nessuno.
 -   **Known regressions**: Nessuna.
 
 **Credentials to test flow:**
-Le credenziali per l'accesso all'app e al database/email sono nei file  e non richiedono interazione con l'utente.
+Le credenziali sono presenti nei file  del backend e frontend.
 
 **What agent forgot to execute**
-Inizialmente, l'agente non ha considerato che lo scanner email dovesse cercare oltre la cartella INBOX. Tuttavia, ha rapidamente corretto questo errore su segnalazione dell'utente, implementando una soluzione molto più robusta che scansiona l'intero account email.</analysis>
+-   L'agente ha corretto manualmente i movimenti di Prima Nota mancanti per la riconciliazione PayPal, ma non ha reso la funzione di riconciliazione completamente idempotente. Se eseguita di nuovo su dati già parzialmente elaborati, potrebbe non creare i movimenti mancanti.
+-   La verifica completa del ciclo di vita di un dipendente con contratto scaduto non è stata eseguita con un caso di test reale.</analysis>
