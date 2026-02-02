@@ -686,8 +686,47 @@ export default function Attendance() {
   };
 
   // === SELEZIONE MULTIPLA: Click su cella in modalità selezione rapida ===
-  const handleMultiSelectClick = async (employeeId, dateStr) => {
+  const handleMultiSelectClick = async (employeeId, dateStr, event) => {
     if (!selectedStato) return;
+    
+    // Se SHIFT è premuto e c'è un range start, applica a tutto il range
+    if (event?.shiftKey && rangeStart) {
+      const startDay = parseInt(rangeStart.split('-')[2]);
+      const endDay = parseInt(dateStr.split('-')[2]);
+      const minDay = Math.min(startDay, endDay);
+      const maxDay = Math.max(startDay, endDay);
+      
+      toast.info(`Applico ${STATI_PRESENZA[selectedStato]?.name} dal ${minDay} al ${maxDay}...`);
+      
+      for (let d = minDay; d <= maxDay; d++) {
+        const dayDateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const dayOfWeek = new Date(currentYear, currentMonth, d).getDay();
+        
+        // Salta domeniche (0) ma includi sabato (6)
+        if (dayOfWeek === 0) continue;
+        
+        const key = `${employeeId}_${dayDateStr}`;
+        setPresenze(prev => ({ ...prev, [key]: selectedStato }));
+        
+        // Salva nel backend
+        try {
+          await api.post('/api/attendance/set-presenza', {
+            employee_id: employeeId,
+            data: dayDateStr,
+            stato: selectedStato
+          });
+        } catch (err) {
+          console.error('Errore salvataggio:', err);
+        }
+      }
+      
+      toast.success(`✅ Applicato a ${maxDay - minDay + 1} giorni`);
+      setRangeStart(null);
+      return;
+    }
+    
+    // Imposta come inizio range per prossimo click con SHIFT
+    setRangeStart(dateStr);
     
     const key = `${employeeId}_${dateStr}`;
     const currentState = presenze[key];
