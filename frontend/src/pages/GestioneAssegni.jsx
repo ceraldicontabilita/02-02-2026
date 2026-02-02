@@ -27,6 +27,7 @@ export default function GestioneAssegni() {
   const [filterNumeroAssegno, setFilterNumeroAssegno] = useState('');
   const [filterNumeroFattura, setFilterNumeroFattura] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [filterAnno, setFilterAnno] = useState(new Date().getFullYear()); // Filtro anno
   
   // Generate modal
   const [showGenerate, setShowGenerate] = useState(false);
@@ -57,7 +58,7 @@ export default function GestioneAssegni() {
   useEffect(() => {
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterStato, search]);
+  }, [filterStato, search, filterAnno]);
 
   /**
    * LOGICA INTELLIGENTE: Ricostruisce automaticamente i dati mancanti.
