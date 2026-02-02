@@ -1,6 +1,6 @@
 """
-Router OpenAPI Imprese - Aggiornamento automatico schede fornitore
-Utilizza l'API OpenAPI.it per recuperare dati anagrafici aggiornati
+Router OpenAPI Company - Aggiornamento automatico schede fornitore
+Utilizza l'API OpenAPI.com Company per recuperare dati anagrafici aggiornati
 """
 from fastapi import APIRouter, HTTPException, Query, Body
 from typing import Dict, Any, List, Optional
@@ -10,14 +10,13 @@ import os
 import logging
 
 from app.database import Database
-from app.services.openapi_imprese import OpenAPIImprese, map_openapi_to_fornitore
+from app.services.openapi_company import OpenAPICompany, map_company_to_fornitore
 
 router = APIRouter(prefix="/openapi-imprese", tags=["OpenAPI Imprese"])
 logger = logging.getLogger(__name__)
 
-# Token da environment o passato direttamente
-OPENAPI_TOKEN = os.environ.get("OPENAPI_IMPRESE_TOKEN", "")
-OPENAPI_USE_SANDBOX = os.environ.get("OPENAPI_IT_ENV", "sandbox") == "sandbox"
+# Token da environment
+OPENAPI_TOKEN = os.environ.get("OPENAPI_COMPANY_TOKEN", "")
 
 
 class UpdateFornitoreRequest(BaseModel):
@@ -32,11 +31,6 @@ class BulkUpdateRequest(BaseModel):
     force_update: bool = False
 
 
-class SearchRequest(BaseModel):
-    """Request per ricerca azienda"""
-    query: str
-
-
 @router.get("/status")
 async def check_api_status() -> Dict[str, Any]:
     """
@@ -47,25 +41,24 @@ async def check_api_status() -> Dict[str, Any]:
     if not token:
         return {
             "configured": False,
-            "message": "Token OpenAPI non configurato. Imposta OPENAPI_IMPRESE_TOKEN in .env"
+            "message": "Token OpenAPI non configurato. Imposta OPENAPI_COMPANY_TOKEN in .env"
         }
     
-    # Test con una P.IVA di esempio (OpenAPI stessa) - usa sandbox se configurato
-    client = OpenAPIImprese(token, sandbox=OPENAPI_USE_SANDBOX)
-    result = await client.get_base_info("12485671007")
+    # Test con una P.IVA di esempio (OpenAPI stessa)
+    client = OpenAPICompany(token)
+    result = await client.get_start_info("12485671007")
     
     if result.get("success"):
         return {
             "configured": True,
             "status": "OK",
-            "mode": "sandbox" if OPENAPI_USE_SANDBOX else "production",
-            "test_result": "Connessione API verificata"
+            "test_company": result.get("data", {}).get("companyName"),
+            "message": "Connessione API verificata"
         }
     else:
         return {
             "configured": True,
             "status": "ERROR",
-            "mode": "sandbox" if OPENAPI_USE_SANDBOX else "production",
             "error": result.get("error", "Errore sconosciuto")
         }
 
@@ -76,16 +69,16 @@ async def aggiorna_fornitore(
     token: Optional[str] = Query(None, description="Token OpenAPI (opzionale se configurato in env)")
 ) -> Dict[str, Any]:
     """
-    Aggiorna la scheda di un fornitore con dati da OpenAPI.it
+    Aggiorna la scheda di un fornitore con dati da OpenAPI Company.
     
-    Recupera: ragione sociale, indirizzo, PEC, codice SDI, ATECO, etc.
+    Recupera: ragione sociale, indirizzo, PEC, codice SDI, ATECO, fatturato, dipendenti
     """
     api_token = token or OPENAPI_TOKEN
     
     if not api_token:
         raise HTTPException(
             status_code=400,
-            detail="Token OpenAPI non fornito. Passalo come query param o configura OPENAPI_IMPRESE_TOKEN"
+            detail="Token OpenAPI non fornito. Passalo come query param o configura OPENAPI_COMPANY_TOKEN"
         )
     
     piva = request.partita_iva.strip().replace(" ", "")
@@ -105,9 +98,13 @@ async def aggiorna_fornitore(
         ]
     })
     
-    # Chiama OpenAPI
-    client = OpenAPIImprese(api_token, sandbox=OPENAPI_USE_SANDBOX)
-    result = await client.get_advance_info(piva)
+    # Chiama OpenAPI Company
+    client = OpenAPICompany(api_token)
+    
+    # Prima prova IT-advanced per dati completi, fallback su IT-start
+    result = await client.get_advanced_info(piva)
+    if not result.get("success"):
+        result = await client.get_start_info(piva)
     
     if not result.get("success"):
         raise HTTPException(
@@ -116,8 +113,14 @@ async def aggiorna_fornitore(
         )
     
     # Mappa dati
-    openapi_data = result.get("data", {})
-    fornitore_update = map_openapi_to_fornitore(openapi_data)
+    company_data = result.get("data", {})
+    fornitore_update = map_company_to_fornitore(company_data)
+    
+    # Recupera PEC separatamente se non presente
+    if not fornitore_update.get("pec"):
+        pec_result = await client.get_pec(piva)
+        if pec_result.get("success") and pec_result.get("pec"):
+            fornitore_update["pec"] = pec_result.get("pec")
     
     if fornitore:
         # Aggiorna fornitore esistente
@@ -160,7 +163,6 @@ async def aggiorna_fornitori_bulk(
 ) -> Dict[str, Any]:
     """
     Aggiorna più fornitori in batch.
-    Utile per aggiornare tutti i fornitori del database.
     """
     api_token = token or OPENAPI_TOKEN
     
@@ -175,18 +177,18 @@ async def aggiorna_fornitori_bulk(
         "dettagli": []
     }
     
-    client = OpenAPIImprese(api_token, sandbox=OPENAPI_USE_SANDBOX)
+    client = OpenAPICompany(api_token)
     db = Database.get_db()
     
     for piva in request.partite_iva:
         piva = piva.strip().replace(" ", "")
         
         try:
-            result = await client.get_advance_info(piva)
+            result = await client.get_start_info(piva)
             
             if result.get("success"):
-                openapi_data = result.get("data", {})
-                fornitore_update = map_openapi_to_fornitore(openapi_data)
+                company_data = result.get("data", {})
+                fornitore_update = map_company_to_fornitore(company_data)
                 fornitore_update["updated_at"] = datetime.now(timezone.utc).isoformat()
                 
                 # Upsert
@@ -220,19 +222,20 @@ async def aggiorna_fornitori_bulk(
 @router.get("/cerca")
 async def cerca_azienda(
     query: str = Query(..., description="Nome azienda (parziale)"),
+    provincia: Optional[str] = Query(None, description="Codice provincia (es: RM, MI)"),
+    limit: int = Query(10, description="Numero massimo risultati"),
     token: Optional[str] = Query(None)
 ) -> Dict[str, Any]:
     """
-    Cerca un'azienda per nome usando l'API OpenAPI.
-    Restituisce lista di risultati con ID e denominazione.
+    Cerca un'azienda per nome usando l'API OpenAPI Company.
     """
     api_token = token or OPENAPI_TOKEN
     
     if not api_token:
         raise HTTPException(status_code=400, detail="Token OpenAPI non fornito")
     
-    client = OpenAPIImprese(api_token, sandbox=OPENAPI_USE_SANDBOX)
-    result = await client.search_by_name(query)
+    client = OpenAPICompany(api_token)
+    result = await client.search_company(company_name=query, provincia=provincia, limit=limit)
     
     if result.get("success"):
         return {
@@ -249,7 +252,7 @@ async def cerca_azienda(
 async def get_info_azienda(
     partita_iva: str,
     token: Optional[str] = Query(None),
-    tipo: str = Query("advance", description="base o advance")
+    tipo: str = Query("advanced", description="start, advanced o full")
 ) -> Dict[str, Any]:
     """
     Recupera informazioni su un'azienda senza aggiornare il database.
@@ -261,79 +264,70 @@ async def get_info_azienda(
         raise HTTPException(status_code=400, detail="Token OpenAPI non fornito")
     
     piva = partita_iva.strip().replace(" ", "")
-    client = OpenAPIImprese(api_token, sandbox=OPENAPI_USE_SANDBOX)
+    client = OpenAPICompany(api_token)
     
-    if tipo == "base":
-        result = await client.get_base_info(piva)
+    if tipo == "start":
+        result = await client.get_start_info(piva)
+    elif tipo == "full":
+        result = await client.get_full_info(piva)
     else:
-        result = await client.get_advance_info(piva)
+        result = await client.get_advanced_info(piva)
     
     if result.get("success"):
         return {
             "success": True,
             "partita_iva": piva,
             "data": result.get("data", {}),
-            "campi_mappati": map_openapi_to_fornitore(result.get("data", {}))
+            "campi_mappati": map_company_to_fornitore(result.get("data", {}))
         }
     else:
         raise HTTPException(status_code=404, detail=result.get("error"))
 
 
-@router.post("/aggiorna-tutti-fornitori")
-async def aggiorna_tutti_fornitori(
-    token: Optional[str] = Query(None),
-    limit: int = Query(50, description="Limite fornitori da aggiornare")
+@router.get("/pec/{partita_iva}")
+async def get_pec_azienda(
+    partita_iva: str,
+    token: Optional[str] = Query(None)
 ) -> Dict[str, Any]:
     """
-    Aggiorna tutti i fornitori nel database che hanno una P.IVA valida.
-    Elabora solo fornitori non aggiornati di recente.
+    Recupera solo la PEC di un'azienda.
     """
     api_token = token or OPENAPI_TOKEN
     
     if not api_token:
         raise HTTPException(status_code=400, detail="Token OpenAPI non fornito")
     
-    db = Database.get_db()
+    piva = partita_iva.strip().replace(" ", "")
+    client = OpenAPICompany(api_token)
+    result = await client.get_pec(piva)
     
-    # Trova fornitori con P.IVA ma senza aggiornamento OpenAPI recente
-    fornitori = await db.fornitori.find({
-        "$or": [
-            {"partita_iva": {"$exists": True, "$ne": None, "$ne": ""}},
-            {"piva": {"$exists": True, "$ne": None, "$ne": ""}}
-        ],
-        "openapi_last_update": {"$exists": False}
-    }).limit(limit).to_list(length=limit)
+    if result.get("success"):
+        return {"success": True, "partita_iva": piva, "pec": result.get("pec")}
+    else:
+        raise HTTPException(status_code=404, detail=result.get("error"))
+
+
+@router.get("/sdi/{partita_iva}")
+async def get_sdi_azienda(
+    partita_iva: str,
+    token: Optional[str] = Query(None)
+) -> Dict[str, Any]:
+    """
+    Recupera il Codice Destinatario SDI di un'azienda.
+    """
+    api_token = token or OPENAPI_TOKEN
     
-    if not fornitori:
-        # Prova anche quelli già aggiornati ma vecchi (> 30 giorni)
-        from datetime import timedelta
-        thirty_days_ago = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat()
-        
-        fornitori = await db.fornitori.find({
-            "$or": [
-                {"partita_iva": {"$exists": True, "$ne": None, "$ne": ""}},
-                {"piva": {"$exists": True, "$ne": None, "$ne": ""}}
-            ],
-            "openapi_last_update": {"$lt": thirty_days_ago}
-        }).limit(limit).to_list(length=limit)
+    if not api_token:
+        raise HTTPException(status_code=400, detail="Token OpenAPI non fornito")
     
-    if not fornitori:
-        return {
-            "success": True,
-            "message": "Tutti i fornitori sono già aggiornati",
-            "aggiornati": 0
-        }
+    piva = partita_iva.strip().replace(" ", "")
+    client = OpenAPICompany(api_token)
+    result = await client.get_sdi_code(piva)
     
-    # Estrai le P.IVA
-    partite_iva = []
-    for f in fornitori:
-        piva = f.get("partita_iva") or f.get("piva")
-        if piva and len(piva.replace(" ", "")) == 11:
-            partite_iva.append(piva)
-    
-    # Usa bulk update
-    bulk_request = BulkUpdateRequest(partite_iva=partite_iva, force_update=True)
-    return await aggiorna_fornitori_bulk(bulk_request, token=api_token)
+    if result.get("success"):
+        return {"success": True, "partita_iva": piva, "codice_sdi": result.get("codice_sdi")}
+    else:
+        raise HTTPException(status_code=404, detail=result.get("error"))
 
 
 @router.get("/fornitori-da-aggiornare")
