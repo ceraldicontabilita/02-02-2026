@@ -403,6 +403,10 @@ app.include_router(openapi_it.router, prefix="/api/openapi", tags=["OpenAPI.it S
 # --- OpenAPI Imprese (Anagrafica Fornitori) ---
 app.include_router(openapi_imprese.router, prefix="/api", tags=["OpenAPI Imprese"])
 
+# --- OpenAPI Automotive (Visure Veicoli) ---
+from app.routers import openapi_automotive
+app.include_router(openapi_automotive.router, prefix="/api", tags=["OpenAPI Automotive"])
+
 # --- Inserimento Rapido Mobile ---
 app.include_router(inserimento_rapido.router, prefix="/api", tags=["Inserimento Rapido"])
 
