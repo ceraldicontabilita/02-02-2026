@@ -273,6 +273,243 @@ async def preview_combinazioni_assegni_v2(
     }
 
 
+@router.get("/verifica-associazioni")
+async def verifica_associazioni_assegni() -> Dict[str, Any]:
+    """
+    Analizza tutte le associazioni assegno-fattura e identifica quelle problematiche.
+    
+    PROBLEMI IDENTIFICATI:
+    1. Importo assegno diverso da importo fattura (oltre tolleranza ±5€)
+    2. Beneficiario assegno diverso da fornitore fattura
+    3. Fattura associata non esistente nel database
+    4. Fattura associata già pagata
+    5. Data assegno molto diversa da data fattura (>180 giorni)
+    
+    Returns:
+        Lista di associazioni problematiche con suggerimenti di correzione
+    """
+    from thefuzz import fuzz
+    
+    db = Database.get_db()
+    
+    # Carica tutti gli assegni con fattura associata
+    assegni = await db[COLLECTION_ASSEGNI].find(
+        {"fattura_id": {"$exists": True, "$ne": None}},
+        {"_id": 0}
+    ).to_list(10000)
+    
+    # Carica tutte le fatture per lookup veloce
+    fatture_cursor = await db["invoices"].find({}, {"_id": 0}).to_list(50000)
+    fatture_by_id = {f.get("id"): f for f in fatture_cursor}
+    
+    problemi = []
+    statistiche = {
+        "totale_assegni_analizzati": len(assegni),
+        "associazioni_corrette": 0,
+        "problemi_importo": 0,
+        "problemi_fornitore": 0,
+        "problemi_fattura_mancante": 0,
+        "problemi_fattura_pagata": 0,
+        "problemi_data": 0
+    }
+    
+    for assegno in assegni:
+        assegno_id = assegno.get("id")
+        fattura_id = assegno.get("fattura_id")
+        numero_assegno = assegno.get("numero_assegno") or assegno.get("numero")
+        importo_assegno = float(assegno.get("importo") or 0)
+        beneficiario = assegno.get("beneficiario") or ""
+        data_assegno = assegno.get("data_emissione") or assegno.get("data")
+        
+        # Cerca la fattura
+        fattura = fatture_by_id.get(fattura_id)
+        
+        problema = {
+            "assegno_id": assegno_id,
+            "numero_assegno": numero_assegno,
+            "importo_assegno": importo_assegno,
+            "beneficiario": beneficiario,
+            "data_assegno": data_assegno,
+            "fattura_id": fattura_id,
+            "problemi": [],
+            "suggerimenti": []
+        }
+        
+        # PROBLEMA 1: Fattura non trovata
+        if not fattura:
+            problema["problemi"].append("Fattura associata non trovata nel database")
+            statistiche["problemi_fattura_mancante"] += 1
+            
+            # Suggerisci fatture con importo simile
+            fatture_simili = [
+                f for f in fatture_cursor 
+                if abs(float(f.get("total_amount", 0) or 0) - importo_assegno) < 5
+            ]
+            if fatture_simili:
+                problema["suggerimenti"] = [
+                    {
+                        "fattura_id": f.get("id"),
+                        "numero": f.get("invoice_number"),
+                        "fornitore": (f.get("supplier_name") or "")[:40],
+                        "importo": f.get("total_amount"),
+                        "match_type": "importo_simile"
+                    }
+                    for f in fatture_simili[:5]
+                ]
+            problemi.append(problema)
+            continue
+        
+        # Dati fattura
+        importo_fattura = float(fattura.get("total_amount") or fattura.get("importo_totale") or 0)
+        fornitore = fattura.get("supplier_name") or fattura.get("fornitore_ragione_sociale") or ""
+        data_fattura = fattura.get("invoice_date") or fattura.get("data_documento") or ""
+        fattura_pagata = fattura.get("pagato") or fattura.get("status") == "paid"
+        
+        problema["fattura_numero"] = fattura.get("invoice_number") or fattura.get("numero_documento")
+        problema["fattura_fornitore"] = fornitore
+        problema["fattura_importo"] = importo_fattura
+        problema["fattura_data"] = data_fattura
+        problema["fattura_pagata"] = fattura_pagata
+        
+        ha_problemi = False
+        
+        # PROBLEMA 2: Importo diverso (tolleranza ±5€)
+        differenza_importo = abs(importo_assegno - importo_fattura)
+        if differenza_importo > 5:
+            problema["problemi"].append(f"Importo differisce di €{differenza_importo:.2f}")
+            problema["differenza_importo"] = differenza_importo
+            statistiche["problemi_importo"] += 1
+            ha_problemi = True
+        
+        # PROBLEMA 3: Fornitore diverso (fuzzy match < 60%)
+        if beneficiario and fornitore:
+            similarity = fuzz.token_set_ratio(beneficiario.upper(), fornitore.upper())
+            if similarity < 60:
+                problema["problemi"].append(f"Beneficiario diverso da fornitore (match: {similarity}%)")
+                problema["similarity_score"] = similarity
+                statistiche["problemi_fornitore"] += 1
+                ha_problemi = True
+        
+        # PROBLEMA 4: Fattura già pagata
+        if fattura_pagata:
+            problema["problemi"].append("Fattura già marcata come pagata")
+            statistiche["problemi_fattura_pagata"] += 1
+            ha_problemi = True
+        
+        # PROBLEMA 5: Data molto diversa (>180 giorni)
+        if data_assegno and data_fattura:
+            try:
+                if isinstance(data_assegno, str):
+                    da = datetime.strptime(data_assegno[:10], "%Y-%m-%d")
+                else:
+                    da = data_assegno
+                if isinstance(data_fattura, str):
+                    df = datetime.strptime(data_fattura[:10], "%Y-%m-%d")
+                else:
+                    df = data_fattura
+                giorni_differenza = abs((da - df).days)
+                if giorni_differenza > 180:
+                    problema["problemi"].append(f"Date differiscono di {giorni_differenza} giorni")
+                    problema["giorni_differenza"] = giorni_differenza
+                    statistiche["problemi_data"] += 1
+                    ha_problemi = True
+            except:
+                pass
+        
+        if ha_problemi:
+            # Cerca fatture alternative suggerite
+            suggerimenti = []
+            for f in fatture_cursor:
+                f_fornitore = f.get("supplier_name") or f.get("fornitore_ragione_sociale") or ""
+                f_importo = float(f.get("total_amount") or f.get("importo_totale") or 0)
+                f_pagata = f.get("pagato") or f.get("status") == "paid"
+                
+                if f_pagata or f.get("id") == fattura_id:
+                    continue
+                
+                # Match per importo esatto o quasi
+                if abs(f_importo - importo_assegno) < 2:
+                    similarity = fuzz.token_set_ratio(beneficiario.upper(), f_fornitore.upper()) if beneficiario else 0
+                    suggerimenti.append({
+                        "fattura_id": f.get("id"),
+                        "numero": f.get("invoice_number") or f.get("numero_documento"),
+                        "fornitore": f_fornitore[:40],
+                        "importo": f_importo,
+                        "similarity": similarity,
+                        "match_type": "importo_esatto" if abs(f_importo - importo_assegno) < 0.5 else "importo_simile"
+                    })
+            
+            suggerimenti.sort(key=lambda x: x.get("similarity", 0), reverse=True)
+            problema["suggerimenti"] = suggerimenti[:5]
+            problemi.append(problema)
+        else:
+            statistiche["associazioni_corrette"] += 1
+    
+    return {
+        "statistiche": statistiche,
+        "problemi": problemi,
+        "totale_problemi": len(problemi)
+    }
+
+
+@router.put("/correggi-associazione/{assegno_id}")
+async def correggi_associazione_assegno(
+    assegno_id: str,
+    nuova_fattura_id: Optional[str] = Body(None, description="ID della nuova fattura da associare"),
+    aggiorna_beneficiario: bool = Body(False, description="Aggiorna beneficiario dal fornitore")
+) -> Dict[str, Any]:
+    """
+    Corregge l'associazione di un assegno con una fattura.
+    """
+    db = Database.get_db()
+    
+    assegno = await db[COLLECTION_ASSEGNI].find_one({"id": assegno_id})
+    if not assegno:
+        raise HTTPException(status_code=404, detail="Assegno non trovato")
+    
+    vecchia_fattura_id = assegno.get("fattura_id")
+    update_data = {"updated_at": datetime.utcnow().isoformat()}
+    
+    if nuova_fattura_id:
+        fattura = await db["invoices"].find_one({"id": nuova_fattura_id})
+        if not fattura:
+            raise HTTPException(status_code=404, detail="Fattura non trovata")
+        
+        update_data["fattura_id"] = nuova_fattura_id
+        update_data["numero_fattura"] = fattura.get("invoice_number") or fattura.get("numero_documento")
+        
+        if aggiorna_beneficiario:
+            update_data["beneficiario"] = fattura.get("supplier_name") or fattura.get("fornitore_ragione_sociale")
+        
+        if vecchia_fattura_id:
+            await db["invoices"].update_one(
+                {"id": vecchia_fattura_id},
+                {"$set": {"pagato": False, "status": "imported", "assegno_id": None}}
+            )
+        
+        await db["invoices"].update_one(
+            {"id": nuova_fattura_id},
+            {"$set": {"assegno_id": assegno_id}}
+        )
+        
+        message = f"Associazione corretta per assegno {assegno.get('numero_assegno') or assegno.get('numero')}"
+    else:
+        update_data["fattura_id"] = None
+        update_data["numero_fattura"] = None
+        
+        if vecchia_fattura_id:
+            await db["invoices"].update_one(
+                {"id": vecchia_fattura_id},
+                {"$set": {"pagato": False, "status": "imported", "assegno_id": None}}
+            )
+        
+        message = f"Associazione rimossa per assegno {assegno.get('numero_assegno') or assegno.get('numero')}"
+    
+    await db[COLLECTION_ASSEGNI].update_one({"id": assegno_id}, {"$set": update_data})
+    
+    return {"success": True, "message": message, "assegno_id": assegno_id, "nuova_fattura_id": nuova_fattura_id}
+
+
 # === ROUTE DINAMICHE (con parametri) - DEVONO STARE DOPO LE STATICHE ===
 
 @router.get("/{assegno_id}")
