@@ -1,81 +1,111 @@
 <analysis>**original_problem_statement:**
-L'utente era frustrato dalla mancanza di automazione e da una pessima esperienza utente da smartphone. Le richieste originali erano di automatizzare la creazione di scritture in Prima Nota dal caricamento di fatture XML e buste paga. Successivamente, l'ambito si è esteso a una complessa automazione per i verbali auto (multe), inclusa la scansione di tutte le cartelle email, la riconciliazione dei pagamenti e l'associazione delle multe a conducenti e veicoli. Le richieste più recenti si sono concentrate sull'aggiunta di nuove funzionalità al modulo di gestione delle presenze, sul miglioramento dell'interfaccia utente e sulla riconciliazione dei pagamenti PayPal con le fatture ricevute.
+L'utente, un manager di un'azienda italiana, era frustrato dalla mancanza di automazione e da una pessima UX. Le richieste iniziali erano di automatizzare la creazione di scritture contabili da fatture XML e buste paga. L'ambito si è poi esteso a una complessa automazione per le multe, la riconciliazione dei pagamenti PayPal e un modulo avanzato per la gestione delle presenze dei dipendenti (con gestione turni, contratti in scadenza e modifica massiva).
 
-PRODUCT REQUIREMENTS:
-1.  **Automazione Fatture e Buste Paga**: Il caricamento di fatture XML e cedolini PDF deve creare automaticamente le relative scritture contabili.
-2.  **Automazione Verbali Auto**: Estrarre dati da fatture e email, scansionare tutte le cartelle email con una logica prioritaria, associare multe a driver/veicoli e gestire un flusso di riconciliazione.
-3.  **Riconciliazione PayPal**: Riconciliare gli estratti conto PayPal (CSV/PDF) con le fatture ricevute nel sistema, aggiornando lo stato di pagamento e creando i movimenti in Prima Nota Banca.
-4.  **Modulo Presenze Avanzato**:
-    *   Impostare presente come stato predefinito.
-    *   Permettere la modifica di più giorni contemporaneamente, inclusa la selezione di un intervallo (range).
-    *   Gestire i turni di lavoro per mansione.
-    *   Gestire il ciclo di vita dei dipendenti in base alla data di scadenza del contratto (disabilitando i giorni futuri e nascondendo il dipendente nei mesi successivi).
-5.  **UI/UX**: Migliorare la reattività e l'usabilità generale dell'applicazione.
+Le richieste più recenti durante questa sessione includono:
+1.  **Bug Fixing Critico**: Correggere un'errata associazione tra assegni e fatture, verificando i dati con l'estratto conto bancario (BPM).
+2.  **Miglioramenti UI/UX**:
+    *   Nella pagina Gestione Assegni, aggiungere un filtro per anno e ordinare gli assegni dal più recente al più vecchio.
+    *   Spostare le nuove pagine create (es. Visure) in sezioni appropriate del menu, invece di lasciarle nel menu principale.
+3.  **Integrazione OpenAPI**:
+    *   Utilizzare l'API Company di OpenAPI per creare una nuova pagina Visure Aziendali per cercare dati di aziende tramite P.IVA.
+    *   Sostituire le funzioni di ricerca esistenti nelle pagine Fornitori e Noleggio con chiamate a OpenAPI per arricchire/aggiornare i dati.
+    *   Utilizzare l'API Automotive per recuperare dati dei veicoli tramite targa.
+4.  **Correzione Assistente AI**: L'assistente AI non rispondeva a domande specifiche sui dati (es. Quante fatture a gennaio 2026?). L'utente ha chiesto di renderlo in grado di accedere ai dati reali dell'applicazione.
+5.  **Automazione Email**: Creare un servizio per leggere automaticamente le email, scaricare allegati PDF (schede tecniche) e associarli ai fornitori corretti.
+6.  **Investigazione Bug**: L'utente ha segnalato che, dopo aver importato 88 fatture XML per il 2026, il sistema non ha segnalato duplicati, nonostante secondo lui dovessero essercene circa 55.
 
 **User's preferred language**: Italiano
 
 **what currently exists?**
-L'applicazione è un gestionale ERP completo con un backend FastAPI e un frontend React.
--   **Automazioni Contabili**: Le automazioni per fatture, buste paga e verbali sono implementate e funzionanti. Uno scheduler in background esegue la scansione delle email per le multe ogni ora.
--   **Riconciliazione PayPal**: È stato implementato un servizio completo che elabora estratti conto PayPal, li abbina alle fatture esistenti (anche di anni precedenti) tramite una logica flessibile, aggiorna lo stato delle fatture e crea i corrispondenti movimenti nella Prima Nota Banca dell'anno corretto. È stata creata un'interfaccia utente () per visualizzare i risultati.
--   **Modulo Presenze ()**: Una pagina molto avanzata che include:
-    -   Una griglia a calendario per la gestione delle presenze.
-    -   Stati personalizzati (Chiuso, Riposo Settimanale) e logica per i giorni lavorativi (sabato incluso, solo domenica festivo).
-    -   Funzionalità di modifica massiva: Imposta tutti presenti e selezione di un intervallo di giorni tramite .
-    -   Una sezione Gestione Turni per assegnare dipendenti a mansioni (es. Camerieri).
-    -   Logica implementata per gestire i contratti in scadenza, disabilitando i giorni successivi alla data di fine e nascondendo i dipendenti cessati nei mesi futuri.
--   **UI/UX**: Diverse pagine sono state migliorate e sono state create nuove interfacce per le funzionalità aggiunte.
+L'applicazione è un ERP full-stack (FastAPI/React). Le funzionalità principali, incluse automazioni contabili, riconciliazione PayPal e gestione presenze, sono implementate.
+In questa sessione sono state aggiunte le seguenti funzionalità:
+-   **Logica Contratti Scaduti**: La logica per nascondere i dipendenti con contratto scaduto dal modulo presenze è stata verificata e confermata come funzionante.
+-   **Modifica Ore Settimanali**: Nella sezione Gestione Turni è ora possibile modificare le ore settimanali di un dipendente.
+-   **Assistente AI Migliorato**: L'assistente AI è ora in grado di interpretare domande su dati specifici (es. fatture in un dato mese) e rispondere fornendo dati reali dal database.
+-   **Integrazione OpenAPI**:
+    -   È stata creata una nuova pagina  che utilizza l'API Company di OpenAPI per recuperare e visualizzare dati aziendali.
+    -   Il backend è stato predisposto con servizi e router per l'API Automotive (recupero dati veicoli da targa), pronto per essere integrato nel frontend.
+-   **Servizio Schede Tecniche**: Esiste un servizio backend che scansiona le email, scarica allegati PDF identificati come schede tecniche e li salva nel database. L'associazione automatica al fornitore non è ancora efficace.
+-   **Gestione Assegni**: La pagina è stata migliorata con un filtro per anno e l'ordinamento decrescente per numero di assegno. Sono state corrette 3 associazioni assegno-fattura errate.
 
 **Last working item**:
--   **Last item agent was working**: Implementazione della logica per la gestione dei dipendenti con contratto scaduto nella pagina delle presenze, come da richiesta dell'utente. Questo include rendere i giorni successivi alla scadenza non modificabili (mostrando Cessato) e nascondere il dipendente dalla lista nei mesi successivi alla scadenza del contratto.
+-   **Last item agent was working**: Investigare una grave discrepanza segnalata dall'utente. L'utente sostiene di aver importato 88 fatture per l'anno 2026 e si aspettava che circa 55 fossero segnalate come duplicate, ma l'agente ha verificato che nel database esistono solo 35 fatture in totale per il 2026, senza alcun duplicato. L'agente stava cercando di capire dove fossero finite le fatture importate dall'utente e perché i conteggi non corrispondessero, causando grande frustrazione all'utente.
 -   **Status**: IN PROGRESS
--   **Agent Testing Done**: Y (per le modifiche UI visibili come lo stile dei sabati e la nuova legenda, tramite screenshot). N (per il test funzionale completo del ciclo di vita di un dipendente con contratto scaduto).
--   **Which testing method agent to use?**: backend testing agent. L'agente dovrà creare uno scenario di test:
-    1.  Identificare o creare un dipendente con una  impostata a metà mese (es. 17/02/2026).
-    2.  Verificare tramite l'API  che i dati per quel dipendente riflettano lo stato Cessato dopo il giorno 17.
-    3.  Verificare che la chiamata API per il mese successivo (marzo 2026) non includa più quel dipendente nella lista.
+-   **Agent Testing Done**: N (era in fase di investigazione)
+-   **Which testing method agent to use?**: main agent to test via curl/python -c. L'agente deve eseguire query dirette sul database per risolvere la discrepanza.
 -   **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
--   **Issue 1: (P0) Verificare e confermare la logica dei contratti scaduti.**
-    -   **Attempted fixes**: Il codice è stato scritto e implementato in .
-    -   **Next debug checklist**: Eseguire lo scenario di test descritto sopra per confermare che il filtraggio dei dipendenti () e la renderizzazione delle celle () funzionino come previsto. Se non funziona, l'agente dovrà correggere la logica nel frontend.
-    -   **Why fix this issue and what will be achieved with the fix?**: Per completare una richiesta esplicita e importante dell'utente riguardo l'automazione del ciclo di vita dei dipendenti nella UI.
+-   **Issue 1: (P0) Discrepanza critica nel conteggio delle fatture 2026.**
+    -   **Attempted fixes**: L'agente ha interrogato la collection  per l'anno 2026, trovando solo 35 record. Questo ha contraddetto le affermazioni dell'utente, aumentando la sua frustrazione.
+    -   **Next debug checklist**:
+        1.  Eseguire una query sulla collection  per trovare i documenti creati nella data in cui l'utente ha eseguito l'import (), indipendentemente dall'anno della fattura (), per vedere se sono stati salvati con l'anno sbagliato.
+        2.  Controllare i log del backend () del periodo dell'import per cercare errori silenti o avvisi durante l'elaborazione dei file XML.
+        3.  Ispezionare la logica di parsing della data nel file  per escludere che un formato di data inatteso possa causare un'errata valorizzazione dell'anno.
+        4.  Verificare se esistono altre collection (es. , ) dove le fatture potrebbero essere state archiviate temporaneamente o in caso di errore.
+    -   **Why fix this issue and what will be achieved with the fix?**: È la causa principale dell'attuale frustrazione dell'utente. Risolverlo è fondamentale per ripristinare la fiducia e garantire l'integrità dei dati contabili.
     -   **Status**: IN PROGRESS
+    -   **Is recurring issue?**: Y (L'utente si lamenta spesso che l'agente non considera il contesto dell'anno selezionato).
+    -   **Should Test frontend/backend/both after fix?**: backend.
+    -   **Blocked on other issue**: No.
+
+-   **Issue 2: (P1) Errata associazione Assegno-Fattura.**
+    -   **Attempted fixes**: Uno script ha identificato 17 associazioni errate. 3 sono state corrette automaticamente. Le restanti 14 sono più complesse (es. nome fornitore non corrispondente, fattura mancante).
+    -   **Next debug checklist**:
+        1.  Creare uno script o un'interfaccia UI temporanea per presentare i 14 casi problematici all'utente, suggerendo possibili corrispondenze e permettendo una correzione manuale.
+        2.  Migliorare l'algoritmo di matching per includere una corrispondenza fuzzy sui nomi dei fornitori.
+    -   **Why fix this issue and what will be achieved with the fix?**: Garantire la correttezza dei dati contabili relativi ai pagamenti.
+    -   **Status**: IN PROGRESS
+    -   **Is recurring issue?**: Y
+    -   **Should Test frontend/backend/both after fix?**: backend.
+    -   **Blocked on other issue**: No.
+
+-   **Issue 3: (P2) Parsing fallito per buste paga.**
+    -   **Attempted fixes**: L'investigazione iniziale ha identificato 5 cedolini con  ma è stata sospesa.
+    -   **Next debug checklist**: Ottenere i file PDF originali per i 5 cedolini e usarli per eseguire il debug del parser in .
+    -   **Why fix this issue and what will be achieved with the fix?**: Completare l'importazione di tutti i dati storici delle buste paga.
+    -   **Status**: NOT STARTED
+    -   **Is recurring issue?**: Y
+    -   **Should Test frontend/backend/both after fix?**: backend.
+    -   **Blocked on other issue**: No.
+
+-   **Issue 4: (P3) Posizionamento errato delle nuove pagine nel menu.**
+    -   **Attempted fixes**: Nessuno. L'utente si è appena lamentato.
+    -   **Next debug checklist**: Modificare  per spostare il link Visure Aziendali dalla lista principale alla sezione Strumenti, dove si trovano link simili.
+    -   **Why fix this issue and what will be achieved with the fix?**: Migliorare l'organizzazione e l'usabilità dell'interfaccia, rispondendo a una critica diretta dell'utente.
+    -   **Status**: NOT STARTED
     -   **Is recurring issue?**: N
-    -   **Should Test frontend/backend/both after fix?**: backend (per testare le API), frontend (per conferma visiva finale)
+    -   **Should Test frontend/backend/both after fix?**: frontend.
     -   **Blocked on other issue**: No.
 
 **In progress Task List**:
-Nessuna.
+Nessuno.
 
 **Upcoming and Future Tasks**
 -   **Upcoming Tasks:**
-    -   **(P0) Configurare le ore settimanali per dipendente nella sezione Turni.** (Richiesto dall'utente in un precedente messaggio, ).
-    -   **(P1) Creare report per le riconciliazioni PayPal.** (Richiesto dall'utente, ).
-    -   **(P2) Testare l'upload di un nuovo estratto conto PayPal tramite l'interfaccia.** (La UI è pronta in ).
+    -   **(P1) Noleggio - Integrazione UI con API Automotive**: Sviluppare il frontend nella sezione Noleggio per permettere l'aggiornamento dei dati dei veicoli tramite targa, utilizzando l'endpoint  già funzionante.
+    -   **(P2) Schede Tecniche - Associazione a Fornitori**: Sviluppare una logica o un'interfaccia per associare le schede tecniche scaricate via email ai fornitori corretti, dato che l'associazione basata sull'email del mittente è inefficace.
+    -   **(P2) Fornitori - Arricchimento dati da OpenAPI**: Implementare la funzione del bottone Aggiorna da OpenAPI nella pagina Fornitori per aggiornare in massa i dati anagrafici usando l'API Company.
 
 -   **Future Tasks:**
-    -   Risolvere i fallimenti di parsing per circa 19 vecchi cedolini.
-    -   Aggiungere Test E2E automatizzati per i flussi di automazione.
-    -   Aggiungere indici alle collezioni MongoDB per migliorare le performance.
-    -   Aggiungere funzionalità di export in formato Excel/CSV per le varie sezioni.
+    -   Refactoring del componente monolitico .
+    -   Creazione di report per la riconciliazione PayPal.
+    -   Aggiunta di indici alle collezioni MongoDB per migliorare le performance.
 
 **Completed work in this session**
--   **Scheduler Email in Background (FATTO)**: Lo scan delle email per le multe ora viene eseguito automaticamente ogni ora.
--   **Riconciliazione PayPal Completa (FATTO)**: Implementato un servizio robusto che riconcilia i pagamenti PayPal con le fatture, gestendo correttamente anche fatture di anni precedenti e creando i movimenti in Prima Nota Banca.
--   **Bug Critico Riconciliazione Anno (RISOLTO)**: Corretto un errore grave per cui i movimenti di Prima Nota generati dalla riconciliazione PayPal non rispettavano l'anno contabile corretto.
--   **Miglioramenti Modulo Presenze (FATTO)**:
-    -   Aggiunti nuovi stati e bottoni (Chiuso, Riposo Settimanale) e rimossi altri.
-    -   I sabati sono ora considerati giorni lavorativi nell'interfaccia.
-    -   Implementata la selezione di un intervallo di giorni con .
-    -   Creata la sezione Gestione Turni e popolata con i primi dipendenti come richiesto.
-    -   Implementata la logica per la gestione dei contratti scaduti.
--   **UI per Riconciliazione e Import (FATTO)**: Create nuove pagine e componenti per visualizzare le riconciliazioni PayPal e per permettere l'upload degli estratti conto.
--   **Test E2E Estensivi (FATTO)**: Eseguite 4 sessioni di test approfonditi che hanno verificato la stabilità generale dell'applicazione.
+-   **Logica Contratti Scaduti (VERIFICATA)**: Verificato e confermato il corretto funzionamento della logica per la gestione dei dipendenti con contratto scaduto nel modulo presenze.
+-   **Modifica Ore Settimanali (IMPLEMENTATA)**: Aggiunta la funzionalità per modificare le ore settimanali dei dipendenti nella sezione Gestione Turni.
+-   **Assistente AI (RISOLTO)**: Corretto l'assistente AI che ora può eseguire query specifiche sul database (es. numero di fatture in un dato mese) e fornire risposte accurate.
+-   **Gestione Assegni (MIGLIORATA)**: Aggiunto filtro per anno e ordinamento per numero di assegno. 3 associazioni errate sono state corrette.
+-   **Integrazione OpenAPI (IMPLEMENTATA)**:
+    -   Creata la nuova pagina Visure Aziendali che si integra con l'API Company.
+    -   Creato e testato il backend per l'integrazione con l'API Automotive.
+-   **Automazione Email Schede Tecniche (IMPLEMENTATA)**: Creato un servizio che scansiona le email, scarica e salva le schede tecniche in PDF.
+-   **Controllo Duplicati Fatture (VERIFICATO)**: Analizzato e confermato che il sistema di controllo dei duplicati durante l'importazione di fatture XML è funzionante.
 
 **Earlier issues found/mentioned but not fixed**
--   Circa 19 cedolini (dal 2018 in poi) che ancora non vengono elaborati correttamente dal parser .
+-   14 associazioni assegno-fattura errate che richiedono un intervento manuale o una logica di matching più complessa.
+-   5 buste paga con parsing fallito (netto = 0).
 
 **Known issue recurrence from previous fork**
 Nessuno.
@@ -84,77 +114,83 @@ Nessuno.
 
 
 **Key Technical Concepts**
--   **Scheduler in Background ()**: Utilizzato per automatizzare la scansione delle email.
--   **Logica di Riconciliazione Flessibile ()**: Il servizio di riconciliazione PayPal abbina transazioni e fatture usando una combinazione di importo (con tolleranza), data e corrispondenza fuzzy del nome del fornitore.
--   **Gestione Stato Complessa (React)**: Il componente  gestisce uno stato molto complesso per la selezione singola, multipla e di un intervallo, oltre al filtraggio dinamico dei dipendenti in base alla data del contratto.
--   **Renderizzazione Condizionale Avanzata**: La griglia delle presenze renderizza dinamicamente lo stato Cessato e disabilita le celle per i dipendenti il cui contratto è scaduto in una data specifica.
+-   **Integrazione API di terze parti (OpenAPI.com)**: Gestione di token di autenticazione, chiamate a endpoint REST esterni (, ) e integrazione dei dati nell'applicazione.
+-   **AI conversazionale con accesso a dati**: L'assistente AI () ora utilizza espressioni regolari per identificare l'intento dell'utente e costruire query MongoDB dinamiche per rispondere a domande specifiche, arricchendo il contesto passato al LLM.
+-   **Automazione Email (IMAP)**: Utilizzo della libreria  per connettersi a un account GMail, cercare email, e scaricare allegati PDF per l'elaborazione.
+-   **Debugging di Dati Contabili**: Analisi incrociata di dati provenienti da diverse fonti (database interno, file CSV di estratti conto) per identificare e correggere discrepanze.
 
 **key DB schema**
--   **** (in ): Contiene il flag  e .
--   **** (in ): Utilizza il campo  per la logica di UI.
--   **** (in ): Qui vengono creati i movimenti bancari con  PayPal - [Nome Fornitore].
--   **** (in ): Nuova collection per mappare  a .
+-   ****: Collection centrale per le fatture. Il campo  (stringa ) e  (datetime) sono cruciali per l'investigazione corrente.
+-   ****: Collection per gli assegni. Contiene i riferimenti alla fattura pagata, che si sono rivelati spesso errati.
+-   ****: Nuova collection per salvare i metadati delle schede tecniche scaricate.
 
 **changes in tech stack**
 Nessuna.
 
 **All files of reference**
--   : File principale per le presenze e i turni, necessita di verifica e potenziale refactoring.
--   : Backend per il modulo presenze.
--   : Servizio chiave per la logica di riconciliazione PayPal.
--   : Pagina per la visualizzazione dei risultati della riconciliazione.
--   : Documento di prodotto aggiornato con le ultime funzionalità.
+-   : File chiave per investigare il problema del conteggio delle fatture.
+-   : Contiene la logica migliorata dell'assistente AI.
+-   : Contiene la logica di scansione email.
+-   : Contiene la logica di riconciliazione assegni da correggere.
+-   : File di riferimento per la riconciliazione manuale degli assegni.
+-   : Da modificare per riorganizzare il menu di navigazione.
 
 **Areas that need refactoring**:
--   Il file  è diventato monolitico (oltre 1500 righe) e difficile da mantenere. Dovrebbe essere scomposto in componenti più piccoli e specializzati (es. , , , , ).
+-   Il posizionamento delle nuove voci di menu in  deve essere reso più strutturato per evitare di aggiungere tutto al menu principale.
+-   La logica di associazione degli assegni è fragile e necessita di una soluzione più robusta che possa gestire discrepanze nei nomi dei fornitori e nelle date.
 
 **key api endpoints**
--   : Imposta lo stato di tutti i dipendenti a Presente.
--   : Recupera le assegnazioni dei turni.
--   : Esegue il processo di riconciliazione PayPal (ora deprecato in favore dell'upload).
--   : Nuovo endpoint per caricare un file di estratto conto PayPal ed eseguire la riconciliazione.
--   : Recupera l'elenco delle fatture già riconciliate.
--   : Controlla lo stato dello scheduler in background.
+-   : Endpoint per l'upload massivo di fatture XML. La sua risposta e i suoi log sono al centro dell'investigazione corrente.
+-   : Endpoint per l'assistente AI, ora in grado di gestire query specifiche.
+-   : Endpoint per la ricerca di aziende tramite l'API Company.
+-   : Endpoint per avviare la scansione delle email alla ricerca di schede tecniche.
+-   : Endpoint per recuperare dati di un veicolo da targa.
 
 **Critical Info for New Agent**
--   L'utente è molto attento ai dettagli, specialmente per quanto riguarda la logica contabile e le date. Qualsiasi implementazione che coinvolge anni fiscali o date di pagamento deve essere estremamente precisa.
--   Il componente  è il cuore delle funzionalità HR. A causa della sua complessità, qualsiasi modifica richiede molta cautela. Proporre un refactoring di questo file è una buona idea per il futuro.
--   Prima di implementare una nuova richiesta, verifica sempre se è correlata a funzionalità esistenti per evitare regressioni o logiche inconsistenti.
--   La richiesta principale da cui ripartire è la verifica completa della logica dei contratti scaduti.
+-   **L'utente è estremamente frustrato.** Sente che l'agente non impara, non ricorda il contesto (specialmente il filtro per anno) e fa errori banali. La priorità assoluta è affrontare le sue critiche in modo diretto e accurato per riconquistare la sua fiducia.
+-   **Il problema del conteggio delle fatture è un showstopper.** Non procedere con nuove funzionalità finché non si è data all'utente una spiegazione chiara e una soluzione per la discrepanza tra le 88 fatture che dice di aver importato e le 35 effettivamente presenti nel DB per il 2026.
+-   **Comunicare sempre nel contesto.** Quando si forniscono conteggi o dati, specificare sempre a quale periodo (anno) si riferiscono. Evitare totali generici.
+-   **Il token OpenAPI per l'API Automotive non sembra attivo.** Sebbene il backend sia pronto, l'utente dovrà attivare l'API corrispondente sul suo account OpenAPI prima che la funzionalità possa essere utilizzata.
 
 **documents and test reports created in this job**
--   
--   
--   
--   
--    (aggiornato)
+-   : JSON con gli assegni parsati dall'estratto conto.
+-   : JSON con le 17 associazioni assegno-fattura errate.
+-   : JSON con le 3 correzioni applicabili automaticamente.
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User**: Spiega la logica per la gestione dei contratti scaduti nella pagina presenze e chiede di non colorare di rosso i sabati. (Stato: **IN PROGRESS**)
-2.  **User**: Corregge l'agente: la riconciliazione PayPal deve aggiornare le fatture e la Prima Nota dell'anno corretto, indipendentemente dall'anno selezionato nella UI. (Stato: **RISOLTO**)
-3.  **User**: Richiede di rimuovere delle card informative dalla pagina di riconciliazione e definisce le priorità: inserire dipendenti nei turni e implementare la modifica multipla dei giorni. (Stato: **RISOLTO**)
-4.  **User**: Fornisce un'immagine di esempio e chiede di creare una sezione Turni di lavoro, aggiungere bottoni Chiusi e Riposo, e un'opzione di import per PayPal. (Stato: **RISOLTO**)
-5.  **User**: Chiede di implementare diverse funzionalità sulla pagina presenze e di creare un'interfaccia e report per la riconciliazione PayPal. Segnala un presunto bug sull'importo di un verbale. (Stato: **PARZIALMENTE RISOLTO**, bug investigato e non confermato, resto implementato).
+1.  **User:** Critica l'agente per non aver gestito correttamente i duplicati di 88 fatture XML importate per il 2026 e per non rispettare il contesto dell'anno selezionato. Esprime frustrazione generale per la presunta mancanza di apprendimento e per errori di usabilità (pagine nel menu sbagliato). (Stato: **IN PROGRESS**)
+2.  **User:** Chiede se l'agente ha gestito correttamente i duplicati dopo l'import di 88 XML. (Stato: **RISOLTO**, ma la risposta dell'agente ha portato alla frustrazione successiva).
+3.  **User:** Conferma le priorità: ricontrollare gli assegni e implementare la lettura email per le schede tecniche. (Stato: **RISOLTO**)
+4.  **User:** Fornisce un'altra segnalazione di assegno errato e chiede di procedere con le altre richieste (Noleggio OpenAPI, lettura email). (Stato: **RISOLTO**)
+5.  **User:** Fornisce un'immagine con gli scope API di OpenAPI e riporta molteplici richieste: correggere bug assegni, migliorare l'assistente AI, integrare OpenAPI in Fornitori/Noleggio. (Stato: **PARZIALMENTE RISOLTO**)
+6.  **User:** Fornisce un nuovo token OpenAPI (quello per l'API Company, che ha funzionato). (Stato: **RISOLTO**)
+7.  **User:** Chiede di continuare e fornisce un link alla console OpenAPI. (Stato: **RISOLTO**)
+8.  **User:** Fornisce un secondo token (che non ha funzionato) e nuove richieste (Visure, dati veicoli, download schede tecniche). (Stato: **RISOLTO**)
+9.  **User:** Interrompe l'agente e fornisce un primo token OpenAPI (che non ha funzionato) e la richiesta di risolvere il parsing di vecchi cedolini. (Stato: **RISOLTO**)
+10. **User**: Conferma le priorità iniziali (contratti scaduti, ore settimanali) e menziona l'idea di integrare WhatsApp e un assistente AI. (Stato: **RISOLTO**)
 
 **Project Health Check:**
--   **Broken**: Nulla di critico.
--   **Mocked**: No.
+-   **Broken**: La fiducia dell'utente. Il processo di importazione delle fatture ha una grave discrepanza che deve essere risolta.
+-   **Mocked**: Nessuno.
 
 **3rd Party Integrations**
 -   **IMAP/SMTP**: Per la scansione delle email.
 -   : Per l'estrazione di testo da PDF.
 -   : Per l'esecuzione di task in background.
--   : Per il matching flessibile di stringhe nella riconciliazione.
+-   : Per il matching flessibile di stringhe.
+-   **OpenAPI.com**: Integrato con le API  (funzionante) e  (backend pronto, ma API non attiva sul token utente).
 
 **Testing status**
--   **Testing agent used after significant changes**: YES (a inizio sessione).
--   **Troubleshoot agent used after agent stuck in loop**: NO.
--   **Test files created**: Nessuno.
--   **Known regressions**: Nessuna.
+-   **Testing agent used after significant changes**: NO
+-   **Troubleshoot agent used after agent stuck in loop**: NO
+-   **Test files created**: Nessuno
+-   **Known regressions**: L'associazione automatica degli assegni si è rivelata inaffidabile.
 
 **Credentials to test flow:**
-Le credenziali sono presenti nei file  del backend e frontend.
+Le credenziali sono presenti nei file  del backend e frontend. I token per OpenAPI sono nel  del backend.
 
 **What agent forgot to execute**
--   L'agente ha corretto manualmente i movimenti di Prima Nota mancanti per la riconciliazione PayPal, ma non ha reso la funzione di riconciliazione completamente idempotente. Se eseguita di nuovo su dati già parzialmente elaborati, potrebbe non creare i movimenti mancanti.
--   La verifica completa del ciclo di vita di un dipendente con contratto scaduto non è stata eseguita con un caso di test reale.</analysis>
+-   L'agente non ha risolto completamente il problema delle associazioni errate degli assegni (14 casi complessi rimangono aperti).
+-   L'agente ha posizionato la nuova pagina Visure nel menu principale invece che in una sezione più appropriata, come criticato dall'utente.
+-   L'agente non è riuscito a diagnosticare la radice del problema delle 88 fatture importate, portando a un'interruzione della comunicazione con l'utente.
+-   Il problema dei 5 cedolini non parsati è stato posticipato e non più ripreso.</analysis>
