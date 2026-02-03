@@ -106,22 +106,38 @@ async def create_invoice(
     description="Get list of years for which invoices exist"
 )
 async def get_anni_disponibili() -> Dict[str, Any]:
-    """Restituisce gli anni per cui esistono fatture."""
+    """Restituisce gli anni per cui esistono fatture (XML e provvisorie)."""
     db = Database.get_db()
     
     anni = set()
     current_year = datetime.now().year
     anni.add(current_year)
     
-    # Estrai anni da invoice_date
-    pipeline = [
-        {"$match": {"invoice_date": {"$exists": True, "$ne": None}}},
+    # Estrai anni da invoice_date (fatture XML complete)
+    pipeline_invoice = [
+        {"$match": {"invoice_date": {"$exists": True, "$ne": None, "$ne": ""}}},
         {"$project": {"anno": {"$substr": ["$invoice_date", 0, 4]}}},
         {"$group": {"_id": "$anno"}}
     ]
     
-    results = await db[Collections.INVOICES].aggregate(pipeline).to_list(100)
+    results = await db[Collections.INVOICES].aggregate(pipeline_invoice).to_list(100)
     for doc in results:
+        try:
+            anno = int(doc["_id"])
+            if 2000 <= anno <= 2100:
+                anni.add(anno)
+        except (ValueError, TypeError):
+            pass
+    
+    # Estrai anni anche da data_documento (fatture provvisorie da Aruba)
+    pipeline_data_doc = [
+        {"$match": {"data_documento": {"$exists": True, "$ne": None, "$ne": ""}}},
+        {"$project": {"anno": {"$substr": ["$data_documento", 0, 4]}}},
+        {"$group": {"_id": "$anno"}}
+    ]
+    
+    results_data_doc = await db[Collections.INVOICES].aggregate(pipeline_data_doc).to_list(100)
+    for doc in results_data_doc:
         try:
             anno = int(doc["_id"])
             if 2000 <= anno <= 2100:
