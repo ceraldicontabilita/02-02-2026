@@ -33,6 +33,7 @@ CATEGORIES = {
     "quietanza": "Quietanze",
     "bonifico": "Bonifici",
     "cartella_esattoriale": "Cartelle Esattoriali",
+    "scheda_tecnica": "Schede Tecniche",
     "altro": "Altri"
 }
 
@@ -48,7 +49,16 @@ KEYWORD_CATEGORY_MAP = {
     "cartella esattoriale": "cartella_esattoriale",
     "cartella esattoria": "cartella_esattoriale",
     "agenzia entrate riscossione": "cartella_esattoriale",
-    "equitalia": "cartella_esattoriale"
+    "equitalia": "cartella_esattoriale",
+    # Schede Tecniche
+    "scheda tecnica": "scheda_tecnica",
+    "technical sheet": "scheda_tecnica",
+    "data sheet": "scheda_tecnica",
+    "product specification": "scheda_tecnica",
+    "specifica prodotto": "scheda_tecnica",
+    "scheda prodotto": "scheda_tecnica",
+    "informazioni tecniche": "scheda_tecnica",
+    "technical data": "scheda_tecnica"
 }
 
 for cat_dir in CATEGORIES.values():
