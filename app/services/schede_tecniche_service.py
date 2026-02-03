@@ -510,7 +510,7 @@ async def scan_email_for_schede_tecniche(
                                 continue  # Già scaricato
                             
                             # Processa la scheda tecnica
-                            result = await process_scheda_tecnica(
+                            result = await process_scheda_tecnica_from_pdf(
                                 pdf_data=payload,
                                 filename=filename,
                                 email_from=sender_email,
