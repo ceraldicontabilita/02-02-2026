@@ -177,3 +177,4 @@ zipfile36==0.1.3
 zipp==3.23.0
 zopfli==0.2.3.post1
 invoicetronic-sdk==1.1.7
+thefuzz
