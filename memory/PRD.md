@@ -1,6 +1,6 @@
 # Application ERP/Accounting - PRD
 
-## Stato: 2 Febbraio 2026 - Aggiornato
+## Stato: 3 Febbraio 2026 - Aggiornato
 
 ---
 
@@ -16,6 +16,21 @@
 ---
 
 ## Completato ✅
+
+### Fix Critico: Filtro Anno Fatture - RISOLTO (3 Feb 2026)
+**PROBLEMA**: L'utente aveva importato 88 fatture per il 2026, ma il sistema ne mostrava solo 35.
+
+**CAUSA RADICE IDENTIFICATA**: Le fatture provvisorie (importate da Aruba) usano il campo `data_documento` invece di `invoice_date`. Il filtro per anno cercava solo in `invoice_date`, escludendo le 88 fatture provvisorie.
+
+**SOLUZIONE APPLICATA**:
+- Modificato `/app/app/routers/public_api.py` per includere sia `invoice_date` che `data_documento` nel filtro anno
+- Modificato `/app/app/routers/invoices/invoices_main.py` con la stessa logica
+- Aggiunto ordinamento intelligente che usa `data_effettiva = ifNull(invoice_date, data_documento)`
+- Aggiornata anche la funzione `get_anni_disponibili` per estrarre anni da entrambi i campi
+
+**RISULTATO**: La pagina Fatture Ricevute ora mostra correttamente 123 fatture per il 2026:
+- 88 fatture provvisorie (da Aruba)
+- 35 fatture complete (XML)
 
 ### Gestione Assegni - Filtro Anno e Ordinamento - COMPLETATO (2 Feb 2026)
 - Ordinamento assegni per numero decrescente (dal più recente al più vecchio)
