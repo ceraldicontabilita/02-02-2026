@@ -137,7 +137,7 @@ export default function IntegrazioniOpenAPI() {
 
   return (
     <PageLayout title="Integrazioni OpenAPI.it" subtitle="SDI (Fatturazione Elettronica), XBRL (Bilanci) & AISP (Open Banking)">
-    <div style={{...STYLES.pageWrapper, padding: 0}}>>
+    <div style={{...STYLES.pageWrapper, padding: 0}}>
       <div style={STYLES.pageContainer}>
         <div style={STYLES.pageHeader}>
           <div>
