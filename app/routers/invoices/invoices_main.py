@@ -420,11 +420,13 @@ async def paga_fatture_anno(
     now = datetime.utcnow().isoformat()
     
     # Query per trovare fatture dell'anno non pagate
+    # Consideriamo tutti i campi data usati nel sistema
     query = {
         "$or": [
             {"data": {"$regex": f"^{anno}"}},
             {"invoice_date": {"$regex": f"^{anno}"}},
-            {"data_fattura": {"$regex": f"^{anno}"}}
+            {"data_fattura": {"$regex": f"^{anno}"}},
+            {"data_documento": {"$regex": f"^{anno}"}}  # Fatture provvisorie da Aruba
         ],
         "pagato": {"$ne": True}
     }
