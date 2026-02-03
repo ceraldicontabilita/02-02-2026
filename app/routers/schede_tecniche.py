@@ -277,3 +277,132 @@ async def statistiche_schede() -> Dict[str, Any]:
         "percentuale_associazione": round(associate / total * 100, 1) if total > 0 else 0,
         "per_fornitore": [{"fornitore": p["_id"], "count": p["count"]} for p in per_fornitore]
     }
+
+
+@router.post("/scan-email")
+async def scan_email_schede_tecniche(
+    folders: Optional[List[str]] = Body(None, description="Cartelle da scansionare"),
+    limit: int = Body(50, description="Limite email per cartella"),
+    days_back: int = Body(60, description="Giorni indietro")
+) -> Dict[str, Any]:
+    """
+    Scansiona le email per scaricare automaticamente schede tecniche.
+    
+    Le schede vengono identificate da parole chiave come:
+    - "scheda tecnica"
+    - "technical sheet"  
+    - "data sheet"
+    - "ingredienti"
+    - "allergeni"
+    
+    Le schede trovate vengono associate automaticamente ai fornitori
+    basandosi sull'email del mittente.
+    """
+    import os
+    from app.services.schede_tecniche_service import scan_email_for_schede_tecniche
+    
+    # Credenziali IMAP da environment
+    imap_host = os.environ.get("IMAP_HOST", "imap.gmail.com")
+    imap_user = os.environ.get("IMAP_USER", "")
+    imap_password = os.environ.get("IMAP_PASSWORD", "")
+    
+    if not imap_user or not imap_password:
+        raise HTTPException(
+            status_code=400,
+            detail="Credenziali IMAP non configurate. Imposta IMAP_USER e IMAP_PASSWORD in .env"
+        )
+    
+    result = await scan_email_for_schede_tecniche(
+        imap_host=imap_host,
+        imap_user=imap_user,
+        imap_password=imap_password,
+        folders=folders,
+        limit=limit,
+        days_back=days_back
+    )
+    
+    return result
+
+
+@router.post("/associa-automatico")
+async def associa_schede_automatico() -> Dict[str, Any]:
+    """
+    Tenta di associare automaticamente le schede tecniche non associate
+    ai fornitori, basandosi sui nomi nelle fatture XML.
+    """
+    db = Database.get_db()
+    
+    # Trova schede non associate
+    schede_non_associate = await db["schede_tecniche_prodotti"].find({
+        "$or": [
+            {"fornitore_id": None},
+            {"fornitore_id": ""}
+        ]
+    }).to_list(200)
+    
+    associated = 0
+    
+    for scheda in schede_non_associate:
+        email_from = scheda.get('email_from', '').lower()
+        
+        if not email_from:
+            continue
+        
+        # Estrai dominio email
+        domain = email_from.split('@')[-1] if '@' in email_from else ''
+        
+        # Cerca fornitore con email o dominio simile
+        fornitore = None
+        
+        # Prima cerca per email esatta
+        fornitore = await db.fornitori.find_one({
+            "$or": [
+                {"email": {"$regex": email_from, "$options": "i"}},
+                {"pec": {"$regex": email_from, "$options": "i"}}
+            ]
+        })
+        
+        if not fornitore and domain:
+            # Cerca per dominio
+            fornitore = await db.fornitori.find_one({
+                "$or": [
+                    {"email": {"$regex": domain, "$options": "i"}},
+                    {"pec": {"$regex": domain, "$options": "i"}},
+                    {"sito_web": {"$regex": domain, "$options": "i"}}
+                ]
+            })
+        
+        if not fornitore:
+            # Cerca nelle fatture per dominio email
+            fattura = await db.invoices.find_one({
+                "$or": [
+                    {"sender_email": {"$regex": domain, "$options": "i"}},
+                    {"fornitore.email": {"$regex": domain, "$options": "i"}}
+                ]
+            })
+            
+            if fattura:
+                supplier_name = fattura.get('supplier_name') or fattura.get('fornitore', {}).get('denominazione')
+                if supplier_name:
+                    fornitore = await db.fornitori.find_one({
+                        "ragione_sociale": {"$regex": supplier_name[:20], "$options": "i"}
+                    })
+        
+        if fornitore:
+            # Aggiorna scheda
+            await db["schede_tecniche_prodotti"].update_one(
+                {"id": scheda["id"]},
+                {"$set": {
+                    "fornitore_id": fornitore.get('id'),
+                    "fornitore_nome": fornitore.get('ragione_sociale'),
+                    "associato_automaticamente": True,
+                    "data_associazione": datetime.now(timezone.utc).isoformat()
+                }}
+            )
+            associated += 1
+    
+    return {
+        "schede_analizzate": len(schede_non_associate),
+        "schede_associate": associated,
+        "non_associate": len(schede_non_associate) - associated
+    }
