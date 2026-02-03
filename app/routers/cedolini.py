@@ -763,3 +763,147 @@ async def download_cedolino_pdf(cedolino_id: str):
         media_type="application/pdf",
         headers={"Content-Disposition": f"attachment; filename=\"{filename}\""},
     )
+
+
+@router.post("/correggi-problematici")
+async def correggi_cedolini_problematici() -> Dict[str, Any]:
+    """
+    Corregge cedolini con netto=0 ma lordo>0.
+    Calcola il netto stimato basandosi su lordo e trattenute standard.
+    """
+    db = Database.get_db()
+    
+    # Cerca cedolini problematici
+    problematici = await db["cedolini"].find({
+        "$or": [
+            {"netto": 0, "lordo": {"$gt": 0}},
+            {"netto": None, "lordo": {"$gt": 0}},
+            {"netto": {"$exists": False}, "lordo": {"$gt": 0}}
+        ]
+    }).to_list(1000)
+    
+    corretti = 0
+    errori = []
+    
+    for ced in problematici:
+        try:
+            lordo = float(ced.get("lordo", 0))
+            trattenute = float(ced.get("trattenute", 0))
+            irpef = float(ced.get("irpef", 0))
+            ritenute_inps = float(ced.get("ritenute_dipendente", 0) or ced.get("contributi_dipendente", 0))
+            
+            # Se non ci sono trattenute specificate, calcola con aliquote standard
+            if trattenute == 0:
+                # INPS dipendente ~9.19%
+                ritenute_inps = lordo * 0.0919
+                
+                # Imponibile fiscale
+                imponibile = lordo - ritenute_inps
+                
+                # IRPEF approssimata (usando aliquota media 23%)
+                irpef = imponibile * 0.23
+                
+                # Detrazioni base per lavoro dipendente (mensili)
+                detrazioni_mensili = DETRAZIONE_BASE / 12
+                irpef = max(0, irpef - detrazioni_mensili)
+                
+                trattenute = ritenute_inps + irpef
+            
+            # Calcola netto
+            netto = lordo - trattenute
+            
+            if netto > 0:
+                # Aggiorna il cedolino
+                await db["cedolini"].update_one(
+                    {"_id": ced["_id"]},
+                    {"$set": {
+                        "netto": round(netto, 2),
+                        "trattenute": round(trattenute, 2),
+                        "irpef_stimato": round(irpef, 2),
+                        "ritenute_dipendente_stimate": round(ritenute_inps, 2),
+                        "corretto_automaticamente": True,
+                        "data_correzione": datetime.utcnow().isoformat()
+                    }}
+                )
+                corretti += 1
+            else:
+                errori.append({
+                    "id": str(ced.get("id") or ced.get("_id")),
+                    "mese": ced.get("mese"),
+                    "anno": ced.get("anno"),
+                    "lordo": lordo,
+                    "netto_calcolato": netto,
+                    "errore": "Netto calcolato <= 0"
+                })
+        except Exception as e:
+            errori.append({
+                "id": str(ced.get("id") or ced.get("_id")),
+                "errore": str(e)
+            })
+    
+    return {
+        "success": True,
+        "cedolini_trovati": len(problematici),
+        "corretti": corretti,
+        "errori_count": len(errori),
+        "errori": errori[:10],
+        "message": f"Corretti {corretti} cedolini su {len(problematici)} trovati"
+    }
+
+
+@router.get("/problematici")
+async def get_cedolini_problematici() -> Dict[str, Any]:
+    """
+    Elenca cedolini con dati mancanti o problematici.
+    """
+    db = Database.get_db()
+    
+    problematici = await db["cedolini"].find({
+        "$or": [
+            {"netto": 0, "lordo": {"$gt": 0}},
+            {"netto": None, "lordo": {"$gt": 0}},
+            {"netto": {"$exists": False}, "lordo": {"$gt": 0}},
+            {"dipendente": None},
+            {"dipendente": "N/A"}
+        ]
+    }, {"_id": 0}).to_list(100)
+    
+    # Raggruppa per tipo di problema
+    problemi = {
+        "netto_mancante": [],
+        "dipendente_mancante": [],
+        "altri": []
+    }
+    
+    for ced in problematici:
+        netto = ced.get("netto")
+        lordo = ced.get("lordo", 0)
+        dip = ced.get("dipendente")
+        
+        if (netto == 0 or netto is None) and lordo > 0:
+            problemi["netto_mancante"].append({
+                "id": ced.get("id"),
+                "mese": ced.get("mese"),
+                "anno": ced.get("anno"),
+                "lordo": lordo,
+                "netto": netto,
+                "dipendente": dip
+            })
+        elif not dip or dip == "N/A":
+            problemi["dipendente_mancante"].append({
+                "id": ced.get("id"),
+                "mese": ced.get("mese"),
+                "anno": ced.get("anno"),
+                "lordo": lordo
+            })
+        else:
+            problemi["altri"].append(ced)
+    
+    return {
+        "totale_problematici": len(problematici),
+        "netto_mancante": len(problemi["netto_mancante"]),
+        "dipendente_mancante": len(problemi["dipendente_mancante"]),
+        "altri": len(problemi["altri"]),
+        "dettagli": problemi
+    }
+
