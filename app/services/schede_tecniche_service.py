@@ -349,3 +349,195 @@ async def get_schede_tecniche_prodotto(db, prodotto_id: str) -> List[Dict[str, A
     ).sort("created_at", -1).to_list(20)
     
     return schede
+
+
+# ============================================
+# SCANSIONE EMAIL PER SCHEDE TECNICHE
+# ============================================
+
+import imaplib
+import email
+from email.header import decode_header as email_decode_header
+
+def decode_mime_header(header_value: str) -> str:
+    """Decodifica header MIME."""
+    if not header_value:
+        return ""
+    decoded_parts = email_decode_header(header_value)
+    result = []
+    for part, encoding in decoded_parts:
+        if isinstance(part, bytes):
+            try:
+                result.append(part.decode(encoding or 'utf-8', errors='replace'))
+            except:
+                result.append(part.decode('utf-8', errors='replace'))
+        else:
+            result.append(str(part))
+    return ' '.join(result)
+
+
+def is_technical_sheet_email(filename: str, subject: str) -> bool:
+    """Determina se un allegato è probabilmente una scheda tecnica."""
+    keywords = [
+        'scheda tecnica', 'technical sheet', 'data sheet',
+        'product specification', 'specifica prodotto',
+        'scheda prodotto', 'informazioni tecniche',
+        'technical data', 'specifiche', 'datasheet',
+        'ingredienti', 'allergeni', 'valori nutrizionali'
+    ]
+    
+    filename_lower = filename.lower()
+    subject_lower = subject.lower()
+    
+    for kw in keywords:
+        if kw in filename_lower or kw in subject_lower:
+            return True
+    
+    # Se è un PDF e NON è fattura/cedolino, considera come potenziale scheda
+    if filename_lower.endswith('.pdf'):
+        non_scheda = ['fattura', 'invoice', 'f24', 'cedolino', 'busta paga', 
+                      'estratto', 'quietanza', 'bonifico', 'cartella']
+        for ns in non_scheda:
+            if ns in filename_lower or ns in subject_lower:
+                return False
+        # Se non è escluso, potrebbe essere scheda tecnica
+        return True
+    
+    return False
+
+
+async def scan_email_for_schede_tecniche(
+    imap_host: str,
+    imap_user: str,
+    imap_password: str,
+    folders: List[str] = None,
+    limit: int = 50,
+    days_back: int = 60
+) -> Dict[str, Any]:
+    """
+    Scansiona le email per trovare e scaricare schede tecniche.
+    
+    Args:
+        imap_host: Host IMAP
+        imap_user: Username
+        imap_password: Password
+        folders: Lista cartelle da scansionare
+        limit: Numero massimo email per cartella
+        days_back: Giorni indietro da cercare
+        
+    Returns:
+        Risultati della scansione
+    """
+    if folders is None:
+        folders = ['INBOX', 'Fornitori', 'Schede', 'Schede Tecniche']
+    
+    results = {
+        "email_scansionate": 0,
+        "allegati_trovati": 0,
+        "schede_salvate": 0,
+        "schede_associate": 0,
+        "errori": [],
+        "dettagli": []
+    }
+    
+    db = Database.get_db()
+    
+    try:
+        # Connessione IMAP
+        mail = imaplib.IMAP4_SSL(imap_host)
+        mail.login(imap_user, imap_password)
+        
+        for folder in folders:
+            try:
+                status, _ = mail.select(folder)
+                if status != 'OK':
+                    continue
+                
+                # Cerca email recenti
+                from datetime import timedelta
+                since_date = (datetime.now() - timedelta(days=days_back)).strftime("%d-%b-%Y")
+                status, messages = mail.search(None, f'(SINCE {since_date})')
+                
+                if status != 'OK':
+                    continue
+                
+                email_ids = messages[0].split()[-limit:]
+                
+                for email_id in email_ids:
+                    try:
+                        status, msg_data = mail.fetch(email_id, '(RFC822)')
+                        if status != 'OK':
+                            continue
+                        
+                        results["email_scansionate"] += 1
+                        
+                        raw_email = msg_data[0][1]
+                        msg = email.message_from_bytes(raw_email)
+                        
+                        subject = decode_mime_header(msg['Subject'] or '')
+                        from_header = msg['From'] or ''
+                        sender_email = email.utils.parseaddr(from_header)[1]
+                        sender_name = decode_mime_header(email.utils.parseaddr(from_header)[0])
+                        
+                        # Cerca allegati PDF
+                        for part in msg.walk():
+                            if part.get_content_maintype() == 'multipart':
+                                continue
+                            
+                            filename = part.get_filename()
+                            if not filename:
+                                continue
+                            
+                            filename = decode_mime_header(filename)
+                            
+                            if not filename.lower().endswith('.pdf'):
+                                continue
+                            
+                            results["allegati_trovati"] += 1
+                            
+                            if not is_technical_sheet_email(filename, subject):
+                                continue
+                            
+                            # Scarica allegato
+                            payload = part.get_payload(decode=True)
+                            if not payload:
+                                continue
+                            
+                            # Verifica se già scaricato (hash)
+                            file_hash = calculate_hash(payload)
+                            existing = await db["schede_tecniche_prodotti"].find_one({"file_hash": file_hash})
+                            if existing:
+                                continue  # Già scaricato
+                            
+                            # Processa la scheda tecnica
+                            result = await process_scheda_tecnica(
+                                pdf_data=payload,
+                                filename=filename,
+                                email_from=sender_email,
+                                email_subject=subject
+                            )
+                            
+                            if result.get("success"):
+                                results["schede_salvate"] += 1
+                                if result.get("fornitore_id"):
+                                    results["schede_associate"] += 1
+                                
+                                results["dettagli"].append({
+                                    "filename": filename,
+                                    "fornitore": result.get("fornitore_nome", "Non associato"),
+                                    "prodotto": result.get("prodotto_nome", "Non identificato"),
+                                    "email_from": sender_email
+                                })
+                            
+                    except Exception as e:
+                        results["errori"].append(f"Email {email_id}: {str(e)}")
+                        
+            except Exception as e:
+                results["errori"].append(f"Folder {folder}: {str(e)}")
+        
+        mail.logout()
+        
+    except Exception as e:
+        results["errori"].append(f"Connessione IMAP: {str(e)}")
+    
+    return results
