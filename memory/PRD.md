@@ -1,6 +1,6 @@
 # Application ERP/Accounting - PRD
 
-## Stato: 3 Febbraio 2026 - Aggiornato
+## Stato: 3 Febbraio 2026 - Aggiornato (Sessione 2)
 
 ---
 
@@ -31,6 +31,25 @@
 **RISULTATO**: La pagina Fatture Ricevute ora mostra correttamente 123 fatture per il 2026:
 - 88 fatture provvisorie (da Aruba)
 - 35 fatture complete (XML)
+
+### Sistema Verifica Associazioni Assegni - NUOVO (3 Feb 2026)
+Creati endpoint per analisi automatica delle associazioni assegno-fattura:
+- `GET /api/assegni/verifica-associazioni` - Analizza tutte le associazioni
+- `PUT /api/assegni/correggi-associazione/{id}` - Corregge manualmente
+- Identifica: importi diversi, fornitori non corrispondenti, fatture mancanti
+- **Nota**: L'utente preferisce che l'associazione sia automatica al caricamento estratti conto
+
+### Cedolini Problematici - CORRETTI (3 Feb 2026)
+- Creati endpoint `/api/cedolini/correggi-problematici` e `/api/cedolini/problematici`
+- **128 cedolini corretti** su 130 trovati (2 con importi troppo bassi)
+- Il sistema calcola automaticamente netto da lordo usando aliquote standard
+- Cedolini con `netto=0` e `lordo>0` ora hanno valori corretti
+
+### Refactoring Attendance.jsx - PARZIALE (3 Feb 2026)
+- Estratte costanti in `/app/frontend/src/components/attendance/constants.js`
+- Estratte funzioni helper in `/app/frontend/src/components/attendance/helpers.js`
+- Ridotta duplicazione codice in `Attendance.jsx`
+- **Nota**: Il refactoring completo (estrazione componenti TurniSection, TabSaldoFerie) è in backlog
 
 ### Gestione Assegni - Filtro Anno e Ordinamento - COMPLETATO (2 Feb 2026)
 - Ordinamento assegni per numero decrescente (dal più recente al più vecchio)
