@@ -238,7 +238,20 @@ async def list_invoices(
             {"data_documento": {"$gte": anno_start, "$lte": anno_end}}
         ]
     
-    return await db[Collections.INVOICES].find(query, {"_id": 0}).sort([("invoice_date", -1)]).skip(skip).limit(limit).to_list(limit)
+    # Usa aggregazione per ordinare correttamente (prende invoice_date se esiste, altrimenti data_documento)
+    pipeline = [
+        {"$match": query} if query else {"$match": {}},
+        {"$addFields": {
+            "data_effettiva": {"$ifNull": ["$invoice_date", "$data_documento"]}
+        }},
+        {"$sort": {"data_effettiva": -1}},
+        {"$skip": skip},
+        {"$limit": limit},
+        {"$project": {"_id": 0}}
+    ]
+    
+    results = await db[Collections.INVOICES].aggregate(pipeline).to_list(limit)
+    return results
 
 
 @router.post("/invoices")
