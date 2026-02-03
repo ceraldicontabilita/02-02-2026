@@ -19,68 +19,18 @@ import { toast } from 'sonner';
 import { STYLES, COLORS, button, badge, formatEuro, formatDateIT } from '../lib/utils';
 import { PageLayout } from '../components/PageLayout';
 
-// Stati presenza con colori
-const STATI_PRESENZA = {
-  presente: { label: 'P', color: '#22c55e', bg: '#dcfce7', name: 'Presente' },
-  assente: { label: 'A', color: '#ef4444', bg: '#fee2e2', name: 'Assente' },
-  ferie: { label: 'F', color: '#f59e0b', bg: '#fef3c7', name: 'Ferie' },
-  permesso: { label: 'PE', color: '#8b5cf6', bg: '#ede9fe', name: 'Permesso' },
-  malattia: { label: 'M', color: '#3b82f6', bg: '#dbeafe', name: 'Malattia' },
-  rol: { label: 'R', color: '#06b6d4', bg: '#cffafe', name: 'ROL' },
-  chiuso: { label: 'CH', color: '#64748b', bg: '#e2e8f0', name: 'Chiuso' },
-  riposo_settimanale: { label: 'RS', color: '#6b7280', bg: '#f3f4f6', name: 'Riposo Sett.' },
-  trasferta: { label: 'T', color: '#6366f1', bg: '#e0e7ff', name: 'Trasferta' },
-  cessato: { label: 'X', color: '#991b1b', bg: '#fef2f2', name: 'Cessato' },
-  riposo: { label: '-', color: '#9ca3af', bg: '#f3f4f6', name: 'Riposo' },
-};
-
-// Giorni settimana abbreviati
-const GIORNI_SETTIMANA = ['D', 'L', 'M', 'M', 'G', 'V', 'S'];
-const MESI = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 
-              'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
-
-// Verifica se dipendente è cessato in una data
-const isDipendenteCessato = (employee, dateStr) => {
-  const dataFineContratto = employee.data_fine_contratto || employee.contratto?.data_fine;
-  if (!dataFineContratto) return false;
-  
-  const dataFine = new Date(dataFineContratto);
-  const dataCorrente = new Date(dateStr);
-  
-  return dataCorrente > dataFine;
-};
-
-// Verifica se dipendente deve essere visibile nel mese
-const isDipendenteVisibileNelMese = (employee, anno, mese) => {
-  const dataFineContratto = employee.data_fine_contratto || employee.contratto?.data_fine;
-  if (!dataFineContratto) return true;
-  
-  const dataFine = new Date(dataFineContratto);
-  const inizioMese = new Date(anno, mese, 1);
-  
-  // Se il contratto è scaduto prima dell'inizio del mese, non mostrare
-  return dataFine >= inizioMese;
-};
-
-// Formatta data
-const formatDate = (dateStr) => {
-  if (!dateStr) return '-';
-  try {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString('it-IT');
-  } catch {
-    return dateStr;
-  }
-};
-
-// Mansioni predefinite
-const MANSIONI_DEFAULT = [
-  { id: 'cameriere', nome: 'Camerieri', color: '#3b82f6' },
-  { id: 'cucina', nome: 'Cucina', color: '#22c55e' },
-  { id: 'bar', nome: 'Bar', color: '#f59e0b' },
-  { id: 'cassa', nome: 'Cassa', color: '#8b5cf6' },
-  { id: 'pulizie', nome: 'Pulizie', color: '#64748b' },
-];
+// Importa costanti e helpers dal modulo attendance
+import { 
+  STATI_PRESENZA, 
+  GIORNI_SETTIMANA, 
+  MESI, 
+  MANSIONI_DEFAULT 
+} from '../components/attendance/constants';
+import { 
+  isDipendenteCessato, 
+  isDipendenteVisibileNelMese, 
+  formatDate 
+} from '../components/attendance/helpers';
 
 // Componente Gestione Turni
 function TurniSection({ employees, currentMonth, currentYear }) {
