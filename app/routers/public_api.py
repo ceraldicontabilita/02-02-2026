@@ -228,10 +228,15 @@ async def list_invoices(
     query = {}
     
     # Filtro per anno
+    # IMPORTANTE: Consideriamo sia invoice_date (fatture XML complete) 
+    # che data_documento (fatture provvisorie da Aruba)
     if anno is not None:
         anno_start = f"{anno}-01-01"
         anno_end = f"{anno}-12-31"
-        query["invoice_date"] = {"$gte": anno_start, "$lte": anno_end}
+        query["$or"] = [
+            {"invoice_date": {"$gte": anno_start, "$lte": anno_end}},
+            {"data_documento": {"$gte": anno_start, "$lte": anno_end}}
+        ]
     
     return await db[Collections.INVOICES].find(query, {"_id": 0}).sort([("invoice_date", -1)]).skip(skip).limit(limit).to_list(limit)
 
