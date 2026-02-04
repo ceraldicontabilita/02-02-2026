@@ -9,7 +9,7 @@ import json
 from datetime import datetime, timedelta
 import uuid
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://finance-wizard-106.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://erpdatafix.preview.emergentagent.com').rstrip('/')
 
 class TestHealthAndBasics:
     """Basic health and connectivity tests"""
