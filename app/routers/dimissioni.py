@@ -109,7 +109,7 @@ def estrai_dati_dimissioni(testo: str, allegati: List[str] = None) -> Dict[str, 
                     if 2020 <= year <= 2030 and 1 <= month <= 12 and 1 <= day <= 31:
                         dati["data_dimissioni"] = f"{day:02d}/{month:02d}/{year}"
                         break
-                except:
+                except ValueError:
                     pass
     
     # Cerca data nel formato YYYYMMDD nel testo
@@ -122,7 +122,7 @@ def estrai_dati_dimissioni(testo: str, allegati: List[str] = None) -> Dict[str, 
             day = int(data_str[6:8])
             if 2000 <= year <= 2030 and 1 <= month <= 12 and 1 <= day <= 31:
                 dati["data_dimissioni"] = f"{day:02d}/{month:02d}/{year}"
-        except:
+        except ValueError:
             pass
     
     # Cerca data nel formato ISO (YYYY-MM-DD)
