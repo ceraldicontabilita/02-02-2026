@@ -133,7 +133,7 @@ export default function IntegrazioniOpenAPI() {
   }
 
   return (
-    <PageLayout title="Integrazioni OpenAPI.it" subtitle="SDI (Fatturazione Elettronica), XBRL (Bilanci) & AISP (Open Banking)">
+    <PageLayout title="Integrazioni OpenAPI.it" subtitle="SDI (Fatturazione Elettronica) & XBRL (Bilanci)">
     <div style={{...STYLES.pageWrapper, padding: 0}}>
       <div style={STYLES.pageContainer}>
         <div style={STYLES.pageHeader}>
@@ -142,7 +142,7 @@ export default function IntegrazioniOpenAPI() {
               🔌 Integrazioni OpenAPI.it
             </h1>
             <p style={{ margin: '4px 0 0', fontSize: 13, color: '#64748b' }}>
-              SDI (Fatturazione Elettronica), XBRL (Bilanci) & AISP (Open Banking)
+              SDI (Fatturazione Elettronica) & XBRL (Bilanci)
             </p>
           </div>
           <button onClick={loadStatus} style={button('#3b82f6')}>
@@ -152,7 +152,7 @@ export default function IntegrazioniOpenAPI() {
 
         <div style={STYLES.pageContent}>
           {/* Status Cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 24 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16, marginBottom: 24 }}>
             {/* SDI Status */}
             <div style={cardStyle}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
@@ -180,20 +180,6 @@ export default function IntegrazioniOpenAPI() {
                 <div>Bilanci aziendali in formato XBRL</div>
               </div>
             </div>
-
-            {/* AISP Status */}
-            <div style={cardStyle}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <h3 style={{ margin: 0, fontSize: 16 }}>🏦 AISP - Open Banking</h3>
-                <span style={badge('warning')}>
-                  ⚠ Richiede Autorizzazione PSD2
-                </span>
-              </div>
-              <div style={{ fontSize: 13, color: '#64748b' }}>
-                <div>Stato: <strong>{aispStatus?.status || 'N/A'}</strong></div>
-                <div>Riconciliazione bancaria automatica</div>
-              </div>
-            </div>
           </div>
 
           {/* Tabs */}
@@ -203,9 +189,6 @@ export default function IntegrazioniOpenAPI() {
             </button>
             <button style={tabStyle(activeTab === 'xbrl')} onClick={() => { setActiveTab('xbrl'); loadXbrlRequests(); }}>
               📊 XBRL Bilanci
-            </button>
-            <button style={tabStyle(activeTab === 'aisp')} onClick={() => setActiveTab('aisp')}>
-              🏦 AISP
             </button>
             <button style={tabStyle(activeTab === 'config')} onClick={() => setActiveTab('config')}>
               ⚙️ Configurazione
