@@ -51,6 +51,25 @@ Creati endpoint per analisi automatica delle associazioni assegno-fattura:
 - Ridotta duplicazione codice in `Attendance.jsx`
 - **Nota**: Il refactoring completo (estrazione componenti TurniSection, TabSaldoFerie) è in backlog
 
+### Integrazione UI API Automotive - COMPLETATA (4 Feb 2026)
+Aggiunta interfaccia frontend nella sezione "Noleggio Auto" per aggiornare dati veicoli da targa.
+
+**Funzionalità:**
+- Bottone **"Aggiorna Dati Veicoli"** nella toolbar per aggiornamento massivo di tutti i veicoli
+- Bottone **"Aggiorna da Targa"** nel dettaglio veicolo per aggiornamento singolo
+- Sezione **"Dati da OpenAPI Automotive"** nella modale di modifica con:
+  - Bottone "Cerca Dati" per preview dati
+  - Visualizzazione marca, modello, anno, alimentazione, potenza, cilindrata
+  - Bottone "Applica questi dati" per aggiornare il veicolo
+
+**File modificati:**
+- `/app/frontend/src/pages/NoleggioAuto.jsx` - Aggiunta integrazione OpenAPI
+
+**Endpoint backend già esistenti:**
+- `GET /api/openapi-automotive/info/{targa}` - Preview dati veicolo
+- `POST /api/openapi-automotive/aggiorna-veicolo` - Aggiorna singolo veicolo
+- `POST /api/openapi-automotive/aggiorna-bulk` - Aggiornamento massivo
+
 ### Gestione Assegni - Filtro Anno e Ordinamento - COMPLETATO (2 Feb 2026)
 - Ordinamento assegni per numero decrescente (dal più recente al più vecchio)
 - Filtro per anno selezionato (2024-2026)
