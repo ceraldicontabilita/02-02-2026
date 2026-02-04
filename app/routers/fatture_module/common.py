@@ -6,7 +6,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Collection names - STANDARDIZZATE
-COL_FORNITORI = "suppliers"
+COL_FORNITORI = "fornitori"
 COL_FATTURE_RICEVUTE = "invoices"
 COL_DETTAGLIO_RIGHE = "dettaglio_righe_fatture"
 COL_ALLEGATI = "allegati_fatture"

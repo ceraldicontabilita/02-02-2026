@@ -42,7 +42,7 @@ class InvoiceServiceV2:
     def __init__(self, db=None):
         self.db = db or Database.get_db()
         self.invoices = self.db["invoices"]
-        self.suppliers = self.db["suppliers"]
+        self.suppliers = self.db["fornitori"]  # Unificato su fornitori
         self.warehouse_movements = self.db["warehouse_movements"]
         self.accounting_entries = self.db["accounting_entries"]
         self.cash_movements = self.db["prima_nota_cassa"]  # Usa collection corretta
