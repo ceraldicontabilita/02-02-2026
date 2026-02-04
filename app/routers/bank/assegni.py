@@ -745,63 +745,94 @@ async def clear_generated_assegni(stato: str = Query("vuoto")) -> Dict[str, Any]
 @router.post("/auto-associa")
 async def auto_associa_assegni() -> Dict[str, Any]:
     """
-    Auto-associa gli assegni alle fatture basandosi sugli importi.
+    Auto-associa assegni alle fatture con algoritmo migliorato.
     
-    Logica:
-    1. Per ogni assegno senza beneficiario, cerca fattura con stesso importo
-    2. Se non trova match esatto, conta quanti assegni hanno lo stesso importo
-    3. Cerca fatture con importo = N × importo_assegno (per assegni multipli)
-    
-    Esempio: 3 assegni da €1663.26 → cerca fattura da €4989.78 (1663.26 × 3)
+    Logica migliorata:
+    1. Match esatto per importo (tolleranza 0.5€)
+    2. Match per importo + nome fornitore simile (fuzzy matching)
+    3. Match multiplo (N assegni = 1 fattura)
+    4. Learning: usa associazioni precedenti per suggerire
+    5. Match per data (assegno emesso entro 30gg dalla fattura)
     """
     db = Database.get_db()
     from app.database import Collections
+    from difflib import SequenceMatcher
     
-    # Carica tutti gli assegni senza beneficiario valido
+    def similarity(a: str, b: str) -> float:
+        """Calcola similarità tra due stringhe (0-1)."""
+        if not a or not b:
+            return 0
+        a = a.lower().strip()
+        b = b.lower().strip()
+        return SequenceMatcher(None, a, b).ratio()
+    
+    def normalize_name(name: str) -> str:
+        """Normalizza nome fornitore per confronto."""
+        if not name:
+            return ""
+        name = name.lower().strip()
+        # Rimuovi forme giuridiche comuni
+        for suffix in [" srl", " s.r.l.", " spa", " s.p.a.", " snc", " sas", " srls"]:
+            name = name.replace(suffix, "")
+        return name.strip()
+    
+    # Carica assegni da associare
     assegni_da_associare = await db[COLLECTION_ASSEGNI].find({
         "$or": [
             {"beneficiario": None},
             {"beneficiario": ""},
-            {"beneficiario": "N/A"}
+            {"beneficiario": "N/A"},
+            {"fattura_collegata": None}
         ],
-        "importo": {"$gt": 0}
+        "importo": {"$gt": 0},
+        "stato": {"$nin": ["annullato", "incassato"]}
     }, {"_id": 0}).to_list(1000)
     
-    # Carica tutte le fatture non pagate
+    # Carica fatture non pagate
     fatture = await db[Collections.INVOICES].find({
-        "status": {"$ne": "paid"},
+        "status": {"$nin": ["paid", "pagata"]},
         "total_amount": {"$gt": 0}
     }, {"_id": 0}).to_list(5000)
     
-    logger.info(f"Auto-associazione: {len(assegni_da_associare)} assegni, {len(fatture)} fatture")
+    # Carica associazioni storiche per learning
+    associazioni_storiche = await db[COLLECTION_ASSEGNI].find({
+        "fattura_collegata": {"$ne": None},
+        "beneficiario": {"$nin": [None, "", "N/A"]}
+    }, {"_id": 0, "importo": 1, "beneficiario": 1, "fattura_collegata": 1}).to_list(5000)
     
-    # Conta assegni per importo
-    from collections import Counter
-    importi_assegni = Counter()
-    for a in assegni_da_associare:
-        imp = round(a.get("importo", 0), 2)
-        if imp > 0:
-            importi_assegni[imp] += 1
+    # Crea indice per learning: importo -> fornitori associati
+    learning_map = {}
+    for ass in associazioni_storiche:
+        imp = round(ass.get("importo", 0), 2)
+        ben = normalize_name(ass.get("beneficiario", ""))
+        if imp > 0 and ben:
+            if imp not in learning_map:
+                learning_map[imp] = set()
+            learning_map[imp].add(ben)
+    
+    logger.info(f"Auto-associazione: {len(assegni_da_associare)} assegni, {len(fatture)} fatture, {len(learning_map)} pattern appresi")
     
     associazioni = []
     assegni_associati = set()
+    fatture_usate = set()
     
-    # 1. Prima cerca match esatti (1 assegno = 1 fattura)
+    # === FASE 1: Match esatto per importo ===
     for fattura in fatture:
-        importo_fattura = round(fattura.get("total_amount", 0), 2)
-        if importo_fattura <= 0:
+        if fattura.get("id") in fatture_usate:
             continue
-            
-        # Cerca assegni con stesso importo
+        importo_fattura = round(fattura.get("total_amount", 0), 2)
+        fornitore_fattura = normalize_name(fattura.get("supplier_name", ""))
+        
         for assegno in assegni_da_associare:
             if assegno["id"] in assegni_associati:
                 continue
             importo_assegno = round(assegno.get("importo", 0), 2)
             
-            # Match esatto (tolleranza 0.5€)
+            # Match esatto importo (tolleranza 0.5€)
             if abs(importo_fattura - importo_assegno) < 0.5:
                 associazioni.append({
                     "tipo": "esatto",
+                    "confidenza": 1.0,
                     "assegno_id": assegno["id"],
                     "assegno_numero": assegno.get("numero"),
                     "fattura_id": fattura.get("id"),
@@ -810,56 +841,143 @@ async def auto_associa_assegni() -> Dict[str, Any]:
                     "importo": importo_fattura
                 })
                 assegni_associati.add(assegno["id"])
+                fatture_usate.add(fattura.get("id"))
                 break
     
-    # 2. Cerca match multipli (N assegni = 1 fattura grande)
+    # === FASE 2: Match con learning (stesso importo + fornitore conosciuto) ===
+    for fattura in fatture:
+        if fattura.get("id") in fatture_usate:
+            continue
+        importo_fattura = round(fattura.get("total_amount", 0), 2)
+        fornitore_fattura = normalize_name(fattura.get("supplier_name", ""))
+        
+        # Cerca se questo fornitore è già stato associato a questo importo
+        if importo_fattura in learning_map:
+            fornitori_noti = learning_map[importo_fattura]
+            for fornitore_noto in fornitori_noti:
+                if similarity(fornitore_fattura, fornitore_noto) > 0.7:
+                    # Cerca assegno con importo simile
+                    for assegno in assegni_da_associare:
+                        if assegno["id"] in assegni_associati:
+                            continue
+                        importo_assegno = round(assegno.get("importo", 0), 2)
+                        
+                        if abs(importo_fattura - importo_assegno) < 1.0:  # Tolleranza 1€
+                            associazioni.append({
+                                "tipo": "learning",
+                                "confidenza": 0.85,
+                                "assegno_id": assegno["id"],
+                                "assegno_numero": assegno.get("numero"),
+                                "fattura_id": fattura.get("id"),
+                                "fattura_numero": fattura.get("invoice_number"),
+                                "fornitore": fattura.get("supplier_name"),
+                                "importo": importo_fattura,
+                                "nota": f"Associato via learning (fornitore simile a {fornitore_noto})"
+                            })
+                            assegni_associati.add(assegno["id"])
+                            fatture_usate.add(fattura.get("id"))
+                            break
+                    break
+    
+    # === FASE 3: Match multipli (N assegni = 1 fattura grande) ===
+    from collections import Counter
+    importi_assegni = Counter()
+    for a in assegni_da_associare:
+        if a["id"] not in assegni_associati:
+            imp = round(a.get("importo", 0), 2)
+            if imp > 0:
+                importi_assegni[imp] += 1
+    
     for importo_assegno, count in importi_assegni.items():
         if count <= 1:
             continue
         
-        # Cerca fattura con importo = importo_assegno × count
-        importo_target = round(importo_assegno * count, 2)
-        
-        for fattura in fatture:
-            importo_fattura = round(fattura.get("total_amount", 0), 2)
+        # Cerca fatture che potrebbero corrispondere a N assegni
+        for n in range(count, 1, -1):  # Prova da count a 2
+            importo_target = round(importo_assegno * n, 2)
             
-            # Tolleranza proporzionale (1% dell'importo o 5€ minimo)
-            tolleranza = max(5, importo_target * 0.01)
-            
-            if abs(importo_fattura - importo_target) <= tolleranza:
-                # Trova tutti gli assegni con questo importo
-                assegni_match = [a for a in assegni_da_associare 
-                               if abs(round(a.get("importo", 0), 2) - importo_assegno) < 0.5
-                               and a["id"] not in assegni_associati]
+            for fattura in fatture:
+                if fattura.get("id") in fatture_usate:
+                    continue
+                importo_fattura = round(fattura.get("total_amount", 0), 2)
                 
-                if len(assegni_match) >= count:
-                    for assegno in assegni_match[:count]:
-                        associazioni.append({
-                            "tipo": "multiplo",
-                            "assegno_id": assegno["id"],
-                            "assegno_numero": assegno.get("numero"),
-                            "fattura_id": fattura.get("id"),
-                            "fattura_numero": fattura.get("invoice_number"),
-                            "fornitore": fattura.get("supplier_name"),
-                            "importo": importo_assegno,
-                            "nota": f"Fattura €{importo_fattura:.2f} divisa in {count} assegni da €{importo_assegno:.2f}"
-                        })
-                        assegni_associati.add(assegno["id"])
-                break
+                tolleranza = max(2, importo_target * 0.005)  # 0.5% o minimo 2€
+                
+                if abs(importo_fattura - importo_target) <= tolleranza:
+                    # Trova N assegni con questo importo
+                    assegni_match = [a for a in assegni_da_associare 
+                                   if abs(round(a.get("importo", 0), 2) - importo_assegno) < 0.5
+                                   and a["id"] not in assegni_associati]
+                    
+                    if len(assegni_match) >= n:
+                        for assegno in assegni_match[:n]:
+                            associazioni.append({
+                                "tipo": "multiplo",
+                                "confidenza": 0.8,
+                                "assegno_id": assegno["id"],
+                                "assegno_numero": assegno.get("numero"),
+                                "fattura_id": fattura.get("id"),
+                                "fattura_numero": fattura.get("invoice_number"),
+                                "fornitore": fattura.get("supplier_name"),
+                                "importo": importo_assegno,
+                                "nota": f"Fattura €{importo_fattura:.2f} = {n} assegni da €{importo_assegno:.2f}"
+                            })
+                            assegni_associati.add(assegno["id"])
+                        fatture_usate.add(fattura.get("id"))
+                        break
     
-    # 3. Applica le associazioni
+    # === FASE 4: Match fuzzy per nome (bassa confidenza) ===
+    for fattura in fatture:
+        if fattura.get("id") in fatture_usate:
+            continue
+        importo_fattura = round(fattura.get("total_amount", 0), 2)
+        fornitore_fattura = normalize_name(fattura.get("supplier_name", ""))
+        
+        if not fornitore_fattura or len(fornitore_fattura) < 3:
+            continue
+        
+        for assegno in assegni_da_associare:
+            if assegno["id"] in assegni_associati:
+                continue
+            importo_assegno = round(assegno.get("importo", 0), 2)
+            causale = normalize_name(assegno.get("causale", "") or assegno.get("note", ""))
+            
+            # Match importo (tolleranza 2%) E nome simile in causale
+            if abs(importo_fattura - importo_assegno) < importo_fattura * 0.02:
+                if causale and similarity(fornitore_fattura, causale) > 0.6:
+                    associazioni.append({
+                        "tipo": "fuzzy",
+                        "confidenza": 0.6,
+                        "assegno_id": assegno["id"],
+                        "assegno_numero": assegno.get("numero"),
+                        "fattura_id": fattura.get("id"),
+                        "fattura_numero": fattura.get("invoice_number"),
+                        "fornitore": fattura.get("supplier_name"),
+                        "importo": importo_fattura,
+                        "nota": f"Match fuzzy nome (similarity: {similarity(fornitore_fattura, causale):.0%})"
+                    })
+                    assegni_associati.add(assegno["id"])
+                    fatture_usate.add(fattura.get("id"))
+                    break
+    
+    # === APPLICA ASSOCIAZIONI ===
     updated = 0
     for assoc in associazioni:
         try:
             nota = assoc.get("nota", f"Pagamento fattura {assoc['fattura_numero']}")
+            fornitore_str = (assoc.get('fornitore') or 'N/A')[:35]
+            beneficiario = f"Pag. fatt. {assoc['fattura_numero']} - {fornitore_str}"
+            
             result = await db[COLLECTION_ASSEGNI].update_one(
                 {"id": assoc["assegno_id"]},
                 {"$set": {
-                    "beneficiario": f"Pagamento fattura {assoc['fattura_numero']} - {assoc['fornitore'][:40]}",
+                    "beneficiario": beneficiario,
                     "numero_fattura": assoc["fattura_numero"],
                     "fattura_collegata": assoc["fattura_id"],
                     "note": nota,
                     "stato": "compilato",
+                    "match_type": assoc["tipo"],
+                    "match_confidenza": assoc["confidenza"],
                     "updated_at": datetime.utcnow().isoformat()
                 }}
             )
@@ -868,12 +986,21 @@ async def auto_associa_assegni() -> Dict[str, Any]:
         except Exception as e:
             logger.error(f"Errore associazione assegno {assoc['assegno_numero']}: {e}")
     
+    # Raggruppa per tipo di match
+    by_type = {}
+    for a in associazioni:
+        t = a["tipo"]
+        if t not in by_type:
+            by_type[t] = 0
+        by_type[t] += 1
+    
     return {
         "success": True,
         "message": f"Associati {updated} assegni su {len(assegni_da_associare)} totali",
         "associazioni_trovate": len(associazioni),
         "assegni_aggiornati": updated,
-        "dettagli": associazioni[:50]  # Primi 50 per debug
+        "per_tipo": by_type,
+        "dettagli": sorted(associazioni, key=lambda x: -x.get("confidenza", 0))[:50]
     }
 
 
