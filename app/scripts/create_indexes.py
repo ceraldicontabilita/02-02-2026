@@ -142,9 +142,67 @@ async def create_indexes():
         await db["documents_inbox"].create_index("category")
         await db["documents_inbox"].create_index("status")
         await db["documents_inbox"].create_index("downloaded_at")
+        await db["documents_inbox"].create_index("filename")
+        await db["documents_inbox"].create_index("hash")
         await db["documents_inbox"].create_index([("category", 1), ("status", 1)])
-        indexes_created.append("documents_inbox: category, status, downloaded_at")
+        await db["documents_inbox"].create_index([("downloaded_at", -1)])
+        indexes_created.append("documents_inbox: category, status, downloaded_at, filename, hash")
         logger.info("✅ Indici documents_inbox creati")
+        
+        # ============================================
+        # ASSEGNI
+        # ============================================
+        await db["assegni"].create_index("numero")
+        await db["assegni"].create_index("importo")
+        await db["assegni"].create_index("stato")
+        await db["assegni"].create_index("beneficiario")
+        await db["assegni"].create_index("fattura_collegata")
+        await db["assegni"].create_index([("importo", 1), ("stato", 1)])
+        await db["assegni"].create_index([("data_emissione", -1)])
+        indexes_created.append("assegni: numero, importo, stato, beneficiario, fattura_collegata")
+        logger.info("✅ Indici assegni creati")
+
+        # ============================================
+        # PRESENZE (ATTENDANCE)
+        # ============================================
+        await db["presenze"].create_index("dipendente_id")
+        await db["presenze"].create_index("data")
+        await db["presenze"].create_index("stato")
+        await db["presenze"].create_index([("dipendente_id", 1), ("data", 1)])
+        await db["presenze"].create_index([("data", -1), ("dipendente_id", 1)])
+        indexes_created.append("presenze: dipendente_id, data, stato, compound")
+        logger.info("✅ Indici presenze creati")
+
+        # ============================================
+        # TURNI
+        # ============================================
+        await db["turni"].create_index([("anno", 1), ("mese", 1)])
+        await db["turni"].create_index("dipendente_id")
+        indexes_created.append("turni: anno/mese, dipendente_id")
+        logger.info("✅ Indici turni creati")
+
+        # ============================================
+        # REGOLE CATEGORIZZAZIONE
+        # ============================================
+        await db["regole_categorizzazione_fornitori"].create_index("pattern")
+        await db["regole_categorizzazione_fornitori"].create_index("categoria")
+        await db["regole_categorizzazione_descrizioni"].create_index("pattern")
+        await db["regole_categorizzazione_descrizioni"].create_index("categoria")
+        indexes_created.append("regole_categorizzazione: pattern, categoria")
+        logger.info("✅ Indici regole_categorizzazione creati")
+
+        # ============================================
+        # INVOICES (collection principale)
+        # ============================================
+        await db["invoices"].create_index("supplier_name")
+        await db["invoices"].create_index("invoice_number")
+        await db["invoices"].create_index("total_amount")
+        await db["invoices"].create_index("status")
+        await db["invoices"].create_index("invoice_date")
+        await db["invoices"].create_index([("status", 1), ("total_amount", 1)])
+        await db["invoices"].create_index([("invoice_date", -1)])
+        indexes_created.append("invoices: supplier_name, invoice_number, total_amount, status, invoice_date")
+        logger.info("✅ Indici invoices creati")
         
         logger.info(f"\n{'='*50}")
         logger.info(f"✅ COMPLETATO: {len(indexes_created)} gruppi di indici creati")
