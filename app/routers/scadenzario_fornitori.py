@@ -206,13 +206,16 @@ async def get_scadenze_urgenti() -> Dict[str, Any]:
     ).sort("data_scadenza", 1).to_list(100)
     
     urgenti = []
-    data_oggi = datetime.strptime(oggi, "%Y-%m-%d")
+    try:
+        data_oggi = datetime.strptime(oggi, "%Y-%m-%d")
+    except ValueError:
+        data_oggi = datetime.now()
     
     for f in fatture:
         data_scad_str = f.get("data_scadenza") or f.get("invoice_date", oggi)
         try:
             data_scad = datetime.strptime(data_scad_str[:10], "%Y-%m-%d")
-        except:
+        except (ValueError, TypeError):
             data_scad = data_oggi
         
         giorni = (data_scad - data_oggi).days
