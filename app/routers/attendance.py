@@ -549,8 +549,8 @@ async def get_ore_lavorate(
                     delta = dt_uscita - dt_entrata
                     ore_sessione = delta.total_seconds() / 3600
                     ore_giorno += ore_sessione
-                except:
-                    pass
+                except Exception as e:
+                    logger.warning(f"Errore calcolo ore sessione: {e}")
         
         # Sottrai pausa pranzo se > 6 ore
         if ore_giorno > 6:
