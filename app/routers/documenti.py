@@ -2409,8 +2409,8 @@ def detect_document_type(filename: str, file_content: bytes) -> str:
             content_str = file_content.decode('utf-8', errors='ignore')
             if 'FatturaElettronica' in content_str or 'fatturaElettronicaHeader' in content_str.lower():
                 return 'fattura'
-        except:
-            pass
+        except Exception as e:
+            logger.warning(f"Errore decodifica XML: {e}")
         return 'fattura'  # XML di default è fattura
     
     # Nomi che indicano tipo
@@ -2449,8 +2449,8 @@ def detect_document_type(filename: str, file_content: bytes) -> str:
             if 'ESTRATTO CONTO' in content_str or 'SALDO INIZIALE' in content_str:
                 return 'estratto_conto'
                 
-        except:
-            pass
+        except Exception as e:
+            logger.warning(f"Errore analisi contenuto PDF: {e}")
     
     # Analizza contenuto Excel
     if lower.endswith('.xlsx') or lower.endswith('.xls') or lower.endswith('.csv'):
