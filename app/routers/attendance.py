@@ -167,8 +167,8 @@ async def registra_timbratura(payload: Dict[str, Any]) -> Dict[str, Any]:
             entrata_dt = datetime.fromisoformat(entrata_oggi["data_ora"].replace("Z", "+00:00"))
             delta = data_ora - entrata_dt
             ore_lavorate = round(delta.total_seconds() / 3600, 2)
-        except:
-            pass
+        except Exception as e:
+            logger.warning(f"Errore calcolo ore lavorate: {e}")
     
     logger.info(f"✅ Timbratura registrata: {employee.get('cognome')} - {tipo} - {data_ora.strftime('%H:%M')}")
     
