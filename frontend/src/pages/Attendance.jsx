@@ -1093,32 +1093,22 @@ export default function Attendance() {
   return (
     <PageLayout title="Gestione Presenze" subtitle="Calendario presenze e assenze dipendenti">
     <div style={{ maxWidth: 1600, margin: '0 auto' }} data-testid="attendance-page">
-      {/* Header */}
+      {/* Header con controlli */}
       <div style={{ 
         display: 'flex', 
-        justifyContent: 'space-between', 
+        justifyContent: 'flex-end', 
         alignItems: 'center', 
         marginBottom: 20,
-        padding: '15px 20px',
-        background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
-        borderRadius: 12,
-        color: 'white',
-        flexWrap: 'wrap',
-        gap: 10
+        gap: 10,
+        flexWrap: 'wrap'
       }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 'bold' }}>👥 Gestione Presenze</h1>
-          <p style={{ margin: '4px 0 0 0', fontSize: 13, opacity: 0.9 }}>
-            Calendario presenze e gestione assenze
-          </p>
-        </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <button 
             onClick={loadData}
             style={{ 
               padding: '10px 20px',
-              background: 'rgba(255,255,255,0.95)',
-              color: '#1e3a5f',
+              background: '#1e3a5f',
+              color: 'white',
               border: 'none',
               borderRadius: 8,
               cursor: 'pointer',
