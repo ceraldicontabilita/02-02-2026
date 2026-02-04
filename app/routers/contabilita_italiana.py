@@ -467,7 +467,7 @@ async def registra_cespite(cespite: CespiteCreate) -> Dict[str, Any]:
         "ammortamenti": [],
         "created_at": now
     }
-    await db["cespiti"].insert_one(doc)
+    await db["cespiti"].insert_one(doc.copy())
     
     return {
         "success": True,
