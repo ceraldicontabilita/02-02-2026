@@ -48,8 +48,117 @@ AVERE: Banca c/c (18.1) - Importo pagato
 - **Contanti**: Conto 10.1 Cassa
 - **RiBa**: Conto 18.3 Effetti passivi
 
-### 2.4 Regola Automatica
-**SE fattura.metodo_pagamento è vuoto → IMPOSTA "Bonifico"**
+---
+
+## 2A. FLUSSO IMPORT FATTURE XML - REGOLE OBBLIGATORIE
+
+### 2A.1 🚫 DIVIETI ASSOLUTI (NON VIOLARE MAI)
+
+```
+❌ MAI scrivere in prima_nota_cassa o prima_nota_banca durante l'import XML
+   → La Prima Nota si scrive SOLO dopo conferma pagamento utente
+
+❌ MAI impostare metodo_pagamento = "bonifico" automaticamente
+   → Il metodo viene SOLO dall'anagrafica fornitore
+   → Se fornitore nuovo: metodo = "da_configurare"
+
+❌ MAI impostare pagato = true durante l'import
+   → Una fattura appena importata NON È PAGATA
+
+❌ MAI impostare riconciliato = true durante l'import
+   → La riconciliazione avviene DOPO match con estratto conto
+
+❌ MAI ignorare il metodo_pagamento dell'anagrafica fornitore
+   → Il XML può dire "bonifico" ma il fornitore paga in contanti
+   → VINCE SEMPRE l'anagrafica fornitore
+
+❌ MAI caricare a magazzino se fornitore.esclude_magazzino = true
+   → Alcuni fornitori (utenze, servizi) non hanno merci
+
+❌ MAI sovrascrivere una fattura esistente senza controllo
+   → Eccezione: bozze email (is_bozza_email = true)
+```
+
+### 2A.2 ✅ OBBLIGHI
+
+```
+✅ SEMPRE creare/aggiornare il fornitore in anagrafica
+✅ SEMPRE creare la scadenza nello scadenziario_fornitori
+✅ SEMPRE salvare le righe dettaglio in dettaglio_righe_fatture
+✅ SEMPRE impostare stato = "in_attesa_conferma" inizialmente
+✅ SEMPRE salvare il contenuto XML originale
+✅ SEMPRE gestire i warnings (IBAN mancante, metodo da configurare)
+✅ SEMPRE loggare le operazioni eseguite
+```
+
+### 2A.3 Flusso Corretto Import Fattura
+
+```
+1. Parse XML            → Estrai tutti i dati
+2. Check duplicati      → Se esiste STOP
+3. Gestione fornitore   → Crea/aggiorna in `fornitori`
+4. Salva fattura        → Collection `invoices` con stato="in_attesa_conferma"
+5. Crea scadenza        → Collection `scadenziario_fornitori`
+6. Carico magazzino     → SOLO se fornitore.esclude_magazzino = false
+7. ⛔ STOP              → NON SCRIVERE PRIMA NOTA
+```
+
+### 2A.4 Stati Iniziali OBBLIGATORI per Fattura Importata
+
+```python
+fattura = {
+    "stato": "in_attesa_conferma",    # MAI "pagata" o "riconciliata"
+    "pagato": False,
+    "riconciliato": False,
+    "data_pagamento": None,
+    "stato_riconciliazione": "in_attesa_conferma",
+    "metodo_pagamento": fornitore.get("metodo_pagamento", "da_configurare")
+}
+```
+
+### 2A.5 Quando Scrivere in Prima Nota?
+
+La Prima Nota si scrive **SOLO** quando:
+- L'utente clicca "Conferma Pagamento"
+- L'utente sceglie "Cassa" o "Banca"
+- Viene chiamato l'endpoint `/api/fatture/paga`
+
+### 2A.6 Mapping Collection MongoDB
+
+| Collection | Cosa contiene | Quando si scrive |
+|------------|---------------|------------------|
+| `invoices` | Fatture complete | Import XML |
+| `fornitori` | Anagrafica fornitori | Import XML (se nuovo) |
+| `scadenziario_fornitori` | Scadenze pagamento | Import XML |
+| `dettaglio_righe_fatture` | Righe fattura | Import XML |
+| `warehouse_movements` | Movimenti magazzino | Import XML (se non escluso) |
+| `haccp_lotti` | Lotti tracciabilità | Import XML (se non escluso) |
+| `prima_nota_cassa` | Movimenti cassa | ⚠️ SOLO dopo conferma pagamento |
+| `prima_nota_banca` | Movimenti banca | ⚠️ SOLO dopo conferma pagamento |
+
+### 2A.7 Checklist Verifica Post-Import
+
+```
+□ Fattura salvata in `invoices` con stato "in_attesa_conferma"
+□ Fornitore esiste in `fornitori`
+□ Scadenza creata in `scadenziario_fornitori`
+□ Righe salvate in `dettaglio_righe_fatture`
+□ Se fornitore non escluso: movimenti in `warehouse_movements`
+□ Se fornitore non escluso: lotti in `haccp_lotti`
+□ ❌ NESSUN record in `prima_nota_cassa` collegato alla fattura
+□ ❌ NESSUN record in `prima_nota_banca` collegato alla fattura
+□ fattura.pagato == false
+□ fattura.riconciliato == false
+```
+
+**Se trovi record in Prima Nota collegati a fatture appena importate, HAI SBAGLIATO.**
+
+### 2A.8 File di Riferimento
+
+- `/app/memory/ISTRUZIONI_FATTURE_AUTOMATICHE.md` - Istruzioni complete
+- `/app/routers/fatture_module/import_xml.py` - Codice import
+- `/app/routers/fatture_module/pagamento.py` - Codice pagamento
+- `/app/services/riconciliazione_intelligente.py` - Logica riconciliazione
 
 ---
 
