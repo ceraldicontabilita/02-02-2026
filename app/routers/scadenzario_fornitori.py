@@ -104,7 +104,11 @@ async def get_scadenzario(
         "oltre_30_giorni": []
     }
     
-    data_oggi = datetime.strptime(oggi, "%Y-%m-%d")
+    try:
+        data_oggi = datetime.strptime(oggi, "%Y-%m-%d")
+    except ValueError:
+        data_oggi = datetime.now()
+        oggi = data_oggi.strftime("%Y-%m-%d")
     
     for f in fatture:
         importo = float(f.get("total_amount", 0))
@@ -114,7 +118,7 @@ async def get_scadenzario(
         data_scad_str = f.get("data_scadenza") or f.get("invoice_date", oggi)
         try:
             data_scad = datetime.strptime(data_scad_str[:10], "%Y-%m-%d")
-        except:
+        except (ValueError, TypeError):
             data_scad = data_oggi
         
         f["data_scadenza_effettiva"] = data_scad.strftime("%Y-%m-%d")
