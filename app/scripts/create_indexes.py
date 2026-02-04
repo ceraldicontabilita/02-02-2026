@@ -6,6 +6,7 @@ Esegui con: python -m app.scripts.create_indexes
 import asyncio
 import logging
 from motor.motor_asyncio import AsyncIOMotorClient
+from pymongo.errors import OperationFailure
 import os
 
 logging.basicConfig(level=logging.INFO)
@@ -16,6 +17,17 @@ DB_NAME = os.environ.get("DB_NAME", "azienda_erp_db")
 
 if not MONGO_URL:
     raise ValueError("MONGO_URL environment variable is required - use MongoDB Atlas connection string")
+
+
+async def safe_create_index(collection, *args, **kwargs):
+    """Crea un indice in modo sicuro, ignorando conflitti con indici esistenti."""
+    try:
+        return await collection.create_index(*args, **kwargs)
+    except OperationFailure as e:
+        if e.code == 86:  # IndexKeySpecsConflict
+            logger.warning(f"⚠️ Indice già esistente con specifiche diverse, saltato: {args}")
+            return None
+        raise
 
 
 async def create_indexes():
@@ -32,7 +44,7 @@ async def create_indexes():
         # ============================================
         # FATTURE RICEVUTE
         # ============================================
-        await db["fatture_ricevute"].create_index("data_ricezione")
+        await safe_create_index(db["fatture_ricevute"], "data_ricezione")
         await db["fatture_ricevute"].create_index("data_fattura")
         await db["fatture_ricevute"].create_index("fornitore")
         await db["fatture_ricevute"].create_index("numero_fattura")
