@@ -294,3 +294,49 @@ export const MESI = [
   { key: '11', value: 11, label: 'Novembre', short: 'Nov' },
   { key: '12', value: 12, label: 'Dicembre', short: 'Dic' }
 ];
+
+/* ================================
+   DESIGN SYSTEM / THEME
+   ================================ */
+
+export const THEME = {
+  primary: '#1e3a5f',
+  primaryLight: '#2d5a87',
+  primaryDark: '#152a47',
+  success: '#16a34a',
+  successLight: '#dcfce7',
+  warning: '#f59e0b',
+  warningLight: '#fef3c7',
+  error: '#dc2626',
+  errorLight: '#fee2e2',
+  info: '#2563eb',
+  infoLight: '#dbeafe',
+  gray: {
+    50: '#f9fafb',
+    100: '#f3f4f6',
+    200: '#e5e7eb',
+    300: '#d1d5db',
+    400: '#9ca3af',
+    500: '#6b7280',
+    600: '#4b5563',
+    700: '#374151',
+    800: '#1f2937',
+    900: '#111827'
+  }
+};
+
+export const SHADOWS = {
+  sm: '0 1px 2px rgba(0,0,0,0.05)',
+  md: '0 2px 8px rgba(0,0,0,0.08)',
+  lg: '0 4px 12px rgba(0,0,0,0.12)',
+  xl: '0 8px 24px rgba(0,0,0,0.16)'
+};
+
+export const BORDER_RADIUS = {
+  sm: 4,
+  md: 8,
+  lg: 12,
+  xl: 16,
+  full: 9999
+};
+
