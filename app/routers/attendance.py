@@ -845,16 +845,19 @@ async def get_presenze_mese(anno: int = Query(...), mese: int = Query(...)) -> D
         }
         stato = stato_map.get(tipo, "assente")
         
-        # Itera sui giorni dellassenza
-        start = datetime.strptime(a["data_inizio"], "%Y-%m-%d")
-        end = datetime.strptime(a["data_fine"], "%Y-%m-%d")
-        current = start
-        while current <= end:
-            data_str = current.strftime("%Y-%m-%d")
-            if data_str >= primo_giorno and data_str < ultimo_giorno:
-                key = f"{emp_id}_{data_str}"
-                presenze_map[key] = stato
-            current += timedelta(days=1)
+        # Itera sui giorni dell'assenza
+        try:
+            start = datetime.strptime(a["data_inizio"], "%Y-%m-%d")
+            end = datetime.strptime(a["data_fine"], "%Y-%m-%d")
+            current = start
+            while current <= end:
+                data_str = current.strftime("%Y-%m-%d")
+                if data_str >= primo_giorno and data_str < ultimo_giorno:
+                    key = f"{emp_id}_{data_str}"
+                    presenze_map[key] = stato
+                current += timedelta(days=1)
+        except ValueError:
+            continue  # Date non valide, salta questa assenza
     
     return {
         "success": True,
