@@ -209,22 +209,14 @@ export default function GestioneDipendentiUnificata() {
 
   return (
     <PageLayout title="Gestione Dipendenti" subtitle="Anagrafica, contratti, retribuzioni, bonifici e acconti">
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', position: 'relative' }}>
       {/* Page Info Card */}
-      <div style={{ position: 'absolute', top: 0, right: 20, zIndex: 100 }}>
+      <div style={{ position: 'absolute', top: -40, right: 0, zIndex: 100 }}>
         <PageInfoCard pageKey="dipendenti" />
       </div>
       
-      {/* Header */}
-      <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: 'clamp(20px, 4vw, 26px)', color: '#1e293b' }}>
-            👥 Gestione Dipendenti
-          </h1>
-          <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: 13 }}>
-            Anagrafica, contratti, retribuzioni, bonifici e acconti
-          </p>
-        </div>
+      {/* Header con Export */}
+      <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
         <ExportButton
           data={filteredDip}
           columns={[
