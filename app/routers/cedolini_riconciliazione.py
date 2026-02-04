@@ -452,7 +452,8 @@ async def import_paghe_bonifici(
     content_paghe = await file_paghe.read()
     try:
         df_paghe = pd.read_excel(io.BytesIO(content_paghe))
-    except:
+    except Exception as e:
+        logger.error(f"Errore lettura file paghe: {e}")
         raise HTTPException(status_code=400, detail="Errore lettura file paghe")
     
     # Leggi file bonifici (se presente)
@@ -483,9 +484,11 @@ async def import_paghe_bonifici(
                         if nome and mese > 0 and anno > 0 and importo > 0:
                             key = f"{nome}_{mese}_{anno}"
                             bonifici_dict[key] = importo
-                    except:
+                    except Exception as e:
+                        logger.warning(f"Errore parsing riga bonifici: {e}")
                         continue
-        except:
+        except Exception as e:
+            logger.warning(f"Errore lettura file bonifici: {e}")
             pass  # Ignora errori bonifici, procedi solo con paghe
     
     # Normalizza colonne paghe
