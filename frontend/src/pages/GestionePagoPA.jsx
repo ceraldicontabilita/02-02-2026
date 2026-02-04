@@ -13,8 +13,6 @@ import {
 import { toast } from '../components/ui/sonner';
 import api from '../api';
 
-const API_URL = import.meta.env.VITE_BACKEND_URL || '';
-
 export default function GestionePagoPA() {
   const [ricevute, setRicevute] = useState([]);
   const [movimentiBanca, setMovimentiBanca] = useState([]);
@@ -26,11 +24,8 @@ export default function GestionePagoPA() {
 
   const fetchStats = useCallback(async () => {
     try {
-      const response = await fetch(`${API_URL}/api/pagopa/stats`);
-      if (response.ok) {
-        const data = await response.json();
-        setStats(data);
-      }
+      const response = await api.get('/api/pagopa/stats');
+      setStats(response.data);
     } catch (error) {
       console.error('Errore fetch stats:', error);
     }
@@ -39,11 +34,8 @@ export default function GestionePagoPA() {
   const fetchRicevute = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL}/api/pagopa/ricevute`);
-      if (response.ok) {
-        const data = await response.json();
-        setRicevute(data);
-      }
+      const response = await api.get('/api/pagopa/ricevute');
+      setRicevute(response.data || []);
     } catch (error) {
       console.error('Errore fetch ricevute:', error);
       toast.error('Errore nel caricamento ricevute');
@@ -54,10 +46,8 @@ export default function GestionePagoPA() {
 
   const fetchMovimentiBanca = useCallback(async () => {
     try {
-      const response = await fetch(`${API_URL}/api/bank/movements?tipo=pagopa&limit=100`);
-      if (response.ok) {
-        const data = await response.json();
-        setMovimentiBanca(data);
+      const response = await api.get('/api/bank/movements?tipo=pagopa&limit=100');
+      setMovimentiBanca(response.data || []);
       }
     } catch (error) {
       console.error('Errore fetch movimenti:', error);
