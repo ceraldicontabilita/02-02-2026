@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import api from "../api";
 import { formatEuro, formatDateIT, STYLES, COLORS, button, badge } from '../lib/utils';
 import { PageLayout } from '../components/PageLayout';
+import { toast } from 'sonner';
 
 export default function NoleggioAuto() {
   // Mostra sempre TUTTI gli anni di default (senza filtro anno)
@@ -18,6 +19,10 @@ export default function NoleggioAuto() {
   const [showAddVeicolo, setShowAddVeicolo] = useState(false);
   const [nuovoVeicolo, setNuovoVeicolo] = useState({ targa: '', marca: '', modello: '', fornitore_piva: '', contratto: '' });
   const [fattureNonAssociate, setFattureNonAssociate] = useState(0);
+  // Stato per lookup OpenAPI
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const [lookupResult, setLookupResult] = useState(null);
+  const [bulkUpdateLoading, setBulkUpdateLoading] = useState(false);
 
   const categorie = [
     { key: 'canoni', label: 'Canoni', icon: '📋', color: '#4caf50' },
