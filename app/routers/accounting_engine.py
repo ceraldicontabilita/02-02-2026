@@ -795,18 +795,23 @@ async def get_aged_receivable() -> Dict[str, Any]:
         due_date = inv.get("due_date", inv.get("date"))
         residual = inv.get("amount_residual", inv.get("total", 0))
         
-        if due_date >= today:
+        if not due_date:
+            bucket = "not_due"
+        elif due_date >= today:
             bucket = "not_due"
         else:
-            days_overdue = (datetime.strptime(today, "%Y-%m-%d") - datetime.strptime(due_date, "%Y-%m-%d")).days
-            if days_overdue <= 30:
-                bucket = "0_30"
-            elif days_overdue <= 60:
-                bucket = "31_60"
-            elif days_overdue <= 90:
-                bucket = "61_90"
-            else:
-                bucket = "over_90"
+            try:
+                days_overdue = (datetime.strptime(today, "%Y-%m-%d") - datetime.strptime(due_date, "%Y-%m-%d")).days
+                if days_overdue <= 30:
+                    bucket = "0_30"
+                elif days_overdue <= 60:
+                    bucket = "31_60"
+                elif days_overdue <= 90:
+                    bucket = "61_90"
+                else:
+                    bucket = "over_90"
+            except ValueError:
+                bucket = "not_due"
         
         buckets[bucket]["amount"] += residual
         buckets[bucket]["count"] += 1
@@ -846,18 +851,23 @@ async def get_aged_payable() -> Dict[str, Any]:
         due_date = inv.get("due_date", inv.get("date"))
         residual = inv.get("amount_residual", inv.get("total", 0))
         
-        if due_date >= today:
+        if not due_date:
+            bucket = "not_due"
+        elif due_date >= today:
             bucket = "not_due"
         else:
-            days_overdue = (datetime.strptime(today, "%Y-%m-%d") - datetime.strptime(due_date, "%Y-%m-%d")).days
-            if days_overdue <= 30:
-                bucket = "0_30"
-            elif days_overdue <= 60:
-                bucket = "31_60"
-            elif days_overdue <= 90:
-                bucket = "61_90"
-            else:
-                bucket = "over_90"
+            try:
+                days_overdue = (datetime.strptime(today, "%Y-%m-%d") - datetime.strptime(due_date, "%Y-%m-%d")).days
+                if days_overdue <= 30:
+                    bucket = "0_30"
+                elif days_overdue <= 60:
+                    bucket = "31_60"
+                elif days_overdue <= 90:
+                    bucket = "61_90"
+                else:
+                    bucket = "over_90"
+            except ValueError:
+                bucket = "not_due"
         
         buckets[bucket]["amount"] += residual
         buckets[bucket]["count"] += 1
