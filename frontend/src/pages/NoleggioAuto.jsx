@@ -406,6 +406,15 @@ export default function NoleggioAuto() {
             </h2>
             <div style={{ display: 'flex', gap: 8 }}>
               <button 
+                onClick={() => handleUpdateFromOpenAPI(selectedVeicolo.targa)}
+                disabled={lookupLoading}
+                style={{ padding: '6px 12px', background: lookupLoading ? '#9ca3af' : '#059669', color: 'white', border: 'none', borderRadius: 6, cursor: lookupLoading ? 'wait' : 'pointer' }}
+                title="Aggiorna dati veicolo da OpenAPI Automotive"
+                data-testid="veicolo-update-openapi-btn"
+              >
+                {lookupLoading ? '⏳' : '🔄'} Aggiorna da Targa
+              </button>
+              <button 
                 onClick={() => setEditingVeicolo({...selectedVeicolo})}
                 style={{ padding: '6px 12px', background: '#dbeafe', color: '#2563eb', border: 'none', borderRadius: 6, cursor: 'pointer' }}
               >
