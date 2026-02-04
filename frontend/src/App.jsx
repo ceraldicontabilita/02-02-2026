@@ -55,6 +55,8 @@ const NAV_ITEMS = [
     isSubmenu: true,
     children: [
       { to: "/dipendenti", label: "👥 Gestione Dipendenti", icon: "👤", isNew: true },
+      { to: "/attendance", label: "⏰ Presenze", icon: "⏰", isNew: true },
+      { to: "/saldi-ferie-permessi", label: "🏖️ Saldi Ferie/ROL", icon: "🏖️", isNew: true },
       { to: "/cedolini", label: "Cedolini / Buste Paga", icon: "📋" },
       { to: "/prima-nota-salari", label: "💰 Prima Nota Salari", icon: "💰", isNew: true },
       { to: "/tfr", label: "TFR e Accantonamenti", icon: "🏢" },
