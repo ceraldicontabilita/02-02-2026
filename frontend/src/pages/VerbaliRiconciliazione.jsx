@@ -233,7 +233,6 @@ export default function VerbaliRiconciliazione() {
           🔗 Associazione Manuale
         </button>
         </div>
-      </div>
 
       {/* Modal Associazione Manuale */}
       {showAssociaModal && (
