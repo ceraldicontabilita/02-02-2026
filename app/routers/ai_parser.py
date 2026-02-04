@@ -78,7 +78,7 @@ async def parse_document(
                 db_data["created_at"] = datetime.now(timezone.utc).isoformat()
                 
                 # Salva in collezione invoices
-                insert_result = await db["invoices"].insert_one(db_data)
+                insert_result = await db["invoices"].insert_one(db_data.copy())
                 result["saved_id"] = str(insert_result.inserted_id)
                 result["collection"] = "invoices"
                 
@@ -165,7 +165,7 @@ async def parse_fattura_endpoint(
                 db_data["centro_costo_id"] = result.get("centro_costo_suggerito")
                 db_data["centro_costo_nome"] = result.get("centro_costo_nome")
             
-            await db["invoices"].insert_one(db_data)
+            await db["invoices"].insert_one(db_data.copy())
             result["saved"] = True
         
         return result
@@ -310,7 +310,7 @@ async def parse_busta_paga_endpoint(
                 "created_at": datetime.now(timezone.utc).isoformat()
             }
             
-            await db["cedolini_parsed"].insert_one(cedolino_data)
+            await db["cedolini_parsed"].insert_one(cedolino_data.copy())
             result["saved"] = True
         
         return result
