@@ -878,18 +878,22 @@ async def get_notifiche_scadenze_imminenti(
     
     oggi_dt = datetime.now()
     for s in scadenze:
-        data_scad = datetime.strptime(s.get("data", ""), "%Y-%m-%d") if s.get("data") else None
-        if data_scad:
-            diff = (data_scad - oggi_dt).days
-            if diff <= 3:
-                s["urgenza"] = "critica"
-                urgenti.append(s)
-            elif diff <= 7:
-                s["urgenza"] = "alta"
-                prossime.append(s)
-            else:
-                s["urgenza"] = "normale"
-                pianificabili.append(s)
+        try:
+            data_scad = datetime.strptime(s.get("data", ""), "%Y-%m-%d") if s.get("data") else None
+            if data_scad:
+                diff = (data_scad - oggi_dt).days
+                if diff <= 3:
+                    s["urgenza"] = "critica"
+                    urgenti.append(s)
+                elif diff <= 7:
+                    s["urgenza"] = "alta"
+                    prossime.append(s)
+                else:
+                    s["urgenza"] = "normale"
+                    pianificabili.append(s)
+        except ValueError:
+            s["urgenza"] = "normale"
+            pianificabili.append(s)
     
     return {
         "success": True,
