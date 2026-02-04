@@ -304,7 +304,7 @@ async def sync_partners_to_local(limit: int = Query(500)) -> Dict[str, Any]:
         # Determina se è fornitore o cliente
         if p.get('supplier_rank', 0) > 0:
             # Fornitore
-            existing = await db["suppliers"].find_one({"partita_iva": piva}) if piva else None
+            existing = await db["fornitori"].find_one({"partita_iva": piva}) if piva else None
             
             doc = {
                 "odoo_id": p['id'],
@@ -320,12 +320,12 @@ async def sync_partners_to_local(limit: int = Query(500)) -> Dict[str, Any]:
             }
             
             if existing:
-                await db["suppliers"].update_one({"_id": existing["_id"]}, {"$set": doc})
+                await db["fornitori"].update_one({"_id": existing["_id"]}, {"$set": doc})
                 updated += 1
             else:
                 doc["id"] = f"odoo_{p['id']}"
                 doc["created_at"] = datetime.now(timezone.utc).isoformat()
-                await db["suppliers"].insert_one(doc)
+                await db["fornitori"].insert_one(doc)
                 created += 1
     
     return {

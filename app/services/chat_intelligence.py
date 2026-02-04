@@ -120,7 +120,7 @@ async def query_database_for_context(db, query_type: str, params: Dict[str, Any]
                     {"denominazione": {"$regex": params["nome"], "$options": "i"}}
                 ]
             
-            fornitori = await db["suppliers"].find(query, {"_id": 0}).limit(50).to_list(50)
+            fornitori = await db["fornitori"].find(query, {"_id": 0}).limit(50).to_list(50)
             result["data"] = fornitori
             result["summary"] = {"count": len(fornitori)}
             
@@ -214,7 +214,7 @@ async def query_database_for_context(db, query_type: str, params: Dict[str, Any]
             # Statistiche generali del sistema
             stats = {
                 "fatture": await db["invoices"].count_documents({}),
-                "fornitori": await db["suppliers"].count_documents({}),
+                "fornitori": await db["fornitori"].count_documents({}),
                 "dipendenti": await db["employees"].count_documents({}),
                 "cedolini": await db["cedolini"].count_documents({}),
                 "f24": await db["f24_unificato"].count_documents({}),
