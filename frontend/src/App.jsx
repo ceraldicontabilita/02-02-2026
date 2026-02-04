@@ -151,12 +151,6 @@ const NAV_ITEMS = [
   // === TO-DO ===
   { to: "/todo", label: "To-Do", icon: "📝", short: "ToDo" },
   
-  // === ATTENDANCE ===
-  { to: "/attendance", label: "Presenze", icon: "⏰", short: "Pres.", isNew: true },
-  
-  // === DIPENDENTI - SALDI ===
-  { to: "/saldi-ferie-permessi", label: "Saldi Ferie/ROL", icon: "🏖️", short: "Saldi", isNew: true },
-  
   // === ASSISTENTE AI ===
   { to: "/assistente-ai", label: "Assistente AI", icon: "🤖", short: "AI", isNew: true, highlight: true },
   
