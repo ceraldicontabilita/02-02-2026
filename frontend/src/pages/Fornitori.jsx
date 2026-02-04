@@ -153,7 +153,7 @@ function SupplierModal({ isOpen, onClose, supplier, onSave, saving }) {
       }}>
         {/* Header */}
         <div style={{
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
           padding: '20px 24px',
           color: 'white'
         }}>
@@ -488,7 +488,7 @@ function SupplierModal({ isOpen, onClose, supplier, onSave, saving }) {
             padding: '10px 20px',
             border: 'none',
             borderRadius: '8px',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
             color: 'white',
             cursor: saving ? 'not-allowed' : 'pointer',
             fontSize: '14px',
@@ -620,7 +620,7 @@ function SupplierCard({ supplier, onEdit, onDelete, onViewInvoices, onChangeMeto
         height: '4px', 
         background: hasIncomplete 
           ? 'linear-gradient(90deg, #f59e0b, #fbbf24)' 
-          : 'linear-gradient(90deg, #667eea, #764ba2)'
+          : 'linear-gradient(90deg, #1e3a5f, #2d5a87)'
       }} />
       
       <div style={{ padding: '16px' }}>
@@ -631,7 +631,7 @@ function SupplierCard({ supplier, onEdit, onDelete, onViewInvoices, onChangeMeto
               width: '44px',
               height: '44px',
               borderRadius: '10px',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -1554,7 +1554,7 @@ export default function Fornitori() {
           gap: '16px', 
           marginBottom: '24px' 
         }}>
-          <StatCard icon={Users} label="Totale Fornitori" value={stats.total} color="#667eea" bgColor="#eef2ff" />
+          <StatCard icon={Users} label="Totale Fornitori" value={stats.total} color="#1e3a5f" bgColor="#eef2ff" />
           <StatCard icon={FileText} label="Con Fatture" value={stats.withInvoices} color="#10b981" bgColor="#d1fae5" />
           <StatCard icon={AlertCircle} label="Dati Incompleti" value={stats.incomplete} color="#f59e0b" bgColor="#fef3c7" />
           <StatCard icon={CreditCard} label="Pagamento Contanti" value={stats.cash} color="#8b5cf6" bgColor="#ede9fe" />
@@ -1702,7 +1702,7 @@ export default function Fornitori() {
               width: '40px',
               height: '40px',
               border: '4px solid #e5e7eb',
-              borderTopColor: '#667eea',
+              borderTopColor: '#1e3a5f',
               borderRadius: '50%',
               animation: 'spin 1s linear infinite',
               margin: '0 auto'
@@ -1787,7 +1787,7 @@ export default function Fornitori() {
                     disabled={learningLoading || fornitoriConfigurati.length === 0}
                     style={{ 
                       display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px',
-                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
                       color: 'white', border: 'none', borderRadius: 6, 
                       cursor: learningLoading ? 'not-allowed' : 'pointer', fontWeight: 500, fontSize: 13,
                       boxShadow: '0 2px 4px rgba(102,126,234,0.3)',
@@ -1893,7 +1893,7 @@ export default function Fornitori() {
                 {/* Colonna destra - Form configurazione */}
                 <div style={{ background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', border: '1px solid #e5e7eb' }}>
                   <h3 style={{ margin: '0 0 16px 0', fontSize: 16, fontWeight: 600, color: '#1e3a5f', display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <Tag size={18} color="#667eea" /> Configura Keywords
+                    <Tag size={18} color="#1e3a5f" /> Configura Keywords
                   </h3>
 
                   {selectedFornitore ? (
@@ -1992,7 +1992,7 @@ export default function Fornitori() {
                           disabled={learningSaving} 
                           style={{ 
                             flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                            padding: '10px 16px', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                            padding: '10px 16px', background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
                             color: 'white', border: 'none', borderRadius: 6, 
                             cursor: learningSaving ? 'not-allowed' : 'pointer', fontWeight: 500, fontSize: 13,
                             boxShadow: '0 2px 4px rgba(102,126,234,0.3)'
@@ -2697,7 +2697,7 @@ export default function Fornitori() {
               {/* Header */}
               <div style={{
                 padding: '20px 24px', borderBottom: '1px solid #e5e7eb',
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
                 color: 'white'
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
