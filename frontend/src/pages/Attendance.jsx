@@ -32,8 +32,11 @@ import {
   formatDate 
 } from '../components/attendance/helpers';
 
-// Componente Gestione Turni
-function TurniSection({ employees, currentMonth, currentYear }) {
+// Importa componenti estratti
+import { TurniSection } from '../components/attendance/TurniSection';
+import { TabSaldoFerie } from '../components/attendance/TabSaldoFerie';
+
+export default function Attendance() {
   const [mansioni, setMansioni] = useState(MANSIONI_DEFAULT);
   const [turniAssegnati, setTurniAssegnati] = useState({});
   const [selectedMansione, setSelectedMansione] = useState(null);
