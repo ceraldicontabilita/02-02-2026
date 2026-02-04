@@ -20,7 +20,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from typing import Iterator, Optional
 
-from utils.parsing import ExternalServiceError
+from app.exceptions import ExternalServiceError
 
 logger = logging.getLogger(__name__)
 
