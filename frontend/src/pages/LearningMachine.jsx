@@ -467,7 +467,7 @@ export default function LearningMachine() {
                     onClick={() => { setActiveTab('fornitori'); riclassificaFatture(); }}
                     style={{
                       padding: 16,
-                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
                       color: 'white',
                       border: 'none',
                       borderRadius: 10,
@@ -560,7 +560,7 @@ export default function LearningMachine() {
                   disabled={fornitoriLoading || fornitoriConfigurati.length === 0}
                   style={{ 
                     ...button('primary'),
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
                     opacity: fornitoriConfigurati.length === 0 ? 0.5 : 1
                   }}
                 >
@@ -645,7 +645,7 @@ export default function LearningMachine() {
               {/* Form configurazione */}
               <div style={{ background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
                 <h3 style={{ margin: '0 0 16px 0', fontSize: 16, fontWeight: 600, color: '#1e3a5f', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Tag size={18} color="#667eea" /> Configura Keywords
+                  <Tag size={18} color="#1e3a5f" /> Configura Keywords
                 </h3>
 
                 {selectedFornitore ? (

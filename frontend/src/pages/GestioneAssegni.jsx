@@ -874,7 +874,7 @@ export default function GestioneAssegni() {
           data-testid="associa-combinazioni-btn"
           style={{
             padding: '10px 16px',
-            background: combinazioneLoading ? '#ccc' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            background: combinazioneLoading ? '#ccc' : 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
             color: 'white',
             border: 'none',
             borderRadius: 8,

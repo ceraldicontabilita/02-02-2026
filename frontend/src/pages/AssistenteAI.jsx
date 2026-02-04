@@ -102,7 +102,7 @@ Seleziona un contesto sopra o fai una domanda!`
       }}>
         {/* Context selector */}
         <div style={{ 
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
           borderRadius: '16px 16px 0 0',
           padding: '16px',
           color: 'white'
@@ -158,7 +158,7 @@ Seleziona un contesto sopra o fai una domanda!`
               width: 36,
               height: 36,
               borderRadius: '50%',
-              background: msg.role === 'user' ? '#3b82f6' : 'linear-gradient(135deg, #667eea, #764ba2)',
+              background: msg.role === 'user' ? '#3b82f6' : 'linear-gradient(135deg, #1e3a5f, #2d5a87)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -188,7 +188,7 @@ Seleziona un contesto sopra o fai una domanda!`
               width: 36,
               height: 36,
               borderRadius: '50%',
-              background: 'linear-gradient(135deg, #667eea, #764ba2)',
+              background: 'linear-gradient(135deg, #1e3a5f, #2d5a87)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
@@ -277,7 +277,7 @@ Seleziona un contesto sopra o fai una domanda!`
           data-testid="send-btn"
           style={{
             padding: '12px 20px',
-            background: loading || !input.trim() ? '#e2e8f0' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            background: loading || !input.trim() ? '#e2e8f0' : 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
             color: loading || !input.trim() ? '#94a3b8' : 'white',
             border: 'none',
             borderRadius: 12,

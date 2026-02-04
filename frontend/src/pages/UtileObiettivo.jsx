@@ -138,7 +138,7 @@ export default function UtileObiettivo() {
                   data-testid="save-target-btn"
                   style={{
                     padding: '12px 24px',
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
                     color: 'white',
                     border: 'none',
                     borderRadius: 8,

@@ -521,7 +521,7 @@ export default function RiconciliazioneUnificata() {
             data-testid="btn-auto-repair"
             style={{
               padding: '10px 16px',
-              background: autoRepairRunning ? '#9ca3af' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              background: autoRepairRunning ? '#9ca3af' : 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
               color: 'white',
               border: 'none',
               borderRadius: 8,
