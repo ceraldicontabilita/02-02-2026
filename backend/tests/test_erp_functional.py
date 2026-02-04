@@ -18,7 +18,7 @@ import os
 from typing import Dict, Any
 
 # Base URL from environment
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://erpdatafix.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://design-overhaul-44.preview.emergentagent.com').rstrip('/')
 
 
 class TestDashboardBilancio:
