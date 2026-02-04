@@ -342,7 +342,8 @@ const router = createBrowserRouter([
       { path: "centri-costo/:centro", element: <LazyPage><CentriCosto /></LazyPage> },
       { path: "utile-obiettivo", element: <LazyPage><UtileObiettivo /></LazyPage> },
       { path: "utile-obiettivo/:anno", element: <LazyPage><UtileObiettivo /></LazyPage> },
-      { path: "learning-machine", element: <Navigate to="/centri-costo" replace /> },
+      { path: "learning-machine", element: <LazyPage><LearningMachine /></LazyPage> },
+      { path: "learning-machine/:tab", element: <LazyPage><LearningMachine /></LazyPage> },
       
       // === CONTABILITÀ & BILANCIO ===
       { path: "bilancio", element: <LazyPage><Bilancio /></LazyPage> },
