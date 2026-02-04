@@ -825,7 +825,7 @@ export default function GestioneAssegni() {
   return (
     <PageLayout title="Gestione Assegni" subtitle="Genera, collega e controlla i tuoi assegni in un'unica schermata">
     <div style={{ maxWidth: 1400, margin: '0 auto' }}>
-      <h1 style={{ marginBottom: 5, color: '#1a365d', fontSize: 'clamp(1.5rem, 4vw, 2rem)' }}>Gestione Assegni</h1>
+      <h1 style={{ marginBottom: 5, color: '#1e3a5f', fontSize: 'clamp(1.5rem, 4vw, 2rem)' }}>Gestione Assegni</h1>
       <p style={{ color: '#666', marginBottom: 20, fontSize: 14 }}>
         Genera, collega e controlla i tuoi assegni in un'unica schermata
       </p>
@@ -941,9 +941,9 @@ export default function GestioneAssegni() {
           data-testid="toggle-filters-btn"
           style={{
             padding: '10px 16px',
-            background: showFilters ? '#1a365d' : 'transparent',
-            color: showFilters ? 'white' : '#1a365d',
-            border: '1px solid #1a365d',
+            background: showFilters ? '#1e3a5f' : 'transparent',
+            color: showFilters ? 'white' : '#1e3a5f',
+            border: '1px solid #1e3a5f',
             borderRadius: 8,
             cursor: 'pointer',
             fontWeight: 'bold',
@@ -962,11 +962,11 @@ export default function GestioneAssegni() {
             data-testid="select-anno"
             style={{
               padding: '10px 16px',
-              border: '2px solid #1a365d',
+              border: '2px solid #1e3a5f',
               borderRadius: 8,
               fontSize: 14,
               fontWeight: 'bold',
-              color: '#1a365d',
+              color: '#1e3a5f',
               background: 'white',
               cursor: 'pointer'
             }}
@@ -999,7 +999,7 @@ export default function GestioneAssegni() {
           gap: 6, 
           marginLeft: 'auto', 
           padding: '4px 8px', 
-          background: 'linear-gradient(135deg, #1a365d 0%, #2563eb 100%)',
+          background: 'linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%)',
           borderRadius: 8
         }}>
           <button
@@ -1341,7 +1341,7 @@ export default function GestioneAssegni() {
           
           {/* Riepilogo filtri attivi */}
           {(filterFornitore || filterImportoMin || filterImportoMax || filterNumeroAssegno || filterNumeroFattura) && (
-            <div style={{ marginTop: 12, fontSize: 13, color: '#1a365d' }}>
+            <div style={{ marginTop: 12, fontSize: 13, color: '#1e3a5f' }}>
               <strong>Risultati:</strong> {filteredAssegni.length} assegni trovati su {assegni.length} totali
             </div>
           )}
@@ -1630,7 +1630,7 @@ export default function GestioneAssegni() {
                         ({carnetAssegni.length} assegni)
                       </span>
                     </div>
-                    <div style={{ fontWeight: 'bold', color: '#1a365d', fontSize: 14 }}>
+                    <div style={{ fontWeight: 'bold', color: '#1e3a5f', fontSize: 14 }}>
                       {formatEuro(carnetAssegni.reduce((s, a) => s + (parseFloat(a.importo) || 0), 0))}
                     </div>
                   </div>
@@ -1657,7 +1657,7 @@ export default function GestioneAssegni() {
                             onChange={() => toggleSelectAssegno(assegno.id)}
                             style={{ width: 18, height: 18, cursor: 'pointer' }}
                           />
-                          <span style={{ fontFamily: 'monospace', fontWeight: 'bold', color: '#1a365d', fontSize: 13 }}>
+                          <span style={{ fontFamily: 'monospace', fontWeight: 'bold', color: '#1e3a5f', fontSize: 13 }}>
                             {assegno.numero?.split('-')[1] || assegno.numero}
                           </span>
                           <span style={{
@@ -1671,7 +1671,7 @@ export default function GestioneAssegni() {
                             {STATI_ASSEGNO[assegno.stato]?.label || assegno.stato}
                           </span>
                         </div>
-                        <span style={{ fontWeight: 'bold', fontSize: 15, color: '#1a365d' }}>
+                        <span style={{ fontWeight: 'bold', fontSize: 15, color: '#1e3a5f' }}>
                           {formatEuro(assegno.importo)}
                         </span>
                       </div>
@@ -1796,7 +1796,7 @@ export default function GestioneAssegni() {
 
                         {/* Numero Assegno */}
                         <td style={{ padding: '8px 12px' }}>
-                          <span style={{ fontFamily: 'monospace', fontWeight: 'bold', color: '#1a365d', fontSize: 13 }}>
+                          <span style={{ fontFamily: 'monospace', fontWeight: 'bold', color: '#1e3a5f', fontSize: 13 }}>
                             {assegno.numero}
                           </span>
                         </td>

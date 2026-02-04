@@ -650,7 +650,7 @@ export default function Commercialista() {
   return (
     <PageLayout title="Area Commercialista" subtitle="Genera e invia documenti PDF al commercialista">
     <div style={{ maxWidth: 1400, margin: '0 auto' }}>
-      <h1 style={{ marginBottom: 5, color: '#1a365d' }}>👩‍💼 Area Commercialista</h1>
+      <h1 style={{ marginBottom: 5, color: '#1e3a5f' }}>👩‍💼 Area Commercialista</h1>
       <p style={{ color: '#666', marginBottom: 25 }}>
         Genera e invia documenti PDF al commercialista via email
       </p>
@@ -717,7 +717,7 @@ export default function Commercialista() {
         marginBottom: 25,
         boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
       }}>
-        <h3 style={{ margin: '0 0 15px 0', color: '#1a365d' }}>📧 Configurazione Email</h3>
+        <h3 style={{ margin: '0 0 15px 0', color: '#1e3a5f' }}>📧 Configurazione Email</h3>
         <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', alignItems: 'center' }}>
           <div>
             <label style={{ display: 'block', fontSize: 12, color: '#666', marginBottom: 4 }}>
@@ -773,7 +773,7 @@ export default function Commercialista() {
         marginBottom: 25,
         boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
       }}>
-        <h3 style={{ margin: '0 0 15px 0', color: '#1a365d' }}>📅 Seleziona Periodo</h3>
+        <h3 style={{ margin: '0 0 15px 0', color: '#1e3a5f' }}>📅 Seleziona Periodo</h3>
         <div style={{ display: 'flex', gap: 15, flexWrap: 'wrap', alignItems: 'center' }}>
           <select
             value={selectedMonth}
@@ -1204,7 +1204,7 @@ export default function Commercialista() {
           marginTop: 25,
           boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
         }}>
-          <h3 style={{ margin: '0 0 15px 0', color: '#1a365d' }}>📋 Storico Invii</h3>
+          <h3 style={{ margin: '0 0 15px 0', color: '#1e3a5f' }}>📋 Storico Invii</h3>
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>

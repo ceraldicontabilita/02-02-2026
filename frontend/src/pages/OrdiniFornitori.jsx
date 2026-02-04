@@ -277,16 +277,16 @@ export default function OrdiniFornitori() {
         <style>
           body { font-family: Arial, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
           .header { border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 30px; }
-          .company { font-size: 22px; font-weight: bold; color: #1a365d; }
+          .company { font-size: 22px; font-weight: bold; color: #1e3a5f; }
           .info { color: #666; font-size: 12px; margin-top: 5px; }
           .order-info { display: flex; justify-content: space-between; margin-bottom: 30px; }
           .order-box { background: #f5f5f5; padding: 15px; border-radius: 8px; }
           table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-          th { background: #1a365d; color: white; padding: 12px; text-align: left; }
+          th { background: #1e3a5f; color: white; padding: 12px; text-align: left; }
           td { padding: 10px; border-bottom: 1px solid #ddd; }
           .totals { text-align: right; margin-top: 20px; }
           .totals div { margin: 5px 0; }
-          .total-row { font-size: 18px; font-weight: bold; color: #1a365d; }
+          .total-row { font-size: 18px; font-weight: bold; color: #1e3a5f; }
           .footer { margin-top: 50px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 11px; color: #999; }
           @media print { body { padding: 20px; } }
         </style>
@@ -298,11 +298,11 @@ export default function OrdiniFornitori() {
           <div class="info">P.IVA: ${AZIENDA.piva} | Tel: ${AZIENDA.tel} | Email: ${AZIENDA.email}</div>
         </div>
         <div class="order-info">
-          <div class="order-box"><strong>ORDINE N°</strong><br/><span style="font-size: 24px; color: #1a365d;">#${order.order_number}</span></div>
+          <div class="order-box"><strong>ORDINE N°</strong><br/><span style="font-size: 24px; color: #1e3a5f;">#${order.order_number}</span></div>
           <div class="order-box"><strong>DATA</strong><br/>${new Date(order.created_at).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' })}</div>
           <div class="order-box"><strong>FORNITORE</strong><br/>${order.supplier_name}</div>
         </div>
-        <h3 style="color: #1a365d;">DETTAGLIO PRODOTTI</h3>
+        <h3 style="color: #1e3a5f;">DETTAGLIO PRODOTTI</h3>
         <table>
           <thead><tr><th>Prodotto</th><th>Quantità</th><th style="text-align: right;">Prezzo Unit.</th><th style="text-align: right;">Totale</th></tr></thead>
           <tbody>

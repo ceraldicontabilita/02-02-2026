@@ -118,7 +118,7 @@ export default function PianoDeiConti() {
     <div style={{ maxWidth: 1400, margin: '0 auto' }}>
       {/* Header */}
       <div style={{ marginBottom: 20 }}>
-        <h1 style={{ margin: 0, fontSize: 'clamp(20px, 5vw, 28px)', color: '#1a365d' }}>
+        <h1 style={{ margin: 0, fontSize: 'clamp(20px, 5vw, 28px)', color: '#1e3a5f' }}>
           📒 Piano dei Conti
         </h1>
         <p style={{ color: '#666', margin: '5px 0 0 0' }}>
@@ -177,7 +177,7 @@ export default function PianoDeiConti() {
             onClick={() => setActiveTab(tab)}
             style={{
               padding: '12px 24px',
-              background: activeTab === tab ? '#1a365d' : '#e5e7eb',
+              background: activeTab === tab ? '#1e3a5f' : '#e5e7eb',
               color: activeTab === tab ? 'white' : '#374151',
               border: 'none',
               borderRadius: 8,

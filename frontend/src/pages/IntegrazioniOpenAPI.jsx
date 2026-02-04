@@ -115,7 +115,7 @@ export default function IntegrazioniOpenAPI() {
 
   const tabStyle = (isActive) => ({
     padding: '12px 24px',
-    background: isActive ? '#1a365d' : 'transparent',
+    background: isActive ? '#1e3a5f' : 'transparent',
     color: isActive ? '#fff' : '#64748b',
     border: 'none',
     borderRadius: '8px 8px 0 0',
