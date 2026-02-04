@@ -751,15 +751,18 @@ async def scadenze_imminenti(giorni: int = Query(30)) -> Dict[str, Any]:
     future = []  # 15+ giorni
     
     for s in scadenze:
-        data_scad = datetime.strptime(s["data"], "%Y-%m-%d")
-        diff = (data_scad - oggi).days
-        
-        if diff <= 7:
-            urgenti.append(s)
-        elif diff <= 14:
-            prossime.append(s)
-        else:
-            future.append(s)
+        try:
+            data_scad = datetime.strptime(s["data"], "%Y-%m-%d")
+            diff = (data_scad - oggi).days
+            
+            if diff <= 7:
+                urgenti.append(s)
+            elif diff <= 14:
+                prossime.append(s)
+            else:
+                future.append(s)
+        except (ValueError, KeyError):
+            future.append(s)  # In caso di errore, metti nelle future
     
     return {
         "success": True,
