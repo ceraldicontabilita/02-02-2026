@@ -499,12 +499,14 @@ async def associate_xml_to_provvisoria(db, xml_invoice: Dict[str, Any]) -> Optio
     if not provvisoria:
         # Prova anche con match più ampio
         if fornitore:
-            fornitore_word = fornitore.split()[0]
-            provvisoria = await db[COLL_FATTURE_PROVVISORIE].find_one({
-                "numero_fattura": numero_fattura,
-                "fornitore": {"$regex": fornitore_word, "$options": "i"},
-                "xml_associato": False
-            }, {"_id": 0})
+            fornitore_words = fornitore.split()
+            fornitore_word = fornitore_words[0] if fornitore_words else ""
+            if fornitore_word:
+                provvisoria = await db[COLL_FATTURE_PROVVISORIE].find_one({
+                    "numero_fattura": numero_fattura,
+                    "fornitore": {"$regex": fornitore_word, "$options": "i"},
+                    "xml_associato": False
+                }, {"_id": 0})
     
     if not provvisoria:
         # Ultimo tentativo: numero fattura + importo simile
