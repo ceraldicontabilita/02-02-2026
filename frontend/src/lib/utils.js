@@ -234,3 +234,63 @@ export function formatDateTimeIT(dateStr) {
     return dateStr;
   }
 }
+
+/**
+ * Formatta data in formato breve (gg/mm)
+ */
+export function formatDateShort(dateStr) {
+  if (!dateStr) return "-";
+  try {
+    const datePart = dateStr.includes("T") ? dateStr.split("T")[0] : dateStr;
+    const parts = datePart.split("-");
+    if (parts.length === 3) {
+      return `${parts[2]}/${parts[1]}`;
+    }
+    return dateStr;
+  } catch {
+    return dateStr;
+  }
+}
+
+/**
+ * Formatta euro senza simbolo (solo numero)
+ */
+export function formatEuroShort(amount) {
+  if (amount === null || amount === undefined) return "0,00";
+  return new Intl.NumberFormat('it-IT', { 
+    minimumFractionDigits: 2, 
+    maximumFractionDigits: 2,
+    useGrouping: true
+  }).format(parseFloat(amount));
+}
+
+/**
+ * Formatta euro come stringa semplice
+ */
+export function formatEuroStr(amount) {
+  if (amount === null || amount === undefined) return "€ 0,00";
+  return formatEuro(amount);
+}
+
+/* ================================
+   COSTANTI MESI
+   ================================ */
+
+export const MESI_SHORT = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
+
+export const MESI_FULL = ['', 'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
+
+export const MESI = [
+  { key: '01', value: 1, label: 'Gennaio', short: 'Gen' },
+  { key: '02', value: 2, label: 'Febbraio', short: 'Feb' },
+  { key: '03', value: 3, label: 'Marzo', short: 'Mar' },
+  { key: '04', value: 4, label: 'Aprile', short: 'Apr' },
+  { key: '05', value: 5, label: 'Maggio', short: 'Mag' },
+  { key: '06', value: 6, label: 'Giugno', short: 'Giu' },
+  { key: '07', value: 7, label: 'Luglio', short: 'Lug' },
+  { key: '08', value: 8, label: 'Agosto', short: 'Ago' },
+  { key: '09', value: 9, label: 'Settembre', short: 'Set' },
+  { key: '10', value: 10, label: 'Ottobre', short: 'Ott' },
+  { key: '11', value: 11, label: 'Novembre', short: 'Nov' },
+  { key: '12', value: 12, label: 'Dicembre', short: 'Dic' }
+];
