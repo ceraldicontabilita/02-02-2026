@@ -134,7 +134,6 @@ const CodiciTributari = lazy(() => import("./pages/CodiciTributari.jsx"));
 
 // === INTEGRAZIONI ===
 const IntegrazioniOpenAPI = lazy(() => import("./pages/IntegrazioniOpenAPI.jsx"));
-const OdooIntegration = lazy(() => import("./pages/OdooIntegration.jsx"));
 
 // === TO-DO ===
 const ToDo = lazy(() => import("./pages/ToDo.jsx"));
