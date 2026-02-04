@@ -689,12 +689,15 @@ async def get_dashboard_presenze(data: str = Query(None)) -> Dict[str, Any]:
             })
         else:
             # Verifica se è weekend
-            dt = datetime.strptime(data, "%Y-%m-%d")
-            if dt.weekday() < 5:  # Lun-Ven
-                non_timbrato.append({
-                    "employee_id": emp_id,
-                    "nome": nome_completo
-                })
+            try:
+                dt = datetime.strptime(data, "%Y-%m-%d")
+                if dt.weekday() < 5:  # Lun-Ven
+                    non_timbrato.append({
+                        "employee_id": emp_id,
+                        "nome": nome_completo
+                    })
+            except ValueError:
+                pass  # Data non valida, ignora
     
     return {
         "success": True,
