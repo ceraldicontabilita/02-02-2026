@@ -11,7 +11,7 @@ import { UploadStatusBar } from "./components/UploadStatusBar";
 import ChatIntelligente from "./components/ChatIntelligente";
 
 const NAV_ITEMS = [
-  { to: "/rapido", label: "📱 Inserimento Rapido", icon: "📱", short: "Rapido", isNew: true, highlight: true },
+  { to: "/rapido", label: "Inserimento Rapido", icon: "📱", short: "Rapido", isNew: true, highlight: true },
   { to: "/", label: "Dashboard", icon: "📊", short: "Home" },
   { to: "/analytics", label: "Analytics", icon: "📈", short: "Analytics", isNew: true },
   
@@ -39,9 +39,9 @@ const NAV_ITEMS = [
     short: "Banca",
     isSubmenu: true,
     children: [
-      { to: "/prima-nota", label: "📒 Prima Nota Unificata", icon: "📒", isNew: true },
-      { to: "/riconciliazione", label: "🔄 Riconciliazione", icon: "🔄", isNew: true },
-      { to: "/riconciliazione-paypal", label: "💳 PayPal", icon: "💳", isNew: true },
+      { to: "/prima-nota", label: "Prima Nota Unificata", icon: "📒", isNew: true },
+      { to: "/riconciliazione", label: "Riconciliazione", icon: "🔄", isNew: true },
+      { to: "/riconciliazione-paypal", label: "PayPal", icon: "💳", isNew: true },
       { to: "/gestione-assegni", label: "Gestione Assegni", icon: "📝" },
       { to: "/archivio-bonifici", label: "Archivio Bonifici", icon: "📂" },
     ]
@@ -54,14 +54,14 @@ const NAV_ITEMS = [
     short: "Dipend.",
     isSubmenu: true,
     children: [
-      { to: "/dipendenti", label: "👥 Gestione Dipendenti", icon: "👤", isNew: true },
-      { to: "/attendance", label: "⏰ Presenze", icon: "⏰", isNew: true },
-      { to: "/saldi-ferie-permessi", label: "🏖️ Saldi Ferie/ROL", icon: "🏖️", isNew: true },
+      { to: "/dipendenti", label: "Gestione Dipendenti", icon: "👥", isNew: true },
+      { to: "/attendance", label: "Presenze", icon: "⏰", isNew: true },
+      { to: "/saldi-ferie-permessi", label: "Saldi Ferie/ROL", icon: "🏖️", isNew: true },
       { to: "/cedolini", label: "Cedolini / Buste Paga", icon: "📋" },
-      { to: "/prima-nota-salari", label: "💰 Prima Nota Salari", icon: "💰", isNew: true },
+      { to: "/prima-nota-salari", label: "Prima Nota Salari", icon: "💰", isNew: true },
       { to: "/tfr", label: "TFR e Accantonamenti", icon: "🏢" },
       { to: "/noleggio-auto", label: "Noleggio Auto", icon: "🚗" },
-      { to: "/verbali-riconciliazione", label: "🚗 Riconciliazione Verbali", icon: "🔄", isNew: true },
+      { to: "/verbali-riconciliazione", label: "Riconciliazione Verbali", icon: "🚗", isNew: true },
     ]
   },
   
