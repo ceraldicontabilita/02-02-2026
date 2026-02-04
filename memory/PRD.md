@@ -15,45 +15,51 @@
 
 ---
 
-## Sessione 4 Febbraio 2026 - Correzioni Multiple
+## Correzioni Sessione 4 Febbraio 2026
 
 ### COMPLETATO ✅
 
 1. **Menu Riorganizzato**
-   - Attendance spostato in Dipendenti
-   - Saldi Ferie/ROL spostato in Dipendenti
-   - Odoo rimosso dal menu e dal codice
-   - AISP rimosso da OpenAPI Integrazioni
+   - ✅ Attendance spostato in sezione Dipendenti (barra blu)
+   - ✅ Saldi Ferie/ROL spostato in sezione Dipendenti  
+   - ✅ Odoo rimosso dal menu e codice eliminato
+   - ✅ AISP rimosso da OpenAPI Integrazioni
 
 2. **Integrazione API Automotive** - Completata
-   - Bottone "Aggiorna Dati Veicoli" nella toolbar Noleggio
-   - Bottone "Aggiorna da Targa" nel dettaglio veicolo
-   - Sezione OpenAPI nella modale di modifica
+   - ✅ Bottone "Aggiorna Dati Veicoli" nella toolbar Noleggio
+   - ✅ Bottone "Aggiorna da Targa" nel dettaglio veicolo
+   - ✅ Sezione OpenAPI nella modale di modifica
 
-3. **Fix Fatture Non Associate Noleggio**
-   - Endpoint corretto per formattare i dati correttamente
+3. **Fix Endpoint e API**
+   - ✅ Fatture Non Associate Noleggio - Formattazione dati corretta
+   - ✅ DocumentiDaRivedere - Path API corretti (/api/ai-parser/da-rivedere)
+   - ✅ PagoPA - Sostituito fetch con api per evitare problemi CORS
+   - ✅ Saldi Ferie - Endpoint ora calcola dai dipendenti se non ci sono saldi salvati
 
-### IN CORSO 🔄
+4. **UI/UX**
+   - ✅ IntegrazioniOpenAPI - Rimosso tab AISP, griglia a 2 colonne
 
-4. **Pagine con Dati Errati**
-   - Bilancio: dati non filtrati per anno
-   - Motore Contabile: UI non conforme
-   - Piano dei Conti: dati mancanti
-   - Cespiti: navigazione assente
-   - Finanziaria: dati non reali
-   - Chiusura Esercizio: dati non reali
-   - Verifica Coerenza: dati errati
-   - Commercialista: tutti i tab errati
+---
 
-5. **UI Non Conforme**
-   - Classificazione Email: UI non coerente
-   - Correzione AI: UI errata
-   - Regole Contabili: non aggiornata
+## ANCORA DA FARE 🔄
 
-6. **Funzionalità Mancanti**
-   - Import Documenti: upload PDF massivo + memorizzazione
-   - Da Rivedere: 404 su processa email
-   - PagoPA: pagina non funzionante
+### Pagine con Dati Non Reali (Richiedono dati nel DB)
+- **Bilancio** - Filtro anno funziona, ma i dati potrebbero non essere completi
+- **Motore Contabile** - UI da uniformare
+- **Piano dei Conti** - Dati da popolare
+- **Cespiti** - Navigazione e dati da completare
+- **Finanziaria** - Verificare fonte dati
+- **Chiusura Esercizio** - Endpoint funzionante, dati corretti
+- **Verifica Coerenza** - Da verificare
+- **Commercialista** - Da verificare
+
+### UI Non Conforme
+- **Classificazione Email** - Da uniformare
+- **Correzione AI** - Da verificare
+- **Regole Contabili** - Da aggiornare
+
+### Funzionalità
+- **Import Documenti** - Upload PDF massivo + memorizzazione
 
 ---
 
@@ -63,6 +69,10 @@
 /app/
 ├── app/
 │   ├── routers/           # Endpoint API
+│   │   ├── invoices/      # Gestione fatture
+│   │   ├── employees/     # Gestione dipendenti
+│   │   ├── bank/          # Banca e assegni
+│   │   └── accounting/    # Contabilità
 │   ├── services/          # Business logic
 │   ├── parsers/           # Parser documenti
 │   └── database.py        # Connessione MongoDB
@@ -70,13 +80,16 @@
     └── src/
         ├── pages/         # Pagine React
         ├── components/    # Componenti riutilizzabili
+        │   ├── ui/        # Shadcn/UI components
+        │   └── attendance/# Componenti attendance (refactored)
         └── lib/utils.js   # Utility condivise
 ```
 
 ---
 
-## Note Critiche
+## Note per Sviluppo Futuro
 
-1. **Dati Reali**: Tutte le pagine devono mostrare SOLO dati dal database. Non usare dati mock.
-2. **Filtri Anno**: Assicurarsi che ogni pagina rispetti il filtro anno selezionato.
-3. **Consistenza UI**: Usare PageLayout e stili condivisi per uniformità.
+1. **Dati Reali**: Tutte le pagine devono mostrare SOLO dati dal database
+2. **Filtri Anno**: Assicurarsi che ogni pagina rispetti il filtro anno selezionato
+3. **Consistenza UI**: Usare PageLayout e stili condivisi da lib/utils.js
+4. **API**: Usare sempre `api` (axios) invece di `fetch` per gestione automatica token e base URL
