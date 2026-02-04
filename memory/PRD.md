@@ -71,6 +71,22 @@
 - ✅ `REGOLE_CONTABILI.md`: Aggiunte regole import fatture XML
 - ✅ `ISTRUZIONI_FATTURE_AUTOMATICHE.md`: Documentazione completa
 
+### Revisione Grafica Completa (4 Feb 2026)
+- ✅ **Allineamento Design System**: Unificati i colori primari a `#1e3a5f` / `#2d5a87`
+- ✅ **pageLayoutStyle.js**: Aggiornati colori da `#1a365d` a `#1e3a5f`
+- ✅ **Fornitori.jsx**: Rimosso gradiente viola (`#667eea/#764ba2`) → blu primario
+- ✅ **Dashboard.jsx**: Rimosso gradiente viola → blu primario
+- ✅ **LearningMachine.jsx**: Rimosso gradiente viola → blu primario
+- ✅ **GestioneAssegni.jsx**: Allineato ai colori primari
+- ✅ **AssistenteAI.jsx**: Allineato ai colori primari
+- ✅ **CentriCosto.jsx**: Allineato ai colori primari
+- ✅ **UtileObiettivo.jsx**: Allineato ai colori primari
+- ✅ **RiconciliazioneUnificata.jsx**: Allineato ai colori primari
+- ✅ **Commercialista.jsx**: Allineato ai colori primari
+- ✅ **PianoDeiConti.jsx**: Allineato ai colori primari
+- ✅ **OrdiniFornitori.jsx**: Allineato ai colori primari
+- ✅ **IntegrazioniOpenAPI.jsx**: Allineato ai colori primari
+
 ---
 
 ## SCHEDULER ATTIVO
