@@ -274,6 +274,24 @@ export default function NoleggioAuto() {
         >
           ➕ Aggiungi Veicolo
         </button>
+        <button 
+          onClick={handleBulkUpdateFromOpenAPI}
+          disabled={bulkUpdateLoading || veicoli.length === 0}
+          style={{ 
+            padding: '10px 20px',
+            background: bulkUpdateLoading ? '#9ca3af' : '#059669',
+            color: 'white',
+            border: 'none',
+            borderRadius: 8,
+            cursor: bulkUpdateLoading ? 'wait' : 'pointer',
+            fontWeight: '600',
+            opacity: veicoli.length === 0 ? 0.5 : 1
+          }}
+          data-testid="noleggio-bulk-update-btn"
+          title="Aggiorna marca, modello e altri dati da OpenAPI Automotive"
+        >
+          {bulkUpdateLoading ? '⏳ Aggiornamento...' : '🚗 Aggiorna Dati Veicoli'}
+        </button>
         {fattureNonAssociate > 0 && (
           <span style={{ 
             padding: '8px 16px', 
