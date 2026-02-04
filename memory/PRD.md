@@ -151,7 +151,7 @@
 ### P2 - Media Priorità
 - [ ] Correggere 2 cedolini con netto=0
 - [ ] Report riconciliazione PayPal
-- [ ] Indici MongoDB per performance
+- [x] ~~Indici MongoDB per performance~~ ✅ COMPLETATO (4 Feb 2026)
 
 ### P3 - Bassa Priorità
 - [ ] Pulizia codice Learning da Fornitori.jsx (~600 righe)
