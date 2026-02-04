@@ -1,6 +1,6 @@
 # Azienda in Cloud ERP - PRD
 
-## Stato: 4 Febbraio 2026 (Aggiornato)
+## Stato: 4 Febbraio 2026 (Aggiornato - Revisione Grafica)
 
 ---
 
