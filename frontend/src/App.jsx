@@ -119,7 +119,7 @@ const NAV_ITEMS = [
     short: "Cucina",
     isSubmenu: true,
     children: [
-      { to: "/learning-machine", label: "🧠 Learning Machine", icon: "🧠", isNew: true },
+      { to: "/learning-machine", label: "Learning Machine", icon: "🧠", isNew: true },
       { to: "/ricette", label: "Ricette & Food Cost", icon: "🍰" },
       { to: "/dizionario-prodotti", label: "Dizionario Prodotti", icon: "📚" },
       { to: "/centri-costo", label: "Centri di Costo", icon: "🏢" },
