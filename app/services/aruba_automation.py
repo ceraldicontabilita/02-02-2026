@@ -269,7 +269,7 @@ async def process_aruba_emails(
     email_user: str,
     email_password: str,
     since_days: int = 7,
-    auto_insert_prima_nota: bool = True
+    auto_insert_prima_nota: bool = False
 ) -> Dict[str, Any]:
     """
     Processo completo di automazione fatture Aruba.
