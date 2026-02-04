@@ -1315,7 +1315,7 @@ export default function Fornitori() {
     setFattureLoading(true);
     try {
       const res = await api.get('/api/invoices?limit=500');
-      const fatture = res.data.filter(f => 
+      const fatture = (res.data || []).filter(f => 
         f.centro_costo_nome === 'Altri costi non classificati' || 
         !f.centro_costo_id
       );
@@ -1499,7 +1499,7 @@ export default function Fornitori() {
                     alert('Tutti i fornitori sono già aggiornati!');
                     return;
                   }
-                  const partiteIva = res.data.fornitori.map(f => f.partita_iva).filter(Boolean);
+                  const partiteIva = (res.data?.fornitori || []).map(f => f.partita_iva).filter(Boolean);
                   if (partiteIva.length === 0) {
                     alert('Nessun fornitore con P.IVA valida da aggiornare');
                     return;

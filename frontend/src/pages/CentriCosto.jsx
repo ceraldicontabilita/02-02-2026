@@ -26,14 +26,15 @@ export default function CentriCosto() {
     setLoading(true);
     try {
       const res = await api.get('/api/centri-costo/centri-costo');
-      setCentri(res.data);
+      const data = res.data || [];
+      setCentri(data);
       
-      const operativi = res.data.filter(c => c.tipo === 'operativo');
-      const supporto = res.data.filter(c => c.tipo === 'supporto');
-      const struttura = res.data.filter(c => c.tipo === 'struttura');
+      const operativi = data.filter(c => c.tipo === 'operativo');
+      const supporto = data.filter(c => c.tipo === 'supporto');
+      const struttura = data.filter(c => c.tipo === 'struttura');
       
       setStats({
-        totale: res.data.reduce((sum, c) => sum + (c.fatture_totale || 0), 0),
+        totale: data.reduce((sum, c) => sum + (c.fatture_totale || 0), 0),
         operativi: operativi.reduce((sum, c) => sum + (c.fatture_totale || 0), 0),
         supporto: supporto.reduce((sum, c) => sum + (c.fatture_totale || 0), 0),
         struttura: struttura.reduce((sum, c) => sum + (c.fatture_totale || 0), 0)

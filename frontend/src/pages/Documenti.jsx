@@ -106,7 +106,12 @@ export default function Documenti() {
     // Carica parole chiave personalizzate dal localStorage
     const saved = localStorage.getItem('documentKeywords');
     if (saved) {
-      setCustomKeywords(JSON.parse(saved));
+      try {
+        setCustomKeywords(JSON.parse(saved));
+      } catch (e) {
+        console.error('Invalid JSON in localStorage:', e);
+        localStorage.removeItem('documentKeywords');
+      }
     }
     
     // Polling per stato lock ogni 5 secondi se sta scaricando
