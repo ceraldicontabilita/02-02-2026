@@ -47,7 +47,7 @@ export default function DocumentiDaRivedere() {
   const handleProcessBatch = async () => {
     setProcessing(true);
     try {
-      await api.post('/api/da-rivedere/process-batch');
+      await api.post('/api/ai-parser/da-rivedere/process-batch');
       fetchDocuments();
     } catch (err) {
       alert('Errore: ' + (err.response?.data?.detail || err.message));
@@ -59,7 +59,7 @@ export default function DocumentiDaRivedere() {
   const handleClassify = async (docId, cdcCode) => {
     setClassifyingId(docId);
     try {
-      await api.post(`/api/da-rivedere/${docId}/classify`, { centro_costo: cdcCode });
+      await api.put(`/api/ai-parser/da-rivedere/${docId}/classifica`, { centro_costo: cdcCode });
       fetchDocuments();
     } catch (err) {
       alert('Errore classificazione: ' + (err.response?.data?.detail || err.message));
