@@ -59,7 +59,8 @@ def decode_header_value(value: str) -> str:
             else:
                 result += str(part)
         return result
-    except:
+    except Exception as e:
+        logger.warning(f"Errore decode header: {e}")
         return str(value)
 
 
@@ -88,8 +89,8 @@ def parse_bonifico_email(body: str) -> Dict[str, Any]:
         importo_str = imp_match.group(1).replace('.', '').replace(',', '.')
         try:
             result["importo"] = float(importo_str)
-        except:
-            pass
+        except ValueError:
+            logger.warning(f"Impossibile convertire importo: {importo_str}")
     
     # Beneficiario: "a favore di: Nome Cognome"
     ben_match = re.search(r'a favore di[:\s]+([^\n\(]+)', body, re.IGNORECASE)
