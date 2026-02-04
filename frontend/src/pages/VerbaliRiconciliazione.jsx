@@ -164,33 +164,22 @@ export default function VerbaliRiconciliazione() {
   return (
     <PageLayout title="Riconciliazione Verbali Noleggio" subtitle="Gestione completa: Verbale → Fattura → Veicolo → Driver">
     <div style={{ maxWidth: 1600, margin: '0 auto' }}>
-      {/* Header */}
+      {/* Header con azioni */}
       <div style={{ 
         display: 'flex', 
-        justifyContent: 'space-between', 
+        justifyContent: 'flex-end', 
         alignItems: 'center', 
         marginBottom: 20,
-        padding: '20px 24px',
-        background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
-        borderRadius: 12,
-        color: 'white',
-        flexWrap: 'wrap',
-        gap: 12
+        gap: 12,
+        flexWrap: 'wrap'
       }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 'bold' }}>🚗 Riconciliazione Verbali Noleggio</h1>
-          <p style={{ margin: '6px 0 0 0', fontSize: 14, opacity: 0.9 }}>
-            Gestione completa: Verbale → Fattura → Veicolo → Driver
-          </p>
-        </div>
-        <div style={{ display: 'flex', gap: 12 }}>
         <button
           onClick={handleScanFatture}
           disabled={scanning}
           style={{
             padding: '12px 24px',
-            background: 'white',
-            color: '#dc2626',
+            background: '#dc2626',
+            color: 'white',
             border: 'none',
             borderRadius: 8,
             cursor: scanning ? 'wait' : 'pointer',
