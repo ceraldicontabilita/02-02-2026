@@ -251,16 +251,27 @@ async def get_fatture_non_associate(
     async for v in cursor:
         veicoli_salvati[v["targa"]] = v
     
-    # Filtra solo fatture di fornitori SENZA veicoli salvati
+    # Filtra solo fatture di fornitori SENZA veicoli salvati o non ancora associate
     fornitori_con_veicoli = set(v.get("fornitore_piva") for v in veicoli_salvati.values())
-    fatture_davvero_non_associate = [
-        f for f in fatture_senza_targa 
-        if f.get("supplier_vat") not in fornitori_con_veicoli
-    ]
+    
+    # Formatta correttamente le fatture per il frontend
+    fatture_formattate = []
+    for f in fatture_senza_targa:
+        fatture_formattate.append({
+            "id": f.get("invoice_id"),
+            "numero": f.get("invoice_number"),
+            "data": f.get("invoice_date"),
+            "fornitore": f.get("supplier"),
+            "piva": f.get("supplier_vat"),
+            "importo": f.get("total", 0),
+            "descrizione": ", ".join([l.get("descrizione", "")[:50] for l in f.get("linee", [])[:2]]),
+            "tipo": f.get("tipo_documento"),
+            "codice_cliente": f.get("codice_cliente")
+        })
     
     return {
-        "fatture": fatture_davvero_non_associate,
-        "count": len(fatture_davvero_non_associate),
+        "fatture": fatture_formattate,
+        "count": len(fatture_formattate),
         "nota": "Queste fatture richiedono associazione manuale ad un veicolo"
     }
 
