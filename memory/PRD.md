@@ -1,6 +1,6 @@
 # Azienda in Cloud ERP - PRD
 
-## Stato: 4 Febbraio 2026
+## Stato: 4 Febbraio 2026 (Aggiornato)
 
 ---
 
@@ -15,6 +15,64 @@
 
 ---
 
+## CHANGELOG - 4 Febbraio 2026
+
+### Fix Critici Backend
+- ✅ `aruba_automation.py`: `auto_insert_prima_nota = False` - Fatture non vanno più automaticamente in Prima Nota
+- ✅ `document_data_saver.py`: `stato = "in_attesa_conferma"` - Stato iniziale corretto
+- ✅ `email_service.py`: Fix import `ExternalServiceError`
+- ✅ Unificato collection `suppliers` → `fornitori` (13 file)
+
+### Fix Sicurezza Python (strptime/split)
+- ✅ `accounting_engine.py`: Try/except su strptime per date
+- ✅ `attendance.py`: 3 fix su strptime
+- ✅ `scadenzario_fornitori.py`: 3 fix su strptime
+- ✅ `fiscalita_italiana.py`: 2 fix su strptime
+- ✅ `aruba_automation.py`: 3 fix su split stringa vuota
+
+### Fix Error Handling Backend
+- ✅ `adr.py`: except generico → except Exception as e
+- ✅ `attendance.py`: 2 fix except
+- ✅ `bonifici_stipendi.py`: 2 fix except
+- ✅ `cedolini_riconciliazione.py`: 4 fix except
+- ✅ `dimissioni.py`: 3 fix except
+- ✅ `documenti.py`: 3 fix except
+
+### Fix insert_one MongoDB
+- ✅ `accounting_engine.py`: insert_one(doc.copy())
+- ✅ `contabilita_italiana.py`: insert_one(doc.copy())
+- ✅ `inserimento_rapido.py`: insert_one(doc.copy())
+- ✅ `ai_parser.py`: insert_one(doc.copy())
+
+### Fix Frontend JSX
+- ✅ `CentriCosto.jsx`: res.data || []
+- ✅ `Fornitori.jsx`: 2 fix res.data || []
+- ✅ `Documenti.jsx`: JSON.parse con try/catch
+- ✅ `App.jsx`: Rimosse 16 icone duplicate dalla sidebar
+- ✅ `verbali_email_logic.py`: Fix escape sequence
+
+### Centralizzazione Utilities
+- ✅ `lib/utils.js`: Aggiunti MESI, MESI_SHORT, MESI_FULL
+- ✅ `lib/utils.js`: Aggiunti formatDateShort, formatEuroShort, formatEuroStr
+- ✅ `components/StatCard.jsx`: Componente condiviso creato
+
+### Nuova Pagina Learning Machine
+- ✅ `LearningMachine.jsx`: Creata pagina centralizzata (~1081 righe)
+- ✅ `main.jsx`: Aggiunta route /learning-machine
+- ✅ `Dashboard.jsx`: Link aggiornato a /learning-machine
+
+### Correzioni Dati Database
+- ✅ Dipendente CF `DLMVCN59E09F839T`: Nome corretto "D'ALMA VINCENZO"
+- ✅ Moscato Emanuele: Rimossa data_fine_contratto errata
+- ✅ Aggiunti giustificativi: Festività Lavorata (FESL), Festività Non Lavorata (FESNL)
+- ✅ Eliminate 741 presenze (02/2026-12/2026)
+
+### Documentazione
+- ✅ `REGOLE_CONTABILI.md`: Aggiunte regole import fatture XML
+- ✅ `ISTRUZIONI_FATTURE_AUTOMATICHE.md`: Documentazione completa
+
+---
+
 ## SCHEDULER ATTIVO
 
 | Job | Frequenza | Descrizione |
@@ -25,76 +83,86 @@
 
 ---
 
-## LOGICA AUTOMAZIONE EMAIL
+## REGOLE IMPORT FATTURE (CRITICHE)
 
-### PRINCIPIO: PRIMA COMPLETA, POI AGGIUNGI
+### DIVIETI ASSOLUTI
+- ❌ MAI scrivere in `prima_nota_cassa/banca` durante import XML
+- ❌ MAI impostare `pagato=true` durante import
+- ❌ MAI impostare `metodo_pagamento="bonifico"` automaticamente
+- ❌ MAI caricare magazzino se `esclude_magazzino=true`
 
-**FASE 1 - Completa Sospesi:**
-1. Cerca quietanze per verbali "DA_PAGARE"
-2. Cerca PDF per verbali senza allegato
-3. Cerca fatture per verbali "IDENTIFICATO"
-
-**FASE 2 - Aggiungi Nuovi:**
-1. Cerca nuovi verbali
-2. Cerca nuove quietanze
-3. Cerca nuove fatture noleggiatori
-
-### ARRICCHIMENTO DATI
-```
-TARGA → VEICOLO → DRIVER → FATTURA → STATO → PRIMA NOTA
-```
-
-### STATI VERBALE
-- `riconciliato`: ha fattura + pagamento + driver
-- `pagato`: ha fattura + pagamento
-- `fattura_ricevuta`: ha fattura
-- `identificato`: ha driver o targa
-- `da_identificare`: nessun dato
-
-Dettagli: `/app/memory/LOGICA_EMAIL_AUTOMAZIONE.md`
+### OBBLIGHI
+- ✅ SEMPRE `stato="in_attesa_conferma"` per fatture importate
+- ✅ SEMPRE creare scadenza in `scadenziario_fornitori`
+- ✅ SEMPRE salvare righe in `dettaglio_righe_fatture`
+- ✅ Prima Nota SOLO dopo conferma utente
 
 ---
 
-## CORREZIONI 4 FEBBRAIO 2026
+## PAGINE PRINCIPALI
 
-### Completato ✅
-1. Menu riorganizzato (Attendance/Saldi in Dipendenti, Odoo rimosso)
-2. API Automotive integrata in Noleggio
-3. Fix endpoint (DaRivedere, PagoPA, Saldi Ferie, Noleggio)
-4. Cedolini associati a dipendenti tramite fuzzy match
-5. Logica salvataggio automatico in collection specifiche (invoices, cedolini, f24)
+### Ciclo Passivo
+- `/fatture-ricevute` - Archivio fatture
+- `/fornitori` - Anagrafica fornitori
+- `/prima-nota` - Prima Nota Unificata
 
-### Da Fare 🔄
-- UI non conformi: Classificazione Email, Correzione AI, Motore Contabile
-- Import Documenti: Upload PDF massivo
-- Revisione grafica completa
+### Dipendenti
+- `/dipendenti` - Gestione dipendenti
+- `/attendance` - Presenze
+- `/cedolini` - Buste paga
+- `/saldi-ferie-permessi` - Saldi ferie/ROL
 
----
+### Learning Machine
+- `/learning-machine` - Dashboard centralizzata
+  - Tab Fornitori & Keywords
+  - Tab Pattern Assegni
+  - Tab Classificazione Documenti
 
-## ARCHITETTURA
-
-```
-/app/
-├── app/
-│   ├── routers/           # Endpoint API
-│   ├── services/
-│   │   ├── email_document_downloader.py    # Download email
-│   │   ├── ai_integration_service.py       # Parsing AI + salvataggio
-│   │   ├── verbali_email_scanner.py        # Scanner verbali
-│   │   └── email_monitor_service.py        # Monitor email
-│   ├── scheduler.py       # Task periodici
-│   └── database.py        # MongoDB
-└── frontend/
-    └── src/
-        ├── pages/
-        └── components/
-```
+### Strumenti
+- `/import-documenti` - Import documenti
+- `/verifica-coerenza` - Controlli incrociati
+- `/correzione-ai` - Correzione dati AI
 
 ---
 
-## NOTE IMPORTANTI
+## PROSSIMI TASK (Backlog)
 
-1. **NIENTE DATI MOCK**: Solo dati reali da MongoDB
-2. **FILTRO ANNO**: Rispettare sempre l'anno selezionato
-3. **API AXIOS**: Usare `api` non `fetch` per gestione automatica token
-4. **SCHEDULER**: Verificare status con `/api/verbali-riconciliazione/scheduler-status`
+### P1 - Alta Priorità
+- [ ] Migliorare associazione automatica Assegno-Fattura
+- [ ] Completare refactoring Attendance.jsx
+- [ ] Upload massivo PDF in Import Documenti
+
+### P2 - Media Priorità
+- [ ] Correggere 2 cedolini con netto=0
+- [ ] Report riconciliazione PayPal
+- [ ] Indici MongoDB per performance
+
+### P3 - Bassa Priorità
+- [ ] Pulizia codice Learning da Fornitori.jsx (~600 righe)
+- [ ] Pulizia codice Learning da GestioneAssegni.jsx (~200 righe)
+- [ ] Revisione grafica completa
+
+---
+
+## FILE DI RIFERIMENTO
+
+### Backend
+- `/app/routers/fatture_module/import_xml.py` - Import fatture XML
+- `/app/routers/fatture_module/pagamento.py` - Pagamento fatture
+- `/app/services/aruba_automation.py` - Automazione Aruba
+- `/app/routers/attendance.py` - API presenze
+
+### Frontend
+- `/frontend/src/App.jsx` - Navigazione principale
+- `/frontend/src/pages/LearningMachine.jsx` - Learning Machine centralizzato
+- `/frontend/src/lib/utils.js` - Utilities condivise
+- `/frontend/src/components/StatCard.jsx` - Componente statistiche
+
+### Documentazione
+- `/memory/REGOLE_CONTABILI.md` - Regole contabili
+- `/memory/ISTRUZIONI_FATTURE_AUTOMATICHE.md` - Istruzioni fatture
+- `/memory/LOGICA_EMAIL_AUTOMAZIONE.md` - Logica email
+
+---
+
+**Ultimo aggiornamento:** 4 Febbraio 2026
