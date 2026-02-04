@@ -48,7 +48,6 @@ export default function GestionePagoPA() {
     try {
       const response = await api.get('/api/bank/movements?tipo=pagopa&limit=100');
       setMovimentiBanca(response.data || []);
-      }
     } catch (error) {
       console.error('Errore fetch movimenti:', error);
     }
@@ -63,18 +62,10 @@ export default function GestionePagoPA() {
   const handleAutoAssocia = async () => {
     setAutoAssociaLoading(true);
     try {
-      const response = await fetch(`${API_URL}/api/pagopa/auto-associa`, {
-        method: 'POST'
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        toast.success(`Associati ${data.associazioni_effettuate || 0} ricevute`);
-        fetchStats();
-        fetchRicevute();
-      } else {
-        toast.error('Errore nell\'associazione automatica');
-      }
+      const response = await api.post('/api/pagopa/auto-associa');
+      toast.success(`Associati ${response.data?.associazioni_effettuate || 0} ricevute`);
+      fetchStats();
+      fetchRicevute();
     } catch (error) {
       console.error('Errore auto-associa:', error);
       toast.error('Errore nell\'associazione automatica');
