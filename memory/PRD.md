@@ -15,81 +15,86 @@
 
 ---
 
-## Correzioni Sessione 4 Febbraio 2026
+## SCHEDULER ATTIVO
 
-### COMPLETATO ✅
-
-1. **Menu Riorganizzato**
-   - ✅ Attendance spostato in sezione Dipendenti (barra blu)
-   - ✅ Saldi Ferie/ROL spostato in sezione Dipendenti  
-   - ✅ Odoo rimosso dal menu e codice eliminato
-   - ✅ AISP rimosso da OpenAPI Integrazioni
-
-2. **Integrazione API Automotive** - Completata
-   - ✅ Bottone "Aggiorna Dati Veicoli" nella toolbar Noleggio
-   - ✅ Bottone "Aggiorna da Targa" nel dettaglio veicolo
-   - ✅ Sezione OpenAPI nella modale di modifica
-
-3. **Fix Endpoint e API**
-   - ✅ Fatture Non Associate Noleggio - Formattazione dati corretta
-   - ✅ DocumentiDaRivedere - Path API corretti (/api/ai-parser/da-rivedere)
-   - ✅ PagoPA - Sostituito fetch con api per evitare problemi CORS
-   - ✅ Saldi Ferie - Endpoint ora calcola dai dipendenti se non ci sono saldi salvati
-
-4. **UI/UX**
-   - ✅ IntegrazioniOpenAPI - Rimosso tab AISP, griglia a 2 colonne
+| Job | Frequenza | Descrizione |
+|-----|-----------|-------------|
+| `gmail_aruba_sync` | ogni 10 min | Sync fatture Gmail/Aruba |
+| `verbali_email_scan` | ogni ora | Scan email per verbali/quietanze |
+| `haccp_daily_routine` | 00:01 UTC | Auto-popolamento HACCP |
 
 ---
 
-## ANCORA DA FARE 🔄
+## LOGICA AUTOMAZIONE EMAIL
 
-### Pagine con Dati Non Reali (Richiedono dati nel DB)
-- **Bilancio** - Filtro anno funziona, ma i dati potrebbero non essere completi
-- **Motore Contabile** - UI da uniformare
-- **Piano dei Conti** - Dati da popolare
-- **Cespiti** - Navigazione e dati da completare
-- **Finanziaria** - Verificare fonte dati
-- **Chiusura Esercizio** - Endpoint funzionante, dati corretti
-- **Verifica Coerenza** - Da verificare
-- **Commercialista** - Da verificare
+### PRINCIPIO: PRIMA COMPLETA, POI AGGIUNGI
 
-### UI Non Conforme
-- **Classificazione Email** - Da uniformare
-- **Correzione AI** - Da verificare
-- **Regole Contabili** - Da aggiornare
+**FASE 1 - Completa Sospesi:**
+1. Cerca quietanze per verbali "DA_PAGARE"
+2. Cerca PDF per verbali senza allegato
+3. Cerca fatture per verbali "IDENTIFICATO"
 
-### Funzionalità
-- **Import Documenti** - Upload PDF massivo + memorizzazione
+**FASE 2 - Aggiungi Nuovi:**
+1. Cerca nuovi verbali
+2. Cerca nuove quietanze
+3. Cerca nuove fatture noleggiatori
+
+### ARRICCHIMENTO DATI
+```
+TARGA → VEICOLO → DRIVER → FATTURA → STATO → PRIMA NOTA
+```
+
+### STATI VERBALE
+- `riconciliato`: ha fattura + pagamento + driver
+- `pagato`: ha fattura + pagamento
+- `fattura_ricevuta`: ha fattura
+- `identificato`: ha driver o targa
+- `da_identificare`: nessun dato
+
+Dettagli: `/app/memory/LOGICA_EMAIL_AUTOMAZIONE.md`
 
 ---
 
-## Architettura
+## CORREZIONI 4 FEBBRAIO 2026
+
+### Completato ✅
+1. Menu riorganizzato (Attendance/Saldi in Dipendenti, Odoo rimosso)
+2. API Automotive integrata in Noleggio
+3. Fix endpoint (DaRivedere, PagoPA, Saldi Ferie, Noleggio)
+4. Cedolini associati a dipendenti tramite fuzzy match
+5. Logica salvataggio automatico in collection specifiche (invoices, cedolini, f24)
+
+### Da Fare 🔄
+- UI non conformi: Classificazione Email, Correzione AI, Motore Contabile
+- Import Documenti: Upload PDF massivo
+- Revisione grafica completa
+
+---
+
+## ARCHITETTURA
 
 ```
 /app/
 ├── app/
 │   ├── routers/           # Endpoint API
-│   │   ├── invoices/      # Gestione fatture
-│   │   ├── employees/     # Gestione dipendenti
-│   │   ├── bank/          # Banca e assegni
-│   │   └── accounting/    # Contabilità
-│   ├── services/          # Business logic
-│   ├── parsers/           # Parser documenti
-│   └── database.py        # Connessione MongoDB
+│   ├── services/
+│   │   ├── email_document_downloader.py    # Download email
+│   │   ├── ai_integration_service.py       # Parsing AI + salvataggio
+│   │   ├── verbali_email_scanner.py        # Scanner verbali
+│   │   └── email_monitor_service.py        # Monitor email
+│   ├── scheduler.py       # Task periodici
+│   └── database.py        # MongoDB
 └── frontend/
     └── src/
-        ├── pages/         # Pagine React
-        ├── components/    # Componenti riutilizzabili
-        │   ├── ui/        # Shadcn/UI components
-        │   └── attendance/# Componenti attendance (refactored)
-        └── lib/utils.js   # Utility condivise
+        ├── pages/
+        └── components/
 ```
 
 ---
 
-## Note per Sviluppo Futuro
+## NOTE IMPORTANTI
 
-1. **Dati Reali**: Tutte le pagine devono mostrare SOLO dati dal database
-2. **Filtri Anno**: Assicurarsi che ogni pagina rispetti il filtro anno selezionato
-3. **Consistenza UI**: Usare PageLayout e stili condivisi da lib/utils.js
-4. **API**: Usare sempre `api` (axios) invece di `fetch` per gestione automatica token e base URL
+1. **NIENTE DATI MOCK**: Solo dati reali da MongoDB
+2. **FILTRO ANNO**: Rispettare sempre l'anno selezionato
+3. **API AXIOS**: Usare `api` non `fetch` per gestione automatica token
+4. **SCHEDULER**: Verificare status con `/api/verbali-riconciliazione/scheduler-status`
