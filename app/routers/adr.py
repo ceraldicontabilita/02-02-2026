@@ -224,8 +224,8 @@ async def scarica_adr_da_email(
                     if part.get_content_type() == "text/plain":
                         try:
                             email_text += "\n" + part.get_payload(decode=True).decode('utf-8', errors='replace')
-                        except:
-                            pass
+                        except Exception as e:
+                            logger.warning(f"Errore decodifica email part: {e}")
                 
                 # Estrai codici cartella e codice fiscale
                 codici_cartella = estrai_codice_cartella(email_text)
