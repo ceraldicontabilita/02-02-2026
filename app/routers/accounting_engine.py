@@ -299,7 +299,7 @@ async def create_journal_entry(entry: JournalEntry) -> Dict[str, Any]:
         "state": "posted",
         "created_at": now
     }
-    await db["prima_nota"].insert_one(move_doc)
+    await db["prima_nota"].insert_one(move_doc.copy())
     
     # Salva righe
     line_docs = []
@@ -519,7 +519,7 @@ async def create_invoice_with_entries(invoice: InvoiceCreate) -> Dict[str, Any]:
         "payment_state": "not_paid",
         "created_at": datetime.now(timezone.utc).isoformat()
     }
-    await db["fatture_contabili"].insert_one(invoice_doc)
+    await db["fatture_contabili"].insert_one(invoice_doc.copy())
     
     return {
         "success": True,
