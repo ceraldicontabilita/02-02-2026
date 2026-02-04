@@ -102,6 +102,80 @@ export default function NoleggioAuto() {
     setExpandedSection(prev => ({ ...prev, [section]: !prev[section] }));
   };
 
+  // Funzione per lookup dati veicolo da OpenAPI Automotive
+  const handleLookupVeicolo = async (targa) => {
+    if (!targa) return;
+    setLookupLoading(true);
+    setLookupResult(null);
+    try {
+      const res = await api.get(`/api/openapi-automotive/info/${targa}`);
+      if (res.data?.success) {
+        setLookupResult(res.data);
+        toast.success(`Dati trovati per ${targa}`);
+      }
+    } catch (e) {
+      const errMsg = e.response?.data?.detail || e.message;
+      toast.error(`Errore lookup: ${errMsg}`);
+      setLookupResult({ error: errMsg });
+    } finally {
+      setLookupLoading(false);
+    }
+  };
+
+  // Funzione per aggiornare veicolo con dati OpenAPI
+  const handleUpdateFromOpenAPI = async (targa) => {
+    if (!targa) return;
+    setLookupLoading(true);
+    try {
+      const res = await api.post('/api/openapi-automotive/aggiorna-veicolo', { targa });
+      if (res.data?.success) {
+        toast.success(`${res.data.action === 'created' ? 'Creato' : 'Aggiornato'} veicolo ${targa}`);
+        fetchVeicoli();
+        setLookupResult(null);
+        // Se stiamo modificando, aggiorna i campi
+        if (editingVeicolo && editingVeicolo.targa === targa) {
+          const updatedData = res.data.automotive_data;
+          setEditingVeicolo(prev => ({ ...prev, ...updatedData }));
+        }
+      }
+    } catch (e) {
+      toast.error(`Errore aggiornamento: ${e.response?.data?.detail || e.message}`);
+    } finally {
+      setLookupLoading(false);
+    }
+  };
+
+  // Funzione per aggiornamento massivo di tutti i veicoli
+  const handleBulkUpdateFromOpenAPI = async () => {
+    const targhe = veicoli.map(v => v.targa).filter(Boolean);
+    if (targhe.length === 0) {
+      toast.error('Nessun veicolo con targa');
+      return;
+    }
+    
+    if (!window.confirm(`Aggiornare dati da OpenAPI per ${targhe.length} veicoli?\nQuesta operazione può richiedere alcuni minuti.`)) {
+      return;
+    }
+    
+    setBulkUpdateLoading(true);
+    try {
+      const res = await api.post('/api/openapi-automotive/aggiorna-bulk', { targhe });
+      const { aggiornati, creati, errori, dettagli } = res.data;
+      toast.success(`Completato: ${aggiornati} aggiornati, ${creati} creati, ${errori} errori`);
+      
+      if (errori > 0) {
+        const erroriList = dettagli.filter(d => d.status === 'error').map(d => `${d.targa}: ${d.error}`).join('\n');
+        console.warn('Errori aggiornamento:', erroriList);
+      }
+      
+      fetchVeicoli();
+    } catch (e) {
+      toast.error(`Errore bulk update: ${e.response?.data?.detail || e.message}`);
+    } finally {
+      setBulkUpdateLoading(false);
+    }
+  };
+
   const formatDate = (dateStr) => {
     if (!dateStr) return "-";
     try {
