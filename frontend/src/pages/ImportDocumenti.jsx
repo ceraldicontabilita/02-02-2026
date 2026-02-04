@@ -15,13 +15,13 @@ import {
 // ============================================================
 
 const TIPI_DOCUMENTO = [
-  { id: 'auto', label: 'Auto-Detect', color: '#3b82f6', desc: 'Il sistema riconosce automaticamente il tipo', extension: '*', endpoint: '/api/documenti/upload-auto' },
+  { id: 'auto', label: 'Auto-Detect', color: '#1e3a5f', desc: 'Il sistema riconosce automaticamente il tipo', extension: '*', endpoint: '/api/documenti/upload-auto' },
   { id: 'fattura', label: 'Fatture XML', color: '#ec4899', desc: 'Fatture SDI con integrazione Magazzino+Prima Nota+Scadenziario', extension: '.xml,.zip', endpoint: '/api/fatture-ricevute/import-xml', endpointMulti: '/api/fatture-ricevute/import-xml-multipli', endpointZip: '/api/fatture-ricevute/import-zip', hasIntegration: true },
-  { id: 'estratto_conto_pdf', label: 'Estratto Conto PDF', color: '#10b981', desc: 'PDF da banca con ANTEPRIMA', extension: '.pdf,.zip', endpoint: '/api/bank-statement-bulk/parse-bulk', hasPreview: true },
+  { id: 'estratto_conto_pdf', label: 'Estratto Conto PDF', color: '#4caf50', desc: 'PDF da banca con ANTEPRIMA', extension: '.pdf,.zip', endpoint: '/api/bank-statement-bulk/parse-bulk', hasPreview: true },
   { id: 'estratto_conto', label: 'Estratto Conto Excel/CSV', color: '#059669', desc: 'Excel/CSV da banca', extension: '.xlsx,.xls,.csv,.zip', endpoint: '/api/estratto-conto-movimenti/import' },
   { id: 'paypal', label: 'Estratto PayPal', color: '#0070ba', desc: 'Estratto conto PayPal CSV/PDF - Riconcilia fatture', extension: '.csv,.pdf,.zip', endpoint: '/api/fatture-ricevute/import-paypal', isNew: true },
   { id: 'f24', label: 'F24', color: '#ef4444', desc: 'Modelli F24 da pagare', extension: '.pdf,.zip', endpoint: '/api/f24/upload-pdf' },
-  { id: 'quietanza_f24', label: 'Quietanza F24', color: '#f59e0b', desc: 'Ricevute pagamento F24', extension: '.pdf,.zip', endpoint: '/api/quietanze-f24/upload' },
+  { id: 'quietanza_f24', label: 'Quietanza F24', color: '#ff9800', desc: 'Ricevute pagamento F24', extension: '.pdf,.zip', endpoint: '/api/quietanze-f24/upload' },
   { id: 'cedolino', label: 'Buste Paga', color: '#8b5cf6', desc: 'Cedolini e Libro Unico', extension: '.pdf,.zip', endpoint: '/api/employees/paghe/upload-pdf' },
   { id: 'libro_unico', label: 'Libro Unico (Giustificativi)', color: '#6366f1', desc: 'Estrae Ferie, ROL, Malattia dai PDF', extension: '.pdf,.zip', endpoint: '/api/giustificativi/upload-libro-unico' },
   { id: 'bonifici', label: 'Bonifici', color: '#06b6d4', desc: 'Archivio bonifici PDF/ZIP', extension: '.pdf,.zip', endpoint: '/api/archivio-bonifici/jobs', useBonificiJob: true },
@@ -376,7 +376,7 @@ function ImportMassivoTab() {
             Upload in corso...
           </span>
         )}
-        <button onClick={() => setShowAdvanced(!showAdvanced)} style={{ padding: '6px 12px', background: showAdvanced ? '#e0e7ff' : '#f1f5f9', color: showAdvanced ? '#4338ca' : '#64748b', border: 'none', borderRadius: 6, fontSize: 12, cursor: 'pointer', fontWeight: 500 }}>
+        <button onClick={() => setShowAdvanced(!showAdvanced)} style={{ padding: '6px 12px', background: showAdvanced ? '#e0e7ff' : '#f1f5f9', color: showAdvanced ? '#4338ca' : '#6b7280', border: 'none', borderRadius: 6, fontSize: 12, cursor: 'pointer', fontWeight: 500 }}>
           {showAdvanced ? '▼' : '▶'} Opzioni avanzate
         </button>
       </div>
@@ -390,14 +390,14 @@ function ImportMassivoTab() {
               style={{
                 padding: '8px 14px',
                 background: tipoSelezionato === tipo.id ? tipo.color : '#f8fafc',
-                color: tipoSelezionato === tipo.id ? 'white' : '#64748b',
+                color: tipoSelezionato === tipo.id ? 'white' : '#6b7280',
                 border: tipoSelezionato === tipo.id ? 'none' : '1px solid #e2e8f0',
                 borderRadius: 8, fontWeight: 600, cursor: 'pointer', fontSize: 12, transition: 'all 0.15s', position: 'relative'
               }}
             >
               {tipo.label}
               {tipo.hasPreview && (
-                <span style={{ position: 'absolute', top: -4, right: -4, background: '#f59e0b', color: 'white', fontSize: 8, padding: '2px 4px', borderRadius: 4, fontWeight: 700 }}>PREVIEW</span>
+                <span style={{ position: 'absolute', top: -4, right: -4, background: '#ff9800', color: 'white', fontSize: 8, padding: '2px 4px', borderRadius: 4, fontWeight: 700 }}>PREVIEW</span>
               )}
             </button>
           ))}
@@ -411,7 +411,7 @@ function ImportMassivoTab() {
         
         {TEMPLATES[tipoSelezionato] && (
           <div style={{ marginTop: 12 }}>
-            <button onClick={() => downloadTemplate(tipoSelezionato)} style={{ padding: '6px 12px', background: 'transparent', color: '#3b82f6', border: '1px dashed #3b82f6', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontWeight: 500 }}>
+            <button onClick={() => downloadTemplate(tipoSelezionato)} style={{ padding: '6px 12px', background: 'transparent', color: '#1e3a5f', border: '1px dashed #1e3a5f', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontWeight: 500 }}>
               Scarica Template {TIPI_DOCUMENTO.find(t => t.id === tipoSelezionato)?.label}
             </button>
           </div>
@@ -424,10 +424,10 @@ function ImportMassivoTab() {
           <div style={{ fontWeight: 600, marginBottom: 12, color: '#374151', fontSize: 14 }}>Opzioni Avanzate</div>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
             <input type="file" ref={zipInputRef} accept=".zip" multiple onChange={handleZipSelect} style={{ display: 'none' }} data-testid="zip-file-input" />
-            <button onClick={() => zipInputRef.current?.click()} disabled={uploading} style={{ padding: '10px 16px', background: '#f59e0b', color: 'white', border: 'none', borderRadius: 8, fontWeight: 600, cursor: uploading ? 'wait' : 'pointer', fontSize: 13 }} data-testid="upload-zip-btn">
+            <button onClick={() => zipInputRef.current?.click()} disabled={uploading} style={{ padding: '10px 16px', background: '#ff9800', color: 'white', border: 'none', borderRadius: 8, fontWeight: 600, cursor: uploading ? 'wait' : 'pointer', fontSize: 13 }} data-testid="upload-zip-btn">
               Carica ZIP Massivo
             </button>
-            <div style={{ fontSize: 12, color: '#64748b' }}>Supporta ZIP annidati • Estrazione automatica</div>
+            <div style={{ fontSize: 12, color: '#6b7280' }}>Supporta ZIP annidati • Estrazione automatica</div>
           </div>
         </div>
       )}
@@ -436,16 +436,16 @@ function ImportMassivoTab() {
       <div onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop} onClick={() => fileInputRef.current?.click()} data-testid="drop-zone"
         style={{
           background: dragOver ? '#dbeafe' : 'white',
-          border: dragOver ? '3px dashed #3b82f6' : '3px dashed #e5e7eb',
+          border: dragOver ? '3px dashed #1e3a5f' : '3px dashed #e5e7eb',
           borderRadius: 16, padding: 'clamp(24px, 5vw, 40px)', textAlign: 'center', marginBottom: 16, transition: 'all 0.2s', cursor: 'pointer'
         }}
       >
         <input ref={fileInputRef} type="file" multiple accept={tipoCorrente?.extension || ".pdf,.xlsx,.xls,.xml,.csv,.zip"} onChange={handleFileSelect} style={{ display: 'none' }} data-testid="file-input" />
-        <FolderUp size={56} style={{ marginBottom: 12, opacity: 0.5, color: dragOver ? '#3b82f6' : '#64748b' }} />
+        <FolderUp size={56} style={{ marginBottom: 12, opacity: 0.5, color: dragOver ? '#1e3a5f' : '#6b7280' }} />
         <div style={{ fontSize: 16, fontWeight: 600, color: '#374151', marginBottom: 6 }}>
           {dragOver ? 'Rilascia qui i file' : isEstrattoContoPDF ? 'Trascina i PDF degli Estratti Conto' : 'Trascina i file o clicca per selezionare'}
         </div>
-        <div style={{ fontSize: 13, color: '#64748b' }}>
+        <div style={{ fontSize: 13, color: '#6b7280' }}>
           {isEstrattoContoPDF ? 'PDF da BANCO BPM, BNL, Nexi • Upload massivo supportato' : 'PDF, Excel, XML, CSV, ZIP • Singoli o multipli'}
         </div>
       </div>
@@ -460,7 +460,7 @@ function ImportMassivoTab() {
                 Svuota
               </button>
               <button onClick={handleUpload} disabled={uploading} data-testid="upload-btn"
-                style={{ padding: '8px 18px', background: uploading ? '#9ca3af' : isEstrattoContoPDF ? '#10b981' : '#3b82f6', color: 'white', border: 'none', borderRadius: 6, cursor: uploading ? 'wait' : 'pointer', fontWeight: 600, fontSize: 12 }}
+                style={{ padding: '8px 18px', background: uploading ? '#9ca3af' : isEstrattoContoPDF ? '#4caf50' : '#1e3a5f', color: 'white', border: 'none', borderRadius: 6, cursor: uploading ? 'wait' : 'pointer', fontWeight: 600, fontSize: 12 }}
               >
                 {uploading ? 'Analisi...' : isEstrattoContoPDF ? 'Analizza e Anteprima' : 'Carica Tutti'}
               </button>
@@ -471,10 +471,10 @@ function ImportMassivoTab() {
             <div style={{ padding: '10px 14px', borderBottom: '1px solid #e5e7eb', background: '#f0f9ff' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
                 <span style={{ fontSize: 12, fontWeight: 600, color: '#0369a1' }}>{uploadProgress.filename}</span>
-                <span style={{ fontSize: 11, color: '#64748b' }}>{uploadProgress.current}/{uploadProgress.total}</span>
+                <span style={{ fontSize: 11, color: '#6b7280' }}>{uploadProgress.current}/{uploadProgress.total}</span>
               </div>
               <div style={{ height: 6, background: '#e0f2fe', borderRadius: 3, overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: `${(uploadProgress.current / uploadProgress.total) * 100}%`, background: 'linear-gradient(90deg, #0ea5e9, #3b82f6)', borderRadius: 3, transition: 'width 0.3s ease' }} />
+                <div style={{ height: '100%', width: `${(uploadProgress.current / uploadProgress.total) * 100}%`, background: 'linear-gradient(90deg, #0ea5e9, #1e3a5f)', borderRadius: 3, transition: 'width 0.3s ease' }} />
               </div>
             </div>
           )}
@@ -485,11 +485,11 @@ function ImportMassivoTab() {
               return (
                 <div key={idx} data-testid={`file-item-${idx}`} style={{ padding: 12, borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: 10, background: f.status === 'success' ? '#f0fdf4' : f.status === 'duplicate' ? '#fefce8' : f.status === 'error' ? '#fef2f2' : 'white' }}>
                   <div style={{ width: 32, height: 32, borderRadius: 6, background: f.status === 'success' ? '#dcfce7' : f.status === 'duplicate' ? '#fef9c3' : f.status === 'error' ? '#fee2e2' : '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    {f.status === 'uploading' ? <Loader2 size={16} className="animate-spin" /> : f.status === 'success' ? <CheckCircle size={16} color="#16a34a" /> : f.status === 'duplicate' ? <AlertCircle size={16} color="#ca8a04" /> : f.status === 'error' ? <AlertCircle size={16} color="#dc2626" /> : <FileText size={16} color="#64748b" />}
+                    {f.status === 'uploading' ? <Loader2 size={16} className="animate-spin" /> : f.status === 'success' ? <CheckCircle size={16} color="#16a34a" /> : f.status === 'duplicate' ? <AlertCircle size={16} color="#ca8a04" /> : f.status === 'error' ? <AlertCircle size={16} color="#dc2626" /> : <FileText size={16} color="#6b7280" />}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 600, fontSize: 13, color: '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name}</div>
-                    <div style={{ fontSize: 11, color: '#64748b' }}>{(f.size / 1024).toFixed(1)} KB {f.error && <span style={{ color: '#dc2626' }}>• {f.error}</span>}</div>
+                    <div style={{ fontSize: 11, color: '#6b7280' }}>{(f.size / 1024).toFixed(1)} KB {f.error && <span style={{ color: '#dc2626' }}>• {f.error}</span>}</div>
                   </div>
                   {!isEstrattoContoPDF && (
                     <select value={f.type} onChange={(e) => changeFileType(idx, e.target.value)} disabled={f.status !== 'pending'} style={{ padding: '5px 8px', border: '1px solid #e5e7eb', borderRadius: 6, background: 'white', fontSize: 11, color: tipoInfo.color, fontWeight: 600, maxWidth: 120 }}>
@@ -510,7 +510,7 @@ function ImportMassivoTab() {
       {showPreview && previewData && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
           <div style={{ background: 'white', borderRadius: 16, width: '100%', maxWidth: 1000, maxHeight: '90vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ padding: 20, background: '#10b981', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ padding: 20, background: '#4caf50', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <h2 style={{ margin: 0, fontSize: 18 }}>Anteprima Transazioni Estratte</h2>
                 <p style={{ margin: '4px 0 0', opacity: 0.9, fontSize: 13 }}>Verifica i dati prima di confermare</p>
@@ -564,7 +564,7 @@ function ImportMassivoTab() {
             </div>
             <div style={{ padding: 16, background: '#f8fafc', borderTop: '1px solid #e5e7eb', display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
               <button onClick={handleCancelPreview} style={{ padding: '10px 20px', background: '#fee2e2', color: '#dc2626', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}>Annulla</button>
-              <button onClick={handleConfirmImport} disabled={confirmingImport} style={{ padding: '10px 24px', background: confirmingImport ? '#9ca3af' : '#10b981', color: 'white', border: 'none', borderRadius: 8, cursor: confirmingImport ? 'wait' : 'pointer', fontWeight: 600 }}>
+              <button onClick={handleConfirmImport} disabled={confirmingImport} style={{ padding: '10px 24px', background: confirmingImport ? '#9ca3af' : '#4caf50', color: 'white', border: 'none', borderRadius: 8, cursor: confirmingImport ? 'wait' : 'pointer', fontWeight: 600 }}>
                 {confirmingImport ? 'Salvataggio...' : 'Conferma Importazione'}
               </button>
             </div>
@@ -682,7 +682,7 @@ function AIParserTab() {
         <h3 style={{ margin: '0 0 1rem 0', fontSize: '1rem', fontWeight: 600, color: '#1e293b' }}>Carica Documento</h3>
 
         <div style={{ marginBottom: '1rem' }}>
-          <label style={{ display: 'block', fontSize: '0.85rem', color: '#64748b', marginBottom: '0.5rem' }}>Tipo Documento</label>
+          <label style={{ display: 'block', fontSize: '0.85rem', color: '#6b7280', marginBottom: '0.5rem' }}>Tipo Documento</label>
           <select value={documentType} onChange={(e) => setDocumentType(e.target.value)}
             style={{ width: '100%', padding: '0.75rem', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.95rem', background: 'white' }}
           >
@@ -707,12 +707,12 @@ function AIParserTab() {
             <div>
               <FileType size={48} color="#8b5cf6" style={{ marginBottom: '1rem' }} />
               <p style={{ margin: 0, fontWeight: 600, color: '#1e293b' }}>{selectedFile.name}</p>
-              <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.85rem', color: '#64748b' }}>{(selectedFile.size / 1024).toFixed(1)} KB</p>
+              <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.85rem', color: '#6b7280' }}>{(selectedFile.size / 1024).toFixed(1)} KB</p>
             </div>
           ) : (
             <div>
               <Upload size={48} color="#94a3b8" style={{ marginBottom: '1rem' }} />
-              <p style={{ margin: 0, fontWeight: 600, color: '#64748b' }}>Trascina qui il file o clicca per selezionare</p>
+              <p style={{ margin: 0, fontWeight: 600, color: '#6b7280' }}>Trascina qui il file o clicca per selezionare</p>
               <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.85rem', color: '#94a3b8' }}>PDF, PNG, JPG supportati</p>
             </div>
           )}
@@ -730,7 +730,7 @@ function AIParserTab() {
           {parsing ? (<><Loader2 size={20} style={{ animation: 'spin 1s linear infinite' }} /> Analisi in corso...</>) : (<><Brain size={20} /> Analizza Documento</>)}
         </button>
 
-        <div style={{ marginTop: '1rem', padding: '1rem', background: '#f8fafc', borderRadius: 8, fontSize: '0.85rem', color: '#64748b' }}>
+        <div style={{ marginTop: '1rem', padding: '1rem', background: '#f8fafc', borderRadius: 8, fontSize: '0.85rem', color: '#6b7280' }}>
           <p style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Brain size={16} color="#8b5cf6" /> Powered by Claude AI
           </p>
@@ -752,7 +752,7 @@ function AIParserTab() {
           <ParsedDataViewer data={result} type={documentType} />
           {result.success && (
             <details style={{ marginTop: '1.5rem' }}>
-              <summary style={{ cursor: 'pointer', color: '#64748b', fontSize: '0.85rem', padding: '0.5rem 0' }}>Mostra JSON completo</summary>
+              <summary style={{ cursor: 'pointer', color: '#6b7280', fontSize: '0.85rem', padding: '0.5rem 0' }}>Mostra JSON completo</summary>
               <pre style={{ marginTop: '0.5rem', padding: '1rem', background: '#f8fafc', borderRadius: 8, fontSize: '0.75rem', overflow: 'auto', maxHeight: 300 }}>
                 {JSON.stringify(result, null, 2)}
               </pre>
@@ -885,9 +885,9 @@ function BustaPagaViewer({ data }) {
             </div>
           </div>
           <div style={{ background: '#eff6ff', padding: '1rem', borderRadius: 8 }}>
-            <h4 style={{ margin: 0, color: '#2563eb', fontSize: '0.85rem' }}>PERMESSI</h4>
+            <h4 style={{ margin: 0, color: '#1e3a5f', fontSize: '0.85rem' }}>PERMESSI</h4>
             <div style={{ marginTop: '0.5rem' }}>
-              <span style={{ fontSize: '1.2rem', fontWeight: 700, color: '#2563eb' }}>Residui: {data.progressivi?.permessi_residui?.toFixed(2)}</span>
+              <span style={{ fontSize: '1.2rem', fontWeight: 700, color: '#1e3a5f' }}>Residui: {data.progressivi?.permessi_residui?.toFixed(2)}</span>
             </div>
           </div>
           <div style={{ background: '#fef3c7', padding: '1rem', borderRadius: 8 }}>
@@ -905,7 +905,7 @@ function BustaPagaViewer({ data }) {
 function InfoCard({ title, value, highlight }) {
   return (
     <div style={{ padding: '1rem', background: highlight ? '#ecfdf5' : '#f8fafc', borderRadius: 8, border: highlight ? '1px solid #86efac' : '1px solid #e2e8f0' }}>
-      <span style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase' }}>{title}</span>
+      <span style={{ fontSize: '0.75rem', color: '#6b7280', textTransform: 'uppercase' }}>{title}</span>
       <p style={{ margin: '4px 0 0', fontSize: '1.1rem', fontWeight: 600, color: highlight ? '#059669' : '#1e293b' }}>{value || '-'}</p>
     </div>
   );
@@ -925,7 +925,7 @@ function Section({ title, children }) {
 function Field({ label, value, highlight }) {
   return (
     <div>
-      <span style={{ fontSize: '0.75rem', color: '#64748b', display: 'block' }}>{label}</span>
+      <span style={{ fontSize: '0.75rem', color: '#6b7280', display: 'block' }}>{label}</span>
       <span style={{ fontWeight: highlight ? 700 : 500, color: highlight ? '#059669' : '#1e293b', fontSize: highlight ? '1.1rem' : '0.95rem' }}>{value || '-'}</span>
     </div>
   );
@@ -958,7 +958,7 @@ export default function ImportDocumenti() {
         <h1 style={{ margin: 0, fontSize: 'clamp(20px, 4vw, 26px)', color: '#1e293b', display: 'flex', alignItems: 'center', gap: 10 }}>
           <Upload size={28} /> Import Documenti
         </h1>
-        <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: 14 }}>
+        <p style={{ margin: '4px 0 0', color: '#6b7280', fontSize: 14 }}>
           Carica documenti con riconoscimento automatico o usa l'AI per estrarre dati strutturati
         </p>
       </div>
@@ -973,9 +973,9 @@ export default function ImportDocumenti() {
             style={{
               padding: '12px 20px',
               background: activeTab === tab.id ? 'white' : 'transparent',
-              color: activeTab === tab.id ? '#3b82f6' : '#64748b',
+              color: activeTab === tab.id ? '#1e3a5f' : '#6b7280',
               border: 'none',
-              borderBottom: activeTab === tab.id ? '3px solid #3b82f6' : '3px solid transparent',
+              borderBottom: activeTab === tab.id ? '3px solid #1e3a5f' : '3px solid transparent',
               borderRadius: '8px 8px 0 0',
               cursor: 'pointer',
               fontWeight: 600,

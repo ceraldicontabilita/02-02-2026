@@ -556,7 +556,7 @@ function PrimaNotaDesktop() {
             fontSize: 14,
             fontWeight: 'bold',
             background: activeSection === 'banca' 
-              ? 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)' 
+              ? 'linear-gradient(135deg, #1e3a5f 0%, #1d4ed8 100%)' 
               : '#f3f4f6',
             color: activeSection === 'banca' ? 'white' : '#374151',
             border: 'none',
@@ -590,16 +590,16 @@ function PrimaNotaDesktop() {
 
           {/* Summary Cards Cassa - Compatti */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10, marginBottom: 16 }}>
-            <MiniCard title="Entrate (DARE)" value={formatEuro(cassaData.totale_entrate)} color="#10b981" />
+            <MiniCard title="Entrate (DARE)" value={formatEuro(cassaData.totale_entrate)} color="#4caf50" />
             <MiniCard title="Uscite (AVERE)" value={formatEuro(cassaData.totale_uscite)} color="#ef4444" />
-            <MiniCard title="Saldo" value={formatEuro(cassaData.saldo)} color={cassaData.saldo >= 0 ? '#10b981' : '#ef4444'} highlight />
+            <MiniCard title="Saldo" value={formatEuro(cassaData.saldo)} color={cassaData.saldo >= 0 ? '#4caf50' : '#ef4444'} highlight />
           </div>
 
           {/* Dettaglio - Compatto */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 8, marginBottom: 16 }}>
-            <TinyStatCard title="Corrispettivi" value={formatEuro(totaleCorrispettivi)} color="#f59e0b" />
-            <TinyStatCard title="POS" value={formatEuro(totalePOS)} color="#3b82f6" />
-            <TinyStatCard title="Versamenti" value={formatEuro(totaleVersamenti)} color="#10b981" />
+            <TinyStatCard title="Corrispettivi" value={formatEuro(totaleCorrispettivi)} color="#ff9800" />
+            <TinyStatCard title="POS" value={formatEuro(totalePOS)} color="#1e3a5f" />
+            <TinyStatCard title="Versamenti" value={formatEuro(totaleVersamenti)} color="#4caf50" />
             <TinyStatCard title="Fatture" value={formatEuro(totaleFattureCassa)} color="#ef4444" />
           </div>
 
@@ -630,7 +630,7 @@ function PrimaNotaDesktop() {
               
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginTop: 12 }}>
                 {/* Corrispettivo - Ultra compatto */}
-                <div style={{ background: 'white', borderRadius: 8, padding: 10, borderLeft: '3px solid #f59e0b' }}>
+                <div style={{ background: 'white', borderRadius: 8, padding: 10, borderLeft: '3px solid #ff9800' }}>
                   <div style={{ fontSize: 11, fontWeight: 'bold', color: '#92400e', marginBottom: 6 }}>📊 Corrispettivo</div>
                   <div style={{ display: 'flex', gap: 4 }}>
                     <input type="date" value={corrispettivo.data} onChange={(e) => setCorrispettivo({...corrispettivo, data: e.target.value})} style={{ ...inputStyleCompact, flex: 1, padding: '4px 6px', fontSize: 11 }} />
@@ -642,7 +642,7 @@ function PrimaNotaDesktop() {
                 </div>
 
                 {/* POS - Ultra compatto */}
-                <div style={{ background: 'white', borderRadius: 8, padding: 10, borderLeft: '3px solid #3b82f6' }}>
+                <div style={{ background: 'white', borderRadius: 8, padding: 10, borderLeft: '3px solid #1e3a5f' }}>
                   <div style={{ fontSize: 11, fontWeight: 'bold', color: '#1d4ed8', marginBottom: 6 }}>💳 POS</div>
                   <div style={{ display: 'flex', gap: 4 }}>
                     <input type="date" value={pos.data} onChange={(e) => setPos({...pos, data: e.target.value})} style={{ ...inputStyleCompact, flex: 1, padding: '4px 6px', fontSize: 11 }} />
@@ -654,7 +654,7 @@ function PrimaNotaDesktop() {
                 </div>
 
                 {/* Versamento - Ultra compatto */}
-                <div style={{ background: 'white', borderRadius: 8, padding: 10, borderLeft: '3px solid #10b981' }}>
+                <div style={{ background: 'white', borderRadius: 8, padding: 10, borderLeft: '3px solid #4caf50' }}>
                   <div style={{ fontSize: 11, fontWeight: 'bold', color: '#059669', marginBottom: 6 }}>🏦 Versamento</div>
                   <div style={{ display: 'flex', gap: 4 }}>
                     <input type="date" value={versamento.data} onChange={(e) => setVersamento({...versamento, data: e.target.value})} style={{ ...inputStyleCompact, flex: 1, padding: '4px 6px', fontSize: 11 }} />
@@ -758,13 +758,13 @@ function PrimaNotaDesktop() {
 
           {/* Summary Cards Banca */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 20 }}>
-            <SummaryCard title="Totale Entrate" value={formatEuro(bancaData.totale_entrate)} color="#10b981" icon="📈" subtitle="Accrediti sul conto" />
+            <SummaryCard title="Totale Entrate" value={formatEuro(bancaData.totale_entrate)} color="#4caf50" icon="📈" subtitle="Accrediti sul conto" />
             <SummaryCard title="Totale Uscite" value={formatEuro(bancaData.totale_uscite)} color="#ef4444" icon="📉" subtitle="Addebiti dal conto" />
-            <SummaryCard title="Saldo Periodo" value={formatEuro(bancaData.saldo)} color={bancaData.saldo >= 0 ? '#10b981' : '#ef4444'} icon="💰" highlight />
+            <SummaryCard title="Saldo Periodo" value={formatEuro(bancaData.saldo)} color={bancaData.saldo >= 0 ? '#4caf50' : '#ef4444'} icon="💰" highlight />
           </div>
 
           {/* Info Box */}
-          <div style={{ background: '#eff6ff', border: '1px solid #3b82f6', borderRadius: 12, padding: 16, marginBottom: 20 }}>
+          <div style={{ background: '#eff6ff', border: '1px solid #1e3a5f', borderRadius: 12, padding: 16, marginBottom: 20 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
               <span style={{ fontSize: 20 }}>ℹ️</span>
               <strong style={{ color: '#1e40af' }}>Estratto Conto Bancario</strong>
@@ -781,7 +781,7 @@ function PrimaNotaDesktop() {
               onClick={() => setSelectedMonth(null)} 
               style={{ 
                 padding: '8px 14px', 
-                background: selectedMonth === null ? '#2563eb' : '#f3f4f6', 
+                background: selectedMonth === null ? '#1e3a5f' : '#f3f4f6', 
                 color: selectedMonth === null ? 'white' : '#374151', 
                 border: 'none', 
                 borderRadius: 8, 
@@ -797,7 +797,7 @@ function PrimaNotaDesktop() {
                 onClick={() => setSelectedMonth(i)} 
                 style={{ 
                   padding: '8px 12px', 
-                  background: selectedMonth === i ? '#2563eb' : '#f3f4f6', 
+                  background: selectedMonth === i ? '#1e3a5f' : '#f3f4f6', 
                   color: selectedMonth === i ? 'white' : '#374151', 
                   border: 'none', 
                   borderRadius: 8, 
@@ -1110,7 +1110,7 @@ function MovementsTable({ movimenti, tipo, loading, formatEuro, formatDate, onDe
       {totalPages > 1 && (
         <div style={{ 
           padding: '12px 16px', 
-          background: tipo === 'cassa' ? '#4f46e5' : '#2563eb', 
+          background: tipo === 'cassa' ? '#4f46e5' : '#1e3a5f', 
           color: 'white',
           display: 'flex',
           justifyContent: 'space-between',
@@ -1258,7 +1258,7 @@ function MovementsTable({ movimenti, tipo, loading, formatEuro, formatDate, onDe
                       style={{
                         display: 'inline-block',
                         padding: '6px 12px',
-                        background: '#10b981',
+                        background: '#4caf50',
                         color: 'white',
                         border: 'none',
                         borderRadius: 6,
@@ -1279,7 +1279,7 @@ function MovementsTable({ movimenti, tipo, loading, formatEuro, formatDate, onDe
                         padding: '6px 12px',
                         background: '#fef3c7',
                         color: '#92400e',
-                        border: '1px solid #f59e0b',
+                        border: '1px solid #ff9800',
                         borderRadius: 6,
                         fontSize: 11,
                         fontWeight: 'bold'
@@ -1305,7 +1305,7 @@ function MovementsTable({ movimenti, tipo, loading, formatEuro, formatDate, onDe
                       }}
                       disabled={spostando === mov.id}
                       style={{ 
-                        background: tipo === 'cassa' ? '#2563eb' : '#7c3aed', 
+                        background: tipo === 'cassa' ? '#1e3a5f' : '#7c3aed', 
                         color: 'white',
                         border: 'none', 
                         borderRadius: 4,
@@ -1472,7 +1472,7 @@ function EditMovimentoModal({ movimento, tipo, onClose, onSave }) {
         <div style={{
           padding: '16px 24px',
           borderBottom: '1px solid #e5e7eb',
-          background: tipo === 'cassa' ? '#4f46e5' : '#2563eb',
+          background: tipo === 'cassa' ? '#4f46e5' : '#1e3a5f',
           borderRadius: '16px 16px 0 0',
           color: 'white',
           display: 'flex',
@@ -1615,7 +1615,7 @@ function EditMovimentoModal({ movimento, tipo, onClose, onSave }) {
                 padding: '10px 20px',
                 borderRadius: 8,
                 border: 'none',
-                background: tipo === 'cassa' ? '#4f46e5' : '#2563eb',
+                background: tipo === 'cassa' ? '#4f46e5' : '#1e3a5f',
                 color: 'white',
                 cursor: saving ? 'not-allowed' : 'pointer',
                 fontSize: 14,

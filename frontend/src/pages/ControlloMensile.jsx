@@ -579,7 +579,7 @@ export default function ControlloMensile() {
               fontSize: 16,
               minWidth: 100,
               background: '#f1f5f9',
-              color: '#64748b',
+              color: '#6b7280',
               fontWeight: 600
             }}
             data-testid="year-display"
@@ -601,7 +601,7 @@ export default function ControlloMensile() {
                 disabled={meseSelezionato <= 1}
                 style={{
                   padding: '8px 14px',
-                  background: meseSelezionato > 1 ? '#3b82f6' : '#94a3b8',
+                  background: meseSelezionato > 1 ? '#1e3a5f' : '#94a3b8',
                   color: 'white',
                   border: 'none',
                   borderRadius: 8,
@@ -636,7 +636,7 @@ export default function ControlloMensile() {
                 disabled={meseSelezionato >= 12}
                 style={{
                   padding: '8px 14px',
-                  background: meseSelezionato < 12 ? '#3b82f6' : '#94a3b8',
+                  background: meseSelezionato < 12 ? '#1e3a5f' : '#94a3b8',
                   color: 'white',
                   border: 'none',
                   borderRadius: 8,
@@ -698,7 +698,7 @@ export default function ControlloMensile() {
         gap: 12, 
         marginBottom: 25 
       }}>
-        <div style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)', borderRadius: 12, padding: 14, color: 'white' }}>
+        <div style={{ background: 'linear-gradient(135deg, #1e3a5f 0%, #1d4ed8 100%)', borderRadius: 12, padding: 14, color: 'white' }}>
           <div style={{ fontSize: 11, opacity: 0.9 }}>POS Agenzia (XML)</div>
           <div style={{ fontSize: 18, fontWeight: 'bold' }}>{formatEuro(yearTotals.posAuto)}</div>
         </div>
@@ -715,15 +715,15 @@ export default function ControlloMensile() {
             </div>
           )}
         </div>
-        <div style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', borderRadius: 12, padding: 14, color: 'white' }}>
+        <div style={{ background: 'linear-gradient(135deg, #ff9800 0%, #d97706 100%)', borderRadius: 12, padding: 14, color: 'white' }}>
           <div style={{ fontSize: 11, opacity: 0.9 }}>Corrisp. Auto (XML)</div>
           <div style={{ fontSize: 18, fontWeight: 'bold' }}>{formatEuro(yearTotals.corrispettiviAuto)}</div>
         </div>
-        <div style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', borderRadius: 12, padding: 14, color: 'white' }}>
+        <div style={{ background: 'linear-gradient(135deg, #4caf50 0%, #059669 100%)', borderRadius: 12, padding: 14, color: 'white' }}>
           <div style={{ fontSize: 11, opacity: 0.9 }}>Corrisp. Manuali</div>
           <div style={{ fontSize: 18, fontWeight: 'bold' }}>{formatEuro(yearTotals.corrispettiviManual)}</div>
         </div>
-        <div style={{ background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)', borderRadius: 12, padding: 14, color: 'white' }}>
+        <div style={{ background: 'linear-gradient(135deg, #16a34a 0%, #16a34a 100%)', borderRadius: 12, padding: 14, color: 'white' }}>
           <div style={{ fontSize: 11, opacity: 0.9 }}>Versamenti</div>
           <div style={{ fontSize: 18, fontWeight: 'bold' }}>{formatEuro(yearTotals.versamenti)}</div>
         </div>
@@ -731,7 +731,7 @@ export default function ControlloMensile() {
           <div style={{ fontSize: 11, opacity: 0.9 }}>Saldo Cassa</div>
           <div style={{ fontSize: 18, fontWeight: 'bold' }}>{formatEuro(yearTotals.saldoCassa)}</div>
         </div>
-        <div style={{ background: 'linear-gradient(135deg, #64748b 0%, #475569 100%)', borderRadius: 12, padding: 14, color: 'white' }}>
+        <div style={{ background: 'linear-gradient(135deg, #6b7280 0%, #475569 100%)', borderRadius: 12, padding: 14, color: 'white' }}>
           <div style={{ fontSize: 11, opacity: 0.9 }}>📄 Doc. Commerciali</div>
           <div style={{ fontSize: 18, fontWeight: 'bold' }}>{(yearTotals.documentiCommerciali || 0).toLocaleString('it-IT')}</div>
         </div>
@@ -787,7 +787,7 @@ export default function ControlloMensile() {
         (viewMode === 'mese' && dailyComparison.some(d => d.hasDiscrepancy))) && (
         <div style={{ 
           background: '#fef3c7', 
-          border: '2px solid #f59e0b', 
+          border: '2px solid #ff9800', 
           borderRadius: 8, 
           padding: 15, 
           marginBottom: 20,
@@ -900,7 +900,7 @@ export default function ControlloMensile() {
                           onClick={() => handleMonthClick(row.month)}
                           style={{
                             padding: '4px 8px',
-                            background: '#3b82f6',
+                            background: '#1e3a5f',
                             color: 'white',
                             border: 'none',
                             borderRadius: 6,
@@ -927,7 +927,7 @@ export default function ControlloMensile() {
                 <td style={{ 
                   padding: 10, 
                   textAlign: 'right',
-                  color: Math.abs(yearTotals.posAuto - yearTotals.posManual) > 1 ? '#fbbf24' : '#22c55e'
+                  color: Math.abs(yearTotals.posAuto - yearTotals.posManual) > 1 ? '#fbbf24' : '#16a34a'
                 }}>
                   {formatEuro(yearTotals.posAuto - yearTotals.posManual)}
                 </td>
@@ -936,7 +936,7 @@ export default function ControlloMensile() {
                 <td style={{ 
                   padding: 10, 
                   textAlign: 'right',
-                  color: Math.abs(yearTotals.corrispettiviAuto - yearTotals.corrispettiviManual) > 1 ? '#fbbf24' : '#22c55e'
+                  color: Math.abs(yearTotals.corrispettiviAuto - yearTotals.corrispettiviManual) > 1 ? '#fbbf24' : '#16a34a'
                 }}>
                   {formatEuro(yearTotals.corrispettiviAuto - yearTotals.corrispettiviManual)}
                 </td>
@@ -1081,19 +1081,19 @@ export default function ControlloMensile() {
         <strong>Legenda e Logica Calcoli:</strong>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 10, marginTop: 10 }}>
           <div>
-            <strong style={{ color: '#3b82f6' }}>POS Agenzia</strong> = Σ corrispettivi.pagato_elettronico (da XML)
+            <strong style={{ color: '#1e3a5f' }}>POS Agenzia</strong> = Σ corrispettivi.pagato_elettronico (da XML)
           </div>
           <div>
             <strong style={{ color: '#8b5cf6' }}>POS Chiusura</strong> = Σ prima_nota_cassa WHERE categoria="POS"
           </div>
           <div>
-            <strong style={{ color: '#f59e0b' }}>Corrisp. Auto</strong> = Σ corrispettivi.totale (da XML)
+            <strong style={{ color: '#ff9800' }}>Corrisp. Auto</strong> = Σ corrispettivi.totale (da XML)
           </div>
           <div>
-            <strong style={{ color: '#10b981' }}>Corrisp. Man.</strong> = Σ prima_nota_cassa WHERE categoria="Corrispettivi" AND tipo="entrata"
+            <strong style={{ color: '#4caf50' }}>Corrisp. Man.</strong> = Σ prima_nota_cassa WHERE categoria="Corrispettivi" AND tipo="entrata"
           </div>
           <div>
-            <strong style={{ color: '#22c55e' }}>Versamenti</strong> = Σ prima_nota_cassa WHERE categoria="Versamento" AND tipo="uscita"
+            <strong style={{ color: '#16a34a' }}>Versamenti</strong> = Σ prima_nota_cassa WHERE categoria="Versamento" AND tipo="uscita"
           </div>
           <div>
             <strong style={{ color: '#0ea5e9' }}>Saldo Cassa</strong> = Σ entrate - Σ uscite (Prima Nota Cassa)
