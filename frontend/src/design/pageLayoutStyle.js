@@ -8,19 +8,24 @@
  * import { PAGE_WRAPPER, PAGE_CONTAINER, PAGE_HEADER, PAGE_CONTENT } from '@/design/pageLayoutStyle';
  */
 
-// Colori del tema
+// Colori del tema - ALLINEATI con lib/utils.js
 const COLORS = {
-  primary: '#1a365d',
-  primaryLight: '#2c5282',
-  background: '#f7fafc',
+  primary: '#1e3a5f',
+  primaryLight: '#2d5a87',
+  primaryDark: '#152a47',
+  background: '#f9fafb',
   surface: '#ffffff',
-  text: '#1a202c',
-  textSecondary: '#4a5568',
-  border: '#e2e8f0',
-  success: '#38a169',
-  warning: '#d69e2e',
-  error: '#e53e3e',
-  info: '#3182ce',
+  text: '#1f2937',
+  textSecondary: '#6b7280',
+  border: '#e5e7eb',
+  success: '#16a34a',
+  successLight: '#dcfce7',
+  warning: '#f59e0b',
+  warningLight: '#fef3c7',
+  error: '#dc2626',
+  errorLight: '#fee2e2',
+  info: '#2563eb',
+  infoLight: '#dbeafe',
 };
 
 // Wrapper principale della pagina - sfondo e padding esterno
