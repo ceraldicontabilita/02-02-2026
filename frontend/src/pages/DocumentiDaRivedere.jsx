@@ -22,14 +22,22 @@ export default function DocumentiDaRivedere() {
     setLoading(true);
     try {
       const url = filterType ? `/api/ai-parser/da-rivedere?tipo=${filterType}` : '/api/ai-parser/da-rivedere';
-      const [docsRes, statsRes] = await Promise.all([
-        api.get(url),
-        api.get('/api/ai-parser/da-rivedere/stats')
-      ]);
-      setDocuments(Array.isArray(docsRes.data) ? docsRes.data : docsRes.data?.documents || []);
-      setStats(statsRes.data || {});
+      const docsRes = await api.get(url);
+      const docs = Array.isArray(docsRes.data) ? docsRes.data : docsRes.data?.documents || [];
+      setDocuments(docs);
+      // Calcola stats dai documenti
+      const calcStats = {
+        totale: docs.length,
+        fatture: docs.filter(d => d.tipo === 'fattura').length,
+        f24: docs.filter(d => d.tipo === 'f24').length,
+        buste_paga: docs.filter(d => d.tipo === 'busta_paga').length,
+        altro: docs.filter(d => !['fattura', 'f24', 'busta_paga'].includes(d.tipo)).length
+      };
+      setStats(calcStats);
     } catch (err) {
       console.error('Errore caricamento documenti:', err);
+      setDocuments([]);
+      setStats({});
     } finally {
       setLoading(false);
     }
