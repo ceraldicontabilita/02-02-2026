@@ -45,174 +45,174 @@ async def create_indexes():
         # FATTURE RICEVUTE
         # ============================================
         await safe_create_index(db["fatture_ricevute"], "data_ricezione")
-        await db["fatture_ricevute"].create_index("data_fattura")
-        await db["fatture_ricevute"].create_index("fornitore")
-        await db["fatture_ricevute"].create_index("numero_fattura")
-        await db["fatture_ricevute"].create_index([("data_ricezione", -1), ("fornitore", 1)])
+        await safe_create_index(db["fatture_ricevute"]("data_fattura")
+        await safe_create_index(db["fatture_ricevute"]("fornitore")
+        await safe_create_index(db["fatture_ricevute"]("numero_fattura")
+        await safe_create_index(db["fatture_ricevute"]([("data_ricezione", -1), ("fornitore", 1)])
         indexes_created.append("fatture_ricevute: data_ricezione, data_fattura, fornitore, numero_fattura")
         logger.info("✅ Indici fatture_ricevute creati")
         
         # ============================================
         # FATTURE EMESSE
         # ============================================
-        await db["fatture_emesse"].create_index("data_fattura")
-        await db["fatture_emesse"].create_index("cliente")
-        await db["fatture_emesse"].create_index("numero")
-        await db["fatture_emesse"].create_index("stato")
-        await db["fatture_emesse"].create_index([("data_fattura", -1)])
+        await safe_create_index(db["fatture_emesse"]("data_fattura")
+        await safe_create_index(db["fatture_emesse"]("cliente")
+        await safe_create_index(db["fatture_emesse"]("numero")
+        await safe_create_index(db["fatture_emesse"]("stato")
+        await safe_create_index(db["fatture_emesse"]([("data_fattura", -1)])
         indexes_created.append("fatture_emesse: data_fattura, cliente, numero, stato")
         logger.info("✅ Indici fatture_emesse creati")
         
         # ============================================
         # PRIMA NOTA
         # ============================================
-        await db["prima_nota"].create_index("data")
-        await db["prima_nota"].create_index("tipo")
-        await db["prima_nota"].create_index("categoria")
-        await db["prima_nota"].create_index([("data", -1), ("tipo", 1)])
-        await db["prima_nota"].create_index([("data", 1), ("categoria", 1)])
+        await safe_create_index(db["prima_nota"]("data")
+        await safe_create_index(db["prima_nota"]("tipo")
+        await safe_create_index(db["prima_nota"]("categoria")
+        await safe_create_index(db["prima_nota"]([("data", -1), ("tipo", 1)])
+        await safe_create_index(db["prima_nota"]([("data", 1), ("categoria", 1)])
         indexes_created.append("prima_nota: data, tipo, categoria, compound indexes")
         logger.info("✅ Indici prima_nota creati")
         
         # ============================================
         # ESTRATTO CONTO MOVIMENTI
         # ============================================
-        await db["estratto_conto_movimenti"].create_index("data_operazione")
-        await db["estratto_conto_movimenti"].create_index("data_valuta")
-        await db["estratto_conto_movimenti"].create_index("stato")
-        await db["estratto_conto_movimenti"].create_index("riconciliato")
-        await db["estratto_conto_movimenti"].create_index([("data_operazione", -1), ("stato", 1)])
+        await safe_create_index(db["estratto_conto_movimenti"]("data_operazione")
+        await safe_create_index(db["estratto_conto_movimenti"]("data_valuta")
+        await safe_create_index(db["estratto_conto_movimenti"]("stato")
+        await safe_create_index(db["estratto_conto_movimenti"]("riconciliato")
+        await safe_create_index(db["estratto_conto_movimenti"]([("data_operazione", -1), ("stato", 1)])
         indexes_created.append("estratto_conto_movimenti: data_operazione, data_valuta, stato, riconciliato")
         logger.info("✅ Indici estratto_conto_movimenti creati")
         
         # ============================================
         # DIPENDENTI
         # ============================================
-        await db["employees"].create_index("codice_fiscale", unique=True, sparse=True)
-        await db["employees"].create_index("status")
-        await db["employees"].create_index("nome_completo")
-        await db["employees"].create_index([("cognome", 1), ("nome", 1)])
+        await safe_create_index(db["employees"]("codice_fiscale", unique=True, sparse=True)
+        await safe_create_index(db["employees"]("status")
+        await safe_create_index(db["employees"]("nome_completo")
+        await safe_create_index(db["employees"]([("cognome", 1), ("nome", 1)])
         indexes_created.append("employees: codice_fiscale (unique), status, nome_completo")
         logger.info("✅ Indici employees creati")
         
         # ============================================
         # CEDOLINI
         # ============================================
-        await db["cedolini"].create_index("dipendente_id")
-        await db["cedolini"].create_index([("anno", -1), ("mese", -1)])
-        await db["cedolini"].create_index([("dipendente_id", 1), ("anno", 1), ("mese", 1)])
+        await safe_create_index(db["cedolini"]("dipendente_id")
+        await safe_create_index(db["cedolini"]([("anno", -1), ("mese", -1)])
+        await safe_create_index(db["cedolini"]([("dipendente_id", 1), ("anno", 1), ("mese", 1)])
         indexes_created.append("cedolini: dipendente_id, anno/mese compound")
         logger.info("✅ Indici cedolini creati")
         
         # ============================================
         # F24
         # ============================================
-        await db["f24_models"].create_index("data_scadenza")
-        await db["f24_models"].create_index("pagato")
-        await db["f24_models"].create_index([("data_scadenza", 1), ("pagato", 1)])
+        await safe_create_index(db["f24_models"]("data_scadenza")
+        await safe_create_index(db["f24_models"]("pagato")
+        await safe_create_index(db["f24_models"]([("data_scadenza", 1), ("pagato", 1)])
         indexes_created.append("f24_models: data_scadenza, pagato")
         logger.info("✅ Indici f24_models creati")
         
         # ============================================
         # SCADENZARIO
         # ============================================
-        await db["scadenzario"].create_index("data_scadenza")
-        await db["scadenzario"].create_index("pagato")
-        await db["scadenzario"].create_index("tipo")
-        await db["scadenzario"].create_index([("data_scadenza", 1), ("pagato", 1)])
+        await safe_create_index(db["scadenzario"]("data_scadenza")
+        await safe_create_index(db["scadenzario"]("pagato")
+        await safe_create_index(db["scadenzario"]("tipo")
+        await safe_create_index(db["scadenzario"]([("data_scadenza", 1), ("pagato", 1)])
         indexes_created.append("scadenzario: data_scadenza, pagato, tipo")
         logger.info("✅ Indici scadenzario creati")
         
         # ============================================
         # CORRISPETTIVI
         # ============================================
-        await db["corrispettivi"].create_index("data")
-        await db["corrispettivi"].create_index([("data", -1)])
+        await safe_create_index(db["corrispettivi"]("data")
+        await safe_create_index(db["corrispettivi"]([("data", -1)])
         indexes_created.append("corrispettivi: data")
         logger.info("✅ Indici corrispettivi creati")
         
         # ============================================
         # FORNITORI
         # ============================================
-        await db["fornitori"].create_index("partita_iva", unique=True, sparse=True)
-        await db["fornitori"].create_index("ragione_sociale")
-        await db["fornitori"].create_index([("ragione_sociale", "text")])
+        await safe_create_index(db["fornitori"]("partita_iva", unique=True, sparse=True)
+        await safe_create_index(db["fornitori"]("ragione_sociale")
+        await safe_create_index(db["fornitori"]([("ragione_sociale", "text")])
         indexes_created.append("fornitori: partita_iva (unique), ragione_sociale, text search")
         logger.info("✅ Indici fornitori creati")
         
         # ============================================
         # API CLIENTS
         # ============================================
-        await db["api_clients"].create_index("key_hash", unique=True)
-        await db["api_clients"].create_index("active")
+        await safe_create_index(db["api_clients"]("key_hash", unique=True)
+        await safe_create_index(db["api_clients"]("active")
         indexes_created.append("api_clients: key_hash (unique), active")
         logger.info("✅ Indici api_clients creati")
         
         # ============================================
         # DOCUMENTS INBOX
         # ============================================
-        await db["documents_inbox"].create_index("category")
-        await db["documents_inbox"].create_index("status")
-        await db["documents_inbox"].create_index("downloaded_at")
-        await db["documents_inbox"].create_index("filename")
-        await db["documents_inbox"].create_index("hash")
-        await db["documents_inbox"].create_index([("category", 1), ("status", 1)])
-        await db["documents_inbox"].create_index([("downloaded_at", -1)])
+        await safe_create_index(db["documents_inbox"]("category")
+        await safe_create_index(db["documents_inbox"]("status")
+        await safe_create_index(db["documents_inbox"]("downloaded_at")
+        await safe_create_index(db["documents_inbox"]("filename")
+        await safe_create_index(db["documents_inbox"]("hash")
+        await safe_create_index(db["documents_inbox"]([("category", 1), ("status", 1)])
+        await safe_create_index(db["documents_inbox"]([("downloaded_at", -1)])
         indexes_created.append("documents_inbox: category, status, downloaded_at, filename, hash")
         logger.info("✅ Indici documents_inbox creati")
         
         # ============================================
         # ASSEGNI
         # ============================================
-        await db["assegni"].create_index("numero")
-        await db["assegni"].create_index("importo")
-        await db["assegni"].create_index("stato")
-        await db["assegni"].create_index("beneficiario")
-        await db["assegni"].create_index("fattura_collegata")
-        await db["assegni"].create_index([("importo", 1), ("stato", 1)])
-        await db["assegni"].create_index([("data_emissione", -1)])
+        await safe_create_index(db["assegni"]("numero")
+        await safe_create_index(db["assegni"]("importo")
+        await safe_create_index(db["assegni"]("stato")
+        await safe_create_index(db["assegni"]("beneficiario")
+        await safe_create_index(db["assegni"]("fattura_collegata")
+        await safe_create_index(db["assegni"]([("importo", 1), ("stato", 1)])
+        await safe_create_index(db["assegni"]([("data_emissione", -1)])
         indexes_created.append("assegni: numero, importo, stato, beneficiario, fattura_collegata")
         logger.info("✅ Indici assegni creati")
 
         # ============================================
         # PRESENZE (ATTENDANCE)
         # ============================================
-        await db["presenze"].create_index("dipendente_id")
-        await db["presenze"].create_index("data")
-        await db["presenze"].create_index("stato")
-        await db["presenze"].create_index([("dipendente_id", 1), ("data", 1)])
-        await db["presenze"].create_index([("data", -1), ("dipendente_id", 1)])
+        await safe_create_index(db["presenze"]("dipendente_id")
+        await safe_create_index(db["presenze"]("data")
+        await safe_create_index(db["presenze"]("stato")
+        await safe_create_index(db["presenze"]([("dipendente_id", 1), ("data", 1)])
+        await safe_create_index(db["presenze"]([("data", -1), ("dipendente_id", 1)])
         indexes_created.append("presenze: dipendente_id, data, stato, compound")
         logger.info("✅ Indici presenze creati")
 
         # ============================================
         # TURNI
         # ============================================
-        await db["turni"].create_index([("anno", 1), ("mese", 1)])
-        await db["turni"].create_index("dipendente_id")
+        await safe_create_index(db["turni"]([("anno", 1), ("mese", 1)])
+        await safe_create_index(db["turni"]("dipendente_id")
         indexes_created.append("turni: anno/mese, dipendente_id")
         logger.info("✅ Indici turni creati")
 
         # ============================================
         # REGOLE CATEGORIZZAZIONE
         # ============================================
-        await db["regole_categorizzazione_fornitori"].create_index("pattern")
-        await db["regole_categorizzazione_fornitori"].create_index("categoria")
-        await db["regole_categorizzazione_descrizioni"].create_index("pattern")
-        await db["regole_categorizzazione_descrizioni"].create_index("categoria")
+        await safe_create_index(db["regole_categorizzazione_fornitori"]("pattern")
+        await safe_create_index(db["regole_categorizzazione_fornitori"]("categoria")
+        await safe_create_index(db["regole_categorizzazione_descrizioni"]("pattern")
+        await safe_create_index(db["regole_categorizzazione_descrizioni"]("categoria")
         indexes_created.append("regole_categorizzazione: pattern, categoria")
         logger.info("✅ Indici regole_categorizzazione creati")
 
         # ============================================
         # INVOICES (collection principale)
         # ============================================
-        await db["invoices"].create_index("supplier_name")
-        await db["invoices"].create_index("invoice_number")
-        await db["invoices"].create_index("total_amount")
-        await db["invoices"].create_index("status")
-        await db["invoices"].create_index("invoice_date")
-        await db["invoices"].create_index([("status", 1), ("total_amount", 1)])
-        await db["invoices"].create_index([("invoice_date", -1)])
+        await safe_create_index(db["invoices"]("supplier_name")
+        await safe_create_index(db["invoices"]("invoice_number")
+        await safe_create_index(db["invoices"]("total_amount")
+        await safe_create_index(db["invoices"]("status")
+        await safe_create_index(db["invoices"]("invoice_date")
+        await safe_create_index(db["invoices"]([("status", 1), ("total_amount", 1)])
+        await safe_create_index(db["invoices"]([("invoice_date", -1)])
         indexes_created.append("invoices: supplier_name, invoice_number, total_amount, status, invoice_date")
         logger.info("✅ Indici invoices creati")
         
