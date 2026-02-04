@@ -1161,8 +1161,8 @@ async def sync_f24_automatico(
                     }}
                 )
                 quietanze_caricate += 1
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"Errore collegamento quietanza: {e}")
         
         return {
             "success": True,
