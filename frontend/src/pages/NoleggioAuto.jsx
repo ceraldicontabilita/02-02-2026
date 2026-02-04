@@ -738,6 +738,88 @@ export default function NoleggioAuto() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {/* Sezione OpenAPI Automotive */}
+              <div style={{ 
+                padding: 12, 
+                background: '#f0fdf4', 
+                borderRadius: 8, 
+                border: '1px solid #86efac'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <span style={{ fontWeight: '600', color: '#166534', fontSize: 13 }}>🚗 Dati da OpenAPI Automotive</span>
+                  <button
+                    onClick={() => handleLookupVeicolo(editingVeicolo.targa)}
+                    disabled={lookupLoading || !editingVeicolo.targa}
+                    style={{
+                      padding: '6px 14px',
+                      background: lookupLoading ? '#9ca3af' : '#059669',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: 6,
+                      cursor: lookupLoading ? 'wait' : 'pointer',
+                      fontSize: 12,
+                      fontWeight: '600'
+                    }}
+                  >
+                    {lookupLoading ? '⏳ Cercando...' : '🔍 Cerca Dati'}
+                  </button>
+                </div>
+                
+                {lookupResult && !lookupResult.error && (
+                  <div style={{ fontSize: 12, marginTop: 8 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                      <div><strong>Marca:</strong> {lookupResult.campi_mappati?.marca || '-'}</div>
+                      <div><strong>Modello:</strong> {lookupResult.campi_mappati?.modello || '-'}</div>
+                      <div><strong>Anno:</strong> {lookupResult.campi_mappati?.anno_immatricolazione || '-'}</div>
+                      <div><strong>Alimentazione:</strong> {lookupResult.campi_mappati?.alimentazione || '-'}</div>
+                      <div><strong>Potenza:</strong> {lookupResult.campi_mappati?.potenza_kw ? `${lookupResult.campi_mappati.potenza_kw} kW` : '-'}</div>
+                      <div><strong>Cilindrata:</strong> {lookupResult.campi_mappati?.cilindrata ? `${lookupResult.campi_mappati.cilindrata} cc` : '-'}</div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        // Applica i dati trovati
+                        setEditingVeicolo(prev => ({
+                          ...prev,
+                          marca: lookupResult.campi_mappati?.marca || prev.marca,
+                          modello: lookupResult.campi_mappati?.modello || prev.modello,
+                          anno_immatricolazione: lookupResult.campi_mappati?.anno_immatricolazione || prev.anno_immatricolazione,
+                          alimentazione: lookupResult.campi_mappati?.alimentazione || prev.alimentazione,
+                          potenza_kw: lookupResult.campi_mappati?.potenza_kw || prev.potenza_kw,
+                          cilindrata: lookupResult.campi_mappati?.cilindrata || prev.cilindrata,
+                        }));
+                        setLookupResult(null);
+                        toast.success('Dati applicati!');
+                      }}
+                      style={{
+                        marginTop: 10,
+                        padding: '8px 16px',
+                        background: '#2563eb',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: 6,
+                        cursor: 'pointer',
+                        fontWeight: '600',
+                        width: '100%'
+                      }}
+                    >
+                      ✓ Applica questi dati
+                    </button>
+                  </div>
+                )}
+                
+                {lookupResult?.error && (
+                  <div style={{ fontSize: 12, color: '#dc2626', marginTop: 8 }}>
+                    ❌ {lookupResult.error}
+                  </div>
+                )}
+                
+                {!lookupResult && (
+                  <p style={{ fontSize: 11, color: '#6b7280', margin: '8px 0 0 0' }}>
+                    Clicca "Cerca Dati" per recuperare marca, modello e altri dati dalla targa.
+                  </p>
+                )}
+              </div>
+
               {/* Marca e Modello */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 12 }}>
                 <div>
