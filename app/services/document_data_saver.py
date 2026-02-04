@@ -275,7 +275,7 @@ async def save_verbale_to_gestionale(db, data: Dict[str, Any], source_info: Dict
             "scadenza_pagamento": parse_date(data.get("scadenza_pagamento")),
             "ente_accertatore": data.get("ente_accertatore"),
             "societa_noleggio": data.get("societa_noleggio"),
-            "stato": "da_pagare",
+            "stato": "in_attesa_conferma",
             "source": "document_ai",
             "source_info": source_info or {},
             "created_at": datetime.now(timezone.utc).isoformat()
@@ -396,7 +396,7 @@ async def save_fattura_to_gestionale(db, data: Dict[str, Any], source_info: Dict
             "metodo_pagamento": data.get("metodo_pagamento"),
             "scadenza_pagamento": parse_date(data.get("scadenza_pagamento")),
             "descrizione_righe": data.get("descrizione_righe", []),
-            "stato": "da_pagare",
+            "stato": "in_attesa_conferma",
             "source": "document_ai",
             "source_info": source_info or {},
             "created_at": datetime.now(timezone.utc).isoformat()
