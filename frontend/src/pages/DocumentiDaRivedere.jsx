@@ -21,10 +21,10 @@ export default function DocumentiDaRivedere() {
   const fetchDocuments = async () => {
     setLoading(true);
     try {
-      const url = filterType ? `/api/da-rivedere?type=${filterType}` : '/api/da-rivedere';
+      const url = filterType ? `/api/ai-parser/da-rivedere?tipo=${filterType}` : '/api/ai-parser/da-rivedere';
       const [docsRes, statsRes] = await Promise.all([
         api.get(url),
-        api.get('/api/da-rivedere/stats')
+        api.get('/api/ai-parser/da-rivedere/stats')
       ]);
       setDocuments(Array.isArray(docsRes.data) ? docsRes.data : docsRes.data?.documents || []);
       setStats(statsRes.data || {});
