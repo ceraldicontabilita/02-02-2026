@@ -236,8 +236,8 @@ async def cerca_email_dimissioni(
                             payload = part.get_payload(decode=True)
                             if payload:
                                 email_text += "\n" + payload.decode('utf-8', errors='replace')
-                        except:
-                            pass
+                        except Exception as e:
+                            logger.warning(f"Errore decodifica email: {e}")
                 
                 # PRIMA estrai i nomi degli allegati PDF
                 allegati_nomi = []
