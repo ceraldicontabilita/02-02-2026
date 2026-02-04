@@ -60,7 +60,7 @@ PATTERN RICERCA EMAIL
 VERBALE:
 - Subject contiene: "verbale", "multa", "contravvenzione", "notifica"
 - Allegato PDF con nome tipo: "verbale_*.pdf", "notifica_*.pdf"
-- Nel corpo: numero verbale (pattern: [A-Z]\d{10,12})
+- Nel corpo: numero verbale (pattern: [A-Z]\\d{10,12})
 
 QUIETANZA PAGAMENTO:
 - Subject contiene: "quietanza", "pagamento", "ricevuta", "PayPal", "bonifico"
