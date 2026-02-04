@@ -161,7 +161,7 @@ const Ricette = lazy(() => import("./pages/Ricette.jsx"));
 const DizionarioProdotti = lazy(() => import("./pages/DizionarioProdotti.jsx"));
 const CentriCosto = lazy(() => import("./pages/CentriCosto.jsx"));
 const UtileObiettivo = lazy(() => import("./pages/UtileObiettivo.jsx"));
-// LearningMachineDashboard RIMOSSA - funzionalità duplicate in CentriCosto, Magazzino, Ricette
+const LearningMachine = lazy(() => import("./pages/LearningMachine.jsx"));
 
 // === CONTABILITÀ & BILANCIO ===
 const Bilancio = lazy(() => import("./pages/Bilancio.jsx"));
