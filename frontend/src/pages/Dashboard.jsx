@@ -955,7 +955,7 @@ export default function Dashboard() {
               </div>
             </div>
             
-            <Link to="/fornitori?tab=learning" style={{
+            <Link to="/learning-machine" style={{
               display: 'block',
               marginTop: 12,
               padding: '8px 14px',
