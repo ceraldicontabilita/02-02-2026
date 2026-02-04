@@ -672,8 +672,8 @@ async def migra_da_prima_nota_salari(
                     parts = data_pag.split("-")
                     anno_ced = int(parts[0])
                     mese = int(parts[1])
-                except:
-                    pass
+                except Exception as e:
+                    logger.warning(f"Errore parsing data pagamento {data_pag}: {e}")
             
             if not mese or not anno_ced:
                 risultato["skipped"] += 1
