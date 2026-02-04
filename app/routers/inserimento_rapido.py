@@ -59,7 +59,7 @@ async def salva_corrispettivo(data: CorrispettivoInput) -> Dict[str, Any]:
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     
-    await db["corrispettivi_manuali"].insert_one(doc)
+    await db["corrispettivi_manuali"].insert_one(doc.copy())
     
     # Registra anche in prima nota cassa
     prima_nota = {
@@ -73,7 +73,7 @@ async def salva_corrispettivo(data: CorrispettivoInput) -> Dict[str, Any]:
         "source": "inserimento_rapido",
         "created_at": datetime.now(timezone.utc).isoformat()
     }
-    await db["prima_nota_cassa"].insert_one(prima_nota)
+    await db["prima_nota_cassa"].insert_one(prima_nota.copy())
     
     return {"success": True, "id": doc["id"], "message": "Corrispettivo salvato"}
 
