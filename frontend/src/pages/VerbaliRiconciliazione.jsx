@@ -198,9 +198,9 @@ export default function VerbaliRiconciliazione() {
           disabled={collegandoDriver}
           style={{
             padding: '12px 24px',
-            background: 'rgba(255,255,255,0.2)',
+            background: '#6366f1',
             color: 'white',
-            border: '2px solid white',
+            border: 'none',
             borderRadius: 8,
             cursor: collegandoDriver ? 'wait' : 'pointer',
             fontWeight: 'bold',
