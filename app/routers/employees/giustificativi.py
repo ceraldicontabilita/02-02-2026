@@ -1650,44 +1650,73 @@ async def get_saldi_finali_tutti(
 ) -> Dict[str, Any]:
     """
     Recupera i saldi finali per tutti i dipendenti.
-    Utile per report e dashboard.
+    Se non esistono saldi salvati, li calcola dai cedolini.
     """
     db = Database.get_db()
     
     if not anno:
         anno = datetime.now().year
     
+    # Prima prova a recuperare i saldi salvati
     saldi = await db["giustificativi_saldi_finali"].find(
         {"anno": anno},
-        {"_id": 0, "storico": 0}  # Escludi storico per performance
+        {"_id": 0, "storico": 0}
     ).to_list(500)
     
-    # Arricchisci con nomi dipendenti
-    risultato = []
-    for s in saldi:
-        emp_id = s.get("employee_id")
-        employee = await db["employees"].find_one(
-            {"id": emp_id},
-            {"_id": 0, "nome_completo": 1, "nome": 1, "cognome": 1}
-        )
+    # Se non ci sono saldi, calcola dai cedolini
+    if not saldi:
+        # Recupera tutti i dipendenti attivi
+        employees = await db["employees"].find(
+            {"stato": {"$ne": "cessato"}},
+            {"_id": 0, "id": 1, "nome_completo": 1, "nome": 1, "cognome": 1}
+        ).to_list(500)
         
-        nome = ""
-        if employee:
-            nome = employee.get("nome_completo") or f"{employee.get('cognome', '')} {employee.get('nome', '')}"
-        
-        risultato.append({
-            **s,
-            "employee_nome": nome
-        })
+        for emp in employees:
+            emp_id = emp.get("id")
+            nome = emp.get("nome_completo") or f"{emp.get('cognome', '')} {emp.get('nome', '')}"
+            
+            # Cerca ultimo cedolino dell'anno per questo dipendente
+            cedolino = await db["cedolini"].find_one(
+                {"employee_id": emp_id, "anno": anno},
+                {"_id": 0},
+                sort=[("mese", -1)]
+            )
+            
+            saldo = {
+                "employee_id": emp_id,
+                "employee_nome": nome,
+                "anno": anno,
+                "ferie_residue": cedolino.get("ferie_residue", 0) if cedolino else 0,
+                "rol_residui": cedolino.get("rol_residui", 0) if cedolino else 0,
+                "permessi_residui": cedolino.get("permessi_residui", 0) if cedolino else 0,
+                "exf_residui": cedolino.get("exf_residui", 0) if cedolino else 0,
+                "data_ultimo_aggiornamento": cedolino.get("created_at") if cedolino else None,
+                "fonte": "cedolino" if cedolino else "nessun_dato"
+            }
+            saldi.append(saldo)
+    else:
+        # Arricchisci con nomi dipendenti
+        for s in saldi:
+            emp_id = s.get("employee_id")
+            employee = await db["employees"].find_one(
+                {"id": emp_id},
+                {"_id": 0, "nome_completo": 1, "nome": 1, "cognome": 1}
+            )
+            
+            nome = ""
+            if employee:
+                nome = employee.get("nome_completo") or f"{employee.get('cognome', '')} {employee.get('nome', '')}"
+            
+            s["employee_nome"] = nome
     
     # Ordina per nome
-    risultato.sort(key=lambda x: x.get("employee_nome", ""))
+    saldi.sort(key=lambda x: x.get("employee_nome", ""))
     
     return {
         "success": True,
         "anno": anno,
-        "totale_dipendenti": len(risultato),
-        "saldi": risultato
+        "totale_dipendenti": len(saldi),
+        "saldi": saldi
     }
 
 
