@@ -123,7 +123,7 @@ async def find_bank_match(db, importo: float, data_documento: str, fornitore: st
         }
         
         # Prima cerca con fornitore nel nome
-        fornitore_words = fornitore.split()[:2]  # Prime 2 parole
+        fornitore_words = fornitore.split()[:2] if fornitore else []  # Prime 2 parole
         if fornitore_words:
             query_with_name = {
                 **query,
@@ -148,7 +148,7 @@ async def find_supplier(db, fornitore_nome: str) -> Optional[Dict[str, Any]]:
         return None
     
     # Cerca per nome simile in fornitori_dizionario (collezione principale)
-    fornitore_words = fornitore_nome.split()[:2]
+    fornitore_words = fornitore_nome.split()[:2] if fornitore_nome else []
     for word in fornitore_words:
         if len(word) > 3:
             # Prima cerca in fornitori_dizionario
