@@ -5,7 +5,6 @@ import { PageLayout } from '../components/PageLayout';
 
 export default function IntegrazioniOpenAPI() {
   const [sdiStatus, setSdiStatus] = useState(null);
-  const [aispStatus, setAispStatus] = useState(null);
   const [xbrlStatus, setXbrlStatus] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('sdi');
@@ -30,13 +29,11 @@ export default function IntegrazioniOpenAPI() {
   const loadStatus = async () => {
     setLoading(true);
     try {
-      const [sdi, aisp, xbrl] = await Promise.all([
+      const [sdi, xbrl] = await Promise.all([
         api.get('/api/openapi/sdi/status').catch(() => ({ data: { status: 'error' } })),
-        api.get('/api/openapi/aisp/status').catch(() => ({ data: { status: 'error' } })),
         api.get('/api/openapi/xbrl/status').catch(() => ({ data: { status: 'error' } }))
       ]);
       setSdiStatus(sdi.data);
-      setAispStatus(aisp.data);
       setXbrlStatus(xbrl.data);
     } catch (e) {
       console.error(e);
